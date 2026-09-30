@@ -147,6 +147,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/sales/start` | `Pages/SalesManager/Onboarding.razor` | SalesManager |
 | `/sales/wallet` | `Pages/SalesManager/Invoices.razor` | SalesManager |
 | `/sales/wallet/uitbetalen` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
+| `/sales/werkgevers` | `Pages/Sales/Employers.razor` | SalesManager |
 | `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
 | `/salesmanager/invoices` | `Pages/SalesManager/Invoices.razor` | SalesManager |
 | `/salesmanager/onboarding` | `Pages/SalesManager/Onboarding.razor` | SalesManager |

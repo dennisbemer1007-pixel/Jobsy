@@ -16,8 +16,8 @@
             <span class="sp-topbar__product">@Culture["Sales.ProductLabel"]</span>
         </a>
         <EntScopeChip Label="@_roleChipLabel" SubLabel="@_roleChipSub" />
-        <div class="sp-topbar__search" aria-hidden="true">
-            @* Search slot filled in 04 *@
+        <div class="sp-topbar__search">
+            <SalesTopbarSearch />
         </div>
         <div class="sp-topbar__actions">
             <SalesWalletChipV2 />

@@ -682,4 +682,63 @@ public sealed partial class JobsyApiClient
 
         return await response.Content.ReadFromJsonAsync<OnboardingCompleteResult>(cancellationToken: ct);
     }
+
+    public async Task<Jobsy.Core.Contracts.Sales.SalesDashboardDto?> GetSalesPartnerDashboardAsync(
+        string period = "year",
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/dashboard?period={Uri.EscapeDataString(period)}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesDashboardDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Sales.SalesEmployerPageDto?> GetSalesPartnerEmployersAsync(
+        string? q = null,
+        string? status = null,
+        int? year = null,
+        int page = 1,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string> { $"page={page}" };
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            qs.Add($"status={Uri.EscapeDataString(status)}");
+        }
+
+        if (year is not null)
+        {
+            qs.Add($"year={year}");
+        }
+
+        var response = await _http.GetAsync($"api/sales/me/employers?{string.Join('&', qs)}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerPageDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto?> GetSalesPartnerEmployerAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/employers/{companyId:D}", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto>(cancellationToken: ct);
+    }
 }

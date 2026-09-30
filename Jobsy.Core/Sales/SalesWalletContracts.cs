@@ -43,6 +43,20 @@ public interface ISalesEmployerReadService
         CancellationToken cancellationToken = default);
 }
 
+/// <summary>Shared place extraction for privacy-safe employer DTOs (D4).</summary>
+public static class SalesPlace
+{
+    public static string? FromAddress(string? address, CompanyLegalForm? legalForm)
+    {
+        if (legalForm is null or CompanyLegalForm.Eenmanszaak)
+        {
+            return null;
+        }
+
+        return Jobsy.Core.Contracts.LobsyCvModelFactory.ExtractCity(address);
+    }
+}
+
 public interface ISalesCorrectionService
 {
     /// <summary>

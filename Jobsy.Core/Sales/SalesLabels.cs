@@ -85,6 +85,15 @@ public static class SalesLabels
         _ => "Sales.Label.State.Pending"
     };
 
+    public static string Key(Contracts.Sales.SalesEmployerStatus status) => status switch
+    {
+        Contracts.Sales.SalesEmployerStatus.NoPurchase => "Sales.Label.EmployerStatus.NoPurchase",
+        Contracts.Sales.SalesEmployerStatus.Active => "Sales.Label.EmployerStatus.Active",
+        Contracts.Sales.SalesEmployerStatus.Quiet => "Sales.Label.EmployerStatus.Quiet",
+        Contracts.Sales.SalesEmployerStatus.Ended => "Sales.Label.EmployerStatus.Ended",
+        _ => "Sales.Label.EmployerStatus.NoPurchase"
+    };
+
     public static string CommissionStateKey(string state) => state switch
     {
         "Pending" => "Sales.Label.State.Pending",
@@ -104,6 +113,7 @@ public static class SalesLabels
         typeof(SelfBillingInvoiceStatus),
         typeof(SalesManagerVatTreatment),
         typeof(SalesAttributionSource),
-        typeof(SalesManagerApplicationStatus)
+        typeof(SalesManagerApplicationStatus),
+        typeof(Contracts.Sales.SalesEmployerStatus)
     ];
 }

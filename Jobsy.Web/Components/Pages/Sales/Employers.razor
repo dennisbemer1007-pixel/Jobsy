@@ -1,0 +1,325 @@
+@page "/sales/werkgevers"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Contracts.Sales
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Sales.Employers.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+<section class="sp-employers">
+    <header class="sp-dash__header">
+        <div>
+            <h1>@Culture["Sales.Employers.Title"]</h1>
+            @if (_page is not null)
+            {
+                <p class="sp-dash__lead">@Culture.Format("Sales.Employers.Lead", _page.Kpis.TotalEmployers, _page.Kpis.ActiveEmployers)</p>
+            }
+        </div>
+    </header>
+
+    @if (_loading && _page is null)
+    {
+        <p class="state-message">@Culture["EntUi.Loading"]</p>
+    }
+    else if (_page is not null)
+    {
+        <div class="sp-dash__kpis sp-employers__kpis">
+            <EntKpiCard Label="@Culture["Sales.Employers.Kpi.Registered"]"
+                        Value="@_page.Kpis.TotalEmployers.ToString()"
+                        Delta="@Culture["Sales.Employers.Kpi.RegisteredSub"]" />
+            <EntKpiCard Label="@Culture["Sales.Employers.Kpi.FirstPurchase"]"
+                        Value="@_page.Kpis.FirstPurchaseCount.ToString()"
+                        Delta="@Culture.Format("Sales.Employers.Kpi.FirstPurchaseSub", FirstPurchasePct())" />
+            <EntKpiCard Label="@Culture["Sales.Employers.Kpi.Quiet"]"
+                        Value="@_page.Kpis.QuietCount.ToString()"
+                        Delta="@Culture["Sales.Employers.Kpi.QuietSub"]" />
+            <EntKpiCard Label="@Culture["Sales.Employers.Kpi.Average"]"
+                        Value="@SalesMoney.FormatPlain(_page.Kpis.AverageCommissionPerActive)" />
+        </div>
+
+        <EntFilterBar Query="@_query" QueryChanged="OnQueryAsync" Placeholder="@Culture["Sales.Employers.Search"]">
+            <ChildContent>
+                <label class="sp-filter">
+                    <span class="visually-hidden">@Culture["Sales.Employers.Filter.Status"]</span>
+                    <select value="@_status" @onchange="OnStatusAsync">
+                        <option value="">@Culture["Sales.Employers.Filter.Status"]: @Culture["Sales.Employers.Filter.All"]</option>
+                        <option value="NoPurchase">@Culture["Sales.Label.EmployerStatus.NoPurchase"]</option>
+                        <option value="Active">@Culture["Sales.Label.EmployerStatus.Active"]</option>
+                        <option value="Quiet">@Culture["Sales.Label.EmployerStatus.Quiet"].Replace(" · {0} dagen", "")</option>
+                        <option value="Ended">@Culture["Sales.Label.EmployerStatus.Ended"]</option>
+                    </select>
+                </label>
+                <label class="sp-filter">
+                    <span class="visually-hidden">@Culture["Sales.Employers.Filter.Year"]</span>
+                    <select value="@(_year?.ToString() ?? "")" @onchange="OnYearAsync">
+                        <option value="">@Culture["Sales.Employers.Filter.Year"]: @Culture["Sales.Employers.Filter.All"]</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="0">@Culture["Sales.Employers.Filter.Ended"]</option>
+                    </select>
+                </label>
+            </ChildContent>
+        </EntFilterBar>
+
+        <EntDataTable Loading="_loading" Empty="_page.Items.Count == 0" EmptyText="@Culture["Sales.Employers.Empty"]">
+            <Header>
+                <th scope="col">@Culture["Sales.Employers.Col.Name"]</th>
+                <th scope="col">@Culture["Sales.Employers.Col.Attributed"]</th>
+                <th scope="col">@Culture["Sales.Employers.Col.Status"]</th>
+                <th scope="col">@Culture["Sales.Employers.Col.Year"]</th>
+                <th scope="col" class="is-num">@Culture.Format("Sales.Employers.Col.Commission", DateTime.UtcNow.Year)</th>
+                <th scope="col">@Culture["Sales.Employers.Col.LastPurchase"]</th>
+            </Header>
+            <Rows>
+                @foreach (var row in _page.Items)
+                {
+                    <tr class="sp-table-row @(_openId == row.CompanyId ? "is-selected" : null)"
+                        tabindex="0"
+                        @onclick="() => OpenDrawer(row.CompanyId)"
+                        @onkeydown="(e) => OnRowKey(e, row.CompanyId)">
+                        <td>
+                            <strong>@row.DisplayName</strong>
+                            <div class="muted">
+                                @if (!string.IsNullOrEmpty(row.Place))
+                                {
+                                    <span>@row.Place</span>
+                                }
+                                @if (row.BranchCount > 0)
+                                {
+                                    <span>@Culture.Format(row.BranchCount == 1 ? "Sales.Employers.Branch" : "Sales.Employers.Branches", row.BranchCount)</span>
+                                }
+                            </div>
+                        </td>
+                        <td>@row.AttributedOn.ToString("dd-MM-yyyy")</td>
+                        <td><span class="sp-status sp-status--@row.Status.ToString().ToLowerInvariant()">@StatusLabel(row)</span></td>
+                        <td>
+                            @if (row.CommissionYear is int y)
+                            {
+                                <div class="sp-year-prog" aria-hidden="true">
+                                    <span class="sp-year-prog__fill" data-p="@((int)(row.YearProgress * 100))"></span>
+                                </div>
+                                <span>@Culture.Format("Sales.Employers.YearLabel", y, PctRate(row.CurrentRate))</span>
+                            }
+                            else if (row.Status == SalesEmployerStatus.Ended)
+                            {
+                                <span>@Culture["Sales.Label.EmployerStatus.Ended"]</span>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
+                        <td class="is-num">@SalesMoney.FormatPlain(row.CommissionThisYear)</td>
+                        <td>@(row.LastPurchaseOn?.ToString("dd-MM-yyyy") ?? "—")</td>
+                    </tr>
+                }
+            </Rows>
+        </EntDataTable>
+
+        @if (_page.Items.Count == 0 && !_loading)
+        {
+            <a class="btn-compact" href="/sales/link">@Culture["Sales.Employers.EmptyCta"]</a>
+        }
+
+        <EntPager Page="_page.Page" TotalPages="_page.TotalPages" PageChanged="OnPageAsync" />
+    }
+</section>
+
+<SalesEmployerDrawer Open="_openId is not null"
+                     OpenChanged="OnDrawerOpenChanged"
+                     CompanyId="_openId" />
+
+@code {
+    private SalesEmployerPageDto? _page;
+    private bool _loading = true;
+    private string _query = "";
+    private string _status = "";
+    private int? _year;
+    private int _pageNum = 1;
+    private Guid? _openId;
+    private System.Threading.Timer? _debounce;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ParseUrl();
+        await LoadAsync();
+        if (_openId is Guid id)
+        {
+            // drawer opens via SalesEmployerDrawer
+        }
+    }
+
+    private void ParseUrl()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("q", out var qq))
+        {
+            _query = qq.ToString() ?? "";
+        }
+
+        if (q.TryGetValue("status", out var st))
+        {
+            _status = st.ToString() ?? "";
+        }
+
+        if (q.TryGetValue("year", out var y) && int.TryParse(y, out var yi))
+        {
+            _year = yi;
+        }
+
+        if (q.TryGetValue("page", out var p) && int.TryParse(p, out var pi))
+        {
+            _pageNum = Math.Max(1, pi);
+        }
+
+        if (q.TryGetValue("open", out var o) && Guid.TryParse(o, out var oid))
+        {
+            _openId = oid;
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _page = await Api.GetSalesPartnerEmployersAsync(
+                string.IsNullOrWhiteSpace(_query) ? null : _query,
+                string.IsNullOrWhiteSpace(_status) ? null : _status,
+                _year,
+                _pageNum);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SyncUrl()
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(_query))
+        {
+            parts.Add($"q={Uri.EscapeDataString(_query)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(_status))
+        {
+            parts.Add($"status={Uri.EscapeDataString(_status)}");
+        }
+
+        if (_year is not null)
+        {
+            parts.Add($"year={_year}");
+        }
+
+        if (_pageNum > 1)
+        {
+            parts.Add($"page={_pageNum}");
+        }
+
+        if (_openId is Guid id)
+        {
+            parts.Add($"open={id:D}");
+        }
+
+        var url = parts.Count == 0 ? "/sales/werkgevers" : "/sales/werkgevers?" + string.Join('&', parts);
+        Navigation.NavigateTo(url, replace: true);
+    }
+
+    private Task OnQueryAsync(string q)
+    {
+        _query = q;
+        _pageNum = 1;
+        _debounce?.Dispose();
+        _debounce = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                SyncUrl();
+                await LoadAsync();
+                StateHasChanged();
+            });
+        }, null, 250, Timeout.Infinite);
+        return Task.CompletedTask;
+    }
+
+    private async Task OnStatusAsync(ChangeEventArgs e)
+    {
+        _status = e.Value?.ToString() ?? "";
+        _pageNum = 1;
+        SyncUrl();
+        await LoadAsync();
+    }
+
+    private async Task OnYearAsync(ChangeEventArgs e)
+    {
+        var v = e.Value?.ToString();
+        _year = int.TryParse(v, out var y) ? y : null;
+        _pageNum = 1;
+        SyncUrl();
+        await LoadAsync();
+    }
+
+    private async Task OnPageAsync(int page)
+    {
+        _pageNum = page;
+        SyncUrl();
+        await LoadAsync();
+    }
+
+    private void OpenDrawer(Guid companyId)
+    {
+        _openId = companyId;
+        SyncUrl();
+    }
+
+    private Task OnDrawerOpenChanged(bool open)
+    {
+        if (!open)
+        {
+            _openId = null;
+            SyncUrl();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void OnRowKey(KeyboardEventArgs e, Guid companyId)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            OpenDrawer(companyId);
+        }
+    }
+
+    private int FirstPurchasePct()
+    {
+        if (_page is null || _page.Kpis.TotalEmployers == 0)
+        {
+            return 0;
+        }
+
+        return (int)Math.Round(100d * _page.Kpis.FirstPurchaseCount / _page.Kpis.TotalEmployers);
+    }
+
+    private string StatusLabel(SalesEmployerDto row)
+    {
+        if (row.Status == SalesEmployerStatus.Quiet && row.QuietDays is int d)
+        {
+            return Culture.Format(row.StatusLabelKey, d);
+        }
+
+        return Culture[row.StatusLabelKey];
+    }
+
+    private static int PctRate(decimal? rate)
+        => (int)Math.Round((rate ?? 0m) * 100m);
+}

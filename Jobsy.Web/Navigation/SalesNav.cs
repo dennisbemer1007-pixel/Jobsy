@@ -39,7 +39,7 @@ public static class SalesNav
                 [JobsyRoles.SalesManager], IsAvailable: true, ShowInBottomNav: true,
                 BottomLabelKey: "Sales.Nav.Bottom.Link", BottomOrder: 2),
             new("employers", "Sales.Nav.Employers", "/sales/werkgevers", NavIcons.Companies,
-                [JobsyRoles.SalesManager], IsAvailable: false, ShowInBottomNav: true,
+                [JobsyRoles.SalesManager], IsAvailable: true, ShowInBottomNav: true,
                 BottomLabelKey: "Sales.Nav.Bottom.Employers", BottomOrder: 3),
             new("recommend", "Sales.Nav.Recommend", "/sales/aanbevelen", NavIcons.Users,
                 [JobsyRoles.SalesManager], IsAvailable: true, RequiresCanRecruit: true),

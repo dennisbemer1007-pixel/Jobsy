@@ -59,6 +59,8 @@ public class SalesFoundationUnitTests
                     nameof(SalesManagerVatTreatment) => SalesLabels.Key((SalesManagerVatTreatment)value),
                     nameof(SalesAttributionSource) => SalesLabels.Key((SalesAttributionSource)value),
                     nameof(SalesManagerApplicationStatus) => SalesLabels.Key((SalesManagerApplicationStatus)value),
+                    nameof(Jobsy.Core.Contracts.Sales.SalesEmployerStatus) =>
+                        SalesLabels.Key((Jobsy.Core.Contracts.Sales.SalesEmployerStatus)value),
                     _ => throw new InvalidOperationException(type.Name)
                 };
                 Assert.False(string.IsNullOrWhiteSpace(key), $"{type.Name}.{value}");

@@ -377,7 +377,10 @@ public static class DependencyInjection
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
         services.AddScoped<ISalesBeneficiaryService, SalesBeneficiaryService>();
         services.AddScoped<ISalesWalletReadService, SalesWalletReadService>();
-        services.AddScoped<ISalesEmployerReadService, SalesEmployerReadService>();
+        services.AddScoped<SalesEmployerReadService>();
+        services.AddScoped<ISalesEmployerReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());
+        services.AddScoped<ISalesEmployerPortalReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());
+        services.AddScoped<ISalesDashboardReadService, SalesDashboardReadService>();
         services.AddScoped<ISalesCorrectionService, SalesCorrectionService>();
         services.AddScoped<ISalesParkedBalanceService, SalesParkedBalanceService>();
         services.AddScoped<ISalesAttributionResolver, SalesAttributionResolver>();

@@ -2,6 +2,418 @@
 @layout SalesLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Contracts.Sales
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
 
-<PageTitle>Dashboard · Lobsy Partner</PageTitle>
-<SalesManagerHomePanel />
+<PageTitle>@Culture["Sales.Nav.Dashboard"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["EntUi.Loading"]</p>
+}
+else if (_dash is null)
+{
+    <p class="state-message error">@Culture["Common.Error"]</p>
+}
+else
+{
+    <section class="sp-dash">
+        <header class="sp-dash__header">
+            <div>
+                <h1 class="sp-dash__hi-desktop">@Greeting(_dash.FirstName)</h1>
+                <h1 class="sp-dash__hi-mobile">@Culture.Format("Sales.Dash.Hi", _dash.FirstName)</h1>
+                <p class="sp-dash__lead sp-dash__hi-desktop">@Culture["Sales.Dash.Lead"]</p>
+                <p class="sp-dash__role-line sp-dash__hi-mobile">
+                    @Culture["Sales.RoleChip"] · <span class="sp-mono">@(_dash.TrackingCode ?? Culture["Sales.RoleChipNoCode"])</span>
+                </p>
+            </div>
+            <div class="sp-dash__header-actions sp-dash__hi-desktop">
+                <div class="sp-segment" role="group" aria-label="@Culture["Sales.Dash.Period.Year"]">
+                    <button type="button" class="sp-segment__btn @(_period == "month" ? "is-active" : null)" @onclick='() => SetPeriod("month")'>@Culture["Sales.Dash.Period.Month"]</button>
+                    <button type="button" class="sp-segment__btn @(_period == "year" ? "is-active" : null)" @onclick='() => SetPeriod("year")'>@Culture["Sales.Dash.Period.Year"]</button>
+                    <button type="button" class="sp-segment__btn @(_period == "all" ? "is-active" : null)" @onclick='() => SetPeriod("all")'>@Culture["Sales.Dash.Period.All"]</button>
+                </div>
+                <button type="button" class="btn-compact" @onclick="CopyLinkAsync">@Culture["Sales.Dash.CopyLink"]</button>
+            </div>
+        </header>
+
+        @if (!string.IsNullOrEmpty(_toast))
+        {
+            <p class="sp-toast" role="status">@_toast</p>
+        }
+
+        <div class="sp-dash__hero-mobile">
+            <article class="sp-hero-card">
+                <p class="sp-hero-card__label">@Culture["Sales.Dash.Kpi.Available"]</p>
+                <p class="sp-hero-card__value">@SalesMoney.FormatPlain(_dash.Available)</p>
+                <div class="sp-hero-card__stats">
+                    <div>
+                        <span>@Culture["Sales.Dash.Kpi.Pending"]</span>
+                        <strong>@SalesMoney.FormatPlain(_dash.Pending)</strong>
+                    </div>
+                    <div>
+                        <span>@Culture.Format("Sales.Dash.Kpi.Earned", PeriodShort())</span>
+                        <strong>@SalesMoney.FormatPlain(_dash.EarnedInPeriod)</strong>
+                    </div>
+                </div>
+                <a class="sp-hero-card__cta @(!_dash.CanRequestPayout ? "is-disabled" : null)"
+                   href="@(_dash.CanRequestPayout ? "/sales/wallet/uitbetalen" : null)"
+                   aria-disabled="@(!_dash.CanRequestPayout)">
+                    @Culture["Sales.Dash.Kpi.RequestPayout"]
+                </a>
+                @if (!_dash.CanRequestPayout && !string.IsNullOrEmpty(_dash.PayoutBlockedReason))
+                {
+                    <p class="sp-hero-card__help">@PayoutHelp(_dash)</p>
+                }
+            </article>
+            <div class="sp-dash__kpi-pair">
+                <EntKpiCard Label="@Culture["Sales.Dash.Kpi.ActiveEmployers"]"
+                            Value="@_dash.ActiveEmployers.ToString()"
+                            Delta="@Culture.Format("Sales.Dash.Kpi.ActiveOf", _dash.ActiveEmployers, _dash.TotalEmployers)" />
+                <EntKpiCard Label="@Culture["Sales.Dash.Kpi.Registrations"]"
+                            Value="@_dash.TotalEmployers.ToString()"
+                            Delta="@(_dash.NewEmployersThisMonth > 0 ? Culture.Format("Sales.Dash.Kpi.NewThisMonth", _dash.NewEmployersThisMonth) : null)"
+                            DeltaTone="up" />
+            </div>
+        </div>
+
+        <div class="sp-dash__kpis sp-dash__hi-desktop">
+            <article class="sp-hero-card">
+                <p class="sp-hero-card__label">@Culture["Sales.Dash.Kpi.Available"]</p>
+                <p class="sp-hero-card__value">@SalesMoney.FormatPlain(_dash.Available)</p>
+                <p class="sp-hero-card__sub">@Culture.Format("Sales.Dash.Kpi.AvailableSub", _dash.NextRunDate.ToString("d MMMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))</p>
+                <a class="sp-hero-card__cta @(!_dash.CanRequestPayout ? "is-disabled" : null)"
+                   href="@(_dash.CanRequestPayout ? "/sales/wallet/uitbetalen" : null)"
+                   aria-disabled="@(!_dash.CanRequestPayout)">
+                    @Culture["Sales.Dash.Kpi.RequestPayout"]
+                </a>
+                @if (!_dash.CanRequestPayout && !string.IsNullOrEmpty(_dash.PayoutBlockedReason))
+                {
+                    <p class="sp-hero-card__help">@PayoutHelp(_dash)</p>
+                }
+            </article>
+            <EntKpiCard Label="@Culture.Format("Sales.Dash.Kpi.Earned", PeriodShort())"
+                        Value="@SalesMoney.FormatPlain(_dash.EarnedInPeriod)"
+                        Delta="@EarnedDelta(_dash)"
+                        DeltaTone="up" />
+            <EntKpiCard Label="@Culture["Sales.Dash.Kpi.Pending"]"
+                        Value="@SalesMoney.FormatPlain(_dash.Pending)"
+                        Delta="@Culture.Format("Sales.Dash.Kpi.PendingSub", _dash.CommissionHoldDays)" />
+            <EntKpiCard Label="@Culture["Sales.Dash.Kpi.ActiveEmployers"]"
+                        Value="@Culture.Format("Sales.Dash.Kpi.ActiveOf", _dash.ActiveEmployers, _dash.TotalEmployers)"
+                        Delta="@(_dash.NewEmployersThisMonth > 0 ? Culture.Format("Sales.Dash.Kpi.NewThisMonth", _dash.NewEmployersThisMonth) : null)"
+                        DeltaTone="up" />
+        </div>
+
+        <div class="sp-dash__grid">
+            <article class="sp-card">
+                <header class="sp-card__header">
+                    <h2 class="sp-dash__hi-desktop">@Culture["Sales.Dash.MonthlyTitle"]</h2>
+                    <h2 class="sp-dash__hi-mobile">@Culture["Sales.Dash.MonthlyTitleShort"]</h2>
+                    <span class="sp-pill">@Culture.Format("Sales.Dash.MonthlySum", SalesMoney.FormatPlain(_dash.Monthly.Sum(m => m.AmountExVat)))</span>
+                    <a class="sp-card__link sp-dash__hi-desktop" href="/sales/wallet">@Culture["Sales.Dash.AllMutations"]</a>
+                </header>
+                @{
+                    var bars = Mobile ? _dash.Monthly.TakeLast(6).ToList() : _dash.Monthly.ToList();
+                    var max = Math.Max(1m, bars.Max(b => b.AmountExVat));
+                }
+                <div class="sp-bars" role="img" aria-label="@Culture["Sales.Dash.MonthlyTitle"]">
+                    @foreach (var bar in bars)
+                    {
+                        var bucket = (int)Math.Clamp(Math.Round(10m * bar.AmountExVat / max), 0, 10);
+                        <div class="sp-bars__col">
+                            <div class="sp-bars__bar sp-bars__bar--h@bucket @(bar.IsCurrent ? "is-current" : null)" title="@SalesMoney.FormatPlain(bar.AmountExVat)"></div>
+                            <span class="sp-bars__label">@bar.Label</span>
+                        </div>
+                    }
+                </div>
+                <table class="visually-hidden">
+                    <caption>@Culture["Sales.Dash.MonthlyTitle"]</caption>
+                    <thead><tr><th>Maand</th><th>Bedrag</th></tr></thead>
+                    <tbody>
+                    @foreach (var bar in _dash.Monthly)
+                    {
+                        <tr><td>@bar.Label @bar.Year</td><td>@SalesMoney.FormatPlain(bar.AmountExVat)</td></tr>
+                    }
+                    </tbody>
+                </table>
+                <p class="sp-bars__legend sp-dash__hi-desktop">
+                    <span><i class="sp-bars__swatch"></i> @Culture["Sales.Dash.MonthlyLegendPaid"]</span>
+                    <span><i class="sp-bars__swatch is-current"></i> @Culture["Sales.Dash.MonthlyLegendCurrent"]</span>
+                </p>
+            </article>
+
+            <article class="sp-card sp-dash__hi-desktop">
+                <header class="sp-card__header">
+                    <h2>@Culture["Sales.Dash.Todos"]</h2>
+                    @if (_dash.Todos.Count > 0)
+                    {
+                        <span class="sp-pill">@_dash.Todos.Count</span>
+                    }
+                </header>
+                @if (_dash.Todos.Count == 0)
+                {
+                    <p class="muted">@Culture["EntUi.Empty"]</p>
+                }
+                else
+                {
+                    <ul class="sp-todo">
+                        @foreach (var t in _dash.Todos)
+                        {
+                            <li class="sp-todo__item">
+                                <div>
+                                    <strong>@Fmt(t.TitleKey, t.TitleArgs)</strong>
+                                    <p>@Fmt(t.SubLineKey, t.SubLineArgs)</p>
+                                </div>
+                                @if (!string.IsNullOrEmpty(t.ActionHref))
+                                {
+                                    <a class="btn-compact" href="@t.ActionHref">@Culture[t.ActionLabelKey]</a>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </article>
+        </div>
+
+        <div class="sp-dash__todos-mobile sp-dash__hi-mobile">
+            <header class="sp-card__header">
+                <h2>@Culture["Sales.Dash.Todos"]</h2>
+                @if (_dash.Todos.Count > 0)
+                {
+                    <span class="sp-pill">@Math.Min(2, _dash.Todos.Count)</span>
+                }
+                <a class="sp-card__link" href="/sales/werkgevers">@Culture["Sales.Dash.TodosAll"]</a>
+            </header>
+            <ul class="sp-todo">
+                @foreach (var t in _dash.Todos.Take(2))
+                {
+                    <li class="sp-todo__item">
+                        <a href="@(t.ActionHref ?? "#")">
+                            <strong>@Fmt(t.TitleKey, t.TitleArgs)</strong>
+                            <p>@Fmt(t.SubLineKey, t.SubLineArgs)</p>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="sp-dash__grid sp-dash__hi-desktop">
+            <article class="sp-card">
+                <header class="sp-card__header">
+                    <h2>@Culture["Sales.Dash.FunnelTitle"]</h2>
+                    @if (_dash.Funnel is not null)
+                    {
+                        <span class="muted">@Culture[_dash.Funnel.PeriodLabel]</span>
+                    }
+                </header>
+                @if (_dash.Funnel is null)
+                {
+                    <p>@Culture["Sales.Dash.Funnel.Empty"]</p>
+                    <a class="btn-compact" href="/sales/link">@Culture["Sales.Dash.Funnel.Cta"]</a>
+                }
+                else
+                {
+                    <ol class="sp-funnel">
+                        <li>
+                            <span>@Culture["Sales.Dash.Funnel.Visits"]</span>
+                            <strong>@_dash.Funnel.Visits</strong>
+                        </li>
+                        <li>
+                            <span>@Culture["Sales.Dash.Funnel.Registered"]</span>
+                            <strong>@_dash.Funnel.Registered</strong>
+                            <em>@Culture.Format("Sales.Dash.Funnel.OfVisits", Pct(_dash.Funnel.Registered, _dash.Funnel.Visits))</em>
+                        </li>
+                        <li>
+                            <span>@Culture["Sales.Dash.Funnel.FirstPurchase"]</span>
+                            <strong>@_dash.Funnel.FirstPurchase</strong>
+                            <em>@Culture.Format("Sales.Dash.Funnel.OfRegistered", Pct(_dash.Funnel.FirstPurchase, _dash.Funnel.Registered))</em>
+                        </li>
+                        <li>
+                            <span>@Culture["Sales.Dash.Funnel.Active"]</span>
+                            <strong>@_dash.Funnel.ActiveNow</strong>
+                            <em>@Culture["Sales.Dash.Funnel.ActiveHint"]</em>
+                        </li>
+                    </ol>
+                }
+            </article>
+
+            <article class="sp-card">
+                <header class="sp-card__header">
+                    <h2>@Culture["Sales.Dash.TopEmployers"]</h2>
+                    <a class="sp-card__link" href="/sales/werkgevers">@Culture.Format("Sales.Dash.TopEmployersAll", _dash.TotalEmployers)</a>
+                </header>
+                <p class="muted">@Culture.Format("Sales.Dash.TopEmployersSub", DateTime.UtcNow.Year)</p>
+                <ol class="sp-rank">
+                    @foreach (var (e, i) in _dash.TopEmployers.Select((e, i) => (e, i + 1)))
+                    {
+                        <li class="sp-rank__row @(e.IsQuiet ? "is-muted" : null)">
+                            <span class="sp-rank__n">@i</span>
+                            <div class="sp-rank__meta">
+                                <strong>@e.DisplayName</strong>
+                                <span>@SubLine(e)</span>
+                            </div>
+                            <span class="sp-rank__amt">@SalesMoney.FormatPlain(e.CommissionThisYear)</span>
+                        </li>
+                    }
+                </ol>
+            </article>
+        </div>
+
+        <article class="sp-card sp-dash__share sp-dash__hi-mobile">
+            <div>
+                <strong>@Culture["Sales.Dash.ShareCard"]</strong>
+                <p>@Culture["Sales.Dash.ShareCardSub"]</p>
+            </div>
+            <button type="button" class="btn-compact" @onclick="ShareLinkAsync">@Culture["Sales.Dash.Share"]</button>
+        </article>
+    </section>
+}
+
+@code {
+    private SalesDashboardDto? _dash;
+    private bool _loading = true;
+    private string _period = "year";
+    private string? _toast;
+    private bool Mobile => false; // CSS handles layout; bars use full 12 on desktop via media.
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("periode", out var p) && !string.IsNullOrWhiteSpace(p))
+        {
+            _period = p.ToString()!.ToLowerInvariant() switch
+            {
+                "maand" or "month" => "month",
+                "alles" or "all" => "all",
+                _ => "year"
+            };
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _dash = await Api.GetSalesPartnerDashboardAsync(_period);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SetPeriod(string period)
+    {
+        _period = period;
+        var url = period == "year" ? "/sales" : $"/sales?periode={period}";
+        Navigation.NavigateTo(url, replace: true);
+        await LoadAsync();
+    }
+
+    private string Greeting(string name)
+    {
+        var hour = Jobsy.Core.Sales.SalesClock.ToLocal(DateTime.UtcNow).Hour;
+        var key = hour < 12 ? "Sales.Dash.GreetingMorning"
+            : hour < 18 ? "Sales.Dash.GreetingAfternoon"
+            : "Sales.Dash.GreetingEvening";
+        return Culture.Format(key, name);
+    }
+
+    private string PeriodShort() => _period switch
+    {
+        "month" => Culture["Sales.Dash.Period.Month"].ToLowerInvariant(),
+        "all" => Culture["Sales.Dash.Period.All"].ToLowerInvariant(),
+        _ => DateTime.UtcNow.Year.ToString()
+    };
+
+    private string? EarnedDelta(SalesDashboardDto d)
+    {
+        if (d.EarnedPrevComparable is null or 0 || d.EarnedInPeriod <= 0)
+        {
+            return null;
+        }
+
+        var pct = (int)Math.Round(100m * (d.EarnedInPeriod - d.EarnedPrevComparable.Value) / d.EarnedPrevComparable.Value);
+        if (pct == 0)
+        {
+            return null;
+        }
+
+        var yearLabel = _period == "year"
+            ? (DateTime.UtcNow.Year - 1).ToString()
+            : Culture["Sales.Dash.Period.Month"].ToLowerInvariant();
+        return Culture.Format("Sales.Dash.Kpi.EarnedDelta", pct, yearLabel);
+    }
+
+    private string PayoutHelp(SalesDashboardDto d)
+    {
+        if (d.PayoutBlockedReason == "Sales.Payout.BelowMinimum")
+        {
+            return Culture.Format(d.PayoutBlockedReason, SalesMoney.FormatPlain(d.PayoutMinimumEuro));
+        }
+
+        return string.IsNullOrEmpty(d.PayoutBlockedReason) ? "" : Culture[d.PayoutBlockedReason];
+    }
+
+    private string Fmt(string key, string[] args)
+        => args.Length == 0 ? Culture[key] : Culture.Format(key, args.Cast<object>().ToArray());
+
+    private static int Pct(int part, int whole)
+        => whole <= 0 ? 0 : (int)Math.Round(100d * part / whole);
+
+    private string SubLine(SalesTopEmployerDto e)
+    {
+        var status = e.StatusLabelKey == "Sales.Label.EmployerStatus.Quiet" && e.QuietDays is int d
+            ? Culture.Format(e.StatusLabelKey, d)
+            : Culture[e.StatusLabelKey];
+        return string.IsNullOrEmpty(e.Place) ? status : $"{e.Place} · {status}";
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_dash?.TrackingCode))
+        {
+            return;
+        }
+
+        var url = $"{Navigation.BaseUri.TrimEnd('/')}/p/{_dash.TrackingCode}";
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", url);
+            _toast = Culture["Sales.Dash.LinkCopied"];
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(2000);
+            _toast = null;
+        }
+        catch { /* ignore */ }
+    }
+
+    private async Task ShareLinkAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_dash?.TrackingCode))
+        {
+            return;
+        }
+
+        var url = $"{Navigation.BaseUri.TrimEnd('/')}/p/{_dash.TrackingCode}";
+        try
+        {
+            await Js.InvokeVoidAsync("eval",
+                $"navigator.share ? navigator.share({{url:'{url}'}}) : navigator.clipboard.writeText('{url}')");
+        }
+        catch
+        {
+            await CopyLinkAsync();
+        }
+    }
+}

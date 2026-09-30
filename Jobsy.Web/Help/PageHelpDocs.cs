@@ -317,9 +317,15 @@ public static class PageHelpDocs
 
         ["/sales"] = new(
             "Salesdashboard",
-            "Overzicht van trackingcode, referrals en commissiesaldo.",
-            "Bekijk je performance, open toolkit of referrals en rond onboarding af als dat nog openstaat.",
+            "Overzicht van verdiensten, funnel en te-doen-lijst voor salesmanagers.",
+            "Bekijk beschikbare commissie, maandgrafiek, funnel en beste werkgevers.",
             "Snel zien waar je staat in acquisitie en uitbetaling."),
+
+        ["/sales/werkgevers"] = new(
+            "Mijn werkgevers",
+            "Privacyveilige lijst van werkgevers via jouw link of code.",
+            "Filter op status of commissiejaar en open het detailpaneel voor je eigen commissie per aankoop.",
+            "Werkgevers opvolgen zonder contact- of vacaturegegevens te zien."),
 
         ["/sales/link"] = new(
             "Sales-toolkit",

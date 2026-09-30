@@ -172,6 +172,7 @@ public static partial class PageSeoCatalog
             ["/sales/start"] = Private("Sales.Onboarding", "Seo.PrivateDescription"),
             ["/sales/wallet"] = Private("Sales.Invoices", "Seo.PrivateDescription"),
             ["/sales/wallet/uitbetalen"] = Private("Seo.SiteName", "Seo.PrivateDescription"),
+            ["/sales/werkgevers"] = Private("Sales.Employers.Title", "Seo.PrivateDescription"),
             ["/ambassadeur"] = Private("Ambassadeur.Dashboard", "Seo.PrivateDescription"),
             ["/ambassadeur/toolkit"] = Private("Ambassadeur.Toolkit", "Seo.PrivateDescription"),
             ["/ambassadeur/onboarding"] = Private("Ambassadeur.Onboarding", "Seo.PrivateDescription"),

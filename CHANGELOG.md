@@ -16,6 +16,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ### Added
 - **Lobsy Partner (salesmanager) foundation:** mandatory 2FA for SalesManager (+ Ambassadeur when re-enabled), partner data model + migration, `SalesLayout` / `/sales/*` URLs (legacy 301s), labels, and Ambassadeur parked behind `AmbassadorsEnabled` (default off). Existing salesmanagers are forced through 2FA at next sign-in.
 - **Sales attribution (03):** 30-day first-click cookie `lobsy_sales_ref`, `/p/{code}` short link, typed code wins over cookie, self-referral guard, admin reassign API + history, daily click counters (no IP/UA), funnel read service.
+- **Sales dashboard + Mijn werkgevers (04):** privacy-safe employer list/detail DTOs, dashboard KPIs / monthly bars / funnel / todos / top employers, top-bar search (`Ctrl K`), `/sales/werkgevers` with detail drawer.
 
 
 ### Fixed

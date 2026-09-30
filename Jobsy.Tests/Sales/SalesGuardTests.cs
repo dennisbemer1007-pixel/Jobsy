@@ -42,6 +42,8 @@ public class SalesLabelsCompletenessTests
         nameof(SalesAttributionSource) => SalesLabels.Key((SalesAttributionSource)value),
         nameof(Jobsy.Core.Entities.SalesManagerApplicationStatus) =>
             SalesLabels.Key((Jobsy.Core.Entities.SalesManagerApplicationStatus)value),
+        nameof(Jobsy.Core.Contracts.Sales.SalesEmployerStatus) =>
+            SalesLabels.Key((Jobsy.Core.Contracts.Sales.SalesEmployerStatus)value),
         _ => throw new InvalidOperationException(type.Name)
     };
 }
