@@ -382,4 +382,35 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Bevestigen mislukt.");
         }
     }
+
+    public async Task<EmailPreferencesDto?> GetMyEmailPreferencesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<EmailPreferencesDto>("api/me/email-preferences", ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<EmailPreferencesDto?> UpdateMyEmailPreferencesAsync(
+        IReadOnlyList<EmailPreferenceItemDto> items,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/email-preferences", new { items }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<EmailPreferencesDto>(cancellationToken: ct);
+    }
+
+    public sealed record EmailPreferenceItemDto(string Key, string Label, bool Enabled);
+
+    public sealed record EmailPreferencesDto(
+        IReadOnlyList<EmailPreferenceItemDto>? Optional,
+        IReadOnlyList<string>? Always);
 }

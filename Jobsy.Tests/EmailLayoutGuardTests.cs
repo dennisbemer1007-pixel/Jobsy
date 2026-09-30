@@ -90,6 +90,9 @@ public class EmailLayoutGuardTests
             new RecordingEmail(),
             new AlwaysOnFlags(),
             new FakeFeatures(),
+            new NoOpPreferences(),
+            new FakeUnsubscribe(),
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.MailOptions()),
             db,
             new FakeHostEnvironment("Testing"),
             NullLogger<TransactionalMailer>.Instance);
@@ -138,6 +141,33 @@ public class EmailLayoutGuardTests
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);
+    }
+
+    private sealed class NoOpPreferences : IEmailPreferenceService
+    {
+        public Task<bool> IsOptedOutAsync(string email, string category, CancellationToken cancellationToken = default)
+            => Task.FromResult(false);
+        public Task OptOutAsync(string email, string category, string source, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+        public Task OptInAsync(string email, string category, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+        public Task OptOutByHashAsync(string emailHash, string category, string source, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+        public Task OptInByHashAsync(string emailHash, string category, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+        public Task<IReadOnlyList<EmailPreferenceItem>> GetForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<EmailPreferenceItem>>([]);
+    }
+
+    private sealed class FakeUnsubscribe : IMailUnsubscribeTokenService
+    {
+        public string CreateToken(string email, string category, DateTime? issuedUtc = null) => "tok";
+        public bool TryValidate(string? token, out string emailHash, out string category, out DateTime issuedUtc)
+        {
+            emailHash = "h"; category = "PushBom"; issuedUtc = DateTime.UtcNow; return true;
+        }
+        public string BuildUnsubscribeUrl(string publicWebBaseUrl, string email, string category)
+            => publicWebBaseUrl.TrimEnd('/') + "/mail/afmelden?t=tok";
     }
 
     private sealed class FakeHostEnvironment : IHostEnvironment

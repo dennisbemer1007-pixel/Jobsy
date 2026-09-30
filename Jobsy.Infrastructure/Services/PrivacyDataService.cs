@@ -372,6 +372,25 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .Select(l => new { l.Provider })
             .ToListAsync(cancellationToken);
 
+        string[] optedOutNames = [];
+        if (!string.IsNullOrWhiteSpace(user.Email))
+        {
+            var emailHash = EmailAddressHasher.Hash(user.Email);
+            var optedCategories = await _db.EmailOptOuts.AsNoTracking()
+                .Where(o => o.EmailHash == emailHash)
+                .Select(o => o.Category)
+                .ToListAsync(cancellationToken);
+            optedOutNames = optedCategories
+                .Select(c =>
+                {
+                    var hit = EmailPreferenceService.Catalog
+                        .FirstOrDefault(x => string.Equals(x.Key, c, StringComparison.OrdinalIgnoreCase));
+                    return string.IsNullOrWhiteSpace(hit.Key) ? c : hit.LabelNl;
+                })
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .ToArray();
+        }
+
         return new
         {
             ExportedAtUtc = DateTime.UtcNow,
@@ -647,6 +666,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
             Apparaatsessies = deviceSessions,
             Pushabonnementen = pushSubscriptions,
             ExterneAanmeldingen = externalLogins,
+            AfgemeldeMails = optedOutNames.Length == 0
+                ? null
+                : string.Join(", ", optedOutNames),
             WieBenIkMomentopnamen = new
             {
                 Profiel = await _db.CandidateWhoAmIProfiles.AsNoTracking()

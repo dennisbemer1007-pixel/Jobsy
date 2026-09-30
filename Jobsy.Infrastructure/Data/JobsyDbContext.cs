@@ -70,6 +70,7 @@ public class JobsyDbContext : DbContext
     public DbSet<DeviceLoginHandoff> DeviceLoginHandoffs => Set<DeviceLoginHandoff>();
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
     public DbSet<OneTimeLink> OneTimeLinks => Set<OneTimeLink>();
+    public DbSet<EmailOptOut> EmailOptOuts => Set<EmailOptOut>();
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
     public DbSet<VacancyLike> VacancyLikes => Set<VacancyLike>();
@@ -1145,6 +1146,16 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmailOptOut>(entity =>
+        {
+            entity.ToTable("EmailOptOuts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EmailHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Category).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Source).HasMaxLength(32).IsRequired();
+            entity.HasIndex(e => new { e.EmailHash, e.Category }).IsUnique();
         });
 
         modelBuilder.Entity<MinimumWageRate>(entity =>

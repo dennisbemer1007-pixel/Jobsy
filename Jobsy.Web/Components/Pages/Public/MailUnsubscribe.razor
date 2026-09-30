@@ -1,0 +1,118 @@
+@page "/mail/afmelden"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using Microsoft.AspNetCore.WebUtilities
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+
+<PageTitle>@Culture["MailUnsub.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section" aria-labelledby="mail-unsub-title">
+    <div class="pub-card">
+        @if (_error)
+        {
+            <h1 id="mail-unsub-title">@Culture["MailUnsub.Title"]</h1>
+            <p>@Culture["MailUnsub.Invalid"]</p>
+        }
+        else if (_doneOptIn)
+        {
+            <h1 id="mail-unsub-title">@Culture["MailUnsub.OptInDone"]</h1>
+            <p><a href="/account/mail-instellingen">@Culture["MailUnsub.SettingsLink"]</a></p>
+        }
+        else if (_done)
+        {
+            <h1 id="mail-unsub-title">@Culture["MailUnsub.Done"]</h1>
+            <form method="post" action="/mail/afmelden" class="login-form" data-enhance="false">
+                <input type="hidden" name="t" value="@_token" />
+                <input type="hidden" name="action" value="opt-in" />
+                <button type="submit" class="login-submit">@Culture["MailUnsub.OptIn"]</button>
+            </form>
+            <p style="margin-top:1rem"><a href="/account/mail-instellingen">@Culture["MailUnsub.SettingsLink"]</a></p>
+        }
+        else if (_valid)
+        {
+            <h1 id="mail-unsub-title">@_heading</h1>
+            <form method="post" action="/mail/afmelden" class="login-form" data-enhance="false">
+                <input type="hidden" name="t" value="@_token" />
+                <button type="submit" class="login-submit">@Culture["MailUnsub.Submit"]</button>
+            </form>
+        }
+        else
+        {
+            <h1 id="mail-unsub-title">@Culture["MailUnsub.Title"]</h1>
+            <p>@Culture["MailUnsub.Invalid"]</p>
+        }
+    </div>
+</section>
+
+@code {
+    private string _token = "";
+    private bool _valid;
+    private bool _done;
+    private bool _doneOptIn;
+    private bool _error;
+    private string _heading = "";
+    private string _category = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _token = query.TryGetValue("t", out var t) ? t.FirstOrDefault() ?? "" : "";
+        _done = string.Equals(query.TryGetValue("done", out var d) ? d.FirstOrDefault() : null, "1", StringComparison.Ordinal);
+        _doneOptIn = string.Equals(query.TryGetValue("done", out var d2) ? d2.FirstOrDefault() : null, "optin", StringComparison.Ordinal);
+        _error = string.Equals(query.TryGetValue("error", out var e) ? e.FirstOrDefault() : null, "1", StringComparison.Ordinal);
+
+        if (_done || _doneOptIn || _error || string.IsNullOrWhiteSpace(_token))
+        {
+            _valid = false;
+            return;
+        }
+
+        // GET never mutates — only validates via API preview.
+        try
+        {
+            var apiBase = (Configuration["ApiBaseUrl"] ?? Configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
+            var client = HttpClientFactory.CreateClient();
+            var preview = await client.GetFromJsonAsync<PreviewDto>(
+                $"{apiBase}/api/email-preferences/unsubscribe/preview?token={Uri.EscapeDataString(_token)}");
+            _valid = preview?.Valid == true;
+            _category = preview?.Category ?? "";
+            if (_valid)
+            {
+                var name = CategoryLabel(_category);
+                _heading = string.Format(
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    Culture["MailUnsub.ConfirmNamed"],
+                    name);
+            }
+        }
+        catch
+        {
+            _valid = false;
+        }
+    }
+
+    private string CategoryLabel(string key) => key switch
+    {
+        "PushBom" => Culture["MailSettings.PushBom.Label"],
+        "VacancyEngagementReminder" => Culture["MailSettings.VacancyEngagement.Label"],
+        "CompanyReEngagement" => Culture["MailSettings.CompanyReEngagement.Label"],
+        _ => key
+    };
+
+    private sealed class PreviewDto
+    {
+        [JsonPropertyName("valid")]
+        public bool Valid { get; set; }
+
+        [JsonPropertyName("category")]
+        public string? Category { get; set; }
+    }
+}

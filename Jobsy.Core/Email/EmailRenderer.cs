@@ -141,6 +141,15 @@ public static class EmailRenderer
         sb.Append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
         sb.Append($"<td class=\"ft m\" align=\"{align}\" style=\"padding:20px 8px 0 8px;font-size:13px;line-height:20px;color:{muted};text-align:{align};font-family:{font};\">");
         sb.Append($"<p class=\"m\" style=\"margin:0 0 8px 0;\">{Escape(doc.ReasonText)}</p>");
+        if (doc.Kind == EmailKind.Optional)
+        {
+            // 04: move this literal into EmailStrings (Mail.Common.Unsubscribe).
+            var unsubHref = string.IsNullOrWhiteSpace(doc.UnsubscribeUrl)
+                ? Absolute(brand.PublicWebBaseUrl, "/mail/afmelden")
+                : doc.UnsubscribeUrl!;
+            sb.Append($"<p class=\"m\" style=\"margin:0 0 8px 0;\"><a href=\"{Escape(unsubHref)}\" data-lobsy-unsub=\"1\" style=\"color:{muted};text-decoration:underline;\">Afmelden voor deze mails</a></p>");
+        }
+
         sb.Append("<p class=\"m\" style=\"margin:0 0 8px 0;\">");
         sb.Append($"<a href=\"mailto:{Escape(brand.SupportAddress)}\" style=\"color:{muted};text-decoration:underline;\">Hulp</a>");
         sb.Append($" &nbsp;·&nbsp; <a href=\"{Escape(Absolute(brand.PublicWebBaseUrl, "/privacy"))}\" style=\"color:{muted};text-decoration:underline;\">Privacy</a>");
@@ -493,6 +502,15 @@ public static class EmailRenderer
         lines.Add(doc.SignOff);
         lines.Add("");
         lines.Add(doc.ReasonText);
+        if (doc.Kind == EmailKind.Optional)
+        {
+            // 04: EmailStrings
+            var unsubHref = string.IsNullOrWhiteSpace(doc.UnsubscribeUrl)
+                ? Absolute(brand.PublicWebBaseUrl, "/mail/afmelden")
+                : doc.UnsubscribeUrl!;
+            lines.Add($"Afmelden voor deze mails: {unsubHref}");
+        }
+
         lines.Add($"Hulp: mailto:{brand.SupportAddress}");
         lines.Add($"Privacy: {Absolute(brand.PublicWebBaseUrl, "/privacy")}");
         if (doc.Kind == EmailKind.Optional)

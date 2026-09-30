@@ -1,9 +1,12 @@
 @using Jobsy.Web.Admin
+@using Jobsy.Core.Email
 @using Jobsy.Core.Options
+@using Microsoft.Extensions.Hosting
 @using Microsoft.Extensions.Options
 @* Expandable integration settings tile with green/red status and live test. *@
 @inject CultureState Culture
 @inject IOptions<MailOptions> MailOptions
+@inject IHostEnvironment HostEnvironment
 
 <article class="company-card integration-tile @(StatusClass)" @onclick="Toggle">
     <div class="integration-tile__header">
@@ -212,8 +215,16 @@
                     <input @bind="_fromAddress"
                            @bind:event="oninput"
                            @bind:after="MarkDirty"
-                           placeholder="@(IsMailIntegration ? "onboarding@resend.dev of jouw@domein.nl" : "noreply@example.com")" />
+                           placeholder="@(IsMailIntegration ? "Lobsy <hallo@mail.lobsy.nl>" : "noreply@example.com")" />
                 </label>
+                @if (IsMailIntegration)
+                {
+                    <p class="muted">Effectief From: <code>@_effectiveFrom</code> · Reply-To: <code>@_effectiveReplyTo</code></p>
+                    @if (_fromDomainWarning)
+                    {
+                        <p class="muted" role="status">Afzender wijkt af van het afgesproken adres (<code>mail.lobsy.nl</code>).</p>
+                    }
+                }
             }
 
             <div class="inline-actions">
@@ -315,6 +326,18 @@
 
     private bool IsMailIntegration =>
         string.Equals(Credential.Key, "Mail", StringComparison.OrdinalIgnoreCase);
+
+    private string _effectiveFrom =>
+        MailAddressResolution.ResolveFromAddress(
+            string.IsNullOrWhiteSpace(_fromAddress) ? Credential.FromAddress : _fromAddress,
+            MailOptions.Value);
+
+    private string _effectiveReplyTo => MailAddressResolution.EffectiveReplyTo(MailOptions.Value);
+
+    private bool _fromDomainWarning =>
+        IsMailIntegration
+        && HostEnvironment.IsProduction()
+        && MailAddressResolution.IsFromDomainMismatch(_effectiveFrom);
 
     private bool IsKvkIntegration =>
         string.Equals(Credential.Key, "Kvk", StringComparison.OrdinalIgnoreCase);

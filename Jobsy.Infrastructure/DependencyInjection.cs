@@ -293,6 +293,8 @@ public static class DependencyInjection
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<IEmailPreferenceService, EmailPreferenceService>();
+        services.AddSingleton<IMailUnsubscribeTokenService, MailUnsubscribeTokenService>();
         services.AddScoped<ITransactionalMailer, TransactionalMailer>();
         services.AddScoped<IEmailCatalogService, EmailCatalogService>();
         services.AddHostedService<MailLegalFooterWarningHostedService>();

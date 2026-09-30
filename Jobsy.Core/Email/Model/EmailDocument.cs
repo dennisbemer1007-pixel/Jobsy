@@ -14,7 +14,9 @@ public sealed record EmailDocument(
     EmailEyebrow? Eyebrow = null,
     string? Greeting = null,
     EmailCta? Cta = null,
-    bool ShowMascot = false);
+    bool ShowMascot = false,
+    /// <summary>Tokenized one-click unsubscribe URL for kind O (filled at send time when missing).</summary>
+    string? UnsubscribeUrl = null);
 
 public abstract record EmailBlock;
 

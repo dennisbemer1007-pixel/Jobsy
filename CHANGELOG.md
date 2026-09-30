@@ -1,6 +1,7 @@
 # Changelog: Jobsy
 ## Unreleased
 
+- **E-mail 03 (verzending/headers/afmelden):** multipart text+HTML, From/Reply-To via config (`Lobsy <hallo@mail.lobsy.nl>` / `support@lobsy.nl`), RFC 8058 List-Unsubscribe One-Click for optional mails only, `EmailOptOut` + `/mail/afmelden` + `/account/mail-instellingen`, migration `AddEmailOptOuts`, `docs/email-deliverability.md`.
 - **E-mail security hotfix:** parental consent only via website POST (`/toestemming`); single-use set-password links replace mailed temporary passwords; API-key reveal-once links (`/koppeling/sleutel`); escaped support-access mail with Europe/Amsterdam expiry; migration `AddOneTimeLinks`.
 - Werkgever-aanmelding afronding (11): dashboardbanner “Nog niet zichtbaar voor kandidaten”, checklist + zichtbaarheidspanel, briefcode vanaf het dashboard, suggesties voor nieuwe KvK-vestigingen, privacytekst voor werkgeversaamelding (incl. Pingen), docs en E2E-dekking.
 - Maatschappelijke betrokkenheid (09): 6 engagement claims with optional proof, honest labels (Door werkgever opgegeven / Gecontroleerd), admin moderation tab, badges on company page + vacancy cards (max 2), match bonus max +5; `api/companies/{id}/engagement`; SBB auto-check deferred (no public open data).

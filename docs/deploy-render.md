@@ -218,6 +218,8 @@ Render **Basic Postgres** (`jobsy-db`) maakt dagelijkse automatische backups (zi
 
 ## Transactionele e-mail (Resend) + SPF/DKIM
 
+See also [email-deliverability.md](email-deliverability.md) for the Dennis checklist (DNS, DMARC, tracking off, support inbox, legal footer).
+
 Lobsy stuurt alle platformmails via **Resend** (`POST https://api.resend.com/emails`). SMTP is alleen fallback.
 
 ### Configureren (kies één)
@@ -229,7 +231,10 @@ Zet op `jobsy-api`:
 | Env var | Voorbeeld |
 |---------|-----------|
 | `Mail__ResendApiKey` | `re_…` (of `RESEND_API_KEY`) |
-| `Mail__FromAddress` | `Lobsy <noreply@lobsy.nl>` (of `RESEND_FROM`) |
+| `Mail__FromAddress` | `Lobsy <hallo@mail.lobsy.nl>` (or `RESEND_FROM`) |
+| `Mail__ReplyTo` | `support@lobsy.nl` |
+| `Mail__SupportAddress` | `support@lobsy.nl` |
+| `Mail__LegalName` / `Mail__LegalAddress` / `Mail__KvkNumber` | Footer legal line (address + KvK still pending from Dennis) |
 
 **B. Admin UI**
 

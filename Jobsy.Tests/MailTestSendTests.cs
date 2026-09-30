@@ -73,7 +73,7 @@ public class MailTestSendTests
     }
 
     [Fact]
-    public async Task Mail_partial_env_key_without_from_is_not_resend_ready()
+    public async Task Mail_partial_env_key_without_from_uses_default_from()
     {
         await using var db = CreateDb();
         var credentials = new IntegrationCredentialService(
@@ -89,7 +89,9 @@ public class MailTestSendTests
         Assert.NotNull(secrets);
         Assert.Equal("re_only_key", secrets!.ApiKey);
         Assert.Null(secrets.FromAddress);
-        Assert.False(SmtpEmailService.TryResolveResend(secrets, out _));
+        // 03: From falls through to MailOptions default when DB/config From is empty.
+        Assert.True(SmtpEmailService.TryResolveResend(secrets, out var resend, new MailOptions()));
+        Assert.Contains("hallo@mail.lobsy.nl", resend.FromAddress, StringComparison.OrdinalIgnoreCase);
 
         var view = await credentials.GetAsync(IntegrationKey.Mail);
         Assert.True(view!.HasApiKey);

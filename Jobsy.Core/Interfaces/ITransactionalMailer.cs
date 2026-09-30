@@ -13,7 +13,12 @@ public interface ITransactionalMailer
 }
 
 public sealed record EmailSendOptions(
-    bool BypassSuppression = false);
+    bool BypassSuppression = false,
+    /// <summary>
+    /// Optional Resend/SMTP idempotency key. Hosted jobs should pass
+    /// <c>{key}:{entityId}:{yyyyMMdd}</c> so retries cannot double-send.
+    /// </summary>
+    string? IdempotencyKey = null);
 
 public sealed record EmailSendOutcome(
     bool Sent,

@@ -9,11 +9,21 @@ public interface IEmailService
     Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// Outbound mail payload. Positional ctor (To, Subject, BodyHtml, Category) stays compatible.
+/// </summary>
 public record EmailMessage(
     string To,
     string Subject,
     string BodyHtml,
-    string? Category = null);
+    string? Category = null)
+{
+    public string? BodyText { get; init; }
+    public string? ReplyTo { get; init; }
+    public IReadOnlyDictionary<string, string>? Headers { get; init; }
+    public IReadOnlyList<(string Name, string Value)>? Tags { get; init; }
+    public string? IdempotencyKey { get; init; }
+}
 
 public enum EmailDeliveryKind
 {

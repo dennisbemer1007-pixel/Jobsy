@@ -3402,6 +3402,7 @@ public static class UiStrings
         UiStringsDiscovery.MergeAll(nl, en, pl, ro, ar);
         UiStringsConsent.MergeAll(nl, en, pl, ro, ar);
         UiStringsSetPassword.MergeAll(nl, en, pl, ro, ar);
+        UiStringsMailSettings.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

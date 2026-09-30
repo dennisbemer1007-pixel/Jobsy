@@ -216,6 +216,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // RFC 8058 one-click unsubscribe (30/min per IP).
+    options.AddPolicy("mail-unsubscribe", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -275,6 +285,8 @@ app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 
 app.MapJobsyAuthEndpoints();
 app.MapPublicTokenEndpoints();
+app.MapMailUnsubscribeEndpoints();
+app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();

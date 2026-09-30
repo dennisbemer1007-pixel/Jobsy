@@ -93,11 +93,23 @@ public static class PageHelpDocs
             "Lees wat Lobsy doet en bevestig met de knop. Alleen een POST vanaf deze pagina bevestigt.",
             "Toestemming geven voor tests en AI-analyse voor iemand onder de 16."),
 
+        ["/mail/afmelden"] = new(
+            "Afmelden voor optionele mails",
+            "Stop optionele Lobsy-mails (tips, herinneringen) via een persoonlijke link.",
+            "Bekijk de categorie en bevestig met Afmelden. GET wijzigt niets; alleen de knop of one-click POST schrijft.",
+            "Iedereen met een afmeldlink uit een optionele Lobsy-mail."),
+
         ["/account/wachtwoord-instellen"] = new(
             "Wachtwoord instellen",
             "Kies een wachtwoord via een eenmalige uitnodigingslink.",
             "Vul twee keer hetzelfde wachtwoord in (12–128 tekens) of log in met Google/Microsoft.",
             "Eerste wachtwoord zetten na een uitnodiging zonder gemaild wachtwoord."),
+
+        ["/account/mail-instellingen"] = new(
+            "Mail-instellingen",
+            "Zet optionele Lobsy-mails aan of uit.",
+            "Schakel tips en herinneringen in of uit. Codes, sollicitaties en beveiliging blijven altijd aan.",
+            "Beheer van optionele e-mailmeldingen op je account."),
 
         ["/koppeling/sleutel"] = new(
             "API-sleutel ophalen",

@@ -34,7 +34,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (225 routes)
+## Table (227 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -42,6 +42,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/access-denied` | `Pages/AccessDenied.razor` | anonymous |
 | `/account-maken` | `Pages/Public/AccountMaken.razor` | anonymous |
 | `/account-maken/code` | `Pages/Public/AccountMakenCode.razor` | anonymous |
+| `/account/mail-instellingen` | `Pages/Account/MailSettings.razor` | authenticated |
 | `/account/mfa` | `Pages/Account/MfaPrompt.razor` | anonymous |
 | `/account/mfa/recovery-codes` | `Pages/Account/MfaRecoveryCodes.razor` | anonymous |
 | `/account/mfa/setup` | `Pages/Account/MfaSetup.razor` | anonymous |
@@ -188,6 +189,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/leraar/klas/{ClassId:guid}/materiaal` | `Pages/Leraar/LeraarMaterials.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}/testvenster` | `Pages/Leraar/LeraarTestWindow.razor` | Teacher, SchoolAdmin |
 | `/login` | `Pages/Login.razor` | anonymous |
+| `/mail/afmelden` | `Pages/Public/MailUnsubscribe.razor` | anonymous |
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
@@ -314,6 +316,8 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 | `/account/cookie-consent/analytics-token` | POST; same-origin analytics consent token for static cookie banner |
 | `/account/email-code/start` | POST; antiforgery; starts passwordless e-mail code (Web → API) |
 | `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |
+| `/mail/afmelden` | POST; RFC 8058 one-click / form unsubscribe (no antiforgery; rate-limited) |
+| `/account/mail-instellingen` | POST; antiforgery; save optional mail toggles (Web → API) |
 | `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |
 | `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |
 

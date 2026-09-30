@@ -7,11 +7,13 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace Jobsy.Infrastructure.Services;
@@ -20,11 +22,14 @@ namespace Jobsy.Infrastructure.Services;
 /// Sends mail via Resend API (<c>POST https://api.resend.com/emails</c>) as the primary path.
 /// SMTP (MailKit) is optional fallback. Gmail SMTP from datacenter IPs often fails with 5.7.9.
 /// Falls back to <see cref="EmailServiceStub"/> only in Development/Testing when neither path is configured.
+/// Open/click tracking stays off at the Resend domain level too (see docs/email-deliverability.md) — we never
+/// send tracking options on the API request.
 /// </summary>
 public sealed class SmtpEmailService : IEmailService
 {
     public const string ResendHttpClientName = "ResendMail";
     public const string DefaultResendApiBase = "https://api.resend.com/";
+    public const string DefaultFromAddress = MailOptions.DefaultFromAddress;
 
     private readonly IIntegrationCredentialService _credentials;
     private readonly EmailServiceStub _stub;
@@ -32,6 +37,7 @@ public sealed class SmtpEmailService : IEmailService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHostEnvironment _environment;
     private readonly IFeatureFlags _featureFlags;
+    private readonly IOptions<MailOptions> _mailOptions;
     private readonly ILogger<SmtpEmailService> _logger;
 
     public SmtpEmailService(
@@ -41,6 +47,7 @@ public sealed class SmtpEmailService : IEmailService
         IHttpClientFactory httpClientFactory,
         IHostEnvironment environment,
         IFeatureFlags featureFlags,
+        IOptions<MailOptions> mailOptions,
         ILogger<SmtpEmailService> logger)
     {
         _credentials = credentials;
@@ -49,6 +56,7 @@ public sealed class SmtpEmailService : IEmailService
         _httpClientFactory = httpClientFactory;
         _environment = environment;
         _featureFlags = featureFlags;
+        _mailOptions = mailOptions;
         _logger = logger;
     }
 
@@ -63,7 +71,7 @@ public sealed class SmtpEmailService : IEmailService
         }
 
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
-        if (TryResolveResend(secrets, out var resend))
+        if (TryResolveResend(secrets, out var resend, _mailOptions.Value))
         {
             try
             {
@@ -72,12 +80,11 @@ public sealed class SmtpEmailService : IEmailService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // Fall through to SMTP or stub so registration / notifications are not hard-failed.
                 _logger.LogWarning(ex, "Resend failed; trying SMTP or stub fallback.");
             }
         }
 
-        if (TryResolveSmtp(secrets, out var settings))
+        if (TryResolveSmtp(secrets, out var settings, _mailOptions.Value))
         {
             try
             {
@@ -111,6 +118,12 @@ public sealed class SmtpEmailService : IEmailService
             var client = _httpClientFactory.CreateClient(ResendHttpClientName);
             using var request = new HttpRequestMessage(HttpMethod.Post, "emails");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
+            if (!string.IsNullOrWhiteSpace(message.IdempotencyKey))
+            {
+                request.Headers.TryAddWithoutValidation("Idempotency-Key", message.IdempotencyKey.Trim());
+            }
+
+            // No open/click tracking fields — keep tracking off at domain level (03.7 / D6).
             request.Content = JsonContent.Create(CreateResendRequest(message, settings.FromAddress));
 
             using var response = await client.SendAsync(request, cancellationToken);
@@ -172,12 +185,31 @@ public sealed class SmtpEmailService : IEmailService
         try
         {
             var mime = new MimeMessage();
-            mime.From.Add(MailboxAddress.Parse(settings.FromAddress));
+            mime.From.Add(EnsureLobsyDisplayName(MailboxAddress.Parse(settings.FromAddress)));
             mime.To.Add(MailboxAddress.Parse(message.To));
             mime.Subject = message.Subject;
+            if (!string.IsNullOrWhiteSpace(message.ReplyTo))
+            {
+                mime.ReplyTo.Add(MailboxAddress.Parse(message.ReplyTo));
+            }
+
+            if (message.Headers is not null)
+            {
+                foreach (var (name, value) in message.Headers)
+                {
+                    if (string.IsNullOrWhiteSpace(name) || value is null)
+                    {
+                        continue;
+                    }
+
+                    mime.Headers.Add(name, value);
+                }
+            }
+
             var builder = new BodyBuilder
             {
-                HtmlBody = message.BodyHtml
+                HtmlBody = message.BodyHtml,
+                TextBody = message.BodyText ?? string.Empty
             };
             mime.Body = builder.ToMessageBody();
 
@@ -241,32 +273,66 @@ public sealed class SmtpEmailService : IEmailService
         }
     }
 
+    /// <summary>
+    /// From resolution: DB integration FromAddress → MailOptions.FromAddress → default.
+    /// Display name "Lobsy" is added when missing.
+    /// </summary>
+    public static string ResolveFromAddress(string? dbFrom, MailOptions? options = null)
+        => MailAddressResolution.ResolveFromAddress(dbFrom, options);
+
+    public static string FormatFromWithDisplayName(string fromAddress)
+        => MailAddressResolution.EnsureLobsyDisplayName(fromAddress);
+
+    public static MailboxAddress EnsureLobsyDisplayName(MailboxAddress address)
+    {
+        if (string.IsNullOrWhiteSpace(address.Name))
+        {
+            return new MailboxAddress("Lobsy", address.Address);
+        }
+
+        return address;
+    }
+
+    /// <summary>True when Production From domain is not mail.lobsy.nl.</summary>
+    public static bool IsFromDomainMismatch(string fromAddress)
+        => MailAddressResolution.IsFromDomainMismatch(fromAddress);
+
+    public static string EffectiveReplyTo(MailOptions? options)
+        => MailAddressResolution.EffectiveReplyTo(options);
+
     internal static bool TryResolveResend(
         IntegrationCredentialSecrets? secrets,
-        out ResendSettings settings)
+        out ResendSettings settings,
+        MailOptions? mailOptions = null)
     {
         settings = default!;
-        if (secrets is null
-            || string.IsNullOrWhiteSpace(secrets.ApiKey)
-            || string.IsNullOrWhiteSpace(secrets.FromAddress))
+        if (secrets is null || string.IsNullOrWhiteSpace(secrets.ApiKey))
         {
             return false;
         }
 
-        settings = new ResendSettings(secrets.ApiKey.Trim(), secrets.FromAddress.Trim());
+        // Api key alone is enough; From falls through DB → config → default (03.2).
+        var from = ResolveFromAddress(secrets.FromAddress, mailOptions);
+        settings = new ResendSettings(secrets.ApiKey.Trim(), from);
         return true;
     }
 
+    /// <summary>Back-compat overload used by older call sites/tests.</summary>
+    internal static bool TryResolveResend(
+        IntegrationCredentialSecrets? secrets,
+        out ResendSettings settings)
+        => TryResolveResend(secrets, out settings, null);
+
     internal static bool TryResolveSmtp(
         IntegrationCredentialSecrets? secrets,
-        out SmtpSettings settings)
+        out SmtpSettings settings,
+        MailOptions? mailOptions = null)
     {
         settings = default!;
         if (secrets is null
             || string.IsNullOrWhiteSpace(secrets.BaseUrl)
             || string.IsNullOrWhiteSpace(secrets.ClientId)
-            || string.IsNullOrWhiteSpace(secrets.ClientSecret)
-            || string.IsNullOrWhiteSpace(secrets.FromAddress))
+            || string.IsNullOrWhiteSpace(secrets.ClientSecret))
         {
             return false;
         }
@@ -276,26 +342,27 @@ public sealed class SmtpEmailService : IEmailService
             return false;
         }
 
-        // Gmail app passwords are often shown as "xxxx xxxx xxxx xxxx" — spaces are ignored.
         var password = secrets.ClientSecret.Replace(" ", string.Empty, StringComparison.Ordinal).Trim();
         if (string.IsNullOrWhiteSpace(password))
         {
             return false;
         }
 
+        var from = ResolveFromAddress(secrets.FromAddress, mailOptions);
         settings = new SmtpSettings(
             host,
             port,
             secrets.ClientId.Trim(),
             password,
-            secrets.FromAddress.Trim());
+            from);
         return true;
     }
 
-    /// <summary>
-    /// Parses host or host:port. Accepts optional smtp:// / smtps:// scheme.
-    /// Default port 587 (Gmail STARTTLS).
-    /// </summary>
+    internal static bool TryResolveSmtp(
+        IntegrationCredentialSecrets? secrets,
+        out SmtpSettings settings)
+        => TryResolveSmtp(secrets, out settings, null);
+
     internal static bool TryParseHostPort(string baseUrl, out string host, out int port)
     {
         host = string.Empty;
@@ -309,7 +376,6 @@ public sealed class SmtpEmailService : IEmailService
             raw = raw[(schemeEnd + 3)..];
         }
 
-        // Strip path if someone pasted a URL.
         var slash = raw.IndexOf('/');
         if (slash >= 0)
         {
@@ -380,18 +446,36 @@ public sealed class SmtpEmailService : IEmailService
         return Truncate(raw, 280);
     }
 
-    /// <summary>
-    /// Keep the hosted HTTPS logo URL. CID attachments do not render in Gmail /
-    /// mobile webmail (broken-image icon next to the wordmark).
-    /// </summary>
     internal static ResendSendRequest CreateResendRequest(EmailMessage message, string fromAddress)
-        => new()
+    {
+        Dictionary<string, string>? headers = null;
+        if (message.Headers is { Count: > 0 })
+        {
+            headers = new Dictionary<string, string>(message.Headers, StringComparer.OrdinalIgnoreCase);
+        }
+
+        List<ResendTag>? tags = null;
+        if (message.Tags is { Count: > 0 })
+        {
+            tags = message.Tags
+                .Where(t => !string.IsNullOrWhiteSpace(t.Name) && t.Value is not null)
+                .Select(t => new ResendTag { Name = t.Name, Value = t.Value })
+                .ToList();
+        }
+
+        return new ResendSendRequest
         {
             From = fromAddress,
             To = [message.To],
             Subject = message.Subject,
-            Html = message.BodyHtml ?? string.Empty
+            Html = message.BodyHtml ?? string.Empty,
+            Text = message.BodyText,
+            ReplyTo = string.IsNullOrWhiteSpace(message.ReplyTo) ? null : message.ReplyTo.Trim(),
+            Headers = headers,
+            Tags = tags
+            // Intentionally no tracking / click options (D6).
         };
+    }
 
     internal static string FormatResendError(int statusCode, string body)
     {
@@ -411,6 +495,7 @@ public sealed class SmtpEmailService : IEmailService
 
         return $"Resend gaf {statusCode}. {detail}";
     }
+
 
     private static string Truncate(string value, int max)
         => value.Length <= max ? value : value[..max] + "…";
@@ -478,5 +563,30 @@ public sealed class SmtpEmailService : IEmailService
 
         [JsonPropertyName("html")]
         public required string Html { get; init; }
+
+        [JsonPropertyName("text")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Text { get; init; }
+
+        [JsonPropertyName("reply_to")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ReplyTo { get; init; }
+
+        [JsonPropertyName("headers")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, string>? Headers { get; init; }
+
+        [JsonPropertyName("tags")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<ResendTag>? Tags { get; init; }
+    }
+
+    internal sealed class ResendTag
+    {
+        [JsonPropertyName("name")]
+        public required string Name { get; init; }
+
+        [JsonPropertyName("value")]
+        public required string Value { get; init; }
     }
 }

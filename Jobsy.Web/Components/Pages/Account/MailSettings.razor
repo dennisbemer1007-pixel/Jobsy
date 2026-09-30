@@ -1,0 +1,121 @@
+@page "/account/mail-instellingen"
+@attribute [Authorize]
+@attribute [ExcludeFromInteractiveRouting]
+@layout MainLayout
+@using Microsoft.AspNetCore.Antiforgery
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IAntiforgery Antiforgery
+
+<PageTitle>@Culture["MailSettings.Title"] · Lobsy</PageTitle>
+
+<section class="page-section" aria-labelledby="mail-settings-title">
+    <h1 id="mail-settings-title">@Culture["MailSettings.Title"]</h1>
+
+    @if (_loadError)
+    {
+        <p class="muted">@Culture["MailSettings.LoadError"]</p>
+    }
+    else
+    {
+        <form method="post" action="/account/mail-instellingen" class="login-form" data-enhance="false" style="max-width:32rem">
+            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+
+            @if (_optional.Count > 0)
+            {
+                <h2 style="font-size:1.05rem;margin:1.5rem 0 0.75rem">@Culture["MailSettings.OptionalHeading"]</h2>
+                @foreach (var item in _optional)
+                {
+                    <label class="checkbox-row" style="display:flex;gap:0.75rem;align-items:flex-start;margin:0.75rem 0">
+                        <input type="checkbox" name="pref_@item.Key" value="1" checked="@item.Enabled" />
+                        <span>
+                            <strong>@LabelFor(item.Key)</strong>
+                            <span class="muted" style="display:block">@HintFor(item.Key)</span>
+                        </span>
+                    </label>
+                }
+                <button type="submit" class="login-submit" style="margin-top:1rem">@Culture["MailSettings.Save"]</button>
+            }
+            else
+            {
+                <p class="muted">@Culture["MailSettings.NoOptional"]</p>
+            }
+
+            <h2 style="font-size:1.05rem;margin:2rem 0 0.75rem">@Culture["MailSettings.AlwaysHeading"]</h2>
+            <ul>
+                @foreach (var line in _always)
+                {
+                    <li>@line</li>
+                }
+            </ul>
+            <p class="muted">@Culture["MailSettings.AlwaysHint"]</p>
+        </form>
+
+        @if (_saved)
+        {
+            <p role="status" style="margin-top:1rem">@Culture["MailSettings.Saved"]</p>
+        }
+    }
+</section>
+
+@code {
+    private readonly List<JobsyApiClient.EmailPreferenceItemDto> _optional = [];
+    private readonly List<string> _always = [];
+    private bool _loadError;
+    private bool _saved;
+    private string _antiforgeryFieldName = "";
+    private string _antiforgeryToken = "";
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? "";
+            _saved = string.Equals(http.Request.Query["saved"], "1", StringComparison.Ordinal);
+        }
+
+        try
+        {
+            var dto = await Api.GetMyEmailPreferencesAsync();
+            if (dto is null)
+            {
+                _loadError = true;
+                return;
+            }
+
+            _optional.Clear();
+            _optional.AddRange(dto.Optional ?? []);
+            _always.Clear();
+            _always.AddRange(dto.Always ?? []);
+        }
+        catch
+        {
+            _loadError = true;
+        }
+    }
+
+    private string LabelFor(string key) => key switch
+    {
+        "PushBom" => Culture["MailSettings.PushBom.Label"],
+        "VacancyEngagementReminder" => Culture["MailSettings.VacancyEngagement.Label"],
+        "CompanyReEngagement" => Culture["MailSettings.CompanyReEngagement.Label"],
+        _ => key
+    };
+
+    private string HintFor(string key) => key switch
+    {
+        "PushBom" => Culture["MailSettings.PushBom.Hint"],
+        "VacancyEngagementReminder" => Culture["MailSettings.VacancyEngagement.Hint"],
+        "CompanyReEngagement" => Culture["MailSettings.CompanyReEngagement.Hint"],
+        _ => ""
+    };
+}
