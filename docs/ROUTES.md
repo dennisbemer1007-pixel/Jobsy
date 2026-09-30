@@ -149,12 +149,12 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/sales/profiel/iban-bevestigen` | `Pages/Sales/IbanConfirm.razor` | SalesManager |
 | `/sales/start` | `Pages/SalesManager/Onboarding.razor` | SalesManager |
 | `/sales/wallet` | `Pages/Sales/Wallet.razor` | SalesManager |
-| `/sales/wallet/uitbetalen` | `Pages/Sales/Wallet.razor` (drawer) | SalesManager |
+| `/sales/wallet/uitbetalen` | `Pages/Sales/Wallet.razor` | SalesManager |
 | `/sales/werkgevers` | `Pages/Sales/Employers.razor` | SalesManager |
 | `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
-| `/salesmanager/invoices` | `Pages/SalesManager/Invoices.razor` → 301 `/sales/wallet?tab=facturen` | SalesManager |
+| `/salesmanager/invoices` | `Pages/SalesManager/Invoices.razor` | SalesManager |
 | `/salesmanager/onboarding` | `Pages/SalesManager/Onboarding.razor` | SalesManager |
-| `/salesmanager/payout-checkout` | `Pages/SalesManager/PayoutCheckoutStub.razor` → 301 `/sales/wallet/uitbetalen` | SalesManager |
+| `/salesmanager/payout-checkout` | `Pages/SalesManager/PayoutCheckoutStub.razor` | SalesManager |
 | `/salesmanager/referrals` | `Pages/SalesManager/Referrals.razor` | SalesManager |
 | `/salesmanager/toolkit` | `Pages/SalesManager/SalesToolkit.razor` | SalesManager |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
