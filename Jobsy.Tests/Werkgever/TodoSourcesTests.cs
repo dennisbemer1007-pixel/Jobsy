@@ -21,22 +21,38 @@ public class TodoSourcesTests
 
         db.Vacancies.Add(new Vacancy
         {
-            Id = Guid.NewGuid(), CompanyId = branch.Id, Title = "Pend", Description = "d",
-            HourlyWage = 14, StartDate = today, EndDate = today.AddDays(30),
-            Status = VacancyStatus.PendingApproval, Location = new GeoPoint(52.1, 4.1)
+            Id = Guid.NewGuid(),
+            CompanyId = branch.Id,
+            Title = "Pend",
+            Description = "d",
+            HourlyWage = 14,
+            StartDate = today,
+            EndDate = today.AddDays(30),
+            Status = VacancyStatus.PendingApproval,
+            Location = new GeoPoint(52.1, 4.1)
         });
         var vacOverdue = Guid.NewGuid();
         db.Vacancies.Add(new Vacancy
         {
-            Id = vacOverdue, CompanyId = branch.Id, Title = "Live", Description = "d",
-            HourlyWage = 14, StartDate = today, EndDate = today.AddDays(3),
-            Status = VacancyStatus.Active, PublishedAtUtc = now.AddDays(-10),
+            Id = vacOverdue,
+            CompanyId = branch.Id,
+            Title = "Live",
+            Description = "d",
+            HourlyWage = 14,
+            StartDate = today,
+            EndDate = today.AddDays(3),
+            Status = VacancyStatus.Active,
+            PublishedAtUtc = now.AddDays(-10),
             Location = new GeoPoint(52.1, 4.1)
         });
         db.Applications.Add(new Application
         {
-            Id = Guid.NewGuid(), VacancyId = vacOverdue, CandidateName = "C", CandidateEmail = "c@t.local",
-            Status = ApplicationStatus.Pending, CreatedAt = now.AddHours(-60)
+            Id = Guid.NewGuid(),
+            VacancyId = vacOverdue,
+            CandidateName = "C",
+            CandidateEmail = "c@t.local",
+            Status = ApplicationStatus.Pending,
+            CreatedAt = now.AddHours(-60)
         });
         branch.TokensManagedByEnterprise = true;
         db.EstablishmentTakeoverRequests.Add(new EstablishmentTakeoverRequest
@@ -98,21 +114,37 @@ public class TodoSourcesTests
         var vac = Guid.NewGuid();
         db.Vacancies.Add(new Vacancy
         {
-            Id = vac, CompanyId = branch.Id, Title = "Live", Description = "d",
-            HourlyWage = 14, StartDate = DateOnly.FromDateTime(now), EndDate = DateOnly.FromDateTime(now).AddDays(3),
-            Status = VacancyStatus.Active, PublishedAtUtc = now.AddDays(-2),
+            Id = vac,
+            CompanyId = branch.Id,
+            Title = "Live",
+            Description = "d",
+            HourlyWage = 14,
+            StartDate = DateOnly.FromDateTime(now),
+            EndDate = DateOnly.FromDateTime(now).AddDays(3),
+            Status = VacancyStatus.Active,
+            PublishedAtUtc = now.AddDays(-2),
             Location = new GeoPoint(52.1, 4.1)
         });
         db.Vacancies.Add(new Vacancy
         {
-            Id = Guid.NewGuid(), CompanyId = branch.Id, Title = "Pend", Description = "d",
-            HourlyWage = 14, StartDate = DateOnly.FromDateTime(now), EndDate = DateOnly.FromDateTime(now).AddDays(30),
-            Status = VacancyStatus.PendingApproval, Location = new GeoPoint(52.1, 4.1)
+            Id = Guid.NewGuid(),
+            CompanyId = branch.Id,
+            Title = "Pend",
+            Description = "d",
+            HourlyWage = 14,
+            StartDate = DateOnly.FromDateTime(now),
+            EndDate = DateOnly.FromDateTime(now).AddDays(30),
+            Status = VacancyStatus.PendingApproval,
+            Location = new GeoPoint(52.1, 4.1)
         });
         db.Applications.Add(new Application
         {
-            Id = Guid.NewGuid(), VacancyId = vac, CandidateName = "C", CandidateEmail = "c@t.local",
-            Status = ApplicationStatus.Pending, CreatedAt = now.AddHours(-60)
+            Id = Guid.NewGuid(),
+            VacancyId = vac,
+            CandidateName = "C",
+            CandidateEmail = "c@t.local",
+            Status = ApplicationStatus.Pending,
+            CreatedAt = now.AddHours(-60)
         });
         await db.SaveChangesAsync();
 
@@ -164,8 +196,13 @@ public class TodoSourcesTests
         var org = new Company { Id = Guid.NewGuid(), Name = "Org", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4) };
         var branch = new Company
         {
-            Id = Guid.NewGuid(), Name = "De Lier", KvkNumber = "2", Address = "b",
-            ParentCompanyId = org.Id, Location = new GeoPoint(52.1, 4.1), TokensManagedByEnterprise = true
+            Id = Guid.NewGuid(),
+            Name = "De Lier",
+            KvkNumber = "2",
+            Address = "b",
+            ParentCompanyId = org.Id,
+            Location = new GeoPoint(52.1, 4.1),
+            TokensManagedByEnterprise = true
         };
         db.Companies.AddRange(org, branch);
         await db.SaveChangesAsync();

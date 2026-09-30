@@ -236,12 +236,20 @@ public sealed class ApplicationsApiFactory : WebApplicationFactory<Program>
             new Company { Id = OrgAId, Name = "OrgA", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4.2) },
             new Company
             {
-                Id = BranchA1Id, Name = "A1", KvkNumber = "2", Address = "a1", ParentCompanyId = OrgAId,
+                Id = BranchA1Id,
+                Name = "A1",
+                KvkNumber = "2",
+                Address = "a1",
+                ParentCompanyId = OrgAId,
                 Location = new GeoPoint(52.01, 4.21)
             },
             new Company
             {
-                Id = BranchA2Id, Name = "A2", KvkNumber = "3", Address = "a2", ParentCompanyId = OrgAId,
+                Id = BranchA2Id,
+                Name = "A2",
+                KvkNumber = "3",
+                Address = "a2",
+                ParentCompanyId = OrgAId,
                 Location = new GeoPoint(52.02, 4.22)
             },
             new Company { Id = BranchBId, Name = "B", KvkNumber = "4", Address = "b", Location = new GeoPoint(51.9, 4.3) });
@@ -249,23 +257,39 @@ public sealed class ApplicationsApiFactory : WebApplicationFactory<Program>
         db.Users.AddRange(
             new User
             {
-                Id = EnterpriseAId, Email = "em@wgapp.local", FullName = "EM", Role = UserRole.EnterpriseManager,
-                IsActive = true, CompanyId = OrgAId
+                Id = EnterpriseAId,
+                Email = "em@wgapp.local",
+                FullName = "EM",
+                Role = UserRole.EnterpriseManager,
+                IsActive = true,
+                CompanyId = OrgAId
             },
             new User
             {
-                Id = BranchA1UserId, Email = "bm1@wgapp.local", FullName = "VM1", Role = UserRole.BranchManager,
-                IsActive = true, CompanyId = BranchA1Id
+                Id = BranchA1UserId,
+                Email = "bm1@wgapp.local",
+                FullName = "VM1",
+                Role = UserRole.BranchManager,
+                IsActive = true,
+                CompanyId = BranchA1Id
             },
             new User
             {
-                Id = BranchA2UserId, Email = "bm2@wgapp.local", FullName = "VM2", Role = UserRole.BranchManager,
-                IsActive = true, CompanyId = BranchA2Id
+                Id = BranchA2UserId,
+                Email = "bm2@wgapp.local",
+                FullName = "VM2",
+                Role = UserRole.BranchManager,
+                IsActive = true,
+                CompanyId = BranchA2Id
             },
             new User
             {
-                Id = RegionalA1UserId, Email = "rm@wgapp.local", FullName = "RM", Role = UserRole.RegionalManager,
-                IsActive = true, CompanyId = BranchA1Id
+                Id = RegionalA1UserId,
+                Email = "rm@wgapp.local",
+                FullName = "RM",
+                Role = UserRole.RegionalManager,
+                IsActive = true,
+                CompanyId = BranchA1Id
             });
 
         db.UserCompanies.AddRange(
@@ -302,20 +326,20 @@ public sealed class ApplicationsApiFactory : WebApplicationFactory<Program>
             DateTime created,
             string name,
             string email) => new()
-        {
-            Id = id,
-            VacancyId = vacancyId,
-            CandidateName = name,
-            CandidateEmail = email,
-            PreferredTransport = "Fiets",
-            EstimatedTravelMinutes = 12,
-            Status = status,
-            EmailVerifiedAt = DateTime.UtcNow.AddDays(-2),
-            CreatedAt = created,
-            RespondedAt = status == ApplicationStatus.Pending ? null : DateTime.UtcNow.AddDays(-1),
-            SnapshotPhoneNumber = "0611111111",
-            MatchPercent = 90
-        };
+            {
+                Id = id,
+                VacancyId = vacancyId,
+                CandidateName = name,
+                CandidateEmail = email,
+                PreferredTransport = "Fiets",
+                EstimatedTravelMinutes = 12,
+                Status = status,
+                EmailVerifiedAt = DateTime.UtcNow.AddDays(-2),
+                CreatedAt = created,
+                RespondedAt = status == ApplicationStatus.Pending ? null : DateTime.UtcNow.AddDays(-1),
+                SnapshotPhoneNumber = "0611111111",
+                MatchPercent = 90
+            };
 
         var now = DateTime.UtcNow;
         db.Applications.AddRange(

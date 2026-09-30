@@ -43,11 +43,13 @@ public class VacancyManageRulesTests
         Assert.Equal("Flex", VacancyManageRules.EmploymentTypeLabel(new VacancyListItem { FlexibleTimes = true }));
         Assert.Equal("Fulltime", VacancyManageRules.EmploymentTypeLabel(new VacancyListItem
         {
-            MinHoursPerWeek = 36, MaxHoursPerWeek = 40
+            MinHoursPerWeek = 36,
+            MaxHoursPerWeek = 40
         }));
         Assert.Equal("Bijbaan", VacancyManageRules.EmploymentTypeLabel(new VacancyListItem
         {
-            MinHoursPerWeek = 4, MaxHoursPerWeek = 8
+            MinHoursPerWeek = 4,
+            MaxHoursPerWeek = 8
         }));
     }
 

@@ -178,36 +178,60 @@ public sealed class CompanyUsersOrgApiFactory : WebApplicationFactory<Program>
             new Company { Id = OrgId, Name = "Org", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4.2) },
             new Company
             {
-                Id = BranchId, Name = "Branch", KvkNumber = "2", Address = "b", ParentCompanyId = OrgId,
+                Id = BranchId,
+                Name = "Branch",
+                KvkNumber = "2",
+                Address = "b",
+                ParentCompanyId = OrgId,
                 Location = new GeoPoint(52.01, 4.21)
             },
             new Company { Id = SoleOrgId, Name = "SoleOrg", KvkNumber = "9", Address = "s", Location = new GeoPoint(52.1, 4.3) },
             new Company
             {
-                Id = SoleBranchId, Name = "SoleBranch", KvkNumber = "8", Address = "sb", ParentCompanyId = SoleOrgId,
+                Id = SoleBranchId,
+                Name = "SoleBranch",
+                KvkNumber = "8",
+                Address = "sb",
+                ParentCompanyId = SoleOrgId,
                 Location = new GeoPoint(52.11, 4.31)
             });
 
         db.Users.AddRange(
             new User
             {
-                Id = EnterpriseUserId, Email = "em@wgcu.local", FullName = "EM", Role = UserRole.EnterpriseManager,
-                IsActive = true, CompanyId = OrgId
+                Id = EnterpriseUserId,
+                Email = "em@wgcu.local",
+                FullName = "EM",
+                Role = UserRole.EnterpriseManager,
+                IsActive = true,
+                CompanyId = OrgId
             },
             new User
             {
-                Id = BranchUserId, Email = "vm@wgcu.local", FullName = "VM", Role = UserRole.BranchManager,
-                IsActive = true, CompanyId = BranchId
+                Id = BranchUserId,
+                Email = "vm@wgcu.local",
+                FullName = "VM",
+                Role = UserRole.BranchManager,
+                IsActive = true,
+                CompanyId = BranchId
             },
             new User
             {
-                Id = RegionalUserId, Email = "rm@wgcu.local", FullName = "RM", Role = UserRole.RegionalManager,
-                IsActive = true, CompanyId = BranchId
+                Id = RegionalUserId,
+                Email = "rm@wgcu.local",
+                FullName = "RM",
+                Role = UserRole.RegionalManager,
+                IsActive = true,
+                CompanyId = BranchId
             },
             new User
             {
-                Id = SoleEnterpriseUserId, Email = "sole@wgcu.local", FullName = "Sole",
-                Role = UserRole.EnterpriseManager, IsActive = true, CompanyId = SoleOrgId
+                Id = SoleEnterpriseUserId,
+                Email = "sole@wgcu.local",
+                FullName = "Sole",
+                Role = UserRole.EnterpriseManager,
+                IsActive = true,
+                CompanyId = SoleOrgId
             });
 
         db.UserCompanies.AddRange(

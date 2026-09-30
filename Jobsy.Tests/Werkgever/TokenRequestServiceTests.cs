@@ -114,24 +114,39 @@ public class TokenRequestServiceTests
     {
         var org = new Company
         {
-            Id = Guid.NewGuid(), Name = "Org", KvkNumber = "1", Address = "a",
+            Id = Guid.NewGuid(),
+            Name = "Org",
+            KvkNumber = "1",
+            Address = "a",
             Location = new GeoPoint(52, 4)
         };
         var branch = new Company
         {
-            Id = Guid.NewGuid(), Name = "Branch", KvkNumber = "1", Address = "b",
-            ParentCompanyId = org.Id, TokensManagedByEnterprise = true,
+            Id = Guid.NewGuid(),
+            Name = "Branch",
+            KvkNumber = "1",
+            Address = "b",
+            ParentCompanyId = org.Id,
+            TokensManagedByEnterprise = true,
             Location = new GeoPoint(52, 4)
         };
         var bm = new User
         {
-            Id = Guid.NewGuid(), Email = "bm@t.local", FullName = "BM",
-            Role = UserRole.EnterpriseManager, IsActive = true, CompanyId = org.Id
+            Id = Guid.NewGuid(),
+            Email = "bm@t.local",
+            FullName = "BM",
+            Role = UserRole.EnterpriseManager,
+            IsActive = true,
+            CompanyId = org.Id
         };
         var vm = new User
         {
-            Id = Guid.NewGuid(), Email = "vm@t.local", FullName = "VM",
-            Role = UserRole.BranchManager, IsActive = true, CompanyId = branch.Id
+            Id = Guid.NewGuid(),
+            Email = "vm@t.local",
+            FullName = "VM",
+            Role = UserRole.BranchManager,
+            IsActive = true,
+            CompanyId = branch.Id
         };
         db.Companies.AddRange(org, branch);
         db.Users.AddRange(bm, vm);

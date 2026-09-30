@@ -170,13 +170,23 @@ public sealed class TokenRequestsApiFactory : WebApplicationFactory<Program>
             new Company { Id = OrgId, Name = "Org", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4) },
             new Company
             {
-                Id = BranchId, Name = "Branch", KvkNumber = "1", Address = "b", ParentCompanyId = OrgId,
-                TokensManagedByEnterprise = true, Location = new GeoPoint(52, 4)
+                Id = BranchId,
+                Name = "Branch",
+                KvkNumber = "1",
+                Address = "b",
+                ParentCompanyId = OrgId,
+                TokensManagedByEnterprise = true,
+                Location = new GeoPoint(52, 4)
             },
             new Company
             {
-                Id = SiblingId, Name = "Sibling", KvkNumber = "1", Address = "c", ParentCompanyId = OrgId,
-                TokensManagedByEnterprise = true, Location = new GeoPoint(52, 4)
+                Id = SiblingId,
+                Name = "Sibling",
+                KvkNumber = "1",
+                Address = "c",
+                ParentCompanyId = OrgId,
+                TokensManagedByEnterprise = true,
+                Location = new GeoPoint(52, 4)
             });
         db.Users.AddRange(
             new User { Id = BmId, Email = "bm@tok.local", FullName = "BM", Role = UserRole.EnterpriseManager, IsActive = true, CompanyId = OrgId },
