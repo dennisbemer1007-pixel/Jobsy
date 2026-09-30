@@ -154,7 +154,6 @@ public class CareerPathServiceTests
         Assert.Contains("CareerOverviewCard", page);
         Assert.Contains("CareerDreamDialog", page);
         Assert.Contains("CareerArchivedPlans", page);
-        Assert.Contains("GrowingShellsStepper", page);
         Assert.Contains("CareerPlanViewBuilder.BuildPage", page);
         Assert.Contains("GetCareerPathAsync", page);
         Assert.Contains("GenerateCareerPathAsync", page);
@@ -173,6 +172,9 @@ public class CareerPathServiceTests
         Assert.DoesNotContain("MatchWithProfile", page);
         Assert.DoesNotContain("ex.Message", page);
         Assert.DoesNotContain("<select", page);
+
+        var overview = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Career/CareerOverviewCard.razor"));
+        Assert.Contains("GrowingShellsStepper", overview);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/carriere.css"));
         Assert.Contains(".career-page", css);
