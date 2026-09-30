@@ -821,7 +821,7 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | Grant tokens note met PII. | Opgeslagen in ledger; vermijd e-mail in note (procesregel). |
 | Admin | Consent-reaccept. | Blocking voor admin-account bij version bump. |
 | Admin | AVG-export eigen admin-user. | Minimale PII; geen hele platformdump via `/privacy/data`. |
-| Admin | How-to `/hoe-werkt-lobsy` / `/candidate/hoe-werkt-lobsy`. | How-to employer Authorize zonder Admin → 403 of candidate-how-to als Admin in candidate-attribute (candidate how-to **inclusief Admin**) — candidate-guide of redirect; employer-how-to zonder Admin = 403. |
+| Admin | How-to `/hoe-werkt-lobsy` / `/candidate/hoe-werkt-lobsy`. | Beide zonder Admin: employer-how-to = 403; kandidaat-how-to is sinds carrière 05 **Candidate-only** → 403. Admin heeft geen how-to-link in het accountmenu. |
 | Admin | Feedback widget + assistent op admin-pagina. | Werkt; feedback meta rol Admin. |
 | Admin | Session timeout setting op 5 min: idle. | Herlogin session-expired. |
 | Admin | Integratie-secret in repo/appsettings committen (review). | Mag niet; secrets via Data Protection / env. |

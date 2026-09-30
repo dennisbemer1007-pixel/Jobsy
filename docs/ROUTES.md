@@ -34,7 +34,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (227 routes)
+## Table (228 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -44,6 +44,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/account-maken/code` | `Pages/Public/AccountMakenCode.razor` | anonymous |
 | `/account/mail-instellingen` | `Pages/Account/MailSettings.razor` | authenticated |
 | `/account/mfa` | `Pages/Account/MfaPrompt.razor` | anonymous |
+| `/account/mfa/herstelcodes-vernieuwen` | `Pages/Account/MfaRegenerateRecoveryCodes.razor` | authenticated |
 | `/account/mfa/recovery-codes` | `Pages/Account/MfaRecoveryCodes.razor` | anonymous |
 | `/account/mfa/setup` | `Pages/Account/MfaSetup.razor` | anonymous |
 | `/account/wachtwoord-instellen` | `Pages/Account/SetPassword.razor` | anonymous |
@@ -133,7 +134,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/deep-analysis/checkout` | `Pages/Candidate/DeepAnalysisCheckout.razor` | Candidate |
 | `/candidate/deep-analysis/{Kind}` | `Pages/Candidate/DeepAnalysis.razor` | Candidate |
 | `/candidate/disc` | `Pages/Candidate/CultureScan.razor` | Candidate |
-| `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate |
 | `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
@@ -201,7 +202,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/regional/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/regional/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/register` | `Pages/Register.razor` | anonymous |
-| `/register/activate` | → 301 `/register` (removed in auth 06) | — |
 | `/register/bedrijf` | `Pages/RegisterBedrijf.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/register/koppelen` | `Pages/RegisterKoppelen.razor` | authenticated |
 | `/register/toegang` | `Pages/RegisterToegang.razor` | anonymous |
@@ -238,6 +238,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
 | `/vestiging/{CompanyId:guid}` | `Pages/VestigingLanding.razor` | anonymous |
+| `/wachtwoord-vergeten` | `Pages/Account/ForgotPassword.razor` | anonymous |
 | `/werkgever` | `Pages/Werkgever/WerkgeverDashboard.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/kandidaatinzichten` | `Pages/Werkgever/CandidateInsights.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/werkgever/koppelingen` | `Pages/Werkgever/Koppelingen.razor` | EnterpriseManager, Admin |

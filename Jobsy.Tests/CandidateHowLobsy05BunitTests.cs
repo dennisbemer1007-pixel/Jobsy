@@ -147,7 +147,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
 
         var cut = RenderComponent<HowLobsyWorks>();
 
-        var rows = cut.FindAll("li.how-stone");
+        var rows = cut.FindAll("li.how-stone").ToList();
         Assert.Equal(5, rows.Count);
         Assert.Contains("how-stone--done", rows[0].ClassName, StringComparison.Ordinal);
         Assert.Contains("how-stone--done", rows[1].ClassName, StringComparison.Ordinal);
@@ -165,7 +165,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     {
         var cut = RenderComponent<HowLobsyWorks>();
 
-        var rows = cut.FindAll("li.how-stone");
+        var rows = cut.FindAll("li.how-stone").ToList();
         Assert.Contains("how-stone--now", rows[0].ClassName, StringComparison.Ordinal);
         Assert.Contains("Begin bij de eerste steen.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Verder met De ontdekkingsreis", cut.Markup, StringComparison.Ordinal);
