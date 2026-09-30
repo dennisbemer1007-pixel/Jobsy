@@ -89,6 +89,16 @@ builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Fea
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingPriceClient>();
+builder.Services.AddSingleton<Jobsy.Web.Services.LegalIdentityProvider>();
+builder.Services.AddHttpClient(Jobsy.Web.Services.LegalIdentityProvider.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(3);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
 builder.Services.AddHttpClient(Jobsy.Web.Services.LandingStatsClient.HttpClientName, client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
@@ -299,6 +309,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// HTML-only status pages (404 etc.); leave API/static/Blazor circuits alone.
+app.UseWhen(
+    ctx => ShouldReExecuteStatusPages(ctx),
+    branch => branch.UseStatusCodePagesWithReExecute("/status/{0}"));
+
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
 if (app.Environment.IsDevelopment())
 {
@@ -358,3 +373,28 @@ app.MapRazorComponents<App>()
     });
 
 app.Run();
+
+static bool ShouldReExecuteStatusPages(HttpContext ctx)
+{
+    var path = ctx.Request.Path.Value ?? string.Empty;
+    if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/_blazor", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/_framework", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/_content", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/healthz", StringComparison.OrdinalIgnoreCase))
+    {
+        return false;
+    }
+
+    var lastSlash = path.LastIndexOf('/');
+    var file = lastSlash >= 0 ? path[(lastSlash + 1)..] : path;
+    if (file.Contains('.', StringComparison.Ordinal))
+    {
+        return false;
+    }
+
+    var accept = ctx.Request.Headers.Accept.ToString();
+    return string.IsNullOrEmpty(accept)
+           || accept.Contains("text/html", StringComparison.OrdinalIgnoreCase)
+           || accept.Contains("*/*", StringComparison.OrdinalIgnoreCase);
+}

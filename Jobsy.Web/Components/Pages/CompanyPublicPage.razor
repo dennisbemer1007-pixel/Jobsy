@@ -9,11 +9,13 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
 @inject ILogger<CompanyPublicPage> Logger
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Http
 @implements IAsyncDisposable
 
@@ -54,9 +56,9 @@
                     }
                     <div>
                         <h1 class="branch-page__title">@_page.Name</h1>
-                        @if (!string.IsNullOrWhiteSpace(_page.Address))
+                        @if (!string.IsNullOrWhiteSpace(_page.City))
                         {
-                            <p class="branch-page__address">@_page.Address</p>
+                            <p class="branch-page__address">@_page.City</p>
                         }
                         <p class="branch-page__meta">
                             @if (!string.IsNullOrWhiteSpace(_page.Vestigingsnummer))
@@ -137,11 +139,14 @@
             @if (_page.Branches is { Count: > 1 })
             {
                 <ul class="branch-page__branches">
-                    @foreach (var branch in _page.Branches.Where(b => !string.IsNullOrWhiteSpace(b.PublicPath)))
+                    @foreach (var branch in _page.Branches.Where(b => !string.IsNullOrWhiteSpace(b.Path ?? b.PublicPath)))
                     {
                         <li>
-                            <a href="@branch.PublicPath">@branch.Name</a>
-                            <span class="muted">@branch.Address</span>
+                            <a href="@(branch.Path ?? branch.PublicPath)">@branch.Name</a>
+                            @if (!string.IsNullOrWhiteSpace(branch.City))
+                            {
+                                <span class="muted">@branch.City</span>
+                            }
                         </li>
                     }
                 </ul>
@@ -154,10 +159,10 @@
                 <nav class="branch-page__branches" aria-label="@Culture["BranchPage.Branches"]">
                     <p class="branch-page__branches-title">@Culture["BranchPage.Branches"]</p>
                     <ul>
-                        @foreach (var branch in _page.Branches.Where(b => !string.IsNullOrWhiteSpace(b.PublicPath)))
+                        @foreach (var branch in _page.Branches.Where(b => !string.IsNullOrWhiteSpace(b.Path ?? b.PublicPath)))
                         {
                             <li>
-                                <a href="@branch.PublicPath">@branch.Name</a>
+                                <a href="@(branch.Path ?? branch.PublicPath)">@branch.Name</a>
                             </li>
                         }
                     </ul>
@@ -237,11 +242,11 @@
                 return null;
             }
 
-            var origin = Navigation.BaseUri.TrimEnd('/');
+            var origin = PageSeoResolver.Origin(Navigation.Uri, Configuration);
             var path = string.IsNullOrWhiteSpace(Vestigingsnummer)
                 ? $"/{KvkNumber}"
                 : $"/{KvkNumber}/{Vestigingsnummer}";
-            return StructuredData.Organization(origin, _page.Name, _page.Address, _page.LogoUrl, path);
+            return StructuredData.Organization(origin, _page.Name, _page.City, _page.LogoUrl, path);
         }
     }
 
@@ -298,13 +303,23 @@
                 _page = await Api.GetPublicCompanyByKvkAsync(kvk);
             }
 
-            if (_page is null || _page.CompanyIds.Count == 0)
+            if (_page is null)
             {
                 MarkNotFound();
                 return;
             }
 
-            _engagementCompanyId = _page.CompanyIds[0];
+            _vacancies = (await Api.GetPublicCompanyVacanciesAsync(
+                kvk,
+                string.IsNullOrWhiteSpace(Vestigingsnummer) ? null : Vestigingsnummer)).ToList();
+
+            if (_vacancies.Count == 0)
+            {
+                MarkNotFound();
+                return;
+            }
+
+            _engagementCompanyId = _vacancies[0].CompanyId;
             var badges = await Api.GetPublicEngagementAsync(_engagementCompanyId);
             _engagement = badges
                 .Select(b => new EngagementBadges.EngageBadgeItem(
@@ -312,14 +327,6 @@
                     string.Equals(b.Status, CompanyEngagementStatuses.Checked, StringComparison.OrdinalIgnoreCase),
                     b.CheckedSource))
                 .ToList();
-
-            _vacancies = (await Api.DiscoverVacanciesAsync(
-                originLat: null,
-                originLng: null,
-                transport: "Fiets",
-                maxMinutes: 30,
-                radiusKm: null,
-                companyIds: _page.CompanyIds)).ToList();
 
             if (RendererInfo.IsInteractive && _vacancies.Count > 0)
             {
@@ -376,10 +383,7 @@
             await Js.InvokeVoidAsync("jobMap.init", "branch-job-map", markers, options);
             _mapReady = true;
             await Js.InvokeVoidAsync("jobMap.invalidate");
-            if (_page.CompanyIds.Count == 1)
-            {
-                await Js.InvokeVoidAsync("jobMap.focusCompany", _page.CompanyIds[0].ToString("D"));
-            }
+            // TODO(public-pages 09): fit map to vacancy pins (no company GUID focus).
         }
         catch (JSDisconnectedException)
         {

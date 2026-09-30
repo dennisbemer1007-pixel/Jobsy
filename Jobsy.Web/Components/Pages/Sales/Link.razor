@@ -327,9 +327,9 @@ else
     private void ShareMail()
     {
         if (_toolkit is null) return;
-        var subject = Uri.EscapeDataString(_toolkit.EmailSubject);
-        var body = Uri.EscapeDataString(_toolkit.EmailBody.Replace("\n", "%0A", StringComparison.Ordinal));
-        Navigation.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
+        Navigation.NavigateTo(
+            MailtoLink.Build(_toolkit.EmailSubject, _toolkit.EmailBody),
+            forceLoad: true);
     }
 
     private async Task DownloadQrAsync()

@@ -14,6 +14,7 @@
 @implements IDisposable
 
 <PageTitle>@Culture["Partner.Title"] · Lobsy</PageTitle>
+<PageSeo CanonicalPath="/partner" Index="@(string.IsNullOrEmpty(TrackingCode))" />
 
 <div class="panel-page panel-page--wide partner-sales">
     <header class="partner-sales__hero">
@@ -230,10 +231,11 @@
 
     private void ShareMail()
     {
-        var subject = Uri.EscapeDataString("Lobsy — partneraanbod Westland & Den Haag");
-        var body = Uri.EscapeDataString(
-            $"Hoi,%0A%0ABekijk het Lobsy-partneraanbod (reistijd-matching, tokens, pakketten):%0A{PartnerPageUrl}%0A%0A");
-        Navigation.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
+        Navigation.NavigateTo(
+            MailtoLink.Build(
+                "Lobsy — partneraanbod Westland & Den Haag",
+                $"Hoi,\n\nBekijk het Lobsy-partneraanbod (reistijd-matching, tokens, pakketten):\n{PartnerPageUrl}\n\n"),
+            forceLoad: true);
     }
 
     private static string CategoryLabel(string category) => category switch

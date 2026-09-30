@@ -12,6 +12,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @inject PersistentComponentState Persist
+@inject IHttpContextAccessor HttpContextAccessor
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
@@ -20,6 +21,7 @@
 @using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
 @implements IAsyncDisposable
 
 <PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
@@ -1600,7 +1602,13 @@
                 originLng: null,
                 _transport,
                 _ageYears);
-            if (string.Equals(_vacancy?.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+            if (_vacancy is null)
+            {
+                MarkVacancyNotFound();
+                return;
+            }
+
+            if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
             {
                 _ = RefreshCultureFitLaterAsync();
             }
@@ -1610,6 +1618,19 @@
             _loading = false;
         }
     }
+
+    private void MarkVacancyNotFound()
+    {
+        _vacancy = null;
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http is not null && !http.Response.HasStarted)
+        {
+            http.Response.StatusCode = StatusCodes.Status404NotFound;
+        }
+    }
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
 
     private int _cultureFitRefreshAttempts;
 

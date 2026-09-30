@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Security / legal
+- Public-pages hotfix: `Legal:*` config + `ILegalIdentity` + `GET api/site/legal` (no placeholders; mail footer via MailOptions); `/{kvk}` only verified KvK with public vacancies (city only, no ids/coords); `/partner/{code}` noindex + canonical; mailto `%0A` fix; real HTML `/status/{code}` 404 + vacancy 404 status.
+
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.
 

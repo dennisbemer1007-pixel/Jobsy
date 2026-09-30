@@ -230,7 +230,18 @@ public sealed partial class JobsyApiClient
             url += "?" + string.Join("&", parts);
         }
 
-        return await _http.GetFromJsonAsync<VacancyListItem>(url, ct);
+        var response = await _http.GetAsync(url, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            response.EnsureSuccessStatusCode();
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyListItem>(cancellationToken: ct);
     }
 
     public async Task<VacancyTravelResult?> GetVacancyTravelAsync(

@@ -344,6 +344,24 @@ public sealed partial class JobsyApiClient
         return await ReadPublicCompanyOrNullAsync(response, ct);
     }
 
+    public async Task<IReadOnlyList<VacancyListItem>> GetPublicCompanyVacanciesAsync(
+        string kvkNumber,
+        string? vestigingsnummer = null,
+        CancellationToken ct = default)
+    {
+        var path = string.IsNullOrWhiteSpace(vestigingsnummer)
+            ? $"api/public/companies/{Uri.EscapeDataString(kvkNumber.Trim())}/vacancies"
+            : $"api/public/companies/{Uri.EscapeDataString(kvkNumber.Trim())}/{Uri.EscapeDataString(vestigingsnummer.Trim())}/vacancies";
+        var response = await _http.GetAsync(path, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return [];
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<VacancyListItem>>(cancellationToken: ct)
+               ?? [];
+    }
+
     private static async Task<PublicCompanyPage?> ReadPublicCompanyOrNullAsync(
         HttpResponseMessage response,
         CancellationToken ct)

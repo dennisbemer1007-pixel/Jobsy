@@ -274,7 +274,7 @@ public static partial class PageSeoCatalog
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =
     [
         ("/vacancies/", Public("Vacancy.Title", "Seo.VacancyFallbackDescription", "article")),
-        ("/partner/", Public("Partner.Title", "Seo.PartnerDescription")),
+        ("/partner/", Public("Partner.Title", "Seo.PartnerDescription", index: false, CanonicalPath: "/partner")),
         ("/home/metrics/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/werkgever/organisatie/salaristabellen/", Private("Employer.SalaryTables", "Seo.PrivateDescription")),
         ("/werkgever/sollicitaties/", Private("Employer.Applicants", "Seo.PrivateDescription")),
@@ -298,8 +298,9 @@ public static partial class PageSeoCatalog
         string descriptionKey,
         string ogType = "website",
         bool hreflang = false,
-        string? CanonicalPath = null)
-        => new(titleKey, descriptionKey, Indexable: true, ogType, Hreflang: hreflang, CanonicalPath: CanonicalPath);
+        string? CanonicalPath = null,
+        bool index = true)
+        => new(titleKey, descriptionKey, Indexable: index, ogType, Hreflang: hreflang, CanonicalPath: CanonicalPath);
 
     private static PageSeoEntry Private(string titleKey, string descriptionKey)
         => new(titleKey, descriptionKey, Indexable: false);

@@ -390,25 +390,23 @@ public sealed class BranchFlyerRouteDto
 
 public sealed class PublicCompanyPage
 {
+    public string Kvk { get; set; } = string.Empty;
     public string KvkNumber { get; set; } = string.Empty;
     public string? Vestigingsnummer { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
+    public string? City { get; set; }
     public string? LogoUrl { get; set; }
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public List<Guid> CompanyIds { get; set; } = [];
     public List<PublicCompanyBranch>? Branches { get; set; }
+
+    public string DisplayKvk => !string.IsNullOrWhiteSpace(Kvk) ? Kvk : KvkNumber;
 }
 
 public sealed class PublicCompanyBranch
 {
-    public Guid CompanyId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public string? LogoUrl { get; set; }
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
+    public string? City { get; set; }
     public string? Vestigingsnummer { get; set; }
+    public string? Path { get; set; }
     public string? PublicPath { get; set; }
+    public int VacancyCount { get; set; }
 }
