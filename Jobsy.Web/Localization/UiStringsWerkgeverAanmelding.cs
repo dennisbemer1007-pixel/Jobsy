@@ -188,5 +188,77 @@ internal static class UiStringsWerkgeverAanmelding
         Add("Wa.Link.Lead", "We koppelen je Microsoft- of Google-login aan je nieuwe Lobsy-account.", "We link your Microsoft or Google login to your new Lobsy account.", "Łączymy logowanie Microsoft/Google z nowym kontem Lobsy.", "Conectăm autentificarea Microsoft/Google la noul cont Lobsy.", "نربط تسجيل Microsoft أو Google بحساب Lobsy الجديد.");
         Add("Wa.Link.Working", "Even geduld…", "One moment…", "Chwila…", "Un moment…", "لحظة…");
         Add("Wa.Link.EmailMismatch", "Dit account hoort bij een ander e-mailadres. Gebruik e-mail en wachtwoord of hetzelfde adres.", "This account belongs to another e-mail address. Use e-mail and password or the same address.", "To konto należy do innego e-maila. Użyj e-maila i hasła lub tego samego adresu.", "Acest cont aparține altui e-mail. Folosește e-mail și parolă sau aceeași adresă.", "هذا الحساب يخص بريداً آخر. استخدم البريد وكلمة المرور أو نفس العنوان.");
+
+        // Step 5 — verification choice (WaVerify.*)
+        Add("WaVerify.Eyebrow", "Stap 5 · Verifiëren", "Step 5 · Verify", "Krok 5 · Weryfikacja", "Pasul 5 · Verificare", "الخطوة 5 · التحقق");
+        Add("WaVerify.Title", "Laat zien dat je bij {0} hoort", "Show that you belong to {0}", "Pokaż, że należysz do {0}", "Arată că aparții de {0}", "أظهر أنك تنتمي إلى {0}");
+        Add("WaVerify.Lead", "Tot die tijd ben je onzichtbaar voor kandidaten. Kies hoe:", "Until then you are invisible to candidates. Choose how:", "Do tego czasu jesteś niewidoczny. Wybierz sposób:", "Până atunci ești invizibil. Alege cum:", "حتى ذلك الحين أنت غير مرئي. اختر كيف:");
+        Add("WaVerify.Speech", "Laatste stap! Zo houden we Lobsy eerlijk.", "Last step! This keeps Lobsy honest.", "Ostatni krok! Tak Lobsy zostaje uczciwy.", "Ultimul pas! Așa Lobsy rămâne corect.", "الخطوة الأخيرة! هكذا تبقى Lobsy نزيهة.");
+        Add("WaVerify.Email.Tag", "Snelst · ± 1 minuut", "Fastest · ± 1 minute", "Najszybciej · ± 1 min", "Cel mai rapid · ± 1 min", "الأسرع · ± دقيقة");
+        Add("WaVerify.Email.Title", "Met je zakelijke e-mailadres", "With your business e-mail", "Firmowym e-mailem", "Cu e-mailul de firmă", "بعنوان بريد العمل");
+        Add("WaVerify.Email.Body", "Het domein moet passen bij de website die bij KVK staat. We sturen een code naar dat adres.", "The domain must match the website at KVK. We send a code to that address.", "Domena musi pasować do strony w KVK. Wyślemy kod.", "Domeniul trebuie să se potrivească site-ului KVK. Trimitem un cod.", "يجب أن يطابق النطاق موقع KVK. نرسل رمزاً.");
+        Add("WaVerify.Email.Website", "Website bij KVK: {0}", "Website at KVK: {0}", "Strona w KVK: {0}", "Site la KVK: {0}", "الموقع في KVK: {0}");
+        Add("WaVerify.Email.Disabled", "Bij de KVK staat geen website. Kies de brief.", "No website at KVK. Choose the letter.", "Brak strony w KVK. Wybierz list.", "Niciun site la KVK. Alege scrisoarea.", "لا موقع في KVK. اختر الخطاب.");
+        Add("WaVerify.Email.FreeMail", "Gmail, Outlook.com, Hotmail en andere gratis adressen tellen niet mee.", "Gmail, Outlook.com, Hotmail and other free addresses do not count.", "Gmail, Outlook.com, Hotmail i inne darmowe nie liczą się.", "Gmail, Outlook.com, Hotmail și altele gratuite nu contează.", "Gmail وOutlook وHotmail وغيرها المجانية لا تُحسب.");
+        Add("WaVerify.Email.Step1", "We mailen een code van 6 cijfers", "We e-mail a 6-digit code", "Wysyłamy 6-cyfrowy kod", "Trimitem un cod de 6 cifre", "نرسل رمزاً من 6 أرقام");
+        Add("WaVerify.Email.Step2", "Vul de code in (10 minuten geldig)", "Enter the code (valid 10 minutes)", "Wpisz kod (ważny 10 min)", "Introdu codul (valabil 10 min)", "أدخل الرمز (صالح 10 دقائق)");
+        Add("WaVerify.Email.Step3", "Klaar: je bedrijf is meteen zichtbaar", "Done: your company is immediately visible", "Gotowe: firma od razu widoczna", "Gata: firma e imediat vizibilă", "تم: شركتك تظهر فوراً");
+        Add("WaVerify.Email.Cta", "Stuur de code naar {0} →", "Send the code to {0} →", "Wyślij kod na {0} →", "Trimite codul la {0} →", "أرسل الرمز إلى {0} ←");
+        Add("WaVerify.Email.Label", "Zakelijk e-mailadres", "Business e-mail", "Firmowy e-mail", "E-mail de firmă", "بريد العمل");
+        Add("WaVerify.Email.CodeLabel", "Code uit de mail", "Code from e-mail", "Kod z e-maila", "Cod din e-mail", "الرمز من البريد");
+        Add("WaVerify.Email.Confirm", "Bedrijf verifiëren →", "Verify company →", "Zweryfikuj firmę →", "Verifică firma →", "تحقّق من الشركة ←");
+        Add("WaVerify.Letter.Tag", "1 tot 3 werkdagen", "1 to 3 business days", "1–3 dni robocze", "1–3 zile lucrătoare", "1–3 أيام عمل");
+        Add("WaVerify.Letter.Title", "Met een brief op het KvK-adres", "With a letter to the KvK address", "Listem na adres KVK", "Cu o scrisoare la adresa KVK", "بخطاب إلى عنوان KVK");
+        Add("WaVerify.Letter.Body", "Geen zakelijk adres, of past je domein niet? We sturen een brief met een code naar het adres dat bij KVK staat.", "No business address, or domain mismatch? We send a letter with a code to the KvK address.", "Brak firmowego adresu? Wyślemy list z kodem na adres KVK.", "Fără e-mail de firmă? Trimitem o scrisoare cu cod la adresa KVK.", "بدون بريد عمل؟ نرسل خطاباً برمز إلى عنوان KVK.");
+        Add("WaVerify.Letter.Step1", "Wij versturen de brief via PostNL", "We send the letter via PostNL", "Wysyłamy list przez PostNL", "Trimitem scrisoarea prin PostNL", "نرسل الخطاب عبر PostNL");
+        Add("WaVerify.Letter.Step2", "Vul de code in via je dashboard", "Enter the code in your dashboard", "Wpisz kod w panelu", "Introdu codul în tablou", "أدخل الرمز في لوحة التحكم");
+        Add("WaVerify.Letter.Step3", "De code is 30 dagen geldig", "The code is valid for 30 days", "Kod ważny 30 dni", "Codul e valabil 30 zile", "الرمز صالح 30 يوماً");
+        Add("WaVerify.Letter.AddressHint", "Staat het adres niet goed bij KVK? Pas het eerst aan bij KVK.", "Wrong address at KVK? Update it at KVK first.", "Zły adres w KVK? Najpierw popraw w KVK.", "Adres greșit la KVK? Corectează mai întâi la KVK.", "عنوان خاطئ في KVK؟ عدّله أولاً في KVK.");
+        Add("WaVerify.Letter.Cta", "Stuur de brief →", "Send the letter →", "Wyślij list →", "Trimite scrisoarea →", "أرسل الخطاب ←");
+        Add("WaVerify.Letter.Cap", "Tijdelijk niet beschikbaar, vraag een handmatige controle aan.", "Temporarily unavailable — request a manual check.", "Tymczasowo niedostępne — poproś o kontrolę ręczną.", "Temporar indisponibil — cere o verificare manuală.", "غير متاح مؤقتاً — اطلب فحصاً يدوياً.");
+        Add("WaVerify.Manual.Lead", "Lukt geen van beide?", "Neither option works?", "Żadna opcja nie działa?", "Niciuna nu merge?", "لا يعمل أي خيار؟");
+        Add("WaVerify.Manual.Cta", "Handmatige controle aanvragen", "Request a manual check", "Poproś o kontrolę ręczną", "Cere verificare manuală", "اطلب فحصاً يدوياً");
+        Add("WaVerify.Manual.Hint", "We reageren binnen 2 werkdagen.", "We reply within 2 business days.", "Odpowiadamy w 2 dni robocze.", "Răspundem în 2 zile lucrătoare.", "نرد خلال يومي عمل.");
+        Add("WaVerify.Manual.Reason", "Waarom lukt het niet?", "Why doesn't it work?", "Dlaczego nie działa?", "De ce nu merge?", "لماذا لا يعمل؟");
+        Add("WaVerify.Manual.Message", "Toelichting (optioneel)", "Details (optional)", "Szczegóły (opcjonalnie)", "Detalii (opțional)", "تفاصيل (اختياري)");
+        Add("WaVerify.Manual.Submit", "Verzoek indienen", "Submit request", "Wyślij wniosek", "Trimite cererea", "إرسال الطلب");
+        Add("WaVerify.Manual.Pending", "Je handmatige controle staat open. We reageren binnen 2 werkdagen.", "Your manual check is open. We reply within 2 business days.", "Kontrola ręczna jest otwarta. Odpowiedź w 2 dni robocze.", "Verificarea manuală e deschisă. Răspuns în 2 zile lucrătoare.", "الفحص اليدوي مفتوح. نرد خلال يومي عمل.");
+        Add("WaVerify.Allowed.Title", "Wat kan al, en wat na verificatie?", "What works now, and after verification?", "Co już możesz, a co po weryfikacji?", "Ce poți acum și după verificare?", "ما المتاح الآن وبعد التحقق؟");
+        Add("WaVerify.Allowed.1", "Vacatures als concept klaarzetten", "Prepare vacancy drafts", "Przygotuj szkice ofert", "Pregătește drafturi", "جهّز مسودات الوظائف");
+        Add("WaVerify.Allowed.2", "Collega’s uitnodigen", "Invite colleagues", "Zaproś kolegów", "Invită colegi", "ادعُ الزملاء");
+        Add("WaVerify.Allowed.3", "Profiel, cultuur en branche invullen", "Fill profile, culture and industry", "Uzupełnij profil, kulturę i branżę", "Completează profil, cultură și industrie", "أكمل الملف والثقافة والقطاع");
+        Add("WaVerify.Blocked.1", "Kandidaten en sollicitaties zien", "See candidates and applications", "Zobacz kandydatów i aplikacje", "Vezi candidați și aplicații", "رؤية المرشحين والطلبات");
+        Add("WaVerify.Blocked.2", "Zichtbaar zijn voor kandidaten", "Be visible to candidates", "Być widocznym dla kandydatów", "Fi vizibil pentru candidați", "الظهور للمرشحين");
+        Add("WaVerify.Blocked.3", "Tokens kopen", "Buy tokens", "Kup tokeny", "Cumpără tokeni", "شراء الرموز");
+        Add("WaVerify.Allowed.Note", "Conceptvacatures gaan automatisch live zodra je geverifieerd bent.", "Draft vacancies go live automatically once verified.", "Szkice ofert publikują się automatycznie po weryfikacji.", "Drafturile apar automat după verificare.", "المسودات تُنشر تلقائياً بعد التحقق.");
+        Add("WaVerify.Already", "Je bedrijf is al geverifieerd.", "Your company is already verified.", "Firma jest już zweryfikowana.", "Firma este deja verificată.", "شركتك موثّقة بالفعل.");
+        Add("WaVerify.Dashboard", "Naar mijn dashboard →", "To my dashboard →", "Do pulpitu →", "La tabloul de bord →", "إلى لوحة التحكم ←");
+
+        // Letter on its way (wr-d9 / wr-m7)
+        Add("WaVerify.Brief.Badge", "Brief onderweg", "Letter on its way", "List w drodze", "Scrisoare pe drum", "الخطاب في الطريق");
+        Add("WaVerify.Brief.Title", "Je brief is onderweg", "Your letter is on its way", "Twój list jest w drodze", "Scrisoarea ta e pe drum", "خطابك في الطريق");
+        Add("WaVerify.Brief.Lead", "We stuurden een brief naar het KvK-adres van {0}. Vul de code in zodra je hem hebt.", "We sent a letter to the KvK address of {0}. Enter the code when you have it.", "Wysłaliśmy list na adres KVK {0}. Wpisz kod gdy go masz.", "Am trimis o scrisoare la adresa KVK a {0}. Introdu codul când îl ai.", "أرسلنا خطاباً إلى عنوان KVK لـ {0}. أدخل الرمز عند استلامه.");
+        Add("WaVerify.Brief.CodeTitle", "Vul je code in", "Enter your code", "Wpisz kod", "Introdu codul", "أدخل الرمز");
+        Add("WaVerify.Brief.CodeHint", "8 tekens, staat onder ‘Uw verificatiecode’. Hoofdletters maken niet uit.", "8 characters, under ‘Your verification code’. Case does not matter.", "8 znaków pod ‘Uw verificatiecode’. Wielkość liter bez znaczenia.", "8 caractere sub ‘Uw verificatiecode’. Majusculele nu contează.", "8 أحرف تحت ‘Uw verificatiecode’. حالة الأحرف لا تهم.");
+        Add("WaVerify.Brief.Confirm", "Bedrijf verifiëren →", "Verify company →", "Zweryfikuj firmę →", "Verifică firma →", "تحقّق من الشركة ←");
+        Add("WaVerify.Brief.Attempts", "Na 5 foute pogingen blokkeren we de code en vraagt support ernaar te kijken.", "After 5 wrong attempts we block the code and ask support to look into it.", "Po 5 błędach blokujemy kod i prosimy support.", "După 5 încercări greșite blocăm codul.", "بعد 5 محاولات خاطئة نوقف الرمز.");
+        Add("WaVerify.Brief.Resend", "Niet ontvangen? Opnieuw versturen kan vanaf {0} (nog {1} keer).", "Not received? Resend possible from {0} ({1} left).", "Nie doszło? Ponowne wysłanie od {0} (jeszcze {1}).", "Nu a ajuns? Retrimitere din {0} (încă {1}).", "لم يصل؟ إعادة الإرسال من {0} (متبقي {1}).");
+        Add("WaVerify.Brief.ResendCta", "Brief opnieuw versturen", "Resend letter", "Wyślij list ponownie", "Retrimite scrisoarea", "أعد إرسال الخطاب");
+        Add("WaVerify.Brief.EmailAlt", "Toch sneller? Verifieer met e-mail", "Faster? Verify by e-mail", "Szybciej? Zweryfikuj e-mailem", "Mai rapid? Verifică pe e-mail", "أسرع؟ تحقّق بالبريد");
+        Add("WaVerify.Brief.Later", "Je kunt de code ook later in je dashboard invullen.", "You can also enter the code later in your dashboard.", "Kod możesz też wpisać później w panelu.", "Poți introduce codul mai târziu în tablou.", "يمكنك إدخال الرمز لاحقاً في لوحة التحكم.");
+        Add("WaVerify.Brief.Delivery", "Verwacht {0} op {1}. Code geldig t/m {2}.", "Expect {0} at {1}. Code valid through {2}.", "Oczekuj {0} pod {1}. Kod ważny do {2}.", "Așteaptă {0} la {1}. Cod valabil până la {2}.", "توقّع {0} على {1}. الرمز صالح حتى {2}.");
+        Add("WaVerify.Brief.Speech", "De postbode komt eraan!", "The postman is on the way!", "Listonosz już jedzie!", "Poștașul e pe drum!", "ساعي البريد في الطريق!");
+
+        Add("AdminWa.Title", "Werkgeververificatie", "Employer verification", "Weryfikacja pracodawców", "Verificare angajatori", "تحقق أصحاب العمل");
+        Add("AdminWa.Lead", "Handmatige controles, gemarkeerde registraties en geblokkeerde brieven.", "Manual checks, flagged registrations and blocked letters.", "Kontrole ręczne, oznaczone rejestracje i zablokowane listy.", "Verificări manuale, înregistrări semnalate și scrisori blocate.", "فحوصات يدوية وتسجيلات معلّمة وخطابات موقوفة.");
+        Add("AdminWa.Tab.Manual", "Handmatig", "Manual", "Ręcznie", "Manual", "يدوي");
+        Add("AdminWa.Tab.Flagged", "Gemarkeerd", "Flagged", "Oznaczone", "Semnalate", "معلّم");
+        Add("AdminWa.Tab.Letters", "Brieven", "Letters", "Listy", "Scrisori", "خطابات");
+        Add("AdminWa.Approve", "Goedkeuren", "Approve", "Zatwierdź", "Aprobă", "موافقة");
+        Add("AdminWa.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
+        Add("AdminWa.SendLetter", "Brief sturen", "Send letter", "Wyślij list", "Trimite scrisoare", "إرسال خطاب");
+        Add("AdminWa.StubPdf", "Bekijk testbrief", "View test letter", "Zobacz list testowy", "Vezi scrisoarea test", "عرض خطاب الاختبار");
+        Add("AdminWa.RejectReason", "Reden (verplicht)", "Reason (required)", "Powód (wymagany)", "Motiv (obligatoriu)", "السبب (مطلوب)");
+        Add("Nav.WerkgeverVerificatie", "Werkgeververificatie", "Employer verification", "Weryfikacja pracodawców", "Verificare angajatori", "تحقق أصحاب العمل");
     }
 }

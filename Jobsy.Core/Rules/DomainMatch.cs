@@ -133,4 +133,54 @@ public static class DomainMatch
 
         return false;
     }
+
+    /// <summary>
+    /// Equal registrable domain, or the e-mail domain is a subdomain of a website's registrable domain.
+    /// Free-mail domains never match.
+    /// </summary>
+    public static bool Matches(string? emailDomain, IEnumerable<string>? kvkWebsites)
+    {
+        if (string.IsNullOrWhiteSpace(emailDomain) || kvkWebsites is null)
+        {
+            return false;
+        }
+
+        var domain = emailDomain.Trim().ToLowerInvariant();
+        if (domain.Contains('@', StringComparison.Ordinal))
+        {
+            domain = ExtractEmailDomain(domain) ?? domain;
+        }
+
+        if (FreeMailDomains.IsFreeMail(domain))
+        {
+            return false;
+        }
+
+        var emailReg = RegistrableDomain(domain);
+        if (string.IsNullOrWhiteSpace(emailReg))
+        {
+            return false;
+        }
+
+        foreach (var site in kvkWebsites)
+        {
+            var siteReg = RegistrableDomain(site);
+            if (string.IsNullOrWhiteSpace(siteReg))
+            {
+                continue;
+            }
+
+            if (emailReg.Equals(siteReg, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (domain.EndsWith("." + siteReg, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

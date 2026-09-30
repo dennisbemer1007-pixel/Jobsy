@@ -1,0 +1,167 @@
+@page "/admin/werkgeververificatie"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["AdminWa.Title"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminWa.Title"]" Lead="@Culture["AdminWa.Lead"]" Wide="true">
+    <div class="filter-bar">
+        <button type="button" class="@TabClass("handmatig")" @onclick="ShowManualTab">@Culture["AdminWa.Tab.Manual"]</button>
+        <button type="button" class="@TabClass("gemarkeerd")" @onclick="ShowFlaggedTab">@Culture["AdminWa.Tab.Flagged"]</button>
+        <button type="button" class="@TabClass("brieven")" @onclick="ShowLettersTab">@Culture["AdminWa.Tab.Letters"]</button>
+        <span class="muted">@_items.Count</span>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Bedrijf</th>
+                        <th>KvK</th>
+                        <th>Aanvrager</th>
+                        <th>Reden / status</th>
+                        <th>Heuristieken</th>
+                        <th>Eerdere afwijzingen</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr>
+                            <td class="data-table__col--wrap">
+                                <strong>@item.CompanyName</strong>
+                                <div class="muted">@item.KvkAddress</div>
+                            </td>
+                            <td>@item.KvkNumber</td>
+                            <td class="data-table__col--wrap">
+                                @item.RequesterName
+                                <div class="muted">@item.RequesterEmail</div>
+                            </td>
+                            <td class="data-table__col--wrap">@item.Reason</td>
+                            <td>@string.Join(", ", item.Heuristics)</td>
+                            <td>@item.PriorRejections</td>
+                            <td>
+                                <div class="inline-actions">
+                                    <button class="btn-compact" type="button" @onclick="() => ApproveAsync(item)">@Culture["AdminWa.Approve"]</button>
+                                    <button class="btn-compact" type="button" @onclick="() => BeginReject(item)">@Culture["AdminWa.Reject"]</button>
+                                    <button class="btn-compact" type="button" @onclick="() => SendLetterAsync(item)">@Culture["AdminWa.SendLetter"]</button>
+                                    @if (item.StubLetterAvailable && item.BlockedLetterId is Guid letterId)
+                                    {
+                                        <a class="btn-compact" href="@Api.GetAdminStubLetterPdfUrl(letterId)" target="_blank" rel="noopener">@Culture["AdminWa.StubPdf"]</a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (_rejectTarget is not null)
+        {
+            <div class="panel admin-wa-reject">
+                <h3>@Culture["AdminWa.Reject"] — @_rejectTarget.CompanyName</h3>
+                <label>
+                    @Culture["AdminWa.RejectReason"]
+                    <input @bind="_rejectReason" maxlength="1000" />
+                </label>
+                <div class="inline-actions">
+                    <button class="btn-compact" type="button" @onclick="ConfirmRejectAsync">@Culture["AdminWa.Reject"]</button>
+                    <button class="btn-compact" type="button" @onclick="() => _rejectTarget = null">@Culture["Common.Cancel"]</button>
+                </div>
+            </div>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private string _tab = "handmatig";
+    private List<AdminCompanyVerificationItem> _items = [];
+    private bool _loading = true;
+    private string? _error;
+    private AdminCompanyVerificationItem? _rejectTarget;
+    private string _rejectReason = "";
+
+    private string TabClass(string tab)
+        => "btn-compact" + (_tab == tab ? " is-active" : "");
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ShowManualTab() => await SwitchTab("handmatig");
+    private async Task ShowFlaggedTab() => await SwitchTab("gemarkeerd");
+    private async Task ShowLettersTab() => await SwitchTab("brieven");
+
+    private async Task SwitchTab(string tab)
+    {
+        _tab = tab;
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _items = (await Api.GetAdminCompanyVerificationQueueAsync(_tab)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ApproveAsync(AdminCompanyVerificationItem item)
+    {
+        await Api.ApproveCompanyVerificationAsync(item.CompanyId, null);
+        await ReloadAsync();
+    }
+
+    private void BeginReject(AdminCompanyVerificationItem item)
+    {
+        _rejectTarget = item;
+        _rejectReason = "";
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        if (_rejectTarget is null || string.IsNullOrWhiteSpace(_rejectReason))
+        {
+            return;
+        }
+
+        await Api.RejectCompanyVerificationAsync(_rejectTarget.CompanyId, _rejectReason);
+        _rejectTarget = null;
+        await ReloadAsync();
+    }
+
+    private async Task SendLetterAsync(AdminCompanyVerificationItem item)
+    {
+        await Api.AdminSendCompanyVerificationLetterAsync(item.CompanyId);
+        await ReloadAsync();
+    }
+}

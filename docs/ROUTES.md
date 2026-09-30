@@ -142,6 +142,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/register` | `Pages/Register.razor` | anonymous |
 | `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
 | `/register/koppelen` | `Pages/RegisterKoppelen.razor` | authenticated |
+| `/register/verifieren` | `Pages/RegisterVerifieren.razor` | employer (unverified) |
+| `/register/verifieren/brief` | `Pages/RegisterVerifierenBrief.razor` | employer (unverified) |
+| `/admin/werkgeververificatie` | `Pages/Admin/WerkgeverVerificatieAdmin.razor` | Admin |
 | `/salesmanager` | `Pages/SalesManager/Dashboard.razor` | SalesManager |
 | `/salesmanager/invoices` | `Pages/SalesManager/Invoices.razor` | SalesManager |
 | `/salesmanager/onboarding` | `Pages/SalesManager/Onboarding.razor` | SalesManager |

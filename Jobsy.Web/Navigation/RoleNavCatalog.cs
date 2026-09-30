@@ -15,6 +15,7 @@ public static class RoleNavCatalog
         new("Admin.AtsVacancies", "/admin/ats-vacancies", NavIcons.List),
         new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/ambassadeurs", "/admin/sales"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
+        new("Nav.WerkgeverVerificatie", "/admin/werkgeververificatie", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
             ["/admin/integrations", "/admin/users", "/admin/personal-data-access-log", "/admin/logging", "/admin/feedback", "/admin/wages", "/admin/masterdata", "/admin/exclusivity", "/admin/notifications", "/admin/company", "/admin/about", "/admin/marketing-flyer", "/admin/api-keys", "/admin/cnames", "/admin/vacancy-categories", "/admin/training", "/admin/mail-test"])
     ];

@@ -356,3 +356,74 @@ a.wa-link { display: inline; }
   .wa-mascot--waving .wa-mascot__img,
   .wa-mascot--celebrating .wa-mascot__img { animation: none; }
 }
+
+/* Verification choice + letter (06) */
+.wa-verify-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.wa-verify-card {
+  text-align: start;
+  border: 1px solid var(--border);
+  border-radius: var(--wa-radius);
+  background: var(--surface, #fffcfa);
+  padding: 1.1rem 1rem;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  box-shadow: none;
+}
+.wa-verify-card.is-selected {
+  border-color: var(--wa-coral);
+  box-shadow: 0 0 0 1px var(--wa-coral);
+}
+.wa-verify-card.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.wa-verify-card__tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--wa-mint);
+  margin-bottom: 0.5rem;
+}
+.wa-verify-card__title {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.35rem;
+}
+.wa-verify-steps {
+  margin: 0.75rem 0 0;
+  padding-inline-start: 1.1rem;
+  font-size: 0.9rem;
+}
+.wa-verify-allowed {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: var(--wa-radius);
+  background: color-mix(in srgb, var(--surface) 80%, var(--wa-sky));
+}
+.wa-verify-allowed h2 {
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+}
+.wa-verify-allowed__ok,
+.wa-verify-allowed__lock {
+  margin: 0.35rem 0;
+  padding-inline-start: 1.1rem;
+}
+.wa-verify-code {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border-radius: var(--wa-radius);
+  border: 1px solid var(--border);
+  background: var(--surface, #fffcfa);
+}
+@media (max-width: 900px) {
+  .wa-verify-cards { grid-template-columns: 1fr; }
+}

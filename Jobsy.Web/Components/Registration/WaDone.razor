@@ -15,7 +15,15 @@
         <p class="wa-note">@Culture["Wa.Done.VerifyNext"]</p>
     }
     <div class="wa-actions">
-        <a class="wa-btn wa-btn--primary" href="/home">@Culture["Wa.Done.Dashboard"]</a>
+        @if (State.InstantlyVerified)
+        {
+            <a class="wa-btn wa-btn--primary" href="/home">@Culture["Wa.Done.Dashboard"]</a>
+        }
+        else
+        {
+            <a class="wa-btn wa-btn--primary" href="/register/verifieren">@Culture["WaVerify.Email.Confirm"]</a>
+            <a class="wa-link" href="/home">@Culture["Wa.Done.Dashboard"]</a>
+        }
         <a class="wa-link" href="/register/bedrijf?stap=branche">@Culture["Wa.Done.Profile"]</a>
     </div>
 </section>

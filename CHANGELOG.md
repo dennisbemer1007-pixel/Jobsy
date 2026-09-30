@@ -1,6 +1,7 @@
 # Changelog: Jobsy
 ## Unreleased
 
+- Employer verification (06): business e-mail domain match or Pingen/stub letter code, manual check + admin queue `/admin/werkgeververificatie`, FreeMailDomains blocklist.
 - Employer registration wizard (search → vestigingen → account + code) with WA theme fallback, referral resolver, geocode-safe manual entry, Microsoft/Google sign-up, and §B review fixes.
 
 

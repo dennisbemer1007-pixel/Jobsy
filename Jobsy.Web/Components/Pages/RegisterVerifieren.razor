@@ -1,0 +1,324 @@
+@page "/register/verifieren"
+@layout Jobsy.Web.Components.Layout.WaPublicLayout
+@attribute [Authorize(Roles = "EnterpriseManager,BranchManager,Intermediary,Admin")]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["WaVerify.Eyebrow"] · Lobsy</PageTitle>
+
+<div class="wa-wizard">
+    <WaWizardChrome CurrentStep="5" Speech="@Culture["WaVerify.Speech"]" Pose="WaMascot.MascotPose.Default" />
+
+    <div class="wa-card">
+        @if (_loading)
+        {
+            <p class="wa-hint">@Culture["Common.Loading"]</p>
+        }
+        else if (_verified)
+        {
+            <h1>@Culture["WaVerify.Already"]</h1>
+            <a class="wa-btn wa-btn--primary" href="/home">@Culture["WaVerify.Dashboard"]</a>
+        }
+        else if (_manualPending)
+        {
+            <h1>@Culture["WaVerify.Manual.Pending"]</h1>
+            <a class="wa-btn wa-btn--primary" href="/home">@Culture["WaVerify.Dashboard"]</a>
+        }
+        else if (_emailCodeSent)
+        {
+            <p class="wa-eyebrow">@Culture["WaVerify.Eyebrow"]</p>
+            <h1>@Culture["WaVerify.Email.CodeLabel"]</h1>
+            <p class="wa-lead">@string.Format(Culture["Wa.Code.Lead"], _maskedEmail)</p>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="wa-error" role="alert">@_error</p>
+            }
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaVerify.Email.CodeLabel"]</span>
+                <span class="wa-input"><input @bind="_emailCode" maxlength="8" inputmode="numeric" autocomplete="one-time-code" /></span>
+            </label>
+            <div class="wa-actions">
+                <button type="button" class="wa-link" @onclick="() => _emailCodeSent = false">@Culture["Common.Back"]</button>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@_busy" @onclick="ConfirmEmailAsync">@Culture["WaVerify.Email.Confirm"]</button>
+            </div>
+        }
+        else if (_showManual)
+        {
+            <p class="wa-eyebrow">@Culture["WaVerify.Eyebrow"]</p>
+            <h1>@Culture["WaVerify.Manual.Cta"]</h1>
+            <p class="wa-lead">@Culture["WaVerify.Manual.Hint"]</p>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="wa-error" role="alert">@_error</p>
+            }
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaVerify.Manual.Reason"]</span>
+                <span class="wa-input"><input @bind="_manualReason" maxlength="400" required /></span>
+            </label>
+            <label class="wa-field">
+                <span class="wa-field__label">@Culture["WaVerify.Manual.Message"]</span>
+                <span class="wa-input"><textarea @bind="_manualMessage" rows="3" maxlength="2000"></textarea></span>
+            </label>
+            <div class="wa-actions">
+                <button type="button" class="wa-link" @onclick="() => _showManual = false">@Culture["Common.Back"]</button>
+                <button type="button" class="wa-btn wa-btn--primary" disabled="@_busy" @onclick="SubmitManualAsync">@Culture["WaVerify.Manual.Submit"]</button>
+            </div>
+        }
+        else
+        {
+            <p class="wa-eyebrow">@Culture["WaVerify.Eyebrow"]</p>
+            <h1>@string.Format(Culture["WaVerify.Title"], _companyName)</h1>
+            <p class="wa-lead">@Culture["WaVerify.Lead"]</p>
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="wa-error" role="alert">@_error</p>
+            }
+
+            <div class="wa-verify-cards">
+                <button type="button"
+                        class="@EmailCardClass"
+                        disabled="@(!_emailAvailable)"
+                        @onclick="SelectEmail">
+                    <span class="wa-verify-card__tag">@Culture["WaVerify.Email.Tag"]</span>
+                    <strong class="wa-verify-card__title">@Culture["WaVerify.Email.Title"]</strong>
+                    <p>@Culture["WaVerify.Email.Body"]</p>
+                    @if (_emailAvailable)
+                    {
+                        <p class="wa-chip wa-chip--ok">@string.Format(Culture["WaVerify.Email.Website"], _websiteDomain)</p>
+                        <label class="wa-field" @onclick:stopPropagation="true">
+                            <span class="wa-field__label">@Culture["WaVerify.Email.Label"]</span>
+                            <span class="wa-input"><input @bind="_businessEmail" type="email" maxlength="256" /></span>
+                        </label>
+                        <ol class="wa-verify-steps">
+                            <li>@Culture["WaVerify.Email.Step1"]</li>
+                            <li>@Culture["WaVerify.Email.Step2"]</li>
+                            <li>@Culture["WaVerify.Email.Step3"]</li>
+                        </ol>
+                        <p class="wa-hint">@Culture["WaVerify.Email.FreeMail"]</p>
+                    }
+                    else
+                    {
+                        <p class="wa-hint">@Culture["WaVerify.Email.Disabled"]</p>
+                    }
+                </button>
+
+                <button type="button"
+                        class="@LetterCardClass"
+                        disabled="@(!_letterAvailable)"
+                        @onclick="SelectLetter">
+                    <span class="wa-verify-card__tag">@Culture["WaVerify.Letter.Tag"]</span>
+                    <strong class="wa-verify-card__title">@Culture["WaVerify.Letter.Title"]</strong>
+                    <p>@Culture["WaVerify.Letter.Body"]</p>
+                    @if (!string.IsNullOrWhiteSpace(_letterAddress))
+                    {
+                        <p class="wa-chip">@_letterAddress</p>
+                    }
+                    @if (_letterAvailable)
+                    {
+                        <ol class="wa-verify-steps">
+                            <li>@Culture["WaVerify.Letter.Step1"]</li>
+                            <li>@Culture["WaVerify.Letter.Step2"]</li>
+                            <li>@Culture["WaVerify.Letter.Step3"]</li>
+                        </ol>
+                        <p class="wa-hint">@Culture["WaVerify.Letter.AddressHint"]</p>
+                    }
+                    else
+                    {
+                        <p class="wa-hint">@Culture["WaVerify.Letter.Cap"]</p>
+                    }
+                </button>
+            </div>
+
+            <div class="wa-verify-allowed">
+                <h2>@Culture["WaVerify.Allowed.Title"]</h2>
+                <ul class="wa-verify-allowed__ok">
+                    <li>@Culture["WaVerify.Allowed.1"]</li>
+                    <li>@Culture["WaVerify.Allowed.2"]</li>
+                    <li>@Culture["WaVerify.Allowed.3"]</li>
+                </ul>
+                <ul class="wa-verify-allowed__lock">
+                    <li>@Culture["WaVerify.Blocked.1"]</li>
+                    <li>@Culture["WaVerify.Blocked.2"]</li>
+                    <li>@Culture["WaVerify.Blocked.3"]</li>
+                </ul>
+                <p class="wa-hint">@Culture["WaVerify.Allowed.Note"]</p>
+            </div>
+
+            <p class="wa-note">
+                @Culture["WaVerify.Manual.Lead"]
+                <button type="button" class="wa-link" @onclick="() => _showManual = true">@Culture["WaVerify.Manual.Cta"]</button>
+                — @Culture["WaVerify.Manual.Hint"]
+            </p>
+
+            <div class="wa-actions wa-fixed-bottom">
+                <a class="wa-link" href="/home">@Culture["Common.Back"]</a>
+                @if (_method == "email")
+                {
+                    <button type="button" class="wa-btn wa-btn--primary" disabled="@(_busy || !_emailAvailable)" @onclick="StartEmailAsync">
+                        @string.Format(Culture["WaVerify.Email.Cta"], _businessEmail)
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="wa-btn wa-btn--primary" disabled="@(_busy || !_letterAvailable)" @onclick="StartLetterAsync">
+                        @Culture["WaVerify.Letter.Cta"]
+                    </button>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _verified;
+    private bool _manualPending;
+    private bool _emailAvailable;
+    private bool _letterAvailable;
+    private bool _emailCodeSent;
+    private bool _showManual;
+    private string _method = "email";
+    private string _companyName = "";
+    private string _websiteDomain = "";
+    private string _businessEmail = "";
+    private string _letterAddress = "";
+    private string _maskedEmail = "";
+    private string _emailCode = "";
+    private string _manualReason = "";
+    private string _manualMessage = "";
+    private string? _error;
+
+    private string EmailCardClass
+        => "wa-verify-card"
+           + (_method == "email" ? " is-selected" : "")
+           + (!_emailAvailable ? " is-disabled" : "");
+
+    private string LetterCardClass
+        => "wa-verify-card"
+           + (_method == "letter" ? " is-selected" : "")
+           + (!_letterAvailable ? " is-disabled" : "");
+
+    private void SelectEmail() => _method = "email";
+    private void SelectLetter() => _method = "letter";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var options = await Api.GetCompanyVerificationOptionsAsync();
+            if (options is null)
+            {
+                _error = "Kon opties niet laden.";
+                return;
+            }
+
+            _companyName = options.CompanyName;
+            _verified = string.Equals(options.Status, "Verified", StringComparison.OrdinalIgnoreCase);
+            _manualPending = options.ManualPending;
+            _emailAvailable = options.EmailAvailable;
+            _letterAvailable = options.LetterAvailable;
+            _websiteDomain = options.WebsiteDomains.FirstOrDefault() ?? "";
+            _businessEmail = options.SuggestedEmail ?? "";
+            _letterAddress = options.LetterAddressMasked ?? "";
+            _method = _emailAvailable ? "email" : "letter";
+
+            if (options.ActiveLetterId is not null)
+            {
+                Navigation.NavigateTo("/register/verifieren/brief");
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task StartEmailAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var ok = await Api.StartCompanyEmailVerificationAsync(_businessEmail);
+            _maskedEmail = ok.MaskedEmail ?? _businessEmail;
+            _emailCodeSent = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ConfirmEmailAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.ConfirmCompanyEmailVerificationAsync(_emailCode);
+            Navigation.NavigateTo("/home");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task StartLetterAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.StartCompanyLetterVerificationAsync();
+            Navigation.NavigateTo("/register/verifieren/brief");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SubmitManualAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.RequestCompanyManualVerificationAsync(_manualReason, _manualMessage);
+            _manualPending = true;
+            _showManual = false;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -47,6 +47,8 @@ public static class TransactionalEmails
         new("RegistrationCredentials", "Account actief", "Registratie", "Welkomstmail na activatie, met inlogknop.", "RegistrationCredentials"),
         new("CompanyVerificationReminder", "Herinnering verificatie", "Werkgever", "Day 7/21 reminder om het bedrijf te verifiëren.", "CompanyVerificationReminder"),
         new("CompanyVerified", "Bedrijf geverifieerd", "Werkgever", "Bevestiging na verificatie + gepubliceerde vacatures.", "CompanyVerified"),
+        new("CompanyBusinessEmailVerification", "Verificatiecode zakelijk e-mail", "Werkgever", "6-cijferige code om bedrijf via zakelijk e-mail te verifiëren.", "CompanyBusinessEmailVerification"),
+        new("CompanyVerificationRejected", "Verificatie afgewezen", "Werkgever", "Admin wees de handmatige controle af met reden.", "CompanyVerificationRejected"),
         new("CompanyUnverifiedDeleted", "Registratie verwijderd", "Werkgever", "Day-60 opruiming van niet-geverifieerde registratie.", "CompanyUnverifiedDeleted"),
         new("TakeoverEmailVerification", "Bevestigingscode overname", "Registratie", "OTP voordat een overnameverzoek de eigenaar bereikt.", "TakeoverEmailVerification"),
         new("TakeoverRequest", "Overnameverzoek (eigenaar)", "Werkgever", "Inbox-mail voor de huidige vestigingseigenaar.", "TakeoverRequest"),
@@ -121,6 +123,10 @@ public static class TransactionalEmails
             "companyverified" => CompanyVerified(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, welcomeTokenGranted: true,
                 publishedTitles: [ctx.VacancyTitle]),
+            "companybusinessemailverification" => CompanyBusinessEmailVerification(
+                ctx.CompanyName, ctx.OtpCode, ctx.PublicWebBaseUrl),
+            "companyverificationrejected" => CompanyVerificationRejected(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.RoleLabel),
             "companyunverifieddeleted" => CompanyUnverifiedDeleted(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName),
             "takeoveremailverification" => TakeoverEmailVerification(
@@ -648,6 +654,50 @@ public static class TransactionalEmails
             baseUrl,
             preheader: "Je bedrijf is geverifieerd op Lobsy");
         return new("CompanyVerified", "CompanyVerified", "Je bedrijf is geverifieerd — Lobsy", html);
+    }
+
+    public static ComposedEmail CompanyBusinessEmailVerification(
+        string companyName,
+        string code,
+        string? baseUrl)
+    {
+        var verifyUrl = EmailLayout.RegisterVerifyUrl(baseUrl);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Je verificatiecode")}
+             {EmailLayout.Paragraph(
+                 $"Gebruik deze 6-cijferige code om <strong>{EmailLayout.Escape(companyName)}</strong> te verifiëren:")}
+             {EmailLayout.OtpBlock(code)}
+             {EmailLayout.Paragraph("De code is 10 minuten geldig.")}
+             {EmailLayout.PrimaryButton(verifyUrl, "Code invullen")}
+             """,
+            baseUrl,
+            preheader: "Verificatiecode voor je bedrijf");
+        return new("CompanyBusinessEmailVerification", "CompanyBusinessEmailVerification",
+            "Je Lobsy-verificatiecode", html);
+    }
+
+    public static ComposedEmail CompanyVerificationRejected(
+        string? baseUrl,
+        string contactName,
+        string companyName,
+        string reason)
+    {
+        var verifyUrl = EmailLayout.RegisterVerifyUrl(baseUrl);
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Verificatie afgewezen")}
+             {EmailLayout.Paragraph($"Hoi {EmailLayout.Escape(contactName)},")}
+             {EmailLayout.Paragraph(
+                 $"We konden <strong>{EmailLayout.Escape(companyName)}</strong> niet verifiëren.")}
+             {EmailLayout.Paragraph($"Reden: {EmailLayout.Escape(reason)}")}
+             {EmailLayout.Paragraph("Je kunt een brief met code aanvragen of opnieuw een handmatige controle starten.")}
+             {EmailLayout.PrimaryButton(verifyUrl, "Opnieuw verifiëren")}
+             """,
+            baseUrl,
+            preheader: "Verificatie afgewezen");
+        return new("CompanyVerificationRejected", "CompanyVerificationRejected",
+            "Verificatie afgewezen — Lobsy", html);
     }
 
     public static ComposedEmail CompanyUnverifiedDeleted(

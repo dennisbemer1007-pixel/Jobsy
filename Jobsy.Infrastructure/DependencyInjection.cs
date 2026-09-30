@@ -1,5 +1,6 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
@@ -290,6 +291,29 @@ public static class DependencyInjection
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
         services.AddScoped<ICompanyVerificationService, CompanyVerificationService>();
+        services.Configure<CompanyVerificationSettings>(configuration.GetSection(CompanyVerificationSettings.SectionName));
+        services.AddSingleton<IStubLetterStore, Jobsy.Infrastructure.Services.Letters.StubLetterStore>();
+        services.AddScoped<Jobsy.Infrastructure.Services.Letters.StubLetterService>();
+        services.AddScoped<Jobsy.Infrastructure.Services.Letters.PingenLetterService>();
+        services.AddHttpClient(Jobsy.Infrastructure.Services.Letters.PingenLetterService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        });
+        services.AddScoped<ILetterService>(sp =>
+        {
+            var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CompanyVerificationSettings>>().Value;
+            if (settings.LetterProvider == LetterProviderKind.Pingen
+                && !string.IsNullOrWhiteSpace(settings.PingenClientId)
+                && !string.IsNullOrWhiteSpace(settings.PingenClientSecret)
+                && !string.IsNullOrWhiteSpace(settings.PingenOrganisationId))
+            {
+                return sp.GetRequiredService<Jobsy.Infrastructure.Services.Letters.PingenLetterService>();
+            }
+
+            return sp.GetRequiredService<Jobsy.Infrastructure.Services.Letters.StubLetterService>();
+        });
+        services.AddScoped<ICompanyVerificationFlowService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationFlowService>();
+        services.AddScoped<ICompanyVerificationAdminService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationAdminService>();
         services.AddScoped<IRegistrationReferralResolver, DefaultRegistrationReferralResolver>();
         services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
         {

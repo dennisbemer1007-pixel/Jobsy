@@ -19,7 +19,10 @@ public static class FreeMailDomains
         "gmx.com", "gmx.de", "gmx.net", "web.de", "mail.com", "aol.com",
         "yandex.com", "yandex.ru",
         "mailinator.com", "guerrillamail.com", "tempmail.com", "10minutemail.com",
-        "yopmail.com", "trashmail.com", "discard.email", "temp-mail.org"
+        "yopmail.com", "trashmail.com", "discard.email", "temp-mail.org",
+        "sharklasers.com", "guerrillamailblock.com", "grr.la", "guerrillamail.info",
+        "pokemail.net", "spam4.me", "bccto.me", "dispostable.com", "mailnesia.com",
+        "maildrop.cc", "getnada.com", "emailondeck.com", "throwaway.email"
     };
 
     public static bool IsFreeMail(string? domainOrEmail)

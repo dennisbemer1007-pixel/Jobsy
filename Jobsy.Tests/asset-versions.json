@@ -1,126 +1,126 @@
 {
-    "css/app.min.css": {
-        "sha256": "ebb735ce83b7c581c4eda87bc229dc6058fef5284b06a104d2e3fa7920084d47",
-        "v": "20260929-acc"
-    },
-    "css/features/account-mfa.css": {
-        "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
-        "v": "20260929-mfa"
-    },
-    "css/features/applications.css": {
-        "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
-        "v": "20260927-apps-clamp"
-    },
-    "css/features/banenkaart.css": {
-        "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
-        "v": "20260927-banenkaart-v3b"
-    },
-    "css/features/gratis-dna.css": {
-        "sha256": "3ffb5af664b48f4edb1a38bfae8917a65f2e123844638d9d1d599e04532260a7",
-        "v": "20260927-gratis-dna"
-    },
-    "css/features/kandidaatinzichten.css": {
-        "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
-        "v": "20260928-insights"
-    },
-    "css/features/match-desktop.css": {
-        "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
-        "v": "20260928-match-desktop-ci"
-    },
-    "css/features/mijn-dna.css": {
-        "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",
-        "v": "20260927-dna-c"
-    },
-    "css/features/nav-feedback.css": {
-        "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",
-        "v": "20260928-nav-fb"
-    },
-    "css/features/onboarding-wizard.css": {
-        "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
-        "v": "20260927-dna-c"
-    },
-    "css/features/questionnaire.css": {
-        "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
-        "v": "20260928-q-scroll"
-    },
-    "css/features/testresultaten.css": {
-        "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
-        "v": "20260929-testresultaten-b2"
-    },
-    "favicon.ico": {
-        "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
-        "v": "20260925-coral"
-    },
-    "favicon.png": {
-        "sha256": "71d7450b21a8326241ce974f03b8e1aea59cceb2c493b163d731c5e8f875d278",
-        "v": "20260925-coral"
-    },
-    "icons/apple-touch-icon.png": {
-        "sha256": "226498db3c36a03789a4d3d80af373c11fcdd52635bab0327a9e8004930aff4c",
-        "v": "20260925-coral"
-    },
-    "js/app-core.js": {
-        "sha256": "28a314f8119199b436e188ff0faaa7494d15663c6ef304cf147a5b803f0f5636",
-        "v": "20260929-match-desktop"
-    },
-    "js/app-extras.js": {
-        "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
-        "v": "20260902-bw1"
-    },
-    "js/blazor-boot.js": {
-        "sha256": "1cd1288aaa4f934165384316b99437f051d0aafaeb2819bce37fb6231a05422c",
-        "v": "20260928-perf"
-    },
-    "js/discoveryHover.js": {
-        "sha256": "f8da38e2ecdf91f6bd33e7de3b3dd9c0316344dfc603143d8de92f73a57ea164",
-        "v": "20260928-list-rerender"
-    },
-    "js/features/kandidaatinzichten-map.js": {
-        "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",
-        "v": "20260928-insights"
-    },
-    "js/feedback.js": {
-        "sha256": "3fa3c2d2ec7df009a97b292ef6ea89f0b1bc283f77c1e1cfe9b83c23a6ed6e7e",
-        "v": "20260831-ux2"
-    },
-    "js/gratis-dna.js": {
-        "sha256": "cfda89b97737942663ce7c82ba0cdff016e4afddc7b10a5a82d82f9a70843c3b",
-        "v": "20260927-gratis-dna"
-    },
-    "js/jobMap.min.js": {
-        "sha256": "dfd24869872790406a6a4044aa377e6b81b9ff7e84e767538699117f113bb990",
-        "v": "20260928-mapperf"
-    },
-    "js/jobsyMapLibre.min.js": {
-        "sha256": "0bd8f0e24e1af41385fcfac63ae64147cc660fc50dea151b0e6cae7a06bd6ff5",
-        "v": "20260926-mapfix9"
-    },
-    "js/lobsyPush.js": {
-        "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",
-        "v": "20260928-perf"
-    },
-    "js/navFeedback.js": {
-        "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
-        "v": "20260928-nav-fb"
-    },
-    "js/vacancyDetailMap.min.js": {
-        "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",
-        "v": "20260928-perf"
-    },
-    "manifest.webmanifest": {
-        "sha256": "3625ad6d3d8132bc21deb77aac1829a188208886111824b30de3db39c673b075",
-        "v": "20260925-coral"
-    },
-    "service-worker.js": {
-        "sha256": "a0958e5755ef7ac5ca423b5ff0e4f7f72009e66c4864684be0af32575b404a28",
-        "v": "20260928-perf"
-    },
-    "service-worker.published.js": {
-        "sha256": "7fbbfcf8dc3ff118e4432c1ed2f84d2808f00464a350529fc334a2ee92b5b687",
-        "v": "20260928-perf"
-    },
-    "css/features/werkgever-aanmelding.css": {
-        "sha256": "b38525927e26955c84b8be375c2aa9f69f286d47010c39ba3de71c2b512353f9",
-        "v": "20260930-wa"
-    }
+  "css/app.min.css": {
+    "sha256": "ebb735ce83b7c581c4eda87bc229dc6058fef5284b06a104d2e3fa7920084d47",
+    "v": "20260929-acc"
+  },
+  "css/features/account-mfa.css": {
+    "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
+    "v": "20260929-mfa"
+  },
+  "css/features/applications.css": {
+    "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
+    "v": "20260927-apps-clamp"
+  },
+  "css/features/banenkaart.css": {
+    "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
+    "v": "20260927-banenkaart-v3b"
+  },
+  "css/features/gratis-dna.css": {
+    "sha256": "3ffb5af664b48f4edb1a38bfae8917a65f2e123844638d9d1d599e04532260a7",
+    "v": "20260927-gratis-dna"
+  },
+  "css/features/kandidaatinzichten.css": {
+    "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
+    "v": "20260928-insights"
+  },
+  "css/features/match-desktop.css": {
+    "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
+    "v": "20260928-match-desktop-ci"
+  },
+  "css/features/mijn-dna.css": {
+    "sha256": "039f2fead93a7aff58df1e7882497e248dad9193ebc37e7ed06de76ba0d97954",
+    "v": "20260927-dna-c"
+  },
+  "css/features/nav-feedback.css": {
+    "sha256": "bcca67f50643f55b0d169df00fb48e97b6aa468af59443acb8de732fa409fd55",
+    "v": "20260928-nav-fb"
+  },
+  "css/features/onboarding-wizard.css": {
+    "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
+    "v": "20260927-dna-c"
+  },
+  "css/features/questionnaire.css": {
+    "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
+    "v": "20260928-q-scroll"
+  },
+  "css/features/testresultaten.css": {
+    "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
+    "v": "20260929-testresultaten-b2"
+  },
+  "css/features/werkgever-aanmelding.css": {
+    "sha256": "01bfa21da72368705057628f9e739ec91ca48368c7239b4f07006fd1b14244e3",
+    "v": "20260930-wa06"
+  },
+  "favicon.ico": {
+    "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
+    "v": "20260925-coral"
+  },
+  "favicon.png": {
+    "sha256": "71d7450b21a8326241ce974f03b8e1aea59cceb2c493b163d731c5e8f875d278",
+    "v": "20260925-coral"
+  },
+  "icons/apple-touch-icon.png": {
+    "sha256": "226498db3c36a03789a4d3d80af373c11fcdd52635bab0327a9e8004930aff4c",
+    "v": "20260925-coral"
+  },
+  "js/app-core.js": {
+    "sha256": "28a314f8119199b436e188ff0faaa7494d15663c6ef304cf147a5b803f0f5636",
+    "v": "20260929-match-desktop"
+  },
+  "js/app-extras.js": {
+    "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
+    "v": "20260902-bw1"
+  },
+  "js/blazor-boot.js": {
+    "sha256": "1cd1288aaa4f934165384316b99437f051d0aafaeb2819bce37fb6231a05422c",
+    "v": "20260928-perf"
+  },
+  "js/discoveryHover.js": {
+    "sha256": "f8da38e2ecdf91f6bd33e7de3b3dd9c0316344dfc603143d8de92f73a57ea164",
+    "v": "20260928-list-rerender"
+  },
+  "js/features/kandidaatinzichten-map.js": {
+    "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",
+    "v": "20260928-insights"
+  },
+  "js/feedback.js": {
+    "sha256": "3fa3c2d2ec7df009a97b292ef6ea89f0b1bc283f77c1e1cfe9b83c23a6ed6e7e",
+    "v": "20260831-ux2"
+  },
+  "js/gratis-dna.js": {
+    "sha256": "cfda89b97737942663ce7c82ba0cdff016e4afddc7b10a5a82d82f9a70843c3b",
+    "v": "20260927-gratis-dna"
+  },
+  "js/jobMap.min.js": {
+    "sha256": "dfd24869872790406a6a4044aa377e6b81b9ff7e84e767538699117f113bb990",
+    "v": "20260928-mapperf"
+  },
+  "js/jobsyMapLibre.min.js": {
+    "sha256": "0bd8f0e24e1af41385fcfac63ae64147cc660fc50dea151b0e6cae7a06bd6ff5",
+    "v": "20260926-mapfix9"
+  },
+  "js/lobsyPush.js": {
+    "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",
+    "v": "20260928-perf"
+  },
+  "js/navFeedback.js": {
+    "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
+    "v": "20260928-nav-fb"
+  },
+  "js/vacancyDetailMap.min.js": {
+    "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",
+    "v": "20260928-perf"
+  },
+  "manifest.webmanifest": {
+    "sha256": "3625ad6d3d8132bc21deb77aac1829a188208886111824b30de3db39c673b075",
+    "v": "20260925-coral"
+  },
+  "service-worker.js": {
+    "sha256": "a0958e5755ef7ac5ca423b5ff0e4f7f72009e66c4864684be0af32575b404a28",
+    "v": "20260928-perf"
+  },
+  "service-worker.published.js": {
+    "sha256": "7fbbfcf8dc3ff118e4432c1ed2f84d2808f00464a350529fc334a2ee92b5b687",
+    "v": "20260928-perf"
+  }
 }

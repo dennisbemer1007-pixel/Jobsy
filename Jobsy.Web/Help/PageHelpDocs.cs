@@ -92,6 +92,24 @@ public static class PageHelpDocs
             "Open de link uit de e-mail (of demo-link). Daarna is het account actief of volgt een overnameproces.",
             "Registratie afronden zodat managers kunnen inloggen."),
 
+        ["/register/verifieren"] = new(
+            "Bedrijf verifiëren",
+            "Kies zakelijk e-mailadres of brief met code om je bedrijf te verifiëren.",
+            "Zonder website bij KVK is e-mail niet beschikbaar. Handmatige controle is de fallback.",
+            "Zichtbaar worden voor kandidaten en publiceren/tokens vrijgeven."),
+
+        ["/register/verifieren/brief"] = new(
+            "Brief onderweg",
+            "Code uit de verificatiebrief invullen.",
+            "De brief gaat naar het KvK-adres. Code is 30 dagen geldig; opnieuw versturen na 7 dagen.",
+            "Bedrijf verifiëren zonder zakelijk e-maildomein."),
+
+        ["/admin/werkgeververificatie"] = new(
+            "Werkgeververificatie",
+            "Admin-wachtrij voor handmatige controles, gemarkeerde registraties en geblokkeerde brieven.",
+            "Goedkeuren, afwijzen met reden, of een brief sturen. Beslissingen worden geaudit.",
+            "Twijfelgevallen afhandelen zodat echte bedrijven zichtbaar worden."),
+
         ["/access-denied"] = new(
             "Geen toegang",
             "Je hebt deze pagina geopend zonder de juiste rol of rechten.",

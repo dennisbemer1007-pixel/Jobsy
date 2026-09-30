@@ -95,6 +95,10 @@ public class JobsyDbContext : DbContext
     public DbSet<VatBufferTransfer> VatBufferTransfers => Set<VatBufferTransfer>();
     public DbSet<VatDeclaration> VatDeclarations => Set<VatDeclaration>();
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
+    public DbSet<CompanyVerificationLetter> CompanyVerificationLetters => Set<CompanyVerificationLetter>();
+    public DbSet<CompanyVerificationEmailChallenge> CompanyVerificationEmailChallenges => Set<CompanyVerificationEmailChallenge>();
+    public DbSet<CompanyManualVerificationRequest> CompanyManualVerificationRequests => Set<CompanyManualVerificationRequest>();
+    public DbSet<CompanyVerificationDecision> CompanyVerificationDecisions => Set<CompanyVerificationDecision>();
     public DbSet<KvkUsageDaily> KvkUsageDaily => Set<KvkUsageDaily>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
@@ -1410,6 +1414,63 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.CreatedBranchCompanyId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CompanyVerificationLetter>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.KvkNumber).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.CodeHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.AddressLine1).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.AddressLine2).HasMaxLength(256);
+            entity.Property(e => e.PostalCode).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.City).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Country).HasMaxLength(2).IsRequired();
+            entity.Property(e => e.ProviderLetterId).HasMaxLength(128);
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => e.KvkNumber);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.RequestedByUser).WithMany().HasForeignKey(e => e.RequestedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ResendOfLetter).WithMany().HasForeignKey(e => e.ResendOfLetterId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CompanyVerificationEmailChallenge>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.CodeHash).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.RequestedByUser).WithMany().HasForeignKey(e => e.RequestedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CompanyManualVerificationRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Reason).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Message).HasMaxLength(4000);
+            entity.Property(e => e.AttachmentIdsJson).HasMaxLength(2000);
+            entity.Property(e => e.DecisionNote).HasMaxLength(2000);
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => e.DecidedAtUtc);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.RequestedByUser).WithMany().HasForeignKey(e => e.RequestedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.DecidedByUser).WithMany().HasForeignKey(e => e.DecidedByUserId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CompanyVerificationDecision>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.KvkNumber).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Reason).HasMaxLength(2000);
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => e.KvkNumber);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.Company).WithMany().HasForeignKey(e => e.CompanyId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.AdminUser).WithMany().HasForeignKey(e => e.AdminUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<KvkUsageDaily>(entity =>
