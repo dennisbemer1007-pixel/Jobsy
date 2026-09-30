@@ -43,7 +43,15 @@
 @code {
     private PageSeoModel Model => PageSeoResolver.Resolve(Navigation.Uri, Culture, Config, Seo.Current);
 
-    private bool IsHome => PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath) == "/";
+    private bool IsHome
+    {
+        get
+        {
+            var path = PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath);
+            // Map dual-route during landing 04: both "/" and /banenkaart emit Website JSON-LD.
+            return path is "/" or "/banenkaart";
+        }
+    }
 
     private string Origin => PageSeoResolver.Origin(Navigation.Uri, Config);
 
@@ -61,7 +69,7 @@
         get
         {
             var path = PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath);
-            if (path == "/" || !Model.Indexable)
+            if (path is "/" or "/banenkaart" || !Model.Indexable)
             {
                 return null;
             }

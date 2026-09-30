@@ -31,7 +31,7 @@ public class PageSeoCatalogTests
     [InlineData("/employer/tokens", false)]
     [InlineData("/register/activate", false)]
     [InlineData("/privacy/data", false)]
-    [InlineData("/banen", false)]
+    [InlineData("/banenkaart", true)]
     public void Indexability_matches_public_vs_private_surfaces(string path, bool indexable)
         => Assert.Equal(indexable, PageSeoCatalog.IsIndexable(path));
 
@@ -240,7 +240,7 @@ public class StructuredDataAndSitemapTests
         var json = StructuredData.WebsiteAndOrganization("https://lobsy.nl");
         Assert.Contains("WebSite", json);
         Assert.Contains("Organization", json);
-        Assert.Contains("/?q={search_term_string}", json);
+        Assert.Contains("/banenkaart?q={search_term_string}", json);
         Assert.DoesNotContain("email", json, StringComparison.OrdinalIgnoreCase);
     }
 

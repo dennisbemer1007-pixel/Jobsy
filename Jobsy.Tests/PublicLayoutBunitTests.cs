@@ -56,7 +56,7 @@ public class PublicLayoutBunitTests : TestContext
         var markup = cut.Markup;
         Assert.True(markup.IndexOf("pub-skip", StringComparison.Ordinal) < markup.IndexOf("pub-header", StringComparison.Ordinal));
 
-        Assert.DoesNotContain("/banenkaart", markup, StringComparison.Ordinal);
+        Assert.Contains("/banenkaart", markup, StringComparison.Ordinal);
         Assert.DoesNotContain("/werkgevers", markup, StringComparison.Ordinal);
         Assert.Contains("/partner", markup, StringComparison.Ordinal);
         Assert.Contains("/hoe-werkt-lobsy", markup, StringComparison.Ordinal);

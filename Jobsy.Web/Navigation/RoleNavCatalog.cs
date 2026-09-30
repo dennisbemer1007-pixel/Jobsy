@@ -10,7 +10,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Admin =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
+        new("Nav.JobMap", "/banenkaart", NavIcons.Map, ["/"]),
         new("Nav.Vacancies", "/admin/vacancies", NavIcons.Vacancies, ["/admin/moderation"]),
         new("Admin.AtsVacancies", "/admin/ats-vacancies", NavIcons.List),
         new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/ambassadeurs", "/admin/sales"]),
@@ -21,7 +21,7 @@ public static class RoleNavCatalog
 
     public static readonly NavItem[] Candidate =
     [
-        new("Nav.Search", "/", NavIcons.Search),
+        new("Nav.Search", "/banenkaart", NavIcons.Search, ["/"]),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
         new("Nav.Applications", "/candidate/applications", NavIcons.Applications),
         new("Nav.CareerPath", "/carriere", NavIcons.Career),
@@ -38,7 +38,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Enterprise =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
+        new("Nav.JobMap", "/banenkaart", NavIcons.Map, ["/"]),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new"]),
         new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
         new("Nav.Talent", "/employer/talent", NavIcons.Users, ["/employer/talent-contacts", "/employer/kandidaatinzichten"]),
@@ -74,7 +74,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Regional =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
+        new("Nav.JobMap", "/banenkaart", NavIcons.Map, ["/"]),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/applicants"]),
         new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"]),
         new("Nav.CandidateInsights", "/employer/kandidaatinzichten", NavIcons.Users)
@@ -83,7 +83,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Branch =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
+        new("Nav.JobMap", "/banenkaart", NavIcons.Map, ["/"]),
         new("Nav.Vacancies", "/branch/vacancies", NavIcons.Vacancies, ["/employer/vacancies", "/branch/vacancies/new"]),
         new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
         new("Nav.Talent", "/employer/talent", NavIcons.Users, ["/employer/talent-contacts", "/employer/kandidaatinzichten"]),
@@ -97,7 +97,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Intermediary =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
+        new("Nav.JobMap", "/banenkaart", NavIcons.Map, ["/"]),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.Talent", "/employer/talent", NavIcons.Users, ["/employer/talent-contacts"]),
         new("Nav.Clients", "/intermediary", NavIcons.Companies),
@@ -259,7 +259,17 @@ public static class RoleNavCatalog
             return false;
         }
 
-        return item.ExtraActivePaths.Any(p => MatchesPathOrPrefix(path, NormalizePath(p)));
+        return item.ExtraActivePaths.Any(p =>
+        {
+            var candidate = NormalizePath(p);
+            // Exact "/" is allowed as ExtraActivePath (map dual-route during landing 04).
+            if (candidate is "/")
+            {
+                return string.Equals(path, "/", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return MatchesPathOrPrefix(path, candidate);
+        });
     }
 
     public static string TokensHrefFor(ClaimsPrincipal user)

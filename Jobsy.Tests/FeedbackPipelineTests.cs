@@ -52,7 +52,7 @@ public class FeedbackPipelineTests
         Assert.Contains("Candidate", prompt);
         Assert.Contains("fix/feedback-aaaaaaaabbbbccccddddeeeeeeeeeeee", prompt);
         Assert.Contains("acc", prompt);
-        Assert.Contains("Jobsy.Web/Components/Pages/Banen.razor", prompt);
+        Assert.Contains("Jobsy.Web/Components/Pages/Banenkaart.razor", prompt);
         Assert.Contains("bijgevoegd", prompt);
         Assert.Contains("niet vertrouwen", prompt);
     }

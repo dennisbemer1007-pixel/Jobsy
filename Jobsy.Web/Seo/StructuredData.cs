@@ -41,7 +41,7 @@ public static class StructuredData
                     ["potentialAction"] = new Dictionary<string, object?>
                     {
                         ["@type"] = "SearchAction",
-                        ["target"] = root + "/?q={search_term_string}",
+                        ["target"] = root + "/banenkaart?q={search_term_string}",
                         ["query-input"] = "required name=search_term_string"
                     }
                 }

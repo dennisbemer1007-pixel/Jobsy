@@ -113,7 +113,7 @@ public class BlazorReconnectAndHealthzTests
         });
 
         var page = await context.NewPageAsync();
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             "() => !!(window.Blazor && typeof Blazor.reconnect === 'function')",
             null,
@@ -175,7 +175,7 @@ public class BlazorReconnectAndHealthzTests
         var ws = await page.RunAndWaitForWebSocketAsync(
             async () =>
             {
-                await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             },
             new()
             {

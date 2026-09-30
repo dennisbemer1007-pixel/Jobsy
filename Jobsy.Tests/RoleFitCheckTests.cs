@@ -141,7 +141,7 @@ public class RoleFitCheckTests
         => Jobsy.Web.Localization.UiStrings.Get(key, "nl");
 
     private static string BuildMapHref(string query)
-        => "/?q=" + Uri.EscapeDataString(query);
+        => "/banenkaart?q=" + Uri.EscapeDataString(query);
 
     private static void AssertNoJargon(RoleFitCheckSnapshot snapshot)
     {

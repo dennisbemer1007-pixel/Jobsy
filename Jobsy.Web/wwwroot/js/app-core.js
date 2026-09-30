@@ -767,7 +767,7 @@ window.jobsyMaps = (function () {
     function isDiscoveryPath() {
         try {
             var path = (window.location && window.location.pathname) || "";
-            return path === "/" || path === "";
+            return path === "/" || path === "" || path === "/banenkaart";
         } catch (e) {
             return false;
         }

@@ -119,7 +119,7 @@ public class RoleNavCatalogTests
         Assert.Equal(
             new[]
             {
-                "/",
+                "/banenkaart",
                 "/candidate/liked",
                 "/candidate/applications",
                 "/carriere",

@@ -29,7 +29,7 @@ public static class PublicNavCatalog
     [
         new("PublicNav.HowItWorks", PublicRoutes.HowItWorks),
         // Available once file 04 moves the map.
-        new("PublicNav.JobMap", PublicRoutes.Banenkaart, IsAvailable: false),
+        new("PublicNav.JobMap", PublicRoutes.Banenkaart, IsAvailable: true),
         // Available once file 08 builds /werkgevers.
         new("PublicNav.Employers", PublicRoutes.Employers, IsAvailable: false),
         // Available once file 08 builds /scholen.

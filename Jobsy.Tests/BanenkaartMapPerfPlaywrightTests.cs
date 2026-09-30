@@ -43,7 +43,7 @@ public class BanenkaartMapPerfPlaywrightTests
             }
         };
 
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
         try
         {
@@ -144,7 +144,7 @@ public class BanenkaartMapPerfPlaywrightTests
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-            using var resp = await http.GetAsync(baseUrl + "/");
+            using var resp = await http.GetAsync(baseUrl + E2eRoutes.Banenkaart);
             return resp.IsSuccessStatusCode;
         }
         catch

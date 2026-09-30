@@ -8,6 +8,8 @@ public class PageHelpDocsTests
     [InlineData("/")]
     [InlineData("/banen")]
     [InlineData("/banen/")]
+    [InlineData("/banenkaart")]
+    [InlineData("/banenkaart/")]
     public void Banenkaart_paths_are_excluded(string path)
     {
         Assert.True(PageHelpDocs.IsExcludedPath(path));

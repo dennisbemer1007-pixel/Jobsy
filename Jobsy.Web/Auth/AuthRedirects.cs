@@ -9,7 +9,7 @@ public static partial class AuthRedirects
 
     /// <summary>Guide remains reachable from the (i) menu.</summary>
     public const string CandidateHowToGuidePath = "/candidate/hoe-werkt-lobsy";
-    public const string BanenkaartPath = "/";
+    public const string BanenkaartPath = "/banenkaart";
 
     /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
@@ -27,7 +27,7 @@ public static partial class AuthRedirects
         }
 
         var path = url.Split('?', '#')[0];
-        return path is "/" or "/home" or "/banen" or "/login";
+        return path is "/" or "/home" or "/banen" or "/banenkaart" or "/login";
     }
 
     /// <summary>

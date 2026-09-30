@@ -10,13 +10,13 @@ public class PublicNavCatalogTests
     {
         var items = PublicNavCatalog.Header(LandingVariant.On);
         Assert.Contains(items, i => i.Href == PublicRoutes.HowItWorks && i.IsAvailable);
-        Assert.Contains(items, i => i.Href == PublicRoutes.Banenkaart && !i.IsAvailable);
+        Assert.Contains(items, i => i.Href == PublicRoutes.Banenkaart && i.IsAvailable);
         Assert.Contains(items, i => i.Href == PublicRoutes.Employers && !i.IsAvailable);
         Assert.Contains(items, i => i.Href == PublicRoutes.Schools && !i.IsAvailable);
         Assert.Contains(items, i => i.Href == PublicRoutes.Partner && i.IsAvailable);
 
         var rendered = items.Where(i => i.IsAvailable).Select(i => i.Href).ToArray();
-        Assert.DoesNotContain(PublicRoutes.Banenkaart, rendered);
+        Assert.Contains(PublicRoutes.Banenkaart, rendered);
         Assert.DoesNotContain(PublicRoutes.Employers, rendered);
         Assert.DoesNotContain(PublicRoutes.Schools, rendered);
     }

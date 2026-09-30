@@ -53,7 +53,7 @@ public static class HorizonCareerPathBuilder
                 ["Minimaal aantoonbare inzet in een verwante functie of project"],
                 YearsExperienceNeeded: EstimateYears(dream, mid: true),
                 "Zoek stap-vacatures",
-                "/?q=" + query),
+                "/banenkaart?q=" + query),
             ContentStep(
                 4,
                 dream,
@@ -63,7 +63,7 @@ public static class HorizonCareerPathBuilder
                 [$"Passende opleiding of gelijkwaardige ervaring voor {dream}", "Betrouwbare referenties of aantoonbare inzet"],
                 YearsExperienceNeeded: EstimateYears(dream, mid: false),
                 "Zoek droomvacatures",
-                "/?q=" + query)
+                "/banenkaart?q=" + query)
         };
 
         var dnaNote = profile?.HasDnaSignal == true

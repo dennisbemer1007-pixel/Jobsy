@@ -195,6 +195,7 @@ app.UseAuthorization();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
 app.UseRegisterOntdekRedirect();
+app.UseBanenRedirect();
 
 app.MapJobsyAuthEndpoints();
 app.MapLanguageEndpoints();

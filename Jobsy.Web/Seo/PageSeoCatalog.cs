@@ -51,6 +51,7 @@ public static partial class PageSeoCatalog
     public static IReadOnlyList<string> StaticIndexablePaths { get; } =
     [
         "/",
+        "/banenkaart",
         "/login",
         "/register",
         "/privacy",
@@ -96,8 +97,9 @@ public static partial class PageSeoCatalog
     public static IReadOnlyDictionary<string, PageSeoEntry> Exact { get; } =
         new Dictionary<string, PageSeoEntry>(StringComparer.OrdinalIgnoreCase)
         {
-            ["/"] = Public("Page.JobMapTitle", "Seo.HomeDescription"),
-            ["/banen"] = Private("Page.JobMapTitle", "Seo.HomeDescription"),
+            // "/" still serves the map until landing 05; canonical already points at /banenkaart.
+            ["/"] = Public("Page.JobMapTitle", "Seo.HomeDescription", CanonicalPath: "/banenkaart"),
+            ["/banenkaart"] = Public("Page.JobMapTitle", "Seo.HomeDescription"),
             ["/login"] = Public("Login.Title", "Seo.LoginDescription"),
             ["/account-maken"] = Private("Signup.Seo.Title", "Signup.Seo.Description"),
             ["/account-maken/code"] = Private("Signup.Code.Title", "Signup.Seo.Description"),
@@ -236,8 +238,13 @@ public static partial class PageSeoCatalog
         ("/tokens/", Private("Seo.SiteName", "Seo.PrivateDescription")),
     ];
 
-    private static PageSeoEntry Public(string titleKey, string descriptionKey, string ogType = "website", bool hreflang = false)
-        => new(titleKey, descriptionKey, Indexable: true, ogType, Hreflang: hreflang);
+    private static PageSeoEntry Public(
+        string titleKey,
+        string descriptionKey,
+        string ogType = "website",
+        bool hreflang = false,
+        string? CanonicalPath = null)
+        => new(titleKey, descriptionKey, Indexable: true, ogType, Hreflang: hreflang, CanonicalPath: CanonicalPath);
 
     private static PageSeoEntry Private(string titleKey, string descriptionKey)
         => new(titleKey, descriptionKey, Indexable: false);

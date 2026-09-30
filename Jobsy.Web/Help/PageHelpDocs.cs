@@ -12,7 +12,7 @@ public static class PageHelpDocs
     public static bool IsExcludedPath(string? path)
     {
         var p = Normalize(path);
-        return p is "/" or "/banen";
+        return p is "/" or "/banen" or "/banenkaart";
     }
 
     public static Doc? TryGet(string? path)

@@ -37,7 +37,7 @@ public static class HowLobsyRoleGuides
         "HowLobsy.Title",
         "HowLobsy.Lead",
         [
-            new("HowLobsy.Step1Title", "HowLobsy.Step1Body", [new("/", "Nav.JobMap")]),
+            new("HowLobsy.Step1Title", "HowLobsy.Step1Body", [new("/banenkaart", "Nav.JobMap")]),
             new("HowLobsy.Step2Title", "HowLobsy.Step2Body", [new("/profiel", "Nav.Profile")]),
             new("HowLobsy.Step3Title", "HowLobsy.Step3Body",
             [
@@ -48,7 +48,7 @@ public static class HowLobsyRoleGuides
             new("HowLobsy.Step5Title", "HowLobsy.Step5Body", [new("/candidate/applications", "Nav.MyApplications")]),
             new("HowLobsy.Step6Title", "HowLobsy.Step6Body", [])
         ],
-        new("/", "HowLobsy.ToMap"),
+        new("/banenkaart", "HowLobsy.ToMap"),
         new("/profiel", "HowLobsy.ToProfile"));
 
     /// <summary>
@@ -58,7 +58,7 @@ public static class HowLobsyRoleGuides
         "HowLobsy.Guest.Title",
         "HowLobsy.Guest.Lead",
         [
-            new("HowLobsy.Guest.Step1Title", "HowLobsy.Guest.Step1Body", [new("/", "Nav.JobMap")]),
+            new("HowLobsy.Guest.Step1Title", "HowLobsy.Guest.Step1Body", [new("/banenkaart", "Nav.JobMap")]),
             new("HowLobsy.Guest.Step2Title", "HowLobsy.Guest.Step2Body", [new("/ontdek", "HowLobsy.Guest.DnaLabel")]),
             new("HowLobsy.Guest.Step3Title", "HowLobsy.Guest.Step3Body", [new(Jobsy.Web.Navigation.PublicRoutes.CreateAccount, "PublicNav.CreateAccount")]),
             new("HowLobsy.Guest.Step4Title", "HowLobsy.Guest.Step4Body", [])
@@ -79,7 +79,7 @@ public static class HowLobsyRoleGuides
                 new("/employer/company", "Nav.CompanyDetails"),
                 new("/employer/takeovers", "Nav.Takeovers")
             ]),
-            new("HowLobsy.Branch.Step6Title", "HowLobsy.Branch.Step6Body", [new("/", "Nav.JobMap")])
+            new("HowLobsy.Branch.Step6Title", "HowLobsy.Branch.Step6Body", [new("/banenkaart", "Nav.JobMap")])
         ],
         new("/branch/vacancies", "HowLobsy.Branch.PrimaryCta"),
         new("/home", "HowLobsy.Branch.SecondaryCta"));
@@ -92,7 +92,7 @@ public static class HowLobsyRoleGuides
             new("HowLobsy.Regional.Step2Title", "HowLobsy.Regional.Step2Body", [new("/employer/vacancies", "Nav.Vacancies")]),
             new("HowLobsy.Regional.Step3Title", "HowLobsy.Regional.Step3Body", [new("/regional/branches", "Nav.MyBranches")]),
             new("HowLobsy.Regional.Step4Title", "HowLobsy.Regional.Step4Body", [new("/employer/tokens", "Nav.Tokens")]),
-            new("HowLobsy.Regional.Step5Title", "HowLobsy.Regional.Step5Body", [new("/", "Nav.JobMap")])
+            new("HowLobsy.Regional.Step5Title", "HowLobsy.Regional.Step5Body", [new("/banenkaart", "Nav.JobMap")])
         ],
         new("/regional/branches", "HowLobsy.Regional.PrimaryCta"),
         new("/home", "HowLobsy.Regional.SecondaryCta"));
@@ -119,7 +119,7 @@ public static class HowLobsyRoleGuides
             new("HowLobsy.Intermediary.Step2Title", "HowLobsy.Intermediary.Step2Body", [new("/intermediary", "Nav.Clients")]),
             new("HowLobsy.Intermediary.Step3Title", "HowLobsy.Intermediary.Step3Body", [new("/employer/vacancies", "Nav.Vacancies")]),
             new("HowLobsy.Intermediary.Step4Title", "HowLobsy.Intermediary.Step4Body", [new("/employer/tokens", "Nav.Tokens")]),
-            new("HowLobsy.Intermediary.Step5Title", "HowLobsy.Intermediary.Step5Body", [new("/", "Nav.JobMap")])
+            new("HowLobsy.Intermediary.Step5Title", "HowLobsy.Intermediary.Step5Body", [new("/banenkaart", "Nav.JobMap")])
         ],
         new("/employer/vacancies", "HowLobsy.Intermediary.PrimaryCta"),
         new("/home", "HowLobsy.Intermediary.SecondaryCta"));

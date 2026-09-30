@@ -46,7 +46,7 @@
     @if (!string.IsNullOrWhiteSpace(_travelSummary))
     {
         <p class="candidate-vacancies__travel">
-            <a href="/">@_travelSummary</a>
+            <a href="/banenkaart">@_travelSummary</a>
         </p>
     }
 
@@ -64,7 +64,7 @@
                 {
                     <p class="state-message">
                         @Culture["CandidateVacancies.EmptyRecent"]
-                        <a href="/">@Culture["CandidateVacancies.BrowseMap"]</a>
+                        <a href="/banenkaart">@Culture["CandidateVacancies.BrowseMap"]</a>
                     </p>
                 }
                 else
@@ -84,7 +84,7 @@
                         @(_hasOrigin
                             ? Culture.Format("Discovery.NoneWithOrigin", _maxTravelMinutes, UiLabels.TransportVerb(Culture, _transport))
                             : Culture["Discovery.NoneWithoutOrigin"])
-                        <a href="/">@Culture["CandidateVacancies.BrowseMap"]</a>
+                        <a href="/banenkaart">@Culture["CandidateVacancies.BrowseMap"]</a>
                     </p>
                 }
                 else
@@ -93,7 +93,7 @@
                     @if (_nearby.Count >= NearbyCap)
                     {
                         <p class="candidate-vacancies__more">
-                            <a href="/">@Culture["CandidateVacancies.OpenMap"]</a>
+                            <a href="/banenkaart">@Culture["CandidateVacancies.OpenMap"]</a>
                         </p>
                     }
                 }

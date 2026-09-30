@@ -92,7 +92,7 @@ public class JobMapPinsClustersPlaywrightTests
         string? pageError = null;
         page.PageError += (_, error) => { pageError ??= error; };
 
-        await page.GotoAsync(baseUrl + "/", new PageGotoOptions
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new PageGotoOptions
         {
             WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 90_000

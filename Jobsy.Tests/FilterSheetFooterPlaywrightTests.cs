@@ -41,7 +41,7 @@ public class FilterSheetFooterPlaywrightTests
             return;
         }
 
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await OpenFiltersAsync(page);
 
         var apply = page.Locator(".filter-sheet__apply").First;
@@ -78,8 +78,8 @@ public class FilterSheetFooterPlaywrightTests
         Assert.DoesNotContain("/carriere", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.True(
             page.Url.TrimEnd('/').Equals(baseUrl, StringComparison.OrdinalIgnoreCase)
-            || page.Url.Contains(baseUrl + "/", StringComparison.OrdinalIgnoreCase)
-            || new Uri(page.Url).AbsolutePath is "/" or "",
+            || page.Url.Contains(baseUrl + E2eRoutes.Banenkaart, StringComparison.OrdinalIgnoreCase)
+            || new Uri(page.Url).AbsolutePath is "/" or "" or "/banenkaart",
             $"URL should stay on home after Apply; was {urlBefore} → {page.Url}");
 
         await Assertions.Expect(page.Locator("#discovery-filters")).ToBeHiddenAsync(new() { Timeout = 10_000 });
@@ -103,7 +103,7 @@ public class FilterSheetFooterPlaywrightTests
             IgnoreHTTPSErrors = true
         });
         var page = await context.NewPageAsync();
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         var search = page.Locator(".filter-bar__search").First;
         await search.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         Assert.True(await search.IsVisibleAsync());
@@ -148,7 +148,7 @@ public class FilterSheetFooterPlaywrightTests
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-            using var response = await http.GetAsync(baseUrl.TrimEnd('/') + "/");
+            using var response = await http.GetAsync(baseUrl.TrimEnd('/') + E2eRoutes.Banenkaart);
             return (int)response.StatusCode is >= 200 and < 500;
         }
         catch

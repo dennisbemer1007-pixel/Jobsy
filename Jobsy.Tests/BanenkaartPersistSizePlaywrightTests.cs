@@ -100,7 +100,7 @@ public class BanenkaartPersistSizePlaywrightTests
         var blazorWs = await page.RunAndWaitForWebSocketAsync(
             async () =>
             {
-                await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             },
             new()
             {
@@ -148,7 +148,7 @@ public class BanenkaartPersistSizePlaywrightTests
         var blazorWs = await page.RunAndWaitForWebSocketAsync(
             async () =>
             {
-                await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             },
             new()
             {

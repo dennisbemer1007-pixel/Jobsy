@@ -33,7 +33,7 @@ public class BanenkaartV3PlaywrightTests
         });
         var page = await context.NewPageAsync();
 
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             "() => !!(window.jobMap && window.maplibregl && document.querySelector('#job-map canvas'))",
             null,
@@ -173,7 +173,7 @@ public class BanenkaartV3PlaywrightTests
             IgnoreHTTPSErrors = true
         });
         var page = await context.NewPageAsync();
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             "() => !!(window.jobMap && document.querySelector('#job-map canvas'))",
             null,
