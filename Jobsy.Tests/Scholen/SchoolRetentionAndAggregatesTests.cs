@@ -271,6 +271,10 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
     [Fact]
     public async Task Admin_report_endpoints_forbid_school_roles()
     {
+        // Trigger RoleFunctionalWebAppFactory seed before inserting school staff
+        // (EnsureSeeded skips when Users.Any()).
+        using (_factory.CreateClient()) { }
+
         await EnableSchoolsAsync(true);
         var (schoolAdminId, _, _) = await SeedSchoolStaffAsync();
         using var schoolClient = JobsyTestAuth.CreateAuthenticatedClient(_factory, schoolAdminId);
@@ -285,6 +289,8 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
     [Fact]
     public async Task School_year_delete_requires_school_admin_and_confirm()
     {
+        using (_factory.CreateClient()) { }
+
         await EnableSchoolsAsync(true);
         var (schoolAdminId, schoolId, classId) = await SeedSchoolStaffAsync(withClass: true, codeCount: 5);
         await SeedCompletedResultsAsync(classId, 5);
