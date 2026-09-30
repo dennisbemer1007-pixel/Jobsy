@@ -30,6 +30,7 @@ public class JobsyDbContext : DbContext
     public DbSet<AtsScrapedListing> AtsScrapedListings => Set<AtsScrapedListing>();
     public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
     public DbSet<Application> Applications => Set<Application>();
+    public DbSet<ApplicationStatusHistory> ApplicationStatusHistories => Set<ApplicationStatusHistory>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
@@ -559,6 +560,25 @@ public class JobsyDbContext : DbContext
                 .WithOne(c => c.Application)
                 .HasForeignKey<ApplicationUploadedCv>(c => c.ApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(e => e.StatusHistory)
+                .WithOne(h => h.Application)
+                .HasForeignKey(h => h.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationStatusHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Kind).HasConversion<int>();
+            entity.Property(e => e.ActorKind).HasConversion<int>();
+            entity.Property(e => e.FromStatus).HasConversion<int?>();
+            entity.Property(e => e.ToStatus).HasConversion<int?>();
+            entity.HasIndex(e => new { e.ApplicationId, e.OccurredAtUtc });
+            // At most one EmployerViewed row per application (D4).
+            entity.HasIndex(e => e.ApplicationId)
+                .IsUnique()
+                .HasFilter("\"Kind\" = 2")
+                .HasDatabaseName("IX_ApplicationStatusHistories_ApplicationId_EmployerViewed");
         });
 
         modelBuilder.Entity<CandidateUploadedCv>(entity =>

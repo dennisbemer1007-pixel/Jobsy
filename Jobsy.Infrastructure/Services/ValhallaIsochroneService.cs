@@ -143,7 +143,10 @@ public sealed class ValhallaIsochroneService : IIsochroneService
         return JsonSerializer.Serialize(body);
     }
 
-    private static string? NormalizeFeatureCollection(JsonElement root, IReadOnlyList<int> orderedMinutes)
+    /// <summary>
+    /// Valhalla returns <c>"contour": 30.0</c> (JSON decimal). Accept int or double and round.
+    /// </summary>
+    internal static string? NormalizeFeatureCollection(JsonElement root, IReadOnlyList<int> orderedMinutes)
     {
         if (!root.TryGetProperty("features", out var features) || features.ValueKind != JsonValueKind.Array)
         {
@@ -209,24 +212,59 @@ public sealed class ValhallaIsochroneService : IIsochroneService
         return Encoding.UTF8.GetString(stream.ToArray());
     }
 
-    private static int? ReadMinutes(JsonElement props)
+    /// <summary>
+    /// Reads Valhalla contour/minutes/time. Decimals (e.g. <c>30.0</c>) round AwayFromZero.
+    /// Non-finite, ≤0 and &gt;240 are skipped.
+    /// </summary>
+    internal static int? ReadMinutes(JsonElement props)
     {
-        if (props.TryGetProperty("contour", out var contour) && contour.TryGetInt32(out var c))
+        if (TryReadContourNumber(props, "contour", out var contour))
         {
-            return c;
+            return contour;
         }
 
-        if (props.TryGetProperty("minutes", out var minutes) && minutes.TryGetInt32(out var m))
+        if (TryReadContourNumber(props, "minutes", out var minutes))
         {
-            return m;
+            return minutes;
         }
 
-        if (props.TryGetProperty("time", out var time) && time.TryGetInt32(out var t))
+        if (TryReadContourNumber(props, "time", out var time))
         {
-            return t;
+            return time;
         }
 
         return null;
+    }
+
+    private static bool TryReadContourNumber(JsonElement props, string name, out int minutes)
+    {
+        minutes = 0;
+        if (!props.TryGetProperty(name, out var el))
+        {
+            return false;
+        }
+
+        double value;
+        if (el.ValueKind == JsonValueKind.Number && el.TryGetDouble(out value))
+        {
+            // Prefer TryGetDouble so integer and decimal JSON numbers both work.
+        }
+        else if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var asInt))
+        {
+            value = asInt;
+        }
+        else
+        {
+            return false;
+        }
+
+        if (!double.IsFinite(value) || value <= 0 || value > 240)
+        {
+            return false;
+        }
+
+        minutes = (int)Math.Round(value, MidpointRounding.AwayFromZero);
+        return minutes is > 0 and <= 240;
     }
 
     private static string? ToCosting(TransportMode mode)

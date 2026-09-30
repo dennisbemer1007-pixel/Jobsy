@@ -23,6 +23,15 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Kandidaat banen E2E + stack report (09):** Playwright S1–S13 (desktop 1440 + mobile 390) for banenkaart, lijst, vacature, sollicitaties, bewaard en Match; soft-skip zonder `JOBSY_E2E_BASE_URL`; docs + stack-eindrapport.
+- **Match refresh (08):** calibrated fit pill, "Waarom jij past" per DNA dimension, Hierna column with fit + travel; "Laten schieten" defers to end of deck (D12, never hides); keyboard hints; mobile header with mascot + progress.
+- **Sollicitaties + Bewaard (07):** statusgeschiedenis met datum, tijdlijn + "Wat nu?", "Niet gekozen" met vergelijkbare banen; Bewaard-kaarten met statuspillen, unsave+undo.
+- **Lijst + vacaturedetail (06):** desktop Kaart/Lijst (`?weergave=lijst`), mobiele Kaart-FAB, fit-panel, reiskaart met vervoerswissel, sticky solliciteer-balk.
+- **Uitzendbureau hidden mode (05):** bureau-pin/reistijd, "via uitzendbureau …", geen Route/Street View; kernwaarden/branche/engagement pas zichtbaar na werkgever-aanmelding 08/09.
+- **Eerlijke fit % (04):** alleen na cultuur- of waardentest; weergave 55–90 (sterk ≥ 75); why-regel; DNA-balken; dislikes zetten lager ("Staat lager"), nooit verbergen. Werkgeverscores ongewijzigd.
+- **Banenkaart start & filters (03):** start op thuisadres · 20 min fietsen; adresveld + PDOK; chips; echte ringen; docked popup.
+- **Kandidaat banen fundament (02):** `Kb.*` strings (5 talen), labels, gedeelde kaartonderdelen, feature-gating-placeholders, UX-fixes.
+- **Banenkaart hotfix (01):** echte isochronen (decimale contouren), desktop top-match crashfix, idempotente pagehide-shim.
 - **Landing gratis test warm (06):** `/ontdek` restyle under `.pub-theme` (start/question/result), compact PublicLayout header, `GratisDnaSignupCard` + mobile sheet, sticky CTA vs cookie banner (`pub-fixed-bottom`), FeedbackWidget on page; behaviour/scoring/storage unchanged.
 - **Landing page ON (05):** `/` is static SSR landing (`Landing.razor`, `[NoBlazorRuntime]`), warm `landing.css`, one real vacancy count (D7), FAQ + JSON-LD, signed-in + legacy map deep-link redirects, no MapLibre/blazor.web.js on `/`. Map stays at `/banenkaart` only.
 - **Landing banenkaart move (04):** map served at `/banenkaart` (public, indexed; dual `@page "/"` until landing 05), `/banen` → 301 with query preserved, `AuthRedirects.BanenkaartPath` / RoleNav / map deep links / SEO+sitemap retargeted, `LegacyMapQuery` for 05.
@@ -65,11 +74,12 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - **Sales dashboard + Mijn werkgevers (04):** privacy-safe employer list/detail DTOs, dashboard KPIs / monthly bars / funnel / todos / top employers, top-bar search (`Ctrl K`), `/sales/werkgevers` with detail drawer.
 - **Sales Mijn link & materiaal (05):** `SalesPriceQuote` from active `TokenPricing` packs, redesigned `/sales/link` (QR, share, materials grid, pitch, commission tiles), personal materials PDFs (`api/sales/me/materials/{kind}.pdf`), presentation PDF, safer public flyer endpoint, `SalesQr` helper.
 
-
 ### Fixed
 - **Render `jobsy-api` deploys:** `WebPushSubscriptions` ontbrak in `JobsyDbContextModelSnapshot`. EF Core 9 behandelt dat als `PendingModelChangesWarning` → harde fout in `MigrateAsync` → API-host stopt (Auto-Deploy Failed sinds PWA-commit). Snapshot + regressietest herstellen de deploy.
 
 ### Added
+- **Kandidaat uitzendbureau hidden mode (05):** bureau pin/travel, "via uitzendbureau …", no Route/Street View; `KbHiddenIntermediaryMask` (KB-FALLBACK(A)). Employer kernwaarden/branche/engagement blocks deferred until werkgever-aanmelding 08/09 (Dep B ABSENT).
+- **Kandidaat fit % (honest):** only when culture or values test is done; calibrated display 55–90 (strong ≥ 75); why line; DNA bars; dislike down-rank via `IKbDislikeSource` (KB-FALLBACK(D) returns none). Employer scores unchanged.
 - **PWA (native-like):** `manifest.webmanifest` (standalone), iconen 192/512 (+ maskable), `service-worker.js` / `service-worker.published.js` voor shell/asset-caching + Web Push handlers.
 - **Web Push:** VAPID + `WebPushSubscriptions`, `api/push/*`, systeemmeldingen via `WebPushNotificationService`; vriendelijke toestemmingsbanner en Profiel-toggle.
 - **Calm tech motion:** hardware-accelerated tab-/page-transities, touch active-states, scroll-containment / minder rubber-banding.

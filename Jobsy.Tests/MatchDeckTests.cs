@@ -32,6 +32,50 @@ public class MatchDeckTests
     }
 
     [Fact]
+    public void Defer_appends_once_and_keeps_count_and_upnext_tail()
+    {
+        var deck = new MatchDeck();
+        var a = Card("a", 90);
+        var b = Card("b", 80);
+        var c = Card("c", 70);
+        deck.ReplaceItems([a, b, c]);
+
+        Assert.Equal("a", deck.Current!.JobTitle);
+        deck.Defer(a.VacancyId!.Value);
+
+        Assert.Equal(3, deck.Count);
+        Assert.Equal(1, deck.Position);
+        Assert.Equal("b", deck.Current!.JobTitle);
+        Assert.Equal("a", deck.Items[^1].JobTitle);
+        Assert.Equal("a", deck.UpNext(3)[^1].JobTitle);
+        Assert.False(deck.IsFinished);
+    }
+
+    [Fact]
+    public void Defer_second_skip_advances_without_reordering()
+    {
+        var deck = new MatchDeck();
+        var a = Card("a", 90);
+        var b = Card("b", 80);
+        deck.ReplaceItems([a, b]);
+
+        deck.Defer(a.VacancyId!.Value);
+        Assert.Equal("b", deck.Current!.JobTitle);
+        Assert.Equal("a", deck.Items[^1].JobTitle);
+
+        // Reach deferred card again
+        deck.Advance();
+        Assert.Equal("a", deck.Current!.JobTitle);
+        Assert.Equal(2, deck.Position);
+
+        var orderBefore = deck.Items.Select(i => i.JobTitle).ToList();
+        deck.Defer(a.VacancyId!.Value);
+        Assert.Equal(orderBefore, deck.Items.Select(i => i.JobTitle).ToList());
+        Assert.True(deck.Index >= deck.Count);
+        Assert.Null(deck.Current);
+    }
+
+    [Fact]
     public void OrderByMatch_is_off_by_default_via_ReplaceItems_order()
     {
         var deck = new MatchDeck();
@@ -64,7 +108,6 @@ public class MatchDeckTests
     {
         var deck = new MatchDeck();
         var model = Card("x", 50);
-        // Null-safe: LikeAsync with no vacancy id is a no-op.
         model.VacancyId = null;
         await deck.LikeAsync(api: null!, model);
     }

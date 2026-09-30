@@ -10,6 +10,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -40,6 +41,7 @@ public class VacanciesController : ControllerBase
     private readonly IExactRoutingService _exactRouting;
     private readonly IProfileVacancyMatchService _profileMatch;
     private readonly ICandidateVacancyCultureFitService _cultureFit;
+    private readonly IKbDislikeSource _dislikeSource;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -55,7 +57,8 @@ public class VacanciesController : ControllerBase
         IUserNotificationService notifications,
         IVacancyDiscoveryIndex discoveryIndex,
         IProfileVacancyMatchService profileMatch,
-        ICandidateVacancyCultureFitService cultureFit)
+        ICandidateVacancyCultureFitService cultureFit,
+        IKbDislikeSource dislikeSource)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -71,6 +74,7 @@ public class VacanciesController : ControllerBase
         _exactRouting = exactRouting;
         _profileMatch = profileMatch;
         _cultureFit = cultureFit;
+        _dislikeSource = dislikeSource;
     }
 
     /// <summary>
@@ -167,15 +171,18 @@ public class VacanciesController : ControllerBase
         }
 
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
+        CandidateFitGate fitGate = CandidateFitGate.Closed;
+        ProfileVacancyMatchContext? matchContext = null;
         var matchFloor = minMatchPercent is int requestedFloor
             ? Math.Clamp(requestedFloor, 0, 100)
             : (int?)null;
         var isCandidate = _companyAuth.IsCandidate(User);
         if (isCandidate)
         {
-            var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+            matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
+                fitGate = CandidateFitGate.FromContext(matchContext);
                 matches = await _profileMatch.ScoreAsync(matchContext, candidates, cancellationToken);
                 candidates = candidates
                     .Where(c =>
@@ -190,7 +197,19 @@ public class VacanciesController : ControllerBase
                             return false;
                         }
 
-                        return matchFloor is not int floor || match.TotalPercent >= floor;
+                        if (matchFloor is not int floor)
+                        {
+                            return true;
+                        }
+
+                        // Closed gate: no percentages — ignore floor (chip should be hidden client-side).
+                        if (!fitGate.IsOpen)
+                        {
+                            return true;
+                        }
+
+                        var fit = CandidateFitDisplay.Build(match, fitGate);
+                        return fit is not null && fit.Percent >= floor;
                     })
                     .ToList();
             }
@@ -220,8 +239,9 @@ public class VacanciesController : ControllerBase
             string? matchBand = null;
             if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
             {
-                matchPercent = match.TotalPercent;
-                matchBand = match.ColorBand;
+                var applied = CandidateFitApply.Apply(match, fitGate);
+                matchPercent = applied.MatchPercent;
+                matchBand = applied.MatchColorBand;
             }
 
             var highlighted = VacancyHighlightRules.IsActive(
@@ -275,21 +295,27 @@ public class VacanciesController : ControllerBase
 
         int? matchPercent = null;
         string? matchBand = null;
+        string? fitGateValue = null;
+        string? fitWhyLine = null;
         if (_companyAuth.IsCandidate(User))
         {
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
+                var gate = CandidateFitGate.FromContext(matchContext);
                 var scored = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
                 if (scored.TryGetValue(id, out var match))
                 {
-                    matchPercent = match.TotalPercent;
-                    matchBand = match.ColorBand;
+                    var applied = CandidateFitApply.Apply(match, gate);
+                    matchPercent = applied.MatchPercent;
+                    matchBand = applied.MatchColorBand;
+                    fitGateValue = applied.FitGate;
+                    fitWhyLine = applied.FitWhyLineNl;
                 }
             }
         }
 
-        return Ok(MapCard(record, showWage, travelMinutes, matchPercent, matchBand));
+        return Ok(MapCard(record, showWage, travelMinutes, matchPercent, matchBand, fitGateValue, fitWhyLine));
     }
 
     /// <summary>
@@ -318,11 +344,13 @@ public class VacanciesController : ControllerBase
         var hasOrigin = originLat is double lat && originLng is double lng && IsFiniteCoordinate(lat, lng);
 
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
+        var fitGate = CandidateFitGate.Closed;
         if (_companyAuth.IsCandidate(User))
         {
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
+                fitGate = CandidateFitGate.FromContext(matchContext);
                 var scoreInput = parsed
                     .Where(byId.ContainsKey)
                     .Select(id =>
@@ -361,13 +389,18 @@ public class VacanciesController : ControllerBase
 
             int? matchPercent = null;
             string? matchBand = null;
+            string? fitGateValue = null;
+            string? fitWhyLine = null;
             if (matches is not null && matches.TryGetValue(id, out var match))
             {
-                matchPercent = match.TotalPercent;
-                matchBand = match.ColorBand;
+                var applied = CandidateFitApply.Apply(match, fitGate);
+                matchPercent = applied.MatchPercent;
+                matchBand = applied.MatchColorBand;
+                fitGateValue = applied.FitGate;
+                fitWhyLine = applied.FitWhyLineNl;
             }
 
-            cards.Add(MapCard(record, showWage, travelMinutes, matchPercent, matchBand));
+            cards.Add(MapCard(record, showWage, travelMinutes, matchPercent, matchBand, fitGateValue, fitWhyLine));
         }
 
         return Ok(cards);
@@ -456,14 +489,18 @@ public class VacanciesController : ControllerBase
         }
 
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
+        var fitGate = CandidateFitGate.Closed;
+        ProfileVacancyMatchContext? matchContext = null;
+        Dictionary<Guid, string>? dislikeReasons = null;
         var matchFloor = minMatchPercent is int requestedFloor
             ? Math.Clamp(requestedFloor, 0, 100)
             : (int?)null;
         if (_companyAuth.IsCandidate(User))
         {
-            var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+            matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is not null)
             {
+                fitGate = CandidateFitGate.FromContext(matchContext);
                 matches = await _profileMatch.ScoreAsync(
                     matchContext,
                     candidates.Select(c => (c.Record, c.TravelMinutes)),
@@ -481,9 +518,20 @@ public class VacanciesController : ControllerBase
                             return false;
                         }
 
-                        return matchFloor is not int floor || match.TotalPercent >= floor;
+                        if (matchFloor is not int floor || !fitGate.IsOpen)
+                        {
+                            return true;
+                        }
+
+                        var fit = CandidateFitDisplay.Build(match, fitGate);
+                        return fit is not null && fit.Percent >= floor;
                     })
                     .ToList();
+
+                dislikeReasons = await LoadDislikeReasonsAsync(
+                    matchContext.UserId,
+                    candidates.Select(c => c.Record.Id),
+                    cancellationToken);
             }
         }
 
@@ -499,7 +547,9 @@ public class VacanciesController : ControllerBase
 
             if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
             {
-                dto = WithCandidateMatch(dto, match);
+                string? rankLower = null;
+                dislikeReasons?.TryGetValue(c.Record.Id, out rankLower);
+                dto = WithCandidateMatch(dto, match, fitGate, rankLower);
             }
 
             results.Add(dto);
@@ -507,9 +557,12 @@ public class VacanciesController : ControllerBase
 
         if (matches is not null)
         {
-            results = results
-                .OrderByDescending(r => r.MatchPercent ?? -1)
-                .ThenBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase)
+            results = KbRanking.OrderByFitThenTitle(
+                    results,
+                    r => r.FitPercent ?? r.MatchPercent,
+                    r => !string.IsNullOrWhiteSpace(r.RankLowerReason),
+                    r => r.Title,
+                    r => r.Id)
                 .ToList();
         }
 
@@ -2118,7 +2171,10 @@ public class VacanciesController : ControllerBase
         bool showWage,
         int? travelMinutes,
         int? matchPercent,
-        string? matchBand)
+        string? matchBand,
+        string? fitGate = null,
+        string? fitWhyLine = null,
+        string? rankLowerReason = null)
     {
         var workType = record.WorkTypeLabelList.FirstOrDefault() ?? record.WorkTypeLabels;
         var thumbnail = VacancyImageUrls.ForCard(
@@ -2145,7 +2201,10 @@ public class VacanciesController : ControllerBase
                 : record.CategoryColorHex,
             record.CompanyAddress,
             record.KvkNumber,
-            record.Vestigingsnummer);
+            record.Vestigingsnummer,
+            fitGate,
+            fitWhyLine,
+            rankLowerReason);
     }
 
     private static string PlaceFromAddress(string? address)
@@ -2489,10 +2548,17 @@ public class VacanciesController : ControllerBase
                     || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree && v.Category.PushBomCostTokens is null)),
             includeCategoryInternals ? DeserializeCategoryFields(v.CategoryFieldsJson) : null,
             v.SuitableFor65Plus,
-            CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber),
-            CompanyPublicPaths.TryParseVestigingsnummer(
-                v.Company?.KvkEstablishmentId,
-                CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber)),
+            // KB-FALLBACK(A): redact end-client KvK/vestiging on candidate public DTOs in hidden mode.
+            Jobsy.Core.Rules.KandidaatBanen.KbHiddenIntermediaryMask.RedactClientPublicPaths(
+                v.IntermediaryCompanyId, v.ShowClientAddressOnMap)
+                ? null
+                : CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber),
+            Jobsy.Core.Rules.KandidaatBanen.KbHiddenIntermediaryMask.RedactClientPublicPaths(
+                v.IntermediaryCompanyId, v.ShowClientAddressOnMap)
+                ? null
+                : CompanyPublicPaths.TryParseVestigingsnummer(
+                    v.Company?.KvkEstablishmentId,
+                    CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber)),
             v.ContentModerationPassed,
             isIncomplete,
             displayStatus,
@@ -2817,7 +2883,10 @@ public class VacanciesController : ControllerBase
             }
         }
 
-        return WithCandidateMatch(dto, match, cultureStatus);
+        var gate = CandidateFitGate.FromContext(matchContext);
+        var dislikeReasons = await LoadDislikeReasonsAsync(user.Id, [vacancy.Id], cancellationToken);
+        dislikeReasons.TryGetValue(vacancy.Id, out var rankLower);
+        return WithCandidateMatch(dto, match, gate, rankLower, cultureStatus);
     }
 
     private static ProfileVacancyMatch CloneMatchWithCulture(ProfileVacancyMatch match, CultureFitResult culture)
@@ -2842,7 +2911,10 @@ public class VacanciesController : ControllerBase
             Core = match.Core,
             ExperienceScore01 = match.ExperienceScore01,
             CompetencyScore01 = match.CompetencyScore01,
+            CompetencyDim01 = match.CompetencyDim01,
             InterestScore01 = match.InterestScore01,
+            CultureDim01 = match.CultureDim01,
+            ValuesFit01 = match.ValuesFit01,
             CultureFit = culture,
             EngagementBonus = match.EngagementBonus,
             IsBroadMatch = match.IsBroadMatch,
@@ -2856,12 +2928,22 @@ public class VacanciesController : ControllerBase
     private static VacancyListItemDto WithCandidateMatch(
         VacancyListItemDto dto,
         ProfileVacancyMatch match,
+        CandidateFitGate gate,
+        string? rankLowerReason = null,
         string cultureFitStatus = InsightsStatuses.Ready)
-        => dto with
+    {
+        var applied = CandidateFitApply.Apply(match, gate);
+        CandidateFitDimensionsDto? dims = null;
+        if (applied.FitDimensions is { } d)
         {
-            MatchPercent = match.TotalPercent,
-            MatchColorBand = match.ColorBand,
-            MatchWhySummary = ProfileVacancyMatchCalculator.SummaryLine(match),
+            dims = new CandidateFitDimensionsDto(d.Culture, d.Values, d.Competencies, d.Interests);
+        }
+
+        return dto with
+        {
+            MatchPercent = applied.MatchPercent,
+            MatchColorBand = applied.MatchColorBand,
+            MatchWhySummary = applied.FitWhyLineNl ?? ProfileVacancyMatchCalculator.SummaryLine(match),
             MatchWhy = PreferRationaleWhy(match),
             MatchGaps = match.Gaps.Select(g => g.Text).ToList(),
             IsBroadMatch = match.IsBroadMatch,
@@ -2870,8 +2952,41 @@ public class VacanciesController : ControllerBase
             CultureFitBand = match.CultureFit?.Band,
             CultureFitLabel = match.CultureFit?.Label,
             CultureFitWhy = match.CultureFit?.Why,
-            CultureFitStatus = cultureFitStatus
+            CultureFitStatus = cultureFitStatus,
+            FitGate = applied.FitGate,
+            FitPercent = applied.FitPercent,
+            FitBand = applied.FitBand,
+            FitWhyLine = applied.FitWhyLineNl,
+            FitWhyKinds = applied.FitWhyKinds.Count > 0 ? applied.FitWhyKinds : null,
+            FitDimensions = dims,
+            RankLowerReason = rankLowerReason
         };
+    }
+
+    /// <summary>
+    /// KB-FALLBACK(D): <see cref="IKbDislikeSource"/> returns none until paspoort 06 lands.
+    /// </summary>
+    private async Task<Dictionary<Guid, string>> LoadDislikeReasonsAsync(
+        Guid candidateUserId,
+        IEnumerable<Guid> vacancyIds,
+        CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<Guid, string>();
+        foreach (var vacancyId in vacancyIds)
+        {
+            var codes = await _dislikeSource.GetMatchingDislikeCodesAsync(
+                candidateUserId, vacancyId, cancellationToken);
+            if (codes.Count == 0)
+            {
+                continue;
+            }
+
+            // First matching dislike becomes the RankLowerReason localization key.
+            result[vacancyId] = $"Kb.Dislike.{codes[0]}";
+        }
+
+        return result;
+    }
 
     private static IReadOnlyList<string> PreferRationaleWhy(ProfileVacancyMatch match)
     {

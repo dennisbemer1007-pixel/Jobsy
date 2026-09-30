@@ -94,16 +94,16 @@
     @if (LoadBlazorRuntime)
     {
         @* Render-blocking versioned CSS — critical shell is already inlined above; full stylesheet is cacheable. *@
-        <link rel="stylesheet" href="css/app.min.css?v=20260930-merge" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260930-kb9" data-app-css />
         <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" />
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" />
         <link rel="stylesheet" href="css/features/mijn-dna.css?v=20260930-dna-overflow" />
         <link rel="stylesheet" href="css/features/applications.css?v=20260927-apps-clamp" />
-        <link rel="stylesheet" href="css/features/banenkaart.css?v=20260927-banenkaart-v3b" />
+        <link rel="stylesheet" href="css/features/banenkaart.css?v=20260930-kb3" />
         <link rel="stylesheet" href="css/features/gratis-dna.css?v=20260930-landing-6" />
         <link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" />
         <link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" />
-        <link rel="stylesheet" href="css/features/match-desktop.css?v=20260928-match-desktop-ci" />
+        <link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" />
         <link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" />
         <link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" />
         <link rel="stylesheet" href="css/features/admin.css?v=20260929-admin-d7" />
@@ -112,9 +112,10 @@
         <link rel="stylesheet" href="css/features/scholen.css?v=20260930-scholen" />
         <link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" />
         <link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" />
+        <link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20260930-kb7" />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260930-merge" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20260930-dna-overflow" /><link rel="stylesheet" href="css/features/applications.css?v=20260927-apps-clamp" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20260927-banenkaart-v3b" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20260930-landing-6" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260928-match-desktop-ci" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20260929-admin-d7" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20260929-ent-ui" /><link rel="stylesheet" href="css/features/werkgever.css?v=20260929-wg-insights" /><link rel="stylesheet" href="css/features/scholen.css?v=20260930-scholen" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20260930-landing-5" /><link rel="stylesheet" href="css/features/landing.css?v=20260930-landing-5" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260930-kb9" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20260930-dna-overflow" /><link rel="stylesheet" href="css/features/applications.css?v=20260927-apps-clamp" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20260930-kb3" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20260930-landing-6" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20260929-admin-d7" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20260929-ent-ui" /><link rel="stylesheet" href="css/features/werkgever.css?v=20260929-wg-insights" /><link rel="stylesheet" href="css/features/scholen.css?v=20260930-scholen" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20260930-landing-5" /><link rel="stylesheet" href="css/features/landing.css?v=20260930-landing-5" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20260930-kb7" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -130,33 +131,37 @@
                 };
             }
             try {
-                var add = EventTarget.prototype.addEventListener;
-                var remove = EventTarget.prototype.removeEventListener;
-                var wrapped = typeof WeakMap === "function" ? new WeakMap() : null;
-                EventTarget.prototype.addEventListener = function (type, listener, options) {
-                    if (type === "unload") {
-                        type = "pagehide";
-                        if (wrapped && typeof listener === "function" && !listener.__jobsyPagehideMapped) {
-                            var mapped = wrapped.get(listener);
-                            if (!mapped) {
-                                mapped = function (ev) { return listener.call(this, ev); };
-                                mapped.__jobsyPagehideMapped = true;
-                                wrapped.set(listener, mapped);
+                // Idempotent: enhanced navigation re-runs this inline script; never wrap twice.
+                if (!window.__jobsyPagehideShim) {
+                    window.__jobsyPagehideShim = true;
+                    var add = EventTarget.prototype.addEventListener;
+                    var remove = EventTarget.prototype.removeEventListener;
+                    var wrapped = typeof WeakMap === "function" ? new WeakMap() : null;
+                    EventTarget.prototype.addEventListener = function (type, listener, options) {
+                        if (type === "unload") {
+                            type = "pagehide";
+                            if (wrapped && typeof listener === "function" && !listener.__jobsyPagehideMapped) {
+                                var mapped = wrapped.get(listener);
+                                if (!mapped) {
+                                    mapped = function (ev) { return listener.call(this, ev); };
+                                    mapped.__jobsyPagehideMapped = true;
+                                    wrapped.set(listener, mapped);
+                                }
+                                listener = mapped;
                             }
-                            listener = mapped;
                         }
-                    }
-                    return add.call(this, type, listener, options);
-                };
-                EventTarget.prototype.removeEventListener = function (type, listener, options) {
-                    if (type === "unload") {
-                        type = "pagehide";
-                        if (wrapped && typeof listener === "function") {
-                            listener = wrapped.get(listener) || listener;
+                        return add.call(this, type, listener, options);
+                    };
+                    EventTarget.prototype.removeEventListener = function (type, listener, options) {
+                        if (type === "unload") {
+                            type = "pagehide";
+                            if (wrapped && typeof listener === "function") {
+                                listener = wrapped.get(listener) || listener;
+                            }
                         }
-                    }
-                    return remove.call(this, type, listener, options);
-                };
+                        return remove.call(this, type, listener, options);
+                    };
+                }
             } catch (e) { }
             try {
                 if (localStorage.getItem("Jobsy.CookieConsent")) {
@@ -271,7 +276,7 @@
             }
         });
     </script>
-        <script src="js/app-core.js?v=20260930-landing-5" nonce="@Nonce" defer></script>
+        <script src="js/app-core.js?v=20260930-kb9" nonce="@Nonce" defer></script>
         <script src="js/landing.js?v=20260930-landing-5" nonce="@Nonce" defer></script>
         <script src="js/navFeedback.js?v=20260928-nav-fb" nonce="@Nonce" defer></script>
         <script src="js/lobsyPush.js?v=20260928-perf" nonce="@Nonce" defer></script>

@@ -39,6 +39,20 @@ public class BlazorCircuitGuardTests
     }
 
     [Fact]
+    public void Pagehide_shim_is_idempotent_and_keeps_native_add()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("window.__jobsyPagehideShim", app, StringComparison.Ordinal);
+        Assert.Contains("if (!window.__jobsyPagehideShim)", app, StringComparison.Ordinal);
+        Assert.Contains("var add = EventTarget.prototype.addEventListener;", app, StringComparison.Ordinal);
+        Assert.Contains("var remove = EventTarget.prototype.removeEventListener;", app, StringComparison.Ordinal);
+        // Patched add/remove call the closed-over natives, not a live re-read of the prototype.
+        Assert.Contains("return add.call(this, type, listener, options);", app, StringComparison.Ordinal);
+        Assert.Contains("return remove.call(this, type, listener, options);", app, StringComparison.Ordinal);
+        Assert.DoesNotContain("EventTarget.prototype.addEventListener.call(this", app, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Host_enables_websockets_for_the_blazor_circuit()
     {
         var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Program.cs"));

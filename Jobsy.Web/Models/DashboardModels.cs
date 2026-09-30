@@ -108,6 +108,17 @@ public class ApplicationItem
     public string? LocationLabel { get; set; }
     public string? PictureUrl { get; set; }
     public string? PictureKind { get; set; }
+    public List<ApplicationTimelineStepItem>? Timeline { get; set; }
+    public string? NextStepKey { get; set; }
+    public bool LegacyNoHistory { get; set; }
+}
+
+public class ApplicationTimelineStepItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public DateTime? OccurredAtUtc { get; set; }
+    public string LabelKey { get; set; } = string.Empty;
 }
 
 public class ApplyResultItem

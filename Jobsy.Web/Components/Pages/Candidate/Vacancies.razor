@@ -3,6 +3,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -283,7 +284,7 @@
                         </div>
                     </a>
                     <div class="job-card__footer">
-                        <p class="job-card__company">@(string.IsNullOrWhiteSpace(vacancy.OfferedByLabel) ? vacancy.CompanyName : vacancy.OfferedByLabel)</p>
+                        <p class="job-card__company">@KbIntermediaryDisplay.CompanyLine(Culture, vacancy)</p>
                         <p class="job-card__location">@vacancy.CompanyAddress</p>
                     </div>
                 </article>

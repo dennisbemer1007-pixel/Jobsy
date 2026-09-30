@@ -292,6 +292,12 @@ public sealed partial class JobsyApiClient
         return await _http.GetFromJsonAsync<List<EmployerApplicationItem>>(url, ct) ?? [];
     }
 
+    public async Task MarkApplicationViewedAsync(Guid applicationId, CancellationToken ct = default)
+    {
+        using var response = await _http.PostAsync($"api/applications/{applicationId:D}/viewed", null, ct);
+        // 204 / already-viewed races are fine; ignore non-success to keep UX calm.
+    }
+
     public async Task<ApplyResultItem?> ApplyAsync(
         Guid vacancyId,
         string preferredTransport,

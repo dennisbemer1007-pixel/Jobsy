@@ -113,12 +113,29 @@ public class VacancyListItem
 
     /// <summary>Draft marked klaar — auto-publishes on company verification.</summary>
     public bool PublishOnVerification { get; set; }
+
+    public string? FitGate { get; set; }
+    public int? FitPercent { get; set; }
+    public string? FitBand { get; set; }
+    public string? FitWhyLine { get; set; }
+    public List<string> FitWhyKinds { get; set; } = [];
+    public CandidateFitDimensionsModel? FitDimensions { get; set; }
+    /// <summary>Candidate-own-only. Localization key for "Staat lager: …".</summary>
+    public string? RankLowerReason { get; set; }
 }
 
 public sealed class VacancyEngagementBadge
 {
     public string ItemId { get; set; } = "";
     public bool Checked { get; set; }
+}
+
+public sealed class CandidateFitDimensionsModel
+{
+    public int? Culture { get; set; }
+    public int? Values { get; set; }
+    public int? Competencies { get; set; }
+    public int? Interests { get; set; }
 }
 
 public sealed class WageByAgeItem
@@ -358,6 +375,23 @@ public sealed class CandidateEngagementItem
     public string? Channel { get; set; }
     public string? ImageUrl { get; set; }
     public string? CompanyLogoUrl { get; set; }
+    public string? VacancyStatus { get; set; }
+    public DateOnly? EndDate { get; set; }
+    public DateTime? ClosedAtUtc { get; set; }
+    public string? LocationLabel { get; set; }
+    public int? HoursPerWeekMin { get; set; }
+    public int? HoursPerWeekMax { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string? WorkTypeLabel { get; set; }
+    public bool HasApplied { get; set; }
+    public Guid? ApplicationId { get; set; }
+    public int? FitPercent { get; set; }
+    public string? FitBand { get; set; }
+    public string? WhyLineKey { get; set; }
+    public bool FitGateClosed { get; set; }
+    public string? SavedStateKind { get; set; }
+    public int? DaysUntilEnd { get; set; }
+    public string? SavedStateLabelKey { get; set; }
 }
 
 public sealed class VacancyMapViewResponse

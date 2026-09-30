@@ -30,11 +30,13 @@ public sealed class NominatimGeocodingClient(HttpClient http) : IGeocodingClient
             return [];
         }
 
+        // Address layer first (file 03): prefer BAG-style addresses over POIs.
         var url = $"{SuggestBase}?q={Uri.EscapeDataString(q)}"
             + "&format=json"
-            + "&addressdetails=0"
+            + "&addressdetails=1"
+            + "&layer=address"
             + "&countrycodes=nl"
-            + "&limit=6"
+            + "&limit=8"
             + "&accept-language=nl";
 
         var results = await http.GetFromJsonAsync<List<NominatimPlace>>(url, cancellationToken)
@@ -44,14 +46,19 @@ public sealed class NominatimGeocodingClient(HttpClient http) : IGeocodingClient
             .Where(r => !string.IsNullOrWhiteSpace(r.DisplayName)
                         && double.TryParse(r.Lat, NumberStyles.Float, CultureInfo.InvariantCulture, out _)
                         && double.TryParse(r.Lon, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
+            .OrderByDescending(HasHouseNumber)
             .Select(r => new AddressSuggestion(
                 FormatLabel(r) ?? r.DisplayName!,
                 double.Parse(r.Lat!, CultureInfo.InvariantCulture),
                 double.Parse(r.Lon!, CultureInfo.InvariantCulture)))
             .GroupBy(s => s.Label, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
+            .Take(6)
             .ToList();
     }
+
+    private static bool HasHouseNumber(NominatimPlace place) =>
+        !string.IsNullOrWhiteSpace(place.Address?.HouseNumber);
 
     public async Task<string?> ReverseAsync(
         double latitude,

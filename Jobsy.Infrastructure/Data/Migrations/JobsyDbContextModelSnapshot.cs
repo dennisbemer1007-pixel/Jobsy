@@ -452,6 +452,45 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("Applications");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.ApplicationStatusHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ActorKind")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("FromStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ToStatus")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApplicationStatusHistories_ApplicationId_EmployerViewed")
+                        .HasFilter("\"Kind\" = 2");
+
+                    b.HasIndex("ApplicationId", "OccurredAtUtc");
+
+                    b.ToTable("ApplicationStatusHistories");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.ApplicationUploadedCv", b =>
                 {
                     b.Property<Guid>("ApplicationId")
@@ -7229,6 +7268,17 @@ modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
                     b.Navigation("Vacancy");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.ApplicationStatusHistory", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Application", "Application")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.ApplicationUploadedCv", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.Application", "Application")
@@ -8556,6 +8606,8 @@ modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
 
             modelBuilder.Entity("Jobsy.Core.Entities.Application", b =>
                 {
+                    b.Navigation("StatusHistory");
+
                     b.Navigation("UploadedCv");
                 });
 

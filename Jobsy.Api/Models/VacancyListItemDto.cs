@@ -116,9 +116,25 @@ public record VacancyListItemDto(
     /// </summary>
     bool IsPreview = false,
     bool PublishOnVerification = false,
-    IReadOnlyList<VacancyEngagementBadgeDto>? EngagementItems = null);
+    IReadOnlyList<VacancyEngagementBadgeDto>? EngagementItems = null,
+    /// <summary>Candidate fit gate: "open" | "closed". Null for anonymous/employer.</summary>
+    string? FitGate = null,
+    int? FitPercent = null,
+    string? FitBand = null,
+    string? FitWhyLine = null,
+    IReadOnlyList<string>? FitWhyKinds = null,
+    CandidateFitDimensionsDto? FitDimensions = null,
+    /// <summary>Candidate-own-only dislike reason key (e.g. Kb.Dislike.night-shifts). Never on shared/public.</summary>
+    string? RankLowerReason = null);
 
 public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
+
+/// <summary>Four DNA bars for the vacancy detail fit panel (null = Nog niet gedaan).</summary>
+public sealed record CandidateFitDimensionsDto(
+    int? Culture = null,
+    int? Values = null,
+    int? Competencies = null,
+    int? Interests = null);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);
@@ -161,7 +177,10 @@ public sealed record VacancyCardDto(
     string? CategoryColorHex = null,
     string? CompanyAddress = null,
     string? KvkNumber = null,
-    string? Vestigingsnummer = null);
+    string? Vestigingsnummer = null,
+    string? FitGate = null,
+    string? FitWhyLine = null,
+    string? RankLowerReason = null);
 
 /// <summary>Exact origin→vacancy travel for the selected transport. No PII.</summary>
 public sealed record VacancyTravelDto(int? TravelMinutes, double? DistanceKm);

@@ -127,6 +127,13 @@ public static class RoutesDocGenerator
         sb.AppendLine("| `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |");
         sb.AppendLine("| `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |");
         sb.AppendLine();
+        sb.AppendLine("## Kandidaat banen notes");
+        sb.AppendLine();
+        sb.AppendLine("- Banenkaart list mode: query `?weergave=lijst` on `/banenkaart`. Persisted in `sessionStorage jobsy.kb.weergave`.");
+        sb.AppendLine("- Employer viewed hook: `POST api/applications/{id}/viewed` (07) records at most one `EmployerViewed` timeline event.");
+        sb.AppendLine("- Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.");
+        sb.AppendLine("- Map route constant: `KbRoutes.Map` (`/banenkaart`).");
+        sb.AppendLine();
         sb.AppendLine("## Notes");
         sb.AppendLine();
         sb.AppendLine("- **Admin redesign 06.4 must host `PayoutRunsSection` in a tab Rondes** on `/admin/financien/uitbetalingen` and keep mark-paid closing payout requests. Until then the fallback is `/admin/sales-managers?tab=uitbetalingen`.");

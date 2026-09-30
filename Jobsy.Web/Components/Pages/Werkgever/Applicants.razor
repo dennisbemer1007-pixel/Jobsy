@@ -729,6 +729,19 @@
         _drawerTab = "profiel";
         _drawerOpen = true;
         SyncQuery();
+        _ = MarkViewedBestEffortAsync(id);
+    }
+
+    private async Task MarkViewedBestEffortAsync(Guid id)
+    {
+        try
+        {
+            await Api.MarkApplicationViewedAsync(id);
+        }
+        catch
+        {
+            // Viewing is best-effort; drawer still works.
+        }
     }
 
     private Task OnDrawerOpenChanged(bool open)

@@ -41,12 +41,15 @@ public class IsochroneServiceTests
         Assert.Contains("isochrone fallback", js, StringComparison.Ordinal);
         Assert.Contains("featuresFromIsochroneFc", js, StringComparison.Ordinal);
         Assert.Contains("buildTravelRingFeatures", js, StringComparison.Ordinal);
-        // Graduated fill opacities (V3).
-        Assert.Contains("0.16", js, StringComparison.Ordinal);
-        Assert.Contains("0.11", js, StringComparison.Ordinal);
-        Assert.Contains("0.07", js, StringComparison.Ordinal);
-        Assert.Contains("#2563eb", js, StringComparison.Ordinal);
-        Assert.Contains("#1d4ed8", js, StringComparison.Ordinal);
+        // Graduated fill opacities (banenkaart 03 — stronger rings).
+        Assert.Contains("0.22", js, StringComparison.Ordinal);
+        Assert.Contains("0.14", js, StringComparison.Ordinal);
+        Assert.Contains("0.09", js, StringComparison.Ordinal);
+        Assert.Contains("getComputedStyle", js, StringComparison.Ordinal);
+        Assert.Contains("--brand", js, StringComparison.Ordinal);
+        Assert.Contains("data-iso-mode", js, StringComparison.Ordinal);
+        Assert.DoesNotContain("#2563eb", js, StringComparison.Ordinal);
+        Assert.DoesNotContain("#1d4ed8", js, StringComparison.Ordinal);
 
         var proxy = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs"));
         Assert.Contains("/api/travel/isochrones", proxy, StringComparison.Ordinal);

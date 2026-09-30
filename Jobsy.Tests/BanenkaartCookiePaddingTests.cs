@@ -14,7 +14,7 @@ public class BanenkaartCookiePaddingTests
         const string generalCookieRule =
             "html:not(.cookie-consent-known) .app-shell.has-bottom-nav .app-main";
         const string discoveryOverride =
-            "html:not(.cookie-consent-known) .app-shell:has(.jobsy-discovery) .app-main";
+            "html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main";
 
         var generalIdx = css.IndexOf(generalCookieRule, StringComparison.Ordinal);
         var overrideIdx = css.IndexOf(discoveryOverride, StringComparison.Ordinal);
@@ -24,7 +24,13 @@ public class BanenkaartCookiePaddingTests
 
         var overrideSlice = css.Substring(overrideIdx, Math.Min(280, css.Length - overrideIdx));
         Assert.Contains("padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", overrideSlice, StringComparison.Ordinal);
-        Assert.Contains("@media (max-width: 1024px)", css.Substring(Math.Max(0, overrideIdx - 80), 80), StringComparison.Ordinal);
+        Assert.Contains("@media (max-width: 1024px)", css, StringComparison.Ordinal);
+        var mediaIdx = css.LastIndexOf("@media (max-width: 1024px)", overrideIdx, StringComparison.Ordinal);
+        Assert.True(mediaIdx >= 0 && mediaIdx < overrideIdx, "discovery override must sit inside the 1024px media query");
+        Assert.Contains(
+            "html:not(.cookie-consent-known) .app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main",
+            css,
+            StringComparison.Ordinal);
 
         // General cookie rule for other pages must remain.
         var generalSlice = css.Substring(generalIdx, Math.Min(260, css.Length - generalIdx));
@@ -32,7 +38,7 @@ public class BanenkaartCookiePaddingTests
 
         var min = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "app.min.css"));
         Assert.Contains(
-            "html:not(.cookie-consent-known) .app-shell:has(.jobsy-discovery) .app-main",
+            "html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main",
             min,
             StringComparison.Ordinal);
         Assert.Contains("4.75rem", min, StringComparison.Ordinal);

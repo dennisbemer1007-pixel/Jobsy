@@ -72,6 +72,8 @@ builder.Services.AddScoped<CultureState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeBootstrap>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.WerkgeverCountsState>();
+builder.Services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
+    Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance); // KB-FALLBACK(D)
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.AlwaysOnEmployersSwitch>();
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
@@ -143,7 +145,7 @@ builder.Services.AddHttpClient(Jobsy.Web.Branding.PlatformBrandingState.HttpClie
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
 
-builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(client =>
+builder.Services.AddHttpClient<NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
     client.DefaultRequestHeaders.TryAddWithoutValidation(
@@ -151,6 +153,15 @@ builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(clien
         "Lobsy/1.0 (demo; contact@jobsy.local)");
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
 });
+builder.Services.AddHttpClient<PdokGeocodingClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(3);
+    client.DefaultRequestHeaders.TryAddWithoutValidation(
+        "User-Agent",
+        "Lobsy/1.0 (demo; contact@jobsy.local)");
+    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
+});
+builder.Services.AddScoped<IGeocodingClient, CompositeGeocodingClient>();
 
 // Scoped (circuit) registration — do not use IHttpClientFactory + message handler here.
 // That resolves AuthenticationStateProvider outside the Razor component scope.

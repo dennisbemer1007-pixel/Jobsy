@@ -1,5 +1,6 @@
 @page "/banenkaart"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; KB-FALLBACK(E): Map = "/" until PublicRoutes.Banenkaart *@
 @* Map chrome prerenders with #jobsy-map-boot. jobsyMaps preloads maplibre+jobMap,
    loads the three scripts in parallel, boots from page data, and fetches pins over
    HTTP — first pins do not wait on the Blazor circuit. *@

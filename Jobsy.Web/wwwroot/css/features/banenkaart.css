@@ -36,7 +36,7 @@
 }
 
 /* Bottom nav sits outside .map-pane; sheet stays above it inside the pane */
-@media (max-width: 768px) {
+@media (max-width: 899px) {
     .map-pane {
         position: relative;
     }
@@ -120,16 +120,25 @@
     }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 900px) {
+    /* File 03: one docked popup on desktop too — center over the map. */
+    .map-cluster-sheet.map-popup--docked,
     .map-cluster-sheet {
-        display: none !important;
+        inset-inline: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(520px, calc(100% - 48px));
+        bottom: 24px;
+        height: 252px;
+        max-height: 252px;
+        min-height: 252px;
     }
 
     .map-cluster-chip {
         display: none !important;
     }
 
-    /* Desktop anchored popup: same fixed geometry */
+    /* Legacy floating cluster popup (kept for non-vacancy use). */
     .job-map-popup--cluster .maplibregl-popup-content {
         width: min(520px, calc(100vw - 48px));
         padding: 0;

@@ -1,8 +1,10 @@
 @namespace Jobsy.Web.Components.Discovery
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Engagement
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Web.Components.KandidaatBanen
 @inject CultureState Culture
 
 <article class="job-card @(IsHighlighted ? "job-card--highlight" : null) @(IsPressed ? "is-pressed" : null)"
@@ -43,21 +45,30 @@
         }
         <div class="job-card__overlay">
             <h2>@Vacancy.Title</h2>
-            @if (Vacancy.MatchPercent is int matchPct)
+            @{
+                var fit = KbFitMapping.FromVacancy(Vacancy);
+                var why = KbFitMapping.WhyLine(Vacancy, Culture);
+                var rankLower = KbFitMapping.RankLowerLabel(Vacancy, Culture);
+            }
+            @if (fit is not null)
             {
-                <p class="job-card__match">
-                    <span class="match-score match-score--@(Vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
-                    <button type="button"
-                            class="competency-help job-card__match-help"
-                            title="@Culture["Discovery.MatchWhy"]"
-                            aria-label="@Culture["Discovery.MatchWhy"]"
-                            @onclick="HandleExplain"
-                            @onclick:stopPropagation="true"
-                            @onclick:preventDefault="true">?</button>
-                </p>
-                @if (!string.IsNullOrWhiteSpace(Vacancy.CultureFitLabel))
+                <div class="job-card__match kb-card-fit">
+                    <KbFitPill Fit="fit" />
+                    @if (fit.GateOpen)
+                    {
+                        <button type="button"
+                                class="competency-help job-card__match-help"
+                                title="@Culture["Discovery.MatchWhy"]"
+                                aria-label="@Culture["Discovery.MatchWhy"]"
+                                @onclick="HandleExplain"
+                                @onclick:stopPropagation="true"
+                                @onclick:preventDefault="true">?</button>
+                    }
+                </div>
+                <KbWhyLine Text="why" />
+                @if (!string.IsNullOrWhiteSpace(rankLower))
                 {
-                    <span class="culture-fit culture-fit--@(Vacancy.CultureFitBand ?? "mid")">@Vacancy.CultureFitLabel</span>
+                    <span class="kb-badges__chip kb-badges__chip--rank-lower">@rankLower</span>
                 }
             }
             <p class="job-card__travel">
@@ -71,7 +82,7 @@
         </div>
     </a>
     <div class="job-card__footer">
-        <p class="job-card__company">@(string.IsNullOrWhiteSpace(Vacancy.OfferedByLabel) ? Vacancy.CompanyName : Vacancy.OfferedByLabel)</p>
+        <p class="job-card__company">@KbIntermediaryDisplay.CompanyLine(Culture, Vacancy)</p>
         <p class="job-card__location">@Vacancy.CompanyAddress</p>
         @if (Vacancy.EngagementItems is { Count: > 0 })
         {
@@ -111,7 +122,7 @@
 
     protected override bool ShouldRender()
     {
-        var company = string.IsNullOrWhiteSpace(Vacancy.OfferedByLabel) ? Vacancy.CompanyName : Vacancy.OfferedByLabel;
+        var company = KbIntermediaryDisplay.CompanyLine(Culture, Vacancy);
         if (_renderVacancyId == Vacancy.Id
             && _renderHighlighted == IsHighlighted
             && _renderPressed == IsPressed

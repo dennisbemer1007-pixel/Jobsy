@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "35e619882e064f65b360816536cd4ecd9ff1db312855798316a6e5ef871805bd",
-    "v": "20260930-merge"
+    "sha256": "e81118cc577d67aa6543dda5981179ef0cf73fe02fc329f8dc3123699c2f5e91",
+    "v": "20260930-kb9"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -16,8 +16,8 @@
     "v": "20260927-apps-clamp"
   },
   "css/features/banenkaart.css": {
-    "sha256": "5f6d5967ef32e2f8a98346aae3d729470b048d1c9310c79f750af1ec49138aa2",
-    "v": "20260927-banenkaart-v3b"
+    "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
+    "v": "20260930-kb3"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
@@ -26,6 +26,10 @@
   "css/features/gratis-dna.css": {
     "sha256": "7eee9cb441a9b874474f93e3402c52f731bf88363306abebeb8a9f680f5513dc",
     "v": "20260930-landing-6"
+  },
+  "css/features/kandidaat-banen.css": {
+    "sha256": "a0092ecc053aaf93403883fd0d1de517756da1194adee977fafe20eee10dcb27",
+    "v": "20260930-kb7"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -36,8 +40,8 @@
     "v": "20260930-landing-5"
   },
   "css/features/match-desktop.css": {
-    "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
-    "v": "20260928-match-desktop-ci"
+    "sha256": "719535fb31e05c285f519f7a047a872dcd91ab67d42b56ae5b03b4cb8f13d672",
+    "v": "20260930-kb8"
   },
   "css/features/mijn-dna.css": {
     "sha256": "dc4132dd0ecb72d496a433bdb015caf8baf98cd6c1fe576358cd574c1d63fcdf",
@@ -91,9 +95,13 @@
     "sha256": "226498db3c36a03789a4d3d80af373c11fcdd52635bab0327a9e8004930aff4c",
     "v": "20260925-coral"
   },
+  "images/brand/mascot-128.png": {
+    "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
+    "v": "20260828-mascot"
+  },
   "js/app-core.js": {
-    "sha256": "d87576723cd4283b0fc2add830f1b1fa768e0dddcacd9f1e5f02260957d7f8da",
-    "v": "20260930-landing-5"
+    "sha256": "4213535fca91bb3f364ef05e2dc2373de3a4237dbe6593b8e9dbcfeb2f8925e4",
+    "v": "20260930-kb9"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -120,12 +128,12 @@
     "v": "20260930-landing-6"
   },
   "js/jobMap.min.js": {
-    "sha256": "dfd24869872790406a6a4044aa377e6b81b9ff7e84e767538699117f113bb990",
-    "v": "20260928-mapperf"
+    "sha256": "e8529e65aacdf1ce942a5b7ff3edcc99d7546c71f929705b764a92d96a86fe03",
+    "v": "20260930-kb4"
   },
   "js/jobsyMapLibre.min.js": {
-    "sha256": "0bd8f0e24e1af41385fcfac63ae64147cc660fc50dea151b0e6cae7a06bd6ff5",
-    "v": "20260926-mapfix9"
+    "sha256": "5a57ef318f0c8c7de80e960d6da0a64a51ca0eef0bfcde9b2f3c236b1c7fade5",
+    "v": "20260930-kb3"
   },
   "js/landing.js": {
     "sha256": "3961460d0850572a978b38e192f9a901b03f33eaf704f664a038c09d3cbcaf9a",

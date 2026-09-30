@@ -1,0 +1,193 @@
+@namespace Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Core.Rules
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<article class="kb-list-row @(Compact ? "kb-list-row--compact" : null) @(IsPressed ? "is-pressed" : null)"
+         data-vacancy-id="@Vacancy.Id"
+         data-testid="kb-list-row">
+    <a class="kb-list-row__media"
+       href="@($"/vacancies/{Vacancy.Id}")"
+       @onclick="HandleOpen"
+       @onclick:stopPropagation="true">
+        <VacancyPhoto Src="@Vacancy.ImageUrl"
+                      FallbackSrc="@Vacancy.CompanyLogoUrl"
+                      VacancyId="Vacancy.Id"
+                      WorkType="@(Vacancy.WorkTypes.FirstOrDefault())"
+                      Class="kb-list-row__photo"
+                      Width="400"
+                      Height="267"
+                      Eager="Eager"
+                      Sizes="@(Compact ? "(max-width: 640px) 100vw, 360px" : "(max-width: 1024px) 28vw, 200px")" />
+        @if (Compact && Vacancy.TravelMinutes is int travelMins and > 0)
+        {
+            <span class="kb-list-row__travel-badge">
+                <KbTravelTime Minutes="travelMins"
+                              Transport="Transport"
+                              Approx="TravelApprox"
+                              ToBureau="KbIntermediaryDisplay.IsHiddenMode(Vacancy)" />
+            </span>
+        }
+    </a>
+
+    <div class="kb-list-row__body">
+        <div class="kb-list-row__top">
+            <div class="kb-list-row__titles">
+                <h2 class="kb-list-row__title">
+                    <a href="@($"/vacancies/{Vacancy.Id}")"
+                       @onclick="HandleOpen"
+                       @onclick:stopPropagation="true">@Vacancy.Title</a>
+                </h2>
+                <p class="kb-list-row__company">@KbIntermediaryDisplay.CompanyLine(Culture, Vacancy)</p>
+                @if (!string.IsNullOrWhiteSpace(Vacancy.CompanyAddress) && !KbIntermediaryDisplay.IsHiddenMode(Vacancy))
+                {
+                    <p class="kb-list-row__place">@Vacancy.CompanyAddress</p>
+                }
+            </div>
+            @if (!Compact)
+            {
+                <div class="kb-list-row__travel">
+                    <KbTravelTime Minutes="Vacancy.TravelMinutes"
+                                  Transport="Transport"
+                                  Approx="TravelApprox"
+                                  ToBureau="KbIntermediaryDisplay.IsHiddenMode(Vacancy)"
+                                  Large="true" />
+                    @if (Vacancy.DistanceKm is double km and > 0)
+                    {
+                        <span class="kb-list-row__distance">@km.ToString("0.#") km</span>
+                    }
+                </div>
+            }
+        </div>
+
+        @{
+            var fit = KbFitMapping.FromVacancy(Vacancy);
+            var why = KbFitMapping.WhyLine(Vacancy, Culture);
+            var rankLower = KbFitMapping.RankLowerLabel(Vacancy, Culture);
+            var badges = BuildBadges(fit, rankLower);
+        }
+        @if (fit is not null || badges.Count > 0)
+        {
+            <div class="kb-list-row__badges">
+                <KbBadgeRow Badges="badges" Fit="fit" MaxVisible="2" />
+            </div>
+        }
+        <KbWhyLine Text="why" />
+
+        <div class="kb-list-row__meta">
+            @if (HoursLabel is not null)
+            {
+                <span class="kb-list-row__meta-item">@HoursLabel</span>
+            }
+            @if (DaypartLabel is not null)
+            {
+                <span class="kb-list-row__meta-item">@DaypartLabel</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(WageText))
+            {
+                <span class="kb-list-row__meta-item">@WageText</span>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(rankLower) && !Compact)
+        {
+            <p class="kb-list-row__rank-note" role="note">@rankLower</p>
+        }
+
+        <div class="kb-list-row__actions">
+            <a class="kb-list-row__view"
+               href="@($"/vacancies/{Vacancy.Id}")"
+               @onclick="HandleOpen"
+               @onclick:stopPropagation="true">@Culture["Kb.List.View"]</a>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public VacancyListItem Vacancy { get; set; } = new();
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public bool IsPressed { get; set; }
+    [Parameter] public bool Eager { get; set; }
+    [Parameter] public string Transport { get; set; } = TransportLabels.Bike;
+    [Parameter] public bool TravelApprox { get; set; }
+    [Parameter] public string? WageText { get; set; }
+    [Parameter] public EventCallback<Guid> OnOpen { get; set; }
+
+    private string? HoursLabel
+    {
+        get
+        {
+            if (Vacancy.MinHoursPerWeek is decimal min && Vacancy.MaxHoursPerWeek is decimal max)
+            {
+                if (min == max)
+                {
+                    return string.Format(Culture["Kb.List.HoursSingle"], min.ToString("0.#"));
+                }
+
+                return string.Format(Culture["Kb.List.Hours"], min.ToString("0.#"), max.ToString("0.#"));
+            }
+
+            if (Vacancy.MinHoursPerWeek is decimal onlyMin)
+            {
+                return string.Format(Culture["Kb.List.HoursSingle"], onlyMin.ToString("0.#"));
+            }
+
+            if (Vacancy.MaxHoursPerWeek is decimal onlyMax)
+            {
+                return string.Format(Culture["Kb.List.HoursSingle"], onlyMax.ToString("0.#"));
+            }
+
+            return null;
+        }
+    }
+
+    private string? DaypartLabel
+    {
+        get
+        {
+            if (Vacancy.FlexibleTimes)
+            {
+                return Culture["Kb.List.DayFlexible"];
+            }
+
+            var night = Vacancy.LegalNightShift23To06 == true;
+            var evening = Vacancy.LegalWorksAfter19 == true;
+            if (night && evening)
+            {
+                return Culture["Kb.List.DayAndEvening"];
+            }
+
+            if (night)
+            {
+                return Culture["Kb.List.DayNight"];
+            }
+
+            if (evening)
+            {
+                return Culture["Kb.List.DayAndEvening"];
+            }
+
+            return Culture["Kb.List.DayDay"];
+        }
+    }
+
+    private List<KbBadgeItem> BuildBadges(KbFitView? fit, string? rankLower)
+    {
+        var list = new List<KbBadgeItem>();
+        if (fit is not null)
+        {
+            list.Add(new KbBadgeItem(Key: "fit", Label: "", IsFitPill: true));
+        }
+
+        if (!string.IsNullOrWhiteSpace(rankLower))
+        {
+            list.Add(new KbBadgeItem(Key: "rank-lower", Label: rankLower, CssModifier: "rank-lower"));
+        }
+
+        return list;
+    }
+
+    private Task HandleOpen() => OnOpen.InvokeAsync(Vacancy.Id);
+}

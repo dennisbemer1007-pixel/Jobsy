@@ -146,18 +146,17 @@ public class MobileSaasUxTests
     public void Candidate_applications_use_cards_with_current_status_and_bar_stepper()
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Applications.razor"));
-        Assert.Contains("class=\"panel-page apps-page\"", razor);
+        Assert.Contains("class=\"panel-page apps-page kb-apps\"", razor);
         Assert.Contains("application-counters", razor);
-        Assert.Contains("class=\"application-card-list\"", razor);
+        Assert.Contains("application-card-list", razor);
         Assert.Contains("application-card", razor);
         Assert.Contains("application-card__title", razor);
         Assert.Contains("application-card__img", razor);
         Assert.Contains("application-card__progress", razor);
-        Assert.Contains("application-card__status", razor);
+        Assert.Contains("kb-timeline", razor);
         Assert.Contains("application-card__company", razor);
         Assert.Contains("application-card--hired", razor);
-        Assert.Contains("Apps.StatusNow", razor);
-        Assert.Contains("Apps.TabRunning", razor);
+        Assert.Contains("Kb.Apps.FilterRunning", razor);
         Assert.Contains("Apps.WithdrawConfirm", razor);
         Assert.Contains("LobsyFriendlyDialog", razor);
         Assert.Contains("aria-haspopup=\"menu\"", razor);

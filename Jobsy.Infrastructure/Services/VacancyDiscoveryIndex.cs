@@ -187,7 +187,17 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy,
             vacancy.Company,
             vacancy.IntermediaryCompany);
-        var kvk = CompanyPublicPaths.NormalizeKvkNumber(vacancy.Company?.KvkNumber);
+        // KB-FALLBACK(A): never expose end-client KvK/vestiging on candidate discovery payloads.
+        var redactClient = Jobsy.Core.Rules.KandidaatBanen.KbHiddenIntermediaryMask
+            .RedactClientPublicPaths(vacancy.IntermediaryCompanyId, vacancy.ShowClientAddressOnMap);
+        var kvk = redactClient
+            ? null
+            : CompanyPublicPaths.NormalizeKvkNumber(vacancy.Company?.KvkNumber);
+        var vestiging = redactClient
+            ? null
+            : CompanyPublicPaths.TryParseVestigingsnummer(
+                vacancy.Company?.KvkEstablishmentId,
+                kvk);
         var rates = vacancy.SalaryTable is { IsActive: true }
             ? vacancy.SalaryTable.Rates
                 .OrderBy(r => r.AgeYears)
@@ -252,9 +262,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy.Category?.ColorHex,
             vacancy.SuitableFor65Plus,
             kvk,
-            CompanyPublicPaths.TryParseVestigingsnummer(
-                vacancy.Company?.KvkEstablishmentId,
-                kvk),
+            vestiging,
             vacancy.ContentModerationPassed,
             vacancy.RequireEmailVerification,
             vacancy.MinimumReferences,

@@ -77,6 +77,7 @@ public static class DependencyInjection
         services.AddScoped<IPersonalDataAccessLogger, PersonalDataAccessLogger>();
         services.AddScoped<IAdminAuditLog, AdminAuditLog>();
         services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
+        services.AddScoped<IApplicationStatusRecorder, ApplicationStatusRecorder>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ISupportAccessService, SupportAccessService>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
@@ -403,6 +404,9 @@ public static class DependencyInjection
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
         services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
+        // KB-FALLBACK(D): paspoort 06 absent — no down-rank / "Staat lager".
+        services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
+            Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance);
         services.AddHttpClient(CultureFitAiService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(12);

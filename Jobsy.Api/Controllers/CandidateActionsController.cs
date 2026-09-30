@@ -24,6 +24,7 @@ public class CandidateActionsController : ControllerBase
     private readonly IEmailService _email;
     private readonly IPlatformFeatureService _features;
     private readonly IUserLookupService _users;
+    private readonly IApplicationStatusRecorder _statusRecorder;
 
     public CandidateActionsController(
         JobsyDbContext db,
@@ -31,7 +32,8 @@ public class CandidateActionsController : ControllerBase
         IUserNotificationService notifications,
         IEmailService email,
         IPlatformFeatureService features,
-        IUserLookupService users)
+        IUserLookupService users,
+        IApplicationStatusRecorder statusRecorder)
     {
         _db = db;
         _tokens = tokens;
@@ -39,6 +41,7 @@ public class CandidateActionsController : ControllerBase
         _email = email;
         _features = features;
         _users = users;
+        _statusRecorder = statusRecorder;
     }
 
     [HttpPost("set-unavailable")]
@@ -217,8 +220,12 @@ public class CandidateActionsController : ControllerBase
             cancellationToken);
         foreach (var other in others)
         {
-            other.Status = ApplicationStatus.Withdrawn;
-            other.RespondedAt = now;
+            _statusRecorder.SetStatus(
+                other,
+                ApplicationStatus.Withdrawn,
+                ApplicationStatusActorKind.Candidate,
+                userId,
+                now);
             ApplicationRules.ScrubPersonalDataOnWithdraw(other);
         }
 

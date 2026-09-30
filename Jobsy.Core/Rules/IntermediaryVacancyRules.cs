@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Rules.KandidaatBanen;
 
 namespace Jobsy.Core.Rules;
 
@@ -38,7 +39,8 @@ public static class IntermediaryVacancyRules
     /// <summary>
     /// Public map/list display: masked intermediary identity vs open end-client identity.
     /// Always keep end-client <see cref="Vacancy.CompanyId"/> for admin / travel / SROI.
-    /// When <see cref="Vacancy.ShowClientAddressOnMap"/> is false, show intermediary name/address.
+    /// When <see cref="Vacancy.ShowClientAddressOnMap"/> is false, show intermediary name/address
+    /// and pin the <b>bureau</b> vestiging (D3 / KB-FALLBACK(A) — never the workplace).
     /// </summary>
     public static (
         string DisplayName,
@@ -52,24 +54,28 @@ public static class IntermediaryVacancyRules
         Company? intermediary)
     {
         endClient ??= vacancy.Company;
-        var offeredBy = intermediary is not null
-            ? $"Aangeboden door {intermediary.Name}"
-            : null;
 
-        // Pin always follows the vacancy workplace when coordinates exist.
+        // Pin for open / non-intermediary vacancies follows the vacancy workplace when set.
         var workplaceLat = vacancy.Location?.Latitude;
         var workplaceLng = vacancy.Location?.Longitude;
 
-        if (intermediary is not null && !vacancy.ShowClientAddressOnMap)
+        if (KbHiddenIntermediaryMask.IsMaskedByIntermediary(intermediary, vacancy.ShowClientAddressOnMap))
         {
+            // D3: pin / travel use the bureau. No fallback to workplace or end-client coords.
+            // OfferedByLabel is null — candidate UI formats Kb.Via.Bureau from DisplayName.
+            var bureauLoc = KbHiddenIntermediaryMask.ResolveBureauLocation(intermediary);
             return (
-                intermediary.Name,
+                intermediary!.Name,
                 intermediary.Address,
                 intermediary.LogoUrl,
-                workplaceLat ?? intermediary.Location?.Latitude ?? endClient?.Location?.Latitude ?? 0,
-                workplaceLng ?? intermediary.Location?.Longitude ?? endClient?.Location?.Longitude ?? 0,
-                offeredBy);
+                bureauLoc?.Latitude ?? 0,
+                bureauLoc?.Longitude ?? 0,
+                OfferedByLabel: null);
         }
+
+        var offeredBy = intermediary is not null
+            ? $"Aangeboden door {intermediary.Name}"
+            : null;
 
         return (
             endClient?.Name ?? "Onbekend bedrijf",

@@ -309,3 +309,10 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 | `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |
 | `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |
 | `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |
+
+## Kandidaat banen notes
+
+- Banenkaart list mode: query `?weergave=lijst` on `/banenkaart`. Persisted in `sessionStorage jobsy.kb.weergave`.
+- Employer viewed hook: `POST api/applications/{id}/viewed` (07) records at most one `EmployerViewed` timeline event.
+- Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.
+- Map route constant: `KbRoutes.Map` (`/banenkaart`).

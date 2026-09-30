@@ -112,7 +112,7 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(51.9812, 4.2235),
                 RequiredTransport = TransportMode.Bike | TransportMode.Car,
                 WorkTypes = WorkType.Logistiek | WorkType.Tuinbouw,
-                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), WorkType.Logistiek | WorkType.Tuinbouw),
+                ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(westlandId, 0, WorkType.Logistiek | WorkType.Tuinbouw),
                 VideoUrl = MockVacancyMedia.VideoUrl(0),
                 CategoryId = VacancyCategoryDefaults.RegulierId,
                 Kind = VacancyKind.Regular,
@@ -137,7 +137,7 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0735, 4.3120),
                 RequiredTransport = TransportMode.Walking | TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Horeca,
-                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), WorkType.Horeca),
+                ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(cafeId, 0, WorkType.Horeca),
                 VideoUrl = MockVacancyMedia.VideoUrl(1),
                 CategoryId = VacancyCategoryDefaults.InclusiefId,
                 Kind = VacancyKind.Regular
@@ -161,7 +161,7 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0910, 4.2815),
                 RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Winkel,
-                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"), WorkType.Winkel),
+                ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(supermarketId, 0, WorkType.Winkel),
                 VideoUrl = MockVacancyMedia.VideoUrl(2),
                 CategoryId = VacancyCategoryDefaults.InternshipId,
                 Kind = VacancyKind.Internship

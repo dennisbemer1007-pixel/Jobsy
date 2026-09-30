@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Services;
@@ -29,6 +30,7 @@ internal static class WestlandVacanciesSeeder
         if (await db.PlatformLogs.AnyAsync(l =>
                 l.Category == "Seed" && l.Message == SeedMarker))
         {
+            await ReassignSeedPhotosAsync(db, logger);
             return;
         }
 
@@ -44,6 +46,7 @@ internal static class WestlandVacanciesSeeder
                 CreatedAt = DateTime.UtcNow
             });
             await db.SaveChangesAsync();
+            await ReassignSeedPhotosAsync(db, logger);
             return;
         }
 
@@ -76,6 +79,56 @@ internal static class WestlandVacanciesSeeder
             "Westland banenkaart seed: {CompanyCount} companies, {VacancyCount} active vacancies.",
             12,
             vacancies.Length);
+    }
+
+    /// <summary>
+    /// Idempotent photo reassignment for known Westland seed vacancy ids only
+    /// (deterministic <c>a1000000-…</c> / companies). Never touches employer uploads.
+    /// </summary>
+    private static async Task ReassignSeedPhotosAsync(JobsyDbContext db, ILogger logger)
+    {
+        var seedIds = Enumerable.Range(1, 55).Select(VacancyId).ToList();
+        var vacancies = await db.Vacancies
+            .Where(v => seedIds.Contains(v.Id))
+            .OrderBy(v => v.CompanyId)
+            .ThenBy(v => v.Id)
+            .ToListAsync();
+        if (vacancies.Count == 0)
+        {
+            return;
+        }
+
+        var changed = 0;
+        var indexWithinCompany = new Dictionary<Guid, int>();
+        foreach (var v in vacancies)
+        {
+            if (!indexWithinCompany.TryGetValue(v.CompanyId, out var idx))
+            {
+                idx = 0;
+            }
+
+            indexWithinCompany[v.CompanyId] = idx + 1;
+            var next = MockVacancyMedia.SeedImageUrlForCompany(v.CompanyId, idx, v.WorkTypes);
+            if (!string.Equals(v.ImageUrl, next, StringComparison.Ordinal))
+            {
+                // Only rewrite known local category fallbacks / empty — never employer uploads.
+                if (string.IsNullOrWhiteSpace(v.ImageUrl)
+                    || VacancyImageUrls.IsLocalVacancyFallbackPhoto(v.ImageUrl)
+                    || VacancyImageUrls.IsLocalVacancySvg(v.ImageUrl)
+                    || VacancyImageUrls.IsPicsum(v.ImageUrl)
+                    || VacancyImageUrls.IsBrokenUnsplash(v.ImageUrl))
+                {
+                    v.ImageUrl = next;
+                    changed++;
+                }
+            }
+        }
+
+        if (changed > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Westland seed photo reassignment: {Count} ImageUrl updates.", changed);
+        }
     }
 
     private static async Task EnsureCompaniesAsync(JobsyDbContext db)
@@ -271,6 +324,7 @@ internal static class WestlandVacanciesSeeder
         };
 
         var list = new List<Vacancy>(specs.Length);
+        var indexWithinCompany = new Dictionary<Guid, int>();
         for (var i = 0; i < specs.Length; i++)
         {
             var s = specs[i];
@@ -285,6 +339,12 @@ internal static class WestlandVacanciesSeeder
             Guid? salaryTableId = s.UseSalaryTable && caoTableId is not null
                 ? caoTableId
                 : wmlByCompany.TryGetValue(companyId, out var wmlId) ? wmlId : caoTableId;
+            if (!indexWithinCompany.TryGetValue(companyId, out var companyIdx))
+            {
+                companyIdx = 0;
+            }
+
+            indexWithinCompany[companyId] = companyIdx + 1;
             var vacancy = new Vacancy
             {
                 Id = vacancyId,
@@ -304,7 +364,7 @@ internal static class WestlandVacanciesSeeder
                 Location = new GeoPoint(s.Lat, s.Lng),
                 RequiredTransport = s.Transport,
                 WorkTypes = s.Types,
-                ImageUrl = MockVacancyMedia.ImageUrl(vacancyId, s.Types),
+                ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(companyId, companyIdx, s.Types),
                 IsHighlighted = s.Highlight,
                 HighlightedUntil = s.Highlight
                     ? DateTime.UtcNow.AddDays(VacancyProductRules.HighlightDays)
@@ -317,6 +377,7 @@ internal static class WestlandVacanciesSeeder
             list.Add(vacancy);
         }
 
+        MockVacancyMedia.EnsureUniqueSeedPhotos(list);
         return list.ToArray();
     }
 }

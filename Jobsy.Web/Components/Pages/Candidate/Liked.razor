@@ -1,8 +1,12 @@
 @page "/candidate/liked"
+@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; 07 redesigns in place (no CandidateJobListTabs) *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Rules.KandidaatBanen
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -10,15 +14,15 @@
 @inject PersistentComponentState Persist
 @implements IDisposable
 
-<PageTitle>@Culture["Saved.Title"] · Lobsy</PageTitle>
+<PageTitle>@Culture["Kb.Saved.Title"] · Lobsy</PageTitle>
 
 <AuthorizeView Roles="Candidate">
     <Authorized>
-        <div class="panel-page">
+        <div class="panel-page kb-saved">
             <header class="panel-header">
                 <div>
-                    <h1>@Culture["Saved.Title"]</h1>
-                    <p class="login-lead">@Culture["Saved.LeadLoggedIn"]</p>
+                    <h1>@Culture["Kb.Saved.Title"]</h1>
+                    <p class="login-lead">@Culture["Kb.Saved.Lead"]</p>
                 </div>
             </header>
 
@@ -30,31 +34,111 @@
             }
             else if (_items.Count == 0)
             {
-                <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="/banenkaart">@Culture["Saved.Discover"]</a>.</p>
+                <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="@KbRoutes.Map">@Culture["Saved.Discover"]</a>.</p>
             }
             else
             {
-                <div class="vacancy-list vacancy-list--cards vacancy-list--saved">
-                    @foreach (var item in _items)
+                <div class="kb-saved__toolbar">
+                    <div class="kb-saved__filters" role="group">
+                        <button type="button" class="kb-chip @(_filter == "all" ? "is-selected" : null)" @onclick='() => SetFilter("all")'>
+                            @Culture["Kb.Saved.FilterAll"] · @_items.Count
+                        </button>
+                        <button type="button" class="kb-chip @(_filter == "open" ? "is-selected" : null)" @onclick='() => SetFilter("open")'>
+                            @Culture["Kb.Saved.FilterOpen"] · @_countOpen
+                        </button>
+                        <button type="button" class="kb-chip @(_filter == "closed" ? "is-selected" : null)" @onclick='() => SetFilter("closed")'>
+                            @Culture["Kb.Saved.FilterClosed"] · @_countClosed
+                        </button>
+                    </div>
+                    <label class="kb-saved__sort">
+                        <span class="visually-hidden">@Culture["Kb.Saved.SortBestFit"]</span>
+                        <select @bind="_sort" @bind:after="ApplyFilter">
+                            <option value="fit">@Culture["Kb.Saved.SortBestFit"]</option>
+                            <option value="newest">@Culture["Kb.Saved.SortNewest"]</option>
+                            <option value="closing">@Culture["Kb.Saved.SortClosing"]</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="kb-saved__grid">
+                    @foreach (var item in _filtered)
                     {
-                        <article class="job-card">
-                            <a class="job-card__stretch-link" href="@($"/vacancies/{item.VacancyId}")" aria-label="@item.VacancyTitle"></a>
-                            <a class="job-card__media" href="@($"/vacancies/{item.VacancyId}")">
-                                <VacancyPhoto Src="@item.ImageUrl"
-                                              FallbackSrc="@item.CompanyLogoUrl"
-                                              VacancyId="item.VacancyId"
-                                              Class="job-card__photo"
-                                              Sizes="(max-width: 700px) 50vw, 360px" />
-                                <div class="job-card__overlay">
-                                    <h2>@item.VacancyTitle</h2>
-                                </div>
-                            </a>
-                            <div class="job-card__footer">
-                                <p class="job-card__company">@item.CompanyName</p>
-                                <p class="job-card__location">@Culture.Format("Saved.LikedOn", item.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy"))</p>
+                        var closed = IsClosed(item);
+                        <article class="kb-saved-card @(closed ? "kb-saved-card--closed" : null)">
+                            <div class="kb-saved-card__media">
+                                <a href="@($"/vacancies/{item.VacancyId}")">
+                                    <VacancyPhoto Src="@item.ImageUrl"
+                                                  FallbackSrc="@item.CompanyLogoUrl"
+                                                  VacancyId="item.VacancyId"
+                                                  Class="kb-saved-card__photo"
+                                                  Sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                                </a>
+                                @if (!string.IsNullOrWhiteSpace(item.SavedStateKind)
+                                     && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal))
+                                {
+                                    <span class="kb-saved-card__state kb-saved-card__state--@KbLabels.SavedStateCss(item.SavedStateKind)">
+                                        @KbLabels.SavedStateLabel(Culture, item.SavedStateKind, item.DaysUntilEnd)
+                                    </span>
+                                }
+                                <button type="button"
+                                        class="kb-saved-card__heart"
+                                        aria-label="@Culture["Kb.Saved.Remove"]"
+                                        @onclick="() => UnsaveAsync(item)">
+                                    ♥
+                                </button>
+                            </div>
+                            <div class="kb-saved-card__body">
+                                <h2 class="kb-saved-card__title">
+                                    <a href="@($"/vacancies/{item.VacancyId}")">@item.VacancyTitle</a>
+                                </h2>
+                                <p class="kb-saved-card__company">
+                                    @item.CompanyName@(string.IsNullOrWhiteSpace(item.LocationLabel) ? "" : $" · {item.LocationLabel}")
+                                </p>
+                                <p class="kb-saved-card__meta">
+                                    @if (item.HoursPerWeekMin.HasValue || item.HoursPerWeekMax.HasValue)
+                                    {
+                                        <span>@FormatHours(item.HoursPerWeekMin, item.HoursPerWeekMax)</span>
+                                    }
+                                    <span>@string.Format(Culture["Kb.Saved.SavedOn"], ShortDate(item.CreatedAt))</span>
+                                </p>
+                                @if (item.FitGateClosed)
+                                {
+                                    <a class="kb-fit kb-fit--gate" href="@KbRoutes.PaspoortTests">@Culture["Kb.Fit.Gate"]</a>
+                                }
+                                else if (item.FitPercent is int pct)
+                                {
+                                    <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ?? "some")">
+                                        @string.Format(Culture["Kb.Fit.Percent"], pct)
+                                    </span>
+                                }
+                            </div>
+                            <div class="kb-saved-card__footer">
+                                @if (closed)
+                                {
+                                    <a class="kb-saved-card__action" href="@SimilarHref(item)">@Culture["Kb.Saved.Similar"]</a>
+                                    <button type="button" class="kb-saved-card__remove" @onclick="() => UnsaveAsync(item)">@Culture["Kb.Saved.Remove"]</button>
+                                }
+                                else if (item.HasApplied)
+                                {
+                                    <span class="kb-saved-card__applied">@Culture["Kb.Saved.Applied"]</span>
+                                    <a class="kb-saved-card__link" href="@KbRoutes.Applications">@Culture["Kb.Saved.View"]</a>
+                                }
+                                else
+                                {
+                                    <a class="btn-compact kb-saved-card__apply" href="@($"/vacancies/{item.VacancyId}")">@Culture["Kb.Saved.Apply"]</a>
+                                    <a class="kb-saved-card__link" href="@($"/vacancies/{item.VacancyId}")">@Culture["Kb.Saved.View"]</a>
+                                }
                             </div>
                         </article>
                     }
+                </div>
+            }
+
+            @if (_undoItem is not null)
+            {
+                <div class="kb-saved__toast" role="status">
+                    <span>@Culture["Kb.Saved.UndoToast"]</span>
+                    <button type="button" @onclick="UndoUnsaveAsync">@Culture["Kb.Saved.Undo"]</button>
                 </div>
             }
         </div>
@@ -62,7 +146,7 @@
     <NotAuthorized>
         <div class="saved-gate">
             <header class="saved-gate__header">
-                <h1>@Culture["Saved.Title"]</h1>
+                <h1>@Culture["Kb.Saved.Title"]</h1>
             </header>
             <div class="saved-gate__body">
                 <div class="saved-gate__hero" aria-hidden="true">
@@ -95,9 +179,16 @@
 @code {
     private const string PersistKey = "candidateLiked";
     private List<CandidateEngagementItem> _items = [];
+    private List<CandidateEngagementItem> _filtered = [];
     private bool _loading = true;
     private bool _restored;
+    private string _filter = "all";
+    private string _sort = "newest";
+    private int _countOpen;
+    private int _countClosed;
+    private CandidateEngagementItem? _undoItem;
     private PersistingComponentStateSubscription _persistSubscription;
+    private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
 
     protected override void OnInitialized()
     {
@@ -106,6 +197,8 @@
         if (Persist.TryTakeFromJson<List<CandidateEngagementItem>>(PersistKey, out var saved) && saved is not null)
         {
             _items = saved;
+            RefreshCounts();
+            ApplyFilter();
             _loading = false;
             _restored = true;
         }
@@ -126,23 +219,16 @@
             return;
         }
 
-        if (_restored)
-        {
-            return;
-        }
+        if (_restored) return;
 
         try
         {
             _items = (await Api.GetMyLikesAsync()).ToList();
+            RefreshCounts();
+            ApplyFilter();
         }
-        catch
-        {
-            _items = [];
-        }
-        finally
-        {
-            _loading = false;
-        }
+        catch { _items = []; }
+        finally { _loading = false; }
     }
 
     private async void OnCultureChanged()
@@ -150,12 +236,10 @@
         try
         {
             _items = (await Api.GetMyLikesAsync()).ToList();
+            RefreshCounts();
+            ApplyFilter();
         }
-        catch
-        {
-            // keep current list
-        }
-
+        catch { }
         await InvokeAsync(StateHasChanged);
     }
 
@@ -163,5 +247,87 @@
     {
         Culture.Changed -= OnCultureChanged;
         _persistSubscription.Dispose();
+    }
+
+    private void SetFilter(string filter)
+    {
+        _filter = filter;
+        ApplyFilter();
+    }
+
+    private void RefreshCounts()
+    {
+        _countOpen = _items.Count(i => !IsClosed(i));
+        _countClosed = _items.Count(IsClosed);
+    }
+
+    private void ApplyFilter()
+    {
+        IEnumerable<CandidateEngagementItem> q = _filter switch
+        {
+            "open" => _items.Where(i => !IsClosed(i)),
+            "closed" => _items.Where(IsClosed),
+            _ => _items
+        };
+
+        q = _sort switch
+        {
+            "fit" => q.OrderByDescending(i => i.FitPercent ?? 0),
+            "closing" => q.OrderBy(i => i.DaysUntilEnd ?? int.MaxValue),
+            _ => q.OrderByDescending(i => i.CreatedAt)
+        };
+
+        _filtered = q.ToList();
+    }
+
+    private static bool IsClosed(CandidateEngagementItem item)
+        => string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Closed), StringComparison.OrdinalIgnoreCase)
+           || string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Fulfilled), StringComparison.OrdinalIgnoreCase);
+
+    private string SimilarHref(CandidateEngagementItem item)
+        => item.CategoryId is Guid cat
+            ? $"{KbRoutes.Map}?categorie={cat:D}"
+            : KbRoutes.Map;
+
+    private async Task UnsaveAsync(CandidateEngagementItem item)
+    {
+        _undoItem = item;
+        _items.Remove(item);
+        RefreshCounts();
+        ApplyFilter();
+        try { await Api.SetLikedAsync(item.VacancyId, liked: false); }
+        catch { /* toast still allows undo */ }
+    }
+
+    private async Task UndoUnsaveAsync()
+    {
+        if (_undoItem is null) return;
+        var item = _undoItem;
+        _undoItem = null;
+        _items.Insert(0, item);
+        RefreshCounts();
+        ApplyFilter();
+        try { await Api.SetLikedAsync(item.VacancyId, liked: true); }
+        catch { }
+    }
+
+    private static string FormatHours(int? min, int? max)
+    {
+        if (min is int a && max is int b && a != b) return $"{a}-{b} uur";
+        return $"{min ?? max} uur";
+    }
+
+    private string ShortDate(DateTime dt)
+    {
+        var local = dt.ToLocalTime();
+        var culture = Culture.Language switch
+        {
+            "en" => new System.Globalization.CultureInfo("en-GB"),
+            "pl" => new System.Globalization.CultureInfo("pl-PL"),
+            "ro" => new System.Globalization.CultureInfo("ro-RO"),
+            "ar" => new System.Globalization.CultureInfo("ar-SA"),
+            _ => Dutch
+        };
+        return local.ToString("d MMM", culture).Replace(".", "");
     }
 }

@@ -50,8 +50,8 @@ public static class UiStringsMatch
             "Top match-ul tău: {0}% — {1}, {2}. Deschide potrivirile",
             "أفضل تطابق لك: {0}% — {1}، {2}. افتح مطابقاتك");
         Add("Match.DialogTitle",
-            "Jouw matches", "Your matches",
-            "Twoje dopasowania", "Potrivirile tale", "مطابقاتك");
+            "Jouw top-matches", "Your top matches",
+            "Twoje top dopasowania", "Top potrivirile tale", "أفضل مطابقاتك");
         Add("Match.DialogProgress",
             "{0} van {1}", "{0} of {1}",
             "{0} z {1}", "{0} din {1}", "{0} من {1}");
@@ -59,22 +59,28 @@ public static class UiStringsMatch
             "Hierna", "Up next",
             "Następne", "Urmează", "التالي");
         Add("Match.DialogFootnote",
-            "Bewaarde matches vind je terug onder Bewaard.",
-            "Saved matches are under Saved.",
-            "Zapisane dopasowania znajdziesz w Zapisane.",
-            "Potrivirile salvate sunt la Salvate.",
-            "المطابقات المحفوظة تحت المحفوظات.");
+            "Laten schieten zet hem achteraan in deze ronde. Hij verdwijnt niet.",
+            "Pass moves it to the end of this round. It does not disappear.",
+            "Odrzucenie przenosi ofertę na koniec tej rundy. Nie znika.",
+            "Renunțarea o mută la finalul rundei. Nu dispare.",
+            "التخطي ينقلها إلى نهاية هذه الجولة. لا تختفي.");
         Add("Match.DeckDone",
-            "Je hebt alle matches gezien", "You've seen all matches",
-            "Widziałeś wszystkie dopasowania", "Ai văzut toate potrivirile", "لقد شاهدت كل المطابقات");
+            "Je hebt ze allemaal gezien", "You've seen them all",
+            "Widziałeś je wszystkie", "Le-ai văzut pe toate", "لقد شاهدتها كلها");
         Add("Match.ToastLiked",
             "Interesse genoteerd", "Interest noted",
             "Zainteresowanie zapisane", "Interes notat", "تم تسجيل الاهتمام");
         Add("Match.ToastSkipped",
-            "Overgeslagen", "Skipped",
-            "Pominięto", "Omise", "تم التخطي");
+            "We laten hem later nog eens zien", "We'll show it again later",
+            "Pokażemy ją później jeszcze raz", "O mai arătăm mai târziu", "سنعرضها لاحقًا مرة أخرى");
         Add("Match.DialogClose",
             "Sluiten", "Close",
             "Zamknij", "Închide", "إغلاق");
+        Add("Match.StampNope",
+            "Nee", "Nope",
+            "Nie", "Nu", "لا");
+        Add("Match.StampLike",
+            "Ja", "Like",
+            "Tak", "Da", "نعم");
     }
 }

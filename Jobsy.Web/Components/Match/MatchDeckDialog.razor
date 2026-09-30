@@ -1,6 +1,9 @@
 @namespace Jobsy.Web.Components.Match
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Core.Rules.KandidaatBanen
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -17,6 +20,7 @@
          aria-labelledby="match-dialog-title"
          aria-describedby="match-dialog-progress"
          tabindex="-1"
+         data-testid="match-deck-dialog"
          @onkeydown="OnKeyDownAsync">
         <div class="lobsy-dialog--match__main">
             <header class="lobsy-dialog--match__header">
@@ -24,6 +28,7 @@
                     <h2 id="match-dialog-title">@Culture["Match.DialogTitle"]</h2>
                     <p id="match-dialog-progress" class="lobsy-dialog--match__progress-text" aria-live="polite">
                         @Culture.Format("Match.DialogProgress", Deck.Position, Deck.Count)
+                        <span> · @Culture["Kb.Match.NoWrongChoice"]</span>
                     </p>
                 </div>
                 <button type="button"
@@ -51,9 +56,13 @@
 
             @if (Deck.IsFinished || Deck.Current is null)
             {
-                <div class="lobsy-dialog--match__done">
+                <div class="lobsy-dialog--match__done" data-testid="match-deck-done">
                     <p>@Culture["Match.DeckDone"]</p>
-                    <button type="button" class="engagement-btn" @onclick="CloseAsync">@Culture["Match.DialogClose"]</button>
+                    <div class="lobsy-dialog--match__done-actions">
+                        <a class="engagement-btn" href="@KbRoutes.Saved">@Culture["Kb.Match.ViewSaved"]</a>
+                        <a class="match-page__cta match-page__cta--ghost" href="@KbRoutes.Map">@Culture["Kb.Match.BackToMap"]</a>
+                    </div>
+                    <button type="button" class="lobsy-dialog--match__done-close" @onclick="CloseAsync">@Culture["Match.DialogClose"]</button>
                 </div>
             }
             else
@@ -77,9 +86,12 @@
                                OnSwipeComplete="HandleSwipeComplete" />
                 </div>
                 <p class="lobsy-dialog--match__hints" aria-hidden="true">
+                    <span>@Culture["Kb.Match.KeyboardLead"]</span>
                     <kbd>←</kbd> @Culture["Match.Reject"]
                     <span>·</span>
-                    @Culture["Match.Interest"] <kbd>→</kbd>
+                    <kbd>→</kbd> / <kbd>Enter</kbd> @Culture["Match.Interest"]
+                    <span>·</span>
+                    <kbd>Esc</kbd> @Culture["Match.DialogClose"]
                 </p>
             }
 
@@ -94,10 +106,11 @@
             <ul class="lobsy-dialog--match__upnext">
                 @foreach (var item in Deck.UpNext(3))
                 {
-                    var pct = item.MatchPercentage;
+                    var upFit = BuildUpNextFit(item);
                     <li>
                         <button type="button"
                                 class="lobsy-dialog--match__upnext-row"
+                                data-vacancy="@(item.VacancyId?.ToString() ?? "")"
                                 @onclick="() => JumpToAsync(item)">
                             <VacancyPhoto Src="@item.ImageUrl"
                                           FallbackSrc="@item.CompanyLogoUrl"
@@ -108,12 +121,16 @@
                                           Sizes="40px" />
                             <span class="lobsy-dialog--match__upnext-body">
                                 <span class="lobsy-dialog--match__upnext-title">@item.JobTitle</span>
-                                <span class="lobsy-dialog--match__upnext-meta">@item.CompanyName</span>
+                                <span class="lobsy-dialog--match__upnext-meta">
+                                    @if (upFit is not null)
+                                    {
+                                        <KbFitPill Fit="upFit" />
+                                    }
+                                    <KbTravelTime Minutes="item.TravelTimeMinutes"
+                                                  Transport="item.TransportMode"
+                                                  ToBureau="item.TravelToBureau" />
+                                </span>
                             </span>
-                            @if (pct is int p)
-                            {
-                                <span class="lobsy-dialog--match__upnext-pct">@p%</span>
-                            }
                         </button>
                     </li>
                 }
@@ -148,6 +165,19 @@
         }
 
         return Task.CompletedTask;
+    }
+
+    private static KbFitView? BuildUpNextFit(SwipeViewModel item)
+    {
+        if (!item.ShowMatchPercentage || item.MatchPercentage is not int pct)
+        {
+            return null;
+        }
+
+        var band = Enum.TryParse<Jobsy.Core.Rules.KbFitBand>(item.FitBand, ignoreCase: true, out var parsed)
+            ? parsed
+            : CandidateFitDisplay.BandFor(pct);
+        return new KbFitView(GateOpen: true, Percent: pct, Band: band);
     }
 
     private async Task CloseAsync()
@@ -200,7 +230,7 @@
             _animating = true;
             await _card.SwipeAsync(SwipeDirection.Left);
         }
-        else if (e.Key is "ArrowRight" && _card is not null)
+        else if ((e.Key is "ArrowRight" or "Enter") && _card is not null)
         {
             _animating = true;
             await _card.SwipeAsync(SwipeDirection.Right);
@@ -208,7 +238,7 @@
     }
 
     private void HandleReject(SwipeViewModel model)
-        => _status = Culture["Match.ToastSkipped"];
+        => _status = Culture["Kb.Match.Skipped"];
 
     private void HandleInterest(SwipeViewModel model)
     {
@@ -230,7 +260,21 @@
 
     private void HandleSwipeComplete((SwipeViewModel Model, SwipeDirection Direction) result)
     {
-        Deck?.Advance();
+        if (Deck is null)
+        {
+            _animating = false;
+            return;
+        }
+
+        if (result.Direction == SwipeDirection.Left && result.Model.VacancyId is Guid id)
+        {
+            Deck.Defer(id);
+        }
+        else
+        {
+            Deck.Advance();
+        }
+
         _animating = false;
     }
 
