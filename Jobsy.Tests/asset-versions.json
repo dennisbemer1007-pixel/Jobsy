@@ -64,8 +64,8 @@
     "v": "20260925-coral"
   },
   "js/app-core.js": {
-    "sha256": "eb0cd80e73122e4921fb4689d52434fa75edfb10433f5bee59ba97babf9e64c1",
-    "v": "20260930-landing-1"
+    "sha256": "d87576723cd4283b0fc2add830f1b1fa768e0dddcacd9f1e5f02260957d7f8da",
+    "v": "20260930-landing-4"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -101,7 +101,7 @@
   },
   "js/landing.js": {
     "sha256": "4a0a61f3face2c40dcaf720b11d338d09fc8f072fb89f104d71cf6e5777b3630",
-    "v": "20260930-landing-1"
+    "v": "20260930-landing-4"
   },
   "js/lobsyPush.js": {
     "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",

@@ -3,11 +3,9 @@ using Jobsy.Web.Auth;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Seo;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
@@ -17,9 +15,8 @@ public class BanenkaartRouteTests
     [Fact]
     public async Task Banen_redirects_301_to_banenkaart_preserving_query()
     {
-        using var host = await CreateHostAsync();
-        var client = host.GetTestClient();
-        client.AllowAutoRedirect = false;
+        await using var app = await CreateAppAsync();
+        var client = app.GetTestClient();
 
         using var response = await client.GetAsync("/banen?q=zorg&transport=Fiets");
         Assert.Equal(HttpStatusCode.MovedPermanently, response.StatusCode);
@@ -65,7 +62,6 @@ public class BanenkaartRouteTests
             "https://lobsy.nl/banenkaart",
             PageSeoResolver.CanonicalUrl("https://lobsy.nl/banenkaart", "/banenkaart", config));
 
-        // Catalog entry drives resolver when overlay is absent.
         var entryHome = PageSeoCatalog.Resolve("/");
         var entryMap = PageSeoCatalog.Resolve("/banenkaart");
         Assert.Equal("Page.JobMapTitle", entryHome.TitleKey);
@@ -73,28 +69,21 @@ public class BanenkaartRouteTests
         Assert.Equal("/banenkaart", entryHome.CanonicalPath ?? "/");
     }
 
-    private static async Task<IHost> CreateHostAsync()
+    private static async Task<WebApplication> CreateAppAsync()
     {
-        var builder = new HostBuilder()
-            .ConfigureWebHost(web =>
-            {
-                web.UseTestServer();
-                web.ConfigureServices(services =>
-                {
-                    services.AddRouting();
-                });
-                web.Configure(app =>
-                {
-                    app.UseBanenRedirect();
-                    app.Run(async ctx =>
-                    {
-                        ctx.Response.StatusCode = StatusCodes.Status404NotFound;
-                        await ctx.Response.WriteAsync("fallback");
-                    });
-                });
-            });
-
-        var host = await builder.StartAsync();
-        return host;
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            EnvironmentName = Environments.Development
+        });
+        builder.WebHost.UseTestServer();
+        var app = builder.Build();
+        app.UseBanenRedirect();
+        app.Run(async ctx =>
+        {
+            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+            await ctx.Response.WriteAsync("fallback");
+        });
+        await app.StartAsync();
+        return app;
     }
 }

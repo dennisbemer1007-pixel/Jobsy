@@ -14,10 +14,16 @@ Guard: `Jobsy.Tests/RoutesDocFreshnessTests`.
 ## NL / EN mix
 
 Routes intentionally mix Dutch and English segments (`/profiel`, `/carriere`,
-`/banen`, `/hoe-werkt-lobsy`, `/candidate/...`, `/employer/...`, `/vacancies/...`).
+`/banenkaart`, `/hoe-werkt-lobsy`, `/candidate/...`, `/employer/...`, `/vacancies/...`).
 **Do not rename routes** for cosmetics — bookmarks, QR landings, and emails depend on them.
 Product narrative per role: [`ROLES_AND_VIEWS.md`](../ROLES_AND_VIEWS.md).
 Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
+
+## Banenkaart (landing 04)
+
+- `/banenkaart` — public job map (indexed).
+- `/` — still serves the same map until landing 05 replaces it with the landing page.
+- `/banen` — legacy; **301** → `/banenkaart` (query preserved; middleware, not a Blazor page).
 
 ## Access column
 
@@ -32,7 +38,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 
 | Route | Component | Access |
 |-------|-----------|--------|
-| `/` | `Pages/Home.razor` | anonymous |
+| `/` | `Pages/Banenkaart.razor` | anonymous |
 | `/access-denied` | `Pages/AccessDenied.razor` | anonymous |
 | `/account-maken` | `Pages/Public/AccountMaken.razor` | anonymous |
 | `/account-maken/code` | `Pages/Public/AccountMakenCode.razor` | anonymous |
@@ -76,7 +82,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ambassadeur/payout-checkout` | `Pages/Ambassadeur/PayoutCheckoutStub.razor` | Ambassadeur |
 | `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
-| `/banen` | `Pages/Banen.razor` | anonymous |
+| `/banenkaart` | `Pages/Banenkaart.razor` | anonymous |
 | `/branch` | `Pages/Branch/BranchDashboard.razor` | BranchManager, EnterpriseManager |
 | `/branch/applicants` | `Pages/Branch/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/branch/culture` | `Pages/Employer/CultureScan.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
@@ -170,3 +176,4 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 | `/account/email-code/start` | POST; antiforgery; starts passwordless e-mail code (Web → API) |
 | `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |
 | `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |
+| `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |

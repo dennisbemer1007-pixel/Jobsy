@@ -55,10 +55,16 @@ public static class RoutesDocGenerator
         sb.AppendLine("## NL / EN mix");
         sb.AppendLine();
         sb.AppendLine("Routes intentionally mix Dutch and English segments (`/profiel`, `/carriere`,");
-        sb.AppendLine("`/banen`, `/hoe-werkt-lobsy`, `/candidate/...`, `/employer/...`, `/vacancies/...`).");
+        sb.AppendLine("`/banenkaart`, `/hoe-werkt-lobsy`, `/candidate/...`, `/employer/...`, `/vacancies/...`).");
         sb.AppendLine("**Do not rename routes** for cosmetics — bookmarks, QR landings, and emails depend on them.");
         sb.AppendLine("Product narrative per role: [`ROLES_AND_VIEWS.md`](../ROLES_AND_VIEWS.md).");
         sb.AppendLine("Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).");
+        sb.AppendLine();
+        sb.AppendLine("## Banenkaart (landing 04)");
+        sb.AppendLine();
+        sb.AppendLine("- `/banenkaart` — public job map (indexed).");
+        sb.AppendLine("- `/` — still serves the same map until landing 05 replaces it with the landing page.");
+        sb.AppendLine("- `/banen` — legacy; **301** → `/banenkaart` (query preserved; middleware, not a Blazor page).");
         sb.AppendLine();
         sb.AppendLine("## Access column");
         sb.AppendLine();
@@ -92,6 +98,7 @@ public static class RoutesDocGenerator
         sb.AppendLine("| `/account/email-code/start` | POST; antiforgery; starts passwordless e-mail code (Web → API) |");
         sb.AppendLine("| `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |");
         sb.AppendLine("| `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |");
+        sb.AppendLine("| `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |");
         sb.AppendLine();
 
         return sb.ToString().Replace("\r\n", "\n", StringComparison.Ordinal);
