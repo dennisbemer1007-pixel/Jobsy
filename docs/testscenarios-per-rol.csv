@@ -816,3 +816,6 @@ Bedrijfsmanager,"Kandidaatinzichten: gratis + unlock (tokens) + CSV.","Locked da
 Regiomanager,"Dashboard + Signalen + vacatures/sollicitaties/tokens/inzichten.","Alleen-lezen hint; acties disabled/403; geen kopen/unlock."
 Vestigingsmanager,"Dashboard scoped; vacatures/sollicitaties eigen vestiging; tokens aanvragen.","Geen kopen/facturen; publicatieaanvraag bij tekort; inzichten unlock alleen bij per-vestiging scope."
 Alle drie,"Legacy URL /employer/vacancies openen.","301/redirect naar /werkgever/vacatures; geen oude hrefs in nav."
+UAT-TESTS-01,Kandidaat,Gratis test intro→vragen→klaar,Open /candidate/career?stap=intro; kies Heel diep; beantwoord; klaar,Passpoort tests toont status
+UAT-TESTS-02,Kandidaat,Uitgebreide offer+stub,TestDetail free first; Uitgebreide→offer; waiver; stub pay; Begin vraag 1,Paid unlock only
+UAT-TESTS-03,Kandidaat,RTL ar,Zet taal ar; open intro 390,dir=rtl geen overflow

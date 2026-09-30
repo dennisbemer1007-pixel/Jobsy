@@ -1,4 +1,12 @@
 # Changelog: Jobsy
+
+## Candidate tests stack (02–07)
+
+- Shared `TestQuestionFlow` + `TestDepthRules`, consent gate, 3-change limit, free pages in ontdekkingsreis shell.
+- Uitgebreide test: 5 parts, pause points, inline motivation, offer/checkout in shell; free CTA first on TestDetail.
+- Five languages + RTL; deep items via embedded JSON; review CSVs for native pl/ro/ar.
+- Playwright soft-skip suite + stack-end report (`docs/reports/tests-stack-end.md`).
+
 ## Unreleased
 
 - **E-mail stack (look & safety):** one-button catalog layout, language-aware copy (nl/en/pl/ro/ar + RTL), optional-mail unsubscribe (List-Unsubscribe One-Click), safer links (set-password / API-key reveal / parental consent without secrets in mail), admin preview with fake data and limited test send. See `docs/emails.md`.

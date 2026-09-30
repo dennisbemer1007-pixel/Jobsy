@@ -79,9 +79,9 @@ internal static class UiStringsValues
 
         ["Kompas.TabValues"] = "Waarden",
         ["Kompas.ValuesLead"] = "Wat jij belangrijk vindt op werk: eigen regie, verbinding, prestatie, zekerheid en impact.",
-        ["Kompas.ValuesDeepDone"] = "Diepteanalyse waarden afgerond",
-        ["Kompas.ValuesDeepReady"] = "Diepteanalyse waarden ontgrendeld — ga verder waar je was",
-        ["Kompas.ValuesDeepLocked"] = "Diepteanalyse (150 vragen) nog niet ontgrendeld",
+        ["Kompas.ValuesDeepDone"] = "Uitgebreide waardentest afgerond",
+        ["Kompas.ValuesDeepReady"] = "Uitgebreide waardentest ontgrendeld — ga verder waar je was",
+        ["Kompas.ValuesDeepLocked"] = "Uitgebreide test (150 vragen) nog niet ontgrendeld",
     };
 
     private static Dictionary<string, string> En()
@@ -108,9 +108,9 @@ internal static class UiStringsValues
         map["Deep.ValuesLead"] = "One hundred fifty statements on competencies, interests, culture fit and drivers. Pause anytime — resume later where you left off.";
         map["Kompas.TabValues"] = "Values";
         map["Kompas.ValuesLead"] = "What matters to you at work: autonomy, connection, achievement, stability and impact.";
-        map["Kompas.ValuesDeepDone"] = "Values deep analysis completed";
-        map["Kompas.ValuesDeepReady"] = "Values deep analysis unlocked — continue where you left off";
-        map["Kompas.ValuesDeepLocked"] = "Deep analysis (150 questions) not unlocked yet";
+        map["Kompas.ValuesDeepDone"] = "Extended values test completed";
+        map["Kompas.ValuesDeepReady"] = "Extended values test unlocked — continue where you left off";
+        map["Kompas.ValuesDeepLocked"] = "Extended test (150 questions) not unlocked yet";
         map["ValuesScan.Q01"] = "I want to decide myself how I approach my work.";
         map["ValuesScan.Q02"] = "New challenges at work motivate me.";
         map["ValuesScan.Q03"] = "I work best when someone tells me exactly what to do.";
@@ -187,9 +187,9 @@ internal static class UiStringsValues
         ["Deep.ValuesLead"] = "PL: Honderdvijftig stellingen over competenties, interesses, cultuurfit en drijfveren. Pauzeren mag — je hervat later waar je was.",
         ["Kompas.TabValues"] = "PL: Waarden",
         ["Kompas.ValuesLead"] = "PL: Wat jij belangrijk vindt op werk: eigen regie, verbinding, prestatie, zekerheid en impact.",
-        ["Kompas.ValuesDeepDone"] = "PL: Diepteanalyse waarden afgerond",
-        ["Kompas.ValuesDeepReady"] = "PL: Diepteanalyse waarden ontgrendeld — ga verder waar je was",
-        ["Kompas.ValuesDeepLocked"] = "PL: Diepteanalyse (150 vragen) nog niet ontgrendeld",
+        ["Kompas.ValuesDeepDone"] = "PL: Uitgebreide waardentest afgerond",
+        ["Kompas.ValuesDeepReady"] = "PL: Uitgebreide waardentest ontgrendeld — ga verder waar je was",
+        ["Kompas.ValuesDeepLocked"] = "PL: Uitgebreide test (150 vragen) nog niet ontgrendeld",
     };
 
     private static Dictionary<string, string> Ro() => new(StringComparer.OrdinalIgnoreCase)
@@ -240,9 +240,9 @@ internal static class UiStringsValues
         ["Deep.ValuesLead"] = "RO: Honderdvijftig stellingen over competenties, interesses, cultuurfit en drijfveren. Pauzeren mag — je hervat later waar je was.",
         ["Kompas.TabValues"] = "RO: Waarden",
         ["Kompas.ValuesLead"] = "RO: Wat jij belangrijk vindt op werk: eigen regie, verbinding, prestatie, zekerheid en impact.",
-        ["Kompas.ValuesDeepDone"] = "RO: Diepteanalyse waarden afgerond",
-        ["Kompas.ValuesDeepReady"] = "RO: Diepteanalyse waarden ontgrendeld — ga verder waar je was",
-        ["Kompas.ValuesDeepLocked"] = "RO: Diepteanalyse (150 vragen) nog niet ontgrendeld",
+        ["Kompas.ValuesDeepDone"] = "RO: Uitgebreide waardentest afgerond",
+        ["Kompas.ValuesDeepReady"] = "RO: Uitgebreide waardentest ontgrendeld — ga verder waar je was",
+        ["Kompas.ValuesDeepLocked"] = "RO: Uitgebreide test (150 vragen) nog niet ontgrendeld",
     };
 
     private static Dictionary<string, string> Ar() => new(StringComparer.OrdinalIgnoreCase)
@@ -293,8 +293,8 @@ internal static class UiStringsValues
         ["Deep.ValuesLead"] = "‏Honderdvijftig stellingen over competenties, interesses, cultuurfit en drijfveren. Pauzeren mag — je hervat later waar je was.",
         ["Kompas.TabValues"] = "‏Waarden",
         ["Kompas.ValuesLead"] = "‏Wat jij belangrijk vindt op werk: eigen regie, verbinding, prestatie, zekerheid en impact.",
-        ["Kompas.ValuesDeepDone"] = "‏Diepteanalyse waarden afgerond",
-        ["Kompas.ValuesDeepReady"] = "‏Diepteanalyse waarden ontgrendeld — ga verder waar je was",
-        ["Kompas.ValuesDeepLocked"] = "‏Diepteanalyse (150 vragen) nog niet ontgrendeld",
+        ["Kompas.ValuesDeepDone"] = "‏Uitgebreide waardentest afgerond",
+        ["Kompas.ValuesDeepReady"] = "‏Uitgebreide waardentest ontgrendeld — ga verder waar je was",
+        ["Kompas.ValuesDeepLocked"] = "‏Uitgebreide test (150 vragen) nog niet ontgrendeld",
     };
 }
