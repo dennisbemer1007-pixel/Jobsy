@@ -88,6 +88,17 @@ public static class EmailLayout
     public static string TakeoversUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/employer/takeovers");
 
+    public static string AccessRequestsUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/employer/takeovers");
+
+    public static string RegisterAccessUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/register/toegang");
+
+    public static string AdminWerkgeverVerificatieUrl(string? publicWebBaseUrl, string? tab = null)
+        => Absolute(publicWebBaseUrl, string.IsNullOrWhiteSpace(tab)
+            ? "/admin/werkgeververificatie"
+            : $"/admin/werkgeververificatie?tab={Uri.EscapeDataString(tab)}");
+
     public static string EmployerVacanciesUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/employer/vacancies");
 

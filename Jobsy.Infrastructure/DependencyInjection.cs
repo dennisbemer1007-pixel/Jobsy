@@ -290,6 +290,7 @@ public static class DependencyInjection
         services.AddScoped<IRegionHostService, RegionHostService>();
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
+        services.AddScoped<ICompanyAccessRequestService, CompanyAccessRequestService>();
         services.AddScoped<ICompanyVerificationService, CompanyVerificationService>();
         services.Configure<CompanyVerificationSettings>(configuration.GetSection(CompanyVerificationSettings.SectionName));
         services.AddSingleton<IStubLetterStore, Jobsy.Infrastructure.Services.Letters.StubLetterStore>();
@@ -463,6 +464,7 @@ public static class DependencyInjection
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<UnverifiedCompanyReminderHostedService>();
         services.AddHostedService<UnverifiedCompanyCleanupHostedService>();
+        services.AddHostedService<AccessRequestEscalationHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();

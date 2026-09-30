@@ -14,7 +14,8 @@
         <button type="button" class="@TabClass("handmatig")" @onclick="ShowManualTab">@Culture["AdminWa.Tab.Manual"]</button>
         <button type="button" class="@TabClass("gemarkeerd")" @onclick="ShowFlaggedTab">@Culture["AdminWa.Tab.Flagged"]</button>
         <button type="button" class="@TabClass("brieven")" @onclick="ShowLettersTab">@Culture["AdminWa.Tab.Letters"]</button>
-        <span class="muted">@_items.Count</span>
+        <button type="button" class="@TabClass("toegang")" @onclick="ShowAccessTab">@Culture["AdminWa.Tab.Access"]</button>
+        <span class="muted">@(_tab == "toegang" ? _access.Count + _ownership.Count : _items.Count)</span>
     </div>
 
     @if (_loading)
@@ -24,6 +25,89 @@
     else if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
+    }
+    else if (_tab == "toegang")
+    {
+        <h3>@Culture["Employer.AccessRequests"]</h3>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Bedrijf</th>
+                        <th>Aanvrager</th>
+                        <th>Rol</th>
+                        <th>@Culture["AdminWa.Access.Managers"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _access)
+                    {
+                        <tr>
+                            <td class="data-table__col--wrap">
+                                <strong>@item.TargetCompanyName</strong>
+                                <div class="muted">@item.KvkNumber</div>
+                            </td>
+                            <td class="data-table__col--wrap">
+                                @item.RequesterName
+                                <div class="muted">@item.RequesterEmail</div>
+                            </td>
+                            <td>@item.RequestedRole</td>
+                            <td class="data-table__col--wrap">
+                                @foreach (var m in item.ManagerContacts)
+                                {
+                                    <div>@m.FullName · @m.Email</div>
+                                }
+                            </td>
+                            <td>
+                                <div class="inline-actions">
+                                    <button class="btn-compact" type="button" @onclick="() => ApproveAccessAsync(item)">@Culture["AdminWa.Approve"]</button>
+                                    <button class="btn-compact" type="button" @onclick="() => RejectAccessAsync(item)">@Culture["AdminWa.Reject"]</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h3>@Culture["AdminWa.Access.Ownership"]</h3>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Bedrijf</th>
+                        <th>Aanvrager</th>
+                        <th>Brief</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _ownership)
+                    {
+                        <tr>
+                            <td class="data-table__col--wrap">
+                                <strong>@item.TargetCompanyName</strong>
+                                <div class="muted">@item.KvkNumber</div>
+                            </td>
+                            <td class="data-table__col--wrap">
+                                @item.RequesterName
+                                <div class="muted">@item.RequesterEmail</div>
+                            </td>
+                            <td>@(item.LetterVerified ? Culture["AdminWa.Access.LetterOk"] : Culture["AdminWa.Access.LetterPending"])</td>
+                            <td>
+                                <div class="inline-actions">
+                                    @if (item.LetterVerified)
+                                    {
+                                        <button class="btn-compact" type="button" @onclick="() => ApproveOwnershipAsync(item)">@Culture["AdminWa.Approve"]</button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
     else
     {
@@ -93,15 +177,33 @@
 @code {
     private string _tab = "handmatig";
     private List<AdminCompanyVerificationItem> _items = [];
+    private List<AccessRequestAdminItemModel> _access = [];
+    private List<OwnershipTransferAdminItemModel> _ownership = [];
     private bool _loading = true;
     private string? _error;
     private AdminCompanyVerificationItem? _rejectTarget;
     private string _rejectReason = "";
 
+    [SupplyParameterFromQuery(Name = "tab")] public string? TabQuery { get; set; }
+
     private string TabClass(string tab)
         => "btn-compact" + (_tab == tab ? " is-active" : "");
 
-    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        if (!string.IsNullOrWhiteSpace(TabQuery))
+        {
+            _tab = TabQuery.Trim().ToLowerInvariant() switch
+            {
+                "toegang" or "access" => "toegang",
+                "brieven" or "letters" => "brieven",
+                "gemarkeerd" or "flagged" => "gemarkeerd",
+                _ => "handmatig"
+            };
+        }
+    }
+
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
     public void Dispose() => Culture.Changed -= OnCultureChanged;
 
@@ -110,6 +212,7 @@
     private async Task ShowManualTab() => await SwitchTab("handmatig");
     private async Task ShowFlaggedTab() => await SwitchTab("gemarkeerd");
     private async Task ShowLettersTab() => await SwitchTab("brieven");
+    private async Task ShowAccessTab() => await SwitchTab("toegang");
 
     private async Task SwitchTab(string tab)
     {
@@ -123,7 +226,18 @@
         _error = null;
         try
         {
-            _items = (await Api.GetAdminCompanyVerificationQueueAsync(_tab)).ToList();
+            if (_tab == "toegang")
+            {
+                _access = (await Api.GetAdminEscalatedAccessRequestsAsync()).ToList();
+                _ownership = (await Api.GetAdminOwnershipTransfersAsync()).ToList();
+                _items = [];
+            }
+            else
+            {
+                _items = (await Api.GetAdminCompanyVerificationQueueAsync(_tab)).ToList();
+                _access = [];
+                _ownership = [];
+            }
         }
         catch (Exception ex)
         {
@@ -162,6 +276,24 @@
     private async Task SendLetterAsync(AdminCompanyVerificationItem item)
     {
         await Api.AdminSendCompanyVerificationLetterAsync(item.CompanyId);
+        await ReloadAsync();
+    }
+
+    private async Task ApproveAccessAsync(AccessRequestAdminItemModel item)
+    {
+        await Api.ApproveAccessRequestAsync(item.RequestId, item.RequestedRole.ToString());
+        await ReloadAsync();
+    }
+
+    private async Task RejectAccessAsync(AccessRequestAdminItemModel item)
+    {
+        await Api.RejectAccessRequestAsync(item.RequestId, "Afgewezen door Lobsy-support");
+        await ReloadAsync();
+    }
+
+    private async Task ApproveOwnershipAsync(OwnershipTransferAdminItemModel item)
+    {
+        await Api.AdminApproveOwnershipTransferAsync(item.TakeoverId);
         await ReloadAsync();
     }
 }

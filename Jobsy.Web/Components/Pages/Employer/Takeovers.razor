@@ -1,13 +1,13 @@
 @page "/employer/takeovers"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Admin")]
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Employer.Takeovers"] · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.AccessRequests"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <AuthorizeView Roles="EnterpriseManager">
@@ -18,8 +18,8 @@
     </AuthorizeView>
     <header class="panel-header">
         <div>
-            <h1>@Culture["Employer.Takeovers"]</h1>
-            <p class="login-lead">Vestigingen waarvoor iemand overname heeft aangevraagd.</p>
+            <h1>@Culture["Employer.AccessRequests"]</h1>
+            <p class="login-lead">@Culture["WaAccess.Privacy"]</p>
         </div>
     </header>
 
@@ -31,30 +31,65 @@
     {
         <p class="state-message error">@_error</p>
     }
-    else if (_items.Count == 0)
-    {
-        <p class="muted">Geen openstaande verzoeken.</p>
-    }
     else
     {
-        <div class="table-list">
-            @foreach (var item in _items)
-            {
-                <div class="table-row">
-                    <div>
-                        <strong>@item.TargetCompanyName</strong>
-                        <span class="muted">@item.KvkEstablishmentId · scope @item.Scope</span>
-                        <span class="muted">Aanvrager: @item.RequesterName (@item.RequesterEmail)</span>
+        <h2>@Culture["Employer.AccessRequests"]</h2>
+        @if (_access.Count == 0)
+        {
+            <p class="muted">@Culture["Employer.Access.Empty"]</p>
+        }
+        else
+        {
+            <div class="table-list">
+                @foreach (var item in _access)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@item.RequesterName</strong>
+                            <span class="muted">@item.RequesterFunction · @item.RequesterEmail</span>
+                            <span class="muted">@item.RequestedRole · @item.TargetCompanyName · @item.AgeWorkingDays werkdagen</span>
+                            @if (!string.IsNullOrWhiteSpace(item.Message))
+                            {
+                                <span class="muted">@item.Message</span>
+                            }
+                        </div>
+                        <div class="wizard-actions">
+                            <button class="provider-btn" type="button" disabled="@_busy"
+                                    @onclick="() => RejectAccessAsync(item.RequestId)">@Culture["Employer.Access.Reject"]</button>
+                            <button class="login-submit" type="button" disabled="@_busy"
+                                    @onclick="() => ApproveAccessAsync(item)">@Culture["Employer.Access.Grant"]</button>
+                        </div>
                     </div>
-                    <div class="wizard-actions">
-                        <button class="provider-btn" type="button" disabled="@_busy"
-                                @onclick="() => RejectAsync(item.TakeoverId)">Afwijzen</button>
-                        <button class="login-submit" type="button" disabled="@_busy"
-                                @onclick="() => ApproveAsync(item.TakeoverId)">Goedkeuren</button>
+                }
+            </div>
+        }
+
+        <h2>@Culture["Employer.TakeoversSection"]</h2>
+        @if (_takeovers.Count == 0)
+        {
+            <p class="muted">Geen openstaande overnameverzoeken.</p>
+        }
+        else
+        {
+            <div class="table-list">
+                @foreach (var item in _takeovers)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@item.TargetCompanyName</strong>
+                            <span class="muted">@item.KvkEstablishmentId · scope @item.Scope</span>
+                            <span class="muted">Aanvrager: @item.RequesterName (@item.RequesterEmail)</span>
+                        </div>
+                        <div class="wizard-actions">
+                            <button class="provider-btn" type="button" disabled="@_busy"
+                                    @onclick="() => RejectTakeoverAsync(item.TakeoverId)">Afwijzen</button>
+                            <button class="login-submit" type="button" disabled="@_busy"
+                                    @onclick="() => ApproveTakeoverAsync(item.TakeoverId)">Goedkeuren</button>
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
     }
 
     @if (!string.IsNullOrEmpty(_message))
@@ -64,7 +99,8 @@
 </div>
 
 @code {
-    private List<TakeoverInboxItem> _items = [];
+    private List<AccessRequestInboxItemModel> _access = [];
+    private List<TakeoverInboxItem> _takeovers = [];
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -87,7 +123,8 @@
         _error = null;
         try
         {
-            _items = (await Api.GetTakeoverInboxAsync()).ToList();
+            _access = (await Api.GetAccessRequestInboxAsync()).ToList();
+            _takeovers = (await Api.GetTakeoverInboxAsync()).ToList();
         }
         catch (Exception ex)
         {
@@ -99,7 +136,46 @@
         }
     }
 
-    private async Task ApproveAsync(Guid id)
+    private async Task ApproveAccessAsync(AccessRequestInboxItemModel item)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.ApproveAccessRequestAsync(item.RequestId, item.RequestedRole);
+            _message = Culture["Employer.Access.Grant"];
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectAccessAsync(Guid id)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.RejectAccessRequestAsync(id);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ApproveTakeoverAsync(Guid id)
     {
         _busy = true;
         _message = null;
@@ -119,7 +195,7 @@
         }
     }
 
-    private async Task RejectAsync(Guid id)
+    private async Task RejectTakeoverAsync(Guid id)
     {
         _busy = true;
         _message = null;

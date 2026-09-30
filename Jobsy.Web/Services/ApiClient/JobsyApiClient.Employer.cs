@@ -425,6 +425,106 @@ public sealed partial class JobsyApiClient
                ?? throw new InvalidOperationException("Lege takeover-respons.");
     }
 
+    public async Task<AccessRequestSubmitResultModel> SubmitAccessRequestAsync(
+        AccessRequestSubmitModel model,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/access-requests", model, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Verzoek mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AccessRequestSubmitResultModel>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege access-request respons.");
+    }
+
+    public async Task<AccessRequestConfirmResultModel> ConfirmAccessRequestAsync(
+        Guid requestId,
+        string code,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/{requestId}/confirm",
+            new { code },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Bevestigen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AccessRequestConfirmResultModel>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege access-confirm respons.");
+    }
+
+    public async Task<IReadOnlyList<AccessRequestInboxItemModel>> GetAccessRequestInboxAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AccessRequestInboxItemModel>>("api/access-requests/inbox", ct) ?? [];
+
+    public async Task ApproveAccessRequestAsync(
+        Guid requestId,
+        string? grantedRole = null,
+        Guid[]? grantedCompanyIds = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/{requestId}/approve",
+            new { grantedRole, grantedCompanyIds },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Goedkeuren mislukt.");
+        }
+    }
+
+    public async Task RejectAccessRequestAsync(
+        Guid requestId,
+        string? reason = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/{requestId}/reject",
+            new { reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Afwijzen mislukt.");
+        }
+    }
+
+    public async Task<IReadOnlyList<AccessRequestAdminItemModel>> GetAdminEscalatedAccessRequestsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AccessRequestAdminItemModel>>(
+               "api/access-requests/admin/escalated", ct) ?? [];
+
+    public async Task<IReadOnlyList<OwnershipTransferAdminItemModel>> GetAdminOwnershipTransfersAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<OwnershipTransferAdminItemModel>>(
+               "api/access-requests/admin/ownership-transfers", ct) ?? [];
+
+    public async Task AdminApproveOwnershipTransferAsync(Guid takeoverId, CancellationToken ct = default)
+        => await ApproveTakeoverAsync(takeoverId, ct);
+
+    public async Task ConfirmOwnershipTransferLetterAsync(
+        Guid takeoverId,
+        string code,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/access-requests/ownership-transfers/{takeoverId}/confirm-letter",
+            new { code },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Briefcode mislukt.");
+        }
+    }
+
     public async Task<CompanySummary?> UpdateTokenManagementAsync(
         Guid companyId,
         bool tokensManagedByEnterprise,

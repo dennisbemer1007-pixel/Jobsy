@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -458,24 +459,47 @@ public class Sprint7RegistrationTests
         Assert.Equal(CompanyRegistrationStatus.TakeoverPending, submit.Status);
         Assert.False(string.IsNullOrWhiteSpace(submit.ActivationUrl));
 
-        // Unverified takeover must not be approvable / listed.
-        var takeoverId = await db.EstablishmentTakeoverRequests
-            .Where(t => t.RegistrationId == submit.RegistrationId)
-            .Select(t => t.Id)
-            .SingleAsync();
+        var takeover = await db.EstablishmentTakeoverRequests
+            .SingleAsync(t => t.RegistrationId == submit.RegistrationId);
+        Assert.Equal(TakeoverRequestKind.OwnershipTransfer, takeover.Kind);
+
+        // Ownership transfers are not in the employer inbox and need letter + admin.
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ApproveTakeoverAsync(
-            takeoverId, ownerId, UserRole.EnterpriseManager, [existingId], isAdmin: false));
+            takeover.Id, ownerId, UserRole.EnterpriseManager, [existingId], isAdmin: false));
         Assert.Empty(await sut.ListPendingTakeoversAsync([existingId], isAdmin: false));
 
         await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
-        Assert.Single(await sut.ListPendingTakeoversAsync([existingId], isAdmin: false));
+        Assert.Empty(await sut.ListPendingTakeoversAsync([existingId], isAdmin: false));
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => sut.ApproveTakeoverAsync(
+            takeover.Id, ownerId, UserRole.EnterpriseManager, [existingId], isAdmin: false));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ApproveTakeoverAsync(
+            takeover.Id, ownerId, UserRole.Admin, [existingId], isAdmin: true));
+
+        var known = "K7Q2M9PX";
+        takeover = await db.EstablishmentTakeoverRequests.SingleAsync(t => t.Id == takeover.Id);
+        takeover.LetterCodeHash = VerificationCodes.Hash(known);
+        takeover.LetterExpiresAtUtc = DateTime.UtcNow.AddDays(30);
+        await db.SaveChangesAsync();
+        await sut.ConfirmOwnershipTransferLetterAsync(takeover.Id, known);
+
+        var adminId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = adminId,
+            Email = "admin@jobsy.local",
+            FullName = "Admin",
+            Role = UserRole.Admin,
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
 
         var decision = await sut.ApproveTakeoverAsync(
-            takeoverId,
-            ownerId,
-            UserRole.EnterpriseManager,
-            accessibleCompanyIds: [existingId],
-            isAdmin: false);
+            takeover.Id,
+            adminId,
+            UserRole.Admin,
+            accessibleCompanyIds: null,
+            isAdmin: true);
 
         Assert.Equal(TakeoverRequestStatus.Approved, decision.Status);
         Assert.NotNull(decision.OrganizationCompanyId);
@@ -495,7 +519,7 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
-    public async Task Branch_manager_cannot_approve_organization_takeover()
+    public async Task Branch_manager_cannot_approve_ownership_transfer()
     {
         await using var db = CreateDb();
         var existingId = Guid.NewGuid();
@@ -539,7 +563,7 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
-    public async Task Duplicate_kvk_establishment_after_activation_becomes_takeover()
+    public async Task Duplicate_kvk_establishment_after_activation_becomes_ownership_transfer()
     {
         await using var db = CreateDb();
         var sut = CreateService(db);
@@ -557,10 +581,15 @@ public class Sprint7RegistrationTests
             "B", "b@jobsy.local", null, AcceptedTerms: true,
             Password: "TestPassphrase!"));
         Assert.True(second.RequiresTakeover);
+        var kind = await db.EstablishmentTakeoverRequests
+            .Where(t => t.RegistrationId == second.RegistrationId)
+            .Select(t => t.Kind)
+            .SingleAsync();
+        Assert.Equal(TakeoverRequestKind.OwnershipTransfer, kind);
     }
 
     [Fact]
-    public async Task Org_takeover_reuses_existing_parent()
+    public async Task Org_ownership_transfer_reuses_existing_parent_after_letter_and_admin()
     {
         await using var db = CreateDb();
         var parentId = Guid.NewGuid();
@@ -615,11 +644,23 @@ public class Sprint7RegistrationTests
             "New EM", "new.em@jobsy.local", null, AcceptedTerms: true,
             Password: "TestPassphrase!"));
         await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
-        var takeoverId = await db.EstablishmentTakeoverRequests
-            .Where(t => t.RegistrationId == submit.RegistrationId).Select(t => t.Id).SingleAsync();
+        var takeover = await db.EstablishmentTakeoverRequests
+            .SingleAsync(t => t.RegistrationId == submit.RegistrationId);
+        var known = "M9PXK7Q2";
+        takeover.LetterCodeHash = VerificationCodes.Hash(known);
+        takeover.LetterExpiresAtUtc = DateTime.UtcNow.AddDays(30);
+        await db.SaveChangesAsync();
+        await sut.ConfirmOwnershipTransferLetterAsync(takeover.Id, known);
+
+        var adminId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = adminId, Email = "admin2@jobsy.local", FullName = "Admin", Role = UserRole.Admin, IsActive = true
+        });
+        await db.SaveChangesAsync();
 
         var decision = await sut.ApproveTakeoverAsync(
-            takeoverId, emId, UserRole.EnterpriseManager, [parentId, branchId], false);
+            takeover.Id, adminId, UserRole.Admin, null, true);
 
         Assert.Equal(parentId, decision.OrganizationCompanyId);
         Assert.Equal(1, await db.Companies.CountAsync(c =>
@@ -627,7 +668,7 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
-    public async Task Intermediary_takeover_detaches_from_employer_org_and_assigns_intermediary()
+    public async Task Intermediary_ownership_transfer_keeps_intermediary_membership()
     {
         await using var db = CreateDb();
         var parentId = Guid.NewGuid();
@@ -662,16 +703,29 @@ public class Sprint7RegistrationTests
             VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var bmId = Guid.NewGuid();
-        db.Users.Add(new User
-        {
-            Id = bmId,
-            Email = "bm.flex@jobsy.local",
-            FullName = "BM",
-            Role = UserRole.BranchManager,
-            CompanyId = branchId,
-            IsActive = true
-        });
-        db.UserCompanies.Add(new UserCompany { UserId = bmId, CompanyId = branchId });
+        var intermediaryId = Guid.NewGuid();
+        db.Users.AddRange(
+            new User
+            {
+                Id = bmId,
+                Email = "bm.flex@jobsy.local",
+                FullName = "BM",
+                Role = UserRole.BranchManager,
+                CompanyId = branchId,
+                IsActive = true
+            },
+            new User
+            {
+                Id = intermediaryId,
+                Email = "im.client@jobsy.local",
+                FullName = "IM",
+                Role = UserRole.Intermediary,
+                CompanyId = branchId,
+                IsActive = true
+            });
+        db.UserCompanies.AddRange(
+            new UserCompany { UserId = bmId, CompanyId = branchId },
+            new UserCompany { UserId = intermediaryId, CompanyId = branchId });
         await db.SaveChangesAsync();
 
         var sut = CreateService(db);
@@ -682,14 +736,23 @@ public class Sprint7RegistrationTests
         Assert.True(submit.RequiresTakeover);
 
         await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
-        var takeoverId = await db.EstablishmentTakeoverRequests
-            .Where(t => t.RegistrationId == submit.RegistrationId)
-            .Select(t => t.Id)
-            .SingleAsync();
+        var takeover = await db.EstablishmentTakeoverRequests
+            .SingleAsync(t => t.RegistrationId == submit.RegistrationId);
+        var known = "Q2M9K7PX";
+        takeover.LetterCodeHash = VerificationCodes.Hash(known);
+        takeover.LetterExpiresAtUtc = DateTime.UtcNow.AddDays(30);
+        await db.SaveChangesAsync();
+        await sut.ConfirmOwnershipTransferLetterAsync(takeover.Id, known);
 
-        // Branch manager can approve (scope is BranchOnly for SBI 78).
+        var adminId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = adminId, Email = "admin3@jobsy.local", FullName = "Admin", Role = UserRole.Admin, IsActive = true
+        });
+        await db.SaveChangesAsync();
+
         var decision = await sut.ApproveTakeoverAsync(
-            takeoverId, bmId, UserRole.BranchManager, [branchId], isAdmin: false);
+            takeover.Id, adminId, UserRole.Admin, null, isAdmin: true);
         Assert.Equal(TakeoverRequestStatus.Approved, decision.Status);
 
         var company = await db.Companies.SingleAsync(c => c.Id == branchId);
@@ -699,6 +762,10 @@ public class Sprint7RegistrationTests
         var user = await db.Users.SingleAsync(u => u.Email == "flex.takeover@jobsy.local");
         Assert.Equal(UserRole.Intermediary, user.Role);
         Assert.Equal(branchId, user.CompanyId);
+
+        var im = await db.Users.Include(u => u.CompanyMemberships).SingleAsync(u => u.Id == intermediaryId);
+        Assert.True(im.IsActive);
+        Assert.Contains(im.CompanyMemberships, m => m.CompanyId == branchId);
     }
 
     private static async Task VerifyTakeoverEmailAsync(

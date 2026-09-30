@@ -459,6 +459,86 @@ public class TakeoverDecisionResult
     public Guid? BranchCompanyId { get; set; }
 }
 
+public sealed record AccessRequestSubmitModel(
+    string KvkNumber,
+    string? KvkEstablishmentId,
+    string RequestedRole,
+    string RequesterName,
+    string? RequesterFunction,
+    string RequesterEmail,
+    string? RequesterPhone,
+    string? Message);
+
+public class AccessRequestSubmitResultModel
+{
+    public Guid RequestId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public DateTime? CodeExpiresAtUtc { get; set; }
+}
+
+public class AccessRequestConfirmResultModel
+{
+    public Guid RequestId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+}
+
+public class AccessRequestInboxItemModel
+{
+    public Guid RequestId { get; set; }
+    public Guid TargetCompanyId { get; set; }
+    public string TargetCompanyName { get; set; } = string.Empty;
+    public string RequesterName { get; set; } = string.Empty;
+    public string? RequesterFunction { get; set; }
+    public string RequesterEmail { get; set; } = string.Empty;
+    public string RequestedRole { get; set; } = string.Empty;
+    public List<Guid> RequestedCompanyIds { get; set; } = [];
+    public string? Message { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; set; }
+    public int AgeWorkingDays { get; set; }
+}
+
+public class AccessRequestAdminItemModel
+{
+    public Guid RequestId { get; set; }
+    public Guid TargetCompanyId { get; set; }
+    public string TargetCompanyName { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string RequesterName { get; set; } = string.Empty;
+    public string RequesterEmail { get; set; } = string.Empty;
+    public string? RequesterPhone { get; set; }
+    public string RequestedRole { get; set; } = string.Empty;
+    public string? Message { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? EscalatedAtUtc { get; set; }
+    public List<AccessRequestManagerContactModel> ManagerContacts { get; set; } = [];
+}
+
+public class AccessRequestManagerContactModel
+{
+    public Guid UserId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string Role { get; set; } = string.Empty;
+}
+
+public class OwnershipTransferAdminItemModel
+{
+    public Guid TakeoverId { get; set; }
+    public Guid TargetCompanyId { get; set; }
+    public string TargetCompanyName { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string RequesterName { get; set; } = string.Empty;
+    public string RequesterEmail { get; set; } = string.Empty;
+    public bool LetterVerified { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LetterVerifiedAtUtc { get; set; }
+}
+
 public class RegionItem
 {
     public Guid Id { get; set; }

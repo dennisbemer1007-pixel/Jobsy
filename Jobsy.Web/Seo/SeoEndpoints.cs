@@ -28,6 +28,7 @@ public static class SitemapXml
             "Disallow: /account\n" +
             "Disallow: /register/activate\n" +
             "Disallow: /register/verifieren\n" +
+            "Disallow: /register/toegang\n" +
             "Disallow: /register/koppelen\n" +
             "Disallow: /candidate/actions\n" +
             "Disallow: /werven\n" +

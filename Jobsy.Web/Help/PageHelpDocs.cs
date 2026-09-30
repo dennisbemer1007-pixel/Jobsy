@@ -104,9 +104,15 @@ public static class PageHelpDocs
             "De brief gaat naar het KvK-adres. Code is 30 dagen geldig; opnieuw versturen na 7 dagen.",
             "Bedrijf verifiëren zonder zakelijk e-maildomein."),
 
+        ["/register/toegang"] = new(
+            "Toegang aanvragen",
+            "Vraag toegang aan tot een bedrijf dat al op Lobsy staat.",
+            "Bevestig je e-mail; de bedrijfsmanager beslist. Na 5 werkdagen kijkt Lobsy-support mee.",
+            "Samenwerken in één bedrijfsaccount zonder tweede eigenaar te worden."),
+
         ["/admin/werkgeververificatie"] = new(
             "Werkgeververificatie",
-            "Admin-wachtrij voor handmatige controles, gemarkeerde registraties en geblokkeerde brieven.",
+            "Admin-wachtrij voor handmatige controles, gemarkeerde registraties, geblokkeerde brieven en geëscaleerde toegangsverzoeken.",
             "Goedkeuren, afwijzen met reden, of een brief sturen. Beslissingen worden geaudit.",
             "Twijfelgevallen afhandelen zodat echte bedrijven zichtbaar worden."),
 
@@ -291,10 +297,10 @@ public static class PageHelpDocs
             "Consistente beloning tonen en WML-/CAO-afspraken ondersteunen."),
 
         ["/employer/takeovers"] = new(
-            "Overnameverzoeken",
-            "Conflicten wanneer een vestiging al geregistreerd is.",
-            "Bekijk openstaande overnames en keur goed of af. Goedkeuring kan org-structuur samenvoegen.",
-            "Dubbele KVK-vestigingen netjes laten claimen door de juiste partij."),
+            "Toegangsverzoeken",
+            "Collega's die toegang vragen en legacy overnameverzoeken.",
+            "Geef toegang (rol mag verlaagd), wijs af, of behandel oude overnames. Geëscaleerde verzoeken gaan naar admin.",
+            "Nieuwe collega's laten aansluiten zonder tweede eigenaar te maken."),
 
         ["/employer/onboarding-checkout"] = new(
             "Onboarding-betaling",

@@ -47,6 +47,12 @@ public interface ICompanyRegistrationService
         bool isAdmin,
         string? note = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Confirms the ownership-transfer letter code before admin approval (07.5).</summary>
+    Task ConfirmOwnershipTransferLetterAsync(
+        Guid takeoverId,
+        string code,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record RegistrationSubmitRequest(

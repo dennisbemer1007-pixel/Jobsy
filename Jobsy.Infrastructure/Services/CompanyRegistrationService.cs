@@ -280,20 +280,20 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         var plaintextCode = AssignConfirmationCode(registration);
 
-        if (existing is not null || match.IsInUse)
-        {
-            if (existing is null)
-            {
-                throw new InvalidOperationException("Vestiging staat als in-gebruik gemarkeerd maar is niet gevonden.");
-            }
+        var isManaged = existing is not null
+            && await CompanyOccupancy.HasActiveManagingEmployersAsync(_db, existing.Id, cancellationToken);
 
+        if (isManaged)
+        {
+            // Ownership transfer (07.5): letter + admin — not a peer takeover the BM can approve alone.
             registration.Status = CompanyRegistrationStatus.TakeoverPending;
             var takeover = new EstablishmentTakeoverRequest
             {
                 Id = Guid.NewGuid(),
                 RegistrationId = registration.Id,
-                TargetCompanyId = existing.Id,
+                TargetCompanyId = existing!.Id,
                 Status = TakeoverRequestStatus.Pending,
+                Kind = TakeoverRequestKind.OwnershipTransfer,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -308,7 +308,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
-                _logger.LogError(ex, "Takeover confirmation e-mail failed for {Id}", registration.Id);
+                _logger.LogError(ex, "Ownership-transfer confirmation e-mail failed for {Id}", registration.Id);
                 throw new InvalidOperationException(
                     "Kon de bevestigingsmail niet versturen. Controleer de e-mailinstellingen of probeer later opnieuw.");
             }
@@ -321,9 +321,18 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 registration.Status,
                 RequiresTakeover: true,
                 Message:
-                "Deze vestiging is al geregistreerd. Vul de bevestigingscode uit je e-mail in (geldig 10 minuten); daarna sturen we het overnameverzoek naar de huidige eigenaar. Lobsy-support kan meekijken.",
+                "Deze vestiging heeft al een beheerder. Bevestig je e-mail; daarna sturen we een brief met code naar het KvK-adres. Lobsy-support keurt de eigendomsoverdracht goed.",
                 ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null,
                 VerificationExpiresAt: registration.EmailVerificationExpiresAt);
+        }
+
+        // Claim (07.6): company row exists (e.g. intermediair client) but no active managing employers —
+        // treat as free; activation attaches the new owner without cutting the intermediary.
+        if (existing is not null && match.IsInUse)
+        {
+            // Defensive: IsInUse should already be false when unmanaged; never invent a second shell.
+            throw new InvalidOperationException(
+                "Vestiging staat als in-gebruik gemarkeerd maar heeft geen actieve beheerder. Vernieuw de pagina.");
         }
 
         registration.Status = CompanyRegistrationStatus.PendingActivation;
@@ -501,11 +510,17 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 $"Registratie kan niet worden geactiveerd (status: {registration.Status}).");
         }
 
-        if (await _db.Companies.AnyAsync(
-                c => c.KvkEstablishmentId == registration.KvkEstablishmentId, cancellationToken))
+        var existingCompany = await _db.Companies
+            .FirstOrDefaultAsync(c => c.KvkEstablishmentId == registration.KvkEstablishmentId, cancellationToken);
+        if (existingCompany is not null)
         {
-            throw new InvalidOperationException(
-                "Deze vestiging is ondertussen al geregistreerd. Dien opnieuw een overnameverzoek in.");
+            if (await CompanyOccupancy.HasActiveManagingEmployersAsync(_db, existingCompany.Id, cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    "Deze vestiging is ondertussen al geregistreerd. Vraag toegang aan of start een eigendomsoverdracht.");
+            }
+
+            return await CompleteClaimAsync(registration, existingCompany, cancellationToken);
         }
 
         var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
@@ -634,11 +649,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         bool isAdmin,
         CancellationToken cancellationToken = default)
     {
+        // Only legacy colleague takeovers appear in the employer inbox.
+        // Ownership transfers are admin-only (tab Toegang).
         var query = _db.EstablishmentTakeoverRequests
             .AsNoTracking()
             .Include(t => t.Registration)
             .Include(t => t.TargetCompany)
-            .Where(t => t.Status == TakeoverRequestStatus.Pending);
+            .Where(t => t.Status == TakeoverRequestStatus.Pending
+                        && t.Kind == TakeoverRequestKind.Colleague);
 
         if (!isAdmin)
         {
@@ -694,9 +712,23 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "De aanvrager heeft het e-mailadres nog niet bevestigd; goedkeuren is niet mogelijk.");
         }
 
-        if (registration.Scope == RegistrationScope.Organization
-            && !isAdmin
-            && actorRole != UserRole.EnterpriseManager)
+        if (takeover.Kind == TakeoverRequestKind.OwnershipTransfer)
+        {
+            if (!isAdmin)
+            {
+                throw new UnauthorizedAccessException(
+                    "Eigendomsoverdracht kan alleen door Lobsy-support worden goedgekeurd.");
+            }
+
+            if (takeover.LetterVerifiedAtUtc is null)
+            {
+                throw new InvalidOperationException(
+                    "Eerst moet de briefcode zijn bevestigd voordat eigendomsoverdracht kan worden goedgekeurd.");
+            }
+        }
+        else if (!isAdmin
+                 && registration.Scope == RegistrationScope.Organization
+                 && actorRole != UserRole.EnterpriseManager)
         {
             throw new UnauthorizedAccessException(
                 "Alleen een bedrijfsmanager of admin mag een organisatie-overname goedkeuren.");
@@ -816,12 +848,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             user.CompanyId = branchId;
         }
 
-        // Transfer: prior employers lose access to the acquired vestiging.
+        // Transfer: prior employers lose access to the acquired vestiging — intermediaries keep their link (07.7).
         // Parent-org memberships stay intact when reusing an existing organization shell.
         await RevokePriorEmployerAccessAsync(
             companyIds: [branchId],
             exceptUserId: user.Id,
             cancellationToken);
+        await NotifyIntermediariesOfSelfManagedAsync(branchId, target.Name, cancellationToken);
 
         // Cancel other pending takeovers for the same target.
         var otherPending = await _db.EstablishmentTakeoverRequests
@@ -1206,9 +1239,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CancellationToken cancellationToken)
     {
         var idSet = companyIds.ToHashSet();
+        // Intermediaries keep their client link on takeover/claim (07.7 / Dependencies G Absent).
         var affected = await _db.Users
             .Include(u => u.CompanyMemberships)
-            .Where(u => u.Id != exceptUserId && u.IsActive && JobsyRoles.IsEmployer(u.Role))
+            .Where(u => u.Id != exceptUserId && u.IsActive && CompanyOccupancy.IsRevocableOnTakeover(u.Role))
             .Where(u =>
                 (u.CompanyId != null && idSet.Contains(u.CompanyId.Value))
                 || u.CompanyMemberships.Any(m => idSet.Contains(m.CompanyId)))
@@ -1237,6 +1271,35 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             {
                 user.IsActive = false;
             }
+        }
+    }
+
+    private async Task NotifyIntermediariesOfSelfManagedAsync(
+        Guid companyId,
+        string companyName,
+        CancellationToken cancellationToken)
+    {
+        var intermediaries = await _db.Users.AsNoTracking()
+            .Where(u => u.IsActive && u.Role == UserRole.Intermediary)
+            .Where(u =>
+                (u.CompanyId != null && u.CompanyId == companyId)
+                || u.CompanyMemberships.Any(m => m.CompanyId == companyId))
+            .Select(u => u.Email)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        if (intermediaries.Count == 0)
+        {
+            return;
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        var mail = TransactionalEmails.IntermediaryClientSelfManaged(features.PublicWebBaseUrl, companyName);
+        foreach (var email in intermediaries)
+        {
+            await _email.SendAsync(
+                new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
+                cancellationToken);
         }
     }
 
@@ -1307,7 +1370,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         if (registration.ContactEmailVerifiedAt is not null)
         {
             throw new InvalidOperationException(
-                "Dit e-mailadres is al bevestigd. Het overnameverzoek wacht op de huidige eigenaar.");
+                takeoverAlreadyMessage(registration));
         }
 
         var takeover = await _db.EstablishmentTakeoverRequests
@@ -1324,13 +1387,28 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         registration.EmailVerificationExpiresAt = null;
         registration.EmailVerificationFailedAttempts = 0;
 
-        await _db.SaveChangesAsync(cancellationToken);
-        await NotifyTakeoverRequestedAsync(registration, takeover.TargetCompany, cancellationToken);
+        if (takeover.Kind == TakeoverRequestKind.OwnershipTransfer)
+        {
+            var plain = LetterVerificationCodes.Create();
+            takeover.LetterCodeHash = VerificationCodes.Hash(plain);
+            takeover.LetterExpiresAtUtc = DateTime.UtcNow.AddDays(30);
+            takeover.LetterSentAtUtc = DateTime.UtcNow;
+            takeover.LetterFailedAttempts = 0;
+            await _db.SaveChangesAsync(cancellationToken);
+            await NotifyOwnershipTransferManagersAsync(takeover.TargetCompany, cancellationToken);
+            // Stub/dev: plaintext is only in the physical letter PDF (not persisted). Tests overwrite the hash.
+        }
+        else
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+            await NotifyTakeoverRequestedAsync(registration, takeover.TargetCompany, cancellationToken);
+        }
 
         _logger.LogInformation(
-            "Takeover e-mail verified for registration {Id} ({Email})",
+            "Takeover e-mail verified for registration {Id} ({Email}) kind={Kind}",
             registration.Id,
-            EmailServiceStub.RedactEmail(registration.ContactEmail));
+            EmailServiceStub.RedactEmail(registration.ContactEmail),
+            takeover.Kind);
 
         return new RegistrationActivationResult(
             registration.Id,
@@ -1345,7 +1423,175 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             BranchCompanyId: null,
             UsedChosenPassword: true,
             EmailVerifiedAwaitingTakeover: true);
+
+        static string takeoverAlreadyMessage(CompanyRegistration _) =>
+            "Dit e-mailadres is al bevestigd. Het overnameverzoek wacht op goedkeuring.";
     }
+
+    private async Task NotifyOwnershipTransferManagersAsync(
+        Company company,
+        CancellationToken cancellationToken)
+    {
+        var tree = await CompanyOccupancy.ExpandCompanyTreeAsync(_db, company.Id, cancellationToken);
+        var managers = await _db.Users.AsNoTracking()
+            .Where(u => u.IsActive && CompanyOccupancy.ManagingEmployerRoles.Contains(u.Role))
+            .Where(u =>
+                (u.CompanyId != null && tree.Contains(u.CompanyId.Value))
+                || u.CompanyMemberships.Any(m => tree.Contains(m.CompanyId)))
+            .Select(u => u.Email)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var features = await _features.GetAsync(cancellationToken);
+        var mail = TransactionalEmails.OwnershipTransferManagersNotify(features.PublicWebBaseUrl, company.Name);
+        foreach (var email in managers)
+        {
+            await _email.SendAsync(
+                new EmailMessage(email, mail.Subject, mail.Html, mail.Category),
+                cancellationToken);
+        }
+
+        var takeover = await _db.EstablishmentTakeoverRequests
+            .FirstOrDefaultAsync(
+                t => t.TargetCompanyId == company.Id
+                     && t.Kind == TakeoverRequestKind.OwnershipTransfer
+                     && t.Status == TakeoverRequestStatus.Pending
+                     && t.ManagersNotifiedAtUtc == null,
+                cancellationToken);
+        if (takeover is not null)
+        {
+            takeover.ManagersNotifiedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task<RegistrationActivationResult> CompleteClaimAsync(
+        CompanyRegistration registration,
+        Company existingCompany,
+        CancellationToken cancellationToken)
+    {
+        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
+        var usedChosenPassword = temporaryPassword is null;
+        var role = ResolveRegistrationRole(registration);
+        var orgId = existingCompany.ParentCompanyId;
+        var branchId = existingCompany.Id;
+        var primaryCompanyId = registration.IsIntermediarySbi
+            ? branchId
+            : (orgId ?? branchId);
+
+        var user = await CreateRegistrationUserAsync(
+            registration, role, primaryCompanyId, passwordHash, cancellationToken);
+        await EnsureMembershipAsync(user.Id, branchId, cancellationToken);
+        if (!registration.IsIntermediarySbi && orgId is Guid oid)
+        {
+            await EnsureMembershipAsync(user.Id, oid, cancellationToken);
+            if (role == UserRole.EnterpriseManager)
+            {
+                user.CompanyId = oid;
+                var children = await _db.Companies
+                    .Where(c => c.ParentCompanyId == oid)
+                    .Select(c => c.Id)
+                    .ToListAsync(cancellationToken);
+                foreach (var childId in children)
+                {
+                    await EnsureMembershipAsync(user.Id, childId, cancellationToken);
+                }
+            }
+        }
+        else
+        {
+            user.CompanyId = branchId;
+        }
+
+        // Do NOT revoke intermediaries (07.7). Public verification state stays until the new owner verifies.
+        registration.Status = CompanyRegistrationStatus.Activated;
+        registration.ActivatedAt = DateTime.UtcNow;
+        registration.ContactEmailVerifiedAt = DateTime.UtcNow;
+        registration.CreatedUserId = user.Id;
+        registration.CreatedOrganizationCompanyId = orgId;
+        registration.CreatedBranchCompanyId = branchId;
+        ClearPendingSecrets(registration);
+
+        await ApplySalesManagerReferralAsync(registration, existingCompany, orgId, cancellationToken);
+        await ApplyPartnerReferralAsync(registration, existingCompany, orgId, cancellationToken);
+
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "Registration",
+            Message =
+                $"Claimed unmanaged company {existingCompany.Id} ({existingCompany.KvkEstablishmentId}) by {EmailServiceStub.RedactEmail(registration.ContactEmail)}",
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync(cancellationToken);
+        await NotifyIntermediariesOfSelfManagedAsync(branchId, existingCompany.Name, cancellationToken);
+        await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
+        await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
+
+        return await BuildActivationResultAsync(
+            registration, temporaryPassword ?? string.Empty, usedChosenPassword, welcomeTokenGranted: false, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirms the ownership-transfer letter code (07.5). Does not approve the transfer —
+    /// admin still must call <see cref="ApproveTakeoverAsync"/>.
+    /// </summary>
+    public async Task ConfirmOwnershipTransferLetterAsync(
+        Guid takeoverId,
+        string code,
+        CancellationToken cancellationToken = default)
+    {
+        var takeover = await _db.EstablishmentTakeoverRequests
+            .FirstOrDefaultAsync(t => t.Id == takeoverId, cancellationToken)
+            ?? throw new KeyNotFoundException("Eigendomsoverdracht niet gevonden.");
+
+        if (takeover.Kind != TakeoverRequestKind.OwnershipTransfer)
+        {
+            throw new InvalidOperationException("Dit verzoek is geen eigendomsoverdracht.");
+        }
+
+        if (takeover.Status != TakeoverRequestStatus.Pending)
+        {
+            throw new InvalidOperationException("Dit verzoek is al afgehandeld.");
+        }
+
+        if (takeover.LetterVerifiedAtUtc is not null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(takeover.LetterCodeHash)
+            || takeover.LetterExpiresAtUtc is null
+            || takeover.LetterExpiresAtUtc < DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("Briefcode ontbreekt of is verlopen.");
+        }
+
+        var normalized = LetterVerificationCodes.Normalize(code);
+        if (!LetterVerificationCodes.IsWellFormed(normalized)
+            || !VerificationCodes.MatchesHash(takeover.LetterCodeHash, normalized))
+        {
+            var attempts = takeover.LetterFailedAttempts;
+            var dead = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            takeover.LetterFailedAttempts = attempts;
+            if (dead)
+            {
+                takeover.LetterCodeHash = null;
+                takeover.DecisionNote = "Brief geblokkeerd na 5 pogingen.";
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            throw new InvalidOperationException(
+                dead ? "Brief geblokkeerd na 5 pogingen." : "Onjuiste briefcode.");
+        }
+
+        takeover.LetterVerifiedAtUtc = DateTime.UtcNow;
+        takeover.LetterCodeHash = null;
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
 
     private async Task SendTakeoverEmailVerificationAsync(
         CompanyRegistration registration,

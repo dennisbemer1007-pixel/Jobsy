@@ -773,9 +773,18 @@ public sealed class KvkHandelsregisterService : IKvkService
 
     private async Task<HashSet<string>> LoadInUseIdsAsync(string kvkNumber, CancellationToken cancellationToken)
     {
+        // 07.6: only establishments with active managing employers (not intermediary-only clients).
+        var managedCompanyIds = await CompanyOccupancy.LoadManagedCompanyIdsAsync(_db, cancellationToken);
+        if (managedCompanyIds.Count == 0)
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
         var ids = await _db.Companies
             .AsNoTracking()
-            .Where(c => c.KvkNumber == kvkNumber && c.KvkEstablishmentId != null)
+            .Where(c => c.KvkNumber == kvkNumber
+                        && c.KvkEstablishmentId != null
+                        && managedCompanyIds.Contains(c.Id))
             .Select(c => c.KvkEstablishmentId!)
             .ToListAsync(cancellationToken);
         return new HashSet<string>(ids, StringComparer.OrdinalIgnoreCase);
@@ -791,12 +800,17 @@ public sealed class KvkHandelsregisterService : IKvkService
             return new HashSet<string>(StringComparer.Ordinal);
         }
 
-        var matches = await (
-            from c in _db.Companies.AsNoTracking()
-            join uc in _db.UserCompanies.AsNoTracking() on c.Id equals uc.CompanyId
-            join u in _db.Users.AsNoTracking() on uc.UserId equals u.Id
-            where list.Contains(c.KvkNumber) && u.IsActive
-            select c.KvkNumber).Distinct().ToListAsync(cancellationToken);
+        var managed = await CompanyOccupancy.LoadManagedCompanyIdsAsync(_db, cancellationToken);
+        if (managed.Count == 0)
+        {
+            return new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        var matches = await _db.Companies.AsNoTracking()
+            .Where(c => list.Contains(c.KvkNumber) && managed.Contains(c.Id))
+            .Select(c => c.KvkNumber)
+            .Distinct()
+            .ToListAsync(cancellationToken);
 
         return new HashSet<string>(matches, StringComparer.Ordinal);
     }

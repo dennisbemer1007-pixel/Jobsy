@@ -101,6 +101,7 @@ public static partial class PageSeoCatalog
             ["/login"] = Public("Login.Title", "Seo.LoginDescription"),
             ["/register"] = Public("Page.RegisterTitle", "Seo.RegisterDescription"),
             ["/register/koppelen"] = Private("Wa.Link.Title", "Wa.Link.Lead"),
+            ["/register/toegang"] = Private("WaAccess.Title", "WaAccess.Lead"),
             ["/register/activate"] = Private("Page.ActivateTitle", "Seo.ActivateDescription"),
             ["/register/verifieren"] = Private("WaVerify.Eyebrow", "WaVerify.Lead"),
             ["/register/verifieren/brief"] = Private("WaVerify.Brief.Title", "WaVerify.Brief.Lead"),

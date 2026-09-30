@@ -101,6 +101,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanyVerificationDecision> CompanyVerificationDecisions => Set<CompanyVerificationDecision>();
     public DbSet<KvkUsageDaily> KvkUsageDaily => Set<KvkUsageDaily>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
+    public DbSet<CompanyAccessRequest> CompanyAccessRequests => Set<CompanyAccessRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
     public DbSet<AmbassadeurProfile> AmbassadeurProfiles => Set<AmbassadeurProfile>();
@@ -1484,12 +1485,42 @@ public class JobsyDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.DecisionNote).HasMaxLength(1024);
+            entity.Property(e => e.LetterCodeHash).HasMaxLength(128);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.Kind);
             entity.HasOne(e => e.Registration)
                 .WithMany(r => r.TakeoverRequests)
                 .HasForeignKey(e => e.RegistrationId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.TargetCompany)
+                .WithMany()
+                .HasForeignKey(e => e.TargetCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.DecidedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.DecidedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CompanyAccessRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.KvkNumber).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.RequestedVestigingIdsJson).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.RequesterName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.RequesterFunction).HasMaxLength(200);
+            entity.Property(e => e.RequesterEmail).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.RequesterPhone).HasMaxLength(40);
+            entity.Property(e => e.Message).HasMaxLength(500);
+            entity.Property(e => e.EmailConfirmationCodeHash).HasMaxLength(128);
+            entity.Property(e => e.RequesterToken).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.DecisionReason).HasMaxLength(1000);
+            entity.Property(e => e.GrantedVestigingIdsJson).HasMaxLength(4000);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasIndex(e => e.RequesterEmail);
+            entity.HasIndex(e => new { e.TargetCompanyId, e.RequesterEmail, e.Status });
             entity.HasOne(e => e.TargetCompany)
                 .WithMany()
                 .HasForeignKey(e => e.TargetCompanyId)

@@ -424,6 +424,21 @@ a.wa-link { display: inline; }
   border: 1px solid var(--border);
   background: var(--surface, #fffcfa);
 }
+.wa-timeline {
+  margin: 1.25rem 0;
+}
+.wa-timeline h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+.wa-timeline ol {
+  margin: 0;
+  padding-inline-start: 1.2rem;
+}
+.wa-timeline li {
+  margin: 0.35rem 0;
+  font-size: 0.92rem;
+}
 @media (max-width: 900px) {
   .wa-verify-cards { grid-template-columns: 1fr; }
 }

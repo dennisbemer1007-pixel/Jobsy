@@ -254,11 +254,50 @@ internal static class UiStringsWerkgeverAanmelding
         Add("AdminWa.Tab.Manual", "Handmatig", "Manual", "Ręcznie", "Manual", "يدوي");
         Add("AdminWa.Tab.Flagged", "Gemarkeerd", "Flagged", "Oznaczone", "Semnalate", "معلّم");
         Add("AdminWa.Tab.Letters", "Brieven", "Letters", "Listy", "Scrisori", "خطابات");
+        Add("AdminWa.Tab.Access", "Toegang", "Access", "Dostęp", "Acces", "الوصول");
         Add("AdminWa.Approve", "Goedkeuren", "Approve", "Zatwierdź", "Aprobă", "موافقة");
         Add("AdminWa.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
         Add("AdminWa.SendLetter", "Brief sturen", "Send letter", "Wyślij list", "Trimite scrisoare", "إرسال خطاب");
         Add("AdminWa.StubPdf", "Bekijk testbrief", "View test letter", "Zobacz list testowy", "Vezi scrisoarea test", "عرض خطاب الاختبار");
         Add("AdminWa.RejectReason", "Reden (verplicht)", "Reason (required)", "Powód (wymagany)", "Motiv (obligatoriu)", "السبب (مطلوب)");
+        Add("AdminWa.Access.Managers", "Beheerders (alleen admin)", "Managers (admin only)", "Managerowie (tylko admin)", "Manageri (doar admin)", "المديرون (للمشرف فقط)");
+        Add("AdminWa.Access.Ownership", "Eigendomsoverdracht", "Ownership transfer", "Przeniesienie własności", "Transfer proprietate", "نقل الملكية");
+        Add("AdminWa.Access.LetterOk", "Brief bevestigd", "Letter confirmed", "List potwierdzony", "Scrisoare confirmată", "تم تأكيد الخطاب");
+        Add("AdminWa.Access.LetterPending", "Brief nog open", "Letter pending", "List oczekuje", "Scrisoare în așteptare", "الخطاب معلّق");
         Add("Nav.WerkgeverVerificatie", "Werkgeververificatie", "Employer verification", "Weryfikacja pracodawców", "Verificare angajatori", "تحقق أصحاب العمل");
+
+        // Access request (07)
+        Add("WaAccess.Speech", "Geen zorgen! Je collega's zijn je voor geweest. Vraag ze om toegang, dan werk je samen in één account.", "No worries! Your colleagues got here first. Ask them for access so you work in one account.", "Spokojnie! Koledzy byli wcześniej. Poproś o dostęp i pracujcie w jednym koncie.", "Nicio grijă! Colegii au fost înainte. Cere acces ca să lucrați într-un singur cont.", "لا تقلق! زملاؤك سبقوك. اطلب الوصول لتعملوا في حساب واحد.");
+        Add("WaAccess.Title", "Dit bedrijf staat al op Lobsy", "This company is already on Lobsy", "Ta firma jest już na Lobsy", "Această firmă e deja pe Lobsy", "هذه الشركة موجودة بالفعل على Lobsy");
+        Add("WaAccess.Lead", "Er is al een bedrijfsmanager. Jij kunt geen tweede eigenaar worden, maar wel toegang aanvragen.", "There is already a company manager. You cannot become a second owner, but you can request access.", "Jest już menedżer firmy. Nie możesz zostać drugim właścicielem, ale możesz poprosić o dostęp.", "Există deja un manager. Nu poți fi al doilea proprietar, dar poți cere acces.", "يوجد مدير شركة بالفعل. لا يمكنك أن تصبح مالكاً ثانياً، لكن يمكنك طلب الوصول.");
+        Add("WaAccess.Privacy", "We sturen je verzoek naar de huidige beheerder. Wie dat is, laten we om privacyredenen niet zien.", "We send your request to the current manager. For privacy we do not show who that is.", "Wysyłamy prośbę do obecnego managera. Ze względów prywatności nie pokazujemy kim jest.", "Trimitem cererea managerului actual. Din motive de confidențialitate nu arătăm cine este.", "نرسل طلبك إلى المدير الحالي. لأسباب الخصوصية لا نُظهر من هو.");
+        Add("WaAccess.FormTitle", "Vraag toegang aan", "Request access", "Poproś o dostęp", "Cere acces", "اطلب الوصول");
+        Add("WaAccess.Name", "Je naam", "Your name", "Twoje imię", "Numele tău", "اسمك");
+        Add("WaAccess.Function", "Functie", "Job title", "Stanowisko", "Funcție", "المسمى الوظيفي");
+        Add("WaAccess.Email", "Je zakelijke e-mailadres", "Your work e-mail", "Twój służbowy e-mail", "E-mailul de serviciu", "بريد العمل");
+        Add("WaAccess.Phone", "Telefoon (optioneel)", "Phone (optional)", "Telefon (opcjonalnie)", "Telefon (opțional)", "الهاتف (اختياري)");
+        Add("WaAccess.Role", "Welke rol zoek je?", "Which role do you need?", "Jakiej roli potrzebujesz?", "Ce rol cauți?", "ما الدور الذي تحتاجه؟");
+        Add("WaAccess.Role.Branch", "Vestigingsmanager", "Branch manager", "Kierownik placówki", "Manager locație", "مدير فرع");
+        Add("WaAccess.Role.Regional", "Regiomanager", "Regional manager", "Kierownik regionu", "Manager regional", "مدير إقليمي");
+        Add("WaAccess.Role.Enterprise", "Bedrijfsmanager", "Company manager", "Menedżer firmy", "Manager firmă", "مدير الشركة");
+        Add("WaAccess.Message", "Bericht (optioneel)", "Message (optional)", "Wiadomość (opcjonalnie)", "Mesaj (opțional)", "رسالة (اختياري)");
+        Add("WaAccess.Submit", "Verzoek versturen", "Send request", "Wyślij prośbę", "Trimite cererea", "إرسال الطلب");
+        Add("WaAccess.CodeTitle", "Bevestig je e-mail", "Confirm your e-mail", "Potwierdź e-mail", "Confirmă e-mailul", "أكّد بريدك");
+        Add("WaAccess.CodeConfirm", "Bevestigen", "Confirm", "Potwierdź", "Confirmă", "تأكيد");
+        Add("WaAccess.Sent", "Je aanvraag is verstuurd.", "Your request was sent.", "Twoja prośba została wysłana.", "Cererea a fost trimisă.", "تم إرسال طلبك.");
+        Add("WaAccess.Timeline.Title", "Wat gebeurt er dan?", "What happens next?", "Co dalej?", "Ce urmează?", "ماذا يحدث بعد ذلك؟");
+        Add("WaAccess.Timeline.1", "De bedrijfsmanager krijgt je verzoek (vandaag)", "The company manager receives your request (today)", "Menedżer dostaje prośbę (dziś)", "Managerul primește cererea (azi)", "يستلم مدير الشركة طلبك (اليوم)");
+        Add("WaAccess.Timeline.2", "Na 3 werkdagen een herinnering", "A reminder after 3 working days", "Przypomnienie po 3 dniach roboczych", "Reminder după 3 zile lucrătoare", "تذكير بعد 3 أيام عمل");
+        Add("WaAccess.Timeline.3", "Geen reactie? Dan kijkt Lobsy-support mee (dag 5)", "No reply? Lobsy support steps in (day 5)", "Brak odpowiedzi? Support Lobsy (dzień 5)", "Fără răspuns? Support Lobsy (ziua 5)", "لا رد؟ تدخل دعم Lobsy (اليوم 5)");
+        Add("WaAccess.Ownership.Title", "Eigendom overnemen", "Take over ownership", "Przejmij własność", "Preia proprietatea", "تولَّ الملكية");
+        Add("WaAccess.Ownership.Body", "Is de beheerder vertrokken en ben jij nu verantwoordelijk? Dan kun je het eigendom overnemen. We sturen een brief met code naar het KvK-adres; support controleert het verzoek.", "Has the manager left and are you responsible now? You can take over ownership. We send a letter with a code to the KvK address; support reviews the request.", "Manager odszedł i ty odpowiadasz? Możesz przejąć własność. Wyślemy list z kodem na adres KvK; support sprawdzi.", "Managerul a plecat și tu ești responsabil? Poți prelua proprietatea. Trimitem o scrisoare cu cod la adresa KvK; support verifică.", "هل غادر المدير وأنت المسؤول الآن؟ يمكنك تولّي الملكية. نرسل خطاباً برمز إلى عنوان KvK؛ يراجع الدعم الطلب.");
+        Add("WaAccess.Ownership.Cta", "Eigendom overnemen", "Take over ownership", "Przejmij własność", "Preia proprietatea", "تولَّ الملكية");
+        Add("WaAccess.OtherCompany", "Ander bedrijf", "Other company", "Inna firma", "Altă firmă", "شركة أخرى");
+        Add("WaAccess.ManagedBadge", "Deze vestiging wordt al beheerd op Lobsy", "This location is already managed on Lobsy", "Ta lokalizacja jest już zarządzana na Lobsy", "Această locație e deja gestionată pe Lobsy", "هذا الموقع يُدار بالفعل على Lobsy");
+        Add("Employer.AccessRequests", "Toegangsverzoeken", "Access requests", "Prośby o dostęp", "Cereri de acces", "طلبات الوصول");
+        Add("Employer.TakeoversSection", "Overname", "Takeovers", "Przejęcia", "Preluări", "عمليات الاستحواذ");
+        Add("Employer.Access.Grant", "Toegang geven", "Grant access", "Przyznaj dostęp", "Acordă acces", "منح الوصول");
+        Add("Employer.Access.Reject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
+        Add("Employer.Access.Empty", "Geen openstaande toegangsverzoeken.", "No open access requests.", "Brak otwartych próśb o dostęp.", "Nicio cerere de acces deschisă.", "لا توجد طلبات وصول مفتوحة.");
     }
 }

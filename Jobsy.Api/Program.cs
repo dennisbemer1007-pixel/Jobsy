@@ -97,6 +97,8 @@ builder.Services.AddRateLimiter(options =>
         ?? 5;
     var verifyStartLimit = builder.Configuration.GetValue<int?>("RateLimiting:VerifyStartPermitLimit")
         ?? 5;
+    var accessRequestLimit = builder.Configuration.GetValue<int?>("RateLimiting:AccessRequestPermitLimit")
+        ?? 5;
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -148,6 +150,15 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = verifyStartLimit,
                 Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("access-request", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = accessRequestLimit,
+                Window = TimeSpan.FromDays(1),
                 QueueLimit = 0
             }));
     options.AddPolicy("public-read", httpContext =>
