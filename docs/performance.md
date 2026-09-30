@@ -15,7 +15,7 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 
 ## Homepage-kaart (aug 2026)
 
-> **Landing 04:** de banenkaart-pagina is `/banenkaart` (publiek, geïndexeerd). `/` serveert de kaart tijdelijk nog mee tot landing 05. Alles hieronder over “Homepage-kaart” geldt voor `/banenkaart`.
+> **Landing 05:** `/` is de landing (static SSR, geen MapLibre/`blazor.web.js`). De banenkaart staat op `/banenkaart`. Alles hieronder over “Homepage-kaart” geldt voor `/banenkaart`.
 
 De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). PageSpeed-PRs #159–#165 (vaste 300px-box, MapLibre pas na `window.load` of klik, minified CSS/JS, cards-first) zijn teruggedraaid omdat de desktopkaart leeg bleef.
 

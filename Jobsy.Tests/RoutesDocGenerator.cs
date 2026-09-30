@@ -60,10 +60,10 @@ public static class RoutesDocGenerator
         sb.AppendLine("Product narrative per role: [`ROLES_AND_VIEWS.md`](../ROLES_AND_VIEWS.md).");
         sb.AppendLine("Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).");
         sb.AppendLine();
-        sb.AppendLine("## Banenkaart (landing 04)");
+        sb.AppendLine("## Landing + banenkaart (landing 04–05)");
         sb.AppendLine();
+        sb.AppendLine("- `/` — public landing page (static SSR, no MapLibre / no Blazor runtime; indexed). Signed-in users are **302** → role home (`/banenkaart` for candidates). Legacy map deep-link query on `/` → **301** `/banenkaart?…`.");
         sb.AppendLine("- `/banenkaart` — public job map (indexed).");
-        sb.AppendLine("- `/` — still serves the same map until landing 05 replaces it with the landing page.");
         sb.AppendLine("- `/banen` — legacy; **301** → `/banenkaart` (query preserved; middleware, not a Blazor page).");
         sb.AppendLine();
         sb.AppendLine("## Access column");

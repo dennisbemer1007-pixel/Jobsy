@@ -22,7 +22,15 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=20260925-coral" />
     <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
     <style nonce="@Nonce">
-        :root { --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --border:#ddd5cc; --brand:#0f2d5c; --map-land:#f8f4f0; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif; }
+        :root {
+            --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --border:#ddd5cc; --brand:#0f2d5c;
+            --map-land:#f8f4f0; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+            --muted:#5a6a7d; --accent:#0f2d5c; --accent-soft:#e7eef7; --accent-hover:#163a6b;
+            --coral:#f54a1b; --coral-deep:#d93a12; --coral-soft:#ffe8e0;
+            --success:#15803d; --success-soft:#ecfdf3;
+            --gold:#c9a227; --gold-light:#e4c65a; --gold-deep:#a6851c; --gold-soft:#faf6e8;
+            --warn:#a65b00; --warn-soft:#fff8e7; --map-pin:#22c55e;
+        }
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; max-width: 100%; overflow-x: hidden; font-family: var(--font); color: var(--text); background: var(--bg); }
         .app-shell { display: flex; flex-direction: column; height: 100%; min-height: 100%; max-width: 100%; overflow-x: hidden; }
@@ -80,8 +88,9 @@
         }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
     </style>
-    @* Public theme must load even when blazor.web.js is skipped (static landing SSR). *@
-    <link rel="stylesheet" href="css/features/public-theme.css?v=20260930-signup" />
+    @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
+    <link rel="stylesheet" href="css/features/public-theme.css?v=20260930-landing-5" />
+    <link rel="stylesheet" href="css/features/landing.css?v=20260930-landing-5" />
     @if (LoadBlazorRuntime)
     {
         @* Render-blocking versioned CSS — critical shell is already inlined above; full stylesheet is cacheable. *@
@@ -98,7 +107,17 @@
         <link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" />
         <link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260929-acc" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/applications.css?v=20260927-apps-clamp" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20260927-banenkaart-v3b" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20260927-gratis-dna" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260928-insights" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260928-match-desktop-ci" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/public-theme.css?v=20260930-signup" /></noscript>
+    else if (!SkipBlazorForPage)
+    {
+        @* Crawler path: non-blocking app shell. *@
+        <link rel="stylesheet" href="css/app.min.css?v=20260929-acc" media="print" onload="this.media='all'" data-app-css />
+    }
+    else
+    {
+        @* NoBlazorRuntime (landing): keep app.min.css non-blocking; tokens live in critical + public-theme. *@
+        <link rel="stylesheet" href="css/app.min.css?v=20260929-acc" media="print" onload="this.media='all'" data-app-css />
+    }
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260929-acc" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/applications.css?v=20260927-apps-clamp" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20260927-banenkaart-v3b" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20260927-gratis-dna" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260928-insights" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260928-match-desktop-ci" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/public-theme.css?v=20260930-landing-5" /><link rel="stylesheet" href="css/features/landing.css?v=20260930-landing-5" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -255,8 +274,8 @@
             }
         });
     </script>
-        <script src="js/app-core.js?v=20260930-landing-4" nonce="@Nonce" defer></script>
-        <script src="js/landing.js?v=20260930-landing-4" nonce="@Nonce" defer></script>
+        <script src="js/app-core.js?v=20260930-landing-5" nonce="@Nonce" defer></script>
+        <script src="js/landing.js?v=20260930-landing-5" nonce="@Nonce" defer></script>
         <script src="js/navFeedback.js?v=20260928-nav-fb" nonce="@Nonce" defer></script>
         <script src="js/lobsyPush.js?v=20260928-perf" nonce="@Nonce" defer></script>
     @if (LoadBlazorRuntime)
@@ -282,8 +301,12 @@
     private string? HtmlDir =>
         Jobsy.Core.Localization.JobsyLanguages.Get(HtmlLang).IsRightToLeft ? "rtl" : null;
 
+    private bool SkipBlazorForPage =>
+        HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
+
     private bool LoadBlazorRuntime =>
-        !CrawlerUserAgent.ShouldSkipInteractiveRuntime(
+        !SkipBlazorForPage
+        && !CrawlerUserAgent.ShouldSkipInteractiveRuntime(
             HttpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString());
 
     /// <summary>

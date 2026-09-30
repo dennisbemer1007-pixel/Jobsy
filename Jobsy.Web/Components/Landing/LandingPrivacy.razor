@@ -1,0 +1,36 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+
+<section class="pub-landing__trust" id="privacy">
+    <div class="pub-landing__wrap">
+        <div class="pub-landing__eyebrow">@LandingText.For("Landing.Privacy.Eyebrow", Variant)</div>
+        <h2 class="pub-landing__h2">@LandingText.For("Landing.Privacy.Title", Variant)</h2>
+        <div class="pub-landing__tgrid">
+            <div class="pub-landing__tg">
+                <PubEmoji Glyph="📱" />
+                <h4>@LandingText.For("Landing.Privacy.C1Title", Variant)</h4>
+                <p>@LandingText.For("Landing.Privacy.C1Body", Variant)</p>
+            </div>
+            <div class="pub-landing__tg">
+                <PubEmoji Glyph="🙈" />
+                <h4>@LandingText.For("Landing.Privacy.C2Title", Variant)</h4>
+                <p>@LandingText.For("Landing.Privacy.C2Body", Variant)</p>
+            </div>
+            <div class="pub-landing__tg">
+                <PubEmoji Glyph="🧹" />
+                <h4>@LandingText.For("Landing.Privacy.C3Title", Variant)</h4>
+                <p>@LandingText.For("Landing.Privacy.C3Body", Variant)</p>
+            </div>
+            <div class="pub-landing__tg">
+                <PubEmoji Glyph="🛡️" />
+                <h4>@LandingText.For("Landing.Privacy.C4Title", Variant)</h4>
+                <p>@LandingText.For("Landing.Privacy.C4Body", Variant)</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+}

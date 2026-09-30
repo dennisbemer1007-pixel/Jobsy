@@ -15,7 +15,7 @@ public class MobileSmokePlaywrightTests
     private const string DefaultPassword = "Jobsy123!";
     private static readonly string[] CandidateTabs =
     [
-        "/",
+        "/banenkaart",
         "/candidate/liked",
         "/candidate/applications",
         "/carriere",

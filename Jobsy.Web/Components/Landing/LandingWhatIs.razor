@@ -1,0 +1,33 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+
+<section class="pub-landing__section" id="wat-is-lobsy">
+    <div class="pub-landing__wrap">
+        <div class="pub-landing__eyebrow">@LandingText.For("Landing.WhatIs.Eyebrow", Variant)</div>
+        <h2 class="pub-landing__h2">@LandingText.For("Landing.WhatIs.Title", Variant)</h2>
+        <p class="pub-landing__lead">@LandingText.For("Landing.WhatIs.Lead", Variant)</p>
+        <div class="pub-landing__steps">
+            @for (var i = 0; i < 3; i++)
+            {
+                var n = i + 1;
+                <div class="pub-landing__step">
+                    <div class="pub-landing__step-n">
+                        <PubEmoji Glyph="@(n == 1 ? "🔍" : n == 2 ? "🗺️" : "🪪")" />
+                        <small>@string.Format(LandingText.For("Landing.WhatIs.Step", Variant), n)</small>
+                    </div>
+                    <h3>@LandingText.For($"Landing.WhatIs.S{n}Title", Variant)</h3>
+                    <p>@LandingText.For($"Landing.WhatIs.S{n}Body", Variant)</p>
+                    <div class="pub-landing__tags">
+                        <span class="pub-pill">@LandingText.For($"Landing.WhatIs.S{n}Tag1", Variant)</span>
+                        <span class="pub-pill">@LandingText.For($"Landing.WhatIs.S{n}Tag2", Variant)</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+}

@@ -23,6 +23,10 @@
     "sha256": "1693816b0b407c89dc96ccf53cf8ab37f4c38794b75c9b411bc986be5e17bd11",
     "v": "20260928-insights"
   },
+  "css/features/landing.css": {
+    "sha256": "37dfc61858e90e15a7d0e394c3fed5f3f4bb72c84ecd8c99d1cd018db6d1cba6",
+    "v": "20260930-landing-5"
+  },
   "css/features/match-desktop.css": {
     "sha256": "765bd9ae5c01bb124d2bf13fd9ed4149a242bbdd51a7132eb501ca38a2726ea3",
     "v": "20260928-match-desktop-ci"
@@ -41,7 +45,7 @@
   },
   "css/features/public-theme.css": {
     "sha256": "dae311dc566e1532c210e13d2d532ba15f39e458d1d01fd737937b7a136352cd",
-    "v": "20260930-signup"
+    "v": "20260930-landing-5"
   },
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
@@ -65,7 +69,7 @@
   },
   "js/app-core.js": {
     "sha256": "d87576723cd4283b0fc2add830f1b1fa768e0dddcacd9f1e5f02260957d7f8da",
-    "v": "20260930-landing-4"
+    "v": "20260930-landing-5"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -100,8 +104,8 @@
     "v": "20260926-mapfix9"
   },
   "js/landing.js": {
-    "sha256": "4a0a61f3face2c40dcaf720b11d338d09fc8f072fb89f104d71cf6e5777b3630",
-    "v": "20260930-landing-4"
+    "sha256": "3961460d0850572a978b38e192f9a901b03f33eaf704f664a038c09d3cbcaf9a",
+    "v": "20260930-landing-5"
   },
   "js/lobsyPush.js": {
     "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",

@@ -97,8 +97,7 @@ public static partial class PageSeoCatalog
     public static IReadOnlyDictionary<string, PageSeoEntry> Exact { get; } =
         new Dictionary<string, PageSeoEntry>(StringComparer.OrdinalIgnoreCase)
         {
-            // "/" still serves the map until landing 05; canonical already points at /banenkaart.
-            ["/"] = Public("Page.JobMapTitle", "Seo.HomeDescription", CanonicalPath: "/banenkaart"),
+            ["/"] = Public("Landing.Seo.Title", "Landing.Seo.Description", hreflang: true),
             ["/banenkaart"] = Public("Page.JobMapTitle", "Seo.HomeDescription"),
             ["/login"] = Public("Login.Title", "Seo.LoginDescription"),
             ["/account-maken"] = Private("Signup.Seo.Title", "Signup.Seo.Description"),

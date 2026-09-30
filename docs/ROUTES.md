@@ -19,10 +19,10 @@ Routes intentionally mix Dutch and English segments (`/profiel`, `/carriere`,
 Product narrative per role: [`ROLES_AND_VIEWS.md`](../ROLES_AND_VIEWS.md).
 Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 
-## Banenkaart (landing 04)
+## Landing + banenkaart (landing 04–05)
 
+- `/` — public landing page (static SSR, no MapLibre / no Blazor runtime; indexed). Signed-in users are **302** → role home (`/banenkaart` for candidates). Legacy map deep-link query on `/` → **301** `/banenkaart?…`.
 - `/banenkaart` — public job map (indexed).
-- `/` — still serves the same map until landing 05 replaces it with the landing page.
 - `/banen` — legacy; **301** → `/banenkaart` (query preserved; middleware, not a Blazor page).
 
 ## Access column
@@ -38,7 +38,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 
 | Route | Component | Access |
 |-------|-----------|--------|
-| `/` | `Pages/Banenkaart.razor` | anonymous |
+| `/` | `Pages/Landing.razor` | anonymous |
 | `/access-denied` | `Pages/AccessDenied.razor` | anonymous |
 | `/account-maken` | `Pages/Public/AccountMaken.razor` | anonymous |
 | `/account-maken/code` | `Pages/Public/AccountMakenCode.razor` | anonymous |

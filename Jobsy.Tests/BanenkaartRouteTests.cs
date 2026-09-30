@@ -42,12 +42,14 @@ public class BanenkaartRouteTests
     }
 
     [Fact]
-    public void Canonical_for_home_and_banenkaart_is_banenkaart()
+    public void Canonical_for_home_is_landing_and_banenkaart_is_map()
     {
         Assert.True(PageSeoCatalog.IsIndexable("/banenkaart"));
         Assert.True(PageSeoCatalog.IsIndexable("/"));
-        Assert.Equal("/banenkaart", PageSeoCatalog.Exact["/"].CanonicalPath);
+        Assert.Null(PageSeoCatalog.Exact["/"].CanonicalPath);
         Assert.Null(PageSeoCatalog.Exact["/banenkaart"].CanonicalPath);
+        Assert.True(PageSeoCatalog.Exact["/"].Hreflang);
+        Assert.Equal("Landing.Seo.Title", PageSeoCatalog.Exact["/"].TitleKey);
         Assert.Contains("/banenkaart", PageSeoCatalog.StaticIndexablePaths);
 
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
@@ -56,17 +58,16 @@ public class BanenkaartRouteTests
         }).Build();
 
         Assert.Equal(
-            "https://lobsy.nl/banenkaart",
-            PageSeoResolver.CanonicalUrl("https://lobsy.nl/", "/banenkaart", config));
+            "https://lobsy.nl/",
+            PageSeoResolver.CanonicalUrl("https://lobsy.nl/", "/", config));
         Assert.Equal(
             "https://lobsy.nl/banenkaart",
             PageSeoResolver.CanonicalUrl("https://lobsy.nl/banenkaart", "/banenkaart", config));
 
         var entryHome = PageSeoCatalog.Resolve("/");
         var entryMap = PageSeoCatalog.Resolve("/banenkaart");
-        Assert.Equal("Page.JobMapTitle", entryHome.TitleKey);
+        Assert.Equal("Landing.Seo.Title", entryHome.TitleKey);
         Assert.Equal("Page.JobMapTitle", entryMap.TitleKey);
-        Assert.Equal("/banenkaart", entryHome.CanonicalPath ?? "/");
     }
 
     private static async Task<WebApplication> CreateAppAsync()

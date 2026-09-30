@@ -1,0 +1,31 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+
+<section class="pub-landing__close" aria-labelledby="landing-close-title">
+    <div class="pub-landing__wrap">
+        <div class="pub-landing__final">
+            <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" />
+            <div>
+                <h2 id="landing-close-title">@LandingText.For("Landing.Close.Title", Variant)</h2>
+                <p>@LandingText.For("Landing.Close.Lead", Variant)</p>
+            </div>
+            <div class="pub-landing__ctas">
+                <a class="pub-btn pub-btn--primary pub-btn--lg"
+                   href="@PublicRoutes.Test"
+                   data-kpi="LandingCtaTest"
+                   data-kpi-target="close">@LandingText.For("Landing.Close.CtaTest", Variant)</a>
+                <a class="pub-btn pub-btn--ghost pub-btn--lg"
+                   href="@PublicRoutes.Login"
+                   data-kpi="LandingCtaLogin"
+                   data-kpi-target="close">@LandingText.For("Landing.Close.CtaLogin", Variant)</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+}

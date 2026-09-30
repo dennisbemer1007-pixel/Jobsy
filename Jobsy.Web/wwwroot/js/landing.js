@@ -1,4 +1,4 @@
-/* Public landing shell: Esc closes mobile menu / lang details; focus returns to toggle. */
+/* Public landing shell: Esc closes mobile menu / lang details; KPI beacon stub (filled in landing 10). */
 (function () {
   "use strict";
 
@@ -30,5 +30,14 @@
     if (summary && typeof summary.focus === "function") {
       summary.focus();
     }
+  });
+
+  // KPI beacon stub — landing 10 wires the cookieless endpoint.
+  document.addEventListener("click", function (ev) {
+    var el = ev.target && ev.target.closest ? ev.target.closest("[data-kpi]") : null;
+    if (!el || !window.jobsyFunnelBeacon) return;
+    try {
+      window.jobsyFunnelBeacon(el.getAttribute("data-kpi"), el.getAttribute("data-kpi-target"));
+    } catch (e) { /* ignore */ }
   });
 })();

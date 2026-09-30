@@ -101,6 +101,32 @@ public static class StructuredData
         return Serialize(payload);
     }
 
+    /// <summary>FAQPage JSON-LD from the exact (question, answer) pairs rendered on the page.</summary>
+    public static string FaqPage(IEnumerable<(string Question, string Answer)> items)
+    {
+        var entities = items
+            .Where(i => !string.IsNullOrWhiteSpace(i.Question) && !string.IsNullOrWhiteSpace(i.Answer))
+            .Select(i => new Dictionary<string, object?>
+            {
+                ["@type"] = "Question",
+                ["name"] = i.Question.Trim(),
+                ["acceptedAnswer"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Answer",
+                    ["text"] = i.Answer.Trim()
+                }
+            })
+            .ToList();
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "FAQPage",
+            ["mainEntity"] = entities
+        };
+        return Serialize(payload);
+    }
+
     public static string? Organization(string origin, string name, string? address, string? logoUrl, string pagePath)
     {
         if (string.IsNullOrWhiteSpace(name))

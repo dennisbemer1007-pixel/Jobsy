@@ -1,0 +1,101 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<section class="pub-landing__section" id="voor-wie">
+    <div class="pub-landing__wrap">
+        <div class="pub-landing__eyebrow">@LandingText.For("Landing.For.Eyebrow", Variant)</div>
+        <h2 class="pub-landing__h2">@LandingText.For("Landing.For.Title", Variant)</h2>
+        <div class="pub-landing__who">
+            <article class="pub-landing__wc pub-landing__wc--me">
+                <div class="pub-landing__wtop t-peach"><PubEmoji Glyph="🙋" /></div>
+                <div class="pub-landing__wb">
+                    <h3>@LandingText.For("Landing.For.CandTitle", Variant)</h3>
+                    <p>@LandingText.For("Landing.For.CandBody", Variant)</p>
+                    <ul>
+                        <li>@LandingText.For("Landing.For.Cand1", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Cand2", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Cand3", Variant)</li>
+                    </ul>
+                    <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Test" data-kpi="LandingCtaAudience" data-kpi-target="kandidaat">
+                        @LandingText.For("Landing.For.CandCta", Variant)
+                    </a>
+                </div>
+            </article>
+
+            <article class="pub-landing__wc">
+                <div class="pub-landing__wtop t-sun"><PubEmoji Glyph="🏢" /></div>
+                <div class="pub-landing__wb">
+                    <h3>@LandingText.For("Landing.For.EmpTitle", Variant)</h3>
+                    <p>@LandingText.For("Landing.For.EmpBody", Variant)</p>
+                    <ul>
+                        <li>@LandingText.For("Landing.For.Emp1", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Emp2", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Emp3", Variant)</li>
+                    </ul>
+                    @if (EmployersAvailable)
+                    {
+                        <a class="pub-btn" href="@PublicRoutes.Employers" data-kpi="LandingCtaAudience" data-kpi-target="werkgever">
+                            @LandingText.For("Landing.For.EmpCta", Variant)
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="pub-btn pub-btn--disabled">@LandingText.For("Landing.For.EmpCta", Variant)</span>
+                    }
+                </div>
+            </article>
+
+            <article class="pub-landing__wc">
+                <div class="pub-landing__wtop t-sky"><PubEmoji Glyph="🎓" /></div>
+                <div class="pub-landing__wb">
+                    <h3>@LandingText.For("Landing.For.SchTitle", Variant)</h3>
+                    <p>@LandingText.For("Landing.For.SchBody", Variant)</p>
+                    <ul>
+                        <li>@LandingText.For("Landing.For.Sch1", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Sch2", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Sch3", Variant)</li>
+                    </ul>
+                    @if (SchoolsAvailable)
+                    {
+                        <a class="pub-btn" href="@PublicRoutes.Schools" data-kpi="LandingCtaAudience" data-kpi-target="school">
+                            @LandingText.For("Landing.For.SchCta", Variant)
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="pub-btn pub-btn--disabled">@LandingText.For("Landing.For.SchCta", Variant)</span>
+                    }
+                </div>
+            </article>
+
+            <article class="pub-landing__wc">
+                <div class="pub-landing__wtop t-mint"><PubEmoji Glyph="🤝" /></div>
+                <div class="pub-landing__wb">
+                    <h3>@LandingText.For("Landing.For.ParTitle", Variant)</h3>
+                    <p>@LandingText.For("Landing.For.ParBody", Variant)</p>
+                    <ul>
+                        <li>@LandingText.For("Landing.For.Par1", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Par2", Variant)</li>
+                        <li>@LandingText.For("Landing.For.Par3", Variant)</li>
+                    </ul>
+                    <a class="pub-btn" href="@PublicRoutes.Partner" data-kpi="LandingCtaAudience" data-kpi-target="partner">
+                        @LandingText.For("Landing.For.ParCta", Variant)
+                    </a>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+
+    private bool EmployersAvailable =>
+        PublicNavCatalog.Header(Variant).Any(i => i.Href == PublicRoutes.Employers && i.IsAvailable);
+
+    private bool SchoolsAvailable =>
+        PublicNavCatalog.Header(Variant).Any(i => i.Href == PublicRoutes.Schools && i.IsAvailable);
+}
