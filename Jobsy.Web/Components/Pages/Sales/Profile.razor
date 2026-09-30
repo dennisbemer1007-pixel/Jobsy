@@ -1,0 +1,500 @@
+@page "/sales/profiel"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@using Jobsy.Core.Entities
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Sales.Profile.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["EntUi.Loading"]</p>
+}
+else if (_profile is null)
+{
+    <p class="state-message error">@Culture["Common.Error"]</p>
+}
+else
+{
+    <section class="sp-profile">
+        <header class="sp-profile__header">
+            <h1>@Culture["Sales.Profile.Title"]</h1>
+            <p class="sp-profile__lead">@Culture["Sales.Profile.Lead"]</p>
+        </header>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error" role="alert">@_error</p>
+        }
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="sp-toast" role="status">@_message</p>
+        }
+
+        <article class="sp-card sp-profile__section">
+            <header class="sp-profile__sec-head">
+                <div>
+                    <h2>@Culture["Sales.Profile.Company"]</h2>
+                    <p>@Culture["Sales.Profile.CompanyHelp"]</p>
+                </div>
+            </header>
+            <div class="sp-profile__grid">
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.CompanyName"]</span>
+                    <input @bind="_companyName" maxlength="256" />
+                </label>
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.Kvk"]</span>
+                    <input @bind="_kvk" maxlength="8" inputmode="numeric" />
+                    <small>@Culture["Sales.Profile.KvkHelp"]</small>
+                </label>
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.Country"]</span>
+                    <input @bind="_country" maxlength="64" />
+                </label>
+                <label class="sp-field sp-field--wide">
+                    <span>@Culture["Sales.Profile.Address"]</span>
+                    <input @bind="_address" maxlength="512" />
+                </label>
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.PostalCode"]</span>
+                    <input @bind="_postal" maxlength="16" />
+                </label>
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.City"]</span>
+                    <input @bind="_city" maxlength="128" />
+                </label>
+            </div>
+            <div class="sp-profile__actions">
+                <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveCompanyAsync">
+                    @Culture["Sales.Profile.Save"]
+                </button>
+            </div>
+        </article>
+
+        <article class="sp-card sp-profile__section">
+            <header class="sp-profile__sec-head">
+                <div>
+                    <h2>@Culture["Sales.Profile.Vat"]</h2>
+                    <p>@Culture["Sales.Profile.VatHelp"]</p>
+                </div>
+            </header>
+            <div class="sp-profile__radio-grid" role="radiogroup" aria-label="@Culture["Sales.Profile.Vat"]">
+                <button type="button"
+                        class="sp-radio-card @(_vat == "Standard21" ? "is-selected" : null)"
+                        @onclick='() => _vat = "Standard21"'>
+                    <strong>@Culture["Sales.Profile.VatStandard"]</strong>
+                    <span>@Culture["Sales.Profile.VatStandardHelp"]</span>
+                </button>
+                <button type="button"
+                        class="sp-radio-card @(_vat == "SmallBusinessScheme" ? "is-selected" : null)"
+                        @onclick='() => _vat = "SmallBusinessScheme"'>
+                    <strong>@Culture["Sales.Profile.VatKor"]</strong>
+                    <span>@Culture["Sales.Profile.VatKorHelp"]</span>
+                </button>
+            </div>
+            @if (_vat == "Standard21")
+            {
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.VatNumber"]</span>
+                    <input @bind="_vatNumber" maxlength="32" placeholder="NL123456789B01" />
+                </label>
+            }
+            else
+            {
+                <label class="sp-check">
+                    <input type="checkbox" @bind="_korConfirmed" />
+                    <span>@Culture["Sales.Profile.VatKorConfirm"]</span>
+                </label>
+                <label class="sp-field">
+                    <span>@Culture["Sales.Profile.VatNumber"]</span>
+                    <input @bind="_vatNumber" maxlength="32" placeholder="NL123456789B01" />
+                </label>
+            }
+            <div class="sp-profile__actions">
+                <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveVatAsync">
+                    @Culture["Sales.Profile.Save"]
+                </button>
+            </div>
+        </article>
+
+        <article class="sp-card sp-profile__section">
+            <header class="sp-profile__sec-head">
+                <div>
+                    <h2>@Culture["Sales.Profile.Payout"]</h2>
+                    <p>@Culture["Sales.Profile.PayoutHelp"]</p>
+                </div>
+                <button type="button" class="btn-compact" @onclick="OpenIbanDrawer">@Culture["Sales.Profile.Change"]</button>
+            </header>
+            <dl class="sp-profile__dl">
+                <div>
+                    <dt>@Culture["Sales.Profile.Iban"]</dt>
+                    <dd class="sp-mono">@(_profile.MaskedIban ?? "—")</dd>
+                </div>
+                <div>
+                    <dt>@Culture["Sales.Profile.Holder"]</dt>
+                    <dd>@(_profile.PayoutAccountHolderName ?? "—")</dd>
+                </div>
+            </dl>
+            <aside class="sp-note sp-note--warn">
+                <strong>@Culture["Sales.Profile.IbanSafeTitle"]</strong>
+                <p>@Culture.Format("Sales.Profile.IbanSafeBody", _profile.IbanChangeHoldDays)</p>
+            </aside>
+            @if (_profile.IbanPayoutHoldUntilUtc is DateTime hold && hold > DateTime.UtcNow)
+            {
+                <p class="sp-profile__hold">
+                    @Culture.Format("Sales.Profile.IbanHold", FormatLocalDate(hold))
+                </p>
+            }
+        </article>
+
+        <article class="sp-card sp-profile__section">
+            <header class="sp-profile__sec-head">
+                <div>
+                    <h2>@Culture["Sales.Profile.Agreements"]</h2>
+                    <p>@Culture["Sales.Profile.AgreementsHelp"]</p>
+                </div>
+            </header>
+            <ul class="sp-profile__rows">
+                <li>
+                    <div>
+                        <strong>@Culture["Sales.Profile.Agreement"]</strong>
+                        <p>
+                            @if (_profile.AgreementSignedAt is not null)
+                            {
+                                @Culture.Format("Sales.Profile.AgreementValue", _profile.AgreementVersion ?? "—")
+                            }
+                            else
+                            {
+                                @Culture["Sales.Profile.AgreementMissing"]
+                            }
+                        </p>
+                    </div>
+                    <button type="button" class="btn-compact" disabled="@(_profile.AgreementSignedAt is null)" @onclick="DownloadAgreementAsync">
+                        @Culture["Sales.Profile.Pdf"]
+                    </button>
+                </li>
+                <li>
+                    <div>
+                        <strong>@Culture["Sales.Profile.SelfBilling"]</strong>
+                        <p>
+                            @if (_profile.HasSelfBillingConsent && _profile.SelfBillingConsentAtUtc is DateTime cAt)
+                            {
+                                @Culture.Format("Sales.Profile.SelfBillingOk", FormatLocalDate(cAt))
+                            }
+                            else
+                            {
+                                @Culture["Sales.Todo.SelfBilling"]
+                            }
+                        </p>
+                    </div>
+                    <div class="sp-profile__row-actions">
+                        @if (_profile.HasSelfBillingConsent)
+                        {
+                            <button type="button" class="btn-compact" @onclick="DownloadConsentAsync">@Culture["Sales.Profile.Pdf"]</button>
+                            <button type="button" class="sp-link-quiet" disabled="@_busy" @onclick="RevokeConsentAsync">
+                                @Culture["Sales.Profile.SelfBillingRevoke"]
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="login-submit" disabled="@_busy" @onclick="GiveConsentAsync">
+                                @Culture["Sales.Profile.SelfBillingGive"]
+                            </button>
+                        }
+                    </div>
+                </li>
+                <li>
+                    <div>
+                        <strong>@Culture["Sales.Profile.Commission"]</strong>
+                        <p>
+                            @(_profile.ReferredBySalesManagerUserId is null
+                                ? Culture["Sales.Profile.CommissionValue"]
+                                : Culture["Sales.Profile.CommissionReferred"])
+                        </p>
+                    </div>
+                </li>
+            </ul>
+            @if (_showConsentText)
+            {
+                <aside class="sp-note">
+                    <p>@Culture["Sales.SelfBilling.ConsentText"]</p>
+                </aside>
+            }
+        </article>
+
+        <article class="sp-card sp-profile__section">
+            <header class="sp-profile__sec-head">
+                <div>
+                    <h2>@Culture["Sales.Profile.Security"]</h2>
+                    <p>@Culture["Sales.Profile.SecurityHelp"]</p>
+                </div>
+            </header>
+            <ul class="sp-profile__rows">
+                <li>
+                    <div>
+                        <strong>@Culture["Sales.Profile.Mfa"]</strong>
+                        <p>
+                            <span class="sp-pill @(_profile.MfaEnabled ? "sp-pill--ok" : null)">
+                                @(_profile.MfaEnabled ? Culture["Sales.Profile.MfaOn"] : Culture["Sales.Profile.MfaOff"])
+                            </span>
+                        </p>
+                    </div>
+                    <a class="btn-compact" href="/account/mfa">@Culture["Sales.Profile.MfaManage"]</a>
+                </li>
+                <li class="sp-profile__rows--stack">
+                    <div>
+                        <strong>@Culture["Sales.Profile.MailPrefs"]</strong>
+                    </div>
+                    <div class="sp-profile__switches">
+                        <label class="sp-switch">
+                            <input type="checkbox" @bind="_prefs.NewEmployer" />
+                            <span>@Culture["Sales.Profile.MailNewEmployer"]</span>
+                        </label>
+                        <label class="sp-switch">
+                            <input type="checkbox" @bind="_prefs.CommissionAvailable" />
+                            <span>@Culture["Sales.Profile.MailCommission"]</span>
+                        </label>
+                        <label class="sp-switch">
+                            <input type="checkbox" @bind="_prefs.PayoutStatus" />
+                            <span>@Culture["Sales.Profile.MailPayout"]</span>
+                        </label>
+                        <button type="button" class="login-submit" disabled="@_busy" @onclick="SavePrefsAsync">
+                            @Culture["Sales.Profile.Save"]
+                        </button>
+                    </div>
+                </li>
+            </ul>
+        </article>
+    </section>
+
+    <EntDrawer @bind-Open="_ibanOpen" Title="@Culture["Sales.Profile.IbanDrawerTitle"]">
+        @if (_ibanStep == 1)
+        {
+            <label class="sp-field">
+                <span>@Culture["Sales.Profile.Iban"]</span>
+                <input @bind="_newIban" maxlength="34" autocomplete="off" />
+            </label>
+            <label class="sp-field">
+                <span>@Culture["Sales.Profile.Holder"]</span>
+                <input @bind="_newHolder" maxlength="70" />
+            </label>
+            <button type="button" class="login-submit" disabled="@_busy" @onclick="BeginIbanAsync">
+                @Culture["Sales.Profile.Change"]
+            </button>
+        }
+        else if (_ibanStep == 2)
+        {
+            <p>@Culture["Sales.Profile.IbanConfirmTitle"]</p>
+            <label class="sp-field">
+                <span>@Culture["Sales.Profile.IbanConfirmCode"]</span>
+                <input @bind="_totpCode" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+            </label>
+            <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmIbanAsync">
+                @Culture["Sales.Profile.IbanConfirm"]
+            </button>
+        }
+        else
+        {
+            <p>@Culture["Sales.Profile.IbanEmailSent"]</p>
+        }
+    </EntDrawer>
+}
+
+@code {
+    private SalesPortalProfileDto? _profile;
+    private SalesEmailPrefs _prefs = new();
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    private string _companyName = "";
+    private string _kvk = "";
+    private string _country = "NL";
+    private string _address = "";
+    private string _postal = "";
+    private string _city = "";
+    private string _vat = "Standard21";
+    private string _vatNumber = "";
+    private bool _korConfirmed;
+    private bool _showConsentText;
+
+    private bool _ibanOpen;
+    private int _ibanStep = 1;
+    private string _newIban = "";
+    private string _newHolder = "";
+    private string _totpCode = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _profile = await Api.GetSalesPortalProfileAsync();
+            ApplyProfile(_profile);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplyProfile(SalesPortalProfileDto? p)
+    {
+        if (p is null) return;
+        _profile = p;
+        _companyName = p.CompanyName ?? "";
+        _kvk = p.KvkNumber ?? "";
+        _country = p.Country ?? "NL";
+        _address = p.Address ?? "";
+        _postal = p.PostalCode ?? "";
+        _city = p.City ?? "";
+        _vat = string.Equals(p.VatTreatment, "SmallBusinessScheme", StringComparison.OrdinalIgnoreCase)
+            ? "SmallBusinessScheme"
+            : "Standard21";
+        _vatNumber = p.VatNumber ?? "";
+        _korConfirmed = _vat == "SmallBusinessScheme";
+        _prefs = p.EmailPrefs ?? new SalesEmailPrefs();
+        _newHolder = p.PayoutAccountHolderName ?? p.FullName;
+    }
+
+    private async Task SaveCompanyAsync()
+    {
+        await RunBusy(async () =>
+        {
+            var dto = await Api.UpdateSalesPortalCompanyAsync(new
+            {
+                companyName = _companyName,
+                kvkNumber = _kvk,
+                vatNumber = string.IsNullOrWhiteSpace(_vatNumber) ? null : _vatNumber,
+                address = _address,
+                postalCode = _postal,
+                city = _city,
+                country = _country
+            });
+            ApplyProfile(dto);
+            _message = Culture["Sales.Profile.Saved"];
+        });
+    }
+
+    private async Task SaveVatAsync()
+    {
+        await RunBusy(async () =>
+        {
+            var dto = await Api.UpdateSalesPortalVatAsync(new
+            {
+                treatment = _vat,
+                vatNumber = string.IsNullOrWhiteSpace(_vatNumber) ? null : _vatNumber,
+                korConfirmed = _korConfirmed
+            });
+            ApplyProfile(dto);
+            _message = Culture["Sales.Profile.Saved"];
+        });
+    }
+
+    private async Task SavePrefsAsync()
+    {
+        await RunBusy(async () =>
+        {
+            var dto = await Api.UpdateSalesEmailPrefsAsync(_prefs);
+            ApplyProfile(dto);
+            _message = Culture["Sales.Profile.Saved"];
+        });
+    }
+
+    private async Task GiveConsentAsync()
+    {
+        _showConsentText = true;
+        await RunBusy(async () =>
+        {
+            var dto = await Api.GiveSalesSelfBillingConsentAsync();
+            ApplyProfile(dto);
+            _message = Culture["Sales.Profile.Saved"];
+        });
+    }
+
+    private async Task RevokeConsentAsync()
+    {
+        await RunBusy(async () =>
+        {
+            var dto = await Api.RevokeSalesSelfBillingConsentAsync();
+            ApplyProfile(dto);
+            _message = Culture["Sales.Profile.Saved"];
+        });
+    }
+
+    private void OpenIbanDrawer()
+    {
+        _ibanStep = 1;
+        _newIban = "";
+        _totpCode = "";
+        _error = null;
+        _ibanOpen = true;
+    }
+
+    private async Task BeginIbanAsync()
+    {
+        await RunBusy(async () =>
+        {
+            var result = await Api.BeginSalesIbanChangeAsync(_newIban, _newHolder);
+            if (result.Applied && result.Profile is not null)
+            {
+                ApplyProfile(result.Profile);
+                _ibanOpen = false;
+                _message = Culture["Sales.Profile.Saved"];
+                return;
+            }
+
+            _ibanStep = string.Equals(result.Method, "email", StringComparison.OrdinalIgnoreCase) ? 3 : 2;
+        });
+    }
+
+    private async Task ConfirmIbanAsync()
+    {
+        await RunBusy(async () =>
+        {
+            var dto = await Api.ConfirmSalesIbanChangeAsync(_totpCode);
+            ApplyProfile(dto);
+            _ibanOpen = false;
+            _message = Culture["Sales.Help.IbanConfirm.Ok"];
+        });
+    }
+
+    private async Task DownloadAgreementAsync()
+    {
+        try { await Api.DownloadSalesAgreementPdfAsync(Js); }
+        catch (Exception ex) { _error = ex.Message; }
+    }
+
+    private async Task DownloadConsentAsync()
+    {
+        try { await Api.DownloadSalesConsentPdfAsync(Js); }
+        catch (Exception ex) { _error = ex.Message; }
+    }
+
+    private async Task RunBusy(Func<Task> action)
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try { await action(); }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private static string FormatLocalDate(DateTime utc)
+    {
+        var local = SalesClock.ToLocal(utc);
+        return local.ToString("dd-MM-yyyy");
+    }
+}

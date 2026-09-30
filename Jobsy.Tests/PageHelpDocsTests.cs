@@ -26,7 +26,7 @@ public class PageHelpDocsTests
     [InlineData("/admin/feedback", "Beheer · Feedback")]
     [InlineData("/werkgever/vacatures/nieuw", "Vacature plaatsen")]
     [InlineData("/werkgever/vacatures", "Vacatures (werkgever)")]
-    [InlineData("/salesmanager/toolkit", "Sales-toolkit")]
+    [InlineData("/sales/link", "Mijn link & materiaal")]
     [InlineData("/intermediary/team", "Team (intermediair)")]
     [InlineData("/wie-zijn-wij", "Wie zijn wij")]
     [InlineData("/privacy", "Privacyverklaring")]

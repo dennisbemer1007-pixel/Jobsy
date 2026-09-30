@@ -11,8 +11,9 @@ API `[Authorize]` attributes remain authoritative; this document is the human-re
 | Bedrijfsmanager | `EnterpriseManager` | All branches + regions of **own company**; posts vacancies; buys / allocates tokens |
 | Regiomanager | `RegionalManager` | **Read-only**, only branches in its own region |
 | Filiaalmanager | `BranchManager` | Enterprise-like rights, but **own branch only** |
-| Salesmanager | `SalesManager` | Wallet payout, sales toolkit, tracking code + % of referred employers |
-| Ambassadeur | `Ambassadeur` | Like salesmanager (product unfinished) |
+| Salesmanager | `SalesManager` | Lobsy Partner portal (`/sales/*`): dashboard, link & materiaal, werkgevers (handelsnaam/plaats/eigen commissie), aanbevelen, wallet. Payouts via aanvraag (≥ € 50) + admin-goedkeuring van maandelijkse ronde. **2FA verplicht.** |
+| Ambassadeur | `Ambassadeur` | **Geparkeerd** (`AmbassadorsEnabled` uit). Geen toegang tot ambassadeur-functies; gegevens blijven bewaard. 2FA blijft verplicht als de rol weer aan gaat. |
+| Decaan | — | Not built |
 | Schoolbeheerder | `SchoolAdmin` | Own school; mandatory 2FA; invites teachers, manages classes/codes |
 | Leraar | `Teacher` | Assigned classes only (`TeacherClassAssignment`); mandatory 2FA; `/leraar/klas/{id}/*` + `api/teacher/classes/{id}/*` (foreign → 404) |
 | Admin | `Admin` | Everything |
@@ -35,6 +36,7 @@ Legend for **Scope**: `branch` = primary company only · `memberships` = `UserCo
 | Manage branches / invites | — | limited | **no** (read) | org | limited | — | — | all |
 | Salary tables (manage) | — | read/use | read | org | clients | — | — | all |
 | Sales wallet / payout | — | — | — | — | — | self | self | all |
+| Sales payout approve / SEPA export / mark paid | — | — | — | — | — | — | — | Admin + MFA session |
 | Tracking code / toolkit | — | — | — | partner affiliate | partner affiliate | self | self | all |
 | Admin screens | — | — | — | — | — | — | — | all |
 | Own profile / sessions / feedback | self | self | self | self | self | self | self | self |

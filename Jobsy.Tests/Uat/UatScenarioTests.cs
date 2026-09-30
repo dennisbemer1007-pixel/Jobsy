@@ -50,6 +50,14 @@ public sealed class UatScenarioTests
                 continue;
             }
 
+            if (role == JobsyRoles.SalesManager)
+            {
+                // Nav moved to SalesNav / SalesLayout (salesmanager-1).
+                Assert.Empty(items);
+                Assert.NotEmpty(Jobsy.Web.Navigation.SalesNav.VisibleItems(canRecruit: true));
+                continue;
+            }
+
             Assert.NotEmpty(items);
             foreach (var item in items)
             {

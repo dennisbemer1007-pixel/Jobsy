@@ -40,7 +40,7 @@
                 <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), antwoorden en afgeleide scores/tags van de optionele competentietest (25 Likert, Big Five) en beroepentest (25 Likert, RIASEC) plus optionele betaalde diepte-analyses (150 vragen per test) en het daaruit afgeleide <strong>Mijn Beroepen-kompas</strong> (algemene beroepen uit de Nederlandse arbeidsmarkt), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
                 <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), vacaturegegevens (uren, roosters/dagdelen, wettelijke taakvinkjes voor jeugdige arbeid), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
                 <li><strong>Salesmanagers:</strong> KvK/BTW/NAW, gemaskeerde IBAN voor uitbetaling, trackingcode, commissieboekingen en self-billingfacturen (fiscale bewaarplicht).</li>
-                <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; idle-timeout cookie <code>Jobsy.LastActivity</code> (versleuteld via Data Protection); taalvoorkeur-cookie <code>Jobsy.Culture</code>; cookie-/analyticsvoorkeur in <code>localStorage</code> en first-party cookie <code>Jobsy.CookieConsent</code>; antwoorden van de gratis werk-DNA-test in <code>localStorage</code> (<code>jobsy.gratisDna.v1</code>), alleen op jouw apparaat, max. 7 dagen, wisbaar via &quot;Wis mijn antwoorden&quot;; bij het maken van een account worden ze in je profiel opgeslagen; optionele anonieme engagement-sleutel in <code>localStorage</code>/<code>sessionStorage</code> (alleen na analytics-toestemming); optionele klik-/impressie-/deel- en sitebezoekstatistieken (alleen na “Accepteer cookies”, ook voor ingelogde gebruikers — de API weigert deze writes zonder toestemming); likes als functionele voorkeur in je account; beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
+                <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; idle-timeout cookie <code>Jobsy.LastActivity</code> (versleuteld via Data Protection); taalvoorkeur-cookie <code>Jobsy.Culture</code>; cookie-/analyticsvoorkeur in <code>localStorage</code> en first-party cookie <code>Jobsy.CookieConsent</code>; functionele referral-cookie <code>lobsy_sales_ref</code> (alleen de genormaliseerde partner-/salescode, max. 30 dagen, first-click, HttpOnly; categorie functioneel — ter bevestiging door Dennis); bestaande <code>lobsy_ambassadeur_ref</code> (kan nog in browsers staan terwijl het ambassadeursprogramma gepauzeerd is); antwoorden van de gratis werk-DNA-test in <code>localStorage</code> (<code>jobsy.gratisDna.v1</code>), alleen op jouw apparaat, max. 7 dagen, wisbaar via &quot;Wis mijn antwoorden&quot;; bij het maken van een account worden ze in je profiel opgeslagen; optionele anonieme engagement-sleutel in <code>localStorage</code>/<code>sessionStorage</code> (alleen na analytics-toestemming); optionele klik-/impressie-/deel- en sitebezoekstatistieken (alleen na “Accepteer cookies”, ook voor ingelogde gebruikers — de API weigert deze writes zonder toestemming); likes als functionele voorkeur in je account; beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst. Linkbezoeken voor sales-funnels tellen we per dag zonder IP- of apparaatgegevens.</li>
                 <li><strong>Communicatie:</strong> berichten of bevestigingen die via het platform of e-mail (Resend) worden verstuurd. Ontvangers worden in logs geredacteerd. API-credentials kunnen éénmalig per e-mail worden verstuurd op verzoek van de bedrijfsmanager.</li>
             </ul>
             <p>
@@ -164,12 +164,27 @@
                 <li><strong>Klikken, shares, impressions en sitebezoeken:</strong> 365 dagen.</li>
                 <li><strong>Onbevestigde sollicitatiedrafts</strong> (e-mailverificatie niet afgerond): 48 uur, daarna automatisch verwijderd.</li>
                 <li><strong>Ingetrokken sollicitaties:</strong> snapshots en geüploade CV-bytes worden bij intrekken gewist; de sollicitatie blijft bestaan zonder die persoonsgegevens.</li>
-                <li><strong>Self-billing / commissies:</strong> langer bewaard waar fiscale bewaarplicht dat vereist; bij accountverwijdering worden persoonsgegevens geanonimiseerd.</li>
+                <li><strong>Self-billing / commissies / uitbetaalrondes:</strong> 7 jaar (fiscale bewaarplicht); bij accountverwijdering worden persoonsgegevens op facturen geanonimiseerd waar mogelijk.</li>
+                <li><strong>Salesmanager-aanbevelingen:</strong> naam/e-mail/motivatie van de aangeraden persoon worden gewist na 60 dagen (nog open), of 30 dagen na afwijzing/goedkeuring; na bezwaar direct.</li>
+                <li><strong>Sales-linkklikken:</strong> dagtotalen zonder IP of apparaat, 25 maanden.</li>
                 <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst (inclusief testantwoorden, scores, tags en diepte-analyse-rapporten).</li>
             </ul>
             <p>
                 Langere bewaartermijnen kunnen gelden waar dat wettelijk verplicht is
                 (bijvoorbeeld voor financiële administratie bij tokenaankopen).
+            </p>
+        </section>
+
+        <section>
+            <h2>6a. Aanmelden via een salesmanager</h2>
+            <p>
+                Als je Lobsy ontdekt via een salesmanager-link of -code, zetten we de functionele cookie
+                <code>lobsy_sales_ref</code> (alleen de genormaliseerde code, max. 30 dagen, first-click, HttpOnly).
+                Zo kunnen we de salesmanager commissie toekennen als jij (als werkgever) tokens koopt.
+                De salesmanager ziet van jou alleen de <strong>handelsnaam</strong>, eventueel de <strong>plaats</strong>
+                (niet bij een eenmanszaak) en <strong>zijn of haar eigen commissie</strong> — nooit contactpersonen,
+                kandidaten of vacaturedetails. De cookie is nodig voor die commissieberekening; zonder attributie
+                krijgt de salesmanager geen commissie over jouw aankopen.
             </p>
         </section>
 

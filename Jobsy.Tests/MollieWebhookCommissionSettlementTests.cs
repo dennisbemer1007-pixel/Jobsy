@@ -63,7 +63,7 @@ public class MollieWebhookCommissionSettlementTests
         var expectedIndirect = SalesCommissionRules.ShareEuro(
             purchaseExVat, SalesCommissionRules.DefaultIndirectCommissionRate);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(expectedDirect, await commissions.GetBalanceExVatAsync(directSmId));
         Assert.Equal(expectedIndirect, await commissions.GetBalanceExVatAsync(parentSmId));
 
@@ -126,13 +126,16 @@ public class MollieWebhookCommissionSettlementTests
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
         Assert.NotNull(result);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(directSmId));
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(parentSmId));
 
-        // Ambassador token share still applies after the SM window (platform loyalty).
+        // Ambassador (company) 15% bonus tokens only inside the commission window (D1).
         var companyBalance = await new TokenLedgerService(db).GetBalanceAsync(companyId);
-        Assert.Equal(10m + SalesCommissionRules.AmbassadorTokens(10), companyBalance);
+        Assert.Equal(10m, companyBalance); // pack tokens only; no 15% bonus after window
+        var ambassadorLog = await db.RevenueShareLogs.SingleAsync(
+            l => l.TokenCheckoutId == checkoutId && l.RecipientKind == RevenueShareRecipientKind.Ambassador);
+        Assert.Equal(0m, ambassadorLog.Tokens);
     }
 
     [Fact]
@@ -215,7 +218,7 @@ public class MollieWebhookCommissionSettlementTests
         var expectedIndirect = SalesCommissionRules.ShareEuro(
             purchaseExVat, SalesCommissionRules.DefaultIndirectCommissionRate);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(expectedDirect, await commissions.GetBalanceExVatAsync(directSmId));
         Assert.Equal(expectedIndirect, await commissions.GetBalanceExVatAsync(parentSmId));
     }
@@ -282,8 +285,11 @@ public class MollieWebhookCommissionSettlementTests
             CommissionIndirectSalesManagerUserId = parentSmId,
             CommissionDirectRateSnapshot = SalesCommissionRules.DefaultDirectCommissionRate,
             CommissionIndirectRateSnapshot = SalesCommissionRules.DefaultIndirectCommissionRate,
+            CommissionYear2RateSnapshot = SalesCommissionRules.DefaultYear2DirectCommissionRate,
+            CommissionYear3RateSnapshot = SalesCommissionRules.DefaultYear3DirectCommissionRate,
             CommissionDurationDaysSnapshot = SalesCommissionRules.DefaultCommissionDurationDays,
             CommissionTermsSnapshottedAtUtc = firstYearStartedAt,
+            CommissionStartsAtUtc = firstYearStartedAt,
             FirstYearStartedAt = firstYearStartedAt
         });
     }
@@ -319,7 +325,7 @@ public class MollieWebhookCommissionSettlementTests
     {
         var companySettings = new PlatformCompanySettingsService(db);
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var commercial = new SalesCommercialService(db, tokens);
         var revenueShare = new RevenueShareService(db, tokens, commissions, commercial);
         var features = new PlatformFeatureService(
@@ -337,7 +343,7 @@ public class MollieWebhookCommissionSettlementTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             revenueShare,
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             new NoopPendingActions(),
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

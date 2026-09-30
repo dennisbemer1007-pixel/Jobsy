@@ -391,7 +391,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     SchoolsEnabled: request.SchoolsEnabled,
                     SchoolPerCodeResultsEnabled: request.SchoolPerCodeResultsEnabled,
                     SchoolRetentionCutoffMonth: request.SchoolRetentionCutoffMonth,
-                    SchoolRetentionCutoffDay: request.SchoolRetentionCutoffDay),
+                    SchoolRetentionCutoffDay: request.SchoolRetentionCutoffDay,
+                    AmbassadorsEnabled: request.AmbassadorsEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -459,6 +460,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("SchoolPerCodeResultsEnabled", before.SchoolPerCodeResultsEnabled.ToString(), after.SchoolPerCodeResultsEnabled.ToString());
         Add("SchoolRetentionCutoffMonth", before.SchoolRetentionCutoffMonth.ToString(), after.SchoolRetentionCutoffMonth.ToString());
         Add("SchoolRetentionCutoffDay", before.SchoolRetentionCutoffDay.ToString(), after.SchoolRetentionCutoffDay.ToString());
+        Add("AmbassadorsEnabled", before.AmbassadorsEnabled.ToString(), after.AmbassadorsEnabled.ToString());
         return list;
     }
 
@@ -686,7 +688,8 @@ snap.CandidateInsightsEnabled,
             snap.SchoolsEnabled,
             snap.SchoolPerCodeResultsEnabled,
             snap.SchoolRetentionCutoffMonth,
-            snap.SchoolRetentionCutoffDay);
+            snap.SchoolRetentionCutoffDay,
+            snap.AmbassadorsEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

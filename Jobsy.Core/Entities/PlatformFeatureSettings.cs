@@ -75,5 +75,11 @@ public class PlatformFeatureSettings
     /// <summary>Retention cutoff day. Default 31.</summary>
     public int SchoolRetentionCutoffDay { get; set; } = 31;
 
+    /// <summary>
+    /// When false (default), the Ambassadeur role is parked: no pages, links, or new commission.
+    /// Existing data is kept.
+    /// </summary>
+    public bool AmbassadorsEnabled { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

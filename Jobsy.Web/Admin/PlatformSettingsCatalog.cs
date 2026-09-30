@@ -57,12 +57,14 @@ public static class PlatformSettingsCatalog
     public const string GroupDemo = "demo";
     public const string GroupGeneral = "general";
     public const string GroupScholen = "scholen";
+    public const string GroupSales = "sales";
 
     public static readonly IReadOnlyList<(string Key, string TitleKey, string DescriptionKey)> Groups =
     [
         (GroupPlatformMode, "AdminSettings.Group.PlatformMode", "AdminSettings.Group.PlatformMode.Desc"),
         (GroupVacancies, "AdminSettings.Group.Vacancies", "AdminSettings.Group.Vacancies.Desc"),
         (GroupScholen, "AdminSettings.Group.Scholen", "AdminSettings.Group.Scholen.Desc"),
+        (GroupSales, "AdminSettings.Group.Sales", "AdminSettings.Group.Sales.Desc"),
         (GroupSecurity, "AdminSettings.Group.Security", "AdminSettings.Group.Security.Desc"),
         (GroupDemo, "AdminSettings.Group.Demo", "AdminSettings.Group.Demo.Desc"),
         (GroupGeneral, "AdminSettings.Group.General", "AdminSettings.Group.General.Desc"),
@@ -71,7 +73,7 @@ public static class PlatformSettingsCatalog
     /// <summary>Functies page groups (excludes Algemeen).</summary>
     public static readonly IReadOnlyList<string> FeaturesGroupKeys =
     [
-        GroupPlatformMode, GroupVacancies, GroupScholen, GroupSecurity, GroupDemo
+        GroupPlatformMode, GroupVacancies, GroupScholen, GroupSales, GroupSecurity, GroupDemo
     ];
 
     public static readonly IReadOnlyList<string> GeneralGroupKeys = [GroupGeneral];
@@ -232,6 +234,20 @@ public static class PlatformSettingsCatalog
             Min: 1,
             Max: 31));
 
+        // --- Sales (Ambassadeur parked by default; tip SettingsAdmin toggle → catalog) ---
+        list.Add(new PlatformSettingDescriptor(
+            Key: "AmbassadorsEnabled",
+            Group: GroupSales,
+            TitleKey: "AdminSettings.Ambassadors.Enabled.Title",
+            DescriptionKey: "AdminSettings.Ambassadors.Enabled.Desc",
+            Kind: PlatformSettingKind.Bool,
+            Read: s => s.AmbassadorsEnabled,
+            Write: v => new PlatformFeatureUpdate(AmbassadorsEnabled: ToBool(v)),
+            ImpactKey: "AdminSettings.Ambassadors.Enabled.ImpactOff",
+            ImpactLevel: PlatformSettingImpactLevel.Warn,
+            ConfirmOnChange: true,
+            ShowOnDashboard: true));
+
         // --- Beveiliging ---
         list.Add(new PlatformSettingDescriptor(
             Key: "MfaPolicy",
@@ -357,6 +373,7 @@ public static class PlatformSettingsCatalog
         bool? schoolPerCode = null;
         int? schoolRetentionMonth = null;
         int? schoolRetentionDay = null;
+        bool? ambassadorsEnabled = null;
 
         foreach (var p in parts)
         {
@@ -386,6 +403,7 @@ public static class PlatformSettingsCatalog
             if (p.SchoolPerCodeResultsEnabled is not null) schoolPerCode = p.SchoolPerCodeResultsEnabled;
             if (p.SchoolRetentionCutoffMonth is not null) schoolRetentionMonth = p.SchoolRetentionCutoffMonth;
             if (p.SchoolRetentionCutoffDay is not null) schoolRetentionDay = p.SchoolRetentionCutoffDay;
+            if (p.AmbassadorsEnabled is not null) ambassadorsEnabled = p.AmbassadorsEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -405,6 +423,7 @@ public static class PlatformSettingsCatalog
             SchoolsEnabled: schoolsEnabled,
             SchoolPerCodeResultsEnabled: schoolPerCode,
             SchoolRetentionCutoffMonth: schoolRetentionMonth,
-            SchoolRetentionCutoffDay: schoolRetentionDay);
+            SchoolRetentionCutoffDay: schoolRetentionDay,
+            AmbassadorsEnabled: ambassadorsEnabled);
     }
 }

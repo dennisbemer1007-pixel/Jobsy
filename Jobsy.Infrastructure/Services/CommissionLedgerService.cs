@@ -1,6 +1,8 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +11,17 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class CommissionLedgerService : ICommissionLedgerService
 {
     private readonly JobsyDbContext _db;
+    private readonly IPlatformFeatureService _features;
+    private readonly ISalesCommercialService _commercial;
 
-    public CommissionLedgerService(JobsyDbContext db)
+    public CommissionLedgerService(
+        JobsyDbContext db,
+        IPlatformFeatureService features,
+        ISalesCommercialService? commercial = null)
     {
         _db = db;
+        _features = features;
+        _commercial = commercial!;
     }
 
     public async Task<decimal> GetBalanceExVatAsync(
@@ -56,6 +65,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         Guid companyId,
         string paymentId,
         int? firstYearSlot,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default)
     {
         if (!SalesCommissionRules.IsEligibleFounderSlot(firstYearSlot))
@@ -75,6 +85,8 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         }
 
         var amountEx = SalesCommissionRules.FounderBonusExVat;
+        var now = DateTime.UtcNow;
+        var available = availableFromUtc ?? await DefaultHoldAvailableFromAsync(now, cancellationToken);
         var entry = new CommissionLedgerEntry
         {
             Id = Guid.NewGuid(),
@@ -86,7 +98,8 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             Note = $"Founder-bonus 20% first-year onboarding (slot {firstYearSlot})",
             CompanyId = companyId,
             SourcePaymentId = paymentId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            AvailableFromUtc = available
         };
         _db.CommissionLedgerEntries.Add(entry);
         try
@@ -115,6 +128,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         int? durationDays = null,
         decimal? year2Rate = null,
         decimal? year3Rate = null,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default)
     {
         var rate = SalesCommissionRules.TokenCommissionRate(
@@ -133,6 +147,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             rate,
             CommissionEntryKind.TokenCommission,
             "Directe commissie",
+            availableFromUtc,
             cancellationToken);
     }
 
@@ -144,6 +159,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         DateTime? firstYearStartedAt,
         decimal? indirectRate = null,
         int? durationDays = null,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default)
     {
         var rate = SalesCommissionRules.IndirectCommissionRate(
@@ -160,10 +176,11 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             rate,
             CommissionEntryKind.IndirectTokenCommission,
             "Indirecte referral-bonus",
+            availableFromUtc,
             cancellationToken);
     }
 
-    public Task<CommissionLedgerEntry?> TryCreditAmbassadeurTokenCommissionAsync(
+    public async Task<CommissionLedgerEntry?> TryCreditAmbassadeurTokenCommissionAsync(
         Guid ambassadeurUserId,
         Guid companyId,
         Guid tokenCheckoutId,
@@ -171,20 +188,37 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         DateTime? firstYearStartedAt,
         decimal rate,
         int? durationDays = null,
+        DateTime? availableFromUtc = null,
         CancellationToken cancellationToken = default)
     {
+        var snap = await _features.GetAsync(cancellationToken);
+        if (!snap.AmbassadorsEnabled)
+        {
+            _db.PlatformLogs.Add(new PlatformLog
+            {
+                Id = Guid.NewGuid(),
+                Level = PlatformLogLevel.Info,
+                Category = "sales.ambassadors.parked-skip",
+                Message = "Ambassadeur commission skipped while parked",
+                DetailsJson = $"{{\"checkoutId\":\"{tokenCheckoutId:D}\"}}",
+                CreatedAt = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+
         if (rate <= 0)
         {
-            return Task.FromResult<CommissionLedgerEntry?>(null);
+            return null;
         }
 
         var windowDays = durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays;
         if (!SalesCommissionRules.IsWithinCommissionWindow(firstYearStartedAt, DateTime.UtcNow, windowDays))
         {
-            return Task.FromResult<CommissionLedgerEntry?>(null);
+            return null;
         }
 
-        return CreditCheckoutCommissionAsync(
+        return await CreditCheckoutCommissionAsync(
             ambassadeurUserId,
             companyId,
             tokenCheckoutId,
@@ -192,6 +226,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             rate,
             CommissionEntryKind.TokenCommission,
             "Ambassadeur-commissie",
+            availableFromUtc,
             cancellationToken);
     }
 
@@ -203,6 +238,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         decimal? rate,
         CommissionEntryKind kind,
         string notePrefix,
+        DateTime? availableFromUtc,
         CancellationToken cancellationToken)
     {
         if (rate is null || purchaseAmountEuro <= 0)
@@ -227,6 +263,8 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             return null;
         }
 
+        var now = DateTime.UtcNow;
+        var available = availableFromUtc ?? await DefaultHoldAvailableFromAsync(now, cancellationToken);
         var entry = new CommissionLedgerEntry
         {
             Id = Guid.NewGuid(),
@@ -238,7 +276,8 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             Note = $"{notePrefix} {(rate.Value * 100):0.##}% over €{purchaseAmountEuro:0.00} ex BTW",
             CompanyId = companyId,
             SourceTokenCheckoutId = tokenCheckoutId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            AvailableFromUtc = available
         };
         _db.CommissionLedgerEntries.Add(entry);
         try
@@ -281,6 +320,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         decimal vatAmount,
         CancellationToken cancellationToken = default)
     {
+        var now = DateTime.UtcNow;
         var entry = new CommissionLedgerEntry
         {
             Id = Guid.NewGuid(),
@@ -291,10 +331,35 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             VatRate = SalesCommissionRules.VatRate,
             Note = "Self-billing uitbetaling",
             SelfBillingInvoiceId = invoiceId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            AvailableFromUtc = now
         };
         _db.CommissionLedgerEntries.Add(entry);
         await _db.SaveChangesAsync(cancellationToken);
         return entry;
+    }
+
+    private async Task<DateTime> DefaultHoldAvailableFromAsync(
+        DateTime paidAtUtc,
+        CancellationToken cancellationToken)
+    {
+        var holdDays = 14;
+        if (_commercial is not null)
+        {
+            try
+            {
+                var settings = await _commercial.GetSettingsAsync(cancellationToken);
+                if (settings.CommissionHoldDays is >= 0 and <= 60)
+                {
+                    holdDays = settings.CommissionHoldDays;
+                }
+            }
+            catch
+            {
+                // Settings may be unavailable in lean unit tests — default 14.
+            }
+        }
+
+        return SalesClock.HoldAvailableFromUtc(paidAtUtc, holdDays);
     }
 }

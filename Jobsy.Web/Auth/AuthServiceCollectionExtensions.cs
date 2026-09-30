@@ -8,6 +8,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Web.Security;
+using Jobsy.Web.Sales;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -577,6 +578,13 @@ public static class AuthServiceCollectionExtensions
             {
                 RedirectUri = dest
             };
+
+            // Carry sales referral through Entra/Google challenge (cookie also survives SameSite=Lax GET).
+            var salesRef = SalesReferralCookie.TryRead(http, ambassadorsEnabled: false);
+            if (!string.IsNullOrWhiteSpace(salesRef))
+            {
+                props.Items[SalesReferralCookie.AuthPropertiesKey] = salesRef;
+            }
 
             return Results.Challenge(props, [scheme]);
         });
@@ -1230,6 +1238,15 @@ public static class AuthServiceCollectionExtensions
                 && !string.IsNullOrWhiteSpace(cookieRef))
             {
                 referralCode = cookieRef.Trim();
+            }
+
+            // Re-assert sales referral cookie after external login when properties carried it
+            // (SameSite=Lax usually keeps the cookie; this covers edge cases).
+            if (properties?.Items.TryGetValue(SalesReferralCookie.AuthPropertiesKey, out var salesRef) == true
+                && !string.IsNullOrWhiteSpace(salesRef)
+                && !http.Request.Cookies.ContainsKey(SalesReferralCookie.CookieName))
+            {
+                SalesReferralCookie.TrySetFirstClick(http, salesRef, maxAgeDays: 30);
             }
 
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/ensure-external")

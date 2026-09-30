@@ -1,3 +1,4 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -53,8 +54,7 @@ public class AmbassadeurAttributionTests
         await db.SaveChangesAsync();
 
         var settings = new AmbassadeurSettingsService(db);
-        var attribution = new AmbassadeurAttributionService(
-            db, settings, NullLogger<AmbassadeurAttributionService>.Instance);
+        var attribution = new AmbassadeurAttributionService(db, settings, NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures());
 
         var candidateId = Guid.NewGuid();
         db.Users.Add(new User
@@ -182,7 +182,7 @@ public class AmbassadeurAttributionTests
         });
         await db.SaveChangesAsync();
 
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var settings = new AmbassadeurSettingsService(db);
         var dashboard = new AmbassadeurDashboardService(db, ledger, settings);
         var dto = await dashboard.GetDashboardAsync(ambassadeurId);

@@ -2,10 +2,13 @@
 @page "/partner/{TrackingCode?}"
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Sales
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <PageTitle>@Culture["Partner.Title"] · Lobsy</PageTitle>
@@ -16,7 +19,7 @@
         <h1>@Culture["Partner.Headline"]</h1>
         <p class="login-lead">@Culture["Partner.Lead"]</p>
         <div class="partner-sales__cta">
-            <a class="login-submit" href="@RegisterHref" style="display:inline-block;text-decoration:none;text-align:center">
+            <a class="login-submit" href="@RegisterHref">
                 @Culture["Partner.RegisterCta"]
             </a>
             <button class="btn-compact btn-compact--primary" type="button" disabled="@_flyerBusy" @onclick="DownloadFlyerAsync">
@@ -54,7 +57,7 @@
         <section class="panel-section">
             <h2>@Culture["Partner.RatesTitle"]</h2>
             <p class="muted">
-                @Culture.Format("Partner.TokenValue", _catalog.BaseTokenValueEuro.ToString("0.00"))
+                @Culture.Format("Partner.TokenValueFrom", _catalog.BaseTokenValueEuro.ToString("0.00"))
                 · Highlight @_catalog.HighlightCarouselDays d: @_catalog.HighlightCarouselTokens.ToString("0.##") tokens
                 · Pulse: @_catalog.HighlightPulseTokens.ToString("0.##") tokens
             </p>
@@ -68,7 +71,7 @@
                         </div>
                         <div>
                             <strong>@cost.CostTokens.ToString("0.##") tokens</strong>
-                            <span class="muted">≈ € @cost.PriceEuro.ToString("0.00")</span>
+                            <span class="muted">≈ @SalesMoney.FormatPlain(cost.PriceEuro)</span>
                         </div>
                     </div>
                 }
@@ -91,7 +94,7 @@
                                     <div class="muted">@pack.Description</div>
                                 }
                             </div>
-                            <strong>€ @pack.PriceEuro.ToString("0.00")</strong>
+                            <strong>@SalesMoney.FormatPlain(pack.PriceEuro)</strong>
                         </div>
                     }
                 </div>
@@ -111,12 +114,19 @@
 @code {
     [Parameter] public string? TrackingCode { get; set; }
     [SupplyParameterFromQuery(Name = "ref")] public string? RefCode { get; set; }
+    [SupplyParameterFromQuery(Name = "b")] public string? Channel { get; set; }
+    [SupplyParameterFromQuery(Name = "preview")] public string? Preview { get; set; }
 
     private PartnerSalesCatalog? _catalog;
     private string? _trackingCode;
     private bool _loading = true;
     private bool _flyerBusy;
     private string? _error;
+    private bool _visitRecorded;
+
+    private bool IsPreview =>
+        string.Equals(Preview, "1", StringComparison.Ordinal)
+        || string.Equals(Preview, "true", StringComparison.OrdinalIgnoreCase);
 
     private string RegisterHref => string.IsNullOrWhiteSpace(_trackingCode)
         ? "/register"
@@ -137,10 +147,17 @@
     {
         Culture.Changed += OnCultureChanged;
         var raw = FirstNonEmpty(TrackingCode, RefCode)?.Trim().ToUpperInvariant();
-        _trackingCode = raw is not null
-                        && System.Text.RegularExpressions.Regex.IsMatch(raw, @"^(SM|BM|IM)-[A-Z0-9]{6}$")
-            ? raw
+        _trackingCode = SalesTrackingCodes.Normalize(raw) is { } code
+                        && !SalesTrackingCodes.IsAmbassadeur(code)
+            ? code
             : null;
+
+        if (_trackingCode is not null && !_visitRecorded)
+        {
+            await TryRecordVisitAndCookieAsync(_trackingCode);
+            _visitRecorded = true;
+        }
+
         try
         {
             _catalog = await Api.GetPartnerSalesCatalogAsync();
@@ -152,6 +169,33 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task TryRecordVisitAndCookieAsync(string code)
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        var isBot = BotUserAgents.IsBot(http.Request.Headers.UserAgent.ToString());
+        var sameDay = SalesReferralCookie.AlreadyHoldsCodeToday(http, code);
+        try
+        {
+            var visit = await Api.RecordSalesReferralVisitAsync(
+                code,
+                Channel,
+                countClick: !IsPreview && !isBot && !sameDay);
+            if (visit is { Active: true } && !IsPreview)
+            {
+                SalesReferralCookie.TrySetFirstClick(http, code, visit.CookieDays);
+            }
+        }
+        catch
+        {
+            // Landing still works without visit telemetry.
         }
     }
 

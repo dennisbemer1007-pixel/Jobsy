@@ -1099,6 +1099,13 @@ public sealed partial class JobsyApiClient
         }
 
         return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
+
+public async Task<IReadOnlyList<SalesParkedBalanceApiItem>> GetSalesParkedBalancesAsync(
+        CancellationToken ct = default)
+    {
+        var items = await _http.GetFromJsonAsync<List<SalesParkedBalanceApiItem>>(
+            "api/admin/sales/parked-balances", ct);
+        return items ?? [];
     }
 
     public async Task<PlatformCompanyItem?> GetPlatformCompanyAsync(CancellationToken ct = default)

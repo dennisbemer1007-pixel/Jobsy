@@ -1,0 +1,143 @@
+@namespace Jobsy.Web.Components.Sales
+@using Jobsy.Core.Contracts.Sales
+@using Jobsy.Core.Sales
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@implements IDisposable
+
+<div class="sp-search" @onkeydown="OnKeyDown">
+    <label class="sp-search__field">
+        <span class="visually-hidden">@Culture["Sales.SearchEmployers"]</span>
+        <input type="search"
+               @ref="_input"
+               value="@_query"
+               placeholder="@Culture["Sales.SearchEmployers"]"
+               autocomplete="off"
+               @oninput="OnInput"
+               @onfocus="() => _open = _results.Count > 0" />
+        <kbd class="sp-search__kbd">@Culture["Sales.Search.Shortcut"]</kbd>
+    </label>
+    @if (_open && (_results.Count > 0 || _searched))
+    {
+        <ul class="sp-search__list" role="listbox">
+            @if (_results.Count == 0)
+            {
+                <li class="sp-search__empty">@Culture["Sales.Search.NoResults"]</li>
+            }
+            else
+            {
+                @for (var i = 0; i < _results.Count; i++)
+                {
+                    var idx = i;
+                    var row = _results[i];
+                    <li class="sp-search__item @(idx == _active ? "is-active" : null)"
+                        role="option"
+                        aria-selected="@(idx == _active)"
+                        @onclick="() => Open(row.CompanyId)">
+                        <strong>@row.DisplayName</strong>
+                        @if (!string.IsNullOrEmpty(row.Place))
+                        {
+                            <span class="muted">@row.Place</span>
+                        }
+                    </li>
+                }
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private string _query = "";
+    private bool _open;
+    private bool _searched;
+    private int _active;
+    private List<SalesEmployerDto> _results = [];
+    private System.Threading.Timer? _debounce;
+    private ElementReference _input;
+    private bool _hooked;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_hooked || !firstRender)
+        {
+            return;
+        }
+
+        _hooked = true;
+        try
+        {
+            await _input.FocusAsync();
+            await Js.InvokeVoidAsync(
+                "eval",
+                "document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){e.preventDefault();var el=document.querySelector('.sp-search__field input');if(el)el.focus();}});");
+        }
+        catch
+        {
+            /* prerender / js unavailable */
+        }
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        _debounce?.Dispose();
+        _debounce = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(SearchAsync);
+        }, null, 250, Timeout.Infinite);
+    }
+
+    private async Task SearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_query))
+        {
+            _results = [];
+            _open = false;
+            _searched = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var page = await Api.GetSalesPartnerEmployersAsync(_query.Trim(), page: 1);
+        _results = page?.Items.Take(8).ToList() ?? [];
+        _active = 0;
+        _open = true;
+        _searched = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (!_open || _results.Count == 0)
+        {
+            return;
+        }
+
+        if (e.Key == "ArrowDown")
+        {
+            _active = Math.Min(_results.Count - 1, _active + 1);
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            _active = Math.Max(0, _active - 1);
+        }
+        else if (e.Key == "Enter")
+        {
+            Open(_results[_active].CompanyId);
+        }
+        else if (e.Key == "Escape")
+        {
+            _open = false;
+        }
+    }
+
+    private void Open(Guid companyId)
+    {
+        _open = false;
+        Navigation.NavigateTo($"/sales/werkgevers?open={companyId:D}");
+    }
+
+    public void Dispose() => _debounce?.Dispose();
+}

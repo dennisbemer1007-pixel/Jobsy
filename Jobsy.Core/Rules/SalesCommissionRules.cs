@@ -4,6 +4,7 @@ namespace Jobsy.Core.Rules;
 /// Pure commission / revenue-share rules for the salesmanager network (ex-VAT amounts).
 /// Staffels (admin-configurable via <c>SalesCommercialSettings</c>):
 /// standard 25% / 10% / 5% over 3 years; referred year-1 20% with 5% referrer override.
+/// Window starts at the organisation's first credited purchase (D1).
 /// </summary>
 public static class SalesCommissionRules
 {
@@ -59,6 +60,15 @@ public static class SalesCommissionRules
     /// <summary>Partner affiliate (BM/IM) mediation agreement version — server-controlled.</summary>
     public const string CurrentPartnerAgreementVersion = "2026-08-06-partner-mediation";
 
+    /// <summary>Snapshotted terms for one organisation commercial unit (frozen at activation).</summary>
+    public sealed record CommissionTerms(
+        decimal DirectYear1Rate,
+        decimal Year2Rate,
+        decimal Year3Rate,
+        decimal IndirectRate,
+        int DurationDays,
+        DateTime StartsAtUtc);
+
     public static decimal FounderBonusExVat =>
         decimal.Round(FirstYearOnboardingEuro * FounderBonusRate, 2, MidpointRounding.AwayFromZero);
 
@@ -74,8 +84,67 @@ public static class SalesCommissionRules
         decimal.Round(packSize * AmbassadorShareRate, 2, MidpointRounding.AwayFromZero);
 
     /// <summary>
+    /// Calendar year within the window: 1 / 2 / 3, or null before start or after duration.
+    /// Year 1 = [start, start+365d), year 2 = [+365d, +730d), year 3 = [+730d, +DurationDays).
+    /// </summary>
+    public static int? YearFor(CommissionTerms terms, DateTime purchaseAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(terms);
+        if (terms.DurationDays <= 0)
+        {
+            return null;
+        }
+
+        if (purchaseAtUtc < terms.StartsAtUtc)
+        {
+            return null;
+        }
+
+        var end = terms.StartsAtUtc.AddDays(terms.DurationDays);
+        if (purchaseAtUtc >= end)
+        {
+            return null;
+        }
+
+        var elapsed = (purchaseAtUtc - terms.StartsAtUtc).TotalDays;
+        if (elapsed < CommissionYearLengthDays)
+        {
+            return 1;
+        }
+
+        if (elapsed < CommissionYearLengthDays * 2)
+        {
+            return 2;
+        }
+
+        return 3;
+    }
+
+    public static decimal? DirectRate(CommissionTerms terms, int? year) => year switch
+    {
+        1 => terms.DirectYear1Rate < 0 ? null : terms.DirectYear1Rate,
+        2 => terms.Year2Rate < 0 ? null : terms.Year2Rate,
+        3 => terms.Year3Rate < 0 ? null : terms.Year3Rate,
+        _ => null
+    };
+
+    /// <summary>Indirect (referrer) rate applies in year 1 only.</summary>
+    public static decimal? IndirectRate(CommissionTerms terms, int? year)
+    {
+        if (year != 1 || terms.IndirectRate <= 0)
+        {
+            return null;
+        }
+
+        return terms.IndirectRate;
+    }
+
+    public static bool BonusTokensAllowed(CommissionTerms terms, DateTime purchaseAtUtc)
+        => YearFor(terms, purchaseAtUtc) is not null;
+
+    /// <summary>
     /// Whether commission still accrues for a referred entrepreneur at <paramref name="asOfUtc"/>.
-    /// Window starts at <paramref name="firstYearStartedAt"/> and lasts <paramref name="durationDays"/>.
+    /// Prefer <see cref="YearFor"/> with snapshotted <see cref="CommissionTerms"/>.
     /// </summary>
     public static bool IsWithinCommissionWindow(
         DateTime? firstYearStartedAt,
@@ -116,6 +185,7 @@ public static class SalesCommissionRules
 
     /// <summary>
     /// Direct salesmanager token commission rate for the current staffel year; otherwise null.
+    /// Prefer <see cref="DirectRate"/> with snapshotted terms.
     /// </summary>
     public static decimal? TokenCommissionRate(
         DateTime? firstYearStartedAt,
@@ -125,18 +195,24 @@ public static class SalesCommissionRules
         decimal year2Rate = DefaultYear2DirectCommissionRate,
         decimal year3Rate = DefaultYear3DirectCommissionRate)
     {
-        var year = CommissionYearIndex(firstYearStartedAt, asOfUtc, durationDays);
-        return year switch
+        if (firstYearStartedAt is null)
         {
-            0 => directRate < 0 ? null : directRate,
-            1 => year2Rate < 0 ? null : year2Rate,
-            2 => year3Rate < 0 ? null : year3Rate,
-            _ => null
-        };
+            return null;
+        }
+
+        var terms = new CommissionTerms(
+            directRate,
+            year2Rate,
+            year3Rate,
+            IndirectRate: 0m,
+            durationDays,
+            firstYearStartedAt.Value);
+        return DirectRate(terms, YearFor(terms, asOfUtc));
     }
 
     /// <summary>
     /// Indirect (referring) salesmanager rate — year 1 of the window only, when a positive rate is configured.
+    /// Prefer <see cref="IndirectRate"/> with snapshotted terms.
     /// </summary>
     public static decimal? IndirectCommissionRate(
         DateTime? firstYearStartedAt,
@@ -144,13 +220,19 @@ public static class SalesCommissionRules
         decimal indirectRate = DefaultIndirectCommissionRate,
         int durationDays = DefaultCommissionDurationDays)
     {
-        if (indirectRate <= 0)
+        if (firstYearStartedAt is null || indirectRate <= 0)
         {
             return null;
         }
 
-        var year = CommissionYearIndex(firstYearStartedAt, asOfUtc, durationDays);
-        return year == 0 ? indirectRate : null;
+        var terms = new CommissionTerms(
+            DirectYear1Rate: 0m,
+            Year2Rate: 0m,
+            Year3Rate: 0m,
+            indirectRate,
+            durationDays,
+            firstYearStartedAt.Value);
+        return IndirectRate(terms, YearFor(terms, asOfUtc));
     }
 
     public static decimal Year1RateForSalesManager(bool wasReferred, decimal standardYear1, decimal referredYear1)

@@ -158,6 +158,7 @@ public sealed class PlatformFeatureItem
     public bool SchoolPerCodeResultsEnabled { get; set; } = true;
     public int SchoolRetentionCutoffMonth { get; set; } = 7;
     public int SchoolRetentionCutoffDay { get; set; } = 31;
+    public bool AmbassadorsEnabled { get; set; }
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>
@@ -180,6 +181,7 @@ public sealed class PlatformFeaturePatch
     public bool? SchoolPerCodeResultsEnabled { get; set; }
     public int? SchoolRetentionCutoffMonth { get; set; }
     public int? SchoolRetentionCutoffDay { get; set; }
+    public bool? AmbassadorsEnabled { get; set; }
     public string? Reason { get; set; }
 }
 
@@ -226,6 +228,14 @@ public sealed class AdminFinanceOpenPayoutPreviewItem
     public string RoleLabel { get; set; } = string.Empty;
     public decimal TotalInclVat { get; set; }
     public string MaskedIban { get; set; } = "—";
+}
+
+public sealed class SalesParkedBalanceApiItem
+{
+    public Guid UserId { get; set; }
+    public string MaskedDisplayName { get; set; } = "";
+    public decimal OpenBalanceExVat { get; set; }
+    public DateTime? LastLineAtUtc { get; set; }
 }
 
 public sealed class PlatformCompanyItem

@@ -1,0 +1,377 @@
+@page "/sales/link"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@using System.Globalization
+@using Jobsy.Core.Sales
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Sales.Link.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["EntUi.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else if (_toolkit is null)
+{
+    <section class="sp-link">
+        <header class="sp-link__header">
+            <h1>@Culture["Sales.Link.Title"]</h1>
+            <p class="sp-link__lead">@Culture["Sales.Link.Onboarding"]</p>
+        </header>
+        <a class="login-submit sp-link__cta" href="/sales/start">@Culture["Sales.Link.OnboardingCta"]</a>
+    </section>
+}
+else
+{
+    <section class="sp-link">
+        <header class="sp-link__header sp-link__desktop-only">
+            <h1>@Culture["Sales.Link.Title"]</h1>
+            <p class="sp-link__lead">@Culture["Sales.Link.Lead"]</p>
+        </header>
+        <header class="sp-link__header sp-link__mobile-only">
+            <h1>@Culture["Sales.Link.MobileTitle"]</h1>
+            <p class="sp-link__lead">@Culture["Sales.Link.MobileLead"]</p>
+        </header>
+
+        @if (!string.IsNullOrEmpty(_toast))
+        {
+            <p class="sp-toast" role="status">@_toast</p>
+        }
+
+        <div class="sp-link__mobile-hero sp-link__mobile-only">
+            <article class="sp-link__qr-card sp-link__qr-card--large">
+                @if (_qrDataUrl is not null)
+                {
+                    <img class="sp-link__qr-img" src="@_qrDataUrl" alt="@Culture.Format("Sales.Link.QrCaption", _toolkit.ShortLinkDisplay)" />
+                }
+                <p class="sp-link__code-big sp-mono">@_toolkit.TrackingCode</p>
+                <p class="sp-link__short muted">@_toolkit.ShortLinkDisplay</p>
+            </article>
+            <div class="sp-link__mobile-actions">
+                <button type="button" class="btn-compact" @onclick="ShareWhatsApp">@Culture["Sales.Link.WhatsApp"]</button>
+                <button type="button" class="btn-compact" @onclick="ShareMail">@Culture["Sales.Link.Mail"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" @onclick="CopyLinkAsync">@Culture["Sales.Link.Copy"]</button>
+            </div>
+            <p class="sp-link__gift">@Culture["Sales.Link.EmployerGift"]</p>
+            <div class="sp-link__mat-mobile">
+                <div class="sp-link__mat-mobile-head">
+                    <h2>@Culture["Sales.Link.Materials"]</h2>
+                    <button type="button" class="sp-link__all" @onclick="() => _showAllMaterials = !_showAllMaterials">
+                        @Culture["Sales.Link.MaterialsAll"]
+                    </button>
+                </div>
+                <ul class="sp-link__mat-list">
+                    <li>
+                        <button type="button" class="sp-link__mat-row" disabled="@_busy" @onclick='() => DownloadMaterialAsync("flyer")'>
+                            <span>
+                                <strong>@Culture["Sales.Link.Mat.Flyer"]</strong>
+                                <span class="muted">@Culture["Sales.Link.TypePdf"] · met jouw code</span>
+                            </span>
+                            <span class="sp-link__mat-action">↓</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="sp-link__mat-row" @onclick="() => _pitchOpen = !_pitchOpen">
+                            <span>
+                                <strong>@Culture["Sales.Link.Mat.PitchMobile"]</strong>
+                                <span class="muted">@Culture["Sales.Link.Mat.PitchMobileHelp"]</span>
+                            </span>
+                            <span class="sp-link__mat-action">›</span>
+                        </button>
+                    </li>
+                    @if (_showAllMaterials)
+                    {
+                        <li>
+                            <button type="button" class="sp-link__mat-row" disabled="@_busy" @onclick='() => DownloadMaterialAsync("visitekaartje")'>
+                                <span>
+                                    <strong>@Culture["Sales.Link.Mat.Cards"]</strong>
+                                    <span class="muted">@Culture["Sales.Link.TypePdf"]</span>
+                                </span>
+                                <span class="sp-link__mat-action">↓</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="sp-link__mat-row" disabled="@_busy" @onclick='() => DownloadMaterialAsync("presentatie")'>
+                                <span>
+                                    <strong>@Culture["Sales.Link.Mat.Pres"]</strong>
+                                    <span class="muted">@Culture["Sales.Link.TypePdf"]</span>
+                                </span>
+                                <span class="sp-link__mat-action">↓</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="sp-link__mat-row" @onclick="CopyEmailAsync">
+                                <span>
+                                    <strong>@Culture["Sales.Link.Mat.Email"]</strong>
+                                    <span class="muted">@Culture["Sales.Link.TypeText"]</span>
+                                </span>
+                                <span class="sp-link__mat-action">@Culture["Sales.Link.Copy"]</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="sp-link__mat-row" disabled="@_busy" @onclick='() => DownloadMaterialAsync("prijskaart")'>
+                                <span>
+                                    <strong>@Culture["Sales.Link.Mat.Price"]</strong>
+                                    <span class="muted">@Culture["Sales.Link.TypePdf"]</span>
+                                </span>
+                                <span class="sp-link__mat-action">↓</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="sp-link__mat-row" @onclick="ShareWhatsApp">
+                                <span>
+                                    <strong>@Culture["Sales.Link.Mat.WhatsApp"]</strong>
+                                    <span class="muted">@Culture["Sales.Link.TypeText"]</span>
+                                </span>
+                                <span class="sp-link__mat-action">@Culture["Sales.Link.Share"]</span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+                @if (_pitchOpen)
+                {
+                    <aside class="sp-link__pitch sp-link__pitch--mobile">
+                        @PitchBlock()
+                    </aside>
+                }
+            </div>
+        </div>
+
+        <div class="sp-link__layout sp-link__desktop-only">
+            <div class="sp-link__main">
+                <article class="sp-link__card">
+                    <div class="sp-link__card-grid">
+                        <div>
+                            <h2>@Culture["Sales.Link.PersonalTitle"]</h2>
+                            <div class="sp-link__field-row">
+                                <input class="sp-link__field sp-mono" readonly value="@_toolkit.ShortLinkDisplay" aria-label="@Culture["Sales.Link.PersonalTitle"]" />
+                                <button type="button" class="btn-compact btn-compact--primary" @onclick="CopyLinkAsync">@Culture["Sales.Link.Copy"]</button>
+                            </div>
+                            <p class="sp-link__code-line">
+                                @Culture["Sales.Link.OrCode"]
+                                <strong class="sp-mono">@_toolkit.TrackingCode</strong>
+                                <span class="sp-pill sp-pill--ok">@Culture["Sales.Link.Active"]</span>
+                            </p>
+                            <div class="sp-link__actions">
+                                <button type="button" class="btn-compact" @onclick="ShareWhatsApp">@Culture["Sales.Link.WhatsApp"]</button>
+                                <button type="button" class="btn-compact" @onclick="ShareMail">@Culture["Sales.Link.Mail"]</button>
+                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="DownloadQrAsync">@Culture["Sales.Link.QrDownload"]</button>
+                                <a class="btn-compact" href="@_toolkit.PartnerPreviewUrl" target="_blank" rel="noopener">@Culture["Sales.Link.Preview"]</a>
+                            </div>
+                            <p class="sp-link__info">@Culture.Format("Sales.Link.Info", _toolkit.AttributionCookieDays)</p>
+                        </div>
+                        <div class="sp-link__qr-card">
+                            @if (_qrDataUrl is not null)
+                            {
+                                <img class="sp-link__qr-img" src="@_qrDataUrl" alt="@Culture.Format("Sales.Link.QrCaption", _toolkit.ShortLinkDisplay)" />
+                            }
+                            <p class="muted">@Culture.Format("Sales.Link.QrCaption", _toolkit.ShortLinkDisplay)</p>
+                        </div>
+                    </div>
+                </article>
+
+                <section class="sp-link__materials">
+                    <header class="sp-link__materials-head">
+                        <h2>@Culture["Sales.Link.Materials"]</h2>
+                        <p class="muted">@Culture["Sales.Link.MaterialsLead"]</p>
+                    </header>
+                    <div class="sp-link__mat-grid">
+                        @MaterialCard("flyer", Culture["Sales.Link.Mat.Flyer"], Culture["Sales.Link.Mat.FlyerHelp"], true)
+                        @MaterialCard("visitekaartje", Culture["Sales.Link.Mat.Cards"], Culture["Sales.Link.Mat.CardsHelp"], true)
+                        @MaterialCard("presentatie", Culture["Sales.Link.Mat.Pres"], Culture["Sales.Link.Mat.PresHelp"], true)
+                        <article class="sp-link__mat-card">
+                            <h3>@Culture["Sales.Link.Mat.Email"]</h3>
+                            <p>@Culture["Sales.Link.Mat.EmailHelp"]</p>
+                            <div class="sp-link__mat-meta">
+                                <span class="sp-pill">@Culture["Sales.Link.TypeText"]</span>
+                                <button type="button" class="btn-compact" @onclick="CopyEmailAsync">@Culture["Sales.Link.Copy"]</button>
+                            </div>
+                        </article>
+                        @MaterialCard("prijskaart", Culture["Sales.Link.Mat.Price"], Culture["Sales.Link.Mat.PriceHelp"], true)
+                        <article class="sp-link__mat-card">
+                            <h3>@Culture["Sales.Link.Mat.WhatsApp"]</h3>
+                            <p>@Culture["Sales.Link.Mat.WhatsAppHelp"]</p>
+                            <div class="sp-link__mat-meta">
+                                <span class="sp-pill">@Culture["Sales.Link.TypeText"]</span>
+                                <button type="button" class="btn-compact" @onclick="ShareWhatsApp">@Culture["Sales.Link.Share"]</button>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="sp-link__side">
+                <article class="sp-link__side-card">
+                    <h2>@Culture["Sales.Link.PitchTitle"]</h2>
+                    @PitchBlock()
+                </article>
+                <article class="sp-link__side-card">
+                    <h2>@Culture["Sales.Link.EmployerGets"]</h2>
+                    <ul class="sp-link__checks">
+                        <li>@Culture.Format("Sales.Link.EmployerGets.Highlight", _toolkit.StartHighlightBonusTokens.ToString("0.##", CultureInfo.GetCultureInfo("nl-NL")))</li>
+                        <li>@Culture["Sales.Link.EmployerGets.Contact"]</li>
+                        <li>@Culture["Sales.Link.EmployerGets.NoSub"]</li>
+                    </ul>
+                </article>
+                <article class="sp-link__side-card">
+                    <h2>@Culture["Sales.Link.Commission"]</h2>
+                    <div class="sp-link__rates">
+                        <div><span>@Culture.Format("Sales.Link.CommissionYear", 1)</span><strong>@Pct(_toolkit.Year1Rate)</strong></div>
+                        <div><span>@Culture.Format("Sales.Link.CommissionYear", 2)</span><strong>@Pct(_toolkit.Year2Rate)</strong></div>
+                        <div><span>@Culture.Format("Sales.Link.CommissionYear", 3)</span><strong>@Pct(_toolkit.Year3Rate)</strong></div>
+                    </div>
+                    <p class="muted sp-link__commission-sub">@Culture["Sales.Link.CommissionSub"]</p>
+                </article>
+            </aside>
+        </div>
+    </section>
+}
+
+@code {
+    private SalesLinkToolkitDto? _toolkit;
+    private string? _qrDataUrl;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _toast;
+    private bool _showAllMaterials;
+    private bool _pitchOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        try
+        {
+            _toolkit = await Api.GetSalesLinkToolkitAsync();
+            if (_toolkit is not null)
+            {
+                var png = await Api.GetSalesQrPngAsync();
+                if (png is { Length: > 0 })
+                {
+                    _qrDataUrl = $"data:image/png;base64,{Convert.ToBase64String(png)}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private RenderFragment PitchBlock() => __builder =>
+    {
+        <ol class="sp-link__pitch-steps">
+            <li><strong>@Culture["Sales.Pitch.Step1Title"]</strong> @Culture["Sales.Pitch.Step1Body"]</li>
+            <li><strong>@Culture["Sales.Pitch.Step2Title"]</strong> @Culture["Sales.Pitch.Step2Body"]</li>
+            <li><strong>@Culture["Sales.Pitch.Step3Title"]</strong> @_toolkit!.PitchCostLine</li>
+            <li><strong>@Culture["Sales.Pitch.Step4Title"]</strong> @Culture["Sales.Pitch.Step4Body"]</li>
+        </ol>
+        <p class="sp-link__tip">@Culture["Sales.Pitch.Tip"]</p>
+    };
+
+    private RenderFragment MaterialCard(string kind, string title, string help, bool download) => __builder =>
+    {
+        <article class="sp-link__mat-card">
+            <h3>@title</h3>
+            <p>@help</p>
+            <div class="sp-link__mat-meta">
+                <span class="sp-pill">@Culture["Sales.Link.TypePdf"]</span>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => DownloadMaterialAsync(kind)">
+                    @Culture["Sales.Link.Download"]
+                </button>
+            </div>
+        </article>
+    };
+
+    private static string Pct(decimal rate)
+        => $"{(rate * 100m).ToString("0", CultureInfo.GetCultureInfo("nl-NL"))} %";
+
+    private async Task CopyLinkAsync()
+    {
+        if (_toolkit is null) return;
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", _toolkit.ShortLinkUrl);
+        await ToastAsync(Culture["Sales.Link.Copied"]);
+    }
+
+    private async Task CopyEmailAsync()
+    {
+        if (_toolkit is null) return;
+        var text = $"{_toolkit.EmailSubject}\n\n{_toolkit.EmailBody}";
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        await ToastAsync(Culture["Sales.Link.Copied"]);
+    }
+
+    private void ShareWhatsApp()
+    {
+        if (_toolkit is null) return;
+        var text = Uri.EscapeDataString(_toolkit.WhatsAppText);
+        Navigation.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
+    }
+
+    private void ShareMail()
+    {
+        if (_toolkit is null) return;
+        var subject = Uri.EscapeDataString(_toolkit.EmailSubject);
+        var body = Uri.EscapeDataString(_toolkit.EmailBody.Replace("\n", "%0A", StringComparison.Ordinal));
+        Navigation.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
+    }
+
+    private async Task DownloadQrAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.DownloadSalesQrPngAsync(Js);
+            await ToastAsync(Culture["Sales.Link.Copied"]);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadMaterialAsync(string kind)
+    {
+        _busy = true;
+        try
+        {
+            await Api.DownloadSalesMaterialPdfAsync(Js, kind, _toolkit?.TrackingCode);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ToastAsync(string message)
+    {
+        _toast = message;
+        StateHasChanged();
+        await Task.Delay(1800);
+        _toast = null;
+    }
+}

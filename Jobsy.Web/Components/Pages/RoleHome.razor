@@ -1,6 +1,7 @@
 @page "/home"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject NavigationManager Navigation
 @using Jobsy.Core.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
@@ -29,10 +30,11 @@
 
 <AuthorizeView Roles="@JobsyRoles.SalesManager">
     <Authorized>
-        <SalesManagerHomePanel />
+        <Jobsy.Web.Components.Sales.SalesRedirect Href="/sales" />
     </Authorized>
 </AuthorizeView>
 
+@* Ambassadeur parked: panel gated by AmbassadorsFeatureMiddleware while AmbassadorsEnabled is off. *@
 <AuthorizeView Roles="@JobsyRoles.Ambassadeur">
     <Authorized>
         <AmbassadeurHomePanel />

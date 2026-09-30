@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Exceptions;
 
 namespace Jobsy.Core.Interfaces;
@@ -53,7 +54,8 @@ public record KvkCompanyResult(
     string KvkNumber,
     string Name,
     string Address,
-    IReadOnlyList<string>? SbiCodes = null)
+    IReadOnlyList<string>? SbiCodes = null,
+    CompanyLegalForm? LegalForm = null)
 {
     public IReadOnlyList<string> EffectiveSbiCodes => SbiCodes ?? Array.Empty<string>();
 }

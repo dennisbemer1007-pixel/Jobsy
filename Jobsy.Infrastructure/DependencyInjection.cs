@@ -2,9 +2,11 @@ using Jobsy.Core.Admin;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
@@ -313,6 +315,7 @@ public static class DependencyInjection
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
+        services.AddScoped<ISalesPayoutProfileService, SalesPayoutProfileService>();
         services.AddScoped<IAmbassadeurInviteService, AmbassadeurInviteService>();
         services.AddScoped<ISchoolStaffInviteService, SchoolStaffInviteService>();
         services.AddScoped<IPupilCodeService, PupilCodeService>();
@@ -420,6 +423,25 @@ public static class DependencyInjection
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
+        services.AddScoped<ISalesBeneficiaryService, SalesBeneficiaryService>();
+        services.AddScoped<ISalesWalletReadService, SalesWalletReadService>();
+        services.AddScoped<ISalesPayoutRequestService, SalesPayoutRequestService>();
+        services.AddScoped<ISalesWalletPortalService, SalesWalletPortalService>();
+        services.Configure<SalesPayoutProviderOptions>(
+            configuration.GetSection(SalesPayoutProviderOptions.SectionName));
+        services.AddScoped<ISalesPayoutProvider, BankTransferPayoutProvider>();
+        services.AddScoped<ISalesPayoutRunService, SalesPayoutRunService>();
+        services.AddHostedService<SalesPayoutRunHostedService>();
+        services.AddScoped<SalesEmployerReadService>();
+        services.AddScoped<ISalesEmployerReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());
+        services.AddScoped<ISalesEmployerPortalReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());
+        services.AddScoped<ISalesDashboardReadService, SalesDashboardReadService>();
+        services.AddScoped<ISalesCorrectionService, SalesCorrectionService>();
+        services.AddScoped<ISalesParkedBalanceService, SalesParkedBalanceService>();
+        services.AddScoped<ISalesAttributionResolver, SalesAttributionResolver>();
+        services.AddScoped<ISalesLinkClickService, SalesLinkClickService>();
+        services.AddScoped<ISalesAttributionAdminService, SalesAttributionAdminService>();
+        services.AddScoped<ISalesFunnelReadService, SalesFunnelReadService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();
         services.AddScoped<ISelfBillingInvoiceService, SelfBillingInvoiceService>();
@@ -430,6 +452,9 @@ public static class DependencyInjection
             sp.GetRequiredService<IDashboardCache>(),
             sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<ISalesCommercialService, SalesCommercialService>();
+        services.AddScoped<ISalesPriceQuote, SalesPriceQuoteService>();
+        services.AddScoped<ISalesMaterialsPdfService, SalesMaterialsPdfService>();
+        services.AddScoped<ISalesLinkToolkitService, SalesLinkToolkitService>();
         services.AddScoped<IPartnerAffiliateService, PartnerAffiliateService>();
         services.AddScoped<IVacancyCategoryService, VacancyCategoryService>();
         services.AddScoped<IPartnerFlyerPdfService, PartnerFlyerPdfService>();
@@ -466,6 +491,7 @@ public static class DependencyInjection
         services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<IbanEncryptionMigrationHostedService>();
+        services.AddHostedService<SalesCommissionBackfillHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();

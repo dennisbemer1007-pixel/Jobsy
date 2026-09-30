@@ -3392,6 +3392,7 @@ UiStringsAdmin.MergeAll(nl, en, pl, ro, ar);
         UiStringsScholen.MergeNl(nl);
         UiStringsLeerlingVragen.MergeNl(nl);
         UiStringsLeerlingVerhaal.MergeNl(nl);
+        UiStringsSales.MergeNl(nl);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

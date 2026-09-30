@@ -351,23 +351,35 @@ public static class PageHelpDocs
             "Nodig teamleden uit en bekijk wie toegang heeft tot opdrachtgevers en vacatures.",
             "Samenwerken zonder accounts buiten je organisatie te delen."),
 
-        ["/salesmanager"] = new(
+        ["/sales"] = new(
             "Salesdashboard",
-            "Overzicht van trackingcode, referrals en commissiesaldo.",
-            "Bekijk je performance, open toolkit of referrals en rond onboarding af als dat nog openstaat.",
+            "Overzicht van verdiensten, funnel en te-doen-lijst voor salesmanagers.",
+            "Bekijk beschikbare commissie, maandgrafiek, funnel en beste werkgevers.",
             "Snel zien waar je staat in acquisitie en uitbetaling."),
 
-        ["/salesmanager/toolkit"] = new(
-            "Sales-toolkit",
-            "Materialen en links om ondernemers te werven met jouw trackingcode.",
-            "Kopieer je partnerlink, deel materialen en volg hoe prospects instappen.",
-            "Acquisitie versnellen met consistente Lobsy-boodschap."),
+        ["/sales/werkgevers"] = new(
+            "Mijn werkgevers",
+            "Privacyveilige lijst van werkgevers via jouw link of code.",
+            "Filter op status of commissiejaar en open het detailpaneel voor je eigen commissie per aankoop.",
+            "Werkgevers opvolgen zonder contact- of vacaturegegevens te zien."),
 
-        ["/salesmanager/referrals"] = new(
-            "Sales-aanbevelingen",
-            "Nieuwe salesmanagers aandragen (tier-afhankelijk).",
-            "Deel referral-opties en volg wie via jou is aangemeld.",
-            "Netwerk laten meegroeien binnen de commissiestructuur."),
+        ["/sales/link"] = new(
+            "Mijn link & materiaal",
+            "Persoonlijke link, QR, pitch en materialen met jouw salescode.",
+            "Kopieer je link, download flyer/QR/presentatie en deel klaar-staande teksten.",
+            "Acquisitie versnellen met consistente Lobsy-boodschap en echte tokenprijzen."),
+
+        ["/sales/aanbevelen"] = new(
+            "Salesmanager aanbevelen",
+            "Beveel iemand aan; Lobsy beslist. De persoon krijgt een info-mail en kan bezwaar maken.",
+            "Vul naam, e-mail en motivatie in, bevestig toestemming, en volg status in je lijst.",
+            "Netwerk laten meegroeien binnen de commissiestructuur (één wervingslaag)."),
+
+        ["/sales/aanbevelen/bezwaar"] = new(
+            "Aanbeveling bezwaar",
+            "Verwijder je gegevens na een salesmanager-aanbeveling.",
+            "Open de eenmalige link uit de info-mail om je gegevens te wissen.",
+            "AVG art. 14: geïnformeerd en recht op bezwaar."),
 
         ["/partner"] = new(
             "Partner / tracking",
@@ -375,23 +387,35 @@ public static class PageHelpDocs
             "Prospects komen hier via een saleslink en starten registratie of oriëntatie.",
             "Salesmanagers koppelen acquisitie aan hun trackingcode."),
 
-        ["/salesmanager/onboarding"] = new(
+        ["/sales/start"] = new(
             "Sales onboarding",
             "Profiel en gegevens van de salesmanager afronden.",
             "Vul verplichte velden (o.a. bedrijfs-/factuurgegevens) in tot onboarding compleet is.",
             "Klaarzetten voor facturatie en uitbetalingen."),
 
-        ["/salesmanager/invoices"] = new(
-            "Facturen (sales)",
-            "Self-billing / factuuroverzicht voor salesmanagers. Kies zelf het uitbetalingsbedrag; download facturen als PDF.",
-            "Bekijk of download facturen gekoppeld aan uitbetalingen.",
-            "Administratie van commissies of uitbetalingen."),
+        ["/sales/profiel"] = new(
+            "Profiel & gegevens",
+            "Bedrijfsgegevens, btw/KOR, uitbetaalrekening, self-billing en beveiliging.",
+            "Houd factuurgegevens bij; wijzig IBAN veilig met 2FA.",
+            "Correcte facturen en veilige uitbetalingen."),
 
-        ["/salesmanager/payout-checkout"] = new(
-            "Uitbetaling",
-            "Uitbetalingstraject (Mollie-stub) voor salesmanagers.",
-            "Start de checkout-stub; daarna volgt self-billing/documentatie in het platform.",
-            "Verdiensten laten uitbetalen volgens het salesproces."),
+        ["/sales/hulp"] = new(
+            "Hulp & afspraken",
+            "FAQ over commissie, self-billing, KOR en privacy.",
+            "Download overeenkomst of self-billing-toestemming; mail support bij vragen.",
+            "Duidelijkheid over hoe Lobsy Partner werkt."),
+
+        ["/sales/wallet"] = new(
+            "Wallet & uitbetalingen",
+            "Saldo per status, mutaties, uitbetalingsaanvragen en self-billing facturen.",
+            "Vraag een uitbetaling aan vanaf € 50 beschikbaar; download facturen en jaaroverzicht als PDF.",
+            "Inzicht in commissie en uitbetalingen."),
+
+        ["/sales/wallet/uitbetalen"] = new(
+            "Uitbetaling aanvragen",
+            "Aanvraag voor het volledige beschikbare bedrag met factuurvoorbeeld (self-billing).",
+            "Controleer bedrag, btw/KOR en rekening; dien de aanvraag in voor de maandelijkse ronde.",
+            "Commissie laten uitbetalen via Lobsy-goedkeuring."),
 
         ["/tokens/checkout-return"] = new(
             "Betaling afronden",

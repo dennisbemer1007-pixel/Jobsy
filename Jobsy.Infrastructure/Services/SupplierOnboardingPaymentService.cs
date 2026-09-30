@@ -165,7 +165,7 @@ public sealed class SupplierOnboardingPaymentService : ISupplierOnboardingPaymen
                     company.Id,
                     session.PaymentId,
                     company.FirstYearSupplierSlot,
-                    cancellationToken);
+                    cancellationToken: cancellationToken);
                 commissionCredited = credit is not null;
             }
 

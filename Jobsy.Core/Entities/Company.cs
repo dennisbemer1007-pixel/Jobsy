@@ -151,6 +151,22 @@ public class Company
     public DateTime? FirstYearStartedAt { get; set; }
 
     /// <summary>
+    /// Commission window start on the organisation root (first credited purchase). Backfilled in 02.
+    /// </summary>
+    public DateTime? CommissionStartsAtUtc { get; set; }
+
+    public decimal? CommissionYear2RateSnapshot { get; set; }
+    public decimal? CommissionYear3RateSnapshot { get; set; }
+
+    /// <summary>When sales attribution was applied (salesmanager or ambassadeur).</summary>
+    public DateTime? SalesAttributedAtUtc { get; set; }
+
+    public SalesAttributionSource? SalesAttributionSource { get; set; }
+
+    /// <summary>Legal form from KvK when known; null = unknown (D4: name only, no place).</summary>
+    public CompanyLegalForm? LegalForm { get; set; }
+
+    /// <summary>
     /// When true, the next published vacancy receives one free start-highlight
     /// (salesmanager tracking referral). Cleared after use — not a flat discount.
     /// </summary>

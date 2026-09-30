@@ -88,7 +88,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.SupportAccessNotifySubject = notifySubject;
         }
 
-if (update.CandidateInsightsEnabled is bool insightsEnabled)
+        if (update.CandidateInsightsEnabled is bool insightsEnabled)
         {
             row.CandidateInsightsEnabled = insightsEnabled;
         }
@@ -126,6 +126,10 @@ if (update.CandidateInsightsEnabled is bool insightsEnabled)
             row.SchoolRetentionCutoffDay = day;
         }
 
+        if (update.AmbassadorsEnabled is bool ambassadorsEnabled)
+        {
+            row.AmbassadorsEnabled = ambassadorsEnabled;
+        }
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -252,6 +256,7 @@ row?.CandidateInsightsEnabled ?? true,
                 : 7,
             row?.SchoolRetentionCutoffDay is >= 1 and <= 31
                 ? row.SchoolRetentionCutoffDay
-                : 31);
+                : 31,
+            row?.AmbassadorsEnabled ?? false);
     }
 }

@@ -1,0 +1,199 @@
+@namespace Jobsy.Web.Components.Layout
+@inherits LayoutComponentBase
+@using Jobsy.Web.Components.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject JobsyApiClient Api
+@implements IDisposable
+
+<div class="sp-shell" lang="nl" dir="ltr">
+    <PageSeoHead />
+    <header class="sp-topbar">
+        <a class="sp-topbar__brand" href="/sales" aria-label="Lobsy Partner">
+            <LobsyLogo Class="sp-topbar__logo" Alt="Lobsy" />
+            <span class="sp-topbar__product">@Culture["Sales.ProductLabel"]</span>
+        </a>
+        <EntScopeChip Label="@_roleChipLabel" SubLabel="@_roleChipSub" />
+        <div class="sp-topbar__search">
+            <SalesTopbarSearch />
+        </div>
+        <div class="sp-topbar__actions">
+            <SalesWalletChipV2 />
+            <PageHelp />
+            <NotificationBell />
+            <AuthHeader />
+        </div>
+        <button type="button" class="sp-topbar__menu" @onclick="OpenMore" aria-label="@Culture["Sales.Nav.MoreSheet"]">
+            <span aria-hidden="true">@((MarkupString)NavIcons.More)</span>
+        </button>
+    </header>
+
+    <div class="sp-shell__body">
+        <aside class="sp-sidebar sp-sidebar--desktop" aria-label="@Culture["Sales.ProductLabel"]">
+            <SalesSidebar CanRecruit="_canRecruit" />
+            <p class="sp-sidebar__privacy">
+                <span aria-hidden="true">@((MarkupString)NavIcons.Shield)</span>
+                @Culture["Sales.PrivacyFooter"]
+            </p>
+        </aside>
+
+        @if (_moreOpen)
+        {
+            <div class="sp-drawer-backdrop" @onclick="CloseMore"></div>
+            <div class="sp-drawer is-open" role="dialog" aria-modal="true" aria-label="@Culture["Sales.Nav.MoreSheet"]">
+                <div class="sp-drawer__header">
+                    <strong>@Culture["Sales.Nav.MoreSheet"]</strong>
+                    <button type="button" class="sp-drawer__close" @onclick="CloseMore" aria-label="@Culture["Sales.Nav.CloseMenu"]">
+                        <span aria-hidden="true">@((MarkupString)NavIcons.Close)</span>
+                    </button>
+                </div>
+                <div class="sp-drawer__body" @onclick="CloseMore">
+                    <SalesSidebar CanRecruit="_canRecruit" />
+                    <p class="sp-sidebar__privacy">
+                        <span aria-hidden="true">@((MarkupString)NavIcons.Shield)</span>
+                        @Culture["Sales.PrivacyFooter"]
+                    </p>
+                </div>
+            </div>
+        }
+
+        <main class="sp-main">
+            <nav class="sp-breadcrumbs" aria-label="Breadcrumb">
+                <a href="/sales">@Culture["Sales.BreadcrumbRoot"]</a>
+                @if (!string.IsNullOrEmpty(_crumbGroup))
+                {
+                    <span class="sp-breadcrumbs__sep" aria-hidden="true">›</span>
+                    <span>@_crumbGroup</span>
+                }
+                @if (!string.IsNullOrEmpty(_crumbPage))
+                {
+                    <span class="sp-breadcrumbs__sep" aria-hidden="true">›</span>
+                    <span aria-current="page">@_crumbPage</span>
+                }
+            </nav>
+            <CircuitErrorBoundary BoundaryTag="sales">
+                <SalesOnboardingGate>
+                    @Body
+                </SalesOnboardingGate>
+            </CircuitErrorBoundary>
+        </main>
+    </div>
+
+    <nav class="sp-bottom-nav" aria-label="@Culture["Sales.ProductLabel"]">
+        @foreach (var item in SalesNav.BottomNavItems(_canRecruit))
+        {
+            var active = IsActive(item.Href);
+            <a class="sp-bottom-nav__item @(active ? "is-active" : null)" href="@item.Href">
+                <span class="sp-bottom-nav__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                <span>@Culture[item.BottomLabelKey ?? item.LabelKey]</span>
+            </a>
+        }
+        <button type="button" class="sp-bottom-nav__item" @onclick="OpenMore">
+            <span class="sp-bottom-nav__icon" aria-hidden="true">@((MarkupString)NavIcons.More)</span>
+            <span>@Culture["Sales.Nav.Bottom.More"]</span>
+        </button>
+    </nav>
+
+    @if (RendererInfo.IsInteractive)
+    {
+        <FeedbackWidget HasBottomNav="true" />
+        <ConsentReacceptDialog />
+    }
+    <CookieConsentBanner />
+    <SessionIdleGuard />
+</div>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private bool _moreOpen;
+    private bool _canRecruit;
+    private string _roleChipLabel = "";
+    private string? _roleChipSub;
+    private string? _crumbGroup;
+    private string? _crumbPage;
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        RefreshCrumbs();
+        _roleChipLabel = Culture["Sales.RoleChip"];
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (AuthStateTask is null)
+            {
+                return;
+            }
+
+            var auth = await AuthStateTask;
+            var user = auth.User;
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                return;
+            }
+
+            var dash = await Api.GetMySalesManagerDashboardAsync();
+            _canRecruit = dash?.CanRecruitSalesManagers == true;
+            var code = dash?.TrackingCode;
+            _roleChipLabel = Culture["Sales.RoleChip"];
+            _roleChipSub = string.IsNullOrWhiteSpace(code)
+                ? Culture["Sales.RoleChipNoCode"]
+                : code;
+        }
+        catch
+        {
+            _canRecruit = false;
+        }
+    }
+
+    private void RefreshCrumbs()
+    {
+        var path = new Uri(Navigation.Uri).AbsolutePath;
+        var (group, item) = SalesNav.Match(path);
+        _crumbGroup = group is null ? null : Culture[group.LabelKey];
+        _crumbPage = item is null ? null : Culture[item.LabelKey];
+        if (path.StartsWith("/sales/start", StringComparison.OrdinalIgnoreCase))
+        {
+            _crumbGroup = Culture["Sales.Nav.Group.Account"];
+            _crumbPage = Culture["Nav.Onboarding"];
+        }
+        else if (path.StartsWith("/sales/wallet", StringComparison.OrdinalIgnoreCase))
+        {
+            _crumbGroup = Culture["Sales.Nav.Group.Money"];
+            _crumbPage = Culture["Sales.Nav.Wallet"];
+        }
+    }
+
+    private bool IsActive(string href)
+    {
+        var path = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');
+        var target = href.Split('?')[0].TrimEnd('/');
+        return string.Equals(path, target, StringComparison.OrdinalIgnoreCase)
+               || (target == "/sales" && path == "/sales");
+    }
+
+    private void OpenMore() => _moreOpen = true;
+    private void CloseMore() => _moreOpen = false;
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _moreOpen = false;
+        RefreshCrumbs();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

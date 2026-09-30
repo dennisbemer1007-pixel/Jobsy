@@ -943,6 +943,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
             salesProfile.UpdatedAt = DateTime.UtcNow;
         }
 
+        var selfBillingConsents = await _db.SalesSelfBillingConsents
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (selfBillingConsents.Count > 0)
+        {
+            _db.SalesSelfBillingConsents.RemoveRange(selfBillingConsents);
+        }
+
+        var ibanPendings = await _db.SalesIbanChangePendings
+            .Where(p => p.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (ibanPendings.Count > 0)
+        {
+            _db.SalesIbanChangePendings.RemoveRange(ibanPendings);
+        }
+
         var partnerProfile = await _db.PartnerAffiliateProfiles
             .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
         if (partnerProfile is not null)

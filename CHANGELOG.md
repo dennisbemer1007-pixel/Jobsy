@@ -36,6 +36,19 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - **Lobsy voor scholen (05 vragenbank):** 60 B1/A2-items op de 4 bestaande scoringsmodellen (`LikertCategoryScorer`), pauze-eiland hobby/niet-leuk chips, `PupilResultBuilder`, gegenereerde review-doc.
 - **Lobsy voor scholen (06 Dit ben jij + droombaan + PDF):** vaste verhaalsjablonen (geen AI), droombaan-checker zonder links/vacatures, QuestPDF on-demand (nooit opgeslagen), leerling- en leraar-PDF.
 - **Lobsy voor scholen (07 bewaartermijn + aggregaten):** `SchoolAggregateSnapshotter` (k≥5, droombanen &lt;2 → Overig), `SchoolRetentionHostedService` (altijd aan, ook als SchoolsEnabled=false), early delete (admin school / schooljaar), admin Scholen-rapportage + CSV + dry-run.
+- **Sales aanbevelen + AVG + cleanup (09):** redesigned `/sales/aanbevelen` with third-party notice mail + objection link, retention 60/30/30 for applications + documented 7y fiscal / 25m clicks, privacy §6a “Aanmelden via een salesmanager”, ADR 0006, removed old SalesManager page stubs and unused `api/sales-managers/me/*` self-service endpoints (parked ambassadeur code kept), empty inline-style allow-list.
+
+### Added
+- **Sales admin uitbetaalrondes (08):** maandelijkse payout run (job 1e werkdag 06:00 Europe/Amsterdam), admin approve/reject per regel, self-billing bij goedkeuring, SEPA pain.001 + CSV, mark paid (sluit payout request), IBAN-hold/consent flags, correctie + toewijzing UI, bank-transfer provider-seam, geparkeerde ambassadeurs-saldo panel. Fallback-tab Uitbetalingen op `/admin/sales-managers` tot admin redesign 06.4.
+
+### Added
+- **Sales wallet & uitbetalingen (07):** balances by state, Mutaties/Uitbetalingen/Facturen, payout request (≥ € 50, full available amount), invoice preview, cancel while Requested, self-billing PDF legal text + KOR, jaaroverzicht PDF; old checkout/complete endpoints return 410.
+
+### Added
+- **Lobsy Partner (salesmanager) foundation:** mandatory 2FA for SalesManager (+ Ambassadeur when re-enabled), partner data model + migration, `SalesLayout` / `/sales/*` URLs (legacy 301s), labels, and Ambassadeur parked behind `AmbassadorsEnabled` (default off). Existing salesmanagers are forced through 2FA at next sign-in.
+- **Sales attribution (03):** 30-day first-click cookie `lobsy_sales_ref`, `/p/{code}` short link, typed code wins over cookie, self-referral guard, admin reassign API + history, daily click counters (no IP/UA), funnel read service.
+- **Sales dashboard + Mijn werkgevers (04):** privacy-safe employer list/detail DTOs, dashboard KPIs / monthly bars / funnel / todos / top employers, top-bar search (`Ctrl K`), `/sales/werkgevers` with detail drawer.
+- **Sales Mijn link & materiaal (05):** `SalesPriceQuote` from active `TokenPricing` packs, redesigned `/sales/link` (QR, share, materials grid, pitch, commission tiles), personal materials PDFs (`api/sales/me/materials/{kind}.pdf`), presentation PDF, safer public flyer endpoint, `SalesQr` helper.
 
 
 ### Fixed

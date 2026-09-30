@@ -32,11 +32,25 @@ public class SalesManagerApplication
     public User? ProvisionedUser { get; set; }
 
     public string? RejectionReason { get; set; }
+
+    public DateTime? SubjectNotifiedAtUtc { get; set; }
+    public DateTime? SubjectObjectedAtUtc { get; set; }
+    public DateTime? PersonalDataClearedAtUtc { get; set; }
+
+    /// <summary>Referrer confirmed the candidate knows they are being recommended (GDPR art. 14).</summary>
+    public bool ReferrerConfirmedPermission { get; set; }
+
+    /// <summary>SHA-256 of candidate e-mail for 60-day duplicate rule after personal data clear.</summary>
+    public string? CandidateEmailSha256 { get; set; }
+
+    /// <summary>Hash of the one-time objection token from the notice mail (D15). Cleared when used or PII cleared.</summary>
+    public string? ObjectionTokenHash { get; set; }
 }
 
 public enum SalesManagerApplicationStatus
 {
     Pending = 0,
     Approved = 1,
-    Rejected = 2
+    Rejected = 2,
+    Expired = 3
 }

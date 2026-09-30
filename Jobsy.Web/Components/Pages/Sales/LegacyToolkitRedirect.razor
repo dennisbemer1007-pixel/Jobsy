@@ -1,0 +1,8 @@
+@page "/salesmanager/toolkit"
+@attribute [Authorize(Roles = "SalesManager")]
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+        => Navigation.NavigateTo("/sales/link", replace: true);
+}

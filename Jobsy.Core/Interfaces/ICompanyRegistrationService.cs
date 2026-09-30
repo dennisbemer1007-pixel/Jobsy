@@ -55,7 +55,7 @@ public sealed record RegistrationSubmitRequest(
     RegistrationScope Scope,
     string ContactName,
     string ContactEmail,
-    string? ContactPhone,
+    string? ContactPhone = null,
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     string? SalesManagerTrackingCode = null,
@@ -71,7 +71,9 @@ public sealed record RegistrationSubmitRequest(
     string? ManualEstablishmentNumber = null,
     double? ManualLatitude = null,
     double? ManualLongitude = null,
-    bool? ManualIsIntermediarySbi = null);
+    bool? ManualIsIntermediarySbi = null,
+    /// <summary>Code from the first-click <c>lobsy_sales_ref</c> cookie (typed code still wins).</summary>
+    string? CookieTrackingCode = null);
 
 public sealed record RegistrationSubmitResult(
     Guid RegistrationId,

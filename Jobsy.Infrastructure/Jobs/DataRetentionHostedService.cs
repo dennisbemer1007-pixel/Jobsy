@@ -3,6 +3,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -172,15 +173,23 @@ public sealed class DataRetentionHostedService : BackgroundService
 
         var staleScreenshotCount = await PurgeStaleFeedbackScreenshotsAsync(db, now, cancellationToken);
 
+        var clickCutoff = SalesClock.Today().AddMonths(-PrivacyConstants.SalesLinkClickRetentionMonths);
+        var salesClicksRemoved = await db.SalesLinkClickDailies
+            .Where(c => c.Date < clickCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var salesAppsCleared = await SalesManagerApplicationService.ApplyRetentionAsync(
+            db, now, cancellationToken);
+
         if (logsRemoved + accessLogsRemoved + auditRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
             + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
-            + withdrawnWithSnapshots.Count + staleScreenshotCount > 0)
+            + withdrawnWithSnapshots.Count + staleScreenshotCount + salesClicksRemoved + salesAppsCleared > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
+                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}, salesApplications={SalesApps}",
                 logsRemoved, accessLogsRemoved, auditRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
                 unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
-                withdrawnWithSnapshots.Count, staleScreenshotCount);
+                withdrawnWithSnapshots.Count, staleScreenshotCount, salesClicksRemoved, salesAppsCleared);
         }
 
         try

@@ -1,0 +1,59 @@
+@page "/sales/profiel/iban-bevestigen"
+@layout SalesLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Sales.Help.IbanConfirm.Title"] · @Culture["Sales.ProductLabel"]</PageTitle>
+
+<section class="sp-profile">
+    <header class="sp-profile__header">
+        <h1>@Culture["Sales.Help.IbanConfirm.Title"]</h1>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["EntUi.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+        <a class="btn-compact" href="/sales/profiel">@Culture["Sales.Nav.Profile"]</a>
+    }
+    else
+    {
+        <p class="sp-toast" role="status">@Culture["Sales.Help.IbanConfirm.Ok"]</p>
+        <a class="login-submit" href="/sales/profiel">@Culture["Sales.Nav.Profile"]</a>
+    }
+</section>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+            if (!query.TryGetValue("token", out var token) || string.IsNullOrWhiteSpace(token))
+            {
+                _error = Culture["Sales.Help.IbanConfirm.Fail"];
+                return;
+            }
+
+            await Api.ConfirmSalesIbanChangeEmailAsync(token!);
+        }
+        catch
+        {
+            _error = Culture["Sales.Help.IbanConfirm.Fail"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -51,83 +51,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("AboutPageSettings");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.AdminAuditEvent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<string>("ActorKind")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<string>("ActorRole")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid?>("ActorUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CorrelationId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("DetailsJson")
-                        .HasMaxLength(4096)
-                        .HasColumnType("character varying(4096)");
-
-                    b.Property<string>("IpHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<DateTime>("OccurredAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Reason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Result")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<string>("TargetId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<string>("TargetLabel")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("TargetType")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorUserId");
-
-                    b.HasIndex("CorrelationId");
-
-                    b.HasIndex("OccurredAtUtc");
-
-                    b.HasIndex("TargetType", "TargetId");
-
-                    b.ToTable("AdminAuditEvents");
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.AgencyAnnualSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -204,9 +127,19 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("EmailPrefsJson")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
                     b.Property<string>("Iban")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("IbanChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("IbanPayoutHoldUntilUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("KvkNumber")
                         .HasMaxLength(20)
@@ -214,6 +147,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<DateTime?>("OnboardingCompletedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PayoutAccountHolderName")
+                        .HasMaxLength(70)
+                        .HasColumnType("character varying(70)");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(16)
@@ -232,6 +169,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("VatNumber")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<int>("VatTreatment")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("VatTreatmentChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1231,101 +1174,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateDeepAnalyses", (string)null);
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ActorUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("DurationDays")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("IdempotencyKey")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<decimal>("PriceTokens")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<Guid>("ScopeCompanyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ScopeKind")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TokenTransactionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UnlockedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("WalletCompanyId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorUserId");
-
-                    b.HasIndex("IdempotencyKey")
-                        .IsUnique();
-
-                    b.HasIndex("TokenTransactionId");
-
-                    b.HasIndex("ScopeCompanyId", "ExpiresAtUtc");
-
-                    b.HasIndex("WalletCompanyId", "ScopeKind", "ScopeCompanyId");
-
-                    b.ToTable("CandidateInsightsUnlocks", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlockRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BranchCompanyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("HandledAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("HandledByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("RequestedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("WalletCompanyId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HandledByUserId");
-
-                    b.HasIndex("RequestedByUserId");
-
-                    b.HasIndex("BranchCompanyId", "Status");
-
-                    b.HasIndex("WalletCompanyId", "Status");
-
-                    b.ToTable("CandidateInsightsUnlockRequests", (string)null);
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateMatchSnapshot", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1691,11 +1539,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<DateTime>("AvailableFromUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CorrectsEntryId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
@@ -1704,13 +1561,24 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<Guid>("SalesManagerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SalesPayoutRequestId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("SelfBillingInvoiceId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("SourcePaymentId")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("SourceRefundKey")
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
@@ -1731,9 +1599,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasFilter("\"Kind\" = 0 AND \"CompanyId\" IS NOT NULL");
 
+                    b.HasIndex("CorrectsEntryId");
+
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("SalesManagerUserId");
+
+                    b.HasIndex("SalesPayoutRequestId");
 
                     b.HasIndex("SelfBillingInvoiceId");
 
@@ -1743,7 +1615,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasIndex("SourceTokenCheckoutId", "SalesManagerUserId", "Kind")
                         .IsUnique()
-                        .HasFilter("\"SourceTokenCheckoutId\" IS NOT NULL");
+                        .HasFilter("\"SourceTokenCheckoutId\" IS NOT NULL AND \"SourceRefundKey\" IS NULL");
+
+                    b.HasIndex("SourceTokenCheckoutId", "SalesManagerUserId", "Kind", "SourceRefundKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CommissionLedgerEntries_SourceTokenCheckoutId_SalesManager~1")
+                        .HasFilter("\"SourceRefundKey\" IS NOT NULL");
 
                     b.ToTable("CommissionLedgerEntries");
                 });
@@ -1777,8 +1654,19 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("CommissionIndirectSalesManagerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("CommissionStartsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("CommissionTermsSnapshottedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("CommissionYear2RateSnapshot")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)");
+
+                    b.Property<decimal?>("CommissionYear3RateSnapshot")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)");
 
                     b.Property<string>("ContactEmail")
                         .HasMaxLength(256)
@@ -1840,6 +1728,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("LastCsvImportAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("LegalForm")
+                        .HasColumnType("integer");
+
                     b.Property<Point>("Location")
                         .IsRequired()
                         .HasColumnType("geometry(Point, 4326)");
@@ -1886,6 +1777,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("RequireEmailVerificationForApplications")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("SalesAttributedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SalesAttributionSource")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("TokensManagedByEnterprise")
                         .HasColumnType("boolean");
@@ -2096,6 +1993,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("PrimarySbiCode")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
+
+                    b.Property<int?>("SalesAttributionSource")
+                        .HasColumnType("integer");
 
                     b.Property<string>("SalesManagerTrackingCode")
                         .HasMaxLength(32)
@@ -2919,9 +2819,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("SubjectCompanyId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("SubjectPupilCodeId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid?>("SubjectUserId")
                         .HasColumnType("uuid");
 
@@ -2933,8 +2830,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("ActorUserId");
 
                     b.HasIndex("OccurredAt");
-
-                    b.HasIndex("SubjectPupilCodeId");
 
                     b.HasIndex("SubjectUserId");
 
@@ -3055,6 +2950,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("SupportAccessNotifySubject")
+                        .HasColumnType("boolean");
+
+                    
+
+                    b.Property<bool>("AmbassadorsEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("UpdatedAtUtc")
@@ -3388,17 +3288,59 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("RevenueShareLogs", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesAttributionChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FromUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ToUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("SalesAttributionChanges");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.SalesCommercialSettings", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("AttributionCookieDays")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("BaseTokenValueEuro")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
                     b.Property<int>("CommissionDurationDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CommissionHoldDays")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("DirectCommissionRate")
@@ -3416,6 +3358,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<int>("IbanChangeHoldDays")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("IndirectCommissionRate")
                         .HasPrecision(5, 4)
                         .HasColumnType("numeric(5,4)");
@@ -3423,6 +3368,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<decimal>("PartnerCommissionRate")
                         .HasPrecision(5, 4)
                         .HasColumnType("numeric(5,4)");
+
+                    b.Property<decimal>("PayoutMinimumEuro")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("ReferredYear1DirectCommissionRate")
                         .HasPrecision(5, 4)
@@ -3448,6 +3397,78 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("SalesCommercialSettings");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesIbanChangePending", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ConsumedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmailTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("EncryptedIban")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("HolderName")
+                        .IsRequired()
+                        .HasMaxLength(70)
+                        .HasColumnType("character varying(70)");
+
+                    b.Property<string>("LastAcceptedTotpCodeHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmailTokenHash");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SalesIbanChangePendings");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesLinkClickDaily", b =>
+                {
+                    b.Property<Guid>("BeneficiaryUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Channel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
+
+                    b.HasKey("BeneficiaryUserId", "Date", "Channel");
+
+                    b.ToTable("SalesLinkClickDailies");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.SalesManagerApplication", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3458,6 +3479,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("CandidateEmailSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("CandidateFullName")
                         .IsRequired()
@@ -3472,8 +3497,18 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("ObjectionTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("PersonalDataClearedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid?>("ProvisionedUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("ReferrerConfirmedPermission")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("ReferrerSalesManagerUserId")
                         .HasColumnType("uuid");
@@ -3496,11 +3531,21 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("SubjectNotifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SubjectObjectedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CandidateEmail");
 
+                    b.HasIndex("CandidateEmailSha256");
+
                     b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("ObjectionTokenHash");
 
                     b.HasIndex("ProvisionedUserId");
 
@@ -3603,9 +3648,19 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("EmailPrefsJson")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
                     b.Property<string>("Iban")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("IbanChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("IbanPayoutHoldUntilUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("KvkNumber")
                         .HasMaxLength(20)
@@ -3613,6 +3668,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<DateTime?>("OnboardingCompletedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PayoutAccountHolderName")
+                        .HasMaxLength(70)
+                        .HasColumnType("character varying(70)");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(16)
@@ -3634,6 +3693,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("VatNumber")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<int>("VatTreatment")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("VatTreatmentChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -3695,501 +3760,151 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("SalesPackages");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilCode", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesPayoutRequest", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CodeLookupHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
+                    b.Property<decimal>("AmountExVat")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
-                    b.Property<string>("CodeProtected")
+                    b.Property<Guid>("BeneficiaryUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MaskedIban")
                         .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<DateTime?>("PaidAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SalesPayoutRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SelfBillingInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalInclVat")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("VatAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("VatTreatment")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BeneficiaryUserId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN (0, 1, 2)");
+
+                    b.HasIndex("SalesPayoutRunId");
+
+                    b.HasIndex("SelfBillingInvoiceId");
+
+                    b.ToTable("SalesPayoutRequests");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesPayoutRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("LastSeenAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LockedUntilUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Number")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("SchoolClassId")
+                    b.Property<Guid?>("CreatedByUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("SessionVersion")
-                        .HasColumnType("integer");
+                    b.Property<string>("ExportFileSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("ExportedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsExtra")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ProviderKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateOnly>("RunDate")
+                        .HasColumnType("date");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolClassId", "CodeLookupHash")
-                        .IsUnique();
+                    b.HasIndex("RunDate")
+                        .IsUnique()
+                        .HasFilter("\"IsExtra\" = FALSE");
 
-                    b.ToTable("PupilCodes", (string)null);
+                    b.ToTable("SalesPayoutRuns");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilProgress", b =>
-                {
-                    b.Property<Guid>("PupilCodeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AnswersJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("ChipsSavedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("CompletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CurrentIndex")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("DislikeOtherWord")
-                        .HasMaxLength(24)
-                        .HasColumnType("character varying(24)");
-
-                    b.Property<string>("DislikesJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("DreamJobKey")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("LikeOtherWord")
-                        .HasMaxLength(24)
-                        .HasColumnType("character varying(24)");
-
-                    b.Property<string>("LikesJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("StartedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("PupilCodeId");
-
-                    b.ToTable("PupilProgresses", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilResult", b =>
-                {
-                    b.Property<Guid>("PupilCodeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CompetenceScoresJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CompletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CultureScoresJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("DreamJobKey")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("FitSnapshotJson")
-                        .HasColumnType("text");
-
-                    b.Property<string>("HollandCode")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
-                    b.Property<string>("RiasecScoresJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("SchoolClassId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ScoringVersion")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("StoryKeysJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("StoryTemplateVersion")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("TopCulture")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("TopValue")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("ValuesScoresJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("PupilCodeId");
-
-                    b.HasIndex("SchoolClassId");
-
-                    b.ToTable("PupilResults", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.School", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesSelfBillingConsent", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AllowedEmailDomains")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("BrinCode")
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
+                    b.Property<DateTime>("AcceptedAtUtc")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<DateOnly?>("ProcessorAgreementSignedOn")
-                        .HasColumnType("date");
-
-                    b.Property<string>("ProcessorAgreementVersion")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("Name");
-
-                    b.ToTable("Schools", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClass", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LoginPausedUntilUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)");
-
-                    b.Property<DateTime?>("ParentalInfoConfirmedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ParentalInfoConfirmedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ParentalInfoTextVersion")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<int>("PupilCount")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("SchoolId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("SchoolYearStart")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TestWindow")
-                        .HasColumnType("integer");
-
-                    b.Property<DateOnly?>("TestWindowClosesOn")
-                        .HasColumnType("date");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TestWindow");
-
-                    b.HasIndex("SchoolId", "SchoolYearStart", "Name")
-                        .IsUnique();
-
-                    b.ToTable("SchoolClasses", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClassAggregate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ClassLabel")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)");
-
-                    b.Property<string>("CompetenceBandCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("CompletedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("DreamJobCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PupilCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RiasecTop3CountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("SchoolId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("SchoolYearStart")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("SnapshotAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("StartedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TopCultureCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TopValueCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SchoolId", "SchoolYearStart");
-
-                    b.ToTable("SchoolClassAggregates", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolRetentionRun", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("AggregatesWritten")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ClassesDeleted")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CodesDeleted")
-                        .HasColumnType("integer");
-
-                    b.Property<DateOnly>("CutoffDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("Outcome")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<DateTime>("RanAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ResultsDeleted")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RanAtUtc");
-
-                    b.ToTable("SchoolRetentionRuns", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolStaffInvite", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("AcceptedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ClassIdsJson")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<Guid?>("InvitedUserId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("RevokedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Role")
+                    b.Property<string>("TextSha256")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
-                    b.Property<Guid>("SchoolId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("TokenHash")
+                    b.Property<string>("Version")
                         .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TokenHash");
+                    b.HasIndex("UserId", "Version");
 
-                    b.HasIndex("SchoolId", "Email");
-
-                    b.ToTable("SchoolStaffInvites", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolYearAggregate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CompetenceBandCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("CompletedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("DreamJobCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("PupilCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RiasecTop3CountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("SchoolId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("SchoolYearStart")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("SnapshotAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("StartedCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TopCultureCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TopValueCountsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SchoolId", "SchoolYearStart");
-
-                    b.ToTable("SchoolYearAggregates", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.TeacherClassAssignment", b =>
-                {
-                    b.Property<Guid>("TeacherUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SchoolClassId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("TeacherUserId", "SchoolClassId");
-
-                    b.HasIndex("SchoolClassId");
-
-                    b.ToTable("TeacherClassAssignments", (string)null);
+                    b.ToTable("SalesSelfBillingConsents");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.SelfBillingInvoice", b =>
@@ -4235,6 +3950,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<Guid?>("SalesPayoutRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SelfBillingConsentId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -4270,6 +3991,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("SalesManagerUserId");
+
+                    b.HasIndex("SelfBillingConsentId");
 
                     b.HasIndex("VatDeclarationId");
 
@@ -4650,56 +4373,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("VatDeclarationId");
 
                     b.ToTable("TokenPurchaseInvoices");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Amount")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("BranchCompanyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("HandledAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("HandledByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(280)
-                        .HasColumnType("character varying(280)");
-
-                    b.Property<Guid>("OrganisationCompanyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Reason")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("RequestedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("HandledByUserId");
-
-                    b.HasIndex("RequestedByUserId");
-
-                    b.HasIndex("BranchCompanyId", "Status");
-
-                    b.HasIndex("OrganisationCompanyId", "Status");
-
-                    b.ToTable("TokenRequests", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenSpendCost", b =>
@@ -5095,9 +4768,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("SchoolId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("SessionVersion")
                         .HasColumnType("integer");
 
@@ -5151,8 +4821,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("HomeLocation"), "GIST");
 
                     b.HasIndex("ReferredByAmbassadeurUserId");
-
-                    b.HasIndex("SchoolId");
 
                     b.HasIndex("OpenForWork", "IsActive", "Role")
                         .HasDatabaseName("IX_Users_OpenForWork_IsActive_Role")
@@ -6028,6 +5696,725 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("WebPushSubscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.AdminAuditEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ActorKind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("ActorRole")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("DetailsJson")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<string>("IpHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("TargetId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("TargetLabel")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("CorrelationId");
+
+                    b.HasIndex("OccurredAtUtc");
+
+                    b.HasIndex("TargetType", "TargetId");
+
+                    b.ToTable("AdminAuditEvents");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DurationDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<decimal>("PriceTokens")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<Guid>("ScopeCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ScopeKind")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TokenTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UnlockedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WalletCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("TokenTransactionId");
+
+                    b.HasIndex("ScopeCompanyId", "ExpiresAtUtc");
+
+                    b.HasIndex("WalletCompanyId", "ScopeKind", "ScopeCompanyId");
+
+                    b.ToTable("CandidateInsightsUnlocks", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlockRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("HandledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("WalletCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandledByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("BranchCompanyId", "Status");
+
+                    b.HasIndex("WalletCompanyId", "Status");
+
+                    b.ToTable("CandidateInsightsUnlockRequests", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodeLookupHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("CodeProtected")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastSeenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LockedUntilUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SchoolClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SessionVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchoolClassId", "CodeLookupHash")
+                        .IsUnique();
+
+                    b.ToTable("PupilCodes", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilProgress", b =>
+                {
+                    b.Property<Guid>("PupilCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ChipsSavedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DislikeOtherWord")
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<string>("DislikesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DreamJobKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("LikeOtherWord")
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<string>("LikesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("PupilCodeId");
+
+                    b.ToTable("PupilProgresses", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilResult", b =>
+                {
+                    b.Property<Guid>("PupilCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompetenceScoresJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CultureScoresJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DreamJobKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("FitSnapshotJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HollandCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("RiasecScoresJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SchoolClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ScoringVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("StoryKeysJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StoryTemplateVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("TopCulture")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("TopValue")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ValuesScoresJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("PupilCodeId");
+
+                    b.HasIndex("SchoolClassId");
+
+                    b.ToTable("PupilResults", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.School", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AllowedEmailDomains")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("BrinCode")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateOnly?>("ProcessorAgreementSignedOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ProcessorAgreementVersion")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Schools", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClass", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LoginPausedUntilUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<DateTime?>("ParentalInfoConfirmedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ParentalInfoConfirmedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ParentalInfoTextVersion")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("PupilCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SchoolId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SchoolYearStart")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TestWindow")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("TestWindowClosesOn")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TestWindow");
+
+                    b.HasIndex("SchoolId", "SchoolYearStart", "Name")
+                        .IsUnique();
+
+                    b.ToTable("SchoolClasses", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClassAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClassLabel")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("CompetenceBandCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CompletedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DreamJobCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PupilCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RiasecTop3CountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("SchoolId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SchoolYearStart")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SnapshotAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("StartedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TopCultureCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TopValueCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchoolId", "SchoolYearStart");
+
+                    b.ToTable("SchoolClassAggregates", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolRetentionRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AggregatesWritten")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClassesDeleted")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CodesDeleted")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("CutoffDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("RanAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ResultsDeleted")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RanAtUtc");
+
+                    b.ToTable("SchoolRetentionRuns", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolStaffInvite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcceptedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClassIdsJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("InvitedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("SchoolId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash");
+
+                    b.HasIndex("SchoolId", "Email");
+
+                    b.ToTable("SchoolStaffInvites", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolYearAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompetenceBandCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CompletedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DreamJobCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PupilCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RiasecTop3CountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("SchoolId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SchoolYearStart")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SnapshotAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("StartedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TopCultureCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TopValueCountsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchoolId", "SchoolYearStart");
+
+                    b.ToTable("SchoolYearAggregates", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.TeacherClassAssignment", b =>
+                {
+                    b.Property<Guid>("TeacherUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SchoolClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("TeacherUserId", "SchoolClassId");
+
+                    b.HasIndex("SchoolClassId");
+
+                    b.ToTable("TeacherClassAssignments", (string)null);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("BranchCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("HandledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(280)
+                        .HasColumnType("character varying(280)");
+
+                    b.Property<Guid>("OrganisationCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Reason")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HandledByUserId");
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("BranchCompanyId", "Status");
+
+                    b.HasIndex("OrganisationCompanyId", "Status");
+
+                    b.ToTable("TokenRequests", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.AgencyAnnualSubscription", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.Company", "Company")
@@ -6225,75 +6612,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.User", "ActorUser")
-                        .WithMany()
-                        .HasForeignKey("ActorUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.Company", "ScopeCompany")
-                        .WithMany()
-                        .HasForeignKey("ScopeCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.TokenTransaction", "TokenTransaction")
-                        .WithMany()
-                        .HasForeignKey("TokenTransactionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.Company", "WalletCompany")
-                        .WithMany()
-                        .HasForeignKey("WalletCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ActorUser");
-
-                    b.Navigation("ScopeCompany");
-
-                    b.Navigation("TokenTransaction");
-
-                    b.Navigation("WalletCompany");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlockRequest", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
-                        .WithMany()
-                        .HasForeignKey("BranchCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.User", "HandledByUser")
-                        .WithMany()
-                        .HasForeignKey("HandledByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Jobsy.Core.Entities.User", "RequestedByUser")
-                        .WithMany()
-                        .HasForeignKey("RequestedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.Company", "WalletCompany")
-                        .WithMany()
-                        .HasForeignKey("WalletCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BranchCompany");
-
-                    b.Navigation("HandledByUser");
-
-                    b.Navigation("RequestedByUser");
-
-                    b.Navigation("WalletCompany");
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateMatchSnapshot", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -6397,11 +6715,21 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Jobsy.Core.Entities.CommissionLedgerEntry", "CorrectsEntry")
+                        .WithMany()
+                        .HasForeignKey("CorrectsEntryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Jobsy.Core.Entities.User", "SalesManagerUser")
                         .WithMany()
                         .HasForeignKey("SalesManagerUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.SalesPayoutRequest", "SalesPayoutRequest")
+                        .WithMany()
+                        .HasForeignKey("SalesPayoutRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Jobsy.Core.Entities.SelfBillingInvoice", "SelfBillingInvoice")
                         .WithMany("LinkedLedgerEntries")
@@ -6410,7 +6738,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Navigation("Company");
 
+                    b.Navigation("CorrectsEntry");
+
                     b.Navigation("SalesManagerUser");
+
+                    b.Navigation("SalesPayoutRequest");
 
                     b.Navigation("SelfBillingInvoice");
                 });
@@ -6713,6 +7045,28 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("RecipientUser");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesAttributionChange", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesIbanChangePending", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.SalesManagerApplication", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "ProvisionedUser")
@@ -6767,92 +7121,40 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilCode", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesPayoutRequest", b =>
                 {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.SchoolClass", "SchoolClass")
-                        .WithMany("PupilCodes")
-                        .HasForeignKey("SchoolClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SchoolClass");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilProgress", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.PupilCode", "PupilCode")
-                        .WithOne("Progress")
-                        .HasForeignKey("Jobsy.Core.Entities.Scholen.PupilProgress", "PupilCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PupilCode");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilResult", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.PupilCode", "PupilCode")
-                        .WithOne("Result")
-                        .HasForeignKey("Jobsy.Core.Entities.Scholen.PupilResult", "PupilCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PupilCode");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClass", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.School", "School")
-                        .WithMany("Classes")
-                        .HasForeignKey("SchoolId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("School");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClassAggregate", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.School", null)
+                    b.HasOne("Jobsy.Core.Entities.User", "BeneficiaryUser")
                         .WithMany()
-                        .HasForeignKey("SchoolId")
+                        .HasForeignKey("BeneficiaryUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.SalesPayoutRun", "SalesPayoutRun")
+                        .WithMany("Requests")
+                        .HasForeignKey("SalesPayoutRunId")
                         .OnDelete(DeleteBehavior.SetNull);
-                });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolStaffInvite", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.School", "School")
+                    b.HasOne("Jobsy.Core.Entities.SelfBillingInvoice", "SelfBillingInvoice")
                         .WithMany()
-                        .HasForeignKey("SchoolId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("School");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolYearAggregate", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.School", null)
-                        .WithMany()
-                        .HasForeignKey("SchoolId")
+                        .HasForeignKey("SelfBillingInvoiceId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("BeneficiaryUser");
+
+                    b.Navigation("SalesPayoutRun");
+
+                    b.Navigation("SelfBillingInvoice");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.TeacherClassAssignment", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesSelfBillingConsent", b =>
                 {
-                    b.HasOne("Jobsy.Core.Entities.Scholen.SchoolClass", "SchoolClass")
-                        .WithMany("TeacherAssignments")
-                        .HasForeignKey("SchoolClassId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.User", null)
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
                         .WithMany()
-                        .HasForeignKey("TeacherUserId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("SchoolClass");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.SelfBillingInvoice", b =>
@@ -6863,12 +7165,19 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Jobsy.Core.Entities.SalesSelfBillingConsent", "SelfBillingConsent")
+                        .WithMany()
+                        .HasForeignKey("SelfBillingConsentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Jobsy.Core.Entities.VatDeclaration", "VatDeclaration")
                         .WithMany("SelfBillingInvoices")
                         .HasForeignKey("VatDeclarationId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("SalesManagerUser");
+
+                    b.Navigation("SelfBillingConsent");
 
                     b.Navigation("VatDeclaration");
                 });
@@ -6990,40 +7299,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("VatDeclaration");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
-                        .WithMany()
-                        .HasForeignKey("BranchCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.User", "HandledByUser")
-                        .WithMany()
-                        .HasForeignKey("HandledByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Jobsy.Core.Entities.Company", "OrganisationCompany")
-                        .WithMany()
-                        .HasForeignKey("OrganisationCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Jobsy.Core.Entities.User", "RequestedByUser")
-                        .WithMany()
-                        .HasForeignKey("RequestedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BranchCompany");
-
-                    b.Navigation("HandledByUser");
-
-                    b.Navigation("OrganisationCompany");
-
-                    b.Navigation("RequestedByUser");
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.TokenTransaction", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "ActorUser")
@@ -7119,11 +7394,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("ReferredByAmbassadeurUserId")
                         .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Jobsy.Core.Entities.Scholen.School", null)
-                        .WithMany()
-                        .HasForeignKey("SchoolId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Company");
 
@@ -7406,23 +7676,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("Companies");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilCode", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.SalesPayoutRun", b =>
                 {
-                    b.Navigation("Progress");
-
-                    b.Navigation("Result");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.School", b =>
-                {
-                    b.Navigation("Classes");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClass", b =>
-                {
-                    b.Navigation("PupilCodes");
-
-                    b.Navigation("TeacherAssignments");
+                    b.Navigation("Requests");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.SelfBillingInvoice", b =>
@@ -7484,6 +7740,216 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("SelfBillingInvoices");
 
                     b.Navigation("TokenPurchaseInvoices");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "ScopeCompany")
+                        .WithMany()
+                        .HasForeignKey("ScopeCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.TokenTransaction", "TokenTransaction")
+                        .WithMany()
+                        .HasForeignKey("TokenTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "WalletCompany")
+                        .WithMany()
+                        .HasForeignKey("WalletCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ActorUser");
+
+                    b.Navigation("ScopeCompany");
+
+                    b.Navigation("TokenTransaction");
+
+                    b.Navigation("WalletCompany");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlockRequest", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
+                        .WithMany()
+                        .HasForeignKey("BranchCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "HandledByUser")
+                        .WithMany()
+                        .HasForeignKey("HandledByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "WalletCompany")
+                        .WithMany()
+                        .HasForeignKey("WalletCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BranchCompany");
+
+                    b.Navigation("HandledByUser");
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("WalletCompany");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilCode", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.SchoolClass", "SchoolClass")
+                        .WithMany("PupilCodes")
+                        .HasForeignKey("SchoolClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SchoolClass");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilProgress", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.PupilCode", "PupilCode")
+                        .WithOne("Progress")
+                        .HasForeignKey("Jobsy.Core.Entities.Scholen.PupilProgress", "PupilCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PupilCode");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilResult", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.PupilCode", "PupilCode")
+                        .WithOne("Result")
+                        .HasForeignKey("Jobsy.Core.Entities.Scholen.PupilResult", "PupilCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PupilCode");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClass", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.School", "School")
+                        .WithMany("Classes")
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("School");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClassAggregate", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.School", null)
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolStaffInvite", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.School", "School")
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("School");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolYearAggregate", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.School", null)
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.TeacherClassAssignment", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Scholen.SchoolClass", "SchoolClass")
+                        .WithMany("TeacherAssignments")
+                        .HasForeignKey("SchoolClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("TeacherUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SchoolClass");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.TokenRequest", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
+                        .WithMany()
+                        .HasForeignKey("BranchCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "HandledByUser")
+                        .WithMany()
+                        .HasForeignKey("HandledByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "OrganisationCompany")
+                        .WithMany()
+                        .HasForeignKey("OrganisationCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BranchCompany");
+
+                    b.Navigation("HandledByUser");
+
+                    b.Navigation("OrganisationCompany");
+
+                    b.Navigation("RequestedByUser");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.PupilCode", b =>
+                {
+                    b.Navigation("Progress");
+
+                    b.Navigation("Result");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.School", b =>
+                {
+                    b.Navigation("Classes");
+                });
+
+modelBuilder.Entity("Jobsy.Core.Entities.Scholen.SchoolClass", b =>
+                {
+                    b.Navigation("PupilCodes");
+
+                    b.Navigation("TeacherAssignments");
                 });
 #pragma warning restore 612, 618
         }

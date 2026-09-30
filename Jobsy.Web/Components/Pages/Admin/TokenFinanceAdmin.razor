@@ -15,6 +15,12 @@
 <PageTitle>@Culture["AdminNav.Payouts"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["AdminNav.Payouts"]" Lead="@Culture["AdminFinance.PayoutsLead"]" Wide="true">
+    @if (_parkedCount > 0)
+    {
+        <Jobsy.Web.Components.Ui.Enterprise.EntImpactNote Tone="warn">
+            @Culture.Format("SalesAdmin.ParkedBalancesNote", _parkedCount, _parkedTotal.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))
+        </Jobsy.Web.Components.Ui.Enterprise.EntImpactNote>
+    }
     <AdminTabs BasePath="/admin/financien/uitbetalingen" ActiveKey="@_tab" Tabs="_tabs" />
 
     @if (_tab != "declarations" && _tab != "uitbetalingen")
@@ -294,6 +300,8 @@
     private List<VatBufferTransferItem> _vatTransfers = [];
     private List<SalesManagerCostFinanceItem> _smCosts = [];
     private List<VatDeclarationListItem> _declarations = [];
+    private int _parkedCount;
+    private decimal _parkedTotal;
 
     private bool _wizardOpen;
     private bool _wizardBusy;
@@ -329,6 +337,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            var parked = await Api.GetSalesParkedBalancesAsync();
+            _parkedCount = parked.Count;
+            _parkedTotal = parked.Sum(p => p.OpenBalanceExVat);
+        }
+        catch
+        {
+            _parkedCount = 0;
+            _parkedTotal = 0;
+        }
+
         if (_tab != "uitbetalingen")
         {
             await ReloadAsync();

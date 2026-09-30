@@ -2,7 +2,9 @@ using System.Text.RegularExpressions;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Sales;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -19,11 +21,19 @@ public partial class SalesCommercialController : ControllerBase
 
     private readonly ISalesCommercialService _sales;
     private readonly IPartnerFlyerPdfService _flyerPdf;
+    private readonly ISalesAttributionResolver _attribution;
+    private readonly ISalesLinkClickService _clicks;
 
-    public SalesCommercialController(ISalesCommercialService sales, IPartnerFlyerPdfService flyerPdf)
+    public SalesCommercialController(
+        ISalesCommercialService sales,
+        IPartnerFlyerPdfService flyerPdf,
+        ISalesAttributionResolver attribution,
+        ISalesLinkClickService clicks)
     {
         _sales = sales;
         _flyerPdf = flyerPdf;
+        _attribution = attribution;
+        _clicks = clicks;
     }
 
     /// <summary>Public partner catalog (rates + packages) for the sales landing page.</summary>
@@ -33,7 +43,49 @@ public partial class SalesCommercialController : ControllerBase
     public async Task<ActionResult<PartnerSalesCatalogDto>> GetCatalog(CancellationToken cancellationToken)
         => Ok(await _sales.GetPublicCatalogAsync(cancellationToken));
 
-    /// <summary>Printable A4 flyer PDF with optional salesmanager tracking code.</summary>
+    /// <summary>
+    /// Validate a referral code, optionally count a funnel click (no IP/UA stored), return cookie days.
+    /// </summary>
+    [HttpPost("referral/visit")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<object>> RecordReferralVisit(
+        [FromBody] SalesReferralVisitRequest request,
+        CancellationToken cancellationToken)
+    {
+        var active = await _attribution.ResolveActiveReferralAsync(request.Code, cancellationToken);
+        var settings = await _sales.GetAdminAsync(cancellationToken);
+        var cookieDays = settings.AttributionCookieDays > 0 ? settings.AttributionCookieDays : 30;
+
+        if (active is null)
+        {
+            return Ok(new
+            {
+                Active = false,
+                CookieDays = cookieDays,
+                Code = (string?)null,
+                Kind = (string?)null
+            });
+        }
+
+        if (request.CountClick)
+        {
+            var channel = Enum.TryParse<SalesLinkChannel>(request.Channel, true, out var parsed)
+                ? parsed
+                : SalesTrackingCodes.ChannelFromQuery(request.Channel);
+            await _clicks.RecordClickAsync(active.BeneficiaryUserId, channel, cancellationToken: cancellationToken);
+        }
+
+        return Ok(new
+        {
+            Active = true,
+            CookieDays = cookieDays,
+            active.Code,
+            Kind = active.Kind.ToString()
+        });
+    }
+
+    /// <summary>Printable A4 flyer PDF. Generic (no code) is public; personal code only when active.</summary>
     [HttpGet("flyer.pdf")]
     [AllowAnonymous]
     [EnableRateLimiting("public-pdf")]
@@ -47,9 +99,21 @@ public partial class SalesCommercialController : ControllerBase
             return BadRequest(new { message = "Ongeldige salescode. Gebruik het formaat SM-, BM- of IM-XXXXXX." });
         }
 
+        if (normalized is not null)
+        {
+            var active = await _attribution.ResolveActiveReferralAsync(normalized, cancellationToken);
+            if (active is null)
+            {
+                return NotFound(new { message = "Deze code kennen we niet." });
+            }
+        }
+
         var bytes = await _flyerPdf.RenderAsync(normalized, cancellationToken);
         // Fixed download name — never embed untrusted query text in Content-Disposition.
-        return File(bytes, "application/pdf", "lobsy-partner-flyer.pdf");
+        var fileName = normalized is null
+            ? "lobsy-partner-flyer.pdf"
+            : $"lobsy-flyer-{normalized}.pdf";
+        return File(bytes, "application/pdf", fileName);
     }
 
     [HttpGet("admin")]
@@ -79,6 +143,10 @@ public partial class SalesCommercialController : ControllerBase
                 request.Year2DirectCommissionRate,
                 request.Year3DirectCommissionRate,
                 request.ReferredYear1DirectCommissionRate,
+                request.CommissionHoldDays,
+                request.PayoutMinimumEuro,
+                request.IbanChangeHoldDays,
+                request.AttributionCookieDays,
                 cancellationToken);
             return Ok(new
             {
@@ -95,6 +163,10 @@ public partial class SalesCommercialController : ControllerBase
                 settings.Year2DirectCommissionRate,
                 settings.Year3DirectCommissionRate,
                 settings.ReferredYear1DirectCommissionRate,
+                settings.CommissionHoldDays,
+                settings.PayoutMinimumEuro,
+                settings.IbanChangeHoldDays,
+                settings.AttributionCookieDays,
                 settings.UpdatedAtUtc
             });
         }

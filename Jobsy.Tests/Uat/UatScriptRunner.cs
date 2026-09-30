@@ -180,6 +180,15 @@ public static class UatScriptRunner
                 Assert.Empty(items);
                 Assert.NotEmpty(AdminNav.AvailableItems());
             }
+            else if (jobsyRole == JobsyRoles.SalesManager)
+            {
+                var salesItems = Jobsy.Web.Navigation.SalesNav.BottomNavItems(canRecruit: true);
+                Assert.NotEmpty(salesItems);
+                foreach (var item in salesItems)
+                {
+                    AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: sales nav → {item.Href}");
+                }
+            }
             else
             {
                 Assert.NotEmpty(items);

@@ -64,7 +64,7 @@ public class CoreFunctionalFlowE2ETests
             "88880001_0001",
             RegistrationScope.BranchOnly,
             "E2E Manager",
-            "manager.e2e@jobsy.local",
+            "manager.e2e@employer.test",
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: "SM-DIRECT1",
@@ -86,8 +86,10 @@ public class CoreFunctionalFlowE2ETests
         var regRow = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.NotNull(regRow.ContactEmailVerifiedAt);
         Assert.Equal(direct.UserId, company.ReferredBySalesManagerUserId);
-        Assert.Equal(upline.UserId, company.CommissionIndirectSalesManagerUserId);
-        Assert.NotNull(company.FirstYearStartedAt);
+        // Indirect SM + rate snapshots are frozen at first purchase activation (02), not at registration.
+        Assert.Null(company.CommissionIndirectSalesManagerUserId);
+        Assert.Null(company.CommissionStartsAtUtc);
+        Assert.NotNull(company.SalesAttributedAtUtc);
         Assert.True(company.HasReceivedWelcomeToken);
         Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
 
@@ -229,7 +231,7 @@ public class CoreFunctionalFlowE2ETests
             Math.Round(purchaseExVat * 0.05m, 2, MidpointRounding.AwayFromZero),
             expectedIndirect);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(expectedDirect, await commissions.GetBalanceExVatAsync(direct.UserId));
         Assert.Equal(expectedIndirect, await commissions.GetBalanceExVatAsync(upline.UserId));
 
@@ -340,8 +342,11 @@ public class CoreFunctionalFlowE2ETests
             CommissionIndirectSalesManagerUserId = upline.UserId,
             CommissionDirectRateSnapshot = SalesCommissionRules.DefaultDirectCommissionRate,
             CommissionIndirectRateSnapshot = SalesCommissionRules.DefaultIndirectCommissionRate,
+            CommissionYear2RateSnapshot = SalesCommissionRules.DefaultYear2DirectCommissionRate,
+            CommissionYear3RateSnapshot = SalesCommissionRules.DefaultYear3DirectCommissionRate,
             CommissionDurationDaysSnapshot = SalesCommissionRules.DefaultCommissionDurationDays,
             CommissionTermsSnapshottedAtUtc = started,
+            CommissionStartsAtUtc = started,
             FirstYearStartedAt = started
         });
         await db.SaveChangesAsync();
@@ -371,7 +376,7 @@ public class CoreFunctionalFlowE2ETests
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
         Assert.NotNull(result);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(direct.UserId));
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(upline.UserId));
     }
@@ -643,7 +648,7 @@ public class CoreFunctionalFlowE2ETests
     {
         var companySettings = new PlatformCompanySettingsService(db);
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var commercial = new SalesCommercialService(db, tokens);
         var revenueShare = new RevenueShareService(db, tokens, commissions, commercial);
         var features = CreateFeatures(db);
@@ -655,7 +660,7 @@ public class CoreFunctionalFlowE2ETests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             revenueShare,
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             pending,
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

@@ -29,9 +29,11 @@ public sealed class LocalizationParityReportTests
         foreach (var lang in Languages)
         {
             Assert.True(catalog.ContainsKey(lang), $"Missing language catalog: {lang}");
-            // D12: Scholen module keys are nl-only; other languages fall back via UiStrings.Get.
+            // D12: Scholen/Sales module keys are nl-only; other languages fall back via UiStrings.Get.
             var missing = nlKeys
-                .Where(k => !UiStringsScholen.IsNlOnlyPrefix(k) && !catalog[lang].ContainsKey(k))
+                .Where(k => !UiStringsScholen.IsNlOnlyPrefix(k)
+                            && !UiStringsSales.IsNlOnlyPrefix(k)
+                            && !catalog[lang].ContainsKey(k))
                 .ToList();
             Assert.True(
                 missing.Count == 0,
@@ -70,7 +72,8 @@ public sealed class LocalizationParityReportTests
                     continue;
                 }
 
-                if (LocalizationParityAllowList.IsExemptIdenticalValue(nlValue))
+                if (UiStringsSales.IsNlOnlyPrefix(key)
+                    || LocalizationParityAllowList.IsExemptIdenticalValue(nlValue))
                 {
                     exempt++;
                 }

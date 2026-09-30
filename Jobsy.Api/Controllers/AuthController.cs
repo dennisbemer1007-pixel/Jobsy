@@ -29,6 +29,7 @@ public class AuthController : ControllerBase
     private readonly IDeviceSessionService _deviceSessions;
     private readonly IEmailService _email;
     private readonly MfaChallengeService _mfaChallenges;
+    private readonly IPlatformFeatureService _features;
 
     public AuthController(
         JobsyDbContext db,
@@ -38,7 +39,8 @@ public class AuthController : ControllerBase
         IHostEnvironment environment,
         IDeviceSessionService deviceSessions,
         IEmailService email,
-        MfaChallengeService mfaChallenges)
+        MfaChallengeService mfaChallenges,
+        IPlatformFeatureService features)
     {
         _db = db;
         _configuration = configuration;
@@ -48,6 +50,7 @@ public class AuthController : ControllerBase
         _deviceSessions = deviceSessions;
         _email = email;
         _mfaChallenges = mfaChallenges;
+        _features = features;
     }
 
     /// <summary>
@@ -129,6 +132,19 @@ public class AuthController : ControllerBase
         if (user is null || !user.IsActive)
         {
             return Unauthorized(genericError);
+        }
+
+        if (user.Role == UserRole.Ambassadeur)
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            if (!features.AmbassadorsEnabled)
+            {
+                return Unauthorized(new
+                {
+                    message =
+                        "Het ambassadeursprogramma is gepauzeerd. Je gegevens en je tegoed blijven bewaard. Vragen? Mail support@lobsy.nl."
+                });
+            }
         }
 
         if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))

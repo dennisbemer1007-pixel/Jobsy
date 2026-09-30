@@ -13,41 +13,41 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class SalesWalletChipTests : TestContext
+public class SalesWalletChipV2Tests : TestContext
 {
     [Fact]
     public void Anonymous_makes_zero_dashboard_calls()
     {
         var counter = Arrange(CreateAnonymous());
-        var cut = RenderComponent<SalesWalletChip>();
+        var cut = RenderComponent<SalesWalletChipV2>();
         cut.WaitForState(() => cut.Instance is not null, TimeSpan.FromSeconds(1));
 
         Assert.Equal(0, counter.DashboardCalls);
-        Assert.DoesNotContain("sales-wallet-chip", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sp-wallet-chip", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Candidate_makes_zero_dashboard_calls()
     {
         var counter = Arrange(CreateUser("Candidate"));
-        var cut = RenderComponent<SalesWalletChip>();
+        var cut = RenderComponent<SalesWalletChipV2>();
         cut.WaitForState(() => cut.Instance is not null, TimeSpan.FromSeconds(1));
 
         Assert.Equal(0, counter.DashboardCalls);
-        Assert.DoesNotContain("sales-wallet-chip", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sp-wallet-chip", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
     public void SalesManager_makes_exactly_one_dashboard_call()
     {
         var counter = Arrange(CreateUser("SalesManager"), dashboardOk: true);
-        var cut = RenderComponent<SalesWalletChip>();
+        var cut = RenderComponent<SalesWalletChipV2>();
 
         cut.WaitForAssertion(
-            () => Assert.Contains("sales-wallet-chip", cut.Markup, StringComparison.Ordinal),
+            () => Assert.Contains("sp-wallet-chip", cut.Markup, StringComparison.Ordinal),
             TimeSpan.FromSeconds(2));
-        Assert.Equal(1, counter.DashboardCalls);
-        Assert.Contains("€ 12.50", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(2, counter.DashboardCalls);
+        Assert.Contains("€ 12,50", cut.Markup, StringComparison.Ordinal);
     }
 
     private CountingHandler Arrange(ClaimsPrincipal user, bool dashboardOk = false)
@@ -118,7 +118,9 @@ public class SalesWalletChipTests : TestContext
             CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
-            if (path.Contains("sales-managers/me/dashboard", StringComparison.OrdinalIgnoreCase))
+            if (path.Contains("sales/me/profile", StringComparison.OrdinalIgnoreCase)
+                || path.Contains("sales/me/wallet", StringComparison.OrdinalIgnoreCase)
+                || path.Contains("sales-managers/me/dashboard", StringComparison.OrdinalIgnoreCase))
             {
                 DashboardCalls++;
                 if (!dashboardOk)
@@ -126,10 +128,23 @@ public class SalesWalletChipTests : TestContext
                     return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized));
                 }
 
+                if (path.Contains("wallet", StringComparison.OrdinalIgnoreCase))
+                {
+                    var walletJson = JsonSerializer.Serialize(new { available = 12.5m });
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(walletJson, System.Text.Encoding.UTF8, "application/json")
+                    });
+                }
+
                 var json = JsonSerializer.Serialize(new
                 {
-                    UninvoicedExVat = 12.5m,
-                    BalanceExVat = 12.5m
+                    userId = Guid.NewGuid(),
+                    email = "sm@jobsy.local",
+                    fullName = "SM",
+                    isOnboardingComplete = true,
+                    canRecruitSalesManagers = true,
+                    trackingCode = "SM-TEST01"
                 });
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
                 {

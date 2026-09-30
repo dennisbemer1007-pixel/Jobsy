@@ -2,6 +2,7 @@ using System.Text.Json;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,7 @@ namespace Jobsy.Api.Controllers;
 /// <summary>
 /// Mollie payment webhooks (application/x-www-form-urlencoded with id=tr_...).
 /// On paid token checkouts: fulfill credit + invoice + BTW-buffer queue.
+/// Refunds/chargebacks book negative commission corrections (D3).
 /// </summary>
 [ApiController]
 [Route("api/webhooks")]
@@ -21,17 +23,20 @@ public sealed class MollieWebhooksController : ControllerBase
 {
     private readonly IPaymentService _payments;
     private readonly ITokenPurchaseFulfillmentService _fulfillment;
+    private readonly ISalesCorrectionService _corrections;
     private readonly JobsyDbContext _db;
     private readonly ILogger<MollieWebhooksController> _logger;
 
     public MollieWebhooksController(
         IPaymentService payments,
         ITokenPurchaseFulfillmentService fulfillment,
+        ISalesCorrectionService corrections,
         JobsyDbContext db,
         ILogger<MollieWebhooksController> logger)
     {
         _payments = payments;
         _fulfillment = fulfillment;
+        _corrections = corrections;
         _db = db;
         _logger = logger;
     }
@@ -54,36 +59,55 @@ public sealed class MollieWebhooksController : ControllerBase
             // Poll Mollie (works for iDEAL and creditcard); marks session Paid then fulfills immediately.
             var status = await _payments.GetPaymentStatusAsync(paymentId, cancellationToken);
             _logger.LogInformation(
-                "Mollie webhook {PaymentId}: status={Status}, paid={Paid}, method={Method}",
-                status.PaymentId, status.Status, status.IsPaid, status.Method ?? "unknown");
+                "Mollie webhook {PaymentId}: status={Status}, paid={Paid}, method={Method}, refunded={Refunded}, chargeback={Chargeback}",
+                status.PaymentId, status.Status, status.IsPaid, status.Method ?? "unknown",
+                status.AmountRefundedEuro, status.AmountChargedBackEuro);
 
-            if (!status.IsPaid)
-            {
-                // Definitive non-paid status — acknowledge so Mollie stops retrying.
-                return Ok();
-            }
-
-            var checkoutId = await _db.TokenPurchaseCheckouts.AsNoTracking()
+            var checkout = await _db.TokenPurchaseCheckouts.AsNoTracking()
                 .Where(c => c.PaymentId == paymentId)
-                .Select(c => (Guid?)c.Id)
+                .Select(c => new { c.Id, c.AmountEuro, c.TotalAmountCents, c.Status })
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (checkoutId is not Guid cid)
+            if (checkout is null)
             {
                 // Unknown payment id (not a token checkout we track) — acknowledge.
                 return Ok();
             }
 
-            var result = await _fulfillment.TryFulfillPaidCheckoutAsync(
-                cid,
-                actorUserId: null,
-                allowDevStubMarkPaid: false,
-                cancellationToken);
-            if (result is not null)
+            if (status.IsPaid)
             {
-                _logger.LogInformation(
-                    "Mollie webhook fulfilled checkout {CheckoutId} method={Method} → invoice {InvoiceNumber} (tokens + commission settlement)",
-                    result.CheckoutId, status.Method ?? "unknown", result.InvoiceNumber);
+                var result = await _fulfillment.TryFulfillPaidCheckoutAsync(
+                    checkout.Id,
+                    actorUserId: null,
+                    allowDevStubMarkPaid: false,
+                    cancellationToken);
+                if (result is not null)
+                {
+                    _logger.LogInformation(
+                        "Mollie webhook fulfilled checkout {CheckoutId} method={Method} → invoice {InvoiceNumber} (tokens + commission settlement)",
+                        result.CheckoutId, status.Method ?? "unknown", result.InvoiceNumber);
+                }
+            }
+            else if (status.AmountRefundedEuro <= 0 && status.AmountChargedBackEuro <= 0)
+            {
+                // Definitive non-paid status without reversals — acknowledge so Mollie stops retrying.
+                return Ok();
+            }
+
+            var amountPaid = status.AmountEuro > 0
+                ? status.AmountEuro
+                : checkout.AmountEuro > 0
+                    ? checkout.AmountEuro
+                    : checkout.TotalAmountCents / 100m;
+
+            if (status.AmountRefundedEuro > 0 || status.AmountChargedBackEuro > 0)
+            {
+                await _corrections.ApplyPaymentReversalsAsync(
+                    checkout.Id,
+                    amountPaid,
+                    status.AmountRefundedEuro,
+                    status.AmountChargedBackEuro,
+                    cancellationToken);
             }
 
             return Ok();

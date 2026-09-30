@@ -1,9 +1,11 @@
+using Jobsy.Core.Sales;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
 /// Business profile for a salesmanager (B2B self-billing). Tracking code is issued only after onboarding + agreement.
 /// </summary>
-public class SalesManagerProfile
+public class SalesManagerProfile : ISalesPayoutProfile
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
@@ -17,6 +19,13 @@ public class SalesManagerProfile
     public string? City { get; set; }
     public string? Country { get; set; } = "NL";
     public string? Iban { get; set; }
+
+    public SalesManagerVatTreatment VatTreatment { get; set; } = SalesManagerVatTreatment.Standard21;
+    public DateTime? VatTreatmentChangedAtUtc { get; set; }
+    public string? PayoutAccountHolderName { get; set; }
+    public DateTime? IbanChangedAtUtc { get; set; }
+    public DateTime? IbanPayoutHoldUntilUtc { get; set; }
+    public string? EmailPrefsJson { get; set; }
 
     /// <summary>Unique referral code; null until onboarding + agreement are complete.</summary>
     public string? TrackingCode { get; set; }

@@ -6,6 +6,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Exceptions;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -313,7 +314,10 @@ public sealed class KvkHandelsregisterService : IKvkService
     {
         var name = CompanyName(profile);
         var address = FormatEmbeddedHqAddress(profile);
-        return new KvkCompanyResult(kvkNumber, name, address, MapSbiCodes(profile.SbiActiviteiten));
+        var legalForm = CompanyLegalFormMapper.FromKvk(
+            FirstNonEmpty(profile.Rechtsvorm, profile.Embedded?.Eigenaar?.Rechtsvorm),
+            FirstNonEmpty(profile.UitgebreideRechtsvorm, profile.Embedded?.Eigenaar?.UitgebreideRechtsvorm));
+        return new KvkCompanyResult(kvkNumber, name, address, MapSbiCodes(profile.SbiActiviteiten), legalForm);
     }
 
     private static List<KvkEstablishmentResult> MapVestigingen(
@@ -515,6 +519,8 @@ public sealed class KvkHandelsregisterService : IKvkService
         public string? KvkNummer { get; set; }
         public string? Naam { get; set; }
         public string? StatutaireNaam { get; set; }
+        public string? Rechtsvorm { get; set; }
+        public string? UitgebreideRechtsvorm { get; set; }
         public List<KvkHandelsnaamDto>? Handelsnamen { get; set; }
         public List<KvkSbiDto>? SbiActiviteiten { get; set; }
 
@@ -525,6 +531,13 @@ public sealed class KvkHandelsregisterService : IKvkService
     private sealed class KvkBasisEmbeddedDto
     {
         public KvkHoofdvestigingDto? Hoofdvestiging { get; set; }
+        public KvkEigenaarDto? Eigenaar { get; set; }
+    }
+
+    private sealed class KvkEigenaarDto
+    {
+        public string? Rechtsvorm { get; set; }
+        public string? UitgebreideRechtsvorm { get; set; }
     }
 
     private sealed class KvkHoofdvestigingDto

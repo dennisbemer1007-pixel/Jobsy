@@ -42,14 +42,8 @@ public static class RoleNavCatalog
     public static readonly NavItem Takeovers =
         new("Nav.Takeovers", "/werkgever/overnames", NavIcons.Branches);
 
-    public static readonly NavItem[] SalesManager =
-    [
-        new("Nav.Home", "/home", NavIcons.Home, ["/salesmanager"]),
-        new("Nav.SalesToolkit", "/salesmanager/toolkit", NavIcons.Shared),
-        new("Nav.SalesReferrals", "/salesmanager/referrals", NavIcons.Users),
-        new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
-        new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)
-    ];
+    /// <summary>Nav comes from <see cref="SalesNav"/> inside SalesLayout.</summary>
+    public static readonly NavItem[] SalesManager = [];
 
     public static readonly NavItem[] Ambassadeur =
     [

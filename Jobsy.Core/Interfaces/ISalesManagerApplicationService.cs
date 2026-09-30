@@ -10,6 +10,11 @@ public interface ISalesManagerApplicationService
         string candidateEmail,
         string candidateFullName,
         string motivation,
+        bool referrerConfirmedPermission,
+        CancellationToken cancellationToken = default);
+
+    Task<SalesRecommendOverviewDto> GetRecommendOverviewAsync(
+        Guid referrerSalesManagerUserId,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<SalesManagerApplicationDto>> ListMineAsync(
@@ -32,6 +37,12 @@ public interface ISalesManagerApplicationService
         Guid adminUserId,
         string? reason,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// One-time objection link from the recommended-person notice mail (D15).
+    /// Clears PII immediately and marks the application Rejected with reason "Bezwaar".
+    /// </summary>
+    Task<bool> ObjectByTokenAsync(string plaintextToken, CancellationToken cancellationToken = default);
 }
 
 public sealed record SalesManagerApplicationDto(
@@ -48,4 +59,28 @@ public sealed record SalesManagerApplicationDto(
     DateTime? ReviewedAtUtc,
     Guid? ProvisionedUserId,
     string? RejectionReason,
-    string? TemporaryPassword);
+    string? TemporaryPassword,
+    DateTime? SubjectNotifiedAtUtc = null,
+    DateTime? SubjectObjectedAtUtc = null,
+    DateTime? PersonalDataClearedAtUtc = null,
+    bool ReferrerConfirmedPermission = false,
+    string StatusLabelKey = "");
+
+public sealed record SalesRecommendOverviewDto(
+    decimal IndirectRatePercent,
+    decimal ReferredYear1RatePercent,
+    decimal IndirectEarnedEuro,
+    bool CanRecruit,
+    bool IsOnboardingComplete,
+    string? TrackingCode,
+    IReadOnlyList<SalesRecommendListItemDto> Applications);
+
+/// <summary>Portal list row — no candidate e-mail (shown only at submit time).</summary>
+public sealed record SalesRecommendListItemDto(
+    Guid Id,
+    DateTime CreatedAtUtc,
+    string DisplayName,
+    string Status,
+    string StatusLabelKey,
+    string? RejectionReason,
+    bool PersonalDataCleared);

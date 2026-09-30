@@ -408,6 +408,7 @@ public sealed partial class JobsyApiClient
         double? manualLatitude = null,
         double? manualLongitude = null,
         bool? manualIsIntermediarySbi = null,
+        string? cookieTrackingCode = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/registration", new
@@ -429,7 +430,8 @@ public sealed partial class JobsyApiClient
             manualEstablishmentNumber,
             manualLatitude,
             manualLongitude,
-            manualIsIntermediarySbi
+            manualIsIntermediarySbi,
+            cookieTrackingCode
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

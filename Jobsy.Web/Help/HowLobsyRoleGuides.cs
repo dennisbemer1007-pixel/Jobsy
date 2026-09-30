@@ -136,20 +136,20 @@ public static class HowLobsyRoleGuides
     {
         var code = trackingCode?.Trim();
         var partnerHref = string.IsNullOrWhiteSpace(code)
-            ? "/salesmanager/toolkit"
+            ? "/sales/link"
             : $"/partner/{Uri.EscapeDataString(code)}";
 
         return new(
             "HowLobsy.Sales.Title",
             "HowLobsy.Sales.Lead",
             [
-                new("HowLobsy.Sales.Step1Title", "HowLobsy.Sales.Step1Body", [new("/salesmanager/onboarding", "Nav.Onboarding")]),
-                new("HowLobsy.Sales.Step2Title", "HowLobsy.Sales.Step2Body", [new("/salesmanager/toolkit", "Nav.SalesToolkit")]),
+                new("HowLobsy.Sales.Step1Title", "HowLobsy.Sales.Step1Body", [new("/sales/start", "Nav.Onboarding")]),
+                new("HowLobsy.Sales.Step2Title", "HowLobsy.Sales.Step2Body", [new("/sales/link", "Nav.SalesToolkit")]),
                 new("HowLobsy.Sales.Step3Title", "HowLobsy.Sales.Step3Body", [new(partnerHref, "HowLobsy.Sales.PartnerLabel")]),
                 new("HowLobsy.Sales.Step4Title", "HowLobsy.Sales.Step4Body", [new("/home", "Nav.Home")]),
-                new("HowLobsy.Sales.Step5Title", "HowLobsy.Sales.Step5Body", [new("/salesmanager/invoices", "Nav.Invoices")])
+                new("HowLobsy.Sales.Step5Title", "HowLobsy.Sales.Step5Body", [new("/sales/wallet", "Nav.Invoices")])
             ],
-            new("/salesmanager/toolkit", "HowLobsy.Sales.PrimaryCta"),
+            new("/sales/link", "HowLobsy.Sales.PrimaryCta"),
             new("/home", "HowLobsy.Sales.SecondaryCta"));
     }
 

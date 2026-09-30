@@ -21,7 +21,6 @@ public class SalesManagersController : ControllerBase
     private readonly ISalesManagerOnboardingService _onboarding;
     private readonly ISalesManagerDashboardService _dashboard;
     private readonly ISelfBillingInvoiceService _invoices;
-    private readonly ISalesManagerPayoutService _payouts;
     private readonly IUserLookupService _users;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IHostEnvironment _environment;
@@ -34,7 +33,6 @@ public class SalesManagersController : ControllerBase
         ISalesManagerOnboardingService onboarding,
         ISalesManagerDashboardService dashboard,
         ISelfBillingInvoiceService invoices,
-        ISalesManagerPayoutService payouts,
         IUserLookupService users,
         ICompanyAuthorizationService companyAuth,
         IHostEnvironment environment,
@@ -46,7 +44,6 @@ public class SalesManagersController : ControllerBase
         _onboarding = onboarding;
         _dashboard = dashboard;
         _invoices = invoices;
-        _payouts = payouts;
         _users = users;
         _companyAuth = companyAuth;
         _environment = environment;
@@ -68,7 +65,6 @@ public class SalesManagersController : ControllerBase
                 request.FullName,
                 referredBySalesManagerUserId: null,
                 cancellationToken);
-            // Temp password only returned in Development (also emailed via stub). Avoid leaking in prod HTTP logs.
             return Ok(new SalesManagerInviteResponse(
                 result.UserId,
                 result.Email,
@@ -125,53 +121,6 @@ public class SalesManagersController : ControllerBase
         }
 
         return Ok(result);
-    }
-
-    [HttpPost("me/applications")]
-    [AdminAuditExempt("Self application submit")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerApplicationDto>> SubmitApplication(
-        [FromBody] SubmitSalesManagerApplicationRequest request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var dto = await _applications.SubmitAsync(
-                user.Id,
-                request.CandidateEmail,
-                request.CandidateFullName,
-                request.Motivation,
-                cancellationToken);
-            return Ok(dto);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    [HttpGet("me/applications")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<IEnumerable<SalesManagerApplicationDto>>> ListMyApplications(
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        return Ok(await _applications.ListMineAsync(user.Id, cancellationToken));
     }
 
     [HttpGet("applications")]
@@ -248,84 +197,6 @@ public class SalesManagersController : ControllerBase
         }
     }
 
-    [HttpGet("me/dashboard")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerDashboardDto>> GetMyDashboard(CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        var dto = await _dashboard.GetDashboardAsync(user.Id, cancellationToken);
-        if (dto is null)
-        {
-            return NotFound(new
-            {
-                message =
-                    "Geen salesmanager-dashboard gevonden. Controleer of je account in de database de rol SalesManager heeft (seed/migratie)."
-            });
-        }
-
-        return Ok(dto);
-    }
-
-    [HttpGet("me/profile")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerProfileDto>> GetMyProfile(CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        var profile = await _onboarding.GetProfileAsync(user.Id, cancellationToken);
-        return profile is null
-            ? NotFound(new { message = "Salesmanager-profiel niet gevonden." })
-            : Ok(profile);
-    }
-
-    [HttpPut("me/profile")]
-    [AdminAuditExempt("Self profile update")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerProfileDto>> UpdateMyProfile(
-        [FromBody] UpdateSalesManagerProfileRequest request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var profile = await _onboarding.UpdateProfileAsync(
-                user.Id,
-                new SalesManagerProfileUpdateRequest(
-                    request.CompanyName,
-                    request.KvkNumber,
-                    request.VatNumber,
-                    request.Address,
-                    request.PostalCode,
-                    request.City,
-                    request.Country,
-                    request.Iban),
-                cancellationToken);
-            return Ok(profile);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
     [HttpPost("me/sign-agreement")]
     [AdminAuditExempt("Self agreement sign")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
@@ -366,148 +237,6 @@ public class SalesManagersController : ControllerBase
         return dto is null
             ? NotFound(new { message = "Salesmanager niet gevonden." })
             : Ok(dto);
-    }
-
-    [HttpGet("me/invoices")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<IEnumerable<SelfBillingInvoiceDto>>> ListMyInvoices(
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        var invoices = await _invoices.ListForSalesManagerAsync(user.Id, cancellationToken);
-        return Ok(invoices.Select(MapInvoice));
-    }
-
-    [HttpPost("me/invoices")]
-    [AdminAuditExempt("Self invoice create")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SelfBillingInvoiceDto>> CreateInvoice(CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(user.Id, cancellationToken: cancellationToken);
-            return Ok(MapInvoice(invoice));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    [HttpGet("me/invoices/{invoiceId:guid}/download")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<IActionResult> DownloadMyInvoice(Guid invoiceId, CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            var pdf = await _payouts.RenderInvoicePdfAsync(invoiceId, user.Id, cancellationToken);
-            var invoice = await _invoices.GetAsync(invoiceId, cancellationToken);
-            var fileName = $"{invoice?.InvoiceNumber ?? invoiceId.ToString("N")}.pdf";
-            return File(pdf, "application/pdf", fileName);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-    }
-
-    [HttpGet("me/payouts/preview")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerPayoutPreviewDto>> GetPayoutPreview(
-        [FromQuery] decimal? amountExVat,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        return Ok(await _payouts.GetPreviewAsync(user.Id, amountExVat, cancellationToken));
-    }
-
-    [HttpPost("me/payouts/checkout")]
-    [AdminAuditExempt("Self payout checkout")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerPayoutCheckoutResult>> CreatePayoutCheckout(
-        [FromBody] CreateSalesManagerPayoutCheckoutRequest? request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            if (request?.AmountExVat is null or <= 0)
-            {
-                return BadRequest(new { message = "Geef een bedrag excl. BTW op om uit te betalen." });
-            }
-
-            return Ok(await _payouts.CreateCheckoutAsync(user.Id, request.AmountExVat.Value, cancellationToken));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    [HttpPost("me/payouts/complete")]
-    [AdminAuditExempt("Self payout complete")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerPayoutCompleteResult>> CompletePayoutCheckout(
-        [FromBody] CompleteSalesManagerPayoutRequest request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            return Ok(await _payouts.CompleteCheckoutAsync(request.PaymentId, user.Id, cancellationToken));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
     }
 
     [HttpPost("{userId:guid}/invoices")]
@@ -578,22 +307,9 @@ public record SalesManagerInviteResponse(
 public record SubmitSalesManagerApplicationRequest(
     string CandidateEmail,
     string CandidateFullName,
-    string Motivation);
+    string Motivation,
+    bool ReferrerConfirmedPermission = false);
 
 public record RejectSalesManagerApplicationRequest(string? Reason = null);
 
-public record UpdateSalesManagerProfileRequest(
-    string CompanyName,
-    string KvkNumber,
-    string VatNumber,
-    string Address,
-    string PostalCode,
-    string City,
-    string? Country = "NL",
-    string? Iban = null);
-
 public record SignSalesManagerAgreementRequest(string? AgreementVersion = null);
-
-public record CompleteSalesManagerPayoutRequest(string PaymentId);
-
-public record CreateSalesManagerPayoutCheckoutRequest(decimal? AmountExVat);

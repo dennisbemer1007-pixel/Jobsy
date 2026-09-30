@@ -5,6 +5,7 @@ using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Models;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
@@ -15,6 +16,24 @@ public sealed partial class JobsyApiClient
 {
     public async Task<PartnerSalesCatalog?> GetPartnerSalesCatalogAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PartnerSalesCatalog>("api/sales-commercial/catalog", ct);
+
+    public async Task<SalesReferralVisitResult?> RecordSalesReferralVisitAsync(
+        string code,
+        string? channel,
+        bool countClick,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales-commercial/referral/visit",
+            new { code, channel, countClick },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesReferralVisitResult>(cancellationToken: ct);
+    }
 
     public async Task UpdateSalesCommercialSettingsAsync(
         decimal baseTokenValueEuro,
@@ -29,6 +48,10 @@ public sealed partial class JobsyApiClient
         decimal? year2DirectCommissionRate = null,
         decimal? year3DirectCommissionRate = null,
         decimal? referredYear1DirectCommissionRate = null,
+        int? commissionHoldDays = null,
+        decimal? payoutMinimumEuro = null,
+        int? ibanChangeHoldDays = null,
+        int? attributionCookieDays = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync(
@@ -46,7 +69,11 @@ public sealed partial class JobsyApiClient
                 partnerCommissionRate,
                 year2DirectCommissionRate,
                 year3DirectCommissionRate,
-                referredYear1DirectCommissionRate
+                referredYear1DirectCommissionRate,
+                commissionHoldDays,
+                payoutMinimumEuro,
+                ibanChangeHoldDays,
+                attributionCookieDays
             },
             ct);
         response.EnsureSuccessStatusCode();
@@ -415,15 +442,29 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<SalesManagerInviteResult>(cancellationToken: ct);
     }
 
-    public async Task<SalesManagerApplicationItem?> SubmitSalesManagerApplicationAsync(
+    public async Task<Jobsy.Core.Interfaces.SalesRecommendOverviewDto?> GetSalesRecommendOverviewAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/recommend", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Aanbevelingen laden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Interfaces.SalesRecommendOverviewDto>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerApplicationItem?> SubmitSalesRecommendAsync(
         string candidateEmail,
         string candidateFullName,
         string motivation,
+        bool referrerConfirmedPermission,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
-            "api/sales-managers/me/applications",
-            new { candidateEmail, candidateFullName, motivation },
+            "api/sales/me/recommend",
+            new { candidateEmail, candidateFullName, motivation, referrerConfirmedPermission },
             ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -434,10 +475,43 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<SalesManagerApplicationItem>(cancellationToken: ct);
     }
 
+    public async Task ObjectSalesRecommendAsync(string token, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales/recommend/object",
+            new { token },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Verwijderen mislukt.");
+        }
+    }
+
+    public async Task<SalesManagerApplicationItem?> SubmitSalesManagerApplicationAsync(
+        string candidateEmail,
+        string candidateFullName,
+        string motivation,
+        bool referrerConfirmedPermission = true,
+        CancellationToken ct = default)
+        => await SubmitSalesRecommendAsync(
+            candidateEmail, candidateFullName, motivation, referrerConfirmedPermission, ct);
+
     public async Task<List<SalesManagerApplicationItem>> GetMySalesManagerApplicationsAsync(
         CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<SalesManagerApplicationItem>>(
-               "api/sales-managers/me/applications", ct) ?? [];
+    {
+        var overview = await GetSalesRecommendOverviewAsync(ct);
+        return overview?.Applications.Select(a => new SalesManagerApplicationItem
+        {
+            Id = a.Id,
+            CandidateFullName = a.DisplayName,
+            Status = a.Status,
+            StatusLabelKey = a.StatusLabelKey,
+            CreatedAtUtc = a.CreatedAtUtc,
+            RejectionReason = a.RejectionReason,
+            PersonalDataClearedAtUtc = a.PersonalDataCleared ? DateTime.UtcNow : null
+        }).ToList() ?? [];
+    }
 
     public async Task<List<SalesManagerApplicationItem>> GetSalesManagerApplicationsAsync(
         bool pendingOnly = true,
@@ -484,16 +558,36 @@ public sealed partial class JobsyApiClient
 
     public async Task<SalesManagerDashboard?> GetMySalesManagerDashboardAsync(CancellationToken ct = default)
     {
-        var response = await _http.GetAsync("api/sales-managers/me/dashboard", ct);
-        if (!response.IsSuccessStatusCode)
+        // Legacy callers: compose from portal profile + wallet (old me/dashboard removed in 09).
+        var profile = await GetSalesPortalProfileAsync(ct);
+        if (profile is null)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(
-                ExtractMessage(body)
-                ?? $"Salesmanager-dashboard mislukt ({(int)response.StatusCode}). Is de API (poort 5200) gestart en gemigreerd?");
+            return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerDashboard>(cancellationToken: ct);
+        decimal available = 0m;
+        try
+        {
+            var wallet = await GetSalesWalletAsync(ct);
+            available = wallet.Available;
+        }
+        catch
+        {
+            // ignore — balance optional for shell
+        }
+
+        return new SalesManagerDashboard
+        {
+            UserId = profile.UserId,
+            Email = profile.Email,
+            FullName = profile.FullName,
+            TrackingCode = profile.TrackingCode,
+            IsOnboardingComplete = profile.IsOnboardingComplete,
+            BalanceExVat = available,
+            UninvoicedExVat = available,
+            CanRecruitSalesManagers = profile.CanRecruitSalesManagers,
+            ReferredBySalesManagerUserId = profile.ReferredBySalesManagerUserId
+        };
     }
 
     public async Task<SalesManagerDashboard?> GetSalesManagerDashboardAsync(Guid userId, CancellationToken ct = default)
@@ -510,30 +604,58 @@ public sealed partial class JobsyApiClient
 
     public async Task<SalesManagerProfile?> GetMySalesManagerProfileAsync(CancellationToken ct = default)
     {
-        var response = await _http.GetAsync("api/sales-managers/me/profile", ct);
-        if (!response.IsSuccessStatusCode)
+        var portal = await GetSalesPortalProfileAsync(ct);
+        if (portal is null)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(
-                ExtractMessage(body)
-                ?? $"Salesmanager-profiel mislukt ({(int)response.StatusCode}). Is de API (poort 5200) gestart?");
+            return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerProfile>(cancellationToken: ct);
+        return new SalesManagerProfile
+        {
+            UserId = portal.UserId,
+            Email = portal.Email,
+            FullName = portal.FullName,
+            CompanyName = portal.CompanyName,
+            KvkNumber = portal.KvkNumber,
+            VatNumber = portal.VatNumber,
+            Address = portal.Address,
+            PostalCode = portal.PostalCode,
+            City = portal.City,
+            Country = portal.Country,
+            TrackingCode = portal.TrackingCode,
+            IsOnboardingComplete = portal.IsOnboardingComplete,
+            CanRecruitSalesManagers = portal.CanRecruitSalesManagers,
+            ReferredBySalesManagerUserId = portal.ReferredBySalesManagerUserId,
+            AgreementSignedAt = portal.AgreementSignedAt,
+            AgreementVersion = portal.AgreementVersion,
+            OnboardingCompletedAt = portal.OnboardingCompletedAt,
+            Iban = portal.MaskedIban
+        };
     }
 
     public async Task<SalesManagerProfile?> UpdateMySalesManagerProfileAsync(
         SalesManagerProfileForm form,
         CancellationToken ct = default)
     {
-        var response = await _http.PutAsJsonAsync("api/sales-managers/me/profile", form, ct);
-        if (!response.IsSuccessStatusCode)
+        var portal = await UpdateSalesPortalCompanyAsync(new
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Profiel opslaan mislukt.");
-        }
-
-        return await response.Content.ReadFromJsonAsync<SalesManagerProfile>(cancellationToken: ct);
+            companyName = form.CompanyName,
+            kvkNumber = form.KvkNumber,
+            vatNumber = form.VatNumber,
+            address = form.Address,
+            postalCode = form.PostalCode,
+            city = form.City,
+            country = form.Country
+        }, ct);
+        return await GetMySalesManagerProfileAsync(ct) ?? new SalesManagerProfile
+        {
+            UserId = portal.UserId,
+            Email = portal.Email,
+            FullName = portal.FullName,
+            CompanyName = portal.CompanyName,
+            TrackingCode = portal.TrackingCode,
+            IsOnboardingComplete = portal.IsOnboardingComplete
+        };
     }
 
     public async Task<SalesManagerProfile?> SignSalesManagerAgreementAsync(CancellationToken ct = default)
@@ -549,69 +671,57 @@ public sealed partial class JobsyApiClient
     }
 
     public async Task<List<SelfBillingInvoiceItem>> GetMySelfBillingInvoicesAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<SelfBillingInvoiceItem>>("api/sales-managers/me/invoices", ct) ?? [];
+    {
+        var rows = await GetSalesInvoicesAsync(ct);
+        return rows.Select(i => new SelfBillingInvoiceItem
+        {
+            Id = i.Id,
+            InvoiceNumber = i.InvoiceNumber,
+            SubtotalExVat = i.SubtotalExVat,
+            VatAmount = 0m,
+            TotalInclVat = i.TotalInclVat,
+            Status = i.Status,
+            CreatedAt = i.CreatedAtUtc,
+            IssuedAt = i.CreatedAtUtc,
+            PaidAt = null
+        }).ToList();
+    }
 
     public async Task<SalesManagerPayoutPreview?> GetMyPayoutPreviewAsync(
         decimal? amountExVat = null,
         CancellationToken ct = default)
     {
-        var url = amountExVat is null
-            ? "api/sales-managers/me/payouts/preview"
-            : $"api/sales-managers/me/payouts/preview?amountExVat={amountExVat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-        return await _http.GetFromJsonAsync<SalesManagerPayoutPreview>(url, ct);
+        var preview = await GetSalesPayoutPreviewAsync(ct);
+        return new SalesManagerPayoutPreview
+        {
+            AvailableExVat = preview.AvailableExVat,
+            AmountExVat = preview.AmountExVat,
+            VatAmount = preview.VatAmount,
+            AmountInclVat = preview.TotalInclVat,
+            MaskedIban = preview.MaskedIban,
+            CanPayout = preview.CanRequest,
+            BlockReason = preview.Blockers.FirstOrDefault()?.MessageKey
+        };
     }
 
-    public async Task<SalesManagerPayoutCheckoutResult?> CreateMyPayoutCheckoutAsync(
+    public Task<SalesManagerPayoutCheckoutResult?> CreateMyPayoutCheckoutAsync(
         decimal amountExVat,
         CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync(
-            "api/sales-managers/me/payouts/checkout",
-            new { amountExVat },
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling starten mislukt.");
-        }
+        => throw new InvalidOperationException("Uitbetalen gaat nu via een aanvraag.");
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCheckoutResult>(cancellationToken: ct);
-    }
-
-    public async Task<SalesManagerPayoutCompleteResult?> CompleteMyPayoutCheckoutAsync(
+    public Task<SalesManagerPayoutCompleteResult?> CompleteMyPayoutCheckoutAsync(
         string paymentId,
         CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync(
-            "api/sales-managers/me/payouts/complete",
-            new { paymentId },
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling afronden mislukt.");
-        }
+        => throw new InvalidOperationException("Uitbetalen gaat nu via een aanvraag.");
 
-        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCompleteResult>(cancellationToken: ct);
-    }
-
-    public async Task DownloadMySelfBillingInvoiceAsync(
+    public async Task DownloadMySelfbillingInvoiceAsync(
         Guid invoiceId,
         string invoiceNumber,
         IJSRuntime js,
         CancellationToken ct = default)
     {
-        var response = await _http.GetAsync($"api/sales-managers/me/invoices/{invoiceId}/download", ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Download mislukt.");
-        }
-
-        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
-        var base64 = Convert.ToBase64String(bytes);
-        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+        await DownloadSalesInvoicePdfAsync(js, invoiceId, fileName, ct);
     }
 
     public async Task<SelfBillingInvoiceItem?> MarkSelfBillingInvoicePaidAsync(Guid invoiceId, CancellationToken ct = default)
@@ -655,4 +765,569 @@ public sealed partial class JobsyApiClient
 
         return await response.Content.ReadFromJsonAsync<OnboardingCompleteResult>(cancellationToken: ct);
     }
+
+    public async Task<Jobsy.Core.Contracts.Sales.SalesDashboardDto?> GetSalesPartnerDashboardAsync(
+        string period = "year",
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/dashboard?period={Uri.EscapeDataString(period)}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesDashboardDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Sales.SalesEmployerPageDto?> GetSalesPartnerEmployersAsync(
+        string? q = null,
+        string? status = null,
+        int? year = null,
+        int page = 1,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string> { $"page={page}" };
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            qs.Add($"status={Uri.EscapeDataString(status)}");
+        }
+
+        if (year is not null)
+        {
+            qs.Add($"year={year}");
+        }
+
+        var response = await _http.GetAsync($"api/sales/me/employers?{string.Join('&', qs)}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerPageDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto?> GetSalesPartnerEmployerAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/employers/{companyId:D}", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesLinkToolkitDto?> GetSalesLinkToolkitAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/link", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesLinkToolkitDto>(cancellationToken: ct);
+    }
+
+    public async Task<byte[]?> GetSalesQrPngAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/materials/qr.png", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task DownloadSalesQrPngAsync(IJSRuntime js, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/materials/qr.png", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "QR downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? "lobsy-qr.png";
+        var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, "image/png");
+    }
+
+    public async Task DownloadSalesMaterialPdfAsync(
+        IJSRuntime js,
+        string kind,
+        string? trackingCode,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/materials/{Uri.EscapeDataString(kind)}.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Materiaal downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var code = string.IsNullOrWhiteSpace(trackingCode) ? "code" : trackingCode.Trim().ToUpperInvariant();
+        var fileName = kind.Trim().ToLowerInvariant() switch
+        {
+            "flyer" => $"lobsy-flyer-{code}.pdf",
+            "visitekaartje" or "visitekaartjes" or "cards" => $"lobsy-visitekaartje-{code}.pdf",
+            "prijskaart" or "prices" => $"lobsy-prijskaart-{code}.pdf",
+            "presentatie" or "presentation" => $"lobsy-presentatie-{code}.pdf",
+            _ => $"lobsy-materiaal-{code}.pdf"
+        };
+        var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto?> GetSalesPortalProfileAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/profile", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Profiel laden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct);
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto> UpdateSalesPortalCompanyAsync(
+        object form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/sales/me/profile/company", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Bedrijfsgegevens opslaan mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto> UpdateSalesPortalVatAsync(
+        object form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/sales/me/profile/vat", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Btw-keuze opslaan mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto> UpdateSalesEmailPrefsAsync(
+        Jobsy.Core.Sales.SalesEmailPrefs prefs,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/sales/me/profile/email-prefs", prefs, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Voorkeuren opslaan mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto> GiveSalesSelfBillingConsentAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/sales/me/profile/consent", new { }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Toestemming geven mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto> RevokeSalesSelfBillingConsentAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/sales/me/profile/consent/revoke", new { }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Toestemming intrekken mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<SalesIbanChangeBeginClientResult> BeginSalesIbanChangeAsync(
+        string iban,
+        string holderName,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales/me/payout-account/change",
+            new { iban, holderName },
+            ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Te veel IBAN-wijzigingen.");
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(ExtractMessage(body) ?? "IBAN-wijziging starten mislukt.");
+        }
+
+        return System.Text.Json.JsonSerializer.Deserialize<SalesIbanChangeBeginClientResult>(
+                   body,
+                   new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+               ?? new SalesIbanChangeBeginClientResult();
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto> ConfirmSalesIbanChangeAsync(
+        string code,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales/me/payout-account/change/confirm",
+            new { code },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Bevestigen mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPortalProfileDto> ConfirmSalesIbanChangeEmailAsync(
+        string token,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales/me/payout-account/change/confirm-email",
+            new { token },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Bevestigen mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPortalProfileDto>(cancellationToken: ct))!;
+    }
+
+    public async Task DownloadSalesAgreementPdfAsync(IJSRuntime js, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/agreement.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Overeenkomst downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        await SendBrowserDownloadAsync(js, "lobsy-overeenkomst.pdf", Convert.ToBase64String(bytes), "application/pdf");
+    }
+
+    public async Task DownloadSalesConsentPdfAsync(IJSRuntime js, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/self-billing-consent.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Toestemming downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        await SendBrowserDownloadAsync(
+            js,
+            "lobsy-self-billing-toestemming.pdf",
+            Convert.ToBase64String(bytes),
+            "application/pdf");
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesWalletOverviewDto> GetSalesWalletAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/wallet", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesWalletOverviewDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesWalletEntriesPageDto> GetSalesWalletEntriesAsync(
+        int? periodYear,
+        string? kind,
+        string? state,
+        int page = 1,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string> { $"page={page}" };
+        if (periodYear is int y) qs.Add($"period={y}");
+        if (!string.IsNullOrWhiteSpace(kind)) qs.Add($"kind={Uri.EscapeDataString(kind)}");
+        if (!string.IsNullOrWhiteSpace(state)) qs.Add($"state={Uri.EscapeDataString(state)}");
+        var response = await _http.GetAsync($"api/sales/me/wallet/entries?{string.Join('&', qs)}", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesWalletEntriesPageDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<IReadOnlyList<Jobsy.Core.Sales.SalesPayoutListItemDto>> GetSalesPayoutsAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/payouts", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<List<Jobsy.Core.Sales.SalesPayoutListItemDto>>(cancellationToken: ct))
+               ?? [];
+    }
+
+    public async Task<IReadOnlyList<Jobsy.Core.Sales.SalesInvoiceListItemDto>> GetSalesInvoicesAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/invoices", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<List<Jobsy.Core.Sales.SalesInvoiceListItemDto>>(cancellationToken: ct))
+               ?? [];
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPayoutPreviewDto> GetSalesPayoutPreviewAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/sales/me/payouts/preview", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPayoutPreviewDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPayoutRequestDto> RequestSalesPayoutAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/sales/me/payouts", new { }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Aanvragen mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPayoutRequestDto>(cancellationToken: ct))!;
+    }
+
+    public async Task CancelSalesPayoutAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync($"api/sales/me/payouts/{id:D}/cancel", new { }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Annuleren mislukt.");
+        }
+    }
+
+    public async Task DownloadSalesInvoicePdfAsync(IJSRuntime js, Guid id, string fileName, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/invoices/{id:D}/pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Factuur downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var safe = string.IsNullOrWhiteSpace(fileName) ? id.ToString("N") : fileName;
+        if (!safe.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            safe += ".pdf";
+        }
+
+        await SendBrowserDownloadAsync(js, safe, Convert.ToBase64String(bytes), "application/pdf");
+    }
+
+    public async Task DownloadSalesJaaroverzichtAsync(IJSRuntime js, int year, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales/me/jaaroverzicht/{year}.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Jaaroverzicht downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        await SendBrowserDownloadAsync(js, $"jaaroverzicht-{year}.pdf", Convert.ToBase64String(bytes), "application/pdf");
+    }
+
+    public async Task<List<Jobsy.Core.Sales.SalesPayoutRunListItemDto>> GetAdminSalesPayoutRunsAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/admin/sales/payout-runs", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<List<Jobsy.Core.Sales.SalesPayoutRunListItemDto>>(cancellationToken: ct))
+               ?? [];
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPayoutRunDetailDto> GetAdminSalesPayoutRunAsync(
+        Guid id,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/admin/sales/payout-runs/{id:D}", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPayoutRunDetailDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPayoutRunDto> CreateAdminSalesExtraPayoutRunAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/admin/sales/payout-runs", new { }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Extra ronde maken mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPayoutRunDto>(cancellationToken: ct))!;
+    }
+
+    public async Task RejectAdminSalesPayoutLineAsync(
+        Guid runId,
+        Guid requestId,
+        string reason,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/sales/payout-runs/{runId:D}/lines/{requestId:D}/reject",
+            new { reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Afwijzen mislukt.");
+        }
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPayoutRunDto> ApproveAdminSalesPayoutRunAsync(
+        Guid runId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/sales/payout-runs/{runId:D}/approve",
+            new { },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Goedkeuren mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPayoutRunDto>(cancellationToken: ct))!;
+    }
+
+    public async Task DownloadAdminSalesPayoutExportAsync(
+        IJSRuntime js,
+        Guid runId,
+        string format,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/admin/sales/payout-runs/{runId:D}/export?format={Uri.EscapeDataString(format)}",
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Export mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                       ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? $"payout-{runId:N}.{format}";
+        var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+        await SendBrowserDownloadAsync(js, fileName, Convert.ToBase64String(bytes), contentType);
+    }
+
+    public async Task<Jobsy.Core.Sales.SalesPayoutRunDto> MarkAdminSalesPayoutRunPaidAsync(
+        Guid runId,
+        IReadOnlyList<Guid>? invoiceIds = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/sales/payout-runs/{runId:D}/mark-paid",
+            new { invoiceIds },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Markeren als betaald mislukt.");
+        }
+
+        return (await response.Content.ReadFromJsonAsync<Jobsy.Core.Sales.SalesPayoutRunDto>(cancellationToken: ct))!;
+    }
+
+    public async Task<List<Jobsy.Core.Sales.SalesParkedBalanceItem>> GetAdminSalesParkedBalancesAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/admin/sales/parked-balances", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<List<Jobsy.Core.Sales.SalesParkedBalanceItem>>(cancellationToken: ct))
+               ?? [];
+    }
+
+    public async Task BookAdminSalesLedgerCorrectionAsync(
+        Guid beneficiaryUserId,
+        Guid? companyId,
+        decimal amountExVat,
+        string reason,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/admin/sales/ledger/corrections",
+            new { beneficiaryUserId, companyId, amountExVat, reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Correctie boeken mislukt.");
+        }
+    }
+
+    public async Task ReassignAdminSalesAttributionAsync(
+        Guid companyId,
+        Guid? toBeneficiaryUserId,
+        string reason,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/sales/attribution/{companyId:D}",
+            new { toBeneficiaryUserId, reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Toewijzing wijzigen mislukt.");
+        }
+    }
+
+    public async Task<List<Jobsy.Core.Sales.SalesAttributionHistoryItem>> GetAdminSalesAttributionHistoryAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/admin/sales/attribution/{companyId:D}/history", ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<List<Jobsy.Core.Sales.SalesAttributionHistoryItem>>(cancellationToken: ct))
+               ?? [];
+    }
+}
+
+public sealed class SalesIbanChangeBeginClientResult
+{
+    public string Method { get; set; } = "totp";
+    public bool Applied { get; set; }
+    public string? Message { get; set; }
+    public Jobsy.Core.Sales.SalesPortalProfileDto? Profile { get; set; }
 }

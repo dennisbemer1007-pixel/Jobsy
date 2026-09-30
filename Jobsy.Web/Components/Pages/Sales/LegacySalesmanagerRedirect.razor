@@ -1,0 +1,9 @@
+@page "/salesmanager"
+@attribute [Authorize(Roles = "SalesManager")]
+@inject NavigationManager Navigation
+
+@* Legacy alias — middleware also 301s; thin page keeps UAT/route index green after 09 cleanup. *@
+@code {
+    protected override void OnInitialized()
+        => Navigation.NavigateTo("/sales", replace: true);
+}

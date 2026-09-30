@@ -158,6 +158,11 @@ public sealed class SalesManagerApplicationItem
     public Guid? ProvisionedUserId { get; set; }
     public string? RejectionReason { get; set; }
     public string? TemporaryPassword { get; set; }
+    public DateTime? SubjectNotifiedAtUtc { get; set; }
+    public DateTime? SubjectObjectedAtUtc { get; set; }
+    public DateTime? PersonalDataClearedAtUtc { get; set; }
+    public bool ReferrerConfirmedPermission { get; set; }
+    public string StatusLabelKey { get; set; } = string.Empty;
 }
 
 public sealed class ReferredSupplierItem
@@ -244,6 +249,8 @@ public sealed class SalesManagerProfile
     public string? AgreementVersion { get; set; }
     public DateTime? OnboardingCompletedAt { get; set; }
     public bool IsOnboardingComplete { get; set; }
+    public bool CanRecruitSalesManagers { get; set; } = true;
+    public Guid? ReferredBySalesManagerUserId { get; set; }
 }
 
 public sealed class SalesManagerProfileForm
@@ -318,6 +325,10 @@ public sealed class SalesCommercialAdminModel
     public decimal Year2DirectCommissionRate { get; set; } = 0.10m;
     public decimal Year3DirectCommissionRate { get; set; } = 0.05m;
     public decimal ReferredYear1DirectCommissionRate { get; set; } = 0.20m;
+    public int CommissionHoldDays { get; set; } = 14;
+    public decimal PayoutMinimumEuro { get; set; } = 50m;
+    public int IbanChangeHoldDays { get; set; } = 3;
+    public int AttributionCookieDays { get; set; } = 30;
 }
 
 public sealed class PartnerAffiliateMeModel

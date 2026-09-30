@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,10 +15,12 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
     private static readonly Regex KvkRegex = new(@"^\d{8}$", RegexOptions.Compiled);
 
     private readonly JobsyDbContext _db;
+    private readonly ISalesPayoutProfileService _payoutProfile;
 
-    public SalesManagerOnboardingService(JobsyDbContext db)
+    public SalesManagerOnboardingService(JobsyDbContext db, ISalesPayoutProfileService payoutProfile)
     {
         _db = db;
+        _payoutProfile = payoutProfile;
     }
 
     public async Task<SalesManagerProfileDto?> GetProfileAsync(
@@ -31,7 +34,6 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
             return null;
         }
 
-        // Always ensure a profile row exists so GET never 404s for a valid salesmanager.
         var profile = await EnsureProfileAsync(userId, cancellationToken);
         if (_db.ChangeTracker.HasChanges())
         {
@@ -46,25 +48,29 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         SalesManagerProfileUpdateRequest request,
         CancellationToken cancellationToken = default)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
-            ?? throw new KeyNotFoundException("Gebruiker niet gevonden.");
+        // Route through the payout profile service: IBAN changes (when an account
+        // already exists) are ignored; first IBAN during onboarding is still applied.
+        var portal = await _payoutProfile.UpdateLegacyProfileAsync(
+            userId,
+            new SalesCompanyUpdateRequest(
+                request.CompanyName,
+                request.KvkNumber,
+                request.VatNumber,
+                request.Address,
+                request.PostalCode,
+                request.City,
+                request.Country),
+            request.Iban,
+            holderName: null,
+            cancellationToken);
 
-        ValidateBusinessFields(request);
-
+        var user = await _db.Users.AsNoTracking().FirstAsync(u => u.Id == userId, cancellationToken);
         var profile = await EnsureProfileAsync(userId, cancellationToken);
-        profile.CompanyName = request.CompanyName.Trim();
-        profile.KvkNumber = request.KvkNumber.Trim();
-        profile.VatNumber = request.VatNumber.Trim().ToUpperInvariant();
-        profile.Address = request.Address.Trim();
-        profile.PostalCode = request.PostalCode.Trim();
-        profile.City = request.City.Trim();
-        profile.Country = string.IsNullOrWhiteSpace(request.Country) ? "NL" : request.Country.Trim();
-        profile.Iban = ResolveIbanUpdate(profile.Iban, request.Iban);
-        profile.UpdatedAt = DateTime.UtcNow;
-
-        TryCompleteOnboarding(profile);
-        await _db.SaveChangesAsync(cancellationToken);
-        return Map(user, profile);
+        var dto = Map(user, profile);
+        // Preserve warnings via a side channel — callers of the legacy DTO still get the profile;
+        // the new api/sales/me/profile returns SalesPortalProfileDto with Warnings.
+        _ = portal.Warnings;
+        return dto;
     }
 
     public async Task<SalesManagerProfileDto> SignAgreementAsync(
@@ -75,7 +81,6 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
             ?? throw new KeyNotFoundException("Gebruiker niet gevonden.");
 
-        // Ignore client-supplied versions (same pattern as consent) — server stamps current.
         _ = agreementVersion;
         var version = SalesCommissionRules.CurrentAgreementVersion;
 
@@ -83,14 +88,19 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         if (!HasRequiredBusinessData(profile))
         {
             throw new InvalidOperationException(
-                "Vul eerst KvK, BTW-nummer en NAW-gegevens in voordat je de overeenkomst ondertekent.");
+                "Vul eerst KvK, NAW-gegevens (en btw-nummer bij 21 % btw) in voordat je de overeenkomst ondertekent.");
+        }
+
+        if (string.IsNullOrWhiteSpace(profile.Iban))
+        {
+            throw new InvalidOperationException("Vul eerst je uitbetaalrekening in.");
         }
 
         profile.AgreementSignedAt = DateTime.UtcNow;
         profile.AgreementVersion = version;
         profile.UpdatedAt = DateTime.UtcNow;
 
-        TryCompleteOnboarding(profile);
+        await TryCompleteOnboardingAsync(profile, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         return Map(user, profile);
     }
@@ -116,14 +126,27 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         return profile;
     }
 
-    private static void TryCompleteOnboarding(SalesManagerProfile profile)
+    private async Task TryCompleteOnboardingAsync(SalesManagerProfile profile, CancellationToken cancellationToken)
     {
         if (profile.OnboardingCompletedAt.HasValue && !string.IsNullOrWhiteSpace(profile.TrackingCode))
         {
             return;
         }
 
-        if (!HasRequiredBusinessData(profile) || !profile.AgreementSignedAt.HasValue)
+        if (!HasRequiredBusinessData(profile)
+            || !profile.AgreementSignedAt.HasValue
+            || string.IsNullOrWhiteSpace(profile.Iban))
+        {
+            return;
+        }
+
+        var hasConsent = await _db.SalesSelfBillingConsents.AsNoTracking()
+            .AnyAsync(
+                c => c.UserId == profile.UserId
+                     && c.Version == SalesSelfBilling.CurrentVersion
+                     && c.RevokedAtUtc == null,
+                cancellationToken);
+        if (!hasConsent)
         {
             return;
         }
@@ -132,52 +155,30 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         profile.OnboardingCompletedAt ??= DateTime.UtcNow;
     }
 
-    private static bool HasRequiredBusinessData(SalesManagerProfile profile) =>
-        !string.IsNullOrWhiteSpace(profile.CompanyName)
-        && !string.IsNullOrWhiteSpace(profile.KvkNumber)
-        && !string.IsNullOrWhiteSpace(profile.VatNumber)
-        && !string.IsNullOrWhiteSpace(profile.Address)
-        && !string.IsNullOrWhiteSpace(profile.PostalCode)
-        && !string.IsNullOrWhiteSpace(profile.City);
-
-    private static void ValidateBusinessFields(SalesManagerProfileUpdateRequest request)
+    private static bool HasRequiredBusinessData(SalesManagerProfile profile)
     {
-        if (string.IsNullOrWhiteSpace(request.CompanyName)
-            || string.IsNullOrWhiteSpace(request.Address)
-            || string.IsNullOrWhiteSpace(request.PostalCode)
-            || string.IsNullOrWhiteSpace(request.City))
+        if (string.IsNullOrWhiteSpace(profile.CompanyName)
+            || string.IsNullOrWhiteSpace(profile.KvkNumber)
+            || string.IsNullOrWhiteSpace(profile.Address)
+            || string.IsNullOrWhiteSpace(profile.PostalCode)
+            || string.IsNullOrWhiteSpace(profile.City))
         {
-            throw new ArgumentException("Bedrijfsnaam en NAW-gegevens zijn verplicht.");
+            return false;
         }
 
-        var kvk = request.KvkNumber.Trim();
-        if (!KvkRegex.IsMatch(kvk))
+        if (!KvkRegex.IsMatch(profile.KvkNumber.Trim()))
         {
-            throw new ArgumentException("KvK-nummer moet 8 cijfers zijn.");
+            return false;
         }
 
-        var vat = request.VatNumber.Trim().ToUpperInvariant();
-        if (!VatRegex.IsMatch(vat))
+        if (profile.VatTreatment == SalesManagerVatTreatment.Standard21)
         {
-            throw new ArgumentException("BTW-nummer moet het formaat NL123456789B01 hebben.");
-        }
-    }
-
-    private static string? ResolveIbanUpdate(string? current, string? incoming)
-    {
-        if (string.IsNullOrWhiteSpace(incoming))
-        {
-            // Empty form field keeps the stored IBAN (GET never returns the full value).
-            return current;
+            return !string.IsNullOrWhiteSpace(profile.VatNumber)
+                   && VatRegex.IsMatch(profile.VatNumber.Trim());
         }
 
-        var compact = incoming.Trim().Replace(" ", "", StringComparison.Ordinal);
-        if (compact.Contains('*', StringComparison.Ordinal))
-        {
-            return current;
-        }
-
-        return compact.ToUpperInvariant();
+        // KOR: btw-nummer optional
+        return true;
     }
 
     private static string GenerateTrackingCode()
@@ -204,10 +205,9 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
             profile?.PostalCode,
             profile?.City,
             profile?.Country,
-            // Never return the full IBAN over the API — only a masked preview.
             string.IsNullOrWhiteSpace(profile?.Iban)
                 ? null
-                : ISalesManagerPayoutService.MaskIban(profile.Iban),
+                : Iban.Mask(profile.Iban),
             profile?.TrackingCode,
             profile?.AgreementSignedAt,
             profile?.AgreementVersion,

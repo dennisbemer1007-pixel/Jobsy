@@ -92,7 +92,8 @@ public class RegistrationController : ControllerBase
                     request.ManualEstablishmentNumber,
                     request.ManualLatitude,
                     request.ManualLongitude,
-                    request.ManualIsIntermediarySbi),
+                    request.ManualIsIntermediarySbi,
+                    request.CookieTrackingCode),
                 cancellationToken);
 
             return Ok(new RegistrationSubmitResponse(

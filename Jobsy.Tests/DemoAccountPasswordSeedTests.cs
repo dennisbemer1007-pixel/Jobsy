@@ -87,6 +87,8 @@ public class DemoAccountPasswordSeedTests
         credential.PasswordHash = JobsyPasswordHasher.Hash("ChangedPass1!");
         await db.SaveChangesAsync();
 
+        // Re-assert pass-through before the second seed (parallel factory tests may swap the static hook).
+        IbanEfProtection.Configure(new PassThroughIbanProtector());
         await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
 
         var restored = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "kandidaat@jobsy.local");
@@ -96,9 +98,19 @@ public class DemoAccountPasswordSeedTests
 
     private static JobsyDbContext CreateDb()
     {
+        // Avoid racing with WebApplicationFactory tests that dispose a real DataProtection
+        // provider after configuring the static IbanEfProtection hook.
+        IbanEfProtection.Configure(new PassThroughIbanProtector());
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new JobsyDbContext(options);
+    }
+
+    private sealed class PassThroughIbanProtector : IIbanProtector
+    {
+        public bool IsProtected(string? value) => false;
+        public string? Protect(string? plaintext) => plaintext;
+        public string? Unprotect(string? protectedPayload) => protectedPayload;
     }
 }

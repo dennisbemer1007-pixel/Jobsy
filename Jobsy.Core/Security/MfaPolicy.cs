@@ -11,5 +11,8 @@ public static class MfaPolicy
                or UserRole.EnterpriseManager
                or UserRole.Intermediary
            || role is UserRole.SchoolAdmin
-               or UserRole.Teacher;
+               or UserRole.Teacher
+           || role == UserRole.SalesManager
+           // Ambassadeur is parked (AmbassadorsEnabled = false); 2FA stays required when the role is re-enabled.
+           || role == UserRole.Ambassadeur;
 }

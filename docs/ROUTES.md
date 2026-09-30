@@ -28,7 +28,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (228 routes)
+## Table (239 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -202,6 +202,17 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
 | `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
 | `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
+| `/sales` | `Pages/Sales/Dashboard.razor` | SalesManager |
+| `/sales/aanbevelen` | `Pages/Sales/Recommend.razor` | SalesManager |
+| `/sales/aanbevelen/bezwaar` | `Pages/Sales/RecommendObject.razor` | anonymous |
+| `/sales/hulp` | `Pages/Sales/Help.razor` | SalesManager |
+| `/sales/link` | `Pages/Sales/Link.razor` | SalesManager |
+| `/sales/profiel` | `Pages/Sales/Profile.razor` | SalesManager |
+| `/sales/profiel/iban-bevestigen` | `Pages/Sales/IbanConfirm.razor` | SalesManager |
+| `/sales/start` | `Pages/Sales/Start.razor` | SalesManager |
+| `/sales/wallet` | `Pages/Sales/Wallet.razor` | SalesManager |
+| `/sales/wallet/uitbetalen` | `Pages/Sales/Wallet.razor` | SalesManager |
+| `/sales/werkgevers` | `Pages/Sales/Employers.razor` | SalesManager |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |

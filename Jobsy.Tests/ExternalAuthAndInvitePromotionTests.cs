@@ -1,3 +1,4 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
@@ -217,7 +218,7 @@ public class ExternalAuthAndInvitePromotionTests
         var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
         return new AuthController(
             db, config, credentials,
-            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures()),
             new StubHostEnvironment { EnvironmentName = Environments.Development },
             new DeviceSessionService(
                 db,
@@ -226,7 +227,8 @@ public class ExternalAuthAndInvitePromotionTests
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance),
             new Jobsy.Infrastructure.Services.EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Infrastructure.Services.EmailServiceStub>.Instance),
             new Jobsy.Api.Security.MfaChallengeService(
-                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())));
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
+            new AlwaysOnFeatures());
     }
 
     private sealed class StubHostEnvironment : IHostEnvironment

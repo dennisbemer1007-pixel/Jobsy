@@ -1,4 +1,6 @@
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
@@ -7,6 +9,17 @@
         <a class="admin-sublink" href="/admin/financien/uitbetalingen">@Culture["AdminNav.Payouts"]</a>
         <a class="admin-sublink admin-sublink--active" href="/admin/gebruikers/sales" aria-current="page">Salesmanagers</a>
     </div>
+
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/admin/sales-managers" />
+
+    @if (_tab == "uitbetalingen")
+    {
+        @* // moves to /admin/financien/uitbetalingen (admin-redesign 06.4) *@
+        <PayoutRunsSection />
+        <p class="muted">@Culture["SalesAdmin.Runs.CrossLinkFinance"]</p>
+    }
+    else
+    {
     <section class="panel-section">
         <h2>Direct uitnodigen (Admin)</h2>
         <p class="muted">Alleen Admin kan initiële (tier-0) salesmanagers aanmaken die zelf mogen werven.</p>
@@ -44,12 +57,16 @@
                 <div class="table-list">
                     @foreach (var app in _applications)
                     {
-                        <div class="table-row" style="flex-wrap:wrap;gap:0.75rem">
-                            <div style="flex:1;min-width:14rem">
-                                <strong>@app.CandidateFullName</strong>
+                        <div class="table-row">
+                            <div>
+                                <strong>@(string.IsNullOrWhiteSpace(app.CandidateFullName) ? "Gegevens verwijderd" : app.CandidateFullName)</strong>
                                 <div class="muted">@app.CandidateEmail</div>
                                 <div class="muted">Via @app.ReferrerFullName (@app.ReferrerTrackingCode)</div>
                                 <div>@app.Motivation</div>
+                                @if (app.SubjectNotifiedAtUtc is DateTime notified)
+                                {
+                                    <div class="muted">@Culture.Format("SalesAdmin.Application.Notified", notified.ToLocalTime().ToString("g"))</div>
+                                }
                             </div>
                             <div class="inline-actions">
                                 <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy"
@@ -157,8 +174,23 @@
                 </div>
             </section>
         }
+
+        @* // moves to /admin/gebruikers/sales *@
+        <AttributionSection />
+        <p class="muted">@Culture["SalesAdmin.Runs.CrossLinkFinance"]</p>
+    }
     }
 @code {
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    private readonly IReadOnlyList<EntTabs.Tab> _tabs =
+    [
+        new("salesmanagers", "Salesmanagers"),
+        new("uitbetalingen", "Uitbetalingen")
+    ];
+
+    private string _tab = "salesmanagers";
     private List<SalesManagerListItem> _list = [];
     private List<SalesManagerApplicationItem> _applications = [];
     private SalesManagerDashboard? _selected;
@@ -173,7 +205,19 @@
     private SupportAccessGrantItem? _activeGrant;
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        ResolveTab();
+    }
+
+    protected override void OnParametersSet() => ResolveTab();
+
+    private void ResolveTab()
+    {
+        _tab = string.Equals(TabQuery, "uitbetalingen", StringComparison.OrdinalIgnoreCase)
+            ? "uitbetalingen"
+            : "salesmanagers";
+    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
