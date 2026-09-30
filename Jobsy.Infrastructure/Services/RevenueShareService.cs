@@ -346,36 +346,54 @@ public sealed class RevenueShareService : IRevenueShareService
         }
 
         // Conditional activation: only the first writer wins CommissionStartsAtUtc.
-        var startsAt = paidAtUtc;
-        var rows = await _db.Companies
-            .Where(c => c.Id == rootCompanyId && c.CommissionStartsAtUtc == null)
-            .ExecuteUpdateAsync(
-                s => s
-                    .SetProperty(c => c.CommissionStartsAtUtc, startsAt)
-                    .SetProperty(c => c.CommissionDirectRateSnapshot, Math.Max(0m, directRate!.Value))
-                    .SetProperty(c => c.CommissionIndirectRateSnapshot, Math.Max(0m, indirectRate!.Value))
-                    .SetProperty(c => c.CommissionDurationDaysSnapshot, durationDays)
-                    .SetProperty(c => c.CommissionYear2RateSnapshot, year2)
-                    .SetProperty(c => c.CommissionYear3RateSnapshot, year3)
-                    .SetProperty(c => c.CommissionIndirectSalesManagerUserId, referringSmId)
-                    .SetProperty(c => c.CommissionTermsSnapshottedAtUtc, DateTime.UtcNow),
-                cancellationToken);
-
-        if (rows == 0)
+        var tracked = await _db.Companies.FirstOrDefaultAsync(c => c.Id == rootCompanyId, cancellationToken);
+        if (tracked is null)
         {
-            // Already activated (or race lost) — fill missing year-2/3 snapshots only.
-            await _db.Companies
-                .Where(c => c.Id == rootCompanyId
-                            && (c.CommissionYear2RateSnapshot == null || c.CommissionYear3RateSnapshot == null))
-                .ExecuteUpdateAsync(
-                    s => s
-                        .SetProperty(
-                            c => c.CommissionYear2RateSnapshot,
-                            c => c.CommissionYear2RateSnapshot ?? year2)
-                        .SetProperty(
-                            c => c.CommissionYear3RateSnapshot,
-                            c => c.CommissionYear3RateSnapshot ?? year3),
-                    cancellationToken);
+            return;
+        }
+
+        if (tracked.CommissionStartsAtUtc is null)
+        {
+            tracked.CommissionStartsAtUtc = paidAtUtc;
+            tracked.CommissionDirectRateSnapshot = Math.Max(0m, directRate!.Value);
+            tracked.CommissionIndirectRateSnapshot = Math.Max(0m, indirectRate!.Value);
+            tracked.CommissionDurationDaysSnapshot = durationDays is > 0
+                ? durationDays.Value
+                : SalesCommissionRules.DefaultCommissionDurationDays;
+            tracked.CommissionYear2RateSnapshot = year2;
+            tracked.CommissionYear3RateSnapshot = year3;
+            tracked.CommissionIndirectSalesManagerUserId = referringSmId;
+            tracked.CommissionTermsSnapshottedAtUtc = DateTime.UtcNow;
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                // Concurrent activation — re-read winner.
+                await _db.Entry(tracked).ReloadAsync(cancellationToken);
+            }
+        }
+        else
+        {
+            // Already activated — fill missing year-2/3 snapshots only.
+            var dirty = false;
+            if (tracked.CommissionYear2RateSnapshot is null)
+            {
+                tracked.CommissionYear2RateSnapshot = year2;
+                dirty = true;
+            }
+
+            if (tracked.CommissionYear3RateSnapshot is null)
+            {
+                tracked.CommissionYear3RateSnapshot = year3;
+                dirty = true;
+            }
+
+            if (dirty)
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
         }
     }
 

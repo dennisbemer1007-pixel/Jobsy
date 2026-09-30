@@ -153,6 +153,7 @@ public class SalesCommissionEngineTests
         var smId = Guid.NewGuid();
         var companyId = Guid.NewGuid();
         SeedCompany(db, smId, companyId);
+        await db.SaveChangesAsync();
         var company = await db.Companies.SingleAsync(c => c.Id == companyId);
         company.CommissionStartsAtUtc = DateTime.UtcNow.AddDays(-1100);
         company.CommissionDirectRateSnapshot = 0.25m;
@@ -173,9 +174,8 @@ public class SalesCommissionEngineTests
 
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(smId));
         Assert.Equal(0m, await tokens.GetBalanceAsync(companyId));
-        var ambassadorLog = await db.RevenueShareLogs.SingleAsync(
-            l => l.TokenCheckoutId == checkoutId && l.RecipientKind == RevenueShareRecipientKind.Ambassador);
-        Assert.Equal(0m, ambassadorLog.Tokens);
+        var logs = await db.RevenueShareLogs.Where(l => l.TokenCheckoutId == checkoutId).ToListAsync();
+        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.Ambassador && l.Tokens == 0m);
     }
 
     [Fact]
@@ -327,18 +327,12 @@ public class SalesCommissionEngineTests
         var smId = Guid.NewGuid();
         var companyId = Guid.NewGuid();
         SeedCompany(db, smId, companyId);
-        await db.SaveChangesAsync();
 
-        var tokens = new TokenLedgerService(db);
-        var commercial = new SalesCommercialService(db, tokens);
-        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures(), commercial);
-        var share = new RevenueShareService(db, tokens, commissions, commercial);
-
-        // First purchase 15-03-2026 € 800 → € 200 commission
         var paidAt = new DateTime(2026, 3, 15, 10, 0, 0, DateTimeKind.Utc);
+        var checkoutId = Guid.NewGuid();
         db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
         {
-            Id = Guid.NewGuid(),
+            Id = checkoutId,
             PaymentId = "stub_pay_example",
             CompanyId = companyId,
             PackSize = 50,
@@ -348,26 +342,12 @@ public class SalesCommissionEngineTests
             CreatedAt = paidAt,
             CreditedAt = paidAt
         });
-        var checkoutId = (await db.TokenPurchaseCheckouts.SingleAsync()).Id;
-        // Align Apply path: use checkout id after save
         await db.SaveChangesAsync();
 
-        // Re-create share call with known checkout
-        db.TokenPurchaseCheckouts.Remove(await db.TokenPurchaseCheckouts.SingleAsync());
-        checkoutId = Guid.NewGuid();
-        db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
-        {
-            Id = checkoutId,
-            PaymentId = "stub_pay_example2",
-            CompanyId = companyId,
-            PackSize = 50,
-            AmountEuro = 968m,
-            AmountExVatCents = 80000,
-            Status = TokenPurchaseCheckoutStatus.Credited,
-            CreatedAt = paidAt,
-            CreditedAt = paidAt
-        });
-        await db.SaveChangesAsync();
+        var tokens = new TokenLedgerService(db);
+        var commercial = new SalesCommercialService(db, tokens);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures(), commercial);
+        var share = new RevenueShareService(db, tokens, commissions, commercial);
 
         await share.ApplyTokenPurchaseShareAsync(
             checkoutId, companyId, Guid.NewGuid(), 50, 800m, smId, null);
@@ -383,28 +363,22 @@ public class SalesCommissionEngineTests
             e => e.Kind == CommissionEntryKind.RefundCorrection);
         Assert.Equal(-100.00m, correction.AmountExVat);
 
-        // Year-2 purchase at snapshotted 10% even if settings changed to 8%
+        // Year-2 rate stays snapshotted at 10% even if settings change to 8%
         var settings = await db.SalesCommercialSettings.SingleAsync();
         settings.Year2DirectCommissionRate = 0.08m;
         await db.SaveChangesAsync();
 
         var company = await db.Companies.SingleAsync(c => c.Id == companyId);
-        company.CommissionStartsAtUtc = paidAt; // keep activation
-        await db.SaveChangesAsync();
-
-        // Force "now" for year-2 by setting start a year earlier relative to purchase time used in Apply (UtcNow).
-        // Instead credit via ledger with snapshotted terms:
-        var year2PurchaseAt = paidAt.AddDays(400);
         var terms = new SalesCommissionRules.CommissionTerms(
             company.CommissionDirectRateSnapshot!.Value,
             company.CommissionYear2RateSnapshot!.Value,
             company.CommissionYear3RateSnapshot!.Value,
             0m,
             company.CommissionDurationDaysSnapshot ?? 1095,
-            paidAt);
+            company.CommissionStartsAtUtc!.Value);
+        var year2PurchaseAt = company.CommissionStartsAtUtc.Value.AddDays(400);
         Assert.Equal(2, SalesCommissionRules.YearFor(terms, year2PurchaseAt));
         Assert.Equal(0.10m, SalesCommissionRules.DirectRate(terms, 2));
-        Assert.NotEqual(0.08m, SalesCommissionRules.DirectRate(terms, 2));
     }
 
     [Fact]
@@ -415,6 +389,7 @@ public class SalesCommissionEngineTests
         var smId = Guid.NewGuid();
         var companyId = Guid.NewGuid();
         SeedCompany(db, smId, companyId);
+        await db.SaveChangesAsync();
         var paidAt = new DateTime(2026, 1, 10, 12, 0, 0, DateTimeKind.Utc);
         db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
         {

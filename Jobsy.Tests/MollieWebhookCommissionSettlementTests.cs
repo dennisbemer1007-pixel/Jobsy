@@ -130,9 +130,12 @@ public class MollieWebhookCommissionSettlementTests
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(directSmId));
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(parentSmId));
 
-        // Ambassador token share still applies after the SM window (platform loyalty).
+        // Ambassador (company) 15% bonus tokens only inside the commission window (D1).
         var companyBalance = await new TokenLedgerService(db).GetBalanceAsync(companyId);
-        Assert.Equal(10m + SalesCommissionRules.AmbassadorTokens(10), companyBalance);
+        Assert.Equal(10m, companyBalance); // pack tokens only; no 15% bonus after window
+        var ambassadorLog = await db.RevenueShareLogs.SingleAsync(
+            l => l.TokenCheckoutId == checkoutId && l.RecipientKind == RevenueShareRecipientKind.Ambassador);
+        Assert.Equal(0m, ambassadorLog.Tokens);
     }
 
     [Fact]

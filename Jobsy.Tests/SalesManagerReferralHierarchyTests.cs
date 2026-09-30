@@ -204,7 +204,7 @@ public class SalesManagerReferralHierarchyTests
             Guid.NewGuid(), companyId, null, 10, 100m, smId, started);
 
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(smId));
-        Assert.Equal(1.5m, await tokens.GetBalanceAsync(companyId)); // ambassador still applies
+        Assert.Equal(0m, await tokens.GetBalanceAsync(companyId)); // no 15% bonus after window (D1)
     }
 
     private static void CompleteOnboarding(JobsyDbContext db, Guid userId, string code)
