@@ -353,9 +353,12 @@ public class EmailCodeAuthTests
                 config,
                 new MemoryCache(new MemoryCacheOptions()),
                 NullLogger<DeviceSessionService>.Instance),
+            new MfaTrustedDeviceService(db),
             email,
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
-            features);
+            features,
+            new UnknownAccountLockoutTracker("test-lockout-key"),
+            NullLogger<AuthController>.Instance);
     }
 
     private static ControllerContext WithProvisionSecret(string secret)

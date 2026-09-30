@@ -200,23 +200,9 @@ public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
         request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.InternalSecretHeader, secret.Trim());
     }
 
-    /// <summary>Prefer Cloudflare visitor IP, then connection remote IP.</summary>
+    /// <summary>Trusted visitor IP after forwarded-headers + Cloudflare origin middleware.</summary>
     public static string? ResolveVisitorIp(HttpContext? http)
-    {
-        if (http is null)
-        {
-            return null;
-        }
-
-        if (http.Request.Headers.TryGetValue("CF-Connecting-IP", out var cf)
-            && !string.IsNullOrWhiteSpace(cf.ToString())
-            && IPAddress.TryParse(cf.ToString().Trim(), out _))
-        {
-            return cf.ToString().Trim();
-        }
-
-        return http.Connection.RemoteIpAddress?.ToString();
-    }
+        => Jobsy.Web.Security.TrustedClientIp.Resolve(http);
 
     private static bool IsAnonymousCacheable(HttpContext http, string apiPath)
     {

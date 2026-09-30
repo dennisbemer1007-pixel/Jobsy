@@ -386,12 +386,6 @@ public class SettingsController : ControllerBase
         [FromBody] UpdatePlatformFeatureRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.ExposeRegistrationActivationLinks == true
-            && string.Equals(_deploymentEnv.Value, DeploymentEnvironment.Productie, StringComparison.Ordinal))
-        {
-            return BadRequest(new { message = "Alleen in Acceptatie." });
-        }
-
         try
         {
             var before = await _features.GetAsync(cancellationToken);
@@ -399,7 +393,7 @@ public class SettingsController : ControllerBase
                 new PlatformFeatureUpdate(
                     request.VacancyContentModerationEnabled,
                     request.AuthenticatorEnabled,
-                    request.ExposeRegistrationActivationLinks,
+                    ExposeRegistrationActivationLinks: null,
                     request.PublicWebBaseUrl,
                     request.InactiveCompanyDays,
                     request.SessionInactivityTimeoutMinutes,

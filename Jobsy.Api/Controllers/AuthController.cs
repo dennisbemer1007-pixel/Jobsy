@@ -29,9 +29,12 @@ public class AuthController : ControllerBase
     private readonly IAmbassadeurAttributionService _ambassadeurAttribution;
     private readonly IHostEnvironment _environment;
     private readonly IDeviceSessionService _deviceSessions;
+    private readonly IMfaTrustedDeviceService _trustedDevices;
     private readonly ITransactionalMailer _mailer;
     private readonly MfaChallengeService _mfaChallenges;
     private readonly IPlatformFeatureService _features;
+    private readonly UnknownAccountLockoutTracker _unknownLockouts;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         JobsyDbContext db,
@@ -40,9 +43,12 @@ public class AuthController : ControllerBase
         IAmbassadeurAttributionService ambassadeurAttribution,
         IHostEnvironment environment,
         IDeviceSessionService deviceSessions,
+        IMfaTrustedDeviceService trustedDevices,
         ITransactionalMailer mailer,
         MfaChallengeService mfaChallenges,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        UnknownAccountLockoutTracker unknownLockouts,
+        ILogger<AuthController> logger)
     {
         _db = db;
         _configuration = configuration;
@@ -50,9 +56,12 @@ public class AuthController : ControllerBase
         _ambassadeurAttribution = ambassadeurAttribution;
         _environment = environment;
         _deviceSessions = deviceSessions;
+        _trustedDevices = trustedDevices;
         _mailer = mailer;
         _mfaChallenges = mfaChallenges;
         _features = features;
+        _unknownLockouts = unknownLockouts;
+        _logger = logger;
     }
 
     /// <summary>
@@ -74,54 +83,83 @@ public class AuthController : ControllerBase
         var email = LoginIdentity.Normalize(request.Email);
         var credential = await _db.LocalAuthCredentials
             .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
-
-        var genericError = new { message = "Ongeldige e-mail of wachtwoord." };
         var now = DateTime.UtcNow;
+        var unknownKey = _unknownLockouts.KeyForEmail(email);
+
         if (credential is null)
         {
-            return Unauthorized(genericError);
+            JobsyPasswordHasher.VerifyAgainstDummy(request.Password);
+            if (_unknownLockouts.IsLocked(unknownKey, now, out var unknownRetry))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "locked_out",
+                    retryAtUtc = unknownRetry
+                });
+            }
+
+            var unknownUntil = _unknownLockouts.RecordFailure(unknownKey, now);
+            if (unknownUntil is not null)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "locked_out",
+                    retryAtUtc = unknownUntil
+                });
+            }
+
+            return Unauthorized(new { code = "invalid_credentials" });
         }
 
         if (credential.LockoutUntil is DateTime lockedUntil && lockedUntil > now)
         {
-            return Unauthorized(genericError);
+            JobsyPasswordHasher.VerifyAgainstDummy(request.Password);
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "locked_out",
+                retryAtUtc = lockedUntil
+            });
+        }
+
+        // Pause over → reset counters.
+        if (credential.LockoutUntil is DateTime ended && ended <= now)
+        {
+            credential.FailedLoginCount = 0;
+            credential.LockoutUntil = null;
+            if (credential.LastLockoutAtUtc is DateTime lastLockout
+                && lastLockout < now - LoginLockoutRules.LockoutWindow)
+            {
+                credential.LockoutCount = 0;
+            }
         }
 
         if (!JobsyPasswordHasher.Verify(request.Password, credential.PasswordHash))
         {
             credential.FailedLoginCount++;
-            var lockoutStarted = false;
-            var duration = LoginLockoutRules.LockoutDuration(credential.FailedLoginCount);
-            if (duration > TimeSpan.Zero)
+            if (credential.FailedLoginCount >= LoginLockoutRules.FailedAttemptsBeforeLockout)
             {
+                credential.LockoutCount++;
+                credential.LastLockoutAtUtc = now;
+                var duration = LoginLockoutRules.LockoutDuration(credential.LockoutCount);
                 credential.LockoutUntil = now.Add(duration);
-                lockoutStarted = true;
+                credential.FailedLoginCount = 0;
+                await _db.SaveChangesAsync(cancellationToken);
+                await SendLockoutMailAsync(credential, duration, cancellationToken);
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "locked_out",
+                    retryAtUtc = credential.LockoutUntil
+                });
             }
 
             await _db.SaveChangesAsync(cancellationToken);
-            if (lockoutStarted)
-            {
-                try
-                {
-                    var features = await _features.GetAsync(cancellationToken);
-                    var lockoutMail = TransactionalEmails.AccountLockout(
-                        features.PublicWebBaseUrl,
-                        credential.FailedLoginCount,
-                        credential.LockoutUntil,
-                        duration);
-                    await _mailer.SendAsync(lockoutMail, credential.Email, cancellationToken: cancellationToken);
-                }
-                catch
-                {
-                    // The lockout must never depend on e-mail delivery.
-                }
-            }
-
-            return Unauthorized(genericError);
+            return Unauthorized(new { code = "invalid_credentials" });
         }
 
         credential.FailedLoginCount = 0;
         credential.LockoutUntil = null;
+        credential.LockoutCount = 0;
+        _unknownLockouts.Clear(unknownKey);
         if (JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
         {
             credential.PasswordHash = JobsyPasswordHasher.Hash(request.Password);
@@ -134,7 +172,7 @@ public class AuthController : ControllerBase
 
         if (user is null || !user.IsActive)
         {
-            return Unauthorized(genericError);
+            return Unauthorized(new { code = "invalid_credentials" });
         }
 
         if (user.Role == UserRole.Ambassadeur)
@@ -152,6 +190,53 @@ public class AuthController : ControllerBase
 
         if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
         {
+            if (user.AuthenticatorEnabled
+                && await _trustedDevices.TryValidateAsync(
+                    user.Id,
+                    request.MfaTrustToken,
+                    user.SessionVersion,
+                    authenticatorEnabled: true,
+                    cancellationToken))
+            {
+                var trustedFlags = await BuildFlagsAsync(user, cancellationToken);
+                var trustedSession = CreateLocalSessionToken(user.Email, user.Id);
+                Guid? trustedDeviceId = null;
+                string? trustedRefresh = null;
+                DateTime? trustedExpires = null;
+                if (request.RememberDevice)
+                {
+                    var device = await _deviceSessions.CreateAsync(
+                        user.Id,
+                        Request.Headers.UserAgent.ToString(),
+                        cancellationToken,
+                        mfaVerified: true);
+                    trustedDeviceId = device.DeviceSessionId;
+                    trustedRefresh = device.RefreshToken;
+                    trustedExpires = device.ExpiresAtUtc;
+                }
+
+                user.LastLoginAtUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
+                return Ok(new LocalLoginResponse(
+                    user.Email,
+                    user.FullName,
+                    user.Role.ToString(),
+                    user.CompanyId,
+                    trustedFlags.CompanyIds,
+                    trustedFlags.ShowCandidateHowTo,
+                    trustedFlags.HasCandidateApplications,
+                    trustedFlags.HasSalesReferral,
+                    trustedSession,
+                    user.SessionVersion,
+                    trustedDeviceId,
+                    trustedRefresh,
+                    trustedExpires,
+                    user.Id,
+                    MfaVerified: true,
+                    SchoolId: user.SchoolId,
+                    AuthMethod: "password+trusted-device"));
+            }
+
             return Ok(new LocalLoginResponse(
                 user.Email,
                 user.FullName,
@@ -372,6 +457,17 @@ public class AuthController : ControllerBase
                 await _ambassadeurAttribution.TryAttributeCandidateAsync(
                     user.Id, request.ReferralCode, cancellationToken);
             }
+        }
+
+        var allowedTenants = AdminLoginProviderPolicy.ParseAllowedTenants(
+            _configuration["JobsyAuth:AdminAllowedEntraTenants"]);
+        if (!AdminLoginProviderPolicy.IsAllowed(user.Role, provider, request.ProviderTenantId, allowedTenants))
+        {
+            _logger.LogInformation(
+                "auth.external.blocked userId={UserId} provider={Provider}",
+                user.Id,
+                provider);
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = "provider_not_allowed" });
         }
 
         if (provider is not null && subject is not null)
@@ -732,6 +828,36 @@ public class AuthController : ControllerBase
             deviceRefresh,
             deviceExpires,
             user.Id));
+    }
+
+    private async Task SendLockoutMailAsync(
+        LocalAuthCredential credential,
+        TimeSpan duration,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        if (credential.LastLockoutMailAtUtc is DateTime lastMail
+            && lastMail > now - LoginLockoutRules.MailCooldown)
+        {
+            return;
+        }
+
+        try
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            var lockoutMail = TransactionalEmails.AccountLockout(
+                features.PublicWebBaseUrl,
+                LoginLockoutRules.FailedAttemptsBeforeLockout,
+                credential.LockoutUntil,
+                duration);
+            await _mailer.SendAsync(lockoutMail, credential.Email, cancellationToken: cancellationToken);
+            credential.LastLockoutMailAtUtc = now;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Account lockout mail failed for user {UserId}", credential.UserId);
+        }
     }
 
     private string? CreateLocalSessionToken(string email, Guid userId)

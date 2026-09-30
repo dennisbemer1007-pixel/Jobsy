@@ -201,7 +201,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/regional/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/regional/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/register` | `Pages/Register.razor` | anonymous |
-| `/register/activate` | `Pages/RegisterActivate.razor` | anonymous |
+| `/register/activate` | → 301 `/register` (removed in auth 06) | — |
 | `/register/bedrijf` | `Pages/RegisterBedrijf.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
 | `/register/koppelen` | `Pages/RegisterKoppelen.razor` | authenticated |
 | `/register/toegang` | `Pages/RegisterToegang.razor` | anonymous |

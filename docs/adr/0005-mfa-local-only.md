@@ -20,3 +20,7 @@ Privileged roles (`MfaPolicy`) must use Lobsy TOTP after a local password login.
 - Demo privileged accounts without a seed TOTP go through enrollment after password login (no shared secret backdoor).
 - Admins can reset another user’s 2FA (audited, sessions revoked); self-reset via this admin API is refused.
 - Documented in [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) (auth section) and covered by MFA / login-protection tests.
+
+## Amendment (auth 02, 2026-09)
+
+External IdP logins skip Lobsy 2FA, except that admins may only use Microsoft work/school accounts (and password + 2FA); Google and personal Microsoft accounts are refused for the Admin role (Dennis, 30-09). SalesManager password users require MFA; Ambassadeur does not.

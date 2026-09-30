@@ -3671,6 +3671,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("FailedLoginCount")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("LastLockoutAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastLockoutMailAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LockoutCount")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("LockoutUntil")
                         .HasColumnType("timestamp with time zone");
 
@@ -3803,6 +3812,50 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("MasterdataOptions");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.MfaTrustedDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastUsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SessionVersionAtCreate")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("UserAgentSummary")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "RevokedAtUtc");
+
+                    b.ToTable("MfaTrustedDevices", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.MinimumWageRate", b =>
@@ -6557,9 +6610,21 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("LastLoginAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("LastMfaLockoutMailAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("LastName")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
+
+                    b.Property<long?>("LastTotpTimeStep")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MfaFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("MfaLockoutUntilUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("OpenForWork")
                         .HasColumnType("boolean");
@@ -6686,6 +6751,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("AuthMethod")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthTenantId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -8360,6 +8431,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.LocalAuthCredential", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.MfaTrustedDevice", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
                         .WithMany()

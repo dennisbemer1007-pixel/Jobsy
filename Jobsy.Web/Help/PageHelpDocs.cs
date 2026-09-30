@@ -128,11 +128,6 @@ public static class PageHelpDocs
             "Microsoft- of Google-login koppelen aan het zojuist geactiveerde werkgeversaccount.",
             "Na de bevestigingscode word je doorgestuurd naar de IdP. Alleen als het IdP-e-mailadres overeenkomt, wordt de login gekoppeld.",
             "Inloggen zonder opnieuw een wachtwoord te kiezen."),
-        ["/register/activate"] = new(
-            "Account activeren",
-            "Bevestigen van een registratie via activatielink.",
-            "Open de link uit de e-mail (of demo-link). Daarna is het account actief of volgt een overnameproces.",
-            "Registratie afronden zodat managers kunnen inloggen."),
 
         ["/register/verifieren"] = new(
             "Bedrijf verifiëren",

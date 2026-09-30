@@ -1,87 +1,162 @@
 @page "/account/mfa/setup"
 @attribute [AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
 @using System.Net
 @using System.Net.Http.Json
+@using Jobsy.Core.Security
+@using Jobsy.Core.Time
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Components.Auth
+@using Jobsy.Web.Components.Registration
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Antiforgery
-@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.WebUtilities
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IConfiguration Configuration
+@inject AuthApiClient AuthApi
 @inject IAntiforgery Antiforgery
 @inject CultureState Culture
+@inject NavigationManager Nav
 
 <PageTitle>@Culture["Mfa.SetupTitle"] · Lobsy</PageTitle>
 
-<div class="login-modal login-modal--compact account-mfa" role="dialog" aria-modal="true" aria-labelledby="mfa-setup-title">
-    <div class="login-modal__dialog login-card">
-        <div class="login-modal__header">
-            <h1 id="mfa-setup-title">@Culture["Mfa.SetupTitle"]</h1>
-        </div>
+@{
+    var nonce = HttpContextAccessor.HttpContext is null
+        ? string.Empty
+        : CspNonce.GetOrCreate(HttpContextAccessor.HttpContext);
+}
 
-        <p class="account-mfa__step">@string.Format(Culture["Mfa.StepOf"], 1, 2)</p>
-        <p class="login-lead">@Culture["Mfa.SetupLead"]</p>
-
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="login-error" role="alert">@_error</p>
-            @if (_expired)
-            {
-                <p><a class="account-mfa__link" href="/login">@Culture["Mfa.BackToLogin"]</a></p>
-            }
-        }
-
-        @if (!string.IsNullOrWhiteSpace(_qrSvgDataUri))
-        {
-            <p class="account-mfa__label">@Culture["Mfa.ScanQr"]</p>
-            <img class="account-mfa__qr" src="@_qrSvgDataUri" alt="@Culture["Mfa.QrAlt"]" width="180" height="180" />
-
-            <details class="account-mfa__details">
-                <summary>@Culture["Mfa.ManualKeySummary"]</summary>
-                <div class="account-mfa__manual">
-                    <code class="account-mfa__secret" id="mfa-manual-key">@_secretGrouped</code>
-                    <button type="button"
-                            class="icon-btn"
-                            aria-label="@Culture["Mfa.CopyKey"]"
-                            title="@Culture["Mfa.CopyKey"]"
-                            onclick="navigator.clipboard.writeText(document.getElementById('mfa-manual-key').textContent.replace(/\s+/g,''))">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                    </button>
-                </div>
-            </details>
-
-            <p class="muted account-mfa__hint">@Culture["Mfa.Instructions"]</p>
-
-            <form method="post" action="/account/mfa/verify" class="login-form" data-enhance="false">
-                <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
-                <label>
-                    @Culture["Mfa.CodeLabel"]
-                    <input type="text"
-                           name="code"
-                           class="w-full px-4 py-3"
-                           inputmode="numeric"
-                           autocomplete="one-time-code"
-                           pattern="[0-9]{6}"
-                           maxlength="6"
-                           required
-                           placeholder="000000" />
-                </label>
-                <button type="submit" class="login-submit">@Culture["Mfa.Confirm"]</button>
-            </form>
-        }
+@if (_wizardVariant)
+{
+    <div class="au-wizard-wrap">
+        <WaWizardChrome CurrentStep="3" Speech="@Culture["Mfa.SetupLead"]" DoneOnCurrent="false" />
     </div>
-</div>
+}
+
+<section class="au-stage" data-au-mfa-setup>
+    <div class="au-blob au-blob--a" aria-hidden="true"></div>
+    <div class="au-col">
+        <div class="au-card">
+            <p class="au-eyebrow">@(_wizardVariant ? string.Format(Culture["Mfa.StepOf"], 3, 4) : string.Format(Culture["Mfa.StepOf"], 1, 2))</p>
+            @if (!string.IsNullOrEmpty(_maskedEmail))
+            {
+                <p class="au-who">
+                    <span>@_maskedEmail</span>
+                    <form method="post" action="/account/mfa/cancel" data-enhance="false" class="au-inline-form">
+                        <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                        <button type="submit" class="au-link-btn">@Culture["Mfa.OtherAccount"]</button>
+                    </form>
+                </p>
+            }
+
+            <h1 class="au-title">@Culture["Mfa.SetupTitle"]</h1>
+            <p class="au-lead">@Culture["Mfa.SetupLead"]</p>
+
+            <LoginStatusBlock State="_loginState" UntilLocalHhMm="_untilLocal" />
+
+            @if (!string.IsNullOrWhiteSpace(_qrSvgDataUri) && !string.IsNullOrWhiteSpace(_provisioningUri))
+            {
+                <ol class="au-setup-steps">
+                    <li>
+                        <span class="au-setup-steps__n" aria-hidden="true">1</span>
+                        <div>
+                            <strong>@Culture["Mfa.InstallApp"]</strong>
+                            <p class="au-help">
+                                <a href="https://www.microsoft.com/store/apps/9NBLGGH203KP" rel="noopener noreferrer" target="_blank">Microsoft Authenticator</a>
+                                ·
+                                <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" rel="noopener noreferrer" target="_blank">Google Authenticator</a>
+                            </p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="au-setup-steps__n" aria-hidden="true">2</span>
+                        <div>
+                            <strong>@Culture["Mfa.LinkApp"]</strong>
+                            <div class="au-mobile-only">
+                                <p>
+                                    <a class="au-submit" href="@_provisioningUri">@Culture["Mfa.OpenAuthenticator"]</a>
+                                </p>
+                                <details class="au-details">
+                                    <summary>@Culture["Mfa.ShowQrDetails"]</summary>
+                                    <img class="au-qr" src="@_qrSvgDataUri" alt="@Culture["Mfa.QrAlt"]" width="180" height="180" />
+                                    <div class="au-manual">
+                                        <code class="au-secret" id="mfa-manual-key" dir="ltr">@_secretGrouped</code>
+                                        <button type="button"
+                                                class="au-link-btn"
+                                                data-copy-target="#mfa-manual-key"
+                                                data-copied-label="@Culture["Mfa.KeyCopied"]">@Culture["Mfa.CopyKey"]</button>
+                                        <span data-copy-status role="status" aria-live="polite" class="visually-hidden"></span>
+                                    </div>
+                                </details>
+                            </div>
+                            <div class="au-desktop-only">
+                                <img class="au-qr" src="@_qrSvgDataUri" alt="@Culture["Mfa.QrAlt"]" width="180" height="180" />
+                                <div class="au-manual">
+                                    <code class="au-secret" id="mfa-manual-key-desktop" dir="ltr">@_secretGrouped</code>
+                                    <button type="button"
+                                            class="au-link-btn"
+                                            data-copy-target="#mfa-manual-key-desktop"
+                                            data-copied-label="@Culture["Mfa.KeyCopied"]">@Culture["Mfa.CopyKey"]</button>
+                                    <span data-copy-status role="status" aria-live="polite" class="visually-hidden"></span>
+                                </div>
+                                <p class="au-help">
+                                    <a href="@_provisioningUri">@Culture["Mfa.OnPhoneLink"]</a>
+                                </p>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="au-setup-steps__n" aria-hidden="true">3</span>
+                        <div>
+                            <strong>@Culture["Mfa.EnterCodeStep"]</strong>
+                            <form method="post" action="/account/mfa/verify" class="au-form" data-enhance="false" novalidate>
+                                <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                                <input type="hidden" name="source" value="setup" />
+                                <input type="hidden" name="method" value="totp" />
+                                <div class="au-field">
+                                    <label class="au-field__label" for="mfa-code">@Culture["Mfa.CodeLabel"]</label>
+                                    <div class="au-input-wrap">
+                                        <input id="mfa-code"
+                                               class="au-input"
+                                               type="text"
+                                               name="code"
+                                               inputmode="numeric"
+                                               autocomplete="one-time-code"
+                                               pattern="[0-9 ]{6,7}"
+                                               maxlength="7"
+                                               dir="ltr"
+                                               autofocus
+                                               required />
+                                    </div>
+                                </div>
+                                <button type="submit" class="au-submit">@Culture["Mfa.Confirm"]</button>
+                            </form>
+                        </div>
+                    </li>
+                </ol>
+            }
+            else if (_expired)
+            {
+                <p><a class="au-submit" href="/login">@Culture["Mfa.BackToLogin"]</a></p>
+            }
+        </div>
+    </div>
+</section>
+
+<script src="js/features/account-mfa.js?v=20260930-auth04" nonce="@nonce" defer></script>
 
 @code {
     private string _antiforgeryFieldName = string.Empty;
     private string _antiforgeryToken = string.Empty;
     private string? _qrSvgDataUri;
+    private string? _provisioningUri;
     private string? _secretGrouped;
-    private string? _error;
+    private string? _maskedEmail;
+    private LoginState _loginState = LoginState.None;
+    private string? _untilLocal;
     private bool _expired;
+    private bool _wizardVariant;
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,10 +165,21 @@
             || !http.Request.Cookies.TryGetValue("Jobsy.MfaChallenge", out var challenge)
             || string.IsNullOrWhiteSpace(challenge))
         {
-            _error = Culture["Mfa.ErrorExpired"];
+            _loginState = LoginState.Generic;
             _expired = true;
             return;
         }
+
+        var returnUrl = http.Request.Query["returnUrl"].ToString();
+        if (string.IsNullOrWhiteSpace(returnUrl)
+            && http.Request.Cookies.TryGetValue("Jobsy.MfaReturnUrl", out var cookieReturn))
+        {
+            returnUrl = cookieReturn;
+        }
+
+        _wizardVariant = returnUrl.StartsWith("/register/", StringComparison.OrdinalIgnoreCase);
+
+        ApplyErrorQuery();
 
         var tokens = Antiforgery.GetAndStoreTokens(http);
         _antiforgeryFieldName = tokens.FormFieldName;
@@ -101,33 +187,36 @@
 
         try
         {
-            var apiBase = Jobsy.Core.JobsyPublicUrl.NormalizeBaseUrl(
-                Configuration["ApiBaseUrl"],
-                "http://localhost:5200/");
-            using var client = new HttpClient { BaseAddress = new Uri(apiBase), Timeout = TimeSpan.FromSeconds(8) };
-
-            using var stateResponse = await client.PostAsJsonAsync(
+            using var stateResponse = await AuthApi.PostJsonAsync(
                 "api/auth/mfa/state",
                 new { challengeToken = challenge });
             if (stateResponse.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest)
             {
-                _error = Culture["Mfa.ErrorExpired"];
+                _loginState = LoginState.Generic;
                 _expired = true;
                 return;
             }
 
             if (stateResponse.StatusCode == HttpStatusCode.TooManyRequests)
             {
-                _error = Culture["Mfa.ErrorTooMany"];
+                _loginState = LoginState.TooMany;
+                return;
+            }
+
+            if (stateResponse.StatusCode == HttpStatusCode.Forbidden)
+            {
+                _loginState = LoginState.Locked;
                 return;
             }
 
             if (stateResponse.IsSuccessStatusCode)
             {
                 var state = await stateResponse.Content.ReadFromJsonAsync<MfaStateDto>();
+                _maskedEmail = string.IsNullOrWhiteSpace(state?.MaskedEmail)
+                    ? EmailMask.Mask(state?.Email)
+                    : state!.MaskedEmail;
                 if (state?.Enrolled == true)
                 {
-                    var returnUrl = http.Request.Query["returnUrl"].ToString();
                     var dest = string.IsNullOrWhiteSpace(returnUrl)
                         ? "/account/mfa"
                         : "/account/mfa?returnUrl=" + Uri.EscapeDataString(returnUrl);
@@ -136,7 +225,7 @@
                 }
             }
 
-            using var enrollResponse = await client.PostAsJsonAsync(
+            using var enrollResponse = await AuthApi.PostJsonAsync(
                 "api/auth/mfa/enroll",
                 new { challengeToken = challenge });
             if (enrollResponse.StatusCode == HttpStatusCode.Conflict)
@@ -147,38 +236,77 @@
 
             if (enrollResponse.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest)
             {
-                _error = Culture["Mfa.ErrorExpired"];
+                _loginState = LoginState.Generic;
                 _expired = true;
                 return;
             }
 
             if (enrollResponse.StatusCode == HttpStatusCode.TooManyRequests)
             {
-                _error = Culture["Mfa.ErrorTooMany"];
+                _loginState = LoginState.TooMany;
+                return;
+            }
+
+            if (enrollResponse.StatusCode == HttpStatusCode.Forbidden)
+            {
+                _loginState = LoginState.Locked;
                 return;
             }
 
             if (!enrollResponse.IsSuccessStatusCode)
             {
-                _error = Culture["Mfa.ErrorGeneric"];
+                _loginState = LoginState.Unavailable;
                 _expired = true;
                 return;
             }
 
             var result = await enrollResponse.Content.ReadFromJsonAsync<MfaEnrollmentDto>();
             _qrSvgDataUri = result?.QrSvgDataUri;
+            _provisioningUri = result?.ProvisioningUri;
             _secretGrouped = GroupSecret(result?.Secret);
-            if (string.IsNullOrWhiteSpace(_qrSvgDataUri) || string.IsNullOrWhiteSpace(_secretGrouped))
+            if (string.IsNullOrWhiteSpace(_qrSvgDataUri)
+                || string.IsNullOrWhiteSpace(_provisioningUri)
+                || string.IsNullOrWhiteSpace(_secretGrouped))
             {
-                _error = Culture["Mfa.ErrorGeneric"];
+                _loginState = LoginState.Unavailable;
                 _expired = true;
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _error = Culture["Mfa.ErrorGeneric"];
+            _loginState = LoginState.Unavailable;
             _expired = true;
         }
+    }
+
+    private void ApplyErrorQuery()
+    {
+        var query = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (!query.TryGetValue("error", out var error))
+        {
+            return;
+        }
+
+        var code = error.ToString();
+        if (query.TryGetValue("until", out var until)
+            && long.TryParse(until.ToString(), out var unix))
+        {
+            var utc = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
+            if (utc > DateTime.UtcNow)
+            {
+                _untilLocal = AmsterdamTime.ToLocal(utc).ToString("HH:mm");
+            }
+        }
+
+        _loginState = code switch
+        {
+            "invalid" => LoginState.Invalid,
+            "locked" => LoginState.Locked,
+            "too-many" => LoginState.TooMany,
+            "expired" => LoginState.Generic,
+            _ => LoginState.Generic
+        };
+        _expired = code is "expired";
     }
 
     private static string? GroupSecret(string? secret)
@@ -197,6 +325,7 @@
     {
         public bool Enrolled { get; set; }
         public string? Email { get; set; }
+        public string? MaskedEmail { get; set; }
     }
 
     private sealed class MfaEnrollmentDto

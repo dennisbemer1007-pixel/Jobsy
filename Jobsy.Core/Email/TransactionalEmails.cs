@@ -197,6 +197,12 @@ public static partial class TransactionalEmails
             "supportaccessrequested" => SupportAccessRequested(ctx.PublicWebBaseUrl, "Admin Demo", "Voorbeeldreden", new DateTime(2026, 9, 30, 18, 0, 0, DateTimeKind.Utc), "Persoonsgegevens", c),
             "accountlockout" => AccountLockout(
                 ctx.PublicWebBaseUrl, 5, DateTime.UtcNow.AddMinutes(15), TimeSpan.FromMinutes(15), c),
+            "mfalockout" => MfaLockout(ctx.PublicWebBaseUrl, c),
+            "recoverycodeused" => RecoveryCodeUsed(ctx.PublicWebBaseUrl, 9, c),
+            "recoverycodesregenerated" => RecoveryCodesRegenerated(ctx.PublicWebBaseUrl, c),
+            "passwordreset" => PasswordReset(ctx.PublicWebBaseUrl, "voorbeeld-token", c),
+            "passwordresetexternalonly" => PasswordResetExternalOnly(ctx.PublicWebBaseUrl, "Microsoft", c),
+            "passwordchanged" => PasswordChanged(ctx.PublicWebBaseUrl, DateTime.UtcNow, c),
             "accessrequestemailverification" => AccessRequestEmailVerification(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.OtpCode, c),
             "accessrequestsubmitted" => AccessRequestSubmitted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "accessrequesttomanager" => AccessRequestToManager(ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.RecipientName, ctx.RoleLabel, ctx.ContactEmail, ctx.RoleLabel, c),

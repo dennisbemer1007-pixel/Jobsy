@@ -11,7 +11,7 @@ Gate with `[RequiresFeature(PlatformFeature.Employers)]` (pages, controllers, ac
 
 ## Gated Blazor pages (Employers)
 
-Public: `/`, `/banen`, `/vacancies/{id}`, `/vestiging/{id}`, `/{kvk}`, `/westland`, `/lancering`, `/register`, `/register/activate`
+Public: `/`, `/banen`, `/vacancies/{id}`, `/vestiging/{id}`, `/{kvk}`, `/westland`, `/lancering`, `/register`
 
 Candidate: `/candidate/match`, `/candidate/vacancies`, `/candidate/liked`, `/candidate/shared`, `/candidate/applications`, `/candidate/actions/*`, `/candidate/talent-contacts`
 

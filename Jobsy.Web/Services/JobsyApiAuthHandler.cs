@@ -175,25 +175,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     /// per visitor, not the shared Web→API hop.
     /// </summary>
     private void ApplyTrustedClientIp(HttpRequestMessage request, HttpContext? httpContext)
-    {
-        request.Headers.Remove(InternalClientIpHeaders.ClientIpHeader);
-        request.Headers.Remove(InternalClientIpHeaders.InternalSecretHeader);
-
-        var secret = _configuration[InternalClientIpHeaders.ConfigKey];
-        if (string.IsNullOrWhiteSpace(secret))
-        {
-            return;
-        }
-
-        var clientIp = VacancyMapApiForwarder.ResolveVisitorIp(httpContext);
-        if (string.IsNullOrWhiteSpace(clientIp))
-        {
-            return;
-        }
-
-        request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.ClientIpHeader, clientIp);
-        request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.InternalSecretHeader, secret.Trim());
-    }
+        => Jobsy.Web.Auth.TrustedClientIpHandler.ApplyTrustedClientIp(request, httpContext, _configuration);
 
     private async Task<bool> TrySilentDeviceRefreshAsync(HttpContext? httpContext, CancellationToken cancellationToken)
     {

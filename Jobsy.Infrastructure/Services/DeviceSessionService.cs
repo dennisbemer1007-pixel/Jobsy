@@ -34,7 +34,9 @@ public sealed class DeviceSessionService : IDeviceSessionService
         Guid userId,
         string? userAgent,
         CancellationToken cancellationToken = default,
-        bool mfaVerified = false)
+        bool mfaVerified = false,
+        string? authMethod = null,
+        string? authTenantId = null)
     {
         var raw = DeviceRefreshToken.Generate();
         var now = DateTime.UtcNow;
@@ -49,7 +51,9 @@ public sealed class DeviceSessionService : IDeviceSessionService
             ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime),
             MfaVerifiedUntilUtc = mfaVerified ? now.AddDays(30) : null,
             UserAgent = Truncate(userAgent, 512),
-            DeviceName = DeviceNameFormatter.FromUserAgent(userAgent)
+            DeviceName = DeviceNameFormatter.FromUserAgent(userAgent),
+            AuthMethod = Truncate(authMethod, 40),
+            AuthTenantId = Truncate(authTenantId, 64)
         };
         _db.UserDeviceSessions.Add(session);
         await _db.SaveChangesAsync(cancellationToken);
@@ -201,6 +205,33 @@ public sealed class DeviceSessionService : IDeviceSessionService
             }
 
             return null;
+        }
+
+        if (user.Role == UserRole.Admin)
+        {
+            var allowed = AdminLoginProviderPolicy.ParseAllowedTenants(
+                _configuration["JobsyAuth:AdminAllowedEntraTenants"]);
+            var method = session.AuthMethod;
+            string? provider = null;
+            if (!string.IsNullOrWhiteSpace(method)
+                && method.StartsWith("external:", StringComparison.OrdinalIgnoreCase))
+            {
+                provider = method["external:".Length..];
+            }
+
+            var methodDisallowed = !string.IsNullOrWhiteSpace(provider)
+                && !AdminLoginProviderPolicy.IsAllowed(user.Role, provider, session.AuthTenantId, allowed);
+            var legacyWithoutMfa = string.IsNullOrWhiteSpace(method)
+                && (session.MfaVerifiedUntilUtc is null || session.MfaVerifiedUntilUtc <= now);
+            if (methodDisallowed || legacyWithoutMfa)
+            {
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction relAdmin)
+                {
+                    await relAdmin.RollbackAsync(cancellationToken);
+                }
+
+                return null;
+            }
         }
 
         var minVersion = await _db.PlatformFeatureSettings.AsNoTracking()

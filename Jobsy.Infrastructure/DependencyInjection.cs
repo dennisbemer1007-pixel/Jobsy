@@ -309,6 +309,7 @@ public static class DependencyInjection
         services.AddScoped<IWebPushSubscriptionService, WebPushSubscriptionService>();
         services.AddScoped<IPushNotificationService, WebPushNotificationService>();
         services.AddScoped<IDeviceSessionService, DeviceSessionService>();
+        services.AddScoped<IMfaTrustedDeviceService, MfaTrustedDeviceService>();
         services.AddScoped<PushNotificationServiceStub>();
         services.AddScoped<IIntegrationHealthService, IntegrationHealthStub>();
         services.AddScoped<IIntegrationCredentialService>(sp => new IntegrationCredentialService(

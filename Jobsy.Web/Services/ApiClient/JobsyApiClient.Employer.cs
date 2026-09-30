@@ -712,23 +712,6 @@ public sealed partial class JobsyApiClient
                ?? throw new InvalidOperationException("Lege bevestigingsrespons.");
     }
 
-    public async Task<RegistrationActivationResult> ActivateRegistrationAsync(
-        string token,
-        CancellationToken ct = default)
-    {
-        var response = await _http.PostAsync(
-            $"api/registration/activate?token={Uri.EscapeDataString(token)}",
-            null,
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Activatie mislukt.");
-        }
-
-        return await response.Content.ReadFromJsonAsync<RegistrationActivationResult>(cancellationToken: ct)
-               ?? throw new InvalidOperationException("Lege activatierespons.");
-    }
 
     public async Task<IReadOnlyList<TakeoverInboxItem>> GetTakeoverInboxAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<TakeoverInboxItem>>("api/registration/takeovers", ct) ?? [];

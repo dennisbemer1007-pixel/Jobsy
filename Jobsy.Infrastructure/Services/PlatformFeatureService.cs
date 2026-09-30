@@ -63,10 +63,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.AuthenticatorEnabled = authenticator;
         }
 
-        if (update.ExposeRegistrationActivationLinks is bool expose)
-        {
-            row.ExposeRegistrationActivationLinks = expose;
-        }
+        // ExposeRegistrationActivationLinks ignored since auth 06 (activation links removed).
 
         if (update.InactiveCompanyDays is int inactiveDays)
         {
@@ -183,7 +180,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     {
         row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
         row.AuthenticatorEnabled = _options.AuthenticatorEnabled;
-        row.ExposeRegistrationActivationLinks = _options.ExposeRegistrationActivationLinks;
+        row.ExposeRegistrationActivationLinks = false;
         row.InactiveCompanyDays = 120;
         row.SessionInactivityTimeoutMinutes = SessionSecurityRules.DefaultInactivityTimeoutMinutes;
         row.SupportAccessNotifyAdmins = false;
@@ -247,7 +244,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         return new PlatformFeatureSnapshot(
             row?.VacancyContentModerationEnabled ?? _options.VacancyContentModerationEnabled,
             row?.AuthenticatorEnabled ?? _options.AuthenticatorEnabled,
-            row?.ExposeRegistrationActivationLinks ?? _options.ExposeRegistrationActivationLinks,
+            false,
             string.IsNullOrWhiteSpace(row?.PublicWebBaseUrl)
                 ? configBase
                 : JobsyPublicUrl.NormalizeOrigin(row.PublicWebBaseUrl),

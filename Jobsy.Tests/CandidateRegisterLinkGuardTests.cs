@@ -11,7 +11,6 @@ public class CandidateRegisterLinkGuardTests
     private static readonly HashSet<string> AllowList = new(StringComparer.OrdinalIgnoreCase)
     {
         "Register.razor",
-        "RegisterActivate.razor",
         "Login.razor",
         "PartnerSales.razor",
         "WestlandTeaser.razor",

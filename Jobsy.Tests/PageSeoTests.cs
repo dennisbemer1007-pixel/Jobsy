@@ -29,7 +29,6 @@ public class PageSeoCatalogTests
     [InlineData("/admin/users", false)]
     [InlineData("/candidate/profile", false)]
     [InlineData("/werkgever/tokens", false)]
-    [InlineData("/register/activate", false)]
     [InlineData("/privacy/data", false)]
     [InlineData("/banenkaart", true)]
     public void Indexability_matches_public_vs_private_surfaces(string path, bool indexable)

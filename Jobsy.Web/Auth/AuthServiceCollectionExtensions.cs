@@ -42,7 +42,8 @@ public static class AuthServiceCollectionExtensions
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
         services.AddSingleton<DemoUserStore>();
         services.AddMemoryCache();
-        services.AddHttpClient("JobsyAuthProvision");
+        services.AddHttpClient("JobsyAuthProvision")
+            .AddHttpMessageHandler<TrustedClientIpHandler>();
         services.AddSingleton<IExternalAuthCredentialSource, ExternalAuthCredentialSource>();
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
@@ -175,6 +176,14 @@ public static class AuthServiceCollectionExtensions
                         context.HttpContext,
                         context.Principal,
                         context.Properties);
+                    if (context.Properties?.Items.TryGetValue("Jobsy.ExternalBlocked", out var blocked) == true
+                        && !string.IsNullOrWhiteSpace(blocked))
+                    {
+                        context.Fail("External provider not allowed for this role.");
+                        context.HandleResponse();
+                        context.Response.Redirect(
+                            AuthRedirects.AppendReturnUrl($"/login?error={blocked}", context.Properties?.RedirectUri));
+                    }
                 },
                 OnRemoteFailure = context =>
                 {
@@ -236,6 +245,13 @@ public static class AuthServiceCollectionExtensions
                     context.HttpContext,
                     context.Principal,
                     context.Properties);
+                if (context.Properties?.Items.TryGetValue("Jobsy.ExternalBlocked", out var blocked) == true
+                    && !string.IsNullOrWhiteSpace(blocked))
+                {
+                    context.Fail("External provider not allowed for this role.");
+                    context.HttpContext.Response.Redirect(
+                        AuthRedirects.AppendReturnUrl($"/login?error={blocked}", context.Properties?.RedirectUri));
+                }
             };
             options.Events.OnRemoteFailure = context =>
             {
@@ -318,7 +334,8 @@ public static class AuthServiceCollectionExtensions
             HttpContext http,
             DemoUserStore users,
             IConfiguration configuration,
-            IAntiforgery antiforgery) =>
+            IAntiforgery antiforgery,
+            IDataProtectionProvider dataProtection) =>
         {
             var form = await http.Request.ReadFormAsync();
             var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
@@ -349,12 +366,46 @@ public static class AuthServiceCollectionExtensions
             }
             else
             {
-                apiProfile = await TryLocalApiLoginProfileAsync(configuration, email, password, rememberDevice);
+                var authApi = http.RequestServices.GetRequiredService<AuthApiClient>();
+                var trustToken = MfaTrustCookie.TryReadRawToken(http, dataProtection, out _);
+                var outcome = await authApi.LocalLoginAsync(email, password, rememberDevice, trustToken);
+                if (outcome.Failure is LocalLoginFailureKind failure)
+                {
+                    if (failure is LocalLoginFailureKind.Invalid or LocalLoginFailureKind.Locked or LocalLoginFailureKind.TooMany)
+                    {
+                        // keep existing hint cookie below
+                    }
+
+                    if (failure == LocalLoginFailureKind.Invalid && !string.IsNullOrWhiteSpace(trustToken))
+                    {
+                        // Wrong password — do not clear trust; only clear when MFA is required without match.
+                    }
+
+                    var error = failure switch
+                    {
+                        LocalLoginFailureKind.Locked => "locked",
+                        LocalLoginFailureKind.TooMany => "too-many",
+                        LocalLoginFailureKind.Unavailable => "unavailable",
+                        _ => "invalid"
+                    };
+                    if (error is "invalid" or "locked" or "too-many")
+                    {
+                        LoginHintCookie.Set(http, dataProtection, email);
+                    }
+
+                    var until = outcome.RetryAtUtc is DateTime retry
+                        ? $"&until={new DateTimeOffset(DateTime.SpecifyKind(retry, DateTimeKind.Utc)).ToUnixTimeSeconds()}"
+                        : string.Empty;
+                    return Results.Redirect(
+                        $"/login?error={error}{until}&returnUrl={Uri.EscapeDataString(safeReturn)}");
+                }
+
+                apiProfile = outcome.Profile;
                 if (apiProfile?.RequiresMfa == true
                     && !string.IsNullOrWhiteSpace(apiProfile.MfaChallengeToken))
                 {
+                    MfaTrustCookie.Clear(http);
                     SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken, safeReturn);
-                    // Not enrolled yet → setup (QR). Already enrolled → code prompt.
                     var mfaPath = apiProfile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
                     return Results.Redirect(mfaPath);
                 }
@@ -367,6 +418,7 @@ public static class AuthServiceCollectionExtensions
 
             if (principal is null)
             {
+                LoginHintCookie.Set(http, dataProtection, email);
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
@@ -550,16 +602,59 @@ public static class AuthServiceCollectionExtensions
             }
 
             var form = await http.Request.ReadFormAsync();
-            var profile = await TryMfaVerifyAsync(
-                configuration,
-                challenge,
-                form["code"].ToString(),
-                form["recoveryCode"].ToString());
-            if (profile is null)
+            var source = form["source"].ToString();
+            if (string.IsNullOrWhiteSpace(source))
             {
-                return Results.Redirect("/account/mfa?error=invalid");
+                source = "prompt";
             }
 
+            var authApi = http.RequestServices.GetRequiredService<AuthApiClient>();
+            var method = form["method"].ToString();
+            if (string.IsNullOrWhiteSpace(method))
+            {
+                method = string.IsNullOrWhiteSpace(form["recoveryCode"].ToString()) ? "totp" : "recovery";
+            }
+
+            var trustDevice = string.Equals(
+                form["trustDevice"].ToString(),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
+            var outcome = await authApi.MfaVerifyAsync(
+                challenge,
+                form["code"].ToString(),
+                form["recoveryCode"].ToString(),
+                trustDevice,
+                method);
+
+            string ErrorRedirect(string error, DateTime? retryAt = null)
+            {
+                var until = retryAt is DateTime r
+                    ? $"&until={new DateTimeOffset(DateTime.SpecifyKind(r, DateTimeKind.Utc)).ToUnixTimeSeconds()}"
+                    : string.Empty;
+                var basePath = string.Equals(source, "setup", StringComparison.OrdinalIgnoreCase)
+                    ? "/account/mfa/setup"
+                    : "/account/mfa";
+                if (string.Equals(error, "expired", StringComparison.OrdinalIgnoreCase))
+                {
+                    ClearMfaChallengeCookies(http);
+                }
+
+                return $"{basePath}?error={error}{until}";
+            }
+
+            if (outcome.Failure is MfaVerifyFailureKind failure)
+            {
+                return Results.Redirect(failure switch
+                {
+                    MfaVerifyFailureKind.Expired => ErrorRedirect("expired"),
+                    MfaVerifyFailureKind.Locked => ErrorRedirect("locked", outcome.RetryAtUtc),
+                    MfaVerifyFailureKind.TooMany => ErrorRedirect("too-many", outcome.RetryAtUtc),
+                    MfaVerifyFailureKind.Unavailable => ErrorRedirect("invalid"),
+                    _ => ErrorRedirect("invalid")
+                });
+            }
+
+            var profile = outcome.Profile!;
             var principal = CreatePrincipalFromProfile(profile, "password+totp");
             if (principal.Identity is ClaimsIdentity identity)
             {
@@ -579,6 +674,11 @@ public static class AuthServiceCollectionExtensions
             ClearMfaChallengeCookies(http);
             StampLastActivity(http);
 
+            if (!string.IsNullOrWhiteSpace(profile.MfaTrustToken) && profile.UserId is Guid trustUserId)
+            {
+                MfaTrustCookie.Set(http, dataProtection, trustUserId, profile.MfaTrustToken);
+            }
+
             var returnUrl = AuthRedirects.SafeLocalUrl(
                 http.Request.Cookies["Jobsy.MfaReturnUrl"] ?? "/home");
 
@@ -589,8 +689,111 @@ public static class AuthServiceCollectionExtensions
                     "/account/mfa/recovery-codes?returnUrl=" + Uri.EscapeDataString(returnUrl));
             }
 
+            if (profile.UsedRecoveryCode)
+            {
+                SetRecoveryUsedCookie(http, dataProtection, profile.RecoveryCodesLeft ?? 0);
+                return Results.Redirect(
+                    "/account/mfa/recovery-codes?used=1&returnUrl=" + Uri.EscapeDataString(returnUrl));
+            }
+
             return Results.Redirect(returnUrl);
         }).RequireRateLimiting("auth");
+
+        app.MapPost("/account/mfa/cancel", async (
+            HttpContext http,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(http))
+            {
+                return Results.Redirect("/login?error=retry");
+            }
+
+            ClearMfaChallengeCookies(http);
+            return Results.Redirect("/login");
+        }).RequireRateLimiting("auth");
+
+        app.MapPost("/account/mfa/herstelcodes-vernieuwen", async (
+            HttpContext http,
+            IConfiguration configuration,
+            IAntiforgery antiforgery,
+            IDataProtectionProvider dataProtection,
+            IHttpClientFactory httpClientFactory) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(http)
+                || http.User.Identity?.IsAuthenticated != true
+                || !http.User.HasClaim(JobsyClaimTypes.MfaVerified, "1"))
+            {
+                return Results.Redirect("/login?error=mfa-required");
+            }
+
+            var form = await http.Request.ReadFormAsync();
+            var code = form["code"].ToString();
+            var issuer = http.RequestServices.GetService<JobsyAccessTokenIssuer>();
+            var jwt = issuer?.TryCreate(http.User, http.Connection.RemoteIpAddress?.ToString());
+            if (string.IsNullOrWhiteSpace(jwt))
+            {
+                return Results.Redirect("/login?error=mfa-required");
+            }
+
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
+                configuration["ApiBaseUrl"],
+                "http://localhost:5200/");
+            var client = httpClientFactory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(15);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/mfa/recovery-codes/regenerate")
+            {
+                Content = JsonContent.Create(new { code })
+            };
+            request.Headers.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt);
+            using var response = await client.SendAsync(request);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                var until = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds();
+                return Results.Redirect($"/account/mfa/herstelcodes-vernieuwen?error=too-many&until={until}");
+            }
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                var until = DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds();
+                try
+                {
+                    var body = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("retryAtUtc", out var retry)
+                        && retry.ValueKind == JsonValueKind.String
+                        && DateTime.TryParse(retry.GetString(), out var retryAt))
+                    {
+                        until = new DateTimeOffset(DateTime.SpecifyKind(retryAt, DateTimeKind.Utc)).ToUnixTimeSeconds();
+                    }
+                }
+                catch
+                {
+                    // keep default until
+                }
+
+                return Results.Redirect($"/account/mfa/herstelcodes-vernieuwen?error=locked&until={until}");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return Results.Redirect("/account/mfa/herstelcodes-vernieuwen?error=invalid");
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<RegenerateCodesDto>();
+            var codes = payload?.RecoveryCodes?.Where(c => !string.IsNullOrWhiteSpace(c)).Take(10).ToList()
+                ?? [];
+            if (codes.Count == 0)
+            {
+                return Results.Redirect("/account/mfa/herstelcodes-vernieuwen?error=invalid");
+            }
+
+            SetRecoveryCodesCookie(http, dataProtection, codes);
+            MfaTrustCookie.Clear(http);
+            return Results.Redirect("/account/mfa/recovery-codes?returnUrl=" + Uri.EscapeDataString("/home"));
+        }).RequireAuthorization().RequireRateLimiting("auth");
 
         // Demo one-click login resolves password server-side so credentials stay out of HTML.
         // Impossible in Production regardless of JobsyAuth:AllowDevelopmentAuth (fail closed).
@@ -1226,65 +1429,6 @@ public static class AuthServiceCollectionExtensions
         public int? AttemptsLeft { get; set; }
     }
 
-    private static async Task<LocalApiLoginProfile?> TryLocalApiLoginProfileAsync(
-        IConfiguration configuration,
-        string email,
-        string password,
-        bool rememberDevice)
-    {
-        try
-        {
-            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
-                configuration["ApiBaseUrl"],
-                "http://localhost:5200/");
-            using var client = new HttpClient { BaseAddress = new Uri(apiBase), Timeout = TimeSpan.FromSeconds(8) };
-            using var response = await client.PostAsJsonAsync(
-                "api/auth/local-login",
-                new { email, password, rememberDevice });
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var profile = await response.Content.ReadFromJsonAsync<LocalApiLoginProfile>();
-            if (profile is null || string.IsNullOrWhiteSpace(profile.Email))
-            {
-                return null;
-            }
-
-            return profile;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static async Task<LocalApiLoginProfile?> TryMfaVerifyAsync(
-        IConfiguration configuration,
-        string challengeToken,
-        string code,
-        string recoveryCode)
-    {
-        try
-        {
-            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
-                configuration["ApiBaseUrl"],
-                "http://localhost:5200/");
-            using var client = new HttpClient { BaseAddress = new Uri(apiBase), Timeout = TimeSpan.FromSeconds(8) };
-            using var response = await client.PostAsJsonAsync(
-                "api/auth/mfa/verify",
-                new { challengeToken, code, recoveryCode });
-            return response.IsSuccessStatusCode
-                ? await response.Content.ReadFromJsonAsync<LocalApiLoginProfile>()
-                : null;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     private static void SetMfaChallengeCookies(HttpContext http, string challenge, string returnUrl)
     {
         var secure = JobsyCookie.ShouldMarkSecure(http);
@@ -1307,6 +1451,28 @@ public static class AuthServiceCollectionExtensions
         http.Response.Cookies.Delete("Jobsy.MfaChallenge", new CookieOptions { Path = "/" });
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/", Secure = true });
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/" });
+    }
+
+    private static void SetRecoveryUsedCookie(
+        HttpContext http,
+        IDataProtectionProvider dataProtection,
+        int left)
+    {
+        var protector = dataProtection.CreateProtector(MfaRecoveryUsedCookie.ProtectorPurpose);
+        var payload = protector.Protect(left.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        var secure = JobsyCookie.ShouldMarkSecure(http);
+        http.Response.Cookies.Append(
+            MfaRecoveryUsedCookie.Name,
+            payload,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                IsEssential = true,
+                SameSite = SameSiteMode.Lax,
+                Secure = secure,
+                MaxAge = TimeSpan.FromMinutes(5),
+                Path = "/"
+            });
     }
 
     private static void SetRecoveryCodesCookie(
@@ -1505,6 +1671,11 @@ public static class AuthServiceCollectionExtensions
         public int SessionVersion { get; set; }
     }
 
+    private sealed class RegenerateCodesDto
+    {
+        public List<string>? RecoveryCodes { get; set; }
+    }
+
     private sealed class HandoffExchangeProfile
     {
         public string Email { get; set; } = "";
@@ -1610,6 +1781,13 @@ public static class AuthServiceCollectionExtensions
                 SalesReferralCookie.TrySetFirstClick(http, salesRef, maxAgeDays: 30);
             }
 
+            var providerTenantId = identity.FindFirst("tid")?.Value
+                ?? identity.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+            if (!string.IsNullOrWhiteSpace(providerTenantId))
+            {
+                identity.AddClaim(new Claim("idp_tid", providerTenantId));
+            }
+
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/ensure-external")
             {
                 Content = JsonContent.Create(new
@@ -1618,6 +1796,7 @@ public static class AuthServiceCollectionExtensions
                     fullName,
                     provider,
                     providerSubject,
+                    providerTenantId,
                     referralCode,
                     rememberDevice = true,
                     returnUrl = properties?.RedirectUri,
@@ -1632,6 +1811,22 @@ public static class AuthServiceCollectionExtensions
             using var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
+                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    var failBody = await response.Content.ReadAsStringAsync();
+                    var code = failBody.Contains("provider_not_allowed", StringComparison.OrdinalIgnoreCase)
+                        ? "admin-provider"
+                        : "unavailable";
+                    // Do not sign in — clear any provisional identity role and abort.
+                    identity.TryRemoveClaim(identity.FindFirst(ClaimTypes.Role));
+                    properties ??= new AuthenticationProperties();
+                    properties.RedirectUri = AuthRedirects.AppendReturnUrl(
+                        $"/login?error={code}",
+                        properties.RedirectUri);
+                    properties.Items["Jobsy.ExternalBlocked"] = code;
+                    return;
+                }
+
                 ReplaceRoleClaim(identity, "Candidate");
                 return;
             }
@@ -1843,31 +2038,6 @@ public static class AuthServiceCollectionExtensions
         identity.AddClaim(new Claim(ClaimTypes.Role, role));
     }
 
-    private sealed class LocalApiLoginProfile
-    {
-        public string Email { get; set; } = string.Empty;
-        public string FullName { get; set; } = string.Empty;
-        public string Role { get; set; } = "Candidate";
-        public Guid? CompanyId { get; set; }
-        public List<Guid>? CompanyIds { get; set; }
-        public Guid? SchoolId { get; set; }
-        public bool ShowCandidateHowTo { get; set; }
-        public bool HasCandidateApplications { get; set; }
-        public bool HasSalesReferral { get; set; }
-        public bool IsNewUser { get; set; }
-        public string? SessionToken { get; set; }
-        public int SessionVersion { get; set; }
-        public Guid? DeviceSessionId { get; set; }
-        public string? DeviceRefreshToken { get; set; }
-        public DateTime? DeviceExpiresAtUtc { get; set; }
-        public string? HandoffCode { get; set; }
-        public Guid? UserId { get; set; }
-        public bool RequiresMfa { get; set; }
-        public bool MfaEnrolled { get; set; }
-        public string? MfaChallengeToken { get; set; }
-        public bool MfaVerified { get; set; }
-        public List<string>? RecoveryCodes { get; set; }
-    }
 
     private static string NormalizeRole(string role) => role.Trim().ToLowerInvariant() switch
     {

@@ -6,7 +6,9 @@ public interface IDeviceSessionService
         Guid userId,
         string? userAgent,
         CancellationToken cancellationToken = default,
-        bool mfaVerified = false);
+        bool mfaVerified = false,
+        string? authMethod = null,
+        string? authTenantId = null);
 
     Task<DeviceSessionRotateResult?> RotateAsync(
         string refreshToken,

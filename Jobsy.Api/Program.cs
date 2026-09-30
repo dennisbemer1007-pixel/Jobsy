@@ -52,6 +52,23 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<MfaChallengeService>();
 builder.Services.AddSingleton(sp =>
 {
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var key = JobsyLocalSessionToken.ResolveSigningKey(
+        cfg["JobsyAuth:LocalSessionSigningKey"],
+        cfg["JobsyAuth:DevelopmentAuthSecret"]);
+    return new UnknownAccountLockoutTracker(key);
+});
+builder.Services.AddSingleton(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var key = JobsyLocalSessionToken.ResolveSigningKey(
+        cfg["JobsyAuth:LocalSessionSigningKey"],
+        cfg["JobsyAuth:DevelopmentAuthSecret"]);
+    return new PasswordResetRequestLimiter(key);
+});
+builder.Services.AddScoped<Jobsy.Core.Interfaces.ITotpVerifier, Jobsy.Infrastructure.Security.TotpVerifier>();
+builder.Services.AddSingleton(sp =>
+{
     var config = sp.GetRequiredService<IConfiguration>();
     return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
         Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
@@ -123,9 +140,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
-            ?? httpContext.Connection.RemoteIpAddress?.ToString()
-            ?? "unknown",
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
@@ -268,6 +283,14 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+
+if (string.IsNullOrWhiteSpace(builder.Configuration[RateLimitPartitioning.ConfigKey])
+    && !app.Environment.IsDevelopment())
+{
+    app.Logger.LogWarning(
+        "JobsyAuth:InternalClientIpSecret is empty; auth rate limits fall back to the Web→API hop");
+}
+
 
 app.UseForwardedHeaders();
 app.UseResponseCompression();

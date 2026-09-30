@@ -25,7 +25,7 @@
 - **Retention:** `DataRetentionHostedService` purged logs/engagement/cancelled registrations/site visits. Teaser-campagne-events (`TeaserEngagementEvents`) volgen dezelfde retentielijn; geen IP-opslag; UTM alleen genormaliseerde dimensies.
 - **Logging:** Geen plaintext e-mailadressen in PlatformLogs (redaction via `EmailServiceStub.RedactEmail`).
 - **Registration occupancy:** `GET /api/registration/kvk/{kvk}/establishments` returns boolean `IsInUse` (no owner/contact PII) so the wizard can mark claimed vestigingen as unavailable and offer a claim path. Generic `GET /api/kvk/.../establishments` still hides occupancy for anonymous callers.
-- **Demo:** DemoUsers alleen in `appsettings.Development.json`. `POST /account/demo-login` is **404 in Production** (environment hard-gate), ongeacht `JobsyAuth:AllowDevelopmentAuth`. Op Render staat `AllowDevelopmentAuth=false` overal. Seed draait alleen bij Development of `Seed:Enabled`. **Geen** `DemoDataPurge` / startup-wipe. Named admin: promoteer een echte user via SQL (`Role = 5`) — zie `docs/deploy-render.md`. Header-auth voor `@jobsy.local` alleen wanneer AllowDevelopmentAuth expliciet aan staat (niet op Render). Niet-demo e-mails vereisen HMAC `X-Jobsy-Local-Session` (`LocalSessionSigningKey`). Activatie-URL’s alleen bij `ExposeRegistrationActivationLinks`. OAuth client-secrets: aparte `JobsyAuth:ExternalProvisionSecret`.
+- **Demo:** DemoUsers alleen in `appsettings.Development.json`. `POST /account/demo-login` is **404 in Production** (environment hard-gate), ongeacht `JobsyAuth:AllowDevelopmentAuth`. Op Render staat `AllowDevelopmentAuth=false` overal. Seed draait alleen bij Development of `Seed:Enabled`. **Geen** `DemoDataPurge` / startup-wipe. Named admin: promoteer een echte user via SQL (`Role = 5`) — zie `docs/deploy-render.md`. Header-auth voor `@jobsy.local` alleen wanneer AllowDevelopmentAuth expliciet aan staat (niet op Render). Niet-demo e-mails vereisen HMAC `X-Jobsy-Local-Session` (`LocalSessionSigningKey`). OAuth client-secrets: aparte `JobsyAuth:ExternalProvisionSecret`.
 - **Verification OTPs:** Sollicitatie- en unsubscribe-codes via `RandomNumberGenerator` + HMAC-SHA256 met application pepper (`VerificationCodes.Hash`); legacy unsalted SHA-256 blijft verifieerbaar tijdens rollout. Max 5 foute pogingen per code + rate limit policy `otp-verify` (10/min, keyed op user+IP).
 - **Verified applications only:** Werkgeversmetrics/counts/drilldowns en kandidaat-sollicitatielijsten tellen alleen `EmailVerifiedAt != null`.
 - **Registration activate:** Gekozen wachtwoord (PBKDF2) bij submit; activatie bevestigt e-mail. Takeover vereist e-mailverificatie vóór inbox/approve. Tijdelijk wachtwoord (legacy) alleen per e-mail; API/UI echo’t hem buiten Development niet. Pending `PasswordHash` wordt gewist bij activate/reject/cancel/expiry/anonymize.
@@ -47,3 +47,20 @@ De ASP.NET Core pipeline stuurt standaard:
 - **Stub payments / payouts:** alleen Development of expliciet `JobsyAuth:AllowStubPayments=true` (niet meer gekoppeld aan AllowDevelopmentAuth). Geldt ook voor diepte-analyse-checkout (`stub_deep_*`); `CompleteCheckout` bindt aan de ingelogde user en markeert Pending→Paid alleen onder die stub-gate. Production Render: `AllowStubPayments=false`.
 - **Mollie test mode:** API-keys die met `test_` beginnen worden buiten Development geweigerd (fail closed). Production vereist een `live_` key.
 - **Cookie consent:** banner + `Jobsy.CookieConsent` in localStorage and a first-party cookie; anonymous site-analytics POSTs only after “Accepteer cookies” (`X-Jobsy-Cookie-Consent` or the cookie).
+
+
+## Auth hardening (2026-09)
+
+- Anonymous Web→API auth calls forward a trusted visitor IP (`X-Jobsy-Client-Ip` + `JobsyAuth:InternalClientIpSecret`). Without the secret, limits fall back to the Web→API hop (startup warning outside Development).
+- Login lockout: 5 failures → pause (15/30/60/120/240 min by lockouts in 24 h). Counter resets after the pause. At most one lockout mail per 24 h. Unknown e-mails get the same pause shape (process-local HMAC tracker).
+- 2FA: 5 wrong codes end the challenge; 10 wrong codes pause MFA for 15 min; TOTP time-steps cannot be reused; recovery-code use is mailed and shows remaining count.
+- Never log passwords, TOTP codes, recovery codes, or challenge tokens.
+- `/register/activate` (any query) permanently redirects to `/register` (auth 06; link activation removed).
+- Admins: Microsoft work/school or password+2FA only (`JobsyAuth:AdminAllowedEntraTenants` optional allow-list). Google and personal Microsoft blocked.
+
+## Wachtwoord vergeten
+
+- `/wachtwoord-vergeten` always shows the same "sent" screen (202 from API). Rate limit: 3 requests per e-mail per hour (process-local HMAC key).
+- Reset link: `OneTimeLinkPurpose.PasswordReset`, 30 minutes, single use; older unused links for the same user are invalidated.
+- On complete: new password hash, lockout + MFA pause cleared, `SessionVersion` bump, all device sessions + trusted devices revoked. 2FA secret/codes stay. Redirect `/login?setup=done`.
+- External-only accounts get `PasswordResetExternalOnly` (no link). Unknown/inactive get no mail.

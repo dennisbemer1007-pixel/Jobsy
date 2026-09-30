@@ -342,16 +342,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                     "Kon de bevestigingsmail niet versturen. Controleer de e-mailinstellingen of probeer later opnieuw.");
             }
 
-            var featuresTakeover = await _features.GetAsync(cancellationToken);
-            var verifyUrl = BuildActivationUrl(registration.ActivationToken, featuresTakeover.PublicWebBaseUrl);
-
             return new RegistrationSubmitResult(
                 registration.Id,
                 registration.Status,
                 RequiresTakeover: true,
                 Message:
                 "Deze vestiging heeft al een beheerder. Bevestig je e-mail; daarna sturen we een brief met code naar het KvK-adres. Lobsy-support keurt de eigendomsoverdracht goed.",
-                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null,
+                ActivationUrl: null,
                 VerificationExpiresAt: registration.EmailVerificationExpiresAt);
         }
 
@@ -380,9 +377,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "Kon de bevestigingsmail niet versturen. Controleer de e-mailinstellingen of probeer later opnieuw.");
         }
 
-        var features = await _features.GetAsync(cancellationToken);
-        var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
-
         var roleHint = isIntermediarySbi
             ? "Na bevestiging krijg je de rol Intermediair (SBI 78) en kun je direct aan de slag."
             : scope == RegistrationScope.Organization
@@ -398,7 +392,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.Status,
             RequiresTakeover: false,
             Message: $"We hebben een bevestigingscode naar je e-mail gestuurd. Vul die hieronder in (geldig 10 minuten). {roleHint}{kvkHint}",
-            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null,
+            ActivationUrl: null,
             VerificationExpiresAt: registration.EmailVerificationExpiresAt);
     }
 
@@ -1843,15 +1837,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "Kon de bevestigingsmail niet versturen. Probeer later opnieuw.");
         }
 
-        var features = await _features.GetAsync(cancellationToken);
-        var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
         return new RegistrationSubmitResult(
             registration.Id,
             registration.Status,
             RequiresTakeover: registration.Status == CompanyRegistrationStatus.TakeoverPending,
             Message:
             "We hebben een nieuwe bevestigingscode naar je e-mail gestuurd. Vul die hieronder in (geldig 10 minuten).",
-            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null,
+            ActivationUrl: null,
             VerificationExpiresAt: registration.EmailVerificationExpiresAt);
     }
 
@@ -1875,9 +1867,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _db.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Deleted unconfirmed registration {Id}", registrationId);
     }
-
-    private static string BuildActivationUrl(string token, string publicWebBaseUrl)
-        => $"{publicWebBaseUrl.TrimEnd('/')}/register/activate?token={Uri.EscapeDataString(token)}";
 
     private async Task ValidateSalesOrAmbassadeurTrackingCodeAsync(
         string trackingCode,

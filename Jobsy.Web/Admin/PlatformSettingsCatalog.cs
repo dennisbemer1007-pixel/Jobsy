@@ -316,17 +316,6 @@ public static class PlatformSettingsCatalog
 
         // --- Demo & test ---
         list.Add(new PlatformSettingDescriptor(
-            Key: "ExposeRegistrationActivationLinks",
-            Group: GroupDemo,
-            TitleKey: "AdminSettings.ActivationLinks.Title",
-            DescriptionKey: "AdminSettings.ActivationLinks.Desc",
-            Kind: PlatformSettingKind.Bool,
-            Read: s => s.ExposeRegistrationActivationLinks,
-            Write: v => new PlatformFeatureUpdate(ExposeRegistrationActivationLinks: ToBool(v)),
-            EnvironmentLock: PlatformSettingEnvironmentLock.AcceptatieOnly,
-            BadgeKey: "AdminSettings.Badge.AcceptatieOnly"));
-
-        list.Add(new PlatformSettingDescriptor(
             Key: "AuthenticatorEnabled",
             Group: GroupDemo,
             TitleKey: "AdminSettings.AuthenticatorStub.Title",

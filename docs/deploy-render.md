@@ -76,7 +76,6 @@ De Blueprint zet `JobsyAuth__AllowDevelopmentAuth=false` op **alle** services (P
 - `JobsyAuth__DevelopmentAuthSecret` wordt per environment gegenereerd op de API en gedeeld met de web-service van **diezelfde** environment.
 - `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens.
 - `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met web voor OAuth credential-provisioning.
-- `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
 - **ES256 JWT PEMs** (`JobsyAuth__Jwt__PublicKeyPem` op API, `JobsyAuth__Jwt__PrivateKeyPem` op Web) staan in de Blueprint als `sync: false`. Zonder Dashboard-waarde start de app met een gelogde **Development bootstrap-pair** (Critical in logs) zodat Acceptatie/Production niet crashen. Zet zo snel mogelijk een **eigen** ES256-paar per environment (openssl / `JobsyAccessToken.GenerateDevelopmentKeyPair`), zelfde private op Web en public op API. Production-PEMs mogen niet gelijk zijn aan Acceptatie.
 - `CLOUDFLARE_ORIGIN_SECRET` is ook `sync: false`. Leeg = geen origin-header-handhaving (Critical-log); gezet = Transform Rule verplicht (behalve `/health` op de API).
 

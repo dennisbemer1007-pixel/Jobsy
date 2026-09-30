@@ -13,7 +13,7 @@
      dir="@(Culture.IsRightToLeft ? "rtl" : null)"
      lang="@Culture.Language">
     <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
-    <PublicHeader Variant="_variant" Compact="_compact" />
+    <PublicHeader Variant="_variant" Compact="_compact" AuthShell="_authShell" />
     <main id="main" class="pub-main @(_compact ? "pub-main--test" : null)">
         @Body
     </main>
@@ -28,6 +28,7 @@
     private LandingVariant _variant = LandingVariant.On;
     private CookieConsentBanner.CookieConsentMode _cookieMode = CookieConsentBanner.CookieConsentMode.Interactive;
     private bool _compact;
+    private bool _authShell;
 
     protected override async Task OnInitializedAsync()
     {
@@ -36,6 +37,7 @@
         Culture.InitializeFromRequest(http);
         _variant = await VariantResolver.GetAsync();
         _compact = IsTestPath(Navigation.Uri, http);
+        _authShell = IsAuthShellPath(Navigation.Uri, http);
         var interactive = http?.AcceptsInteractiveRouting() == true;
         _cookieMode = interactive
             ? CookieConsentBanner.CookieConsentMode.Interactive
@@ -70,4 +72,28 @@
     private static bool IsOntdekPath(string? path)
         => string.Equals(path, PublicRoutes.Test, StringComparison.OrdinalIgnoreCase)
            || string.Equals(path, "/dna", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAuthShellPath(string navigationUri, HttpContext? http)
+    {
+        try
+        {
+            var path = new Uri(navigationUri).AbsolutePath;
+            if (IsAuthPath(path))
+            {
+                return true;
+            }
+        }
+        catch
+        {
+            // fall through
+        }
+
+        return IsAuthPath(http?.Request.Path.Value);
+    }
+
+    private static bool IsAuthPath(string? path)
+        => string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, "/wachtwoord-vergeten", StringComparison.OrdinalIgnoreCase)
+           || (path?.StartsWith("/account/mfa", StringComparison.OrdinalIgnoreCase) ?? false)
+           || string.Equals(path, "/account/wachtwoord-instellen", StringComparison.OrdinalIgnoreCase);
 }

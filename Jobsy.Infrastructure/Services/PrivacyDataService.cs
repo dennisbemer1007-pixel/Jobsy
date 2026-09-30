@@ -372,6 +372,19 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .Select(l => new { l.Provider })
             .ToListAsync(cancellationToken);
 
+        var trustedDevices = await _db.MfaTrustedDevices.AsNoTracking()
+            .Where(d => d.UserId == user.Id)
+            .Select(d => new
+            {
+                d.Id,
+                d.CreatedAtUtc,
+                d.ExpiresAtUtc,
+                d.LastUsedAtUtc,
+                d.UserAgentSummary,
+                d.RevokedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
         string[] optedOutNames = [];
         if (!string.IsNullOrWhiteSpace(user.Email))
         {
@@ -678,6 +691,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             Apparaatsessies = deviceSessions,
             Pushabonnementen = pushSubscriptions,
             ExterneAanmeldingen = externalLogins,
+            VertrouwdeApparaten = trustedDevices,
             AfgemeldeMails = optedOutNames.Length == 0
                 ? null
                 : string.Join(", ", optedOutNames),
@@ -851,6 +865,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (deviceSessions.Count > 0)
         {
             _db.UserDeviceSessions.RemoveRange(deviceSessions);
+        }
+
+        var trustedDevices = await _db.MfaTrustedDevices
+            .Where(d => d.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (trustedDevices.Count > 0)
+        {
+            _db.MfaTrustedDevices.RemoveRange(trustedDevices);
         }
 
         var loginHandoffs = await _db.DeviceLoginHandoffs

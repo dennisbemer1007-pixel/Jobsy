@@ -1,0 +1,107 @@
+@page "/account/mfa/herstelcodes-vernieuwen"
+@attribute [Authorize]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Components.Auth
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Security
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IAntiforgery Antiforgery
+@inject CultureState Culture
+@inject NavigationManager Nav
+
+<PageTitle>@Culture["Mfa.RegenerateTitle"] · Lobsy</PageTitle>
+
+<section class="au-stage" data-au-mfa-regenerate>
+    <div class="au-blob au-blob--a" aria-hidden="true"></div>
+    <div class="au-col">
+        <div class="au-card">
+            <h1 class="au-title">@Culture["Mfa.RegenerateTitle"]</h1>
+            <p class="au-lead">@Culture["Mfa.RegenerateLead"]</p>
+
+            <LoginStatusBlock State="_loginState" UntilLocalHhMm="_untilLocal" />
+
+            <form method="post" action="/account/mfa/herstelcodes-vernieuwen" class="au-form" data-enhance="false" novalidate>
+                <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                <div class="au-field">
+                    <label class="au-field__label" for="mfa-code">@Culture["Mfa.CodeLabel"]</label>
+                    <div class="au-input-wrap">
+                        <input id="mfa-code"
+                               class="au-input"
+                               type="text"
+                               name="code"
+                               inputmode="numeric"
+                               autocomplete="one-time-code"
+                               pattern="[0-9 ]{6,7}"
+                               maxlength="7"
+                               dir="ltr"
+                               autofocus
+                               required />
+                    </div>
+                </div>
+                <button type="submit" class="au-submit">@Culture["Mfa.RegenerateSubmit"]</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+@code {
+    private string _antiforgeryFieldName = string.Empty;
+    private string _antiforgeryToken = string.Empty;
+    private LoginState _loginState = LoginState.None;
+    private string? _untilLocal;
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        if (http.User.Identity?.IsAuthenticated != true)
+        {
+            http.Response.Redirect("/login?returnUrl=" + Uri.EscapeDataString("/account/mfa/herstelcodes-vernieuwen"));
+            return;
+        }
+
+        if (!http.User.HasClaim(JobsyClaimTypes.MfaVerified, "1"))
+        {
+            http.Response.Redirect("/login?error=mfa-required");
+            return;
+        }
+
+        var tokens = Antiforgery.GetAndStoreTokens(http);
+        _antiforgeryFieldName = tokens.FormFieldName;
+        _antiforgeryToken = tokens.RequestToken ?? string.Empty;
+
+        var query = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (!query.TryGetValue("error", out var error))
+        {
+            return;
+        }
+
+        var code = error.ToString();
+        if (query.TryGetValue("until", out var until)
+            && long.TryParse(until.ToString(), out var unix))
+        {
+            var utc = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime;
+            if (utc > DateTime.UtcNow)
+            {
+                _untilLocal = Jobsy.Core.Time.AmsterdamTime.ToLocal(utc).ToString("HH:mm");
+            }
+        }
+
+        _loginState = code switch
+        {
+            "invalid" => LoginState.Invalid,
+            "locked" => LoginState.Locked,
+            "too-many" => LoginState.TooMany,
+            _ => LoginState.Generic
+        };
+    }
+}

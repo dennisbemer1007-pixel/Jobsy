@@ -197,7 +197,7 @@ Start in een private window. Cookie-banner nog niet beantwoord. Geen bottom-navi
 | Gast | Register: verkeerde activatiecode. | Code geweigerd; na max pogingen geblokkeerd/rate-limit. |
 | Gast | Register: **Code opnieuw versturen**. | Nieuwe code; oude ongeldig of beide binnen window. |
 | Gast | Register: verlopen code. | Fout verlopen; opnieuw aanvragen. |
-| Gast | Open `/register/activate` zonder token. | Fout + retry naar register. |
+| Gast | Open `/register/activate` (met of zonder token). | 301 naar `/register`. |
 | Gast | Activate met geldige token. | Succes + naar login; wachtwoord niet in UI buiten Development. |
 | Gast | Activate takeover-wachtend. | Melding wacht op eigenaar; naar login. |
 | Gast | Activate ongeldige/gebruikte token. | Fout; geen accountactivatie. |

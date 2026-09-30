@@ -67,7 +67,8 @@ public record AdminUserDetailDto(
     DateTime? LastActiveAtUtc = null,
     DateTime? AuthenticatorEnrolledAtUtc = null,
     int ActiveSessionCount = 0,
-    IReadOnlyList<string>? MembershipCompanyNames = null);
+    IReadOnlyList<string>? MembershipCompanyNames = null,
+    int TrustedDeviceCount = 0);
 
 /// <summary>Paginated, masked admin users overview (prompt 05).</summary>
 public record AdminUsersPageDto(

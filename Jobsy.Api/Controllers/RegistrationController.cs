@@ -275,37 +275,6 @@ public class RegistrationController : ControllerBase
         }
     }
 
-    [HttpPost("activate")]
-    [AdminAuditExempt("Registration activate")]
-    [AllowAnonymous]
-    [EnableRateLimiting("auth")]
-    public async Task<ActionResult<RegistrationActivationResponse>> Activate(
-        [FromQuery] string token,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var result = await _registration.ActivateAsync(token, cancellationToken);
-            return Ok(ToActivationResponse(result));
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-        catch (DbUpdateException)
-        {
-            return Conflict(new { message = "Activatie conflict — vestiging is mogelijk al bezet." });
-        }
-    }
-
     [HttpGet("takeovers")]
     [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.BranchManager},{JobsyRoles.Admin}")]
     public async Task<ActionResult<IEnumerable<TakeoverInboxItemDto>>> ListTakeovers(
@@ -424,54 +393,6 @@ public class RegistrationController : ControllerBase
         {
             return Conflict(new { message = ex.Message });
         }
-    }
-
-    /// <summary>
-    /// Development-only helper: latest activation stub URL for an email.
-    /// Requires Admin auth — never anonymous.
-    /// </summary>
-    [HttpGet("stub-activation")]
-    [Authorize(Roles = JobsyRoles.Admin)]
-    public async Task<ActionResult<object>> StubActivation(
-        [FromQuery] string email,
-        CancellationToken cancellationToken)
-    {
-        if (!_environment.IsDevelopment())
-        {
-            var featuresGate = await _features.GetAsync(cancellationToken);
-            if (!featuresGate.ExposeRegistrationActivationLinks)
-            {
-                return NotFound();
-            }
-        }
-
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return BadRequest(new { message = "email is verplicht." });
-        }
-
-        var normalized = email.Trim().ToLowerInvariant();
-        var reg = await _db.CompanyRegistrations
-            .AsNoTracking()
-            .Where(r => r.ContactEmail == normalized
-                        && r.Status == CompanyRegistrationStatus.PendingActivation
-                        && r.ActivationToken != "")
-            .OrderByDescending(r => r.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (reg is null)
-        {
-            return NotFound(new { message = "Geen openstaande activatie gevonden." });
-        }
-
-        var features = await _features.GetAsync(cancellationToken);
-        var baseUrl = features.PublicWebBaseUrl.TrimEnd('/');
-        return Ok(new
-        {
-            reg.Id,
-            reg.ContactEmail,
-            ActivationUrl = $"{baseUrl}/register/activate?token={Uri.EscapeDataString(reg.ActivationToken)}"
-        });
     }
 
     private RegistrationActivationResponse ToActivationResponse(
