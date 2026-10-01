@@ -103,3 +103,72 @@ Written while building `docs/prompts/errors/01-errorlayout-404-500.md` against
   `Common.Error.Maintenance` is kept in the catalog as a fallback key.
 - **Propagation is 15 s by design** (`MaintenanceRules.StatePollSeconds`). A stack that needs the
   switch to be instant should add a push path rather than shortening the poll.
+
+## errors 06 (E2E, HTTP guards, stack end)
+
+This is the stack's closing list: what the browser suite could not run here, which dependencies
+stayed absent, and what is left for other stacks or for Dennis.
+
+### Dependency outcomes over the whole stack
+
+| | Dependency | Outcome | Carried follow-up |
+|---|---|---|---|
+| A | Public theme (`docs/landing` 01/02/04) | **present** at 01, still present at the 03 and 05 re-checks | none — `ErrorLayout` uses `.pub-theme`, `pub-*`, `LobsyMascot` and `PublicRoutes` |
+| B | Public-pages hotfix (`docs/public-pages` 01) | **absent** — 01 created `StatusPage.razor`, `UiStringsStatus` and the re-execute filter | public-pages must reuse them, and switch `ErrorChromeProvider` to `LegalIdentityProvider.TryGetCached()` once that provider exists (see the public-pages 01 section above) |
+| C | Emails (`AmsterdamTime`) | **present** | none — the maintenance end time uses it |
+| D | Admin redesign | **present** at 01, still present at the 05 re-check | none — the switch is an `AdminToggleRow` with a danger `AdminImpactNote` on `/admin/instellingen` |
+| E | Auth 03 (`/account/switch`) | **absent** — 02 added `reason=switch` to `/account/logout` | auth should point `AccessDeniedView`'s switch form at its own path when it has one (see the auth 03 section above) |
+| F | Werkgevers actief (`IEmployersSwitch`) | **present** at 01, still present at the 02 and 03 re-checks | none — the 404 primary action follows E3 OFF, 403 handles `reason=employers-off` |
+| G | Tests stack | n/a (nothing to check) | the 04 ratchet baseline already includes their progress |
+
+### `ex.Message` at the end of the stack
+
+`docs/errors/ex-message-baseline.txt` holds **109 files / 322 uses**, down from **377** at
+`acceptatie` when 04 measured it. The error pages, the public pages, the layouts and the pages 04
+swept are at 0 and the ratchet keeps them there. The file *is* the to-do list: a stack touching one
+of those pages can pick a few off with `UserFacingError.Describe(ex)`.
+
+### Native review pl / ro / ar
+
+`docs/i18n/errors-review.md` lists every `Status.*` key with its Dutch source. **nl and en are
+final; pl, ro and ar are B1 drafts** written during this stack and still need a native pass. The
+maintenance page in `ops/maintenance/` carries the same five languages as literal text, so a
+correction there has to be applied in both places.
+
+### Browser rows that skip themselves
+
+`StatusPagesPlaywrightTests` soft-skips without `JOBSY_E2E_BASE_URL`, and individual rows skip when
+their precondition is missing. Each reason is appended to
+`artifacts/playwright-errors/skipped.txt` so a CI run says out loud what it did not cover.
+
+| Row | Needs | Falls back to |
+|---|---|---|
+| 500 page (matrix, copy button) | `Errors__EnableTestThrow=true` **and** `Errors__ForceHandler=true`; Development only, never on Render. Both are set by `.github/scripts/start-ci-stack.sh`. | `ErrorPageTests` / `StatusPagesHttpTests` in process |
+| 410 page (matrix) | `JOBSY_E2E_CLOSED_VACANCY_ID` — the Development seed has no vacancy that is guaranteed closed, so the id must be passed in | `ClosedVacancyPageTests` + `StatusPagesHttpTests` against the in-process API |
+| 403 page (matrix, switch account) | a candidate session (`JOBSY_E2E_CANDIDATE_EMAIL` / `_PASSWORD`, default the seed account) | `ForbiddenStatusTests` / `ForbiddenViewTests` |
+| Maintenance flow | an **admin** session; admins need MFA since auth 02, so a scripted password login cannot get in | `MaintenanceMiddlewareTests` / `MaintenanceApiTests` cover the 503, the allow-list, the admin bypass and `Retry-After` |
+| Reconnect toast | a live Blazor circuit that actually drops | `ReconnectToastTests` asserts the five languages in the markup |
+| Inline block error | a dashboard card that already uses `InlineErrorBlock` (the panels still use `PanelErrorBoundary`) | `InlineErrorBlockTests` |
+| 429 page (matrix) | uses the direct `/status/429` route, which is a real 429 with `Retry-After`. Exhausting the live limiter needs a CI-only permit value that does not exist yet. | `RateLimitPageTests` exhausts the real limiter in process |
+
+### Smaller things 06 found and fixed
+
+- **An unknown vacancy answered 404 with a bare "Vacature niet gevonden." line** inside the normal
+  app shell — a real status code but not the friendly page §IA promises, and no `<h1>`. The 404 hero
+  moved into `Components/Errors/NotFoundView.razor` (the same pattern as `ClosedVacancyView` for
+  410) and is now used by both `/status/404` and `VacancyDetail`.
+- **The API's 410 body had no machine-readable marker.** `ClosedVacancyDto` now carries
+  `code: "vacancy_closed"` next to the minimal public fields, so a caller can tell this 410 from
+  any other one without parsing prose.
+- **There was no way to see the real 500 page in a browser.** `ErrorPagesExtensions.UseTestThrowPath`
+  adds `/__test/throw`, gated on `Errors:EnableTestThrow` **and** a Development host. Off by
+  default, never set on Render.
+
+### Still open for other stacks
+
+- **A CI-only rate-limit permit value** would let the browser suite see a 429 the way a visitor
+  gets one (hitting the limiter) instead of the direct route.
+- **A seeded closed vacancy** in the Development seed would make the 410 browser row run without an
+  environment variable.
+- **A reachable inline-error card.** Once one dashboard card uses `InlineErrorBlock`, the
+  route-intercept flow in 06.2 runs for real.

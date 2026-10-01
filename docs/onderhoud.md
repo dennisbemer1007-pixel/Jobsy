@@ -164,3 +164,28 @@ services:
 Beide HTML-bestanden zijn zelfstandig: geen scripts, geen externe fonts of afbeeldingen, inline CSS
 en inline SVG. `MaintenanceStaticPageTests` bewaakt de grootte, het ontbreken van `<script`, de vijf
 `lang`-waarden en de Cloudflare-token.
+
+---
+
+## 6. Runbook nagelopen tegen de E2E (errors 06)
+
+Elke stap uit §1 is nagelopen tegen wat de tests écht doen. Wat afwijkt staat hieronder; de rest
+van §1 klopt woord voor woord.
+
+| Stap uit §1 | Wat de tests aantonen | Klopt |
+|---|---|---|
+| Schakelaar op `/admin/instellingen` | `MaintenancePanel` staat daar; `/admin/settings` is een **legacy redirect** (302) naar `/admin/instellingen` — gebruik altijd de nieuwe URL | ja, met die noot |
+| "Wacht 15 seconden" | `MaintenanceRules.StatePollSeconds` = 15; de browsertest geeft de bezoeker daarom 20 s voordat hij een 503 verwacht | ja |
+| Bezoeker krijgt 503 + `Retry-After` | `MaintenanceMiddlewareTests` (web) en `MaintenanceApiTests` (API), plus `StatusPagesHttpTests` voor de headers | ja |
+| `/healthz` en `/health` blijven 200 | `StatusPagesHttpTests.Health_checks_answer_200_during_maintenance` | ja |
+| Admin ziet een rode balk | de balk heeft CSS-klasse `.maintenance-banner` (geen `data-testid`) | ja |
+| Uitzetten werkt binnen 15 s | middleware-tests; de browserflow slaat dit over (zie hieronder) | ja |
+
+**De browserflow voor onderhoud slaat zichzelf over.** Admins hebben sinds auth 02 verplicht MFA,
+dus een gescript wachtwoord-login komt niet binnen. De 503-pagina, de allow-list, de admin-bypass en
+`Retry-After` worden daarom in-process bewezen (`MaintenanceMiddlewareTests`, `MaintenanceApiTests`,
+`StatusPagesHttpTests`) en niet via de browser. Wil je de knop vóór een echte ingreep één keer met
+eigen ogen zien: doe §1 handmatig op Acceptatie.
+
+**Niet vergeten bij een handmatige ronde:** jij ziet als admin de échte site, dus controleer de
+onderhoudspagina in een **incognitovenster**. Anders denk je dat de schakelaar niets doet.

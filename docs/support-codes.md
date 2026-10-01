@@ -19,10 +19,13 @@ One request produces at most one code: the web side caches it on `HttpContext.It
 |---|---|
 | 500 page (`/Error`) | the "Foutcode" card, plus the `Mail support` link (`subject=Foutcode LB-XXXX`) |
 | 429 page (`/status/429`) | the same "Foutcode" card (`Components/Errors/SupportCodeCard.razor`) |
+| 503 onderhoudspagina (`/status/503`) | **no code** — maintenance is planned, not a failure, so there is nothing for support to look up. The API's 503 ProblemDetails still carries one (see below). |
 | Inline block errors | "Foutcode {LB-XXXX}" under "Dit stukje laadt nu niet." (`InlineErrorBlock`) |
 | Circuit error boundary | the same line under "Even iets misgegaan" (`CircuitErrorBoundary`) |
 | API errors | `supportCode` in the ProblemDetails body, next to `traceId` |
 | API 429 | `supportCode` next to `code: "rate_limited"` and `retryAfterSeconds` |
+| API 503 | `supportCode` next to `code: "maintenance"`, `retryAfterSeconds` and `expectedEndUtc` |
+| Inline block errors in a page | `supportCode` from the failing API call, shown by `InlineErrorBlock` |
 
 ## How support finds the error
 
@@ -51,6 +54,22 @@ Never logged by the error page, and never shown to the visitor:
 - query strings, form bodies or headers
 - e-mail addresses, names or any other personal data
 - the exception message, the stack trace or the request id (the visitor only gets the code)
+
+## How long a code can be looked up (retention)
+
+A code is only useful while the matching log line still exists. Ask the visitor to mail it the
+same day; after that the trail depends on where you look.
+
+| Where | How long | Notes |
+|---|---|---|
+| Render service logs (live tail + search) | the window of the current Render plan — **confirm it in the dashboard**, it is the shortest of the three | after that window the code has no matching request line any more |
+| Sentry issues (tag `support_code`) | the event retention of the current Sentry plan | the issue (what broke, how often) outlives the individual event; the tag sits on the event |
+| `PlatformLogs` in the database | until the retention job removes the row | these rows carry no e-mail address or name on purpose, so the code is the only handle |
+| Log drain | **not configured today** | set one up if support wants a window longer than Render's |
+
+Practical rule: ask the visitor to mail the code the same day. Once Render's window has passed,
+only the Sentry issue is left and the individual request is gone. Don't promise a specific number
+of days without checking the two dashboards first — both plans can change.
 
 ## Rate limits (429)
 
