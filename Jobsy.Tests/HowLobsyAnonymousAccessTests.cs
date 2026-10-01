@@ -31,24 +31,28 @@ public class HowLobsyAnonymousAccessTests
         Assert.DoesNotContain("/login", location, StringComparison.OrdinalIgnoreCase);
 
         // Document shell must not bounce anonymous visitors via meta/JS login redirect.
+        // The language switcher legitimately carries returnUrl back to this page, so only
+        // a login target counts as a bounce.
         var html = await response.Content.ReadAsStringAsync();
-        Assert.DoesNotContain("returnUrl=%2Fhoe-werkt-lobsy", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/login?returnUrl=%2Fhoe-werkt-lobsy", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("window.location=\"/login", html, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void How_lobsy_page_is_allow_anonymous_with_guest_guide()
+    public void How_lobsy_page_is_allow_anonymous_static_without_role_gate()
     {
         var root = FindRepoRoot();
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "HowLobsyWorks.razor"));
         Assert.Contains("AllowAnonymous", page, StringComparison.Ordinal);
         Assert.DoesNotContain("Authorize(Roles", page, StringComparison.Ordinal);
-        Assert.Contains("HowLobsyRoleGuides.Guest", page, StringComparison.Ordinal);
+        Assert.Contains("ExcludeFromInteractiveRouting", page, StringComparison.Ordinal);
 
+        // Guests read the public story on this page itself; there is no guest guide object
+        // and no redirect into the candidate area.
         var guides = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Help", "HowLobsyRoleGuides.cs"));
-        Assert.Contains("public static readonly Guide Guest", guides, StringComparison.Ordinal);
-        Assert.Contains("/ontdek", guides, StringComparison.Ordinal);
-        Assert.Contains("HowLobsy.Guest.PrimaryCta", guides, StringComparison.Ordinal);
+        Assert.DoesNotContain("Guide Guest", guides, StringComparison.Ordinal);
+        Assert.DoesNotContain("HowLobsy.Guest.", guides, StringComparison.Ordinal);
+        Assert.DoesNotContain("NavigateTo", page, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

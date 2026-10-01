@@ -3,7 +3,9 @@
 # LocalizationParityReportTests fails only if a language count increases.
 # Auth 07: lowered after real pl/ro/ar for UiStringsMfa (was EN-copied).
 # Before auth-07: en=234 pl=846 ro=865 ar=839
-en=192
-pl=205
-ro=225
-ar=195
+# Public-pages 08: lowered after UiStringsHowLobsyRoles stopped copying nl into pl/ro/ar
+# (staff guides now carry the English draft). Before: en=192 pl=205 ro=225 ar=195
+en=188
+pl=103
+ro=121
+ar=93

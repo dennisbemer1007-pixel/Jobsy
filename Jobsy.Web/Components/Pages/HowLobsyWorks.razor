@@ -256,8 +256,11 @@
 
     private string Text(string key) => LandingText.For(key, _variant, Culture.Language);
 
+    /// <summary>A visitor never reads "vanaf € 0,00", so an empty or nonsense price falls back.</summary>
     private string PriceText
-        => "€ " + (_priceEuro ?? Jobsy.Core.Entities.FlexCommercialSettings.DefaultDeepAnalysisPriceEuro)
+        => "€ " + (_priceEuro is > 0m
+                ? _priceEuro.Value
+                : Jobsy.Core.Entities.FlexCommercialSettings.DefaultDeepAnalysisPriceEuro)
             .ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
 
     private string TabLabel(HowLobsyAudience audience)
