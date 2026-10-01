@@ -17,7 +17,7 @@ neither `main` nor `acceptatie` was pushed to.
 | 07 | Mijn gegevens | `cursor/public-pages-7` | [#489](https://github.com/dennisbemer1007-pixel/Jobsy/pull/489) | `acceptatie` | open | `/privacy/data` on `PublicLayout`, `GET /privacy/data/export` as file download, Dutch time, POST logout |
 | 08 | Hoe werkt Lobsy + Wie zijn wij | `cursor/public-pages-8` | [#490](https://github.com/dennisbemer1007-pixel/Jobsy/pull/490) | `acceptatie` | open | both pages static SSR in 5 languages, admin about-editor and `api/site/about` removed |
 | 09 | Partner + bedrijfspagina | `cursor/public-pages-9` | [#491](https://github.com/dennisbemer1007-pixel/Jobsy/pull/491) | `acceptatie` | open | `/partner` B1 + excl. btw + "Gratis"; `/{kvk}` in `PublicLayout` with vestiging tabs, JSON-LD from config, "Meld het" |
-| 10 | E2E + docs + this report | `cursor/public-pages-10` | this PR | `acceptatie` | open | `PublicPagesPlaywrightTests`, `PublicPagesHttpTests`, two product fixes, `docs/legal/README.md`, completed review list, follow-ups, this report |
+| 10 | E2E + docs + this report | `cursor/public-pages-10` | [#492](https://github.com/dennisbemer1007-pixel/Jobsy/pull/492) | `acceptatie` | open | `PublicPagesPlaywrightTests`, `PublicPagesHttpTests`, two product fixes, `docs/legal/README.md`, completed review list, follow-ups, this report |
 
 Every PR from 02 on is stacked: its diff contains the lower PRs until they merge, so review the
 "own commits" column, not the whole diff.
