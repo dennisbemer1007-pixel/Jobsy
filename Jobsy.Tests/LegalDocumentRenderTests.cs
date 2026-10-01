@@ -135,8 +135,8 @@ public class LegalDocumentRenderTests : TestContext
         Assert.Equal(UiStrings.Get("Legal.InShort", "ar"), label);
 
         var summary = cut.FindAll(".pp-short__text").First().TextContent.Trim();
-        Assert.Equal(UiStrings.Get("Privacy.Sec.verantwoordelijk.Summary", "ar"), summary);
-        Assert.NotEqual(UiStrings.Get("Privacy.Sec.verantwoordelijk.Summary", "nl"), summary);
+        Assert.Equal(UiStrings.Get("Privacy.Sec.wie.Summary", "ar"), summary);
+        Assert.NotEqual(UiStrings.Get("Privacy.Sec.wie.Summary", "nl"), summary);
     }
 
     [Fact]
@@ -241,8 +241,8 @@ public class LegalDocumentRenderTests : TestContext
     }
 
     [Fact]
-    public void Processor_table_renders_nothing_while_the_catalog_is_empty()
-        => Assert.Empty(RenderPrivacy().FindAll("#delen .pp-table__grid"));
+    public void Processor_table_renders_inside_the_sharing_section()
+        => Assert.Single(RenderPrivacy().FindAll("#delen .pp-table__grid"));
 
     [Theory]
     [InlineData(typeof(Jobsy.Web.Components.Pages.Legal.Privacy))]

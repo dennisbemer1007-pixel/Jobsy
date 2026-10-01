@@ -18,5 +18,11 @@ public sealed class LegalSection
 
     public string? SummaryKey { get; init; }
 
+    /// <summary>
+    /// Ids of older sections that merged into this one. They render as empty anchors so links
+    /// shared before a rewrite still land on the right section.
+    /// </summary>
+    public IReadOnlyList<string> AliasIds { get; init; } = [];
+
     public required RenderFragment Body { get; init; }
 }

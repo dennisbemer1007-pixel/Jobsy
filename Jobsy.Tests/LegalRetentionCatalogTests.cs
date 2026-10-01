@@ -74,10 +74,11 @@ public class LegalRetentionCatalogTests
     }
 
     [Fact]
-    public void Processor_catalog_is_empty_until_03_fills_it()
+    public void Processor_catalog_is_filled_and_split_by_status()
     {
-        Assert.Empty(LegalProcessors.All);
-        Assert.Empty(LegalProcessors.Active);
-        Assert.Empty(LegalProcessors.Planned);
+        Assert.NotEmpty(LegalProcessors.All);
+        Assert.Equal(
+            LegalProcessors.All.Count,
+            LegalProcessors.Active.Count + LegalProcessors.Planned.Count);
     }
 }
