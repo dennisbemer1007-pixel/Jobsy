@@ -315,3 +315,87 @@
     animation: none;
   }
 }
+
+/* —— embedded content style (closed vacancy / errors 03) ——
+   VacancyDetail.razor keeps its own route, layout and interactive render mode;
+   this just gives the .err-hero markup the same CSS variables ErrorLayout sets
+   on .err-layout, without the full-page flex/min-height shell. */
+
+.err-embed {
+  --err-ink: var(--text, #122033);
+  --err-muted: var(--muted, #5a6a7d);
+  --err-surface: color-mix(in srgb, var(--surface, #fffcfa) 92%, var(--coral-soft, #ffe8e0) 8%);
+  --err-blob: color-mix(in srgb, var(--coral-soft, #ffe8e0) 70%, var(--surface, #fffcfa) 30%);
+  --err-line: color-mix(in srgb, var(--border, #ddd5cc) 70%, transparent);
+  display: block;
+  color: var(--err-ink);
+  background: var(--err-surface);
+  border-radius: 20px;
+  padding: 1.5rem 1rem;
+}
+
+.err-similar-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.err-similar-card {
+  border-radius: 14px;
+  overflow: clip;
+  background: var(--surface, #fff);
+  border: 1px solid var(--err-line);
+}
+
+.err-similar-card__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  min-block-size: 44px;
+}
+
+.err-similar-card__photo {
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  flex: none;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.err-similar-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-inline-size: 0;
+}
+
+.err-similar-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.err-similar-card__place,
+.err-similar-card__travel {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--err-muted);
+}
+
+.err-similar-empty {
+  margin: 0;
+  color: var(--err-muted);
+}
+
+@media (min-width: 640px) {
+  .err-similar-grid {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+}

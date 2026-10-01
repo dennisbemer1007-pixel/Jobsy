@@ -276,6 +276,63 @@ public sealed class OriginPoint
     public double Longitude { get; set; }
 }
 
+/// <summary>
+/// Minimal public info for a closed vacancy (410). No company name, dates, contact or
+/// description — see <c>ClosedVacancyDto</c> on the API.
+/// </summary>
+public sealed class ClosedVacancyInfo
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? City { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string? CategoryLabel { get; set; }
+}
+
+/// <summary>One similar vacancy nearby on the closed-vacancy (410) page. Mirrors VacancyCardDto.</summary>
+public sealed class SimilarVacancyItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string? OfferedByLabel { get; set; }
+    public string Place { get; set; } = string.Empty;
+    public string? ThumbnailUrl { get; set; }
+    public string? LogoUrl { get; set; }
+    public decimal? HourlyWage { get; set; }
+    public bool WageVisible { get; set; }
+    public string[]? WorkTypes { get; set; }
+    public bool IsHighlighted { get; set; }
+    public int? TravelMinutes { get; set; }
+    public double? DistanceKm { get; set; }
+}
+
+/// <summary>
+/// Result of looking up a vacancy by id: either found (full payload), closed (410, minimal
+/// public data) or not found at all (404). The Web client maps the HTTP status to this instead
+/// of throwing, so the detail page can render each case without catching exceptions.
+/// </summary>
+public abstract class VacancyLookup
+{
+    public static VacancyLookup Found(VacancyListItem vacancy) => new FoundResult(vacancy);
+
+    public static VacancyLookup Closed(ClosedVacancyInfo info) => new ClosedResult(info);
+
+    public static VacancyLookup NotFound { get; } = new NotFoundResult();
+
+    public sealed class FoundResult(VacancyListItem vacancy) : VacancyLookup
+    {
+        public VacancyListItem Vacancy { get; } = vacancy;
+    }
+
+    public sealed class ClosedResult(ClosedVacancyInfo info) : VacancyLookup
+    {
+        public ClosedVacancyInfo Info { get; } = info;
+    }
+
+    public sealed class NotFoundResult : VacancyLookup;
+}
+
 public sealed class VacancyTravelResult
 {
     public int? TravelMinutes { get; set; }

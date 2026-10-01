@@ -1,0 +1,88 @@
+@namespace Jobsy.Web.Components.Errors
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@*
+  410 content for a closed vacancy (errors 03). VacancyDetail.razor keeps its own route,
+  layout and render mode (Dep A/F) — this just reuses the ErrorLayout "err-" content style
+  (smaller change than switching @layout for an otherwise-interactive page).
+*@
+
+<section class="err-hero err-embed pub-theme" data-testid="closed-vacancy-view">
+    <div class="err-hero__text">
+        <p class="pub-chip err-code">@Culture["Status.Gone.Eyebrow"]</p>
+        <h1 class="err-hero__title">@Culture["Status.Gone.Title"]</h1>
+        <p class="err-hero__lead">@Lead</p>
+
+        @if (Similar.Count > 0)
+        {
+            <ul class="err-similar-grid" data-testid="closed-vacancy-similar">
+                @foreach (var item in Similar)
+                {
+                    <li class="err-similar-card">
+                        <a class="err-similar-card__link" href="@($"/vacancies/{item.Id}")">
+                            <VacancyPhoto Src="@item.ThumbnailUrl"
+                                          FallbackSrc="@item.LogoUrl"
+                                          VacancyId="item.Id"
+                                          WorkType="@(item.WorkTypes?.FirstOrDefault())"
+                                          Class="err-similar-card__photo"
+                                          Width="180"
+                                          Height="180"
+                                          Sizes="72px" />
+                            <span class="err-similar-card__body">
+                                <span class="err-similar-card__title">@item.Title</span>
+                                <span class="err-similar-card__place">@item.Place</span>
+                                @if (TravelText(item) is string travel)
+                                {
+                                    <span class="err-similar-card__travel">@travel</span>
+                                }
+                            </span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="err-similar-empty" data-testid="closed-vacancy-similar-empty">@Culture["Status.Gone.NoneFound"]</p>
+        }
+
+        <div class="err-actions">
+            <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Banenkaart">@Culture["Status.Gone.ViewMap"]</a>
+            <a class="pub-btn pub-btn--secondary" href="@PublicRoutes.Test">@Culture["Status.Common.FreeTest"]</a>
+        </div>
+    </div>
+    <div class="err-hero__art" aria-hidden="true">
+        <span class="err-blob"></span>
+        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public ClosedVacancyInfo Info { get; set; } = new();
+    [Parameter] public IReadOnlyList<SimilarVacancyItem> Similar { get; set; } = [];
+
+    private string Lead => string.IsNullOrWhiteSpace(Info.City)
+        ? string.Format(Culture["Status.Gone.LeadNoCity"], Info.Title)
+        : string.Format(Culture["Status.Gone.Lead"], Info.Title, Info.City);
+
+    private string? TravelText(SimilarVacancyItem item)
+    {
+        if (item.TravelMinutes is int minutes)
+        {
+            return string.Format(Culture["Status.Gone.TravelMinutes"], minutes);
+        }
+
+        if (item.DistanceKm is double km)
+        {
+            return string.Format(
+                Culture["Status.Gone.DistanceKm"],
+                km.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        return null;
+    }
+}

@@ -180,7 +180,22 @@ public sealed record VacancyCardDto(
     string? Vestigingsnummer = null,
     string? FitGate = null,
     string? FitWhyLine = null,
-    string? RankLowerReason = null);
+    string? RankLowerReason = null,
+    /// <summary>Crow-flies km from the requested origin (closed-vacancy "similar" list fallback
+    /// when the visitor has no geolocation origin yet). Null when an origin wasn't supplied.</summary>
+    double? DistanceKm = null);
 
 /// <summary>Exact origin→vacancy travel for the selected transport. No PII.</summary>
 public sealed record VacancyTravelDto(int? TravelMinutes, double? DistanceKm);
+
+/// <summary>
+/// Minimal public payload for a closed vacancy (410). No company name, dates, contact or
+/// description — only enough to show the title/city and look up similar vacancies.
+/// City (and the owning category) already reflect the intermediary-hidden display rules.
+/// </summary>
+public sealed record ClosedVacancyDto(
+    Guid Id,
+    string Title,
+    string? City,
+    Guid? CategoryId,
+    string? CategoryLabel);

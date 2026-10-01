@@ -308,5 +308,55 @@ public static class UiStringsStatus
             "Nieznana rola",
             "Rol necunoscut",
             "دور غير معروف");
+
+        // —— 410 Vacature gesloten (errors 03) ——
+        Add("Status.Gone.Eyebrow",
+            "Vacature gesloten",
+            "Vacancy closed",
+            "Oferta zamknięta",
+            "Loc de muncă închis",
+            "الوظيفة مغلقة");
+        Add("Status.Gone.Title",
+            "Deze vacature is gesloten",
+            "This vacancy is closed",
+            "Ta oferta pracy jest zamknięta",
+            "Acest loc de muncă este închis",
+            "هذه الوظيفة مغلقة");
+        Add("Status.Gone.Lead",
+            "“{0}” in {1} staat niet meer open. Misschien past een van deze banen bij je.",
+            "“{0}” in {1} is no longer open. Maybe one of these jobs is a good fit for you.",
+            "„{0}” w {1} nie jest już otwarta. Może jedna z tych ofert będzie dla ciebie dobra.",
+            "„{0}” din {1} nu mai este deschis. Poate unul dintre aceste locuri de muncă îți convine.",
+            "لم تعد وظيفة ”{0}“ في {1} متاحة. ربما تناسبك واحدة من هذه الوظائف.");
+        Add("Status.Gone.LeadNoCity",
+            "“{0}” staat niet meer open. Misschien past een van deze banen bij je.",
+            "“{0}” is no longer open. Maybe one of these jobs is a good fit for you.",
+            "„{0}” nie jest już otwarta. Może jedna z tych ofert będzie dla ciebie dobra.",
+            "„{0}” nu mai este deschis. Poate unul dintre aceste locuri de muncă îți convine.",
+            "لم تعد وظيفة ”{0}“ متاحة. ربما تناسبك واحدة من هذه الوظائف.");
+        Add("Status.Gone.NoneFound",
+            "We vonden nu geen vergelijkbare banen in de buurt.",
+            "We could not find similar jobs nearby right now.",
+            "Nie znaleźliśmy teraz podobnych ofert w pobliżu.",
+            "Nu am găsit acum locuri de muncă similare în apropiere.",
+            "لم نجد حالياً وظائف مشابهة قريبة.");
+        Add("Status.Gone.ViewMap",
+            "Bekijk de banenkaart",
+            "View the job map",
+            "Zobacz mapę pracy",
+            "Vezi harta joburilor",
+            "عرض خريطة الوظائف");
+        Add("Status.Gone.TravelMinutes",
+            "{0} min",
+            "{0} min",
+            "{0} min",
+            "{0} min",
+            "{0} دقيقة");
+        Add("Status.Gone.DistanceKm",
+            "{0} km",
+            "{0} km",
+            "{0} km",
+            "{0} km",
+            "{0} كم");
     }
 }

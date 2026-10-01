@@ -18,12 +18,13 @@
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Components.Engagement
+@using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IAsyncDisposable
 
-<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
+<PageTitle>@(_vacancy?.Title ?? _closed?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
 <PageSeo Title="@SeoTitle"
          Description="@SeoDescription"
          Index="@(_vacancy is not null)"
@@ -32,7 +33,11 @@
          JsonLd="@SeoJsonLd" />
 
 <div class="panel-page panel-page--vacancy">
-    @if (_vacancy is null)
+    @if (_closed is not null)
+    {
+        <ClosedVacancyView Info="_closed" Similar="_similar" />
+    }
+    else if (_vacancy is null)
     {
         @if (_loading)
         {
@@ -748,6 +753,8 @@
     [Parameter] public Guid Id { get; set; }
 
     private VacancyListItem? _vacancy;
+    private ClosedVacancyInfo? _closed;
+    private IReadOnlyList<SimilarVacancyItem> _similar = [];
     private string? SeoTitle => _vacancy is null ? null : $"{_vacancy.Title} · Lobsy";
     private string? SeoDescription => _vacancy is null
         ? null
@@ -1297,7 +1304,10 @@
         }
     }
 
-    /// <summary>An unknown or non-public vacancy is a real 404 for crawlers, not a 200 with a message.</summary>
+    /// <summary>
+    /// An unknown or non-public vacancy is a real 404 for crawlers; a closed one (archived,
+    /// fulfilled, or ran past its end date) is a real 410 — never a 200 with a message.
+    /// </summary>
     private void ApplyNotFoundStatus()
     {
         var http = HttpContextAccessor.HttpContext;
@@ -1306,7 +1316,9 @@
             return;
         }
 
-        http.Response.StatusCode = StatusCodes.Status404NotFound;
+        http.Response.StatusCode = _closed is not null
+            ? StatusCodes.Status410Gone
+            : StatusCodes.Status404NotFound;
         Jobsy.Web.Hosting.ErrorResponse.ApplyHeaders(http);
     }
 
@@ -1424,9 +1436,12 @@
                 }
 
                 // Exactly one full vacancy load when missing; never re-fetch culture-fit/AI via LoadAsync.
-                if (_vacancy is null || _vacancy.Id != Id)
+                // Origin flows through so a closed vacancy's similar list can show travel time.
+                var alreadyLoaded = (_vacancy is not null && _vacancy.Id == Id)
+                                    || (_closed is not null && _closed.Id == Id);
+                if (!alreadyLoaded)
                 {
-                    await LoadAsync(origin: null);
+                    await LoadAsync(origin);
                 }
                 else
                 {
@@ -1609,15 +1624,43 @@
         try
         {
             // Full vacancy payload without travel — travel uses /travel separately.
-            _vacancy = await Api.GetVacancyAsync(
+            var lookup = await Api.GetVacancyLookupAsync(
                 Id,
                 originLat: null,
                 originLng: null,
                 _transport,
                 _ageYears);
-            if (string.Equals(_vacancy?.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+
+            switch (lookup)
             {
-                _ = RefreshCultureFitLaterAsync();
+                case VacancyLookup.FoundResult found:
+                    _vacancy = found.Vacancy;
+                    _closed = null;
+                    _similar = [];
+                    if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _ = RefreshCultureFitLaterAsync();
+                    }
+
+                    break;
+                case VacancyLookup.ClosedResult closed:
+                    _vacancy = null;
+                    _closed = closed.Info;
+                    // Travel time when the visitor already has an origin (like the banenkaart);
+                    // the API falls back to crow-flies distance otherwise. Max 3, no new ranking —
+                    // this reuses the discovery index via the /similar endpoint.
+                    _similar = await Api.GetVacancySimilarAsync(
+                        Id,
+                        limit: 3,
+                        originLat: origin?.Latitude,
+                        originLng: origin?.Longitude,
+                        _transport);
+                    break;
+                default:
+                    _vacancy = null;
+                    _closed = null;
+                    _similar = [];
+                    break;
             }
         }
         finally

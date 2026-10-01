@@ -212,8 +212,8 @@ internal static class LocalizationParityAllowList
             return true;
         }
 
-        // Universal distance tokens (nl/en/pl/ro share "km").
-        if (Regex.IsMatch(v, @"^\{\d+\}\s*km$", RegexOptions.IgnoreCase))
+        // Universal distance/duration tokens (nl/en/pl/ro share "km"/"min").
+        if (Regex.IsMatch(v, @"^\{\d+\}\s*(km|min)$", RegexOptions.IgnoreCase))
         {
             return true;
         }
