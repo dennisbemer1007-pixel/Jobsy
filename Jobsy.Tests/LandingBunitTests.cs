@@ -45,6 +45,7 @@ public class LandingBunitTests : TestContext
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddScoped<PageSeoContext>();
+        Services.AddSingleton(new Jobsy.Web.Hosting.MaintenanceState());
         Services.AddSingleton<NavigationManager>(new FakeNavigation("/"));
     }
 
