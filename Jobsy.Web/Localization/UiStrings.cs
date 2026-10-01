@@ -3457,6 +3457,7 @@ public static class UiStrings
         UiStringsAuth.MergeAll(nl, en, pl, ro, ar);
         UiStringsStatus.MergeAll(nl, en, pl, ro, ar);
         UiStringsLegal.MergeAll(nl, en, pl, ro, ar);
+        UiStringsPublicInfo.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

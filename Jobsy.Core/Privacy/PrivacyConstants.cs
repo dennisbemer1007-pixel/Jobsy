@@ -70,6 +70,18 @@ public static class PrivacyConstants
     /// </summary>
     public const int UnconfirmedRegistrationRetentionMinutes = 10;
 
+    /// <summary>
+    /// Decided content reports (DSA notice and action) are purged this many days after the decision.
+    /// Open reports are kept until an admin decides.
+    /// </summary>
+    public const int ContentReportRetentionDays = 365;
+
+    /// <summary>
+    /// The reporter's e-mail address is cleared this many days after the decision — long enough to
+    /// send the outcome mail, short enough to keep the report itself anonymous afterwards.
+    /// </summary>
+    public const int ContentReportEmailRetentionDays = 30;
+
     public static bool IsCurrentConsent(string? consentVersion)
         => string.Equals(consentVersion, CurrentConsentVersion, StringComparison.Ordinal);
 

@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
-/// Public /{kvk} visibility: KVK verified + platform verified + ≥1 publicly visible vacancy.
+/// Public /{kvk} visibility: KVK verified + platform verified + ≥1 publicly visible vacancy,
+/// and not blocked by a moderation decision (<c>PublicPageBlockedAtUtc</c>).
 /// </summary>
 public interface IPublicCompanyQuery
 {
@@ -62,7 +63,9 @@ public sealed class PublicCompanyQuery : IPublicCompanyQuery
         var companies = await _db.Companies.AsNoTracking()
             .Where(PublicVisibility.CompanyIsPublic)
             .Where(c => c.KvkNumber == kvk
-                        && c.KvkVerificationStatus == KvkVerificationStatus.Verified)
+                        && c.KvkVerificationStatus == KvkVerificationStatus.Verified
+                        // A "Verwijderen" decision on a content report takes the page offline (06).
+                        && c.PublicPageBlockedAtUtc == null)
             .Where(c => publicByCompany.Keys.Contains(c.Id))
             .Select(c => new
             {

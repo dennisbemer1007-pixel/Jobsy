@@ -92,6 +92,17 @@ public static class LegalRetention
             () => FormatDays(PrivacyConstants.AdminAuditRetentionDays),
             [nameof(PrivacyConstants.AdminAuditRetentionDays)]),
         new(
+            "Legal.Retention.ContentReports",
+            () => string.Join(" · ", new[]
+            {
+                FormatDays(PrivacyConstants.ContentReportRetentionDays),
+                FormatDays(PrivacyConstants.ContentReportEmailRetentionDays)
+            }.Distinct(StringComparer.Ordinal)),
+            [
+                nameof(PrivacyConstants.ContentReportRetentionDays),
+                nameof(PrivacyConstants.ContentReportEmailRetentionDays)
+            ]),
+        new(
             "Legal.Retention.Account",
             () => UntilAccountDeleted,
             [])

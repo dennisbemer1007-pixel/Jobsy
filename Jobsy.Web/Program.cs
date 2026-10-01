@@ -145,6 +145,17 @@ builder.Services.AddScoped<Jobsy.Web.Services.CandidateProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Components.Candidate.ProfileSections.CandidateProfileEditor>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaStorage>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaMergeService>();
+// Anonymous POST relay for the static /melden form; forwards the visitor IP so the
+// API partitions the "report" rate limit per visitor instead of per Web instance.
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.ContentReportEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(8);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+}).AddHttpMessageHandler<Jobsy.Web.Auth.TrustedClientIpHandler>();
 builder.Services.AddHttpClient("JobsySeo", client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
@@ -234,6 +245,19 @@ builder.Services.AddRateLimiter(options =>
             return;
         }
 
+        // The /melden form works without JS, so keep the visitor on the page.
+        if (HttpMethods.IsPost(http.Request.Method)
+            && path.Equals("/melden", StringComparison.OrdinalIgnoreCase))
+        {
+            var form = await http.Request.ReadFormAsync(token);
+            var target = ContentReportEndpoints.BuildFormUrl(
+                ContentReportEndpoints.NormalizeType(form["type"].ToString()),
+                form["id"].ToString().Trim());
+            http.Response.StatusCode = StatusCodes.Status303SeeOther;
+            http.Response.Headers.Location = target + "&fout=teveel";
+            return;
+        }
+
         http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
         await http.Response.WriteAsJsonAsync(
             new { code = "rate_limited", message = "Te veel verzoeken." },
@@ -272,6 +296,17 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("mail-unsubscribe", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // Static /melden form POST; the API applies the stricter per-visitor "report" limit.
+    options.AddPolicy("report-form", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 30,
@@ -353,6 +388,7 @@ app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 app.MapJobsyAuthEndpoints();
 app.MapPublicTokenEndpoints();
 app.MapMailUnsubscribeEndpoints();
+app.MapContentReportEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
 app.MapLanguageEndpoints();

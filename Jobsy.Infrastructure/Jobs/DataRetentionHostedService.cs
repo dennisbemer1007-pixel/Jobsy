@@ -184,15 +184,20 @@ public sealed class DataRetentionHostedService : BackgroundService
         var salesAppsCleared = await SalesManagerApplicationService.ApplyRetentionAsync(
             db, now, cancellationToken);
 
+        var (reportsPurged, reportEmailsCleared) = await ContentReportService.ApplyRetentionAsync(
+            db, now, cancellationToken);
+
         if (logsRemoved + accessLogsRemoved + auditRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
             + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + oneTimeLinksRemoved + dirtyActionUrls.Count
-            + withdrawnWithSnapshots.Count + staleScreenshotCount + salesClicksRemoved + salesAppsCleared > 0)
+            + withdrawnWithSnapshots.Count + staleScreenshotCount + salesClicksRemoved + salesAppsCleared
+            + reportsPurged + reportEmailsCleared > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, oneTimeLinks={OneTimeLinks}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}, salesApplications={SalesApps}",
+                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, oneTimeLinks={OneTimeLinks}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}, salesApplications={SalesApps}, contentReports={Reports}, contentReportEmails={ReportEmails}",
                 logsRemoved, accessLogsRemoved, auditRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
                 unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, oneTimeLinksRemoved, dirtyActionUrls.Count,
-                withdrawnWithSnapshots.Count, staleScreenshotCount, salesClicksRemoved, salesAppsCleared);
+                withdrawnWithSnapshots.Count, staleScreenshotCount, salesClicksRemoved, salesAppsCleared,
+                reportsPurged, reportEmailsCleared);
         }
 
         try
@@ -218,7 +223,9 @@ public sealed class DataRetentionHostedService : BackgroundService
                         ["notifications"] = notificationsRemoved,
                         ["actionTokens"] = tokensRemoved,
                         ["withdrawnScrubbed"] = withdrawnWithSnapshots.Count,
-                        ["feedbackScreenshots"] = staleScreenshotCount
+                        ["feedbackScreenshots"] = staleScreenshotCount,
+                        ["contentReports"] = reportsPurged,
+                        ["contentReportEmails"] = reportEmailsCleared
                     }),
                     Result: AdminAuditKeys.Results.Success,
                     ActorKind: AdminAuditKeys.ActorKinds.System,

@@ -216,6 +216,14 @@
                 }
             </div>
         }
+
+        @if (_page is not null)
+        {
+            <p class="muted">
+                @Culture["Report.Company.Prompt"]
+                <a href="@($"/melden?type=company&id={Uri.EscapeDataString(KvkNumber)}")">@Culture["Report.Company.PromptCta"]</a>
+            </p>
+        }
     </aside>
 
     <section class="map-pane map-pane--branch">
