@@ -192,6 +192,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         _cache?.Remove(FeatureFlags.CacheKey);
+        _cache?.Remove(MaintenanceRules.CacheKey);
         return ToSnapshot(row);
     }
 

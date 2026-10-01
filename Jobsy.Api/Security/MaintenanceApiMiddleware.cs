@@ -5,6 +5,7 @@ using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Api.Security;
 
@@ -28,22 +29,43 @@ public sealed class MaintenanceApiMiddleware
             return;
         }
 
+        var state = await ReadStateAsync(context);
+        if (state is null || !state.Enabled)
+        {
+            await _next(context);
+            return;
+        }
+
+        await WriteProblemAsync(context, state.ExpectedEndUtc);
+    }
+
+    /// <summary>
+    /// Cached for a few seconds so the common "maintenance is off" path costs no database query.
+    /// Writing the switch clears the key, so a flip is visible immediately.
+    /// </summary>
+    private static async Task<MaintenanceSnapshot?> ReadStateAsync(HttpContext context)
+    {
+        var cache = context.RequestServices.GetService<IMemoryCache>();
+        if (cache is not null
+            && cache.TryGetValue(MaintenanceRules.CacheKey, out MaintenanceSnapshot? cached)
+            && cached is not null)
+        {
+            return cached;
+        }
+
         var features = context.RequestServices.GetService<IPlatformFeatureService>();
         if (features is null)
         {
-            await _next(context);
-            return;
+            return null;
         }
 
         var snap = await features.GetAsync(context.RequestAborted);
-        if (!snap.MaintenanceEnabled)
-        {
-            await _next(context);
-            return;
-        }
-
-        await WriteProblemAsync(context, snap.MaintenanceExpectedEndUtc);
+        var state = new MaintenanceSnapshot(snap.MaintenanceEnabled, snap.MaintenanceExpectedEndUtc);
+        cache?.Set(MaintenanceRules.CacheKey, state, MaintenanceRules.CacheTtl);
+        return state;
     }
+
+    private sealed record MaintenanceSnapshot(bool Enabled, DateTime? ExpectedEndUtc);
 
     /// <summary>Paths that must answer normally even while maintenance is on.</summary>
     public static bool IsAlwaysAllowed(string path)

@@ -25,6 +25,15 @@ public static class MaintenanceRules
     public const int StatePollSeconds = 15;
 
     /// <summary>
+    /// Memory-cache key for the API's maintenance snapshot, so the middleware does not query the
+    /// database on every request. Invalidated the moment the switch is written.
+    /// </summary>
+    public const string CacheKey = "jobsy.maintenance";
+
+    /// <summary>How long the API may serve a cached snapshot (the write invalidates it anyway).</summary>
+    public static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(5);
+
+    /// <summary>
     /// Seconds until <paramref name="expectedEndUtc"/>, clamped to 60–3600. A missing or past
     /// end time falls back to <see cref="DefaultRetryAfterSeconds"/>.
     /// </summary>

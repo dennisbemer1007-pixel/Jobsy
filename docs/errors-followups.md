@@ -81,3 +81,25 @@ Written while building `docs/prompts/errors/01-errorlayout-404-500.md` against
 - **Extra head tags on error pages** go through the `error-head` section
   (`ErrorLayout.ErrorHeadSection`), never a second `<HeadContent>`: that would replace the layout's
   `noindex` meta.
+
+## errors 05 (maintenance 503)
+
+- **Dennis still has to decide the edge story.** `docs/onderhoud.md` §2 has the Cloudflare plan
+  check with a checklist. Nothing in Cloudflare, Render or `render.yaml` was touched.
+  - The most important finding: **Cloudflare Error Pages do not apply to HTTP 500/501/503/505**, so
+    the legacy "5XX Errors" page would never fire on Lobsy's own 503. A **Custom Error Rule** is
+    needed instead, which also requires a paid plan (Pro and up).
+- **The maintenance switch is its own panel, not a catalog row.**
+  `Components/Admin/Sections/MaintenancePanel.razor` sits above `PlatformSettingsEditor` on
+  `/admin/instellingen` because it carries an end time and an internal note that
+  `PlatformSettingDescriptor` cannot express. If `PlatformSettingsCatalog` ever grows a composite
+  kind, the panel can fold into it; the audit actions `maintenance.on` / `maintenance.off` must
+  stay distinct from `settings.platform.update`.
+- **The admin banner lives in five layouts** (`AdminLayout`, `MainLayout`, `PublicLayout`,
+  `WerkgeverLayout`, `SalesLayout`). A new layout that an admin can reach should include
+  `<Jobsy.Web.Components.Errors.MaintenanceAdminBanner />` near the top.
+- **`UserFacingError` now maps `ApiError.Maintenance` to `Status.Maintenance.Short`** instead of
+  04's `Common.Error.Maintenance`, so the toast and the 503 page say the same thing.
+  `Common.Error.Maintenance` is kept in the catalog as a fallback key.
+- **Propagation is 15 s by design** (`MaintenanceRules.StatePollSeconds`). A stack that needs the
+  switch to be instant should add a push path rather than shortening the poll.
