@@ -315,4 +315,5 @@ public sealed class LocalApiLoginProfile
     public bool UsedRecoveryCode { get; set; }
     public string? MfaTrustToken { get; set; }
     public string? AuthMethod { get; set; }
+    public bool IsTestAccount { get; set; }
 }

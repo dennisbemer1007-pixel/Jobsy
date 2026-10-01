@@ -61,12 +61,21 @@ public sealed class KvkHandelsregisterService : IKvkService
         string kvkNumber,
         CancellationToken cancellationToken = default)
     {
+        var normalizedEarly = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
+        if (normalizedEarly is not null
+            && await _db.Companies.AsNoTracking()
+                .AnyAsync(c => c.IsTestData && c.KvkNumber == normalizedEarly, cancellationToken))
+        {
+            // Never call out for reserved test-data KvK numbers.
+            return await _stub.GetByKvkNumberAsync(kvkNumber, cancellationToken);
+        }
+
         if (!await HasApiKeyAsync(cancellationToken))
         {
             return await _stub.GetByKvkNumberAsync(kvkNumber, cancellationToken);
         }
 
-        var normalized = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
+        var normalized = normalizedEarly;
         if (normalized is null)
         {
             return null;

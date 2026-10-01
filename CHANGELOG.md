@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Ops
+- Acceptatie-only test accounts CLI (`dotnet Jobsy.Api.dll test-accounts seed|cleanup|status`): hard deployment guard, `IsTestAccount`/`IsTestData` flags (migration `AddTestAccountFlags`), MFA exemption while the guard is active, test↔real boundary helpers, admin “Testaccount” badge, mail drop for test→real. Passwords only from `TestAccounts__Password__*` env vars. See `docs/deploy-render.md` and `docs/testaccounts-followups.md`.
+
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.
 

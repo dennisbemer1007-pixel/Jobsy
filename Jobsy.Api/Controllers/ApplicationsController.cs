@@ -9,6 +9,7 @@ using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
@@ -686,6 +687,17 @@ public class ApplicationsController : ControllerBase
         if (vacancy is null)
         {
             return NotFound();
+        }
+
+        var actorIsTest = TestDataRules.IsTestViewer(User);
+        if (TestDataRules.IsBoundaryViolation(actorIsTest, vacancy.IsTestData))
+        {
+            if (!actorIsTest && vacancy.IsTestData)
+            {
+                return NotFound();
+            }
+
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = TestDataRules.BoundaryErrorCode });
         }
 
         if (vacancy.Kind == VacancyKind.Internship

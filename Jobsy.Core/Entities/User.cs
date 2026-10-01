@@ -61,6 +61,11 @@ public class User
     public bool IsEarlyAdapter { get; set; }
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// True only for acceptatie CLI-seeded test logins. Never set via API/UI.
+    /// </summary>
+    public bool IsTestAccount { get; set; }
+
     /// <summary>When the user accepted terms/privacy (registration or profile).</summary>
     public DateTime? TermsAcceptedAt { get; set; }
     public string? ConsentVersion { get; set; }

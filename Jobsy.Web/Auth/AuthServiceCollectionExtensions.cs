@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Web.Localization;
@@ -2002,6 +2003,18 @@ public static class AuthServiceCollectionExtensions
         if (profile.MfaVerified)
         {
             identity.AddClaim(new Claim(JobsyClaimTypes.MfaVerified, "1"));
+        }
+
+        foreach (var existing in identity.FindAll(TestAccountClaimTypes.TestAccount).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        if (profile.IsTestAccount)
+        {
+            identity.AddClaim(new Claim(
+                TestAccountClaimTypes.TestAccount,
+                TestAccountClaimTypes.TestAccountValue));
         }
 
         if (!identity.HasClaim(c => c.Type == "auth_method"))

@@ -94,6 +94,10 @@ projects:
                   property: connectionString
               - key: PublicWebBaseUrl
                 value: "https://lobsy.nl"
+              - key: Lobsy__DeploymentEnvironment
+                value: Production
+              - key: TestAccounts__Enabled
+                value: "false"
               - key: PublicApiBaseUrl
                 fromService:
                   name: jobsy-api
@@ -183,6 +187,10 @@ projects:
                 fromDatabase:
                   name: jobsy-db
                   property: connectionString
+              - key: Lobsy__DeploymentEnvironment
+                value: Production
+              - key: TestAccounts__Enabled
+                value: "false"
               - key: WebPush__Subject
                 sync: false
               - key: WebPush__PublicKey
@@ -258,6 +266,35 @@ projects:
                   property: connectionString
               - key: PublicWebBaseUrl
                 value: "https://acceptatie.lobsy.nl"
+              - key: Lobsy__DeploymentEnvironment
+                value: Acceptatie
+              # Dennis sets true in Dashboard after passwords are configured.
+              - key: TestAccounts__Enabled
+                sync: false
+              - key: TestAccounts__EmailDomain
+                value: "lobsy.nl"
+              - key: TestAccounts__Password__Candidate
+                sync: false
+              - key: TestAccounts__Password__CandidateNew
+                sync: false
+              - key: TestAccounts__Password__BranchManager
+                sync: false
+              - key: TestAccounts__Password__EnterpriseManager
+                sync: false
+              - key: TestAccounts__Password__RegionalManager
+                sync: false
+              - key: TestAccounts__Password__Intermediary
+                sync: false
+              - key: TestAccounts__Password__SalesManager
+                sync: false
+              - key: TestAccounts__Password__Admin
+                sync: false
+              - key: TestAccounts__Password__Ambassadeur
+                sync: false
+              - key: TestAccounts__Password__Teacher
+                sync: false
+              - key: TestAccounts__Password__SchoolAdmin
+                sync: false
               - key: PublicApiBaseUrl
                 fromService:
                   name: lobsy-acc-api
@@ -343,6 +380,10 @@ projects:
                 fromDatabase:
                   name: lobsy-acc-db
                   property: connectionString
+              - key: Lobsy__DeploymentEnvironment
+                value: Acceptatie
+              - key: TestAccounts__Enabled
+                sync: false
               - key: WebPush__Subject
                 sync: false
               - key: WebPush__PublicKey

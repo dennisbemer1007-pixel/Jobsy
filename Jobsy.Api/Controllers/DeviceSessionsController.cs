@@ -88,7 +88,8 @@ public sealed class DeviceSessionsController : ControllerBase
             rotated.SessionVersion,
             rotated.SessionToken,
             rotated.UserId,
-            rotated.MfaVerified));
+            rotated.MfaVerified,
+            rotated.IsTestAccount));
     }
 
     [HttpGet]

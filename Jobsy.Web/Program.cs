@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
@@ -38,6 +39,30 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
+
+builder.Services.AddSingleton<ITestAccountsRuntime>(_ =>
+{
+    var cfg = builder.Configuration;
+    var enabled = string.Equals(cfg["TestAccounts:Enabled"], "true", StringComparison.OrdinalIgnoreCase)
+                  || cfg.GetValue("TestAccounts:Enabled", false);
+    var input = TestAccountGuardInputBuilder.Create(
+        deploymentEnvironment: cfg["Lobsy:DeploymentEnvironment"],
+        testAccountsEnabled: enabled,
+        renderServiceName: cfg["RENDER_SERVICE_NAME"],
+        publicWebBaseUrl: null,
+        apiBaseUrl: cfg["ApiBaseUrl"],
+        connectionString: cfg.GetConnectionString("JobsyDb") ?? cfg["DATABASE_URL"],
+        allowStubPayments: true,
+        hasLiveMollieKey: false,
+        hostEnvironmentName: builder.Environment.EnvironmentName,
+        allowedPublicHosts: cfg.GetSection("TestAccounts:AllowedPublicHosts").Get<string[]>(),
+        expectedDatabaseName: cfg["TestAccounts:ExpectedDatabaseName"],
+        isWebRuntime: true);
+    var runtime = TestAccountsRuntimeState.FromInput(input);
+    Console.WriteLine(
+        $"Test accounts runtime: {(runtime.IsActive ? "active" : "inactive")} ({runtime.StatusCodes})");
+    return runtime;
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()

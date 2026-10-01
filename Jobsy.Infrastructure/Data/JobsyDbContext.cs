@@ -188,6 +188,7 @@ public class JobsyDbContext : DbContext
                 .IsRequired(false);
             entity.HasIndex(e => e.HomeLocation).HasMethod("GIST");
             entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(e => e.IsTestAccount);
             entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
             entity.HasIndex(e => e.SchoolId);
             // PushBom + OpenForWork metrics hot path.
@@ -285,6 +286,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.ReferredBySalesManagerUserId);
             entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
             entity.HasIndex(e => e.ReferredByPartnerUserId);
+            entity.HasIndex(e => e.IsTestData);
             entity.HasIndex(e => e.FirstYearSupplierSlot)
                 .IsUnique()
                 .HasFilter("\"FirstYearSupplierSlot\" IS NOT NULL");
@@ -327,6 +329,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.IsHighlighted, e.HighlightedUntil });
             entity.HasIndex(e => e.ClosedAtUtc);
             entity.HasIndex(e => e.IntermediaryCompanyId);
+            entity.HasIndex(e => e.IsTestData);
             entity.HasIndex(e => new { e.Status, e.Kind });
             entity.HasIndex(e => e.ExclusivitySettingId);
             entity.HasIndex(e => e.CategoryId);
@@ -2395,6 +2398,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.AllowedEmailDomains).HasMaxLength(2000).IsRequired();
             entity.Property(e => e.ProcessorAgreementVersion).HasMaxLength(64);
             entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.IsTestData);
             entity.HasIndex(e => e.Name);
         });
 
@@ -2408,6 +2412,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ParentalInfoTextVersion).HasMaxLength(64);
             entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart, e.Name }).IsUnique();
             entity.HasIndex(e => e.TestWindow);
+            entity.HasIndex(e => e.IsTestData);
             entity.HasOne(e => e.School)
                 .WithMany(s => s.Classes)
                 .HasForeignKey(e => e.SchoolId)

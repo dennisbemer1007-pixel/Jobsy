@@ -328,7 +328,8 @@ public class AdminController : ControllerBase
                 HasExternalLogin = u.ExternalLogins.Any(),
                 u.PhoneNumber,
                 u.TermsAcceptedAt,
-                u.AuthenticatorEnrolledAtUtc
+                u.AuthenticatorEnrolledAtUtc,
+                u.IsTestAccount
             })
             .ToListAsync(cancellationToken);
 
@@ -416,7 +417,8 @@ public class AdminController : ControllerBase
                 u.AuthenticatorEnrolledAtUtc,
                 activeSessions,
                 names,
-                trustedCount));
+                trustedCount,
+                u.IsTestAccount));
         }
 
         await this.LogPersonalDataAccessAsync(

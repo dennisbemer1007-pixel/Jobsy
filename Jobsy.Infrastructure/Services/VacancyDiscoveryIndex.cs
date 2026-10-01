@@ -63,6 +63,21 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             snap = _snapshot ?? [];
         }
 
+        // Public/default callers never see test data; test viewers filter at the controller.
+        return VisibleToday(snap, today).Where(r => !r.IsTestData).ToList();
+    }
+
+    public async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var snap = _snapshot;
+        if (snap is null || _dirty || _indexedForDate != today)
+        {
+            await RefreshCoreAsync(force: false, cancellationToken);
+            snap = _snapshot ?? [];
+        }
+
         return VisibleToday(snap, today);
     }
 
@@ -269,7 +284,8 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson),
             PublisherVerified: PublicVisibility.IsCompanyPublic(vacancy.Company)
                 && (vacancy.IntermediaryCompanyId is null
-                    || PublicVisibility.IsCompanyPublic(vacancy.IntermediaryCompany)));
+                    || PublicVisibility.IsCompanyPublic(vacancy.IntermediaryCompany)),
+            IsTestData: vacancy.IsTestData);
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(

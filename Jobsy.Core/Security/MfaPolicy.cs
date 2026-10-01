@@ -17,4 +17,11 @@ public static class MfaPolicy
             or UserRole.SchoolAdmin
             or UserRole.Teacher
             or UserRole.SalesManager;
+
+    /// <summary>
+    /// Same as <see cref="IsRequired"/>, but test accounts skip MFA only while the
+    /// acceptatie test-accounts runtime guard is active.
+    /// </summary>
+    public static bool IsRequiredFor(UserRole role, bool isTestAccount, bool testAccountsActive)
+        => !(isTestAccount && testAccountsActive) && IsRequired(role);
 }

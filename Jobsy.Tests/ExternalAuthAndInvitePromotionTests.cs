@@ -16,6 +16,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Jobsy.Core.Security;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -241,6 +242,7 @@ public class ExternalAuthAndInvitePromotionTests
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
             NullLogger<AuthController>.Instance);
     }
 

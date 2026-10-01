@@ -75,7 +75,8 @@ public sealed record DeviceSessionRotateResult(
     bool HasSalesReferral,
     int SessionVersion,
     string? SessionToken,
-    bool MfaVerified = false);
+    bool MfaVerified = false,
+    bool IsTestAccount = false);
 
 public sealed record DeviceSessionListItem(
     Guid Id,
