@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Security / legal
+- Public-pages 02 (juridisch fundament): one `LegalDocument` component for `/privacy`, `/algemene-voorwaarden` and `/gebruiksvoorwaarden` — static SSR on `PublicLayout`, sticky/mobile table of contents, “In het kort” per section in nl/en/pl/ro/ar (ar right-to-left with an LTR Dutch body), identity card from `Legal:*`, print stylesheet instead of a server pdf, and “Wat is er veranderd?”. Version and date come from `LegalDocumentVersions` (no hand-typed dates); the retention table is generated from `PrivacyConstants` and the processor catalog (`LegalProcessors`) is filled in 03. Footer shows the legal identity line.
 - Public-pages hotfix: `Legal:*` config + `ILegalIdentity` + `GET api/site/legal` (no placeholders; mail footer via MailOptions); `/{kvk}` only verified KvK with public vacancies (city only, no ids/coords); `/partner/{code}` noindex + canonical; mailto `%0A` fix; real HTML `/status/{code}` 404 + vacancy 404 status.
 
 ### Security
