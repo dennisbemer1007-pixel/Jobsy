@@ -228,11 +228,18 @@ public sealed class ContentReportService : IContentReportService
         CancellationToken cancellationToken = default)
     {
         var purgeCutoff = utcNow.AddDays(-PrivacyConstants.ContentReportRetentionDays);
-        var purged = await db.ContentReports
+        var expired = await db.ContentReports
             .Where(r => r.Status != ContentReportStatus.Open
                         && r.DecidedAtUtc != null
                         && r.DecidedAtUtc < purgeCutoff)
-            .ExecuteDeleteAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
+        if (expired.Count > 0)
+        {
+            db.ContentReports.RemoveRange(expired);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var purged = expired.Count;
 
         var emailCutoff = utcNow.AddDays(-PrivacyConstants.ContentReportEmailRetentionDays);
         var stale = await db.ContentReports

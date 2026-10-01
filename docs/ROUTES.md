@@ -34,7 +34,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (229 routes)
+## Table (230 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -191,6 +191,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/leraar/klas/{ClassId:guid}/testvenster` | `Pages/Leraar/LeraarTestWindow.razor` | Teacher, SchoolAdmin |
 | `/login` | `Pages/Login.razor` | anonymous |
 | `/mail/afmelden` | `Pages/Public/MailUnsubscribe.razor` | anonymous |
+| `/melden` | `Pages/Public/Melden.razor` | anonymous |
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
@@ -320,6 +321,7 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 | `/account/email-code/verify` | POST; antiforgery; verifies code and signs in |
 | `/mail/afmelden` | POST; RFC 8058 one-click / form unsubscribe (no antiforgery; rate-limited) |
 | `/account/mail-instellingen` | POST; antiforgery; save optional mail toggles (Web → API) |
+| `/melden` | POST; antiforgery; forwards a content report to `api/reports` (rate-limited; no IP stored) |
 | `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |
 | `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |
 

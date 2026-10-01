@@ -224,6 +224,18 @@ public static class UiStringsPublicInfo
             "Zgłoszenia dotyczące ofert i stron firm. Zdecyduj z podaniem powodu.",
             "Raportări despre joburi și pagini de firme. Decide cu un motiv.",
             "تبليغات عن وظائف وصفحات شركات. اتخذ قراراً مع ذكر السبب.");
+        Add("Report.Admin.Kind.Vacancy",
+            "Vacature",
+            "Vacancy",
+            "Oferta",
+            "Job",
+            "وظيفة");
+        Add("Report.Admin.Kind.Company",
+            "Bedrijfspagina",
+            "Company page",
+            "Strona firmy",
+            "Pagină de firmă",
+            "صفحة شركة");
         Add("Report.Admin.What",
             "Wat",
             "What",

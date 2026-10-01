@@ -10,5 +10,29 @@
 <AdminPageShell Title="@Culture["AdminNav.Moderation"]"
                 Lead="@Culture["AdminDash.Moderation.Lead"]"
                 Wide="true">
-    <VacanciesAdminSection ModerationFilter="flagged" />
+    <nav class="admin-tabs" role="tablist" aria-label="@Culture["AdminNav.Moderation"]">
+        <button type="button"
+                class="admin-tabs__tab @(_tab == "vacatures" ? "is-active" : null)"
+                role="tab"
+                aria-selected="@(_tab == "vacatures")"
+                @onclick="@(() => _tab = "vacatures")">@Culture["AdminNav.Vacancies"]</button>
+        <button type="button"
+                class="admin-tabs__tab @(_tab == "meldingen" ? "is-active" : null)"
+                role="tab"
+                aria-selected="@(_tab == "meldingen")"
+                @onclick="@(() => _tab = "meldingen")">@Culture["Report.Admin.Tab"]</button>
+    </nav>
+
+    @if (_tab == "meldingen")
+    {
+        <ContentReportsAdminSection />
+    }
+    else
+    {
+        <VacanciesAdminSection ModerationFilter="flagged" />
+    }
 </AdminPageShell>
+
+@code {
+    private string _tab = "vacatures";
+}

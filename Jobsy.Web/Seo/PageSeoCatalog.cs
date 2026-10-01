@@ -131,6 +131,7 @@ public static partial class PageSeoCatalog
             ["/account/mail-instellingen"] = Private("MailSettings.Seo.Title", "MailSettings.Seo.Description"),
             ["/toestemming"] = Private("Consent.Seo.Title", "Consent.Seo.Description"),
             ["/mail/afmelden"] = Private("MailUnsub.Seo.Title", "MailUnsub.Seo.Description"),
+            ["/melden"] = Private("Report.Seo.Title", "Report.Seo.Description"),
             ["/koppeling/sleutel"] = Private("ApiKeyReveal.Seo.Title", "ApiKeyReveal.Seo.Description"),
             ["/register"] = Public("Page.RegisterTitle", "Seo.RegisterDescription"),
             ["/register/koppelen"] = Private("Wa.Link.Title", "Wa.Link.Lead"),

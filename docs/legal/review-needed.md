@@ -89,8 +89,8 @@ Old anchors kept as aliases (`wie-is-lobsy` → `wie`, `dienst` → `wat`, `matc
 ### Open points of 04 that are not about one section
 
 - The reporting text names the button "Meld deze vacature" / "Meld dit bedrijf" before the button
-  exists. Public-pages 06 builds the form at `/melden`; until then the text offers only the support
-  e-mail. If 06 slips, the sentence promises a route that is not there yet.
+  exists. **Resolved in public-pages 06**: the buttons exist on the vacancy detail and the company
+  page, the text links to `/melden` and names the "Melding versturen" button.
 - `Terms.Waiver.Checkbox` must stay identical in the terms and in the checkout. **Resolved in
   public-pages 05**: the checkout checkbox (`DeepAnalysis.razor`) now renders `Terms.Waiver.Checkbox`
   itself (the old, differently worded `DeepPay.Waiver` key was removed) and
@@ -114,3 +114,23 @@ aligns the wording and adds a guard test; it does not touch the Mollie/checkout 
 | Waiver text version | `DeepAnalysisPricing.WaiverTextVersion` → `DeepAnalysisCheckout.WaiverTextVersion` | Now reads `LegalDocumentVersions.Terms.Version` ("2026-10") instead of the literal "2026-09", so the stored version always matches the terms version the consumer actually saw. Existing rows (version "2026-09" / "legacy") are left as they were paid under. | If the terms text changes again without changing the waiver sentence itself, should the stored `WaiverTextVersion` still bump (current behaviour: yes, since it is tied to the whole terms document, not only §`bedenktijd`)? |
 | Order summary link | `DeepAnalysis.razor` | Added "Lees meer over bedenktijd" linking to `/gebruiksvoorwaarden#bedenktijd`, next to the checkbox. | — |
 | Receipt mail small print | `Email.DeepTestReceipt` (`deep_test_receipt`) | Added a "Voorwaarden versie" / "Terms version" fact row with the checkout's stored `WaiverTextVersion`, next to amount/date/invoice number. | — |
+
+## Meldknop / notice and action (public-pages 06) — DSA art. 16/17 + retention
+
+The report form lives at `/melden` (static SSR, antiforgery, noindex) and is reachable from the
+vacancy detail ("Meld deze vacature") and the company page ("Klopt er iets niet op deze pagina?
+Meld het."). An admin decides on `/admin/vacatures/moderatie` → tab "Meldingen" with a required
+statement of reasons for "Beperken" and "Verwijderen". Reporter data is deliberately minimal: an
+optional e-mail address and never an IP address.
+
+| What | Where | What it says / does | Open question for the lawyer |
+|---|---|---|---|
+| Reason list | `Report.Reason.*` (`UiStringsPublicInfo`) | Six B1 options: nep, discriminerend, mag niet volgens de wet, verkeerde informatie, onveilig werk, iets anders. | Is a six-option list specific enough for a DSA art. 16 notice, or must the notice form ask for an explanation and a good-faith statement as separate required fields? |
+| Optional e-mail | `/melden` form, `ContentReport.ReporterEmail` | "Als je wilt dat we je laten weten wat we doen." Anonymous reports are accepted. | Art. 16(2) wants the notifier's name and e-mail "unless" the notice concerns certain offences. Is accepting fully anonymous notices acceptable, given we then cannot send a statement of reasons? |
+| False reports | `Report.FalseWarning` | "Meld alleen iets als je denkt dat het echt niet klopt." We do not (yet) suspend repeat abusers (art. 23). | Do we need an explicit art. 23 misuse policy and a suspension mechanism before launch, or is the rate limit enough for now? |
+| Statement of reasons | `ContentReport.DecisionReason`, mail `ContentRemoved` | The employer gets what was reported, the decision, the reason (HTML-escaped) and the date, plus "Wil je bezwaar maken? Mail {SupportEmail} binnen 6 maanden." The notifier gets the decision (`ReportDecided`) only when an e-mail was given. | Art. 17(3) lists mandatory elements (facts, automated means yes/no, legal or contractual ground, redress options incl. out-of-court dispute settlement and judicial redress). Our mail names only the internal objection route. Which elements must we add, and must we publish decisions in the DSA transparency database? |
+| No notifier identity to the employer | `ContentReportService.NotifyOwnerAsync` | The employer mail never contains the reporter's e-mail address or user id. | Confirm this is the right balance against the employer's right to contest a notice. |
+| Decision scope | `POST api/admin/reports/decide` | One decision closes **all** open reports of the same target with the same reason. "Beperken" exists for vacancies only (the vacancy goes inactive); "Verwijderen" archives the vacancy or sets `Company.PublicPageBlockedAtUtc` so `/{kvk}` answers 404 and the sitemap drops it. | Does a company-page block need its own appeal window or reinstatement rule, separate from a single vacancy? |
+| No IP address | `ContentReport` (no IP column); rate limit `report` partitions by IP in memory only | 5 per hour and 20 per day per IP; the key is never persisted. | Would a retained IP be needed as evidence for an abuse policy (art. 23), and if so on what basis and for how long? |
+| Retention | `PrivacyConstants.ContentReportRetentionDays = 365`, `ContentReportEmailRetentionDays = 30` | The reporter e-mail is cleared 30 days after the decision; the whole report is purged 365 days after the decision. Open reports are kept until decided. Both periods appear in the privacy retention table (`Legal.Retention.ContentReports`). | Is 365 days after the decision long enough to defend an appeal or an authority request, and is clearing the e-mail after 30 days compatible with a 6-month objection window (we then can no longer reach the notifier)? |
+| Log redaction | `PlatformLog` `report.created` | Stores report id, type and reason; the e-mail is redacted (`EmailServiceStub.RedactEmail`). The admin audit row (`report.decided`) holds the decision and the report ids and no free text. | — |
