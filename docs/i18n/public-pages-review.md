@@ -149,4 +149,41 @@ These are the chrome strings the rewrite added.
 | `Legal.Processor.{render, cloudflare, resend, sentry, mollie, pingen, openai, cursor, google-ms, kvk, routing, maps, push, video}.Purpose` | pl / ro / ar draft (14 keys) |
 | `Legal.Processor.{same 14 ids}.Data` | pl / ro / ar draft (14 keys) |
 
-Later files (04+) add their new Privacy.* / Terms.* rows here.
+## 04 — algemene voorwaarden + gebruiksvoorwaarden (`UiStringsLegal.cs`)
+
+The Dutch bodies of both terms documents are the official version and are not translated (D3).
+These are the chrome strings and section summaries the rewrite added or reworded.
+
+| Key | Notes |
+|---|---|
+| `Terms.Switch.Label` | pl / ro / ar draft |
+| `Terms.Switch.Employers` | pl / ro / ar draft |
+| `Terms.Switch.Candidates` | pl / ro / ar draft |
+| `Terms.Waiver.Checkbox` | pl / ro / ar draft. **One sentence for the whole platform (D7)**; the checkout reuses this exact key, so a reviewer must read it as consumer-facing legal copy, not as UI chrome. |
+| `Terms.Sec.toepasselijkheid.Title` / `.Summary` | pl / ro / ar draft (title reworded to "Wanneer gelden deze voorwaarden?") |
+| `Terms.Sec.dienst.Title` / `.Summary` | pl / ro / ar draft (title reworded to "Wat Lobsy doet") |
+| `Terms.Sec.account-kvk.Title` / `.Summary` | pl / ro / ar draft (title reworded to "Account en KvK-controle") |
+| `Terms.Sec.tokens.Title` / `.Summary` | pl / ro / ar draft (title reworded to "Tokens en prijzen") |
+| `Terms.Sec.betalen-btw.Title` / `.Summary` | pl / ro / ar draft (title reworded to "Betalen") |
+| `Terms.Sec.vacatures.Summary` | pl / ro / ar draft |
+| `Terms.Sec.kandidaatgegevens.Title` / `.Summary` | pl / ro / ar draft |
+| `Terms.Sec.beschikbaarheid.Summary` | pl / ro / ar draft |
+| `Terms.Sec.beeindiging.Title` / `.Summary` | pl / ro / ar draft |
+| `Terms.Sec.recht.Title` / `.Summary` | pl / ro / ar draft |
+| `Terms.Sec.wat.Title` / `.Summary` | pl / ro / ar draft (new candidate section) |
+| `Terms.Sec.account.Title` / `.Summary` | pl / ro / ar draft |
+| `Terms.Sec.solliciteren.Summary` | pl / ro / ar draft |
+| `Terms.Sec.bedenktijd.Summary` | pl / ro / ar draft (reworded: names the waiver) |
+| `Terms.Sec.ai.Title` / `.Summary` | pl / ro / ar draft |
+| `Terms.Sec.gebruik.Title` / `.Summary` | pl / ro / ar draft (title reworded to "Wat mag niet") |
+| `Terms.Sec.beschikbaar.Title` | pl / ro / ar draft (candidate-only short title) |
+| `Terms.Sec.einde.Title` / `.Summary` | pl / ro / ar draft (candidate-only) |
+| `Terms.Sec.wijzigingen.Summary` | pl / ro / ar draft |
+| `Terms.Sec.aansprakelijkheid.Employer.Summary` | pl / ro / ar draft. Names the € 250 minimum cap (D6); check the amount and the currency format per language. |
+| `Terms.Sec.aansprakelijkheid.Candidate.Summary` | pl / ro / ar draft. Says statutory consumer rights always apply; must not read as a cap. |
+
+Removed in 04: `Terms.Sec.toepasselijkheid` lost its duplicate twin `Terms.Sec.voor-wie.Title`
+for employers, and `Terms.Sec.matching.Title` / `Terms.Sec.matchscores.Title` disappeared because
+those sections merged into `vacatures` and `solliciteren`.
+
+Later files (05+) add their new Privacy.* / Terms.* rows here.
