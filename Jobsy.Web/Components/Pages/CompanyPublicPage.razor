@@ -244,18 +244,6 @@ else
                     string.Equals(b.Status, CompanyEngagementStatuses.Checked, StringComparison.OrdinalIgnoreCase),
                     b.CheckedSource))
                 .ToList();
-
-            if (RendererInfo.IsInteractive)
-            {
-                try
-                {
-                    await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
-                }
-                catch
-                {
-                    // Analytics must not block the page.
-                }
-            }
         }
         catch (Exception ex)
         {
@@ -327,7 +315,7 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // The list is in the prerendered HTML; the map is initialised afterwards (09.3).
-        if (_loading || _page is null || _mapReady || _mapInitScheduled || !RendererInfo.IsInteractive)
+        if (_loading || _page is null || _mapReady || _mapInitScheduled)
         {
             return;
         }
@@ -335,6 +323,21 @@ else
         _mapInitScheduled = true;
         try
         {
+            if (!RendererInfo.IsInteractive)
+            {
+                _mapInitScheduled = false;
+                return;
+            }
+
+            try
+            {
+                await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
+            }
+            catch
+            {
+                // Analytics must not block the map.
+            }
+
             _dotNetRef ??= DotNetObjectReference.Create(this);
             var markers = BuildMarkers();
             var options = new Dictionary<string, object?>

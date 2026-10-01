@@ -186,7 +186,9 @@ internal static class LocalizationParityAllowList
         "KVK", "SBI", "Arts", "Kok", "Meer", "Eens", "Samen", "Adres", "E-bike", "CV", "PDF",
         "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI", "2FA",
         "Filters", "Urgent", "Dashboard", "Team",
-        "Cookies", "Contact", "Privacy", "Tokens"
+        "Cookies", "Contact", "Privacy", "Tokens",
+        // public-pages 09: a dash placeholder and the loanword "Flyer" are language-neutral.
+        "—", "Flyer (pdf)"
     };
 
     public static bool IsExemptIdenticalValue(string value)

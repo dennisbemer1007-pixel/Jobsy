@@ -1014,7 +1014,7 @@ public static class UiStringsPublicInfo
         Add("PartnerPage.Rates.Free",
             "Gratis",
             "Free",
-            "Gratis",
+            "Bezpłatnie",
             "Gratuit",
             "مجاني");
         Add("PartnerPage.Rates.NoTokens",
@@ -1068,7 +1068,7 @@ public static class UiStringsPublicInfo
             "واتساب");
         Add("PartnerPage.Share.Mail",
             "Mail",
-            "Mail",
+            "E-mail",
             "E-mail",
             "E-mail",
             "بريد");
