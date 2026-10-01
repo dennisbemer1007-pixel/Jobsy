@@ -35,7 +35,7 @@ public class MaintenanceState
 /// <summary>Polls <c>api/site/status</c> and feeds <see cref="MaintenanceState"/>.</summary>
 public sealed class MaintenancePoller : BackgroundService
 {
-    internal const string StatusPath = "api/site/status";
+    public const string StatusPath = "api/site/status";
 
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(3);
 
@@ -63,7 +63,8 @@ public sealed class MaintenancePoller : BackgroundService
         }
     }
 
-    internal async Task PollOnceAsync(CancellationToken stoppingToken)
+    /// <summary>One poll. Public so a test can prove an API outage keeps the last state.</summary>
+    public async Task PollOnceAsync(CancellationToken stoppingToken)
     {
         try
         {
@@ -87,5 +88,5 @@ public sealed class MaintenancePoller : BackgroundService
         }
     }
 
-    internal sealed record SiteStatusResponse(bool Maintenance, DateTime? ExpectedEndUtc);
+    private sealed record SiteStatusResponse(bool Maintenance, DateTime? ExpectedEndUtc);
 }

@@ -22,6 +22,34 @@ public class StatusPageBunitTests : TestContext
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+        Services.AddSingleton(new Jobsy.Web.Hosting.MaintenanceState());
+    }
+
+    [Fact]
+    public void Maintenance_names_the_expected_end_time_and_keeps_the_admin_hint()
+    {
+        Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(true));
+        var state = Services.GetRequiredService<Jobsy.Web.Hosting.MaintenanceState>();
+        state.Apply(true, DateTime.UtcNow.AddMinutes(45));
+
+        var cut = RenderComponent<StatusPage>(p => p.Add(x => x.Code, 503));
+
+        Assert.Contains("We zijn even aan het klussen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("We verwachten terug te zijn om", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Beheerder? Inloggen", cut.Markup, StringComparison.Ordinal);
+        // Visitors get no login button, only the small admin hint.
+        Assert.Empty(cut.FindAll(".err-actions a"));
+    }
+
+    [Fact]
+    public void Maintenance_without_an_end_time_only_says_lobsy_is_back_soon()
+    {
+        Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(true));
+
+        var cut = RenderComponent<StatusPage>(p => p.Add(x => x.Code, 503));
+
+        Assert.Contains("Lobsy is zo terug.", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("We verwachten terug te zijn om", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
