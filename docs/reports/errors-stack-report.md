@@ -20,7 +20,7 @@ Dennis's decisions and they are listed at the bottom.
 | 03 | `cursor/errors-3` | [#495](https://github.com/dennisbemer1007-pixel/Jobsy/pull/495) | open | `ab804c05` |
 | 04 | `cursor/errors-4` | [#496](https://github.com/dennisbemer1007-pixel/Jobsy/pull/496) | open | `a7700235` `99e65bff` `c55c5179` |
 | 05 | `cursor/errors-5` | [#497](https://github.com/dennisbemer1007-pixel/Jobsy/pull/497) | open | `7e3942ae` `3592c16d` `c4b73fbb` `760825df` |
-| 06 | `cursor/errors-6` | this PR | open | `1fee8b1b` `81f95068` `93ee3eca` `296f4d76` `6abfa8ec` `5a1437e9` |
+| 06 | `cursor/errors-6` | [#498](https://github.com/dennisbemer1007-pixel/Jobsy/pull/498) | open | `1fee8b1b` `81f95068` `93ee3eca` `296f4d76` `6abfa8ec` `5a1437e9` |
 
 The branches are stacked, so each diff contains the ones below it until they merge. Merge them in
 order 01 → 06; `acceptatie` is the base for all six and none of them touches `main`.
