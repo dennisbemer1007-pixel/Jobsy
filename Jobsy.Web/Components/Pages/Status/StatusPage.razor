@@ -1,6 +1,7 @@
 @page "/status/{Code:int}"
 @attribute [AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
 @inject CultureState Culture
 @inject IHttpContextAccessor HttpContextAccessor
 @using Microsoft.AspNetCore.Http

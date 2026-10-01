@@ -314,6 +314,10 @@ app.UseWhen(
     ctx => ShouldReExecuteStatusPages(ctx),
     branch => branch.UseStatusCodePagesWithReExecute("/status/{0}"));
 
+// Re-run endpoint routing after status-code re-execute rewrites the path to /status/{code}.
+// WebApplication would otherwise only route once at the start of the pipeline.
+app.UseRouting();
+
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
 if (app.Environment.IsDevelopment())
 {
