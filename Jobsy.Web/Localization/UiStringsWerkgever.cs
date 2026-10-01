@@ -17,7 +17,6 @@ public static class UiStringsWerkgever
         }
 
         // Terminology overrides (D11) — replace jargon left in UiStringsExtras
-        Add("Partner.Usp2", "Funda-model: banenkaart + uitlicht-carrousel", "Funda-style job map + feature carousel", "Model Funda: mapa ofert + karuzela wyróżnień", "Model Funda: hartă joburi + carusel evidențieri", "نموذج Funda: خريطة وظائف + دوّارة التمييز");
         Add("Employer.FilterMatched", "Aangenomen", "Hired", "Zatrudniony", "Angajat", "مُعيَّن");
         Add("Employer.ApplicantsReadOnly", "Je kunt sollicitaties inzien; reageren doet de vestigings- of bedrijfsmanager.", "You can view applications; the branch or company manager responds.", "Możesz przeglądać aplikacje; reaguje menedżer placówki lub firmy.", "Poți vedea aplicațiile; răspunde managerul de filială sau de firmă.", "يمكنك عرض الطلبات؛ يرد مدير الفرع أو الشركة.");
         Add("Register.RoleBranch", "Vestigingsmanager", "Branch manager", "Menedżer placówki", "Manager de filială", "مدير الفرع");

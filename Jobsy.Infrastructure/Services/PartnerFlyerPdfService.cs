@@ -98,11 +98,11 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
                         });
 
                         hero.Item().PaddingTop(8)
-                            .Text("Nodig werkgevers uit voor hyper-lokaal werven")
+                            .Text("Nodig werkgevers uit om personeel dichtbij te vinden")
                             .FontSize(20).Bold().FontColor(Colors.White);
                         hero.Item().Text(
-                                "Reistijd-matching in Westland & Den Haag — bereik kandidaten die écht in de buurt " +
-                                "wonen of studeren, zonder abonnement.")
+                                "Lobsy laat een vacature zien aan mensen in de buurt, op fiets-, OV- of autotijd. " +
+                                "Je betaalt alleen als je een vacature plaatst.")
                             .FontSize(9).FontColor(SoftSky);
                     });
 
@@ -116,8 +116,8 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
                         {
                             usp.Spacing(2);
                             usp.Item().Text("Waarom Lobsy?").Bold().FontColor(AccentTeal).FontSize(10);
-                            usp.Item().Text("• Match op fiets, OV of auto — geen landelijke spill").FontSize(8);
-                            usp.Item().Text("• Banenkaart + carrousel-highlight (Funda-model)").FontSize(8);
+                            usp.Item().Text("• Kandidaten uit de buurt, op fiets-, OV- of autotijd").FontSize(8);
+                            usp.Item().Text("• Je vacature op de banenkaart, met een highlight erbij").FontSize(8);
                             usp.Item().Text("• Tokens i.p.v. abonnementen — betaal alleen voor plaatsing").FontSize(8);
                             usp.Item().Text($"• Start-highlight t.w.v. {bonus} tokens bij aanmelding via salescode")
                                 .FontSize(8);

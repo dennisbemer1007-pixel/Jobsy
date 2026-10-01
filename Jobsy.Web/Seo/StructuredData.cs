@@ -127,7 +127,11 @@ public static class StructuredData
         return Serialize(payload);
     }
 
-    public static string? Organization(string origin, string name, string? address, string? logoUrl, string pagePath)
+    /// <summary>
+    /// Company page markup (public-pages 09, D4): the address carries the city only, never a street
+    /// or coordinates.
+    /// </summary>
+    public static string? Organization(string origin, string name, string? city, string? logoUrl, string pagePath)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -142,12 +146,12 @@ public static class StructuredData
             ["name"] = name.Trim(),
             ["url"] = root + pagePath
         };
-        if (!string.IsNullOrWhiteSpace(address))
+        if (!string.IsNullOrWhiteSpace(city))
         {
             payload["address"] = new Dictionary<string, object?>
             {
                 ["@type"] = "PostalAddress",
-                ["streetAddress"] = address.Trim(),
+                ["addressLocality"] = city.Trim(),
                 ["addressCountry"] = "NL"
             };
         }

@@ -1,164 +1,191 @@
 @page "/partner"
 @page "/partner/{TrackingCode?}"
 @attribute [AllowAnonymous]
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
 @using Jobsy.Core.Sales
 @using Jobsy.Web.Sales
-@using Jobsy.Core.Features
-@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.Employers, FallbackPath = "/")]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
-@inject IJSRuntime Js
 @inject CultureState Culture
+@inject IConfiguration Configuration
 @inject IHttpContextAccessor HttpContextAccessor
-@implements IDisposable
+@inject ILogger<PartnerSales> Logger
 
-<PageTitle>@Culture["Partner.Title"] · Lobsy</PageTitle>
-<PageSeo CanonicalPath="/partner" Index="@(string.IsNullOrEmpty(TrackingCode))" />
+<PageTitle>@Culture["PartnerPage.Seo.Title"] · Lobsy</PageTitle>
+<PageSeo Title="@Culture["PartnerPage.Seo.Title"]"
+         Description="@Culture["PartnerPage.Seo.Description"]"
+         CanonicalPath="/partner"
+         Index="@(string.IsNullOrEmpty(_trackingCode))" />
 
-<div class="panel-page panel-page--wide partner-sales">
-    <header class="partner-sales__hero">
-        <p class="partner-sales__brand">Lobsy</p>
-        <h1>@Culture["Partner.Headline"]</h1>
-        <p class="login-lead">@Culture["Partner.Lead"]</p>
-        <div class="partner-sales__cta">
-            <a class="login-submit" href="@RegisterHref">
-                @Culture["Partner.RegisterCta"]
+<section class="pub-section pp-partner" aria-labelledby="partner-title">
+    <header class="pp-partner__hero">
+        <div class="pp-partner__hero-copy">
+            <p class="pp-doc__eyebrow">
+                <PubEmoji Glyph="🤝" />
+                <span>@Culture["PartnerPage.Eyebrow"]</span>
+            </p>
+            <h1 id="partner-title" class="pp-doc__title">@Culture["PartnerPage.Title"]</h1>
+            <p class="pp-doc__lead">@Culture["PartnerPage.Lead"]</p>
+            <div class="pp-partner__cta">
+                <a class="pub-btn pub-btn--primary" href="@RegisterHref">@Culture["PartnerPage.RegisterCta"]</a>
+                <a class="pub-btn pub-btn--secondary" href="#tarieven">@Culture["PartnerPage.RatesCta"]</a>
+            </div>
+        </div>
+        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" />
+    </header>
+
+    <div class="pp-partner__usps" aria-label="@Culture["PartnerPage.Usps.Label"]">
+        <article class="pub-card pp-partner__usp">
+            <PubEmoji Glyph="📍" />
+            <h2>@Culture["PartnerPage.Usp.Nearby.Title"]</h2>
+            <p>@Culture["PartnerPage.Usp.Nearby.Body"]</p>
+        </article>
+        <article class="pub-card pp-partner__usp">
+            <PubEmoji Glyph="🪙" />
+            <h2>@Culture["PartnerPage.Usp.PerVacancy.Title"]</h2>
+            <p>@Culture["PartnerPage.Usp.PerVacancy.Body"]</p>
+        </article>
+        <article class="pub-card pp-partner__usp">
+            <PubEmoji Glyph="🎁" />
+            <h2>@Culture["PartnerPage.Usp.FreeHighlight.Title"]</h2>
+            <p>@Culture.Format("PartnerPage.Usp.FreeHighlight.Body", BonusTokens)</p>
+        </article>
+    </div>
+
+    <section class="pub-card pp-partner__rates" id="tarieven" aria-labelledby="partner-rates-title">
+        <h2 id="partner-rates-title">@Culture["PartnerPage.Rates.Title"]</h2>
+        @if (_catalog is null)
+        {
+            <p class="pp-partner__rates-empty">@Culture["PartnerPage.RatesUnavailable"]</p>
+        }
+        else
+        {
+            <p class="pp-partner__token-value">
+                @Culture.Format("PartnerPage.Rates.TokenValue", ExVat(_catalog.BaseTokenValueEuro))
+                <span class="pp-partner__incl">@Culture.Format("PartnerPage.Rates.InclVat", InclVat(_catalog.BaseTokenValueEuro))</span>
+            </p>
+            <table class="pp-partner__table">
+                <thead>
+                    <tr>
+                        <th scope="col">@Culture["PartnerPage.Rates.Kind"]</th>
+                        <th scope="col">@Culture["PartnerPage.Rates.Tokens"]</th>
+                        <th scope="col">@Culture["PartnerPage.Rates.Price"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Rows())
+                    {
+                        <tr>
+                            <th scope="row">@row.Label</th>
+                            <td>@row.Tokens</td>
+                            <td>
+                                @if (row.IsFree)
+                                {
+                                    <strong class="pp-partner__free">@Culture["PartnerPage.Rates.Free"]</strong>
+                                }
+                                else
+                                {
+                                    <strong>@row.ExVat</strong>
+                                    <span class="pp-partner__incl">@Culture.Format("PartnerPage.Rates.InclVat", row.InclVat)</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="pp-partner__vat-note">@Culture["PartnerPage.Rates.ExclVatNote"]</p>
+            <p class="pp-partner__packages-note">@Culture["PartnerPage.Rates.PackagesNote"]</p>
+        }
+    </section>
+
+    <section class="pub-card pp-partner__share" aria-labelledby="partner-share-title">
+        <h2 id="partner-share-title">
+            <PubEmoji Glyph="📣" />
+            @Culture["PartnerPage.Share.Title"]
+        </h2>
+        <p>@Culture["PartnerPage.Share.Body"]</p>
+        <div class="pp-partner__share-links">
+            <a class="pub-chip pp-partner__share-link" href="@WhatsAppHref" rel="nofollow noopener">
+                @Culture["PartnerPage.Share.WhatsApp"]
             </a>
-            <button class="btn-compact btn-compact--primary" type="button" disabled="@_flyerBusy" @onclick="DownloadFlyerAsync">
-                @Culture["Partner.DownloadFlyer"]
-            </button>
-            <button class="btn-compact" type="button" @onclick="ShareWhatsApp">WhatsApp</button>
-            <button class="btn-compact" type="button" @onclick="ShareMail">Mail</button>
+            <a class="pub-chip pp-partner__share-link" href="@MailHref">
+                @Culture["PartnerPage.Share.Mail"]
+            </a>
+            <a class="pub-chip pp-partner__share-link" href="@FlyerHref" rel="nofollow">
+                @Culture["PartnerPage.Share.Flyer"]
+            </a>
         </div>
         @if (!string.IsNullOrWhiteSpace(_trackingCode))
         {
-            <p class="partner-sales__code">Salescode: <strong>@_trackingCode</strong></p>
-        }
-    </header>
-
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
-    {
-        <p class="state-message error">@_error</p>
-    }
-    else if (_catalog is not null)
-    {
-        <section class="panel-section">
-            <h2>@Culture["Partner.UspsTitle"]</h2>
-            <ul class="partner-sales__usps">
-                <li>@Culture["Partner.Usp1"]</li>
-                <li>@Culture["Partner.Usp2"]</li>
-                <li>@Culture["Partner.Usp3"]</li>
-                <li>@Culture.Format("Partner.Usp4", _catalog.StartHighlightBonusTokens.ToString("0.##"))</li>
-            </ul>
-        </section>
-
-        <section class="panel-section">
-            <h2>@Culture["Partner.RatesTitle"]</h2>
-            <p class="muted">
-                @Culture.Format("Partner.TokenValueFrom", _catalog.BaseTokenValueEuro.ToString("0.00"))
-                · Highlight @_catalog.HighlightCarouselDays d: @_catalog.HighlightCarouselTokens.ToString("0.##") tokens
-                · Pulse: @_catalog.HighlightPulseTokens.ToString("0.##") tokens
+            <p class="pp-partner__code">
+                @Culture["PartnerPage.SalesCode"]: <strong>@_trackingCode</strong>
             </p>
-            <div class="table-list">
-                @foreach (var cost in _catalog.VacancyTypeCosts)
-                {
-                    <div class="table-row">
-                        <div>
-                            <strong>@cost.Label</strong>
-                            <span class="muted">@Culture["Partner.Placement"]</span>
-                        </div>
-                        <div>
-                            <strong>@cost.CostTokens.ToString("0.##") tokens</strong>
-                            <span class="muted">≈ @SalesMoney.FormatPlain(cost.PriceEuro)</span>
-                        </div>
-                    </div>
-                }
-            </div>
-        </section>
-
-        @if (_catalog.Packages.Count > 0)
-        {
-            <section class="panel-section">
-                <h2>@Culture["Partner.PackagesTitle"]</h2>
-                <div class="table-list">
-                    @foreach (var pack in _catalog.Packages)
-                    {
-                        <div class="table-row">
-                            <div>
-                                <strong>@pack.Name</strong>
-                                <span class="muted">@CategoryLabel(pack.Category) · @pack.TokenAmount tokens</span>
-                                @if (!string.IsNullOrWhiteSpace(pack.Description))
-                                {
-                                    <div class="muted">@pack.Description</div>
-                                }
-                            </div>
-                            <strong>@SalesMoney.FormatPlain(pack.PriceEuro)</strong>
-                        </div>
-                    }
-                </div>
-            </section>
         }
-
-        <section class="panel-section partner-sales__box">
-            <h2>@Culture["Partner.BonusTitle"]</h2>
-            <p>
-                @Culture.Format("Partner.BonusBody", _catalog.StartHighlightBonusTokens.ToString("0.##"))
-            </p>
-            <a class="auth-link" href="@RegisterHref">@Culture["Partner.RegisterCta"] →</a>
-        </section>
-    }
-</div>
+    </section>
+</section>
 
 @code {
+    private sealed record RateRow(string Label, string Tokens, string ExVat, string InclVat, bool IsFree);
+
     [Parameter] public string? TrackingCode { get; set; }
     [SupplyParameterFromQuery(Name = "ref")] public string? RefCode { get; set; }
-    [SupplyParameterFromQuery(Name = "b")] public string? Channel { get; set; }
-    [SupplyParameterFromQuery(Name = "preview")] public string? Preview { get; set; }
 
     private PartnerSalesCatalog? _catalog;
     private string? _trackingCode;
-    private bool _loading = true;
-    private bool _flyerBusy;
-    private string? _error;
-    private bool _visitRecorded;
-
-    private bool IsPreview =>
-        string.Equals(Preview, "1", StringComparison.Ordinal)
-        || string.Equals(Preview, "true", StringComparison.OrdinalIgnoreCase);
 
     private string RegisterHref => string.IsNullOrWhiteSpace(_trackingCode)
-        ? "/register"
-        : $"/register?ref={Uri.EscapeDataString(_trackingCode)}";
+        ? PublicRoutes.CompanyRegister
+        : $"{PublicRoutes.CompanyRegister}?ref={Uri.EscapeDataString(_trackingCode)}";
+
+    private string FlyerHref => string.IsNullOrWhiteSpace(_trackingCode)
+        ? PartnerFlyerEndpoints.Path
+        : $"{PartnerFlyerEndpoints.Path}?code={Uri.EscapeDataString(_trackingCode)}";
 
     private string PartnerPageUrl
     {
         get
         {
-            var baseUri = Navigation.BaseUri.TrimEnd('/');
+            var origin = PageSeoResolver.Origin(Navigation.Uri, Configuration).TrimEnd('/');
             return string.IsNullOrWhiteSpace(_trackingCode)
-                ? $"{baseUri}/partner"
-                : $"{baseUri}/partner/{Uri.EscapeDataString(_trackingCode)}";
+                ? $"{origin}{PublicRoutes.Partner}"
+                : $"{origin}{PublicRoutes.Partner}/{Uri.EscapeDataString(_trackingCode)}";
         }
     }
 
+    private string WhatsAppHref
+        => "https://wa.me/?text="
+           + Uri.EscapeDataString(Culture.Format("PartnerPage.Share.Text", PartnerPageUrl));
+
+    private string MailHref => MailtoLink.Build(
+        Culture["PartnerPage.Share.Subject"],
+        Culture.Format("PartnerPage.Share.Body.Mail", PartnerPageUrl));
+
+    private string BonusTokens => (_catalog?.StartHighlightBonusTokens
+                                   ?? VacancyProductRules.DefaultHighlightCarouselTokens).ToString("0.##");
+
+    [SupplyParameterFromQuery(Name = "b")] public string? Channel { get; set; }
+    [SupplyParameterFromQuery(Name = "preview")] public string? Preview { get; set; }
+
+    private bool IsPreview =>
+        string.Equals(Preview, "1", StringComparison.Ordinal)
+        || string.Equals(Preview, "true", StringComparison.OrdinalIgnoreCase);
+
     protected override async Task OnInitializedAsync()
     {
-        Culture.Changed += OnCultureChanged;
         var raw = FirstNonEmpty(TrackingCode, RefCode)?.Trim().ToUpperInvariant();
         _trackingCode = SalesTrackingCodes.Normalize(raw) is { } code
                         && !SalesTrackingCodes.IsAmbassadeur(code)
             ? code
             : null;
 
-        if (_trackingCode is not null && !_visitRecorded)
+        if (_trackingCode is not null)
         {
             await TryRecordVisitAndCookieAsync(_trackingCode);
-            _visitRecorded = true;
         }
 
         try
@@ -167,18 +194,18 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _loading = false;
+            // The page still sells the idea; only the rates table is dropped (never ex.Message).
+            Logger.LogWarning(ex, "Partner rates unavailable for request {RequestId}", RequestId);
         }
     }
 
+    private string? RequestId => HttpContextAccessor.HttpContext?.TraceIdentifier;
+
+    /// <summary>Sales attribution stays best effort: the page renders even when telemetry fails.</summary>
     private async Task TryRecordVisitAndCookieAsync(string code)
     {
         var http = HttpContextAccessor.HttpContext;
-        if (http is null)
+        if (http is null || http.Response.HasStarted)
         {
             return;
         }
@@ -191,65 +218,67 @@
                 code,
                 Channel,
                 countClick: !IsPreview && !isBot && !sameDay);
-            if (visit is { Active: true } && !IsPreview)
+            if (visit is { Active: true } && !IsPreview && !http.Response.HasStarted)
             {
                 SalesReferralCookie.TrySetFirstClick(http, code, visit.CookieDays);
             }
         }
-        catch
-        {
-            // Landing still works without visit telemetry.
-        }
-    }
-
-    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
-    public void Dispose() => Culture.Changed -= OnCultureChanged;
-
-    private async Task DownloadFlyerAsync()
-    {
-        _flyerBusy = true;
-        try
-        {
-            await Api.DownloadPartnerFlyerPdfAsync(Js, _trackingCode);
-        }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            Logger.LogDebug(ex, "Sales referral visit not recorded for request {RequestId}", RequestId);
         }
-        finally
+    }
+
+    private IReadOnlyList<RateRow> Rows()
+    {
+        if (_catalog is null)
         {
-            _flyerBusy = false;
+            return [];
         }
+
+        var rows = new List<RateRow>();
+        foreach (var cost in _catalog.VacancyTypeCosts.Where(c => c.IsActive))
+        {
+            rows.Add(Row(cost.Label, cost.CostTokens, cost.PriceEuro));
+        }
+
+        rows.Add(Row(
+            Culture.Format("PartnerPage.Rates.Highlight", _catalog.HighlightCarouselDays.ToString()),
+            _catalog.HighlightCarouselTokens,
+            Math.Round(_catalog.HighlightCarouselTokens * _catalog.BaseTokenValueEuro, 2)));
+
+        return rows;
     }
 
-    private void ShareWhatsApp()
+    private RateRow Row(string label, decimal tokens, decimal priceInclVatEuro)
     {
-        var text = Uri.EscapeDataString(
-            $"Lobsy partnerinfo — hyper-lokaal werven op reistijd. {PartnerPageUrl}");
-        Navigation.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
+        var free = tokens <= 0m;
+        return new RateRow(
+            label,
+            free ? Culture["PartnerPage.Rates.NoTokens"] : tokens.ToString("0.##"),
+            free ? string.Empty : ExVat(priceInclVatEuro),
+            free ? string.Empty : InclVat(priceInclVatEuro),
+            free);
     }
 
-    private void ShareMail()
-    {
-        Navigation.NavigateTo(
-            MailtoLink.Build(
-                "Lobsy — partneraanbod Westland & Den Haag",
-                $"Hoi,\n\nBekijk het Lobsy-partneraanbod (reistijd-matching, tokens, pakketten):\n{PartnerPageUrl}\n\n"),
-            forceLoad: true);
-    }
+    /// <summary>
+    /// Stored catalog amounts are the amounts Mollie charges, and those are incl. 21% btw
+    /// (<see cref="TokenVatPricing"/>). D5 shows the excl. amount as the main number.
+    /// </summary>
+    private static string ExVat(decimal inclVatEuro)
+        => SalesMoney.FormatPlain(
+            TokenVatPricing.FromCents(TokenVatPricing.SplitInclVatEuros(inclVatEuro).ExVatCents));
 
-    private static string CategoryLabel(string category) => category switch
-    {
-        "FirstYearSupplier" => "First Year Supplier",
-        "Enterprise" => "Enterprise",
-        _ => "Standaard"
-    };
+    private static string InclVat(decimal inclVatEuro) => SalesMoney.FormatPlain(inclVatEuro);
 
     private static string? FirstNonEmpty(params string?[] values)
     {
         foreach (var v in values)
         {
-            if (!string.IsNullOrWhiteSpace(v)) return v;
+            if (!string.IsNullOrWhiteSpace(v))
+            {
+                return v;
+            }
         }
 
         return null;
