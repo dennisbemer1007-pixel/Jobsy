@@ -11,6 +11,12 @@ public static class AdminAuditKeys
     public const string SettingsFlyerUpdate = "settings.flyer.update";
     public const string SettingsIntegrationUpdate = "settings.integration.update";
 
+    /// <summary>Maintenance switch on (errors 05).</summary>
+    public const string MaintenanceOn = "maintenance.on";
+
+    /// <summary>Maintenance switch off (errors 05).</summary>
+    public const string MaintenanceOff = "maintenance.off";
+
     public const string UserMfaReset = "user.mfa.reset";
     public const string UserRoleChange = "user.role.change";
     public const string UserSessionsRevoke = "user.sessions.revoke";

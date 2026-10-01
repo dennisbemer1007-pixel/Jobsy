@@ -1545,6 +1545,7 @@ public class JobsyDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.PublicWebBaseUrl).HasMaxLength(512);
+            entity.Property(e => e.MaintenanceNote).HasMaxLength(200);
         });
 
         modelBuilder.Entity<PlatformCompanySettings>(entity =>

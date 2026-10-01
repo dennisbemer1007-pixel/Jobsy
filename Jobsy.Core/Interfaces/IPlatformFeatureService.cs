@@ -32,7 +32,12 @@ public sealed record PlatformFeatureSnapshot(
     /// <summary>Default false — Ambassadeur role parked.</summary>
     bool AmbassadorsEnabled = false,
     bool EmployersEnabled = true,
-    bool CandidatePassportEnabled = false);
+    bool CandidatePassportEnabled = false,
+    /// <summary>Maintenance switch (errors 05). Everyone except admins sees the 503 page.</summary>
+    bool MaintenanceEnabled = false,
+    DateTime? MaintenanceExpectedEndUtc = null,
+    /// <summary>Admin-only note. Never returned on a public endpoint.</summary>
+    string? MaintenanceNote = null);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -68,4 +73,11 @@ public sealed record PlatformFeatureUpdate(
     /// <summary>Null = keep existing.</summary>
     bool? AmbassadorsEnabled = null,
     bool? EmployersEnabled = null,
-    bool? CandidatePassportEnabled = null);
+    bool? CandidatePassportEnabled = null,
+    /// <summary>Null = keep existing.</summary>
+    bool? MaintenanceEnabled = null,
+    DateTime? MaintenanceExpectedEndUtc = null,
+    /// <summary>When true, clears <see cref="MaintenanceExpectedEndUtc"/> (no expected end).</summary>
+    bool ClearMaintenanceExpectedEndUtc = false,
+    /// <summary>Null = keep existing. Empty string clears the note.</summary>
+    string? MaintenanceNote = null);

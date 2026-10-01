@@ -15,6 +15,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
 @inject IEmployersSwitch EmployersSwitch
+@inject MaintenanceState Maintenance
 @*
   Re-execute target for unknown HTML pages, and a direct route for the other real status codes.
   Static SSR only: this page must still render when the API or the database is down.
@@ -52,6 +53,34 @@ else if (_status == StatusCodes.Status429TooManyRequests)
 
             <p class="err-support">
                 @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+            </p>
+        </div>
+        <div class="err-hero__art" aria-hidden="true">
+            <span class="err-blob"></span>
+            <LobsyMascot Pose="MascotPose.Sitting" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+        </div>
+    </section>
+}
+else if (_status == StatusCodes.Status503ServiceUnavailable)
+{
+    <PageTitle>@Culture["Status.Maintenance.Title"] · Lobsy</PageTitle>
+    <Microsoft.AspNetCore.Components.Sections.SectionContent SectionName="@ErrorLayout.ErrorHeadSection">
+        @* One refresh, never sooner than the wait we asked for and never later than 5 minutes. *@
+        <meta http-equiv="refresh" content="@MaintenanceRefreshContent" />
+    </Microsoft.AspNetCore.Components.Sections.SectionContent>
+
+    <section class="err-hero">
+        <div class="err-hero__text">
+            <p class="pub-chip err-code">@Culture["Status.Maintenance.Eyebrow"]</p>
+            <h1 class="err-hero__title">@Culture["Status.Maintenance.Title"]</h1>
+            <p class="err-hero__lead">@MaintenanceLead</p>
+
+            <p class="err-support">
+                @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+            </p>
+
+            <p class="err-aside">
+                <a class="err-aside__link" href="/login">@Culture["Status.Maintenance.AdminLogin"]</a>
             </p>
         </div>
         <div class="err-hero__art" aria-hidden="true">
@@ -110,6 +139,7 @@ else
     private string _supportCode = string.Empty;
     private string _nonce = string.Empty;
     private int _retryAfterSeconds = RateLimitRejection.DefaultRetryAfterSeconds;
+    private DateTime? _maintenanceEndUtc;
 
     private string TooManyLead => string.Format(
         System.Globalization.CultureInfo.InvariantCulture,
@@ -119,6 +149,35 @@ else
     private string MetaRefreshContent => string.Create(
         System.Globalization.CultureInfo.InvariantCulture,
         $"{Math.Max(MinMetaRefreshSeconds, _retryAfterSeconds)};url={_originalReturnUrl}");
+
+    /// <summary>
+    /// "Lobsy is zo terug." plus, only when an end time is set (E8), the expected time in
+    /// Amsterdam time formatted for the visitor's culture (with the date when it is not today).
+    /// </summary>
+    private string MaintenanceLead
+    {
+        get
+        {
+            var lead = Culture["Status.Maintenance.Lead"];
+            if (_maintenanceEndUtc is not DateTime endUtc)
+            {
+                return lead;
+            }
+
+            var culture = System.Globalization.CultureInfo.CurrentCulture;
+            var local = Jobsy.Core.Time.AmsterdamTime.ToLocal(endUtc);
+            var today = Jobsy.Core.Time.AmsterdamTime.ToLocal(DateTime.UtcNow).Date;
+            var when = local.Date == today
+                ? local.ToString("HH:mm", culture)
+                : local.ToString("d MMMM HH:mm", culture);
+
+            return lead + " " + string.Format(culture, Culture["Status.Maintenance.BackAt"], when);
+        }
+    }
+
+    private string MaintenanceRefreshContent => string.Create(
+        System.Globalization.CultureInfo.InvariantCulture,
+        $"{Jobsy.Web.Hosting.MaintenanceMiddleware.MetaRefreshSeconds(_retryAfterSeconds)}");
 
     private bool IsNotFound => _status == StatusCodes.Status404NotFound;
 
@@ -158,13 +217,19 @@ else
             _nonce = Jobsy.Web.Security.CspNonce.Get(http);
             _retryAfterSeconds = RateLimitRejection.RetryAfterFor(http);
         }
+        else if (_status == StatusCodes.Status503ServiceUnavailable)
+        {
+            // In-memory state only: the onderhoudspagina must render while the API is down.
+            _maintenanceEndUtc = Maintenance.ExpectedEndUtc;
+            _retryAfterSeconds = Maintenance.RetryAfterSeconds;
+        }
 
         if (http is not null && !http.Response.HasStarted)
         {
             http.Response.StatusCode = _status;
             ErrorResponse.ApplyHeaders(http);
 
-            if (_status == StatusCodes.Status429TooManyRequests
+            if (_status is StatusCodes.Status429TooManyRequests or StatusCodes.Status503ServiceUnavailable
                 && string.IsNullOrEmpty(http.Response.Headers.RetryAfter))
             {
                 http.Response.Headers.RetryAfter = _retryAfterSeconds.ToString(

@@ -1149,6 +1149,24 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
     }
 
+    /// <summary>Maintenance switch state for the admin panel (errors 05).</summary>
+    public async Task<MaintenanceStateItem?> GetMaintenanceAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<MaintenanceStateItem>("api/admin/settings/maintenance", ct);
+
+    public async Task<MaintenanceStateItem?> SaveMaintenanceAsync(
+        MaintenanceUpdateForm form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/admin/settings/maintenance", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<MaintenanceStateItem>(cancellationToken: ct);
+    }
+
     public async Task<IReadOnlyList<SalesParkedBalanceApiItem>> GetSalesParkedBalancesAsync(
         CancellationToken ct = default)
     {

@@ -379,6 +379,44 @@ public static class UiStringsStatus
             "Ai trimis multe cereri una după alta. Așteaptă {0} secunde și încearcă din nou.",
             "قمت بمحاولات كثيرة متتابعة. انتظر {0} ثانية ثم حاول مرة أخرى.");
 
+        // —— 503 Onderhoud (errors 05) ——
+        Add("Status.Maintenance.Eyebrow",
+            "Onderhoud",
+            "Maintenance",
+            "Prace serwisowe",
+            "Mentenanță",
+            "صيانة");
+        Add("Status.Maintenance.Title",
+            "We zijn even aan het klussen",
+            "We are doing a bit of maintenance",
+            "Chwilowo majsterkujemy",
+            "Lucrăm puțin la site",
+            "نحن نُجري بعض الصيانة");
+        Add("Status.Maintenance.Lead",
+            "Lobsy is zo terug.",
+            "Lobsy will be back shortly.",
+            "Lobsy wkrótce wróci.",
+            "Lobsy revine imediat.",
+            "سيعود لوبسي قريباً.");
+        Add("Status.Maintenance.BackAt",
+            "We verwachten terug te zijn om {0}.",
+            "We expect to be back at {0}.",
+            "Spodziewamy się wrócić o {0}.",
+            "Ne așteptăm să revenim la {0}.",
+            "نتوقع العودة في {0}.");
+        Add("Status.Maintenance.AdminLogin",
+            "Beheerder? Inloggen",
+            "Admin? Sign in",
+            "Administrator? Zaloguj się",
+            "Administrator? Autentifică-te",
+            "مشرف؟ سجّل الدخول");
+        Add("Status.Maintenance.Short",
+            "We zijn even aan het klussen. Lobsy is zo terug.",
+            "We are doing a bit of maintenance. Lobsy will be back shortly.",
+            "Chwilowo majsterkujemy. Lobsy wkrótce wróci.",
+            "Lucrăm puțin la site. Lobsy revine imediat.",
+            "نحن نُجري بعض الصيانة. سيعود لوبسي قريباً.");
+
         // —— Reconnect toast (errors 04) ——
         Add("Status.Reconnect.Trying",
             "Verbinding herstellen…",

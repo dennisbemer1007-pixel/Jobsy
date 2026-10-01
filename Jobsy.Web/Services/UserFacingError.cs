@@ -71,7 +71,8 @@ public sealed class UserFacingError
         ApiError.NotFound => "Common.Error.NotFound",
         ApiError.Forbidden => "Common.Error.Forbidden",
         ApiError.Validation => "Common.Error.Validation",
-        ApiError.Maintenance => "Common.Error.Maintenance",
+        // errors 05 §05.2: the maintenance wording lives with the 503 page.
+        ApiError.Maintenance => "Status.Maintenance.Short",
         _ => "Common.Error.TryAgain"
     };
 

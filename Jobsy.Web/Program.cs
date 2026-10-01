@@ -159,6 +159,10 @@ builder.Services.AddHttpClient(Jobsy.Web.Branding.PlatformBrandingState.HttpClie
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
 
+// Maintenance switch (errors 05): one polled singleton, so no request ever waits on the API.
+builder.Services.AddSingleton<MaintenanceState>();
+builder.Services.AddHostedService<MaintenancePoller>();
+
 builder.Services.AddHttpClient<NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
@@ -335,6 +339,8 @@ app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAdminProviderGuard();
 app.UseAuthorization();
+// After auth so the admin bypass reads the cookie principal (errors 05).
+app.UseMiddleware<MaintenanceMiddleware>();
 app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();

@@ -1,0 +1,23 @@
+@namespace Jobsy.Web.Components.Errors
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+@inject MaintenanceState Maintenance
+
+@*
+  Thin red reminder for admins while the maintenance switch is on (errors 05 §05.3). Reads the
+  polled in-memory state and the signed-in principal only — no API or database call.
+*@
+@if (Maintenance.IsEnabled)
+{
+    <AuthorizeView Roles="@JobsyRoles.Admin">
+        <Authorized>
+            <div class="maintenance-banner" role="status">
+                <span class="maintenance-banner__text">@Culture["Admin.Maintenance.Banner"]</span>
+                <a class="maintenance-banner__link" href="/admin/instellingen">@Culture["Admin.Maintenance.BannerLink"]</a>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+}

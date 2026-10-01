@@ -1,0 +1,213 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Core.Time
+@using Jobsy.Web.Components
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+@*
+  The maintenance switch (errors 05 §05.5). Lives in "Platforminstellingen → Functies" next to the
+  catalog-driven rows, but keeps its own endpoint because it carries an end time and an internal note.
+*@
+<section class="detail-card admin-settings-group admin-maintenance" aria-labelledby="settings-group-maintenance">
+    <h2 id="settings-group-maintenance">@Culture["Admin.Maintenance.Title"]</h2>
+    <p class="muted admin-settings-group__desc">@Culture["Admin.Maintenance.Desc"]</p>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <AdminToggleRow Title="@Culture["Admin.Maintenance.Title"]"
+                        Description="@Culture["Admin.Maintenance.Desc"]"
+                        Meta="@StatusMeta"
+                        IsDirty="@_enabled">
+            <Control>
+                <button type="button"
+                        class="admin-switch @(_enabled ? "is-on" : null)"
+                        role="switch"
+                        aria-checked="@_enabled"
+                        aria-label="@Culture["Admin.Maintenance.Title"]"
+                        disabled="@_busy"
+                        @onclick="ToggleAsync">
+                    <span class="admin-switch__thumb"></span>
+                </button>
+            </Control>
+            <Impact>
+                <AdminImpactNote Tone="danger">
+                    @Culture["Admin.Maintenance.Impact"]
+                </AdminImpactNote>
+            </Impact>
+        </AdminToggleRow>
+
+        <div class="admin-maintenance__fields">
+            <label class="admin-maintenance__field">
+                <span>@Culture["Admin.Maintenance.ExpectedEnd"]</span>
+                <input type="datetime-local"
+                       class="admin-settings-input"
+                       value="@_expectedEndLocal"
+                       disabled="@_busy"
+                       @onchange="OnExpectedEndChanged" />
+                <span class="admin-maintenance__hint">@Culture["Admin.Maintenance.ExpectedEndHint"]</span>
+            </label>
+            <label class="admin-maintenance__field">
+                <span>@Culture["Admin.Maintenance.Note"]</span>
+                <input type="text"
+                       class="admin-settings-input admin-settings-input--wide"
+                       maxlength="@MaintenanceRules.NoteMaxLength"
+                       value="@_note"
+                       disabled="@_busy"
+                       @onchange="OnNoteChanged" />
+                <span class="admin-maintenance__hint">@Culture["Admin.Maintenance.NoteHint"]</span>
+            </label>
+        </div>
+
+        <p class="admin-maintenance__hint">@Culture["Admin.Maintenance.Propagation"]</p>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</section>
+
+<LobsyFriendlyDialog IsOpen="_confirmOpen"
+                     Title="@Culture["Admin.Maintenance.ConfirmTitle"]"
+                     Lead="@Culture["Admin.Maintenance.ConfirmLead"]"
+                     OnClose="CancelConfirm">
+    <div class="inline-actions">
+        <button type="button" class="btn-compact" @onclick="CancelConfirm">@Culture["Common.Cancel"]</button>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SaveAsync(true)">
+            @Culture["Common.Confirm"]
+        </button>
+    </div>
+</LobsyFriendlyDialog>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _confirmOpen;
+    private bool _enabled;
+    private string _expectedEndLocal = "";
+    private string _note = "";
+    private DateTime? _updatedAtUtc;
+    private string? _message;
+
+    /// <summary>"Actief sinds {tijd} door {admin}" while on; the audit log holds the actor name.</summary>
+    private string? StatusMeta
+    {
+        get
+        {
+            if (!_enabled || _updatedAtUtc is not DateTime since)
+            {
+                return null;
+            }
+
+            return string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                Culture["Admin.Maintenance.ActiveSince"],
+                AmsterdamTime.FormatDateTime(since),
+                Culture["Admin.Maintenance.UnknownAdmin"]);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Apply(await Api.GetMaintenanceAsync());
+        }
+        catch (Exception ex)
+        {
+            _message = Jobsy.Web.Services.UserFacingError.MessageKeyFor(ex) is { } key
+                ? Culture[key]
+                : Culture["Common.Error.TryAgain"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>Turning it on asks for a confirm; turning it off saves straight away (05.5).</summary>
+    private Task ToggleAsync()
+    {
+        if (_enabled)
+        {
+            return SaveAsync(false);
+        }
+
+        _confirmOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CancelConfirm()
+    {
+        _confirmOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private void OnExpectedEndChanged(ChangeEventArgs e)
+        => _expectedEndLocal = e.Value?.ToString() ?? "";
+
+    private void OnNoteChanged(ChangeEventArgs e)
+        => _note = e.Value?.ToString() ?? "";
+
+    private async Task SaveAsync(bool enabled)
+    {
+        _confirmOpen = false;
+        _busy = true;
+        _message = null;
+        try
+        {
+            Apply(await Api.SaveMaintenanceAsync(new MaintenanceUpdateForm
+            {
+                Enabled = enabled,
+                ExpectedEndUtc = ParseExpectedEndUtc(_expectedEndLocal),
+                Note = _note
+            }));
+            _message = Culture["Admin.Maintenance.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _message = Culture[Jobsy.Web.Services.UserFacingError.MessageKeyFor(ex)];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Apply(MaintenanceStateItem? item)
+    {
+        _enabled = item?.Enabled ?? false;
+        _note = item?.Note ?? "";
+        _updatedAtUtc = item?.UpdatedAtUtc;
+        _expectedEndLocal = item?.ExpectedEndUtc is DateTime end
+            ? AmsterdamTime.ToLocal(end).ToString("yyyy-MM-dd\\THH:mm", System.Globalization.CultureInfo.InvariantCulture)
+            : "";
+    }
+
+    /// <summary>The admin types Amsterdam time; the API stores UTC.</summary>
+    internal static DateTime? ParseExpectedEndUtc(string? localValue)
+    {
+        if (string.IsNullOrWhiteSpace(localValue)
+            || !DateTime.TryParse(
+                localValue,
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out var local))
+        {
+            return null;
+        }
+
+        return AmsterdamTime.ToUtc(local);
+    }
+
+    /// <summary>Test hooks for the bUnit panel test.</summary>
+    public bool IsOnForTests => _enabled;
+
+    public Task ConfirmOnForTestsAsync() => SaveAsync(true);
+}

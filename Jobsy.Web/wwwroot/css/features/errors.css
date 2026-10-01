@@ -189,6 +189,21 @@
   color: inherit;
 }
 
+/* —— small secondary line, e.g. the admin sign-in hint on 503 (errors 05) —— */
+
+.err-aside {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: var(--err-muted);
+}
+
+.err-aside__link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: inherit;
+}
+
 /* —— account card (403, errors 02) —— */
 
 .err-account {

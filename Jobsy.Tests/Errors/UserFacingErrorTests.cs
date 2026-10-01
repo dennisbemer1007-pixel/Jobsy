@@ -17,7 +17,7 @@ public class UserFacingErrorTests
     [InlineData(ApiError.NotFound, "Common.Error.NotFound")]
     [InlineData(ApiError.Forbidden, "Common.Error.Forbidden")]
     [InlineData(ApiError.Validation, "Common.Error.Validation")]
-    [InlineData(ApiError.Maintenance, "Common.Error.Maintenance")]
+    [InlineData(ApiError.Maintenance, "Status.Maintenance.Short")]
     [InlineData(ApiError.Unknown, "Common.Error.TryAgain")]
     [InlineData("something_new", "Common.Error.TryAgain")]
     public void Api_error_codes_map_to_their_key(string code, string expectedKey)

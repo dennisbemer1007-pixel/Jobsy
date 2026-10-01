@@ -13,15 +13,34 @@ public class SiteController : ControllerBase
     private readonly IAboutPageSettingsService _aboutPage;
     private readonly IVacancyDiscoveryIndex _discovery;
     private readonly IPlatformCompanySettingsService _companySettings;
+    private readonly IPlatformFeatureService _features;
 
     public SiteController(
         IAboutPageSettingsService aboutPage,
         IVacancyDiscoveryIndex discovery,
-        IPlatformCompanySettingsService companySettings)
+        IPlatformCompanySettingsService companySettings,
+        IPlatformFeatureService features)
     {
         _aboutPage = aboutPage;
         _discovery = discovery;
         _companySettings = companySettings;
+        _features = features;
+    }
+
+    /// <summary>
+    /// Maintenance state for the Web host's 503 middleware (errors 05). Anonymous and allowed
+    /// through <see cref="Jobsy.Api.Security.MaintenanceApiMiddleware"/>, otherwise the Web host
+    /// could never learn the switch was flipped back off. The admin note is never returned.
+    /// </summary>
+    [HttpGet("status")]
+    [AllowAnonymous]
+    [ResponseCache(Duration = 5, Location = ResponseCacheLocation.Any)]
+    public async Task<ActionResult<SiteStatusDto>> GetStatus(CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        return Ok(new SiteStatusDto(
+            snap.MaintenanceEnabled,
+            snap.MaintenanceEnabled ? snap.MaintenanceExpectedEndUtc : null));
     }
 
     /// <summary>Public “Wie zijn wij” page content.</summary>
@@ -91,6 +110,8 @@ public sealed record AboutPageDto(
     DateTime? UpdatedAtUtc);
 
 public sealed record SiteBrandingDto(string CompanyName, string Slogan);
+
+public sealed record SiteStatusDto(bool Maintenance, DateTime? ExpectedEndUtc);
 
 public sealed record SiteCrawlIndexDto(
     IReadOnlyList<SiteCrawlVacancyDto> Vacancies,
