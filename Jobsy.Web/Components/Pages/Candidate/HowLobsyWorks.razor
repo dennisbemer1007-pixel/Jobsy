@@ -5,6 +5,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture[HowLobsyRoleGuides.Candidate.TitleKey] · Lobsy</PageTitle>
 
@@ -28,7 +29,7 @@
         catch (Exception ex)
         {
             // Still allow navigation; how-to can be completed later.
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {

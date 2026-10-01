@@ -106,7 +106,7 @@ public static class RateLimitPartitioning
 
         var supportCode = SupportCodeGenerator.Create();
 
-        var logger = http.RequestServices
+        var logger = http.RequestServices?
             .GetService<ILoggerFactory>()
             ?.CreateLogger("Jobsy.Api.RateLimiting");
         logger?.LogWarning(

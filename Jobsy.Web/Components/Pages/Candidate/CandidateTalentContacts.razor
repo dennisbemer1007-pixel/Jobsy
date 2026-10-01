@@ -7,6 +7,7 @@
 @using Jobsy.Core.Rules
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["Talent.CandidateTitle"] · Lobsy</PageTitle>
 
@@ -72,7 +73,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -98,7 +99,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {

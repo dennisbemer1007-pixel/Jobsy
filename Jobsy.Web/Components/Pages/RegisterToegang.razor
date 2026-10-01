@@ -7,6 +7,7 @@
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["WaAccess.Title"] · Lobsy</PageTitle>
 
@@ -188,7 +189,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
     }
 
@@ -217,7 +218,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -243,7 +244,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {

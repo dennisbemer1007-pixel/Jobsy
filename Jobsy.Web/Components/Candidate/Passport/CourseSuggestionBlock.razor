@@ -8,6 +8,7 @@
 @inject NavigationManager Navigation
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 
 @if (Slots.Count == 0)
 {
@@ -145,7 +146,7 @@
         }
         catch (Exception ex)
         {
-            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {

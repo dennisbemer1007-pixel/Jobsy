@@ -11,6 +11,7 @@
 @inject IJSRuntime Js
 @inject CultureState Culture
 @inject IHttpContextAccessor HttpContextAccessor
+@inject UserFacingError UserFacing
 @implements IDisposable
 
 <PageTitle>@Culture["Partner.Title"] · Lobsy</PageTitle>
@@ -166,7 +167,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -213,7 +214,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {

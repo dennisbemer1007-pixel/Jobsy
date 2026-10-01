@@ -7,6 +7,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["CareerDash.Title"] · Lobsy</PageTitle>
 
@@ -409,7 +410,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
             _model = CareerPaths.EmptyDashboard();
         }
         finally
@@ -535,7 +536,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -559,7 +560,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -582,7 +583,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -623,7 +624,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -654,7 +655,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {

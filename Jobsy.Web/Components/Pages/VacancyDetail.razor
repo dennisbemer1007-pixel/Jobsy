@@ -13,6 +13,7 @@
 @inject CultureState Culture
 @inject PersistentComponentState Persist
 @inject IHttpContextAccessor HttpContextAccessor
+@inject UserFacingError UserFacing
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
@@ -1899,7 +1900,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -2075,7 +2076,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -2100,7 +2101,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
     }
 
@@ -2182,7 +2183,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -2238,7 +2239,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
@@ -2256,7 +2257,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {

@@ -82,7 +82,7 @@ public static class RateLimitRejection
     /// </summary>
     private static void Log(HttpContext http, int retryAfterSeconds, string supportCode)
     {
-        var logger = http.RequestServices
+        var logger = http.RequestServices?
             .GetService<ILoggerFactory>()
             ?.CreateLogger("Jobsy.Web.RateLimiting");
 

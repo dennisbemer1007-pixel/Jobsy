@@ -32,10 +32,10 @@
 else if (_status == StatusCodes.Status429TooManyRequests)
 {
     <PageTitle>@Culture["Status.TooMany.Title"] · Lobsy</PageTitle>
-    <HeadContent>
+    <Microsoft.AspNetCore.Components.Sections.SectionContent SectionName="@ErrorLayout.ErrorHeadSection">
         @* No auto-refresh loop: one refresh, never sooner than the wait we asked for. *@
         <meta http-equiv="refresh" content="@MetaRefreshContent" />
-    </HeadContent>
+    </Microsoft.AspNetCore.Components.Sections.SectionContent>
 
     <section class="err-hero">
         <div class="err-hero__text">

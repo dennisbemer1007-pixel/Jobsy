@@ -14,6 +14,8 @@
 <HeadContent>
     <meta name="robots" content="noindex, nofollow" />
     <meta name="googlebot" content="noindex, nofollow" />
+    @* Pages add their own head tags here; a second HeadContent would replace the noindex above. *@
+    <Microsoft.AspNetCore.Components.Sections.SectionOutlet SectionName="@ErrorHeadSection" />
 </HeadContent>
 
 <div class="err-layout pub-theme" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
@@ -63,6 +65,9 @@
 </div>
 
 @code {
+    /// <summary>Section an error page adds extra <c>&lt;head&gt;</c> tags to (errors 04).</summary>
+    public const string ErrorHeadSection = "error-head";
+
     private ErrorChrome _chrome = default!;
 
     protected override void OnInitialized()
