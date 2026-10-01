@@ -201,7 +201,10 @@ public class Sprint6AdminSuiteTests
     public void Semi_annual_effective_from_aligns_with_due_dates(int day, int month, int year, string expected)
     {
         var today = new DateOnly(year, month, day);
-        Assert.Equal(DateOnly.Parse(expected), WagesController.ResolveSemiAnnualEffectiveFrom(today));
+        // Invariant: another suite may have left a non-Dutch ambient culture on this thread.
+        Assert.Equal(
+            DateOnly.Parse(expected, System.Globalization.CultureInfo.InvariantCulture),
+            WagesController.ResolveSemiAnnualEffectiveFrom(today));
     }
 
     [Fact]

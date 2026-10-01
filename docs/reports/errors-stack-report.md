@@ -127,7 +127,7 @@ the integration suites fail on both sides):
 **Zero failures that `acceptatie` does not already have**, and two that `acceptatie` has are green
 here (`AssetVersionGuardTests`, `RoutesDocFreshnessTests`). The stack added 225 tests.
 
-Three guards did drift while the stack was built, and 06 fixed them:
+Four guards did drift while the stack was built, and 06 fixed them:
 
 - `PublicVisibilityEndpointTests` did not classify `VacanciesController.GetSimilar` (03) or
   `SiteController.GetStatus` (05). Both are now in the catalog — the first as `filtered` (it reads
@@ -136,6 +136,10 @@ Three guards did drift while the stack was built, and 06 fixed them:
 - `VacancyCultureFitTranslationTests` forbade the literal string `await LoadAsync(origin);`, which
   03 introduced on purpose so a closed vacancy's similar list can show travel time. The guard now
   asserts the `alreadyLoaded` condition that keeps the call to one, which is what it meant.
+- `Sprint6AdminSuiteTests.Semi_annual_effective_from_aligns_with_due_dates` parsed an ISO date with
+  the ambient culture, so it failed or passed depending on which suite ran before it and what
+  culture that suite left on the thread. It now parses invariantly. (It is a pure function test —
+  nothing to do with the error pages, just newly visible because the stack changed the run order.)
 
 Two failures predate the stack and are untouched here: `LegacyMapQueryTests` (a banenkaart
 query-key list) and `Werkgever/ApplicationsApiTests` (403 without a database). Both also fail on
