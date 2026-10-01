@@ -358,5 +358,115 @@ public static class UiStringsStatus
             "{0} km",
             "{0} km",
             "{0} كم");
+
+        // —— 429 Even rustig aan (errors 04) ——
+        Add("Status.TooMany.Eyebrow",
+            "Even rustig aan",
+            "Easy does it",
+            "Spokojnie",
+            "Mai ușor",
+            "بهدوء قليلاً");
+        Add("Status.TooMany.Title",
+            "Even rustig aan",
+            "Easy does it",
+            "Spokojnie",
+            "Mai ușor",
+            "بهدوء قليلاً");
+        Add("Status.TooMany.Lead",
+            "Je deed veel verzoeken achter elkaar. Wacht {0} seconden en probeer het dan opnieuw.",
+            "You made a lot of requests in a row. Wait {0} seconds and then try again.",
+            "Wysłałeś wiele zapytań po kolei. Odczekaj {0} sekund i spróbuj ponownie.",
+            "Ai trimis multe cereri una după alta. Așteaptă {0} secunde și încearcă din nou.",
+            "قمت بمحاولات كثيرة متتابعة. انتظر {0} ثانية ثم حاول مرة أخرى.");
+
+        // —— Reconnect toast (errors 04) ——
+        Add("Status.Reconnect.Trying",
+            "Verbinding herstellen…",
+            "Reconnecting…",
+            "Łączenie ponownie…",
+            "Se reconectează…",
+            "جارٍ إعادة الاتصال…");
+        Add("Status.Reconnect.Failed",
+            "De verbinding is weg.",
+            "The connection is gone.",
+            "Połączenie zostało przerwane.",
+            "Conexiunea s-a pierdut.",
+            "انقطع الاتصال.");
+        Add("Status.Reconnect.Rejected",
+            "Je sessie is verlopen.",
+            "Your session has expired.",
+            "Twoja sesja wygasła.",
+            "Sesiunea ta a expirat.",
+            "انتهت صلاحية جلستك.");
+        Add("Status.Reconnect.Reload",
+            "Opnieuw laden",
+            "Reload",
+            "Odśwież",
+            "Reîncarcă",
+            "إعادة التحميل");
+
+        // —— Inline block error (errors 04) ——
+        Add("Status.Inline.Title",
+            "Dit stukje laadt nu niet.",
+            "This bit is not loading right now.",
+            "Ten fragment teraz się nie wczytuje.",
+            "Această bucată nu se încarcă acum.",
+            "هذا الجزء لا يتم تحميله الآن.");
+        Add("Status.Inline.Retry",
+            "Opnieuw",
+            "Retry",
+            "Ponów",
+            "Reîncearcă",
+            "أعد المحاولة");
+        Add("Status.Inline.Code",
+            "Foutcode {0}",
+            "Error code {0}",
+            "Kod błędu {0}",
+            "Cod de eroare {0}",
+            "رمز الخطأ {0}");
+
+        // —— User-facing fallbacks (errors 04, UserFacingError) ——
+        Add("Common.Error.TryAgain",
+            "Dat lukte niet. Probeer het zo nog eens.",
+            "That did not work. Try again in a moment.",
+            "Nie udało się. Spróbuj za chwilę jeszcze raz.",
+            "Nu a funcționat. Mai încearcă peste puțin timp.",
+            "لم ينجح ذلك. جرّب مرة أخرى بعد قليل.");
+        Add("Common.Error.Network",
+            "Geen verbinding. Probeer het zo nog eens.",
+            "No connection. Try again in a moment.",
+            "Brak połączenia. Spróbuj za chwilę jeszcze raz.",
+            "Fără conexiune. Mai încearcă peste puțin timp.",
+            "لا يوجد اتصال. جرّب مرة أخرى بعد قليل.");
+        Add("Common.Error.RateLimited",
+            "Even rustig aan. Wacht een momentje en probeer het opnieuw.",
+            "Easy does it. Wait a moment and try again.",
+            "Spokojnie. Odczekaj chwilę i spróbuj ponownie.",
+            "Mai ușor. Așteaptă un moment și încearcă din nou.",
+            "بهدوء. انتظر لحظة ثم حاول مرة أخرى.");
+        Add("Common.Error.NotFound",
+            "Dit kunnen we niet vinden.",
+            "We cannot find this.",
+            "Nie możemy tego znaleźć.",
+            "Nu găsim acest lucru.",
+            "لا يمكننا العثور على هذا.");
+        Add("Common.Error.Forbidden",
+            "Dit mag met jouw account niet.",
+            "Your account is not allowed to do this.",
+            "Twoje konto nie może tego zrobić.",
+            "Contul tău nu are voie să facă asta.",
+            "حسابك غير مسموح له بهذا.");
+        Add("Common.Error.Validation",
+            "Controleer wat je hebt ingevuld en probeer het opnieuw.",
+            "Check what you filled in and try again.",
+            "Sprawdź, co wpisałeś, i spróbuj ponownie.",
+            "Verifică ce ai completat și încearcă din nou.",
+            "تحقق من البيانات التي أدخلتها ثم حاول مرة أخرى.");
+        Add("Common.Error.Maintenance",
+            "We zijn even aan het werk aan Lobsy. Probeer het zo nog eens.",
+            "We are working on Lobsy for a moment. Try again shortly.",
+            "Pracujemy chwilę nad Lobsy. Spróbuj niedługo ponownie.",
+            "Lucrăm puțin la Lobsy. Mai încearcă în scurt timp.",
+            "نعمل على لوبسي لبعض الوقت. جرّب بعد قليل.");
     }
 }

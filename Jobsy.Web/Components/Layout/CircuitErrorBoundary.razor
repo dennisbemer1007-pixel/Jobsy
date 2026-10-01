@@ -16,6 +16,12 @@
         <div class="panel-page circuit-error" role="alert">
             <h1>@Culture["Circuit.ErrorTitle"]</h1>
             <p class="login-lead">@Culture["Circuit.ErrorLead"]</p>
+            @if (!string.IsNullOrEmpty(_supportCode))
+            {
+                <p class="err-inline__code" data-support-code="@_supportCode">
+                    @string.Format(System.Globalization.CultureInfo.InvariantCulture, Culture["Status.Inline.Code"], _supportCode)
+                </p>
+            }
             <button type="button" class="login-submit" @onclick="RecoverFromError">@Culture["Circuit.ErrorRetry"]</button>
         </div>
     </ErrorContent>
@@ -27,6 +33,7 @@
 
     private ErrorBoundary? _errorBoundary;
     private Exception? _loggedCircuitError;
+    private string _supportCode = string.Empty;
 
     protected override void OnInitialized()
         => Navigation.LocationChanged += OnLocationChanged;
@@ -35,12 +42,14 @@
     {
         // An error on one tab must never follow the user to the next route.
         _loggedCircuitError = null;
+        _supportCode = string.Empty;
         _errorBoundary?.Recover();
     }
 
     private void RecoverFromError()
     {
         _loggedCircuitError = null;
+        _supportCode = string.Empty;
         _errorBoundary?.Recover();
     }
 
@@ -52,11 +61,14 @@
         }
 
         _loggedCircuitError = ex;
+        // E2: one code per circuit error so support can find this log line back from the screen.
+        _supportCode = Jobsy.Web.Diagnostics.SupportCode.GetOrCreate(HttpContextAccessor.HttpContext);
         var route = SafeRoute();
         var userId = ResolveUserId();
         Logger.LogError(
             ex,
-            "Circuit error boundary at {Route} for user {UserId}: {ExceptionType}",
+            "Circuit error boundary {SupportCode} at {Route} for user {UserId}: {ExceptionType}",
+            _supportCode,
             route,
             userId,
             ex.GetType().Name);
@@ -64,6 +76,7 @@
         {
             Sentry.SentrySdk.CaptureException(ex, scope =>
             {
+                scope.SetTag(Jobsy.Web.Diagnostics.SupportCode.SentryTag, _supportCode);
                 scope.SetTag("route", route);
                 scope.SetTag("boundary", BoundaryTag);
                 if (!string.IsNullOrEmpty(userId))

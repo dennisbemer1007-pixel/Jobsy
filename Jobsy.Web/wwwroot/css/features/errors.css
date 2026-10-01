@@ -399,3 +399,79 @@
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   }
 }
+
+/*
+  —— inline block error (errors 04) ——
+  The only err- block that lives outside .err-layout: it sits inside normal app pages where one
+  card, list or chart failed. errors.css is linked for every page, so it needs no second file.
+*/
+
+.err-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--warn, #a65b00) 35%, transparent);
+  background: var(--warn-soft, #fff8e7);
+  color: var(--text, #122033);
+}
+
+.err-inline__icon {
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.err-inline__body {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.err-inline__text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.err-inline__detail {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.err-inline__code {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  color: var(--muted, #5a6a7d);
+  user-select: all;
+}
+
+.err-inline__retry {
+  flex: none;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--warn, #a65b00) 45%, transparent);
+  background: var(--surface, #fffcfa);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.err-inline__retry:focus-visible {
+  outline: 2px solid var(--accent, #0f2d5c);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .err-inline {
+    flex-wrap: wrap;
+  }
+
+  .err-inline__retry {
+    inline-size: 100%;
+  }
+}

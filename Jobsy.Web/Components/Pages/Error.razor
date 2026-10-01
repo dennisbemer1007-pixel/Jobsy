@@ -4,6 +4,7 @@
 @attribute [NoBlazorRuntime]
 @layout ErrorLayout
 @using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Diagnostics
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
@@ -27,15 +28,7 @@
         <h1 class="err-hero__title">@Culture["Status.Error.Title"]</h1>
         <p class="err-hero__lead">@Culture["Status.Error.Lead"]</p>
 
-        <div class="pub-card err-card">
-            <p class="err-card__label" id="err-code-label">@Culture["Status.Common.CodeLabel"]</p>
-            <p class="err-card__code" id="err-code" data-support-code="@_supportCode">@_supportCode</p>
-            <button type="button"
-                    class="pub-btn pub-btn--ghost err-card__copy"
-                    data-err-copy="err-code"
-                    data-err-copied="@Culture["Status.Common.Copied"]"
-                    aria-describedby="err-code-label">@Culture["Status.Common.Copy"]</button>
-        </div>
+        <SupportCodeCard Code="@_supportCode" Nonce="@_nonce" />
 
         <div class="err-actions">
             <a class="pub-btn pub-btn--primary" href="@_retryHref">@Culture["Status.Common.TryAgain"]</a>
@@ -47,21 +40,6 @@
         <LobsyMascot Pose="MascotPose.Sitting" Size="MascotSize.Large" Alt="" Class="err-mascot" />
     </div>
 </section>
-
-@* Progressive enhancement only: without JS the code above is plain selectable text. *@
-<script nonce="@_nonce">
-    (function () {
-        var button = document.querySelector("[data-err-copy]");
-        if (!button || !navigator.clipboard) { return; }
-        button.addEventListener("click", function () {
-            var target = document.getElementById(button.getAttribute("data-err-copy"));
-            if (!target) { return; }
-            navigator.clipboard.writeText(target.textContent.trim()).then(function () {
-                button.textContent = button.getAttribute("data-err-copied");
-            });
-        });
-    })();
-</script>
 
 @code {
     private string _supportCode = SupportCode.Create();

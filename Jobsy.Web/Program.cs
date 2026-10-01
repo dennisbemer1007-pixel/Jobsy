@@ -79,6 +79,8 @@ builder.Services.AddSingleton<Jobsy.Web.Auth.AuthApiClient>();
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
 builder.Services.AddScoped<CultureState>();
+// E7: the only place that turns an exception into text a visitor may read.
+builder.Services.AddScoped<Jobsy.Web.Services.UserFacingError>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeBootstrap>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.WerkgeverCountsState>();
@@ -206,14 +208,9 @@ builder.Services.AddRateLimiter(options =>
             && (path.Equals("/account/login", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/account/mfa/herstelcodes-vernieuwen", StringComparison.OrdinalIgnoreCase));
+        var retryAfterSeconds = Jobsy.Web.Security.RateLimitRejection.RetryAfterSeconds(context.Lease);
         if (isAuthForm)
         {
-            var retryAfterSeconds = 60;
-            if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-            {
-                retryAfterSeconds = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
-            }
-
             var until = DateTimeOffset.UtcNow.AddSeconds(retryAfterSeconds).ToUnixTimeSeconds();
             var target = path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
                 ? $"/account/mfa?error=too-many&until={until}"
@@ -225,10 +222,8 @@ builder.Services.AddRateLimiter(options =>
             return;
         }
 
-        http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        await http.Response.WriteAsJsonAsync(
-            new { code = "rate_limited", message = "Te veel verzoeken." },
-            token);
+        // HTML visitors get the friendly /status/429 page; everything else ProblemDetails (04.2).
+        await Jobsy.Web.Security.RateLimitRejection.WriteAsync(http, retryAfterSeconds, token);
     };
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
