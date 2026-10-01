@@ -46,10 +46,13 @@ public class ZapFindingsTests
     {
         var error = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Error.razor"));
         Assert.DoesNotContain("Internal Server Error", error);
-        Assert.DoesNotContain("Exception", error);
-        Assert.DoesNotContain("stack", error, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("TraceIdentifier", error);
-        Assert.Contains("Referentie:", error);
+        Assert.DoesNotContain("ex.Message", error);
+        Assert.DoesNotContain("StackTrace", error);
+        // Errors 01: the correlation id the visitor sees is the support code, never the trace id.
+        Assert.DoesNotContain("TraceIdentifier", error);
+        Assert.DoesNotContain("Referentie:", error);
+        Assert.Contains("SupportCode.GetOrCreate", error);
+        Assert.Contains("Status.Common.CodeLabel", error);
     }
 
     [Fact]
