@@ -164,6 +164,17 @@ their precondition is missing. Each reason is appended to
   adds `/__test/throw`, gated on `Errors:EnableTestThrow` **and** a Development host. Off by
   default, never set on Render.
 
+### Guards that drifted while the stack was built (fixed in 06)
+
+- **`PublicVisibilityEndpointTests` did not classify two new anonymous GETs.**
+  `VacanciesController.GetSimilar` (03) is now `filtered` — it reads the public discovery index —
+  and `SiteController.GetStatus` (05) is `safe`: it returns the maintenance flag and the expected
+  end time, never the internal note. Any new `[AllowAnonymous]` GET on those controllers has to be
+  added to that catalog in the same change.
+- **`VacancyCultureFitTranslationTests` forbade the literal `await LoadAsync(origin);`.** 03
+  introduced exactly that call on purpose, so a closed vacancy's similar list can show travel time.
+  The guard now asserts the `alreadyLoaded` condition that keeps the call to one load.
+
 ### Still open for other stacks
 
 - **A CI-only rate-limit permit value** would let the browser suite see a 429 the way a visitor

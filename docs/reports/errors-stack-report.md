@@ -107,7 +107,32 @@ source, and no hard-coded Dutch in `App.razor`'s reconnect markup.
 
 `dotnet build Jobsy.sln` clean. The suites named in 06's verification step —
 `StatusPages`, `NoRawException`, `Maintenance`, `LocalizationParity`, `RoutesDoc`, `AssetVersion`,
-`PageSeo` — are **150 tests, all green**, and the full `Jobsy.Tests` suite is green.
+`PageSeo` — are **150 tests, all green**.
+
+The full suite was compared against `origin/acceptatie` in the same environment (no Postgres, so
+the integration suites fail on both sides):
+
+| | Total | Failed |
+|---|---|---|
+| `origin/acceptatie` | 4 858 | 57 |
+| `cursor/errors-6` | 5 083 | 55 |
+
+**Zero failures that `acceptatie` does not already have**, and two that `acceptatie` has are green
+here (`AssetVersionGuardTests`, `RoutesDocFreshnessTests`). The stack added 225 tests.
+
+Three guards did drift while the stack was built, and 06 fixed them:
+
+- `PublicVisibilityEndpointTests` did not classify `VacanciesController.GetSimilar` (03) or
+  `SiteController.GetStatus` (05). Both are now in the catalog — the first as `filtered` (it reads
+  the public discovery index), the second as `safe` (the maintenance flag and expected end time
+  only, never the internal note).
+- `VacancyCultureFitTranslationTests` forbade the literal string `await LoadAsync(origin);`, which
+  03 introduced on purpose so a closed vacancy's similar list can show travel time. The guard now
+  asserts the `alreadyLoaded` condition that keeps the call to one, which is what it meant.
+
+Two failures predate the stack and are untouched here: `LegacyMapQueryTests` (a banenkaart
+query-key list) and `Werkgever/ApplicationsApiTests` (403 without a database). Both also fail on
+`origin/acceptatie`.
 
 ### `ex.Message`
 
