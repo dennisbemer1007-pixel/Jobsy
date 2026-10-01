@@ -1,0 +1,29 @@
+KEY: RecoveryCodeUsed
+SUBJECT: Je hebt een herstelcode gebruikt
+PREHEADER: Je hebt er nog 9.
+KIND: Essential
+--- TEXT ---
+Herstelcode gebruikt
+====================
+
+Je bent net ingelogd met een herstelcode. Je hebt er nog 9.
+
+Was jij dit niet? Neem dan meteen contact op met support@lobsy.nl.
+
+Maak nieuwe herstelcodes: https://lobsy.nl/account/mfa/herstelcodes-vernieuwen
+
+Team Lobsy
+
+Je krijgt deze mail om je account te beschermen.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Herstelcode gebruikt
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Maak nieuwe herstelcodes -> https://lobsy.nl/account/mfa/herstelcodes-vernieuwen
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

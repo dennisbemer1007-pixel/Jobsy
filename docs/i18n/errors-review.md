@@ -47,3 +47,34 @@ no translation needed beyond confirming the numeral style for Arabic readers.
 - The footer copyright line is built in code (`© {year} Lobsy`), not translated.
 - Later files in this stack add `Status.*` keys for 403, 410, 429 and maintenance; add them to
   this review when they land.
+
+## errors 04 — 429, reconnect toast, inline errors (nl/en final, pl/ro/ar B1 drafts)
+
+| Key | nl | Review needed |
+|---|---|---|
+| `Status.TooMany.Eyebrow` / `Status.TooMany.Title` | Even rustig aan | pl, ro, ar |
+| `Status.TooMany.Lead` | Je deed veel verzoeken achter elkaar. Wacht {0} seconden en probeer het dan opnieuw. | pl, ro, ar |
+| `Status.Reconnect.Trying` | Verbinding herstellen… | pl, ro, ar |
+| `Status.Reconnect.Failed` | De verbinding is weg. | pl, ro, ar |
+| `Status.Reconnect.Rejected` | Je sessie is verlopen. | pl, ro, ar |
+| `Status.Reconnect.Reload` | Opnieuw laden | pl, ro, ar |
+| `Status.Inline.Title` | Dit stukje laadt nu niet. | pl, ro, ar |
+| `Status.Inline.Retry` | Opnieuw | pl, ro, ar |
+| `Status.Inline.Code` | Foutcode {0} | pl, ro, ar |
+| `Common.Error.TryAgain` | Dat lukte niet. Probeer het zo nog eens. | pl, ro, ar |
+| `Common.Error.Network` | Geen verbinding. Probeer het zo nog eens. | pl, ro, ar |
+| `Common.Error.RateLimited` | Even rustig aan. Wacht een momentje en probeer het opnieuw. | pl, ro, ar |
+| `Common.Error.NotFound` | Dit kunnen we niet vinden. | pl, ro, ar |
+| `Common.Error.Forbidden` | Dit mag met jouw account niet. | pl, ro, ar |
+| `Common.Error.Validation` | Controleer wat je hebt ingevuld en probeer het opnieuw. | pl, ro, ar |
+| `Common.Error.Maintenance` | We zijn even aan het werk aan Lobsy. Probeer het zo nog eens. | pl, ro, ar |
+
+Notes for translators:
+
+- `{0}` in `Status.TooMany.Lead` is a number of seconds, in `Status.Inline.Code` the support code
+  (`LB-7Q3K`); both must stay.
+- The reconnect toast is the only copy rendered before the Blazor circuit exists. It is read from
+  the catalog with the request language (cookie → `Accept-Language` → nl), so a translation lands
+  there without any extra wiring.
+- `Common.Error.*` are the fallbacks `UserFacingError` picks when an action fails. They must stay
+  short enough to fit a one-line inline card.

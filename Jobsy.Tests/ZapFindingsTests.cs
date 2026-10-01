@@ -52,7 +52,12 @@ public class ZapFindingsTests
         Assert.DoesNotContain("TraceIdentifier", error);
         Assert.DoesNotContain("Referentie:", error);
         Assert.Contains("SupportCode.GetOrCreate", error);
-        Assert.Contains("Status.Common.CodeLabel", error);
+        // Errors 04 moved the code card into the shared SupportCodeCard component (429 reuses it).
+        Assert.Contains("<SupportCodeCard", error);
+        var card = File.ReadAllText(Path.Combine(
+            FindRepoRoot(), "Jobsy.Web", "Components", "Errors", "SupportCodeCard.razor"));
+        Assert.Contains("Status.Common.CodeLabel", card);
+        Assert.DoesNotContain("ex.Message", card);
     }
 
     [Fact]

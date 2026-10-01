@@ -18,7 +18,11 @@ One request produces at most one code: the web side caches it on `HttpContext.It
 | Surface | Where |
 |---|---|
 | 500 page (`/Error`) | the "Foutcode" card, plus the `Mail support` link (`subject=Foutcode LB-XXXX`) |
+| 429 page (`/status/429`) | the same "Foutcode" card (`Components/Errors/SupportCodeCard.razor`) |
+| Inline block errors | "Foutcode {LB-XXXX}" under "Dit stukje laadt nu niet." (`InlineErrorBlock`) |
+| Circuit error boundary | the same line under "Even iets misgegaan" (`CircuitErrorBoundary`) |
 | API errors | `supportCode` in the ProblemDetails body, next to `traceId` |
+| API 429 | `supportCode` next to `code: "rate_limited"` and `retryAfterSeconds` |
 
 ## How support finds the error
 
@@ -47,6 +51,24 @@ Never logged by the error page, and never shown to the visitor:
 - query strings, form bodies or headers
 - e-mail addresses, names or any other personal data
 - the exception message, the stack trace or the request id (the visitor only gets the code)
+
+## Rate limits (429)
+
+A rate-limited request is logged once, with the code, the limiter **policy** name
+(`public-redirect`, `auth`, …), the route template and the wait in seconds. The visitor's IP is
+never in that line: the Web partition key *is* an IP, so the key itself is not logged either.
+
+```
+Rate limit rejected LB-7Q3K policy=public-redirect route=/p/{code} retryAfter=60s
+```
+
+## No exception text for visitors
+
+`Jobsy.Web/Services/UserFacingError.cs` is the only place that turns an exception into something a
+visitor may read. It returns a catalog key (`Common.Error.*`) plus the support code, and logs the
+exception once. The ratchet `NoRawExceptionMessageTests` counts `ex.Message` per file against
+`docs/errors/ex-message-baseline.txt`: counts may only shrink, a file that is not in the baseline
+must be at 0, and the error pages, public pages and layouts are already at 0.
 
 ## Reading a code back to a visitor
 

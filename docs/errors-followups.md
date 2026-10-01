@@ -50,3 +50,34 @@ Written while building `docs/prompts/errors/01-errorlayout-404-500.md` against
 - If auth adds its own `/account/switch` path or a redesigned login landing, point
   `AccessDeniedView`'s switch-account form at that instead of duplicating the logic, and keep the
   `returnUrl` round-trip (open-redirect safe, local paths only).
+
+## errors 04 (429, reconnect, inline errors, `ex.Message` ratchet)
+
+- **`ex.Message` is still on 109 files (322 uses).** `docs/errors/ex-message-baseline.txt` *is* the
+  to-do list: every line is a file that still assigns an exception message to UI state. The ratchet
+  only lets counts shrink, so any stack touching one of those pages can pick a few off by injecting
+  `UserFacingError` and calling `Describe(ex)`. Error pages, public pages, layouts and the pages
+  errors 04 swept are at 0 and must stay there.
+  - swept in 04: the two action pages (`SetUnavailableAction`, `WithdrawOthersAction`),
+    `CompanyPublicPage`, `VacancyDetail`, `Partner/PartnerSales`, `RegisterToegang`,
+    `Sales/RecommendObject`, `Legal/PrivacyData`, `Candidate/HowLobsyWorks`, the candidate pages
+    (`Applications`, `CandidateTalentContacts`, `CareerDashboard`, `DiscoveryJourney`,
+    `OnboardingWizard`, `CandidateKompas`, `CourseSuggestionBlock`, `TrainingOffersBlock`),
+    `RoleFitCheckSession` and `CandidateProfileEditor`.
+  - left on purpose: `Pages/Leerling/LeerlingEiland.razor` classifies a 400 body (`name_rejected`)
+    from `HttpRequestException.Message` and shows a catalog key, and
+    `Services/HomeDashboardLoad.cs` / `Security/DataProtectionSetup.cs` use the message for
+    transient-error classification and a boot-time console line. None of them reach a visitor.
+- **`ApiError` is only wired on `ExportPrivacyDataAsync`.** The other `JobsyApiClient` methods still
+  throw `InvalidOperationException(ExtractMessage(body))`, which puts the API body in reach of a
+  page. Migrating a method means switching its callers to `UserFacingError` in the same change,
+  otherwise the visitor sees `"API call failed with code …"`.
+- **Panels still use `PanelErrorBoundary` / `panel-inline-error`.** The new `InlineErrorBlock`
+  (`err-inline`, support code, retry callback) is the intended visual for a part of a page that
+  fails; panels can migrate when their stack next touches them.
+- **429 body for non-HTML Web requests** is ProblemDetails (`code`, `retryAfterSeconds`,
+  `supportCode`) instead of the empty body §04.2 allows, so JS callers keep a machine-readable
+  answer. The HTML path is an empty 429 that `UseHtmlStatusCodePages` re-executes to `/status/429`.
+- **Extra head tags on error pages** go through the `error-head` section
+  (`ErrorLayout.ErrorHeadSection`), never a second `<HeadContent>`: that would replace the layout's
+  `noindex` meta.
