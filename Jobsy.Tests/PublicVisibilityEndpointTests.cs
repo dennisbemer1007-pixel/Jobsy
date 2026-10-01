@@ -47,7 +47,6 @@ public class PublicVisibilityEndpointTests : IClassFixture<RoleFunctionalWebAppF
         ("PublicCompaniesController", "GetByVestiging", "filtered"),
         ("PublicCompaniesController", "GetVacanciesByKvk", "filtered"),
         ("PublicCompaniesController", "GetVacanciesByVestiging", "filtered"),
-        ("SiteController", "GetAbout", "safe"),
         ("SiteController", "GetBranding", "safe"),
         ("SiteController", "GetLegal", "safe"),
         ("SiteController", "GetCrawlIndex", "filtered"),
