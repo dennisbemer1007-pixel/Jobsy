@@ -61,6 +61,7 @@ Screenshots are written to `artifacts/e2e/carriere/` (git-ignored): `f1-*`, `f2-
 5. **The archive sits under the bottom nav.** On the overview the *Eerdere plannen* disclosure is the last element, and the fixed bottom nav keeps covering it however far the page scrolls, so a mouse click on it can be intercepted. Flow 4 falls back to a scripted click; the keyboard path works. Worth a small padding fix on the career page — **deferred**.
 6. **The generation limit is real and the E2E respects it.** After five plans in 24 hours the dream change answers `429 generation_limit` and the page says "Je kunt morgen weer een nieuw plan maken.". Flow 4 recognises that message and soft-skips instead of failing, so a repeated run on the same account stays honest.
 7. **Pre-existing UAT gap:** `UAT-0137` (`/register/activate`) fails on the baseline too — that route has no Blazor page. Out of scope for this stack.
+8. **Pre-existing red tests outside this stack.** The non-Playwright suite has **55 failures on this branch and exactly the same 55 on the parent commit** (`5bccdab9`), in e-mail copy, nav feature flags and werkgever APIs. This stack added 14 passing tests and broke none. The required gate — `dotnet build Jobsy.sln` plus `--filter "FullyQualifiedName~Career|CarrierePlaywright|LocalizationParity|RoutesDoc|AssetVersion|CareerDesign"` — is **215/215 green** with a live server.
 
 ## Cleanup
 
