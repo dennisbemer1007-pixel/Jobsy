@@ -404,6 +404,17 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 .ToArray();
         }
 
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "privacy.export",
+            Message = $"Gegevensexport opgehaald voor gebruiker {user.Id}",
+            DetailsJson = JsonSerializer.Serialize(new { UserId = user.Id }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+
         return new
         {
             ExportedAtUtc = DateTime.UtcNow,

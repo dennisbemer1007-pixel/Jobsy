@@ -1,98 +1,115 @@
 @page "/privacy/data"
 @attribute [Authorize]
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@layout PublicLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Time
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IJSRuntime Js
+@inject ILogger<PrivacyData> Logger
 
-<PageTitle>Mijn gegevens · Lobsy</PageTitle>
+<PageTitle>@Culture["Privacy.Data.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page">
-    <h1>Mijn gegevens (AVG)</h1>
-    <p class="login-lead">
-        Exporteer je persoonsgegevens of verwijder je account. Verwijderen vereist een reden en een verificatiecode per e-mail;
-        daarna wordt je account geblokkeerd en worden je gegevens opgeschoond.
-    </p>
+<section class="pub-section" aria-labelledby="mydata-title">
+    <header class="pp-doc__hero">
+        <p class="pp-doc__eyebrow">
+            <span>@Culture["Privacy.Data.Eyebrow"]</span>
+        </p>
+        <h1 id="mydata-title" class="pp-doc__title">@Culture["Privacy.Data.Title"]</h1>
+        <p class="pp-doc__lead">@Culture["Privacy.Data.Lead"]</p>
+    </header>
 
-    @if (_supportNotes.Count > 0)
-    {
-        <section class="panel-section" style="margin-top:1rem">
-            @foreach (var note in _supportNotes)
+    <div class="pp-mydata__grid">
+        <article class="pp-mydata__card" aria-labelledby="mydata-download-title">
+            <h2 id="mydata-download-title">@Culture["Privacy.Data.Download.Title"]</h2>
+            <p>@Culture["Privacy.Data.Download.Text"]</p>
+            @if (_exportFailed)
             {
-                <p class="muted">@string.Format(Culture["Admin.SupportAccessNotifySubjectNote"], note.ToString("yyyy-MM-dd HH:mm"))</p>
+                <p class="state-message error" role="alert">@Culture["Privacy.Data.ExportFailed"]</p>
             }
-        </section>
-    }
+            <a class="pub-btn pub-btn--primary" href="/privacy/data/export" download>
+                @Culture["Privacy.Data.Download.Button"]
+            </a>
+        </article>
 
-    <div class="inline-actions" style="margin-top:1.5rem">
-        <button class="login-submit" type="button" disabled="@_busyExport" @onclick="ExportAsync">
-            @(_busyExport ? "Bezig…" : "Exporteer JSON")
-        </button>
-        <button class="provider-btn provider-btn--danger" type="button" disabled="@_busyExport" @onclick="OpenUnsubscribe">
-            Account verwijderen
-        </button>
-        <a class="auth-link" href="/privacy">Terug naar privacyverklaring</a>
+        @if (!_supportNotesFailed)
+        {
+            <article class="pp-mydata__card" aria-labelledby="mydata-support-title">
+                <h2 id="mydata-support-title">@Culture["Privacy.Data.Support.Title"]</h2>
+                @if (_supportNotes.Count > 0)
+                {
+                    <ul class="pp-mydata__notes">
+                        @foreach (var note in _supportNotes)
+                        {
+                            <li>@Culture.Format("Privacy.Data.SupportViewed", AmsterdamTime.FormatDate(note), AmsterdamTime.ToLocal(note).ToString("HH:mm"))</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>@Culture["Privacy.Data.Support.Empty"]</p>
+                }
+            </article>
+        }
+
+        <article class="pp-mydata__card pp-mydata__card--danger" aria-labelledby="mydata-delete-title">
+            <h2 id="mydata-delete-title">@Culture["Privacy.Data.Delete.Title"]</h2>
+            <p>@Culture["Privacy.Data.Delete.Text"]</p>
+            <p><a href="/privacy#bewaren">@Culture["Privacy.Data.Delete.Retention"]</a></p>
+            <button type="button" class="pub-btn pub-btn--secondary" @onclick="OpenUnsubscribe">
+                @Culture["Privacy.Data.Delete.Button"]
+            </button>
+        </article>
     </div>
 
-    @if (!string.IsNullOrEmpty(_message))
-    {
-        <p class="state-message">@_message</p>
-    }
-
-    @if (!string.IsNullOrEmpty(_exportJson))
-    {
-        <pre class="code-block" style="margin-top:1.5rem;white-space:pre-wrap;max-height:28rem;overflow:auto">@_exportJson</pre>
-    }
-</div>
+    <p class="pp-mydata__back"><a href="/privacy">@Culture["Privacy.Data.Back"]</a></p>
+</section>
 
 <UnsubscribeDialog IsOpen="_unsubscribeOpen"
                    OnClose="CloseUnsubscribe"
-                   OnCompleted="OnUnsubscribeCompleted" />
+                   OnCompleted="OnUnsubscribeCompleted"
+                   SkipLogoutNavigation="true" />
+
+<form id="pp-logout-form" class="pp-mydata__logout-form" method="post" action="/account/logout">
+    <AntiforgeryToken />
+</form>
 
 @code {
-    private bool _busyExport;
     private bool _unsubscribeOpen;
-    private string? _message;
-    private string? _exportJson;
+    private bool _exportFailed;
+    private bool _supportNotesFailed;
     private List<DateTime> _supportNotes = [];
+
+    [SupplyParameterFromQuery(Name = "export")]
+    public string? ExportQuery { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        _exportFailed = string.Equals(ExportQuery, "failed", StringComparison.OrdinalIgnoreCase);
+
         try
         {
             _supportNotes = (await Api.GetSupportAccessNotesAsync()).ToList();
         }
-        catch
+        catch (Exception ex)
         {
+            // Card 2 is decorative; hide it rather than show a raw error (07.4).
+            _supportNotesFailed = true;
             _supportNotes = [];
+            Logger.LogWarning(ex, "Could not load support-access notes for the Mijn gegevens page.");
         }
     }
 
-    private void OpenUnsubscribe()
-    {
-        _message = null;
-        _unsubscribeOpen = true;
-    }
+    private void OpenUnsubscribe() => _unsubscribeOpen = true;
 
     private void CloseUnsubscribe() => _unsubscribeOpen = false;
 
-    private void OnUnsubscribeCompleted() => _unsubscribeOpen = true;
-
-    private async Task ExportAsync()
+    private async Task OnUnsubscribeCompleted()
     {
-        _busyExport = true;
-        _message = null;
-        try
-        {
-            _exportJson = await Api.ExportPrivacyDataAsync();
-            _message = "Export geladen. Bewaar dit bestand veilig.";
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busyExport = false;
-        }
+        // The dialog's own GET navigation is disabled (SkipLogoutNavigation); submit the
+        // hidden antiforgery-protected POST form instead (07.2).
+        await CircuitInterop.InvokeVoidIgnoredAsync(Js, "lobsyPublicPages.submitForm", "pp-logout-form");
     }
 }

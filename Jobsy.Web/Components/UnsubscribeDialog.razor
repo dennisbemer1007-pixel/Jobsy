@@ -101,6 +101,13 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnCompleted { get; set; }
 
+    /// <summary>
+    /// When set, the caller's <see cref="OnCompleted"/> handler is responsible for signing
+    /// the visitor out (a POST form submit, public-pages 07); this dialog then skips its own
+    /// GET navigation to <c>/account/logout</c>. Default keeps today's behaviour unchanged.
+    /// </summary>
+    [Parameter] public bool SkipLogoutNavigation { get; set; }
+
     private List<UnsubscribeReasonOption> _reasons = [];
     private string _reasonCode = "";
     private string _reasonOther = "";
@@ -148,9 +155,9 @@
             _reasons = (await Api.GetUnsubscribeReasonsAsync()).ToList();
             _reasonsLoaded = true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Common.Error.TryAgain"];
         }
     }
 
@@ -173,9 +180,9 @@
             _verificationCode = "";
             _info = "Controleer je e-mail voor de verificatiecode.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Common.Error.TryAgain"];
         }
         finally
         {
@@ -213,12 +220,15 @@
             await Api.ConfirmUnsubscribeAsync(_verificationCode.Trim());
             _completed = true;
             await OnCompleted.InvokeAsync();
-            // GET /account/logout always signs out (same path as AuthHeader) — no eval/form submit.
-            Navigation.NavigateTo("/account/logout", forceLoad: true);
+            if (!SkipLogoutNavigation)
+            {
+                // GET /account/logout always signs out (same path as AuthHeader) — no eval/form submit.
+                Navigation.NavigateTo("/account/logout", forceLoad: true);
+            }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Common.Error.TryAgain"];
         }
         finally
         {

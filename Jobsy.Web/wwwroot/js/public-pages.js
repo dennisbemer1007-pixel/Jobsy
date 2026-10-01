@@ -97,4 +97,14 @@
 
     // Enhanced navigation swaps the document body; re-run after each load.
     document.addEventListener("enhancedload", init);
+
+    // Mijn gegevens (07): after account deletion the dialog's circuit asks us to submit the
+    // hidden POST logout form instead of a GET navigation (keeps the antiforgery POST path).
+    window.lobsyPublicPages = window.lobsyPublicPages || {};
+    window.lobsyPublicPages.submitForm = function (id) {
+        var form = document.getElementById(id);
+        if (form && typeof form.submit === "function") {
+            form.submit();
+        }
+    };
 })();

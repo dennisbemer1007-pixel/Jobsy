@@ -186,4 +186,21 @@ Removed in 04: `Terms.Sec.toepasselijkheid` lost its duplicate twin `Terms.Sec.v
 for employers, and `Terms.Sec.matching.Title` / `Terms.Sec.matchscores.Title` disappeared because
 those sections merged into `vacatures` and `solliciteren`.
 
-Later files (05+) add their new Privacy.* / Terms.* rows here.
+## 07 — mijn gegevens (`UiStringsLegal.cs`)
+
+`/privacy/data` chrome. nl and en are final; pl/ro/ar below are B1 drafts for native review.
+
+| Key | Notes |
+|---|---|
+| `Privacy.Data.Eyebrow` | pl / ro / ar draft |
+| `Privacy.Data.Title` | pl / ro / ar draft |
+| `Privacy.Data.Lead` | pl / ro / ar draft |
+| `Privacy.Data.Download.Title` / `.Text` / `.Button` | pl / ro / ar draft |
+| `Privacy.Data.ExportFailed` | pl / ro / ar draft. Shown after a failed `/privacy/data/export` redirect; never the raw API error. |
+| `Privacy.Data.Support.Title` / `.Empty` | pl / ro / ar draft |
+| `Privacy.Data.SupportViewed` | pl / ro / ar draft. Two placeholders: `{0}` date, `{1}` time, both already formatted in Europe/Amsterdam before substitution — check word order per language. |
+| `Privacy.Data.Delete.Title` / `.Text` / `.Retention` / `.Button` | pl / ro / ar draft |
+| `Privacy.Data.Back` | pl / ro / ar draft |
+| `Common.Error.TryAgain` | pl / ro / ar draft. Shared generic fallback; used by `UnsubscribeDialog` instead of raw API error text. |
+
+Later files (08+) add their new Privacy.* / Terms.* rows here.

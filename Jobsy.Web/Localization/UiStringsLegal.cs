@@ -1036,5 +1036,103 @@ public static class UiStringsLegal
             "Lobsy jest darmowe dla szukających pracy. Nie obiecujemy pracy ani dopasowania. Twoje prawa konsumenta zawsze obowiązują.",
             "Lobsy este gratuit pentru cei care caută de lucru. Nu promitem un job sau o potrivire. Drepturile tale de consumator rămân mereu valabile.",
             "‏Lobsy مجاني للباحثين عن عمل. لا نعد بوظيفة أو مطابقة. وتظل حقوقك القانونية كمستهلك سارية دائماً.");
+
+        // —— Mijn gegevens (public-pages 07) ——
+        Add("Privacy.Data.Eyebrow",
+            "🔒 Privacy",
+            "🔒 Privacy",
+            "🔒 Prywatność",
+            "🔒 Confidențialitate",
+            "🔒 الخصوصية");
+        Add("Privacy.Data.Title",
+            "Mijn gegevens",
+            "My data",
+            "Moje dane",
+            "Datele mele",
+            "بياناتي");
+        Add("Privacy.Data.Lead",
+            "Hier zie en download je wat Lobsy van je bewaart. Je kunt ook je account verwijderen.",
+            "Here you see and download what Lobsy keeps about you. You can also delete your account.",
+            "Tutaj widzisz i pobierasz to, co Lobsy o tobie przechowuje. Możesz też usunąć swoje konto.",
+            "Aici vezi și descarci ce reține Lobsy despre tine. Poți și să îți ștergi contul.",
+            "هنا ترى وتحمّل ما يحتفظ به Lobsy عنك. يمكنك أيضاً حذف حسابك.");
+        Add("Privacy.Data.Download.Title",
+            "Download je gegevens",
+            "Download your data",
+            "Pobierz swoje dane",
+            "Descarcă-ți datele",
+            "نزّل بياناتك");
+        Add("Privacy.Data.Download.Text",
+            "Je krijgt één bestand (JSON) met alles wat we van je bewaren. Bewaar het op een veilige plek.",
+            "You get one file (JSON) with everything we keep about you. Keep it somewhere safe.",
+            "Otrzymasz jeden plik (JSON) z wszystkim, co o tobie przechowujemy. Zachowaj go w bezpiecznym miejscu.",
+            "Primești un singur fișier (JSON) cu tot ce reținem despre tine. Păstrează-l într-un loc sigur.",
+            "تحصل على ملف واحد (JSON) يحتوي كل ما نحتفظ به عنك. احفظه في مكان آمن.");
+        Add("Privacy.Data.Download.Button",
+            "Download mijn gegevens",
+            "Download my data",
+            "Pobierz moje dane",
+            "Descarcă-mi datele",
+            "نزّل بياناتي");
+        Add("Privacy.Data.ExportFailed",
+            "Downloaden lukte niet. Probeer het zo nog eens.",
+            "Downloading did not work. Please try again in a moment.",
+            "Pobieranie się nie powiodło. Spróbuj ponownie za chwilę.",
+            "Descărcarea nu a funcționat. Încearcă din nou în câteva clipe.",
+            "لم ينجح التنزيل. حاول مرة أخرى بعد قليل.");
+        Add("Privacy.Data.Support.Title",
+            "Wie heeft je gegevens bekeken?",
+            "Who has viewed your data?",
+            "Kto widział twoje dane?",
+            "Cine ți-a văzut datele?",
+            "من رأى بياناتك؟");
+        Add("Privacy.Data.SupportViewed",
+            "Support bekeek je gegevens op {0} om {1}",
+            "Support viewed your data on {0} at {1}",
+            "Wsparcie zobaczyło twoje dane {0} o {1}",
+            "Suportul ți-a văzut datele pe {0} la ora {1}",
+            "شاهد الدعم بياناتك في {0} عند الساعة {1}");
+        Add("Privacy.Data.Support.Empty",
+            "Niemand van Lobsy heeft je gegevens bekeken.",
+            "No one at Lobsy has viewed your data.",
+            "Nikt z Lobsy nie widział twoich danych.",
+            "Nimeni de la Lobsy nu ți-a văzut datele.",
+            "لم يرَ أحد من Lobsy بياناتك.");
+        Add("Privacy.Data.Delete.Title",
+            "Account verwijderen",
+            "Delete account",
+            "Usuń konto",
+            "Șterge contul",
+            "حذف الحساب");
+        Add("Privacy.Data.Delete.Text",
+            "We vragen een reden en sturen een code naar je e-mail. Daarna blokkeren we je account en wissen we je gegevens, behalve wat we volgens de wet moeten bewaren.",
+            "We ask for a reason and send a code to your e-mail. After that we block your account and erase your data, except what we must keep by law.",
+            "Prosimy o powód i wysyłamy kod na twój e-mail. Potem blokujemy twoje konto i usuwamy twoje dane, oprócz tego, co musimy zachować z mocy prawa.",
+            "Îți cerem un motiv și trimitem un cod pe e-mail. După aceea blocăm contul tău și ștergem datele tale, cu excepția a ce trebuie să păstrăm conform legii.",
+            "نطلب سبباً ونرسل رمزاً إلى بريدك الإلكتروني. وبعد ذلك نحظر حسابك ونمحو بياناتك، باستثناء ما يجب علينا الاحتفاظ به بموجب القانون.");
+        Add("Privacy.Data.Delete.Retention",
+            "Wat bewaren we?",
+            "What do we keep?",
+            "Co zachowujemy?",
+            "Ce reținem?",
+            "ما الذي نحتفظ به؟");
+        Add("Privacy.Data.Delete.Button",
+            "Account verwijderen",
+            "Delete account",
+            "Usuń konto",
+            "Șterge contul",
+            "حذف الحساب");
+        Add("Privacy.Data.Back",
+            "Terug naar de privacyverklaring",
+            "Back to the privacy statement",
+            "Powrót do polityki prywatności",
+            "Înapoi la declarația de confidențialitate",
+            "العودة إلى بيان الخصوصية");
+        Add("Common.Error.TryAgain",
+            "Er ging iets mis. Probeer het opnieuw.",
+            "Something went wrong. Please try again.",
+            "Coś poszło nie tak. Spróbuj ponownie.",
+            "Ceva nu a mers bine. Încearcă din nou.",
+            "حدث خطأ ما. حاول مرة أخرى.");
     }
 }

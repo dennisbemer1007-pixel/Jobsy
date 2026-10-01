@@ -156,6 +156,17 @@ builder.Services.AddHttpClient(Jobsy.Web.Hosting.ContentReportEndpoints.HttpClie
     client.Timeout = TimeSpan.FromSeconds(8);
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 }).AddHttpMessageHandler<Jobsy.Web.Auth.TrustedClientIpHandler>();
+// GET /privacy/data/export forwards to the API with a minted bearer token (07) — this is a
+// plain HttpClient, not the circuit-scoped JobsyApiClient, so the download works outside Blazor.
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.PrivacyDataExportEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(20);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
 builder.Services.AddHttpClient("JobsySeo", client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
@@ -313,6 +324,18 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // GET /privacy/data/export (07): per signed-in user, not per IP (shared Web→API hop).
+    options.AddPolicy("export", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -389,6 +412,7 @@ app.MapJobsyAuthEndpoints();
 app.MapPublicTokenEndpoints();
 app.MapMailUnsubscribeEndpoints();
 app.MapContentReportEndpoints();
+app.MapPrivacyDataExportEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
 app.MapLanguageEndpoints();
