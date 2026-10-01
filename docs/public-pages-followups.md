@@ -13,3 +13,15 @@ Small items this stack deliberately deferred.
 ## Founder photo (public-pages 08)
 - `/wie-zijn-wij` shows an emoji avatar until `wwwroot/images/about/founder.webp` lands. Add the
   file and flip `AboutAssets.HasFounderPhoto`; `AboutPageTests` keeps flag and file in sync.
+
+## Partner pulse row (public-pages 09)
+- `/partner` lists the vacancy types plus the carousel highlight, not the pulse highlight:
+  `VacancyProductRules` has `HighlightPulseTokens`, but no employer-facing screen sells it (it is an
+  admin setting only). Add the row when pulse becomes buyable, so the tariff table keeps matching
+  what an employer can actually order.
+
+## Company page engagement form (public-pages 09)
+- `/{kvk}` no longer carries the inline "klopt deze claim niet?" form next to the engagement badges.
+  The DSA route is the single reporting path now ("Klopt er iets niet op deze pagina? Meld het." →
+  `/melden?type=company&id={kvk}`, file 06). If moderation wants a claim-specific reason, add a
+  `claim` reason to the report form instead of a second form on the page.
