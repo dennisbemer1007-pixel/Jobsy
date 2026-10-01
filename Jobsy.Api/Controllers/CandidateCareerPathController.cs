@@ -211,7 +211,8 @@ public sealed class CandidateCareerPathController : ControllerBase
     /// Removed self-claim (D2): candidates prove courses via the passport, not by naming a course here.
     /// Kept as a 410 stub for one release so old clients get a clear error instead of a 404/500.
     /// </summary>
-    [Obsolete("Removed in Carrière 01 (D2). Candidates claim courses via the passport. Remove this stub in 06.")]
+    // remove after 2026-10-30
+    [Obsolete("Removed in Carrière 01 (D2). Candidates claim courses via the passport.")]
     [HttpPost("courses/claim")]
     [EnableRateLimiting("public-write")]
     public ActionResult ClaimCourse()
