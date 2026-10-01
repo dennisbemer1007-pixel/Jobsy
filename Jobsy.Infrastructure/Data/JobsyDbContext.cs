@@ -98,7 +98,9 @@ public class JobsyDbContext : DbContext
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
+#pragma warning disable CS0618 // Table kept until the public-pages 08 cleanup migration drops it.
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
+#pragma warning restore CS0618
     public DbSet<MarketingFlyerSettings> MarketingFlyerSettings => Set<MarketingFlyerSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
@@ -1564,6 +1566,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.VatBufferIban).HasMaxLength(34);
         });
 
+#pragma warning disable CS0618 // Table kept until the public-pages 08 cleanup migration drops it.
         modelBuilder.Entity<AboutPageSettings>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -1571,6 +1574,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Lead).HasMaxLength(400);
             entity.Property(e => e.BodyHtml).IsRequired();
         });
+#pragma warning restore CS0618
 
         modelBuilder.Entity<MarketingFlyerSettings>(entity =>
         {

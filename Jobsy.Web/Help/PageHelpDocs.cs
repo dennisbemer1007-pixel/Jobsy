@@ -173,9 +173,9 @@ public static class PageHelpDocs
 
         ["/hoe-werkt-lobsy"] = new(
             "Hoe werkt Lobsy",
-            "Uitleg over Lobsy afgestemd op jouw rol (vestiging, regio, bedrijf, intermediair of sales).",
-            "Lees de stappen, volg de links naar de juiste modules en gebruik de knoppen onderaan om meteen aan de slag te gaan.",
-            "Snel begrijpen wat jij in Lobsy doet en waar je de belangrijkste acties vindt."),
+            "Uitleg in vier stappen, met tabbladen voor jou, werkgevers en scholen. Ingelogd medewerkers zien de uitleg voor hun rol.",
+            "Kies een tabblad, lees de stappen en volg de links. De pagina werkt ook zonder in te loggen.",
+            "Snel begrijpen hoe Lobsy werkt en waar je de belangrijkste acties vindt."),
 
         ["/candidate/hoe-werkt-lobsy"] = new(
             "Hoe werkt Lobsy (kandidaat)",
@@ -747,12 +747,6 @@ public static class PageHelpDocs
             "Juridische platformgegevens op facturen houden."),
 
         ["/admin/content/paginas"] = new(
-            "Beheer · Wie zijn wij",
-            "Publieke ‘Wie zijn wij’-pagina bewerken.",
-            "Pas titel, introregel en inhoud aan. Gebruik koppen voor secties. De pagina is zichtbaar via /wie-zijn-wij.",
-            "Het verhaal achter Lobsy up-to-date houden zonder code-deploys."),
-
-        ["/admin/content/paginas-flyer"] = new(
             "Beheer · Werkgeversflyer",
             "Professionele A4-flyer voor werkgevers bewerken en afdrukken.",
             "Pas koppen, USP’s, lanceringsteksten en QR-doel aan. Download de PDF om te printen of digitaal te delen.",
@@ -856,8 +850,8 @@ public static class PageHelpDocs
 
         ["/wie-zijn-wij"] = new(
             "Wie zijn wij",
-            "Het verhaal en contactkader achter Lobsy.",
-            "Lees wie Lobsy is; inhoud kan door admins worden bijgewerkt.",
+            "Het verhaal achter Lobsy, de oprichter en de contactgegevens.",
+            "Lees wie Lobsy is en mail ons via het contactblok. De tekst staat in vijf talen vast.",
             "Context en vertrouwen in het platform.")
     };
 

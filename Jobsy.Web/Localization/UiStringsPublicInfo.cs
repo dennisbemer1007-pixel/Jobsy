@@ -380,5 +380,501 @@ public static class UiStringsPublicInfo
             "Usunięte",
             "Scos",
             "تمت الإزالة");
+
+        MergeHowLobsy(Add);
+        MergeAbout(Add);
+    }
+
+    private delegate void AddKey(string key, string nl, string en, string pl, string ro, string ar);
+
+    /// <summary>Static <c>/hoe-werkt-lobsy</c> (public-pages 08). <c>.Zw</c> siblings are the werkgevers-OFF copy.</summary>
+    private static void MergeHowLobsy(AddKey Add)
+    {
+        Add("HowLobsy.Seo.Title",
+            "Hoe werkt Lobsy?",
+            "How does Lobsy work?",
+            "Jak działa Lobsy?",
+            "Cum funcționează Lobsy?",
+            "كيف يعمل Lobsy؟");
+        Add("HowLobsy.Seo.Description",
+            "In vier stappen: kijk op de kaart, doe de gratis test, maak een account en solliciteer op jouw tempo.",
+            "In four steps: look at the map, take the free test, create an account and apply at your own pace.",
+            "W czterech krokach: zobacz mapę, zrób darmowy test, utwórz konto i aplikuj w swoim tempie.",
+            "În patru pași: uită-te pe hartă, fă testul gratuit, creează un cont și aplică în ritmul tău.",
+            "في أربع خطوات: انظر إلى الخريطة، اخض الاختبار المجاني، أنشئ حساباً، وتقدَّم بالسرعة التي تريحك.");
+        Add("HowLobsy.Eyebrow",
+            "Hoe werkt Lobsy?",
+            "How does Lobsy work?",
+            "Jak działa Lobsy?",
+            "Cum funcționează Lobsy?",
+            "كيف يعمل Lobsy؟");
+        Add("HowLobsy.Title",
+            "Zo werkt Lobsy. In 4 stappen.",
+            "This is how Lobsy works. In 4 steps.",
+            "Tak działa Lobsy. W 4 krokach.",
+            "Așa funcționează Lobsy. În 4 pași.",
+            "هكذا يعمل Lobsy. في 4 خطوات.");
+        Add("HowLobsy.Lead",
+            "Eerst kijk je wie je bent en wat je kunt. Daarna vind je werk dat past, dichtbij huis.",
+            "First you look at who you are and what you can do. Then you find work that fits, close to home.",
+            "Najpierw sprawdzasz, kim jesteś i co umiesz. Potem znajdujesz pracę, która pasuje, blisko domu.",
+            "Mai întâi vezi cine ești și ce poți. Apoi găsești muncă potrivită, aproape de casă.",
+            "أولاً تتعرّف على نفسك وعلى ما تستطيع. ثم تجد عملاً يناسبك قريباً من بيتك.");
+        Add("HowLobsy.Lead.Zw",
+            "Eerst kijk je wie je bent en wat je kunt. Daarna weet je welk werk bij je past.",
+            "First you look at who you are and what you can do. Then you know which work fits you.",
+            "Najpierw sprawdzasz, kim jesteś i co umiesz. Potem wiesz, jaka praca do Ciebie pasuje.",
+            "Mai întâi vezi cine ești și ce poți. Apoi știi ce fel de muncă ți se potrivește.",
+            "أولاً تتعرّف على نفسك وعلى ما تستطيع. ثم تعرف أي عمل يناسبك.");
+
+        Add("HowLobsy.Tabs.Label",
+            "Voor wie wil je het weten?",
+            "Who do you want to read about?",
+            "O kim chcesz przeczytać?",
+            "Despre cine vrei să citești?",
+            "عن مَن تريد أن تقرأ؟");
+        Add("HowLobsy.Tab.You",
+            "Voor jou",
+            "For you",
+            "Dla Ciebie",
+            "Pentru tine",
+            "لك");
+        Add("HowLobsy.Tab.YouRole",
+            "Voor jou ({0})",
+            "For you ({0})",
+            "Dla Ciebie ({0})",
+            "Pentru tine ({0})",
+            "لك ({0})");
+        Add("HowLobsy.Tab.Employers",
+            "Voor werkgevers",
+            "For employers",
+            "Dla pracodawców",
+            "Pentru angajatori",
+            "لأصحاب العمل");
+        Add("HowLobsy.Tab.Schools",
+            "Voor scholen",
+            "For schools",
+            "Dla szkół",
+            "Pentru școli",
+            "للمدارس");
+
+        Add("HowLobsy.Steps.Label",
+            "De vier stappen",
+            "The four steps",
+            "Cztery kroki",
+            "Cei patru pași",
+            "الخطوات الأربع");
+        Add("HowLobsy.Step1.Title",
+            "Kijk op de kaart",
+            "Look at the map",
+            "Zobacz mapę",
+            "Uită-te pe hartă",
+            "انظر إلى الخريطة");
+        Add("HowLobsy.Step1.Title.Zw",
+            "Maak je paspoort",
+            "Build your passport",
+            "Zbuduj swój paszport",
+            "Construiește-ți pașaportul",
+            "ابنِ جوازك");
+        Add("HowLobsy.Step1.Body",
+            "Je ziet vacatures bij jou in de buurt. Op fiets-, OV- of autotijd.",
+            "You see vacancies near you. By bike, public transport or car time.",
+            "Widzisz oferty blisko Ciebie. Według czasu na rowerze, komunikacją lub samochodem.",
+            "Vezi joburi aproape de tine. După timpul cu bicicleta, transportul public sau mașina.",
+            "ترى الوظائف القريبة منك، بحسب زمن الدراجة أو المواصلات أو السيارة.");
+        Add("HowLobsy.Step1.Body.Zw",
+            "Je eigen paspoort met je DNA, je tests en je bewijzen. Jij kiest wat je deelt.",
+            "Your own passport with your DNA, your tests and your proofs. You choose what you share.",
+            "Twój paszport z DNA, testami i dowodami. Ty wybierasz, co udostępniasz.",
+            "Pașaportul tău cu ADN-ul, testele și dovezile tale. Tu alegi ce împarți.",
+            "جوازك الخاص مع حمضك واختباراتك وإثباتاتك. أنت تختار ما تشاركه.");
+        Add("HowLobsy.Step1.Cta",
+            "Open de banenkaart",
+            "Open the job map",
+            "Otwórz mapę ofert",
+            "Deschide harta joburilor",
+            "افتح خريطة الوظائف");
+        Add("HowLobsy.Step2.Title",
+            "Doe de gratis test",
+            "Take the free test",
+            "Zrób darmowy test",
+            "Fă testul gratuit",
+            "اخض الاختبار المجاني");
+        Add("HowLobsy.Step2.Body",
+            "Korte vragen. Je ziet meteen wat bij je past. Geen account nodig.",
+            "Short questions. You see right away what fits you. No account needed.",
+            "Krótkie pytania. Od razu widzisz, co do Ciebie pasuje. Konto nie jest potrzebne.",
+            "Întrebări scurte. Vezi imediat ce ți se potrivește. Fără cont.",
+            "أسئلة قصيرة. ترى فوراً ما يناسبك. دون حساب.");
+        Add("HowLobsy.Step2.Cta",
+            "Doe de test",
+            "Take the test",
+            "Zrób test",
+            "Fă testul",
+            "اخض الاختبار");
+        Add("HowLobsy.Step3.Title",
+            "Maak een account",
+            "Create an account",
+            "Utwórz konto",
+            "Creează un cont",
+            "أنشئ حساباً");
+        Add("HowLobsy.Step3.Body",
+            "Pas als je wilt solliciteren. Je testuitslag gaat mee.",
+            "Only when you want to apply. Your test result comes along.",
+            "Dopiero gdy chcesz aplikować. Wynik testu idzie z Tobą.",
+            "Doar când vrei să aplici. Rezultatul testului vine cu tine.",
+            "فقط عندما تريد التقدّم. نتيجة اختبارك تنتقل معك.");
+        Add("HowLobsy.Step3.Body.Zw",
+            "Pas als je je paspoort wilt bewaren. Je testuitslag gaat mee.",
+            "Only when you want to keep your passport. Your test result comes along.",
+            "Dopiero gdy chcesz zachować paszport. Wynik testu idzie z Tobą.",
+            "Doar când vrei să păstrezi pașaportul. Rezultatul testului vine cu tine.",
+            "فقط عندما تريد الاحتفاظ بجوازك. نتيجة اختبارك تنتقل معك.");
+        Add("HowLobsy.Step3.Cta",
+            "Account maken",
+            "Create an account",
+            "Utwórz konto",
+            "Creează cont",
+            "أنشئ حساباً");
+        Add("HowLobsy.Step4.Title",
+            "Solliciteer op jouw tempo",
+            "Apply at your own pace",
+            "Aplikuj w swoim tempie",
+            "Aplică în ritmul tău",
+            "تقدَّم بالسرعة التي تريحك");
+        Add("HowLobsy.Step4.Title.Zw",
+            "Groei verder op jouw tempo",
+            "Keep growing at your own pace",
+            "Rozwijaj się w swoim tempie",
+            "Crește în ritmul tău",
+            "واصل النمو بالسرعة التي تريحك");
+        Add("HowLobsy.Step4.Body",
+            "Werkgevers zien je gegevens pas als jij dat goed vindt.",
+            "Employers only see your details when you agree to it.",
+            "Pracodawcy widzą Twoje dane tylko wtedy, gdy się zgodzisz.",
+            "Angajatorii îți văd datele doar dacă ești de acord.",
+            "لا يرى أصحاب العمل بياناتك إلا إذا وافقت.");
+        Add("HowLobsy.Step4.Body.Zw",
+            "Je ziet wat bij je past en welke stap je kunt zetten. Jij kiest wat je deelt.",
+            "You see what fits you and which step you can take. You choose what you share.",
+            "Widzisz, co do Ciebie pasuje i jaki krok możesz zrobić. Ty wybierasz, co udostępniasz.",
+            "Vezi ce ți se potrivește și ce pas poți face. Tu alegi ce împarți.",
+            "ترى ما يناسبك وأي خطوة يمكنك اتخاذها. أنت تختار ما تشاركه.");
+
+        Add("HowLobsy.Promise.Title",
+            "Dit beloven we je",
+            "This is what we promise you",
+            "To Ci obiecujemy",
+            "Asta îți promitem",
+            "هذا ما نَعِدك به");
+        Add("HowLobsy.Promise.Free",
+            "Gratis voor werkzoekenden. Altijd.",
+            "Free for job seekers. Always.",
+            "Darmowe dla szukających pracy. Zawsze.",
+            "Gratuit pentru cei care caută muncă. Întotdeauna.",
+            "مجاني للباحثين عن عمل. دائماً.");
+        Add("HowLobsy.Promise.Answers",
+            "Werkgevers zien je testantwoorden nooit.",
+            "Employers never see your test answers.",
+            "Pracodawcy nigdy nie widzą Twoich odpowiedzi z testu.",
+            "Angajatorii nu îți văd niciodată răspunsurile din test.",
+            "لا يرى أصحاب العمل إجابات اختبارك أبداً.");
+        Add("HowLobsy.Promise.Answers.Zw",
+            "Niemand anders ziet je testantwoorden.",
+            "Nobody else sees your test answers.",
+            "Nikt inny nie widzi Twoich odpowiedzi z testu.",
+            "Nimeni altcineva nu îți vede răspunsurile din test.",
+            "لا يرى أحد غيرك إجابات اختبارك.");
+        Add("HowLobsy.Promise.Contact",
+            "Je naam en telefoon deel je pas na jouw ja.",
+            "You share your name and phone number only after your yes.",
+            "Imię i telefon udostępniasz dopiero po swojej zgodzie.",
+            "Numele și telefonul le împarți doar după acordul tău.",
+            "تشارك اسمك ورقم هاتفك فقط بعد موافقتك.");
+        Add("HowLobsy.Promise.Delete",
+            "Je kunt je account en gegevens zelf verwijderen.",
+            "You can delete your account and data yourself.",
+            "Konto i dane możesz usunąć samodzielnie.",
+            "Îți poți șterge singur contul și datele.",
+            "يمكنك حذف حسابك وبياناتك بنفسك.");
+
+        Add("HowLobsy.Faq.Title",
+            "Vragen",
+            "Questions",
+            "Pytania",
+            "Întrebări",
+            "أسئلة");
+        Add("HowLobsy.Faq.PriceQ",
+            "Kost Lobsy geld?",
+            "Does Lobsy cost money?",
+            "Czy Lobsy kosztuje?",
+            "Lobsy costă bani?",
+            "هل Lobsy بمقابل؟");
+        Add("HowLobsy.Faq.PriceA",
+            "Nee. Voor werkzoekenden is Lobsy gratis. Alleen de uitgebreide testanalyse kost vanaf {0}, en die heb je niet nodig.",
+            "No. For job seekers Lobsy is free. Only the extended test analysis costs from {0}, and you do not need it.",
+            "Nie. Dla szukających pracy Lobsy jest darmowe. Tylko rozszerzona analiza testu kosztuje od {0}, a nie jest potrzebna.",
+            "Nu. Pentru cei care caută muncă, Lobsy este gratuit. Doar analiza extinsă a testului costă de la {0} și nu îți este necesară.",
+            "لا. Lobsy مجاني للباحثين عن عمل. فقط التحليل الموسّع للاختبار يبدأ من {0}، وأنت لا تحتاجه.");
+        Add("HowLobsy.Faq.CvQ",
+            "Heb ik een cv nodig?",
+            "Do I need a CV?",
+            "Czy potrzebuję CV?",
+            "Am nevoie de CV?",
+            "هل أحتاج إلى سيرة ذاتية؟");
+        Add("HowLobsy.Faq.CvA",
+            "Nee. Je kunt solliciteren met je profiel. Een cv toevoegen mag, maar hoeft niet.",
+            "No. You can apply with your profile. Adding a CV is allowed, but not required.",
+            "Nie. Możesz aplikować ze swoim profilem. CV możesz dodać, ale nie musisz.",
+            "Nu. Poți aplica cu profilul tău. Poți adăuga un CV, dar nu este obligatoriu.",
+            "لا. يمكنك التقدّم بملفك الشخصي. إضافة سيرة ذاتية مسموحة لكنها غير مطلوبة.");
+        Add("HowLobsy.Faq.CvA.Zw",
+            "Nee. Je paspoort is genoeg. Een cv toevoegen mag, maar hoeft niet.",
+            "No. Your passport is enough. Adding a CV is allowed, but not required.",
+            "Nie. Twój paszport wystarczy. CV możesz dodać, ale nie musisz.",
+            "Nu. Pașaportul tău este suficient. Poți adăuga un CV, dar nu este obligatoriu.",
+            "لا. جوازك يكفي. إضافة سيرة ذاتية مسموحة لكنها غير مطلوبة.");
+        Add("HowLobsy.Faq.AgeQ",
+            "Ik ben jonger dan 16. Kan ik meedoen?",
+            "I am younger than 16. Can I join?",
+            "Mam mniej niż 16 lat. Czy mogę?",
+            "Am mai puțin de 16 ani. Pot participa?",
+            "عمري أقل من 16. هل أستطيع المشاركة؟");
+
+        Add("HowLobsy.You.SignedInTitle",
+            "Je bent ingelogd",
+            "You are signed in",
+            "Jesteś zalogowany",
+            "Ești conectat",
+            "أنت مسجَّل الدخول");
+        Add("HowLobsy.You.SignedInBody",
+            "Ga verder waar je gebleven was.",
+            "Continue where you left off.",
+            "Kontynuuj tam, gdzie skończyłeś.",
+            "Continuă de unde ai rămas.",
+            "تابع من حيث توقفت.");
+        Add("HowLobsy.You.StartCta",
+            "Naar je start",
+            "To your start",
+            "Do strony startowej",
+            "Spre pagina ta de start",
+            "إلى صفحة بدايتك");
+
+        Add("HowLobsy.Employers.Title",
+            "Zo werkt Lobsy voor werkgevers.",
+            "This is how Lobsy works for employers.",
+            "Tak działa Lobsy dla pracodawców.",
+            "Așa funcționează Lobsy pentru angajatori.",
+            "هكذا يعمل Lobsy لأصحاب العمل.");
+        Add("HowLobsy.Employers.Lead",
+            "Je vacature staat op de kaart. Je ziet wie past, zonder stapels cv's.",
+            "Your vacancy is on the map. You see who fits, without piles of CVs.",
+            "Twoja oferta jest na mapie. Widzisz, kto pasuje, bez stosów CV.",
+            "Jobul tău este pe hartă. Vezi cine se potrivește, fără stive de CV-uri.",
+            "وظيفتك على الخريطة. ترى مَن يناسبك دون أكوام من السير الذاتية.");
+        Add("HowLobsy.Employers.Step1Title",
+            "Meld je bedrijf aan",
+            "Register your company",
+            "Zgłoś swoją firmę",
+            "Înscrie firma ta",
+            "سجّل شركتك");
+        Add("HowLobsy.Employers.Step1Body",
+            "Je vult je KvK-nummer in. Wij controleren je bedrijf.",
+            "You enter your Chamber of Commerce number. We check your company.",
+            "Podajesz numer rejestrowy firmy. My ją sprawdzamy.",
+            "Introduci numărul de înregistrare al firmei. Noi o verificăm.",
+            "تُدخل رقم تسجيل شركتك. ونحن نتحقق منها.");
+        Add("HowLobsy.Employers.Step2Title",
+            "Plaats je vacature",
+            "Publish your vacancy",
+            "Opublikuj ofertę",
+            "Publică jobul",
+            "انشر وظيفتك");
+        Add("HowLobsy.Employers.Step2Body",
+            "Je baan komt op de banenkaart, op reistijd rond jouw locatie.",
+            "Your job appears on the job map, by travel time around your location.",
+            "Twoja oferta pojawia się na mapie, według czasu dojazdu do Twojej lokalizacji.",
+            "Jobul apare pe hartă, după timpul de călătorie până la locația ta.",
+            "تظهر وظيفتك على الخريطة بحسب زمن التنقّل إلى موقعك.");
+        Add("HowLobsy.Employers.Step3Title",
+            "Praat met mensen die passen",
+            "Talk to people who fit",
+            "Rozmawiaj z pasującymi osobami",
+            "Vorbește cu oameni care se potrivesc",
+            "تحدّث مع مَن يناسبك");
+        Add("HowLobsy.Employers.Step3Body",
+            "Je ziet contactgegevens pas als de kandidaat ja zegt. Testantwoorden zie je nooit.",
+            "You see contact details only after the candidate says yes. You never see test answers.",
+            "Dane kontaktowe widzisz dopiero po zgodzie kandydata. Odpowiedzi z testu nigdy.",
+            "Vezi datele de contact doar după ce candidatul acceptă. Răspunsurile din test niciodată.",
+            "ترى بيانات الاتصال فقط بعد موافقة المرشّح. ولا ترى إجابات الاختبار أبداً.");
+        Add("HowLobsy.Employers.Cta",
+            "Lees meer voor werkgevers",
+            "Read more for employers",
+            "Więcej dla pracodawców",
+            "Citește mai mult pentru angajatori",
+            "اقرأ المزيد لأصحاب العمل");
+
+        Add("HowLobsy.Schools.Title",
+            "Zo werkt Lobsy voor scholen.",
+            "This is how Lobsy works for schools.",
+            "Tak działa Lobsy dla szkół.",
+            "Așa funcționează Lobsy pentru școli.",
+            "هكذا يعمل Lobsy للمدارس.");
+        Add("HowLobsy.Schools.Lead",
+            "Leerlingen ontdekken wat bij ze past. Jij ziet alleen groepsbeelden, geen antwoorden.",
+            "Pupils discover what fits them. You only see group pictures, never answers.",
+            "Uczniowie odkrywają, co do nich pasuje. Ty widzisz tylko obraz grupy, nie odpowiedzi.",
+            "Elevii descoperă ce li se potrivește. Tu vezi doar imaginea grupei, nu răspunsurile.",
+            "يكتشف التلاميذ ما يناسبهم. أنت ترى صورة المجموعة فقط، لا الإجابات.");
+        Add("HowLobsy.Schools.Step1Title",
+            "Vraag een klascode aan",
+            "Request a class code",
+            "Poproś o kod klasy",
+            "Cere un cod de clasă",
+            "اطلب رمز الصف");
+        Add("HowLobsy.Schools.Step1Body",
+            "Je krijgt een code voor je klas. Leerlingen hebben geen account nodig.",
+            "You get a code for your class. Pupils do not need an account.",
+            "Dostajesz kod dla klasy. Uczniowie nie potrzebują konta.",
+            "Primești un cod pentru clasă. Elevii nu au nevoie de cont.",
+            "تحصل على رمز لصفك. ولا يحتاج التلاميذ إلى حساب.");
+        Add("HowLobsy.Schools.Step2Title",
+            "Leerlingen doen de test",
+            "Pupils take the test",
+            "Uczniowie robią test",
+            "Elevii fac testul",
+            "يخوض التلاميذ الاختبار");
+        Add("HowLobsy.Schools.Step2Body",
+            "In één les. Iedere leerling ziet een eigen uitslag in gewone taal.",
+            "In one lesson. Every pupil sees their own result in plain language.",
+            "W jednej lekcji. Każdy uczeń widzi własny wynik prostym językiem.",
+            "Într-o singură lecție. Fiecare elev vede propriul rezultat în limbaj simplu.",
+            "في حصة واحدة. يرى كل تلميذ نتيجته بلغة بسيطة.");
+        Add("HowLobsy.Schools.Step3Title",
+            "Praat na in de klas",
+            "Talk it through in class",
+            "Omówcie to w klasie",
+            "Discutați în clasă",
+            "ناقشوا النتائج في الصف");
+        Add("HowLobsy.Schools.Step3Body",
+            "Je ziet een groepsbeeld voor het gesprek. Losse antwoorden blijven privé.",
+            "You see a group picture for the conversation. Individual answers stay private.",
+            "Widzisz obraz grupy do rozmowy. Pojedyncze odpowiedzi pozostają prywatne.",
+            "Vezi imaginea grupei pentru discuție. Răspunsurile individuale rămân private.",
+            "ترى صورة المجموعة للحوار. تبقى الإجابات الفردية خاصة.");
+        Add("HowLobsy.Schools.Cta",
+            "Lees meer voor scholen",
+            "Read more for schools",
+            "Więcej dla szkół",
+            "Citește mai mult pentru școli",
+            "اقرأ المزيد للمدارس");
+    }
+
+    /// <summary>Static <c>/wie-zijn-wij</c> (public-pages 08, D10: no admin-editable text).</summary>
+    private static void MergeAbout(AddKey Add)
+    {
+        Add("About.Eyebrow",
+            "Wie zijn wij",
+            "About us",
+            "O nas",
+            "Despre noi",
+            "من نحن");
+        Add("About.Title",
+            "Hoi! Wij zijn Lobsy.",
+            "Hi! We are Lobsy.",
+            "Cześć! Jesteśmy Lobsy.",
+            "Salut! Noi suntem Lobsy.",
+            "مرحباً! نحن Lobsy.");
+        Add("About.Lead",
+            "Een klein team uit het Westland. We helpen mensen werk vinden dat past, dichtbij huis.",
+            "A small team from the Westland. We help people find work that fits, close to home.",
+            "Mały zespół z Westland. Pomagamy ludziom znaleźć pasującą pracę blisko domu.",
+            "O echipă mică din Westland. Ajutăm oamenii să găsească muncă potrivită, aproape de casă.",
+            "فريق صغير من منطقة ويستلاند. نساعد الناس على إيجاد عمل يناسبهم قريباً من بيوتهم.");
+        Add("About.Stories.Label",
+            "Ons verhaal",
+            "Our story",
+            "Nasza historia",
+            "Povestea noastră",
+            "قصتنا");
+        Add("About.Story.Lobster.Title",
+            "Waarom een kreeft?",
+            "Why a lobster?",
+            "Dlaczego homar?",
+            "De ce un homar?",
+            "لماذا سرطان البحر؟");
+        Add("About.Story.Lobster.Body",
+            "Een kreeft groeit door zijn oude schild af te werpen. Zo zien wij werk zoeken ook: je groeit, stap voor stap.",
+            "A lobster grows by shedding its old shell. That is how we see job hunting: you grow, step by step.",
+            "Homar rośnie, zrzucając starą skorupę. Tak samo widzimy szukanie pracy: rośniesz krok po kroku.",
+            "Homarul crește lepădând carapacea veche. Așa vedem și căutarea unui job: crești pas cu pas.",
+            "ينمو سرطان البحر بخلع قشرته القديمة. هكذا نرى البحث عن عمل: تنمو خطوة بخطوة.");
+        Add("About.Story.Westland.Title",
+            "Begonnen in het Westland",
+            "Started in the Westland",
+            "Zaczęło się w Westland",
+            "A început în Westland",
+            "بدأنا في ويستلاند");
+        Add("About.Story.Westland.Body",
+            "Lobsy begon met één vraag: hoe vinden mensen dichtbij werk dat echt past? Van daaruit bouwen we verder.",
+            "Lobsy started with one question: how do people nearby find work that really fits? From there we keep building.",
+            "Lobsy zaczęło się od jednego pytania: jak ludzie w okolicy znajdują pracę, która naprawdę pasuje? Od tego budujemy dalej.",
+            "Lobsy a început cu o întrebare: cum găsesc oamenii din apropiere muncă ce li se potrivește? De acolo construim mai departe.",
+            "بدأ Lobsy بسؤال واحد: كيف يجد الناس القريبون عملاً يناسبهم فعلاً؟ ومن هناك نكمل البناء.");
+        Add("About.Story.BothSides.Title",
+            "Voor twee kanten",
+            "For both sides",
+            "Dla obu stron",
+            "Pentru ambele părți",
+            "للطرفين");
+        Add("About.Story.BothSides.Body",
+            "Voor werkzoekenden: eerlijk en duidelijk. Voor werkgevers: snel en zonder gedoe.",
+            "For job seekers: honest and clear. For employers: fast and without hassle.",
+            "Dla szukających pracy: szczerze i jasno. Dla pracodawców: szybko i bez kłopotów.",
+            "Pentru cei care caută muncă: cinstit și clar. Pentru angajatori: rapid și fără bătăi de cap.",
+            "للباحثين عن عمل: بصدق ووضوح. ولأصحاب العمل: بسرعة ودون تعقيد.");
+        Add("About.Founder.Name",
+            "Dennis, oprichter",
+            "Dennis, founder",
+            "Dennis, założyciel",
+            "Dennis, fondator",
+            "دينيس، المؤسس");
+        Add("About.Founder.Text",
+            "Ik bouw software die logisch voelt. Met Lobsy wil ik dat iedereen dichtbij werk kan vinden, ook zonder cv of perfect Nederlands.",
+            "I build software that feels logical. With Lobsy I want everyone to find work nearby, also without a CV or perfect Dutch.",
+            "Buduję oprogramowanie, które ma sens. Chcę, by dzięki Lobsy każdy znalazł pracę blisko domu, też bez CV i perfekcyjnego niderlandzkiego.",
+            "Construiesc software care are logică. Cu Lobsy vreau ca oricine să găsească muncă aproape de casă, și fără CV sau olandeză perfectă.",
+            "أبني برمجيات منطقية. أريد مع Lobsy أن يجد الجميع عملاً قريباً، حتى بدون سيرة ذاتية أو لغة هولندية مثالية.");
+        Add("About.Founder.PhotoAlt",
+            "Dennis, oprichter van Lobsy",
+            "Dennis, founder of Lobsy",
+            "Dennis, założyciel Lobsy",
+            "Dennis, fondatorul Lobsy",
+            "دينيس، مؤسس Lobsy");
+        Add("About.Contact.Title",
+            "Contact en bedrijfsgegevens",
+            "Contact and company details",
+            "Kontakt i dane firmy",
+            "Contact și date de firmă",
+            "الاتصال وبيانات الشركة");
+        Add("About.Contact.Lead",
+            "Vraag of idee? Mail ons, we reageren binnen 2 werkdagen.",
+            "A question or an idea? Mail us, we answer within 2 working days.",
+            "Pytanie albo pomysł? Napisz do nas, odpowiadamy w 2 dni robocze.",
+            "O întrebare sau o idee? Scrie-ne, răspundem în 2 zile lucrătoare.",
+            "سؤال أو فكرة؟ راسلنا، ونرد خلال يومي عمل.");
+        Add("About.Contact.MailCta",
+            "Mail ons",
+            "Mail us",
+            "Napisz do nas",
+            "Scrie-ne",
+            "راسلنا");
+        Add("About.Contact.PrivacyNote",
+            "Gaat je vraag over je privacy of je gegevens? Lees eerst het privacybeleid.",
+            "Is your question about your privacy or your data? Read the privacy statement first.",
+            "Pytanie dotyczy prywatności lub danych? Przeczytaj najpierw politykę prywatności.",
+            "Întrebarea ta e despre confidențialitate sau datele tale? Citește mai întâi declarația de confidențialitate.",
+            "هل سؤالك عن خصوصيتك أو بياناتك؟ اقرأ بيان الخصوصية أولاً.");
     }
 }

@@ -336,7 +336,6 @@ public static class DependencyInjection
         services.AddScoped<ILegalIdentity, LegalIdentityService>();
         services.AddScoped<IPublicCompanyQuery, PublicCompanyQuery>();
         services.AddScoped<IContentReportService, ContentReportService>();
-        services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
         services.AddScoped<IMarketingFlyerSettingsService, MarketingFlyerSettingsService>();
         services.AddScoped<IMarketingFlyerPdfService, MarketingFlyerPdfService>();
         services.AddScoped<IRegionHostService, RegionHostService>();

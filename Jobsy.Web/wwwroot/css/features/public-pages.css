@@ -567,3 +567,245 @@ html.pp-js .pub-theme .pp-toc__print {
     transition: none;
   }
 }
+
+/* —— /hoe-werkt-lobsy (public-pages 08) —— */
+.pub-theme .pp-how__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 1.5rem;
+}
+
+.pub-theme .pp-how__tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--pub-line);
+  border-radius: var(--pub-radius-pill);
+  background: var(--pub-card);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pub-theme .pp-how__tab:hover,
+.pub-theme .pp-how__tab:focus-visible {
+  border-color: var(--pub-coral);
+}
+
+.pub-theme .pp-how__tab--active {
+  background: var(--pub-coral-soft);
+  border-color: var(--pub-coral);
+}
+
+.pub-theme .pp-how__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.pub-theme .pp-how__step {
+  position: relative;
+  background: var(--pub-card);
+  border: 1px solid var(--pub-line);
+  border-radius: var(--pub-radius-card);
+  box-shadow: var(--pub-shadow-soft);
+  padding: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.pub-theme .pp-how__step-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: var(--pub-radius-pill);
+  background: var(--pub-gold-soft);
+  font-weight: 600;
+}
+
+.pub-theme .pp-how__step-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.pub-theme .pp-how__step-body,
+.pub-theme .pp-how__guide-lead {
+  margin: 0;
+}
+
+.pub-theme .pp-how__step-link {
+  justify-self: start;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.pub-theme .pp-how__start,
+.pub-theme .pp-how__promise,
+.pub-theme .pp-how__faq,
+.pub-theme .pp-how__guide {
+  background: var(--pub-card);
+  border: 1px solid var(--pub-line);
+  border-radius: var(--pub-radius-card);
+  box-shadow: var(--pub-shadow-soft);
+  padding: 1.5rem;
+  margin-block-start: 1.75rem;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.pub-theme .pp-how__start h2,
+.pub-theme .pp-how__promise h2,
+.pub-theme .pp-how__faq h2,
+.pub-theme .pp-how__guide-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.pub-theme .pp-how__promise-list {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.pub-theme .pp-how__guide-steps {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.pub-theme .pp-how__guide-step h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.pub-theme .pp-how__guide-step p {
+  margin: 0;
+}
+
+.pub-theme .pp-how__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block-start: 0.5rem;
+}
+
+.pub-theme .pp-how__fq {
+  border-block-start: 1px solid var(--pub-line);
+  padding-block: 0.75rem;
+}
+
+.pub-theme .pp-how__fq summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.pub-theme .pp-how__fq p {
+  margin: 0.25rem 0 0;
+}
+
+@media (min-width: 640px) {
+  .pub-theme .pp-how__steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .pub-theme .pp-how__steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* —— /wie-zijn-wij (public-pages 08) —— */
+.pub-theme .pp-about__stories {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-block-start: 1.75rem;
+}
+
+.pub-theme .pp-about__story,
+.pub-theme .pp-about__founder,
+.pub-theme .pp-about__contact {
+  background: var(--pub-card);
+  border: 1px solid var(--pub-line);
+  border-radius: var(--pub-radius-card);
+  box-shadow: var(--pub-shadow-soft);
+  padding: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.pub-theme .pp-about__story h2,
+.pub-theme .pp-about__founder h2,
+.pub-theme .pp-about__contact h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.pub-theme .pp-about__story p,
+.pub-theme .pp-about__founder p {
+  margin: 0;
+}
+
+.pub-theme .pp-about__founder,
+.pub-theme .pp-about__contact {
+  margin-block-start: 1.75rem;
+}
+
+.pub-theme .pp-about__founder {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.pub-theme .pp-about__photo {
+  inline-size: 6rem;
+  block-size: 6rem;
+  border-radius: var(--pub-radius-pill);
+  object-fit: cover;
+}
+
+.pub-theme .pp-about__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 4rem;
+  block-size: 4rem;
+  border-radius: var(--pub-radius-pill);
+  background: var(--pub-sky-soft);
+  font-size: 2rem;
+}
+
+.pub-theme .pp-about__mail,
+.pub-theme .pp-about__privacy {
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .pub-theme .pp-about__stories {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pub-theme .pp-how__step,
+  .pub-theme .pp-about__story {
+    transition: none;
+  }
+}

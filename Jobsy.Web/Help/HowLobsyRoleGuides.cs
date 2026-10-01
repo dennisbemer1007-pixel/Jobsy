@@ -51,21 +51,6 @@ public static class HowLobsyRoleGuides
         new("/banenkaart", "HowLobsy.ToMap"),
         new("/profiel", "HowLobsy.ToProfile"));
 
-    /// <summary>
-    /// Anonymous visitor guide on <c>/hoe-werkt-lobsy</c> — public links only, no auth APIs.
-    /// </summary>
-    public static readonly Guide Guest = new(
-        "HowLobsy.Guest.Title",
-        "HowLobsy.Guest.Lead",
-        [
-            new("HowLobsy.Guest.Step1Title", "HowLobsy.Guest.Step1Body", [new("/banenkaart", "Nav.JobMap")]),
-            new("HowLobsy.Guest.Step2Title", "HowLobsy.Guest.Step2Body", [new("/ontdek", "HowLobsy.Guest.DnaLabel")]),
-            new("HowLobsy.Guest.Step3Title", "HowLobsy.Guest.Step3Body", [new(Jobsy.Web.Navigation.PublicRoutes.CreateAccount, "PublicNav.CreateAccount")]),
-            new("HowLobsy.Guest.Step4Title", "HowLobsy.Guest.Step4Body", [])
-        ],
-        new("/ontdek", "HowLobsy.Guest.PrimaryCta"),
-        new(Jobsy.Web.Navigation.PublicRoutes.CreateAccount, "PublicNav.CreateAccount"));
-
     public static readonly Guide Branch = new(
         "HowLobsy.Branch.Title",
         "HowLobsy.Branch.Lead",

@@ -26,7 +26,8 @@ public static class AdminLegacyRoutes
         new("/admin/sales", "/admin/financien/prijzen", "sales"),
         new("/admin/tokens", "/admin/financien/goodwill"),
         new("/admin/token-finance", "/admin/financien/uitbetalingen"),
-        new("/admin/about", "/admin/content/paginas"),
+        // public-pages 08 removed the "Wie zijn wij" editor; the old URL lands on the cockpit.
+        new("/admin/about", "/admin"),
         new("/admin/marketing-flyer", "/admin/content/paginas", "flyer"),
         new("/admin/training", "/admin/content/opleidingen"),
         new("/admin/masterdata", "/admin/content/stamgegevens"),

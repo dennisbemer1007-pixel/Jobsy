@@ -47,7 +47,7 @@ public static class UiStringsAdmin
         Add("AdminNav.Pricing", "Prijzen & pakketten", "Prices & packages", "Ceny i pakiety", "Prețuri și pachete", "الأسعار والباقات");
         Add("AdminNav.Goodwill", "Goodwill & tokens", "Goodwill & tokens", "Goodwill i tokeny", "Goodwill și tokenuri", "حسن النية والرموز");
         Add("AdminNav.Payouts", "Uitbetalingen & btw", "Payouts & VAT", "Wypłaty i VAT", "Plăți și TVA", "المدفوعات وضريبة القيمة المضافة");
-        Add("AdminNav.PagesFlyer", "Pagina's & flyer", "Pages & flyer", "Strony i ulotka", "Pagini și flyer", "الصفحات والنشرة");
+        Add("AdminNav.Flyer", "Werkgeversflyer", "Employer flyer", "Ulotka dla pracodawców", "Flyer pentru angajatori", "نشرة أصحاب العمل");
         Add("AdminNav.Training", "Opleidingen", "Training", "Szkolenia", "Traininguri", "التدريب");
         Add("AdminNav.Masterdata", "Stamgegevens", "Master data", "Dane podstawowe", "Date de bază", "البيانات الأساسية");
         Add("AdminNav.Emails", "E-mails & meldingen", "E-mails & notifications", "E-maile i powiadomienia", "E-mailuri și notificări", "البريد والإشعارات");
@@ -85,7 +85,6 @@ public static class UiStringsAdmin
         // Tabs
         Add("AdminTabs.Categories", "Categorieën", "Categories", "Kategorie", "Categorii", "الفئات");
         Add("AdminTabs.Wages", "Salaris & WML", "Wages & WML", "Wynagrodzenia i WML", "Salarii și WML", "الرواتب وWML");
-        Add("AdminTabs.About", "Wie zijn wij", "About us", "O nas", "Despre noi", "من نحن");
         Add("AdminTabs.Flyer", "Werkgeversflyer", "Employer flyer", "Ulotka pracodawcy", "Flyer angajator", "نشرة أصحاب العمل");
         Add("AdminTabs.Masterdata", "Stamgegevens", "Master data", "Dane podstawowe", "Date de bază", "البيانات الأساسية");
         Add("AdminTabs.Exclusivity", "Exclusiviteit stages", "Exclusivity stages", "Etapy wyłączności", "Etape exclusivitate", "مراحل الحصرية");

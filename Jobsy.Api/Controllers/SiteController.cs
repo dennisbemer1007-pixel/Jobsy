@@ -12,33 +12,21 @@ namespace Jobsy.Api.Controllers;
 [Route("api/site")]
 public class SiteController : ControllerBase
 {
-    private readonly IAboutPageSettingsService _aboutPage;
     private readonly IVacancyDiscoveryIndex _discovery;
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly ILegalIdentity _legalIdentity;
     private readonly IPublicCompanyQuery _publicCompanies;
 
     public SiteController(
-        IAboutPageSettingsService aboutPage,
         IVacancyDiscoveryIndex discovery,
         IPlatformCompanySettingsService companySettings,
         ILegalIdentity legalIdentity,
         IPublicCompanyQuery publicCompanies)
     {
-        _aboutPage = aboutPage;
         _discovery = discovery;
         _companySettings = companySettings;
         _legalIdentity = legalIdentity;
         _publicCompanies = publicCompanies;
-    }
-
-    /// <summary>Public “Wie zijn wij” page content.</summary>
-    [HttpGet("about")]
-    [AllowAnonymous]
-    public async Task<ActionResult<AboutPageDto>> GetAbout(CancellationToken cancellationToken)
-    {
-        var snap = await _aboutPage.GetAsync(cancellationToken);
-        return Ok(ToDto(snap));
     }
 
     /// <summary>
@@ -83,16 +71,7 @@ public class SiteController : ControllerBase
         var companyPaths = await _publicCompanies.GetSitemapCompanyPathsAsync(cancellationToken);
         return Ok(new SiteCrawlIndexDto(vacancies, companyPaths));
     }
-
-    internal static AboutPageDto ToDto(AboutPageSnapshot snap) =>
-        new(snap.Title, snap.Lead, snap.BodyHtml, snap.UpdatedAtUtc);
 }
-
-public sealed record AboutPageDto(
-    string Title,
-    string Lead,
-    string BodyHtml,
-    DateTime? UpdatedAtUtc);
 
 public sealed record SiteBrandingDto(string CompanyName, string Slogan);
 

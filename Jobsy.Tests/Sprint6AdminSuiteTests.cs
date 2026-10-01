@@ -290,7 +290,6 @@ public class Sprint6AdminSuiteTests
                 Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
                 new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build()),
             new PlatformCompanySettingsService(db),
-            new AboutPageSettingsService(db),
             new MarketingFlyerSettingsService(db),
             new MarketingFlyerPdfService(
                 new MarketingFlyerSettingsService(db),

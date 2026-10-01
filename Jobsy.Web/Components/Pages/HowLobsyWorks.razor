@@ -1,96 +1,327 @@
 @page "/hoe-werkt-lobsy"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@using Jobsy.Core.Authorization
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Legal
+@using Jobsy.Web.Components.Public
 @using Jobsy.Web.Help
-@using Microsoft.AspNetCore.Components.Authorization
-@inject AuthenticationStateProvider AuthState
-@inject JobsyApiClient Api
-@inject NavigationManager Navigation
+@using Jobsy.Web.Localization
 @inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IFeatureFlags FeatureFlags
+@inject LandingVariantResolver VariantResolver
+@inject LandingPriceClient Prices
+@inject JobsyApiClient Api
+@inject ILogger<HowLobsyWorks> Logger
 
-<PageTitle>@(_guide is null ? Culture["Nav.HowLobsyWorks"] : Culture[_guide.TitleKey]) · Lobsy</PageTitle>
+<PageTitle>@Culture["HowLobsy.Seo.Title"] · Lobsy</PageTitle>
 
-@if (_guide is null)
-{
-    <div class="panel-page">
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    </div>
-}
-else
-{
-    <HowLobsyGuidePanel Guide="_guide" />
-}
+<section class="pub-section pp-how" aria-labelledby="how-title">
+    <header class="pp-doc__hero">
+        <p class="pp-doc__eyebrow">
+            <PubEmoji Glyph="🧭" />
+            <span>@Culture["HowLobsy.Eyebrow"]</span>
+        </p>
+        <h1 id="how-title" class="pp-doc__title">@Culture["HowLobsy.Title"]</h1>
+        <p class="pp-doc__lead">@Text("HowLobsy.Lead")</p>
+    </header>
 
-@code {
-    private HowLobsyRoleGuides.Guide? _guide;
+    <nav class="pp-how__tabs" aria-label="@Culture["HowLobsy.Tabs.Label"]">
+        @foreach (var tab in HowLobsyAudiences.Visible(_employersEnabled))
+        {
+            <a class="pp-how__tab @(tab == _audience ? "pp-how__tab--active" : null)"
+               href="@HowLobsyAudiences.Href(tab)"
+               aria-current="@(tab == _audience ? "page" : null)">
+                @TabLabel(tab)
+            </a>
+        }
+    </nav>
 
-    protected override async Task OnInitializedAsync()
+    @if (_audience == HowLobsyAudience.You)
     {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        var user = state.User;
-
-        if (user.Identity?.IsAuthenticated != true)
+        @if (_guide is not null)
         {
-            // Public explanation for new visitors — no authenticated APIs.
-            _guide = HowLobsyRoleGuides.Guest;
-            return;
-        }
-
-        if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
-        {
-            _guide = HowLobsyRoleGuides.BuildSalesGuide(await TryGetSalesTrackingCodeAsync());
-        }
-        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur))
-        {
-            _guide = HowLobsyRoleGuides.BuildAmbassadeurGuide(await TryGetAmbassadeurTrackingCodeAsync());
-        }
-        else if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
-        {
-            _guide = HowLobsyRoleGuides.Enterprise;
-        }
-        else if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
-        {
-            _guide = HowLobsyRoleGuides.Regional;
-        }
-        else if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
-        {
-            _guide = HowLobsyRoleGuides.Branch;
-        }
-        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
-        {
-            _guide = HowLobsyRoleGuides.Intermediary;
+            <HowLobsyRoleGuide Guide="_guide" />
         }
         else
         {
-            Navigation.NavigateTo("/home", replace: true);
+            @if (_candidateStartPath is not null)
+            {
+                <article class="pp-how__start">
+                    <h2>@Culture["HowLobsy.You.SignedInTitle"]</h2>
+                    <p>@Culture["HowLobsy.You.SignedInBody"]</p>
+                    <a class="pub-btn pub-btn--primary" href="@_candidateStartPath">@Culture["HowLobsy.You.StartCta"]</a>
+                </article>
+            }
+
+            <ol class="pp-how__steps" aria-label="@Culture["HowLobsy.Steps.Label"]">
+                @foreach (var step in Steps())
+                {
+                    <li class="pp-how__step">
+                        <span class="pp-how__step-no" aria-hidden="true">@step.Number</span>
+                        <PubEmoji Glyph="@step.Glyph" />
+                        <h2 class="pp-how__step-title">@step.Title</h2>
+                        <p class="pp-how__step-body">@step.Body</p>
+                        @if (step.Href is not null)
+                        {
+                            <a class="pp-how__step-link" href="@step.Href">@step.LinkLabel</a>
+                        }
+                    </li>
+                }
+            </ol>
+
+            <article class="pp-how__promise">
+                <h2>
+                    <PubEmoji Glyph="🔒" />
+                    @Culture["HowLobsy.Promise.Title"]
+                </h2>
+                <ul class="pp-how__promise-list">
+                    <li>@Culture["HowLobsy.Promise.Free"]</li>
+                    <li>@Text("HowLobsy.Promise.Answers")</li>
+                    <li>@Culture["HowLobsy.Promise.Contact"]</li>
+                    <li>@Culture["HowLobsy.Promise.Delete"]</li>
+                </ul>
+            </article>
+
+            <article class="pp-how__faq">
+                <h2>@Culture["HowLobsy.Faq.Title"]</h2>
+                <details class="pp-how__fq" open>
+                    <summary>@Culture["HowLobsy.Faq.PriceQ"]</summary>
+                    <p>@Culture.Format("HowLobsy.Faq.PriceA", PriceText)</p>
+                </details>
+                <details class="pp-how__fq">
+                    <summary>@Culture["HowLobsy.Faq.CvQ"]</summary>
+                    <p>@Text("HowLobsy.Faq.CvA")</p>
+                </details>
+                <details class="pp-how__fq">
+                    <summary>@Culture["HowLobsy.Faq.AgeQ"]</summary>
+                    <AgeRulesText />
+                </details>
+            </article>
+        }
+    }
+    else if (_audience == HowLobsyAudience.Employers)
+    {
+        <div class="pp-how__guide">
+            <h2 class="pp-how__guide-title">@Culture["HowLobsy.Employers.Title"]</h2>
+            <p class="pp-how__guide-lead">@Culture["HowLobsy.Employers.Lead"]</p>
+            <ol class="pp-how__guide-steps">
+                <li class="pp-how__guide-step">
+                    <h3>@Culture["HowLobsy.Employers.Step1Title"]</h3>
+                    <p>@Culture["HowLobsy.Employers.Step1Body"]</p>
+                </li>
+                <li class="pp-how__guide-step">
+                    <h3>@Culture["HowLobsy.Employers.Step2Title"]</h3>
+                    <p>@Culture["HowLobsy.Employers.Step2Body"]</p>
+                </li>
+                <li class="pp-how__guide-step">
+                    <h3>@Culture["HowLobsy.Employers.Step3Title"]</h3>
+                    <p>@Culture["HowLobsy.Employers.Step3Body"]</p>
+                </li>
+            </ol>
+            <div class="pp-how__actions">
+                <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Employers">@Culture["HowLobsy.Employers.Cta"]</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="pp-how__guide">
+            <h2 class="pp-how__guide-title">@Culture["HowLobsy.Schools.Title"]</h2>
+            <p class="pp-how__guide-lead">@Culture["HowLobsy.Schools.Lead"]</p>
+            <ol class="pp-how__guide-steps">
+                <li class="pp-how__guide-step">
+                    <h3>@Culture["HowLobsy.Schools.Step1Title"]</h3>
+                    <p>@Culture["HowLobsy.Schools.Step1Body"]</p>
+                </li>
+                <li class="pp-how__guide-step">
+                    <h3>@Culture["HowLobsy.Schools.Step2Title"]</h3>
+                    <p>@Culture["HowLobsy.Schools.Step2Body"]</p>
+                </li>
+                <li class="pp-how__guide-step">
+                    <h3>@Culture["HowLobsy.Schools.Step3Title"]</h3>
+                    <p>@Culture["HowLobsy.Schools.Step3Body"]</p>
+                </li>
+            </ol>
+            <div class="pp-how__actions">
+                <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Schools">@Culture["HowLobsy.Schools.Cta"]</a>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private sealed record StepCard(
+        int Number,
+        string Glyph,
+        string Title,
+        string Body,
+        string? Href,
+        string? LinkLabel);
+
+    private bool _employersEnabled = true;
+    private LandingVariant _variant = LandingVariant.On;
+    private HowLobsyAudience _audience = HowLobsyAudience.You;
+    private HowLobsyRoleGuides.Guide? _guide;
+    private string? _candidateStartPath;
+    private decimal? _priceEuro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // The public header/footer use the same resolver, so the pills match the rest of the chrome.
+        _variant = await VariantResolver.GetAsync();
+        _employersEnabled = _variant == LandingVariant.On;
+
+        var http = HttpContextAccessor.HttpContext;
+        _audience = HowLobsyAudiences.Parse(
+            http?.Request.Query[HowLobsyAudiences.QueryName].ToString(),
+            _employersEnabled);
+
+        _priceEuro = await Prices.GetDeepAnalysisPriceEuroAsync();
+
+        var user = http?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        _guide = await StaffGuideAsync(user);
+        if (_guide is not null)
+        {
+            // A staff member lands on their own guide; the audience pills stay reachable.
+            _audience = HowLobsyAudience.You;
+            _roleLabelKey = RoleLabelKey(user);
+            return;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _candidateStartPath = FeatureRoutes.HomeFor(user, flags);
         }
     }
 
-    private async Task<string?> TryGetSalesTrackingCodeAsync()
+    private async Task<HowLobsyRoleGuides.Guide?> StaffGuideAsync(System.Security.Claims.ClaimsPrincipal user)
+    {
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
+        {
+            return HowLobsyRoleGuides.BuildSalesGuide(await TrackingCodeAsync(sales: true));
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur))
+        {
+            return HowLobsyRoleGuides.BuildAmbassadeurGuide(await TrackingCodeAsync(sales: false));
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
+        {
+            return HowLobsyRoleGuides.Enterprise;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
+        {
+            return HowLobsyRoleGuides.Regional;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
+        {
+            return HowLobsyRoleGuides.Branch;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
+        {
+            return HowLobsyRoleGuides.Intermediary;
+        }
+
+        return null;
+    }
+
+    /// <summary>The guide renders without the personal code when the dashboard call fails.</summary>
+    private async Task<string?> TrackingCodeAsync(bool sales)
     {
         try
         {
-            var dashboard = await Api.GetMySalesManagerDashboardAsync();
-            return dashboard?.TrackingCode;
+            return sales
+                ? (await Api.GetMySalesManagerDashboardAsync())?.TrackingCode
+                : (await Api.GetMyAmbassadeurDashboardAsync())?.TrackingCode;
         }
-        catch
+        catch (Exception ex)
         {
-            // Guide still works; partner step falls back to toolkit.
+            Logger.LogWarning(ex, "Tracking code unavailable for the hoe-werkt-lobsy role guide");
             return null;
         }
     }
 
-    private async Task<string?> TryGetAmbassadeurTrackingCodeAsync()
+    private string Text(string key) => LandingText.For(key, _variant, Culture.Language);
+
+    private string PriceText
+        => "€ " + (_priceEuro ?? Jobsy.Core.Entities.FlexCommercialSettings.DefaultDeepAnalysisPriceEuro)
+            .ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+
+    private string TabLabel(HowLobsyAudience audience)
     {
-        try
+        if (audience != HowLobsyAudience.You)
         {
-            var dashboard = await Api.GetMyAmbassadeurDashboardAsync();
-            return dashboard?.TrackingCode;
+            return audience == HowLobsyAudience.Employers
+                ? Culture["HowLobsy.Tab.Employers"]
+                : Culture["HowLobsy.Tab.Schools"];
         }
-        catch
+
+        return _roleLabelKey is null
+            ? Culture["HowLobsy.Tab.You"]
+            : Culture.Format("HowLobsy.Tab.YouRole", Culture[_roleLabelKey]);
+    }
+
+    private string? _roleLabelKey;
+
+    private static string? RoleLabelKey(System.Security.Claims.ClaimsPrincipal user)
+    {
+        foreach (var role in new[]
         {
-            return null;
+            JobsyRoles.SalesManager,
+            JobsyRoles.Ambassadeur,
+            JobsyRoles.EnterpriseManager,
+            JobsyRoles.RegionalManager,
+            JobsyRoles.BranchManager,
+            JobsyRoles.Intermediary
+        })
+        {
+            if (RoleClaimMatching.HasRole(user, role))
+            {
+                return "Role." + role;
+            }
         }
+
+        return null;
+    }
+
+    private IReadOnlyList<StepCard> Steps()
+    {
+        var mapHref = _employersEnabled ? PublicRoutes.Banenkaart : null;
+        return
+        [
+            new(1, _employersEnabled ? "🗺️" : "🪪",
+                Text("HowLobsy.Step1.Title"),
+                Text("HowLobsy.Step1.Body"),
+                mapHref,
+                mapHref is null ? null : Culture["HowLobsy.Step1.Cta"]),
+            new(2, "✨",
+                Culture["HowLobsy.Step2.Title"],
+                Culture["HowLobsy.Step2.Body"],
+                PublicRoutes.Test,
+                Culture["HowLobsy.Step2.Cta"]),
+            new(3, "🪪",
+                Culture["HowLobsy.Step3.Title"],
+                Text("HowLobsy.Step3.Body"),
+                PublicRoutes.CreateAccount,
+                Culture["HowLobsy.Step3.Cta"]),
+            new(4, "🤝",
+                Text("HowLobsy.Step4.Title"),
+                Text("HowLobsy.Step4.Body"),
+                null,
+                null),
+        ];
     }
 }

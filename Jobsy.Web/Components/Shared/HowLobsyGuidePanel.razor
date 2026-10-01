@@ -65,23 +65,5 @@
     private Task HandlePrimaryAsync() => OnPrimaryClick.InvokeAsync();
 
     private MarkupString FormatBody(HowLobsyRoleGuides.Step step)
-    {
-        if (step.Links.Length == 0)
-        {
-            return new MarkupString(WebUtility.HtmlEncode(Culture[step.BodyKey]));
-        }
-
-        var args = new object[step.Links.Length];
-        for (var i = 0; i < step.Links.Length; i++)
-        {
-            var link = step.Links[i];
-            var label = WebUtility.HtmlEncode(Culture[link.LabelKey]);
-            // Candidate step 4 uses Apply.Title as emphasis, not a real href.
-            args[i] = link.Href is "#" or ""
-                ? $"<strong>{label}</strong>"
-                : $"<a href=\"{WebUtility.HtmlEncode(link.Href)}\">{label}</a>";
-        }
-
-        return new MarkupString(Culture.Format(step.BodyKey, args));
-    }
+        => HowLobsyGuideBody.Render(step, Culture);
 }
