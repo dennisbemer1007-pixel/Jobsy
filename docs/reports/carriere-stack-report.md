@@ -13,7 +13,7 @@ This report is meant to be the last thing you need to read about this stack.
 | 03 Stapdetail & groeimoment | `cursor/carriere-3` | `fc6ba1cb` | [#480](https://github.com/dennisbemer1007-pixel/Jobsy/pull/480) | Done | B6 (step), B7, B8, B9, B13 (step copy), B15 |
 | 04 Contactverzoeken | `cursor/carriere-4` | `0b325502` | [#481](https://github.com/dennisbemer1007-pixel/Jobsy/pull/481) | Done | T1–T5 |
 | 05 Hoe werkt Lobsy | `cursor/carriere-5` | `5bccdab9` | [#482](https://github.com/dennisbemer1007-pixel/Jobsy/pull/482) | Done | H1–H3, B14 (this page) |
-| 06 E2E, cleanup, docs | `cursor/carriere-6` | this branch | no PR (as instructed) | Done | — (proves 01–05) |
+| 06 E2E, cleanup, docs | `cursor/carriere-6` | `6e4e9500` | [#483](https://github.com/dennisbemer1007-pixel/Jobsy/pull/483) | Done | — (proves 01–05) |
 
 ## Dependencies A–G
 
