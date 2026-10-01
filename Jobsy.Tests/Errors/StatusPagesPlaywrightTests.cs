@@ -47,7 +47,12 @@ public class StatusPagesPlaywrightTests
             return;
         }
 
-        Assert.DoesNotContain("lobsy.nl", baseUrl, StringComparison.OrdinalIgnoreCase);
+        // Acceptatie (acceptatie.lobsy.nl) is fine; the live apex and www are not.
+        var host = new Uri(baseUrl).Host;
+        Assert.False(
+            host.Equals("lobsy.nl", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("www.lobsy.nl", StringComparison.OrdinalIgnoreCase),
+            $"This suite must never run against production ({host}).");
     }
 
     public static TheoryData<string, int> PageMatrix()
@@ -76,7 +81,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip($"page matrix {language}/{width}: no reachable JOBSY_E2E_BASE_URL");
+            Skip($"page matrix {language}/{width}: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -117,7 +122,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip($"no-JS {language}: no reachable JOBSY_E2E_BASE_URL");
+            Skip($"no-JS {language}: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -163,7 +168,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip("403 flow: no reachable JOBSY_E2E_BASE_URL");
+            Skip("403 flow: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -204,7 +209,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip("403 employers-off: no reachable JOBSY_E2E_BASE_URL");
+            Skip("403 employers-off: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -237,7 +242,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip("410 flow: no reachable JOBSY_E2E_BASE_URL");
+            Skip("410 flow: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -289,7 +294,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip("maintenance flow: no reachable JOBSY_E2E_BASE_URL");
+            Skip("maintenance flow: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -365,7 +370,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip($"reconnect toast {language}: no reachable JOBSY_E2E_BASE_URL");
+            Skip($"reconnect toast {language}: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -408,7 +413,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip("inline block: no reachable JOBSY_E2E_BASE_URL");
+            Skip("inline block: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -466,7 +471,7 @@ public class StatusPagesPlaywrightTests
         var baseUrl = BaseUrl();
         if (baseUrl is null || !await IsReachableAsync(baseUrl))
         {
-            Skip("copy button: no reachable JOBSY_E2E_BASE_URL");
+            Skip("copy button: no usable JOBSY_E2E_BASE_URL (unset, unreachable, or not running this stack)");
             return;
         }
 
@@ -734,13 +739,31 @@ public class StatusPagesPlaywrightTests
     private static string Password()
         => Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
 
+    /// <summary>
+    /// Reachable *and* already running this stack's pages. Pointing the suite at a host that was
+    /// deployed before errors 01 would otherwise fail every row for the wrong reason.
+    /// </summary>
     private static async Task<bool> IsReachableAsync(string baseUrl)
     {
         try
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-            using var response = await http.GetAsync(baseUrl + "/healthz");
-            return response.IsSuccessStatusCode;
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            using var health = await http.GetAsync(baseUrl + "/healthz");
+            if (!health.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            http.DefaultRequestHeaders.Add("Accept", "text/html");
+            using var status = await http.GetAsync(baseUrl + "/status/404");
+            var html = await status.Content.ReadAsStringAsync();
+            if (html.Contains("err-layout", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            Skip($"{new Uri(baseUrl).Host} does not serve the errors-stack status pages yet");
+            return false;
         }
         catch
         {

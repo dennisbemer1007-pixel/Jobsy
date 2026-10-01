@@ -76,9 +76,16 @@ an inline error while the rest of the page lives on, and the copy-code button.
 
 **This suite soft-skips without `JOBSY_E2E_BASE_URL`**, like every other browser suite in the repo,
 and rows whose precondition is missing skip themselves and append the reason to
-`artifacts/playwright-errors/skipped.txt`. In this environment there is no running stack, so the
-whole class soft-skipped; it is registered in **both** filter lists of
-`.github/workflows/pr-tests.yml` so CI runs it against the seeded stack on `127.0.0.1:5201`.
+`artifacts/playwright-errors/skipped.txt`. It also skips when the host *is* reachable but was
+deployed before errors 01 (it probes `/status/404` for the `err-layout` marker), so pointing it at
+Acceptatie before this stack merges reports "not deployed yet" instead of 60 confusing failures.
+Production (`lobsy.nl`, `www.lobsy.nl`) is refused outright; Acceptatie is allowed.
+
+In this environment there is no running stack with this code, so the whole class soft-skipped —
+**21 tests, 0 failures, every row's reason written to the skip log**. It is registered in **both**
+filter lists of `.github/workflows/pr-tests.yml` (excluded from the unit step, included in the
+smoke step) so CI runs it for real against the seeded stack on `127.0.0.1:5201`, and
+`artifacts/playwright-errors/**` is part of the `playwright-screenshots` upload.
 
 Rows that skip even with a stack, and what covers them instead:
 
