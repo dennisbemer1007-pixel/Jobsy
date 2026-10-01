@@ -1,0 +1,37 @@
+KEY: ContentRemoved
+SUBJECT: قيّدنا أو أزلنا شيئاً يتعلق بكم
+PREHEADER: ماذا فعلنا، ولماذا، وكيف تعترض
+KIND: Essential
+--- TEXT ---
+اتخذنا قراراً
+
+استلمنا تبليغاً بخصوص ⁨Bakkerij De Gouden Korrel⁩. نظرنا فيه.
+
+Weekendhulp verkoop :ماذا
+Weggehaald :القرار
+De tekst vraagt om gegevens die niet mogen. :السبب
+1 أكتوبر 2026, 07:00 :التاريخ
+
+تريد الاعتراض؟ راسل ⁨support@lobsy.nl⁩ خلال 6 أشهر.
+
+اقرأ القواعد في شروط الاستخدام على Lobsy.
+
+إلى وظائفكم: https://lobsy.nl/werkgever/vacatures
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: اتخذنا قراراً
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: إلى وظائفكم -> https://lobsy.nl/werkgever/vacatures
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

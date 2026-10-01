@@ -1,0 +1,37 @@
+KEY: ReportDecided
+SUBJECT: We looked at your report
+PREHEADER: This is what we decided
+KIND: Essential
+--- TEXT ---
+This is what we decided
+=======================
+
+Your report has been reviewed. This is the outcome:
+
+What: Weekendhulp verkoop
+Decision: Weggehaald
+Date: 1 October 2026, 07:00
+
+Why: De tekst vraagt om gegevens die niet mogen.
+
+Thanks for reporting it. That keeps Lobsy safe.
+
+To the job map: https://lobsy.nl/banenkaart
+
+Team Lobsy
+
+You are getting this email because you reported something on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: This is what we decided
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: To the job map -> https://lobsy.nl/banenkaart
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -1,0 +1,36 @@
+KEY: ReportDecided
+SUBJECT: نظرنا في تبليغك
+PREHEADER: هذا ما قررناه
+KIND: Essential
+--- TEXT ---
+هذا ما قررناه
+
+تمت مراجعة تبليغك. هذه النتيجة:
+
+Weekendhulp verkoop :ماذا
+Weggehaald :القرار
+1 أكتوبر 2026, 07:00 :التاريخ
+
+السبب: ⁨De tekst vraagt om gegevens die niet mogen.⁩
+
+شكراً على التبليغ. بهذا نحافظ على سلامة Lobsy.
+
+إلى خريطة الوظائف: https://lobsy.nl/banenkaart
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك أبلغت عن شيء على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: هذا ما قررناه
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: إلى خريطة الوظائف -> https://lobsy.nl/banenkaart
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

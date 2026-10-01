@@ -1,0 +1,35 @@
+KEY: ReportReceived
+SUBJECT: We hebben je melding ontvangen
+PREHEADER: Bedankt — we kijken ernaar
+KIND: Essential
+--- TEXT ---
+Dank je. We kijken ernaar
+=========================
+
+Je meldde iets op Lobsy. Dit hebben we binnengekregen:
+
+Wat: Weekendhulp verkoop
+Reden: Klopt niet / nep
+Datum: 1 oktober 2026, 07:00
+
+We laten je weten wat we besluiten. Meestal binnen 5 werkdagen.
+
+Naar de banenkaart: https://lobsy.nl/banenkaart
+
+Team Lobsy
+
+Je krijgt deze mail omdat je iets hebt gemeld op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Dank je. We kijken ernaar
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar de banenkaart -> https://lobsy.nl/banenkaart
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
