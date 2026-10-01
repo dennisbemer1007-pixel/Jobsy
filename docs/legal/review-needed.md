@@ -91,10 +91,26 @@ Old anchors kept as aliases (`wie-is-lobsy` → `wie`, `dienst` → `wat`, `matc
 - The reporting text names the button "Meld deze vacature" / "Meld dit bedrijf" before the button
   exists. Public-pages 06 builds the form at `/melden`; until then the text offers only the support
   e-mail. If 06 slips, the sentence promises a route that is not there yet.
-- `Terms.Waiver.Checkbox` must stay identical in the terms and in the checkout. Public-pages 05
-  aligns `DeepPay.Waiver` and `DeepAnalysisPricing.WaiverTextVersion` with
-  `LegalDocumentVersions.Terms`; today the checkout still carries the older sentence and version
-  `2026-09`.
+- `Terms.Waiver.Checkbox` must stay identical in the terms and in the checkout. **Resolved in
+  public-pages 05**: the checkout checkbox (`DeepAnalysis.razor`) now renders `Terms.Waiver.Checkbox`
+  itself (the old, differently worded `DeepPay.Waiver` key was removed) and
+  `DeepAnalysisPricing.WaiverTextVersion` now reads `LegalDocumentVersions.Terms.Version` instead of
+  the literal `"2026-09"`, so a bump of the terms version automatically bumps the version stored on
+  new checkouts and the receipt mail's small print.
 - Both documents share one version and one date. A change to only one of them still bumps both.
 - The pl / ro / ar "In het kort" blocks and the waiver sentence are dev-team drafts awaiting a
   native review (`docs/i18n/public-pages-review.md`). The Dutch text is the official version (D3).
+
+## Bedenktijd checkout guard (public-pages 05) — version 2026-10
+
+Dependency C (`docs/tests` 01) had already landed `WaiverAcceptedAtUtc` / `WaiverTextVersion` /
+`waiver_required` on `main`/`acceptatie` before this file ran (05.2a "Present" path). This file only
+aligns the wording and adds a guard test; it does not touch the Mollie/checkout internals or
+`FlexCommercialSettings`.
+
+| What | Where | What changed | Open question for the lawyer |
+|---|---|---|---|
+| Waiver checkbox sentence | `DeepAnalysis.razor` (checkout offer) | Reuses `Terms.Waiver.Checkbox` word for word instead of the separate, differently worded `DeepPay.Waiver` key. One source of truth across the terms and the checkout. | None beyond the 04.7 `bedenktijd` question (art. 6:230m/6:230v BW) — the sentence itself did not change here. |
+| Waiver text version | `DeepAnalysisPricing.WaiverTextVersion` → `DeepAnalysisCheckout.WaiverTextVersion` | Now reads `LegalDocumentVersions.Terms.Version` ("2026-10") instead of the literal "2026-09", so the stored version always matches the terms version the consumer actually saw. Existing rows (version "2026-09" / "legacy") are left as they were paid under. | If the terms text changes again without changing the waiver sentence itself, should the stored `WaiverTextVersion` still bump (current behaviour: yes, since it is tied to the whole terms document, not only §`bedenktijd`)? |
+| Order summary link | `DeepAnalysis.razor` | Added "Lees meer over bedenktijd" linking to `/gebruiksvoorwaarden#bedenktijd`, next to the checkbox. | — |
+| Receipt mail small print | `Email.DeepTestReceipt` (`deep_test_receipt`) | Added a "Voorwaarden versie" / "Terms version" fact row with the checkout's stored `WaiverTextVersion`, next to amount/date/invoice number. | — |

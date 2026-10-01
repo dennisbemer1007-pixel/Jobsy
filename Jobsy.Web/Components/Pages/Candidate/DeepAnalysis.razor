@@ -94,8 +94,11 @@ else
                             }
                             <label class="deep-pay-waiver">
                                 <input type="checkbox" @bind="_waiverAccepted" />
-                                @Culture["DeepPay.Waiver"]
+                                @Culture["Terms.Waiver.Checkbox"]
                             </label>
+                            <p class="muted deep-pay-waiver__link">
+                                <a href="/gebruiksvoorwaarden#bedenktijd">@Culture["DeepPay.WaiverReadMore"]</a>
+                            </p>
                             @if (!string.IsNullOrWhiteSpace(_orderErrorKey))
                             {
                                 <p class="state-message error" role="alert">@Culture[_orderErrorKey]</p>

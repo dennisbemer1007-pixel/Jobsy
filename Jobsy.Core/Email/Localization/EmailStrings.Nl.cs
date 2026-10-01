@@ -461,6 +461,7 @@ internal static class EmailStringsNl
         ["Email.DeepTestReceipt.Fact.Amount"] = "Bedrag (incl. btw)",
         ["Email.DeepTestReceipt.Fact.Date"] = "Datum",
         ["Email.DeepTestReceipt.Fact.Invoice"] = "Factuurnummer",
+        ["Email.DeepTestReceipt.Fact.TermsVersion"] = "Voorwaarden versie",
         ["Email.DeepTestReceipt.Waiver"] = "Je koos ervoor om meteen te beginnen. Daarom kun je niet binnen 14 dagen annuleren.",
         ["Email.DeepTestReceipt.Cta"] = "Begin met vraag 1",
         ["Email.DeepTestReceipt.Support"] = "Vragen over je betaling? Mail support@lobsy.nl.",

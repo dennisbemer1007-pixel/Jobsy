@@ -301,7 +301,8 @@ public static partial class TransactionalEmails
         DateTime paidAtUtc,
         string invoiceNumber,
         string testSlug,
-        EmailCulture? culture = null)
+        EmailCulture? culture = null,
+        string? waiverTextVersion = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
@@ -309,17 +310,24 @@ public static partial class TransactionalEmails
             c.Language == "nl" ? "nl-NL" : "en-US"));
         var when = EmailFormat.DateTimeWithoutZone(paidAtUtc, c);
         var startUrl = links.Absolute($"/candidate/deep-analysis/{Uri.EscapeDataString(testSlug)}");
+        var facts = new List<(string Label, string Value)>
+        {
+            (S(c, "Email.DeepTestReceipt.Fact.Amount"), $"€ {amount}"),
+            (S(c, "Email.DeepTestReceipt.Fact.Date"), when),
+            (S(c, "Email.DeepTestReceipt.Fact.Invoice"), invoiceNumber)
+        };
+        if (!string.IsNullOrWhiteSpace(waiverTextVersion))
+        {
+            facts.Add((S(c, "Email.DeepTestReceipt.Fact.TermsVersion"), waiverTextVersion));
+        }
+
         return Finish(Doc("deep_test_receipt",
             S(c, "Email.DeepTestReceipt.Subject"),
             S(c, "Email.DeepTestReceipt.Preheader"),
             S(c, "Email.DeepTestReceipt.Heading"),
             [
                 P(T(c, "Email.DeepTestReceipt.P1", EmailArg.Bold(testName))),
-                F([
-                    (S(c, "Email.DeepTestReceipt.Fact.Amount"), $"€ {amount}"),
-                    (S(c, "Email.DeepTestReceipt.Fact.Date"), when),
-                    (S(c, "Email.DeepTestReceipt.Fact.Invoice"), invoiceNumber)
-                ]),
+                F(facts),
                 N(S(c, "Email.DeepTestReceipt.Waiver")),
                 P(S(c, "Email.DeepTestReceipt.Support"))
             ],

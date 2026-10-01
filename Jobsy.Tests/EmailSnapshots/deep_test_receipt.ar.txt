@@ -10,8 +10,9 @@ Paid. You can start
 Paid: Extended test ⁨Competenties⁩
 
 € 2.99 :Amount (incl. VAT)
-30 سبتمبر 2026, 18:19 :Date
+1 أكتوبر 2026, 05:49 :Date
 LOB-KT-2026-0001 :Invoice number
+2026-10 :Terms version
 
 You chose to start right away. That means you cannot cancel within 14 days.
 
