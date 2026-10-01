@@ -1,6 +1,7 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @inject CultureState Culture
 
 <footer class="pub-footer">
@@ -32,10 +33,36 @@
         <p class="pub-footer__copy">
             @Culture.Format("PublicFooter.Copyright", DateTime.UtcNow.Year, Culture["PublicFooter.MadeWith"])
         </p>
+        @if (!string.IsNullOrWhiteSpace(_legalLine))
+        {
+            <p class="pp-footer-legal">@_legalLine</p>
+        }
         <p class="pub-footer__lang-name">@Culture.Current.NativeName</p>
     </div>
 </footer>
 
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+
+    [Inject] private LegalIdentityProvider LegalIdentity { get; set; } = default!;
+
+    private string? _legalLine;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Legal identity line (public-pages 02.6): name · address · KvK, empty parts omitted.
+        var legal = await LegalIdentity.GetAsync();
+        var parts = new List<string> { legal.DisplayName };
+        if (!string.IsNullOrWhiteSpace(legal.AddressLine))
+        {
+            parts.Add(legal.AddressLine);
+        }
+
+        if (!string.IsNullOrWhiteSpace(legal.KvkNumber))
+        {
+            parts.Add($"KvK {legal.KvkNumber.Trim()}");
+        }
+
+        _legalLine = parts.Count > 1 ? string.Join(" · ", parts) : null;
+    }
 }

@@ -1,0 +1,64 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject LegalIdentityProvider LegalIdentity
+
+@if (_rows.Count > 0)
+{
+    <dl class="pp-identity">
+        @foreach (var row in _rows)
+        {
+            <div class="pp-identity__row">
+                <dt class="pp-identity__label">@Culture[row.LabelKey]</dt>
+                <dd class="pp-identity__value">
+                    @if (row.MailTo)
+                    {
+                        <a href="mailto:@row.Value">@row.Value</a>
+                    }
+                    else
+                    {
+                        @row.Value
+                    }
+                </dd>
+            </div>
+        }
+    </dl>
+}
+
+@code {
+    /// <summary>Privacy pages label the contact row "Privacyvragen"; the terms pages use "Contact".</summary>
+    [Parameter] public bool ShowPrivacyContact { get; set; }
+
+    private readonly List<Row> _rows = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var legal = await LegalIdentity.GetAsync();
+        _rows.Clear();
+        Add("Legal.IdentityCard.Name", legal.DisplayName);
+        Add("Legal.IdentityCard.Address", legal.AddressLine);
+        Add("Legal.IdentityCard.Kvk", legal.KvkNumber);
+        Add("Legal.IdentityCard.Vat", legal.VatNumber);
+        if (ShowPrivacyContact)
+        {
+            Add("Legal.IdentityCard.PrivacyQuestions", legal.PrivacyContact, mailTo: true);
+        }
+        else
+        {
+            Add("Legal.IdentityCard.Contact", legal.SupportEmail ?? legal.PrivacyContact, mailTo: true);
+        }
+    }
+
+    private void Add(string labelKey, string? value, bool mailTo = false)
+    {
+        var trimmed = value?.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return;
+        }
+
+        _rows.Add(new Row(labelKey, trimmed, mailTo));
+    }
+
+    private sealed record Row(string LabelKey, string Value, bool MailTo);
+}

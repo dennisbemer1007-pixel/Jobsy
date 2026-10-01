@@ -67,6 +67,10 @@
     "sha256": "ae6b4e42acec649ea1465fe3f18c931d63881d4cf136d0a52b371944be286a46",
     "v": "20260929-or-08"
   },
+  "css/features/public-pages.css": {
+    "sha256": "0fd2cae237afeb07f3dbb4a68a54c1cc7b24c30159041eb9879d36706f2db2be",
+    "v": "20261001-pp02"
+  },
   "css/features/public-theme.css": {
     "sha256": "dae311dc566e1532c210e13d2d532ba15f39e458d1d01fd737937b7a136352cd",
     "v": "20260930-landing-5"
@@ -137,7 +141,7 @@
   },
   "js/features/auth.js": {
     "sha256": "abe562c0ae9e57649701c7512e6cddf34476ccd519d48caf51eff2677ab5a456",
-    "v": "20260930-auth03"
+    "v": "20260930-auth05"
   },
   "js/features/kandidaatinzichten-map.js": {
     "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",
@@ -170,6 +174,10 @@
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
     "v": "20260928-nav-fb"
+  },
+  "js/public-pages.js": {
+    "sha256": "1d1e510ebfe9df64c6284a1b9d1006f2bbcdd037aaefcd036d67ae4a8605a862",
+    "v": "20261001-pp02"
   },
   "js/vacancyDetailMap.min.js": {
     "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",
