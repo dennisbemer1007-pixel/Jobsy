@@ -152,6 +152,7 @@ public static partial class PageSeoCatalog
             ["/company"] = Public("BranchPage.Title", "Seo.CompanyFallbackDescription"),
             ["/access-denied"] = Private("Page.AccessDeniedTitle", "Seo.PrivateDescription"),
             ["/error"] = Private("Seo.ErrorTitle", "Seo.PrivateDescription"),
+            ["/status"] = Private("Status.NotFound.Title", "Seo.PrivateDescription"),
             ["/home"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
             ["/hoe-werkt-lobsy"] = Public("HowLobsy.Guest.Title", "HowLobsy.Guest.Lead"),
             ["/candidate/hoe-werkt-lobsy"] = Private("Nav.HowLobsyWorks", "Seo.PrivateDescription"),
@@ -273,6 +274,7 @@ public static partial class PageSeoCatalog
 
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =
     [
+        ("/status/", Private("Status.NotFound.Title", "Seo.PrivateDescription")),
         ("/vacancies/", Public("Vacancy.Title", "Seo.VacancyFallbackDescription", "article")),
         ("/partner/", Public("Partner.Title", "Seo.PartnerDescription")),
         ("/home/metrics/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),

@@ -1,29 +1,133 @@
 @page "/Error"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@using Microsoft.AspNetCore.Http
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout ErrorLayout
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Diagnostics
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Diagnostics
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
+@inject ILogger<Error> Logger
+@*
+  500 page. Shows a support code, never the exception, the path, a trace id or any internal id.
+  Static SSR only: the circuit, the API and the database may all be gone.
+*@
 
-<PageTitle>Er ging iets mis · Lobsy</PageTitle>
+<PageTitle>@Culture["Status.Error.Title"] · Lobsy</PageTitle>
 
-<div class="login-page">
-    <div class="login-card">
-        <h1>Er ging iets mis</h1>
-        <p class="login-lead">Deze pagina kon de aanvraag niet afronden. Ga terug naar de banenkaart en probeer het opnieuw.</p>
-        @if (!string.IsNullOrWhiteSpace(_requestId))
-        {
-            <p class="muted">Referentie: @_requestId</p>
-        }
-        <p><a class="auth-link" href="/banenkaart">Naar de banenkaart</a></p>
+<section class="err-hero">
+    <div class="err-hero__text">
+        <p class="pub-chip err-code">@Culture["Status.Error.Eyebrow"]</p>
+        <h1 class="err-hero__title">@Culture["Status.Error.Title"]</h1>
+        <p class="err-hero__lead">@Culture["Status.Error.Lead"]</p>
+
+        <div class="pub-card err-card">
+            <p class="err-card__label" id="err-code-label">@Culture["Status.Common.CodeLabel"]</p>
+            <p class="err-card__code" id="err-code" data-support-code="@_supportCode">@_supportCode</p>
+            <button type="button"
+                    class="pub-btn pub-btn--ghost err-card__copy"
+                    data-err-copy="err-code"
+                    data-err-copied="@Culture["Status.Common.Copied"]"
+                    aria-describedby="err-code-label">@Culture["Status.Common.Copy"]</button>
+        </div>
+
+        <div class="err-actions">
+            <a class="pub-btn pub-btn--primary" href="@_retryHref">@Culture["Status.Common.TryAgain"]</a>
+            <a class="pub-btn pub-btn--secondary" href="@SupportMailto">@Culture["Status.Common.MailSupport"]</a>
+        </div>
     </div>
-</div>
+    <div class="err-hero__art" aria-hidden="true">
+        <span class="err-blob"></span>
+        <LobsyMascot Pose="MascotPose.Sitting" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+    </div>
+</section>
+
+@* Progressive enhancement only: without JS the code above is plain selectable text. *@
+<script nonce="@_nonce">
+    (function () {
+        var button = document.querySelector("[data-err-copy]");
+        if (!button || !navigator.clipboard) { return; }
+        button.addEventListener("click", function () {
+            var target = document.getElementById(button.getAttribute("data-err-copy"));
+            if (!target) { return; }
+            navigator.clipboard.writeText(target.textContent.trim()).then(function () {
+                button.textContent = button.getAttribute("data-err-copied");
+            });
+        });
+    })();
+</script>
 
 @code {
-    [CascadingParameter]
-    private HttpContext? HttpContext { get; set; }
+    private string _supportCode = SupportCode.Create();
+    private string _supportEmail = SupportContact.Default;
+    private string _retryHref = PublicRoutes.Landing;
+    private string _nonce = string.Empty;
 
-    private string? _requestId;
+    private string SupportMailto => SupportContact.MailtoLink(
+        _supportEmail,
+        Culture.Format("Status.Common.MailSubject", _supportCode));
 
     protected override void OnInitialized()
     {
-        _requestId = HttpContext?.TraceIdentifier;
+        var http = HttpContextAccessor.HttpContext;
+        _supportCode = SupportCode.GetOrCreate(http);
+        _supportEmail = SupportContact.Email(Configuration);
+        _nonce = Jobsy.Web.Security.CspNonce.Get(http);
+
+        var feature = http?.Features.Get<IExceptionHandlerPathFeature>();
+        _retryHref = ResolveRetryHref(http, feature);
+
+        if (http is not null && !http.Response.HasStarted)
+        {
+            http.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            ErrorResponse.ApplyHeaders(http);
+        }
+
+        if (feature is not null)
+        {
+            ErrorTelemetry.Record(Logger, http, feature, _supportCode);
+        }
     }
+
+    /// <summary>
+    /// GET: back to the page that failed. Anything else (a POST cannot be replayed from a link):
+    /// the page the visitor came from, else home. Never rendered as visible text.
+    /// </summary>
+    private static string ResolveRetryHref(HttpContext? http, IExceptionHandlerPathFeature? feature)
+    {
+        var originalMethod = http?.Items.TryGetValue(ErrorPagesExtensions.OriginalMethodItemsKey, out var m) == true
+            ? m as string
+            : http?.Request.Method;
+
+        if (feature is not null
+            && HttpMethods.IsGet(originalMethod ?? HttpMethods.Get)
+            && IsSafeLocalPath(feature.Path))
+        {
+            return feature.Path!;
+        }
+
+        var referer = http?.Request.Headers.Referer.ToString();
+        if (!string.IsNullOrWhiteSpace(referer)
+            && Uri.TryCreate(referer, UriKind.Absolute, out var refererUri)
+            && http is not null
+            && string.Equals(refererUri.Host, http.Request.Host.Host, StringComparison.OrdinalIgnoreCase)
+            && IsSafeLocalPath(refererUri.AbsolutePath))
+        {
+            return refererUri.AbsolutePath;
+        }
+
+        return PublicRoutes.Landing;
+    }
+
+    private static bool IsSafeLocalPath(string? path)
+        => !string.IsNullOrEmpty(path)
+           && path[0] == '/'
+           && (path.Length == 1 || path[1] != '/')
+           && !path.StartsWith(ErrorPagesExtensions.ErrorPath, StringComparison.OrdinalIgnoreCase);
 }

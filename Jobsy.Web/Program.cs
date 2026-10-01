@@ -86,6 +86,7 @@ builder.Services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
     Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance); // KB-FALLBACK(D)
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.AlwaysOnEmployersSwitch>();
+builder.Services.AddSingleton<Jobsy.Web.Hosting.IErrorChromeProvider, Jobsy.Web.Hosting.ErrorChromeProvider>();
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingPriceClient>();
@@ -293,11 +294,27 @@ app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseAdminLegacyRedirects();
 app.UseResponseCompression();
 
+// Development keeps the developer exception page; tests opt in with Errors:ForceHandler.
+var useErrorPageHandler = !app.Environment.IsDevelopment()
+    || app.Configuration.GetValue<bool>(ErrorPagesExtensions.ForceHandlerConfigKey);
+if (useErrorPageHandler)
+{
+    app.UseErrorPageFallback();
+    app.UseExceptionHandler(ErrorPagesExtensions.ErrorPath, createScopeForErrors: true);
+    app.UseErrorPageMethodReset();
+}
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
+
+// Unknown HTML pages answer with the real status code and the friendly /status/{code} page.
+app.UseHtmlStatusCodePages();
+
+// Explicit so it sits *after* the re-executing handlers above: both /Error and /status/{code}
+// need routing to run again on the rewritten path. WebApplication would otherwise add it first.
+app.UseRouting();
 
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
 if (app.Environment.IsDevelopment())

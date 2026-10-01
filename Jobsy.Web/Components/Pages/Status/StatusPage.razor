@@ -1,0 +1,107 @@
+@page "/status/{Code:int}"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout ErrorLayout
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
+@inject IEmployersSwitch EmployersSwitch
+@*
+  Re-execute target for unknown HTML pages, and a direct route for the other real status codes.
+  Static SSR only: this page must still render when the API or the database is down.
+*@
+
+<PageTitle>@Heading · Lobsy</PageTitle>
+
+<section class="err-hero">
+    <div class="err-hero__text">
+        <p class="pub-chip err-code">@_status</p>
+        <h1 class="err-hero__title">@Heading</h1>
+        <p class="err-hero__lead">@Lead</p>
+
+        @if (IsNotFound)
+        {
+            <div class="err-actions">
+                <a class="pub-btn pub-btn--primary" href="@PrimaryHref">@PrimaryLabel</a>
+                <a class="pub-btn pub-btn--secondary" href="@PublicRoutes.Test">@Culture["Status.Common.FreeTest"]</a>
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
+            </div>
+        }
+        else
+        {
+            <div class="err-actions">
+                <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Landing">@Culture["Status.Nav.Home"]</a>
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
+            </div>
+        }
+
+        <p class="err-support">
+            @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+        </p>
+    </div>
+    <div class="err-hero__art" aria-hidden="true">
+        <span class="err-blob"></span>
+        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+    </div>
+</section>
+
+@code {
+    [Parameter] public int Code { get; set; }
+
+    private int _status = StatusCodes.Status404NotFound;
+    private string _supportEmail = SupportContact.Default;
+    private bool _employersOn = true;
+
+    private bool IsNotFound => _status == StatusCodes.Status404NotFound;
+
+    private string Heading => IsNotFound
+        ? Culture["Status.NotFound.Title"]
+        : Culture["Status.Generic.Title"];
+
+    private string Lead => IsNotFound
+        ? Culture["Status.NotFound.Lead"]
+        : Culture["Status.Generic.Lead"];
+
+    /// <summary>F present: with werkgevers actief OFF the job map is replaced by Mijn Paspoort (E3).</summary>
+    private string PrimaryLabel => _employersOn
+        ? Culture["Status.Common.Banenkaart"]
+        : Culture["Status.Common.Passport"];
+
+    private string PrimaryHref => _employersOn ? PublicRoutes.Banenkaart : PublicRoutes.Test;
+
+    private string SupportMailto => SupportContact.MailtoLink(_supportEmail);
+
+    private string SupportLinePrefix => SplitSupportLine().Prefix;
+
+    private string SupportLineSuffix => SplitSupportLine().Suffix;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _status = ErrorResponse.NormalizeStatusCode(Code);
+        _supportEmail = SupportContact.Email(Configuration);
+        _employersOn = await EmployersSwitch.IsEnabledAsync();
+
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null && !http.Response.HasStarted)
+        {
+            http.Response.StatusCode = _status;
+            ErrorResponse.ApplyHeaders(http);
+        }
+    }
+
+    private (string Prefix, string Suffix) SplitSupportLine()
+    {
+        var template = Culture["Status.Common.SupportLine"];
+        var marker = template.IndexOf("{0}", StringComparison.Ordinal);
+        return marker < 0
+            ? (template + " ", string.Empty)
+            : (template[..marker], template[(marker + 3)..]);
+    }
+}

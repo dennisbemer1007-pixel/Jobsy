@@ -12,6 +12,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @inject PersistentComponentState Persist
+@inject IHttpContextAccessor HttpContextAccessor
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
@@ -1292,7 +1293,21 @@
         if (!RendererInfo.IsInteractive)
         {
             await LoadAsync(origin: null);
+            ApplyNotFoundStatus();
         }
+    }
+
+    /// <summary>An unknown or non-public vacancy is a real 404 for crawlers, not a 200 with a message.</summary>
+    private void ApplyNotFoundStatus()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (_vacancy is not null || http is null || http.Response.HasStarted)
+        {
+            return;
+        }
+
+        http.Response.StatusCode = StatusCodes.Status404NotFound;
+        Jobsy.Web.Hosting.ErrorResponse.ApplyHeaders(http);
     }
 
     private bool _pendingInitialHydration;

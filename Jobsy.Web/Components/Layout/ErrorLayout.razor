@@ -1,0 +1,75 @@
+@inherits LayoutComponentBase
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IErrorChromeProvider ChromeProvider
+@inject IHttpContextAccessor HttpContextAccessor
+@*
+  Static SSR shell for 404 / 500 and the later status pages.
+  Hard rule: no API or DB call, no interactive render mode, no component that needs either.
+  Everything it needs comes from the request (cookie, Accept-Language, auth cookie claims).
+*@
+
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+</HeadContent>
+
+<div class="err-layout pub-theme" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
+    <a class="pub-skip err-skip" href="#main">@Culture["Status.Nav.SkipToContent"]</a>
+    <header class="err-header">
+        <a class="err-header__brand" href="@_chrome.HomeHref" aria-label="@Culture["Status.Nav.Home"]">
+            <LobsyLogo Class="err-header__logo" Alt="" Animate="false" />
+            <span class="err-header__name">Lobsy</span>
+        </a>
+        <nav class="err-header__nav" aria-label="@Culture["Status.Nav.ChooseLanguage"]">
+            <ul class="err-lang">
+                @foreach (var lang in JobsyLanguages.All)
+                {
+                    <li>
+                        <a class="err-lang__option @(lang.Code == _chrome.Language ? "is-current" : null)"
+                           href="@_chrome.LanguageHref(lang.Code)"
+                           hreflang="@lang.Code"
+                           lang="@lang.Code"
+                           rel="nofollow"
+                           aria-current="@(lang.Code == _chrome.Language ? "true" : null)">@lang.Code.ToUpperInvariant()</a>
+                    </li>
+                }
+            </ul>
+            @if (_chrome.IsSignedIn)
+            {
+                <a class="pub-btn pub-btn--ghost err-header__action" href="@_chrome.MyStartHref">@Culture["Status.Nav.MyStart"]</a>
+            }
+            else
+            {
+                <a class="pub-btn pub-btn--ghost err-header__action" href="@_chrome.LoginHref">@Culture["Status.Nav.Login"]</a>
+            }
+        </nav>
+    </header>
+
+    <main id="main" class="err-main">
+        @Body
+    </main>
+
+    <footer class="err-footer">
+        <p class="err-footer__copy">@_chrome.Copyright</p>
+        <ul class="err-footer__links">
+            <li><a href="@_chrome.PrivacyHref">@Culture["Status.Nav.Privacy"]</a></li>
+            <li><a href="@_chrome.TermsHref">@Culture["Status.Nav.Terms"]</a></li>
+            <li><a href="@_chrome.HelpHref">@Culture["Status.Nav.Help"]</a></li>
+        </ul>
+    </footer>
+</div>
+
+@code {
+    private ErrorChrome _chrome = default!;
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        _chrome = ChromeProvider.Build(http);
+        Culture.InitializeFromLanguage(_chrome.Language);
+        ErrorResponse.ApplyHeaders(http);
+    }
+}

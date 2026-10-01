@@ -3455,6 +3455,7 @@ public static class UiStrings
         UiStringsMailSettings.MergeAll(nl, en, pl, ro, ar);
         UiStringsTests.MergeAll(nl, en, pl, ro, ar);
         UiStringsAuth.MergeAll(nl, en, pl, ro, ar);
+        UiStringsStatus.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
