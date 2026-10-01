@@ -27,6 +27,7 @@ namespace Jobsy.Tests;
 public class LegalDocumentRenderTests : TestContext
 {
     private readonly DefaultHttpContext _http = new();
+    private readonly AmbientCultureScope _culture = new();
 
     public LegalDocumentRenderTests()
     {
@@ -50,6 +51,15 @@ public class LegalDocumentRenderTests : TestContext
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddScoped<PageSeoContext>();
         Services.AddSingleton<NavigationManager>(new StaticNavigation("/privacy"));
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _culture.Dispose();
+        }
     }
 
     private void UseLanguage(string language)
@@ -233,6 +243,22 @@ public class LegalDocumentRenderTests : TestContext
     [Fact]
     public void Processor_table_renders_nothing_while_the_catalog_is_empty()
         => Assert.Empty(RenderPrivacy().FindAll("#delen .pp-table__grid"));
+
+    [Theory]
+    [InlineData(typeof(Jobsy.Web.Components.Pages.Legal.Privacy))]
+    [InlineData(typeof(Jobsy.Web.Components.Pages.Legal.AlgemeneVoorwaarden))]
+    [InlineData(typeof(Jobsy.Web.Components.Pages.Legal.Gebruiksvoorwaarden))]
+    public void Legal_routes_are_anonymous_static_ssr_on_the_public_layout(Type page)
+    {
+        Assert.NotNull(page.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute), false).SingleOrDefault());
+        Assert.NotNull(page.GetCustomAttributes(typeof(ExcludeFromInteractiveRoutingAttribute), false).SingleOrDefault());
+        Assert.NotNull(page.GetCustomAttributes(typeof(NoBlazorRuntimeAttribute), false).SingleOrDefault());
+
+        var layout = (LayoutAttribute?)page
+            .GetCustomAttributes(typeof(LayoutAttribute), false)
+            .SingleOrDefault();
+        Assert.Equal(typeof(PublicLayout), layout?.LayoutType);
+    }
 
     private sealed class AnonymousAuth : AuthenticationStateProvider
     {
