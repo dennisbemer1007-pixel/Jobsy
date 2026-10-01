@@ -1,17 +1,31 @@
 @using Jobsy.Core.Legal
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Services
 @inject CultureState Culture
+@inject LegalIdentityProvider LegalIdentity
 
-@* Official Dutch algemene voorwaarden (D3). 04 rewrites the text; 02 only moves it onto LegalDocument. *@
+@* Official Dutch algemene voorwaarden for employers (D3). B1 Dutch, "je"; prices and amounts live
+   on the tarievenpagina and in the checkout, never in this text. *@
 <LegalDocument DocumentId="@LegalDocumentIds.TermsEmployer"
                Title="@Culture["Legal.Terms"]"
                Lead="@Culture["Terms.Employer.Lead"]"
                Eyebrow="@Culture["Legal.Eyebrow.Terms"]"
                EyebrowEmoji="📜"
-               Sections="Sections" />
+               Sections="Sections">
+    <Switch>
+        <TermsAudienceSwitch Active="TermsAudience.Employer" />
+    </Switch>
+</LegalDocument>
 
 @code {
+    private string? _supportEmail;
     private IReadOnlyList<LegalSection>? _sections;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var legal = await LegalIdentity.GetAsync();
+        _supportEmail = legal.SupportEmail ?? legal.PrivacyContact;
+    }
 
     private IReadOnlyList<LegalSection> Sections => _sections ??= BuildSections();
 
@@ -19,25 +33,36 @@
     [
         new LegalSection
         {
-            Id = "wie-is-lobsy",
+            Id = "wie",
             Number = "1",
             TitleKey = "Terms.Sec.wie-is-lobsy.Title",
             SummaryKey = "Terms.Sec.wie-is-lobsy.Summary",
+            AliasIds = ["wie-is-lobsy"],
             Body = @<text>
+                <p>
+                    Lobsy is een platform dat werk dicht bij huis zoekt. Hieronder staan onze gegevens,
+                    zodat je weet met wie je afspraken maakt.
+                </p>
                 <LegalIdentityCard />
             </text>
         },
         new LegalSection
         {
-            Id = "toepasselijkheid",
+            Id = "toepassing",
             Number = "2",
             TitleKey = "Terms.Sec.toepasselijkheid.Title",
+            SummaryKey = "Terms.Sec.toepasselijkheid.Summary",
+            AliasIds = ["toepasselijkheid"],
             Body = @<text>
                 <p>
-                    Deze algemene voorwaarden gelden voor elke ondernemer, vestiging, organisatie of intermediair
-                    (“Ondernemer”) die een bedrijfsaccount aanmaakt of gebruikt op Lobsy. Door te registreren of
-                    het platform te gebruiken, ga je akkoord met deze voorwaarden en de
-                    <a href="/privacy">@Culture["Legal.Privacy"]</a>.
+                    Deze voorwaarden gelden voor elk bedrijf, elke vestiging, organisatie of intermediair
+                    die een bedrijfsaccount op Lobsy maakt of gebruikt. In deze tekst noemen we jou
+                    “de werkgever”. Maak je een account of gebruik je het platform? Dan ga je akkoord met
+                    deze voorwaarden en met de <a href="/privacy">@Culture["Legal.Privacy"]</a>.
+                </p>
+                <p>
+                    Gebruik je Lobsy als werkzoekende? Dan gelden de
+                    <a href="/gebruiksvoorwaarden">@Culture["Legal.Usage"]</a>.
                 </p>
             </text>
         },
@@ -46,26 +71,36 @@
             Id = "dienst",
             Number = "3",
             TitleKey = "Terms.Sec.dienst.Title",
+            SummaryKey = "Terms.Sec.dienst.Summary",
             Body = @<text>
                 <p>
-                    Lobsy biedt een platform om vacatures te publiceren, kandidaten te bereiken op basis van
-                    (onder meer) reistijd, sollicitaties te ontvangen en tokenproducten te gebruiken
-                    (publiceren, highlight, PushBom, verlengen). Lobsy is een bemiddelings- en publicatieplatform;
-                    wij zijn geen partij bij de arbeidsovereenkomst tussen Ondernemer en kandidaat.
+                    Met Lobsy plaats je vacatures, bereik je kandidaten in de buurt (onder meer op reistijd),
+                    ontvang je sollicitaties en gebruik je betaalde functies met tokens: publiceren,
+                    highlight, PushBom en verlengen.
+                </p>
+                <p>
+                    Lobsy is een plek om te publiceren en te bemiddelen. We zijn geen partij bij het
+                    arbeidscontract tussen jou en de kandidaat. We zijn ook geen uitzendbureau.
                 </p>
             </text>
         },
         new LegalSection
         {
-            Id = "account-kvk",
+            Id = "account",
             Number = "4",
             TitleKey = "Terms.Sec.account-kvk.Title",
+            SummaryKey = "Terms.Sec.account-kvk.Summary",
+            AliasIds = ["account-kvk"],
             Body = @<text>
                 <ul>
-                    <li>Je bent verantwoordelijk voor juiste KVK- en vestigingsgegevens en voor bevoegde vertegenwoordiging.</li>
-                    <li>Registratie kan per vestiging of voor de gehele organisatie plaatsvinden, volgens de keuzes in het registratieproces.</li>
-                    <li>Bij een vestiging die al in gebruik is, kan een overnameverzoek volgen; Lobsy beslist over toekenning volgens platformregels.</li>
-                    <li>Je houdt inloggegevens geheim en bent verantwoordelijk voor gebruik onder jouw account(s).</li>
+                    <li>
+                        We controleren je KvK-nummer. Zolang dat niet gelukt is, is je bedrijfspagina niet
+                        openbaar.
+                    </li>
+                    <li>Je zorgt dat je KvK- en vestigingsgegevens kloppen en dat je bevoegd bent om het bedrijf te vertegenwoordigen.</li>
+                    <li>Je kunt je per vestiging aanmelden of voor de hele organisatie, zoals het aanmeldproces aangeeft.</li>
+                    <li>Is een vestiging al in gebruik? Dan kun je die overnemen met een verzoek. Lobsy beslist daarover volgens de platformregels.</li>
+                    <li>Je houdt je inloggegevens geheim. Wat er onder jouw account gebeurt, is jouw verantwoordelijkheid.</li>
                 </ul>
             </text>
         },
@@ -74,61 +109,62 @@
             Id = "tokens",
             Number = "5",
             TitleKey = "Terms.Sec.tokens.Title",
+            SummaryKey = "Terms.Sec.tokens.Summary",
             Body = @<text>
                 <p>
-                    Tokens zijn digitale tegoeden binnen Lobsy waarmee Ondernemers betaalde platformfuncties afnemen.
-                    Tokens hebben geen contante waarde buiten het platform, zijn niet overdraagbaar aan derden buiten
-                    Lobsy, en vormen geen banksaldo of e-money in de zin van een betaalrekening.
+                    Tokens zijn tegoeden in Lobsy waarmee je betaalde functies afneemt. Tokens hebben geen
+                    waarde buiten het platform, zijn niet overdraagbaar aan anderen buiten Lobsy en zijn
+                    geen banksaldo of elektronisch geld.
                 </p>
-                <h3>Gebruik van tokens</h3>
+                <h3>Waar je tokens voor gebruikt</h3>
                 <ul>
-                    <li><strong>Publiceren:</strong> het plaatsen/activeren van een vacature kost tokens volgens de actuele tarieven in het platform.</li>
-                    <li><strong>Highlight:</strong> optionele zichtbaarheidsboost tegen tokenkosten.</li>
-                    <li><strong>PushBom:</strong> optionele push/bereik-actie; kosten kunnen afhangen van bereik of kandidatentiers.</li>
-                    <li><strong>Verlengen:</strong> verlenging van een vacatureperiode tegen tokenkosten.</li>
+                    <li><strong>Publiceren:</strong> een vacature plaatsen of activeren.</li>
+                    <li><strong>Highlight:</strong> je vacature beter laten opvallen.</li>
+                    <li><strong>PushBom:</strong> een extra push naar kandidaten; de kosten hangen af van het bereik.</li>
+                    <li><strong>Verlengen:</strong> je vacature langer open laten staan.</li>
                 </ul>
+                <h3>Prijzen en btw</h3>
+                <p>
+                    Prijzen op de tarievenpagina staan <strong>exclusief btw</strong>. Bij het afrekenen zie je
+                    ook het bedrag inclusief btw. Wat een token of een functie kost, staat op de tarievenpagina
+                    en in de checkout — niet in deze tekst. Lobsy mag tarieven wijzigen. Heb je een pakket al
+                    betaald? Dan blijft dat geldig volgens de voorwaarden van het moment van aankoop.
+                    Een early-adopterkorting of andere actie geldt alleen zolang die in het platform staat.
+                </p>
                 <h3>Welkomsttoken</h3>
                 <p>
-                    Bij succesvolle activatie van een bedrijfsaccount kan Lobsy een welkomsttoken toekennen
-                    (standaard één token, tenzij anders vermeld). Welkomsttokens kunnen aan voorwaarden of
-                    gebruiksbeperkingen onderhevig zijn.
+                    Is je bedrijfsaccount geactiveerd? Dan kun je een welkomsttoken krijgen (standaard één,
+                    tenzij we iets anders melden). Aan een welkomsttoken kunnen voorwaarden hangen.
                 </p>
-                <h3>Allocatie</h3>
+                <h3>Tokens verdelen</h3>
                 <p>
-                    Binnen een organisatie kunnen tokens (waar de functionaliteit dat toelaat) worden toegewezen
-                    tussen vestigingen. Allocaties zijn intern en wijzigen het totale organisatiesaldo niet,
-                    behalve door aankoop, besteding, grant of correctie.
+                    Binnen een organisatie kun je tokens verdelen over vestigingen, waar die functie
+                    beschikbaar is. Verdelen verandert het totale saldo niet. Dat verandert alleen door
+                    aankoop, besteding, een toekenning door Lobsy of een correctie.
                 </p>
-                <h3>Onvoldoende saldo</h3>
+                <h3>Te weinig tokens</h3>
                 <p>
-                    Lobsy werkt prepaid: zonder positief tokensaldo wordt een betaalde actie geblokkeerd
-                    (“no tokens, no action”). Je kunt direct in de melding tokens bijkopen (exact tekort of
-                    een bulkpakket) via Mollie. Na succesvolle betaling worden tokens bijgeschreven en wordt
-                    de openstaande actie automatisch uitgevoerd. Vestigingsmanagers zonder kooprecht kunnen
-                    een publicatieaanvraag in wachtstatus plaatsen tot een bedrijfsmanager goedkeurt of tokens
-                    beschikbaar zijn. Er wordt geen automatische incasso gebruikt.
-                </p>
-                <h3>Tarieven en kortingen</h3>
-                <p>
-                    Tokenprijzen, pakketten, productkosten en eventuele kortingen voor vroege gebruikers worden in het
-                    platform getoond of door Lobsy meegedeeld. Lobsy mag tarieven wijzigen; reeds betaalde
-                    pakketten blijven beschikbaar volgens de aankoopvoorwaarden van dat moment.
+                    Lobsy werkt met vooraf betalen. Zonder tokens kun je een betaalde actie niet doen.
+                    In de melding koop je direct tokens bij: precies het tekort of een bulkpakket.
+                    Een vestigingsmanager zonder kooprecht kan een aanvraag in de wachtrij zetten tot een
+                    bedrijfsmanager die goedkeurt of tot er tokens zijn. We gebruiken geen automatische incasso.
                 </p>
             </text>
         },
         new LegalSection
         {
-            Id = "betalen-btw",
+            Id = "betalen",
             Number = "6",
             TitleKey = "Terms.Sec.betalen-btw.Title",
             SummaryKey = "Terms.Sec.betalen-btw.Summary",
+            AliasIds = ["betalen-btw"],
             Body = @<text>
                 <ul>
-                    <li>Tokenpakketten worden aangeschaft via de in het platform gekozen betaalmethode (bijv. Mollie).</li>
-                    <li>Betalingen zijn verschuldigd volgens de checkout; na succesvolle betaling worden tokens bijgeschreven.</li>
-                    <li>Prijzen zijn in euro’s. Bij de checkout staat per bedrag of het exclusief of inclusief btw is.</li>
-                    <li>Lobsy of een beheerder kan in uitzonderlijke gevallen tokens toekennen (grant) of corrigeren bij fouten of misbruik.</li>
-                    <li>Terugbetaling van gekochte tokens of ongebruikte tegoeden is alleen mogelijk als de wet dat verplicht of Lobsy dat uitdrukkelijk toestaat.</li>
+                    <li>Je betaalt met de betaalmethode die je in het platform kiest; dat loopt via Mollie.</li>
+                    <li>Na een gelukte betaling schrijven we de tokens bij. Staat er een actie klaar? Die voeren we dan automatisch uit.</li>
+                    <li>Je krijgt een factuur in het platform. Bedragen staan in euro’s.</li>
+                    <li>Lobsy kan in uitzonderlijke gevallen tokens toekennen of een fout corrigeren.</li>
+                    <li>Gekochte tokens en ongebruikt tegoed betalen we alleen terug als de wet dat verplicht of als Lobsy dat uitdrukkelijk toezegt.</li>
                 </ul>
             </text>
         },
@@ -137,94 +173,112 @@
             Id = "vacatures",
             Number = "7",
             TitleKey = "Terms.Sec.vacatures.Title",
+            SummaryKey = "Terms.Sec.vacatures.Summary",
+            AliasIds = ["matching"],
             Body = @<text>
                 <ul>
-                    <li>Je garandeert dat vacatureteksten kloppen, rechtmatig zijn en geen discriminerende of misleidende inhoud bevatten.</li>
-                    <li>Je vult uren, roosters/dagdelen (of “tijden in overleg”) en de wettelijke taakvinkjes juist in; die gegevens sturen matching en jeugdige-arbeidschecks.</li>
-                    <li>Lobsy mag content modereren (inclusief geautomatiseerde/AI-ondersteunde moderatie) en vacatures weigeren, pauzeren of verwijderen.</li>
-                    <li>Je blijft zelf verantwoordelijk voor werving, selectie en naleving van arbeidsrecht en gelijke behandeling.</li>
+                    <li>Je zorgt dat je vacaturetekst klopt, mag van de wet en niets discriminerends of misleidends bevat.</li>
+                    <li>Je vult uren, dagdelen (of “tijden in overleg”) en de vinkjes over de taken goed in. Die gegevens sturen de matching en de checks voor werk door jongeren.</li>
+                    <li>Lobsy mag inhoud controleren, ook met hulp van AI, en een vacature weigeren, pauzeren of weghalen.</li>
+                    <li>Werven, selecteren en de regels over arbeidsrecht en gelijke behandeling blijven jouw verantwoordelijkheid.</li>
+                </ul>
+                <h3>Matching en werk door jongeren</h3>
+                <ul>
+                    <li>Een matchpercentage is een hulpmiddel op basis van reistijd, uren en dagdelen. Het zegt niets over geschiktheid en is geen toezegging.</li>
+                    <li>Checks op basis van de taakvinkjes en de leeftijd van een kandidaat helpen je bij de Arbeidstijdenwet. Ze vervangen je eigen controle niet.</li>
+                    <li>Je mag geen minimumleeftijd als filter op een vacature zetten. Bescherming van jongeren loopt via de taken, niet via leeftijd.</li>
+                    <li>Verkeerde of onvolledige taakvinkjes, uren of dagdelen kunnen tot verkeerde matches leiden. Dat risico ligt bij jou.</li>
                 </ul>
             </text>
         },
         new LegalSection
         {
-            Id = "matching",
-            Number = "7a",
-            TitleKey = "Terms.Sec.matching.Title",
-            Body = @<text>
-                <ul>
-                    <li>Matchingspercentages en breakdowns zijn hulpmiddelen op basis van reistijd, uren en dagdelen; zij vormen geen toezegging van geschiktheid of aanname.</li>
-                    <li>Automatische checks op basis van taakvinkjes en kandidaatleeftijd ondersteunen naleving van de Arbeidstijdenwet, maar vervangen jouw eigen juridische en operationele controle niet.</li>
-                    <li>Je mag geen minimumleeftijd als wervingsfilter op vacatures zetten; leeftijdsbescherming loopt via feitelijke taakkenmerken.</li>
-                    <li>Onjuiste of onvolledige taakvinkjes, uren of roosters kunnen tot verkeerde matches of ongepaste sollicitaties leiden — dat risico ligt bij de Ondernemer.</li>
-                </ul>
-            </text>
-        },
-        new LegalSection
-        {
-            Id = "kandidaatgegevens",
+            Id = "melden",
             Number = "8",
+            TitleKey = "Terms.Sec.melden.Title",
+            SummaryKey = "Terms.Sec.melden.Summary",
+            Body = @<text>
+                <TermsReportingText Audience="TermsAudience.Employer" SupportEmail="@_supportEmail" />
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "sollicitaties",
+            Number = "9",
             TitleKey = "Terms.Sec.kandidaatgegevens.Title",
+            SummaryKey = "Terms.Sec.kandidaatgegevens.Summary",
+            AliasIds = ["kandidaatgegevens"],
             Body = @<text>
                 <p>
-                    Je verwerkt kandidatengegevens die je via Lobsy ontvangt als zelfstandige verwerkingsverantwoordelijke
-                    (of volgens jullie interne rolverdeling), en houdt je aan de AVG. Gebruik sollicitatiegegevens alleen
-                    voor werving rondom de betreffende vacature, tenzij de kandidaat anders toestemt.
-                    Progressive disclosure geldt: volledige NAW/contactgegevens worden pas getoond na acceptatie of
-                    contactstatus volgens de platformregels.
+                    Krijg je gegevens van kandidaten via Lobsy? Dan bepaal je zelf wat je daarmee doet, en
+                    geldt de AVG voor jou. Gebruik sollicitatiegegevens alleen voor de werving rond die
+                    vacature, tenzij de kandidaat iets anders goed vindt.
+                </p>
+                <p>
+                    Je ziet niet meteen alles. Naam, adres en contactgegevens van een kandidaat komen pas
+                    vrij nadat je de sollicitatie accepteert of contact opneemt, volgens de platformregels.
                 </p>
             </text>
         },
         new LegalSection
         {
-            Id = "beschikbaarheid",
-            Number = "9",
+            Id = "beschikbaar",
+            Number = "10",
             TitleKey = "Terms.Sec.beschikbaarheid.Title",
+            SummaryKey = "Terms.Sec.beschikbaarheid.Summary",
+            AliasIds = ["beschikbaarheid"],
             Body = @<text>
                 <p>
-                    Lobsy streeft naar een stabiele dienst maar garandeert geen ononderbroken beschikbaarheid.
-                    Functionaliteit, tarieven en deze voorwaarden kunnen worden aangepast. Bij materiële wijzigingen
-                    informeren we redelijkerwijs via het platform.
+                    We doen ons best om Lobsy stabiel te houden, maar we beloven geen ononderbroken
+                    beschikbaarheid. Functies, tarieven en deze voorwaarden kunnen veranderen. Verandert er
+                    iets belangrijks? Dan laten we dat op een redelijke manier weten in het platform.
                 </p>
             </text>
         },
         new LegalSection
         {
             Id = "aansprakelijkheid",
-            Number = "10",
+            Number = "11",
             TitleKey = "Terms.Sec.aansprakelijkheid.Title",
+            SummaryKey = "Terms.Sec.aansprakelijkheid.Employer.Summary",
             Body = @<text>
                 <p>
-                    Lobsy is niet aansprakelijk voor (het uitblijven van) matches, de kwaliteit van kandidaten,
-                    beslissingen van Ondernemer of kandidaat, of schade door onjuiste door jou aangeleverde gegevens.
-                    Onze totale aansprakelijkheid is, voor zover wettelijk toegestaan, beperkt tot het bedrag dat je
-                    in de twaalf maanden voorafgaand aan de gebeurtenis aan Lobsy hebt betaald voor tokens, of € 250
-                    als dat lager is. Dit beperkt geen aansprakelijkheid die wettelijk niet mag worden uitgesloten.
+                    Lobsy is niet aansprakelijk voor matches die uitblijven, voor de kwaliteit van kandidaten,
+                    voor keuzes van jou of van een kandidaat, of voor schade door gegevens die jij verkeerd
+                    hebt ingevuld.
+                </p>
+                <p>
+                    Is Lobsy aansprakelijk? Dan betalen we nooit meer dan wat je in de 12 maanden vóór de
+                    gebeurtenis aan Lobsy betaalde, met een minimum van € 250. Dit geldt niet bij opzet of
+                    grove schuld van Lobsy, en niet voor aansprakelijkheid die de wet niet laat beperken.
                 </p>
             </text>
         },
         new LegalSection
         {
-            Id = "beeindiging",
-            Number = "11",
+            Id = "einde",
+            Number = "12",
             TitleKey = "Terms.Sec.beeindiging.Title",
+            SummaryKey = "Terms.Sec.beeindiging.Summary",
+            AliasIds = ["beeindiging"],
             Body = @<text>
                 <p>
-                    Bij misbruik, fraude, schending van deze voorwaarden of wetgeving mag Lobsy accounts beperken
-                    of beëindigen en tokens blokkeren. Je kunt je account beëindigen volgens de in het platform
-                    beschikbare procedures; openstaande verplichtingen blijven bestaan.
+                    Bij misbruik, fraude of het schenden van deze voorwaarden of van de wet mag Lobsy je
+                    account beperken of stoppen en tokens blokkeren. Je kunt zelf stoppen via de procedures
+                    in het platform. Wat je nog moet betalen, blijft je betalen.
                 </p>
             </text>
         },
         new LegalSection
         {
             Id = "recht",
-            Number = "12",
+            Number = "13",
             TitleKey = "Terms.Sec.recht.Title",
+            SummaryKey = "Terms.Sec.recht.Summary",
             Body = @<text>
                 <p>
-                    Op deze voorwaarden is Nederlands recht van toepassing. Geschillen worden voorgelegd aan de
-                    bevoegde rechter in Nederland, tenzij dwingend recht anders bepaalt.
+                    Op deze voorwaarden geldt Nederlands recht. Een geschil leggen we voor aan de bevoegde
+                    rechter in Nederland, tenzij de wet iets anders voorschrijft.
                 </p>
             </text>
         }

@@ -1,0 +1,28 @@
+KEY: RecoveryCodeUsed
+SUBJECT: You used a recovery code
+PREHEADER: You have 9 left.
+KIND: Essential
+--- TEXT ---
+Recovery code used
+
+You just signed in with a recovery code. You have 9 left.
+
+Was this not you? Contact ⁨support@lobsy.nl⁩ right away.
+
+Create new recovery codes: https://lobsy.nl/account/mfa/herstelcodes-vernieuwen
+
+فريق Lobsy
+
+You get this email to protect your account.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Recovery code used
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Create new recovery codes -> https://lobsy.nl/account/mfa/herstelcodes-vernieuwen
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

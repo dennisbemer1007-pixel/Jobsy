@@ -1,0 +1,29 @@
+KEY: RecoveryCodesRegenerated
+SUBJECT: You created new recovery codes
+PREHEADER: Your old recovery codes no longer work.
+KIND: Essential
+--- TEXT ---
+New recovery codes
+==================
+
+You just created new recovery codes. Your old codes no longer work.
+
+Was this not you? Contact support@lobsy.nl right away.
+
+View your recovery codes: https://lobsy.nl/account/mfa/herstelcodes
+
+Team Lobsy
+
+You get this email to protect your account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: New recovery codes
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View your recovery codes -> https://lobsy.nl/account/mfa/herstelcodes
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

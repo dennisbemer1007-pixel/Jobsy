@@ -374,6 +374,7 @@ public static class UiStringsLegal
             "النسخة الأولى التي تشمل الرموز والمطابقة وعمل الشباب.");
 
         MergePrivacySections(Add);
+        MergeTermsChrome(Add);
         MergeTermsSections(Add);
     }
 
@@ -707,9 +708,46 @@ public static class UiStringsLegal
             "هل تغيّر شيء مهم؟ سنخبرك داخل المنصة أو بالبريد. في الأسفل ترى ما تغيّر.");
     }
 
-    /// <summary>Terms section titles and summaries, shared by both terms documents (04 writes the bodies).</summary>
+    /// <summary>
+    /// Terms chrome that is not a section: the audience switch and the one waiver sentence (04.2, 04.7).
+    /// </summary>
+    private static void MergeTermsChrome(AddString Add)
+    {
+        Add("Terms.Switch.Label",
+            "Kies voor wie je de voorwaarden leest",
+            "Choose whose terms you are reading",
+            "Wybierz, czyj regulamin czytasz",
+            "Alege pentru cine citești condițiile",
+            "اختر الشروط التي تقرأها");
+        Add("Terms.Switch.Employers",
+            "Voor werkgevers",
+            "For employers",
+            "Dla pracodawców",
+            "Pentru angajatori",
+            "لأصحاب العمل");
+        Add("Terms.Switch.Candidates",
+            "Voor kandidaten",
+            "For candidates",
+            "Dla kandydatów",
+            "Pentru candidați",
+            "للمرشحين");
+
+        // D7: one sentence, reused word for word by the checkout (public-pages 05 / docs/tests 01).
+        Add("Terms.Waiver.Checkbox",
+            "Ik wil dat de analyse meteen start. Ik weet dat ik dan geen 14 dagen bedenktijd heb.",
+            "I want the analysis to start right away. I know that I then have no 14-day cooling-off period.",
+            "Chcę, aby analiza zaczęła się od razu. Wiem, że wtedy nie mam 14 dni na odstąpienie.",
+            "Vreau ca analiza să înceapă imediat. Știu că atunci nu am 14 zile de retragere.",
+            "أريد أن يبدأ التحليل فوراً. أعلم أنه لن يكون لديّ 14 يوماً للتراجع.");
+    }
+
+    /// <summary>
+    /// Terms section titles and summaries (04.3 / 04.4). Section ids are stable URLs; the key names
+    /// keep their older spelling where both documents share a title, so translations stay in place.
+    /// </summary>
     private static void MergeTermsSections(AddString Add)
     {
+        // —— 1. Wie is Lobsy? (both documents) ——
         Add("Terms.Sec.wie-is-lobsy.Title",
             "Wie is Lobsy?",
             "Who is Lobsy?",
@@ -722,12 +760,130 @@ public static class UiStringsLegal
             "To nasze dane, żebyś wiedział, z kim się umawiasz.",
             "Acestea sunt datele noastre, ca să știi cu cine faci acordul.",
             "هذه بياناتنا، لتعرف مع من تتعامل.");
+
+        // —— Employer document ——
         Add("Terms.Sec.toepasselijkheid.Title",
-            "Voor wie gelden ze?",
-            "Who do they apply to?",
-            "Dla kogo obowiązują?",
-            "Pentru cine se aplică?",
-            "على من تنطبق؟");
+            "Wanneer gelden deze voorwaarden?",
+            "When do these terms apply?",
+            "Kiedy obowiązuje ten regulamin?",
+            "Când se aplică aceste condiții?",
+            "متى تنطبق هذه الشروط؟");
+        Add("Terms.Sec.toepasselijkheid.Summary",
+            "Zodra je een bedrijfsaccount maakt of gebruikt. Zoek je zelf werk? Dan gelden de gebruiksvoorwaarden.",
+            "As soon as you create or use a company account. Looking for work yourself? Then the terms of use apply.",
+            "Od chwili, gdy zakładasz lub używasz konta firmowego. Szukasz pracy? Wtedy obowiązują warunki użytkowania.",
+            "De îndată ce creezi sau folosești un cont de firmă. Cauți tu de lucru? Atunci se aplică condițiile de utilizare.",
+            "بمجرد إنشاء حساب شركة أو استخدامه. تبحث عن عمل بنفسك؟ إذاً تنطبق شروط الاستخدام.");
+        Add("Terms.Sec.dienst.Title",
+            "Wat Lobsy doet",
+            "What Lobsy does",
+            "Co robi Lobsy",
+            "Ce face Lobsy",
+            "ما يقوم به Lobsy");
+        Add("Terms.Sec.dienst.Summary",
+            "Je plaatst vacatures en bereikt kandidaten in de buurt. Lobsy is geen partij bij het arbeidscontract.",
+            "You post vacancies and reach candidates nearby. Lobsy is not a party to the employment contract.",
+            "Publikujesz ogłoszenia i docierasz do kandydatów w okolicy. Lobsy nie jest stroną umowy o pracę.",
+            "Publici anunțuri și ajungi la candidați din apropiere. Lobsy nu este parte în contractul de muncă.",
+            "تنشر الوظائف وتصل إلى مرشحين قريبين. ‏Lobsy ليس طرفاً في عقد العمل.");
+        Add("Terms.Sec.account-kvk.Title",
+            "Account en KvK-controle",
+            "Account and KvK check",
+            "Konto i weryfikacja KvK",
+            "Cont și verificarea KvK",
+            "الحساب والتحقق من السجل التجاري");
+        Add("Terms.Sec.account-kvk.Summary",
+            "We controleren je KvK-nummer. Zolang dat niet gelukt is, is je bedrijfspagina niet openbaar.",
+            "We check your KvK number. Until that succeeds, your company page is not public.",
+            "Sprawdzamy twój numer KvK. Dopóki się to nie uda, strona firmy nie jest publiczna.",
+            "Verificăm numărul tău KvK. Până reușește, pagina firmei nu este publică.",
+            "نتحقق من رقم سجلك التجاري. وحتى ينجح ذلك، لا تكون صفحة شركتك علنية.");
+        Add("Terms.Sec.tokens.Title",
+            "Tokens en prijzen",
+            "Tokens and prices",
+            "Tokeny i ceny",
+            "Tokenuri și prețuri",
+            "الرموز والأسعار");
+        Add("Terms.Sec.tokens.Summary",
+            "Met tokens neem je betaalde functies af. Prijzen op de tarievenpagina staan exclusief btw; bij het afrekenen zie je ook het bedrag inclusief btw.",
+            "You use tokens for paid features. Prices on the rates page exclude VAT; at checkout you also see the amount including VAT.",
+            "Tokenami opłacasz funkcje płatne. Ceny na stronie cennika są bez VAT; przy płatności widzisz też kwotę z VAT.",
+            "Cu tokenuri plătești funcțiile cu plată. Prețurile din pagina de tarife sunt fără TVA; la plată vezi și suma cu TVA.",
+            "تستخدم الرموز للميزات المدفوعة. الأسعار في صفحة التسعير بدون ضريبة القيمة المضافة؛ وعند الدفع ترى المبلغ مع الضريبة أيضاً.");
+        Add("Terms.Sec.betalen-btw.Title",
+            "Betalen",
+            "Paying",
+            "Płatności",
+            "Plata",
+            "الدفع");
+        Add("Terms.Sec.betalen-btw.Summary",
+            "Je betaalt vooraf via Mollie. Na een gelukte betaling staan je tokens klaar en krijg je een factuur in het platform.",
+            "You pay up front through Mollie. After a successful payment your tokens are ready and you get an invoice in the platform.",
+            "Płacisz z góry przez Mollie. Po udanej płatności tokeny są gotowe, a fakturę znajdziesz w platformie.",
+            "Plătești în avans prin Mollie. După o plată reușită, tokenurile sunt gata și primești o factură în platformă.",
+            "تدفع مقدماً عبر Mollie. بعد نجاح الدفع تكون رموزك جاهزة وتصلك فاتورة داخل المنصة.");
+        Add("Terms.Sec.vacatures.Title",
+            "Vacatures en inhoud",
+            "Vacancies and content",
+            "Ogłoszenia i treści",
+            "Anunțuri și conținut",
+            "الوظائف والمحتوى");
+        Add("Terms.Sec.vacatures.Summary",
+            "Jouw tekst, jouw verantwoordelijkheid. Wij mogen inhoud controleren en weghalen. Een matchpercentage is een hulpmiddel, geen toezegging.",
+            "Your text, your responsibility. We may review and remove content. A match percentage is a tool, not a promise.",
+            "Twój tekst, twoja odpowiedzialność. Możemy sprawdzać i usuwać treści. Procent dopasowania to narzędzie, nie obietnica.",
+            "Textul tău, responsabilitatea ta. Putem verifica și elimina conținut. Procentul de potrivire e un instrument, nu o promisiune.",
+            "نصك ومسؤوليتك. يمكننا مراجعة المحتوى وإزالته. نسبة المطابقة أداة مساعدة وليست وعداً.");
+        Add("Terms.Sec.kandidaatgegevens.Title",
+            "Sollicitaties en gegevens van kandidaten",
+            "Applications and candidate data",
+            "Zgłoszenia i dane kandydatów",
+            "Candidaturi și datele candidaților",
+            "الطلبات وبيانات المرشحين");
+        Add("Terms.Sec.kandidaatgegevens.Summary",
+            "Gebruik sollicitatiegegevens alleen voor die vacature. Contactgegevens komen pas vrij nadat je accepteert of contact opneemt.",
+            "Only use application data for that vacancy. Contact details become available after you accept or make contact.",
+            "Dane ze zgłoszenia wykorzystuj tylko do tego ogłoszenia. Dane kontaktowe otrzymasz po akceptacji lub kontakcie.",
+            "Folosește datele candidaturii doar pentru acel anunț. Datele de contact apar după ce accepți sau iei legătura.",
+            "استخدم بيانات الطلب لهذه الوظيفة فقط. تظهر بيانات الاتصال بعد القبول أو بعد التواصل.");
+        Add("Terms.Sec.beschikbaarheid.Title",
+            "Beschikbaarheid en wijzigingen",
+            "Availability and changes",
+            "Dostępność i zmiany",
+            "Disponibilitate și modificări",
+            "التوافر والتغييرات");
+        Add("Terms.Sec.beschikbaarheid.Summary",
+            "We beloven geen ononderbroken dienst. Verandert er iets belangrijks? Dan laten we dat weten in het platform.",
+            "We do not promise an uninterrupted service. Is something important changing? Then we tell you in the platform.",
+            "Nie obiecujemy nieprzerwanej usługi. Zmienia się coś ważnego? Powiemy o tym w platformie.",
+            "Nu promitem un serviciu neîntrerupt. Se schimbă ceva important? Îți spunem în platformă.",
+            "لا نضمن خدمة دون انقطاع. هل تغيّر شيء مهم؟ سنخبرك داخل المنصة.");
+        Add("Terms.Sec.beeindiging.Title",
+            "Misbruik en stoppen",
+            "Misuse and stopping",
+            "Nadużycia i zakończenie",
+            "Abuz și încetare",
+            "سوء الاستخدام والإنهاء");
+        Add("Terms.Sec.beeindiging.Summary",
+            "Bij misbruik of fraude mogen we je account beperken of stoppen. Wat je nog moet betalen, blijft staan.",
+            "In case of misuse or fraud we may limit or end your account. What you still owe remains due.",
+            "W razie nadużycia lub oszustwa możemy ograniczyć albo zamknąć twoje konto. Zaległe płatności pozostają.",
+            "În caz de abuz sau fraudă putem limita sau închide contul tău. Ce mai datorezi rămâne de plată.",
+            "في حالة سوء الاستخدام أو الغش يمكننا تقييد حسابك أو إنهاؤه. ويبقى ما عليك دفعه مستحقاً.");
+        Add("Terms.Sec.recht.Title",
+            "Welk recht geldt?",
+            "Which law applies?",
+            "Jakie prawo obowiązuje?",
+            "Ce lege se aplică?",
+            "أي قانون ينطبق؟");
+        Add("Terms.Sec.recht.Summary",
+            "Nederlands recht. Een geschil gaat naar de bevoegde rechter in Nederland.",
+            "Dutch law. A dispute goes to the competent court in the Netherlands.",
+            "Prawo niderlandzkie. Spór rozstrzyga właściwy sąd w Niderlandach.",
+            "Legea neerlandeză. Un litigiu merge la instanța competentă din Țările de Jos.",
+            "القانون الهولندي. ويُحال أي نزاع إلى المحكمة المختصة في هولندا.");
+
+        // —— Candidate document ——
         Add("Terms.Sec.voor-wie.Title",
             "Voor wie gelden ze?",
             "Who do they apply to?",
@@ -740,42 +896,42 @@ public static class UiStringsLegal
             "Dla każdego, kto szuka pracy przez Lobsy, od 13 lat. Masz mniej niż 16 lat? Najpierw pytamy rodzica o zgodę.",
             "Pentru oricine caută de lucru pe Lobsy, de la 13 ani. Ai sub 16 ani? Atunci cerem mai întâi acordul părintelui.",
             "لكل من يستخدم Lobsy للبحث عن عمل، من عمر 13 سنة. أقل من 16؟ نطلب موافقة والدك أولاً.");
-        Add("Terms.Sec.dienst.Title",
-            "Wat doet Lobsy?",
-            "What does Lobsy do?",
-            "Co robi Lobsy?",
-            "Ce face Lobsy?",
-            "ماذا يفعل Lobsy؟");
-        Add("Terms.Sec.account-kvk.Title",
-            "Account en KvK",
-            "Account and KvK",
-            "Konto i KvK",
-            "Cont și KvK",
-            "الحساب والسجل التجاري");
+        Add("Terms.Sec.wat.Title",
+            "Wat Lobsy wel en niet is",
+            "What Lobsy is and is not",
+            "Czym Lobsy jest, a czym nie",
+            "Ce este și ce nu este Lobsy",
+            "ما هو Lobsy وما ليس هو");
+        Add("Terms.Sec.wat.Summary",
+            "Lobsy helpt je werk in de buurt te vinden. We zijn geen werkgever en geen uitzendbureau; de werkgever beslist.",
+            "Lobsy helps you find work nearby. We are not an employer and not a staffing agency; the employer decides.",
+            "Lobsy pomaga ci znaleźć pracę w okolicy. Nie jesteśmy pracodawcą ani agencją pracy; decyduje pracodawca.",
+            "Lobsy te ajută să găsești de lucru în apropiere. Nu suntem angajator și nici agenție de muncă; angajatorul decide.",
+            "يساعدك Lobsy في العثور على عمل قريب. نحن لسنا صاحب عمل ولا وكالة توظيف؛ صاحب العمل هو من يقرر.");
         Add("Terms.Sec.account.Title",
-            "Jouw account en gegevens",
-            "Your account and data",
-            "Twoje konto i dane",
-            "Contul și datele tale",
-            "حسابك وبياناتك");
-        Add("Terms.Sec.tokens.Title",
-            "Tokens",
-            "Tokens",
-            "Tokeny",
-            "Tokenuri",
-            "الرموز");
-        Add("Terms.Sec.betalen-btw.Title",
-            "Betalen en btw",
-            "Payment and VAT",
-            "Płatności i VAT",
-            "Plată și TVA",
-            "الدفع وضريبة القيمة المضافة");
-        Add("Terms.Sec.betalen-btw.Summary",
-            "Je betaalt vooraf met tokens via Mollie. Alle prijzen zijn exclusief btw, tenzij er iets anders staat.",
-            "You pay up front with tokens through Mollie. All prices exclude VAT unless stated otherwise.",
-            "Płacisz z góry tokenami przez Mollie. Wszystkie ceny są bez VAT, chyba że napisano inaczej.",
-            "Plătești în avans cu tokenuri prin Mollie. Toate prețurile sunt fără TVA, dacă nu se spune altfel.",
-            "تدفع مقدماً بالرموز عبر Mollie. جميع الأسعار بدون ضريبة القيمة المضافة إلا إذا ذُكر غير ذلك.");
+            "Jouw account",
+            "Your account",
+            "Twoje konto",
+            "Contul tău",
+            "حسابك");
+        Add("Terms.Sec.account.Summary",
+            "Vul gegevens in die kloppen en houd je inloggegevens voor jezelf.",
+            "Enter details that are correct and keep your login details to yourself.",
+            "Podawaj prawdziwe dane i zachowaj dane logowania dla siebie.",
+            "Completează date corecte și păstrează datele de autentificare pentru tine.",
+            "أدخل بيانات صحيحة واحتفظ ببيانات الدخول لنفسك.");
+        Add("Terms.Sec.solliciteren.Title",
+            "Solliciteren",
+            "Applying for a job",
+            "Składanie zgłoszeń",
+            "Aplicarea la un job",
+            "التقديم على وظيفة");
+        Add("Terms.Sec.solliciteren.Summary",
+            "Je deelt je voorkeuren met die werkgever. Een matchpercentage is een schatting, geen garantie op een gesprek.",
+            "You share your preferences with that employer. A match percentage is an estimate, not a guarantee of an interview.",
+            "Dzielisz się swoimi preferencjami z tym pracodawcą. Procent dopasowania to szacunek, nie gwarancja rozmowy.",
+            "Îți împărtășești preferințele cu acel angajator. Procentul de potrivire e o estimare, nu o garanție de interviu.",
+            "تشارك تفضيلاتك مع صاحب العمل. نسبة المطابقة تقدير وليست ضماناً لمقابلة.");
         Add("Terms.Sec.bedenktijd.Title",
             "Betaalde extra’s en bedenktijd",
             "Paid extras and your right to withdraw",
@@ -783,47 +939,67 @@ public static class UiStringsLegal
             "Extra plătite și dreptul de retragere",
             "الإضافات المدفوعة وحق التراجع");
         Add("Terms.Sec.bedenktijd.Summary",
-            "Lobsy is gratis. Koop je iets extra, zoals de uitgebreide analyse? Dan zie je vooraf de prijs en wat je krijgt.",
-            "Lobsy is free. Buying something extra, like the in-depth analysis? Then you see the price and what you get up front.",
-            "Lobsy jest darmowe. Kupujesz dodatek, na przykład analizę pogłębioną? Cenę i zakres widzisz z góry.",
-            "Lobsy este gratuit. Cumperi un extra, cum ar fi analiza detaliată? Vezi dinainte prețul și ce primești.",
-            "‏Lobsy مجاني. تشتري إضافة مثل التحليل المتقدم؟ ترى السعر وما تحصل عليه مسبقاً.");
-        Add("Terms.Sec.vacatures.Title",
-            "Vacatures en inhoud",
-            "Vacancies and content",
-            "Ogłoszenia i treści",
-            "Anunțuri și conținut",
-            "الوظائف والمحتوى");
-        Add("Terms.Sec.matching.Title",
-            "Matching en jeugdige arbeid",
-            "Matching and young workers",
-            "Dopasowanie i praca młodzieży",
-            "Potrivirea și munca minorilor",
-            "المطابقة وعمل الشباب");
-        Add("Terms.Sec.matchscores.Title",
-            "Matchpercentages",
-            "Match percentages",
-            "Procenty dopasowania",
-            "Procentele de potrivire",
-            "نسب المطابقة");
-        Add("Terms.Sec.solliciteren.Title",
-            "Solliciteren",
-            "Applying for a job",
-            "Składanie zgłoszeń",
-            "Aplicarea la un job",
-            "التقديم على وظيفة");
+            "Lobsy is gratis. Koop je de uitgebreide test? Dan start de analyse meteen en geef je met een vinkje je 14 dagen bedenktijd op.",
+            "Lobsy is free. Buying the in-depth test? Then the analysis starts right away and you waive your 14-day cooling-off period with a checkbox.",
+            "Lobsy jest darmowe. Kupujesz test pogłębiony? Analiza startuje od razu, a zaznaczając pole, rezygnujesz z 14 dni na odstąpienie.",
+            "Lobsy este gratuit. Cumperi testul detaliat? Analiza începe imediat și renunți printr-o bifă la cele 14 zile de retragere.",
+            "‏Lobsy مجاني. تشتري الاختبار المتقدم؟ يبدأ التحليل فوراً وتتنازل بعلامة اختيار عن مدة التراجع البالغة 14 يوماً.");
         Add("Terms.Sec.ai.Title",
-            "Chatbot en AI",
-            "Chatbot and AI",
-            "Czatbot i AI",
-            "Chatbot și AI",
-            "روبوت الدردشة والذكاء الاصطناعي");
+            "AI en de chatbot",
+            "AI and the chatbot",
+            "AI i czatbot",
+            "AI și chatbotul",
+            "الذكاء الاصطناعي وروبوت الدردشة");
+        Add("Terms.Sec.ai.Summary",
+            "AI helpt, maar kan fouten maken. Het is geen advies op maat en belooft je geen baan.",
+            "AI helps, but it can make mistakes. It is not tailored advice and promises you no job.",
+            "AI pomaga, ale może się mylić. To nie porada na miarę i nie obiecuje ci pracy.",
+            "AI ajută, dar poate greși. Nu este un sfat personalizat și nu îți promite un job.",
+            "الذكاء الاصطناعي يساعد لكنه قد يخطئ. ليس نصيحة مخصّصة ولا يعدك بوظيفة.");
         Add("Terms.Sec.gebruik.Title",
-            "Acceptabel gebruik",
-            "Acceptable use",
-            "Dozwolone korzystanie",
-            "Utilizare acceptabilă",
-            "الاستخدام المقبول");
+            "Wat mag niet",
+            "What is not allowed",
+            "Czego nie wolno",
+            "Ce nu este permis",
+            "ما هو غير مسموح");
+        Add("Terms.Sec.gebruik.Summary",
+            "Geen illegaal, discriminerend of frauduleus gebruik, geen scrapen en de beveiliging niet omzeilen.",
+            "No illegal, discriminatory or fraudulent use, no scraping and no bypassing security.",
+            "Żadnego nielegalnego, dyskryminującego lub oszukańczego użycia, bez scrapowania i bez obchodzenia zabezpieczeń.",
+            "Fără utilizare ilegală, discriminatorie sau fraudulentă, fără scraping și fără ocolirea securității.",
+            "لا استخدام غير قانوني أو تمييزي أو احتيالي، ولا سحب للبيانات، ولا تجاوز للحماية.");
+        Add("Terms.Sec.beschikbaar.Title",
+            "Beschikbaarheid",
+            "Availability",
+            "Dostępność",
+            "Disponibilitate",
+            "التوافر");
+        Add("Terms.Sec.einde.Title",
+            "Stoppen",
+            "Stopping",
+            "Rezygnacja",
+            "Renunțarea",
+            "التوقف");
+        Add("Terms.Sec.einde.Summary",
+            "Je kunt altijd stoppen. Wij mogen je toegang beperken bij misbruik. Verwijderen van gegevens loopt via de privacyverklaring.",
+            "You can stop at any time. We may limit your access in case of misuse. Deleting data goes through the privacy statement.",
+            "Możesz przestać w każdej chwili. W razie nadużycia możemy ograniczyć dostęp. Usuwanie danych odbywa się zgodnie z polityką prywatności.",
+            "Poți renunța oricând. În caz de abuz putem limita accesul. Ștergerea datelor se face prin declarația de confidențialitate.",
+            "يمكنك التوقف في أي وقت. ويمكننا تقييد وصولك عند سوء الاستخدام. ويتم حذف البيانات وفق بيان الخصوصية.");
+        Add("Terms.Sec.wijzigingen.Title",
+            "Wijzigingen en recht",
+            "Changes and applicable law",
+            "Zmiany i prawo",
+            "Modificări și legea aplicabilă",
+            "التغييرات والقانون");
+        Add("Terms.Sec.wijzigingen.Summary",
+            "De actuele versie staat altijd op deze pagina. Onderaan zie je wat er is veranderd. Nederlands recht geldt.",
+            "The current version is always on this page. At the bottom you see what changed. Dutch law applies.",
+            "Aktualna wersja jest zawsze na tej stronie. Na dole widzisz, co się zmieniło. Obowiązuje prawo niderlandzkie.",
+            "Versiunea actuală este mereu pe această pagină. Jos vezi ce s-a schimbat. Se aplică legea neerlandeză.",
+            "النسخة الحالية موجودة دائماً على هذه الصفحة. وفي الأسفل ترى ما تغيّر. وينطبق القانون الهولندي.");
+
+        // —— Shared sections with a document-specific summary ——
         Add("Terms.Sec.melden.Title",
             "Iets melden",
             "Reporting something",
@@ -836,41 +1012,23 @@ public static class UiStringsLegal
             "Widzisz ogłoszenie albo firmę, które budzą wątpliwości? Zgłoś to. Sprawdzimy i powiemy, co robimy.",
             "Vezi un anunț sau o firmă care nu e în regulă? Raportează. Verificăm și îți spunem ce facem.",
             "ترى وظيفة أو شركة غير سليمة؟ أبلغنا. سننظر في الأمر ونخبرك بما سنفعله.");
-        Add("Terms.Sec.kandidaatgegevens.Title",
-            "Kandidaatgegevens",
-            "Candidate data",
-            "Dane kandydatów",
-            "Datele candidaților",
-            "بيانات المرشحين");
-        Add("Terms.Sec.beschikbaarheid.Title",
-            "Beschikbaarheid en wijzigingen",
-            "Availability and changes",
-            "Dostępność i zmiany",
-            "Disponibilitate și modificări",
-            "التوافر والتغييرات");
         Add("Terms.Sec.aansprakelijkheid.Title",
             "Aansprakelijkheid",
             "Liability",
             "Odpowiedzialność",
             "Răspundere",
             "المسؤولية");
-        Add("Terms.Sec.beeindiging.Title",
-            "Misbruik en beëindiging",
-            "Misuse and termination",
-            "Nadużycia i zakończenie",
-            "Abuz și încetare",
-            "سوء الاستخدام والإنهاء");
-        Add("Terms.Sec.wijzigingen.Title",
-            "Wijzigingen en recht",
-            "Changes and applicable law",
-            "Zmiany i prawo",
-            "Modificări și legea aplicabilă",
-            "التغييرات والقانون");
-        Add("Terms.Sec.recht.Title",
-            "Recht en geschillen",
-            "Law and disputes",
-            "Prawo i spory",
-            "Legea și litigiile",
-            "القانون والنزاعات");
+        Add("Terms.Sec.aansprakelijkheid.Employer.Summary",
+            "Is Lobsy aansprakelijk? Dan betalen we nooit meer dan wat je in de 12 maanden vóór de gebeurtenis betaalde, met een minimum van € 250.",
+            "Is Lobsy liable? Then we never pay more than what you paid in the 12 months before the event, with a minimum of € 250.",
+            "Czy Lobsy odpowiada? Wtedy nie zapłacimy więcej niż to, co zapłaciłeś w 12 miesiącach przed zdarzeniem, co najmniej 250 €.",
+            "Răspunde Lobsy? Atunci nu plătim mai mult decât ce ai plătit în cele 12 luni înainte de eveniment, cu un minim de 250 €.",
+            "هل يتحمل Lobsy المسؤولية؟ إذاً لا ندفع أكثر مما دفعته خلال 12 شهراً قبل الحادث، وبحد أدنى 250 يورو.");
+        Add("Terms.Sec.aansprakelijkheid.Candidate.Summary",
+            "Lobsy is gratis voor werkzoekenden. We beloven geen baan of match. Je wettelijke rechten als consument blijven altijd gelden.",
+            "Lobsy is free for job seekers. We promise no job and no match. Your statutory consumer rights always keep applying.",
+            "Lobsy jest darmowe dla szukających pracy. Nie obiecujemy pracy ani dopasowania. Twoje prawa konsumenta zawsze obowiązują.",
+            "Lobsy este gratuit pentru cei care caută de lucru. Nu promitem un job sau o potrivire. Drepturile tale de consumator rămân mereu valabile.",
+            "‏Lobsy مجاني للباحثين عن عمل. لا نعد بوظيفة أو مطابقة. وتظل حقوقك القانونية كمستهلك سارية دائماً.");
     }
 }

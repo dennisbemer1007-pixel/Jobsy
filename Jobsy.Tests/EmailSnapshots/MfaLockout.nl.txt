@@ -1,0 +1,30 @@
+KEY: MfaLockout
+SUBJECT: Iemand probeerde in te loggen op je Lobsy-account
+PREHEADER: Er is te vaak een verkeerde code ingevuld.
+KIND: Essential
+--- TEXT ---
+Iemand kende je wachtwoord, maar niet je code
+=============================================
+
+Iemand vulde je wachtwoord goed in, maar de code uit je app 10 keer niet.
+
+Was jij dit niet? Neem dan contact op met support@lobsy.nl. Je wachtwoord
+veranderen kan binnenkort ook zelf.
+
+Nieuw wachtwoord kiezen: https://lobsy.nl/wachtwoord-vergeten
+
+Team Lobsy
+
+Je krijgt deze mail om je account te beschermen.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Iemand kende je wachtwoord, maar niet je code
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Nieuw wachtwoord kiezen -> https://lobsy.nl/wachtwoord-vergeten
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

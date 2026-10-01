@@ -15,12 +15,25 @@ public static class PublicNavCatalog
     public static IReadOnlyList<PublicFooterColumn> Footer(LandingVariant variant)
         => variant == LandingVariant.Zw ? FooterZw : FooterOn;
 
-    private static readonly PublicFooterColumn LegalColumn = new(
+    private static readonly PublicFooterColumn LegalColumnOn = new(
         "PublicFooter.Legal",
         [
             new("PublicFooter.Privacy", PublicRoutes.Privacy),
             new("PublicFooter.Cookies", PublicRoutes.PrivacyCookies),
             new("PublicFooter.Terms", PublicRoutes.Terms),
+            new("PublicFooter.UsageTerms", PublicRoutes.UsageTerms),
+            new("PublicFooter.About", PublicRoutes.About)
+        ]);
+
+    /// <summary>
+    /// OFF hides the employer terms from the nav (Dependency F). The document itself stays reachable
+    /// at <see cref="PublicRoutes.Terms"/> and from the audience switch on the terms pages (04.2).
+    /// </summary>
+    private static readonly PublicFooterColumn LegalColumnZw = new(
+        "PublicFooter.Legal",
+        [
+            new("PublicFooter.Privacy", PublicRoutes.Privacy),
+            new("PublicFooter.Cookies", PublicRoutes.PrivacyCookies),
             new("PublicFooter.UsageTerms", PublicRoutes.UsageTerms),
             new("PublicFooter.About", PublicRoutes.About)
         ]);
@@ -60,7 +73,7 @@ public static class PublicNavCatalog
             new("PublicNav.CreateAccount", PublicRoutes.CreateAccount),
             new("PublicFooter.CompanyRegister", PublicRoutes.CompanyRegister)
         ]),
-        LegalColumn
+        LegalColumnOn
     ];
 
     private static readonly IReadOnlyList<PublicFooterColumn> FooterZw =
@@ -77,6 +90,6 @@ public static class PublicNavCatalog
             new("PublicNav.Login", PublicRoutes.Login),
             new("PublicNav.CreateAccount", PublicRoutes.CreateAccount)
         ]),
-        LegalColumn
+        LegalColumnZw
     ];
 }
