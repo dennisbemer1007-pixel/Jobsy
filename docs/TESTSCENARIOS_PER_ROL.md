@@ -1,6 +1,6 @@
 # Testscenario’s per rol (UAT-catalogus)
 
-Aantal rijen: **808**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
+Aantal rijen: **821**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
 
 Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina’s onder `Jobsy.Web/Components`, `RoleNavCatalog`, functionele specs in `docs/`.
 
@@ -10,7 +10,7 @@ Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina�
 
 - [1. Gast (niet ingelogd)](#1-gast-niet-ingelogd) — 147 scenario’s
 - [2. Alle ingelogde rollen (cross-cutting chrome)](#2-alle-ingelogde-rollen-cross-cutting-chrome) — 33 scenario’s
-- [3. Kandidaat](#3-kandidaat) — 112 scenario’s
+- [3. Kandidaat](#3-kandidaat) — 125 scenario’s
 - [4. Filiaalmanager (BranchManager)](#4-filiaalmanager-branchmanager) — 101 scenario’s
 - [5. Regiomanager (RegionalManager)](#5-regiomanager-regionalmanager) — 22 scenario’s
 - [6. Bedrijfsmanager (EnterpriseManager)](#6-bedrijfsmanager-enterprisemanager) — 55 scenario’s
@@ -389,6 +389,19 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Solliciteren zonder nieuwe consent-checkbox bij consent-bump. | Per-apply akkoord verplicht; oude sollicitaties blijven. |
 | Kandidaat | Notifications: sollicitatie-statuswijziging (accept/reject). | Bell toont item; deep link naar applications/detail. |
 | Kandidaat | Tweede kandidaat `kandidaat.denhaag@jobsy.local` vs `kandidaat.ver@jobsy.local` op dezelfde vacature. | Reistijd/match-% verschilt; geen data-mix tussen accounts. |
+| Kandidaat | `/carriere` zonder plan: kies een droombaan en klik **Maak mijn plan**. | Eén kaart met de vraag waar je naartoe wil groeien; knop gaat na de eerste klik op disabled (één generatie); daarna het overzicht met de groeiende schelpen. Geen percentages, geen “stip op de horizon”. |
+| Kandidaat | `/carriere` overzicht: open de stap die **nu aan de beurt** is. | `/carriere?stap={n}` met de stapkaart; alleen deze stap heeft een afrondknop. |
+| Kandidaat | Stap afronden en daarna **ongedaan maken**. | Groeimoment (“Je nieuwe schaal past”) met de volgende stap; ongedaan maken zet de stap terug zonder de rest van het plan te wijzigen. |
+| Kandidaat | Open via `?stap=` een stap die nog niet aan de beurt is. | Stap is leesbaar maar heeft **geen** afrondknop; afronden kan alleen op de huidige stap. |
+| Kandidaat | Droombaan wijzigen: dialoog openen en weer sluiten. | Plan en voortgang onveranderd; de dialoog vertelt wat je meeneemt. |
+| Kandidaat | Droombaan wijzigen naar een andere baan en daarna het oude plan uit **Eerdere plannen** terugzetten. | Nieuw plan met behoud van gehaalde stappen (“Die tellen mee”); het oude plan staat in het archief (30 dagen) en komt na terugzetten weer bovenaan. |
+| Kandidaat | Stapdetail: zoek een knop om een cursus zelf af te vinken. | Bestaat niet; cursussen bewijs je via het paspoort. `POST api/me/career-path/courses/claim` geeft **410** en raakt je certificaten niet. |
+| Kandidaat | `/candidate/talent-contacts` met een openstaand contactverzoek (mobiel 390 en desktop 1440). | Eerst de vraag of je je gegevens wil delen met een preview van wat de werkgever ziet; pas na **Ja** de bedrijfsgegevens. Bij **Nee** blijft “Je zei nee” staan en wordt niets gedeeld. |
+| Kandidaat | `/candidate/hoe-werkt-lobsy`. | Vijf stenen in volgorde ontdekkingsreis/start → paspoort → carrière → banenkaart → sollicitaties; de huidige steen heeft `aria-current="step"`; links blijven binnen de kandidaatroutes. |
+| Kandidaat | Zet de taal op `en`, `pl`, `ro` en `ar` en open carrière, contactverzoeken en de how-to. | Alles vertaald (geen `Career.`/`TalentC.`/`HowC.`-sleutels als tekst); in `ar` is `dir=rtl`, spiegelt de scène mee en is er geen horizontale overflow op 390. |
+| Kandidaat | Zet in het systeem “verminder beweging” aan en rond een stap af. | Het groeimoment is er wel, maar zonder animatie van de kreeft of de vallende schaal. |
+| Kandidaat | Werkgevers-feature UIT: open carrière, contactverzoeken en de how-to. | Geen vacature- of banenkaartlinks meer op deze pagina’s; de rest van het plan blijft werken. |
+| Kandidaat | Navigeer met de muis en daarna met Tab over carrière, contactverzoeken en de how-to. | Muisklik op de titel geeft geen focuskader; de eerste Tab landt zichtbaar op een element. |
 
 
 ---
