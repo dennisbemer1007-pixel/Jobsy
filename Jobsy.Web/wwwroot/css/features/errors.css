@@ -189,6 +189,29 @@
   color: inherit;
 }
 
+/* —— account card (403, errors 02) —— */
+
+.err-account {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-block-start: 0.2rem;
+}
+
+.err-account__line {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.err-account__email,
+.err-account__role {
+  color: var(--err-muted);
+}
+
+.err-switch-form {
+  margin: 0;
+}
+
 /* —— support code card (500) —— */
 
 .err-card {

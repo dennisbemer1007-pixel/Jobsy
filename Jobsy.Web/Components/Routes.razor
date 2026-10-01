@@ -1,4 +1,5 @@
 @using Jobsy.Web.Features
+@inject NavigationManager Navigation
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <FeatureRouteGate RouteData="routeData">
@@ -10,7 +11,11 @@
                     }
                     else
                     {
-                        <RedirectToAccessDenied />
+                        @* Real 403 at the requested URL (errors 02): no forceLoad redirect to
+                           /access-denied, the return URL is kept for "Inloggen met een ander account". *@
+                        <LayoutView Layout="typeof(Layout.ErrorLayout)">
+                            <AccessDeniedView ReturnUrl="@CurrentReturnPath()" Reason="role" />
+                        </LayoutView>
                     }
                 </NotAuthorized>
             </AuthorizeRouteView>
@@ -18,3 +23,11 @@
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+
+@code {
+    private string CurrentReturnPath()
+    {
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        return string.IsNullOrEmpty(relative) ? "/" : "/" + relative;
+    }
+}

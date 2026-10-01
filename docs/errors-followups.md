@@ -36,3 +36,17 @@ Written while building `docs/prompts/errors/01-errorlayout-404-500.md` against
 
 - 403 (`02`), 410 (`03`), 429 (`04`) and maintenance 503 (`05`) currently fall through to the
   generic `/status/{code}` copy. Each file replaces that branch with its own content.
+  **403 is done as of `02`** (`cursor/errors-2`): a signed-in user missing the required role now
+  gets a real 403 at the requested URL via `OnRedirectToAccessDenied` (sets a bare 403, no
+  redirect) → the existing `UseHtmlStatusCodePages` re-execute → `StatusPage.razor`'s
+  `Code == 403` branch, which renders the shared `AccessDeniedView` component.
+
+## auth 03 (`/account/switch`, Dependency E was absent)
+
+- `02` added `reason=switch` handling to `/account/logout`
+  (`Jobsy.Web/Auth/AuthServiceCollectionExtensions.cs`): signs out as today, then redirects to
+  `/login?returnUrl={safe local}` via `AuthRedirects.SafeLocalUrl`. The "Inloggen met een ander
+  account" button on the 403 page (`AccessDeniedView.razor`) posts to this endpoint.
+- If auth adds its own `/account/switch` path or a redesigned login landing, point
+  `AccessDeniedView`'s switch-account form at that instead of duplicating the logic, and keep the
+  `returnUrl` round-trip (open-redirect safe, local paths only).

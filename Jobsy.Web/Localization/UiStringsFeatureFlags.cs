@@ -46,23 +46,5 @@ public static class UiStringsFeatureFlags
             "Pracodawcy wyłączeni",
             "Angajatorii sunt opriți",
             "أصحاب العمل متوقفون");
-        Add("Access.EmployersOffTitle",
-            "Even alleen voor kandidaten",
-            "Candidates only for now",
-            "Na razie tylko dla kandydatów",
-            "Deocamdată doar pentru candidați",
-            "للمرشحين فقط مؤقتاً");
-        Add("Access.EmployersOffLead",
-            "Lobsy staat even alleen open voor kandidaten. Je gegevens blijven bewaard. We laten het je weten als werkgevers weer welkom zijn.",
-            "Lobsy is temporarily open for candidates only. Your data is kept. We’ll let you know when employers are welcome again.",
-            "Lobsy jest tymczasowo otwarte tylko dla kandydatów. Twoje dane zostają. Dam y znać, gdy pracodawcy znów będą mile widziani.",
-            "Lobsy este deschis temporar doar pentru candidați. Datele tale rămân. Te anunțăm când angajatorii sunt din nou bineveniți.",
-            "لوبسي مفتوح مؤقتاً للمرشحين فقط. بياناتك محفوظة. سنُعلمك عندما يعود أصحاب العمل.");
-        Add("Access.EmployersOffLogout",
-            "Uitloggen",
-            "Log out",
-            "Wyloguj",
-            "Deconectare",
-            "تسجيل الخروج");
     }
 }

@@ -16,8 +16,19 @@
 @*
   Re-execute target for unknown HTML pages, and a direct route for the other real status codes.
   Static SSR only: this page must still render when the API or the database is down.
+  403 (errors stack 02) is a special case: a signed-in user without the required role lands
+  here via the OnRedirectToAccessDenied → UseHtmlStatusCodePages re-execute, and the requested
+  URL (not /status/403) stays in the browser. Delegate to AccessDeniedView for that case so the
+  masked-account / switch-account UI shows up at the real URL.
 *@
 
+@if (_status == StatusCodes.Status403Forbidden)
+{
+    <PageTitle>@Culture["Status.Forbidden.Title"] · Lobsy</PageTitle>
+    <AccessDeniedView ReturnUrl="@_originalReturnUrl" Reason="role" />
+}
+else
+{
 <PageTitle>@Heading · Lobsy</PageTitle>
 
 <section class="err-hero">
@@ -51,6 +62,7 @@
         <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" Class="err-mascot" />
     </div>
 </section>
+}
 
 @code {
     [Parameter] public int Code { get; set; }
@@ -58,6 +70,7 @@
     private int _status = StatusCodes.Status404NotFound;
     private string _supportEmail = SupportContact.Default;
     private bool _employersOn = true;
+    private string _originalReturnUrl = "/home";
 
     private bool IsNotFound => _status == StatusCodes.Status404NotFound;
 
@@ -89,11 +102,26 @@
         _employersOn = await EmployersSwitch.IsEnabledAsync();
 
         var http = HttpContextAccessor.HttpContext;
+        _originalReturnUrl = OriginalReturnUrl(http);
+
         if (http is not null && !http.Response.HasStarted)
         {
             http.Response.StatusCode = _status;
             ErrorResponse.ApplyHeaders(http);
         }
+    }
+
+    /// <summary>Path+query the visitor originally asked for, from the status-code re-execute feature.</summary>
+    private static string OriginalReturnUrl(HttpContext? http)
+    {
+        var feature = http?.Features.Get<Microsoft.AspNetCore.Diagnostics.IStatusCodeReExecuteFeature>();
+        var path = feature?.OriginalPath;
+        if (string.IsNullOrEmpty(path) || path[0] != '/')
+        {
+            return "/home";
+        }
+
+        return string.IsNullOrEmpty(feature?.OriginalQueryString) ? path : path + feature!.OriginalQueryString;
     }
 
     private (string Prefix, string Suffix) SplitSupportLine()

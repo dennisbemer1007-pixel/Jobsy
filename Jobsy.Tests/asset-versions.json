@@ -23,13 +23,13 @@
     "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
     "v": "20260930-kb3"
   },
-  "css/features/errors.css": {
-    "sha256": "cdda5784e67bea70c8cfeb745a515967ab68f1af2d5fd35c70c13de12e9ce50e",
-    "v": "20261001-errors-1"
-  },
   "css/features/enterprise-ui.css": {
     "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
     "v": "20260929-ent-ui"
+  },
+  "css/features/errors.css": {
+    "sha256": "62d72683f3a76a2474f3aae2980a3e2a7ba7bac3d6ba798338747e542054ad48",
+    "v": "20261001-errors-2"
   },
   "css/features/gratis-dna.css": {
     "sha256": "7eee9cb441a9b874474f93e3402c52f731bf88363306abebeb8a9f680f5513dc",

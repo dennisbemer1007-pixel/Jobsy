@@ -3,6 +3,7 @@
 ## Unreleased
 
 - **Foutpagina's (errors 01):** eigen `ErrorLayout` op het publieke thema met Lobsy-mascotte, vriendelijke `/status/{code}`-pagina in vijf talen (nl/en/pl/ro/ar + RTL), echte statuscodes via `UseStatusCodePagesWithReExecute` voor HTML-verzoeken, 500-pagina met foutcode `LB-XXXX` (Sentry-tag `support_code`, ProblemDetails `supportCode`), onbekende vacature geeft nu 404 in plaats van 200, en `noindex` op alle foutresponses. Zie `docs/support-codes.md`, `docs/i18n/errors-review.md` en `docs/errors-followups.md`.
+- **Geen toegang / 403 (errors 02):** een signed-in gebruiker zonder de juiste rol krijgt nu een echte 403 op de aangevraagde URL (geen redirect naar `/access-denied`) via `OnRedirectToAccessDenied` + de bestaande `/status/{code}`-re-execute. De pagina toont het account alleen uit de auth-cookie claims (naam, gemaskeerd e-mailadres, rol — geen API/DB-aanroep), met "Naar mijn start" en "Inloggen met een ander account" (`/account/logout?reason=switch` → `/login?returnUrl=`). `reason=employers-off` toont eigen tekst zonder wisselknop (Dependency F aanwezig). `/access-denied` blijft bestaan als directe 403-pagina met dezelfde `AccessDeniedView`. Dependency E (auth switch-account) was afwezig; follow-up in `docs/errors-followups.md`.
 
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.

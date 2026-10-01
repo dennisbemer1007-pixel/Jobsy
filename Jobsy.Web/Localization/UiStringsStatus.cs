@@ -192,5 +192,121 @@ public static class UiStringsStatus
             "Pomoc",
             "Ajutor",
             "مساعدة");
+
+        // —— 403 Geen toegang (errors 02) ——
+        Add("Status.Forbidden.Chip",
+            "🔒 Geen toegang",
+            "🔒 Access denied",
+            "🔒 Brak dostępu",
+            "🔒 Acces interzis",
+            "🔒 لا وصول");
+        Add("Status.Forbidden.Title",
+            "Deze pagina is niet voor jouw account",
+            "This page is not for your account",
+            "Ta strona nie jest dla twojego konta",
+            "Această pagină nu este pentru contul tău",
+            "هذه الصفحة ليست لحسابك");
+        Add("Status.Forbidden.Lead",
+            "Je bent ingelogd, maar dit deel van Lobsy hoort bij een andere rol.",
+            "You are signed in, but this part of Lobsy belongs to a different role.",
+            "Jesteś zalogowany, ale ta część Lobsy należy do innej roli.",
+            "Ești autentificat, dar această parte din Lobsy aparține unui alt rol.",
+            "أنت مسجّل الدخول، لكن هذا الجزء من لوبسي يخص دوراً آخر.");
+        Add("Status.Forbidden.AccountIntro",
+            "Je bent ingelogd als {0}",
+            "You are signed in as {0}",
+            "Jesteś zalogowany jako {0}",
+            "Ești autentificat ca {0}",
+            "أنت مسجّل الدخول باسم {0}");
+        Add("Status.Forbidden.SwitchAccount",
+            "Inloggen met een ander account",
+            "Sign in with a different account",
+            "Zaloguj się na inne konto",
+            "Autentifică-te cu alt cont",
+            "تسجيل الدخول بحساب آخر");
+        Add("Status.Forbidden.ToHomepage",
+            "Naar de voorpagina",
+            "To the home page",
+            "Na stronę główną",
+            "Spre pagina principală",
+            "إلى الصفحة الرئيسية");
+        Add("Status.Forbidden.EmployersOffTitle",
+            "Even alleen voor kandidaten",
+            "Candidates only for now",
+            "Na razie tylko dla kandydatów",
+            "Deocamdată doar pentru candidați",
+            "للمرشحين فقط مؤقتاً");
+        Add("Status.Forbidden.EmployersOffLead",
+            "Werkgevers kunnen Lobsy nu even niet gebruiken. We laten het je weten als het weer kan.",
+            "Employers cannot use Lobsy right now. We will let you know when they can again.",
+            "Pracodawcy nie mogą teraz korzystać z Lobsy. Dam y znać, gdy to się zmieni.",
+            "Angajatorii nu pot folosi Lobsy chiar acum. Te vom anunța când va fi din nou posibil.",
+            "لا يمكن لأصحاب العمل استخدام لوبسي الآن. سنُعلمك عندما يصبح ذلك ممكناً مجدداً.");
+        Add("Status.Forbidden.Role.Candidate",
+            "Kandidaat",
+            "Candidate",
+            "Kandydat",
+            "Candidat",
+            "مرشح");
+        Add("Status.Forbidden.Role.BranchManager",
+            "Vestigingsmanager",
+            "Branch manager",
+            "Kierownik placówki",
+            "Manager de filială",
+            "مدير الفرع");
+        Add("Status.Forbidden.Role.RegionalManager",
+            "Regiomanager",
+            "Regional manager",
+            "Kierownik regionu",
+            "Manager regional",
+            "مدير المنطقة");
+        Add("Status.Forbidden.Role.EnterpriseManager",
+            "Bedrijfsmanager",
+            "Enterprise manager",
+            "Kierownik przedsiębiorstwa",
+            "Manager de companie",
+            "مدير المؤسسة");
+        Add("Status.Forbidden.Role.Intermediary",
+            "Intermediair",
+            "Intermediary",
+            "Pośrednik",
+            "Intermediar",
+            "وسيط");
+        Add("Status.Forbidden.Role.Admin",
+            "Beheerder",
+            "Admin",
+            "Administrator",
+            "Administrator",
+            "مشرف");
+        Add("Status.Forbidden.Role.SalesManager",
+            "Salesmanager",
+            "Sales manager",
+            "Kierownik sprzedaży",
+            "Manager de vânzări",
+            "مدير المبيعات");
+        Add("Status.Forbidden.Role.Ambassadeur",
+            "Ambassadeur",
+            "Ambassador",
+            "Ambasador",
+            "Ambasador",
+            "سفير");
+        Add("Status.Forbidden.Role.SchoolAdmin",
+            "Schoolbeheerder",
+            "School admin",
+            "Administrator szkoły",
+            "Administrator școlar",
+            "مشرف المدرسة");
+        Add("Status.Forbidden.Role.Teacher",
+            "Docent",
+            "Teacher",
+            "Nauczyciel",
+            "Profesor",
+            "معلم");
+        Add("Status.Forbidden.Role.Unknown",
+            "Onbekende rol",
+            "Unknown role",
+            "Nieznana rola",
+            "Rol necunoscut",
+            "دور غير معروف");
     }
 }
