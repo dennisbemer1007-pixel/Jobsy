@@ -303,6 +303,9 @@ if (useErrorPageHandler)
     app.UseErrorPageMethodReset();
 }
 
+// Development-only, opt-in: lets the browser suite request a genuine 500 page.
+app.UseTestThrowPath();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();

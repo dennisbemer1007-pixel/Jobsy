@@ -11,6 +11,15 @@ public static class ErrorPagesExtensions
     /// <summary>Set to true in tests to exercise the production handlers inside Development.</summary>
     public const string ForceHandlerConfigKey = "Errors:ForceHandler";
 
+    /// <summary>
+    /// Opt-in switch for <see cref="TestThrowPath"/>. Off by default, only honoured in
+    /// Development, and never set on Render — it exists so the CI browser suite can look at the
+    /// real 500 page instead of a stubbed one.
+    /// </summary>
+    public const string EnableTestThrowConfigKey = "Errors:EnableTestThrow";
+
+    public const string TestThrowPath = "/__test/throw";
+
     /// <summary>Request method before the re-execute was forced to GET.</summary>
     public const string OriginalMethodItemsKey = "Jobsy.Error.OriginalMethod";
 
@@ -50,6 +59,29 @@ public static class ErrorPagesExtensions
                 await context.Response.WriteAsync(ErrorResponse.MinimalHtml(status));
             }
         });
+
+    /// <summary>
+    /// Adds <see cref="TestThrowPath"/> when <see cref="EnableTestThrowConfigKey"/> is on in a
+    /// Development host. Anywhere else this is a no-op, so the path 404s like any unknown page.
+    /// </summary>
+    public static IApplicationBuilder UseTestThrowPath(this WebApplication app)
+    {
+        if (!app.Environment.IsDevelopment()
+            || !app.Configuration.GetValue<bool>(EnableTestThrowConfigKey))
+        {
+            return app;
+        }
+
+        return app.Use(async (context, next) =>
+        {
+            if (context.Request.Path.Equals(TestThrowPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Deliberate error from " + TestThrowPath + ".");
+            }
+
+            await next(context);
+        });
+    }
 
     /// <summary>
     /// The exception handler re-executes with the original method; <c>/Error</c> is a GET-only

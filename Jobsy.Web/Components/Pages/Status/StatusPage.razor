@@ -6,7 +6,6 @@
 @using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Diagnostics
-@using Jobsy.Web.Features
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
@@ -14,7 +13,6 @@
 @inject CultureState Culture
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
-@inject IEmployersSwitch EmployersSwitch
 @inject MaintenanceState Maintenance
 @*
   Re-execute target for unknown HTML pages, and a direct route for the other real status codes.
@@ -89,6 +87,11 @@ else if (_status == StatusCodes.Status503ServiceUnavailable)
         </div>
     </section>
 }
+else if (IsNotFound)
+{
+    <PageTitle>@Heading · Lobsy</PageTitle>
+    <NotFoundView />
+}
 else
 {
 <PageTitle>@Heading · Lobsy</PageTitle>
@@ -99,21 +102,10 @@ else
         <h1 class="err-hero__title">@Heading</h1>
         <p class="err-hero__lead">@Lead</p>
 
-        @if (IsNotFound)
-        {
-            <div class="err-actions">
-                <a class="pub-btn pub-btn--primary" href="@PrimaryHref">@PrimaryLabel</a>
-                <a class="pub-btn pub-btn--secondary" href="@PublicRoutes.Test">@Culture["Status.Common.FreeTest"]</a>
-                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
-            </div>
-        }
-        else
-        {
-            <div class="err-actions">
-                <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Landing">@Culture["Status.Nav.Home"]</a>
-                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
-            </div>
-        }
+        <div class="err-actions">
+            <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Landing">@Culture["Status.Nav.Home"]</a>
+            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
+        </div>
 
         <p class="err-support">
             @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
@@ -134,7 +126,6 @@ else
 
     private int _status = StatusCodes.Status404NotFound;
     private string _supportEmail = SupportContact.Default;
-    private bool _employersOn = true;
     private string _originalReturnUrl = "/home";
     private string _supportCode = string.Empty;
     private string _nonce = string.Empty;
@@ -189,13 +180,6 @@ else
         ? Culture["Status.NotFound.Lead"]
         : Culture["Status.Generic.Lead"];
 
-    /// <summary>F present: with werkgevers actief OFF the job map is replaced by Mijn Paspoort (E3).</summary>
-    private string PrimaryLabel => _employersOn
-        ? Culture["Status.Common.Banenkaart"]
-        : Culture["Status.Common.Passport"];
-
-    private string PrimaryHref => _employersOn ? PublicRoutes.Banenkaart : PublicRoutes.Test;
-
     private string SupportMailto => SupportContact.MailtoLink(_supportEmail);
 
     private string SupportLinePrefix => SplitSupportLine().Prefix;
@@ -206,7 +190,6 @@ else
     {
         _status = ErrorResponse.NormalizeStatusCode(Code);
         _supportEmail = SupportContact.Email(Configuration);
-        _employersOn = await EmployersSwitch.IsEnabledAsync();
 
         var http = HttpContextAccessor.HttpContext;
         _originalReturnUrl = OriginalReturnUrl(http);

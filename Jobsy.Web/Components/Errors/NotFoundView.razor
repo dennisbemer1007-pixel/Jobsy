@@ -1,0 +1,72 @@
+@namespace Jobsy.Web.Components.Errors
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject IConfiguration Configuration
+@inject IEmployersSwitch EmployersSwitch
+@*
+  404 content (errors 01 / E3). Shared by /status/404 and by pages that answer 404 while keeping
+  their own route and layout (VacancyDetail), the way ClosedVacancyView is shared for 410.
+  No API or DB call: the employers switch is the cached feature flag the layout already uses.
+*@
+
+<section class="err-hero @(Embedded ? "err-embed pub-theme" : null)" data-testid="not-found-view">
+    <div class="err-hero__text">
+        <p class="pub-chip err-code">@Culture["Status.NotFound.Chip"]</p>
+        <h1 class="err-hero__title">@Culture["Status.NotFound.Title"]</h1>
+        <p class="err-hero__lead">@Culture["Status.NotFound.Lead"]</p>
+
+        <div class="err-actions">
+            <a class="pub-btn pub-btn--primary" href="@PrimaryHref">@PrimaryLabel</a>
+            <a class="pub-btn pub-btn--secondary" href="@PublicRoutes.Test">@Culture["Status.Common.FreeTest"]</a>
+            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
+        </div>
+
+        <p class="err-support">
+            @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+        </p>
+    </div>
+    <div class="err-hero__art" aria-hidden="true">
+        <span class="err-blob"></span>
+        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+    </div>
+</section>
+
+@code {
+    /// <summary>True inside another page's layout (adds <c>err-embed pub-theme</c>).</summary>
+    [Parameter] public bool Embedded { get; set; }
+
+    private string _supportEmail = Jobsy.Web.Hosting.SupportContact.Default;
+    private bool _employersOn = true;
+
+    /// <summary>F present: with werkgevers actief OFF the job map is replaced by Mijn Paspoort (E3).</summary>
+    private string PrimaryLabel => _employersOn
+        ? Culture["Status.Common.Banenkaart"]
+        : Culture["Status.Common.Passport"];
+
+    private string PrimaryHref => _employersOn ? PublicRoutes.Banenkaart : PublicRoutes.Test;
+
+    private string SupportMailto => Jobsy.Web.Hosting.SupportContact.MailtoLink(_supportEmail);
+
+    private string SupportLinePrefix => SplitSupportLine().Prefix;
+
+    private string SupportLineSuffix => SplitSupportLine().Suffix;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _supportEmail = Jobsy.Web.Hosting.SupportContact.Email(Configuration);
+        _employersOn = await EmployersSwitch.IsEnabledAsync();
+    }
+
+    private (string Prefix, string Suffix) SplitSupportLine()
+    {
+        var template = Culture["Status.Common.SupportLine"];
+        var marker = template.IndexOf("{0}", StringComparison.Ordinal);
+        return marker < 0
+            ? (template + " ", string.Empty)
+            : (template[..marker], template[(marker + 3)..]);
+    }
+}

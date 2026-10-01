@@ -57,7 +57,8 @@
         }
         else
         {
-            <p class="state-message error">@Culture["Vacancy.NotFound"]</p>
+            @* A 404 deserves the same friendly page as any other unknown URL (§IA). *@
+            <Jobsy.Web.Components.Errors.NotFoundView Embedded="true" />
         }
     }
     else

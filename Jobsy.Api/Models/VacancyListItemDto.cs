@@ -198,4 +198,6 @@ public sealed record ClosedVacancyDto(
     string Title,
     string? City,
     Guid? CategoryId,
-    string? CategoryLabel);
+    string? CategoryLabel,
+    /// <summary>Machine-readable reason, so a caller can tell 410 "closed" from any other 410.</summary>
+    string Code = "vacancy_closed");
