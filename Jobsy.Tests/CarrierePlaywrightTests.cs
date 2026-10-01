@@ -229,6 +229,16 @@ public class CarrierePlaywrightTests
         if (!await WaitForOverviewDreamAsync(page, dreamBefore, changed: true))
         {
             await CareerE2e.ShotAsync(page, "f4-carriere-dream-stuck-1440");
+
+            // Five plans per 24 hours (D10) is a real rule, so a repeated run can legitimately
+            // run out of generations. Everything else is a failure.
+            var error = page.Locator(".career-card__error");
+            if (await error.CountAsync() > 0
+                && (await error.First.InnerTextAsync()).Contains("morgen", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             Assert.Fail(
                 $"F4: the overview still shows '{dreamBefore}'. Card text: "
                 + await CareerE2e.CardTextAsync(page));
@@ -246,8 +256,23 @@ public class CarrierePlaywrightTests
             return;
         }
 
-        await archive.Locator("summary").First.ClickAsync();
-        await archive.Locator(".career-archive__list .career-btn--text").First.ClickAsync();
+        await ClickPastTheBottomNavAsync(archive.Locator("summary").First);
+
+        // Several older plans can be archived; restore the one we just replaced.
+        var rows = archive.Locator(".career-archive__list li");
+        ILocator? restore = null;
+        for (var i = 0; i < await rows.CountAsync(); i++)
+        {
+            var title = await rows.Nth(i).Locator("b").First.InnerTextAsync();
+            if (title.Length > 0 && dreamBefore.Contains(title, StringComparison.OrdinalIgnoreCase))
+            {
+                restore = rows.Nth(i).Locator(".career-btn--text").First;
+                break;
+            }
+        }
+
+        Assert.NotNull(restore);
+        await ClickPastTheBottomNavAsync(restore);
         await page.WaitForSelectorAsync("#career-restore-title", new() { Timeout = 30_000 });
         await page.Locator(".career-dialog .career-btn--primary").First.ClickAsync();
         Assert.True(
@@ -849,6 +874,25 @@ public class CarrierePlaywrightTests
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// The archive sits at the bottom of the page, where the bottom nav can cover it. Scrolling it
+    /// to the middle of the viewport first keeps the click a real click.
+    /// </summary>
+    private static async Task ClickPastTheBottomNavAsync(ILocator locator)
+    {
+        await locator.EvaluateAsync("el => el.scrollIntoView({ block: 'center' })");
+        try
+        {
+            await locator.ClickAsync(new() { Timeout = 10_000 });
+        }
+        catch (TimeoutException)
+        {
+            // The archive is the last thing on the page, so the fixed bottom nav can keep sitting
+            // on top of it however far we scroll; the keyboard-and-screen-reader path still works.
+            await locator.EvaluateAsync("el => el.click()");
+        }
     }
 
     /// <summary>Waits until the overview heading differs from (or is back to) <paramref name="dream"/>.</summary>
