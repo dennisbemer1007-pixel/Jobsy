@@ -1,1 +1,1 @@
-OK: no securitypolicyviolation events on http://127.0.0.1:5201 (/, /login, /hoe-werkt-lobsy); script-src without 'unsafe-eval'.
+OK: no securitypolicyviolation events on https://acceptatie.lobsy.nl (/, /banenkaart, /login, /wachtwoord-vergeten, /hoe-werkt-lobsy); script-src without 'unsafe-eval'.
