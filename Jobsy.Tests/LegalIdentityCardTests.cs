@@ -19,6 +19,7 @@ namespace Jobsy.Tests;
 /// </summary>
 public class LegalIdentityCardTests : TestContext
 {
+    private readonly AmbientCultureScope _culture = new();
     private string _legalJson = "{}";
 
     public LegalIdentityCardTests()
@@ -35,6 +36,15 @@ public class LegalIdentityCardTests : TestContext
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<NavigationManager>(new StaticNavigation());
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _culture.Dispose();
+        }
     }
 
     [Fact]

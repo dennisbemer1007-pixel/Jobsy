@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Jobs;
 using Jobsy.Api.Models;
@@ -201,7 +202,9 @@ public class Sprint6AdminSuiteTests
     public void Semi_annual_effective_from_aligns_with_due_dates(int day, int month, int year, string expected)
     {
         var today = new DateOnly(year, month, day);
-        Assert.Equal(DateOnly.Parse(expected), WagesController.ResolveSemiAnnualEffectiveFrom(today));
+        Assert.Equal(
+            DateOnly.ParseExact(expected, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            WagesController.ResolveSemiAnnualEffectiveFrom(today));
     }
 
     [Fact]
