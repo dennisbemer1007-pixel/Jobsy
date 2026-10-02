@@ -69,9 +69,8 @@ public class CodeHealth01Rz10012Tests : BunitContext
     public void Web_project_treats_RZ10012_as_error()
     {
         var root = FindRepoRoot();
-        var csproj = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Jobsy.Web.csproj"));
-        Assert.Contains("RZ10012", csproj, StringComparison.Ordinal);
-        Assert.Contains("WarningsAsErrors", csproj, StringComparison.Ordinal);
+        var props = File.ReadAllText(Path.Combine(root, "Directory.Build.props"));
+        Assert.Contains("<TreatWarningsAsErrors>true</TreatWarningsAsErrors>", props, StringComparison.Ordinal);
     }
 
     private static void AssertNoRawTag(string markup, string tag)

@@ -146,9 +146,7 @@ public static partial class AuthRedirects
                || path.StartsWith("/candidate/shared", StringComparison.Ordinal)
                || path.StartsWith("/candidate/applications", StringComparison.Ordinal)
                || path.StartsWith("/candidate/vacancies", StringComparison.Ordinal)
-               || path.StartsWith("/employer/", StringComparison.Ordinal)
                || path.StartsWith("/werkgever/", StringComparison.Ordinal)
-               || path.StartsWith("/branch/", StringComparison.Ordinal)
                || path.StartsWith("/register", StringComparison.Ordinal)
                || path.StartsWith("/vestiging/", StringComparison.Ordinal);
     }
