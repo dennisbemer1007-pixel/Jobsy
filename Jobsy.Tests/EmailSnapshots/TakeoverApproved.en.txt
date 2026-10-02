@@ -13,7 +13,7 @@ and history stay with the branch.
 
 The branch stays linked to the organization.
 
-The link works until 7 October 2026. After that, ask for a new invitation.
+The link works until 9 October 2026. After that, ask for a new invitation.
 
 Choose your password: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
 

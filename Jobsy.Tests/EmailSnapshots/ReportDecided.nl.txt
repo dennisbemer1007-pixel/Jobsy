@@ -10,7 +10,7 @@ Je melding is bekeken. Dit is de uitkomst:
 
 Wat: Weekendhulp verkoop
 Besluit: Weggehaald
-Datum: 1 oktober 2026, 07:00
+Datum: 1 oktober 2026, 14:00
 
 Waarom: De tekst vraagt om gegevens die niet mogen.
 

@@ -133,6 +133,7 @@ public class AdminLegacyHrefTests
         "AdminLegacyRoutes.cs",
         "AdminLegacyRedirect.razor",
         "AdminNav.cs",
+        "AmbassadorsFeatureMiddleware.cs", // maps legacy /admin/ambassadeurs while AmbassadorsEnabled is off
     };
 
     private static readonly string[] Forbidden =

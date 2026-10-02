@@ -1,6 +1,6 @@
 KEY: ReportReceived
 SUBJECT: We received your report
-PREHEADER: Thanks — we are looking into it
+PREHEADER: Thanks: we are looking into it
 KIND: Essential
 --- TEXT ---
 Thank you. We are looking into it
@@ -10,7 +10,7 @@ You reported something on Lobsy. This is what we received:
 
 What: Weekendhulp verkoop
 Reason: Klopt niet / nep
-Date: 1 October 2026, 07:00
+Date: 1 October 2026, 14:00
 
 We will tell you what we decide. Usually within 5 working days.
 

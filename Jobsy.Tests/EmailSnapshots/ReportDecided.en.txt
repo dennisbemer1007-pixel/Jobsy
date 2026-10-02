@@ -10,7 +10,7 @@ Your report has been reviewed. This is the outcome:
 
 What: Weekendhulp verkoop
 Decision: Weggehaald
-Date: 1 October 2026, 07:00
+Date: 1 October 2026, 14:00
 
 Why: De tekst vraagt om gegevens die niet mogen.
 

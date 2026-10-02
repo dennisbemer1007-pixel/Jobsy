@@ -25,6 +25,11 @@ public class CandidateRegisterLinkGuardTests
         "RegisterOntdekRedirectMiddleware.cs",
         "JobsyApiAuthHandler.cs",
         "HowLobsyRoleGuides.cs", // historical string may linger in comments only
+        // Employer registration wizard (company KvK) — not candidate-facing.
+        "WaDone.razor",
+        "RegisterToegang.razor",
+        "RegisterVerifierenBrief.razor",
+        "CreateVacancy.razor",
     };
 
     [Fact]
@@ -63,7 +68,11 @@ public class CandidateRegisterLinkGuardTests
                 || rel.StartsWith("Components/Pages/Intermediary/", StringComparison.OrdinalIgnoreCase)
                 || rel.StartsWith("Components/Pages/SalesManager/", StringComparison.OrdinalIgnoreCase)
                 || rel.StartsWith("Components/Pages/Partner/", StringComparison.OrdinalIgnoreCase)
-                || rel.StartsWith("Components/Admin/", StringComparison.OrdinalIgnoreCase))
+                || rel.StartsWith("Components/Admin/", StringComparison.OrdinalIgnoreCase)
+                || rel.StartsWith("Components/Pages/Werkgever/", StringComparison.OrdinalIgnoreCase)
+                || rel.StartsWith("Components/Registration/", StringComparison.OrdinalIgnoreCase)
+                || rel.Equals("Components/Pages/RegisterToegang.razor", StringComparison.OrdinalIgnoreCase)
+                || rel.Equals("Components/Pages/RegisterVerifierenBrief.razor", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

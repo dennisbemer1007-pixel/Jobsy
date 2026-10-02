@@ -135,7 +135,7 @@
                                 <div class="wa-engage__card @(on ? "is-on" : null)">
                                     <button type="button" class="wa-engage__toggle" disabled="@_busy" @onclick="() => ToggleEngageOrg(item.Id)">
                                         <span class="wa-engage__ck" aria-hidden="true">@(on ? "✓" : "")</span>
-                                        <span class="pub-emoji" aria-hidden="true">@item.Emoji</span>
+                                        <span class="wg-emoji" aria-hidden="true">@item.Emoji</span>
                                         <span>
                                             <strong>@Culture[item.TitleKey]</strong>
                                             <small>@Culture[item.HintKey]</small>

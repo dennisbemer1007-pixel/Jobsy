@@ -322,7 +322,9 @@ public static class PlatformSettingsCatalog
             DescriptionKey: "AdminSettings.AuthenticatorStub.Desc",
             Kind: PlatformSettingKind.Bool,
             Read: s => s.AuthenticatorEnabled,
-            Write: v => new PlatformFeatureUpdate(AuthenticatorEnabled: ToBool(v))));
+            Write: v => new PlatformFeatureUpdate(AuthenticatorEnabled: ToBool(v)),
+            EnvironmentLock: PlatformSettingEnvironmentLock.AcceptatieOnly,
+            BadgeKey: "AdminSettings.Badge.AcceptatieOnly"));
 
         // --- Algemeen ---
         list.Add(new PlatformSettingDescriptor(

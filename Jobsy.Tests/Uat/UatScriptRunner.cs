@@ -44,7 +44,8 @@ public static class UatScriptRunner
     /// <summary>Server redirects (middleware / Minimal API) — no Blazor <c>@page</c>.</summary>
     private static readonly HashSet<string> KnownRedirectRoutes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "/banen"
+        "/banen",
+        "/register/activate"
     };
 
     public static void Execute(UatScenario scenario)

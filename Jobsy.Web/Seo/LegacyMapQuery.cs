@@ -14,12 +14,13 @@ public static class LegacyMapQuery
     [
         "company",
         "companies",
-        "workType",
-        "q",
+        "maxHours",
         "maxMinutes",
-        "transport",
         "minHours",
-        "maxHours"
+        "q",
+        "transport",
+        "weergave",
+        "workType"
     ];
 
     public static bool IsMapDeepLink(IQueryCollection query)

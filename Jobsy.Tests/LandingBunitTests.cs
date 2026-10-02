@@ -126,8 +126,11 @@ public class LandingBunitTests : BunitContext
     {
         var desc = LandingFeatureAvailability.DescribeMatches();
         Assert.False(string.IsNullOrWhiteSpace(desc));
-        Assert.True(LandingFeatureAvailability.ShowPassportSoon);
-        Assert.True(LandingFeatureAvailability.ShowDiscoverySoon);
+        // Passport + discovery routes are live on this branch — "soon" pills stay off.
+        Assert.Equal(LandingFeatureAvailability.ShowPassportSoon, !LandingFeatureAvailability.PassportLive);
+        Assert.Equal(LandingFeatureAvailability.ShowDiscoverySoon, !LandingFeatureAvailability.DiscoveryJourneyLive);
+        Assert.Contains("/candidate/paspoort", desc, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/candidate/ontdekkingsreis", desc, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

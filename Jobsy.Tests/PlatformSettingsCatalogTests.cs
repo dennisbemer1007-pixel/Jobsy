@@ -46,9 +46,12 @@ public class PlatformSettingsCatalogTests
         }
 
         Assert.Equal(seen, seen.OrderBy(g => groupOrder.IndexOf(g)).ToList());
-        Assert.False(PlatformSettingsCatalog.FieldExists("EmployersEnabled"));
-        Assert.False(PlatformSettingsCatalog.FieldExists("CandidatePassportEnabled"));
-        Assert.DoesNotContain(entries, e => e.Key is "EmployersEnabled" or "CandidatePassportEnabled");
+        // EmployersEnabled / CandidatePassportEnabled are present on PlatformFeatureSettings —
+        // catalog entries must exist (not slot comments only).
+        Assert.True(PlatformSettingsCatalog.FieldExists("EmployersEnabled"));
+        Assert.True(PlatformSettingsCatalog.FieldExists("CandidatePassportEnabled"));
+        Assert.Contains(entries, e => e.Key == "EmployersEnabled");
+        Assert.Contains(entries, e => e.Key == "CandidatePassportEnabled");
 
         var sourcePath = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory, "..", "..", "..", "..",
@@ -57,7 +60,6 @@ public class PlatformSettingsCatalogTests
         var source = File.ReadAllText(sourcePath);
         Assert.Contains("EmployersEnabled", source, StringComparison.Ordinal);
         Assert.Contains("CandidatePassportEnabled", source, StringComparison.Ordinal);
-        Assert.Contains("// Slot:", source, StringComparison.Ordinal);
     }
 
     [Fact]

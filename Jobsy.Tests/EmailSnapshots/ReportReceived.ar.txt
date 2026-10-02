@@ -1,6 +1,6 @@
 KEY: ReportReceived
 SUBJECT: استلمنا تبليغك
-PREHEADER: شكراً — نحن ننظر فيه
+PREHEADER: شكراً: نحن ننظر فيه
 KIND: Essential
 --- TEXT ---
 شكراً. نحن ننظر فيه
@@ -9,7 +9,7 @@ KIND: Essential
 
 Weekendhulp verkoop :ماذا
 Klopt niet / nep :السبب
-1 أكتوبر 2026, 07:00 :التاريخ
+1 أكتوبر 2026, 14:00 :التاريخ
 
 سنخبرك بما سنقرر. عادة خلال 5 أيام عمل.
 

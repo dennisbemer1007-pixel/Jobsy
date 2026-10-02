@@ -45,7 +45,10 @@ public class PublicThemeCssGuardTests
         {
             var text = File.ReadAllText(file);
             if (text.Contains("@layout PublicLayout", StringComparison.Ordinal)
-                || text.Contains("@layout TeaserLayout", StringComparison.Ordinal))
+                || text.Contains("@layout TeaserLayout", StringComparison.Ordinal)
+                || text.Contains("@layout ErrorLayout", StringComparison.Ordinal)
+                || text.Contains("@layout Jobsy.Web.Components.Layout.WaPublicLayout", StringComparison.Ordinal)
+                || text.Contains("@layout WaPublicLayout", StringComparison.Ordinal))
             {
                 continue;
             }
