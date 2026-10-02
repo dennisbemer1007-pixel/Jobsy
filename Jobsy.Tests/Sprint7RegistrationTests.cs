@@ -854,12 +854,10 @@ public class Sprint7RegistrationTests
             return new EmailSendOutcome(true, false, null, delivery.Kind);
         }
 
-        private readonly JobsyDbContext _db;
         private readonly EmailServiceStub _inner;
 
         public CapturingEmailService(JobsyDbContext db)
         {
-            _db = db;
             _inner = new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance);
         }
 

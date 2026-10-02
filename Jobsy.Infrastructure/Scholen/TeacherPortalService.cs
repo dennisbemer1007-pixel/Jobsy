@@ -542,6 +542,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         DateOnly? closesOn,
         CancellationToken cancellationToken)
     {
+        _ = user;
         // Reuse school portal rules (409 parental / processor) by temporarily allowing teach scope.
         // SchoolPortalService.SetTestWindowAsync only allows CanManageClass — call shared logic via DB here.
         var entity = await _db.SchoolClasses

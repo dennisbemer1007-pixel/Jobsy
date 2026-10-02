@@ -168,7 +168,7 @@ public static class CulturePersonalityCatalog
     public static IReadOnlyList<string> DeriveMatchTags(CulturePersonalityScores scores)
     {
         var tags = new List<string>();
-        void Add(string code, int? value, string high, string low)
+        void Add(int? value, string high, string low)
         {
             if (value is null)
             {
@@ -178,12 +178,12 @@ public static class CulturePersonalityCatalog
             tags.Add(value >= 60 ? high : low);
         }
 
-        Add(Autonomy, scores.Autonomy, "zelfstandig", "duidelijke-kaders");
-        Add(Informal, scores.Informal, "informeel", "formeel");
-        Add(Collaboration, scores.Collaboration, "samenwerken", "zelfstandig-werken");
-        Add(Flexibility, scores.Flexibility, "flexibel", "gestructureerd");
-        Add(Innovation, scores.Innovation, "vernieuwend", "stabiel");
-        Add(PeopleFirst, scores.PeopleFirst, "mensgericht", "resultaatgericht");
+        Add(scores.Autonomy, "zelfstandig", "duidelijke-kaders");
+        Add(scores.Informal, "informeel", "formeel");
+        Add(scores.Collaboration, "samenwerken", "zelfstandig-werken");
+        Add(scores.Flexibility, "flexibel", "gestructureerd");
+        Add(scores.Innovation, "vernieuwend", "stabiel");
+        Add(scores.PeopleFirst, "mensgericht", "resultaatgericht");
         return tags;
     }
 

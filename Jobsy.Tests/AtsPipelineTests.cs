@@ -15,14 +15,14 @@ public class AtsPipelineTests
     public void Validation_allows_missing_location_but_rejects_error_titles()
     {
         Assert.False(AtsListingValidation.TryValidateForReview(
-            "404 Not Found", "Acme", "Den Haag", new string('x', 80), out _));
+            "404 Not Found", "Acme", new string('x', 80), out _));
         // Location / salary may be empty at intake — admin completes in ATS module.
         Assert.True(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", null, new string('x', 80), out _));
+            "Kassamedewerker", "Acme", new string('x', 80), out _));
         Assert.True(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", "Naaldwijk", new string('x', 80), out _));
+            "Kassamedewerker", "Acme", new string('x', 80), out _));
         Assert.False(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", "Naaldwijk", "kort", out var shortReason));
+            "Kassamedewerker", "Acme", "kort", out var shortReason));
         Assert.Contains("tekst", shortReason!, StringComparison.OrdinalIgnoreCase);
         Assert.True(AtsListingValidation.IsDemoListing("Kassamedewerker (demo)", "https://x/demo-abc", null));
     }

@@ -157,8 +157,6 @@ public class DeepTestStubGuardTests
             new DeepAnalysisService(
                 db,
                 new FlexCommercialService(db),
-                env,
-                config,
                 new StubCareer(),
                 new StubCompetence(),
                 NullLogger<DeepAnalysisService>.Instance,

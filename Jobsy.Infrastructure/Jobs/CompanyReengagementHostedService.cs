@@ -182,6 +182,7 @@ public sealed class CompanyReengagementHostedService : BackgroundService
         IReadOnlyList<Guid> orgIds,
         CancellationToken cancellationToken)
     {
+        _ = orgId;
         var email = await db.Users.AsNoTracking()
             .Where(u => u.IsActive
                         && (u.CompanyId != null && orgIds.Contains(u.CompanyId.Value)

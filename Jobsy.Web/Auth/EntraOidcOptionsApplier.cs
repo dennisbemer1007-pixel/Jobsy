@@ -50,8 +50,8 @@ public static class EntraOidcOptionsApplier
     /// </summary>
     public static string ValidateMicrosoftIssuer(
         string issuer,
-        SecurityToken _token,
-        TokenValidationParameters _parameters)
+        SecurityToken _,
+        TokenValidationParameters __)
     {
         if (string.IsNullOrWhiteSpace(issuer))
         {

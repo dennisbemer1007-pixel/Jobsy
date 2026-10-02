@@ -402,6 +402,7 @@ public sealed class RevenueShareService : IRevenueShareService
         Guid salesManagerUserId,
         CancellationToken cancellationToken)
     {
+        _ = salesManagerUserId;
         var company = await _db.Companies.AsNoTracking()
             .Where(c => c.Id == rootCompanyId)
             .Select(c => new

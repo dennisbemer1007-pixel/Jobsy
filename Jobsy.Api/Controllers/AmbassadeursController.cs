@@ -24,7 +24,6 @@ public class AmbassadeursController : ControllerBase
     private readonly ISelfBillingInvoiceService _invoices;
     private readonly ISalesManagerPayoutService _payouts;
     private readonly IUserLookupService _users;
-    private readonly IHostEnvironment _environment;
     private readonly ISupportAccessService _supportAccess;
     private readonly IPersonalDataAccessLogger _accessLog;
 
@@ -37,7 +36,6 @@ public class AmbassadeursController : ControllerBase
         ISelfBillingInvoiceService invoices,
         ISalesManagerPayoutService payouts,
         IUserLookupService users,
-        IHostEnvironment environment,
         ISupportAccessService supportAccess,
         IPersonalDataAccessLogger accessLog)
     {
@@ -49,7 +47,6 @@ public class AmbassadeursController : ControllerBase
         _invoices = invoices;
         _payouts = payouts;
         _users = users;
-        _environment = environment;
         _supportAccess = supportAccess;
         _accessLog = accessLog;
     }

@@ -377,6 +377,8 @@ public static partial class TransactionalEmails
         string? baseUrl, string contactName, string companyName, string contactEmail,
         string? setPasswordUrl, bool hasOrganization, EmailCulture? culture = null)
     {
+        // TODO(code-health): include contactEmail in copy if product wants an account hint.
+        _ = contactEmail;
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;

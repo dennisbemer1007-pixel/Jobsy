@@ -85,6 +85,7 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
     /// </summary>
     public static bool ShouldRetry(HttpStatusCode status, HttpRequestMessage sent)
     {
+        _ = sent;
         if (status == HttpStatusCode.Unauthorized)
         {
             // No Authorization / Jobsy.Auth cookie → do not retry.

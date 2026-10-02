@@ -20,21 +20,15 @@ namespace Jobsy.Api.Controllers;
 public sealed class AdminAuditController : ControllerBase
 {
     private readonly JobsyDbContext _db;
-    private readonly IUserLookupService _users;
-    private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
     private readonly IConfiguration _configuration;
 
     public AdminAuditController(
         JobsyDbContext db,
-        IUserLookupService users,
-        IAdminAuditLog audit,
         IAdminAuditContext auditContext,
         IConfiguration configuration)
     {
         _db = db;
-        _users = users;
-        _audit = audit;
         _auditContext = auditContext;
         _configuration = configuration;
     }

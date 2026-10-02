@@ -25,7 +25,6 @@ public class SalesManagersController : ControllerBase
     private readonly ISelfBillingInvoiceService _invoices;
     private readonly IUserLookupService _users;
     private readonly ICompanyAuthorizationService _companyAuth;
-    private readonly IHostEnvironment _environment;
     private readonly ISupportAccessService _supportAccess;
     private readonly IPersonalDataAccessLogger _accessLog;
 
@@ -37,7 +36,6 @@ public class SalesManagersController : ControllerBase
         ISelfBillingInvoiceService invoices,
         IUserLookupService users,
         ICompanyAuthorizationService companyAuth,
-        IHostEnvironment environment,
         ISupportAccessService supportAccess,
         IPersonalDataAccessLogger accessLog)
     {
@@ -48,7 +46,6 @@ public class SalesManagersController : ControllerBase
         _invoices = invoices;
         _users = users;
         _companyAuth = companyAuth;
-        _environment = environment;
         _supportAccess = supportAccess;
         _accessLog = accessLog;
     }

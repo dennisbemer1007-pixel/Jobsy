@@ -60,9 +60,11 @@ public static partial class TransactionalEmails
             reasonText: Sf(c, "Email.Reason.Invited", EmailBidi.Isolate(c, reasonInviter))), baseUrl);
     }
 
+    // TODO(code-health): surface email in body (account hint) if legal/copy requires it.
     public static ComposedEmail SalesManagerInvite(
         string? baseUrl, string name, string email, string? setPasswordUrl, EmailCulture? culture = null)
     {
+        _ = email;
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;
@@ -85,9 +87,11 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
+    // TODO(code-health): surface email in body (account hint) if legal/copy requires it.
     public static ComposedEmail AmbassadeurInvite(
         string? baseUrl, string name, string email, string? setPasswordUrl, EmailCulture? culture = null)
     {
+        _ = email;
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var ctaUrl = setPasswordUrl ?? links.Login;

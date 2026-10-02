@@ -127,7 +127,7 @@ public static class SchwartzValuesCatalog
     public static IReadOnlyList<string> DeriveMatchTags(SchwartzValuesScores scores)
     {
         var tags = new List<string>();
-        void Add(string code, int? value, string high, string low)
+        void Add(int? value, string high, string low)
         {
             if (value is null)
             {
@@ -137,11 +137,11 @@ public static class SchwartzValuesCatalog
             tags.Add(value >= 60 ? high : low);
         }
 
-        Add(Autonomy, scores.Autonomy, "waarden-eigen-regie", "waarden-kaders");
-        Add(Connection, scores.Connection, "waarden-verbinding", "waarden-zelfstandig");
-        Add(Achievement, scores.Achievement, "waarden-prestatie", "waarden-balans");
-        Add(Stability, scores.Stability, "waarden-zekerheid", "waarden-verandering");
-        Add(Impact, scores.Impact, "waarden-impact", "waarden-praktisch");
+        Add(scores.Autonomy, "waarden-eigen-regie", "waarden-kaders");
+        Add(scores.Connection, "waarden-verbinding", "waarden-zelfstandig");
+        Add(scores.Achievement, "waarden-prestatie", "waarden-balans");
+        Add(scores.Stability, "waarden-zekerheid", "waarden-verandering");
+        Add(scores.Impact, "waarden-impact", "waarden-praktisch");
         return tags;
     }
 

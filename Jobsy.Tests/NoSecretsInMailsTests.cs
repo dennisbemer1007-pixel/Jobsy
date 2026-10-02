@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Jobsy.Core.Email;
 using Jobsy.Core.Time;
 
@@ -6,10 +5,6 @@ namespace Jobsy.Tests;
 
 public class NoSecretsInMailsTests
 {
-    private static readonly Regex TempPasswordLike = new(
-        @"[A-Za-z0-9!@#]{12}",
-        RegexOptions.Compiled);
-
     [Fact]
     public void Catalog_samples_have_no_password_box_or_api_key()
     {

@@ -730,6 +730,7 @@ public class MeController : ControllerBase
 
     private Task<string> ResolveTargetLanguageAsync(Core.Entities.User user, CancellationToken cancellationToken)
     {
+        _ = cancellationToken;
         if (Request.Query.TryGetValue("lang", out var langQuery) && JobsyLanguages.IsSupported(langQuery.ToString()))
         {
             return Task.FromResult(JobsyLanguages.Normalize(langQuery.ToString()));

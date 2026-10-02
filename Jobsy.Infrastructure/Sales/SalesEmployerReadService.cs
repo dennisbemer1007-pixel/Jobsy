@@ -160,7 +160,7 @@ public sealed class SalesEmployerReadService : ISalesEmployerReadService, ISales
             ?? SalesCommissionRules.DefaultCommissionDurationDays;
 
         var years = BuildYearSegments(row.CommissionStartsAtUtc, year1Rate, year2Rate, year3Rate, duration, now);
-        var timeline = await BuildTimelineAsync(row, year1Rate, year2Rate, year3Rate, duration, cancellationToken);
+        var timeline = await BuildTimelineAsync(row, duration, cancellationToken);
         var lines = await BuildLinesAsync(beneficiaryUserId, branchIds, now, cancellationToken);
 
         return new SalesEmployerDetailDto
@@ -420,9 +420,6 @@ public sealed class SalesEmployerReadService : ISalesEmployerReadService, ISales
 
     private async Task<IReadOnlyList<SalesEmployerTimelineItemDto>> BuildTimelineAsync(
         EmployerRow row,
-        decimal y1,
-        decimal y2,
-        decimal y3,
         int durationDays,
         CancellationToken cancellationToken)
     {

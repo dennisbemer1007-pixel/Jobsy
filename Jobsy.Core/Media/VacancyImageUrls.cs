@@ -297,13 +297,13 @@ public static class VacancyImageUrls
         Guid? vacancyId,
         string? workType)
     {
-        var primary = UsableSource(imageUrl, vacancyId);
+        var primary = UsableSource(imageUrl);
         if (primary is not null)
         {
             return primary;
         }
 
-        var fallback = UsableSource(fallbackUrl, vacancyId: null);
+        var fallback = UsableSource(fallbackUrl);
         if (fallback is not null)
         {
             return fallback;
@@ -357,7 +357,7 @@ public static class VacancyImageUrls
     /// </summary>
     public static string? AlternateSrc(string? imageUrl, string? fallbackUrl, string displaySrc)
     {
-        var fallback = UsableSource(fallbackUrl, vacancyId: null);
+        var fallback = UsableSource(fallbackUrl);
         if (string.IsNullOrWhiteSpace(fallback)
             || string.Equals(fallback, displaySrc, StringComparison.OrdinalIgnoreCase)
             || string.Equals(fallback, Normalize(imageUrl), StringComparison.OrdinalIgnoreCase))
@@ -456,7 +456,7 @@ public static class VacancyImageUrls
         return "flex";
     }
 
-    private static string? UsableSource(string? imageUrl, Guid? vacancyId)
+    private static string? UsableSource(string? imageUrl)
     {
         var normalized = Normalize(imageUrl);
         if (string.IsNullOrWhiteSpace(normalized))

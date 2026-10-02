@@ -709,6 +709,7 @@ public sealed partial class JobsyApiClient
         decimal? amountExVat = null,
         CancellationToken ct = default)
     {
+        _ = amountExVat;
         var preview = await GetSalesPayoutPreviewAsync(ct);
         return new SalesManagerPayoutPreview
         {

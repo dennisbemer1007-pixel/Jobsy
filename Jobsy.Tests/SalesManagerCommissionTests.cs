@@ -634,22 +634,6 @@ public class SalesManagerCommissionTests
             new TokenLedgerService(db),
             new FakePublicWebFeatures("https://lobsy.nl"));
 
-    private static SalesManagerPayoutService CreatePayoutService(
-        JobsyDbContext db,
-        CommissionLedgerService ledger)
-    {
-        var invoices = new SelfBillingInvoiceService(db, ledger);
-        return new SalesManagerPayoutService(
-            db,
-            invoices,
-            ledger,
-            new PlatformCompanySettingsService(db),
-            new FakePublicWebFeatures("https://lobsy.nl"),
-            new TestHostEnvironment(),
-            new ConfigurationBuilder().Build(),
-            NullLogger<SalesManagerPayoutService>.Instance);
-    }
-
     private static CompanyRegistrationService CreateRegistrationService(JobsyDbContext db)
     {
         var config = new ConfigurationBuilder().Build();

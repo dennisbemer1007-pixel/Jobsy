@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
-using System.Text.Json;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
@@ -19,10 +18,6 @@ namespace Jobsy.Tests.Scholen;
 public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWebAppFactory>
 {
     private readonly RoleFunctionalWebAppFactory _factory;
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-    };
 
     public SchoolRetentionAndAggregatesTests(RoleFunctionalWebAppFactory factory) => _factory = factory;
 

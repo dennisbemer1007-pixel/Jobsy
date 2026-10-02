@@ -23,6 +23,8 @@ public static class CompetenceDeepReportBuilder
         bool fromOpenAi,
         DateTime generatedAtUtc)
     {
+        // TODO(code-health): use jobTitle in report header / PDF title when product wants occupation context.
+        _ = jobTitle;
         var domainScores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Competence)
             .ToDictionary(s => s.Domain, s => s.Percent, StringComparer.OrdinalIgnoreCase);
         var facetScores = DeepAnalysisCatalog.ScoreFacets(answers);
