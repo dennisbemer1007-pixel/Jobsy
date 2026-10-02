@@ -502,7 +502,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                         DeepAnalysisQuestionHelp.DomainLabel(q.Domain)))
                     .ToList()
                 : [],
-            FormatUpsellCopy(priceEuro, kind),
+            DeepAnalysisUpsellRules.CopyNl(kind, expected),
             completed && kind == AssessmentKind.Competence ? competenceReport : null,
             completed && kind == AssessmentKind.Career ? careerReport : null,
             completed && kind == AssessmentKind.Culture ? cultureReport : null,
