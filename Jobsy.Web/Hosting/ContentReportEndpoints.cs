@@ -31,16 +31,22 @@ public static class ContentReportEndpoints
             var id = form["id"].ToString().Trim();
             var backUrl = BuildFormUrl(type, id);
 
+            var reasonRaw = form["reason"].ToString();
+            var reasonQuery = AppendReasonQuery(reasonRaw);
+
             if (!await antiforgery.IsRequestValidAsync(http))
             {
-                return Results.Redirect(backUrl + "&fout=opnieuw");
+                return Results.Redirect(backUrl + "&fout=opnieuw" + reasonQuery);
             }
 
-            if (!Enum.TryParse<ContentReportReason>(form["reason"].ToString(), ignoreCase: true, out var reason)
+            if (!Enum.TryParse<ContentReportReason>(reasonRaw, ignoreCase: true, out var reason)
                 || !Enum.IsDefined(reason))
             {
                 return Results.Redirect(backUrl + "&fout=reden");
             }
+
+            // Valid reason only from here — keep it on error redirects so the form can re-check it.
+            reasonQuery = "&reden=" + Uri.EscapeDataString(reason.ToString());
 
             var email = ContentReportRules.NormalizeEmail(form["email"].ToString());
             var payload = new
@@ -62,12 +68,12 @@ public static class ContentReportEndpoints
                 var response = await client.PostAsJsonAsync("api/reports", payload, http.RequestAborted);
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
-                    return Results.Redirect(backUrl + "&fout=teveel");
+                    return Results.Redirect(backUrl + "&fout=teveel" + reasonQuery);
                 }
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return Results.Redirect(backUrl + "&fout=opnieuw");
+                    return Results.Redirect(backUrl + "&fout=opnieuw" + reasonQuery);
                 }
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
@@ -75,7 +81,7 @@ public static class ContentReportEndpoints
                 loggerFactory
                     .CreateLogger("Jobsy.Web.ContentReports")
                     .LogWarning(ex, "Could not forward a content report to the API.");
-                return Results.Redirect(backUrl + "&fout=opnieuw");
+                return Results.Redirect(backUrl + "&fout=opnieuw" + reasonQuery);
             }
 
             return Results.Redirect(
@@ -94,4 +100,19 @@ public static class ContentReportEndpoints
 
     internal static string BuildFormUrl(string type, string? id)
         => $"/melden?type={type}&id={Uri.EscapeDataString(id ?? string.Empty)}";
+
+    /// <summary>
+    /// Returns <c>&amp;reden=Fake</c> when the posted value is a defined
+    /// <see cref="ContentReportReason"/>; otherwise empty (never echo free text).
+    /// </summary>
+    public static string AppendReasonQuery(string? reasonRaw)
+    {
+        if (!Enum.TryParse<ContentReportReason>(reasonRaw, ignoreCase: true, out var reason)
+            || !Enum.IsDefined(reason))
+        {
+            return string.Empty;
+        }
+
+        return "&reden=" + Uri.EscapeDataString(reason.ToString());
+    }
 }

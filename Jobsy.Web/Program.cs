@@ -305,7 +305,9 @@ builder.Services.AddRateLimiter(options =>
                 ContentReportEndpoints.NormalizeType(form["type"].ToString()),
                 form["id"].ToString().Trim());
             http.Response.StatusCode = StatusCodes.Status303SeeOther;
-            http.Response.Headers.Location = target + "&fout=teveel";
+            http.Response.Headers.Location = target
+                + "&fout=teveel"
+                + ContentReportEndpoints.AppendReasonQuery(form["reason"].ToString());
             return;
         }
 
