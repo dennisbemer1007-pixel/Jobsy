@@ -1,0 +1,47 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+@*
+    Dependency B is present: the curated course slots come from the passport block
+    (CourseSlotRules server-side: best free first, at most one partner). This page never
+    seeds data, so no EnsureDefaultsAsync call belongs here.
+    TODO(paspoort-03): when paspoort 03 changes the slot contract, only this seam moves.
+*@
+
+@if (Slots.Count > 0)
+{
+    <section class="career-courses" id="career-courses" aria-labelledby="career-courses-title">
+        <h2 id="career-courses-title" class="career-card__block-title">@Culture["CareerStep.Courses.Title"]</h2>
+
+        <CourseSuggestionBlock EyebrowKey="CareerStep.Courses.Eyebrow"
+                               SkillLabel="@SkillLabel"
+                               Slots="Slots"
+                               Campaign="@TrainingTracking.CampaignCompetence" />
+
+        <p class="career-courses__disclosure">@Culture["CareerStep.Courses.Disclosure"]</p>
+    </section>
+}
+else if (CourseNames.Count > 0)
+{
+    @* No curated free match: the course block is hidden and only the claw text stays (D5). *@
+    <p class="career-courses__plain" id="career-courses">
+        <span class="career-courses__icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+        @Culture.Format("CareerStep.Courses.Plain", string.Join(", ", CourseNames))
+    </p>
+}
+
+@code {
+    /// <summary>Curated slots for this step; empty means no free match, so no block (D5).</summary>
+    [Parameter] public IReadOnlyList<PassportCourseCard> Slots { get; set; } = [];
+
+    /// <summary>AI course names from the plan. Rendered as plain text only, never as links.</summary>
+    [Parameter] public IReadOnlyList<string> CourseNames { get; set; } = [];
+
+    /// <summary>The claw the courses help grow; used in the "why" line.</summary>
+    [Parameter] public string SkillLabel { get; set; } = "";
+}

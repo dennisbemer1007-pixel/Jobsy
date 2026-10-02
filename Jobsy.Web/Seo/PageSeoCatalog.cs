@@ -89,6 +89,30 @@ public static partial class PageSeoCatalog
         ];
     }
 
+    /// <summary>
+    /// Sitemap static paths by employers switch (landing §S). OFF drops employer/map surfaces but keeps "/"
+    /// (the landing -zw variant). Used once the <c>IEmployersSwitch</c> adapter over <c>IFeatureFlags</c> lands
+    /// (see docs/feature-flags-landing-followup.md); until then the sitemap uses the flag-snapshot overload.
+    /// </summary>
+    public static IReadOnlyList<string> StaticIndexablePathsFor(bool employersEnabled)
+    {
+        if (employersEnabled)
+        {
+            return StaticIndexablePaths;
+        }
+
+        return StaticIndexablePaths
+            .Where(p => !IsEmployersOnlySitemapPath(p))
+            .ToArray();
+    }
+
+    public static bool IsEmployersOnlySitemapPath(string? path)
+    {
+        var p = Normalize(path);
+        return p is "/banenkaart" or "/partner" or "/westland" or "/lancering" or "/werkgevers"
+               || p.StartsWith("/vacancies/", StringComparison.Ordinal);
+    }
+
     public static string Normalize(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -155,7 +179,7 @@ public static partial class PageSeoCatalog
             ["/error"] = Private("Seo.ErrorTitle", "Seo.PrivateDescription"),
             ["/home"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
             ["/hoe-werkt-lobsy"] = Public("HowLobsy.Guest.Title", "HowLobsy.Guest.Lead"),
-            ["/candidate/hoe-werkt-lobsy"] = Private("Nav.HowLobsyWorks", "Seo.PrivateDescription"),
+            ["/candidate/hoe-werkt-lobsy"] = Private("HowC.Eyebrow", "Seo.PrivateDescription"),
             ["/candidate/liked"] = Private("Saved.Title", "Seo.PrivateDescription"),
             ["/candidate/shared"] = Private("Saved.TabShared", "Seo.PrivateDescription"),
             ["/candidate/vacancies"] = Private("Nav.Vacancies", "Seo.PrivateDescription"),
@@ -180,7 +204,7 @@ public static partial class PageSeoCatalog
             ["/profiel/tests/values"] = Private("Test.Values.Title", "Seo.PrivateDescription"),
             ["/werkgever/organisatie/profiel?tab=cultuur"] = Private("CultureScan.EmployerTitle", "Seo.PrivateDescription"),
             ["/candidate/deep-analysis/checkout"] = Private("Deep.Checkout", "Seo.PrivateDescription"),
-            ["/candidate/talent-contacts"] = Private("Talent.CandidateTitle", "Seo.PrivateDescription"),
+            ["/candidate/talent-contacts"] = Private("TalentC.Eyebrow", "Seo.PrivateDescription"),
             ["/werkgever/talentpool"] = Private("Talent.Title", "Seo.PrivateDescription"),
             ["/werkgever/talentpool?tab=contact"] = Private("Talent.EmployerContactsTitle", "Seo.PrivateDescription"),
             ["/candidate/actions/set-unavailable"] = Private("Seo.SiteName", "Seo.PrivateDescription"),

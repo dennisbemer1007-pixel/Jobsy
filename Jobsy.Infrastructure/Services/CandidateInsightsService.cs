@@ -259,7 +259,7 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
             active30Kpi = new SuppressedCount(a30s, a30v);
 
             var careerPlans = await _db.CandidateCareerPlans.AsNoTracking()
-                .Where(p => cohortIds.Contains(p.UserId))
+                .Where(p => cohortIds.Contains(p.UserId) && p.Status == CareerPlanStatuses.Active)
                 .Select(p => new { p.UserId, p.DreamKey, p.DreamTitle })
                 .ToListAsync(cancellationToken);
 

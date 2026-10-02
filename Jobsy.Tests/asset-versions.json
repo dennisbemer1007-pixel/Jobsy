@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "1ddeb818618343052df88a2d4092102fa9c19dd293f6fdeaf8efd9a6c21c8f6b",
-    "v": "20260930-kb9"
+    "sha256": "f70947fb7561e147a8d62831e32c4c6d121f043237eaaaf0138a6271fc676a00",
+    "v": "20260930-carriere6"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -23,6 +23,10 @@
     "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
     "v": "20260930-kb3"
   },
+  "css/features/carriere.css": {
+    "sha256": "38a5169943c3e3c01c6ffa9aea4f38cf45b205b1da9ff89eae5cc3a465ffbe4f",
+    "v": "20260930-carriere5"
+  },
   "css/features/enterprise-ui.css": {
     "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
     "v": "20260929-ent-ui"
@@ -40,8 +44,8 @@
     "v": "20260929-insights-7"
   },
   "css/features/landing.css": {
-    "sha256": "37dfc61858e90e15a7d0e394c3fed5f3f4bb72c84ecd8c99d1cd018db6d1cba6",
-    "v": "20260930-landing-5"
+    "sha256": "45e4aa322d0fa71fd6c3b9bed697cccef7888c1e9733f5f7b5868413f00b7e5f",
+    "v": "20260930-landing-7"
   },
   "css/features/match-desktop.css": {
     "sha256": "719535fb31e05c285f519f7a047a872dcd91ab67d42b56ae5b03b4cb8f13d672",

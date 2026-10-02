@@ -19,25 +19,51 @@ public interface ICandidateCareerPlanService
     /// <summary>Generates the plan when a pending dream stub exists (called from insights worker).</summary>
     Task TryGeneratePendingAsync(Guid userId, HorizonCareerProfileSnapshot snapshot, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Archive-aware generation (§2, §6). <paramref name="dreamTitle"/> is used when neither
+    /// <paramref name="catalogKey"/> nor free text is supplied (e.g. the wizard/pending path).
+    /// A <paramref name="catalogKey"/> wins over <paramref name="dreamTitle"/> when both are given.
+    /// </summary>
     Task<HorizonCareerPathPlanView> GenerateAndSaveAsync(
         Guid userId,
-        string dreamTitle,
+        string? dreamTitle,
         HorizonCareerProfileSnapshot snapshot,
+        string? catalogKey = null,
+        string? dreamSource = null,
+        string? planLanguage = null,
+        bool force = false,
         CancellationToken cancellationToken = default);
 
+    /// <summary>409 <c>complete_previous_first</c> unless <paramref name="stepKey"/> is the Active step (idempotent when already Completed).</summary>
     Task<HorizonCareerPathPlanView?> CompleteStepAsync(
         Guid userId,
         string stepKey,
         CancellationToken cancellationToken = default);
 
+    /// <summary>409 <c>undo_last_first</c> unless <paramref name="stepKey"/> is the last completed step.</summary>
     Task<HorizonCareerPathPlanView?> UncompleteStepAsync(
         Guid userId,
         string stepKey,
         CancellationToken cancellationToken = default);
 
-    Task<HorizonCareerPathPlanView?> ClaimCourseAsync(
+    /// <summary>Newest-first, max 3 (D11).</summary>
+    Task<IReadOnlyList<ArchivedCareerPlanView>> ListArchivedAsync(
         Guid userId,
-        string courseName,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Archives the current active plan (if any) and activates <paramref name="planId"/> with its own
+    /// progress. No carry-over, no AI call. Returns null for a foreign or already-purged plan id (404).
+    /// </summary>
+    Task<HorizonCareerPathPlanView?> RestoreArchivedAsync(
+        Guid userId,
+        Guid planId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Dream-job suggestions + search results for the dream picker (B10).</summary>
+    Task<CareerDreamOptionsView> GetDreamOptionsAsync(
+        Guid userId,
+        string? query,
         CancellationToken cancellationToken = default);
 }
 
@@ -47,6 +73,10 @@ public sealed record HorizonCareerPathPlanView(
     int MatchPercent,
     string MatchSummary,
     bool GoalReached,
+    bool FromAi,
+    string PlanLanguage,
+    string DreamFitBand,
+    int CarriedOverCount,
     IReadOnlyList<HorizonCareerPathStepView> Steps);
 
 public sealed record HorizonCareerPathStepView(
@@ -59,9 +89,23 @@ public sealed record HorizonCareerPathStepView(
     IReadOnlyList<HorizonCareerCourseView> Courses,
     IReadOnlyList<string> MinRequirements,
     int YearsExperienceNeeded,
-    string ActionLabel,
-    string ActionHref,
-    int StepMatchPercent,
-    int MatchedCourseCount);
+    string StepFitBand,
+    bool HeldBack,
+    int MatchedCourseCount,
+    IReadOnlyList<string> ActionKinds);
 
 public sealed record HorizonCareerCourseView(string Name, bool OnProfile);
+
+public sealed record ArchivedCareerPlanView(
+    Guid PlanId,
+    string DreamTitle,
+    DateTime ArchivedAtUtc,
+    int CompletedSteps,
+    int TotalSteps,
+    DateTime ExpiresAtUtc);
+
+public sealed record CareerDreamOptionView(string? CatalogKey, string Title, string? ReasonKey);
+
+public sealed record CareerDreamOptionsView(
+    IReadOnlyList<CareerDreamOptionView> Suggestions,
+    IReadOnlyList<CareerDreamOptionView> Results);
