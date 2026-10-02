@@ -150,11 +150,12 @@ public class BanenkaartMobileOverflowPlaywrightTests
               const offenders = [];
               const main = document.querySelector('.app-main') || document.body;
               for (const el of main.querySelectorAll('*')) {
-                if (el.closest('.kb-filter-chips')) {
-                  // Chip row scroll content may extend; its box must not.
-                  const box = el.closest('.kb-filter-chips');
-                  if (box && el !== box) continue;
-                }
+                // Chip row + highlight carousel scroll horizontally by design;
+                // only their outer boxes must stay within the viewport.
+                const chip = el.closest('.kb-filter-chips');
+                if (chip && el !== chip) continue;
+                const carousel = el.closest('.highlight-carousel');
+                if (carousel && el !== carousel) continue;
                 const r = el.getBoundingClientRect();
                 if (r.width <= 0 || r.height <= 0) continue;
                 if (r.right > 391.5) {
@@ -164,6 +165,13 @@ public class BanenkaartMobileOverflowPlaywrightTests
               }
               const chips = document.querySelector('.kb-filter-chips:not(.kb-filter-chips--desktop)');
               const chipBox = chips ? chips.getBoundingClientRect().width : 0;
+              const carousels = [...document.querySelectorAll('.highlight-carousel')];
+              for (const c of carousels) {
+                const r = c.getBoundingClientRect();
+                if (r.width > 0 && r.right > 391.5) {
+                  offenders.push('highlight-carousel-box');
+                }
+              }
               return { docW, offenders, chipBox };
             }
             """);
