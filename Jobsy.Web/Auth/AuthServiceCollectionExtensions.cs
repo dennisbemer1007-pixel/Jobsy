@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Web.Localization;
@@ -810,7 +811,8 @@ public static class AuthServiceCollectionExtensions
             DemoUserStore users,
             IConfiguration configuration,
             IHostEnvironment environment,
-            IAntiforgery antiforgery) =>
+            IAntiforgery antiforgery,
+            IFeatureFlags featureFlags) =>
         {
             if (environment.IsProduction())
             {
@@ -844,7 +846,8 @@ public static class AuthServiceCollectionExtensions
                 || principal.IsInRole("Candidate")
                 || principal.HasClaim(ClaimTypes.Role, "Candidate"))
             {
-                returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
+                var flags = await ResolveFeatureFlagsAsync(featureFlags, http.RequestAborted);
+                returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo, flags);
             }
 
             var rememberDevice = string.Equals(
@@ -1130,8 +1133,11 @@ public static class AuthServiceCollectionExtensions
             if (profile.ShowCandidateHowTo
                 || string.Equals(profile.Role, "Candidate", StringComparison.OrdinalIgnoreCase))
             {
+                var flags = await ResolveFeatureFlagsAsync(
+                    http.RequestServices.GetService<IFeatureFlags>(),
+                    http.RequestAborted);
                 dest = AuthRedirects.SafeLocalUrl(
-                    AuthRedirects.ResolveCandidateReturnUrl(dest, profile.ShowCandidateHowTo));
+                    AuthRedirects.ResolveCandidateReturnUrl(dest, profile.ShowCandidateHowTo, flags));
             }
             else if (IsEmployerRoleName(profile.Role))
             {
@@ -1312,7 +1318,10 @@ public static class AuthServiceCollectionExtensions
             || principal.IsInRole("Candidate")
             || principal.HasClaim(ClaimTypes.Role, "Candidate"))
         {
-            returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
+            var flags = await ResolveFeatureFlagsAsync(
+                http.RequestServices.GetService<IFeatureFlags>(),
+                http.RequestAborted);
+            returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo, flags);
         }
 
         returnUrl = AuthRedirects.ResolvePostLoginLanding(returnUrl, principal);
@@ -1884,6 +1893,10 @@ public static class AuthServiceCollectionExtensions
 
             ApplyProfileClaims(identity, profile, $"external:{provider}");
 
+            var featureFlags = await ResolveFeatureFlagsAsync(
+                http.RequestServices.GetService<IFeatureFlags>(),
+                http.RequestAborted);
+
             if (properties is not null && !string.IsNullOrWhiteSpace(profile.HandoffCode))
             {
                 // Finish inside the PWA scope via one-time code (iOS standalone cookie jar).
@@ -1893,7 +1906,8 @@ public static class AuthServiceCollectionExtensions
                 {
                     returnDest = AuthRedirects.ResolveCandidateReturnUrl(
                         returnDest,
-                        profile.ShowCandidateHowTo);
+                        profile.ShowCandidateHowTo,
+                        featureFlags);
                 }
                 else if (IsEmployerRoleName(profile.Role))
                 {
@@ -1912,7 +1926,8 @@ public static class AuthServiceCollectionExtensions
                     properties.RedirectUri = AuthRedirects.SafeLocalUrl(
                         AuthRedirects.ResolveCandidateReturnUrl(
                             properties.RedirectUri ?? "/home",
-                            profile.ShowCandidateHowTo));
+                            profile.ShowCandidateHowTo,
+                            featureFlags));
                 }
                 else if (IsEmployerRoleName(profile.Role))
                 {
@@ -1924,6 +1939,25 @@ public static class AuthServiceCollectionExtensions
         catch
         {
             ReplaceRoleClaim(identity, "Candidate");
+        }
+    }
+
+    private static async Task<FeatureFlagSnapshot> ResolveFeatureFlagsAsync(
+        IFeatureFlags? featureFlags,
+        CancellationToken cancellationToken)
+    {
+        if (featureFlags is null)
+        {
+            return FeatureFlagSnapshot.Defaults;
+        }
+
+        try
+        {
+            return await featureFlags.GetAsync(cancellationToken);
+        }
+        catch
+        {
+            return FeatureFlagSnapshot.Defaults;
         }
     }
 

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Tests.Werkgever;
@@ -19,11 +20,15 @@ public class RoleNavCatalogEmployerEmptyTests
     public void Candidate_admin_sales_ambassadeur_unchanged_snapshot()
     {
         Assert.Equal(5, RoleNavCatalog.Candidate.Length);
-        Assert.Equal(7, RoleNavCatalog.Admin.Length);
-        Assert.Equal(5, RoleNavCatalog.SalesManager.Length);
+        Assert.Empty(RoleNavCatalog.Admin);
+        Assert.Empty(RoleNavCatalog.SalesManager);
         Assert.Equal(4, RoleNavCatalog.Ambassadeur.Length);
         Assert.Equal("/candidate/liked", RoleNavCatalog.Candidate[1].Href);
-        Assert.Equal("/admin/vacancies", RoleNavCatalog.Admin[2].Href);
+        Assert.Equal("/banenkaart", RoleNavCatalog.Candidate[0].Href);
+
+        var passportOn = RoleNavCatalog.CandidateItems(new FeatureFlagSnapshot(true, true));
+        Assert.Equal("Nav.Banenkaart", passportOn[3].TitleKey);
+        Assert.Equal("/carriere", passportOn[2].Href);
     }
 
     [Fact]

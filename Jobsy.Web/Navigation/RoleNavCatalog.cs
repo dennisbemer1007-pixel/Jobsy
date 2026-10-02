@@ -43,6 +43,12 @@ public static class RoleNavCatalog
     public static readonly NavItem SearchItem =
         new("Nav.Search", "/banenkaart", NavIcons.Search, ["/"]);
 
+    /// <summary>
+    /// Banenkaart slot for passport-ON nav (label <c>Nav.Banenkaart</c>; href stays /banenkaart).
+    /// Legacy passport-OFF order keeps <see cref="SearchItem"/> ("Zoeken").
+    /// </summary>
+    public static readonly NavItem BanenkaartItem =
+        new("Nav.Banenkaart", "/banenkaart", NavIcons.Search, ["/"]);
 
     public static readonly NavItem SavedItem =
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]);
@@ -71,7 +77,6 @@ public static class RoleNavCatalog
     public static readonly NavItem ApplicationsWithSavedAliases =
         new("Nav.Applications", "/candidate/applications", NavIcons.Applications,
             ["/candidate/liked", "/candidate/shared"]);
-
     public static readonly NavItem MyApplicationsReadOnly =
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
 
@@ -108,8 +113,9 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Teacher = [];
 
     /// <summary>
-    /// Pure-function candidate nav. Passport OFF keeps today's order; passport ON uses §N slots
-    /// with Discovery first. Employers OFF hides Zoeken / Bewaard / Sollicitaties.
+    /// Pure-function candidate nav. Passport OFF keeps today's order (D1); passport ON uses §N
+    /// slots with Career directly after Passport. Employers OFF hides Banenkaart / Bewaard /
+    /// Sollicitaties.
     /// </summary>
     public static IReadOnlyList<NavItem> CandidateItems(FeatureFlagSnapshot flags)
     {
@@ -123,8 +129,8 @@ public static class RoleNavCatalog
                 return [DiscoveryItem, PassportItem, CareerItem];
             }
 
-            // De ontdekkingsreis · Mijn Paspoort · Zoeken · Sollicitaties · Carrière
-            return [DiscoveryItem, PassportItem, SearchItem, ApplicationsWithSavedAliases, CareerItem];
+            // De ontdekkingsreis · Mijn Paspoort · Carrière · Banenkaart · Sollicitaties
+            return [DiscoveryItem, PassportItem, CareerItem, BanenkaartItem, ApplicationsWithSavedAliases];
         }
 
         if (!flags.EmployersEnabled)

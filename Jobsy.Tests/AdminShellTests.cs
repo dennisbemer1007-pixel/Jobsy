@@ -106,17 +106,23 @@ public class RoleNavCatalogSnapshotTests
     public void Admin_catalog_is_empty_and_other_catalogs_are_unchanged()
     {
         Assert.Empty(RoleNavCatalog.Admin);
+        // Employer bottom-nav catalogs empty — WerkgeverNav owns chrome (D1).
+        Assert.Empty(RoleNavCatalog.Enterprise);
+        Assert.Empty(RoleNavCatalog.Regional);
+        Assert.Empty(RoleNavCatalog.Branch);
+        Assert.Empty(RoleNavCatalog.Intermediary);
+        Assert.Empty(RoleNavCatalog.SalesManager);
 
         Assert.Equal(
-            ["/", "/candidate/liked", "/candidate/applications", "/carriere", "/candidate/profile"],
+            ["/banenkaart", "/candidate/liked", "/candidate/applications", "/carriere", "/candidate/profile"],
             RoleNavCatalog.Candidate.Select(i => i.Href));
-        Assert.Equal("/employer/vacancies", RoleNavCatalog.Enterprise[2].Href);
-        Assert.Equal("/employer/vacancies", RoleNavCatalog.Regional[2].Href);
-        Assert.Equal("/branch/vacancies", RoleNavCatalog.Branch[2].Href);
-        Assert.Equal("/employer/vacancies", RoleNavCatalog.Intermediary[2].Href);
-        Assert.Equal("/salesmanager/toolkit", RoleNavCatalog.SalesManager[1].Href);
         Assert.Equal("/ambassadeur/toolkit", RoleNavCatalog.Ambassadeur[1].Href);
-        Assert.Contains("/admin/tokens", RoleNavCatalog.Enterprise[5].ExtraActivePaths ?? []);
+
+        var passportOn = RoleNavCatalog.CandidateItems(
+            new Jobsy.Core.Features.FeatureFlagSnapshot(true, true));
+        Assert.Equal(
+            ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/carriere", "/banenkaart", "/candidate/applications"],
+            passportOn.Select(i => i.Href));
     }
 }
 

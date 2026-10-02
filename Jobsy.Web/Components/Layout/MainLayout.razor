@@ -1,7 +1,10 @@
 @inherits LayoutComponentBase
+@using Jobsy.Core.Authorization
 @using Jobsy.Core.Features
+@using Jobsy.Web.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
@@ -9,6 +12,8 @@
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 @inject Jobsy.Web.Services.ApiCallTracker ApiCalls
+@inject AuthenticationStateProvider AuthState
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
@@ -19,7 +24,7 @@
     {
         <header class="app-header">
             <div class="app-header__brand">
-                <a class="brand" href="/" aria-label="Lobsy">
+                <a class="brand" href="@_homeHref" aria-label="Lobsy">
                     <LobsyLogo Class="brand__logo" Alt="Lobsy" />
                     <span class="brand__text">
                         <span class="brand__name">Lobsy</span>
@@ -80,6 +85,7 @@
     private bool _hasBottomNav;
     private bool _isMatchPage;
     private bool _isQuestionnairePage;
+    private string _homeHref = "/";
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,8 +96,41 @@
         RefreshFocusedFlags();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
+        await RefreshHomeHrefAsync();
         // Do not block first paint (or /home dashboards) on region/slogan HTTP.
         _ = HydrateHostBrandingAsync();
+    }
+
+    private async Task RefreshHomeHrefAsync()
+    {
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            if (user.Identity?.IsAuthenticated != true
+                || !RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+            {
+                _homeHref = "/";
+                return;
+            }
+
+            var flags = await FeatureFlags.GetAsync();
+            if (!flags.CandidatePassportEnabled)
+            {
+                // Flag OFF: logo stays on "/" (LandingRedirectMiddleware → banenkaart).
+                _homeHref = "/";
+                return;
+            }
+
+            _homeHref = FeatureRoutes.HomeFor(
+                user,
+                flags,
+                passportReady: AuthRedirects.PassportReadyFromClaims(user));
+        }
+        catch
+        {
+            _homeHref = "/";
+        }
     }
 
     private async Task HydrateHostBrandingAsync()

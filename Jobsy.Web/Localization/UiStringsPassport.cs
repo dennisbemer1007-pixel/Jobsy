@@ -24,6 +24,9 @@ public static class UiStringsPassport
             "De ontdekkingsreis", "The discovery journey", "Podróż odkrywcza", "Călătoria de descoperire", "رحلة الاكتشاف");
         Add("Nav.Discovery.Short",
             "Reis", "Journey", "Podróż", "Călătorie", "الرحلة");
+        // Passport-ON Banenkaart slot (legacy Nav.Search "Zoeken" kept for passport-OFF / other surfaces).
+        Add("Nav.Banenkaart",
+            "Banenkaart", "Job map", "Mapa ofert", "Hartă joburi", "خريطة الوظائف");
         Add("Nav.ApplicationsTab",
             "Sollicitaties", "Applications", "Aplikacje", "Candidaturi", "الطلبات");
         Add("Nav.SavedTab",
