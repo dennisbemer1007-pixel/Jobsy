@@ -14,6 +14,9 @@ public sealed class LocalizationParityReportTests
     private static readonly string[] Languages = ["nl", "en", "pl", "ro", "ar"];
     private static readonly string[] NonDefaultLanguages = ["en", "pl", "ro", "ar"];
 
+    /// <summary>String.Format slots carry digits that are not part of the copy.</summary>
+    private static readonly Regex PlaceholderPattern = new(@"\{\d+\}", RegexOptions.Compiled);
+
     private readonly ITestOutputHelper _output;
 
     public LocalizationParityReportTests(ITestOutputHelper output) => _output = output;
@@ -118,6 +121,33 @@ public sealed class LocalizationParityReportTests
             hits.Count == 0,
             "User-visible UiStrings values still contain 'Jobsy' (use 'Lobsy'). " +
             string.Join("; ", hits.Take(20)));
+    }
+
+    /// <summary>
+    /// 05 §1 H3: the profile step describes short questionnaires instead of a question count that
+    /// goes stale, and it says the same thing in every language.
+    /// </summary>
+    [Fact]
+    public void HowLobsy_profile_step_carries_no_question_count()
+    {
+        var catalog = LoadCatalog();
+        foreach (var lang in Languages)
+        {
+            Assert.True(
+                catalog[lang].TryGetValue("HowLobsy.Step2Body", out var body),
+                $"Language {lang} is missing HowLobsy.Step2Body");
+            var copy = PlaceholderPattern.Replace(body!, "");
+            Assert.DoesNotContain(copy, char.IsDigit);
+        }
+
+        // The typo "Lik" (instead of "Like") must not come back either.
+        foreach (var lang in Languages)
+        {
+            Assert.DoesNotContain(
+                "Lik ",
+                catalog[lang]["HowLobsy.Step3Body"],
+                StringComparison.Ordinal);
+        }
     }
 
     private static Dictionary<string, Dictionary<string, string>> LoadCatalog()

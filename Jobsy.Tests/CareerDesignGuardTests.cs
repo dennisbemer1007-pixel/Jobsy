@@ -44,7 +44,7 @@ public class CareerDesignGuardTests
     [Fact]
     public void Career_code_never_uses_a_native_confirm()
     {
-        foreach (var file in CareerFiles().Concat([PagePath(), ContactsPagePath()]))
+        foreach (var file in CareerFiles().Concat(PagePaths()))
         {
             var text = File.ReadAllText(file);
             Assert.DoesNotContain("window.confirm", text, StringComparison.OrdinalIgnoreCase);
@@ -55,11 +55,22 @@ public class CareerDesignGuardTests
     [Fact]
     public void Career_surfaces_never_render_exception_messages()
     {
-        foreach (var file in CareerFiles().Concat([PagePath(), ContactsPagePath()]))
+        foreach (var file in CareerFiles().Concat(PagePaths()))
         {
             var text = File.ReadAllText(file);
             Assert.DoesNotContain("ex.Message", text, StringComparison.Ordinal);
         }
+    }
+
+    /// <summary>05: the candidate how-to guide joins the same journey shell and guards.</summary>
+    [Fact]
+    public void How_to_guide_page_uses_the_journey_shell()
+    {
+        var text = File.ReadAllText(HowPagePath());
+        Assert.Contains("journey-page career-page", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("HowLobsyGuidePanel", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("panel-page", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Message=\"_message\"", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -102,6 +113,12 @@ public class CareerDesignGuardTests
     /// <summary>04: the contact-request page joins the same guards.</summary>
     private static string ContactsPagePath()
         => Path.Combine(Repo(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateTalentContacts.razor");
+
+    /// <summary>05: the candidate how-to guide joins the same guards.</summary>
+    private static string HowPagePath()
+        => Path.Combine(Repo(), "Jobsy.Web", "Components", "Pages", "Candidate", "HowLobsyWorks.razor");
+
+    private static string[] PagePaths() => [PagePath(), ContactsPagePath(), HowPagePath()];
 
     private static IEnumerable<string> CareerFiles()
     {
