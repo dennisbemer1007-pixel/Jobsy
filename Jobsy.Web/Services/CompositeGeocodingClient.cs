@@ -28,7 +28,7 @@ public sealed class CompositeGeocodingClient(
             return hit.Suggestions;
         }
 
-        IReadOnlyList<AddressSuggestion> results = [];
+        IReadOnlyList<AddressSuggestion> results;
         try
         {
             results = await pdok.SuggestAsync(query, cancellationToken);

@@ -220,9 +220,17 @@ else
     private Task OnGateChanged(bool open) { _gateOpen = open; return Task.CompletedTask; }
     private Task OnAutosaveChanged()
     {
-        var s = _autosave?.Status ?? QuestionnaireSaveStatus.Idle;
-        if (s == QuestionnaireSaveStatus.Saved) _liveSave = Culture["TestFlow.Saved"];
-        if (s == QuestionnaireSaveStatus.Failed) _liveSave = Culture["TestFlow.SaveFailed"];
+        if (_autosave is not null && _autosave.Status != _lastAnnounced)
+        {
+            _lastAnnounced = _autosave.Status;
+            _liveSave = _autosave.Status switch
+            {
+                QuestionnaireSaveStatus.Saved => Culture["TestFlow.Saved"],
+                QuestionnaireSaveStatus.Failed => Culture["TestFlow.SaveFailed"],
+                _ => _liveSave
+            };
+        }
+
         _answered = _autosave?.AnsweredCount ?? _answered;
         return InvokeAsync(StateHasChanged);
     }

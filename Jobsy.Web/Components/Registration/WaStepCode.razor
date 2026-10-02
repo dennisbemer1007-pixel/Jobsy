@@ -56,19 +56,7 @@
     [Parameter] public string? Error { get; set; }
     [Parameter] public EventCallback<string> OnConfirm { get; set; }
     [Parameter] public EventCallback OnResend { get; set; }
-    [Parameter] public bool Expired
-    {
-        get => _expired;
-        set
-        {
-            _expired = value;
-            if (value)
-            {
-                _timer?.Dispose();
-                _timer = null;
-            }
-        }
-    }
+    [Parameter] public bool Expired { get; set; }
 
     private string _code = "";
     private bool _expired;
@@ -77,7 +65,15 @@
 
     protected override void OnParametersSet()
     {
-        if (State.VerificationExpiresAt is DateTime exp && !_expired)
+        _expired = Expired;
+        if (_expired)
+        {
+            _timer?.Dispose();
+            _timer = null;
+            return;
+        }
+
+        if (State.VerificationExpiresAt is DateTime exp)
         {
             StartCountdown(exp);
         }

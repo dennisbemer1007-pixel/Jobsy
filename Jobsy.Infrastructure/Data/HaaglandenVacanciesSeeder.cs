@@ -194,10 +194,9 @@ internal static class HaaglandenVacanciesSeeder
         {
             for (var i = 0; i < city.VacancyCount; i++)
             {
-                var role = Roles[i % Roles.Length];
                 // Rotate roles with a city offset so the same index differs per city.
                 var roleOffset = (city.Region * 17 + i * 3) % Roles.Length;
-                role = Roles[roleOffset];
+                var role = Roles[roleOffset];
 
                 var area = city.Areas[i % city.Areas.Length];
                 var companyN = (i % city.Companies.Length) + 1;

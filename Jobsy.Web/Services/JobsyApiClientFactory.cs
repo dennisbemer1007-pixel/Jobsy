@@ -56,9 +56,11 @@ public static class JobsyApiClientFactory
     /// <summary>Delegates to an inner handler without disposing it.</summary>
     internal sealed class NonDisposingHandler(HttpMessageHandler inner) : DelegatingHandler(inner)
     {
+#pragma warning disable CA2215 // shared inner handler must outlive this wrapper
         protected override void Dispose(bool disposing)
         {
             // Intentionally skip base.Dispose so the shared SocketsHttpHandler stays alive.
         }
+#pragma warning restore CA2215
     }
 }

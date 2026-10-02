@@ -898,10 +898,10 @@
             {
                 <p class="kb-travel-card__meta">@Culture.Format("Kb.Detail.TravelFrom", _originLabel)</p>
             }
-            @if (KbIntermediaryDisplay.IsHiddenMode(_vacancy!))
+            @if (_vacancy is { } travelVacancy && KbIntermediaryDisplay.IsHiddenMode(travelVacancy))
             {
                 <p class="kb-travel-card__meta">
-                    @if (_vacancy.TravelMinutes is int mins)
+                    @if (travelVacancy.TravelMinutes is int mins)
                     {
                         @string.Format(Culture["Kb.Map.TravelNoteHidden"], mins, KbLabels.TransportVerb(Culture, _transport))
                     }
@@ -911,7 +911,7 @@
                     }
                 </p>
             }
-            else if (!KbIntermediaryDisplay.HideRouteAndStreetView(_vacancy!))
+            else if (_vacancy is { } routeVacancy && !KbIntermediaryDisplay.HideRouteAndStreetView(routeVacancy))
             {
                 <div class="kb-travel-card__links">
                     <button class="kb-travel-card__link" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">

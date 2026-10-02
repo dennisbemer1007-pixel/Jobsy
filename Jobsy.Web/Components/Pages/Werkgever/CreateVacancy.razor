@@ -51,12 +51,16 @@
                     </p>
                     <KvkSearchField Label="Bedrijfsnaam of KVK-nummer"
                                     SearchButtonLabel="Zoek bedrijven"
-                                    OnSelected="OnClientSearchSelectedAsync" />
+                                    OnSelected="OnClientSearchSelectedAsync"
+                                    Disabled="_kvkBusy" />
                     @if (_clientEstablishments.Count > 0)
                     {
                         <label>
                             Vestiging
-                            <select @bind="_selectedEstablishmentId" @bind:after="OnClientEstablishmentChangedAsync">
+                            <select @bind="_selectedEstablishmentId"
+                                    @bind:after="OnClientEstablishmentChangedAsync"
+                                    disabled="@_kvkBusy"
+                                    aria-busy="@_kvkBusy">
                                 <option value="">— Kies vestiging —</option>
                                 @foreach (var e in _clientEstablishments)
                                 {
@@ -804,7 +808,6 @@
     private string? _align;
     private bool _isIntermediary;
     private string? _vmPublishNote;
-    private string _clientKvkNumber = "";
     private string _selectedEstablishmentId = "";
     private bool _kvkBusy;
     private bool _hideClientAddressOnMap = true;

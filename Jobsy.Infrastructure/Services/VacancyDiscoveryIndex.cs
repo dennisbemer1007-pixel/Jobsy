@@ -14,11 +14,12 @@ namespace Jobsy.Infrastructure.Services;
 /// <summary>
 /// Process-wide banenkaart snapshot. Rebuilt on a short timer and immediately after writes.
 /// </summary>
-public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
+public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<VacancyDiscoveryIndex> _logger;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
+    private bool _disposed;
 
     private volatile IReadOnlyList<VacancyDiscoveryRecord>? _snapshot;
     private volatile VacancyMapView _mapView = VacancyMapViewCalculator.Fallback;
@@ -298,5 +299,16 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
         }
 
         return records.Where(r => VacancyVisibilityRules.IsPubliclyVisible(r, today)).ToList();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _refreshLock.Dispose();
     }
 }

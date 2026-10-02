@@ -53,3 +53,4 @@ node_modules/
 package-lock.json
 !tools/css/package-lock.json
 Jobsy.Api/scholen-code-hmac.key
+TestResults/

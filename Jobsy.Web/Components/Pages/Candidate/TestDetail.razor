@@ -503,7 +503,7 @@
                     break;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Keep any payment query error; surface load failures without wiping completed results.
             _payError ??= Culture["Common.Error"];
@@ -738,7 +738,7 @@
             _adjustments = new AssessmentAdjustmentState { Used = AssessmentAdjustmentRules.MaxAdjustments, Remaining = 0, Max = AssessmentAdjustmentRules.MaxAdjustments };
             _redoOpen = false;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _payError = Culture["Common.Error"];
         }
@@ -779,7 +779,7 @@
         {
             await Api.DownloadDeepAnalysisReportAsync(Js, _def.Key, Culture.Language);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _payError = Culture["Common.Error"];
         }
@@ -816,7 +816,7 @@
                 ? preview.TotalPages
                 : DeepReportCapabilities.For(_def.Kind).PdfPageCount;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _payError = Culture["Common.Error"];
             _samplePdfOpen = false;
@@ -845,7 +845,7 @@
         {
             await Api.DownloadSampleAssessmentReportAsync(Js, _def.Key, Culture.Language);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _payError = Culture["Common.Error"];
         }
