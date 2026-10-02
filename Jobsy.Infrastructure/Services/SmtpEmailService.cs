@@ -355,6 +355,14 @@ public sealed class SmtpEmailService : IEmailService
             return false;
         }
 
+        // Full credentials require an explicit From (DB or MailOptions) — do not treat the
+        // platform default as "configured SMTP" readiness (Sprint3CandidateTests).
+        if (string.IsNullOrWhiteSpace(secrets.FromAddress)
+            && string.IsNullOrWhiteSpace(mailOptions?.FromAddress))
+        {
+            return false;
+        }
+
         if (!TryParseHostPort(secrets.BaseUrl, out var host, out var port))
         {
             return false;
