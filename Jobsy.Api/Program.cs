@@ -133,6 +133,10 @@ builder.Services.AddRateLimiter(options =>
         ?? 5;
     var accessRequestLimit = builder.Configuration.GetValue<int?>("RateLimiting:AccessRequestPermitLimit")
         ?? 5;
+    var reportHourlyLimit = builder.Configuration.GetValue<int?>("RateLimiting:ReportHourlyPermitLimit")
+        ?? 5;
+    var reportDailyLimit = builder.Configuration.GetValue<int?>("RateLimiting:ReportDailyPermitLimit")
+        ?? 20;
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -193,6 +197,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromDays(1),
                 QueueLimit = 0
             }));
+    // DSA report form: 5 per hour and 20 per day per visitor. The IP is only a partition key,
+    // never stored with the report (06).
+    options.AddPolicy("report", httpContext =>
+        RateLimitPartition.Get(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new DualWindowRateLimiter(
+                reportHourlyLimit,
+                TimeSpan.FromHours(1),
+                reportDailyLimit,
+                TimeSpan.FromDays(1))));
     options.AddPolicy("public-read", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),

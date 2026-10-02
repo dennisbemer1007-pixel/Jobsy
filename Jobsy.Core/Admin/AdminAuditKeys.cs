@@ -31,6 +31,9 @@ public static class AdminAuditKeys
     public const string VacancyInactive = "vacancy.inactive";
     public const string ApiKeyDeactivate = "apikey.deactivate";
 
+    /// <summary>DSA notice and action: an admin decided on the reports of one target (06).</summary>
+    public const string ReportDecided = "report.decided";
+
     public const string PrivacyRetentionRun = "privacy.retention.run";
     public const string PrivacyAccountDeleted = "privacy.account.deleted";
     public const string AuthAdminLoginFailed = "auth.admin.login-failed";
@@ -64,5 +67,6 @@ public static class AdminAuditKeys
         public const string Retention = "retention";
         public const string Account = "account";
         public const string EmailTemplate = "email-template";
+        public const string ContentReport = "content-report";
     }
 }

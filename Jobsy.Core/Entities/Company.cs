@@ -54,6 +54,12 @@ public class Company
     /// </summary>
     public int LastAutoPublishedVacancyCount { get; set; }
 
+    /// <summary>
+    /// Set by a "Verwijderen" decision on a content report (DSA notice and action, public-pages 06).
+    /// While filled, <c>/{kvk}</c> answers 404 and the sitemap drops the company paths.
+    /// </summary>
+    public DateTime? PublicPageBlockedAtUtc { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
 

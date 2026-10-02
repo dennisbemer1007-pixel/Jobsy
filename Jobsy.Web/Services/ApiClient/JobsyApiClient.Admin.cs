@@ -1530,4 +1530,44 @@ public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>
         if (year is int y) q.Add($"year={y}");
         return "api/admin/schools/rapportage.csv" + (q.Count == 0 ? "" : "?" + string.Join('&', q));
     }
+
+    public async Task<IReadOnlyList<AdminContentReportItem>> GetContentReportsAsync(
+        string? status = null,
+        CancellationToken ct = default)
+    {
+        var url = "api/admin/reports";
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            url += $"?status={Uri.EscapeDataString(status)}";
+        }
+
+        return await _http.GetFromJsonAsync<List<AdminContentReportItem>>(url, ct) ?? [];
+    }
+
+    public async Task<IReadOnlyList<AdminContentReportItem>> GetContentReportsForTargetAsync(
+        string targetType,
+        Guid targetId,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminContentReportItem>>(
+               $"api/admin/reports/{Uri.EscapeDataString(targetType)}/{targetId:D}",
+               ct)
+           ?? [];
+
+    public async Task DecideContentReportAsync(
+        string targetType,
+        Guid targetId,
+        string decision,
+        string? reason,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/admin/reports/decide",
+            new { targetType, targetId, decision, reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
 }

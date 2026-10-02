@@ -471,14 +471,17 @@ public class TermsCopyTests : TermsRenderTestBase
     }
 
     [Fact]
-    public void Reporting_links_the_support_mail_and_not_a_melden_route_yet()
+    public void Reporting_links_the_melden_form_and_the_support_mail()
     {
-        var links = Candidate().FindAll("#melden a")
+        var section = Candidate().Find("#melden");
+        var links = section.QuerySelectorAll("a")
             .Select(a => a.GetAttribute("href"))
             .ToList();
 
-        Assert.NotEmpty(links);
-        Assert.All(links, href => Assert.StartsWith("mailto:", href, StringComparison.Ordinal));
+        Assert.Contains("/melden", links);
+        Assert.Contains(links, href => href?.StartsWith("mailto:", StringComparison.Ordinal) == true);
+        // Public-pages 06 requires the text to name the button of the form.
+        Assert.Contains("Melding versturen", section.TextContent, StringComparison.Ordinal);
     }
 
     [Fact]

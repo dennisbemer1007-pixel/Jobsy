@@ -214,6 +214,14 @@ public static partial class TransactionalEmails
             "deep_test_receipt" => DeepTestReceipt(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, "Competenties", 2.99m, DateTime.UtcNow,
                 "LOB-KT-2026-0001", "competence", c, Jobsy.Core.Legal.LegalDocumentVersions.Terms.Version),
+            "reportreceived" => ReportReceived(
+                ctx.PublicWebBaseUrl, ctx.VacancyTitle, "Klopt niet / nep", DateTime.UtcNow, c),
+            "reportdecided" => ReportDecided(
+                ctx.PublicWebBaseUrl, ctx.VacancyTitle, "Weggehaald", "De tekst vraagt om gegevens die niet mogen.",
+                DateTime.UtcNow, c),
+            "contentremoved" => ContentRemoved(
+                ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.VacancyTitle, "Weggehaald",
+                "De tekst vraagt om gegevens die niet mogen.", DateTime.UtcNow, c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

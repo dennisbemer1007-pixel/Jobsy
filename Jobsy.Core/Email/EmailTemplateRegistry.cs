@@ -141,6 +141,14 @@ public static class EmailTemplateRegistry
         // —— Candidate tests (01 hotfix) ——
         Def("deep_test_receipt", "DeepTestReceipt", "Kandidaat", EmailKind.Essential, "Applied", true,
             "Uitgebreide test betaald", "Ontvangstbevestiging + factuur na betaling van de uitgebreide test."),
+
+        // —— Meldknop / DSA notice and action (public-pages 06) ——
+        Def("ReportReceived", "ReportReceived", "Melder", EmailKind.Essential, "Reported", false,
+            "Melding ontvangen", "Bevestiging aan wie een vacature of bedrijfspagina meldde."),
+        Def("ReportDecided", "ReportDecided", "Melder", EmailKind.Essential, "Reported", false,
+            "Besluit over je melding", "Wat we met de melding deden, in B1 en zonder werkgeversgegevens."),
+        Def("ContentRemoved", "ContentRemoved", "Werkgever", EmailKind.Essential, "ManagesVacancies", false,
+            "Inhoud beperkt of weggehaald", "Motivering voor de werkgever na een moderatiebesluit, met bezwaarroute."),
     ];
 
     private static readonly HashSet<string> GoodNewsKeys = new(

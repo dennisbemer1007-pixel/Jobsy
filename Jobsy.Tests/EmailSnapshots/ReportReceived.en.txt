@@ -1,0 +1,35 @@
+KEY: ReportReceived
+SUBJECT: We received your report
+PREHEADER: Thanks — we are looking into it
+KIND: Essential
+--- TEXT ---
+Thank you. We are looking into it
+=================================
+
+You reported something on Lobsy. This is what we received:
+
+What: Weekendhulp verkoop
+Reason: Klopt niet / nep
+Date: 1 October 2026, 07:00
+
+We will tell you what we decide. Usually within 5 working days.
+
+To the job map: https://lobsy.nl/banenkaart
+
+Team Lobsy
+
+You are getting this email because you reported something on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Thank you. We are looking into it
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: To the job map -> https://lobsy.nl/banenkaart
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

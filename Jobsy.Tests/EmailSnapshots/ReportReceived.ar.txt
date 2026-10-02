@@ -1,0 +1,34 @@
+KEY: ReportReceived
+SUBJECT: استلمنا تبليغك
+PREHEADER: شكراً — نحن ننظر فيه
+KIND: Essential
+--- TEXT ---
+شكراً. نحن ننظر فيه
+
+أبلغت عن شيء على Lobsy. هذا ما استلمناه:
+
+Weekendhulp verkoop :ماذا
+Klopt niet / nep :السبب
+1 أكتوبر 2026, 07:00 :التاريخ
+
+سنخبرك بما سنقرر. عادة خلال 5 أيام عمل.
+
+إلى خريطة الوظائف: https://lobsy.nl/banenkaart
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك أبلغت عن شيء على Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: شكراً. نحن ننظر فيه
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: إلى خريطة الوظائف -> https://lobsy.nl/banenkaart
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

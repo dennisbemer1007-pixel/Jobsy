@@ -340,6 +340,12 @@ public static class UiStringsLegal
             "Dziennik audytu działań administratora",
             "Jurnal de audit al acțiunilor de administrare",
             "سجل تدقيق إجراءات الإدارة");
+        Add("Legal.Retention.ContentReports",
+            "Meldingen over een vacature of bedrijfspagina (e-mail korter)",
+            "Reports about a vacancy or company page (e-mail kept shorter)",
+            "Zgłoszenia o ofercie lub stronie firmy (e-mail krócej)",
+            "Raportări despre un job sau o pagină de firmă (e-mailul mai scurt)",
+            "التبليغات عن وظيفة أو صفحة شركة (البريد لفترة أقصر)");
         Add("Legal.Retention.Account",
             "Account, tests en uitslagen",
             "Account, tests and results",

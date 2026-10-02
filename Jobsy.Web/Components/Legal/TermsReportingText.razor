@@ -1,16 +1,17 @@
 @using Jobsy.Core.Legal
 
-@* "Iets melden": notice and action plus statement of reasons (DSA, 04.5). The report button and the
-   /melden form arrive in public-pages 06; until then this text names the e-mail route only.
+@* "Iets melden": notice and action plus statement of reasons (DSA, 04.5).
    An empty Legal:SupportEmail hides the address instead of showing a placeholder (D1). *@
 <p>
     Zie je een vacature of een bedrijf dat niet klopt of niet mag (bijvoorbeeld nep, discriminerend of
-    illegaal)? Klik op “Meld deze vacature” of “Meld dit bedrijf”@if (HasEmail)
-    {<text>, of mail <a href="mailto:@SupportEmail">@SupportEmail</a></text>}.
+    illegaal)? Klik onderaan de vacature op “Meld deze vacature” of onderaan de bedrijfspagina op
+    “Meld dit bedrijf”. Je kunt ook meteen naar het <a href="/melden">meldformulier</a>@if (HasEmail)
+    {<text>, of mailen naar <a href="mailto:@SupportEmail">@SupportEmail</a></text>}.
 </p>
 <p>
-    Laat je je e-mailadres achter? Dan bevestigen we je melding. We kijken er zo snel mogelijk naar,
-    meestal binnen 5 werkdagen.
+    Op het formulier kies je met één klik op de knop “Melding versturen” wat er aan de hand is. Laat je
+    je e-mailadres achter? Dan bevestigen we je melding. We kijken er zo snel mogelijk naar, meestal
+    binnen 5 werkdagen.
 </p>
 @if (Audience == TermsAudience.Employer)
 {

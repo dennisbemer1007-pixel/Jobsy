@@ -1,0 +1,37 @@
+KEY: ReportDecided
+SUBJECT: We hebben naar je melding gekeken
+PREHEADER: Dit hebben we besloten
+KIND: Essential
+--- TEXT ---
+Dit hebben we besloten
+======================
+
+Je melding is bekeken. Dit is de uitkomst:
+
+Wat: Weekendhulp verkoop
+Besluit: Weggehaald
+Datum: 1 oktober 2026, 07:00
+
+Waarom: De tekst vraagt om gegevens die niet mogen.
+
+Bedankt dat je het meldde. Zo houden we Lobsy veilig.
+
+Naar de banenkaart: https://lobsy.nl/banenkaart
+
+Team Lobsy
+
+Je krijgt deze mail omdat je iets hebt gemeld op Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Dit hebben we besloten
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar de banenkaart -> https://lobsy.nl/banenkaart
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

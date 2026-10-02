@@ -104,6 +104,7 @@ public class JobsyDbContext : DbContext
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
     public DbSet<AdminAuditEvent> AdminAuditEvents => Set<AdminAuditEvent>();
+    public DbSet<ContentReport> ContentReports => Set<ContentReport>();
     public DbSet<SupportAccessGrant> SupportAccessGrants => Set<SupportAccessGrant>();
     public DbSet<School> Schools => Set<School>();
     public DbSet<SchoolClass> SchoolClasses => Set<SchoolClass>();
@@ -2024,6 +2025,22 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.TargetType, e.TargetId });
             entity.HasIndex(e => e.ActorUserId);
             entity.HasIndex(e => e.CorrelationId);
+        });
+
+        modelBuilder.Entity<ContentReport>(entity =>
+        {
+            entity.ToTable("ContentReports");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TargetType).HasConversion<int>();
+            entity.Property(e => e.Reason).HasConversion<int>();
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.Property(e => e.TargetKvk).HasMaxLength(20);
+            entity.Property(e => e.TargetLabel).HasMaxLength(256);
+            entity.Property(e => e.Details).HasMaxLength(ContentReportRules.DetailsMaxLength);
+            entity.Property(e => e.DecisionReason).HasMaxLength(ContentReportRules.DecisionReasonMaxLength);
+            entity.Property(e => e.ReporterEmail).HasMaxLength(ContentReportRules.ReporterEmailMaxLength);
+            entity.HasIndex(e => new { e.Status, e.CreatedAtUtc });
+            entity.HasIndex(e => new { e.TargetType, e.TargetId });
         });
 
         modelBuilder.Entity<SupportAccessGrant>(entity =>

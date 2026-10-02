@@ -494,3 +494,26 @@ html.pp-js .pub-theme .pp-toc__print {
     font-size: 0.85em;
   }
 }
+
+/* —— /melden report form (public-pages 06) —— */
+.pub-theme .pp-report__target {
+  margin: 0 0 1rem;
+}
+
+.pub-theme .pp-report__reasons {
+  border: 1px solid var(--pub-border, #d9dde5);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin: 0 0 1rem;
+}
+
+.pub-theme .pp-report__reasons legend {
+  padding: 0 0.35rem;
+  font-weight: 600;
+}
+
+.pub-theme .pp-report__hint {
+  margin: 0.25rem 0 1rem;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}

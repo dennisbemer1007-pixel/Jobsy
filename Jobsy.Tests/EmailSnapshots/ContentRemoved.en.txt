@@ -1,0 +1,38 @@
+KEY: ContentRemoved
+SUBJECT: We limited or removed something of yours
+PREHEADER: What we did, why, and how to appeal
+KIND: Essential
+--- TEXT ---
+We made a decision
+==================
+
+We received a report about Bakkerij De Gouden Korrel. We looked into it.
+
+What: Weekendhulp verkoop
+Decision: Weggehaald
+Reason: De tekst vraagt om gegevens die niet mogen.
+Date: 1 October 2026, 07:00
+
+Want to appeal? Email support@lobsy.nl within 6 months.
+
+Read the rules in the terms of use on Lobsy.
+
+To your vacancies: https://lobsy.nl/werkgever/vacatures
+
+Team Lobsy
+
+You receive this email because of an action on Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: We made a decision
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: To your vacancies -> https://lobsy.nl/werkgever/vacatures
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -379,3 +379,21 @@ public sealed class AdminSearchResultDto
     public List<AdminSearchHitDto> Invoices { get; set; } = [];
     public List<AdminSearchHitDto> Correlations { get; set; } = [];
 }
+
+/// <summary>One row of the admin tab "Meldingen" (public-pages 06). The e-mail arrives masked.</summary>
+public sealed class AdminContentReportItem
+{
+    public Guid Id { get; set; }
+    public string TargetType { get; set; } = "Vacancy";
+    public Guid TargetId { get; set; }
+    public string? TargetKvk { get; set; }
+    public string? TargetLabel { get; set; }
+    public string Reason { get; set; } = "Other";
+    public string? Details { get; set; }
+    public string? ReporterEmailMasked { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public string Status { get; set; } = "Open";
+    public string? DecisionReason { get; set; }
+    public DateTime? DecidedAtUtc { get; set; }
+    public int TargetReportCount { get; set; }
+}
