@@ -35,11 +35,11 @@ public static class UiStringsFeatureFlags
             "Pașaportul meu (profil nou)",
             "جواز سفري (ملف جديد)");
         Add("Admin.CandidatePassportEnabledHelp",
-            "Aan = kandidaten zien ‘Mijn Paspoort’ in plaats van ‘Profiel’. Uit = alles zoals nu.",
-            "On = candidates see ‘My Passport’ instead of ‘Profile’. Off = everything as today.",
-            "Wł. = kandydaci widzą „Mój Paszport” zamiast „Profil”. Wył. = wszystko jak teraz.",
-            "Pornit = candidații văd „Pașaportul meu” în loc de „Profil”. Oprit = tot ca acum.",
-            "تشغيل = يرى المرشحون «جواز سفري» بدل «الملف». إيقاف = كل شيء كما هو الآن.");
+            "Aan (standaard) = kandidaten zien Ontdekkingsreis, Mijn Paspoort, Zoeken, Sollicitaties, Carrière. Bewaard is een tab onder Sollicitaties. Uit = klassieke navigatie.",
+            "On (default) = candidates see Discovery, My Passport, Search, Applications, Career. Saved is a tab under Applications. Off = classic navigation.",
+            "Wł. (domyślnie) = kandydaci widzą Odkrywanie, Mój Paszport, Szukaj, Aplikacje, Kariera. Zapisane to zakładka. Wył. = klasyczna nawigacja.",
+            "Pornit (implicit) = candidații văd Descoperire, Pașaportul meu, Căutare, Candidaturi, Carieră. Salvate e tab. Oprit = navigație clasică.",
+            "تشغيل (افتراضي) = يرى المرشحون الاكتشاف وجواز سفري والبحث والطلبات والمسار. المحفوظات تبويب. إيقاف = التنقل الكلاسيكي.");
         Add("Admin.EmployersOffPill",
             "Werkgevers staan uit",
             "Employers are off",

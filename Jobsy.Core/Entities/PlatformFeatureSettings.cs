@@ -85,9 +85,9 @@ public class PlatformFeatureSettings
     public bool EmployersEnabled { get; set; } = true;
 
     /// <summary>
-    /// When true, candidates see Mijn Paspoort instead of the classic profile. Default false.
+    /// When true, candidates see Mijn Paspoort instead of the classic profile. Default true.
     /// </summary>
-    public bool CandidatePassportEnabled { get; set; }
+    public bool CandidatePassportEnabled { get; set; } = true;
 
     /// <summary>
     /// When true, everyone except admins gets the 503 maintenance page (errors 05). Default false.

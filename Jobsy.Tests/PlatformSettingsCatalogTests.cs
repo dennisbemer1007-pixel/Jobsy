@@ -101,6 +101,25 @@ public class PlatformSettingsCatalogTests
         Assert.DoesNotContain(rows, r => r.Key == "AuthenticatorEnabled");
     }
 
+    [Fact]
+    public void Passport_descriptor_reads_on_for_default_row_and_write_off_works()
+    {
+        var entry = PlatformSettingsCatalog.Entries.Single(e => e.Key == "CandidatePassportEnabled");
+        var defaults = new Jobsy.Core.Entities.PlatformFeatureSettings();
+        var snap = new PlatformFeatureSnapshot(
+            VacancyContentModerationEnabled: true,
+            AuthenticatorEnabled: true,
+            PublicWebBaseUrl: "http://localhost:5201",
+            UpdatedAtUtc: DateTime.UtcNow,
+            EmployersEnabled: true,
+            CandidatePassportEnabled: defaults.CandidatePassportEnabled);
+        Assert.True(defaults.CandidatePassportEnabled);
+        Assert.True(entry.Read(snap) is true);
+
+        var offUpdate = entry.Write(false);
+        Assert.False(offUpdate.CandidatePassportEnabled);
+    }
+
     private static string Format(object? v) => v switch
     {
         DateOnly d => d.ToString("O"),

@@ -115,7 +115,7 @@ public class CandidateLandingTests
         if (passport && employers)
         {
             Assert.Equal(
-                ["Nav.Discovery", "Nav.Passport", "Nav.CareerPath", "Nav.Banenkaart", "Nav.Applications"],
+                ["Nav.Discovery", "Nav.Passport", "Nav.Search", "Nav.Applications", "Nav.CareerPath"],
                 items.Select(i => i.TitleKey).ToArray());
         }
         else if (passport)

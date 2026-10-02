@@ -579,7 +579,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
 
         var passportOn = await _db.PlatformFeatureSettings.AsNoTracking()
             .Select(s => (bool?)s.CandidatePassportEnabled)
-            .FirstOrDefaultAsync(cancellationToken) ?? false;
+            .FirstOrDefaultAsync(cancellationToken) ?? true;
         if (passportOn)
         {
             var completedAt = await _db.CandidateOnboardings.AsNoTracking()

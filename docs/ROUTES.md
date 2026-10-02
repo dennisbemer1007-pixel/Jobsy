@@ -136,6 +136,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/disc` | `Pages/Candidate/CultureScan.razor` | Candidate |
 | `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate |
 | `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
+| `/bewaard` | 302 → `/candidate/liked` (query kept) | — |
+| `/candidate/saved` | 302 → `/candidate/liked` (query kept) | — |
+| `/candidate/bewaard` | 302 → `/candidate/liked` (query kept) | — |
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |

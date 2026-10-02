@@ -13,15 +13,27 @@ public sealed record PlatformModeRow(
 
 /// <summary>
 /// Compatibility shim — prefer <c>Jobsy.Web.Admin.PlatformSettingsCatalog.DashboardRows</c>.
-/// Kept so Core tests can assert absent employer/passport flags without referencing Web.
+/// Kept so Core tests can assert platform-mode rows without referencing Web.
 /// </summary>
 public static class PlatformModeSummary
 {
-    public static IReadOnlyList<PlatformModeRow> Build(bool vacancyContentModerationEnabled)
+    public static IReadOnlyList<PlatformModeRow> Build(
+        bool vacancyContentModerationEnabled,
+        bool employersEnabled = true,
+        bool candidatePassportEnabled = true)
     {
         var rows = new List<PlatformModeRow>
         {
-            // EmployersEnabled / CandidatePassportEnabled stay out until those fields exist (D7).
+            new(
+                "EmployersEnabled",
+                "AdminSettings.Employers.Enabled.Title",
+                employersEnabled ? "AdminDash.Mode.On" : "AdminDash.Mode.Off",
+                employersEnabled),
+            new(
+                "CandidatePassportEnabled",
+                "AdminSettings.Passport.Enabled.Title",
+                candidatePassportEnabled ? "AdminDash.Mode.On" : "AdminDash.Mode.Off",
+                candidatePassportEnabled),
             new(
                 "VacancyContentModerationEnabled",
                 "AdminSettings.AiModeration.Title",

@@ -31,7 +31,7 @@ public sealed record PlatformFeatureSnapshot(
     /// <summary>Default false — Ambassadeur role parked.</summary>
     bool AmbassadorsEnabled = false,
     bool EmployersEnabled = true,
-    bool CandidatePassportEnabled = false,
+    bool CandidatePassportEnabled = true,
     /// <summary>Maintenance switch (errors 05). Everyone except admins sees the 503 page.</summary>
     bool MaintenanceEnabled = false,
     DateTime? MaintenanceExpectedEndUtc = null,

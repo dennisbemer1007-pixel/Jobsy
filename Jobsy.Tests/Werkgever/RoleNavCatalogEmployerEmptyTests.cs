@@ -27,8 +27,10 @@ public class RoleNavCatalogEmployerEmptyTests
         Assert.Equal("/banenkaart", RoleNavCatalog.Candidate[0].Href);
 
         var passportOn = RoleNavCatalog.CandidateItems(new FeatureFlagSnapshot(true, true));
-        Assert.Equal("Nav.Banenkaart", passportOn[3].TitleKey);
-        Assert.Equal("/carriere", passportOn[2].Href);
+        Assert.Equal("Nav.Search", passportOn[2].TitleKey);
+        Assert.Equal("/banenkaart", passportOn[2].Href);
+        Assert.Equal("/candidate/applications", passportOn[3].Href);
+        Assert.Equal("/carriere", passportOn[4].Href);
     }
 
     [Fact]

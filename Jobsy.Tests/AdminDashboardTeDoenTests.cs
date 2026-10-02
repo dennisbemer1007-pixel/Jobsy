@@ -477,13 +477,17 @@ public class AdminGreetingTests
 public class PlatformModeSummaryTests
 {
     [Fact]
-    public void Shows_required_for_2fa_and_hides_absent_flags()
+    public void Shows_required_for_2fa_and_platform_mode_flags()
     {
         var rows = PlatformModeSummary.Build(vacancyContentModerationEnabled: true);
         Assert.Contains(rows, r => r.Key == "MfaPolicy" && r.ValueKey == "AdminDash.Mode.Required" && r.IsPolicyReadonly);
         Assert.Contains(rows, r => r.Key == "VacancyContentModerationEnabled" && r.IsOn);
-        Assert.DoesNotContain(rows, r => r.Key.Contains("passport", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(rows, r => r.Key.Contains("Employer", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(rows, r => r.Key == "EmployersEnabled" && r.IsOn);
+        Assert.Contains(rows, r => r.Key == "CandidatePassportEnabled" && r.IsOn);
+
+        var off = PlatformModeSummary.Build(false, employersEnabled: false, candidatePassportEnabled: false);
+        Assert.Contains(off, r => r.Key == "CandidatePassportEnabled" && !r.IsOn && r.ValueKey == "AdminDash.Mode.Off");
+        Assert.Contains(off, r => r.Key == "EmployersEnabled" && !r.IsOn);
     }
 }
 

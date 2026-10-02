@@ -27,13 +27,13 @@ namespace Jobsy.Tests;
 public class FeatureFlagFoundationTests
 {
     [Fact]
-    public void FeatureFlagSnapshot_defaults_employers_on_passport_off()
+    public void FeatureFlagSnapshot_defaults_employers_on_passport_on()
     {
         var d = FeatureFlagSnapshot.Defaults;
         Assert.True(d.EmployersEnabled);
-        Assert.False(d.CandidatePassportEnabled);
+        Assert.True(d.CandidatePassportEnabled);
         Assert.True(d.IsEnabled(PlatformFeature.Employers));
-        Assert.False(d.IsEnabled(PlatformFeature.CandidatePassport));
+        Assert.True(d.IsEnabled(PlatformFeature.CandidatePassport));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class FeatureFlagFoundationTests
     {
         var row = new PlatformFeatureSettings();
         Assert.True(row.EmployersEnabled);
-        Assert.False(row.CandidatePassportEnabled);
+        Assert.True(row.CandidatePassportEnabled);
     }
 
     [Fact]
@@ -54,29 +54,56 @@ public class FeatureFlagFoundationTests
             AuthenticatorEnabled: true,
             PublicWebBaseUrl: "http://localhost:5201",
             EmployersEnabled: false,
-            CandidatePassportEnabled: true));
+            CandidatePassportEnabled: false));
         Assert.False(updated.EmployersEnabled);
-        Assert.True(updated.CandidatePassportEnabled);
+        Assert.False(updated.CandidatePassportEnabled);
 
         var again = await sut.GetAsync();
         Assert.False(again.EmployersEnabled);
-        Assert.True(again.CandidatePassportEnabled);
+        Assert.False(again.CandidatePassportEnabled);
     }
 
     [Fact]
-    public async Task Migrated_row_without_explicit_flags_reads_employers_true()
+    public async Task Migrated_row_without_explicit_flags_reads_employers_and_passport_true()
     {
         await using var db = CreateDb();
         db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            // EmployersEnabled / CandidatePassportEnabled use CLR defaults
+            // EmployersEnabled / CandidatePassportEnabled use CLR defaults (both true)
         });
         await db.SaveChangesAsync();
 
         var snap = await CreateFeatureService(db).GetAsync();
         Assert.True(snap.EmployersEnabled);
-        Assert.False(snap.CandidatePassportEnabled);
+        Assert.True(snap.CandidatePassportEnabled);
+    }
+
+    [Fact]
+    public async Task PlatformFeatureService_admin_off_stays_off()
+    {
+        await using var db = CreateDb();
+        var sut = CreateFeatureService(db);
+        await sut.UpdateAsync(new PlatformFeatureUpdate(
+            VacancyContentModerationEnabled: true,
+            AuthenticatorEnabled: true,
+            PublicWebBaseUrl: "http://localhost:5201",
+            CandidatePassportEnabled: false));
+
+        var again = await sut.GetAsync();
+        Assert.False(again.CandidatePassportEnabled);
+
+        // No startup re-enable: a second Get still reports OFF.
+        Assert.False((await sut.GetAsync()).CandidatePassportEnabled);
+    }
+
+    [Fact]
+    public async Task PlatformFeatureService_no_row_reports_passport_on()
+    {
+        await using var db = CreateDb();
+        var snap = await CreateFeatureService(db).GetAsync();
+        Assert.True(snap.EmployersEnabled);
+        Assert.True(snap.CandidatePassportEnabled);
     }
 
     [Fact]
@@ -231,13 +258,16 @@ public class RoleNavCatalogFeatureFlagTests
         Assert.Equal(5, items.Count);
         Assert.True(items.Count <= 5);
         Assert.Equal(
-            ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/carriere", "/banenkaart", "/candidate/applications"],
+            ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/banenkaart", "/candidate/applications", "/carriere"],
             items.Select(i => i.Href).ToArray());
         Assert.Equal(
-            ["Nav.Discovery", "Nav.Passport", "Nav.CareerPath", "Nav.Banenkaart", "Nav.Applications"],
+            ["Nav.Discovery", "Nav.Passport", "Nav.Search", "Nav.Applications", "Nav.CareerPath"],
             items.Select(i => i.TitleKey).ToArray());
-        Assert.Contains("/candidate/liked", items[4].ExtraActivePaths ?? []);
+        Assert.Contains("/candidate/liked", items[3].ExtraActivePaths ?? []);
+        Assert.Contains("/candidate/match", items[2].ExtraActivePaths ?? []);
         Assert.False(RoleNavCatalog.ShowsSavedInNav(flags));
+        Assert.DoesNotContain(items, i => i.Href.Contains("match", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(items, i => i.TitleKey.Contains("Match", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -263,6 +293,19 @@ public class RoleNavCatalogFeatureFlagTests
             ["Nav.Discovery", "Nav.Passport", "Nav.CareerPath"],
             items.Select(i => i.TitleKey).ToArray());
         Assert.False(RoleNavCatalog.ShowsSavedInNav(flags));
+    }
+
+    [Fact]
+    public void CandidateItems_never_includes_match_for_any_flag_combo()
+    {
+        foreach (var employers in new[] { true, false })
+        foreach (var passport in new[] { true, false })
+        {
+            var items = RoleNavCatalog.CandidateItems(new FeatureFlagSnapshot(employers, passport));
+            Assert.DoesNotContain(items, i =>
+                i.Href.Contains("match", StringComparison.OrdinalIgnoreCase)
+                || i.TitleKey.Contains("Match", StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     [Fact]
