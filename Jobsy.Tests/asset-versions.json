@@ -48,8 +48,8 @@
     "v": "20260929-insights-7"
   },
   "css/features/landing.css": {
-    "sha256": "45e4aa322d0fa71fd6c3b9bed697cccef7888c1e9733f5f7b5868413f00b7e5f",
-    "v": "20260930-landing-7"
+    "sha256": "f81012d5f052e8e6052a4cfc1895c8c5f4be8424c10bd8b2901fb831ad55bb15",
+    "v": "20261002-ci-mtp"
   },
   "css/features/match-desktop.css": {
     "sha256": "719535fb31e05c285f519f7a047a872dcd91ab67d42b56ae5b03b4cb8f13d672",
@@ -140,8 +140,8 @@
     "v": "20260928-perf"
   },
   "js/discoveryHover.js": {
-    "sha256": "f8da38e2ecdf91f6bd33e7de3b3dd9c0316344dfc603143d8de92f73a57ea164",
-    "v": "20260928-list-rerender"
+    "sha256": "c5376977e8cd5a533eba239cc95e8f7e212f23a279bceccad6b29356a6e481b0",
+    "v": "20261002-ci-mtp"
   },
   "js/features/account-mfa.js": {
     "sha256": "01fcae80a3439833ca143a9bbb11278e63d3d9d4fdb55be3136b9a4f035c63f5",
