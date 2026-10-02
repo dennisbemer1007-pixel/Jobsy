@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Web.Services.Careers
 @inject CareerPathService CareerPaths
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -409,7 +410,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = CareerFailureMessage(ex);
             _model = CareerPaths.EmptyDashboard();
         }
         finally
@@ -535,7 +536,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = CareerFailureMessage(ex);
         }
         finally
         {
@@ -559,7 +560,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = CareerFailureMessage(ex);
         }
         finally
         {
@@ -582,7 +583,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = CareerFailureMessage(ex);
         }
         finally
         {
@@ -623,7 +624,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = CareerFailureMessage(ex);
         }
         finally
         {
@@ -654,13 +655,18 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = CareerFailureMessage(ex);
         }
         finally
         {
             _busy = false;
         }
     }
+
+    private string CareerFailureMessage(Exception ex)
+        => ex is CareerApiError api
+            ? CareerPathService.ErrorMessage(key => Culture[key], api)
+            : Culture["Common.Error"];
 
     private void ClearToast()
     {

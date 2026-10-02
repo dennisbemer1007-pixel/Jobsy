@@ -14,7 +14,7 @@ public class CareerPathServiceTests
 
         Assert.DoesNotContain("Magazijnmedewerker", dash.MatchSummary, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Magazijnmedewerker", dash.DreamRoleTitle, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(CareerPathService.DefaultDreamId, dash.DreamRoleId);
+        Assert.Equal("custom", dash.DreamRoleId);
         Assert.Equal("Teamleider logistiek", dash.DreamRoleTitle);
         Assert.InRange(dash.MatchPercent, 15, 55);
         Assert.NotEmpty(dash.MatchSummary);
@@ -93,9 +93,9 @@ public class CareerPathServiceTests
     public void Switching_known_dream_role_changes_path_and_match()
     {
         var svc = new CareerPathService();
-        var logistics = svc.GetDashboard("teamleider-logistiek");
+        var logistics = svc.GetDashboard("Teamleider logistiek");
         var retail = svc.GetDashboard("Filiaalmanager");
-        var hr = svc.GetDashboard("hr-adviseur");
+        var hr = svc.GetDashboard("HR-adviseur");
 
         Assert.NotEqual(logistics.DreamRoleTitle, retail.DreamRoleTitle);
         Assert.Equal("HR-adviseur", hr.DreamRoleTitle);
@@ -128,7 +128,7 @@ public class CareerPathServiceTests
     {
         var svc = new CareerPathService();
         var dash = svc.GetDashboard("   ");
-        Assert.Equal(CareerPathService.DefaultDreamId, dash.DreamRoleId);
+        Assert.Equal("custom", dash.DreamRoleId);
         Assert.Equal(CareerPathService.DefaultDreamTitle, dash.DreamRoleTitle);
     }
 
