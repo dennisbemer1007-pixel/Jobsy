@@ -4,16 +4,16 @@
     <!-- Pin transitive PackageVersions (EF Relational, Newtonsoft via WebPush) across the graph. -->
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-
   <ItemGroup>
     <!-- HTML / parsing -->
     <PackageVersion Include="AngleSharp" Version="1.8.3" />
-
     <!-- AspNetCore / EF / Extensions (aligned 10.0.x patch) -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.17.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.12" />
@@ -25,7 +25,6 @@
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
     <!-- Override WebPush → Newtonsoft.Json 10.0.3 (NU1903 / GHSA-5crp-9r3c-p9vr). -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-
     <!-- Identity / JWT (8.x — latest that OpenIdConnect 10.x / Identity.Web need under CPM pinning) -->
     <PackageVersion Include="Microsoft.Identity.Web" Version="3.15.1" />
     <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.23.0" />
@@ -34,12 +33,10 @@
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.90.1" />
     <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.90.1" />
-
     <!-- PostgreSQL (Npgsql 10.0.x aligned with EF Core 10) -->
     <PackageVersion Include="Npgsql" Version="10.0.3" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="10.0.3" />
-
     <!-- App libraries -->
     <PackageVersion Include="MailKit" Version="4.18.1" />
     <PackageVersion Include="QRCoder" Version="1.8.0" />
@@ -47,9 +44,7 @@
     <PackageVersion Include="Sentry.AspNetCore" Version="6.12.0" />
     <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageVersion Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.3.2" />
     <PackageVersion Include="WebPush" Version="1.0.13" />
-
     <!-- Test -->
     <PackageVersion Include="bunit" Version="1.40.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />

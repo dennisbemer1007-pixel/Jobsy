@@ -1,3 +1,4 @@
+using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
 using Jobsy.Api;
 using Jobsy.Api.Authorization;
@@ -98,8 +99,7 @@ builder.Services.AddControllers(options =>
         options.JsonSerializerOptions.DefaultIgnoreCondition =
             System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(ExternalApiSwagger.Configure);
+builder.Services.AddOpenApi(ExternalApiOpenApi.DocumentName, ExternalApiOpenApi.Configure);
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddJobsyApiAuthorization(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<DatabaseSeedHostedService>();
@@ -341,34 +341,16 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
-    // Swagger UI needs inline script/style; keep API responses locked down.
+    // Scalar/OpenAPI UI needs inline script/style; keep API responses locked down.
     var path = context.Request.Path.Value ?? string.Empty;
+    var openApiUi = path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
+                    || path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase);
     context.Response.Headers["Content-Security-Policy"] =
-        path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
+        openApiUi
             ? "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'"
             : "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
     await next();
 });
-
-// Partner docs for the external vacancy API (X-API-Key). Scoped to /api/external/vacancies.
-// Default: on in Development, off elsewhere. Override with Swagger:Enabled=true|false.
-var swaggerEnabled = builder.Configuration.GetValue<bool?>("Swagger:Enabled")
-    ?? builder.Environment.IsDevelopment();
-if (swaggerEnabled)
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint($"/swagger/{ExternalApiSwagger.DocumentName}/swagger.json", "Lobsy externe vacature-API");
-        options.DocumentTitle = "Lobsy API · Swagger";
-        options.RoutePrefix = "swagger";
-        if (!app.Environment.IsDevelopment())
-        {
-            // Reduce abuse of live "Try it out" against production.
-            options.SupportedSubmitMethods();
-        }
-    });
-}
 
 if (app.Environment.IsDevelopment())
 {
@@ -382,6 +364,24 @@ else
 }
 
 app.UseCors("JobsyWeb");
+// Outside Development, refuse OpenAPI/Scalar/legacy Swagger with a hard 404 (code-health 08b).
+if (!app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        var path = context.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        await next();
+    });
+}
+
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseLoginProtection();
@@ -399,6 +399,18 @@ app.MapGet("/health", () => Results.Ok(new
             ?? "local"
     }))
     .AllowAnonymous();
+
+// Partner OpenAPI for the external vacancy API (X-API-Key). Development only —
+// Acceptatie/Production must 404 (code-health 08b). Self-hosted Scalar UI, no CDN.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi().AllowAnonymous();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Lobsy API · OpenAPI");
+        options.WithOpenApiRoutePattern($"/openapi/{ExternalApiOpenApi.DocumentName}.json");
+    }).AllowAnonymous();
+}
 
 app.MapControllers();
 
