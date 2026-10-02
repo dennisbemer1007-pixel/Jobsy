@@ -42,6 +42,7 @@ public class LandingVariantTests : TestContext
         Services.AddSingleton<IExternalAuthCredentialSource, StubExternalAuth>();
         Services.AddSingleton<LandingStatsClient>();
         Services.AddSingleton<LandingPriceClient>();
+        Services.AddSingleton<LegalIdentityProvider>();
         Services.AddScoped<LandingVariantResolver>();
         Services.AddScoped(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),

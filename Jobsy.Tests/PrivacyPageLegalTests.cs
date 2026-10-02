@@ -8,7 +8,9 @@ public class PrivacyPageLegalTests
     public void Privacy_razor_has_no_placeholders_or_empty_mailto()
     {
         var root = FindRepoRoot();
-        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Legal", "Privacy.razor"));
+        // Public-pages moved the statement body into Components/Legal/Docs/PrivacyNl.razor (rendered by Pages/Legal/Privacy.razor).
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Legal", "Privacy.razor"))
+                   + File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Legal", "Docs", "PrivacyNl.razor"));
         Assert.DoesNotContain(string.Concat("[", "BEDRIJFS", "NAAM]"), page, StringComparison.Ordinal);
         Assert.DoesNotContain(string.Concat("[", "KVK-", "NUMMER]"), page, StringComparison.Ordinal);
         Assert.DoesNotContain(string.Concat("[", "AD", "RES]"), page, StringComparison.Ordinal);

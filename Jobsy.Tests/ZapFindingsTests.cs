@@ -21,7 +21,8 @@ public class ZapFindingsTests
 
         Assert.DoesNotContain("Format(\"Discovery.LoadFailed\", ex.Message)", company);
         Assert.DoesNotContain("Format(\"Discovery.LoadFailed\", ex.Message)", discovery);
-        Assert.Contains("Culture[\"Discovery.LoadFailed\"]", company);
+        // The company page no longer shows a load-failed message: any API failure is a plain 404 (Public-pages 09).
+        Assert.DoesNotContain("ex.Message", company);
         Assert.Contains("Culture[\"Discovery.LoadFailed\"]", discovery);
         Assert.Contains("StatusCodes.Status404NotFound", company);
         Assert.Contains("ReadPublicCompanyOrNullAsync", client);
