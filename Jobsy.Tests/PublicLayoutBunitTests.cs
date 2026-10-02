@@ -32,6 +32,10 @@ public class PublicLayoutBunitTests : TestContext
         {
             HttpContext = new DefaultHttpContext()
         });
+        Services.AddLogging();
+        Services.AddMemoryCache();
+        Services.AddSingleton<IHttpClientFactory>(new TimeoutHttpClientFactory());
+        Services.AddSingleton<LegalIdentityProvider>();
         Services.AddScoped<LandingVariantResolver>();
         Services.AddScoped(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),
@@ -112,4 +116,17 @@ public class PublicLayoutBunitTests : TestContext
         public FakeNavigation(string uri) => Initialize("http://localhost/", "http://localhost" + uri);
         protected override void NavigateToCore(string uri, bool forceLoad) { }
     }
+    private sealed class TimeoutHttpClientFactory : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name)
+            => new(new TimeoutHandler()) { BaseAddress = new Uri("http://localhost/") };
+    }
+
+    private sealed class TimeoutHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.RequestTimeout));
+    }
+
 }

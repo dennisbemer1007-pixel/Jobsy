@@ -1,0 +1,28 @@
+@using Jobsy.Core.Legal
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="pp-table">
+    <table class="pp-table__grid">
+        <thead>
+            <tr>
+                <th scope="col">@Culture["Legal.Retention.What"]</th>
+                <th scope="col">@Culture["Legal.Retention.HowLong"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Rows)
+            {
+                <tr>
+                    <th scope="row" data-label="@Culture["Legal.Retention.What"]">@Culture[row.LabelKey]</th>
+                    <td data-label="@Culture["Legal.Retention.HowLong"]">@row.Duration()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="pp-table__note">@Culture["Legal.Retention.Caption"]</p>
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<LegalRetentionRow> Rows { get; set; } = LegalRetention.Rows;
+}

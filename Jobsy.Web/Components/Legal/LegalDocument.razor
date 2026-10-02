@@ -1,0 +1,156 @@
+@using System.Globalization
+@using Jobsy.Core.Legal
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<article class="pp-doc">
+    <header class="pp-doc__hero">
+        <p class="pp-doc__eyebrow">
+            <span class="pp-doc__eyebrow-icon" aria-hidden="true">@EyebrowEmoji</span>
+            <span>@Eyebrow</span>
+        </p>
+        <h1 class="pp-doc__title">@Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p class="pp-doc__lead">@Lead</p>
+        }
+        <p class="pp-doc__meta">
+            <span class="pp-doc__version">@VersionLine</span>
+            <span class="pp-doc__langs">@Culture["Legal.SummaryLanguages"]</span>
+        </p>
+        @if (Switch is not null)
+        {
+            <div class="pp-doc__switch">@Switch</div>
+        }
+    </header>
+
+    @if (!IsDutch)
+    {
+        <p class="pp-doc__note">
+            <span class="pp-doc__note-icon" aria-hidden="true">🌍</span>
+            <span>@Culture["Legal.OfficialNote"]</span>
+        </p>
+    }
+
+    <div class="pp-doc__grid">
+        <nav class="pp-toc" aria-label="@Culture["Legal.TocTitle"]">
+            <h2 class="pp-toc__title">@Culture["Legal.TocTitle"]</h2>
+            <ol class="pp-toc__list">
+                @foreach (var item in Sections)
+                {
+                    <li>
+                        <a class="pp-toc__link" href="#@item.Id" data-pp-toc-link>@SectionHeading(item)</a>
+                    </li>
+                }
+            </ol>
+            <ul class="pp-toc__extra">
+                @if (IsPrivacy)
+                {
+                    <li><a class="pp-toc__link" href="/privacy/data">@Culture["Legal.MyData"]</a></li>
+                }
+                <li>
+                    <button type="button" class="pp-toc__print" data-pp-print>@Culture["Legal.Print"]</button>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="pp-doc__body">
+            <details class="pp-toc-mobile">
+                <summary class="pp-toc-mobile__summary">@Culture.Format("Legal.TocMobile", Sections.Count)</summary>
+                <ol class="pp-toc-mobile__list">
+                    @foreach (var item in Sections)
+                    {
+                        <li><a class="pp-toc__link" href="#@item.Id">@SectionHeading(item)</a></li>
+                    }
+                </ol>
+            </details>
+
+            @foreach (var item in Sections)
+            {
+                var headingId = $"{item.Id}-title";
+                <section id="@item.Id" class="pp-sec" aria-labelledby="@headingId">
+                    <h2 id="@headingId" class="pp-sec__title">@SectionHeading(item)</h2>
+
+                    @if (!string.IsNullOrWhiteSpace(item.SummaryKey))
+                    {
+                        <div class="pp-short">
+                            <span class="pp-short__icon" aria-hidden="true">💡</span>
+                            <div>
+                                <p class="pp-short__label">@Culture["Legal.InShort"]</p>
+                                <p class="pp-short__text">@Culture[item.SummaryKey!]</p>
+                            </div>
+                        </div>
+                    }
+
+                    @if (IsDutch)
+                    {
+                        <div class="pp-sec__body">@item.Body</div>
+                    }
+                    else
+                    {
+                        <p class="pp-sec__dutch-label">@Culture["Legal.DutchText"]</p>
+                        <div class="pp-sec__body" lang="nl" dir="ltr">@item.Body</div>
+                    }
+                </section>
+            }
+
+            <section id="wat-is-veranderd" class="pp-sec pp-changes" aria-labelledby="wat-is-veranderd-title">
+                <h2 id="wat-is-veranderd-title" class="pp-sec__title">@Culture["Legal.Changes"]</h2>
+                <ul class="pp-changes__list">
+                    @foreach (var entry in History)
+                    {
+                        <li class="pp-changes__item">
+                            <span class="pp-changes__version">@LegalDocumentVersions.FormatVersionLabel(entry.Version, DisplayCulture)</span>
+                            <span class="pp-changes__text">@Culture[entry.SummaryKey]</span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public string DocumentId { get; set; } = LegalDocumentIds.Privacy;
+
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+
+    [Parameter] public string? Lead { get; set; }
+
+    /// <summary>Eyebrow chip label, e.g. "Privacy" or "Voorwaarden".</summary>
+    [Parameter] public string Eyebrow { get; set; } = "";
+
+    [Parameter] public string EyebrowEmoji { get; set; } = "🔒";
+
+    [Parameter] public IReadOnlyList<LegalSection> Sections { get; set; } = [];
+
+    /// <summary>Audience switch above the table of contents (04).</summary>
+    [Parameter] public RenderFragment? Switch { get; set; }
+
+    private bool IsDutch => JobsyLanguages.AreSame(Culture.Language, JobsyLanguages.Default);
+
+    private bool IsPrivacy => string.Equals(DocumentId, LegalDocumentIds.Privacy, StringComparison.Ordinal);
+
+    private CultureInfo DisplayCulture => CultureInfo.GetCultureInfo(Culture.Current.CultureName);
+
+    private IReadOnlyList<LegalVersionEntry> History
+        => LegalDocumentVersions.History(DocumentId).Take(3).ToList();
+
+    private string VersionLine
+    {
+        get
+        {
+            var version = LegalDocumentVersions.For(DocumentId);
+            return Culture.Format(
+                "Legal.VersionLine",
+                LegalDocumentVersions.FormatVersionLabel(version.Version, DisplayCulture),
+                LegalDocumentVersions.FormatDate(version.EffectiveFrom, DisplayCulture));
+        }
+    }
+
+    private string SectionHeading(LegalSection section)
+        => string.IsNullOrWhiteSpace(section.Number)
+            ? Culture[section.TitleKey]
+            : $"{section.Number}. {Culture[section.TitleKey]}";
+}

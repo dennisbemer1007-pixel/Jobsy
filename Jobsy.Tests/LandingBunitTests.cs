@@ -39,6 +39,8 @@ public class LandingBunitTests : TestContext
         Services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory());
         Services.AddSingleton<LandingStatsClient>();
         Services.AddSingleton<LandingPriceClient>();
+        Services.AddLogging();
+        Services.AddSingleton<LegalIdentityProvider>();
         Services.AddScoped<LandingVariantResolver>();
         Services.AddScoped(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),

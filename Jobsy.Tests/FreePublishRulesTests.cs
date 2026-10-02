@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -22,8 +23,10 @@ public class FreePublishRulesTests
     [InlineData(null, "2026-11-01", false)]
     public void IsActive_respects_inclusive_end_date(string? untilRaw, string nowRaw, bool expected)
     {
-        DateOnly? until = untilRaw is null ? null : DateOnly.Parse(untilRaw);
-        var now = DateTime.Parse(nowRaw + "T12:00:00Z").ToUniversalTime();
+        DateOnly? until = untilRaw is null
+            ? null
+            : DateOnly.ParseExact(untilRaw, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var now = DateTime.Parse(nowRaw + "T12:00:00Z", CultureInfo.InvariantCulture).ToUniversalTime();
         Assert.Equal(expected, FreePublishRules.IsActive(until, now));
     }
 
