@@ -1,6 +1,6 @@
-# 02. Class level picks the question set: `SchoolLevel.Groep78`, leerjaar rules, pinning, migration + backfill, level picker
+# 02. Class level picks the test: `SchoolLevel.Groep78`, leerjaar rules, migration + backfill, level picker
 
-Read `00-README.md` first (§S, §DM, D1, K1). Branch `cursor/vragensets-2` from `cursor/vragensets-1` (or from `origin/acceptatie` if 01 was skipped).
+Read `00-README.md` first (§S, §DM, §E, D1). Branch `cursor/vragensets-2` from `cursor/vragensets-1` (or from `origin/acceptatie` if 01 was skipped).
 
 > **Rules (same as README §0):**
 > - Never merge, deploy or use rule `123`.
@@ -14,7 +14,7 @@ Read `00-README.md` first (§S, §DM, D1, K1). Branch `cursor/vragensets-2` from
 | | |
 |---|---|
 | Branch | `cursor/vragensets-2` |
-| PR title | `feat(scholen): class level picks the question set — Basisschool groep 7/8 + VO levels, leerjaar rules, pinning + backfill` |
+| PR title | `feat(scholen): class level picks the question set — Basisschool groep 7/8 + VO levels, leerjaar rules, existing classes → VO` |
 | PR body starts with | `Stacked on #<PR 01> (cursor/vragensets-1)` |
 | Mockups | `klas-niveau/kl-d01-nieuwe-klas-basisschool.png`, `kl-m01-nieuwe-klas-vo.png`, `kl-m02-klas-bewerken-vergrendeld.png` (+ `html/`) |
 | Migration | `AddClassQuestionSet` (the only one in this file) |
@@ -47,33 +47,29 @@ Read `00-README.md` first (§S, §DM, D1, K1). Branch `cursor/vragensets-2` from
 - **`SchoolClass`:**
   - add `public PupilQuestionSet QuestionSet { get; set; }`
   - fix the `Year` comment ("1–6 for VO; 7–8 for Groep78")
-- **`PupilCode`:** add `public PupilQuestionSet? QuestionSet { get; set; }` with the comment "Pinned on the first saved answer to the set actually served; null = follows the class."
-- **New `Jobsy.Core/Scholen/PupilQuestionSetResolver.cs`:** `static PupilQuestionSet Effective(PupilCode code, SchoolClass cls) => code.QuestionSet ?? cls.QuestionSet;`. Every later file goes through this.
+- **No set on `PupilCode`.** The test of a code is always `code.SchoolClass.QuestionSet` (README §S). Don't add a per-code column, resolver, override or "started with" field. A code never moves to another class (no service changes `SchoolClassId` after creation; keep it that way).
+- **`SchoolLevelRules.StartedCodesBlockChange(SchoolLevel from, SchoolLevel to)`** → `true` when `QuestionSetFor(from) != QuestionSetFor(to)`.
 
 ## 02.3 Migration `AddClassQuestionSet` (Infrastructure)
 - **`SchoolClasses.QuestionSet`** int not null, default 2. **Backfill** in SQL: `UPDATE "SchoolClasses" SET "QuestionSet" = CASE WHEN "Level" = 8 THEN 1 ELSE 2 END` (today: all rows 2).
-- **`PupilCodes.QuestionSet`** int null. **Backfill:** set it to 1 where the code has a `PupilProgresses` row whose `AnswersJson` is not `'{}'`/empty, **or** a `PupilResults` row. Leave the rest `NULL` (§DM, K1).
-  - Write the SQL so it is idempotent and works on an empty DB.
-  - Put the reasoning in a comment above it.
-- **Index** `IX_PupilCodes_SchoolClassId_QuestionSet`.
-- **`JobsyDbContext`:** `HasConversion<int>()` for both columns.
-- **Down:** drop the columns and the index.
-- **Report in the PR:** run the migration on a local DB seeded with `TestAccountsSeedService` plus 3 hand-made codes (no progress / progress / result) and paste the before/after counts.
+  - Write the SQL so it is idempotent and works on an empty DB. Comment: "Existing classes default to the VO test (Dennis, 2 Oct 2026). Their legacy answers are handled by the cut-over in 04 (README §E)."
+- **No change to `PupilCodes`, `PupilProgresses` or `PupilResults`** in this migration. Existing answers are neither moved nor re-labelled.
+- **`JobsyDbContext`:** `HasConversion<int>()` for the column.
+- **Down:** drop the column.
+- **Report in the PR:** run the migration on a local DB seeded with `TestAccountsSeedService` and paste the before/after class counts per `QuestionSet`.
 
-## 02.4 Pin on first answer (Infrastructure)
-- In `PupilPortalService.SaveAnswerAsync`: when `code.QuestionSet is null`, set it to the set that **served** this item.
-  - In this file that is always `PupilQuestionSet.Groep78`: the only bank is still the 60-item `PupilQuestionBank`, and the VO bank arrives in 04.
-  - 03a replaces this with "the served set".
-- Note that a `Vo` class keeps getting the 60 items until 04 ships. That's intended: those pupils are pinned to `Groep78` and stay valid (README §S).
-- Write it once, on the same `SaveChanges` as the answer. Never change a pinned value.
+## 02.4 What pupils get in this file (interim until 04, README §E)
+- Nothing changes for pupils yet. Every class still gets today's 60 items through today's code. 03a makes this explicit (`LegacyVo` def for VO classes, G78 def for Groep78 classes), and 04 does the cut-over.
+- No per-code state is written. Don't add anything to `SaveAnswerAsync` in this file.
 
 ## 02.5 API (`SchoolPortalService`, DTOs)
 - **`CreateClassAsync` / `UpdateClassAsync`:**
   - replace the Year check with `SchoolLevelRules.ValidateYear`
   - set `QuestionSet = SchoolLevelRules.QuestionSetFor(request.Level)`
-- **Lock rule** (D1 *extra*). In `UpdateClassAsync`, a change is **blocked** when the new level maps to a different set **and** any code of the class has `QuestionSet != null` with a different value.
+- **Lock rule** (D1). In `UpdateClassAsync`, a change is **blocked** when `SchoolLevelRules.StartedCodesBlockChange(old, new)` **and** any code of the class has started: `Status != NotStarted`, **or** a `PupilProgress` row, **or** a `PupilResult` row. Use one `AnyAsync` query and never load answers.
   - Return `(null, "Soort klas ligt vast: er zijn al leerlingen van deze klas begonnen.")`; the controller maps it to 409 with error code `level_locked`.
-  - Otherwise unpinned codes simply follow the class.
+  - Without started codes the change is allowed and `QuestionSet` follows the new level. All codes of the class follow it, because none has started.
+  - A change that keeps the test (havo → vwo, klas 2 → 3, groep 7 → 8) is always allowed.
 - **DTOs** (append parameters at the end; update all `new(...)` sites and tests):
   - `SchoolPortalClassListItemDto`, `SchoolPortalClassDetailDto`: `PupilQuestionSet QuestionSet`, `bool LevelLocked` (detail only)
   - teacher class DTOs in `TeacherPortalDtos.cs` that carry `Level`/`Year`: `PupilQuestionSet QuestionSet`
@@ -87,7 +83,7 @@ Read `00-README.md` first (§S, §DM, D1, K1). Branch `cursor/vragensets-2` from
   4. **Set info box** (`role="status"`, `sch-set-note`). It updates live, with the texts from the mockup:
      - **G78:** "Vragenlijst: Groep 7/8 · 60 vragen (Nee … Ja!) · 3 puzzelpauzes · ongeveer 30 minuten. Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets."
      - **VO:** "Vragenlijst: Middelbare school · 100 vragen (Klopt niet … Klopt helemaal) · 2 lesdelen · ongeveer 40–45 minuten. … Pauze na het Pauze-eiland: daar kan de les stoppen."
-     - **Before 04 and 07 are live** the box must not promise what isn't built yet. Gate the "100 vragen / 2 lesdelen" and "3 puzzelpauzes" parts on `PupilQuestionSetRegistry` capabilities (03a). In 02, show only "Vragenlijst: Groep 7/8" / "Vragenlijst: Middelbare school" + "Elke leerlingcode …". 04 and 07 extend the text.
+     - **Before 04 and 07 are live** the box must not promise what isn't built yet. Gate the "100 vragen / 2 lesdelen" and "3 puzzelpauzes" parts on the registry (03a: `IsLegacy(Vo)`; 07: the enabled puzzle keys). In 02, show only "Vragenlijst: Groep 7/8" / "Vragenlijst: Middelbare school" + "Elke leerlingcode …". 04 and 07 extend the text.
   5. **Aantal leerlingen** (create only), the codes note, Leraar(en): unchanged.
 - **Switching** Soort klas resets the year to a valid default (7 for Basisschool, 1 for VO) so the form is never invalid without a message.
 - **Create:** `SchoolClasses.razor` uses the form in its `EntDrawer`. Default = Middelbare school · Havo · 2 (today's default).
@@ -123,22 +119,23 @@ Read `00-README.md` first (§S, §DM, D1, K1). Branch `cursor/vragensets-2` from
   - create a Groep78 class with Year 3 → 400 with the message
   - create a Havo class → `Vo`
   - update Havo → Vwo with started codes → 200
-  - update Havo → Groep78 with a pinned code → 409 `level_locked`
-  - update Havo → Groep78 with no pinned codes → 200 and the class set changes
+  - update Havo → Groep78 with a started code (InProgress, or a progress row, or a result) → 409 `level_locked`, and nothing is changed
+  - update Havo → Groep78 with only NotStarted codes → 200 and the class test changes
+  - update Groep78 year 7 → 8 with started codes → 200
   - a Teacher calling create/update → 403 (rights matrix unchanged)
-- **Class level → set selection** (`PupilQuestionSetResolverTests`): class `Vo` + code `null` → `Vo`; class `Vo` + code `Groep78` → `Groep78`; class `Groep78` + code `null` → `Groep78`.
-- **Pinning:** the first answer pins, a second answer doesn't change it, and a level change after the pin doesn't change it.
-- **Migration test** (pattern of the existing migration tests; if none exists, an integration test on a fresh DB): the backfill rules from 02.3 on 3 fixture codes.
+- **Class level → test:** `SchoolLevelRules.QuestionSetFor` for every level, and `StartedCodesBlockChange` truth table (G78↔VO true, within VO false, G78 7↔8 false).
+- **No per-code set:** a reflection guard asserts `PupilCode`, `PupilProgress` and `PupilResult` have no property of type `PupilQuestionSet`/`PupilQuestionSet?` (README §S).
+- **Migration test** (pattern of the existing migration tests; if none exists, an integration test on a fresh DB): every existing class → `QuestionSet = 2`; codes, progress and results are byte-identical before and after.
 - **bUnit** (`SchoolClassForm`):
   - switching kind changes the fields and resets the year
   - the info box text per set
   - locked mode disables the cards and shows the warning
   - radios have accessible names
-- **Guards:** `NoPupilNameFieldsTests` (new columns are enums), `ScholenRightsMatrix` (no new staff endpoint), `BlazorPageRoleAttributesTests`.
+- **Guards:** `NoPupilNameFieldsTests` (the new column is an enum), `ScholenRightsMatrix` (no new staff endpoint), `BlazorPageRoleAttributesTests`.
 
 ## Success criteria
 - A school can create a groep 7 class and a havo-2 class. The list shows "Groep 7 · Vragenlijst Groep 7/8" and "Klas 2 · VO" with readable labels, and no raw enum names anywhere.
-- The migration is correct for any mix of existing data (02.3), and no pupil's in-progress answers become invalid.
+- The migration is correct for any mix of existing data (02.3) and touches only `SchoolClasses`; the class level is the only source of the test.
 - The edit drawer enforces the lock rule (API and UI).
 
 Done → next: `03-vragenset-abstractie.md`.

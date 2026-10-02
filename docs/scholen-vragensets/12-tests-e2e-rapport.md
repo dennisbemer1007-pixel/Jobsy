@@ -59,15 +59,20 @@ Read `00-README.md` first (§0 "Playwright in CI", §P). Branch `cursor/vragense
 - **Screenshots:** save to `artifacts/playwright-smoke/<utc-timestamp>/scholen-vragensets/` (same pattern as `MobileSmokePlaywrightTests`) and attach the key ones to the PR.
 
 ## 12.3 Cross-cutting guards (unit; add what isn't there yet)
-- **Scoring per set** (`PupilScoringPerSetTests`):
+- **Scoring per test** (`PupilScoringPerSetTests`):
   - for G78 and VO: all-1 → 0, all-5 → 100, all-3 → 50 per dimension
   - a reversed item flips (6 − raw)
   - G78 matches the pre-stack golden values (`LikertCategoryScorerGoldenTests` untouched)
   - VO dimension keys == G78 dimension keys
-  - `ScoringVersion` is `g78-1` / `vo-1`
-- **Class level → set** (`SchoolLevelRulesTests`): every `SchoolLevel` value maps to exactly one set (Groep78 → G78, all others → VO); year validation (7/8 vs 1–6); the pinned set wins over the class set.
+  - `ScoringVersion` is `g78-1` / `vo-1`; no result with legacy `"1"` can be written any more (04)
+- **Class level → test** (`SchoolLevelRulesTests` + API): every `SchoolLevel` value maps to exactly one test (Groep78 → G78, all others → VO); year validation (7/8 vs 1–6).
+  - The class level is the only source: login, progress, answers, result and teacher detail all report the class's test for every code of the class.
+  - The level lock (02) holds once any code has started.
 - **Puzzle seeding determinism:** 07's golden tests stay green. Add one test that re-runs the golden inputs in a **fresh process-independent** way: no static state, a new generator instance per call.
-- **No mixing:** a test builds a class with both G78 and VO results and asserts that every aggregate row has a single `QuestionSet` and that no DTO sums across sets.
+- **Separate tests, no carry-over:**
+  - a school with a G78 class and a VO class → every aggregate row has one `QuestionSet`, and no DTO, page or CSV combines or compares the two tests
+  - a code's result is built only from its own answers in its class's test: a test with a second code (other test) in the same school proves nothing from it is read
+  - the reflection guard from 02 (no `PupilQuestionSet` on `PupilCode`/`PupilProgress`/`PupilResult`) stays green
 - **Privacy sweep:**
   - `NoPupilNameFieldsTests` covers all new DTOs and entities
   - a log-capture test over a full G78 run (answers, puzzles, chips) asserts no log line contains an answer value pattern, `correct`, a strength key or a plaintext code
@@ -77,18 +82,18 @@ Read `00-README.md` first (§0 "Playwright in CI", §P). Branch `cursor/vragense
 ## 12.4 Docs
 - `docs/scholen/vragensets.md` (new, short):
   - the §S table
-  - how the class level picks the set
-  - the pin rule (K1)
-  - per-set totals
+  - how the class level picks the test (only source; one class = one test; the lock rule)
+  - the cut-over of existing VO classes (README §E: legacy answers deleted, codes restart; no archive, no carry-over)
+  - totals strictly per test, never compared
   - the puzzle privacy rules
   - how to run the dev seed and the smoke locally (`ASPNETCORE_ENVIRONMENT=Development`, `JOBSY_E2E_BASE_URL=http://localhost:5201`)
-- `docs/adr/0006-school-roles-and-pupil-codes.md`: an "Addendum 2026-10: question sets and puzzles" paragraph (pupil codes stay code-only; puzzles store done/skipped + correct; the teacher sees the count only).
+- `docs/adr/0006-school-roles-and-pupil-codes.md`: an "Addendum 2026-10: question sets and puzzles" paragraph (two separate anonymous tests chosen by the class level; pupil codes stay code-only; no answers carried over between tests; puzzles store done/skipped + correct; the teacher sees the count only).
 - `docs/ROUTES.md`, `docs/security/roles-matrix.md`: check that 08 and 11 updated them.
 - `CHANGELOG.md`: one entry for the stack (Unreleased).
 
 ## 12.5 Stack-end report (in the PR body of 12 and as the final message)
 - file → branch → PR number → status (open / draft + why)
-- migrations: `AddClassQuestionSet` (02), `AddQuestionSetToResults` (03b), `AddPupilPuzzles` (07), with backfill counts from the local seeded run
+- migrations: `AddClassQuestionSet` (02), `AddQuestionSetToAggregates` (03b), `StartVoTestFresh` (04, data only), `AddPupilPuzzles` (07), with backfill/cut-over counts from the local seeded run
 - **"Needs content review by Dennis":**
   - the VO strings vs the CSV
   - the VO cheers
@@ -97,9 +102,9 @@ Read `00-README.md` first (§0 "Playwright in CI", §P). Branch `cursor/vragense
   - the puzzle texts and strength sentences
   - the ouderbrief clause (v2/v3)
   - K8 (60 items for groep 7/8)
-- **Known conflicts:** K1–K10, each with how it was handled.
+- **Known conflicts:** K2–K10 (K1 withdrawn, see §E), each with how it was handled.
 - **Follow-ups:** F1–F6.
-- **Non-code to-dos for Dennis:** N1 (parent letter for groep 7/8 + DPIA/verwerkersovereenkomst/privacy page), N2 (tell schools about VO for unstarted codes), N3 (content review).
+- **Non-code to-dos for Dennis:** N1 (parent letter for groep 7/8 + DPIA/verwerkersovereenkomst/privacy page), N2 (production check before release: no real school data that the cut-over would delete), N3 (content review).
 - Anything deferred ("Out of scope" items from every PR, e.g. 08.4 if skipped, the class-create Playwright test if replaced by bUnit).
 
 ## Success criteria

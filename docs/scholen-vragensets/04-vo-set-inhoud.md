@@ -1,6 +1,6 @@
 # 04. VO question set: 100 items from the CSV, guards, island after 50, two lesson parts, calm VO copy
 
-Read `00-README.md` first (§S, D2, K8–K10). Branch `cursor/vragensets-4` from `cursor/vragensets-3b`.
+Read `00-README.md` first (§S, §E, D2, K8–K10). Branch `cursor/vragensets-4` from `cursor/vragensets-3b`.
 
 > **Rules (same as README §0):**
 > - Never merge, deploy or use rule `123`.
@@ -17,6 +17,7 @@ Read `00-README.md` first (§S, D2, K8–K10). Branch `cursor/vragensets-4` from
 | PR title | `feat(scholen): VO question set — 100 items (9101–9200), island after 50, two lesson parts, calm VO copy` |
 | PR body starts with | `Stacked on #<PR 03b> (cursor/vragensets-3b)` |
 | Content source | `vo-set/vo-vragenset-100.csv` (+ `vo-vragenset-100.md` for counts, readability and judgement calls) |
+| Migration | `StartVoTestFresh` (data only, the cut-over in 04.7 / README §E) |
 | Mark | **"Needs content review by Dennis"** (cheer lines, part-break and stop texts, VO "docent" variants) |
 
 ## 04.1 Content into the repo
@@ -49,9 +50,8 @@ Read `00-README.md` first (§S, D2, K8–K10). Branch `cursor/vragensets-4` from
   - `ItemsPerPlate = 10`, `PlateCount = 10`
   - `CheerKeyPrefix = "LeerlingQ.Vo.Cheer."`, `CheerCount = 12`
   - `PartBreakAfterIsland = true`, `StartTimeKey = "Leerling.Vo.Start.NoteTime"`, `ScoringVersion = "vo-1"`
-- **`IsAvailable(Vo)` = true** from now on, so `Serve(Vo)` returns VO.
-  - Unstarted codes in VO classes get VO.
-  - Pinned `Groep78` codes keep G78 (K1).
+- **The `Vo` def replaces `LegacyVo`** (03a). `IsLegacy(Vo)` = false. Delete the `LegacyVo` def and every `IsLegacy` branch in the same PR (keep `IsLegacy` itself only if something still needs it; otherwise remove it too).
+  - From the cut-over (04.7) on, **every** code in a VO class uses the VO test. There is no code in a VO class that keeps the 60 items.
 - **Answer labels** (`UiStringsScholen.cs`):
 
   | Key | Text |
@@ -126,10 +126,10 @@ Read `00-README.md` first (§S, D2, K8–K10). Branch `cursor/vragensets-4` from
 - **The lobster and plates** stay (same component). Only the lines change. World intro and "Wereld klaar!" lines stay shared.
 - **Start screen:** `Leerling.Vo.Start.NoteTime` = "Duurt ongeveer 40–45 minuten, in twee delen." G78 keeps "Duurt ongeveer 25 minuten." until 10, which changes it to "ongeveer 30 minuten" once all three puzzles are live.
 - **Leftover set-specific lines (also hardcoded; not listed in 03.1):**
-  - `LeerlingStory.DonePill` = "Klaar · 60 van 60" (`PupilVerhaalCopy.cs`) becomes "Klaar · {0} van {0}", filled with the served set's item count.
+  - `LeerlingStory.DonePill` = "Klaar · 60 van 60" (`PupilVerhaalCopy.cs`) becomes "Klaar · {0} van {0}", filled with the class's test item count.
   - `Leerling.Reis.Bubble` = "Goed bezig! Elke 6 vragen valt er een schaaltje af." gets a VO variant `Leerling.Reis.Bubble.Vo` = "Elke 10 vragen valt er een schaaltje af. Je antwoorden worden bewaard."
   - Guard: no pupil-facing string contains a literal "60 van 60" or "Elke 6 vragen" without a G78-only key.
-- **"docent" for VO pupils.** Add a VO variant and pick it by the pupil's served set, through a small helper `PupilCopy.For(def, key)` that tries `key + ".Vo"` first for VO:
+- **"docent" for VO pupils.** Add a VO variant and pick it by the class's test, through a small helper `PupilCopy.For(def, key)` that tries `key + ".Vo"` first for VO:
   - `Leerling.WindowClosed.Body`
   - `Leerling.Login.Error.Invalid`, `.Cooldown`, `.Window`. On the login page the set comes from the selected class: append `PupilQuestionSet QuestionSet` to `PupilClassOptionDto`.
   - the hardcoded Dutch messages in `PupilPortalService` (`"Je leraar zet het weer open."`, `"Je antwoorden zijn bewaard. Je leraar zet de test weer open."`, …). Move the pupil-facing ones to keys with a `.Vo` variant (K10). Error **codes** stay the same.
@@ -137,11 +137,25 @@ Read `00-README.md` first (§S, D2, K8–K10). Branch `cursor/vragensets-4` from
   Droombaan/story/PDF lines are file 06.
 
 ## 04.6 Factual count lines (K9, D5 *extra*)
-- **`OuderbriefTemplate.DutchText`** (`SchoolPortalService.cs` ~L1415): replace **only** the sentence "De test bestaat uit 60 kindvriendelijke vragen en past in één lesuur." with "De vragenlijst past bij de leeftijd: in groep 7/8 zijn het 60 korte vragen (ongeveer een half uur), op de middelbare school 100 korte vragen in twee lesdelen."
+- **`OuderbriefTemplate`** (`SchoolPortalService.cs` ~L1409; shown on the school privacy page via `SchoolPrivacyDto`). The two tests get **two letter variants**, not one letter that describes both:
+  - `OuderbriefTemplate.For(PupilQuestionSet)`. The VO text = today's text with **only** the sentence "De test bestaat uit 60 kindvriendelijke vragen en past in één lesuur." replaced by "De vragenlijst bestaat uit 100 korte vragen en wordt in twee lesdelen gemaakt." The G78 text is the same letter with "De vragenlijst bestaat uit 60 korte vragen en duurt ongeveer een half uur." (10 adds the puzzle clause).
+  - `SchoolPrivacyDto` carries the letter per test the school has classes of (`IReadOnlyList<(PupilQuestionSet, string)>`). The privacy page shows one letter per test, each under its own heading. No comparison text.
   - Bump `ParentalInfoTexts.CurrentVersion` to `"ouders-2026-10-v2"`.
   - Nothing else in the letter changes (N1 is Dennis's).
-- **`Jobsy.Web/wwwroot/docs/scholen/lesbrief-lobsy.html`:** "Beantwoord 60 vragen; progressie wordt bewaard." → "Beantwoord de vragen (groep 7/8: 60 vragen; middelbare school: 100 vragen in twee lesdelen, pauze na het Pauze-eiland). Alles wordt bewaard."
-- **`SchoolClassForm` set note** (02.6): the VO text now shows "100 vragen (Klopt niet … Klopt helemaal) · 2 lesdelen · ongeveer 40–45 minuten" and "Pauze na het Pauze-eiland: daar kan de les stoppen." (`IsAvailable(Vo)`).
+- **`Jobsy.Web/wwwroot/docs/scholen/lesbrief-lobsy.html`:** "Beantwoord 60 vragen; progressie wordt bewaard." → "Beantwoord de vragen van jouw vragenlijst. In groep 7/8 zijn dat 60 vragen. Op de middelbare school zijn het 100 vragen in twee lesdelen, met een pauze na het Pauze-eiland. Alles wordt bewaard." (a factual line per test, no comparison)
+- **`SchoolClassForm` set note** (02.6): the VO text now shows "100 vragen (Klopt niet … Klopt helemaal) · 2 lesdelen · ongeveer 40–45 minuten" and "Pauze na het Pauze-eiland: daar kan de les stoppen." (`IsLegacy(Vo)` is false now).
+
+## 04.7 Cut-over for existing VO classes (migration `StartVoTestFresh`, README §E)
+- **Data-only EF migration** (empty `Up` schema, SQL only), in **one transaction**, idempotent, correct on an empty DB:
+  1. `DELETE FROM "PupilResults"` and `DELETE FROM "PupilProgresses"` for all codes whose class has `"QuestionSet" = 2`.
+  2. `UPDATE "PupilCodes" SET "Status" = 0, "SessionVersion" = "SessionVersion" + 1` for those codes.
+  3. `DELETE FROM "SchoolClassAggregates" WHERE "QuestionSet" = 2` and `DELETE FROM "SchoolYearAggregates" WHERE "QuestionSet" = 2` (incl. the platform rows with `SchoolId IS NULL`).
+  4. Nothing else: codes (`CodeLookupHash`, `CodeProtected`, `Number`), classes, teachers, test windows, parental-info confirmations and all Groep78 data stay untouched.
+- **Comment above the SQL:** "Cut-over to two separate tests (Dennis, 2 Oct 2026). Answers in VO classes were made on the legacy 60-item flow, before the VO test existed. They belong to neither test and may not be reused, moved or linked (anonymity). On acceptatie this is pilot/test data. Fresh start: each code starts the VO test at question 1."
+- **`Down()`** is a no-op with a comment; deleted data can't be restored. That's fine because it's legacy pilot data, and production is checked by Dennis first (README N2).
+- **Session check:** confirm in `PupilSessionAuthorizationHandler` that a `SessionVersion` bump signs out an open pupil tab. If it doesn't, say so in the PR and don't change the auth code (§0 "Must NOT touch"). The 400 `wrong_set` for old ids covers it anyway.
+- **No archive.** Don't copy the legacy answers anywhere: no backup table, no JSON dump, no log line. Data minimisation (§P): nothing may use them.
+- **PR body:** the counts from a local run on a seeded DB (codes reset, progress/result/aggregate rows deleted). Counts only, no ids.
 
 ## Tests
 - `VoQuestionBankCsvParityTests` (04.1), the set-aware bank guards (04.3), doc freshness for both docs.
@@ -149,21 +163,29 @@ Read `00-README.md` first (§S, D2, K8–K10). Branch `cursor/vragensets-4` from
   - all-3 → 50 % on every dimension
   - all-5 → 100 % except the reversed dimensions, which give the exact hand-computed value (e.g. Koraalrif Samenwerken with 4×5 + rev 5 → (4×5 + 1)/5 = 4.2 → 80 %)
   - one fixture per model that includes the reversed item
-  - `ScoringVersion = "vo-1"`, `QuestionSet = Vo`
+  - `ScoringVersion = "vo-1"`
 - **Class level → set (API):**
-  - a fresh code in a Havo class answers `9101` → 200 and is pinned `Vo`, and the progress total is 100
+  - every code in a Havo class answers `9101` → 200, and the progress total is 100
   - the same pupil answering `9001` → 400 `wrong_set`
-  - a code pinned `Groep78` in a Havo class still gets 60 items
-  - a Groep78 class code gets 60 items
+  - a Groep78 class code gets 60 items and `9101` → 400 `wrong_set`
+  - `LegacyVo` is gone: no def with `ScoringVersion "1"` exists, and `IsLegacy` returns false for every test (or no longer exists)
+- **Cut-over migration** (`StartVoTestFresh`, integration test on a seeded DB). Fixtures: a VO class with codes NotStarted / InProgress (legacy answers + chips + dream job) / Completed (legacy result) plus VO aggregates, and a Groep78 class with an in-progress code, a result and aggregates. After the migration:
+  - every VO code is `NotStarted` with no progress and no result, and its `SessionVersion` went up by 1
+  - VO aggregate rows are gone
+  - the Groep78 class's codes, progress, results and aggregates are byte-identical
+  - the VO codes' hash/protected/number are unchanged, and logging in with the same code starts at question 1 of the VO test
+  - running the migration SQL twice gives the same result
+  - no `PupilResults` row with `ScoringVersion = '1'` remains
 - **Flow:**
   - VO: the island is due at 50 and not at 30
   - after chips, `NextStep = question` index 50
   - the part-break panel renders (bUnit), "Stoppen voor nu" posts `part=1`, and the stop page shows the deel-1 text
 - **Copy:** VO cheer keys are used for a VO pupil and G78 keys for a G78 pupil; the VO login error from a VO class says "docent".
-- **Ouderbrief:** the version is `ouders-2026-10-v2` and the letter contains no "60 kindvriendelijke".
+- **Ouderbrief:** the version is `ouders-2026-10-v2`; no variant contains "60 kindvriendelijke"; a school with only VO classes gets one letter (VO), a school with both gets two separate letters.
 
 ## Success criteria
 - A VO pupil does 100 questions with the island after 50, and can stop after deel 1 and resume at item 51.
+- After the cut-over, every code in a VO class uses the VO test from question 1; no legacy answer is kept, reused or linked anywhere.
 - All 100 texts are byte-identical to the CSV, and every guard is green for both sets.
 - G78 is unchanged (the 03a golden flow still passes).
 

@@ -12,11 +12,15 @@ Cursor: **read this file completely**. Then **execute the files below strictly i
 > - **Pupils:** code only, no names. No AI, no vacancies, no employer visibility and no matching for anything pupil-related. Teachers see only their own classes (existing `ISchoolScopeService` rule).
 
 **What this stack builds.** Dennis approved these decisions on **2 Oct 2026**:
-- **Class level → question set.** When the school creates a class, it picks the kind of class: **Basisschool (groep 7 or 8)** or **Middelbare school** (vmbo-b … vwo, Mix, Anders), plus the leerjaar. The class level decides which question set every pupil code of that class gets. The pupil chooses nothing.
-- **Two question sets:**
+- **Class level → question set.** When the school creates a class, it picks the kind of class: **Basisschool (groep 7 or 8)** or **Middelbare school** (vmbo-b … vwo, Mix, Anders), plus the leerjaar. The class level decides which test every pupil code of that class gets, and **only** the class level. The pupil chooses nothing.
+- **Two completely different tests** (revised by Dennis on 2 Oct 2026, ~22:00). The groep 7/8 test and the VO test have different questions, and each one is a test of its own. ("Question set" in code names = test.)
+  - A class has exactly one test, and every code in it uses that test. A code with the other test inside a class never exists.
+  - **Everything is anonymous.** Answers are never carried over, linked or looked up between the tests or from earlier answers.
+  - **No comparison anywhere:** separate results, separate scoring versions, separate totals. There are no notes, tables or exports that put the two tests side by side.
+- **The two tests:**
   - **Groep 7/8** = today's 60 questions, **unchanged**, with today's scale (Nee / Niet echt / Soms / Best wel / Ja!).
   - **VO** = the 100 approved questions in `vo-vragenset-100.csv`, with the scale **Klopt niet / Klopt meestal niet / Klopt deels / Klopt meestal / Klopt helemaal**, no smileys. Values stay 1–5.
-  - **Scoring and totals:** the same dimension keys and the same scoring `(avg − 1) / 4 × 100`. Each set has its own id range and scoring version. Totals are shown per set and never mixed.
+  - **Scoring:** both use the same scoring formula `(avg − 1) / 4 × 100` per dimension key, but each test has its own id range and its own scoring version. Results and totals are kept fully separate per test.
 - **VO lesson flow:** two lesson parts, with a pause after the Pauze-eiland, and a calmer VO copy variant for the mascot.
 - **Droombaan-checker:**
   - the "Nu: …" step comes from the class instead of the fixed "klas 2"
@@ -39,16 +43,16 @@ Cursor: **read this file completely**. Then **execute the files below strictly i
 | # | File | Branch | Branches from | PR into |
 |---|---|---|---|---|
 | 01 | `01-hotfix-voltooid-zonder-resultaat.md`: a pupil can get stuck when `PupilResultBuilder` fails after the last answer (`Completed` without `PupilResult`): build first, self-heal on read. **Standalone:** mergeable on its own. **Conditional:** skip only if the failing test can't be written because the bug is gone. | `cursor/vragensets-1` | `origin/acceptatie` | `acceptatie` |
-| 02 | `02-klasniveau-groep78.md`: `SchoolLevel.Groep78`, leerjaar rules (groep 7/8 vs klas 1–6), `PupilQuestionSet` on `SchoolClass` + pin on `PupilCode`, migration `AddClassQuestionSet` + backfill, class create/edit level picker (school portal) with lock rule, labels everywhere a level is shown | `cursor/vragensets-2` | `cursor/vragensets-1` | `acceptatie` |
-| 03 | `03-vragenset-abstractie.md`: **03a** `IPupilQuestionSetRegistry` + `PupilQuestionSetDef` (G78 = today's bank, byte-identical), `PupilFlow` step engine (questions / puzzle slots / island / part break / done), every hardcoded 60/30/15/6 made set-aware, Web stops doing `new PupilQuestionBank()`. **03b** results + aggregates per set (`PupilResult.QuestionSet`, scoring version per set, aggregate rows per set, k ≥ 5 per set), migration `AddQuestionSetToResults`, "not 1:1 comparable" note | `cursor/vragensets-3a` → `-3b` | `cursor/vragensets-2` | `acceptatie` |
-| 04 | `04-vo-set-inhoud.md`: VO bank (ids 9101–9200) from the CSV, `UiStringsLeerlingVragenVo.cs`, generated doc, VO guards (wordlist with `collega`/`klant` allowed), island after 50, two lesson parts (part-break screen), calm VO mascot/copy variant ("docent"), start-screen time, ouderbrief/lesbrief count lines | `cursor/vragensets-4` | `cursor/vragensets-3b` | `acceptatie` |
+| 02 | `02-klasniveau-groep78.md`: `SchoolLevel.Groep78`, leerjaar rules (groep 7/8 vs klas 1–6), `PupilQuestionSet` on `SchoolClass` (the class level is the only source), migration `AddClassQuestionSet` (existing classes → VO), class create/edit level picker (school portal) with lock rule once codes have started, labels everywhere a level is shown | `cursor/vragensets-2` | `cursor/vragensets-1` | `acceptatie` |
+| 03 | `03-vragenset-abstractie.md`: **03a** `IPupilQuestionSetRegistry` + `PupilQuestionSetDef` (G78 = today's bank, byte-identical), `PupilFlow` step engine (questions / puzzle slots / island / part break / done), every hardcoded 60/30/15/6 made set-aware, Web stops doing `new PupilQuestionBank()`. **03b** results + aggregates strictly per test (scoring version per test, aggregate rows per test, k ≥ 5 per test, school/admin pages show one test at a time), migration `AddQuestionSetToAggregates` | `cursor/vragensets-3a` → `-3b` | `cursor/vragensets-2` | `acceptatie` |
+| 04 | `04-vo-set-inhoud.md`: VO bank (ids 9101–9200) from the CSV, the **cut-over** for existing classes (migration `StartVoTestFresh`, §E), `UiStringsLeerlingVragenVo.cs`, generated doc, VO guards (wordlist with `collega`/`klant` allowed), island after 50, two lesson parts (part-break screen), calm VO mascot/copy variant ("docent"), start-screen time, ouderbrief/lesbrief count lines | `cursor/vragensets-4` | `cursor/vragensets-3b` | `acceptatie` |
 | 05 | `05-antwoordschaal-ui.md`: `LeerlingAnswerScale` component, set-specific labels (VO 5 labels without smileys, G78 unchanged), real radio semantics, long-label layout on 360–390 px, keyboard 1–5 | `cursor/vragensets-5` | `cursor/vragensets-4` | `acceptatie` |
 | 06 | `06-droombaan.md`: "Nu: {nu}" from class level + year, 10 mbo occupations (catalog + routes + icons), hint and "leraar" lines per set ("docent of mentor" for VO) | `cursor/vragensets-6` | `cursor/vragensets-5` | `acceptatie` |
 | 07 | `07-puzzels-engine.md`: Core puzzle engine (seed, own PRNG, 3 generators at L2, checker, strength sentences), `PupilProgress.PuzzlesJson` (migration `AddPupilPuzzles`), pupil API, flow gates after 15/30/45 for G78 | `cursor/vragensets-7` | `cursor/vragensets-6` | `acceptatie` |
 | 08 | `08-puzzel-schelpenrij.md`: puzzle page shell `/leerling/puzzel/{key}` + De schelpenrij (question + result), skip, a11y, reduced motion | `cursor/vragensets-8` | `cursor/vragensets-7` | `acceptatie` |
 | 09 | `09-puzzel-schatkaart.md`: De schatkaart (5×5 grid, route arrows, cell pick, reveal) + hand-off to the Pauze-eiland | `cursor/vragensets-9` | `cursor/vragensets-8` | `acceptatie` |
 | 10 | `10-puzzel-vuurtorenlampen.md`: De vuurtorenlampen (3×3 latin square, 4 options) + puzzle steps in the journey rail and "Puzzel n van 3 · x van 60 klaar" | `cursor/vragensets-10` | `cursor/vragensets-9` | `acceptatie` |
-| 11 | `11-leraar-school-weergave.md`: teacher sees "n van 3 puzzels gedaan" (never right/wrong), question-set badge on class lists and details, per-set sections polished, rights matrix for the new endpoints | `cursor/vragensets-11` | `cursor/vragensets-10` | `acceptatie` |
+| 11 | `11-leraar-school-weergave.md`: teacher sees "n van 3 puzzels gedaan" (never right/wrong), test badge on class lists and details, one-test-at-a-time checks on school/admin pages, rights matrix for the new endpoints | `cursor/vragensets-11` | `cursor/vragensets-10` | `acceptatie` |
 | 12 | `12-tests-e2e-rapport.md`: Development-only scholen seed (G78 + VO class, fixed codes), `ScholenVragensetsMobileSmokePlaywrightTests`, cross-cutting guards, docs, stack-end report | `cursor/vragensets-12` | `cursor/vragensets-11` | `acceptatie` |
 
 - **Too big for one PR?** If a file is too big for one reviewable PR (> ~1.500 changed lines excluding tests, migrations, string resources and snapshots), split it into `a`/`b` at the seam the file names.
@@ -89,7 +93,7 @@ At the end report: file → branch → PR number → status, the migration list,
    - Before 01 is pushed, add it to file 01 (the standalone hotfix).
    - After that, stop, describe it in the current PR body under "Serious bug found", and report. Dennis decides.
 6. **Never** merge, deploy, or use rule `123`. **Never** push to `main` or `acceptatie`. No force-pushes.
-   - **Migrations:** only 02 (`AddClassQuestionSet`), 03b (`AddQuestionSetToResults`) and 07 (`AddPupilPuzzles`) add one. Never regenerate or edit a lower file's migration.
+   - **Migrations:** only 02 (`AddClassQuestionSet`), 03b (`AddQuestionSetToAggregates`), 04 (`StartVoTestFresh`, data only) and 07 (`AddPupilPuzzles`) add one. Never regenerate or edit a lower file's migration.
    - **If `acceptatie` moves during the run:** don't rebase. Only when a conflict blocks you, `git merge origin/acceptatie` into the current branch (a normal merge commit) and say so in the PR body. If a newer migration landed on `acceptatie`, regenerate **only your own** migration after the merge.
 
 ## Before you start (say the outcome in PR 01)
@@ -146,7 +150,7 @@ At the end report: file → branch → PR number → status, the migration list,
   - other stacks' in-progress `cursor/*` branches: never branch from or merge them
 - **PR description:**
   - what changed and why, and which decision (D1–D5) it implements
-  - screenshots: mobile 390 and desktop 1366 (pupil pages), desktop 1440 (school/teacher pages), for **both sets** where the screen differs
+  - screenshots: mobile 390 and desktop 1366 (pupil pages), desktop 1440 (school/teacher pages), for **both tests** where the screen differs
   - migration summary and backfill counts from a local run on a seeded DB
   - test list
   - "Out of scope / deferred"
@@ -174,25 +178,36 @@ At the end report: file → branch → PR number → status, the migration list,
 | Review doc (generated) | `docs/scholen/vragenbank-leerlingen.md` (only its title gets "groep 7/8") | `docs/scholen/vragenbank-leerlingen-vo.md` |
 | UI label of the set | "Vragenlijst groep 7/8 (60 vragen)" | "Vragenlijst VO (100 vragen)" |
 
-- **Which set a pupil gets:**
-  - `SchoolClass.QuestionSet` is derived from `Level` on create and edit.
-  - `PupilCode.QuestionSet` is **pinned on the first saved answer** to the set that was actually served. Before that it's `null` and follows the class.
-  - Every read uses `code.QuestionSet ?? class.QuestionSet`.
-  - This keeps in-progress answers valid, whatever happens to the class level.
-- **Ids never overlap** (adult catalogs use 1–~200; pupil G78 9001–9060; VO 9101–9200). An answer id that doesn't belong to the pupil's set → **400** `wrong_set`.
-- **Comparability:** percentages from different sets are **not 1:1 comparable**. Every total (teacher group, school results, admin rapportage, aggregates) is computed and shown **per set**, never mixed. k ≥ 5 applies **per set**.
+- **Which test a pupil gets:** only `SchoolClass.QuestionSet`. It is derived from `Level` on create and edit (`SchoolLevelRules.QuestionSetFor`). There is no per-code set, no pin and no override; every read uses `class.QuestionSet`.
+- **Lock rule:** once any code of the class has started (status not `NotStarted`, or a `PupilProgress`/`PupilResult` row exists), a level change that would change the test is blocked (409 `level_locked`). A change that keeps the test (e.g. havo → vwo, klas 2 → 3, groep 7 → 8) stays allowed. So a class can never end up with codes of two tests.
+- **Ids never overlap** (adult catalogs use 1–~200; pupil G78 9001–9060; VO 9101–9200). An answer id that doesn't belong to the class's test → **400** `wrong_set`.
+- **Separate everywhere:** results, scoring versions, aggregates, k ≥ 5, school results, admin rapportage and CSV exports are **per test**. A page that can show both tests (school results, admin rapportage) shows **one test at a time** (a test switch), never side by side, never summed, and with no comparison note.
 
 ## §DM. Data-model changes (only these)
 | Migration (file) | Change |
 |---|---|
-| `AddClassQuestionSet` (02) | `SchoolClass.QuestionSet` int not null (backfill: `Level == 8 ? 1 : 2` → all existing rows **2**). `PupilCode.QuestionSet` int **null**: backfill **1** where the code has a `PupilProgress` with `AnswersJson` other than `{}`/empty **or** a `PupilResult`; otherwise `null`. Index `PupilCodes(SchoolClassId, QuestionSet)`. Enum `SchoolLevel` gets `Groep78 = 8` (no renumbering; stored as int). |
-| `AddQuestionSetToResults` (03b) | `PupilResult.QuestionSet` int not null (backfill **1**, because every existing result was scored on the 60-set). `ScoringVersion` `"1"` → `"g78-1"`. `SchoolClassAggregate.QuestionSet` and `SchoolYearAggregate.QuestionSet` int not null (backfill **1**). Indexes `(SchoolId, SchoolYearStart, QuestionSet)`. |
+| `AddClassQuestionSet` (02) | `SchoolClass.QuestionSet` int not null (backfill: `Level == 8 ? 1 : 2`; today every row is a VO level, so all rows get **2**). Enum `SchoolLevel` gets `Groep78 = 8` (no renumbering; stored as int). **No column on `PupilCode`.** |
+| `AddQuestionSetToAggregates` (03b) | `SchoolClassAggregate.QuestionSet` and `SchoolYearAggregate.QuestionSet` int not null (backfill from `Level == 8 ? 1 : 2` for class rows, **2** for year/platform rows). Indexes `(SchoolId, SchoolYearStart, QuestionSet)`. `ScoringVersion` of results in Groep78 classes `"1"` → `"g78-1"` (normally 0 rows). Results in VO classes keep `"1"` = legacy until 04. No `PupilResult.QuestionSet` column: a result's test is its class's test. |
+| `StartVoTestFresh` (04, data only) | The cut-over in §E: deletes the legacy test data of VO classes and resets their codes to "not started". No schema change. |
 | `AddPupilPuzzles` (07) | `PupilProgress.PuzzlesJson` text not null default `'{}'`. |
 
-- **Why existing data is "groep 7/8 set".** Every class that exists today is a VO class, but its pupils answered the 60 items. Those 60 items are now the groep 7/8 set.
-  - Their results keep their meaning, labelled "Vragenlijst groep 7/8 (60 vragen)".
-  - Codes in those classes that **haven't started** get the VO set once 04 is live.
-  - Dennis approved "existing classes default to VO". This pin rule is the safe reading of that decision. **Say it in PR 02.**
+## §E. Existing classes and codes on acceptatie (cut-over; Dennis, 2 Oct 2026)
+All classes on acceptatie today are VO levels. Their pupils answered today's 60 items, before there were two tests. That is **legacy acceptatie/pilot test data**, and it belongs to neither new test.
+- **02 (backfill):** every existing class gets `QuestionSet = Vo`.
+- **02 → 03b (interim, only until 04 is merged):** VO classes keep today's behaviour unchanged. The registry serves them a `LegacyVo` def: today's 60 items with today's `ScoringVersion "1"`, used by no other class and never labelled as a test in the UI. Groep78 classes created in this interim get the real G78 test (`"g78-1"`). Each class still has exactly one test.
+- **04 (cut-over), migration `StartVoTestFresh`, one transaction:**
+  1. For every `PupilCode` in a class with `QuestionSet = Vo`:
+     - delete its `PupilProgress` and `PupilResult` (answers, chips, "Iets anders" words, dream job: all legacy)
+     - set `Status = NotStarted`
+     - bump `SessionVersion`, so an open pupil tab must log in again and can't post old item ids. Check that `PupilSessionAuthorizationHandler` uses it; if not, say so in the PR.
+  2. Delete all `SchoolClassAggregate`/`SchoolYearAggregate` rows with `QuestionSet = Vo`, incl. the platform rows. They were all computed from the legacy test.
+  3. Keep the codes themselves (`CodeLookupHash`, `CodeProtected`, `Number`), the classes, teachers, test windows and parental-info confirmations. Printed code lists keep working; each code starts the VO test at question 1.
+  4. Then remove the `LegacyVo` def. From now on, answer ids 9001–9060 from a VO class → 400 `wrong_set`.
+  - **Not archived, not reused.** Legacy answers are never kept "just in case", moved to the VO test or linked to new results. Deleting them is the data-minimisation answer, because nothing may use them.
+  - `Down()` is a no-op with a comment (deleted data can't be restored).
+  - Groep78 classes are untouched by the cut-over.
+  - **PR 04 reports** the counts from a local seeded run (codes reset, progress/results/aggregate rows deleted). Never log code ids or answers.
+- **Production:** this stack never deploys. Before the stack goes to production, Dennis confirms there is no real school data there (N2).
 
 ## §P. Privacy (every file; 10–11-year-olds now in scope)
 - **No names, ever.**
@@ -219,13 +234,14 @@ At the end report: file → branch → PR number → status, the migration list,
 - **D1. Class level picks the set.**
   - The school picks Basisschool (groep 7/8) or Middelbare school + level, and the leerjaar.
   - The pupil chooses nothing.
-  - Migration + backfill: existing classes default to VO (§DM).
+  - The class level is the **only** source of the test; one class = one test.
+  - Migration + backfill: existing classes default to VO, and their codes use the VO test after a fresh start (§E).
   - Teachers keep seeing only their own classes.
-  - *extra:* a cross-family level change (basisschool ↔ middelbare school) is **blocked** once any code of the class has a pinned set. A change within VO is always allowed (mockup `kl-m02`).
+  - Changing the class level after codes have started stays **blocked** when it would change the test. Within the same test it stays allowed (mockup `kl-m02`).
 - **D2. Two sets** per §S.
   - VO content = `vo-vragenset-100.csv`, as-is.
   - The VO wordlist allows `collega`/`klant`.
-  - Totals are per set, with a note that they are not 1:1 comparable.
+  - Two separate tests: results and totals per test, with no comparison and no carry-over anywhere (revised 2 Oct 2026).
   - VO has two lesson parts, a pause after the Pauze-eiland and a calmer mascot copy.
   - *extra:* the G78 answer look stays exactly as today (text + dot). The "smiley" faces exist only in the printed booklet; see Known conflicts K2.
 - **D3. Droombaan:**
@@ -243,7 +259,7 @@ At the end report: file → branch → PR number → status, the migration list,
   - *extra:* 04 fixes only the factual count/time sentence in `OuderbriefTemplate` and bumps `ParentalInfoTexts.CurrentVersion` to `ouders-2026-10-v2`.
 
 ## Known conflicts between the decisions and the code (handled as described; say so in the PR named)
-- **K1 (02/03). "Existing classes default to VO" vs existing answers.** Existing pupils answered the 60 items, so their codes and results are pinned to the 60-set (now called groep 7/8) and labelled that way, even in VO classes. Only unstarted codes move to VO.
+- *K1 was withdrawn by Dennis on 2 Oct 2026 ("two completely different tests; anonymous, earlier answers may not be carried over"). It is replaced by §E. The numbering K2–K10 stays as it is.*
 - **K2 (05). "Smiley scale" for groep 7/8.** The app has **no** smileys today: it shows a dot + label (`.ll-answer__dot` in `LeerlingReis.razor`). The decision also says "unchanged", so the app look stays. Smileys are only in the printed groep 7 booklet. If Dennis wants faces in the app, that's a small follow-up (F4).
 - **K3 (06). `DreamJobCatalog` is shared.** The candidate onboarding uses it too (`Components/Candidate/Onboarding/DreamJobStep.razor`). Adding 10 mbo occupations also adds them there. The spec accepts that, since they're real jobs. The PR says so.
 - **K4 (06). Route texts after "Nu: …".** Lines like "Kies straks biologie en scheikunde" assume a lower VO year. With `{nu}` they read fine for groep 7/8 and klas 1–3. For klas 4–6 the "kies straks" detail is outdated (the profile is already chosen). That is follow-up F3 (content). 06 only fixes the "Nu:" step.
@@ -264,7 +280,7 @@ At the end report: file → branch → PR number → status, the migration list,
 
 ## Non-code to-dos for Dennis (not for Cursor; repeat them in the stack-end report)
 - **N1 Parent letter for groep 7/8.** Write and approve an ouderbrief for parents of 10–11-year-olds (primary school), including what the puzzles store. Check that the verwerkersovereenkomst, the DPIA and the privacy page (`SchoolPrivacy.razor`) cover primary-school pupils. Then decide whether `ParentalInfoTexts.CurrentVersion` needs another bump.
-- **N2 School communication.** Tell the existing schools that unstarted codes will get the VO set (100 questions, two lesson parts) once 04 is live.
+- **N2 Production check before release.** Confirm that production has no real school or pupil data in Lobsy voor scholen. The cut-over (§E) deletes the legacy answers of VO classes; on acceptatie that is pilot/test data. If a school did use it for real, tell that school before release that its codes start the new VO test from question 1.
 - **N3 Content review.**
   - the VO strings (checked against the CSV)
   - the VO cheer lines (04)

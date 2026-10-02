@@ -1,6 +1,6 @@
-# 03. Question-set abstraction: registry, set-aware flow (03a) · results and totals per set (03b)
+# 03. Question-set abstraction: registry, test-aware flow (03a) · results and totals strictly per test (03b)
 
-Read `00-README.md` first (§S, §DM, K1). **Always split:**
+Read `00-README.md` first (§S, §DM, §E). **Always split:**
 - **03a:** branch `cursor/vragensets-3a` from `cursor/vragensets-2`.
 - **03b:** branch `cursor/vragensets-3b` from `cursor/vragensets-3a`.
 
@@ -11,13 +11,13 @@ Read `00-README.md` first (§S, §DM, K1). **Always split:**
 > - Red or an unmet criterion → draft PR, stop, report.
 > - Release build with 0 warnings.
 > - No `.github/workflows` changes.
-> - Groep 7/8 behaviour stays **byte-identical**.
+> - Today's pupil behaviour stays **byte-identical** (for every existing class, via the `LegacyVo` def, and for new Groep78 classes via the G78 def).
 
 | | 03a | 03b |
 |---|---|---|
-| PR title | `refactor(scholen): question-set registry + PupilFlow step engine (G78 unchanged)` | `feat(scholen): results and totals per question set (never mixed), scoring version per set` |
+| PR title | `refactor(scholen): question-set registry + PupilFlow step engine (G78 unchanged)` | `feat(scholen): results and totals strictly per test, scoring version per test` |
 | PR body starts with | `Stacked on #<PR 02> (cursor/vragensets-2)` | `Stacked on #<PR 03a> (cursor/vragensets-3a)` |
-| Migration | none | `AddQuestionSetToResults` |
+| Migration | none | `AddQuestionSetToAggregates` |
 
 ## 03.1 Today: the hardcoded places (verify; every one must go)
 | Where | What |
@@ -46,8 +46,8 @@ public sealed record PupilPuzzleSlot(int AfterItem, string PuzzleKey);   // fill
 
 public sealed record PupilQuestionSetDef(
     PupilQuestionSet Set,
-    string Key,                         // "g78" | "vo"
-    string ScoringVersion,              // "g78-1" | "vo-1" (written from 03b on)
+    string Key,                         // "g78" | "vo" | "legacy-vo" (interim, removed in 04)
+    string ScoringVersion,              // "g78-1" | "vo-1" | legacy "1" (written from 03b on)
     IPupilQuestionBank Bank,
     IReadOnlyList<PupilWorldPlan> Worlds,   // test worlds only, in order
     int IslandAfter,                    // 30 | 50
@@ -63,14 +63,17 @@ public sealed record PupilQuestionSetDef(
 
 public interface IPupilQuestionSetRegistry
 {
-    PupilQuestionSetDef Get(PupilQuestionSet set);        // throws for unknown
-    bool IsAvailable(PupilQuestionSet set);               // Vo = false until 04
-    PupilQuestionSetDef Serve(PupilQuestionSet requested); // requested if available, else Groep78
-    PupilQuestionSetDef? FindByItemId(string itemId);
+    PupilQuestionSetDef ForClass(SchoolClass schoolClass); // = Get(schoolClass.QuestionSet); the ONLY way pupil code reaches a def
+    PupilQuestionSetDef Get(PupilQuestionSet set);          // throws for unknown; never falls back to the other test
+    bool IsLegacy(PupilQuestionSet set);                    // true for Vo until 04 (README §E)
+    PupilQuestionSetDef? FindByItemId(PupilQuestionSet set, string itemId); // only within that test
     IReadOnlyList<PupilQuestionSetDef> All { get; }
 }
 ```
-- **`PupilQuestionSetRegistry`** (Core, no DI dependencies) registers **G78 only** in 03a: today's `PupilQuestionBank`, worlds 15×4, island 30, no puzzle slots, today's `AnswerLabels`, plates 6/10, today's cheer keys, no part break, today's time key.
+- **`PupilQuestionSetRegistry`** (Core, no DI dependencies) registers two defs in 03a:
+  - **`Groep78`** → the G78 def: today's `PupilQuestionBank`, worlds 15×4, island 30, no puzzle slots yet, today's `AnswerLabels`, plates 6/10, today's cheer keys, no part break, today's time key, `ScoringVersion "g78-1"`.
+  - **`Vo`** → the interim **`LegacyVo`** def (README §E): the same 60 items and settings as today, `ScoringVersion "1"`, `IsLegacy = true`. It exists only so existing VO classes keep today's behaviour until the cut-over. 04 replaces it with the real VO def and deletes `LegacyVo`.
+  - **No fallback.** There is no "serve the other test if this one isn't there" path anywhere. A class always gets the def of its own `QuestionSet`.
   - 04 adds VO; 07 adds the G78 puzzle slots.
 - **Methods on the def:** `PlatesShed(answered)`, `SceneDepth(answered)` (same formula with `Bank.AllItems.Count` and `ItemsPerPlate`), `CheerKey(answered)`, `WorldOf(globalIndex)`, `IndexInWorld(globalIndex)`. Remove the static versions from `PupilWorldCatalog`.
   - Keep `PupilWorldCatalog.Worlds` for keys, titles and subtitles (incl. `pauze-eiland`), but **drop** `ItemCount`, `TotalTestItems`, `ItemsPerPlate`, `PlateCount` and `AnswerLabels`. Replace every use; don't mark them `[Obsolete]`, because warnings are errors.
@@ -98,24 +101,24 @@ Rules, in this order:
 - **Server enforcement (new; also closes today's gap where item 31 could be saved before the island).** `SaveAnswerAsync` accepts an answer only for an item with `index <= first`, and only when the current step is `Question`, or the item was answered before (changing an earlier answer is always allowed).
   - Otherwise: 409 `step_pending` with `{ nextStep }`.
   - The UI never hits this. Test it through the API.
-- **Item from another set:** an item id that `registry.FindByItemId` resolves to another set than the pupil's served set → **400** `wrong_set`. An unknown id → 404 (as today).
+- **Item from the other test:** an item id that isn't in the class's test but is a known pupil id (9001–9060 or 9101–9200) → **400** `wrong_set`. An unknown id → 404 (as today). In 03a both defs hold ids 9001–9060, so this can only be tested with a fake def.
 
 ### 03a.3 Wiring
 - **`PupilPortalService`:**
-  - resolve `def = registry.Serve(PupilQuestionSetResolver.Effective(code, class))` once per call
-  - pin `code.QuestionSet ??= def.Set` on the first answer (replaces 02.4's constant)
+  - resolve `def = registry.ForClass(code.SchoolClass)` once per call (load the class with the code; it already is for the window check)
+  - write nothing set-related on the code
   - use `def.Bank`, `PupilFlow.Next`, `def.PlatesShed`
   - `FirstUnansweredIndex` takes the def
   - `LoginAsync` returns `total = def.Bank.AllItems.Count`
 - **DTOs** (append, defaults keep old callers compiling):
-  - `PupilProgressStateDto` + `PupilQuestionSet QuestionSet`, `string NextStep` (`question|puzzle|island|done`), `string? NextPuzzleKey`
+  - `PupilProgressStateDto` + `PupilQuestionSet QuestionSet` (the class's test), `string NextStep` (`question|puzzle|island|done`), `string? NextPuzzleKey`
   - `PupilAnswerResponse` + `NextStep`, `NextPuzzleKey`
   - `PupilChipsResponse` + `NextStep`, `NextPuzzleKey`
   - Keep `NeedsIsland` for compatibility, derived from `NextStep == "island"`.
-- **`PupilResultBuilder`:** inject the registry; score with the **code's served set** (`Get(code.QuestionSet ?? class.QuestionSet)`); drop the cast and `new`. Completion = all items of **that** set answered.
+- **`PupilResultBuilder`:** inject the registry; score with **the class's test** (`ForClass(code.SchoolClass)`); drop the cast and `new`. Completion = all items of **that** test answered. It reads only this code's answers of this test: no lookup of earlier answers, other codes or the other test.
 - **Staff progress:**
   - `SchoolPortalService` / `TeacherPortalService` lose `ProgressTotalQuestions`
-  - per code: `total = registry.Serve(effective).Bank.AllItems.Count`, `current` = answered count (not `CurrentIndex`; same value today)
+  - per class: `total = registry.ForClass(class).Bank.AllItems.Count` (the same for every code of the class), `current` = answered count (not `CurrentIndex`; same value today)
   - `SchoolPortalCodeRowDto` / `TeacherCodeRowDto` keep `ProgressCurrent/ProgressTotal`
 - **Web:**
   - `LeerlingReis.razor` injects `IPupilQuestionSetRegistry` and uses `registry.Get(_state.QuestionSet)` for items, the rail (worlds from `def.Worlds` + the island + puzzle steps later), plates (`def.PlateCount`), cheer (`def.CheerKey`) and answer labels (`def.AnswerLabels`; 05 replaces the markup).
@@ -125,7 +128,7 @@ Rules, in this order:
   - `LeerlingEiland.razor` uses `def.SceneDepth`.
 
 ### 03a tests
-- **G78 golden flow:** a scripted run of 60 answers + chips. Snapshot every `PupilProgressStateDto` and `PupilAnswerResponse`, minus timestamps. Compare it to a snapshot recorded on the **03a base commit before the refactor** (commit the snapshot first, like the golden scorer tests). It must be identical except the new appended fields.
+- **Golden flow:** a scripted run of 60 answers + chips in a VO class (`LegacyVo`) **and** in a Groep78 class (G78). Snapshot every `PupilProgressStateDto` and `PupilAnswerResponse`, minus timestamps. Compare both to the snapshot recorded on the **03a base commit before the refactor** (commit the snapshot first, like the golden scorer tests). Both must be identical to it except the new appended fields.
 - **`PupilFlowTests`** (table-driven):
   - empty → Question 0
   - 29 answered → Question 29
@@ -136,51 +139,64 @@ Rules, in this order:
 - **API:**
   - saving item index 31 before the island → 409 `step_pending`
   - changing an earlier answer while the island is due → 200
-  - answer id 9101 for a G78 pupil → 404 in 03a (no VO yet), 400 `wrong_set` from 04 on (assert via a fake set in 03a)
+  - answer id 9101 in any class → 404 in 03a (no VO items yet); `wrong_set` is asserted with a fake def in 03a, for real from 04 on
 - **Registry:**
-  - `Serve(Vo)` returns G78 while VO isn't registered
-  - a `Vo` class pupil's first answer pins `Groep78` (K1 safety)
+  - `ForClass` returns the def of the class's own `QuestionSet` for both values, and `Get` throws for an unknown value (no fallback)
+  - `IsLegacy(Vo)` is true in 03a; G78 is never legacy
+  - a guard test greps `Jobsy.Infrastructure/Scholen` and `Jobsy.Web` for `registry.Get(` outside the registry and tests: pupil-facing code must use `ForClass`
 - Existing `PupilQuestionBankTests`, `PupilPortalApiTests`, `TeacherPortal*Tests`, `SchoolPortal*Tests` stay green, with only constant references updated.
 
 ---
 
-## 03b. Results and totals per set (migration `AddQuestionSetToResults`)
+## 03b. Results and totals strictly per test (migration `AddQuestionSetToAggregates`)
 
 ### 03b.1 Data
-- **`PupilResult.QuestionSet`** (int, not null). `PupilResultBuilder` writes the served set and `ScoringVersion = def.ScoringVersion`.
-- **Migration:**
-  - add `PupilResults.QuestionSet` (backfill **1**) and `UPDATE "PupilResults" SET "ScoringVersion"='g78-1' WHERE "ScoringVersion"='1'`
-  - add `SchoolClassAggregates.QuestionSet` and `SchoolYearAggregates.QuestionSet` (backfill **1**)
+- **No `PupilResult.QuestionSet` column.** A result belongs to a code, and the code to a class with exactly one test, so the test is `result.SchoolClass.QuestionSet`. `PupilResultBuilder` writes `ScoringVersion = def.ScoringVersion` (`"g78-1"`, legacy `"1"` for `LegacyVo`, `"vo-1"` from 04).
+- **Migration `AddQuestionSetToAggregates`:**
+  - `UPDATE "PupilResults" SET "ScoringVersion"='g78-1' WHERE "ScoringVersion"='1' AND "SchoolClassId" IN (SELECT "Id" FROM "SchoolClasses" WHERE "QuestionSet"=1)` (normally 0 rows). Results in VO classes keep `"1"`: legacy, deleted by 04's cut-over (README §E).
+  - add `SchoolClassAggregates.QuestionSet` (backfill `CASE WHEN "Level"=8 THEN 1 ELSE 2 END`) and `SchoolYearAggregates.QuestionSet` (backfill **2**: every existing year/platform row was computed from VO classes)
   - indexes `(SchoolId, SchoolYearStart, QuestionSet)` on both aggregate tables
-  - Down reverses (`'g78-1'` → `'1'`)
-- **`SchoolAggregateSnapshotter`:** class aggregates are written **per (class, set)** and school-year aggregates **per (school, year, set)**, plus the platform row (`SchoolId null`) per set. The k ≥ 5 check (`SchoolAnonymity.MinGroupSize`) runs **per set group**: a class with 6 VO + 3 G78 results writes the VO row and masks G78.
-- **`ClassResultsAggregator`:** unchanged math. **Callers** group results by `QuestionSet` first:
+  - Down reverses (drop the columns; `'g78-1'` → `'1'`)
+- **`SchoolAggregateSnapshotter`:**
+  - class aggregates per class: one test by definition, so the row gets `QuestionSet = class.QuestionSet`
+  - school-year aggregates **per (school, year, test)**, plus the platform row (`SchoolId null`) **per test**
+  - the k ≥ 5 check (`SchoolAnonymity.MinGroupSize`) runs **per test group**
+  - never one row over both tests
+- **`ClassResultsAggregator`:** unchanged math. **Callers** group results by test (via the class) first:
   - `SchoolPortalService` ~L274 (school RIASEC top 3) and ~L817 (class totals)
   - `TeacherPortalService` ~L176 (overview), ~L272 and ~L631 (group)
   - `SchoolReportingService` (admin rapportage, CSV export)
-  - Never pass a mixed list into it. Add a guard that throws `InvalidOperationException` on a mixed list, covered by a test.
+  - **Guard:** the aggregator takes a `PupilQuestionSet` argument and throws `InvalidOperationException` when any input result's scoring version doesn't belong to that test (`g78-*` for G78; `vo-*` or legacy `"1"` for VO). Cover it with a test.
 
-### 03b.2 DTOs + UI ("not 1:1 comparable")
-- **`TeacherGroupInsightsDto`, the school class results DTO and `SchoolReportViewDto`:** add `IReadOnlyList<…PerSetDto> Sets`. Each entry has `PupilQuestionSet Set`, `string SetLabel`, the existing blocks and `bool Masked`. Keep the old top-level fields filled **only** when exactly one set is present (compatibility), otherwise empty.
-- **UI** (`LeraarGroup.razor`, `LeraarKlasOverview.razor`, `SchoolResults.razor`, `ScholenRapportage.razor`):
-  - **One set present:** a small caption "Vragenlijst groep 7/8 (60 vragen)" or "Vragenlijst VO (100 vragen)".
-  - **Two sets:** one section per set with that heading, plus a note (`role="note"`) `School.Results.SetsNotComparable` = "Uitkomsten van verschillende vragenlijsten zijn niet 1-op-1 te vergelijken. Daarom staan ze apart." A masked set shows the existing "minder dan 5" message.
-  - **Admin rapportage:** a filter "Vragenlijst" (Alle / Groep 7/8 / VO). "Alle" shows the sets side by side, never summed. The CSV export gets a `vragenlijst` column, one row per set.
-- **Strings:** `School.QuestionSet.Groep78` = "Vragenlijst groep 7/8 (60 vragen)", `School.QuestionSet.Vo` = "Vragenlijst VO (100 vragen)", `School.Results.SetsNotComparable`, `AdminScholen.Report.Filter.QuestionSet`.
+### 03b.2 DTOs + UI (one test at a time, no comparison)
+- **Teacher views** (`LeraarGroup.razor`, `LeraarKlasOverview.razor`, `TeacherGroupInsightsDto`): a class has one test, so there are **no** per-test sections. Add `PupilQuestionSet QuestionSet` to the DTO and show a small caption "Vragenlijst groep 7/8 (60 vragen)" or "Vragenlijst VO (100 vragen)". Any teacher view that combines **several** classes (check `LeraarDashboard`) groups by test and shows only per-class or per-test numbers, never a total over both.
+- **School results** (`SchoolResults.razor`, school results DTO): `PupilQuestionSet QuestionSet` query parameter + DTO field.
+  - If the school has classes of **one** test: no switch, just the caption.
+  - If it has **both**: a test switch (two tabs, "Groep 7/8" / "VO", default = the test with the most classes). The page shows **one test at a time**. No side-by-side view, no combined total, no comparison text.
+- **Admin rapportage** (`ScholenRapportage.razor`, `SchoolReportViewDto`): the "Vragenlijst" filter is **required** (Groep 7/8 / VO, default VO; no "Alle"). The CSV export is per test: the file name carries the test (`…-groep78.csv` / `…-vo.csv`) and a `vragenlijst` column. A request without a test → 400.
+- **Strings:**
+  - `School.QuestionSet.Groep78` = "Vragenlijst groep 7/8 (60 vragen)", `School.QuestionSet.Vo` = "Vragenlijst VO (100 vragen)"
+  - `School.Results.TestSwitch` = "Vragenlijst"
+  - `AdminScholen.Report.Filter.QuestionSet`
+  - **No** "not comparable" note, and no string that compares the tests.
+  - While VO is `IsLegacy` (03b–04), the VO label reads "Vragenlijst VO". The "(100 vragen)" part arrives with 04.
 
 ### 03b tests
-- **Scoring per set:** G78 percentages are byte-identical to today for 200 random complete answer sets (golden snapshot recorded before the change). `ScoringVersion` is `"g78-1"`.
-- **Migration:** `"1"` → `"g78-1"` and `QuestionSet = 1` on existing results and aggregates.
+- **Scoring per test:** G78 percentages are byte-identical to today for 200 random complete answer sets (golden snapshot recorded before the change). `ScoringVersion` is `"g78-1"` for a Groep78 class and `"1"` for a VO class (legacy, until 04).
+- **Migration:** `"1"` → `"g78-1"` only for results in Groep78 classes; VO-class results unchanged; aggregate backfill as above.
 - **Aggregates:**
-  - a class with mixed results → two class rows, k ≥ 5 per set
-  - the school-year row per set
-  - the platform row per set
-  - the aggregator guard throws on mixed input
-- **API/bUnit:** teacher group and school results with 2 sets → 2 sections + the note; with 1 set → a caption only, no note.
+  - a school with a G78 class (6 results) and a VO class (6 results) → two school-year rows (one per test) and two platform rows; never a row over both
+  - k ≥ 5 per test: G78 6 + VO 3 → G78 row written, VO masked
+  - the aggregator guard throws on a result from the other test
+- **API/bUnit:**
+  - teacher group → a caption only, no sections
+  - school results for a school with both tests → the switch, and each tab shows only its own test's numbers
+  - admin rapportage without a test → 400; CSV per test
+  - a guard asserts no rendered page or export contains both test labels in one result block
 - **Rights:** unchanged (`ScholenRightsMatrix`): a teacher only gets their own class; the school admin only gets totals.
 
 ## Success criteria
 - **03a:** the G78 golden flow is identical; no hardcoded 60/30/15/6/12 is left in the pupil flow; `SaveAnswerAsync` enforces the step order; Web no longer creates a bank.
-- **03b:** results carry their set and scoring version; no total anywhere mixes sets; k ≥ 5 per set; the note shows when two sets meet.
+- **03b:** results carry their test's scoring version; no total, page or export combines or compares the two tests; k ≥ 5 per test.
 
 Done → next: `04-vo-set-inhoud.md`.

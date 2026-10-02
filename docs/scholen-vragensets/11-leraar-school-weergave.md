@@ -1,6 +1,6 @@
-# 11. Teacher and school view: "n van 3 puzzels gedaan", set badges, per-set polish, rights matrix
+# 11. Teacher and school view: "n van 3 puzzels gedaan", test badges, one test at a time, rights matrix
 
-Read `00-README.md` first (§S, §P, D1, D4). Branch `cursor/vragensets-11` from `cursor/vragensets-10`.
+Read `00-README.md` first (§S, §E, §P, D1, D4). Branch `cursor/vragensets-11` from `cursor/vragensets-10`.
 
 > **Rules (same as README §0):**
 > - Never merge, deploy or use rule `123`.
@@ -13,9 +13,9 @@ Read `00-README.md` first (§S, §P, D1, D4). Branch `cursor/vragensets-11` from
 | | |
 |---|---|
 | Branch | `cursor/vragensets-11` |
-| PR title | `feat(scholen): teacher sees "n van 3 puzzels gedaan" (never right/wrong), question-set badges, rights matrix for puzzle endpoints` |
+| PR title | `feat(scholen): teacher sees "n van 3 puzzels gedaan" (never right/wrong), test badges, rights matrix for puzzle endpoints` |
 | PR body starts with | `Stacked on #<PR 10> (cursor/vragensets-10)` |
-| Screens | desktop 1440: `LeraarCodes`, `LeraarCodeDetail` (G78 code + VO code), `LeraarKlasOverview`, `SchoolClasses`, `SchoolResults` with both sets |
+| Screens | desktop 1440: `LeraarCodes`, `LeraarCodeDetail` (G78 code + VO code), `LeraarKlasOverview`, `SchoolClasses`, `SchoolResults` for a school with both tests (each tab) |
 
 **Teachers still see only their own classes** (`ISchoolScopeService`). Nothing in this file widens a scope.
 
@@ -31,13 +31,14 @@ Read `00-README.md` first (§S, §P, D1, D4). Branch `cursor/vragensets-11` from
 - **School admin and admin:** **no** puzzle data at all. No field in `SchoolPortal*Dto`, `SchoolClassDetail`, `SchoolResults`, `ScholenRapportage` or the CSV exports.
 - **Aggregates:** puzzles are never aggregated (F6).
 
-## 11.2 Question-set badges and labels (finishing 02/03b)
+## 11.2 Test badges and labels (finishing 02/03b)
+- **One class = one test** (README §S). Every code of a class shows the class's test; there is no per-code test, no "started with another test" notice and no mixed progress.
 - **Teacher pages:**
-  - `LeraarDashboard.razor` (class cards) and `LeraarKlasOverview.razor` show the set pill (`sch-pill`): "Groep 7/8" / "VO", always as text (02 added it to `SchoolClasses.razor`).
-  - `LeraarCodeDetail.razor` shows the code's **effective** set (`code.QuestionSet ?? class.QuestionSet`): "Vragenlijst groep 7/8 (60 vragen)" / "Vragenlijst VO (100 vragen)".
-  - If the code's pinned set differs from the class set (K1: an old code in a VO class), show `Leraar.Detail.SetPinned` = "Deze leerling begon met de vragenlijst groep 7/8. De antwoorden blijven bij die lijst."
-- **Progress:** "x van 100" for VO codes and "x van 60" for G78 codes in the same class (03a computes `ProgressTotal` per code). The group progress bar in `LeraarKlasOverview` uses the **percentage** per code, never a summed item count across sets.
-- **Per-set sections** (03b): check that `LeraarGroup.razor`, `SchoolResults.razor` and `ScholenRapportage.razor` show one section per set present, each with its own k ≥ 5, plus `School.Results.SetsNotComparable` when both sets are present. Fix any gaps found; no new layout.
+  - `LeraarDashboard.razor` (class cards) and `LeraarKlasOverview.razor` show the test pill (`sch-pill`): "Groep 7/8" / "VO", always as text (02 added it to `SchoolClasses.razor`).
+  - `LeraarCodeDetail.razor` shows the class's test: "Vragenlijst groep 7/8 (60 vragen)" / "Vragenlijst VO (100 vragen)".
+- **Progress:** "x van 60" in a Groep78 class, "x van 100" in a VO class (03a: the total per class). `LeraarKlasOverview`'s progress bar uses that class total.
+- **Teacher views are per class** (03b): `LeraarGroup.razor` shows one test, with a caption only. If `LeraarDashboard` shows numbers over several classes, check they're per class or grouped per test, never a total over both tests.
+- **School and admin pages** (03b): check that `SchoolResults.razor` and `ScholenRapportage.razor` show **one test at a time** (the switch / required filter), with k ≥ 5 per test. Check that nothing renders both tests side by side, sums them or compares them, and that the CSV export is per test. Fix any gaps found; no new layout.
 - **Copy for staff** stays "Leraar" as the role name (§0).
 
 ## 11.3 Rights matrix (`Jobsy.Tests/Scholen/ScholenRightsMatrix.cs`) and the roles doc
@@ -64,12 +65,13 @@ Add rows (data-driven, same style as the existing ones):
 - Reflection guard (from 07): still no `Correct`/`Strength` on any staff DTO; `PuzzlesDone` is the only puzzle field and is an int.
 - bUnit `LeraarCodeDetail`:
   - G78 shows "2 van 3 puzzels gedaan"; VO shows no puzzle line
-  - the pinned-set note appears for K1 codes
+  - the test caption matches the class's test for every code
 - `ScholenRightsMatrix` rows above.
-- `SchoolResults`/`LeraarGroup`: with 5 G78 + 5 VO completed codes, two sections plus the "not comparable" note; with 5 G78 + 4 VO, one section plus "VO: te weinig leerlingen" (existing k-text).
+- `SchoolResults`: a school with a G78 class (5 completed) and a VO class (4 completed) → the G78 tab shows numbers and the VO tab shows the existing "te weinig leerlingen" k-text. No markup contains both tests' numbers at once.
+- `LeraarGroup`: one test caption, no sections, no comparison text.
 
 ## Success criteria
 - A teacher sees "n van 3 puzzels gedaan" for a groep 7/8 pupil and nothing that hints at right or wrong; school admins and admins see no puzzle data.
-- Every class and code shows which question set it uses; totals are per set.
+- Every class shows which test it uses; totals are per test and the two tests are never shown together or compared.
 
 Done → next: `12-tests-e2e-rapport.md`.

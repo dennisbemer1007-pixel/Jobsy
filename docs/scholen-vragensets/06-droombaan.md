@@ -91,7 +91,7 @@ Add them at the end of `DreamJobCatalog.All`, in this order. Keys are stable keb
 - **K3 in the PR body:** the candidate onboarding (`DreamJobStep.razor`) now also offers these 10 jobs. Attach a screenshot of the candidate step to show it still lays out well.
 
 ## 06.4 "docent of mentor" for VO
-- **Add `.Vo` variants**, picked through the served set (04's `PupilCopy.For` pattern, here on `PupilVerhaalCopy`):
+- **Add `.Vo` variants**, picked through the class's test (04's `PupilCopy.For` pattern, here on `PupilVerhaalCopy`):
 
   | Key | VO variant |
   |---|---|

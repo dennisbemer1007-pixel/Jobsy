@@ -120,7 +120,7 @@ Every generator: `PuzzleInstance Generate(ulong seed, PuzzleLevel level)`. It's 
   | POST | `api/pupil/puzzles/{key}/skip` | – | `NextStep`, `NextPuzzleKey` (no strength) |
 
   - **One answer per puzzle, idempotent.** If the puzzle is already `done`/`skipped`, answer/skip return **200** with the **stored** outcome; nothing changes, and there is no retry. A second, different answer doesn't change `correct`.
-  - **404** for an unknown key, and for **every key when the served set is VO** (no puzzles for VO, F1).
+  - **404** for an unknown key, and for **every key when the class's test is VO** (no puzzles for VO, F1).
   - **409 `step_pending`** when the pupil isn't at that puzzle's gate yet (fewer than `AfterItem` answers). Answering a puzzle later than its gate is allowed (e.g. after a reload).
   - **400** for a malformed body (option outside 0–3, cell outside 0–4).
   - A window-closed / revoked / completed code behaves as in `SaveAnswerAsync` (same errors).
