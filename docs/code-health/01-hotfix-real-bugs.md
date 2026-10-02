@@ -109,14 +109,17 @@
 
 **Change:**
 1. Enable a **compact** attribution on every MapLibre map (Banenkaart / job map, vacancy detail map, Kandidaatinzichten map `wwwroot/js/features/kandidaatinzichten-map.js`): `attributionControl: { compact: true, customAttribution: '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }`.
-   - It may be styled small and low-contrast to match the brand, but it must be visible without interaction on desktop. On mobile the compact "i" toggle is acceptable.
+   - **Decision 6:** on **desktop (≥ 1025 px) the credit is always visible**: expanded, no interaction needed, so use `compact: false` there. On **mobile it is the compact "i" toggle** (`compact: true`). Choose by viewport when the map is created, and switch again on resize/orientation change. It may be styled small and low-contrast to match the brand.
    - Keep the MapLibre logo hidden; that is allowed.
 2. Remove the attribution-hiding rules (keep the logo-hiding ones). Give the toggle a localized `aria-label` via the existing locale object, instead of the empty string.
 3. Make sure the attribution does not overlap the bottom nav, the carousel or the Match button on 390×844. Adjust the `bottom` offset with a CSS variable if needed.
 4. Rebuild `jobMap.min.js` / `jobsyMapLibre.min.js` / `vacancyDetailMap.min.js`. No minifier is documented yet (`git log` the `.min.js` files for hints). If none is found, use a pinned `npx terser@5 --compress --mangle` and document the exact command in `docs/performance.md`. Bump the `?v=` strings.
 
 **Tests:**
-- Playwright on `/banenkaart` and on a vacancy detail page, desktop and mobile: `.maplibregl-ctrl-attrib` is visible (or the compact button is), and contains "OpenStreetMap". Include screenshots.
+- Playwright on `/banenkaart` and on a vacancy detail page:
+  - **Desktop 1366×900:** `.maplibregl-ctrl-attrib` is visible **without clicking**, is not `.maplibregl-compact`, and its text contains "OpenStreetMap".
+  - **Mobile 390×844:** the compact "i" button is visible; tapping it shows the text containing "OpenStreetMap".
+  - Include screenshots.
 - Existing map Playwright suites (Banenkaart*, JobMapPinsClusters*) are still green.
 
 ## §7 npm: `image-size` vulnerability via `pptxgenjs` (root `package.json`)

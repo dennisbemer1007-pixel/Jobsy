@@ -26,7 +26,7 @@
    - the **API smoke test**: start `Jobsy.Api` against an empty database and check that all migrations apply, `GET /health` returns 200 and a demo login works
 5. **No new warnings.** The unique warning count (counter including RZ/ASP/BL) must be **≤ the base branch count**, and every file you touch must be warning-free. Steps 02–07 must lower the count. The only exception is step 04, see its file.
 6. **Red tests mean stop.** If anything fails that does not fail on the base branch (compare against Appendix A in [11](11-gate-warnings-as-errors.md)), or the build fails, open the PR as a **draft**, describe the failure and stop. Don't "fix" tests by weakening their assertions unless the step file says so.
-7. **Pushes that touch `.github/workflows/*`** need a token with `workflow` scope. If the push is rejected for that reason, do not work around it. Put the workflow diff in the PR description as a fenced patch, mark the PR draft and report it.
+7. **Pushes that touch `.github/workflows/*`** need a token with `workflow` scope. If the push is rejected for that reason, do not work around it. Put the workflow diff in the PR description as a fenced patch, mark the PR draft and report it (Decision 3).
 8. Commit as Dennis: `git -c user.name="Dennis Bemer" -c user.email="dennisbemer1007@users.noreply.github.com" commit …`. Make small commits, one per logical item, so each can be reverted on its own.
 9. Don't touch real accounts, production data, `render.yaml` secrets or `TestAccounts__*` / `Lobsy__DeploymentEnvironment`.
 10. Bump cache-busting `?v=` query strings (`App.razor`) for any CSS/JS you change, and regenerate `app.min.css` with `tools/css/build.sh` when `app.css` changes.
@@ -60,8 +60,8 @@ Until step 02 lands, also report the full count. Key = `path(line,col):CODE` ove
 | 05 | [05-warnings-behaviour-fixes.md](05-warnings-behaviour-fixes.md) | `cursor/code-health-05-behaviour` | 04 | Bug-adjacent warnings + switch analyzers to the 10.0 level |
 | 06 | [06-warnings-unused-code-signatures.md](06-warnings-unused-code-signatures.md) | `cursor/code-health-06-unused` | 05 | IDE0060/0052/0051/0059 |
 | 07 | [07-warnings-obsolete-and-mechanical.md](07-warnings-obsolete-and-mechanical.md) | `cursor/code-health-07-obsolete-mechanical` | 06 | CS0618 + migration, CA1068 order, mechanical rest |
-| 08 | [08-major-package-bumps.md](08-major-package-bumps.md) | `cursor/code-health-08a-sentry6`, `-08b-openapi`, `-08c-identityweb4`, `-08d-imagesharp4`, optional `-08e-questpdf2026` | 07 (each on the previous) | One major per sub-PR; ImageSharp and QuestPDF only after Dennis' licence OK |
-| 09 | [09-test-stack.md](09-test-stack.md) | `cursor/code-health-09-test-stack` | 08 (last sub-PR) | xunit.v3, runner, bunit 2 |
+| 08 | [08-major-package-bumps.md](08-major-package-bumps.md) | `cursor/code-health-08a-sentry6`, `-08b-openapi`, `-08c-identityweb4`, `-08d-imagesharp4`, `-08e-questpdf2026` | 07 (each on the previous) | One major per sub-PR; OpenAPI → built-in `Microsoft.AspNetCore.OpenApi`; **08d/08e are analysis-only drafts** (licences unconfirmed) |
+| 09 | [09-test-stack.md](09-test-stack.md) | `cursor/code-health-09-test-stack` | 08 (last non-draft sub-PR) | xunit.v3, runner, bunit 2. **Only after the Werkgever and Scholen stacks are merged** |
 | 10 | [10-frontend-libs.md](10-frontend-libs.md) | `cursor/code-health-10-frontend` | 09 | MapLibre 6, html2canvas → maintained fork |
 | 11 | [11-gate-warnings-as-errors.md](11-gate-warnings-as-errors.md) | `cursor/code-health-11-gate` | 10 | TreatWarningsAsErrors, pin AnalysisLevel, delete the baseline, auto-fix job, fix the 49 pre-existing failing tests (Appendix A) |
 
@@ -81,13 +81,19 @@ Playwright (if run): which suites, result
 Open points / questions for Dennis
 ```
 
-## Open questions for Dennis (answer before the step that needs them)
+## Decisions by Dennis (2 Oct 2026, approved): binding for all steps
 
-1. **ImageSharp 4 licence (08d)** and **QuestPDF 2026 licence (08e):** both have revenue thresholds for free use. Does Lobsy qualify, or is a commercial licence needed? Until there's an answer, 08d/08e stop at an analysis-only draft PR.
-2. **Auto-fix bot token (11):** create a GitHub App or a fine-grained PAT (contents: write, this repo only) as the secret `CODE_HEALTH_BOT_TOKEN`. Without it, bot commits don't retrigger CI and the author must re-run the checks by hand.
-3. **`workflow` scope:** steps 02, 04 and 11 change `.github/workflows/*`. The pushing agent or token needs `workflow` scope; otherwise those PRs arrive as drafts with a patch.
-4. **OpenAPI (08b):** switch to the built-in `Microsoft.AspNetCore.OpenApi` (preferred) or stay on Swashbuckle 10?
-5. **Timing of 09 (test stack):** pick a moment with few open feature stacks.
-6. **OSM attribution styling (01 §6):** a compact "i" toggle on mobile is acceptable; on desktop the attribution is visible. OK?
-7. **Ambiguous pre-existing tests (11, Appendix A, "Ask Dennis"):** MFA enrolment redirect, Ambassadeur MFA, and BranchManager 403s on the werkgever APIs. Which side (test or code) reflects the intended behaviour?
-8. **Dropping obsolete DB columns (07):** OK to drop `ExposeRegistrationActivationLinks` and `DeepAnalysisPriceEuro` once the code no longer uses them?
+1. **Licences are still unconfirmed** (ImageSharp 4, QuestPDF 2026). **08d and 08e stay analysis-only draft PRs**: no package bump, no code change. They are just the analysis (licence terms, API impact, effort) in the PR description, and the agent stops there.
+2. **Auto-fix job (11)** uses the secret **`CODE_HEALTH_BOT_TOKEN`**. Dennis will create it himself; agents never create or read secrets. Until the secret exists, the job must **skip gracefully**: the step passes with a clear message (`::notice::CODE_HEALTH_BOT_TOKEN not configured; auto-fix skipped`) and never fails or blocks the PR.
+3. **`workflow` scope:** if a push that touches `.github/workflows/*` is rejected, open the PR as a **draft with the workflow diff as a fenced patch** in the description, and report it (global rule 7). Never work around the scope.
+4. **OpenAPI (08b):** switch to the built-in **`Microsoft.AspNetCore.OpenApi`**, removing Swashbuckle. There is no Swashbuckle 10 option.
+5. **Test stack (09)** runs only **after the Werkgever and Scholen stacks have been merged** into `acceptatie`. Check that before starting; if they are not merged, stop and report.
+6. **Map credit (01 §6):** the OpenStreetMap/OpenFreeMap credit is **always visible on desktop**; on mobile it is the **compact "i" toggle**.
+7. **Pre-existing role/MFA/rights tests (11, Appendix A):** the **code follows the agreed role rules, and the tests are updated to match**. The rules:
+   - **Admins:** MFA required (local password + Lobsy TOTP). **No Google sign-in for admins**: only Microsoft work/school accounts, or password + 2FA.
+   - **Microsoft/Google (external) sign-in:** no extra Lobsy 2FA (ADR 0005).
+   - **Ambassadeur:** paused behind its feature flag.
+   - **BranchManager:** as in the agreed werkgever rights (`WerkgeverRightsMatrix`, `docs/security/roles-matrix.md`, `docs/adr/0004-roles-and-scope.md`).
+
+   Where the code already follows these rules, update the test. Where the code breaks them, fix the code.
+8. **Obsolete columns (07):** drop **`ExposeRegistrationActivationLinks`** and **`DeepAnalysisPriceEuro`** in step 07 with migrations. This is approved, so it is not a follow-up.

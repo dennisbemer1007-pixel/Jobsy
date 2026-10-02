@@ -1,9 +1,12 @@
 # 09: Test stack: xunit.v3, runner, bunit 2
 
-- **Branch:** `cursor/code-health-09-test-stack`, from the last 08 sub-PR.
+- **Branch:** `cursor/code-health-09-test-stack`, from `cursor/code-health-08c-identityweb4`, or from `origin/acceptatie` if 01–08c are merged.
 - **PR:** into that branch.
 - **Test-only changes**, plus `Directory.Packages.props`.
-- Large but mechanical. Do it when few feature stacks are open (ask Dennis for the moment), because every open test file will conflict.
+- Large but mechanical.
+- **Precondition (Decision 5): run only after the Werkgever and Scholen stacks have been merged into `acceptatie`.** Before starting, check `gh pr list --base acceptatie --state open` and the merge history of `origin/acceptatie`.
+  - If any Werkgever (`cursor/werkgever-*`) or Scholen (`cursor/scholen-*`) PR is still open, **stop and report which ones**. Don't open a PR.
+  - Every other open test file will still conflict, so list the open stacks in the PR description.
 
 ## Packages
 

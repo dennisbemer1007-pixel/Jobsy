@@ -52,22 +52,36 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Bot token present?
+        id: token
+        env:
+          BOT_TOKEN: ${{ secrets.CODE_HEALTH_BOT_TOKEN }}
+        run: |
+          if [[ -z "$BOT_TOKEN" ]]; then
+            echo "::notice::CODE_HEALTH_BOT_TOKEN not configured; auto-fix skipped (Dennis creates this secret)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.token.outputs.skip != 'true'
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 2
-          token: ${{ secrets.CODE_HEALTH_BOT_TOKEN || github.token }}   # see "Token" below
+          token: ${{ secrets.CODE_HEALTH_BOT_TOKEN }}
       - name: Loop guard
         id: guard
+        if: steps.token.outputs.skip != 'true'
         run: |
           msg="$(git log -1 --pretty=%B)"; author="$(git log -1 --pretty=%ae)"
           if [[ "$msg" == *"[code-health-autofix]"* || "$author" == "code-health-bot@users.noreply.github.com" ]]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "Last commit is the bot's: skipping."; fi
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "Last commit is the bot's: skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@v4
-        if: steps.guard.outputs.skip != 'true'
+        if: steps.token.outputs.skip != 'true' && steps.guard.outputs.skip == 'false'
         with: { dotnet-version: "10.0.x" }
       - name: dotnet format (safe fixers only)
-        if: steps.guard.outputs.skip != 'true'
+        if: steps.token.outputs.skip != 'true' && steps.guard.outputs.skip == 'false'
         run: |
           dotnet restore Jobsy.sln
           dotnet format whitespace Jobsy.sln
@@ -75,7 +89,7 @@ jobs:
           dotnet format analyzers Jobsy.sln --severity warn --diagnostics \
             CA1827 CA1828 CA1834 CA1847 CA1854 CA1860 CA1865 CA2249 CA2263
       - name: Commit and push fixes
-        if: steps.guard.outputs.skip != 'true'
+        if: steps.token.outputs.skip != 'true' && steps.guard.outputs.skip == 'false'
         run: |
           git diff --quiet && { echo "No fixes."; exit 0; }
           git -c user.name="code-health-bot" -c user.email="code-health-bot@users.noreply.github.com" \
@@ -85,19 +99,21 @@ jobs:
 
 Rules for the job:
 - **The allow-list is the safety boundary.** Only fixers that don't change behaviour may be in it. `CA1826` (exception type on empty lists), `CA1512` (exception message) and `CA1822` (API shape) are deliberately **not** in it. Changing the list needs a PR with a reason. Never use `dotnet format` without `--diagnostics` for analyzers.
-- **Token:** pushes made with the default `GITHUB_TOKEN` do **not** trigger new workflow runs, so "the build reruns" needs a GitHub App token or a fine-grained PAT (contents: write on this repo only), stored as the `CODE_HEALTH_BOT_TOKEN` secret.
-  - **Dennis must create this secret.** Don't create it yourself.
-  - Without the secret, the job falls back to `GITHUB_TOKEN`, and the PR author has to re-run the checks by hand. Document that.
+- **Token (Decision 2):** the job uses the secret **`CODE_HEALTH_BOT_TOKEN`**, a GitHub App token or fine-grained PAT with contents: write on this repo only. Pushes made with the default `GITHUB_TOKEN` would not retrigger the checks.
+  - **Dennis creates the secret.** Agents never create, read or print it.
+  - **Until the secret exists, the job skips gracefully:** the first step emits `::notice::CODE_HEALTH_BOT_TOKEN not configured; auto-fix skipped`, every later step is skipped, and the job ends **green**. It never fails or blocks the PR. There is no fallback to `GITHUB_TOKEN`.
 - **Loop guard:** skip when the last commit has the `[code-health-autofix]` marker or the bot author. The job only ever adds **one** commit per push.
 - **Never on main or acceptatie:** the `if:` above, plus `pull_request` events only (no `push` trigger). Branch protection on `main`/`acceptatie` stays as it is.
 - Warnings that format cannot fix still fail the normal build. The author fixes them, following the standing rule.
 - Pushing this file needs `workflow` scope (global rule 7).
 
-**Test the job** on a throwaway same-repo PR (`cursor/code-health-11-autofix-probe`). Put one fixable warning in it (e.g. `"x".StartsWith("/")` → CA1865) and check:
-1. the bot commit appears
-2. the checks rerun (with the PAT) and go green
-3. a second push without warnings produces no bot commit
-4. the bot's own commit does not trigger another bot commit
+**Test the job** on a throwaway same-repo PR (`cursor/code-health-11-autofix-probe`).
+- **Without the secret** (the expected state when this PR is built): the job is green and shows the "not configured" notice. Screenshot or link it in the PR.
+- **With the secret**, once Dennis has created it (otherwise list this as a follow-up): put one fixable warning in the probe PR (e.g. `"x".StartsWith("/")` → CA1865) and check:
+  1. the bot commit appears
+  2. the checks rerun (with the bot token) and go green
+  3. a second push without warnings produces no bot commit
+  4. the bot's own commit does not trigger another bot commit
 
 Close the probe PR afterwards **without merging**.
 
@@ -105,7 +121,14 @@ Close the probe PR afterwards **without merging**.
 
 - Every failure listed in Appendix A must be fixed in this step, unless an earlier step already fixed it. Mark those as "fixed in NN".
 - "Fix" means: correct the code when the test describes intended behaviour, **or** update the test when the product intentionally changed. In that case, cite the commit/stack that changed it in the commit message.
-- **When it's unclear which side is right** (marked "Ask Dennis" in Appendix A, or any authorization/privacy test), do not guess. Keep the test failing, list it in the PR under "Questions for Dennis", and open the PR as **draft**.
+- **Role/MFA/rights tests: the code follows the agreed role rules, and the tests are updated accordingly** (Decision 7, README):
+  - admins MFA required, no Google sign-in for admins
+  - Microsoft/Google (external) users no extra Lobsy 2FA
+  - Ambassadeur paused behind its feature flag
+  - BranchManager as in the agreed werkgever rights (`WerkgeverRightsMatrix`, `docs/security/roles-matrix.md`, ADR 0004/0005)
+
+  Where the code matches these rules, update the test, and cite the rule in the commit message. Where the code breaks them, fix the code.
+- **Only if a test cannot be mapped to these rules or any other documented behaviour** (privacy/anonymisation included), do not guess. Keep it failing, list it in the PR under "Questions for Dennis", and open the PR as **draft**.
 - If the list gets long, the test fixes may be split into sub-PRs `11a` (authorization/privacy), `11b` (copy/links/flags) and `11c` (the rest), stacked before the gate PR. The gate PR itself (§1–§3) lands last, once CI is green.
 
 ## Acceptance
@@ -139,7 +162,7 @@ Close the probe PR afterwards **without merging**.
 
 | Test | Symptom (2 Oct, acceptatie 3a15b0d7) | Direction |
 |---|---|---|
-| `Werkgever.ApplicationsApiTests.Bm_and_own_vm_can_react` | BranchManager gets 403 | Ask Dennis if unclear; likely a code fix in the rights matrix/policy |
+| `Werkgever.ApplicationsApiTests.Bm_and_own_vm_can_react` | BranchManager gets 403 | Decision 7: follow `WerkgeverRightsMatrix`. Where the matrix grants BM (react on applications), **fix the code/policy**; where it denies, update the test |
 | `Werkgever.ApplicationsApiTests.Filters_status_overdue_and_branchIds` | 403 | Same root cause |
 | `Werkgever.ApplicationsApiTests.Privacy_dto_matches_LobsyCvAccessRules_for_bm_rm_vm` | 403 | Same root cause |
 | `Werkgever.TokenRequestsApiTests.Checkout_vm_and_rm_forbidden_bm_not_forbidden` | BM checkout forbidden | Same root cause |
@@ -147,7 +170,7 @@ Close the probe PR afterwards **without merging**.
 | `CandidateInsightsLockedJsonTests.Locked_json_omits_premium_values_for_bm_rm_vm` | 403 instead of 200 | Feature flag / role setup in test vs policy; check |
 | `CandidateInsightsLockedJsonTests.Unlocked_json_includes_premium_sections` | 403 instead of 200 | Same |
 | `CandidateInsightsUnlockApiTests.Feature_off_returns_404` | 403 instead of 404 when the feature is off | Order of the feature gate vs authorization |
-| `AuthorizationMatrixReflectionTests.Mutating_actions_do_not_admit_RegionalManager_except_allow_list` | `MeEmailPreferencesController.Put`, `MfaController.RegenerateRecoveryCodes` admit RegionalManager | Add to the allow-list with a reason (self-service endpoints), or restrict them |
+| `AuthorizationMatrixReflectionTests.Mutating_actions_do_not_admit_RegionalManager_except_allow_list` | `MeEmailPreferencesController.Put`, `MfaController.RegenerateRecoveryCodes` admit RegionalManager | Self-service endpoints (own e-mail preferences, own recovery codes) are allowed for every signed-in role: add them to the allow-list with that reason |
 | `Werkgever.WerkgeverRightsMatrixCompletenessTests.Matrix_covers_mutating_employer_endpoints` | Matrix is missing `api/applications/{id}/viewed`, `api/vacancies/{id}/ready` | Add the endpoints to `WerkgeverRightsMatrix` |
 | `Werkgever.WerkgeverPageAuthorizeTests.Every_werkgever_page_authorize_matches_matrix` | `/werkgever/overnames` roles differ from the matrix | Align the page `[Authorize]` with the matrix |
 | `AdminAuditRedesignTests.Reflection_guard_every_admin_reachable_non_get_has_audit_or_exempt` | `SalesCommercialController.RecordReferralVisit` has no `[AdminAudit]`/`[AdminAuditExempt]` | Add `[AdminAuditExempt]` with a reason (public tracking), or audit it |
@@ -156,10 +179,10 @@ Close the probe PR afterwards **without merging**.
 
 | Test | Symptom (2 Oct, acceptatie 3a15b0d7) | Direction |
 |---|---|---|
-| `LoginProtectionTests.Admin_without_mfa_is_redirected_before_admin_page_renders` | Redirect is now `/login?error=mfa-required` instead of `/account/mfa` | Product changed (honest errors, auth hotfix): update the test, or restore the enrol redirect. Ask Dennis |
+| `LoginProtectionTests.Admin_without_mfa_is_redirected_before_admin_page_renders` | Redirect is now `/login?error=mfa-required` instead of `/account/mfa` | Decision 7: admins MFA required. The code must block the admin page before it renders and send the user into MFA enrolment/verification (ADR 0005). If the current `/login?error=mfa-required` does that (auth hotfix `46cb0511`), update the test to assert it; if not, fix the code |
 | `LoginProtectionTests.Branch_manager_local_without_mfa_is_redirected` | Same | Same |
 | `LoginProtectionTests.Fifth_failed_attempt_starts_fifteen_minute_lockout` | Expected 0, got 2h lockout | Test isolation (lockout history) or a changed rule; check `LoginLockoutRules` |
-| `Sales.SalesFoundationUnitTests.MfaPolicy_requires_SalesManager_and_Ambassadeur` | Ambassadeur no longer requires MFA | Ambassadeur login is paused: update the test with a reason, or restore. Ask Dennis |
+| `Sales.SalesFoundationUnitTests.MfaPolicy_requires_SalesManager_and_Ambassadeur` | Ambassadeur no longer requires MFA | Decision 7: Ambassadeur is paused behind its feature flag. Update the test: SalesManager requires MFA; Ambassadeur is asserted as paused (no login while the flag is off), with any MFA expectation only under flag-on, if `MfaPolicy` still contains it |
 | `Sprint3CandidateTests.Smtp_resolve_requires_full_credentials` | SMTP resolves with incomplete credentials | Code fix: require full credentials |
 
 ### D. Feature flags, routes, legacy links, guards
@@ -195,4 +218,4 @@ Close the probe PR afterwards **without merging**.
 |---|---|---|
 | `AccountUnsubscribeTests.Candidate_user_relation_catalog_requires_anonymize_coverage_for_every_model_entity` | New candidate entities lack anonymize coverage | **Privacy:** add the new entities to the anonymize/delete catalog (code fix) |
 | `CoreFunctionalFlowE2ETests.Full_chain_company_manager_salesmanager_admin_prepaid_and_commissions` | Expected null, got a Guid | Check the flow; likely a changed default |
-| `SalesManagerCommissionTests.Registration_with_tracking_code_links_supplier_and_reserves_slot` | No slot reserved | Check the tracking-code validation (see the unused `ValidateSalesOrAmbassadeurTrackingCodeAsync`, 06) |
+| `SalesManagerCommissionTests.Registration_with_tracking_code_links_supplier_and_reserves_slot` | No slot reserved | Check the tracking-code validation (see the unused `ValidateSalesOrAmbassadeurTrackingCodeAsync`, 06). SalesManager codes must reserve the slot; Ambassadeur codes only while its flag is on (Decision 7) |
