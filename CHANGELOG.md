@@ -44,8 +44,8 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
-- **Paspoort landing + nav order:** candidate default landing via `FeatureRoutes.HomeFor` when the paspoort flag is ON (not ready → `/candidate/ontdekkingsreis`, ready → `/candidate/paspoort`); nav order Discovery · Passport · Career · Banenkaart · Sollicitaties; `Nav.Banenkaart` label (legacy `Nav.Search` kept for flag OFF).
 - **De ontdekkingsreis (08):** tests 7–10 with deeper question sets (5/10/25, Cultuur 18), “Weer een laag eraf” shed moment, end screen (`?stap=klaar`) with mini passport + `CompleteMyOnboardingAsync`, Discovery nav slot + short labels, “Verder ontdekken” overview, `OnboardingRoutes.StartPath` for flag-aware entry points. Old wizard kept for flag OFF.
+- **Paspoort landing + nav order:** candidate default landing via `FeatureRoutes.HomeFor` when the paspoort flag is ON (not ready → `/candidate/ontdekkingsreis`, ready → `/candidate/paspoort`); nav order Discovery · Passport · Career · Banenkaart · Sollicitaties; `Nav.Banenkaart` label (legacy `Nav.Search` kept for flag OFF).
 - **De ontdekkingsreis (07a):** `/candidate/ontdekkingsreis` behind CandidatePassport flag; journey shell (scene, lobster plates, progress rail, save status); wizard v3 step maps; Start + steps 1–2; extracted shared onboarding step components. Steps 3–10 deferred to 07b.
 - **Mijn Paspoort · Mijn tests:** depth rows, quota line, locked-report preview, Groei verder course slots (curated `ShowInPassport`); TrainingOffer passport fields + admin; no demo course seeds in production.
 - **Mijn Paspoort (flag ON):** `/candidate/paspoort` with overview (DNA ring + stats), tab shell, Mijn DNA tab, derived schalen; nav order Discovery · Passport · Career · Banenkaart · Sollicitaties; Bewaard as tab inside Sollicitaties; classic profile kept when flag OFF.
