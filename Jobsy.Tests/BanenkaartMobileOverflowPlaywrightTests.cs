@@ -211,8 +211,19 @@ public class BanenkaartMobileOverflowPlaywrightTests
         }
     }
 
-    private sealed record OverflowReport(double DocW, string[] Offenders, double ChipBox);
-    private sealed record ChipScroll(double Client, double Scroll);
+    // Playwright's EvaluateAsync needs a parameterless ctor to materialize the result.
+    private sealed class OverflowReport
+    {
+        public double DocW { get; set; }
+        public string[] Offenders { get; set; } = [];
+        public double ChipBox { get; set; }
+    }
+
+    private sealed class ChipScroll
+    {
+        public double Client { get; set; }
+        public double Scroll { get; set; }
+    }
 
     private static string? BaseUrl()
     {
@@ -247,12 +258,20 @@ public class BanenkaartMobileOverflowPlaywrightTests
         var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
         try
         {
-            await page.GotoAsync(baseUrl + "/account/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-            await page.FillAsync("input[type=email], input[name=email], #email", email);
-            await page.FillAsync("input[type=password], input[name=password], #password", password);
-            await page.ClickAsync("button[type=submit], button:has-text('Inloggen'), button:has-text('Log')");
-            await page.WaitForTimeoutAsync(1500);
-            return true;
+            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+            await page.FillAsync("input[name='email']", email);
+            await page.FillAsync("input[name='password']", password);
+            var submit = page.Locator("button.login-submit, button.au-submit[type=submit]");
+            await page.WaitForFunctionAsync(
+                "() => { const b = document.querySelector('button.login-submit, button.au-submit[type=submit]'); return b && !b.disabled; }",
+                null,
+                new() { Timeout = 30_000 });
+            await Task.WhenAll(
+                page.WaitForURLAsync(
+                    url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = 60_000 }),
+                submit.ClickAsync());
+            return !page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase);
         }
         catch
         {
