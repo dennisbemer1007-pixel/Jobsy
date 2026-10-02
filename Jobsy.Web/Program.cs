@@ -141,6 +141,9 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CareerPathService>();
+builder.Services.AddScoped<
+    Jobsy.Web.Services.Careers.ICareerStepVacancyFit,
+    Jobsy.Web.Services.Careers.CareerStepVacancyFitService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Components.Candidate.ProfileSections.CandidateProfileEditor>();
 builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaStorage>();
@@ -349,6 +352,10 @@ app.UseWhen(
     ctx => ShouldReExecuteStatusPages(ctx),
     branch => branch.UseStatusCodePagesWithReExecute("/status/{0}"));
 
+// Re-run endpoint routing after status-code re-execute rewrites the path to /status/{code}.
+// WebApplication would otherwise only route once at the start of the pipeline.
+app.UseRouting();
+
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
 if (app.Environment.IsDevelopment())
 {
@@ -380,6 +387,7 @@ app.UseMfaEnforcement();
 app.UseAntiforgery();
 app.UseRegisterOntdekRedirect();
 app.UseBanenRedirect();
+app.UseBanenkaartGate();
 app.UseLandingRedirect();
 
 // Legacy /employer|/branch|/regional → /werkgever (GET/HEAD 301). Needs auth for /home.

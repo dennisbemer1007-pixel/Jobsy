@@ -1,0 +1,217 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<section class="career-card career-card--step" aria-labelledby="career-title">
+    <a class="career-step__back" href="/carriere">
+        <span class="career-step__back-icon" aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+        <span>@Culture["CareerStep.Back"]</span>
+    </a>
+
+    <p class="career-card__eyebrow">@EyebrowText</p>
+
+    <h1 id="career-title" tabindex="-1">@Step.Title</h1>
+    @if (!string.IsNullOrWhiteSpace(Step.Level))
+    {
+        <p class="career-step__level"><span class="career-tag">@Step.Level</span></p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Step.Lead))
+    {
+        <p class="career-card__lead">@Step.Lead</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="career-card__error" role="alert">@ErrorText</p>
+    }
+
+    <div class="career-step__grid">
+        <section class="career-step__block career-step__block--gaps" aria-labelledby="career-gaps-title">
+            <h2 id="career-gaps-title" class="career-card__block-title">@Culture["CareerStep.Gaps.Title"]</h2>
+            <p class="career-step__sub">@Culture["CareerStep.Gaps.Sub"]</p>
+
+            @if (VisibleLines.Count == 0)
+            {
+                <p class="career-step__quiet">@Culture["CareerStep.Gaps.None"]</p>
+            }
+            else
+            {
+                <ul class="career-step__gaps">
+                    @foreach (var line in VisibleLines)
+                    {
+                        <li class="career-step__gap @(line.Met ? "is-met" : "is-missing")">
+                            @if (line.Met)
+                            {
+                                <span class="career-step__gap-icon" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
+                                <span>@line.Text · @Culture["CareerStep.Gaps.Have"]</span>
+                            }
+                            else
+                            {
+                                <span class="career-step__gap-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                                <span>@line.Text</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+
+            @if (!_showAll && AllLines.Count > MaxLines)
+            {
+                <button type="button" class="career-btn career-btn--text" @onclick="() => _showAll = true">
+                    @Culture.Format("CareerStep.Gaps.ShowAll", AllLines.Count)
+                </button>
+            }
+
+            @if (Step.Years > 0)
+            {
+                <p class="career-step__years">@Culture.Format("CareerStep.Years", Step.Years)</p>
+            }
+        </section>
+
+        <section class="career-step__block career-step__block--band" aria-labelledby="career-band-title">
+            <h2 id="career-band-title" class="career-card__block-title">@Culture["CareerStep.Band.Title"]</h2>
+            <p class="career-step__sub">@Culture["CareerStep.Band.Eyebrow"]</p>
+
+            @if (Step.BandLabelKey is { } bandKey)
+            {
+                <p class="career-step__band"><span class="career-pill">@Culture[bandKey]</span></p>
+                <p class="career-step__band-text">@BandSentence</p>
+            }
+            else
+            {
+                <p class="career-step__band-text">@Culture["CareerStep.Band.Unknown"]</p>
+                <a class="career-btn career-btn--text" href="@TestHref">@Culture["CareerStep.Band.TestLink"]</a>
+            }
+
+            @if (EmployersOn)
+            {
+                <a class="career-step__vacancies" href="@Step.VacanciesHref">
+                    @Culture.Format("CareerStep.Vacancies", Step.ShortTitle)
+                    <span class="career-step__chev" aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                </a>
+                @if (VacancyFit.ShowsCount)
+                {
+                    <p class="career-step__vacancy-count">@Culture.Format("CareerStep.VacancyCount", VacancyFit.GoodCount)</p>
+                }
+            }
+        </section>
+
+        <div class="career-step__block career-step__block--courses">
+            <CareerStepCourses Slots="@CourseSlots"
+                               CourseNames="@Step.CourseNames"
+                               SkillLabel="@(string.IsNullOrWhiteSpace(Step.FirstGap) ? Step.ShortTitle : Step.FirstGap)" />
+        </div>
+    </div>
+
+    @if (Step.Status == CareerStepStatus.Active)
+    {
+        <div class="career-card__actions career-only-desktop">
+            <a class="career-btn career-btn--text" href="@ProofHref">
+                <span class="career-step__proof-icon" aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
+                <span>@Culture["CareerStep.Proof"]</span>
+            </a>
+            <button type="button" class="career-btn career-btn--primary" disabled="@Busy" @onclick="OnComplete">
+                <span class="career-step__check" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
+                <span>@Culture["CareerStep.Complete"]</span>
+            </button>
+        </div>
+
+        <div class="career-card__actions career-card__actions--sticky career-only-mobile">
+            <a class="career-btn career-btn--icon"
+               href="@ProofHref"
+               aria-label="@Culture["CareerStep.ProofShort"]">
+                <span aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
+            </a>
+            <button type="button" class="career-btn career-btn--primary" disabled="@Busy" @onclick="OnComplete">
+                @Culture["CareerStep.Complete"]
+            </button>
+        </div>
+    }
+    else if (Step.Status == CareerStepStatus.Completed)
+    {
+        @if (Step.CanUndo)
+        {
+            <div class="career-card__actions">
+                <button type="button" class="career-btn career-btn--secondary" disabled="@Busy" @onclick="OnUndo">
+                    @Culture["CareerStep.Undo"]
+                </button>
+            </div>
+        }
+    }
+    else if (Step.CurrentStepNumber > 0)
+    {
+        <p class="career-step__quiet">@Culture.Format("CareerStep.FinishFirst", Step.CurrentStepNumber)</p>
+    }
+</section>
+
+@code {
+    private const int MaxLines = 6;
+
+    private bool _showAll;
+
+    [Parameter] public CareerStepDetailView Step { get; set; } = new();
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool EmployersOn { get; set; } = true;
+    [Parameter] public bool PassportOn { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public IReadOnlyList<PassportCourseCard> CourseSlots { get; set; } = [];
+
+    /// <summary>Dependency E; <see cref="CareerStepVacancyFit.None"/> keeps the link countless.</summary>
+    [Parameter] public Jobsy.Web.Services.Careers.CareerStepVacancyFit VacancyFit { get; set; }
+
+    [Parameter] public EventCallback OnComplete { get; set; }
+    [Parameter] public EventCallback OnUndo { get; set; }
+
+    private string _shownStepId = "";
+
+    protected override void OnParametersSet()
+    {
+        if (!string.Equals(_shownStepId, Step.Id, StringComparison.Ordinal))
+        {
+            _shownStepId = Step.Id;
+            _showAll = false;
+        }
+    }
+
+    private List<CareerStepGapLine> AllLines
+        => Step.Missing.Concat(Step.Present).ToList();
+
+    private List<CareerStepGapLine> VisibleLines
+        => _showAll ? AllLines : AllLines.Take(MaxLines).ToList();
+
+    private string EyebrowText => Step.Status switch
+    {
+        CareerStepStatus.Completed => Culture.Format("CareerStep.Eyebrow.Done", Step.Order, Step.TotalSteps),
+        CareerStepStatus.Active => Culture.Format("CareerStep.Eyebrow.Now", Step.Order, Step.TotalSteps),
+        _ => Culture.Format("CareerStep.Eyebrow.Todo", Step.Order, Step.TotalSteps)
+    };
+
+    private string BandSentence => Step.Band switch
+    {
+        "Good" => Culture["CareerStep.Band.Good"],
+        "Fair" => Culture.Format(
+            "CareerStep.Band.Fair",
+            string.IsNullOrWhiteSpace(Step.FirstGap) ? Step.ShortTitle : Step.FirstGap),
+        "NotYet" => Culture["CareerStep.Band.NotYet"],
+        _ => Culture["CareerStep.Band.Unknown"]
+    };
+
+    private string TestHref => PassportOn
+        ? $"/candidate/paspoort?tab={PassportTabs.Tests}"
+        : "/candidate/career";
+
+    /// <summary>Dependency F: the Bewijzen tab at "Certificaat toevoegen", name prefilled.</summary>
+    private string ProofHref
+    {
+        get
+        {
+            var name = Uri.EscapeDataString(Step.ProofName ?? "");
+            return PassportOn
+                ? $"/candidate/paspoort?tab={PassportTabs.Proof}&add=certificate&name={name}"
+                : $"/candidate/profile?add=certificate&name={name}#certificates";
+        }
+    }
+}
