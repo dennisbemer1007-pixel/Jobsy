@@ -744,9 +744,13 @@ public sealed class SalesPayoutRunService : ISalesPayoutRunService
             // IBAN is decrypted in memory via the EF value converter — never returned by APIs.
             var fullIban = profile.Iban
                 ?? throw new InvalidOperationException("IBAN ontbreekt voor SEPA-export.");
-            var holder = string.IsNullOrWhiteSpace(profile.PayoutAccountHolderName)
-                ? profile.CompanyName
-                : profile.PayoutAccountHolderName!;
+            var holder = !string.IsNullOrWhiteSpace(profile.PayoutAccountHolderName)
+                ? profile.PayoutAccountHolderName.Trim()
+                : profile.CompanyName?.Trim();
+            if (string.IsNullOrWhiteSpace(holder))
+            {
+                throw new InvalidOperationException("Rekeninghouder ontbreekt voor SEPA-export.");
+            }
 
             result.Add(new SalesPayoutExportLine(
                 req.Id,
