@@ -274,6 +274,10 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    /// <summary>Read-only stone state for the candidate how-to guide (05 §2).</summary>
+    public Task<CandidateJourneySummaryApiModel?> GetMyJourneySummaryAsync(CancellationToken ct = default)
+        => _http.GetFromJsonAsync<CandidateJourneySummaryApiModel>("api/me/journey-summary", ct);
+
     public async Task CompleteCandidateHowToAsync(CancellationToken ct = default)
     {
         var response = await _http.PostAsync("api/me/candidate-how-to-completed", null, ct);

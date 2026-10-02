@@ -1,7 +1,9 @@
 @inherits CultureAwareComponentBase
+@using Jobsy.Web.Features
 @inject NavigationManager Navigation
 @inject PageSeoContext Seo
 @inject IConfiguration Config
+@inject LandingVariantResolver VariantResolver
 
 <PageTitle>@Model.Title</PageTitle>
 <HeadContent>
@@ -21,7 +23,7 @@
     <meta name="twitter:image" content="@Model.ImageUrl" />
     @if (Model.Indexable && IsHome)
     {
-        <script type="application/ld+json">@((MarkupString)StructuredData.WebsiteAndOrganization(Origin))</script>
+        <script type="application/ld+json">@((MarkupString)StructuredData.WebsiteAndOrganization(Origin, includeSearchAction: _includeSearchAction))</script>
     }
     @if (Model.Indexable && BreadcrumbJsonLd is not null)
     {
@@ -41,6 +43,8 @@
 </HeadContent>
 
 @code {
+    private bool _includeSearchAction = true;
+
     private PageSeoModel Model => PageSeoResolver.Resolve(Navigation.Uri, Culture, Config, Seo.Current);
 
     private bool IsHome
@@ -48,8 +52,8 @@
         get
         {
             var path = PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath);
-            // Website+Organization JSON-LD on the marketing home ("/") and the banenkaart.
-            return path is "/" or "/banenkaart";
+            // Website+Organization JSON-LD on the marketing home ("/") and the banenkaart (ON only).
+            return path == "/" || (path == "/banenkaart" && _includeSearchAction);
         }
     }
 
@@ -90,6 +94,12 @@
 
             return StructuredData.Breadcrumb(Origin, items);
         }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var variant = await VariantResolver.GetAsync();
+        _includeSearchAction = variant == LandingVariant.On;
     }
 
     protected override void OnInitialized()

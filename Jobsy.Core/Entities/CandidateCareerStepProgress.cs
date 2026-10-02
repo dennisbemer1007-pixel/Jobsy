@@ -13,7 +13,15 @@ public class CandidateCareerStepProgress
     public string StepKey { get; set; } = "";
     public int StepOrder { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
-    /// <summary>Manual | Auto | ManualUndo</summary>
+
+    /// <summary>Manual | Auto | ManualUndo | CarriedOver</summary>
     public string Source { get; set; } = "Manual";
+
+    /// <summary>
+    /// Hash of matching certificate names at undo time; auto-complete stays blocked
+    /// only while the fingerprint still matches.
+    /// </summary>
+    public string? UndoFingerprint { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; }
 }

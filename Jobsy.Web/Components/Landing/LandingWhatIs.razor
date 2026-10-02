@@ -13,7 +13,7 @@
                 var n = i + 1;
                 <div class="pub-landing__step">
                     <div class="pub-landing__step-n">
-                        <PubEmoji Glyph="@(n == 1 ? "🔍" : n == 2 ? "🗺️" : "🪪")" />
+                        <PubEmoji Glyph="@StepGlyph(n)" />
                         <small>@string.Format(LandingText.For("Landing.WhatIs.Step", Variant), n)</small>
                     </div>
                     <h3>@LandingText.For($"Landing.WhatIs.S{n}Title", Variant)</h3>
@@ -30,4 +30,11 @@
 
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+
+    private string StepGlyph(int n) => n switch
+    {
+        1 => "🔍",
+        2 => Variant == LandingVariant.Zw ? "✅" : "🗺️",
+        _ => "🪪"
+    };
 }

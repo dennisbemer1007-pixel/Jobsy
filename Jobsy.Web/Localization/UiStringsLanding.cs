@@ -177,6 +177,7 @@ public static class UiStringsLanding
         MergePrivacy(Add);
         MergeFaq(Add);
         MergeClosing(Add);
+        MergeZwVariants(Add);
     }
 
     private static void MergeWhatYouGet(Action<string, string, string, string?, string?, string?> Add)
@@ -301,5 +302,168 @@ public static class UiStringsLanding
         Add("Landing.Close.Lead", "20 vragen. 3 minuutjes. Daarna weet je meer over jezelf.", "20 questions. 3 minutes. Then you know more about yourself.", "20 pytań. 3 minuty. Potem wiesz więcej o sobie.", "20 de întrebări. 3 minute. Apoi știi mai multe despre tine.", "٢٠ سؤالًا. ٣ دقائق. بعدها تعرف المزيد عن نفسك.");
         Add("Landing.Close.CtaTest", "Doe de gratis test →", "Take the free test →", "Zrób darmowy test →", "Fă testul gratuit →", "أجرِ الاختبار المجاني ←");
         Add("Landing.Close.CtaLogin", "Inloggen", "Log in", "Zaloguj się", "Autentificare", "تسجيل الدخول");
+    }
+
+    /// <summary>OFF (-zw) sibling keys. Components pick them via <see cref="LandingText.For"/>.</summary>
+    private static void MergeZwVariants(Action<string, string, string, string?, string?, string?> Add)
+    {
+        Add("Landing.Seo.Title.Zw",
+            "Lobsy — ontdek wie jij bent en welke richting bij je past",
+            "Lobsy — discover who you are and which direction fits you",
+            "Lobsy — odkryj kim jesteś i jaki kierunek do Ciebie pasuje",
+            "Lobsy — descoperă cine ești și ce direcție ți se potrivește",
+            "لوبسي — اكتشف من أنت وأي اتجاه يناسبك");
+        Add("Landing.Seo.Description.Zw",
+            "Gratis test van 20 vragen. Bouw je paspoort. Zie welke beroepen bij je passen.",
+            "Free 20-question test. Build your passport. See which occupations fit you.",
+            "Darmowy test 20 pytań. Zbuduj paszport. Zobacz, które zawody do Ciebie pasują.",
+            "Test gratuit cu 20 de întrebări. Construiește-ți pașaportul. Vezi ce ocupații ți se potrivesc.",
+            "اختبار مجاني من 20 سؤالًا. ابنِ جوازك. اعرف أي المهن تناسبك.");
+
+        Add("Landing.Hero.Sub.Zw",
+            "Lobsy laat zien wie jij bent, wat je kunt en welk werk bij je past. Eerst jij, dan je richting. Doe de korte test en zie: dit ben jij.",
+            "Lobsy shows who you are, what you can do and which work fits you. You first, then your direction. Take the short test and see: this is you.",
+            "Lobsy pokazuje, kim jesteś, co potrafisz i jaka praca do Ciebie pasuje. Najpierw Ty, potem kierunek. Zrób krótki test i zobacz: to Ty.",
+            "Lobsy arată cine ești, ce poți și ce muncă ți se potrivește. Mai întâi tu, apoi direcția. Fă testul scurt și vezi: acesta ești tu.",
+            "لوبسي يُظهر من أنت وما تستطيع وأي عمل يناسبك. أنت أولًا، ثم اتجاهك. خُض الاختبار القصير وانظر: هذا أنت.");
+        Add("Landing.Hero.MetaPrivacy.Zw", "🔒 Alleen jij ziet je antwoorden", "🔒 Only you see your answers", "🔒 Tylko Ty widzisz odpowiedzi", "🔒 Doar tu îți vezi răspunsurile", "🔒 أنت وحدك ترى إجاباتك");
+        Add("Landing.Hero.MetaPassport.Zw", "🪪 Gratis paspoort", "🪪 Free passport", "🪪 Darmowy paszport", "🪪 Pașaport gratuit", "🪪 جواز مجاني");
+        Add("Landing.Hero.ChipWork.Zw", "je richting zoekt", "are looking for your direction", "szukasz kierunku", "cauți direcția", "تبحث عن اتجاهك");
+        Add("Landing.Hero.Bubble.Zw", "Kijk, dit ben ik! ✨", "Look, this is me! ✨", "Patrz, to ja! ✨", "Uite, acesta sunt eu! ✨", "انظر، هذا أنا! ✨");
+        Add("Landing.Hero.PassportTitle", "Mijn Paspoort", "My Passport", "Mój Paszport", "Pașaportul meu", "جوازي");
+        Add("Landing.Hero.WheelCenter", "Dit ben jij", "This is you", "To Ty", "Acesta ești tu", "هذا أنت");
+        Add("Landing.Hero.WheelSub", "4 kanten", "4 sides", "4 strony", "4 laturi", "٤ جوانب");
+        Add("Landing.Hero.Legend1", "Zo werk jij", "How you work", "Tak pracujesz", "Așa lucrezi", "هكذا تعمل");
+        Add("Landing.Hero.Legend2", "Dit vind je leuk", "What you like", "To lubisz", "Asta îți place", "ما تحب");
+        Add("Landing.Hero.Legend3", "Hier voel je je thuis", "Where you feel at home", "Tu czujesz się jak w domu", "Aici te simți acasă", "هنا تشعر أنك في بيتك");
+        Add("Landing.Hero.Legend4", "Dit vind je belangrijk", "What matters to you", "To jest ważne", "Ce contează", "ما يهمك");
+        Add("Landing.Hero.ChipCollab", "Samenwerker", "Collaborator", "Współpracownik", "Colaborator", "متعاون");
+        Add("Landing.Hero.ChipHelp", "Mensen helpen", "Helping people", "Pomaganie ludziom", "Ajutor oameni", "مساعدة الناس");
+        Add("Landing.Hero.ChipWarm", "Warm team", "A warm team", "Ciepły zespół", "Echipă caldă", "فريق دافئ");
+        Add("Landing.Hero.FitFloatTitle", "Past dit beroep bij mij?", "Does this occupation suit me?", "Czy ten zawód do mnie pasuje?", "Mi se potrivește ocupația?", "هل تناسبني هذه المهنة؟");
+        Add("Landing.Hero.FitFloatMeta", "Verpleegkundige · 82% fit", "Nurse · 82% fit", "Pielęgniarka · 82% dopasowania", "Asistent medical · 82% potrivire", "ممرض · تناسب ٨٢٪");
+        Add("Landing.Hero.JourneyFloatTitle", "Ontdekkingsreis", "Discovery journey", "Podróż odkrywcza", "Călătoria de descoperire", "رحلة الاكتشاف");
+        Add("Landing.Hero.JourneyFloatMeta", "Stap 3 van 6 · Hier voel je je thuis", "Step 3 of 6 · Where you feel at home", "Krok 3 z 6 · Tu czujesz się jak w domu", "Pasul 3 din 6 · Aici te simți acasă", "الخطوة ٣ من ٦ · هنا تشعر أنك في بيتك");
+        Add("Landing.Hero.FitFloatMobile", "Verpleegkundige", "Nurse", "Pielęgniarka", "Asistent medical", "ممرض");
+        Add("Landing.Hero.FitFloatMobileMeta", "82% fit met jou", "82% fit with you", "82% dopasowania do Ciebie", "82% potrivire cu tine", "تناسب ٨٢٪ معك");
+
+        Add("Landing.WhatIs.S2Body.Zw",
+            "Welke beroepen passen bij jou? En wat heb je nog nodig voor je droombaan?",
+            "Which occupations fit you? And what do you still need for your dream job?",
+            "Które zawody do Ciebie pasują? I czego jeszcze potrzebujesz do wymarzonej pracy?",
+            "Ce ocupații ți se potrivesc? Și ce mai ai nevoie pentru jobul visurilor?",
+            "أي المهن تناسبك؟ وماذا تحتاج بعد لوظيفة أحلامك؟");
+        Add("Landing.WhatIs.S2Tag1.Zw", "Functiefit", "Role fit", "Dopasowanie roli", "Potrivire rol", "ملاءمة الدور");
+        Add("Landing.WhatIs.S2Tag2.Zw", "Droombaan-check", "Dream-job check", "Check wymarzonej pracy", "Check job vis", "فحص وظيفة الأحلام");
+        Add("Landing.WhatIs.S3Body.Zw",
+            "Je eigen paspoort met je DNA, je tests en je bewijzen. Van jou, voor jou.",
+            "Your own passport with your DNA, tests and proofs. Yours, for you.",
+            "Twój paszport z DNA, testami i dowodami. Twój, dla Ciebie.",
+            "Pașaportul tău cu ADN, teste și dovezi. Al tău, pentru tine.",
+            "جوازك مع الحمض والاختبارات والإثباتات. لك، من أجلك.");
+        Add("Landing.WhatIs.S3Tag2.Zw", "Bewijzen", "Proofs", "Dowody", "Dovezi", "إثباتات");
+
+        Add("Landing.Kreeft.T3Body.Zw",
+            "Een kreeft zoekt een plek waar hij veilig kan groeien. Welk beroep is jouw rots?",
+            "A lobster looks for a place where it can grow safely. Which occupation is your rock?",
+            "Homar szuka miejsca, gdzie może bezpiecznie rosnąć. Który zawód jest Twoją skałą?",
+            "Homarul caută un loc unde poate crește în siguranță. Ce ocupație e stânca ta?",
+            "الكركند يبحث عن مكان ينمو فيه بأمان. أي مهنة هي صخرتك؟");
+        Add("Landing.Kreeft.T3Link.Zw", "Past dit beroep?", "Does this occupation suit you?", "Czy ten zawód pasuje?", "Ți se potrivește ocupația?", "هل تناسبك هذه المهنة؟");
+
+        Add("Landing.Get.Title.Zw",
+            "Van “wie ben ik?” naar “dit past bij mij”.",
+            "From “who am I?” to “this fits me”.",
+            "Od „kim jestem?” do „to do mnie pasuje”.",
+            "De la „cine sunt?” la „asta mi se potrivește”.",
+            "من «من أنا؟» إلى «هذا يناسبني».");
+        Add("Landing.Get.Passport.TabFit.Zw", "Past dit beroep?", "Does this occupation suit you?", "Czy ten zawód pasuje?", "Ți se potrivește ocupația?", "هل تناسبك هذه المهنة؟");
+        Add("Landing.Get.Passport.TabPassport", "Mijn Paspoort", "My Passport", "Mój Paszport", "Pașaportul meu", "جوازي");
+        Add("Landing.Get.PassportNote", "Van jou, voor jou. Jij kiest wat je deelt.", "Yours, for you. You choose what you share.", "Twój, dla Ciebie. Ty decydujesz, co udostępniasz.", "Al tău, pentru tine. Tu alegi ce împărtășești.", "لك، من أجلك. أنت تختار ما تشاركه.");
+        Add("Landing.Get.PassportStoryTitle", "Dit ben jij", "This is you", "To Ty", "Acesta ești tu", "هذا أنت");
+        Add("Landing.Get.PassportStoryBody",
+            "Je werkt graag samen en je maakt af wat je belooft. Je krijgt energie van mensen helpen.",
+            "You like working together and you finish what you promise. Helping people gives you energy.",
+            "Lubisz współpracować i kończysz, co obiecasz. Pomaganie ludziom daje Ci energię.",
+            "Îți place să lucrezi împreună și termini ce promiți. Ajuți oamenii și asta îți dă energie.",
+            "تحب العمل معًا وتنجز ما تعد به. مساعدة الناس تمنحك طاقة.");
+        Add("Landing.Get.PassportRow1Label", "Zo werk jij", "How you work", "Tak pracujesz", "Așa lucrezi", "هكذا تعمل");
+        Add("Landing.Get.PassportRow1Value", "Samenwerker", "Collaborator", "Współpracownik", "Colaborator", "متعاون");
+        Add("Landing.Get.PassportRow2Label", "Dit vind je leuk", "What you like", "To lubisz", "Asta îți place", "ما تحب");
+        Add("Landing.Get.PassportRow2Value", "Mensen helpen", "Helping people", "Pomaganie ludziom", "Ajutor oameni", "مساعدة الناس");
+        Add("Landing.Get.PassportRow3Label", "Hier voel je je thuis", "Where you feel at home", "Tu czujesz się jak w domu", "Aici te simți acasă", "هنا تشعر أنك في بيتك");
+        Add("Landing.Get.PassportRow3Value", "Een warm team", "A warm team", "Ciepły zespół", "O echipă caldă", "فريق دافئ");
+        Add("Landing.Get.PassportRow4Label", "Dit vind je belangrijk", "What matters to you", "To jest ważne", "Ce contează", "ما يهمك");
+        Add("Landing.Get.PassportRow4Value", "Zekerheid en zorg", "Security and care", "Bezpieczeństwo i troska", "Siguranță și grijă", "أمان ورعاية");
+
+        Add("Landing.Get.FitTitle", "Past dit beroep bij mij?", "Does this occupation suit me?", "Czy ten zawód do mnie pasuje?", "Mi se potrivește ocupația?", "هل تناسبني هذه المهنة؟");
+        Add("Landing.Get.FitBody", "Kijk hoe goed een beroep bij je DNA past. En wat je nog kunt leren.", "See how well an occupation fits your DNA. And what you can still learn.", "Zobacz, jak dobrze zawód pasuje do Twojego DNA. I czego jeszcze możesz się nauczyć.", "Vezi cât de bine se potrivește o ocupație ADN-ului tău. Și ce mai poți învăța.", "اعرف مدى ملاءمة مهنة لحمضك. وماذا يمكنك تعلمه بعد.");
+        Add("Landing.Get.FitOcc1", "Verpleegkundige", "Nurse", "Pielęgniarka", "Asistent medical", "ممرض");
+        Add("Landing.Get.FitOcc2", "Doktersassistent", "Medical assistant", "Asystent medyczny", "Asistent medical", "مساعد طبيب");
+        Add("Landing.Get.FitOcc3", "Sociaal werker", "Social worker", "Pracownik socjalny", "Asistent social", "أخصائي اجتماعي");
+
+        Add("Landing.Get.DreamTitle", "Droombaan-check", "Dream-job check", "Check wymarzonej pracy", "Check job vis", "فحص وظيفة الأحلام");
+        Add("Landing.Get.DreamBody", "Wat is je droombaan? Lobsy laat zien welke stappen je kunt zetten.", "What is your dream job? Lobsy shows which steps you can take.", "Jaka jest Twoja wymarzona praca? Lobsy pokazuje, jakie kroki możesz zrobić.", "Care e jobul tău de vis? Lobsy arată ce pași poți face.", "ما وظيفة أحلامك؟ لوبسي يُظهر الخطوات التي يمكنك اتخاذها.");
+        Add("Landing.Get.DreamNow", "Nu", "Now", "Teraz", "Acum", "الآن");
+        Add("Landing.Get.DreamNowRole", "Zorghulp", "Care aide", "Pomoc opiekuna", "Ajutor îngrijire", "مساعد رعاية");
+        Add("Landing.Get.DreamNext", "Volgende stap", "Next step", "Następny krok", "Următorul pas", "الخطوة التالية");
+        Add("Landing.Get.DreamNextRole", "Mbo Verzorgende IG", "Vocational care IG", "Mbo opiekun IG", "Mbo îngrijitor IG", "تدريب رعاية IG");
+        Add("Landing.Get.DreamGoal", "Droombaan", "Dream job", "Wymarzona praca", "Job de vis", "وظيفة الأحلام");
+        Add("Landing.Get.DreamGoalRole", "Verpleegkundige", "Nurse", "Pielęgniarka", "Asistent medical", "ممرض");
+
+        Add("Landing.For.Title.Zw",
+            "Lobsy is er voor iedereen die wil groeien.",
+            "Lobsy is for everyone who wants to grow.",
+            "Lobsy jest dla każdego, kto chce rosnąć.",
+            "Lobsy e pentru oricine vrea să crească.",
+            "لوبسي لكل من يريد أن ينمو.");
+        Add("Landing.For.YouTitle", "Jij, op zoek naar je richting", "You, looking for your direction", "Ty, szukasz kierunku", "Tu, în căutarea direcției", "أنت، تبحث عن اتجاهك");
+        Add("Landing.For.YouBody", "Weet je nog niet wat je wilt? Of wil je iets nieuws? Begin gewoon.", "Not sure what you want yet? Or want something new? Just start.", "Nie wiesz jeszcze, czego chcesz? Albo chcesz coś nowego? Po prostu zacznij.", "Nu știi încă ce vrei? Sau vrei ceva nou? Începe pur și simplu.", "لا تعرف بعد ماذا تريد؟ أو تريد شيئًا جديدًا؟ ابدأ ببساطة.");
+        Add("Landing.For.You1", "Gratis tests en paspoort", "Free tests and passport", "Darmowe testy i paszport", "Teste și pașaport gratuite", "اختبارات وجواز مجانيان");
+        Add("Landing.For.You2", "Beroepen die bij je passen", "Occupations that fit you", "Zawody, które do Ciebie pasują", "Ocupații care ți se potrivesc", "مهن تناسبك");
+        Add("Landing.For.You3", "Jij beslist wat je deelt", "You decide what you share", "Ty decydujesz, co udostępniasz", "Tu decizi ce împărtășești", "أنت تقرر ما تشاركه");
+        Add("Landing.For.YouCta", "Doe de gratis test", "Take the free test", "Zrób darmowy test", "Fă testul gratuit", "أجرِ الاختبار المجاني");
+        Add("Landing.For.NewTitle", "Nieuw in Nederland", "New in the Netherlands", "Nowy w Holandii", "Nou în Țările de Jos", "جديد في هولندا");
+        Add("Landing.For.NewBody", "Je diploma telt hier (nog) niet? Laat zien wat je wél kunt.", "Your diploma does not count here (yet)? Show what you can do.", "Dyplom tu (jeszcze) nie liczy? Pokaż, co potrafisz.", "Diploma nu contează aici (încă)? Arată ce poți.", "شهادتك لا تُحسب هنا (بعد)؟ أظهر ما تستطيع.");
+        Add("Landing.For.New1", "In je eigen taal", "In your own language", "W Twoim języku", "În limba ta", "بلغتك");
+        Add("Landing.For.New2", "Bewijzen van je ervaring", "Proof of your experience", "Dowody Twojego doświadczenia", "Dovezi ale experienței tale", "إثباتات خبرتك");
+        Add("Landing.For.New3", "Stap voor stap, B1-taal", "Step by step, B1 language", "Krok po kroku, język B1", "Pas cu pas, limbaj B1", "خطوة بخطوة، لغة B1");
+        Add("Landing.For.NewCta", "Kies je taal", "Choose your language", "Wybierz język", "Alege limba", "اختر لغتك");
+        Add("Landing.For.StuckTitle", "Even vastgelopen", "Feeling stuck", "Utknąłeś", "Te-ai blocat", "عالق قليلًا");
+        Add("Landing.For.StuckBody", "Werk dat niet meer past? Dan is het tijd om uit je schild te groeien.", "Work that no longer fits? Then it is time to grow out of your shell.", "Praca już nie pasuje? Czas wyjść ze skorupy.", "Munca nu se mai potrivește? E timpul să ieși din cochilie.", "عمل لم يعد يناسب؟ حان وقت الخروج من صدفتك.");
+        Add("Landing.For.Stuck1", "Ontdek wat je energie geeft", "Discover what gives you energy", "Odkryj, co daje Ci energię", "Descoperă ce-ți dă energie", "اكتشف ما يمنحك طاقة");
+        Add("Landing.For.Stuck2", "Droombaan-check", "Dream-job check", "Check wymarzonej pracy", "Check job vis", "فحص وظيفة الأحلام");
+        Add("Landing.For.Stuck3", "Rustig, in je eigen tempo", "Calmly, at your own pace", "Spokojnie, w swoim tempie", "Liniștit, în ritmul tău", "بهدوء، بوتيرتك");
+        Add("Landing.For.StuckCta", "Zo werkt het", "How it works", "Jak to działa", "Cum funcționează", "كيف يعمل");
+        Add("Landing.For.Sch2.Zw", "Inzicht per groep", "Insight per group", "Wgląd per grupa", "Insight pe grup", "رؤية لكل مجموعة");
+        Add("Landing.For.Sch3.Zw", "Hulp bij studiekeuze", "Help with study choice", "Pomoc w wyborze studiów", "Ajutor la alegerea studiilor", "مساعدة في اختيار الدراسة");
+
+        Add("Landing.Privacy.C2Title.Zw", "Alleen jij kijkt mee", "Only you look along", "Tylko Ty patrzysz", "Doar tu te uiți", "أنت وحدك تنظر");
+        Add("Landing.Privacy.C2Body.Zw",
+            "Je antwoorden en je paspoort zijn van jou. Jij kiest wat je deelt.",
+            "Your answers and passport are yours. You choose what you share.",
+            "Twoje odpowiedzi i paszport są Twoje. Ty decydujesz, co udostępniasz.",
+            "Răspunsurile și pașaportul sunt ale tale. Tu alegi ce împărtășești.",
+            "إجاباتك وجوازك ملكك. أنت تختار ما تشاركه.");
+
+        Add("Landing.Faq.A1.Zw",
+            "Ja. De test, je account en je paspoort zijn gratis. Alleen het uitgebreide rapport (de diepteanalyse) kost eenmalig {0}.",
+            "Yes. The test, your account and passport are free. Only the extended report (deep analysis) costs {0} once.",
+            "Tak. Test, konto i paszport są darmowe. Tylko rozszerzony raport (głęboka analiza) kosztuje jednorazowo {0}.",
+            "Da. Testul, contul și pașaportul sunt gratuite. Doar raportul extins (analiza profundă) costă o dată {0}.",
+            "نعم. الاختبار والحساب والجواز مجانية. فقط التقرير الموسّع (التحليل العميق) يكلف مرة واحدة {0}.");
+        Add("Landing.Faq.Q5.Zw", "Ik werk op een school. Hoe begin ik?", "I work at a school. How do I start?", "Pracuję w szkole. Jak zacząć?", "Lucrez la o școală. Cum încep?", "أعمل في مدرسة. كيف أبدأ؟");
+        Add("Landing.Faq.A5.Zw",
+            "Scholen lezen eerst Hoe werkt Lobsy? of mailen ons. Lobsy voor scholen start binnenkort.",
+            "Schools first read How Lobsy works or email us. Lobsy for schools starts soon.",
+            "Szkoły najpierw czytają Jak działa Lobsy? lub piszą do nas. Lobsy dla szkół wkrótce.",
+            "Școlile citesc mai întâi Cum funcționează Lobsy? sau ne scriu. Lobsy pentru școli începe curând.",
+            "المدارس تقرأ أولًا كيف يعمل لوبسي أو تراسلنا. لوبسي للمدارس يبدأ قريبًا.");
+        Add("Landing.Faq.A7.Zw",
+            "Je doet een korte gratis test, ziet welke beroepen bij je passen, en bouwt een paspoort dat jij deelt wanneer jij wilt.",
+            "You take a short free test, see which occupations fit you, and build a passport you share when you want.",
+            "Robisz krótki darmowy test, widzisz pasujące zawody i budujesz paszport, który udostępniasz, kiedy chcesz.",
+            "Faci un test scurt gratuit, vezi ce ocupații ți se potrivesc și construiești un pașaport pe care îl împarți când vrei.",
+            "تخوض اختبارًا مجانيًا قصيرًا، وترى المهن التي تناسبك، وتبني جوازًا تشاركه متى شئت.");
     }
 }
