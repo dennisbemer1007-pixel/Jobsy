@@ -300,6 +300,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 p.PlanJson,
                 p.MatchPercent,
                 p.MatchSummary,
+                p.Status,
+                p.ArchivedAtUtc,
                 p.CreatedAtUtc,
                 p.UpdatedAtUtc,
                 StepProgress = p.StepProgress.Select(s => new

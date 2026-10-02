@@ -12,9 +12,32 @@ public static class StructuredData
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public static string WebsiteAndOrganization(string origin)
+    public static string WebsiteAndOrganization(string origin, bool includeSearchAction = true)
     {
         var root = origin.TrimEnd('/');
+        var website = new Dictionary<string, object?>
+        {
+            ["@type"] = "WebSite",
+            ["@id"] = root + "/#website",
+            ["name"] = "Lobsy",
+            ["url"] = root + "/",
+            ["inLanguage"] = "nl-NL",
+            ["publisher"] = new Dictionary<string, object?> { ["@id"] = root + "/#organization" }
+        };
+        if (includeSearchAction)
+        {
+            website["potentialAction"] = new Dictionary<string, object?>
+            {
+                ["@type"] = "SearchAction",
+                ["target"] = root + "/banenkaart?q={search_term_string}",
+                ["query-input"] = "required name=search_term_string"
+            };
+        }
+
+        var orgDescription = includeSearchAction
+            ? "Hyperlokale banenkaart: vacatures en bijbanen op reistijd en vervoer."
+            : "Ontdek wie jij bent en welke richting bij je past. Gratis test en paspoort.";
+
         var payload = new Dictionary<string, object?>
         {
             ["@context"] = "https://schema.org",
@@ -27,24 +50,9 @@ public static class StructuredData
                     ["name"] = "Lobsy",
                     ["url"] = root + "/",
                     ["logo"] = root + "/images/brand/lobsy-256.webp",
-                    ["description"] =
-                        "Hyperlokale banenkaart: vacatures en bijbanen op reistijd en vervoer."
+                    ["description"] = orgDescription
                 },
-                new Dictionary<string, object?>
-                {
-                    ["@type"] = "WebSite",
-                    ["@id"] = root + "/#website",
-                    ["name"] = "Lobsy",
-                    ["url"] = root + "/",
-                    ["inLanguage"] = "nl-NL",
-                    ["publisher"] = new Dictionary<string, object?> { ["@id"] = root + "/#organization" },
-                    ["potentialAction"] = new Dictionary<string, object?>
-                    {
-                        ["@type"] = "SearchAction",
-                        ["target"] = root + "/banenkaart?q={search_term_string}",
-                        ["query-input"] = "required name=search_term_string"
-                    }
-                }
+                website
             }
         };
 

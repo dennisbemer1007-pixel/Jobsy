@@ -1,6 +1,7 @@
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate;
 using Jobsy.Web.Models;
+using Jobsy.Web.Services.Careers;
 
 namespace Jobsy.Web.Services;
 
@@ -13,26 +14,16 @@ public sealed class CareerPathService
     public const string DefaultDreamId = "teamleider-logistiek";
     public const string DefaultDreamTitle = "Teamleider logistiek";
 
-    private static readonly CareerDreamOption[] DreamSuggestions =
-    [
-        new() { Id = "teamleider-logistiek", Title = "Teamleider logistiek" },
-        new() { Id = "filiaalmanager", Title = "Filiaalmanager" },
-        new() { Id = "hr-adviseur", Title = "HR-adviseur" },
-        new() { Id = "assistent-manager", Title = "Assistent-manager" },
-        new() { Id = "planner", Title = "Planner" },
-        new() { Id = "coach", Title = "Teamcoach" }
-    ];
-
-    public IReadOnlyList<CareerDreamOption> GetDreamSuggestions() => DreamSuggestions;
+    public IReadOnlyList<CareerDreamOption> GetDreamSuggestions() => [];
 
     /// <summary>Empty shell used before the first saved plan (dream input only).</summary>
     public CareerDashboardModel EmptyDashboard(string? dreamDraft = null)
         => new()
         {
-            DreamRoleId = ResolveSuggestionId(dreamDraft ?? "") ?? "custom",
+            DreamRoleId = "custom",
             DreamRoleTitle = string.IsNullOrWhiteSpace(dreamDraft) ? "" : ClampTitle(dreamDraft),
             HasPlan = false,
-            DreamOptions = DreamSuggestions,
+            DreamOptions = [],
             Steps = []
         };
 
@@ -42,16 +33,26 @@ public sealed class CareerPathService
             ? DefaultDreamTitle
             : dreamRoleIdOrTitle.Trim();
 
-        var id = ResolveSuggestionId(raw);
-        var title = id is not null
-            ? DreamSuggestions.First(o => o.Id == id).Title
-            : ClampTitle(raw);
+        var title = ClampTitle(raw);
         var plan = HorizonCareerPathBuilder.BuildLocal(title);
-        return MapLocalPreview(plan, id ?? "custom");
+        return MapLocalPreview(plan, "custom");
     }
 
     public CareerDashboardModel FromApi(CareerPathPlanApiModel plan)
-        => CareerPlanViewBuilder.FromApi(plan, DreamSuggestions);
+        => CareerPlanViewBuilder.FromApi(plan, GetDreamSuggestions());
+
+    /// <summary>Maps API error codes to localized user messages (never raw API text).</summary>
+    public static string ErrorMessage(Func<string, string> localize, CareerApiError error)
+    {
+        var key = CareerApiError.LocalizationKey(error.Code);
+        var text = localize(key);
+        if (string.IsNullOrWhiteSpace(text) || string.Equals(text, key, StringComparison.Ordinal))
+        {
+            return localize("Common.Error");
+        }
+
+        return text;
+    }
 
     private static CareerDashboardModel MapLocalPreview(HorizonCareerPathPlan plan, string dreamRoleId)
         => new()
@@ -61,7 +62,7 @@ public sealed class CareerPathService
             MatchPercent = plan.MatchPercent,
             MatchSummary = plan.MatchSummary,
             HasPlan = false,
-            DreamOptions = DreamSuggestions,
+            DreamOptions = [],
             Steps = plan.Steps.Select(s => new CareerPathDashboardStep
             {
                 Id = s.Id,
@@ -78,20 +79,6 @@ public sealed class CareerPathService
                 StepMatchPercent = 0
             }).ToList()
         };
-
-    private static string? ResolveSuggestionId(string raw)
-    {
-        foreach (var option in DreamSuggestions)
-        {
-            if (string.Equals(option.Id, raw, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(option.Title, raw, StringComparison.OrdinalIgnoreCase))
-            {
-                return option.Id;
-            }
-        }
-
-        return null;
-    }
 
     private static string ClampTitle(string title)
     {

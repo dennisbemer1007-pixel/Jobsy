@@ -1,4 +1,6 @@
 @using Jobsy.Web.Features
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <FeatureRouteGate RouteData="routeData">
@@ -17,4 +19,13 @@
         </FeatureRouteGate>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
+    <NotFound>
+        @{
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null && !http.Response.HasStarted)
+            {
+                http.Response.StatusCode = StatusCodes.Status404NotFound;
+            }
+        }
+    </NotFound>
 </Router>

@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Public
+@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
@@ -6,7 +7,7 @@
 @inject IJSRuntime Js
 @implements IAsyncDisposable
 
-<section class="gd-result gd-result--warm" aria-labelledby="gd-result-title" data-testid="gd-result">
+<section class="gd-result gd-result--warm" aria-labelledby="gd-result-title" data-testid="gd-result" data-variant="@(Variant == LandingVariant.Zw ? "zw" : "on")">
     <div class="gd-result__grid">
         <div class="gd-result__main">
             <p class="gd-result__badge" data-testid="gd-result-badge">@Culture["GratisDna.Result.Badge"]</p>
@@ -71,7 +72,7 @@
                     <div class="gd-lockd__tabs">
                         <span class="is-on">@Culture["GratisDna.Passport.TabDna"]</span>
                         <span>@Culture["GratisDna.Passport.TabTests"]</span>
-                        <span>@Culture["GratisDna.Passport.TabFit"]</span>
+                        <span>@LandingText.For("GratisDna.Locked.TabFit", Variant)</span>
                         <span>@Culture["GratisDna.Passport.TabCareer"]</span>
                         <span>@Culture["GratisDna.Passport.TabProof"]</span>
                     </div>
@@ -87,15 +88,18 @@
                 </p>
             </div>
 
-            <a class="gd-jobs-teaser" href="@RegisterHref" data-testid="gd-jobs-teaser">
-                <h3>@Culture["GratisDna.JobsTeaser.Title"]</h3>
-                <p>@Culture["GratisDna.JobsTeaser.Lead"]</p>
-                <div class="gd-jobs-teaser__rows" aria-hidden="true">
-                    <div>🔒 @Culture["GratisDna.JobsTeaser.Title"]</div>
-                    <div>🔒 ——— ———</div>
-                    <div>🔒 ——— ———</div>
-                </div>
-            </a>
+            @if (Variant == LandingVariant.On)
+            {
+                <a class="gd-jobs-teaser" href="@RegisterHref" data-testid="gd-jobs-teaser">
+                    <h3>@Culture["GratisDna.JobsTeaser.Title"]</h3>
+                    <p>@Culture["GratisDna.JobsTeaser.Lead"]</p>
+                    <div class="gd-jobs-teaser__rows" aria-hidden="true">
+                        <div>🔒 @Culture["GratisDna.JobsTeaser.Title"]</div>
+                        <div>🔒 ——— ———</div>
+                        <div>🔒 ——— ———</div>
+                    </div>
+                </a>
+            }
 
             <div class="gd-rfoot">
                 <div class="gd-share" data-testid="gd-share">
@@ -132,7 +136,7 @@
         </div>
 
         <div class="gd-result__aside" data-gd-signup-inline>
-            <GratisDnaSignupCard DomId="gd-signup-inline" />
+            <GratisDnaSignupCard DomId="gd-signup-inline" Variant="Variant" />
         </div>
     </div>
 </section>
@@ -152,11 +156,12 @@
 
 <dialog class="gd-sheet" data-testid="gd-sheet" data-gd-sheet>
     <div class="gd-sheet__grab" aria-hidden="true"></div>
-    <GratisDnaSignupCard DomId="gd-signup-sheet" ShowLater="true" OnLater="CloseSheetAsync" />
+    <GratisDnaSignupCard DomId="gd-signup-sheet" Variant="Variant" ShowLater="true" OnLater="CloseSheetAsync" />
     <button type="button" class="gd-sheet__close" @onclick="CloseSheetAsync">@Culture["Common.Close"]</button>
 </dialog>
 
 @code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
     [Parameter] public string RegisterHref { get; set; } = PublicRoutes.CreateAccountFromTest;
     [Parameter] public string? StrengthSentence { get; set; }
     [Parameter] public string? RiasecSentence { get; set; }

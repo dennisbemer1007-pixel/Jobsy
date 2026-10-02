@@ -16,8 +16,6 @@
 @inject PageSeoContext Seo
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>@Culture["Landing.Seo.Title"]</PageTitle>
-
 <div class="pub-landing" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
     <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" />
     <LandingWhatIs Variant="_variant" />
@@ -38,11 +36,18 @@
     {
         Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         _variant = await VariantResolver.GetAsync();
-        var raw = await Stats.GetActiveVacanciesAsync();
-        _vacancyDisplay = LandingVacancyCount.RoundDownToTens(raw);
+        if (_variant == LandingVariant.On)
+        {
+            var raw = await Stats.GetActiveVacanciesAsync();
+            _vacancyDisplay = LandingVacancyCount.RoundDownToTens(raw);
+        }
+
         _priceEuro = await Prices.GetDeepAnalysisPriceEuroAsync();
 
         var faqPairs = LandingFaq.BuildPairs(_variant, Culture.Language, _priceEuro);
-        Seo.Set(new PageSeoOverride(JsonLd: StructuredData.FaqPage(faqPairs)));
+        Seo.Set(new PageSeoOverride(
+            Title: LandingText.For("Landing.Seo.Title", _variant, Culture.Language),
+            Description: LandingText.For("Landing.Seo.Description", _variant, Culture.Language),
+            JsonLd: StructuredData.FaqPage(faqPairs)));
     }
 }
