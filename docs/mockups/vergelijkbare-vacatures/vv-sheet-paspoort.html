@@ -1,0 +1,86 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meer rotsen zoals deze · mockup</title><style>:root{--brand:#0f2d5c;--accent:#0f2d5c;--accent-soft:#e7eef7;--surface:#fffcfa;--bg:#f5f2ee;--text:#122033;
+--muted:#5a6a7d;--border:#ddd5cc;--pearl:#f7f4f0;--gold:#c9a227;--shadow-lg:0 12px 32px #0f2d5c1f;--radius:12px}
+body{margin:0;font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text)}
+.demo{max-width:420px;margin:1rem auto;padding:0 1rem}
+.similar-entry{display:flex;align-items:center;gap:.75rem;width:100%;min-height:64px;
+  padding:.65rem .85rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);
+  color:var(--brand);text-align:start;font:inherit;cursor:pointer;box-shadow:0 1px 0 color-mix(in srgb,var(--brand) 6%,transparent)}
+.similar-entry:hover{background:var(--accent-soft)}
+.similar-entry__icon{flex:0 0 44px;height:44px;display:grid;place-items:center;border-radius:10px;background:var(--accent-soft)}
+.similar-entry__text{flex:1 1 auto;display:flex;flex-direction:column;gap:.1rem;min-width:0}
+.similar-entry__title{font-weight:600;font-size:1rem;line-height:1.25}
+.similar-entry__sub{font-size:.85rem;color:var(--muted);line-height:1.3}
+.similar-entry__chev{flex:0 0 auto;color:var(--brand)}
+.similar-backdrop{position:fixed;inset:0;z-index:180;background:rgba(15,23,42,.45)}
+.similar-sheet{position:fixed;inset-inline:0;bottom:0;z-index:190;max-height:min(88dvh,88vh);display:flex;flex-direction:column;
+  overflow:hidden;background:var(--surface);border-radius:14px 14px 0 0;box-shadow:var(--shadow-lg);
+  padding-bottom:max(.35rem,env(safe-area-inset-bottom));color:var(--text)}
+.similar-sheet__grab{width:40px;height:4px;border-radius:2px;background:var(--border);margin:.5rem auto 0}
+.similar-sheet__header{display:flex;align-items:flex-start;gap:.65rem;padding:.55rem .9rem .4rem}
+.similar-sheet__mascot{width:2.35rem;height:2.35rem;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 4px 8px color-mix(in srgb,var(--brand) 20%,transparent))}
+.similar-sheet__titles{flex:1 1 auto;min-width:0}
+.similar-sheet__titles h2{margin:0;font-size:1.1rem;font-weight:600;color:var(--brand);line-height:1.25}
+.similar-sheet__titles p{margin:.1rem 0 0;font-size:.85rem;color:var(--muted)}
+.similar-sheet__close{flex:0 0 44px;width:44px;height:44px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
+  font-size:1.35rem;line-height:1;color:var(--brand);cursor:pointer}
+.similar-sheet__why{margin:0 .9rem .5rem;padding:.45rem .65rem;border-radius:10px;background:var(--pearl);font-size:.8rem;color:var(--muted)}
+.similar-sheet__body{overflow-y:auto;padding:0 .9rem .9rem;display:flex;flex-direction:column;gap:.55rem}
+.similar-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem}
+.similar-row{display:flex;gap:.7rem;align-items:stretch;padding:.55rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);
+  text-decoration:none;color:inherit;min-height:44px}
+.similar-row__photo{flex:0 0 76px;width:76px;height:76px;border-radius:10px;object-fit:cover;background:var(--pearl)}
+.similar-row__body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:.15rem}
+.similar-row__title{font-weight:600;font-size:.98rem;color:var(--brand);line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.similar-row__meta{font-size:.82rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.similar-row__foot{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-top:auto}
+.similar-row__travel{display:inline-flex;align-items:center;gap:.25rem;font-size:.82rem;font-weight:600;color:var(--text)}
+.similar-chip{display:inline-flex;align-items:center;gap:.25rem;max-width:100%;padding:.15rem .55rem;border-radius:999px;font-size:.75rem;font-weight:600;line-height:1.3;
+  border:1px solid color-mix(in srgb,var(--brand) 18%,var(--border));background:var(--accent-soft);color:var(--brand);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.similar-cta{display:flex;gap:.65rem;align-items:center;padding:.65rem .75rem;border-radius:var(--radius);border:1px dashed color-mix(in srgb,var(--brand) 30%,var(--border));background:var(--pearl)}
+.similar-cta img{width:40px;height:40px;flex:0 0 auto}
+.similar-cta__text{flex:1 1 auto;min-width:0;font-size:.85rem;line-height:1.3}
+.similar-cta__text b{display:block;color:var(--brand);font-size:.92rem}
+.similar-cta a{flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 .85rem;border-radius:10px;background:var(--brand);color:#fff;font-weight:600;font-size:.85rem;text-decoration:none}
+.similar-sheet__more{align-self:center;display:inline-flex;align-items:center;min-height:44px;color:var(--brand);font-weight:600;font-size:.9rem}
+.similar-sample{align-self:flex-start;margin:0 .9rem .4rem;font-size:.7rem;color:var(--muted);border:1px dashed var(--border);border-radius:999px;padding:.05rem .45rem;background:var(--surface)}
+@media (min-width:900px){
+  .similar-sheet{inset-inline:auto 0;inset-block:0;bottom:0;width:460px;max-height:none;border-radius:16px 0 0 16px}
+  .similar-sheet__grab{display:none}
+  .similar-sheet__header{padding:1rem 1.1rem .5rem}
+  .similar-sheet__why{margin:0 1.1rem .65rem}
+  .similar-sample{margin-inline:1.1rem}
+  .similar-sheet__body{padding:0 1.1rem 1.1rem}
+  .similar-row__photo{flex-basis:88px;width:88px;height:88px}
+}
+</style></head>
+<body><!-- Mockup: inline CSS + raw hex for speed. Rebuild with design tokens/classes (see 03-ui-knop-sheet.md). Voorbeelddata. -->
+<div class="demo"><button type="button" class="similar-entry" aria-haspopup="dialog" data-testid="similar-open">
+<span class="similar-entry__icon"><svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true"><ellipse cx="13" cy="37" rx="10" ry="6" fill="#5a6a7d"/><ellipse cx="25" cy="31" rx="11" ry="6.5" fill="#0f2d5c"/><ellipse cx="37" cy="24" rx="9" ry="5.5" fill="#c9a227"/><path d="M13 33c4-6 8-9 12-8M25 26c4-5 8-7 12-6" fill="none" stroke="#c9a227" stroke-width="1.6" stroke-dasharray="2 3" stroke-linecap="round"/></svg></span><span class="similar-entry__text"><span class="similar-entry__title">Meer rotsen zoals deze</span>
+<span class="similar-entry__sub">Lijkt hierop en past bij jou</span></span><span class="similar-entry__chev"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button></div>
+<div class="similar-backdrop"></div>
+<div class="similar-sheet" role="dialog" aria-modal="true" aria-labelledby="similar-title">
+<div class="similar-sheet__grab" aria-hidden="true"></div>
+<div class="similar-sheet__header"><img class="similar-sheet__mascot" src="https://acceptatie.lobsy.nl/images/brand/lobsy-128.webp" alt="">
+<div class="similar-sheet__titles"><h2 id="similar-title">Meer rotsen zoals deze</h2><p>Lijkt hierop en past bij jou</p></div>
+<button class="similar-sheet__close" aria-label="Sluiten">×</button></div>
+<p class="similar-sheet__why">Gekozen op het werk, je waarden en je reistijd. Alleen echte bedrijven.</p><span class="similar-sample">Voorbeelddata</span>
+<div class="similar-sheet__body"><ul class="similar-list"><li><a class="similar-row" href="#"><img class="similar-row__photo" src="https://acceptatie.lobsy.nl/images/vacancies/logistiek-400.webp" alt="">
+<span class="similar-row__body"><span class="similar-row__title">Allround orderpicker</span><span class="similar-row__meta">Westland Fresh Logistics · Honselersdijk</span>
+<span class="similar-row__foot"><span class="similar-row__travel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17 9 9h6l3.5 8M9 9l3 8 3-8M14 6h3"/></svg>9 min</span><span class="similar-chip"><span aria-hidden="true">🤝</span>Past bij je waarde: Een hecht team</span></span></span></a></li>
+<li><a class="similar-row" href="#"><img class="similar-row__photo" src="https://acceptatie.lobsy.nl/images/vacancies/winkel-400.webp" alt="">
+<span class="similar-row__body"><span class="similar-row__title">Magazijnmedewerker</span><span class="similar-row__meta">Supermarkt Poeldijk · Poeldijk</span>
+<span class="similar-row__foot"><span class="similar-row__travel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17 9 9h6l3.5 8M9 9l3 8 3-8M14 6h3"/></svg>6 min</span><span class="similar-chip"><span aria-hidden="true">🏠</span>Dichter bij huis</span></span></span></a></li>
+<li><a class="similar-row" href="#"><img class="similar-row__photo" src="https://acceptatie.lobsy.nl/images/vacancies/tuinbouw-400.webp" alt="">
+<span class="similar-row__body"><span class="similar-row__title">Hovenier-hulp</span><span class="similar-row__meta">Tuin & Groen Delft · Delft</span>
+<span class="similar-row__foot"><span class="similar-row__travel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17 9 9h6l3.5 8M9 9l3 8 3-8M14 6h3"/></svg>18 min</span><span class="similar-chip"><span aria-hidden="true">🌤️</span>Ook buiten werken</span></span></span></a></li>
+<li><a class="similar-row" href="#"><img class="similar-row__photo" src="https://acceptatie.lobsy.nl/images/vacancies/productie-400.webp" alt="">
+<span class="similar-row__body"><span class="similar-row__title">Medewerker kas tomaten</span><span class="similar-row__meta">Tomatenpark De Lier · De Lier</span>
+<span class="similar-row__foot"><span class="similar-row__travel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17 9 9h6l3.5 8M9 9l3 8 3-8M14 6h3"/></svg>14 min</span><span class="similar-chip"><span aria-hidden="true">💪</span>Past bij je sterkte: Samenwerken</span></span></span></a></li>
+<li><a class="similar-row" href="#"><img class="similar-row__photo" src="https://acceptatie.lobsy.nl/images/vacancies/kantoor-400.webp" alt="">
+<span class="similar-row__body"><span class="similar-row__title">Planner logistiek</span><span class="similar-row__meta">Westland Fresh Logistics · Honselersdijk</span>
+<span class="similar-row__foot"><span class="similar-row__travel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17 9 9h6l3.5 8M9 9l3 8 3-8M14 6h3"/></svg>9 min</span><span class="similar-chip"><span aria-hidden="true">🕒</span>Ook flexibele tijden</span></span></span></a></li>
+<li><a class="similar-row" href="#"><img class="similar-row__photo" src="https://acceptatie.lobsy.nl/images/vacancies/schoonmaak-400.webp" alt="">
+<span class="similar-row__body"><span class="similar-row__title">Schoonmaker distributiecentrum</span><span class="similar-row__meta">Schoon Westland · Naaldwijk</span>
+<span class="similar-row__foot"><span class="similar-row__travel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17 9 9h6l3.5 8M9 9l3 8 3-8M14 6h3"/></svg>12 min</span><span class="similar-chip"><span aria-hidden="true">🌱</span>Geen ervaring nodig</span></span></span></a></li></ul>
+<a class="similar-sheet__more" href="#">Bekijk meer op de banenkaart</a></div></div></body></html>
