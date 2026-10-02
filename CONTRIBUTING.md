@@ -17,6 +17,22 @@ Before asking for review:
 
 There is no GitHub PR template file yet; treat the list above as the template.
 
+## Warnings
+
+Every PR must deliver a **Release build with 0 new warnings** compared with the base branch (and 0 warnings once code-health step 11 lands `TreatWarningsAsErrors`). Files you touch must be warning-free.
+
+Local checks:
+
+```bash
+dotnet build Jobsy.sln -c Release --no-incremental -v minimal 2>&1 | tee /tmp/build.log
+.github/scripts/count-build-warnings.sh --summary /tmp/build.log
+dotnet format whitespace Jobsy.sln --verify-no-changes
+dotnet format style Jobsy.sln --verify-no-changes
+dotnet format analyzers Jobsy.sln --verify-no-changes
+```
+
+Suppressions need a written reason in `.editorconfig` or an inline `#pragma warning disable <ID> // reason`. Never use a blanket `<NoWarn>`.
+
 ## Asset `?v=` bump rule
 
 Versioned files under `Jobsy.Web/wwwroot` are cached as immutable. After editing a versioned asset:

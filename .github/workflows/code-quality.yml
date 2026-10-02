@@ -23,21 +23,31 @@ jobs:
       - name: Restore
         run: dotnet restore Jobsy.sln
 
+      - name: Warning counter self-test
+        run: |
+          set -euo pipefail
+          chmod +x .github/scripts/count-build-warnings.sh .github/scripts/count-build-warnings.selftest.sh
+          .github/scripts/count-build-warnings.selftest.sh
+
       - name: Build (Release) and enforce warning baseline
         run: |
           set -euo pipefail
           chmod +x .github/scripts/count-build-warnings.sh
           dotnet build Jobsy.sln -c Release --no-restore --no-incremental -v minimal \
             2>&1 | tee /tmp/jobsy-build.log
-          count="$(.github/scripts/count-build-warnings.sh /tmp/jobsy-build.log)"
+          .github/scripts/count-build-warnings.sh --summary /tmp/jobsy-build.log >/tmp/jobsy-warn-count.txt 2>/tmp/jobsy-warn-summary.txt
+          count="$(tr -d '[:space:]' </tmp/jobsy-warn-count.txt)"
           baseline="$(tr -d '[:space:]' < .github/quality/warning-baseline.txt)"
           echo "Unique warnings: $count (baseline: $baseline)"
+          echo "Per-code summary:"
+          cat /tmp/jobsy-warn-summary.txt || true
           if [[ "$count" -gt "$baseline" ]]; then
             echo "::error::Warning count $count exceeds baseline $baseline. Fix new warnings or intentionally raise the baseline in the same PR."
             exit 1
           fi
           if [[ "$count" -lt "$baseline" ]]; then
-            echo "::notice::Warning count dropped to $count (baseline $baseline). Consider lowering .github/quality/warning-baseline.txt."
+            echo "::error::Warning count dropped to $count (baseline $baseline). Please lower .github/quality/warning-baseline.txt to $count."
+            exit 1
           fi
 
       - name: Whitespace format (changed .cs files only)
