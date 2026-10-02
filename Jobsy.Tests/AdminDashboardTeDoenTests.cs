@@ -516,6 +516,10 @@ public class AdminTodoApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     [Fact]
     public async Task Vacancies_moderation_flagged_filters()
     {
+        // CreateClient seeds the factory; do it first so the test does not depend on xunit ordering.
+        var client = _factory.CreateClient();
+        JobsyTestAuth.Authorize(client, _factory.AdminId);
+
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var companyId = await db.Companies.Select(c => c.Id).FirstAsync();
@@ -535,9 +539,6 @@ public class AdminTodoApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             CreatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
-
-        var client = _factory.CreateClient();
-        JobsyTestAuth.Authorize(client, _factory.AdminId);
 
         var flagged = await client.GetFromJsonAsync<List<JsonElement>>("api/admin/vacancies?moderation=flagged");
         Assert.NotNull(flagged);
