@@ -40,6 +40,18 @@ public static class VacancyVisibilityRules
         && startDate <= today
         && endDate >= today;
 
+    /// <summary>
+    /// Closed = was once live and is not publicly visible now because it archived, was fulfilled,
+    /// or ran past its end date. Never-published, draft, pending-approval and future-start vacancies
+    /// are not "closed" — those stay a plain 404 (unknown).
+    /// </summary>
+    public static bool IsClosed(Vacancy vacancy, DateOnly today) =>
+        vacancy.PublishedAtUtc is not null
+        && !IsPubliclyVisible(vacancy, today)
+        && (vacancy.Status == VacancyStatus.Archived
+            || vacancy.Status == VacancyStatus.Fulfilled
+            || (vacancy.Status == VacancyStatus.Active && vacancy.EndDate < today));
+
     public static bool CanAcceptApplications(Vacancy vacancy, DateOnly today, int currentApplicationCount) =>
         IsPubliclyVisible(vacancy, today)
         && (vacancy.MaxApplications <= 0 || currentApplicationCount < vacancy.MaxApplications);

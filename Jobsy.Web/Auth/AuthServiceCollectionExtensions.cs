@@ -80,6 +80,14 @@ public static class AuthServiceCollectionExtensions
                     return Task.CompletedTask;
                 };
                 options.Events.OnValidatePrincipal = ValidatePrincipalSessionVersionAsync;
+                // A signed-in user missing the required role should see a real 403 at the URL
+                // they asked for, not a redirect to /access-denied: UseHtmlStatusCodePages
+                // re-executes this bare status through /status/403 (errors stack 02).
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
             })
             .AddCookie(PupilAuthDefaults.Scheme, options =>
             {
@@ -922,9 +930,11 @@ public static class AuthServiceCollectionExtensions
 
         app.MapMethods("/account/logout", ["GET", "POST"], async (HttpContext http) =>
         {
-            // POST from the header form uses antiforgery; GET covers refresh / Cookie LogoutPath / bookmarks.
-            // Stale antiforgery must not block logout (GET already signs out) or show /Error.
-            if (HttpMethods.IsPost(http.Request.Method))
+            // POST from the header form / switch-account form uses antiforgery; GET covers
+            // refresh / Cookie LogoutPath / bookmarks. Stale antiforgery must not block logout
+            // (GET already signs out) or show /Error.
+            var isPost = HttpMethods.IsPost(http.Request.Method);
+            if (isPost)
             {
                 var antiforgery = http.RequestServices.GetRequiredService<IAntiforgery>();
                 if (!await antiforgery.IsRequestValidAsync(http))
@@ -935,7 +945,18 @@ public static class AuthServiceCollectionExtensions
                 }
             }
 
-            var reason = http.Request.Query["reason"].ToString();
+            // The switch-account form (errors 02.5) posts reason/returnUrl in the body; GET
+            // (bookmarks, the cookie LogoutPath) carries them in the query string.
+            var form = isPost && http.Request.HasFormContentType
+                ? await http.Request.ReadFormAsync()
+                : null;
+            string QueryOrForm(string key)
+            {
+                var fromForm = form?[key].ToString();
+                return !string.IsNullOrEmpty(fromForm) ? fromForm : http.Request.Query[key].ToString();
+            }
+
+            var reason = QueryOrForm("reason");
             var deviceToken = DeviceSessionCookie.Read(http);
             var deviceSessionId = http.User.FindFirst(JobsyClaimTypes.DeviceSessionId)?.Value;
 
@@ -956,11 +977,20 @@ public static class AuthServiceCollectionExtensions
             if (string.Equals(reason, "session-expired", StringComparison.OrdinalIgnoreCase))
             {
                 var returnUrl = AuthRedirects.ResolveSessionReturnUrl(
-                    http.Request.Query["returnUrl"],
-                    http.Request.Query["returnTo"],
-                    http.Request.Query["redirect"]);
+                    QueryOrForm("returnUrl"),
+                    QueryOrForm("returnTo"),
+                    QueryOrForm("redirect"));
                 return Results.Redirect(
                     AuthRedirects.AppendReturnUrl(SessionInactivityMiddleware.SessionExpiredPath, returnUrl));
+            }
+
+            if (string.Equals(reason, "switch", StringComparison.OrdinalIgnoreCase))
+            {
+                // 02.5 (Dependency E absent on acceptatie): sign out as today, then straight to
+                // login with the kept return URL. Never an open redirect: SafeLocalUrl falls
+                // back to /home for an absolute or "//" URL.
+                var safeReturn = AuthRedirects.SafeLocalUrl(QueryOrForm("returnUrl"));
+                return Results.Redirect("/login?returnUrl=" + Uri.EscapeDataString(safeReturn));
             }
 
             return Results.Redirect("/");

@@ -8,8 +8,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "4a2679997b0bea2a4629bfdce8f1fb434c9869f765f01115629bc5c885f5a965",
-    "v": "20260929-admin-d7"
+    "sha256": "862b8b48630d8592fed20f728d0197e01c77ccfc6982651bb19b1e630f8da70f",
+    "v": "20261001-errors-5"
   },
   "css/features/applications.css": {
     "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
@@ -30,6 +30,10 @@
   "css/features/enterprise-ui.css": {
     "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
     "v": "20260929-ent-ui"
+  },
+  "css/features/errors.css": {
+    "sha256": "9815efc2872ddd3d2b7d4fcf528ac0d0019fe90494ad060682e8d7091c2fec81",
+    "v": "20261001-errors-5"
   },
   "css/features/gratis-dna.css": {
     "sha256": "7eee9cb441a9b874474f93e3402c52f731bf88363306abebeb8a9f680f5513dc",

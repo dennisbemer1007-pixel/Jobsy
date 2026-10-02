@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,8 +49,10 @@ public sealed class ExceptionHandlingMiddleware
         }
 
         var (status, title, detail) = MapException(ex);
-        _logger.LogError(ex, "Unhandled exception for {Method} {Path} → {Status}",
-            context.Request.Method, context.Request.Path.Value, status);
+        var supportCode = SupportCodeGenerator.Create();
+        TagSentry(supportCode);
+        _logger.LogError(ex, "Unhandled exception {SupportCode} for {Method} {Path} → {Status}",
+            supportCode, context.Request.Method, context.Request.Path.Value, status);
 
         context.Response.Clear();
         context.Response.StatusCode = status;
@@ -63,6 +66,8 @@ public sealed class ExceptionHandlingMiddleware
             Instance = context.Request.Path.Value
         };
         problem.Extensions["traceId"] = context.TraceIdentifier;
+        // E2: the same short code the web 500 page shows, so support can match both sides.
+        problem.Extensions["supportCode"] = supportCode;
 
         await context.Response.WriteAsync(
             JsonSerializer.Serialize(problem, JsonOptions),
@@ -98,6 +103,18 @@ public sealed class ExceptionHandlingMiddleware
                 ? SanitizeClientMessage(ex.Message)
                 : "Er ging iets mis. Probeer het later opnieuw.")
     };
+
+    private static void TagSentry(string supportCode)
+    {
+        try
+        {
+            SentrySdk.ConfigureScope(scope => scope.SetTag("support_code", supportCode));
+        }
+        catch (Exception)
+        {
+            // Sentry is optional (no DSN in Development / tests); never fail the response over it.
+        }
+    }
 
     private static string SanitizeClientMessage(string? message)
     {

@@ -43,6 +43,8 @@ public class LandingVariantTests : TestContext
         Services.AddSingleton<LandingStatsClient>();
         Services.AddSingleton<LandingPriceClient>();
         Services.AddSingleton<LegalIdentityProvider>();
+        // PublicLayout shows the maintenance admin banner (errors 05).
+        Services.AddSingleton(new Jobsy.Web.Hosting.MaintenanceState());
         Services.AddScoped<LandingVariantResolver>();
         Services.AddScoped(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),

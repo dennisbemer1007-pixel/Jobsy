@@ -23,6 +23,9 @@ public class CourseSuggestionBlockBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags());
         var http = new HttpClient(new FakeHandler()) { BaseAddress = new Uri("http://localhost/") };
         Services.AddSingleton(new Jobsy.Web.Services.JobsyApiClient(http));
+        Services.AddSingleton(sp => new Jobsy.Web.Services.UserFacingError(
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Web.Services.UserFacingError>.Instance,
+            sp.GetRequiredService<CultureState>()));
     }
 
     [Fact]

@@ -68,6 +68,13 @@ public class EmailLayoutGuardTests
                 continue;
             }
 
+            // Errors 01: the last-resort error document is deliberately hard-coded HTML,
+            // because it must render when every template and stylesheet is unavailable.
+            if (file.EndsWith("ErrorResponse.cs", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             var source = File.ReadAllText(file);
             if (source.Contains("EmailLayout.Wrap(", StringComparison.Ordinal)
                 || source.Contains("<html", StringComparison.OrdinalIgnoreCase)

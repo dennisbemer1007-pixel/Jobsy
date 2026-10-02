@@ -9,6 +9,7 @@
 
 <div class="admin-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
+    <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
     <AdminTopBar EnvLabel="@Env.Value" OnMenuClick="OpenDrawer" />
 
     <div class="admin-shell__body">

@@ -22,6 +22,7 @@ public sealed class CandidateProfileEditor : IDisposable
     private readonly NavigationManager _navigation;
     private readonly CultureState _culture;
     private readonly IJSRuntime _js;
+    private readonly UserFacingError? _userFacing;
 
     private CancellationTokenSource? _suggestCts;
     private int _suggestGeneration;
@@ -31,14 +32,20 @@ public sealed class CandidateProfileEditor : IDisposable
         IGeocodingClient geocoder,
         NavigationManager navigation,
         CultureState culture,
-        IJSRuntime js)
+        IJSRuntime js,
+        UserFacingError? userFacing = null)
     {
         _api = api;
         _geocoder = geocoder;
         _navigation = navigation;
         _culture = culture;
         _js = js;
+        _userFacing = userFacing;
     }
+
+    /// <summary>E7: candidates read a calm sentence, never the exception text.</summary>
+    private string Describe(Exception ex)
+        => _userFacing?.Describe(ex) ?? _culture["Common.Error.TryAgain"];
 
     public event Action? Changed;
 
@@ -416,7 +423,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Message = ex.Message;
+            Message = Describe(ex);
         }
         finally
         {
@@ -874,7 +881,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Message = ex.Message;
+            Message = Describe(ex);
         }
         finally
         {
@@ -895,7 +902,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Message = ex.Message;
+            Message = Describe(ex);
         }
         finally
         {
@@ -926,7 +933,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Message = ex.Message;
+            Message = Describe(ex);
         }
         finally
         {
@@ -969,7 +976,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            ConsentMessage = ex.Message;
+            ConsentMessage = Describe(ex);
         }
         finally
         {
@@ -997,7 +1004,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            ConsentMessage = ex.Message;
+            ConsentMessage = Describe(ex);
         }
         finally
         {
@@ -1035,7 +1042,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Message = ex.Message;
+            Message = Describe(ex);
         }
         finally
         {
@@ -1097,7 +1104,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Message = ex.Message;
+            Message = Describe(ex);
         }
         finally
         {
@@ -1125,7 +1132,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            Message = ex.Message;
+            Message = Describe(ex);
         }
         finally
         {
@@ -1174,7 +1181,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            DevicesMessage = ex.Message;
+            DevicesMessage = Describe(ex);
         }
         finally
         {
@@ -1196,7 +1203,7 @@ public sealed class CandidateProfileEditor : IDisposable
         }
         catch (Exception ex)
         {
-            DevicesMessage = ex.Message;
+            DevicesMessage = Describe(ex);
             DevicesBusy = false;
             Notify();
         }

@@ -23,6 +23,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
+@inject UserFacingError UserFacing
 @implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
@@ -601,7 +602,7 @@
             ApplyFilter();
             _message = Culture["Apps.WithdrawnMsg"];
         }
-        catch (Exception ex) { _message = ex.Message; }
+        catch (Exception ex) { _message = UserFacing.Describe(ex); }
         finally { _busyId = null; }
     }
 
@@ -612,7 +613,7 @@
         _pdfBusy = true;
         _message = null;
         try { await Api.DownloadApplicationLobsyCvPdfAsync(item.Id, Js); }
-        catch (Exception ex) { _message = ex.Message; }
+        catch (Exception ex) { _message = UserFacing.Describe(ex); }
         finally { _busyId = null; _pdfBusy = false; }
     }
 }

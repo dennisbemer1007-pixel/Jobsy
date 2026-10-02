@@ -237,6 +237,22 @@ public sealed class PlatformFeaturePatch
     public string? Reason { get; set; }
 }
 
+/// <summary>Maintenance switch as the admin sees it (errors 05). <c>Note</c> is admin-only.</summary>
+public sealed class MaintenanceStateItem
+{
+    public bool Enabled { get; set; }
+    public DateTime? ExpectedEndUtc { get; set; }
+    public string? Note { get; set; }
+    public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public sealed class MaintenanceUpdateForm
+{
+    public bool Enabled { get; set; }
+    public DateTime? ExpectedEndUtc { get; set; }
+    public string? Note { get; set; }
+}
+
 public sealed class AdminTodoItemView
 {
     public string Key { get; set; } = "";

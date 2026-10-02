@@ -9,6 +9,7 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 @implements IAsyncDisposable
 @implements IDisposable
 
@@ -654,7 +655,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
         }
         finally
         {

@@ -6,6 +6,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject UserFacingError UserFacing
 
 <PageTitle>Andere sollicitaties intrekken · Lobsy</PageTitle>
 
@@ -153,27 +154,11 @@
         {
             _phase = Phase.Failed;
             _error = true;
-            _message = FriendlyError(ex.Message);
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
             _busy = false;
         }
-    }
-
-    private static string FriendlyError(string raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return "Er ging iets mis. Trek sollicitaties desnoods handmatig in via Sollicitaties.";
-        }
-
-        if (raw.Contains("ongeldig", StringComparison.OrdinalIgnoreCase)
-            || raw.Contains("gebruikt", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Deze link is al gebruikt of niet meer geldig. Open Sollicitaties om het handmatig te doen.";
-        }
-
-        return raw;
     }
 }

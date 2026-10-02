@@ -1,0 +1,200 @@
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Microsoft.AspNetCore.Antiforgery
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
+@inject IAntiforgery Antiforgery
+@*
+  Geen toegang (403). Rendered either in place of the routed page (Routes.razor's
+  NotAuthorized, a signed-in user without the right role) or at /access-denied (the cookie's
+  AccessDeniedPath, or a direct/legacy link).
+
+  Hard rule: the account shown comes from the auth cookie's claims only — no API or DB call.
+*@
+
+<section class="err-hero err-forbidden">
+    <div class="err-hero__text">
+        <p class="pub-chip err-code">@Culture["Status.Forbidden.Chip"]</p>
+        <h1 class="err-hero__title">@Title</h1>
+        <p class="err-hero__lead">@Lead</p>
+
+        @if (_isSignedIn)
+        {
+            <div class="err-account">
+                @if (!string.IsNullOrWhiteSpace(_displayName))
+                {
+                    <p class="err-account__line">@AccountPrefix<strong>@_displayName</strong>@AccountSuffix</p>
+                    @if (!string.IsNullOrWhiteSpace(_maskedEmail))
+                    {
+                        <p class="err-account__line err-account__email">@_maskedEmail</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_roleLabel))
+                    {
+                        <p class="err-account__line err-account__role">@_roleLabel</p>
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(_maskedEmail))
+                {
+                    <p class="err-account__line err-account__email">@_maskedEmail</p>
+                }
+            </div>
+        }
+
+        <div class="err-actions">
+            <a class="pub-btn pub-btn--primary" href="@_primaryHref">@_primaryLabel</a>
+            @if (_showSwitchAccount)
+            {
+                <form method="post" action="/account/logout" class="err-switch-form">
+                    <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                    <input type="hidden" name="reason" value="switch" />
+                    <input type="hidden" name="returnUrl" value="@_safeReturnUrl" />
+                    <button type="submit" class="pub-btn pub-btn--secondary">@Culture["Status.Forbidden.SwitchAccount"]</button>
+                </form>
+            }
+        </div>
+
+        <p class="err-support">
+            @SupportLinePrefix<a class="err-support__link" href="@_supportMailto">@_supportEmail</a>@SupportLineSuffix
+        </p>
+    </div>
+    <div class="err-hero__art" aria-hidden="true">
+        <span class="err-blob"></span>
+        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+    </div>
+</section>
+
+@code {
+    /// <summary>The page the visitor originally asked for (path + query), kept across login.</summary>
+    [Parameter] public string ReturnUrl { get; set; } = "/home";
+
+    /// <summary><c>role</c> (default) or <c>employers-off</c>; anything else falls back to <c>role</c>.</summary>
+    [Parameter] public string? Reason { get; set; }
+
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    private bool _isSignedIn;
+    private string _displayName = "";
+    private string _maskedEmail = "";
+    private string _roleLabel = "";
+    private bool _employersOff;
+    private bool _showSwitchAccount = true;
+    private string _primaryHref = "/home";
+    private string _primaryLabel = "";
+    private string _safeReturnUrl = "/home";
+    private string _supportEmail = SupportContact.Default;
+    private string _antiforgeryFieldName = "__RequestVerificationToken";
+    private string _antiforgeryToken = "";
+
+    private string Title => _employersOff
+        ? Culture["Status.Forbidden.EmployersOffTitle"]
+        : Culture["Status.Forbidden.Title"];
+
+    private string Lead => _employersOff
+        ? Culture["Status.Forbidden.EmployersOffLead"]
+        : Culture["Status.Forbidden.Lead"];
+
+    private string AccountPrefix => SplitTemplate(Culture["Status.Forbidden.AccountIntro"]).Prefix;
+
+    private string AccountSuffix => SplitTemplate(Culture["Status.Forbidden.AccountIntro"]).Suffix;
+
+    private string SupportLinePrefix => SplitTemplate(Culture["Status.Common.SupportLine"]).Prefix;
+
+    private string SupportLineSuffix => SplitTemplate(Culture["Status.Common.SupportLine"]).Suffix;
+
+    private string _supportMailto => SupportContact.MailtoLink(
+        _supportEmail,
+        string.Format(Culture["Status.Common.MailSubject"], StatusCodes.Status403Forbidden));
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http is not null && !http.Response.HasStarted)
+        {
+            http.Response.StatusCode = StatusCodes.Status403Forbidden;
+            ErrorResponse.ApplyHeaders(http);
+        }
+
+        _supportEmail = SupportContact.Email(Configuration);
+        _safeReturnUrl = AuthRedirects.SafeLocalUrl(ReturnUrl);
+        _employersOff = string.Equals(Reason, "employers-off", StringComparison.OrdinalIgnoreCase);
+
+        var user = http?.User;
+        var identity = user?.Identity as ClaimsIdentity;
+        _isSignedIn = identity?.IsAuthenticated == true;
+
+        string? roleValue = null;
+        if (_isSignedIn)
+        {
+            _displayName = identity!.FindFirst(ClaimTypes.Name)?.Value?.Trim() ?? "";
+            var email = identity.FindFirst(ClaimTypes.Email)?.Value
+                        ?? identity.FindFirst("email")?.Value
+                        ?? "";
+            _maskedEmail = string.IsNullOrWhiteSpace(email) ? "" : AccountMasking.RedactEmail(email);
+            roleValue = identity.FindFirst(ClaimTypes.Role)?.Value;
+            _roleLabel = string.IsNullOrWhiteSpace(roleValue) ? "" : Culture[RoleLabelKey(roleValue)];
+        }
+
+        if (_employersOff)
+        {
+            _showSwitchAccount = false;
+            if (FeatureRoutes.IsEmployerSideOnly(user))
+            {
+                _primaryHref = "/";
+                _primaryLabel = Culture["Status.Forbidden.ToHomepage"];
+            }
+            else
+            {
+                _primaryHref = FeatureRoutes.HomeFor(
+                    user,
+                    new FeatureFlagSnapshot(EmployersEnabled: false, CandidatePassportEnabled: false));
+                _primaryLabel = Culture["Status.Nav.MyStart"];
+            }
+        }
+        else
+        {
+            _showSwitchAccount = true;
+            _primaryHref = FeatureRoutes.HomeFor(user, FeatureFlagSnapshot.Defaults);
+            _primaryLabel = Culture["Status.Nav.MyStart"];
+        }
+
+        if (string.IsNullOrWhiteSpace(_primaryHref))
+        {
+            _primaryHref = AuthRedirects.PostLoginUrl(null);
+        }
+
+        if (_showSwitchAccount && http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
+    }
+
+    private static string RoleLabelKey(string role) => role switch
+    {
+        JobsyRoles.Candidate => "Status.Forbidden.Role.Candidate",
+        JobsyRoles.BranchManager => "Status.Forbidden.Role.BranchManager",
+        JobsyRoles.RegionalManager => "Status.Forbidden.Role.RegionalManager",
+        JobsyRoles.EnterpriseManager => "Status.Forbidden.Role.EnterpriseManager",
+        JobsyRoles.Intermediary => "Status.Forbidden.Role.Intermediary",
+        JobsyRoles.Admin => "Status.Forbidden.Role.Admin",
+        JobsyRoles.SalesManager => "Status.Forbidden.Role.SalesManager",
+        JobsyRoles.Ambassadeur => "Status.Forbidden.Role.Ambassadeur",
+        JobsyRoles.SchoolAdmin => "Status.Forbidden.Role.SchoolAdmin",
+        JobsyRoles.Teacher => "Status.Forbidden.Role.Teacher",
+        _ => "Status.Forbidden.Role.Unknown"
+    };
+
+    private static (string Prefix, string Suffix) SplitTemplate(string template)
+    {
+        var marker = template.IndexOf("{0}", StringComparison.Ordinal);
+        return marker < 0
+            ? (template + " ", string.Empty)
+            : (template[..marker], template[(marker + 3)..]);
+    }
+}

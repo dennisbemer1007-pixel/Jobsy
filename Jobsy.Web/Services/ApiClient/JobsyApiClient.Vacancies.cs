@@ -230,18 +230,98 @@ public sealed partial class JobsyApiClient
             url += "?" + string.Join("&", parts);
         }
 
-        var response = await _http.GetAsync(url, ct);
+        // 404 is "unknown or not public" — the detail page turns that into a real 404 page.
+        using var response = await _http.GetAsync(url, ct);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return null;
         }
 
-        if (!response.IsSuccessStatusCode)
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<VacancyListItem>(cancellationToken: ct);
+    }
+
+    /// <summary>
+    /// Same lookup as <see cref="GetVacancyAsync"/> but distinguishes closed (410, errors 03)
+    /// from unknown (404) instead of collapsing both to null.
+    /// </summary>
+    public async Task<VacancyLookup> GetVacancyLookupAsync(
+        Guid id,
+        double? originLat = null,
+        double? originLng = null,
+        string? transport = null,
+        int? ageYears = null,
+        CancellationToken ct = default)
+    {
+        var url = $"api/vacancies/{id}";
+        var parts = new List<string>();
+        if (originLat is not null && originLng is not null)
         {
-            response.EnsureSuccessStatusCode();
+            parts.Add($"originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            parts.Add($"originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         }
 
-        return await response.Content.ReadFromJsonAsync<VacancyListItem>(cancellationToken: ct);
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            parts.Add($"transport={Uri.EscapeDataString(transport)}");
+        }
+
+        if (ageYears is not null)
+        {
+            parts.Add($"ageYears={ageYears.Value}");
+        }
+
+        if (parts.Count > 0)
+        {
+            url += "?" + string.Join("&", parts);
+        }
+
+        using var response = await _http.GetAsync(url, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return VacancyLookup.NotFound;
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Gone)
+        {
+            var closed = await response.Content.ReadFromJsonAsync<ClosedVacancyInfo>(cancellationToken: ct);
+            return closed is null ? VacancyLookup.NotFound : VacancyLookup.Closed(closed);
+        }
+
+        response.EnsureSuccessStatusCode();
+        var vacancy = await response.Content.ReadFromJsonAsync<VacancyListItem>(cancellationToken: ct);
+        return vacancy is null ? VacancyLookup.NotFound : VacancyLookup.Found(vacancy);
+    }
+
+    /// <summary>Up to <paramref name="limit"/> similar vacancies for a closed vacancy's 410 page.</summary>
+    public async Task<IReadOnlyList<SimilarVacancyItem>> GetVacancySimilarAsync(
+        Guid id,
+        int limit = 3,
+        double? originLat = null,
+        double? originLng = null,
+        string? transport = null,
+        CancellationToken ct = default)
+    {
+        var url = $"api/vacancies/{id}/similar?limit={limit}";
+        if (originLat is not null && originLng is not null)
+        {
+            url += $"&originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                 + $"&originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            url += $"&transport={Uri.EscapeDataString(transport)}";
+        }
+
+        using var response = await _http.GetAsync(url, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return [];
+        }
+
+        var items = await response.Content.ReadFromJsonAsync<List<SimilarVacancyItem>>(cancellationToken: ct);
+        return items ?? [];
     }
 
     public async Task<VacancyTravelResult?> GetVacancyTravelAsync(

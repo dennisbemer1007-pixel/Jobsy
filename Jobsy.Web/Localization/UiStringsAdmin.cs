@@ -667,5 +667,22 @@ public static class UiStringsAdmin
         Add("AdminLogs.Col.Message", "Bericht", "Message", "Wiadomość", "Mesaj", "الرسالة");
         Add("AdminLogs.Empty", "Geen logs gevonden.", "No logs found.", "Brak logów.", "Niciun jurnal.", "لا سجلات.");
         Add("AdminLogs.CategoryPlaceholder", "Categorie", "Category", "Kategoria", "Filtrează categoria", "الفئة");
+
+        // Onderhoudsmodus (errors 05). Admin UI stays nl + en.
+        Add("Admin.Maintenance.Title", "Onderhoudsmodus", "Maintenance mode");
+        Add("Admin.Maintenance.Desc", "Zet het platform in onderhoud voor een risicovolle deploy of migratie.", "Put the platform into maintenance for a risky deploy or migration.");
+        Add("Admin.Maintenance.Impact", "Iedereen behalve admins ziet de onderhoudspagina.", "Everyone except admins sees the maintenance page.");
+        Add("Admin.Maintenance.Banner", "Onderhoudsmodus staat AAN. Bezoekers zien de onderhoudspagina.", "Maintenance mode is ON. Visitors see the maintenance page.");
+        Add("Admin.Maintenance.BannerLink", "Naar de schakelaar", "To the switch");
+        Add("Admin.Maintenance.ExpectedEnd", "Verwacht klaar om", "Expected to be done at");
+        Add("Admin.Maintenance.ExpectedEndHint", "Amsterdamse tijd. Leeg laten mag.", "Amsterdam time. May be left empty.");
+        Add("Admin.Maintenance.Note", "Interne notitie", "Internal note");
+        Add("Admin.Maintenance.NoteHint", "Alleen voor admins. Bezoekers zien dit nooit.", "Admins only. Visitors never see this.");
+        Add("Admin.Maintenance.Propagation", "Binnen 15 seconden overal actief.", "Active everywhere within 15 seconds.");
+        Add("Admin.Maintenance.ActiveSince", "Actief sinds {0} door {1}", "Active since {0} by {1}");
+        Add("Admin.Maintenance.ConfirmTitle", "Onderhoudsmodus aanzetten", "Turn on maintenance mode");
+        Add("Admin.Maintenance.ConfirmLead", "Bezoekers zien vanaf nu de onderhoudspagina. Jij blijft erin.", "Visitors will see the maintenance page from now on. You stay in.");
+        Add("Admin.Maintenance.Saved", "Opgeslagen.", "Saved.");
+        Add("Admin.Maintenance.UnknownAdmin", "een beheerder", "an admin");
     }
 }

@@ -57,6 +57,21 @@ public sealed class CultureState
         _initialized = true;
     }
 
+    /// <summary>
+    /// Pins the culture for a static SSR render that resolved the language itself
+    /// (error pages use cookie → Accept-Language → nl without touching the API).
+    /// </summary>
+    public void InitializeFromLanguage(string language)
+    {
+        if (_initialized)
+        {
+            return;
+        }
+
+        Apply(language);
+        _initialized = true;
+    }
+
     public async Task InitializeAsync()
     {
         if (_initialized)

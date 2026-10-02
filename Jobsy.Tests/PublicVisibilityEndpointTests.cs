@@ -43,6 +43,8 @@ public class PublicVisibilityEndpointTests : IClassFixture<RoleFunctionalWebAppF
         ("VacanciesController", "GetById", "filtered"),
         ("VacanciesController", "GetTravel", "filtered"),
         ("VacanciesController", "GetCultureFit", "filtered"),
+        // errors 03: similar vacancies for a 410 page, straight off the public discovery index.
+        ("VacanciesController", "GetSimilar", "filtered"),
         ("PublicCompaniesController", "GetByKvk", "filtered"),
         ("PublicCompaniesController", "GetByVestiging", "filtered"),
         ("PublicCompaniesController", "GetVacanciesByKvk", "filtered"),
@@ -50,6 +52,8 @@ public class PublicVisibilityEndpointTests : IClassFixture<RoleFunctionalWebAppF
         ("SiteController", "GetBranding", "safe"),
         ("SiteController", "GetLegal", "safe"),
         ("SiteController", "GetCrawlIndex", "filtered"),
+        // errors 05: the maintenance flag and its expected end time only — no internal note.
+        ("SiteController", "GetStatus", "safe"),
         ("EmployerFlyersController", "ResolvePublicRoute", "filtered"),
     ];
 

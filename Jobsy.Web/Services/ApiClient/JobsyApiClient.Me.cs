@@ -342,8 +342,9 @@ public sealed partial class JobsyApiClient
         var response = await _http.GetAsync("api/privacy/export", ct);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Export mislukt.");
+            // errors 04 §04.5: a typed error (code + supportCode + retryAfterSeconds) instead of
+            // the raw body, which used to end up on screen through ex.Message.
+            throw await ApiError.FromResponseAsync(response, ct);
         }
 
         return await response.Content.ReadAsStringAsync(ct);

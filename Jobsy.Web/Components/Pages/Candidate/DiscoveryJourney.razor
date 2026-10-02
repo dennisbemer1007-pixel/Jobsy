@@ -18,6 +18,7 @@
 @inject IFeatureFlags FeatureFlags
 @inject GratisDnaMergeService GratisDnaMerge
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
@@ -839,7 +840,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -1123,7 +1124,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
             _saveStatus = "error";
         }
         finally
@@ -1151,7 +1152,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
             _saveStatus = "error";
         }
         finally
@@ -1255,7 +1256,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
             _saveStatus = "error";
         }
         finally
@@ -1291,7 +1292,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -1665,7 +1666,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
             _saveStatus = "error";
         }
         finally
