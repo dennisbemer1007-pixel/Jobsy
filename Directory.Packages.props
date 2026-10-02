@@ -44,7 +44,7 @@
     <PackageVersion Include="MailKit" Version="4.18.1" />
     <PackageVersion Include="QRCoder" Version="1.8.0" />
     <PackageVersion Include="QuestPDF" Version="2025.12.4" />
-    <PackageVersion Include="Sentry.AspNetCore" Version="5.16.3" />
+    <PackageVersion Include="Sentry.AspNetCore" Version="6.12.0" />
     <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageVersion Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.3.2" />
