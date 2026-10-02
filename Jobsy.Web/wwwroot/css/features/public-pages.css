@@ -517,3 +517,53 @@ html.pp-js .pub-theme .pp-toc__print {
   font-size: 0.875rem;
   opacity: 0.8;
 }
+
+/* —— /privacy/data Mijn gegevens (public-pages 07) —— */
+.pub-theme .pp-mydata__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+}
+
+.pub-theme .pp-mydata__card {
+  background: var(--pub-card);
+  border: 1px solid var(--pub-line);
+  border-radius: var(--pub-radius-card);
+  box-shadow: var(--pub-shadow-soft);
+  padding: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.pub-theme .pp-mydata__card--danger {
+  border-color: color-mix(in srgb, var(--pub-coral) 45%, var(--pub-line));
+  background: color-mix(in srgb, var(--pub-coral) 6%, var(--pub-card));
+}
+
+.pub-theme .pp-mydata__card h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.pub-theme .pp-mydata__notes {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.pub-theme .pp-mydata__back {
+  margin-top: 1.75rem;
+}
+
+.pub-theme .pp-mydata__logout-form {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pub-theme .pp-mydata__card {
+    transition: none;
+  }
+}

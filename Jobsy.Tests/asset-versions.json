@@ -72,8 +72,8 @@
     "v": "20260929-or-08"
   },
   "css/features/public-pages.css": {
-    "sha256": "ec8fc816335c99dc616ffcf381103fdfc4ff9648a77cb8e657903657e444f4b1",
-    "v": "20261001-pp06"
+    "sha256": "d77e837dbb32691d4565f89a3bb30845afb4af34cae7b7536affa1f23482c1dd",
+    "v": "20261001-pp07"
   },
   "css/features/public-theme.css": {
     "sha256": "dae311dc566e1532c210e13d2d532ba15f39e458d1d01fd737937b7a136352cd",
@@ -180,8 +180,8 @@
     "v": "20260928-nav-fb"
   },
   "js/public-pages.js": {
-    "sha256": "1d1e510ebfe9df64c6284a1b9d1006f2bbcdd037aaefcd036d67ae4a8605a862",
-    "v": "20261001-pp02"
+    "sha256": "e5f1baab87e03d1ea0c7ccb09aa7851d5691ac44d0e38394a85f97d1796cd8a1",
+    "v": "20261001-pp07"
   },
   "js/vacancyDetailMap.min.js": {
     "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",
