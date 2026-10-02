@@ -123,12 +123,45 @@ dotnet_diagnostic.CA1305.severity = none
 dotnet_diagnostic.CA1304.severity = none
 dotnet_diagnostic.CA1311.severity = none
 
+# CA1862: every hit is inside an EF Core IQueryable predicate (email / tracking-code lookups,
+# ATS + assistant search). EF translates ToLower()/ToUpper() to SQL lower()/upper(), but it cannot
+# translate string.Equals(..., StringComparison), so the suggested fix throws at runtime.
+# Follow-up: normalised/citext columns (see docs/code-health/warnings-analysis.md §3).
+dotnet_diagnostic.CA1862.severity = none
+# CA1859: internal/private API shape. Read-only interfaces express intent; the perf gain is negligible here.
+dotnet_diagnostic.CA1859.severity = suggestion
+# CA1863: format strings are localised at runtime (UiStrings/EmailStrings), so CompositeFormat caching does not apply.
+dotnet_diagnostic.CA1863.severity = suggestion
+# CA1716/CA1711/CA1720/CA1000: VB/C++ interop and library-design naming rules. We ship no public library.
+dotnet_diagnostic.CA1716.severity = none
+dotnet_diagnostic.CA1711.severity = none
+dotnet_diagnostic.CA1720.severity = none
+dotnet_diagnostic.CA1000.severity = none
+
 # --- Tests: allow underscore method names (xUnit) ---
 [Jobsy.Tests/**.cs]
 dotnet_diagnostic.CA1707.severity = none
+# Test code: readability over micro-perf and API-design rules.
+dotnet_diagnostic.CA1822.severity = none
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.CA1051.severity = none
+dotnet_diagnostic.CA1865.severity = none
+dotnet_diagnostic.CA1860.severity = none
+dotnet_diagnostic.CA1869.severity = none
+dotnet_diagnostic.CA1859.severity = none
+# ASP0006: bUnit RenderTreeBuilder helpers in tests use seq++. Rendering diff stability is not under test here.
+dotnet_diagnostic.ASP0006.severity = none
 
 [**/Jobsy.Tests/**/*.cs]
 dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1822.severity = none
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.CA1051.severity = none
+dotnet_diagnostic.CA1865.severity = none
+dotnet_diagnostic.CA1860.severity = none
+dotnet_diagnostic.CA1869.severity = none
+dotnet_diagnostic.CA1859.severity = none
+dotnet_diagnostic.ASP0006.severity = none
 
 # --- EF migrations: generated ---
 [Jobsy.Infrastructure/Data/Migrations/**.cs]
