@@ -254,9 +254,15 @@ public sealed class VacanciesManageApiFactory : WebApplicationFactory<Jobsy.Api.
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Companies.AddRange(
-            new Company { Id = OrgAId, Name = "OrgA", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4.2) },
             new Company
             {
+                Id = OrgAId,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                Name = "OrgA", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4.2) },
+            new Company
+            {
+                
+                VerificationStatus = CompanyVerificationStatus.Verified,
                 Id = BranchA1Id,
                 Name = "A1",
                 KvkNumber = "2",
@@ -267,6 +273,8 @@ public sealed class VacanciesManageApiFactory : WebApplicationFactory<Jobsy.Api.
             },
             new Company
             {
+                
+                VerificationStatus = CompanyVerificationStatus.Verified,
                 Id = BranchA2Id,
                 Name = "A2",
                 KvkNumber = "3",
@@ -275,7 +283,11 @@ public sealed class VacanciesManageApiFactory : WebApplicationFactory<Jobsy.Api.
                 Location = new GeoPoint(52.02, 4.22),
                 TokensManagedByEnterprise = true
             },
-            new Company { Id = BranchBId, Name = "B", KvkNumber = "4", Address = "b", Location = new GeoPoint(51.9, 4.3) });
+            new Company
+            {
+                Id = BranchBId,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                Name = "B", KvkNumber = "4", Address = "b", Location = new GeoPoint(51.9, 4.3) });
 
         db.Users.AddRange(
             new User

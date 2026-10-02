@@ -50,6 +50,7 @@ public partial class SalesCommercialController : ControllerBase
     /// </summary>
     [HttpPost("referral/visit")]
     [AllowAnonymous]
+    [AdminAuditExempt("Public referral click tracking; no admin write")]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<object>> RecordReferralVisit(
         [FromBody] SalesReferralVisitRequest request,

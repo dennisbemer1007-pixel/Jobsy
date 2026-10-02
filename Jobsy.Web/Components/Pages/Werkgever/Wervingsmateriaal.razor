@@ -1,6 +1,8 @@
 @page "/werkgever/wervingsmateriaal"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever

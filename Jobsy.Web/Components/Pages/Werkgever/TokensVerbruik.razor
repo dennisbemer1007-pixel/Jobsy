@@ -1,6 +1,8 @@
 @page "/werkgever/tokens/verbruik"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Core.Interfaces
 @using Jobsy.Web.Components.Ui.Enterprise
 @using Jobsy.Web.Components.Werkgever.Shell
