@@ -202,7 +202,6 @@ public static partial class TransactionalEmails
         EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
-        var brand = Brand(baseUrl);
         var links = Links(baseUrl);
         var effectiveDuration = duration ?? LoginLockoutRules.LockoutDuration(failedAttempts);
         var durationLabel = EmailFormat.Duration(effectiveDuration, c);
@@ -213,7 +212,9 @@ public static partial class TransactionalEmails
             S(c, "Email.AccountLockout.Heading"),
             [
                 P(T(c, "Email.AccountLockout.P1",
-                    EmailArg.Plain(untilLabel, isolate: false))),
+                    EmailArg.Plain(untilLabel, isolate: false),
+                    EmailArg.Plain(failedAttempts.ToString(System.Globalization.CultureInfo.InvariantCulture), isolate: false),
+                    EmailArg.Plain(durationLabel, isolate: false))),
                 F([(S(c, "Email.AccountLockout.Fact.Until"), untilLabel)]),
                 P(S(c, "Email.AccountLockout.P2"))
             ],

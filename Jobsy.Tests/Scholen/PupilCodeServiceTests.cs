@@ -39,6 +39,26 @@ public class PupilCodeServiceTests
     }
 
     [Fact]
+    public void NextUniquePlainCode_survives_fifty_plus_forced_collisions()
+    {
+        var alphabet = PupilCodeFormat.Alphabet.ToCharArray();
+        Span<char> chars = stackalloc char[PupilCodeFormat.Length];
+        var used = new HashSet<string>(StringComparer.Ordinal) { "collision" };
+        var calls = 0;
+        string Hash(string code)
+        {
+            calls++;
+            // First 55 attempts keep colliding; then a unique hash.
+            return calls <= 55 ? "collision" : "ok-" + code;
+        }
+
+        var code = PupilCodeService.NextUniquePlainCode(alphabet, chars, used, Hash, maxAttempts: 100);
+        Assert.False(string.IsNullOrWhiteSpace(code));
+        Assert.True(calls > 50, $"expected >50 collision retries, got {calls}");
+        Assert.Contains(used, h => h.StartsWith("ok-", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Replace_invalidates_old_hash_and_bumps_session()
     {
         await using var db = CreateDb();

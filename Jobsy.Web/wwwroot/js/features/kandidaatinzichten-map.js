@@ -85,13 +85,19 @@
     destroy(elementId);
 
     var center = options.center || [5.2, 52.1];
+    var compact = !(window.matchMedia && window.matchMedia("(min-width: 1025px)").matches);
     var map = new maplibregl.Map({
       container: el,
       style: options.styleUrl || "https://demotiles.maplibre.org/style.json",
       center: center,
       zoom: options.zoom || 9,
       interactive: false,
-      attributionControl: false
+      attributionControl: {
+        compact: compact,
+        customAttribution:
+          '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+      },
+      maplibreLogo: false
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     // Keep zoom only
@@ -193,7 +199,7 @@
       if (this._loading) return this._loading;
       this._loading = new Promise(function (resolve, reject) {
         var s = document.createElement("script");
-        s.src = "js/features/kandidaatinzichten-map.js?v=20260928-insights";
+        s.src = "js/features/kandidaatinzichten-map.js?v=20261002-ch01";
         s.onload = function () { resolve(); };
         s.onerror = reject;
         document.head.appendChild(s);

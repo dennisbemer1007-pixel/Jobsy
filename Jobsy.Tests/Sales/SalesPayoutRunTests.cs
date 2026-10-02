@@ -206,6 +206,27 @@ public class SalesPayoutRunTests
     }
 
     [Fact]
+    public async Task Export_fails_when_creditor_name_and_company_name_are_blank()
+    {
+        await using var db = CreateDb();
+        var (user, _) = await SeedBeneficiaryAsync(db);
+        await AddAvailableAndRequestAsync(db, user.Id, 100m);
+        var runs = CreateRunService(db, configured: true);
+        var run = await runs.TryCreateScheduledRunAsync(SalesClock.Today(), DateTime.UtcNow);
+        await runs.ApproveRunAsync(Guid.NewGuid(), run!.Id);
+
+        // Last-line defence: blank both name sources after approve (CS8604 path).
+        var profile = await db.SalesManagerProfiles.SingleAsync(p => p.UserId == user.Id);
+        profile.PayoutAccountHolderName = null;
+        profile.CompanyName = null;
+        await db.SaveChangesAsync();
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => runs.ExportAsync(Guid.NewGuid(), run.Id, "sepa"));
+        Assert.Contains("Rekeninghouder", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Export_sepa_validates_against_xsd_and_stores_hash_not_file()
     {
         await using var db = CreateDb();

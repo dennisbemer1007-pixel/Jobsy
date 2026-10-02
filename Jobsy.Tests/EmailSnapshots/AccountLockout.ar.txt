@@ -1,18 +1,19 @@
 KEY: AccountLockout
-SUBJECT: Your Lobsy account is temporarily locked
-PREHEADER: You can sign in again after 15 minutes.
+SUBJECT: Your Lobsy account is paused for a bit
+PREHEADER: You cannot sign in with your password until 2 أكتوبر 2026, 13:05.
 KIND: Essential
 --- TEXT ---
-Your account is locked for a while
+A short pause
 
-A wrong password was entered 5 times. That is why your account is locked for
-15 minutes.
+أُدخلَت كلمة المرور خطأً 5 مرات. لذلك لا يمكنك تسجيل الدخول بكلمة المرور
+لمدة 15 minutes، حتى 2 أكتوبر 2026, 13:05.
 
-30 سبتمبر 2026, 17:52 :Locked until
+2 أكتوبر 2026, 13:05 :Paused until
 
-After that you can sign in again. Was this not you? Then contact us.
+Was this you? Then you can try again afterwards. Was this not you? Please
+contact support.
 
-Contact us: mailto:support@lobsy.nl
+نسيت كلمة المرور؟: https://lobsy.nl/wachtwoord-vergeten
 
 فريق Lobsy
 
@@ -21,12 +22,12 @@ You get this email to protect your account.
 الخصوصية: https://lobsy.nl/privacy
 Lobsy
 --- STRUCTURE ---
-h1: Your account is locked for a while
+h1: A short pause
 marker: table data-lobsy-layout=2
 marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Contact us -> mailto:support@lobsy.nl
+a: نسيت كلمة المرور؟ -> https://lobsy.nl/wachtwoord-vergeten
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

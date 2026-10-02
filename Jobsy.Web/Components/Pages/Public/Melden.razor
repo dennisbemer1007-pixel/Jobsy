@@ -123,6 +123,13 @@
             _ => null
         };
 
+        var redenRaw = Value(query, "reden");
+        if (Enum.TryParse<ContentReportReason>(redenRaw, ignoreCase: true, out var parsedReason)
+            && Enum.IsDefined(parsedReason))
+        {
+            _selectedReason = parsedReason;
+        }
+
         if (_sent)
         {
             return;

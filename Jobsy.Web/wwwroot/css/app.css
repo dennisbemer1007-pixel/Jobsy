@@ -3629,14 +3629,10 @@ html[dir="rtl"] .account-menu__panel {
     z-index: 5;
 }
 
-/* Super-minimal map chrome: no attribution, logos, or corner links. */
-.job-map .maplibregl-ctrl-attrib,
+/* Super-minimal map chrome: hide MapLibre logo only. OSM/OpenFreeMap credit stays visible (ODbL). */
 .job-map .maplibregl-ctrl-logo,
-.job-map .maplibregl-compact,
 .job-map a.maplibregl-ctrl-logo,
-.vacancy-detail-map .maplibregl-ctrl-attrib,
 .vacancy-detail-map .maplibregl-ctrl-logo,
-.vacancy-detail-map .maplibregl-compact,
 .vacancy-detail-map a.maplibregl-ctrl-logo {
     display: none !important;
     visibility: hidden !important;
@@ -3645,6 +3641,26 @@ html[dir="rtl"] .account-menu__panel {
     width: 0 !important;
     height: 0 !important;
     overflow: hidden !important;
+}
+
+/* Compact, low-contrast attribution that clears the bottom nav / Match CTA on mobile. */
+.job-map .maplibregl-ctrl-attrib,
+.vacancy-detail-map .maplibregl-ctrl-attrib {
+    --jobsy-map-attrib-bottom: var(--bottom-nav-clearance, 4.5rem);
+    bottom: max(0.35rem, calc(var(--jobsy-map-attrib-bottom) - 3.2rem));
+    font-size: 10px;
+    line-height: 1.25;
+    background: rgba(255, 252, 250, 0.72);
+    color: #5a6a7d;
+    max-width: min(70vw, 16rem);
+}
+
+@media (min-width: 1025px) {
+    .job-map .maplibregl-ctrl-attrib,
+    .vacancy-detail-map .maplibregl-ctrl-attrib {
+        --jobsy-map-attrib-bottom: 0.5rem;
+        bottom: 0.5rem;
+    }
 }
 
 /* OpenFreeMap vector canvas — keep a light polish only. */

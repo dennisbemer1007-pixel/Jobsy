@@ -69,24 +69,12 @@ public sealed class PupilCodeService : IPupilCodeService
 
         var created = new List<PupilCode>(count);
         var alphabet = PupilCodeFormat.Alphabet.ToCharArray();
+        // Allocate once per batch — never stackalloc inside the collision retry loop (CA2014).
+        Span<char> chars = stackalloc char[PupilCodeFormat.Length];
         for (var i = 0; i < count; i++)
         {
-            string code;
-            string hash;
-            var attempts = 0;
-            do
-            {
-                if (++attempts > 100)
-                {
-                    throw new InvalidOperationException("Kon geen unieke leerlingcode genereren.");
-                }
-
-                Span<char> chars = stackalloc char[PupilCodeFormat.Length];
-                RandomNumberGenerator.GetItems(alphabet, chars);
-                code = new string(chars);
-                hash = LookupHash(code);
-            }
-            while (!used.Add(hash));
+            var code = NextUniquePlainCode(alphabet, chars, used, LookupHash);
+            var hash = LookupHash(code);
 
             var row = new PupilCode
             {
@@ -149,22 +137,14 @@ public sealed class PupilCodeService : IPupilCodeService
             .ToListAsync(cancellationToken);
         var used = new HashSet<string>(classHashes, StringComparer.Ordinal);
 
-        string code;
-        string hash;
-        var attempts = 0;
-        do
-        {
-            if (++attempts > 100)
-            {
-                throw new InvalidOperationException("Kon geen nieuwe unieke leerlingcode genereren.");
-            }
-
-            Span<char> chars = stackalloc char[PupilCodeFormat.Length];
-            RandomNumberGenerator.GetItems(alphabet, chars);
-            code = new string(chars);
-            hash = LookupHash(code);
-        }
-        while (!used.Add(hash));
+        Span<char> chars = stackalloc char[PupilCodeFormat.Length];
+        var code = NextUniquePlainCode(
+            alphabet,
+            chars,
+            used,
+            LookupHash,
+            "Kon geen nieuwe unieke leerlingcode genereren.");
+        var hash = LookupHash(code);
 
         existing.CodeLookupHash = hash;
         existing.CodeProtected = Protect(code);
@@ -172,6 +152,44 @@ public sealed class PupilCodeService : IPupilCodeService
         existing.LockedUntilUtc = null;
         await _db.SaveChangesAsync(cancellationToken);
         return existing;
+    }
+
+    /// <summary>
+    /// Generates a unique plain code by retrying into <paramref name="used"/>.
+    /// The char buffer must be allocated by the caller (never inside the loop).
+    /// </summary>
+    internal static string NextUniquePlainCode(
+        char[] alphabet,
+        Span<char> chars,
+        HashSet<string> used,
+        Func<string, string> lookupHash,
+        string exhaustedMessage = "Kon geen unieke leerlingcode genereren.",
+        int maxAttempts = 100)
+    {
+        ArgumentNullException.ThrowIfNull(alphabet);
+        ArgumentNullException.ThrowIfNull(used);
+        ArgumentNullException.ThrowIfNull(lookupHash);
+        if (chars.Length < PupilCodeFormat.Length)
+        {
+            throw new ArgumentException("Buffer is te klein voor een leerlingcode.", nameof(chars));
+        }
+
+        var attempts = 0;
+        while (true)
+        {
+            if (++attempts > maxAttempts)
+            {
+                throw new InvalidOperationException(exhaustedMessage);
+            }
+
+            RandomNumberGenerator.GetItems(alphabet, chars[..PupilCodeFormat.Length]);
+            var code = new string(chars[..PupilCodeFormat.Length]);
+            var hash = lookupHash(code);
+            if (used.Add(hash))
+            {
+                return code;
+            }
+        }
     }
 
     private static byte[] ResolveHmacKey(IConfiguration configuration, IHostEnvironment environment)
