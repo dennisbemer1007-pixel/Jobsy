@@ -521,9 +521,6 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Map.HoursRange",
             "{min}–{max} uur", "{min}–{max} hrs",
             "{min}–{max} godz.", "{min}–{max} ore", "{min}–{max} ساعة");
-        Add("Kb.Map.PassportHref",
-            "/profiel", "/profiel",
-            "/profiel", "/profiel", "/profiel");
 
         // Banenkaart start / location prompt (03)
         Add("Kb.Start.Title",
