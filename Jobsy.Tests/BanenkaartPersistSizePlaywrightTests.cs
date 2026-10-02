@@ -264,7 +264,7 @@ public class BanenkaartPersistSizePlaywrightTests
             var sw = Stopwatch.StartNew();
             await listBtn.ClickAsync();
             await page.WaitForSelectorAsync(
-                ".vacancy-list .job-card, .vacancy-list--cards .job-card, article.job-card",
+                ".vacancy-list .job-card, .vacancy-list--cards .job-card, article.job-card, .kb-list-rows .kb-list-row, [data-testid=kb-list-rows] .kb-list-row",
                 new() { Timeout = 2_000 });
             sw.Stop();
             Assert.True(sw.ElapsedMilliseconds <= 2_000, $"Lijst cards took {sw.ElapsedMilliseconds}ms (>2s).");
@@ -274,7 +274,7 @@ public class BanenkaartPersistSizePlaywrightTests
             var sw = Stopwatch.StartNew();
             await listBtn.ClickAsync();
             await page.WaitForSelectorAsync(
-                ".vacancy-list .job-card, .vacancy-list--cards .job-card, article.job-card",
+                ".vacancy-list .job-card, .vacancy-list--cards .job-card, article.job-card, .kb-list-rows .kb-list-row, [data-testid=kb-list-rows] .kb-list-row",
                 new() { Timeout = 2_000 });
             sw.Stop();
             Assert.True(sw.ElapsedMilliseconds <= 2_000, $"Lijst cards took {sw.ElapsedMilliseconds}ms (>2s).");
@@ -283,11 +283,11 @@ public class BanenkaartPersistSizePlaywrightTests
         {
             // Desktop list pane is visible without a toggle — wait for cards once interactive.
             await page.WaitForSelectorAsync(
-                ".vacancy-list .job-card, .vacancy-list--cards .job-card, article.job-card",
+                ".vacancy-list .job-card, .vacancy-list--cards .job-card, article.job-card, .kb-list-rows .kb-list-row, [data-testid=kb-list-rows] .kb-list-row",
                 new() { Timeout = 15_000 });
         }
 
-        var cards = await page.Locator(".vacancy-list .job-card, article.job-card").CountAsync();
+        var cards = await page.Locator(".vacancy-list .job-card, article.job-card, .kb-list-rows .kb-list-row").CountAsync();
         Assert.True(cards > 0, "Expected vacancy cards after opening Lijst.");
     }
 

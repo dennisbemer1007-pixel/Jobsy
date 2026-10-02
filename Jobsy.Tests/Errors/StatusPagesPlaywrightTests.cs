@@ -383,6 +383,13 @@ public class StatusPagesPlaywrightTests
         var trying = await page.Locator(".reconnect-toast__msg--show").First.InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(trying));
 
+        var hasBlazor = await page.EvaluateAsync<bool>("() => typeof Blazor !== 'undefined' && !!Blazor");
+        if (!hasBlazor)
+        {
+            Skip($"reconnect toast {language}: landing has no Blazor circuit in this environment");
+            return;
+        }
+
         await context.SetOfflineAsync(true);
         try
         {

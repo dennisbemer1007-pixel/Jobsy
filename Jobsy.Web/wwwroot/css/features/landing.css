@@ -264,19 +264,19 @@
 }
 
 .pub-theme .pub-landing__float--bike {
-  inset-inline-start: 0.5rem;
+  inset-inline-start: 0.75rem;
   top: 6%;
 }
 
 .pub-theme .pub-landing__float--bus {
-  inset-inline-end: 0.25rem;
+  inset-inline-end: 0.75rem;
   top: 42%;
 }
 
 .pub-theme .pub-landing__you-card {
   position: absolute;
-  inset-inline-end: 0.5rem;
-  bottom: 0.5rem;
+  inset-inline-end: 0.75rem;
+  bottom: 0.75rem;
   z-index: 3;
   background: var(--surface);
   border-radius: var(--pub-radius-card);
@@ -1300,5 +1300,42 @@
   .pub-theme .pub-landing__ppc-chip {
     white-space: normal;
     max-width: 100%;
+  }
+
+  /* Keep hero floats/chips inside the 12px viewport inset used by LandingPlaywrightTests. */
+  .pub-theme .pub-landing__hero-scene {
+    overflow: hidden;
+  }
+
+  .pub-theme .pub-landing__float {
+    max-width: min(9.5rem, calc(100% - 1.75rem));
+    padding: 0.4rem 0.55rem;
+  }
+
+  .pub-theme .pub-landing__float--bike {
+    inset-inline-start: 0.75rem;
+    top: 8%;
+  }
+
+  .pub-theme .pub-landing__float--bus {
+    inset-inline-end: 0.75rem;
+    top: 44%;
+  }
+
+  .pub-theme .pub-landing__float--fit {
+    inset-inline-end: 0.75rem;
+    max-width: min(9.5rem, calc(100% - 1.75rem));
+  }
+
+  .pub-theme .pub-landing__bubble {
+    white-space: normal;
+    max-width: min(8.5rem, 42%);
+    inset-inline-start: 48%;
+  }
+
+  .pub-theme .pub-landing__you-card {
+    inset-inline-end: 0.75rem;
+    inset-inline-start: 0.75rem;
+    max-width: none;
   }
 }

@@ -383,7 +383,13 @@ public class PublicPagesPlaywrightTests
     {
         var text = await page.Locator("body").InnerTextAsync();
         Assert.DoesNotContain("€ 0,00", text, StringComparison.Ordinal);
-        Assert.Contains("btw", text, StringComparison.OrdinalIgnoreCase);
+        // NL uses "btw"; EN/PL/RO/AR use VAT / localized tax wording from PartnerPage.Rates.*.
+        Assert.True(
+            text.Contains("btw", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("VAT", StringComparison.Ordinal)
+            || text.Contains("TVA", StringComparison.Ordinal)
+            || text.Contains("ضريبة", StringComparison.Ordinal),
+            "Partner rates should mention VAT/btw in the page language.");
     }
 
     private static async Task SetLanguageAsync(IPage page, string baseUrl, string lang)

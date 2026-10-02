@@ -20,7 +20,8 @@ public static class ContentReportEndpoints
 
     public static IEndpointRouteBuilder MapContentReportEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/melden", async (
+        // Distinct from the Blazor GET page at /melden — same path POST is AmbiguousMatchException.
+        app.MapPost("/melden/verstuur", async (
             HttpContext http,
             IAntiforgery antiforgery,
             IHttpClientFactory httpClientFactory,

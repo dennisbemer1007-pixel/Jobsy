@@ -63,7 +63,8 @@ public class LoginPlaywrightTests
 
             Assert.Empty(cspHits);
             await Assertions.Expect(page.Locator("h1").First).ToBeVisibleAsync();
-            Assert.Equal(0, await page.Locator("[role=dialog]").CountAsync());
+            // Cookie consent uses role=dialog; the login redesign itself must not open a modal.
+            Assert.Equal(0, await page.Locator("[role=dialog]:not(.cookie-consent)").CountAsync());
 
             var overflow = await page.EvaluateAsync<bool>(
                 "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");

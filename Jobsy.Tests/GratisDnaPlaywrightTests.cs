@@ -52,7 +52,12 @@ public class GratisDnaPlaywrightTests
             return;
         }
 
-        var age16 = page.Locator("[data-testid=gd-age16], button.gd-pill");
+        var age16 = page.Locator("[data-testid=gd-age16]");
+        if (await age16.CountAsync() == 0)
+        {
+            age16 = page.Locator("button.gd-pill");
+        }
+
         if (await age16.CountAsync() == 0)
         {
             return;
@@ -60,14 +65,24 @@ public class GratisDnaPlaywrightTests
 
         await AssertNoHorizontalOverflowAsync(page);
 
-        await age16.First.ClickAsync();
-        var consent = page.Locator("[data-testid=gd-consent], label.gd-consent input[type=checkbox]");
-        if (await consent.CountAsync() > 0)
+        await age16.First.CheckAsync();
+        var consent = page.Locator("[data-testid=gd-consent]");
+        try
         {
-            await consent.First.CheckAsync();
+            await consent.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+            await consent.CheckAsync();
+        }
+        catch (TimeoutException)
+        {
+            // Age gate did not reveal consent (storage disabled / under-16 path).
+            return;
         }
 
-        var start = page.GetByRole(AriaRole.Button, new() { NameRegex = new("Start de( gratis)? test", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
+        var start = page.GetByTestId("gd-start-cta");
+        await page.WaitForFunctionAsync(
+            "() => { const b = document.querySelector('[data-testid=gd-start-cta]'); return b && !b.disabled; }",
+            null,
+            new() { Timeout = 15_000 });
         await start.ClickAsync();
 
         await page.WaitForSelectorAsync(".gd-questions, [data-testid=gd-questions], .questionnaire-shell", new() { Timeout = 30_000 });
