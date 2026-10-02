@@ -45,6 +45,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidatePrivatePreferences> CandidatePrivatePreferences => Set<CandidatePrivatePreferences>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
+    public DbSet<CandidateCareerGeneration> CandidateCareerGenerations => Set<CandidateCareerGeneration>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateOnboarding> CandidateOnboardings => Set<CandidateOnboarding>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
@@ -777,7 +778,28 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.DreamKey).HasMaxLength(120).IsRequired();
             entity.Property(e => e.PlanJson).HasColumnType("text").IsRequired();
             entity.Property(e => e.MatchSummary).HasMaxLength(500).IsRequired();
-            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired().HasDefaultValue(CareerPlanStatuses.Active);
+            entity.Property(e => e.PlanLanguage).HasMaxLength(8).IsRequired().HasDefaultValue("nl");
+            entity.Property(e => e.DreamSource).HasMaxLength(16).IsRequired().HasDefaultValue(CareerDreamSources.Wizard);
+            entity.Property(e => e.DreamCatalogKey).HasMaxLength(80);
+            entity.HasIndex(e => e.UserId)
+                .HasDatabaseName("IX_CandidateCareerPlans_UserId_Active")
+                .HasFilter("\"Status\" = 'Active'")
+                .IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.Status, e.ArchivedAtUtc });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateCareerGeneration>(entity =>
+        {
+            entity.ToTable("CandidateCareerGenerations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DreamKey).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.Outcome).HasMaxLength(16).IsRequired().HasDefaultValue(CareerGenerationOutcomes.Ok);
+            entity.HasIndex(e => new { e.UserId, e.StartedAtUtc });
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -805,6 +827,7 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.StepKey).HasMaxLength(32).IsRequired();
             entity.Property(e => e.Source).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.UndoFingerprint).HasMaxLength(64);
             entity.HasIndex(e => new { e.PlanId, e.StepKey }).IsUnique();
             entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.Plan)
@@ -1010,6 +1033,8 @@ public class JobsyDbContext : DbContext
             entity.ToTable("TalentContactRequests");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Message).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.CandidateDeclineReason)
+                .HasMaxLength(Jobsy.Core.Rules.TalentContactDeclineReasons.MaxLength);
             entity.HasIndex(e => new { e.CompanyId, e.CandidateUserId, e.Status });
             entity.HasIndex(e => e.RespondByUtc);
             entity.HasOne(e => e.Company)

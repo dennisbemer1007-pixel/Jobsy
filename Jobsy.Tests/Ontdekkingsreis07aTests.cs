@@ -256,7 +256,15 @@ public class OntdekkingsreisServiceMigrationTests
         public Task TryGeneratePendingAsync(Guid userId, HorizonCareerProfileSnapshot snapshot, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public Task<HorizonCareerPathPlanView> GenerateAndSaveAsync(Guid userId, string dreamTitle, HorizonCareerProfileSnapshot snapshot, CancellationToken cancellationToken = default)
+        public Task<HorizonCareerPathPlanView> GenerateAndSaveAsync(
+            Guid userId,
+            string? dreamTitle,
+            HorizonCareerProfileSnapshot snapshot,
+            string? catalogKey = null,
+            string? dreamSource = null,
+            string? planLanguage = null,
+            bool force = false,
+            CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
         public Task<HorizonCareerPathPlanView?> CompleteStepAsync(Guid userId, string stepKey, CancellationToken cancellationToken = default)
@@ -265,8 +273,14 @@ public class OntdekkingsreisServiceMigrationTests
         public Task<HorizonCareerPathPlanView?> UncompleteStepAsync(Guid userId, string stepKey, CancellationToken cancellationToken = default)
             => Task.FromResult<HorizonCareerPathPlanView?>(null);
 
-        public Task<HorizonCareerPathPlanView?> ClaimCourseAsync(Guid userId, string courseName, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<ArchivedCareerPlanView>> ListArchivedAsync(Guid userId, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<ArchivedCareerPlanView>>([]);
+
+        public Task<HorizonCareerPathPlanView?> RestoreArchivedAsync(Guid userId, Guid planId, CancellationToken cancellationToken = default)
             => Task.FromResult<HorizonCareerPathPlanView?>(null);
+
+        public Task<CareerDreamOptionsView> GetDreamOptionsAsync(Guid userId, string? query, CancellationToken cancellationToken = default)
+            => Task.FromResult(new CareerDreamOptionsView([], []));
     }
 }
 

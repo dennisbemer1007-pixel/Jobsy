@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Public
 @using Jobsy.Web.Auth
+@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
@@ -13,10 +14,20 @@
     <p class="gd-signup__sub">@Culture["GratisDna.Signup.Sub"]</p>
 
     <ul class="gd-signup__unlock">
-        <li><PubEmoji Glyph="🧬" /> @Culture["GratisDna.Signup.Unlock.Passport"]</li>
-        <li><PubEmoji Glyph="✅" /> @Culture["GratisDna.Signup.Unlock.Fit"]</li>
-        <li><PubEmoji Glyph="🗺️" /> @Culture["GratisDna.Signup.Unlock.Map"]</li>
-        <li><PubEmoji Glyph="⭐" /> @Culture["GratisDna.Signup.Unlock.Match"]</li>
+        @if (Variant == LandingVariant.Zw)
+        {
+            <li><PubEmoji Glyph="🧬" /> @Culture["GratisDna.Signup.Unlock.Passport"]</li>
+            <li><PubEmoji Glyph="✅" /> @LandingText.For("GratisDna.Signup.Unlock.Fit", Variant)</li>
+            <li><PubEmoji Glyph="🪜" /> @LandingText.For("GratisDna.Signup.Unlock.Dream", Variant)</li>
+            <li><PubEmoji Glyph="🧭" /> @LandingText.For("GratisDna.Signup.Unlock.Journey", Variant)</li>
+        }
+        else
+        {
+            <li><PubEmoji Glyph="🧬" /> @Culture["GratisDna.Signup.Unlock.Passport"]</li>
+            <li><PubEmoji Glyph="✅" /> @Culture["GratisDna.Signup.Unlock.Fit"]</li>
+            <li><PubEmoji Glyph="🗺️" /> @Culture["GratisDna.Signup.Unlock.Map"]</li>
+            <li><PubEmoji Glyph="⭐" /> @Culture["GratisDna.Signup.Unlock.Match"]</li>
+        }
     </ul>
 
     <div class="gd-signup__providers">
@@ -80,6 +91,7 @@
 </aside>
 
 @code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
     [Parameter] public string DomId { get; set; } = "gd-signup";
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public bool ShowLater { get; set; }

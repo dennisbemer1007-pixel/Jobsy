@@ -1,0 +1,254 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@implements IDisposable
+@inject CultureState Culture
+
+<div class="career-picker">
+    @if (Suggestions.Count > 0)
+    {
+        <div class="career-picker__suggest">
+            <p class="career-picker__label" id="@($"{Id}-suggest-label")">@Culture["Career.Empty.SuggestTitle"]</p>
+            <p class="career-picker__hint">@Culture["Career.Empty.SuggestLead"]</p>
+            <div class="career-picker__options" role="radiogroup" aria-labelledby="@($"{Id}-suggest-label")">
+                @foreach (var item in Suggestions.Take(3))
+                {
+                    var key = SuggestionId(item);
+                    <button type="button"
+                            class="career-option @(IsSelected(key) ? "is-selected" : null)"
+                            role="radio"
+                            aria-checked="@(IsSelected(key) ? "true" : "false")"
+                            disabled="@Disabled"
+                            @onclick="() => PickSuggestion(item)">
+                        <b class="career-option__title">@item.Title</b>
+                        @if (!string.IsNullOrWhiteSpace(item.ReasonKey))
+                        {
+                            <small class="career-option__reason">@Culture[item.ReasonKey]</small>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(BandLabelKey))
+                        {
+                            <small class="career-option__band">@Culture["Career.Suggest.Fit"] · @Culture[BandLabelKey]</small>
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+
+        <p class="career-picker__divider" aria-hidden="true">@Culture["Career.Empty.Or"]</p>
+    }
+
+    <div class="career-picker__search">
+        <label class="career-picker__label" for="@($"{Id}-q")">@Culture["Career.Search.Label"]</label>
+        <input id="@($"{Id}-q")"
+               class="career-picker__input"
+               type="text"
+               role="combobox"
+               autocomplete="off"
+               maxlength="60"
+               aria-expanded="@(_open ? "true" : "false")"
+               aria-controls="@($"{Id}-list")"
+               aria-autocomplete="list"
+               aria-activedescendant="@ActiveDescendant"
+               placeholder="@Culture["Career.Search.Placeholder"]"
+               value="@_query"
+               disabled="@Disabled"
+               @oninput="OnQueryInput"
+               @onkeydown="OnQueryKeyDown" />
+        <p class="career-picker__hint">@Culture["Career.Search.Hint"]</p>
+
+        <ul id="@($"{Id}-list")"
+            class="career-picker__list @(_open ? "is-open" : null)"
+            role="listbox"
+            aria-label="@Culture["Career.Search.Results"]">
+            @for (var i = 0; i < _results.Count; i++)
+            {
+                var index = i;
+                var item = _results[i];
+                var key = SuggestionId(item);
+                <li id="@($"{Id}-opt-{index}")"
+                    class="career-picker__result @(index == _activeIndex ? "is-active" : null)"
+                    role="option"
+                    aria-selected="@(IsSelected(key) ? "true" : "false")">
+                    <button type="button" disabled="@Disabled" @onclick="() => PickSuggestion(item)">@item.Title</button>
+                </li>
+            }
+        </ul>
+
+        <button type="button"
+                class="career-picker__free-toggle"
+                aria-expanded="@(_freeOpen ? "true" : "false")"
+                aria-controls="@($"{Id}-free")"
+                disabled="@Disabled"
+                @onclick="ToggleFree">
+            @Culture["Career.Search.NotFound"]
+        </button>
+
+        @if (_freeOpen)
+        {
+            <div id="@($"{Id}-free")" class="career-picker__free">
+                <label class="career-picker__label" for="@($"{Id}-free-input")">@Culture["Career.Search.FreeLabel"]</label>
+                <input id="@($"{Id}-free-input")"
+                       class="career-picker__input"
+                       type="text"
+                       maxlength="60"
+                       autocomplete="off"
+                       value="@_freeText"
+                       disabled="@Disabled"
+                       @oninput="OnFreeInput" />
+                <p class="career-picker__hint">@Culture["Career.Search.FreeHint"]</p>
+                @if (_freeInvalid)
+                {
+                    <p class="career-picker__error" role="alert">@Culture["CareerErr.DreamTextInvalid"]</p>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private readonly List<CareerDreamOptionApiItem> _results = [];
+    private CancellationTokenSource? _debounce;
+    private string _query = "";
+    private string _freeText = "";
+    private string? _selectedKey;
+    private bool _open;
+    private bool _freeOpen;
+    private bool _freeInvalid;
+    private int _activeIndex = -1;
+
+    [Parameter] public string Id { get; set; } = "career-dream";
+    [Parameter] public IReadOnlyList<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
+    [Parameter] public string? BandLabelKey { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback<CareerDreamChoice?> OnChoice { get; set; }
+    [Parameter] public Func<string, CancellationToken, Task<IReadOnlyList<CareerDreamOptionApiItem>>>? OnSearch { get; set; }
+
+    private string? ActiveDescendant
+        => _open && _activeIndex >= 0 && _activeIndex < _results.Count ? $"{Id}-opt-{_activeIndex}" : null;
+
+    private static string SuggestionId(CareerDreamOptionApiItem item)
+        => string.IsNullOrWhiteSpace(item.CatalogKey) ? $"title:{item.Title}" : $"key:{item.CatalogKey}";
+
+    private bool IsSelected(string key) => string.Equals(_selectedKey, key, StringComparison.Ordinal);
+
+    private async Task PickSuggestion(CareerDreamOptionApiItem item)
+    {
+        _selectedKey = SuggestionId(item);
+        _open = false;
+        _activeIndex = -1;
+        _freeInvalid = false;
+        await OnChoice.InvokeAsync(new CareerDreamChoice(item.CatalogKey, null, item.Title));
+    }
+
+    private async Task OnQueryInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+
+        if (_query.Trim().Length < 2 || OnSearch is null)
+        {
+            _results.Clear();
+            _open = false;
+            _activeIndex = -1;
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _debounce = cts;
+        var term = _query.Trim();
+
+        try
+        {
+            await Task.Delay(250, cts.Token);
+            var found = await OnSearch(term, cts.Token);
+            if (cts.IsCancellationRequested)
+            {
+                return;
+            }
+
+            _results.Clear();
+            _results.AddRange(found.Take(8));
+            _open = _results.Count > 0;
+            _activeIndex = _results.Count > 0 ? 0 : -1;
+            StateHasChanged();
+        }
+        catch (OperationCanceledException)
+        {
+            // superseded by a newer keystroke
+        }
+    }
+
+    private async Task OnQueryKeyDown(KeyboardEventArgs e)
+    {
+        if (_results.Count == 0)
+        {
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                _open = true;
+                _activeIndex = (_activeIndex + 1) % _results.Count;
+                break;
+            case "ArrowUp":
+                _open = true;
+                _activeIndex = _activeIndex <= 0 ? _results.Count - 1 : _activeIndex - 1;
+                break;
+            case "Escape":
+                _open = false;
+                _activeIndex = -1;
+                break;
+            case "Enter":
+                if (_open && _activeIndex >= 0 && _activeIndex < _results.Count)
+                {
+                    await PickSuggestion(_results[_activeIndex]);
+                }
+
+                break;
+        }
+    }
+
+    private async Task ToggleFree()
+    {
+        _freeOpen = !_freeOpen;
+        if (!_freeOpen)
+        {
+            _freeInvalid = false;
+            if (_selectedKey == "free")
+            {
+                _selectedKey = null;
+                await OnChoice.InvokeAsync(null);
+            }
+        }
+    }
+
+    private async Task OnFreeInput(ChangeEventArgs e)
+    {
+        _freeText = e.Value?.ToString() ?? "";
+        var sanitized = CareerDreamText.Sanitize(_freeText);
+        if (sanitized is null)
+        {
+            _freeInvalid = _freeText.Trim().Length > 0;
+            if (_selectedKey == "free")
+            {
+                _selectedKey = null;
+                await OnChoice.InvokeAsync(null);
+            }
+
+            return;
+        }
+
+        _freeInvalid = false;
+        _selectedKey = "free";
+        await OnChoice.InvokeAsync(new CareerDreamChoice(null, sanitized, sanitized));
+    }
+
+    public void Dispose()
+    {
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+    }
+}

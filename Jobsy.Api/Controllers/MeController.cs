@@ -497,6 +497,71 @@ public class MeController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Per-stone done state for <c>/candidate/hoe-werkt-lobsy</c> (05 §2). Read-only:
+    /// every query is <c>AsNoTracking</c> and nothing is saved.
+    /// </summary>
+    [HttpGet("journey-summary")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    public async Task<ActionResult<CandidateJourneySummaryDto>> GetJourneySummary(
+        CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var userId = lookup.Id;
+
+        var discoveryDone = await _db.CandidateOnboardings.AsNoTracking()
+            .AnyAsync(o => o.UserId == userId && (o.CompletedAtUtc != null || o.FinishReached), cancellationToken);
+
+        var preferencesJson = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var passportDone = HasAnyProof(preferencesJson)
+            || await _db.CandidateReferences.AsNoTracking()
+                .AnyAsync(r => r.UserId == userId, cancellationToken)
+            || await _db.CandidateUploadedCvs.AsNoTracking()
+                .AnyAsync(c => c.UserId == userId, cancellationToken);
+
+        var careerDone = await _db.CandidateCareerStepProgress.AsNoTracking()
+            .AnyAsync(
+                p => p.UserId == userId
+                     && p.CompletedAtUtc != null
+                     && p.Plan.Status == Jobsy.Core.Entities.CareerPlanStatuses.Active,
+                cancellationToken);
+
+        var jobMapDone = await _db.VacancyLikes.AsNoTracking()
+                .AnyAsync(l => l.UserId == userId, cancellationToken)
+            || await _db.VacancyShares.AsNoTracking()
+                .AnyAsync(s => s.UserId == userId, cancellationToken);
+
+        var applicationsDone = await _db.Applications.AsNoTracking()
+            .AnyAsync(a => a.CandidateUserId == userId, cancellationToken);
+
+        return Ok(new CandidateJourneySummaryDto(
+            discoveryDone,
+            passportDone,
+            careerDone,
+            jobMapDone,
+            applicationsDone));
+    }
+
+    /// <summary>At least one paspoort proof: employer, education, certificate or own CV.</summary>
+    private static bool HasAnyProof(string? preferencesJson)
+    {
+        var preferences = ParsePreferences(preferencesJson);
+        return (preferences.Employers?.Any(e => !string.IsNullOrWhiteSpace(e.EmployerName)) ?? false)
+               || (preferences.Certificates?.Any(c => !string.IsNullOrWhiteSpace(c.Name)) ?? false)
+               || (preferences.Educations?.Any(e =>
+                   !string.IsNullOrWhiteSpace(e)
+                   && !string.Equals(e, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase)) ?? false);
+    }
+
     [HttpGet("likes")]
     [Authorize(Policy = JobsyPolicies.RequireCandidate)]
     public async Task<ActionResult<IEnumerable<CandidateVacancyEngagementDto>>> GetMyLikes(CancellationToken cancellationToken)
