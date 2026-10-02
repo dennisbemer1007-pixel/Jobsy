@@ -40,7 +40,7 @@ public sealed class MfaEnforcementMiddleware
             return;
         }
 
-        var runtime = context.RequestServices.GetService(typeof(ITestAccountsRuntime)) as ITestAccountsRuntime;
+        var runtime = context.RequestServices?.GetService(typeof(ITestAccountsRuntime)) as ITestAccountsRuntime;
         var isTestViewer = TestDataRules.IsTestViewer(context.User);
         if (isTestViewer && runtime?.IsActive == true)
         {
