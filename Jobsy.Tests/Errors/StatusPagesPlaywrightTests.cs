@@ -383,6 +383,13 @@ public class StatusPagesPlaywrightTests
         var trying = await page.Locator(".reconnect-toast__msg--show").First.InnerTextAsync();
         Assert.False(string.IsNullOrWhiteSpace(trying));
 
+        var hasBlazor = await page.EvaluateAsync<bool>("() => typeof Blazor !== 'undefined' && !!Blazor");
+        if (!hasBlazor)
+        {
+            Skip($"reconnect toast {language}: landing has no Blazor circuit in this environment");
+            return;
+        }
+
         await context.SetOfflineAsync(true);
         try
         {
@@ -683,7 +690,7 @@ public class StatusPagesPlaywrightTests
             });
             return true;
         }
-        catch (PlaywrightException)
+        catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
         {
             return false;
         }
@@ -712,10 +719,16 @@ public class StatusPagesPlaywrightTests
             await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
             await page.FillAsync("input[name='email']", email);
             await page.FillAsync("input[name='password']", password);
-            await page.ClickAsync("button.login-submit");
-            await page.WaitForURLAsync(
-                url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
-                new() { Timeout = 60_000 });
+            var submit = page.Locator("button.login-submit, button.au-submit[type=submit]");
+            await page.WaitForFunctionAsync(
+                "() => { const b = document.querySelector('button.login-submit, button.au-submit[type=submit]'); return b && !b.disabled; }",
+                null,
+                new() { Timeout = 30_000 });
+            await Task.WhenAll(
+                page.WaitForURLAsync(
+                    url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = 60_000 }),
+                submit.ClickAsync());
             return true;
         }
         catch

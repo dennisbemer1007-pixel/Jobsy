@@ -12,8 +12,8 @@
     "v": "20261001-errors-5"
   },
   "css/features/applications.css": {
-    "sha256": "08e8ccce5618f81b8e728a073d7630c2e9c6759ae09a2552c936bad4910e713d",
-    "v": "20260927-apps-clamp"
+    "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
+    "v": "20261002-ci-mtp2"
   },
   "css/features/auth.css": {
     "sha256": "3388f3f86c22de763eab34d89641cef75fa0ea83e621d5a4d4373acc182a6f4c",
@@ -48,16 +48,16 @@
     "v": "20260929-insights-7"
   },
   "css/features/landing.css": {
-    "sha256": "45e4aa322d0fa71fd6c3b9bed697cccef7888c1e9733f5f7b5868413f00b7e5f",
-    "v": "20260930-landing-7"
+    "sha256": "1ca9ddd1a7ac555d403a4313de07ee4706ae1f79d4eb603d6fb10adfd222ad37",
+    "v": "20261002-ci-mtp3"
   },
   "css/features/match-desktop.css": {
     "sha256": "719535fb31e05c285f519f7a047a872dcd91ab67d42b56ae5b03b4cb8f13d672",
     "v": "20260930-kb8"
   },
   "css/features/mijn-dna.css": {
-    "sha256": "dc4132dd0ecb72d496a433bdb015caf8baf98cd6c1fe576358cd574c1d63fcdf",
-    "v": "20260930-dna-overflow"
+    "sha256": "83627c283d3bb38460b2661e74c9021c92186b0d783ce9ebb27d3808dbabee65",
+    "v": "20261002-ci-mtp"
   },
   "css/features/mijn-paspoort.css": {
     "sha256": "299c0863e6a1abf7fa094820262565f5e5c93be064bdf0d7aace263199a5e3ec",
@@ -140,8 +140,8 @@
     "v": "20260928-perf"
   },
   "js/discoveryHover.js": {
-    "sha256": "be3ef352874658692c51a81b3cf04601db54000f34298be1c2a284660d8634b5",
-    "v": "20261002-kp01"
+    "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
+    "v": "20261002-kp01m"
   },
   "js/features/account-mfa.js": {
     "sha256": "01fcae80a3439833ca143a9bbb11278e63d3d9d4fdb55be3136b9a4f035c63f5",

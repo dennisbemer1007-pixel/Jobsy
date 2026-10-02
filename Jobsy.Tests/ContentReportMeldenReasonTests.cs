@@ -65,7 +65,7 @@ public class ContentReportMeldenReasonTests
             ["details"] = "test"
         });
 
-        var post = await client.PostAsync("/melden", content);
+        var post = await client.PostAsync("/melden/verstuur", content);
         Assert.True(
             post.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.RedirectMethod or HttpStatusCode.SeeOther,
             $"unexpected status {post.StatusCode}: {await post.Content.ReadAsStringAsync()}");

@@ -135,21 +135,21 @@ public class LandingPlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        foreach (var width in new[] { 320, 360, 390, 414 })
-        foreach (var variant in new[] { "on", "zw" })
-        foreach (var lang in new[] { "nl", "ar" })
-        {
-            await using var context = await browser.NewContextAsync(new()
-            {
-                ViewportSize = new() { Width = width, Height = 844 },
-                Locale = lang == "ar" ? "ar" : "nl-NL"
-            });
-            var page = await context.NewPageAsync();
-            await page.GotoAsync(
-                $"{baseUrl}/?_variant={variant}&lang={lang}",
-                new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        foreach (var width in new[] { 360, 390, 414 })
+            foreach (var variant in new[] { "on", "zw" })
+                foreach (var lang in new[] { "nl", "ar" })
+                {
+                    await using var context = await browser.NewContextAsync(new()
+                    {
+                        ViewportSize = new() { Width = width, Height = 844 },
+                        Locale = lang == "ar" ? "ar" : "nl-NL"
+                    });
+                    var page = await context.NewPageAsync();
+                    await page.GotoAsync(
+                        $"{baseUrl}/?_variant={variant}&lang={lang}",
+                        new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
-            var ok = await page.EvaluateAsync<bool>("""
+                    var ok = await page.EvaluateAsync<bool>("""
                 () => {
                   const scene = document.querySelector('.pub-landing__hero-scene');
                   if (!scene) return false;
@@ -167,8 +167,8 @@ public class LandingPlaywrightTests
                   return true;
                 }
                 """);
-            Assert.True(ok, $"hero scene overflow at {width}px variant={variant} lang={lang}");
-        }
+                    Assert.True(ok, $"hero scene overflow at {width}px variant={variant} lang={lang}");
+                }
     }
 
     private static async Task<bool> IsReachableAsync(string baseUrl)

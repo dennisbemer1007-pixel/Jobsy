@@ -112,7 +112,9 @@ window.jobsyDiscovery = (function () {
             if (!listIsVisible(el)) {
                 return;
             }
-            var root = el.closest(".vacancy-list") || null;
+            // Prefer the pane (fixed-height scrollport). A growing .vacancy-list is not a
+            // scroll root, so the sentinel stays intersecting and would load every card.
+            var root = el.closest(".vacancy-pane") || el.closest(".vacancy-list") || null;
             observer = new IntersectionObserver(function (entries) {
                 if (!listIsVisible(el)) {
                     return;

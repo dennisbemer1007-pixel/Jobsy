@@ -356,6 +356,11 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             candidate.DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-17);
             candidate.TalentPoolConsentAt = DateTime.UtcNow;
             candidate.TalentPoolConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion;
+            // The class fixture shares one in-memory store; another test may already have
+            // completed a competency test for this candidate. Postgres enforces one row per
+            // user (unique index), the in-memory provider does not, so clear it first.
+            db.CandidateCompetencies.RemoveRange(
+                db.CandidateCompetencies.Where(c => c.UserId == candidate.Id));
             db.CandidateCompetencies.Add(new CandidateCompetency
             {
                 Id = Guid.NewGuid(),
