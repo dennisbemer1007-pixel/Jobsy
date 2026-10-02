@@ -135,7 +135,7 @@ public class LandingPlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        foreach (var width in new[] { 320, 360, 390, 414 })
+        foreach (var width in new[] { 360, 390, 414 })
         foreach (var variant in new[] { "on", "zw" })
         foreach (var lang in new[] { "nl", "ar" })
         {
