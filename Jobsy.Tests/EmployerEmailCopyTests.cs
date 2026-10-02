@@ -63,7 +63,7 @@ public class EmployerEmailCopyTests
     [Fact]
     public void Day_counts_follow_rule_constants_not_literals_in_values()
     {
-        foreach (var (key, value) in EmailStrings.All["nl"])
+        foreach (var (_, value) in EmailStrings.All["nl"])
         {
             Assert.DoesNotMatch(@"\b\d+\s*(minuten|dagen)\b", value);
         }

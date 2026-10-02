@@ -122,6 +122,11 @@ dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1305.severity = none
 dotnet_diagnostic.CA1304.severity = none
 dotnet_diagnostic.CA1311.severity = none
+# CA1873 (.NET 10): expensive-looking log args. Seeders/jobs use simple interpolations; LoggerMessage
+# conversion is a later pass (same bucket as CA1848). Not a correctness issue.
+dotnet_diagnostic.CA1873.severity = none
+# CA1875 (.NET 10): Regex.Count vs Matches().Count — micro-perf; mostly tests. Defer mechanical fix.
+dotnet_diagnostic.CA1875.severity = none
 
 # CA1862: every hit is inside an EF Core IQueryable predicate (email / tracking-code lookups,
 # ATS + assistant search). EF translates ToLower()/ToUpper() to SQL lower()/upper(), but it cannot
@@ -149,6 +154,7 @@ dotnet_diagnostic.CA1865.severity = none
 dotnet_diagnostic.CA1860.severity = none
 dotnet_diagnostic.CA1869.severity = none
 dotnet_diagnostic.CA1859.severity = none
+dotnet_diagnostic.CA1875.severity = none
 # ASP0006: bUnit RenderTreeBuilder helpers in tests use seq++. Rendering diff stability is not under test here.
 dotnet_diagnostic.ASP0006.severity = none
 
@@ -161,6 +167,7 @@ dotnet_diagnostic.CA1865.severity = none
 dotnet_diagnostic.CA1860.severity = none
 dotnet_diagnostic.CA1869.severity = none
 dotnet_diagnostic.CA1859.severity = none
+dotnet_diagnostic.CA1875.severity = none
 dotnet_diagnostic.ASP0006.severity = none
 
 # --- EF migrations: generated ---

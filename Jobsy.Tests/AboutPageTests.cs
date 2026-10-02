@@ -112,14 +112,9 @@ public class AboutPageTests : TestContext
         Assert.Equal(UiStrings.Get("About.Founder.Name"), card.QuerySelector("h2")!.TextContent.Trim());
         Assert.Contains(UiStrings.Get("About.Founder.Text"), card.TextContent, StringComparison.Ordinal);
 
-        if (AboutAssets.HasFounderPhoto)
-        {
-            Assert.NotNull(card.QuerySelector("img.pp-about__photo"));
-        }
-        else
-        {
-            Assert.NotNull(card.QuerySelector("span.pp-about__avatar"));
-        }
+        // Photo branch is omitted while AboutAssets.HasFounderPhoto is false (CS0162 otherwise).
+        Assert.False(AboutAssets.HasFounderPhoto);
+        Assert.NotNull(card.QuerySelector("span.pp-about__avatar"));
     }
 
     [Fact]

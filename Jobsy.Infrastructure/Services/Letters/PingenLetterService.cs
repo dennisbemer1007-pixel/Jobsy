@@ -15,7 +15,7 @@ namespace Jobsy.Infrastructure.Services.Letters;
 /// Only used when <see cref="CompanyVerificationSettings.LetterProvider"/> is Pingen
 /// and credentials are configured — never the Dev/CI/Acc default.
 /// </summary>
-public sealed class PingenLetterService : ILetterService
+public sealed class PingenLetterService : ILetterService, IDisposable
 {
     public const string HttpClientName = "PingenLetters";
 
@@ -31,6 +31,7 @@ public sealed class PingenLetterService : ILetterService
     private readonly SemaphoreSlim _tokenGate = new(1, 1);
     private string? _accessToken;
     private DateTime _tokenExpiresAtUtc = DateTime.MinValue;
+    private bool _disposed;
 
     public PingenLetterService(
         IHttpClientFactory httpClientFactory,
@@ -257,6 +258,17 @@ public sealed class PingenLetterService : ILetterService
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
         return doc.RootElement.GetProperty("data").GetProperty("id").GetString();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _tokenGate.Dispose();
     }
 
     private sealed class TokenResponse

@@ -40,14 +40,11 @@ public class CandidateEmailCopyTests
             }
 
             var hasMascot = mail.Html.Contains("mascot", StringComparison.OrdinalIgnoreCase)
-                            || mail.Html.Contains("/images/email/", StringComparison.Ordinal)
-                               && mail.Html.Contains("width=\"64\"", StringComparison.Ordinal);
+                            || (mail.Html.Contains("/images/email/", StringComparison.Ordinal)
+                               && mail.Html.Contains("width=\"64\"", StringComparison.Ordinal));
             // Good-news keys show mascot image at 64px besides the logo.
             var expectMascot = key is "EmployerReactionAccepted" or "EmployerContacting" or "ApplicationHired";
-            if (expectMascot)
-            {
-                Assert.Contains("width=\"64\"", mail.Html, StringComparison.Ordinal);
-            }
+            Assert.Equal(expectMascot, hasMascot);
         }
     }
 
@@ -89,7 +86,7 @@ public class CandidateEmailCopyTests
     [Fact]
     public void Nl_email_values_have_no_literal_minute_or_day_counts()
     {
-        foreach (var (key, value) in EmailStrings.All["nl"])
+        foreach (var (_, value) in EmailStrings.All["nl"])
         {
             Assert.DoesNotMatch(@"\b\d+\s*(minuten|dagen)\b", value);
         }

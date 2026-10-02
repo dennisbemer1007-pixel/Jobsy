@@ -25,7 +25,7 @@
         }
         <button type="button"
                 class="provider-btn"
-                disabled="@(_busy || !CanSearch)"
+                disabled="@(_busy || Disabled || !CanSearch)"
                 @onclick="SearchAsync">
             @(_busy ? "Zoeken…" : SearchButtonLabel)
         </button>
@@ -73,6 +73,7 @@
     [Parameter] public string Placeholder { get; set; } = "Minimaal 3 tekens of 8 cijfers";
     [Parameter] public string SearchButtonLabel { get; set; } = "Zoeken";
     [Parameter] public bool ShowPlace { get; set; } = true;
+    [Parameter] public bool Disabled { get; set; }
     [Parameter] public EventCallback<KvkSearchHitItem> OnSelected { get; set; }
 
     private string _query = "";

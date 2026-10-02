@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Jobsy.Infrastructure\Jobsy.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Jobsy.Tests" />
+  </ItemGroup>
+
 </Project>

@@ -40,17 +40,10 @@
     </div>
 
     <article class="pp-about__founder">
-        @if (AboutAssets.HasFounderPhoto)
-        {
-            <img class="pp-about__photo"
-                 src="@AboutAssets.FounderPhotoUrl"
-                 alt="@Culture["About.Founder.PhotoAlt"]"
-                 width="96" height="96" loading="lazy" decoding="async" />
-        }
-        else
-        {
-            <span class="pp-about__avatar" aria-hidden="true">🙂</span>
-        }
+        @* HasFounderPhoto is currently false (no photo checked in). Keep a single branch so the
+           Razor generator does not emit an unreachable if (CS0162). Restore the <img> branch when
+           AboutAssets.HasFounderPhoto is flipped and founder.webp is committed. *@
+        <span class="pp-about__avatar" aria-hidden="true">🙂</span>
         <div>
             <h2>@Culture["About.Founder.Name"]</h2>
             <p>@Culture["About.Founder.Text"]</p>

@@ -20,6 +20,14 @@ public class JobsyApiClientFactoryTests
             JobsyApiClientFactory.SharedSocketsHandler);
         Assert.False(JobsyApiClientFactory.SharedSocketsHandler.UseCookies);
         Assert.Equal(TimeSpan.FromMinutes(2), JobsyApiClientFactory.SharedSocketsHandler.PooledConnectionLifetime);
+
+        // NonDisposingHandler intentionally skips base.Dispose (CA2215) so the shared
+        // SocketsHttpHandler outlives per-request HttpClient wrappers.
+        Assert.Contains("CA2215", source, StringComparison.Ordinal);
+        Assert.Contains("Intentionally skip base.Dispose", source, StringComparison.Ordinal);
+        var wrapper = new JobsyApiClientFactory.NonDisposingHandler(JobsyApiClientFactory.SharedSocketsHandler);
+        wrapper.Dispose();
+        Assert.False(JobsyApiClientFactory.SharedSocketsHandler.UseCookies);
     }
 
     private static string FindRepoRoot()

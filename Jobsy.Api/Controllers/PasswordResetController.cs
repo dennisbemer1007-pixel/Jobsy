@@ -103,6 +103,8 @@ public sealed class PasswordResetController : ControllerBase
                     features.PublicWebBaseUrl,
                     created.Token,
                     culture);
+                // Fire-and-forget after the HTTP response: do not forward the request token
+                // (it would cancel the mail when the client disconnects).
                 _ = Task.Run(async () =>
                 {
                     try
@@ -113,7 +115,7 @@ public sealed class PasswordResetController : ControllerBase
                     {
                         _logger.LogWarning(ex, "Password reset mail failed for user {UserId}", user.Id);
                     }
-                });
+                }, CancellationToken.None);
             }
             else
             {
@@ -126,6 +128,7 @@ public sealed class PasswordResetController : ControllerBase
                     features.PublicWebBaseUrl,
                     label,
                     culture);
+                // Fire-and-forget after the HTTP response: do not forward the request token.
                 _ = Task.Run(async () =>
                 {
                     try
@@ -136,7 +139,7 @@ public sealed class PasswordResetController : ControllerBase
                     {
                         _logger.LogWarning(ex, "Password reset external-only mail failed for user {UserId}", user.Id);
                     }
-                });
+                }, CancellationToken.None);
             }
         }
 

@@ -80,6 +80,7 @@ internal sealed class DualWindowRateLimiter : RateLimiter
     {
         await _shortWindow.DisposeAsync();
         await _longWindow.DisposeAsync();
+        await base.DisposeAsyncCore();
     }
 
     private sealed class PairLease(RateLimitLease first, RateLimitLease second) : RateLimitLease
@@ -100,6 +101,8 @@ internal sealed class DualWindowRateLimiter : RateLimiter
                 first.Dispose();
                 second.Dispose();
             }
+
+            base.Dispose(disposing);
         }
     }
 }

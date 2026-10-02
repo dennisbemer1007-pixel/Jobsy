@@ -123,7 +123,7 @@ public sealed class SalesWalletPortalService : ISalesWalletPortalService
         var companyIds = entries.Where(e => e.CompanyId is not null)
             .Select(e => e.CompanyId!.Value).Distinct().ToList();
         var companies = companyIds.Count == 0
-            ? new Dictionary<Guid, (string Name, string? Address, CompanyLegalForm? LegalForm, Guid? ParentCompanyId)>()
+            ? new Dictionary<Guid, (string Name, string Address, CompanyLegalForm? LegalForm, Guid? ParentCompanyId)>()
             : await _db.Companies.AsNoTracking()
                 .Where(c => companyIds.Contains(c.Id))
                 .ToDictionaryAsync(
@@ -464,7 +464,7 @@ public sealed class SalesWalletPortalService : ISalesWalletPortalService
 
     private static string ResolveDisplayName(
         Guid? companyId,
-        Dictionary<Guid, (string Name, string? Address, CompanyLegalForm? LegalForm, Guid? ParentCompanyId)> companies)
+        Dictionary<Guid, (string Name, string Address, CompanyLegalForm? LegalForm, Guid? ParentCompanyId)> companies)
     {
         if (companyId is not Guid id || !companies.TryGetValue(id, out var c))
         {
