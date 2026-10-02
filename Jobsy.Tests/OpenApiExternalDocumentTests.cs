@@ -77,6 +77,7 @@ public class OpenApiExternalDocumentTests
             // Non-Development host without a real key-store DB (CI only has JobsyCi): allow ephemeral keys
             // like the other Production-environment test hosts do.
             builder.UseSetting("JobsyAuth:AllowEphemeralDataProtection", "true");
+            builder.UseSetting("VerificationCodes:Pepper", "test-pepper-openapi-external-doc-32chars!");
             builder.UseSetting(
                 "ConnectionStrings:JobsyDb",
                 "Host=127.0.0.1;Port=5432;Database=JobsyTest;Username=postgres;Password=postgres");
