@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -39,10 +40,18 @@ public sealed class MfaEnforcementMiddleware
             return;
         }
 
+        var runtime = context.RequestServices?.GetService(typeof(ITestAccountsRuntime)) as ITestAccountsRuntime;
+        var isTestViewer = TestDataRules.IsTestViewer(context.User);
+        if (isTestViewer && runtime?.IsActive == true)
+        {
+            await _next(context);
+            return;
+        }
+
         var roleClaim = context.User.FindFirstValue(ClaimTypes.Role)
                         ?? context.User.FindFirstValue("role");
         if (!Enum.TryParse<UserRole>(roleClaim, ignoreCase: true, out var role)
-            || !MfaPolicy.IsRequired(role))
+            || !MfaPolicy.IsRequiredFor(role, isTestViewer, runtime?.IsActive == true))
         {
             await _next(context);
             return;

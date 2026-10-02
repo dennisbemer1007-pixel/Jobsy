@@ -122,6 +122,10 @@ else if (_page is not null)
                             <span class="admin-avatar" aria-hidden="true">@Initials(u.FullName)</span>
                             <span class="admin-user-cell__text">
                                 <strong>@u.FullName</strong>
+                                @if (u.IsTestAccount)
+                                {
+                                    <span class="status-pill status-pill--warn">@Culture["Admin.TestAccount"]</span>
+                                }
                                 <span class="muted">@u.Email</span>
                             </span>
                         </div>
@@ -219,8 +223,16 @@ else if (_page is not null)
                         <span class="status-pill @(_drawerUser.MfaStatus == "enrolled" ? "status-pill--accepted" : null)">
                             @MfaStatusLabel(_drawerUser.MfaStatus)
                         </span>
+                        @if (_drawerUser.IsTestAccount)
+                        {
+                            <span class="status-pill status-pill--warn">@Culture["Admin.TestAccount"]</span>
+                        }
                         <span class="muted">ID @_drawerUser.Id.ToString("D")[..8]</span>
                     </div>
+                    @if (_drawerUser.IsTestAccount)
+                    {
+                        <p class="muted">@Culture["Admin.TestAccountNote"]</p>
+                    }
                 </div>
 
                 <div class="admin-tabs admin-tabs--drawer" role="tablist">

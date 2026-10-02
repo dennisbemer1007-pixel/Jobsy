@@ -9,6 +9,9 @@ public class SchoolClass
     public School? School { get; set; }
     /// <summary>Class label, e.g. "2B". Max 12; pattern letters/digits/dash/space.</summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>True only for acceptatie CLI-seeded sample classes.</summary>
+    public bool IsTestData { get; set; }
     public SchoolLevel Level { get; set; }
     /// <summary>School year number 1–6.</summary>
     public int Year { get; set; }

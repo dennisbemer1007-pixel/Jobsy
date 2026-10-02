@@ -58,6 +58,13 @@ De ASP.NET Core pipeline stuurt standaard:
 - `/register/activate` (any query) permanently redirects to `/register` (auth 06; link activation removed).
 - Admins: Microsoft work/school or password+2FA only (`JobsyAuth:AdminAllowedEntraTenants` optional allow-list). Google and personal Microsoft blocked.
 
+## Test accounts (acceptatie only)
+
+- CLI `dotnet Jobsy.Api.dll test-accounts seed|cleanup|status` — no HTTP surface. Hard guard: `Lobsy:DeploymentEnvironment=Acceptatie`, `TestAccounts:Enabled=true`, `RENDER_SERVICE_NAME` starts with `lobsy-acc-`, allowlisted public host, database name `lobsy`, stub payments and no `live_` Mollie key, host environment not Development.
+- `User.IsTestAccount` / `Company|Vacancy|School|SchoolClass.IsTestData` are set only by the CLI seed. Flags are never bound from API/UI.
+- MFA exemption: `MfaPolicy.IsRequiredFor` skips 2FA only when `IsTestAccount` **and** the process-wide runtime guard is active (API + Web). A test flag on a production row changes nothing. Admin Google block is unchanged for the test admin.
+- Test ↔ real boundary: interactions between test and real entities return 403 `test_account_boundary` (or 404 for test vacancies to real viewers). Mail caused by a test scope to a non-test recipient is dropped (`TestAccountMailGuard`). Public discovery excludes `IsTestData` by default.
+
 ## Wachtwoord vergeten
 
 - `/wachtwoord-vergeten` always shows the same "sent" screen (202 from API). Rate limit: 3 requests per e-mail per hour (process-local HMAC key).

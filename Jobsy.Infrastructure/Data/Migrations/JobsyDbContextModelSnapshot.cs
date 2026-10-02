@@ -2020,6 +2020,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("HasReceivedWelcomeToken")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsTestData")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("KvkEstablishmentId")
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
@@ -2147,6 +2150,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("FirstYearSupplierSlot")
                         .IsUnique()
                         .HasFilter("\"FirstYearSupplierSlot\" IS NOT NULL");
+
+                    b.HasIndex("IsTestData");
 
                     b.HasIndex("KvkEstablishmentId")
                         .IsUnique();
@@ -5546,6 +5551,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsTestData")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -5562,6 +5570,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasIndex("IsActive");
 
+                    b.HasIndex("IsTestData");
+
                     b.HasIndex("Name");
 
                     b.ToTable("Schools", (string)null);
@@ -5575,6 +5585,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsTestData")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Level")
                         .HasColumnType("integer");
@@ -5616,6 +5629,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IsTestData");
 
                     b.HasIndex("TestWindow");
 
@@ -6759,6 +6774,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("IsEarlyAdapter")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsTestAccount")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("LastLoginAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -6871,6 +6889,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("HomeLocation");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("HomeLocation"), "GIST");
+
+                    b.HasIndex("IsTestAccount");
 
                     b.HasIndex("ReferredByAmbassadeurUserId");
 
@@ -7172,6 +7192,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("IsHighlighted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsTestData")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
@@ -7293,6 +7316,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("ExclusivitySettingId");
 
                     b.HasIndex("IntermediaryCompanyId");
+
+                    b.HasIndex("IsTestData");
 
                     b.HasIndex("Location");
 

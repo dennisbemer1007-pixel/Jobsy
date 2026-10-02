@@ -148,7 +148,8 @@ public record LocalLoginResponse(
     int? RecoveryCodesLeft = null,
     bool UsedRecoveryCode = false,
     string? MfaTrustToken = null,
-    string? AuthMethod = null);
+    string? AuthMethod = null,
+    bool IsTestAccount = false);
 
 public record MfaEnrollmentRequest(string ChallengeToken);
 

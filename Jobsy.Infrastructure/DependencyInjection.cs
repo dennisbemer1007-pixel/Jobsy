@@ -6,8 +6,10 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
@@ -29,7 +31,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration,
-        IHostEnvironment? environment = null)
+        IHostEnvironment? environment = null,
+        bool isWebRuntime = false)
     {
         var connectionString = ResolveJobsyConnectionString(configuration);
         var isDev = environment?.IsDevelopment() ?? true;
@@ -300,7 +303,16 @@ public static class DependencyInjection
             sp.GetRequiredService<IKvkUsageCounter>()));
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
-        services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<SmtpEmailService>();
+        services.AddScoped<IEmailService>(sp =>
+        {
+            var inner = sp.GetRequiredService<SmtpEmailService>();
+            var domain = sp.GetRequiredService<IConfiguration>()["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+            return new TestAccountMailGuard(
+                inner,
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TestAccountMailGuard>>(),
+                domain);
+        });
         services.AddScoped<IEmailPreferenceService, EmailPreferenceService>();
         services.AddSingleton<IMailUnsubscribeTokenService, MailUnsubscribeTokenService>();
         services.AddScoped<IEmailLanguageResolver, EmailLanguageResolver>();
@@ -580,6 +592,14 @@ public static class DependencyInjection
         services.AddHostedService<DeepTestCheckoutReconcileHostedService>();
         services.AddHostedService<KvkVerificationRetryHostedService>();
         services.AddHostedService<VestigingSuggestionHostedService>();
+
+        services.AddSingleton<ITestAccountsRuntime>(sp =>
+            TestAccountsRuntimeFactory.Create(
+                sp.GetRequiredService<IConfiguration>(),
+                sp.GetRequiredService<IHostEnvironment>(),
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>()
+                    .CreateLogger("TestAccountsRuntime"),
+                isWebRuntime: isWebRuntime));
 
         return services;
     }

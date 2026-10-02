@@ -65,7 +65,10 @@ public sealed class AssessmentNormService : IAssessmentNormService
         var rows = await _db.CandidateDeepAnalyses.AsNoTracking()
             .Where(d => d.Kind == kind && d.Status == CandidateDeepAnalysisStatuses.Completed)
             .Join(
-                _db.Users.AsNoTracking().Where(u => !u.Email.Contains("jobsy.local") && !u.Email.Contains("demo")),
+                _db.Users.AsNoTracking().Where(u =>
+                    !u.IsTestAccount
+                    && !u.Email.Contains("jobsy.local")
+                    && !u.Email.Contains("demo")),
                 d => d.UserId,
                 u => u.Id,
                 (d, _) => d)

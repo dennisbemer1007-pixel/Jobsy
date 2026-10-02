@@ -62,3 +62,13 @@ dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter "FullyQualifiedName~CoreFunc
 ```
 
 **Env:** meeste tests gebruiken EF InMemory / TestServer. Live Mollie wordt gemockt; `LiveApiSmokeTests` kan een draaiende API vereisen.
+
+## 5. Testaccounts op acceptatie
+
+Na merge + Dashboard env vars (`TestAccounts__Enabled`, `TestAccounts__Password__*` op `lobsy-acc-api`; marker + switch on `lobsy-acc-web`):
+
+1. Shell on `lobsy-acc-api`: `dotnet Jobsy.Api.dll test-accounts seed --dry-run`, then `seed`.
+2. Log in at `https://acceptatie.lobsy.nl/login` as `test-<role>@lobsy.nl` with the Dashboard password (no 2FA while the guard is active).
+3. Cleanup: `dotnet Jobsy.Api.dll test-accounts cleanup` then `--execute --expect-users <n>`.
+
+Never put real passwords in tests or docs. Automated coverage lives under `Jobsy.Tests/TestAccounts/`.

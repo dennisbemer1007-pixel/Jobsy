@@ -71,7 +71,9 @@ public sealed record VacancyDiscoveryRecord(
     /// </summary>
     bool PublisherVerified = true,
     /// <summary>Non-removed engagement claims (ids + checked) for badges and match bonus.</summary>
-    IReadOnlyList<VacancyEngagementItem>? EngagementItems = null);
+    IReadOnlyList<VacancyEngagementItem>? EngagementItems = null,
+    /// <summary>Acceptatie CLI test vacancy; filtered out for real/anonymous viewers.</summary>
+    bool IsTestData = false);
 
 /// <summary>Discovery snapshot of one engagement claim (no proof text / URLs).</summary>
 public sealed record VacancyEngagementItem(string ItemId, bool Checked);

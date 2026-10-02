@@ -30,6 +30,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -474,6 +475,7 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
             challenges,
             new StubFeatures(authenticatorEnabled: true),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
             NullLogger<AuthController>.Instance);
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;

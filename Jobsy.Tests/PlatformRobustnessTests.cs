@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
 using Jobsy.Core.Security;
 
 namespace Jobsy.Tests;
@@ -401,6 +402,7 @@ public class PlatformRobustnessTests
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
             NullLogger<AuthController>.Instance);
     }
 

@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -290,6 +291,7 @@ public class AuthHardeningHotfixTests
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
             NullLogger<AuthController>.Instance);
     }
 

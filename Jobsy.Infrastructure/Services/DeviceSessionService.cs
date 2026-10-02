@@ -288,7 +288,8 @@ public sealed class DeviceSessionService : IDeviceSessionService
             hasSales,
             user.SessionVersion,
             CreateLocalSessionToken(user.Email, user.Id),
-            session.MfaVerifiedUntilUtc > now);
+            session.MfaVerifiedUntilUtc > now,
+            user.IsTestAccount);
         }
         finally
         {

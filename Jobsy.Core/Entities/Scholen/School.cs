@@ -14,6 +14,9 @@ public class School
     /// <summary>JSON array of allowed e-mail domains, e.g. <c>["voorbeeldcollege.nl"]</c>.</summary>
     public string AllowedEmailDomains { get; set; } = "[]";
     public bool IsActive { get; set; } = true;
+
+    /// <summary>True only for acceptatie CLI-seeded sample schools.</summary>
+    public bool IsTestData { get; set; }
     public DateOnly? ProcessorAgreementSignedOn { get; set; }
     public string? ProcessorAgreementVersion { get; set; }
     public DateTime CreatedAtUtc { get; set; }

@@ -19,6 +19,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
 using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
@@ -358,6 +359,7 @@ public class EmailCodeAuthTests
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
             features,
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
             NullLogger<AuthController>.Instance);
     }
 

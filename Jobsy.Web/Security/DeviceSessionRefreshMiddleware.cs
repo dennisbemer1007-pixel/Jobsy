@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
@@ -142,6 +143,7 @@ public sealed class DeviceSessionRefreshMiddleware
         public string? SessionToken { get; set; }
         public Guid? UserId { get; set; }
         public bool MfaVerified { get; set; }
+        public bool IsTestAccount { get; set; }
     }
 }
 
@@ -205,6 +207,13 @@ public static class AuthPrincipalFactory
         if (profile.MfaVerified)
         {
             identity.AddClaim(new Claim(JobsyClaimTypes.MfaVerified, "1"));
+        }
+
+        if (profile.IsTestAccount)
+        {
+            identity.AddClaim(new Claim(
+                TestAccountClaimTypes.TestAccount,
+                TestAccountClaimTypes.TestAccountValue));
         }
 
         return new ClaimsPrincipal(identity);

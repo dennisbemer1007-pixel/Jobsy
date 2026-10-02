@@ -3,6 +3,7 @@ using Jobsy.Api;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Hosting;
 using Jobsy.Api.Jobs;
+using Jobsy.Api.Ops;
 using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
@@ -10,6 +11,12 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+
+if (args.Length > 0 && args[0] == "test-accounts")
+{
+    Environment.ExitCode = await TestAccountsCommand.RunAsync(args[1..]);
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -382,6 +389,7 @@ app.UseAuthorization();
 // After auth so the admin bypass can read the principal (errors 05).
 app.UseMiddleware<Jobsy.Api.Security.MaintenanceApiMiddleware>();
 app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
+app.UseMiddleware<Jobsy.Api.Middleware.TestAccountScopeMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(new
     {

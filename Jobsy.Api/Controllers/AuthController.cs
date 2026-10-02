@@ -9,6 +9,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
@@ -35,6 +36,7 @@ public class AuthController : ControllerBase
     private readonly MfaChallengeService _mfaChallenges;
     private readonly IPlatformFeatureService _features;
     private readonly UnknownAccountLockoutTracker _unknownLockouts;
+    private readonly ITestAccountsRuntime _testAccounts;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
@@ -49,6 +51,7 @@ public class AuthController : ControllerBase
         MfaChallengeService mfaChallenges,
         IPlatformFeatureService features,
         UnknownAccountLockoutTracker unknownLockouts,
+        ITestAccountsRuntime testAccounts,
         ILogger<AuthController> logger)
     {
         _db = db;
@@ -62,8 +65,12 @@ public class AuthController : ControllerBase
         _mfaChallenges = mfaChallenges;
         _features = features;
         _unknownLockouts = unknownLockouts;
+        _testAccounts = testAccounts;
         _logger = logger;
     }
+
+    private bool IsTestAccountExempt(User user)
+        => user.IsTestAccount && _testAccounts.IsActive;
 
     /// <summary>
     /// Validates a local registration credential (hashed password).
@@ -189,7 +196,10 @@ public class AuthController : ControllerBase
             }
         }
 
-        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        var testExempt = IsTestAccountExempt(user);
+        if (!testExempt
+            && (user.AuthenticatorEnabled
+                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
         {
             if (user.AuthenticatorEnabled
                 && await _trustedDevices.TryValidateAsync(
@@ -235,7 +245,8 @@ public class AuthController : ControllerBase
                     user.Id,
                     MfaVerified: true,
                     SchoolId: user.SchoolId,
-                    AuthMethod: "password+trusted-device"));
+                    AuthMethod: "password+trusted-device",
+                    IsTestAccount: user.IsTestAccount));
             }
 
             return Ok(new LocalLoginResponse(
@@ -248,7 +259,13 @@ public class AuthController : ControllerBase
                 MfaEnrolled: user.AuthenticatorEnabled,
                 MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
                 UserId: user.Id,
-                SchoolId: user.SchoolId));
+                SchoolId: user.SchoolId,
+                IsTestAccount: user.IsTestAccount));
+        }
+
+        if (testExempt)
+        {
+            _logger.LogInformation("auth.login.test_exempt userId={UserId}", user.Id);
         }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
@@ -285,7 +302,9 @@ public class AuthController : ControllerBase
             deviceRefresh,
             deviceExpires,
             user.Id,
-            SchoolId: user.SchoolId));
+            SchoolId: user.SchoolId,
+            AuthMethod: testExempt ? "password+test-exempt" : null,
+            IsTestAccount: user.IsTestAccount));
     }
 
     /// <summary>
@@ -326,7 +345,9 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Sessie ongeldig of verlopen." });
         }
 
-        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        if (!IsTestAccountExempt(user)
+            && (user.AuthenticatorEnabled
+                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
         {
             return Ok(new LocalLoginResponse(
                 user.Email,
@@ -338,7 +359,8 @@ public class AuthController : ControllerBase
                 MfaEnrolled: user.AuthenticatorEnabled,
                 MfaChallengeToken: _mfaChallenges.Create(user, rememberDevice: false, localPassword: true),
                 UserId: user.Id,
-                SessionToken: request.SessionToken));
+                SessionToken: request.SessionToken,
+                IsTestAccount: user.IsTestAccount));
         }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
@@ -485,7 +507,10 @@ public class AuthController : ControllerBase
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
         // IdP (Entra/Google/…) already enforced MFA — never challenge again in Lobsy.
-        if (provider is null && (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role)))
+        if (provider is null
+            && !IsTestAccountExempt(user)
+            && (user.AuthenticatorEnabled
+                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
         {
             return Ok(new EnsureExternalUserResponse(
                 user.Email,
@@ -781,7 +806,9 @@ public class AuthController : ControllerBase
             user = existing;
         }
 
-        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        if (!IsTestAccountExempt(user)
+            && (user.AuthenticatorEnabled
+                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
         {
             return Ok(new LocalLoginResponse(
                 user.Email,
@@ -792,7 +819,8 @@ public class AuthController : ControllerBase
                 RequiresMfa: true,
                 MfaEnrolled: user.AuthenticatorEnabled,
                 MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
-                UserId: user.Id));
+                UserId: user.Id,
+                IsTestAccount: user.IsTestAccount));
         }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);

@@ -726,6 +726,7 @@ public class AdminUserItem
     public int ActiveSessionCount { get; set; }
     public int TrustedDeviceCount { get; set; }
     public List<string> MembershipCompanyNames { get; set; } = [];
+    public bool IsTestAccount { get; set; }
 }
 
 public class AdminUserSessionItem

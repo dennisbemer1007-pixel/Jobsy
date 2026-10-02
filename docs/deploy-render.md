@@ -295,4 +295,22 @@ Als KVK IP-whitelisting aan heeft staan in het Developer Portal, voeg de uitgaan
 | `JobsyAuth__AllowStubPayments` | `true` (alleen acc) | `false` + live Mollie (`live_…` key) |
 | `Swagger__Enabled` | `false` | `false` (of tijdelijk `true` voor partners) |
 | `Seed:Enabled` | `true` | `false` |
+| `Lobsy__DeploymentEnvironment` | `Acceptatie` | `Production` |
+| `TestAccounts__Enabled` | Dashboard (`sync: false`) | `false` |
 | DemoDataPurge / `Seed:PurgeDemoData` | verwijderd | verwijderd |
+
+## Testaccounts (alleen acceptatie)
+
+CLI inside the API binary (no HTTP endpoint):
+
+```bash
+cd /app && dotnet Jobsy.Api.dll test-accounts seed --dry-run
+cd /app && dotnet Jobsy.Api.dll test-accounts seed
+cd /app && dotnet Jobsy.Api.dll test-accounts cleanup
+cd /app && dotnet Jobsy.Api.dll test-accounts cleanup --execute --expect-users <n>
+cd /app && dotnet Jobsy.Api.dll test-accounts status
+```
+
+**Dashboard (Acceptatie → `lobsy-acc-api`):** set `TestAccounts__Enabled=true` and one secret per role (`TestAccounts__Password__Candidate`, `CandidateNew`, `BranchManager`, `EnterpriseManager`, `RegionalManager`, `Intermediary`, `SalesManager`, `Admin`, `Ambassadeur`, and when needed `Teacher` / `SchoolAdmin`). Passwords never go in git. On `lobsy-acc-web` set `Lobsy__DeploymentEnvironment=Acceptatie` and `TestAccounts__Enabled=true` (no passwords). Production keeps `Lobsy__DeploymentEnvironment=Production` and `TestAccounts__Enabled=false`.
+
+Hard guard: Acceptatie marker + switch + `lobsy-acc-*` service name + allowlisted public host + database name `lobsy` + stub payments / no `live_` Mollie + non-Development host. Never run this CLI against production.

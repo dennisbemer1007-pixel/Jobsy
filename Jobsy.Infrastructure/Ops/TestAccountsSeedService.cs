@@ -1,0 +1,912 @@
+using Jobsy.Core.Entities;
+using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Ops;
+using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
+using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Scholen;
+using Jobsy.Infrastructure.Security;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
+namespace Jobsy.Infrastructure.Ops;
+
+public enum TestAccountSeedAction
+{
+    Created,
+    Updated,
+    Unchanged,
+    Skipped
+}
+
+public sealed record TestAccountSeedRow(
+    string AccountKey,
+    string Email,
+    string Role,
+    TestAccountSeedAction Action,
+    string Reason);
+
+public sealed class TestAccountsSeedResult
+{
+    public List<TestAccountSeedRow> Rows { get; } = [];
+    public bool AnySkipped => Rows.Any(r => r.Action == TestAccountSeedAction.Skipped);
+    public int Created => Rows.Count(r => r.Action == TestAccountSeedAction.Created);
+    public int Updated => Rows.Count(r => r.Action == TestAccountSeedAction.Updated);
+    public int Unchanged => Rows.Count(r => r.Action == TestAccountSeedAction.Unchanged);
+    public int Skipped => Rows.Count(r => r.Action == TestAccountSeedAction.Skipped);
+    public bool AdminRealAccountConflict { get; set; }
+}
+
+public sealed class TestAccountsSeedService
+{
+    private readonly JobsyDbContext _db;
+    private readonly IConfiguration _configuration;
+    private readonly IPupilCodeService? _pupilCodes;
+
+    public TestAccountsSeedService(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        IPupilCodeService? pupilCodes = null)
+    {
+        _db = db;
+        _configuration = configuration;
+        _pupilCodes = pupilCodes;
+    }
+
+    public async Task<TestAccountsSeedResult> SeedAsync(
+        bool dryRun,
+        IReadOnlySet<string>? onlyKeys,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new TestAccountsSeedResult();
+        var domain = _configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+        var usersByKey = new Dictionary<string, User>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in TestAccountCatalog.All)
+        {
+            if (onlyKeys is { Count: > 0 }
+                && !onlyKeys.Contains(entry.AccountKey))
+            {
+                continue;
+            }
+
+            if (!TestAccountCatalog.RoleExistsInBuild(entry.Role))
+            {
+                result.Rows.Add(new(
+                    entry.AccountKey,
+                    TestAccountCatalog.BuildEmail(entry.EmailSlug, domain),
+                    entry.Role.ToString(),
+                    TestAccountSeedAction.Skipped,
+                    $"role {entry.Role} does not exist in this build; skipped"));
+                continue;
+            }
+
+            var email = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain);
+            var password = _configuration[$"TestAccounts:Password:{entry.AccountKey}"];
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                result.Rows.Add(new(
+                    entry.AccountKey,
+                    email,
+                    entry.Role.ToString(),
+                    TestAccountSeedAction.Skipped,
+                    "password missing from TestAccounts:Password:<Key>"));
+                continue;
+            }
+
+            try
+            {
+                RegistrationPasswordRules.Validate(password, required: true);
+            }
+            catch (ArgumentException)
+            {
+                result.Rows.Add(new(
+                    entry.AccountKey,
+                    email,
+                    entry.Role.ToString(),
+                    TestAccountSeedAction.Skipped,
+                    $"password for {entry.AccountKey} doesn't meet the password rules"));
+                continue;
+            }
+
+            var normalized = email.ToLowerInvariant();
+            var existing = await _db.Users.FirstOrDefaultAsync(
+                u => u.Email.ToLower() == normalized,
+                cancellationToken);
+
+            if (existing is not null && !existing.IsTestAccount)
+            {
+                result.Rows.Add(new(
+                    entry.AccountKey,
+                    email,
+                    entry.Role.ToString(),
+                    TestAccountSeedAction.Skipped,
+                    "a real account uses this e-mail"));
+                if (entry.AccountKey.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.AdminRealAccountConflict = true;
+                }
+
+                continue;
+            }
+
+            if (existing is null)
+            {
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = normalized,
+                    FullName = entry.DisplayName,
+                    Role = entry.Role,
+                    IsActive = true,
+                    IsTestAccount = true,
+                    TermsAcceptedAt = DateTime.UtcNow,
+                    ConsentVersion = PrivacyConstants.CurrentConsentVersion
+                };
+                ClearMfa(user);
+                _db.Users.Add(user);
+                await EnsurePasswordAsync(user, password, bumpSession: false, cancellationToken);
+                usersByKey[entry.AccountKey] = user;
+                result.Rows.Add(new(
+                    entry.AccountKey, email, entry.Role.ToString(),
+                    TestAccountSeedAction.Created, "created"));
+                continue;
+            }
+
+            var changed = false;
+            if (existing.Role != entry.Role)
+            {
+                existing.Role = entry.Role;
+                changed = true;
+            }
+
+            if (!string.Equals(existing.FullName, entry.DisplayName, StringComparison.Ordinal))
+            {
+                existing.FullName = entry.DisplayName;
+                changed = true;
+            }
+
+            if (!existing.IsActive)
+            {
+                existing.IsActive = true;
+                changed = true;
+            }
+
+            existing.IsTestAccount = true;
+            ClearMfa(existing);
+            var passwordRotated = await EnsurePasswordAsync(
+                existing, password, bumpSession: true, cancellationToken);
+            if (passwordRotated)
+            {
+                changed = true;
+            }
+
+            usersByKey[entry.AccountKey] = existing;
+            result.Rows.Add(new(
+                entry.AccountKey,
+                email,
+                entry.Role.ToString(),
+                changed ? TestAccountSeedAction.Updated : TestAccountSeedAction.Unchanged,
+                changed ? (passwordRotated ? "updated (password rotated)" : "updated") : "unchanged"));
+        }
+
+        if (result.AdminRealAccountConflict)
+        {
+            return result;
+        }
+
+        await EnsureSampleDataAsync(usersByKey, domain, dryRun, cancellationToken);
+        return result;
+    }
+
+    private static void ClearMfa(User user)
+    {
+        user.AuthenticatorEnabled = false;
+        user.AuthenticatorSecret = null;
+        user.RecoveryCodesHash = null;
+        user.AuthenticatorEnrolledAtUtc = null;
+        user.MfaFailedCount = 0;
+        user.MfaLockoutUntilUtc = null;
+        user.LastTotpTimeStep = null;
+        user.LastMfaLockoutMailAtUtc = null;
+    }
+
+    private async Task<bool> EnsurePasswordAsync(
+        User user,
+        string password,
+        bool bumpSession,
+        CancellationToken cancellationToken)
+    {
+        var email = user.Email.Trim().ToLowerInvariant();
+        var credential = await _db.LocalAuthCredentials
+            .FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken)
+            ?? await _db.LocalAuthCredentials
+                .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
+
+        if (credential is null)
+        {
+            _db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Email = email,
+                PasswordHash = JobsyPasswordHasher.Hash(password),
+                FailedLoginCount = 0,
+                LockoutUntil = null,
+                LockoutCount = 0,
+                LastLockoutAtUtc = null,
+                LastLockoutMailAtUtc = null
+            });
+            return true;
+        }
+
+        credential.UserId = user.Id;
+        credential.Email = email;
+        credential.FailedLoginCount = 0;
+        credential.LockoutUntil = null;
+        credential.LockoutCount = 0;
+        credential.LastLockoutAtUtc = null;
+        credential.LastLockoutMailAtUtc = null;
+
+        if (!JobsyPasswordHasher.Verify(password, credential.PasswordHash)
+            || JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
+        {
+            credential.PasswordHash = JobsyPasswordHasher.Hash(password);
+            if (bumpSession)
+            {
+                user.SessionVersion++;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task EnsureSampleDataAsync(
+        IReadOnlyDictionary<string, User> usersByKey,
+        string domain,
+        bool dryRun,
+        CancellationToken cancellationToken)
+    {
+        var root = await EnsureCompanyAsync(
+            TestAccountsIds.RootCompany,
+            "Testbedrijf Lobsy (test)",
+            TestAccountsIds.RootKvk,
+            "0001",
+            CompanyType.Employer,
+            parentId: null,
+            new GeoPoint(52.0705, 4.3007),
+            "Den Haag",
+            cancellationToken);
+
+        var haag = await EnsureCompanyAsync(
+            TestAccountsIds.VestigingDenHaag,
+            "Testvestiging Den Haag (test)",
+            TestAccountsIds.HaagKvk,
+            "0001",
+            CompanyType.Employer,
+            root.Id,
+            new GeoPoint(52.0780, 4.3100),
+            "Den Haag",
+            cancellationToken);
+
+        var delft = await EnsureCompanyAsync(
+            TestAccountsIds.VestigingDelft,
+            "Testvestiging Delft (test)",
+            TestAccountsIds.DelftKvk,
+            "0001",
+            CompanyType.Employer,
+            root.Id,
+            new GeoPoint(52.0116, 4.3571),
+            "Delft",
+            cancellationToken);
+
+        var bureau = await EnsureCompanyAsync(
+            TestAccountsIds.IntermediaryCompany,
+            "Testbureau Lobsy (test)",
+            TestAccountsIds.IntermediaryKvk,
+            "0001",
+            CompanyType.Intermediary,
+            parentId: null,
+            new GeoPoint(52.0705, 4.3007),
+            "Den Haag",
+            cancellationToken);
+
+        if (usersByKey.TryGetValue("BranchManager", out var bm))
+        {
+            bm.CompanyId = haag.Id;
+            await EnsureMembershipAsync(bm.Id, haag.Id, cancellationToken);
+        }
+
+        if (usersByKey.TryGetValue("EnterpriseManager", out var em))
+        {
+            em.CompanyId = root.Id;
+            await EnsureMembershipAsync(em.Id, root.Id, cancellationToken);
+            await EnsureMembershipAsync(em.Id, haag.Id, cancellationToken);
+            await EnsureMembershipAsync(em.Id, delft.Id, cancellationToken);
+        }
+
+        if (usersByKey.TryGetValue("RegionalManager", out var rm))
+        {
+            rm.CompanyId = root.Id;
+            await EnsureMembershipAsync(rm.Id, haag.Id, cancellationToken);
+            await EnsureMembershipAsync(rm.Id, delft.Id, cancellationToken);
+            await EnsureRegionAsync(root.Id, haag.Id, delft.Id, cancellationToken);
+        }
+
+        if (usersByKey.TryGetValue("Intermediary", out var im))
+        {
+            im.CompanyId = bureau.Id;
+            await EnsureMembershipAsync(im.Id, bureau.Id, cancellationToken);
+        }
+
+        if (usersByKey.TryGetValue("SalesManager", out var sm))
+        {
+            await EnsureSalesProfileAsync(sm.Id, cancellationToken);
+            root.ReferredBySalesManagerUserId = sm.Id;
+            root.SalesAttributedAtUtc ??= DateTime.UtcNow;
+        }
+
+        if (usersByKey.TryGetValue("Ambassadeur", out var am))
+        {
+            await EnsureAmbassadeurProfileAsync(am.Id, cancellationToken);
+        }
+
+        await EnsureTokenGrantAsync(root.Id, cancellationToken);
+        await EnsureVacanciesAsync(haag, delft, bureau, cancellationToken);
+
+        if (usersByKey.TryGetValue("Candidate", out var candidate))
+        {
+            await EnsureCompleteCandidateAsync(candidate, cancellationToken);
+        }
+
+        if (usersByKey.TryGetValue("CandidateNew", out var candidateNew))
+        {
+            candidateNew.OpenForWork = false;
+            candidateNew.PreferencesJson = null;
+            candidateNew.HomeLocation = null;
+            var existingOnboarding = await _db.CandidateOnboardings
+                .FirstOrDefaultAsync(o => o.UserId == candidateNew.Id, cancellationToken);
+            if (existingOnboarding is not null)
+            {
+                _db.CandidateOnboardings.Remove(existingOnboarding);
+            }
+        }
+
+        if (usersByKey.TryGetValue("Teacher", out var teacher)
+            && usersByKey.TryGetValue("SchoolAdmin", out var schoolAdmin))
+        {
+            await EnsureSchoolAsync(teacher, schoolAdmin, dryRun, cancellationToken);
+        }
+
+        _ = domain;
+    }
+
+    private async Task<Company> EnsureCompanyAsync(
+        Guid id,
+        string name,
+        string kvk,
+        string vestiging,
+        CompanyType type,
+        Guid? parentId,
+        GeoPoint location,
+        string city,
+        CancellationToken cancellationToken)
+    {
+        var existing = await _db.Companies.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        if (existing is not null)
+        {
+            existing.Name = name;
+            existing.IsTestData = true;
+            existing.KvkNumber = kvk;
+            existing.KvkEstablishmentId = $"{kvk}_{vestiging}";
+            existing.Type = type;
+            existing.ParentCompanyId = parentId;
+            existing.Location = location;
+            existing.Address = $"Teststraat 1, {city}";
+            existing.VerificationStatus = CompanyVerificationStatus.Verified;
+            existing.VerificationMethod = CompanyVerificationMethod.AdminCreated;
+            existing.VerifiedAtUtc ??= DateTime.UtcNow;
+            existing.KvkVerificationStatus = KvkVerificationStatus.Verified;
+            existing.HasReceivedWelcomeToken = true;
+            return existing;
+        }
+
+        var company = new Company
+        {
+            Id = id,
+            Name = name,
+            KvkNumber = kvk,
+            KvkEstablishmentId = $"{kvk}_{vestiging}",
+            Type = type,
+            ParentCompanyId = parentId,
+            Location = location,
+            Address = $"Teststraat 1, {city}",
+            IsTestData = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow,
+            KvkVerificationStatus = KvkVerificationStatus.Verified,
+            KvkVerifiedAtUtc = DateTime.UtcNow,
+            HasReceivedWelcomeToken = true,
+            WelcomeTokenLedgerCredited = false
+        };
+        _db.Companies.Add(company);
+        return company;
+    }
+
+    private async Task EnsureMembershipAsync(Guid userId, Guid companyId, CancellationToken cancellationToken)
+    {
+        if (!await _db.UserCompanies.AnyAsync(m => m.UserId == userId && m.CompanyId == companyId, cancellationToken))
+        {
+            _db.UserCompanies.Add(new UserCompany { UserId = userId, CompanyId = companyId });
+        }
+    }
+
+    private async Task EnsureRegionAsync(
+        Guid orgId,
+        Guid companyA,
+        Guid companyB,
+        CancellationToken cancellationToken)
+    {
+        var region = await _db.Regions.FirstOrDefaultAsync(r => r.Id == TestAccountsIds.Region, cancellationToken);
+        if (region is null)
+        {
+            region = new Region
+            {
+                Id = TestAccountsIds.Region,
+                OrganizationCompanyId = orgId,
+                Name = "Testregio Haaglanden (test)"
+            };
+            _db.Regions.Add(region);
+        }
+        else
+        {
+            region.OrganizationCompanyId = orgId;
+            region.Name = "Testregio Haaglanden (test)";
+        }
+
+        foreach (var companyId in new[] { companyA, companyB })
+        {
+            if (!await _db.RegionCompanies.AnyAsync(
+                    rc => rc.RegionId == region.Id && rc.CompanyId == companyId,
+                    cancellationToken))
+            {
+                _db.RegionCompanies.Add(new RegionCompany
+                {
+                    RegionId = region.Id,
+                    CompanyId = companyId
+                });
+            }
+        }
+    }
+
+    private async Task EnsureTokenGrantAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var existing = await _db.TokenTransactions
+            .FirstOrDefaultAsync(t => t.Id == TestAccountsIds.TokenGrant, cancellationToken);
+        if (existing is not null)
+        {
+            existing.Note = "test-seed";
+            existing.Kind = TokenTransactionKind.Grant;
+            existing.Amount = 25m;
+            return;
+        }
+
+        _db.TokenTransactions.Add(new TokenTransaction
+        {
+            Id = TestAccountsIds.TokenGrant,
+            CompanyId = companyId,
+            Amount = 25m,
+            Kind = TokenTransactionKind.Grant,
+            Reason = TokenSpendReason.None,
+            OldBalance = 0m,
+            NewBalance = 25m,
+            Note = "test-seed",
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
+    private async Task EnsureVacanciesAsync(
+        Company haag,
+        Company delft,
+        Company bureau,
+        CancellationToken cancellationToken)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var end = today.AddMonths(3);
+
+        await UpsertVacancyAsync(
+            TestAccountsIds.VacancyHaag1,
+            "Horeca medewerker (test)",
+            haag,
+            VacancyStatus.Active,
+            new GeoPoint(52.0780, 4.3100),
+            WorkType.Horeca,
+            today,
+            end,
+            intermediaryId: null,
+            cancellationToken);
+
+        await UpsertVacancyAsync(
+            TestAccountsIds.VacancyHaag2,
+            "Kassamedewerker (test)",
+            haag,
+            VacancyStatus.Active,
+            new GeoPoint(52.0790, 4.3110),
+            WorkType.Winkel,
+            today,
+            end,
+            intermediaryId: null,
+            cancellationToken);
+
+        await UpsertVacancyAsync(
+            TestAccountsIds.VacancyDelftDraft,
+            "Magazijnmedewerker (test)",
+            delft,
+            VacancyStatus.Draft,
+            new GeoPoint(52.0116, 4.3571),
+            WorkType.Logistiek,
+            today,
+            end,
+            intermediaryId: null,
+            cancellationToken);
+
+        await UpsertVacancyAsync(
+            TestAccountsIds.ClientVacancy,
+            "Uitzendkracht horeca (test)",
+            haag,
+            VacancyStatus.Active,
+            new GeoPoint(52.0785, 4.3105),
+            WorkType.Horeca,
+            today,
+            end,
+            bureau.Id,
+            cancellationToken);
+    }
+
+    private async Task UpsertVacancyAsync(
+        Guid id,
+        string title,
+        Company company,
+        VacancyStatus status,
+        GeoPoint location,
+        WorkType workTypes,
+        DateOnly start,
+        DateOnly end,
+        Guid? intermediaryId,
+        CancellationToken cancellationToken)
+    {
+        var existing = await _db.Vacancies.FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+        if (existing is not null)
+        {
+            existing.Title = title;
+            existing.CompanyId = company.Id;
+            existing.Status = status;
+            existing.IsTestData = true;
+            existing.Location = location;
+            existing.WorkTypes = workTypes;
+            existing.IntermediaryCompanyId = intermediaryId;
+            if (status == VacancyStatus.Active)
+            {
+                existing.PublishedAtUtc ??= DateTime.UtcNow;
+            }
+
+            return;
+        }
+
+        _db.Vacancies.Add(new Vacancy
+        {
+            Id = id,
+            Title = title,
+            Description = "Testdata voor acceptatie-rollen. Niet zichtbaar voor echte gebruikers.",
+            HourlyWage = 14.50m,
+            StartDate = start,
+            EndDate = end,
+            Status = status,
+            CompanyId = company.Id,
+            IntermediaryCompanyId = intermediaryId,
+            Location = location,
+            RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
+            WorkTypes = workTypes,
+            Kind = VacancyKind.Regular,
+            CategoryId = VacancyCategoryDefaults.RegulierId,
+            IsTestData = true,
+            ContentModerationPassed = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            PublishedAtUtc = status == VacancyStatus.Active ? DateTime.UtcNow : null
+        });
+    }
+
+    private async Task EnsureCompleteCandidateAsync(User candidate, CancellationToken cancellationToken)
+    {
+        candidate.OpenForWork = true;
+        candidate.HomeLocation = new GeoPoint(52.0780, 4.3100);
+        candidate.DateOfBirth = new DateOnly(1998, 4, 12);
+        candidate.PreferencesJson =
+            """{"roles":["horeca","retail"],"maxTravelMinutes":30,"educations":["MBO"]}""";
+        candidate.CandidateHowToCompletedAt ??= DateTime.UtcNow;
+        candidate.TalentPoolConsentAt ??= DateTime.UtcNow;
+        candidate.TalentPoolConsentVersion = PrivacyConstants.CurrentConsentVersion;
+        candidate.TestAiConsentAt ??= DateTime.UtcNow;
+        candidate.TestAiConsentVersion = PrivacyConstants.CurrentConsentVersion;
+
+        var onboarding = await _db.CandidateOnboardings
+            .FirstOrDefaultAsync(o => o.UserId == candidate.Id, cancellationToken);
+        if (onboarding is null)
+        {
+            _db.CandidateOnboardings.Add(new CandidateOnboarding
+            {
+                Id = TestAccountsIds.OnboardingComplete,
+                UserId = candidate.Id,
+                CurrentStep = OnboardingWizardCatalog.V3StepCount,
+                WizardVersion = OnboardingWizardCatalog.WizardVersionV3,
+                FinishReached = true,
+                StartedAtUtc = DateTime.UtcNow.AddDays(-2),
+                CompletedAtUtc = DateTime.UtcNow.AddDays(-1),
+                UpdatedAtUtc = DateTime.UtcNow,
+                Source = "test-seed"
+            });
+        }
+        else
+        {
+            onboarding.FinishReached = true;
+            onboarding.CompletedAtUtc ??= DateTime.UtcNow;
+            onboarding.WizardVersion = OnboardingWizardCatalog.WizardVersionV3;
+            onboarding.CurrentStep = OnboardingWizardCatalog.V3StepCount;
+            onboarding.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await EnsureCompletedProfileAsync(candidate.Id, cancellationToken);
+
+        if (!await _db.Applications.AnyAsync(a => a.Id == TestAccountsIds.Application, cancellationToken))
+        {
+            _db.Applications.Add(new Application
+            {
+                Id = TestAccountsIds.Application,
+                VacancyId = TestAccountsIds.VacancyHaag1,
+                CandidateUserId = candidate.Id,
+                CandidateName = candidate.FullName,
+                CandidateEmail = candidate.Email,
+                CandidateCity = "Den Haag",
+                PreferredTransport = "Bike",
+                EstimatedTravelMinutes = 15,
+                Status = ApplicationStatus.Pending,
+                ConsentAcceptedAt = DateTime.UtcNow,
+                ConsentVersion = PrivacyConstants.CurrentConsentVersion,
+                WorkPermitConfirmed = true,
+                EmailVerifiedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+    }
+
+    private async Task EnsureCompletedProfileAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        if (!await _db.CandidateCompetencies.AnyAsync(c => c.UserId == userId, cancellationToken))
+        {
+            _db.CandidateCompetencies.Add(new CandidateCompetency
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Status = CandidateCompetencyStatuses.Completed,
+                AnswersJson = """{"1":4,"2":4,"3":3,"4":5,"5":4}""",
+                SamenwerkenPercent = 70,
+                ResultaatgerichtheidPercent = 65,
+                StressbestendigheidPercent = 60,
+                InnovatiePercent = 55,
+                ExtraversiePercent = 50,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now,
+                CompletedAtUtc = now
+            });
+        }
+
+        if (!await _db.CandidateValuesProfiles.AnyAsync(c => c.UserId == userId, cancellationToken))
+        {
+            _db.CandidateValuesProfiles.Add(new CandidateValuesProfile
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Status = CandidateCompetencyStatuses.Completed,
+                AnswersJson = """{"1":4,"2":3,"3":5}""",
+                AutonomyPercent = 60,
+                ConnectionPercent = 70,
+                AchievementPercent = 55,
+                StabilityPercent = 50,
+                ImpactPercent = 65,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now,
+                CompletedAtUtc = now
+            });
+        }
+
+        if (!await _db.CandidateCulturePersonalityProfiles.AnyAsync(c => c.UserId == userId, cancellationToken))
+        {
+            _db.CandidateCulturePersonalityProfiles.Add(new CandidateCulturePersonalityProfile
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Status = CandidateCompetencyStatuses.Completed,
+                AnswersJson = """{"1":4,"2":3,"3":4}""",
+                AutonomyPercent = 55,
+                InformalPercent = 60,
+                CollaborationPercent = 70,
+                FlexibilityPercent = 65,
+                InnovationPercent = 50,
+                PeopleFirstPercent = 75,
+                OpennessPercent = 60,
+                ConscientiousnessPercent = 65,
+                ExtraversionPercent = 55,
+                AgreeablenessPercent = 70,
+                EmotionalStabilityPercent = 60,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now,
+                CompletedAtUtc = now
+            });
+        }
+
+        if (!await _db.CandidateCareerInterests.AnyAsync(c => c.UserId == userId, cancellationToken))
+        {
+            _db.CandidateCareerInterests.Add(new CandidateCareerInterest
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Status = CandidateCompetencyStatuses.Completed,
+                AnswersJson = """{"1":4,"2":3}""",
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now,
+                CompletedAtUtc = now
+            });
+        }
+    }
+
+    private async Task EnsureSalesProfileAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var existing = await _db.SalesManagerProfiles
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (existing is not null)
+        {
+            existing.TrackingCode ??= "TEST-SM01";
+            existing.OnboardingCompletedAt ??= now;
+            existing.AgreementSignedAt ??= now;
+            existing.AgreementVersion ??= "test-seed";
+            existing.UpdatedAt = now;
+            return;
+        }
+
+        _db.SalesManagerProfiles.Add(new SalesManagerProfile
+        {
+            Id = TestAccountsIds.SalesProfile,
+            UserId = userId,
+            CompanyName = "Test Sales Lobsy (test)",
+            KvkNumber = "00000995",
+            City = "Den Haag",
+            Country = "NL",
+            TrackingCode = "TEST-SM01",
+            AgreementSignedAt = now,
+            AgreementVersion = "test-seed",
+            OnboardingCompletedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+    }
+
+    private async Task EnsureAmbassadeurProfileAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var existing = await _db.AmbassadeurProfiles
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (existing is not null)
+        {
+            existing.TrackingCode ??= "TEST-AM01";
+            existing.OnboardingCompletedAt ??= now;
+            existing.AgreementSignedAt ??= now;
+            existing.AgreementVersion ??= AmbassadeurCommissionRules.CurrentAgreementVersion;
+            existing.UpdatedAt = now;
+            return;
+        }
+
+        _db.AmbassadeurProfiles.Add(new AmbassadeurProfile
+        {
+            Id = TestAccountsIds.AmbassadeurProfile,
+            UserId = userId,
+            CompanyName = "Test Ambassadeur Lobsy (test)",
+            KvkNumber = "00000996",
+            City = "Den Haag",
+            Country = "NL",
+            TrackingCode = "TEST-AM01",
+            BaseCommissionPercentage = 5.0m,
+            AgreementSignedAt = now,
+            AgreementVersion = AmbassadeurCommissionRules.CurrentAgreementVersion,
+            OnboardingCompletedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+    }
+
+    private async Task EnsureSchoolAsync(
+        User teacher,
+        User schoolAdmin,
+        bool dryRun,
+        CancellationToken cancellationToken)
+    {
+        var school = await _db.Schools.FirstOrDefaultAsync(s => s.Id == TestAccountsIds.School, cancellationToken);
+        if (school is null)
+        {
+            school = new School
+            {
+                Id = TestAccountsIds.School,
+                Name = "Testschool Lobsy (test)",
+                City = "Den Haag",
+                AllowedEmailDomains = """["lobsy.nl"]""",
+                IsActive = true,
+                IsTestData = true,
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedByUserId = schoolAdmin.Id,
+                ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+                ProcessorAgreementVersion = "test-seed"
+            };
+            _db.Schools.Add(school);
+        }
+        else
+        {
+            school.IsTestData = true;
+            school.IsActive = true;
+        }
+
+        teacher.SchoolId = school.Id;
+        schoolAdmin.SchoolId = school.Id;
+
+        var schoolClass = await _db.SchoolClasses
+            .FirstOrDefaultAsync(c => c.Id == TestAccountsIds.SchoolClass, cancellationToken);
+        if (schoolClass is null)
+        {
+            schoolClass = new SchoolClass
+            {
+                Id = TestAccountsIds.SchoolClass,
+                SchoolId = school.Id,
+                Name = "1A",
+                Level = SchoolLevel.VmboGt,
+                Year = 1,
+                SchoolYearStart = DateTime.UtcNow.Year,
+                PupilCount = 5,
+                IsTestData = true,
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            _db.SchoolClasses.Add(schoolClass);
+            if (!dryRun)
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+                if (_pupilCodes is not null)
+                {
+                    await _pupilCodes.GenerateAsync(5, schoolClass, cancellationToken);
+                }
+            }
+        }
+        else
+        {
+            schoolClass.IsTestData = true;
+            schoolClass.Name = "1A";
+        }
+
+        if (!await _db.TeacherClassAssignments.AnyAsync(
+                a => a.TeacherUserId == teacher.Id && a.SchoolClassId == schoolClass.Id,
+                cancellationToken))
+        {
+            _db.TeacherClassAssignments.Add(new TeacherClassAssignment
+            {
+                TeacherUserId = teacher.Id,
+                SchoolClassId = schoolClass.Id,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+    }
+}

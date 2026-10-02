@@ -79,6 +79,11 @@ public class Company
 
     public CompanyType Type { get; set; } = CompanyType.Employer;
 
+    /// <summary>
+    /// True only for acceptatie CLI-seeded sample companies. Never set via API/UI.
+    /// </summary>
+    public bool IsTestData { get; set; }
+
     public Guid? ParentCompanyId { get; set; }
     public Company? ParentCompany { get; set; }
     public ICollection<Company> ChildCompanies { get; set; } = new List<Company>();

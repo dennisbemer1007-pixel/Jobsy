@@ -90,6 +90,11 @@ public class Vacancy
     public bool IsHighlighted { get; set; }
 
     /// <summary>
+    /// True only for acceptatie CLI-seeded sample vacancies. Never set via API/UI.
+    /// </summary>
+    public bool IsTestData { get; set; }
+
+    /// <summary>
     /// UTC expiry of the paid highlight. When in the past, the vacancy is no longer treated as featured
     /// on the banenkaart (carousel / pulse marker), even if <see cref="IsHighlighted"/> is still true.
     /// </summary>
