@@ -325,7 +325,7 @@ public class CandidateInsightsUnlockRequestTests : IClassFixture<CandidateInsigh
     }
 }
 
-public sealed class CandidateInsightsUnlockFactory : WebApplicationFactory<Program>
+public sealed class CandidateInsightsUnlockFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid OrgId { get; } = Guid.Parse("f1000000-0000-0000-0000-000000000001");
     public Guid BranchId { get; } = Guid.Parse("f1000000-0000-0000-0000-000000000011");

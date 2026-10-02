@@ -1621,7 +1621,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 }
 
-public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
+public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public const string DevSecret = "role-functional-secret";
 

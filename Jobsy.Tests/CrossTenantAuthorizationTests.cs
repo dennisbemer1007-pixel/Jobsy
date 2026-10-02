@@ -158,7 +158,7 @@ public class CrossTenantAuthorizationTests : IClassFixture<CrossTenantWebAppFact
     }
 }
 
-public sealed class CrossTenantWebAppFactory : WebApplicationFactory<Program>
+public sealed class CrossTenantWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid OrgAId { get; } = Guid.Parse("d1000000-0000-0000-0000-000000000001");
     public Guid BranchA1Id { get; } = Guid.Parse("d1000000-0000-0000-0000-000000000011");

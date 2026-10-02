@@ -148,7 +148,7 @@ public class ApplicationsApiTests : IClassFixture<ApplicationsApiFactory>
     }
 }
 
-public sealed class ApplicationsApiFactory : WebApplicationFactory<Program>
+public sealed class ApplicationsApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     private readonly string _dbName = "wg-apps-" + Guid.NewGuid().ToString("N");
     private bool _seeded;

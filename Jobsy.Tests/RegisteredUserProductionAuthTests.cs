@@ -89,7 +89,7 @@ public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserPro
     }
 }
 
-public sealed class RegisteredUserProductionAuthFactory : WebApplicationFactory<Program>
+public sealed class RegisteredUserProductionAuthFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     private readonly string _dbName = "RegisteredUserProdAuth-" + Guid.NewGuid();
 

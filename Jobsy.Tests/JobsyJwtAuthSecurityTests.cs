@@ -113,7 +113,7 @@ public class JobsyJwtAuthSecurityTests : IClassFixture<JobsyJwtAuthSecurityFacto
     }
 }
 
-public sealed class JobsyJwtAuthSecurityFactory : WebApplicationFactory<Program>
+public sealed class JobsyJwtAuthSecurityFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid UserId { get; } = Guid.Parse("a1000000-0000-0000-0000-000000000099");
 

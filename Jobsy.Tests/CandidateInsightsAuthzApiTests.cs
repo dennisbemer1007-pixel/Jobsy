@@ -105,7 +105,7 @@ public class CandidateInsightsAuthzApiTests : IClassFixture<CandidateInsightsAut
     }
 }
 
-public sealed class CandidateInsightsAuthzFactory : WebApplicationFactory<Program>
+public sealed class CandidateInsightsAuthzFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid OrgAId { get; } = Guid.Parse("e1000000-0000-0000-0000-000000000001");
     public Guid BranchA1Id { get; } = Guid.Parse("e1000000-0000-0000-0000-000000000011");

@@ -166,7 +166,7 @@ public class RateLimitUserIsolationTests : IClassFixture<RateLimitIsolationFacto
     }
 }
 
-public sealed class RateLimitIsolationFactory : WebApplicationFactory<Program>
+public sealed class RateLimitIsolationFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid UserAId { get; } = Guid.Parse("f1000000-0000-0000-0000-0000000000a1");
     public Guid UserBId { get; } = Guid.Parse("f1000000-0000-0000-0000-0000000000b2");

@@ -171,7 +171,7 @@ public class VacanciesManageApiTests : IClassFixture<VacanciesManageApiFactory>
     }
 }
 
-public sealed class VacanciesManageApiFactory : WebApplicationFactory<Program>
+public sealed class VacanciesManageApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid OrgAId { get; } = Guid.Parse("f2000000-0000-0000-0000-000000000001");
     public Guid BranchA1Id { get; } = Guid.Parse("f2000000-0000-0000-0000-000000000011");

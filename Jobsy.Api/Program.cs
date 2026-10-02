@@ -404,4 +404,5 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program;
+// Entry-point type stays compiler-generated. Tests host via Jobsy.Api.ApiAssemblyMarker
+// (not bare Program) because Jobsy.Web also emits a public Program on .NET 10+.

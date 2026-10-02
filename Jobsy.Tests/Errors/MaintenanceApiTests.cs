@@ -177,7 +177,7 @@ public class MaintenanceApiTests
 }
 
 /// <summary>In-memory API host with one admin and one candidate, for the maintenance tests.</summary>
-public sealed class MaintenanceApiFactory : WebApplicationFactory<Program>
+public sealed class MaintenanceApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid AdminId { get; } = Guid.Parse("c5000000-0000-0000-0000-000000000001");
 

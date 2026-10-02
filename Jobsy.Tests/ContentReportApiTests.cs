@@ -131,7 +131,7 @@ public class ContentReportApiTests : IClassFixture<ContentReportApiFactory>
     private sealed record AcceptedDto(bool Accepted, bool EmailConfirmationSent);
 }
 
-public sealed class ContentReportApiFactory : WebApplicationFactory<Program>
+public sealed class ContentReportApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     private readonly string _dbName = "ContentReports-" + Guid.NewGuid();
     private readonly int _hourlyLimit;

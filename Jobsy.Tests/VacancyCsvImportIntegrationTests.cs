@@ -194,7 +194,7 @@ public class VacancyCsvImportIntegrationTests : IClassFixture<VacancyCsvImportWe
             CompanyId: companyId?.ToString());
 }
 
-public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Program>
+public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid OrgId { get; } = Guid.Parse("a1111111-1111-1111-1111-111111111111");
     public Guid BranchId { get; } = Guid.Parse("a2222222-2222-2222-2222-222222222222");

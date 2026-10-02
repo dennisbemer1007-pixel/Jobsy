@@ -20,7 +20,7 @@ namespace Jobsy.Tests.Errors;
 /// company, one hidden-mode intermediary, and a vacancy for every closed/unknown/owner case
 /// the spec distinguishes.
 /// </summary>
-public sealed class ClosedVacancyApiFactory : WebApplicationFactory<Program>
+public sealed class ClosedVacancyApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid CompanyId { get; } = Guid.Parse("c3000000-0000-0000-0000-000000000001");
     public Guid IntermediaryCompanyId { get; } = Guid.Parse("c3000000-0000-0000-0000-000000000002");
