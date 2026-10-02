@@ -67,3 +67,15 @@ Herhaal PSI/Lighthouse op `https://lobsy.nl` na merge naar `main` en vul de tabe
 - Eigen image-CDN of upload-pipeline (Cloudflare Resizing is de schakelaar als die add-on aanstaat).
 - Critical-CSS extractie van `app.css` (271&nbsp;KB) — te bros voor Blazor; compressie + preload is de praktische winst.
 - Blazor WASM / lazy `.razor` assemblies — dit is Interactive Server.
+
+## Map JS minify (code-health 01)
+
+Rebuild MapLibre wrappers after editing the sources:
+
+```bash
+npx --yes terser@5 Jobsy.Web/wwwroot/js/jobsyMapLibre.js --compress --mangle -o Jobsy.Web/wwwroot/js/jobsyMapLibre.min.js
+npx --yes terser@5 Jobsy.Web/wwwroot/js/jobMap.js --compress --mangle -o Jobsy.Web/wwwroot/js/jobMap.min.js
+npx --yes terser@5 Jobsy.Web/wwwroot/js/vacancyDetailMap.js --compress --mangle -o Jobsy.Web/wwwroot/js/vacancyDetailMap.min.js
+```
+
+Bump the matching `?v=` strings in `Jobsy.Web/wwwroot/js/app-core.js` (and App.razor for CSS).

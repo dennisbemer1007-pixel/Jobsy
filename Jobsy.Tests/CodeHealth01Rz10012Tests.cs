@@ -1,5 +1,4 @@
 using Bunit;
-using Jobsy.Web.Components.Admin.Sections;
 using Jobsy.Web.Components.Employer;
 using Jobsy.Web.Components.Werkgever.Insights;
 using Jobsy.Web.Localization;
@@ -61,7 +60,7 @@ public class CodeHealth01Rz10012Tests : TestContext
         Assert.Equal(1, Regex.Matches(imports, @"@using Jobsy\.Web\.Features\b").Count);
 
         var companyDetails = File.ReadAllText(Path.Combine(
-            root, "Jobsy.Web", "Components", "Admin", "Sections", "CompanyDetailsSection.razor"));
+            root, "Jobsy.Web", "Components", "Werkgever", "Sections", "CompanyDetailsSection.razor"));
         Assert.Contains("<RaamflyerTools", companyDetails, StringComparison.Ordinal);
         Assert.DoesNotContain("&lt;RaamflyerTools", companyDetails, StringComparison.Ordinal);
     }

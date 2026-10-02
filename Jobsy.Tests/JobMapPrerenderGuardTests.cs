@@ -163,14 +163,17 @@ public class JobMapPrerenderGuardTests
     }
 
     [Fact]
-    public void Job_map_uses_openfreemap_vector_styles_and_hides_attribution()
+    public void Job_map_uses_openfreemap_vector_styles_and_keeps_osm_attribution()
     {
         var helper = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js"));
         Assert.Contains("https://tiles.openfreemap.org/styles/liberty", helper);
         Assert.DoesNotContain("https://tiles.openfreemap.org/styles/bright", helper);
         Assert.Contains("fill-extrusion", helper);
         Assert.Contains("pitch: 50", helper);
-        Assert.Contains("attributionControl: false", helper);
+        // ODbL: compact attribution with OpenStreetMap credit (desktop expands via syncAttributionCompact).
+        Assert.Contains("customAttribution", helper);
+        Assert.Contains("openstreetmap.org/copyright", helper);
+        Assert.Contains("preferCompactAttribution", helper);
         Assert.Contains("maplibreLogo: false", helper);
         Assert.Contains("cooperativeGestures: false", helper);
         Assert.Contains("dragPan: true", helper);
@@ -179,6 +182,13 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("3D / Bright", helper);
         Assert.Contains("syncStyleToggle", helper);
         Assert.Contains("return \"liberty\"", helper);
+        // Logo may be stripped; attribution must not be removed from the DOM.
+        var hideStart = helper.IndexOf("function hideChrome(map)", StringComparison.Ordinal);
+        var hideEnd = helper.IndexOf("function findBuildingSourceLayer", hideStart, StringComparison.Ordinal);
+        Assert.True(hideStart > 0 && hideEnd > hideStart);
+        var hideFn = helper[hideStart..hideEnd];
+        Assert.Contains("maplibregl-ctrl-logo", hideFn);
+        Assert.DoesNotContain("maplibregl-ctrl-attrib", hideFn);
 
         var createStart = helper.IndexOf("function createMap(container, options)", StringComparison.Ordinal);
         var createEnd = helper.IndexOf("return {", createStart, StringComparison.Ordinal);
@@ -193,7 +203,12 @@ public class JobMapPrerenderGuardTests
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-ctrl-attrib", css);
-        Assert.Contains("display: none !important", css);
+        // Logo stays hidden; attribution rules must not force display:none on .maplibregl-ctrl-attrib.
+        var attribRuleStart = css.IndexOf(".job-map .maplibregl-ctrl-attrib,", StringComparison.Ordinal);
+        Assert.True(attribRuleStart >= 0);
+        var attribBlock = css[attribRuleStart..(attribRuleStart + 400)];
+        Assert.DoesNotContain("display: none !important", attribBlock);
+        Assert.Contains(".job-map .maplibregl-ctrl-logo", css);
         Assert.Contains("job-map-style-switch", css);
         Assert.Contains("maplibregl-ctrl-bottom-right", css);
         Assert.Contains("bottom: 58px", css);
@@ -201,6 +216,9 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("touch-action: none", css);
         Assert.Contains("#job-map", css);
         Assert.Contains("min-height: 55dvh", css);
+
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.DoesNotContain(".maplibregl-ctrl-attrib, .maplibregl-compact { display: none", app);
     }
 
     [Fact]
