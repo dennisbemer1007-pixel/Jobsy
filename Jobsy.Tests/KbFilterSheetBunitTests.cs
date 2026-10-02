@@ -114,7 +114,9 @@ public class KbFilterSheetBunitTests
         var discovery = ReadDiscovery();
         var footerIdx = discovery.IndexOf("class=\"filter-sheet__footer\"", StringComparison.Ordinal);
         Assert.True(footerIdx > 0);
-        var footer = discovery.Substring(footerIdx, 500);
+        var footerEnd = discovery.IndexOf("</div>", footerIdx + 20, StringComparison.Ordinal);
+        Assert.True(footerEnd > footerIdx);
+        var footer = discovery[footerIdx..Math.Min(discovery.Length, footerEnd + 6)];
         Assert.Contains("ApplyFiltersLabel", footer, StringComparison.Ordinal);
         Assert.DoesNotContain("Discovery.Apply", footer, StringComparison.Ordinal);
 

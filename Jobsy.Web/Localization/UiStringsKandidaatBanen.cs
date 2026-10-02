@@ -568,10 +568,10 @@ public static class UiStringsKandidaatBanen
             "Hoe ga je naar je werk?", "How do you get to work?",
             "Jak dojeżdżasz do pracy?", "Cum ajungi la muncă?", "كيف تذهب إلى العمل؟");
         Add("Kb.Filter.TravelValue",
-            "max. {0} min", "max. {0} min",
-            "maks. {0} min", "max. {0} min", "حد أقصى {0} د");
+            "max. {0} min", "up to {0} min",
+            "maks. {0} min", "max. {0} min.", "حد أقصى {0} د");
         Add("Kb.Filter.Match",
-            "Match", "Match",
+            "Match", "Fit",
             "Dopasowanie", "Potrivire", "التطابق");
         Add("Kb.Filter.MatchHint",
             "Hoe goed past de baan bij jou?", "How well does the job fit you?",
@@ -592,8 +592,8 @@ public static class UiStringsKandidaatBanen
             "Afstand", "Distance",
             "Odległość", "Distanță", "المسافة");
         Add("Kb.Filter.DistanceValue",
-            "max. {0} km", "max. {0} km",
-            "maks. {0} km", "max. {0} km", "حد أقصى {0} كم");
+            "max. {0} km", "up to {0} km",
+            "maks. {0} km", "max. {0} km.", "حد أقصى {0} كم");
         Add("Kb.Filter.AgeHint",
             "Sommige banen hebben een minimum leeftijd.",
             "Some jobs have a minimum age.",
