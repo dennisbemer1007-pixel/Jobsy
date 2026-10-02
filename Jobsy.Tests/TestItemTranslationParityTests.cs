@@ -78,7 +78,7 @@ public sealed class TestItemTranslationParityTests
             var nl = UiStrings.Get(key, "nl");
             foreach (var lang in Langs)
             {
-                    var v = UiStrings.Get(key, lang);
+                var v = UiStrings.Get(key, lang);
                 Assert.False(string.IsNullOrWhiteSpace(v));
                 Assert.False(string.Equals(nl, v, StringComparison.Ordinal));
             }

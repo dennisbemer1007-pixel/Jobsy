@@ -187,30 +187,56 @@ public sealed class CandidateInsightsAuthzFactory : WebApplicationFactory<Jobsy.
         }
 
         db.Companies.AddRange(
-            new Company { Id = OrgAId, Name = "OrgA", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4.2),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
-            new Company { Id = BranchA1Id, Name = "A1", KvkNumber = "2", Address = "a1", ParentCompanyId = OrgAId, Location = new GeoPoint(52.01, 4.21),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
-            new Company { Id = BranchA2Id, Name = "A2", KvkNumber = "3", Address = "a2", ParentCompanyId = OrgAId, Location = new GeoPoint(52.02, 4.22),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
-            new Company { Id = BranchBId, Name = "B", KvkNumber = "4", Address = "b", Location = new GeoPoint(51.9, 4.3),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+            new Company
+            {
+                Id = OrgAId,
+                Name = "OrgA",
+                KvkNumber = "1",
+                Address = "a",
+                Location = new GeoPoint(52, 4.2),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
+            new Company
+            {
+                Id = BranchA1Id,
+                Name = "A1",
+                KvkNumber = "2",
+                Address = "a1",
+                ParentCompanyId = OrgAId,
+                Location = new GeoPoint(52.01, 4.21),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
+            new Company
+            {
+                Id = BranchA2Id,
+                Name = "A2",
+                KvkNumber = "3",
+                Address = "a2",
+                ParentCompanyId = OrgAId,
+                Location = new GeoPoint(52.02, 4.22),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
+            new Company
+            {
+                Id = BranchBId,
+                Name = "B",
+                KvkNumber = "4",
+                Address = "b",
+                Location = new GeoPoint(51.9, 4.3),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
 
         db.Users.AddRange(
             new User { Id = EnterpriseAId, Email = "em-a@test.local", FullName = "EM", Role = UserRole.EnterpriseManager, IsActive = true, CompanyId = OrgAId },

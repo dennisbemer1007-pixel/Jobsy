@@ -2,12 +2,12 @@ using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 

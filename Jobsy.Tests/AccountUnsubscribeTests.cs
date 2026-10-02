@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -8,7 +9,6 @@ using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 

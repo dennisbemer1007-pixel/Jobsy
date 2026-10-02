@@ -1,6 +1,6 @@
 using System.Net;
-using Microsoft.AspNetCore.Components;
 using Jobsy.Web.Localization;
+using Microsoft.AspNetCore.Components;
 
 namespace Jobsy.Web.Help;
 

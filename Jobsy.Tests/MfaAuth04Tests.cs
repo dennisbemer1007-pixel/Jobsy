@@ -13,6 +13,7 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.TestSupport;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Hosting;
@@ -29,7 +30,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 

@@ -1,3 +1,4 @@
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -8,7 +9,6 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -603,11 +603,11 @@ public class Sprint7RegistrationTests
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
                 Type = CompanyType.Employer,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = branchId,
@@ -618,11 +618,11 @@ public class Sprint7RegistrationTests
                 Location = new GeoPoint(52.1, 4.1),
                 Type = CompanyType.Employer,
                 ParentCompanyId = parentId,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
         var emId = Guid.NewGuid();
         db.Users.Add(new User
         {
@@ -655,7 +655,11 @@ public class Sprint7RegistrationTests
         var adminId = Guid.NewGuid();
         db.Users.Add(new User
         {
-            Id = adminId, Email = "admin2@jobsy.local", FullName = "Admin", Role = UserRole.Admin, IsActive = true
+            Id = adminId,
+            Email = "admin2@jobsy.local",
+            FullName = "Admin",
+            Role = UserRole.Admin,
+            IsActive = true
         });
         await db.SaveChangesAsync();
 
@@ -682,11 +686,11 @@ public class Sprint7RegistrationTests
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
                 Type = CompanyType.Employer,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = branchId,
@@ -697,11 +701,11 @@ public class Sprint7RegistrationTests
                 Location = new GeoPoint(52.1, 4.1),
                 Type = CompanyType.Employer,
                 ParentCompanyId = parentId,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
         var bmId = Guid.NewGuid();
         var intermediaryId = Guid.NewGuid();
         db.Users.AddRange(
@@ -747,7 +751,11 @@ public class Sprint7RegistrationTests
         var adminId = Guid.NewGuid();
         db.Users.Add(new User
         {
-            Id = adminId, Email = "admin3@jobsy.local", FullName = "Admin", Role = UserRole.Admin, IsActive = true
+            Id = adminId,
+            Email = "admin3@jobsy.local",
+            FullName = "Admin",
+            Role = UserRole.Admin,
+            IsActive = true
         });
         await db.SaveChangesAsync();
 

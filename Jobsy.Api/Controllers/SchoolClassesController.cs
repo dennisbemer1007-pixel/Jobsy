@@ -1,7 +1,7 @@
 using System.Security.Claims;
+using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
-using Jobsy.Api.Security;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -11,6 +11,7 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.TestSupport;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 

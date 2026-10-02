@@ -107,107 +107,107 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
 
     private async Task<bool> RetryCompanyAsync(Company company, CancellationToken cancellationToken)
     {
-            company.KvkLastVerificationAttemptAtUtc = DateTime.UtcNow;
-            company.KvkVerificationAttempts += 1;
+        company.KvkLastVerificationAttemptAtUtc = DateTime.UtcNow;
+        company.KvkVerificationAttempts += 1;
 
-            var lookup = await _kvk.LookupEstablishmentsAsync(company.KvkNumber, cancellationToken);
-            if (lookup.Status == KvkLookupStatus.Unavailable)
-            {
-                if (company.KvkVerificationAttempts >= MaxAttempts)
-                {
-                    company.KvkVerificationStatus = KvkVerificationStatus.Failed;
-                    _logger.LogWarning(
-                        "KVK verification failed after {Attempts} attempts for company {CompanyId}",
-                        company.KvkVerificationAttempts, company.Id);
-                }
-
-                return false;
-            }
-
-            if (lookup.Status == KvkLookupStatus.NotFound)
+        var lookup = await _kvk.LookupEstablishmentsAsync(company.KvkNumber, cancellationToken);
+        if (lookup.Status == KvkLookupStatus.Unavailable)
+        {
+            if (company.KvkVerificationAttempts >= MaxAttempts)
             {
                 company.KvkVerificationStatus = KvkVerificationStatus.Failed;
-                return false;
+                _logger.LogWarning(
+                    "KVK verification failed after {Attempts} attempts for company {CompanyId}",
+                    company.KvkVerificationAttempts, company.Id);
             }
 
-            var match = lookup.Establishments.FirstOrDefault(e =>
-                e.KvkEstablishmentId.Equals(company.KvkEstablishmentId, StringComparison.OrdinalIgnoreCase));
-            if (match is null)
+            return false;
+        }
+
+        if (lookup.Status == KvkLookupStatus.NotFound)
+        {
+            company.KvkVerificationStatus = KvkVerificationStatus.Failed;
+            return false;
+        }
+
+        var match = lookup.Establishments.FirstOrDefault(e =>
+            e.KvkEstablishmentId.Equals(company.KvkEstablishmentId, StringComparison.OrdinalIgnoreCase));
+        if (match is null)
+        {
+            company.KvkVerificationStatus = KvkVerificationStatus.Failed;
+            return false;
+        }
+
+        // Ownership: if another company already owns this establishment, do not auto-verify.
+        var occupiedByOther = await _db.Companies.AsNoTracking()
+            .AnyAsync(
+                c => c.Id != company.Id
+                     && c.KvkEstablishmentId == company.KvkEstablishmentId
+                     && c.KvkVerificationStatus == KvkVerificationStatus.Verified,
+                cancellationToken);
+        if (occupiedByOther || match.IsInUse)
+        {
+            // IsInUse may include this company itself — re-check excluding self.
+            var otherOwner = await _db.Companies.AsNoTracking()
+                .Where(c => c.KvkEstablishmentId == company.KvkEstablishmentId && c.Id != company.Id)
+                .Select(c => c.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (otherOwner != Guid.Empty)
             {
                 company.KvkVerificationStatus = KvkVerificationStatus.Failed;
+                _logger.LogWarning(
+                    "KVK verification rejected for company {CompanyId}: establishment {Establishment} already owned",
+                    company.Id, company.KvkEstablishmentId);
                 return false;
             }
+        }
 
-            // Ownership: if another company already owns this establishment, do not auto-verify.
-            var occupiedByOther = await _db.Companies.AsNoTracking()
-                .AnyAsync(
-                    c => c.Id != company.Id
-                         && c.KvkEstablishmentId == company.KvkEstablishmentId
-                         && c.KvkVerificationStatus == KvkVerificationStatus.Verified,
-                    cancellationToken);
-            if (occupiedByOther || match.IsInUse)
+        company.Name = match.Name;
+        company.Address = match.Address;
+        company.Location = new GeoPoint(match.Latitude, match.Longitude);
+        company.KvkVerificationStatus = KvkVerificationStatus.Verified;
+        company.KvkVerifiedAtUtc = DateTime.UtcNow;
+
+        var kvkCompany = await _kvk.GetByKvkNumberAsync(company.KvkNumber, cancellationToken);
+        var sbiCodes = kvkCompany?.EffectiveSbiCodes.Count > 0
+            ? kvkCompany.EffectiveSbiCodes
+            : match.EffectiveSbiCodes;
+        if (kvkCompany?.LegalForm is not null)
+        {
+            company.LegalForm = kvkCompany.LegalForm;
+        }
+
+        await ApplyVerifiedSbiClassificationAsync(company, sbiCodes, cancellationToken);
+
+        if (company.ParentCompanyId is Guid orgId)
+        {
+            var org = await _db.Companies.FirstOrDefaultAsync(c => c.Id == orgId, cancellationToken);
+            if (org is not null)
             {
-                // IsInUse may include this company itself — re-check excluding self.
-                var otherOwner = await _db.Companies.AsNoTracking()
-                    .Where(c => c.KvkEstablishmentId == company.KvkEstablishmentId && c.Id != company.Id)
-                    .Select(c => c.Id)
-                    .FirstOrDefaultAsync(cancellationToken);
-                if (otherOwner != Guid.Empty)
+                org.KvkVerificationStatus = KvkVerificationStatus.Verified;
+                org.KvkVerifiedAtUtc ??= DateTime.UtcNow;
+                if (kvkCompany is not null)
                 {
-                    company.KvkVerificationStatus = KvkVerificationStatus.Failed;
-                    _logger.LogWarning(
-                        "KVK verification rejected for company {CompanyId}: establishment {Establishment} already owned",
-                        company.Id, company.KvkEstablishmentId);
-                    return false;
-                }
-            }
-
-            company.Name = match.Name;
-            company.Address = match.Address;
-            company.Location = new GeoPoint(match.Latitude, match.Longitude);
-            company.KvkVerificationStatus = KvkVerificationStatus.Verified;
-            company.KvkVerifiedAtUtc = DateTime.UtcNow;
-
-            var kvkCompany = await _kvk.GetByKvkNumberAsync(company.KvkNumber, cancellationToken);
-            var sbiCodes = kvkCompany?.EffectiveSbiCodes.Count > 0
-                ? kvkCompany.EffectiveSbiCodes
-                : match.EffectiveSbiCodes;
-            if (kvkCompany?.LegalForm is not null)
-            {
-                company.LegalForm = kvkCompany.LegalForm;
-            }
-
-            await ApplyVerifiedSbiClassificationAsync(company, sbiCodes, cancellationToken);
-
-            if (company.ParentCompanyId is Guid orgId)
-            {
-                var org = await _db.Companies.FirstOrDefaultAsync(c => c.Id == orgId, cancellationToken);
-                if (org is not null)
-                {
-                    org.KvkVerificationStatus = KvkVerificationStatus.Verified;
-                    org.KvkVerifiedAtUtc ??= DateTime.UtcNow;
-                    if (kvkCompany is not null)
+                    org.Name = kvkCompany.Name;
+                    org.Address = kvkCompany.Address;
+                    if (kvkCompany.LegalForm is not null)
                     {
-                        org.Name = kvkCompany.Name;
-                        org.Address = kvkCompany.Address;
-                        if (kvkCompany.LegalForm is not null)
-                        {
-                            org.LegalForm = kvkCompany.LegalForm;
-                        }
+                        org.LegalForm = kvkCompany.LegalForm;
                     }
-
-                    await _registration.ClaimSiblingEstablishmentsForOrgAsync(
-                        company.KvkNumber, orgId, company.Id, cancellationToken);
-
-                    // Membership for newly claimed siblings for the org's enterprise managers.
-                    await EnsureOrgMembershipsForSiblingsAsync(orgId, cancellationToken);
                 }
-            }
 
-            _logger.LogInformation(
-                "KVK verification succeeded for company {CompanyId} ({Establishment})",
-                company.Id, company.KvkEstablishmentId);
-            return true;
+                await _registration.ClaimSiblingEstablishmentsForOrgAsync(
+                    company.KvkNumber, orgId, company.Id, cancellationToken);
+
+                // Membership for newly claimed siblings for the org's enterprise managers.
+                await EnsureOrgMembershipsForSiblingsAsync(orgId, cancellationToken);
+            }
+        }
+
+        _logger.LogInformation(
+            "KVK verification succeeded for company {CompanyId} ({Establishment})",
+            company.Id, company.KvkEstablishmentId);
+        return true;
     }
 
     private async Task ApplyVerifiedSbiClassificationAsync(

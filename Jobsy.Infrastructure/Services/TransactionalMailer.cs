@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
@@ -11,7 +12,6 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace Jobsy.Infrastructure.Services;
 

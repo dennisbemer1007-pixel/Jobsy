@@ -1,15 +1,15 @@
+using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Jobsy.Api.Admin;
-using Jobsy.Core.Admin;
-using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 

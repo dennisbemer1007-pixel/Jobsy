@@ -110,7 +110,11 @@ public class CandidateOnboardingWizardTests
     {
         var answers = new Dictionary<int, int>
         {
-            [1] = 5, [6] = 4, [11] = 3, [16] = 5, [21] = 4
+            [1] = 5,
+            [6] = 4,
+            [11] = 3,
+            [16] = 5,
+            [21] = 4
         };
         var json = CompetencyTestCatalog.SerializeAnswers(answers);
         var provisional = ProvisionalAssessmentScores.ResolveCompetency(
@@ -130,7 +134,11 @@ public class CandidateOnboardingWizardTests
     {
         var valuesAnswers = new Dictionary<int, int>
         {
-            [1] = 5, [6] = 4, [11] = 3, [16] = 2, [21] = 5
+            [1] = 5,
+            [6] = 4,
+            [11] = 3,
+            [16] = 2,
+            [21] = 5
         };
         var valuesJson = SchwartzValuesCatalog.SerializeAnswers(valuesAnswers);
         var values = ProvisionalAssessmentScores.ResolveValues(
@@ -140,7 +148,11 @@ public class CandidateOnboardingWizardTests
 
         var cultureAnswers = new Dictionary<int, int>
         {
-            [1] = 5, [3] = 4, [5] = 5, [7] = 3, [11] = 4
+            [1] = 5,
+            [3] = 4,
+            [5] = 5,
+            [7] = 3,
+            [11] = 4
         };
         var cultureJson = CulturePersonalityCatalog.SerializeAnswers(cultureAnswers);
         var culture = ProvisionalAssessmentScores.ResolveCulture(

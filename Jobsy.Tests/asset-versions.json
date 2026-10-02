@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "f0d0c0b79780e61469e293f47798dd7b7dc555ecc1a3bea4c17afe8241554682",
-    "v": "20261002-ch01"
+    "sha256": "3ced202924dc71bf346b04af8194bcf0da5cb7c11a0727284ff29a9c545d5ef9",
+    "v": "20261002-kp01"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -20,8 +20,8 @@
     "v": "20260930-auth04b"
   },
   "css/features/banenkaart.css": {
-    "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
-    "v": "20260930-kb3"
+    "sha256": "060393cd4e868f54faab55f47ffbb6e00fbb1dcf939fa05ee84e10d29d7eeb9e",
+    "v": "20261002-kp01"
   },
   "css/features/carriere.css": {
     "sha256": "38a5169943c3e3c01c6ffa9aea4f38cf45b205b1da9ff89eae5cc3a465ffbe4f",
@@ -40,8 +40,8 @@
     "v": "20260930-landing-6"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "a0092ecc053aaf93403883fd0d1de517756da1194adee977fafe20eee10dcb27",
-    "v": "20260930-kb7"
+    "sha256": "5eb633f814b6b9cb27754c021eb6e3ef10bc7d91d78597dacfe185a38e2ed9c3",
+    "v": "20261002-kp01"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -128,8 +128,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "70fe505ca13fc5cc283853ff383029f0b5f1eac8a0e7af45a436c5086b0542c9",
-    "v": "20260930-tests-2"
+    "sha256": "cd11b34d64a74e57767f77199bead470e19120ac8cb6afb9321070991977b1bd",
+    "v": "20261002-kp01"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -140,8 +140,8 @@
     "v": "20260928-perf"
   },
   "js/discoveryHover.js": {
-    "sha256": "f8da38e2ecdf91f6bd33e7de3b3dd9c0316344dfc603143d8de92f73a57ea164",
-    "v": "20260928-list-rerender"
+    "sha256": "be3ef352874658692c51a81b3cf04601db54000f34298be1c2a284660d8634b5",
+    "v": "20261002-kp01"
   },
   "js/features/account-mfa.js": {
     "sha256": "01fcae80a3439833ca143a9bbb11278e63d3d9d4fdb55be3136b9a4f035c63f5",
@@ -164,8 +164,8 @@
     "v": "20260930-landing-6"
   },
   "js/jobMap.min.js": {
-    "sha256": "e8529e65aacdf1ce942a5b7ff3edcc99d7546c71f929705b764a92d96a86fe03",
-    "v": "20261002-ch01"
+    "sha256": "3b564f65c9eb9e70d12f57e201bfff4dccb5db0294eee91e5b2f9a02b9d12a86",
+    "v": "20261002-kp01"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "7398c432fd1e38c3840753ca918919adeed81ed19074c0fdcf75b33e1972b825",

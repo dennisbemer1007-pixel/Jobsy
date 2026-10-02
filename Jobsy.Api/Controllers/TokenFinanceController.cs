@@ -1,13 +1,13 @@
 using System.Text;
+using Jobsy.Api.Admin;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Privacy;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Jobsy.Api.Admin;
-using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 

@@ -1,19 +1,19 @@
-using Jobsy.Core.Interfaces;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Jobsy.Core.Security;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 

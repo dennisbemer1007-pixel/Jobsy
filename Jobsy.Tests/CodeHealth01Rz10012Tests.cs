@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 using Bunit;
 using Jobsy.Web.Components.Employer;
 using Jobsy.Web.Components.Werkgever.Insights;
@@ -6,8 +8,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 
 namespace Jobsy.Tests;
 

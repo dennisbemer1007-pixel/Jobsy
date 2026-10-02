@@ -1,4 +1,6 @@
+using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -11,8 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Jobsy.Api.Admin;
-using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 

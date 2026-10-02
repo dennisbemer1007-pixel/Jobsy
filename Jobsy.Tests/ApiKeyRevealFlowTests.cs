@@ -1,3 +1,4 @@
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -7,7 +8,6 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 

@@ -1,19 +1,19 @@
+using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
-using Jobsy.Core.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Jobsy.Api.Admin;
-using Jobsy.Core.Admin;
-using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 

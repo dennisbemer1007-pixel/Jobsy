@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Bunit;
@@ -12,7 +13,6 @@ using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using System.Security.Claims;
 
 namespace Jobsy.Tests;
 

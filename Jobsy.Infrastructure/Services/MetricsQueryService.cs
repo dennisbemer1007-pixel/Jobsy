@@ -1314,36 +1314,36 @@ public sealed class MetricsQueryService : IMetricsQueryService
                     from, to, bucketCount);
 
             case "site_visits_unique" when includePlatformOnly:
-            {
-                var rows = await _db.SiteVisits.AsNoTracking()
-                    .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
-                    .Select(v => new { v.CreatedAt, v.UserId, v.AnonymousKey, v.Id })
-                    .ToListAsync(ct);
-                return BucketUniqueVisitors(rows.Select(v => (
-                    v.CreatedAt,
-                    v.UserId is Guid uid ? "u:" + uid : "a:" + (v.AnonymousKey ?? v.Id.ToString())
-                )).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.SiteVisits.AsNoTracking()
+                        .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+                        .Select(v => new { v.CreatedAt, v.UserId, v.AnonymousKey, v.Id })
+                        .ToListAsync(ct);
+                    return BucketUniqueVisitors(rows.Select(v => (
+                        v.CreatedAt,
+                        v.UserId is Guid uid ? "u:" + uid : "a:" + (v.AnonymousKey ?? v.Id.ToString())
+                    )).ToList(), from, to, bucketCount);
+                }
 
             case "tokens_purchased":
-            {
-                var rows = await _db.TokenTransactions.AsNoTracking()
-                    .Where(t => t.Kind == TokenTransactionKind.Purchase && t.CreatedAt >= from && t.CreatedAt <= to)
-                    .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
-                    .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
-                    .ToListAsync(ct);
-                return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.TokenTransactions.AsNoTracking()
+                        .Where(t => t.Kind == TokenTransactionKind.Purchase && t.CreatedAt >= from && t.CreatedAt <= to)
+                        .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+                        .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
+                        .ToListAsync(ct);
+                    return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
+                }
 
             case "tokens_spent":
-            {
-                var rows = await _db.TokenTransactions.AsNoTracking()
-                    .Where(t => t.Kind == TokenTransactionKind.Spend && t.CreatedAt >= from && t.CreatedAt <= to)
-                    .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
-                    .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
-                    .ToListAsync(ct);
-                return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.TokenTransactions.AsNoTracking()
+                        .Where(t => t.Kind == TokenTransactionKind.Spend && t.CreatedAt >= from && t.CreatedAt <= to)
+                        .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+                        .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
+                        .ToListAsync(ct);
+                    return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
+                }
 
             default:
                 return new decimal[bucketCount];

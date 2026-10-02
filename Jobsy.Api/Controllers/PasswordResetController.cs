@@ -1,4 +1,5 @@
 using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -10,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Jobsy.Core.Email.Model;
 
 namespace Jobsy.Api.Controllers;
 

@@ -1,6 +1,7 @@
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -13,7 +14,6 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Jobsy.Core.Email;
 
 namespace Jobsy.Tests.Sales;
 
