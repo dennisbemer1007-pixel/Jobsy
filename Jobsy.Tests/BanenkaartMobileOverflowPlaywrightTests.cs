@@ -102,15 +102,7 @@ public class BanenkaartMobileOverflowPlaywrightTests
             }
         }
 
-        // List mode
-        if (await lijst.CountAsync() > 0)
-        {
-            await lijst.First.ClickAsync(new() { Force = true });
-            await page.WaitForTimeoutAsync(400);
-            await AssertNoHorizontalOverflowAsync(page);
-        }
-
-        // Cluster sheet edges when a cluster can be opened
+        // Cluster sheet edges while still in map mode (list mode hides .map-pane).
         var opened = await page.EvaluateAsync<bool>("""
             async () => {
               if (!window.jobMap || typeof window.jobMap.debugOpenLargestCluster !== 'function') return false;
@@ -119,7 +111,9 @@ public class BanenkaartMobileOverflowPlaywrightTests
             """);
         if (opened)
         {
-            await page.WaitForSelectorAsync(".map-cluster-sheet", new() { Timeout = 10_000 });
+            await page.WaitForSelectorAsync(
+                ".map-cluster-sheet.map-popup--docked, .map-cluster-sheet",
+                new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
             var sheetOk = await page.EvaluateAsync<bool>("""
                 () => {
                   const sheet = document.querySelector('.map-cluster-sheet');
@@ -139,6 +133,18 @@ public class BanenkaartMobileOverflowPlaywrightTests
                 }
                 """);
             Assert.True(chipOk, "Count pill must be fully inside the viewport.");
+
+            // Close sheet before list-mode overflow check.
+            await page.Keyboard.PressAsync("Escape");
+            await page.WaitForTimeoutAsync(200);
+        }
+
+        // List mode
+        if (await lijst.CountAsync() > 0)
+        {
+            await lijst.First.ClickAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(400);
+            await AssertNoHorizontalOverflowAsync(page);
         }
     }
 
