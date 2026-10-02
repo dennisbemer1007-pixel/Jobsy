@@ -3831,7 +3831,10 @@ html[dir="rtl"] .account-menu__panel {
 .highlight-carousel__track {
     display: flex;
     gap: 0.65rem;
+    min-width: 0;
+    max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     padding: 0.15rem 0.1rem 0.45rem;
