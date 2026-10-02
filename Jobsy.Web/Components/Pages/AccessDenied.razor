@@ -1,47 +1,41 @@
 @page "/access-denied"
 @attribute [AllowAnonymous]
-@using Jobsy.Core.Features
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout ErrorLayout
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.WebUtilities
-@inject CultureState Culture
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@*
+  Cookie AccessDeniedPath target (endpoint [Authorize] failures append ?ReturnUrl=), and the
+  direct/legacy link with ?reason=. Same 403 page as the in-place NotAuthorized render
+  (Routes.razor / AccessDeniedView).
+*@
 
-<PageTitle>@(_employersOff ? Culture["Access.EmployersOffTitle"] : Culture["Page.AccessDeniedTitle"])</PageTitle>
+<PageTitle>@(_employersOff ? Culture["Status.Forbidden.EmployersOffTitle"] : Culture["Page.AccessDeniedTitle"])</PageTitle>
 
-<div class="login-page">
-    <div class="login-card">
-        @if (_employersOff)
-        {
-            <h1>@Culture["Access.EmployersOffTitle"]</h1>
-            <p class="login-lead">
-                @Culture["Access.EmployersOffLead"]
-            </p>
-            <p>
-                <a class="auth-link" href="/account/logout">@Culture["Access.EmployersOffLogout"]</a>
-            </p>
-        }
-        else
-        {
-            <h1>@Culture["Access.Title"]</h1>
-            <p class="login-lead">
-                @Culture["Access.Lead"]
-            </p>
-            <p>
-                <a class="auth-link" href="/home">@Culture["Access.ToHome"]</a>
-                ·
-                <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
-            </p>
-        }
-    </div>
-</div>
+<AccessDeniedView ReturnUrl="@_returnUrl" Reason="@_reason" />
 
 @code {
+    private string _returnUrl = "/home";
+    private string? _reason;
     private bool _employersOff;
 
     protected override void OnInitialized()
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
-        _employersOff = query.TryGetValue("reason", out var reason)
-                        && string.Equals(reason.ToString(), "employers-off", StringComparison.OrdinalIgnoreCase);
+
+        // The cookie middleware appends "ReturnUrl" (capital R); a direct link may use "returnUrl".
+        var raw = QueryValue(query, "ReturnUrl") ?? QueryValue(query, "returnUrl");
+        _returnUrl = AuthRedirects.ResolveRequestedReturnUrl(raw);
+
+        _reason = QueryValue(query, "reason");
+        _employersOff = string.Equals(_reason, "employers-off", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static string? QueryValue(Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query, string key)
+        => query.TryGetValue(key, out var value) ? value.ToString() : null;
 }

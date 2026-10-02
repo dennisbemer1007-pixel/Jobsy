@@ -1,32 +1,245 @@
 @page "/status/{Code:int}"
-@attribute [AllowAnonymous]
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
-@layout PublicLayout
+@attribute [NoBlazorRuntime]
+@layout ErrorLayout
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Components.Errors
+@using Jobsy.Web.Diagnostics
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
 @inject CultureState Culture
 @inject IHttpContextAccessor HttpContextAccessor
-@using Jobsy.Web.Components.Status
-@using Microsoft.AspNetCore.Http
+@inject IConfiguration Configuration
+@inject MaintenanceState Maintenance
+@*
+  Re-execute target for unknown HTML pages, and a direct route for the other real status codes.
+  Static SSR only: this page must still render when the API or the database is down.
+  403 (errors stack 02) is a special case: a signed-in user without the required role lands
+  here via the OnRedirectToAccessDenied → UseHtmlStatusCodePages re-execute, and the requested
+  URL (not /status/403) stays in the browser. Delegate to AccessDeniedView for that case so the
+  masked-account / switch-account UI shows up at the real URL.
+*@
 
-<PageTitle>@(IsNotFound ? Culture["Status.NotFound.Title"] : Culture["Status.Generic.Title"]) · Lobsy</PageTitle>
-<PageSeo Index="false" />
+@if (_status == StatusCodes.Status403Forbidden)
+{
+    <PageTitle>@Culture["Status.Forbidden.Title"] · Lobsy</PageTitle>
+    <AccessDeniedView ReturnUrl="@_originalReturnUrl" Reason="role" />
+}
+else if (_status == StatusCodes.Status429TooManyRequests)
+{
+    <PageTitle>@Culture["Status.TooMany.Title"] · Lobsy</PageTitle>
+    <Microsoft.AspNetCore.Components.Sections.SectionContent SectionName="@ErrorLayout.ErrorHeadSection">
+        @* No auto-refresh loop: one refresh, never sooner than the wait we asked for. *@
+        <meta http-equiv="refresh" content="@MetaRefreshContent" />
+    </Microsoft.AspNetCore.Components.Sections.SectionContent>
 
-<StatusPageContent Code="Code" />
+    <section class="err-hero">
+        <div class="err-hero__text">
+            <p class="pub-chip err-code">@Culture["Status.TooMany.Eyebrow"]</p>
+            <h1 class="err-hero__title">@Culture["Status.TooMany.Title"]</h1>
+            <p class="err-hero__lead">@TooManyLead</p>
+
+            <SupportCodeCard Code="@_supportCode" Nonce="@_nonce" />
+
+            <div class="err-actions">
+                <a class="pub-btn pub-btn--primary" href="@_originalReturnUrl">@Culture["Status.Common.TryAgain"]</a>
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
+            </div>
+
+            <p class="err-support">
+                @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+            </p>
+        </div>
+        <div class="err-hero__art" aria-hidden="true">
+            <span class="err-blob"></span>
+            <LobsyMascot Pose="MascotPose.Sitting" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+        </div>
+    </section>
+}
+else if (_status == StatusCodes.Status503ServiceUnavailable)
+{
+    <PageTitle>@Culture["Status.Maintenance.Title"] · Lobsy</PageTitle>
+    <Microsoft.AspNetCore.Components.Sections.SectionContent SectionName="@ErrorLayout.ErrorHeadSection">
+        @* One refresh, never sooner than the wait we asked for and never later than 5 minutes. *@
+        <meta http-equiv="refresh" content="@MaintenanceRefreshContent" />
+    </Microsoft.AspNetCore.Components.Sections.SectionContent>
+
+    <section class="err-hero">
+        <div class="err-hero__text">
+            <p class="pub-chip err-code">@Culture["Status.Maintenance.Eyebrow"]</p>
+            <h1 class="err-hero__title">@Culture["Status.Maintenance.Title"]</h1>
+            <p class="err-hero__lead">@MaintenanceLead</p>
+
+            <p class="err-support">
+                @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+            </p>
+
+            <p class="err-aside">
+                <a class="err-aside__link" href="/login">@Culture["Status.Maintenance.AdminLogin"]</a>
+            </p>
+        </div>
+        <div class="err-hero__art" aria-hidden="true">
+            <span class="err-blob"></span>
+            <LobsyMascot Pose="MascotPose.Sitting" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+        </div>
+    </section>
+}
+else if (IsNotFound)
+{
+    <PageTitle>@Heading · Lobsy</PageTitle>
+    <NotFoundView />
+}
+else
+{
+<PageTitle>@Heading · Lobsy</PageTitle>
+
+<section class="err-hero">
+    <div class="err-hero__text">
+        <p class="pub-chip err-code">@_status</p>
+        <h1 class="err-hero__title">@Heading</h1>
+        <p class="err-hero__lead">@Lead</p>
+
+        <div class="err-actions">
+            <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Landing">@Culture["Status.Nav.Home"]</a>
+            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
+        </div>
+
+        <p class="err-support">
+            @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+        </p>
+    </div>
+    <div class="err-hero__art" aria-hidden="true">
+        <span class="err-blob"></span>
+        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" Class="err-mascot" />
+    </div>
+</section>
+}
 
 @code {
     [Parameter] public int Code { get; set; }
 
-    private bool IsNotFound => Code == StatusCodes.Status404NotFound;
+    /// <summary>Lower bound for the meta refresh so a short limiter window cannot cause a loop (04.2).</summary>
+    private const int MinMetaRefreshSeconds = 30;
 
-    protected override void OnParametersSet()
+    private int _status = StatusCodes.Status404NotFound;
+    private string _supportEmail = SupportContact.Default;
+    private string _originalReturnUrl = "/home";
+    private string _supportCode = string.Empty;
+    private string _nonce = string.Empty;
+    private int _retryAfterSeconds = RateLimitRejection.DefaultRetryAfterSeconds;
+    private DateTime? _maintenanceEndUtc;
+
+    private string TooManyLead => string.Format(
+        System.Globalization.CultureInfo.InvariantCulture,
+        Culture["Status.TooMany.Lead"],
+        _retryAfterSeconds);
+
+    private string MetaRefreshContent => string.Create(
+        System.Globalization.CultureInfo.InvariantCulture,
+        $"{Math.Max(MinMetaRefreshSeconds, _retryAfterSeconds)};url={_originalReturnUrl}");
+
+    /// <summary>
+    /// "Lobsy is zo terug." plus, only when an end time is set (E8), the expected time in
+    /// Amsterdam time formatted for the visitor's culture (with the date when it is not today).
+    /// </summary>
+    private string MaintenanceLead
     {
-        var http = HttpContextAccessor.HttpContext;
-        if (http is null || http.Response.HasStarted)
+        get
         {
-            return;
+            var lead = Culture["Status.Maintenance.Lead"];
+            if (_maintenanceEndUtc is not DateTime endUtc)
+            {
+                return lead;
+            }
+
+            var culture = System.Globalization.CultureInfo.CurrentCulture;
+            var local = Jobsy.Core.Time.AmsterdamTime.ToLocal(endUtc);
+            var today = Jobsy.Core.Time.AmsterdamTime.ToLocal(DateTime.UtcNow).Date;
+            var when = local.Date == today
+                ? local.ToString("HH:mm", culture)
+                : local.ToString("d MMMM HH:mm", culture);
+
+            return lead + " " + string.Format(culture, Culture["Status.Maintenance.BackAt"], when);
+        }
+    }
+
+    private string MaintenanceRefreshContent => string.Create(
+        System.Globalization.CultureInfo.InvariantCulture,
+        $"{Jobsy.Web.Hosting.MaintenanceMiddleware.MetaRefreshSeconds(_retryAfterSeconds)}");
+
+    private bool IsNotFound => _status == StatusCodes.Status404NotFound;
+
+    private string Heading => IsNotFound
+        ? Culture["Status.NotFound.Title"]
+        : Culture["Status.Generic.Title"];
+
+    private string Lead => IsNotFound
+        ? Culture["Status.NotFound.Lead"]
+        : Culture["Status.Generic.Lead"];
+
+    private string SupportMailto => SupportContact.MailtoLink(_supportEmail);
+
+    private string SupportLinePrefix => SplitSupportLine().Prefix;
+
+    private string SupportLineSuffix => SplitSupportLine().Suffix;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _status = ErrorResponse.NormalizeStatusCode(Code);
+        _supportEmail = SupportContact.Email(Configuration);
+
+        var http = HttpContextAccessor.HttpContext;
+        _originalReturnUrl = OriginalReturnUrl(http);
+
+        if (_status == StatusCodes.Status429TooManyRequests)
+        {
+            _supportCode = SupportCode.GetOrCreate(http);
+            _nonce = Jobsy.Web.Security.CspNonce.Get(http);
+            _retryAfterSeconds = RateLimitRejection.RetryAfterFor(http);
+        }
+        else if (_status == StatusCodes.Status503ServiceUnavailable)
+        {
+            // In-memory state only: the onderhoudspagina must render while the API is down.
+            _maintenanceEndUtc = Maintenance.ExpectedEndUtc;
+            _retryAfterSeconds = Maintenance.RetryAfterSeconds;
         }
 
-        // Keep/re-apply the status for direct GETs and re-execute.
-        var status = Code is >= 400 and < 600 ? Code : StatusCodes.Status500InternalServerError;
-        http.Response.StatusCode = status;
+        if (http is not null && !http.Response.HasStarted)
+        {
+            http.Response.StatusCode = _status;
+            ErrorResponse.ApplyHeaders(http);
+
+            if (_status is StatusCodes.Status429TooManyRequests or StatusCodes.Status503ServiceUnavailable
+                && string.IsNullOrEmpty(http.Response.Headers.RetryAfter))
+            {
+                http.Response.Headers.RetryAfter = _retryAfterSeconds.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+    }
+
+    /// <summary>Path+query the visitor originally asked for, from the status-code re-execute feature.</summary>
+    private static string OriginalReturnUrl(HttpContext? http)
+    {
+        var feature = http?.Features.Get<Microsoft.AspNetCore.Diagnostics.IStatusCodeReExecuteFeature>();
+        var path = feature?.OriginalPath;
+        if (string.IsNullOrEmpty(path) || path[0] != '/')
+        {
+            return "/home";
+        }
+
+        return string.IsNullOrEmpty(feature?.OriginalQueryString) ? path : path + feature!.OriginalQueryString;
+    }
+
+    private (string Prefix, string Suffix) SplitSupportLine()
+    {
+        var template = Culture["Status.Common.SupportLine"];
+        var marker = template.IndexOf("{0}", StringComparison.Ordinal);
+        return marker < 0
+            ? (template + " ", string.Empty)
+            : (template[..marker], template[(marker + 3)..]);
     }
 }

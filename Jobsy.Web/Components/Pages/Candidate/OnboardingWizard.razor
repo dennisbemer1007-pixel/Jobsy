@@ -12,6 +12,7 @@
 @inject IJSRuntime Js
 @inject GratisDnaMergeService GratisDnaMerge
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
+@inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
 @implements IAsyncDisposable
 
@@ -444,7 +445,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -552,7 +553,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
             _saveError = true;
         }
         finally
@@ -963,7 +964,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
             _saveError = true;
         }
         finally
@@ -1046,7 +1047,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
             _saveError = true;
         }
         finally

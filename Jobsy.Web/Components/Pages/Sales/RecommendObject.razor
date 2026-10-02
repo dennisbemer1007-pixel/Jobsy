@@ -3,6 +3,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["Sales.Recommend.Object.Title"] · Lobsy</PageTitle>
 
@@ -51,7 +52,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {

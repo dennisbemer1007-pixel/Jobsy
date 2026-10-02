@@ -93,9 +93,10 @@ public sealed class RoleFitCheckSession
         {
             State = await api.EvaluateRoleFitAsync(title, vacancyId);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Message = string.IsNullOrWhiteSpace(ex.Message) ? errorFallback : ex.Message;
+            // E7: the exception text never reaches the candidate; the caller supplies the copy.
+            Message = errorFallback;
         }
         finally
         {

@@ -47,10 +47,18 @@ public class ZapFindingsTests
     {
         var error = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Error.razor"));
         Assert.DoesNotContain("Internal Server Error", error);
-        Assert.DoesNotContain("Exception", error);
-        Assert.DoesNotContain("stack", error, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("TraceIdentifier", error);
-        Assert.Contains("Referentie:", error);
+        Assert.DoesNotContain("ex.Message", error);
+        Assert.DoesNotContain("StackTrace", error);
+        // Errors 01: the correlation id the visitor sees is the support code, never the trace id.
+        Assert.DoesNotContain("TraceIdentifier", error);
+        Assert.DoesNotContain("Referentie:", error);
+        Assert.Contains("SupportCode.GetOrCreate", error);
+        // Errors 04 moved the code card into the shared SupportCodeCard component (429 reuses it).
+        Assert.Contains("<SupportCodeCard", error);
+        var card = File.ReadAllText(Path.Combine(
+            FindRepoRoot(), "Jobsy.Web", "Components", "Errors", "SupportCodeCard.razor"));
+        Assert.Contains("Status.Common.CodeLabel", card);
+        Assert.DoesNotContain("ex.Message", card);
     }
 
     [Fact]

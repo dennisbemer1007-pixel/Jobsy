@@ -1,0 +1,73 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject UserFacingError UserFacing
+@*
+  One part of a page (a card, a list, a chart) failed while the rest is fine (errors 04 §04.4).
+  Calm, small, no layout shift beyond this card, and never exception text: the line comes from the
+  catalog and the support code from the API error or the request.
+*@
+
+<div class="err-inline" role="status" data-testid="inline-error">
+    <span class="err-inline__icon" aria-hidden="true">⚠️</span>
+    <div class="err-inline__body">
+        <p class="err-inline__text">@MessageText</p>
+        @if (!string.IsNullOrEmpty(_apiUserMessage))
+        {
+            <p class="err-inline__detail">@_apiUserMessage</p>
+        }
+        @if (!string.IsNullOrEmpty(CodeShown))
+        {
+            <p class="err-inline__code" data-support-code="@CodeShown">
+                @string.Format(System.Globalization.CultureInfo.InvariantCulture, Culture["Status.Inline.Code"], CodeShown)
+            </p>
+        }
+    </div>
+    @if (OnRetry.HasDelegate)
+    {
+        <button type="button" class="err-inline__retry" @onclick="OnRetry">@Culture["Status.Inline.Retry"]</button>
+    }
+</div>
+
+@code {
+    /// <summary>The failure. Mapped by <see cref="UserFacingError"/> and logged once.</summary>
+    [Parameter] public Exception? Error { get; set; }
+
+    /// <summary>Override the default "Dit stukje laadt nu niet." line; must already be user-safe.</summary>
+    [Parameter] public string? Message { get; set; }
+
+    /// <summary>Support code to show; taken from <see cref="Error"/> when it carries one.</summary>
+    [Parameter] public string? SupportCode { get; set; }
+
+    [Parameter] public EventCallback OnRetry { get; set; }
+
+    private Exception? _mapped;
+    private string? _mappedCode;
+    private string? _apiUserMessage;
+
+    private string MessageText => Message ?? Culture["Status.Inline.Title"];
+
+    private string? CodeShown => SupportCode ?? _mappedCode;
+
+    protected override void OnParametersSet()
+    {
+        if (Error is null)
+        {
+            _mapped = null;
+            _mappedCode = null;
+            _apiUserMessage = null;
+            return;
+        }
+
+        if (ReferenceEquals(_mapped, Error))
+        {
+            // Re-render of the same failure: do not log or re-code it twice.
+            return;
+        }
+
+        _mapped = Error;
+        var mapped = UserFacing.From(Error);
+        _mappedCode = mapped.SupportCode;
+        _apiUserMessage = mapped.ApiUserMessage;
+    }
+}

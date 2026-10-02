@@ -142,6 +142,25 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.CandidatePassportEnabled = passportEnabled;
         }
 
+        if (update.MaintenanceEnabled is bool maintenanceEnabled)
+        {
+            row.MaintenanceEnabled = maintenanceEnabled;
+        }
+
+        if (update.ClearMaintenanceExpectedEndUtc)
+        {
+            row.MaintenanceExpectedEndUtc = null;
+        }
+        else if (update.MaintenanceExpectedEndUtc is DateTime expectedEnd)
+        {
+            row.MaintenanceExpectedEndUtc = DateTime.SpecifyKind(expectedEnd, DateTimeKind.Utc);
+        }
+
+        if (update.MaintenanceNote is not null)
+        {
+            row.MaintenanceNote = MaintenanceRules.NormalizeNote(update.MaintenanceNote);
+        }
+
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -173,6 +192,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         _cache?.Remove(FeatureFlags.CacheKey);
+        _cache?.Remove(MaintenanceRules.CacheKey);
         return ToSnapshot(row);
     }
 
@@ -272,6 +292,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
                 : 31,
             row?.AmbassadorsEnabled ?? false,
             row?.EmployersEnabled ?? true,
-            row?.CandidatePassportEnabled ?? false);
+            row?.CandidatePassportEnabled ?? false,
+            row?.MaintenanceEnabled ?? false,
+            row?.MaintenanceExpectedEndUtc is DateTime end
+                ? DateTime.SpecifyKind(end, DateTimeKind.Utc)
+                : null,
+            row?.MaintenanceNote);
     }
 }

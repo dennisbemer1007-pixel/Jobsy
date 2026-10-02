@@ -201,7 +201,8 @@
 @code {
     private static readonly string[] ActionOptions =
     [
-        "settings.platform.update", "user.mfa.reset", "support-access.grant", "support-access.revoke",
+        "settings.platform.update", "maintenance.on", "maintenance.off",
+        "user.mfa.reset", "support-access.grant", "support-access.revoke",
         "user.block", "user.unblock", "tokens.goodwill.grant", "export.create", "privacy.retention.run"
     ];
 
@@ -367,7 +368,7 @@
     {
         "user.mfa.reset" => Culture["AdminAudit.Action.MfaReset"],
         "support-access.grant" or "support-access.revoke" => Culture["AdminAudit.Action.Support"],
-        "settings.platform.update" => Culture["AdminAudit.Action.Setting"],
+        "settings.platform.update" or "maintenance.on" or "maintenance.off" => Culture["AdminAudit.Action.Setting"],
         "export.create" => Culture["AdminAudit.Action.Export"],
         "user.block" or "user.unblock" => Culture["AdminAudit.Action.Block"],
         "tokens.goodwill.grant" => Culture["AdminAudit.Action.Tokens"],

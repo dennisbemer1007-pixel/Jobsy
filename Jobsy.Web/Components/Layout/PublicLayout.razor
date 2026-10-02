@@ -13,6 +13,7 @@
      dir="@(Culture.IsRightToLeft ? "rtl" : null)"
      lang="@Culture.Language">
     <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
+    <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
     <PublicHeader Variant="_variant" Compact="_compact" AuthShell="_authShell" />
     <main id="main" class="pub-main @(_compact ? "pub-main--test" : null)">
         @Body

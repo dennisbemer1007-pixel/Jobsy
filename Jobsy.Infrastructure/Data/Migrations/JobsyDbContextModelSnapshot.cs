@@ -4368,6 +4368,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("InactiveCompanyDays")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("MaintenanceEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("MaintenanceExpectedEndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MaintenanceNote")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int>("MinimumSessionVersion")
                         .HasColumnType("integer");
 

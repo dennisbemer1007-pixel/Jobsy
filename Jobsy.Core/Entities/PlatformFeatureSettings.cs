@@ -92,5 +92,16 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool CandidatePassportEnabled { get; set; }
 
+    /// <summary>
+    /// When true, everyone except admins gets the 503 maintenance page (errors 05). Default false.
+    /// </summary>
+    public bool MaintenanceEnabled { get; set; }
+
+    /// <summary>Optional moment the maintenance window is expected to end (UTC).</summary>
+    public DateTime? MaintenanceExpectedEndUtc { get; set; }
+
+    /// <summary>Internal note for admins only. Never shown to visitors.</summary>
+    public string? MaintenanceNote { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

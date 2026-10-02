@@ -6,6 +6,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject UserFacingError UserFacing
 
 <PageTitle>Niet beschikbaar · Lobsy</PageTitle>
 
@@ -139,27 +140,11 @@
         {
             _phase = Phase.Failed;
             _error = true;
-            _message = FriendlyError(ex.Message);
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
             _busy = false;
         }
-    }
-
-    private static string FriendlyError(string raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return "Er ging iets mis. Probeer het later opnieuw of pas je status aan via je profiel.";
-        }
-
-        if (raw.Contains("ongeldig", StringComparison.OrdinalIgnoreCase)
-            || raw.Contains("gebruikt", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Deze link is al gebruikt of niet meer geldig. Je kunt je status alsnog wijzigen in je profiel.";
-        }
-
-        return raw;
     }
 }

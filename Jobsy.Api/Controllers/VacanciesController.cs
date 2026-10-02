@@ -687,7 +687,103 @@ public class VacanciesController : ControllerBase
             return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, age, isPreview: true, cancellationToken));
         }
 
+        // Was once public and is no longer: a useful 410, not a bare 404 (errors 03).
+        if (VacancyVisibilityRules.IsClosed(vacancy, today))
+        {
+            Response.Headers["X-Robots-Tag"] = "noindex";
+            return StatusCode(StatusCodes.Status410Gone, MapClosed(vacancy));
+        }
+
         return NotFound();
+    }
+
+    /// <summary>
+    /// Up to <paramref name="limit"/> similar vacancies nearby for a closed vacancy's 410 page.
+    /// Reuses the discovery index/query — no new ranking. Same category within 25 km (nearest
+    /// first), or without a category the nearest publicly visible vacancy within 10 km.
+    /// </summary>
+    [HttpGet("{id:guid}/similar")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<IEnumerable<VacancyCardDto>>> GetSimilar(
+        Guid id,
+        [FromQuery] int limit = 3,
+        [FromQuery] double? originLat = null,
+        [FromQuery] double? originLng = null,
+        [FromQuery] string transport = TransportLabels.Bike,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancy = await _db.Vacancies
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (!VacancyVisibilityRules.IsClosed(vacancy, today))
+        {
+            return NotFound();
+        }
+
+        limit = Math.Clamp(limit, 1, 3);
+        var origin = vacancy.Location;
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var withDistance = records
+            .Where(r => r.Id != id)
+            .Select(r => (Record: r, DistanceKm: GeoDistance.HaversineKm(
+                origin,
+                new Jobsy.Core.ValueObjects.GeoPoint(r.Latitude, r.Longitude))));
+
+        var nearest = (vacancy.CategoryId is Guid categoryId
+                ? withDistance.Where(c => c.Record.CategoryId == categoryId && c.DistanceKm <= 25)
+                : withDistance.Where(c => c.DistanceKm <= 10))
+            .OrderBy(c => c.DistanceKm)
+            .Take(limit)
+            .Select(c => c.Record)
+            .ToList();
+
+        var showWage = await CanViewerSeeWageAsync(cancellationToken);
+        var hasOrigin = originLat is double lat && originLng is double lng && IsFiniteCoordinate(lat, lng);
+        var mode = TransportLabels.Parse(transport);
+        var cards = nearest.Select(r =>
+        {
+            int? travelMinutes = null;
+            double? distanceKm = null;
+            if (hasOrigin)
+            {
+                var (minutes, km) = TravelReach.Estimate(originLat!.Value, originLng!.Value, r.Latitude, r.Longitude, mode);
+                travelMinutes = minutes;
+                distanceKm = km;
+            }
+            else
+            {
+                distanceKm = Math.Round(GeoDistance.HaversineKm(origin, new Jobsy.Core.ValueObjects.GeoPoint(r.Latitude, r.Longitude)), 1);
+            }
+
+            return MapCard(r, showWage, travelMinutes, matchPercent: null, matchBand: null, distanceKm: distanceKm);
+        });
+        Response.Headers["X-Robots-Tag"] = "noindex";
+        ApplyPublicListCacheHeaders();
+        return Ok(cards);
+    }
+
+    /// <summary>
+    /// Minimal public payload for a closed vacancy — city/category respect the intermediary-hidden
+    /// display rules, but the company name itself is never included (<see cref="ClosedVacancyDto"/>).
+    /// </summary>
+    private static ClosedVacancyDto MapClosed(Vacancy vacancy)
+    {
+        var (_, displayAddress, _, _, _, _) = IntermediaryVacancyRules.ResolvePublicDisplay(
+            vacancy, vacancy.Company, vacancy.IntermediaryCompany);
+        var city = PlaceFromAddress(displayAddress);
+        return new ClosedVacancyDto(
+            vacancy.Id,
+            vacancy.Title,
+            string.IsNullOrWhiteSpace(city) ? null : city,
+            vacancy.CategoryId,
+            vacancy.Category?.Name);
     }
 
     /// <summary>
@@ -2202,7 +2298,8 @@ public class VacanciesController : ControllerBase
         string? matchBand,
         string? fitGate = null,
         string? fitWhyLine = null,
-        string? rankLowerReason = null)
+        string? rankLowerReason = null,
+        double? distanceKm = null)
     {
         var workType = record.WorkTypeLabelList.FirstOrDefault() ?? record.WorkTypeLabels;
         var thumbnail = VacancyImageUrls.ForCard(
@@ -2232,7 +2329,8 @@ public class VacanciesController : ControllerBase
             record.Vestigingsnummer,
             fitGate,
             fitWhyLine,
-            rankLowerReason);
+            rankLowerReason,
+            distanceKm);
     }
 
     private static string PlaceFromAddress(string? address)

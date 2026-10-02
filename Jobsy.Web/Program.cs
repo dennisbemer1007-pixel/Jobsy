@@ -79,6 +79,8 @@ builder.Services.AddSingleton<Jobsy.Web.Auth.AuthApiClient>();
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
 builder.Services.AddScoped<CultureState>();
+// E7: the only place that turns an exception into text a visitor may read.
+builder.Services.AddScoped<Jobsy.Web.Services.UserFacingError>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeBootstrap>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.WerkgeverCountsState>();
@@ -86,6 +88,7 @@ builder.Services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
     Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance); // KB-FALLBACK(D)
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.AlwaysOnEmployersSwitch>();
+builder.Services.AddSingleton<Jobsy.Web.Hosting.IErrorChromeProvider, Jobsy.Web.Hosting.ErrorChromeProvider>();
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingPriceClient>();
@@ -201,6 +204,10 @@ builder.Services.AddHttpClient(Jobsy.Web.Branding.PlatformBrandingState.HttpClie
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
 
+// Maintenance switch (errors 05): one polled singleton, so no request ever waits on the API.
+builder.Services.AddSingleton<MaintenanceState>();
+builder.Services.AddHostedService<MaintenancePoller>();
+
 builder.Services.AddHttpClient<NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
@@ -250,14 +257,9 @@ builder.Services.AddRateLimiter(options =>
             && (path.Equals("/account/login", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
                 || path.Equals("/account/mfa/herstelcodes-vernieuwen", StringComparison.OrdinalIgnoreCase));
+        var retryAfterSeconds = Jobsy.Web.Security.RateLimitRejection.RetryAfterSeconds(context.Lease);
         if (isAuthForm)
         {
-            var retryAfterSeconds = 60;
-            if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-            {
-                retryAfterSeconds = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
-            }
-
             var until = DateTimeOffset.UtcNow.AddSeconds(retryAfterSeconds).ToUnixTimeSeconds();
             var target = path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
                 ? $"/account/mfa?error=too-many&until={until}"
@@ -282,10 +284,8 @@ builder.Services.AddRateLimiter(options =>
             return;
         }
 
-        http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        await http.Response.WriteAsJsonAsync(
-            new { code = "rate_limited", message = "Te veel verzoeken." },
-            token);
+        // HTML visitors get the friendly /status/429 page; everything else ProblemDetails (04.2).
+        await Jobsy.Web.Security.RateLimitRejection.WriteAsync(http, retryAfterSeconds, token);
     };
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -385,20 +385,29 @@ app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseAdminLegacyRedirects();
 app.UseResponseCompression();
 
+// Development keeps the developer exception page; tests opt in with Errors:ForceHandler.
+var useErrorPageHandler = !app.Environment.IsDevelopment()
+    || app.Configuration.GetValue<bool>(ErrorPagesExtensions.ForceHandlerConfigKey);
+if (useErrorPageHandler)
+{
+    app.UseErrorPageFallback();
+    app.UseExceptionHandler(ErrorPagesExtensions.ErrorPath, createScopeForErrors: true);
+    app.UseErrorPageMethodReset();
+}
+
+// Development-only, opt-in: lets the browser suite request a genuine 500 page.
+app.UseTestThrowPath();
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
 
-// HTML-only status pages (404 etc.); leave API/static/Blazor circuits alone.
-app.UseWhen(
-    ctx => ShouldReExecuteStatusPages(ctx),
-    branch => branch.UseStatusCodePagesWithReExecute("/status/{0}"));
+// Unknown HTML pages answer with the real status code and the friendly /status/{code} page.
+app.UseHtmlStatusCodePages();
 
-// Routing must run *after* the re-execute so the rewritten /status/{code} request still matches an
-// endpoint. With the implicit UseRouting (at the top of the pipeline) a 404 re-executed into an
-// empty body, because the cleared endpoint was never resolved again.
+// Explicit so it sits *after* the re-executing handlers above: both /Error and /status/{code}
+// need routing to run again on the rewritten path. WebApplication would otherwise add it first.
 app.UseRouting();
 
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
@@ -425,6 +434,8 @@ app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAdminProviderGuard();
 app.UseAuthorization();
+// After auth so the admin bypass reads the cookie principal (errors 05).
+app.UseMiddleware<MaintenanceMiddleware>();
 app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();
@@ -464,28 +475,3 @@ app.MapRazorComponents<App>()
     });
 
 app.Run();
-
-static bool ShouldReExecuteStatusPages(HttpContext ctx)
-{
-    var path = ctx.Request.Path.Value ?? string.Empty;
-    if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWith("/_blazor", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWith("/_framework", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWith("/_content", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWith("/healthz", StringComparison.OrdinalIgnoreCase))
-    {
-        return false;
-    }
-
-    var lastSlash = path.LastIndexOf('/');
-    var file = lastSlash >= 0 ? path[(lastSlash + 1)..] : path;
-    if (file.Contains('.', StringComparison.Ordinal))
-    {
-        return false;
-    }
-
-    var accept = ctx.Request.Headers.Accept.ToString();
-    return string.IsNullOrEmpty(accept)
-           || accept.Contains("text/html", StringComparison.OrdinalIgnoreCase)
-           || accept.Contains("*/*", StringComparison.OrdinalIgnoreCase);
-}

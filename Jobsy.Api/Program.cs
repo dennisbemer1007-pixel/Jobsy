@@ -379,6 +379,8 @@ app.UseAuthentication();
 app.UseRateLimiter();
 app.UseLoginProtection();
 app.UseAuthorization();
+// After auth so the admin bypass can read the principal (errors 05).
+app.UseMiddleware<Jobsy.Api.Security.MaintenanceApiMiddleware>();
 app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(new

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Onderhoud · Lobsy</title>
+<!--
+  Static maintenance page for the edge (errors 05 §05.6).
+  Self-contained on purpose: inline CSS, inline SVG, no scripts, no external fonts or images,
+  so it still renders when the Lobsy app and API are completely down.
+  All five languages are stacked (nl, en, pl, ro, ar); the in-app page at /status/503 shows only
+  the visitor's own language.
+  Dennis switches this page on; see docs/onderhoud.md. Never edit render.yaml or Cloudflare for it.
+-->
+<style>
+  :root {
+    --ink: #122033;
+    --muted: #5a6a7d;
+    --surface: #fffcfa;
+    --blob: #ffe8e0;
+    --line: #ece4db;
+    --accent: #e4572e;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+
+  .page {
+    max-inline-size: 44rem;
+    margin-inline: auto;
+    padding: 2.5rem 1.25rem 3rem;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-block-end: 2rem;
+  }
+
+  .brand__name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .art {
+    display: flex;
+    justify-content: center;
+    margin-block-end: 1.5rem;
+  }
+
+  .block {
+    padding-block: 1.5rem;
+    border-block-start: 1px solid var(--line);
+  }
+
+  .block:first-of-type {
+    border-block-start: 0;
+    padding-block-start: 0;
+  }
+
+  .block[dir="rtl"] {
+    text-align: right;
+  }
+
+  h1 {
+    margin: 0 0 0.4rem;
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+
+  h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.125rem;
+    line-height: 1.3;
+  }
+
+  p {
+    margin: 0 0 0.35rem;
+    color: var(--muted);
+  }
+
+  a {
+    color: var(--accent);
+  }
+
+  .support a {
+    display: inline-block;
+    min-block-size: 44px;
+    line-height: 44px;
+  }
+
+  @media (min-width: 640px) {
+    .page { padding-block-start: 3.5rem; }
+    h1 { font-size: 1.875rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="Lobsy">
+      <circle cx="20" cy="20" r="19" fill="#ffe8e0"></circle>
+      <path d="M13 24c0-4.5 3.1-8 7-8s7 3.5 7 8" fill="none" stroke="#e4572e" stroke-width="3" stroke-linecap="round"></path>
+      <circle cx="16" cy="17" r="1.8" fill="#122033"></circle>
+      <circle cx="24" cy="17" r="1.8" fill="#122033"></circle>
+    </svg>
+    <span class="brand__name">Lobsy</span>
+  </div>
+
+  <div class="art">
+    <svg width="168" height="132" viewBox="0 0 168 132" role="img" aria-label="">
+      <ellipse cx="84" cy="118" rx="58" ry="8" fill="#f3ece6"></ellipse>
+      <circle cx="84" cy="62" r="44" fill="#ffe8e0"></circle>
+      <path d="M58 76c0-14 11.6-25 26-25s26 11 26 25" fill="none" stroke="#e4572e" stroke-width="6" stroke-linecap="round"></path>
+      <circle cx="70" cy="54" r="5" fill="#122033"></circle>
+      <circle cx="98" cy="54" r="5" fill="#122033"></circle>
+      <path d="M118 36l16-16" stroke="#5a6a7d" stroke-width="7" stroke-linecap="round"></path>
+      <circle cx="137" cy="17" r="8" fill="none" stroke="#5a6a7d" stroke-width="7"></circle>
+    </svg>
+  </div>
+
+  <section class="block" lang="nl">
+    <h1>We zijn even aan het klussen</h1>
+    <p>Lobsy is zo terug.</p>
+    <p class="support">Vragen? Mail <a href="mailto:support@lobsy.nl">support@lobsy.nl</a>.</p>
+  </section>
+
+  <section class="block" lang="en">
+    <h2>We are doing a bit of maintenance</h2>
+    <p>Lobsy will be back shortly.</p>
+    <p class="support">Questions? E-mail <a href="mailto:support@lobsy.nl">support@lobsy.nl</a>.</p>
+  </section>
+
+  <section class="block" lang="pl">
+    <h2>Chwilowo majsterkujemy</h2>
+    <p>Lobsy wkrótce wróci.</p>
+    <p class="support">Pytania? Napisz na <a href="mailto:support@lobsy.nl">support@lobsy.nl</a>.</p>
+  </section>
+
+  <section class="block" lang="ro">
+    <h2>Lucrăm puțin la site</h2>
+    <p>Lobsy revine imediat.</p>
+    <p class="support">Întrebări? Scrie la <a href="mailto:support@lobsy.nl">support@lobsy.nl</a>.</p>
+  </section>
+
+  <section class="block" lang="ar" dir="rtl">
+    <h2>نحن نُجري بعض الصيانة</h2>
+    <p>سيعود لوبسي قريباً.</p>
+    <p class="support">أسئلة؟ راسل <a href="mailto:support@lobsy.nl">support@lobsy.nl</a>.</p>
+  </section>
+</div>
+</body>
+</html>

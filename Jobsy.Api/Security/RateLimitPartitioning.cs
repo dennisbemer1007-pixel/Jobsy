@@ -1,8 +1,12 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.RateLimiting;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Security;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace Jobsy.Api.Security;
@@ -17,6 +21,15 @@ public static class RateLimitPartitioning
     public const string InternalSecretHeader = InternalClientIpHeaders.InternalSecretHeader;
     public const string ConfigKey = InternalClientIpHeaders.ConfigKey;
     public const string PartitionItemKey = "Jobsy.RateLimit.Partition";
+
+    /// <summary>Machine-readable ProblemDetails code the Web client maps to a friendly message.</summary>
+    public const string RateLimitCode = "rate_limited";
+
+    private static readonly JsonSerializerOptions ProblemJson = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
 
     /// <summary>
     /// Order: authenticated user id → trusted visitor IP (header + secret via
@@ -91,14 +104,22 @@ public static class RateLimitPartitioning
             : "unknown";
         var route = http.Request.Path.Value ?? "/";
 
-        var logger = http.RequestServices
+        var supportCode = SupportCodeGenerator.Create();
+
+        var logger = http.RequestServices?
             .GetService<ILoggerFactory>()
             ?.CreateLogger("Jobsy.Api.RateLimiting");
         logger?.LogWarning(
-            "Rate limit rejected route={Route} partition={Partition} method={Method}",
+            "Rate limit rejected {SupportCode} route={Route} partition={Partition} method={Method}",
+            supportCode,
             route,
             partition,
             http.Request.Method);
+
+        if (http.Response.HasStarted)
+        {
+            return;
+        }
 
         http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -108,10 +129,24 @@ public static class RateLimitPartitioning
             retryAfterSeconds = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
         }
 
-        http.Response.Headers.RetryAfter = retryAfterSeconds.ToString();
-        http.Response.ContentType = "application/json; charset=utf-8";
+        http.Response.Headers.RetryAfter = retryAfterSeconds.ToString(CultureInfo.InvariantCulture);
+        http.Response.ContentType = "application/problem+json; charset=utf-8";
+
+        // errors 04 §04.2: ProblemDetails with a machine-readable code the Web client maps to
+        // ApiError.RateLimited, plus the same LB-XXXX support code the error pages show.
+        var problem = new ProblemDetails
+        {
+            Type = "https://tools.ietf.org/html/rfc6585#section-4",
+            Title = "Too many requests",
+            Status = StatusCodes.Status429TooManyRequests,
+            Detail = "Probeer het zo opnieuw."
+        };
+        problem.Extensions["code"] = RateLimitCode;
+        problem.Extensions["retryAfterSeconds"] = retryAfterSeconds;
+        problem.Extensions["supportCode"] = supportCode;
+
         await http.Response.WriteAsync(
-            """{"code":"rate_limited","title":"Te veel verzoeken","detail":"Probeer het zo opnieuw."}""",
+            JsonSerializer.Serialize(problem, ProblemJson),
             cancellationToken);
     }
 
