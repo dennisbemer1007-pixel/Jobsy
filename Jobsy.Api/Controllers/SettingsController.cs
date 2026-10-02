@@ -26,7 +26,6 @@ public class SettingsController : ControllerBase
     private readonly IIntegrationCredentialService _credentials;
     private readonly IPlatformFeatureService _features;
     private readonly IPlatformCompanySettingsService _companySettings;
-    private readonly IAboutPageSettingsService _aboutPage;
     private readonly IMarketingFlyerSettingsService _marketingFlyer;
     private readonly IMarketingFlyerPdfService _marketingFlyerPdf;
     private readonly IFlexCommercialService _flexCommercial;
@@ -40,7 +39,6 @@ public class SettingsController : ControllerBase
         IIntegrationCredentialService credentials,
         IPlatformFeatureService features,
         IPlatformCompanySettingsService companySettings,
-        IAboutPageSettingsService aboutPage,
         IMarketingFlyerSettingsService marketingFlyer,
         IMarketingFlyerPdfService marketingFlyerPdf,
         IFlexCommercialService flexCommercial,
@@ -53,7 +51,6 @@ public class SettingsController : ControllerBase
         _credentials = credentials;
         _features = features;
         _companySettings = companySettings;
-        _aboutPage = aboutPage;
         _marketingFlyer = marketingFlyer;
         _marketingFlyerPdf = marketingFlyerPdf;
         _flexCommercial = flexCommercial;
@@ -553,28 +550,6 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         return Ok(ToCompanyDto(snap));
     }
 
-    [HttpGet("about")]
-    public async Task<ActionResult<AboutPageDto>> GetAboutPage(CancellationToken cancellationToken)
-    {
-        var snap = await _aboutPage.GetAsync(cancellationToken);
-        return Ok(SiteController.ToDto(snap));
-    }
-
-    [HttpPut("about")]
-    [AdminAudit(AdminAuditKeys.SettingsAboutUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
-    public async Task<ActionResult<AboutPageDto>> UpdateAboutPage(
-        [FromBody] UpdateAboutPageRequest request,
-        CancellationToken cancellationToken)
-    {
-        var snap = await _aboutPage.UpdateAsync(
-            new AboutPageUpdate(
-                request.Title ?? "",
-                request.Lead,
-                request.BodyHtml ?? ""),
-            cancellationToken);
-        return Ok(SiteController.ToDto(snap));
-    }
-
     [HttpGet("marketing-flyer")]
     public async Task<ActionResult<MarketingFlyerDto>> GetMarketingFlyer(CancellationToken cancellationToken)
     {
@@ -795,11 +770,6 @@ public sealed record UpdatePlatformCompanyRequest(
     string? Phone,
     string? Email,
     string? VatBufferIban = null);
-
-public sealed record UpdateAboutPageRequest(
-    string? Title,
-    string? Lead,
-    string? BodyHtml);
 
 public sealed record MarketingFlyerDto(
     string Headline,

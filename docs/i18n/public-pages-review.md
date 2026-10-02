@@ -204,3 +204,38 @@ those sections merged into `vacatures` and `solliciteren`.
 | `Common.Error.TryAgain` | pl / ro / ar draft. Shared generic fallback; used by `UnsubscribeDialog` instead of raw API error text. |
 
 Later files (08+) add their new Privacy.* / Terms.* rows here.
+## 08 — hoe werkt Lobsy + wie zijn wij (`UiStringsPublicInfo.cs`)
+
+`/hoe-werkt-lobsy` and `/wie-zijn-wij` are static pages in five languages. nl and en are final;
+pl/ro/ar below are B1 drafts for native review.
+
+| Key | Notes |
+|---|---|
+| `HowLobsy.Seo.Title` / `.Description` | pl / ro / ar draft. Title and meta description of the page. |
+| `HowLobsy.Eyebrow` / `HowLobsy.Title` | pl / ro / ar draft. "In 4 stappen" counts the four cards; keep the number. |
+| `HowLobsy.Lead` (+ `.Zw`) | pl / ro / ar draft. The `.Zw` sibling is the werkgevers-OFF copy (no vacancies). |
+| `HowLobsy.Tabs.Label`, `HowLobsy.Tab.You` / `.YouRole` / `.Employers` / `.Schools` | pl / ro / ar draft. `.YouRole` has one placeholder: the translated role name (`Role.*`). |
+| `HowLobsy.Steps.Label` | pl / ro / ar draft. Accessible name of the step list. |
+| `HowLobsy.Step1.*` (+ `.Zw`), `HowLobsy.Step2.*`, `HowLobsy.Step3.*` (+ `.Zw`), `HowLobsy.Step4.*` (+ `.Zw`) | pl / ro / ar draft. The `.Zw` siblings drop the job map and talk about the passport instead. |
+| `HowLobsy.Promise.*` (+ `Answers.Zw`) | pl / ro / ar draft. Privacy promises; keep them factual, they mirror the privacy statement. |
+| `HowLobsy.Faq.PriceQ` / `.PriceA` | pl / ro / ar draft. `.PriceA` has one placeholder: the amount, already formatted ("€ 2,99"). |
+| `HowLobsy.Faq.CvQ` / `.CvA` (+ `.Zw`) | pl / ro / ar draft |
+| `HowLobsy.Faq.AgeQ` | pl / ro / ar draft. The answer itself is `AgeRulesText` (Dutch, reads the age constants). |
+| `HowLobsy.You.SignedInTitle` / `.SignedInBody` / `.StartCta` | pl / ro / ar draft. Shown to a signed-in candidate instead of a redirect. |
+| `HowLobsy.Employers.*` | pl / ro / ar draft. Hidden when werkgevers-actief is OFF. |
+| `HowLobsy.Schools.*` | pl / ro / ar draft |
+| `About.Eyebrow` / `About.Title` / `About.Lead` | pl / ro / ar draft |
+| `About.Stories.Label`, `About.Story.Lobster.*`, `About.Story.Westland.*`, `About.Story.BothSides.*` | pl / ro / ar draft. "Westland" is a place name and stays untranslated. |
+| `About.Founder.Name` / `.Text` / `.PhotoAlt` | pl / ro / ar draft. First person, Dennis speaking. |
+| `About.Contact.Title` / `.Lead` / `.MailCta` / `.PrivacyNote` | pl / ro / ar draft. The address, KvK and e-mail themselves come from `Legal:*` config, never from a string. |
+
+### Staff role guides (`UiStringsHowLobsyRoles.cs`) — nl + en only
+The signed-in role guides (branch, regional, enterprise, intermediary, sales, ambassadeur) ship in
+Dutch and English. pl/ro/ar read the English draft so staff never get Dutch they cannot read:
+
+`HowLobsy.Branch.*`, `HowLobsy.Regional.*`, `HowLobsy.Enterprise.*`, `HowLobsy.Intermediary.*`,
+`HowLobsy.Sales.*`, `HowLobsy.Ambassadeur.*`.
+
+Translate these when a native reviewer is available; the public visitor copy (`HowLobsy.*` above)
+is already in five languages. The old `HowLobsy.Guest.*` keys are gone: the public page owns that
+copy now.

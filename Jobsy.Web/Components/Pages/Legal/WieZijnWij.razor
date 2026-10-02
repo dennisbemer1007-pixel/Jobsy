@@ -1,81 +1,86 @@
 @page "/wie-zijn-wij"
 @attribute [AllowAnonymous]
-@rendermode @(new InteractiveServerRenderMode(prerender: true))
-@inject JobsyApiClient Api
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Web.Components.Legal
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @inject CultureState Culture
+@inject LegalIdentityProvider LegalIdentity
 
 <PageTitle>@Culture["Legal.About"] · Lobsy</PageTitle>
-<PageSeo Title="@($"{Culture["Legal.About"]} · Lobsy")"
-         Description="@(string.IsNullOrWhiteSpace(_page.Lead) ? Culture["Seo.AboutDescription"] : _page.Lead)"
-         Index="true" />
 
-<div class="panel-page legal-page about-page">
-    <div class="about-page__watermark" aria-hidden="true">
-        <img src="@Jobsy.Web.Media.BrandImages.Webp256" alt="" width="256" height="256" loading="lazy" decoding="async" />
+<section class="pub-section pp-about" aria-labelledby="about-title">
+    <header class="pp-doc__hero">
+        <p class="pp-doc__eyebrow">
+            <PubEmoji Glyph="👋" />
+            <span>@Culture["About.Eyebrow"]</span>
+        </p>
+        <h1 id="about-title" class="pp-doc__title">@Culture["About.Title"]</h1>
+        <p class="pp-doc__lead">@Culture["About.Lead"]</p>
+    </header>
+
+    <div class="pp-about__stories" aria-label="@Culture["About.Stories.Label"]">
+        <article class="pp-about__story">
+            <PubEmoji Glyph="🦞" />
+            <h2>@Culture["About.Story.Lobster.Title"]</h2>
+            <p>@Culture["About.Story.Lobster.Body"]</p>
+        </article>
+        <article class="pp-about__story">
+            <PubEmoji Glyph="🌷" />
+            <h2>@Culture["About.Story.Westland.Title"]</h2>
+            <p>@Culture["About.Story.Westland.Body"]</p>
+        </article>
+        <article class="pp-about__story">
+            <PubEmoji Glyph="🤝" />
+            <h2>@Culture["About.Story.BothSides.Title"]</h2>
+            <p>@Culture["About.Story.BothSides.Body"]</p>
+        </article>
     </div>
 
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else
-    {
-        <header class="panel-header">
-            <div>
-                <h1>@Culture["Legal.About"]</h1>
-                @if (!string.IsNullOrWhiteSpace(_page.Lead))
-                {
-                    <p class="login-lead">@_page.Lead</p>
-                }
-            </div>
-        </header>
-
-        <LegalToc />
-
-        <p class="login-lead muted">@Culture["Legal.DocNote"]</p>
-
-        @if (!string.IsNullOrEmpty(_error))
+    <article class="pp-about__founder">
+        @if (AboutAssets.HasFounderPhoto)
         {
-            <p class="state-message error">@_error</p>
+            <img class="pp-about__photo"
+                 src="@AboutAssets.FounderPhotoUrl"
+                 alt="@Culture["About.Founder.PhotoAlt"]"
+                 width="96" height="96" loading="lazy" decoding="async" />
         }
+        else
+        {
+            <span class="pp-about__avatar" aria-hidden="true">🙂</span>
+        }
+        <div>
+            <h2>@Culture["About.Founder.Name"]</h2>
+            <p>@Culture["About.Founder.Text"]</p>
+        </div>
+    </article>
 
-        <article class="legal-doc about-doc">
-            @((MarkupString)_safeBody)
-        </article>
-    }
-</div>
+    <article class="pp-about__contact">
+        <h2>@Culture["About.Contact.Title"]</h2>
+        <p>@Culture["About.Contact.Lead"]</p>
+        @if (!string.IsNullOrWhiteSpace(_supportEmail))
+        {
+            <p class="pp-about__mail">
+                <a class="pub-btn pub-btn--primary" href="mailto:@_supportEmail">@Culture["About.Contact.MailCta"]</a>
+            </p>
+        }
+        <LegalIdentityCard />
+        <p class="pp-about__privacy">
+            @Culture["About.Contact.PrivacyNote"]
+            <a href="@PublicRoutes.Privacy">@Culture["Legal.Privacy"]</a>
+        </p>
+    </article>
+</section>
 
 @code {
-    private AboutPageItem _page = new();
-    private string _safeBody = string.Empty;
-    private bool _loading = true;
-    private string? _error;
+    private string? _supportEmail;
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            _page = await Api.GetPublicAboutPageAsync() ?? new AboutPageItem();
-            if (string.IsNullOrWhiteSpace(_page.Title))
-            {
-                _page.Title = "Wie zijn wij";
-            }
-
-            _safeBody = Jobsy.Core.Rules.HtmlSanitize.ToSafeMarkup(_page.BodyHtml);
-        }
-        catch (Exception)
-        {
-            _error = "De pagina-inhoud kon niet worden geladen.";
-            _page = new AboutPageItem
-            {
-                Title = "Wie zijn wij",
-                Lead = "Over Lobsy — en de mens achter de knop"
-            };
-            _safeBody = string.Empty;
-        }
-        finally
-        {
-            _loading = false;
-        }
+        // D9: contact is Legal:SupportEmail; privacy@ stays for privacy questions only.
+        var legal = await LegalIdentity.GetAsync();
+        _supportEmail = legal.SupportEmail?.Trim();
     }
 }

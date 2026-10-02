@@ -314,14 +314,6 @@ public sealed class SiteBrandingItem
     public string Slogan { get; set; } = "Dichtbij genoeg om het pantser te laten vallen";
 }
 
-public sealed class AboutPageItem
-{
-    public string Title { get; set; } = "Wie zijn wij";
-    public string Lead { get; set; } = "Over Lobsy — en de mens achter de knop";
-    public string BodyHtml { get; set; } = string.Empty;
-    public DateTime? UpdatedAtUtc { get; set; }
-}
-
 public sealed class MarketingFlyerItem
 {
     public string Headline { get; set; } = string.Empty;

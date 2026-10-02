@@ -85,8 +85,8 @@ public static class AdminNav
         ]),
         new("content", "AdminNav.Group.Content",
         [
-            new("pages", "AdminNav.PagesFlyer", "/admin/content/paginas", NavIcons.Info,
-                ["/admin/about", "/admin/marketing-flyer"], IsAvailable: true),
+            new("pages", "AdminNav.Flyer", "/admin/content/paginas", NavIcons.Info,
+                ["/admin/marketing-flyer"], IsAvailable: true),
             new("training", "AdminNav.Training", "/admin/content/opleidingen", NavIcons.Masterdata,
                 ["/admin/training"], IsAvailable: true),
             new("masterdata", "AdminNav.Masterdata", "/admin/content/stamgegevens", NavIcons.Masterdata,

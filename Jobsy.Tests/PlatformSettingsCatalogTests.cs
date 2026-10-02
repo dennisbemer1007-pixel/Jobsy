@@ -157,7 +157,6 @@ public class PlatformFeaturesEnvLockApiTests
             new IntegrationCredentialService(db, new PassthroughSecretProtector()),
             features,
             new PlatformCompanySettingsService(db),
-            new AboutPageSettingsService(db),
             new MarketingFlyerSettingsService(db),
             new MarketingFlyerPdfService(
                 new MarketingFlyerSettingsService(db),
