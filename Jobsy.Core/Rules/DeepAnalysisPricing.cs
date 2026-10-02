@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Legal;
 
 namespace Jobsy.Core.Rules;
 
@@ -9,7 +10,11 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class DeepAnalysisPricing
 {
-    public const string WaiverTextVersion = "2026-09";
+    /// <summary>
+    /// The waiver sentence's version. Shared with the terms (<see cref="LegalDocumentVersions.Terms"/>),
+    /// since the checkbox text (<c>Terms.Waiver.Checkbox</c>) is the gebruiksvoorwaarden's bedenktijd clause.
+    /// </summary>
+    public static string WaiverTextVersion => LegalDocumentVersions.Terms.Version;
 
     public static decimal For(FlexCommercialSettingsDto settings, AssessmentKind kind)
     {

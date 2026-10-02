@@ -461,6 +461,7 @@ internal static class EmailStringsPl
         ["Email.DeepTestReceipt.Fact.Amount"] = "Amount (incl. VAT)",
         ["Email.DeepTestReceipt.Fact.Date"] = "Date",
         ["Email.DeepTestReceipt.Fact.Invoice"] = "Invoice number",
+        ["Email.DeepTestReceipt.Fact.TermsVersion"] = "Terms version",
         ["Email.DeepTestReceipt.Waiver"] = "You chose to start right away. That means you cannot cancel within 14 days.",
         ["Email.DeepTestReceipt.Cta"] = "Start with question 1",
         ["Email.DeepTestReceipt.Support"] = "Questions about your payment? Email support@lobsy.nl.",

@@ -514,7 +514,8 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
                 invoice.IssuedAt,
                 invoice.InvoiceNumber,
                 AssessmentKindLabels.ToSlug(checkout.Kind),
-                culture);
+                culture,
+                checkout.WaiverTextVersion);
 
             var outcome = await _mailer.SendAsync(
                 composed,

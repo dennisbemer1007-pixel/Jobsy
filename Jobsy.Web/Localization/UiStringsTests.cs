@@ -26,7 +26,9 @@ public static class UiStringsTests
         Add("DeepPay.Get.4", "Je gratis uitslag blijft van jou", "Your free results stay yours", "Twój free results stay tyrs", "Your free results stay yours", "‏Your free results stay yours");
         Add("DeepPay.PriceOnce", "Eenmalig · inclusief btw", "One-time · including VAT", "Jednorazowo · z VAT", "O singură dată · cu TVA", "مرة واحدة · شامل الضريبة");
         Add("DeepPay.Methods", "Betaalmethoden", "Payment methods", "Metody płatności", "Metode de plată", "طرق الدفع");
-        Add("DeepPay.Waiver", "Ik wil meteen beginnen. Ik weet dat ik dan niet meer binnen 14 dagen kan annuleren.", "I want to start right away. I know I then cannot cancel within 14 days.", "I want to start right away. I know I then cannot cancel within 14 days. ·", "I want to start right away. I know I then cannot cancel within 14 days.", "‏I want to start right away. I know I then cannot cancel within 14 days.");
+        // D7/05: the checkbox itself reuses "Terms.Waiver.Checkbox" word for word (one source of truth);
+        // only the "read more" link text lives here.
+        Add("DeepPay.WaiverReadMore", "Lees meer over bedenktijd", "Read more about the cooling-off period", "Przeczytaj więcej o prawie odstąpienia", "Citește mai multe despre perioada de retragere", "اقرأ المزيد عن فترة التراجع");
         Add("DeepPay.FreeKeeps", "Je gratis uitslag blijft van jou.", "Your free results stay yours.", "Twój free results stay tyrs.", "Your free results stay yours.", "‏Your free results stay yours.");
         Add("DeepPay.NotNow", "Nu niet", "Not now", "Nie teraz", "Nu acum", "ليس الآن");
         Add("DeepPay.PayCta", "Naar betalen · € {0}", "Pay · € {0}", "Pay · € {0} ·", "Pay · € {0}", "‏Pay · € {0}");
