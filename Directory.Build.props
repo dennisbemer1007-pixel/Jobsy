@@ -1,10 +1,12 @@
 <Project>
   <!-- Central build defaults for Jobsy.* projects (prompt 01). Do not set TreatWarningsAsErrors. -->
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <!-- Temporarily pin analyzers to 9.0 so this PR only surfaces SDK/obsoletion noise from the
+         TFM bump. Step 05 raises AnalysisLevel to 10.0-recommended. -->
+    <AnalysisLevel>9.0-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditLevel>moderate</NuGetAuditLevel>

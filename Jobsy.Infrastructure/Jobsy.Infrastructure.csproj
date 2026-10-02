@@ -7,15 +7,12 @@
   <ItemGroup>
     <PackageReference Include="AngleSharp" />
     <PackageReference Include="MailKit" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" />
+    <!-- DataProtection / Hosting / Http / Options come from FrameworkReference Microsoft.AspNetCore.App (NU1510 on net10). -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
     <PackageReference Include="QRCoder" />
