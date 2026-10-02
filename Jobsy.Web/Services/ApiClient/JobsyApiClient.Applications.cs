@@ -146,16 +146,43 @@ public sealed partial class JobsyApiClient
         }
     }
 
-    public async Task RespondToTalentContactAsync(Guid requestId, bool accept, bool alreadyPlaced = false, CancellationToken ct = default)
+    /// <summary>
+    /// Exactly the fields the employer receives when the candidate accepts (04 §4).
+    /// Throws <see cref="Jobsy.Web.Services.Careers.CareerApiError"/> with a stable code on failure.
+    /// </summary>
+    public async Task<TalentContactSharePreviewModel?> GetTalentContactSharePreviewAsync(
+        Guid requestId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/me/talent-contacts/{requestId}/share-preview", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw Jobsy.Web.Services.Careers.CareerApiError.FromResponse(response.StatusCode, body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<TalentContactSharePreviewModel>(cancellationToken: ct);
+    }
+
+    /// <summary>
+    /// Candidate answer. Accepting needs <paramref name="confirmedShare"/> from the share dialog;
+    /// the API rejects an accept without it (04 §1).
+    /// </summary>
+    public async Task RespondToTalentContactAsync(
+        Guid requestId,
+        bool accept,
+        bool alreadyPlaced = false,
+        bool confirmedShare = false,
+        CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
             $"api/me/talent-contacts/{requestId}/respond",
-            new { accept, alreadyPlaced },
+            new { accept, alreadyPlaced, confirmedShare },
             ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Reageren op contactverzoek mislukt.");
+            throw Jobsy.Web.Services.Careers.CareerApiError.FromResponse(response.StatusCode, body);
         }
     }
 

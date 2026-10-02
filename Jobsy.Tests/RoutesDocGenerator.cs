@@ -136,6 +136,14 @@ public static class RoutesDocGenerator
         sb.AppendLine("- Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.");
         sb.AppendLine("- Map route constant: `KbRoutes.Map` (`/banenkaart`).");
         sb.AppendLine();
+        sb.AppendLine("## Carrière notes");
+        sb.AppendLine();
+        sb.AppendLine("- `/carriere` deep-links one step with `?stap={n}`; an unknown or future step falls back to the overview.");
+        sb.AppendLine("- `/candidate/talent-contacts` only shows employer contact details after the candidate accepts; a Pending request shows the share preview first.");
+        sb.AppendLine("- `/candidate/hoe-werkt-lobsy` is the candidate how-to guide (Kandidaat only); other roles get their own guide and never see the five stones.");
+        sb.AppendLine("- Career API: `GET api/me/career-path/dream-options`, `GET api/me/career-path/archived`, `POST api/me/career-path/archived/{id}/restore`, `GET api/me/talent-contacts/{id}/share-preview`, `GET api/me/journey-summary`.");
+        sb.AppendLine("- `POST api/me/career-path/courses/claim` is a **410 Gone** stub (`use_passport_proof`); candidates prove courses through the passport. Removed after 2026-10-30.");
+        sb.AppendLine();
         sb.AppendLine("## Notes");
         sb.AppendLine();
         sb.AppendLine("- **Admin redesign 06.4 must host `PayoutRunsSection` in a tab Rondes** on `/admin/financien/uitbetalingen` and keep mark-paid closing payout requests. Until then the fallback is `/admin/sales-managers?tab=uitbetalingen`.");

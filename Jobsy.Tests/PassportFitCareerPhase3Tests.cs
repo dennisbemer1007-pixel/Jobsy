@@ -108,7 +108,7 @@ public class CareerPlanViewBuilderTests
         Assert.Contains(view.Gaps, g => !g.Met && g.Text.Contains("Diploma", StringComparison.Ordinal));
         Assert.Contains(view.Gaps, g => g.Met);
         Assert.NotEmpty(view.CourseSearchKeys);
-        Assert.Equal(RoleFitBandRules.LabelKey(view.StepMatchPercent), view.StepBandLabelKey);
+        Assert.Equal("CareerFit.Fair", view.StepBandLabelKey);
     }
 
     [Fact]
@@ -160,6 +160,7 @@ public class CareerPlanViewBuilderTests
                     Order = 2,
                     Title = "Helpende niveau 2",
                     Status = "Active",
+                    StepFitBand = "Fair",
                     SkillsGap = ["Diploma Helpende (niveau 2)"],
                     Courses = ["Helpende (BBL)", "Zorgzaam"],
                     CourseStatuses =
@@ -168,6 +169,7 @@ public class CareerPlanViewBuilderTests
                         new CareerPathCourseApiModel { Name = "Zorgzaam", OnProfile = true }
                     ],
                     MinRequirements = ["1 jaar ervaring in de zorg"],
+                    ActionKinds = ["Vacancies"],
                     ActionHref = "/?q=helpende",
                     ActionLabel = "Zoek",
                     StepMatchPercent = 72,

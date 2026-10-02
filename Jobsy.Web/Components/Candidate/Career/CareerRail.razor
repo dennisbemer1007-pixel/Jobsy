@@ -1,0 +1,100 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.Journey
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="career-rail card" aria-labelledby="career-rail-title">
+    <h2 id="career-rail-title">@Culture["Career.Rail.Title"]</h2>
+    <p class="career-rail__count">@CountText</p>
+
+    @if (Plan.HasPlan)
+    {
+        <ol class="career-rail__route">
+            <li class="career-rail__zone" aria-hidden="true">@Culture["Career.Rail.Zone.Deep"]</li>
+            <li class="career-rail__step is-done">
+                <span class="career-rail__dot" aria-hidden="true"></span>
+                <div>
+                    <b>@Culture["Career.Rail.Now"]</b>
+                    <small>@NowText</small>
+                </div>
+            </li>
+
+            <li class="career-rail__zone" aria-hidden="true">@Culture["Career.Rail.Zone.Climb"]</li>
+            @foreach (var step in Plan.Steps)
+            {
+                var state = StepState(step);
+                <li class="career-rail__step @state" aria-current="@(state == "is-current" ? "step" : null)">
+                    <span class="career-rail__dot" aria-hidden="true">@(state == "is-todo" ? step.Order.ToString() : null)</span>
+                    <div>
+                        <b>@step.ShortTitle</b>
+                        <small>@StepStateText(step)</small>
+                    </div>
+                </li>
+            }
+
+            <li class="career-rail__zone" aria-hidden="true">@Culture["Career.Rail.Zone.Light"]</li>
+            <li class="career-rail__step career-rail__step--goal @(Plan.GoalReached ? "is-done" : "is-end")">
+                <span class="career-rail__dot career-rail__dot--goal" aria-hidden="true"></span>
+                <div>
+                    <b>@Plan.DreamTitle</b>
+                    <small>@GoalText</small>
+                </div>
+            </li>
+        </ol>
+
+        <div class="career-rail__segs" aria-hidden="true">
+            @for (var i = 0; i < Plan.TotalSteps; i++)
+            {
+                <i class="@SegmentClass(i)"></i>
+            }
+        </div>
+        <p class="career-rail__shells">@Culture.Format("Career.Rail.Shells", Plan.CompletedSteps, Plan.TotalSteps)</p>
+    }
+
+    <p class="career-rail__saved">@(Plan.HasPlan ? Culture["Career.Rail.Saved"] : Culture["Career.Rail.EmptyNote"])</p>
+</aside>
+
+@code {
+    [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
+
+    /// <summary>The candidate's current work from the paspoort; empty when unknown (never invented).</summary>
+    [Parameter] public string NowLabel { get; set; } = "";
+
+    private string CountText => Plan.HasPlan
+        ? Culture.Format("Career.Rail.To", Plan.DreamTitle)
+        : Culture["Career.Rail.NoDream"];
+
+    private string NowText => string.IsNullOrWhiteSpace(NowLabel)
+        ? Culture["Career.Rail.NowUnknown"]
+        : NowLabel;
+
+    private string GoalText => string.IsNullOrWhiteSpace(Plan.DreamLevel)
+        ? Culture["Career.Rail.Goal"]
+        : Culture.Format("Career.Rail.GoalLevel", Plan.DreamLevel);
+
+    private static string StepState(CareerPlanStepView step) => step.Status switch
+    {
+        Jobsy.Web.Models.CareerStepStatus.Completed => "is-done",
+        Jobsy.Web.Models.CareerStepStatus.Active => "is-current",
+        _ => "is-todo"
+    };
+
+    private string StepStateText(CareerPlanStepView step) => step.Status switch
+    {
+        Jobsy.Web.Models.CareerStepStatus.Completed => Culture["Career.Rail.NewShell"],
+        Jobsy.Web.Models.CareerStepStatus.Active => string.IsNullOrWhiteSpace(step.BandLabelKey)
+            ? Culture["Career.Rail.GrowingNow"]
+            : Culture.Format("Career.Rail.GrowingNowLevel", Culture[step.BandLabelKey]),
+        _ => ""
+    };
+
+    private string SegmentClass(int index)
+    {
+        if (index < Plan.CompletedSteps)
+        {
+            return "is-done";
+        }
+
+        return Plan.CurrentStepNumber == index + 1 ? "is-current" : "is-off";
+    }
+}

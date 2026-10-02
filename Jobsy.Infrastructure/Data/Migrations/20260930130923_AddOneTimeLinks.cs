@@ -8,21 +8,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
     /// <inheritdoc />
     public partial class AddOneTimeLinks : Migration
     {
+        // Users.SchoolId, PersonalDataAccessLogs.SubjectPupilCodeId and their index/foreign key
+        // already come from the earlier AddScholenFoundation migration; repeating them here made
+        // every fresh database fail with "column ... already exists".
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<Guid>(
-                name: "SchoolId",
-                table: "Users",
-                type: "uuid",
-                nullable: true);
-
-            migrationBuilder.AddColumn<Guid>(
-                name: "SubjectPupilCodeId",
-                table: "PersonalDataAccessLogs",
-                type: "uuid",
-                nullable: true);
-
             migrationBuilder.CreateTable(
                 name: "OneTimeLinks",
                 columns: table => new
@@ -56,16 +48,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_SchoolId",
-                table: "Users",
-                column: "SchoolId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PersonalDataAccessLogs_SubjectPupilCodeId",
-                table: "PersonalDataAccessLogs",
-                column: "SubjectPupilCodeId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_OneTimeLinks_CompanyId",
                 table: "OneTimeLinks",
                 column: "CompanyId");
@@ -85,41 +67,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 name: "IX_OneTimeLinks_UserId",
                 table: "OneTimeLinks",
                 column: "UserId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Users_Schools_SchoolId",
-                table: "Users",
-                column: "SchoolId",
-                principalTable: "Schools",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Users_Schools_SchoolId",
-                table: "Users");
-
             migrationBuilder.DropTable(
                 name: "OneTimeLinks");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Users_SchoolId",
-                table: "Users");
-
-            migrationBuilder.DropIndex(
-                name: "IX_PersonalDataAccessLogs_SubjectPupilCodeId",
-                table: "PersonalDataAccessLogs");
-
-            migrationBuilder.DropColumn(
-                name: "SchoolId",
-                table: "Users");
-
-            migrationBuilder.DropColumn(
-                name: "SubjectPupilCodeId",
-                table: "PersonalDataAccessLogs");
         }
     }
 }

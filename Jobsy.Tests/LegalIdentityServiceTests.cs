@@ -4,6 +4,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Jobsy.Core.Entities;
@@ -66,6 +67,45 @@ public class LegalIdentityServiceTests
         Assert.Equal("support@lobsy.nl", snap.PrivacyContact);
     }
 
+    [Fact]
+    public async Task Mismatch_warning_logs_field_names_once_without_values()
+    {
+        await using var db = CreateDb();
+        var company = new PlatformCompanySettingsService(db, new MemoryCache(new MemoryCacheOptions()));
+        await company.UpdateAsync(new PlatformCompanyUpdate(
+            "Admin BV", null, "Adminstraat 1", "1111 AA", "Delft", "NL", "11112222", "NL001", null, null));
+
+        var logger = new CollectingLogger();
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var sut = new LegalIdentityService(
+            new StaticOptionsMonitor<LegalOptions>(new LegalOptions
+            {
+                Name = "Config BV",
+                Street = "Configstraat 2",
+                PostalCode = "9999 ZZ",
+                City = "Den Haag",
+                KvkNumber = "87654321",
+                VatNumber = "NL999"
+            }),
+            company,
+            cache,
+            logger);
+
+        _ = await sut.GetAsync();
+        cache.Remove(LegalIdentityService.CacheKey);
+        _ = await sut.GetAsync();
+
+        var warnings = logger.Entries
+            .Where(e => e.Level == LogLevel.Warning && e.Message.Contains("legal.identity.mismatch", StringComparison.Ordinal))
+            .ToList();
+        Assert.Single(warnings);
+        Assert.Contains("Name", warnings[0].Message, StringComparison.Ordinal);
+        Assert.Contains("Street", warnings[0].Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Config BV", warnings[0].Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Admin BV", warnings[0].Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Configstraat", warnings[0].Message, StringComparison.Ordinal);
+    }
+
     private static LegalIdentityService CreateSut(IPlatformCompanySettingsService company, LegalOptions options)
     {
         var monitor = new StaticOptionsMonitor<LegalOptions>(options);
@@ -74,6 +114,15 @@ public class LegalIdentityServiceTests
             company,
             new MemoryCache(new MemoryCacheOptions()),
             NullLogger<LegalIdentityService>.Instance);
+    }
+
+    private sealed class CollectingLogger : ILogger<LegalIdentityService>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = new();
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            => Entries.Add((logLevel, formatter(state, exception)));
     }
 
     private static JobsyDbContext CreateDb()
