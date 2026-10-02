@@ -343,7 +343,7 @@ public class OntdekkingsreisRouteTests
     }
 }
 
-public class JourneyLobsterSceneBunitTests : TestContext
+public class JourneyLobsterSceneBunitTests : BunitContext
 {
     public JourneyLobsterSceneBunitTests()
     {

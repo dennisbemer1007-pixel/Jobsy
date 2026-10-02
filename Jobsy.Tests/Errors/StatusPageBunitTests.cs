@@ -10,7 +10,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests.Errors;
 
-public class StatusPageBunitTests : TestContext
+public class StatusPageBunitTests : BunitContext
 {
     public StatusPageBunitTests()
     {
@@ -32,7 +32,7 @@ public class StatusPageBunitTests : TestContext
         var state = Services.GetRequiredService<Jobsy.Web.Hosting.MaintenanceState>();
         state.Apply(true, DateTime.UtcNow.AddMinutes(45));
 
-        var cut = RenderComponent<StatusPage>(p => p.Add(x => x.Code, 503));
+        var cut = Render<StatusPage>(p => p.Add(x => x.Code, 503));
 
         Assert.Contains("We zijn even aan het klussen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("We verwachten terug te zijn om", cut.Markup, StringComparison.Ordinal);
@@ -46,7 +46,7 @@ public class StatusPageBunitTests : TestContext
     {
         Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(true));
 
-        var cut = RenderComponent<StatusPage>(p => p.Add(x => x.Code, 503));
+        var cut = Render<StatusPage>(p => p.Add(x => x.Code, 503));
 
         Assert.Contains("Lobsy is zo terug.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("We verwachten terug te zijn om", cut.Markup, StringComparison.Ordinal);
@@ -57,7 +57,7 @@ public class StatusPageBunitTests : TestContext
     {
         Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(true));
 
-        var cut = RenderComponent<StatusPage>(p => p.Add(x => x.Code, 404));
+        var cut = Render<StatusPage>(p => p.Add(x => x.Code, 404));
         var actions = cut.FindAll(".err-actions a").ToList();
 
         Assert.Equal(3, actions.Count);
@@ -72,7 +72,7 @@ public class StatusPageBunitTests : TestContext
     {
         Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(false));
 
-        var cut = RenderComponent<StatusPage>(p => p.Add(x => x.Code, 404));
+        var cut = Render<StatusPage>(p => p.Add(x => x.Code, 404));
         var actions = cut.FindAll(".err-actions a").ToList();
 
         Assert.Equal(3, actions.Count);
@@ -85,7 +85,7 @@ public class StatusPageBunitTests : TestContext
     {
         Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(true));
 
-        var cut = RenderComponent<StatusPage>(p => p.Add(x => x.Code, 404));
+        var cut = Render<StatusPage>(p => p.Add(x => x.Code, 404));
 
         Assert.Equal("mailto:support@lobsy.nl", cut.Find(".err-support__link").GetAttribute("href"));
     }

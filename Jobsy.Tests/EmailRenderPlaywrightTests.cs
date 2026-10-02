@@ -1,7 +1,6 @@
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
 using Microsoft.Playwright;
-using Xunit.Abstractions;
 
 namespace Jobsy.Tests;
 
@@ -135,14 +134,14 @@ public class EmailRenderPlaywrightTests : IClassFixture<EmailRenderPlaywrightTes
         public IPlaywright Playwright { get; private set; } = null!;
         public IBrowser Browser { get; private set; } = null!;
 
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             Microsoft.Playwright.Program.Main(["install", "chromium"]);
             Playwright = await Microsoft.Playwright.Playwright.CreateAsync();
             Browser = await Playwright.Chromium.LaunchAsync(new() { Headless = true });
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             if (Browser is not null)
             {

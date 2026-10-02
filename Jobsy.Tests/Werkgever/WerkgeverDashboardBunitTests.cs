@@ -12,7 +12,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class WerkgeverDashboardBunitTests : TestContext
+public class WerkgeverDashboardBunitTests : BunitContext
 {
     public WerkgeverDashboardBunitTests()
     {
@@ -40,7 +40,7 @@ public class WerkgeverDashboardBunitTests : TestContext
             17,
             [Guid.NewGuid()]);
 
-        var cut = RenderComponent<WgTodoItem>(p => p
+        var cut = Render<WgTodoItem>(p => p
             .Add(x => x.Item, item)
             .Add(x => x.ShowAction, true));
 
@@ -64,7 +64,7 @@ public class WerkgeverDashboardBunitTests : TestContext
             3,
             [Guid.NewGuid()]);
 
-        var cut = RenderComponent<WgTodoItem>(p => p
+        var cut = Render<WgTodoItem>(p => p
             .Add(x => x.Item, item)
             .Add(x => x.ShowAction, false));
 
@@ -74,7 +74,7 @@ public class WerkgeverDashboardBunitTests : TestContext
     [Fact]
     public void EntKpiCard_no_upsell_gold_on_dashboard_primitives()
     {
-        var cut = RenderComponent<EntKpiCard>(p => p
+        var cut = Render<EntKpiCard>(p => p
             .Add(x => x.Label, "Actieve vacatures")
             .Add(x => x.Value, "48")
             .Add(x => x.Delta, "+4")
@@ -94,7 +94,7 @@ public class WerkgeverDashboardBunitTests : TestContext
             [new EmployerScopeOption(EmployerScopeKind.Region, Guid.NewGuid(), "Westland")],
             new Dictionary<string, IReadOnlyList<Guid>>());
 
-        var cut = RenderComponent<WgAction>(p => p
+        var cut = Render<WgAction>(p => p
             .Add(x => x.RequiresWrite, true)
             .Add(x => x.Kind, WgAction.WgActionKind.Primary)
             .AddChildContent("Vacature plaatsen"));

@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Jobsy.Web.Localization;
-using Xunit.Abstractions;
 
 namespace Jobsy.Tests;
 

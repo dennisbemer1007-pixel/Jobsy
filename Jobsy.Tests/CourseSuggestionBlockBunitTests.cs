@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class CourseSuggestionBlockBunitTests : TestContext
+public class CourseSuggestionBlockBunitTests : BunitContext
 {
     public CourseSuggestionBlockBunitTests()
     {
@@ -31,7 +31,7 @@ public class CourseSuggestionBlockBunitTests : TestContext
     [Fact]
     public void Empty_slots_render_nothing()
     {
-        var cut = RenderComponent<CourseSuggestionBlock>(p => p
+        var cut = Render<CourseSuggestionBlock>(p => p
             .Add(x => x.Slots, Array.Empty<PassportCourseCard>())
             .Add(x => x.SkillLabel, "Plannen"));
         Assert.DoesNotContain("passport-course", cut.Markup, StringComparison.Ordinal);
@@ -70,7 +70,7 @@ public class CourseSuggestionBlockBunitTests : TestContext
             }
         };
 
-        var cut = RenderComponent<CourseSuggestionBlock>(p => p
+        var cut = Render<CourseSuggestionBlock>(p => p
             .Add(x => x.Slots, slots)
             .Add(x => x.SkillLabel, "Plannen"));
 

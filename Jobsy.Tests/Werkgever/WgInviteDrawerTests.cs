@@ -10,7 +10,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class WgInviteDrawerTests : TestContext
+public class WgInviteDrawerTests : BunitContext
 {
     public WgInviteDrawerTests()
     {
@@ -29,7 +29,7 @@ public class WgInviteDrawerTests : TestContext
     [Fact]
     public void Role_cards_render_exact_copy_keys()
     {
-        var cut = RenderComponent<WgInviteDrawer>(p => p
+        var cut = Render<WgInviteDrawer>(p => p
             .Add(x => x.Open, true)
             .Add(x => x.Companies, SampleCompanies())
             .Add(x => x.Regions, SampleRegions()));
@@ -46,7 +46,7 @@ public class WgInviteDrawerTests : TestContext
     [Fact]
     public void Scope_field_hidden_for_BM_shown_for_VM_and_RM()
     {
-        var cut = RenderComponent<WgInviteDrawer>(p => p
+        var cut = Render<WgInviteDrawer>(p => p
             .Add(x => x.Open, true)
             .Add(x => x.Companies, SampleCompanies())
             .Add(x => x.Regions, SampleRegions())
@@ -67,7 +67,7 @@ public class WgInviteDrawerTests : TestContext
     [Fact]
     public void Validation_requires_email()
     {
-        var cut = RenderComponent<WgInviteDrawer>(p => p
+        var cut = Render<WgInviteDrawer>(p => p
             .Add(x => x.Open, true)
             .Add(x => x.Companies, SampleCompanies())
             .Add(x => x.Regions, SampleRegions()));

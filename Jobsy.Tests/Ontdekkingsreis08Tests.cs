@@ -205,7 +205,7 @@ public class Ontdekkingsreis08RoutesNavTests
     }
 }
 
-public class Ontdekkingsreis08ShedBunitTests : TestContext
+public class Ontdekkingsreis08ShedBunitTests : BunitContext
 {
     public Ontdekkingsreis08ShedBunitTests()
     {

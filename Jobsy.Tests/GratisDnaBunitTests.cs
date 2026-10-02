@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class GratisDnaBunitTests : TestContext
+public class GratisDnaBunitTests : BunitContext
 {
     public GratisDnaBunitTests()
     {
@@ -65,7 +65,7 @@ public class GratisDnaBunitTests : TestContext
     [Fact]
     public void Signup_card_links_to_account_maken_and_external_providers_not_register()
     {
-        var cut = RenderComponent<GratisDnaSignupCard>();
+        var cut = Render<GratisDnaSignupCard>();
         var markup = cut.Markup;
         Assert.Contains("/account-maken?van=ontdek#email", markup, StringComparison.Ordinal);
         Assert.Contains("/account/external/google?", markup, StringComparison.Ordinal);
@@ -78,7 +78,7 @@ public class GratisDnaBunitTests : TestContext
     [Fact]
     public void Under16_view_renders_register_cta_and_page_never_saves_on_under16_choice()
     {
-        var cut = RenderComponent<GratisDnaUnder16View>();
+        var cut = Render<GratisDnaUnder16View>();
 
         Assert.Contains("Leuk dat je mee wilt doen!", cut.Markup, StringComparison.Ordinal);
         var cta = cut.Find("[data-testid=gd-under16-cta]");

@@ -103,7 +103,7 @@ public class Ontdekkingsreis07bSourceTests
     }
 }
 
-public class JourneyProgressRailBunitTests : TestContext
+public class JourneyProgressRailBunitTests : BunitContext
 {
     public JourneyProgressRailBunitTests()
     {

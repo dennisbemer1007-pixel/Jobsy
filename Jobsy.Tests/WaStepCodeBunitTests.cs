@@ -8,7 +8,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class WaStepCodeBunitTests : TestContext
+public class WaStepCodeBunitTests : BunitContext
 {
     public WaStepCodeBunitTests()
     {
@@ -29,14 +29,14 @@ public class WaStepCodeBunitTests : TestContext
             VerificationExpiresAt = DateTime.UtcNow.AddMinutes(10)
         };
 
-        var cut = RenderComponent<WaStepCode>(p => p
+        var cut = Render<WaStepCode>(p => p
             .Add(c => c.State, state)
             .Add(c => c.Expired, true));
 
         Assert.Contains("wa-note--warn", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("wa-input--otp", cut.Markup, StringComparison.Ordinal);
 
-        cut.SetParametersAndRender(p => p
+        cut.Render(p => p
             .Add(c => c.State, state)
             .Add(c => c.Expired, false));
 

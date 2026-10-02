@@ -21,9 +21,9 @@ public sealed class StatusPagesHttpFixture : IAsyncLifetime
     /// <summary>Maintenance on, to prove the health checks are untouched.</summary>
     public MaintenanceWebFactory Maintenance { get; } = new() { MaintenanceEnabled = true };
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await Web.DisposeAsync();
         await Throwing.DisposeAsync();

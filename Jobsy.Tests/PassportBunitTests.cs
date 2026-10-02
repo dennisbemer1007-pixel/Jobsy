@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class PassportBunitTests : TestContext
+public class PassportBunitTests : BunitContext
 {
     public PassportBunitTests()
     {
@@ -30,7 +30,7 @@ public class PassportBunitTests : TestContext
     [InlineData(1, 1, 1, 1)]
     public void DnaRing_renders_svg_with_aria(double a, double b, double c, double d)
     {
-        var cut = RenderComponent<DnaRing>(p => p
+        var cut = Render<DnaRing>(p => p
             .Add(x => x.CompetenceProgress, a)
             .Add(x => x.CareerProgress, b)
             .Add(x => x.CultureProgress, c)
@@ -46,7 +46,7 @@ public class PassportBunitTests : TestContext
     [Fact]
     public void PassportCard_empty_facts_show_dash_no_share_no_photo()
     {
-        var cut = RenderComponent<PassportCard>(p => p
+        var cut = Render<PassportCard>(p => p
             .Add(x => x.DisplayName, "Samira")
             .Add(x => x.Initials, "SE")
             .Add(x => x.MemberNumber, "LB-12345")
@@ -65,7 +65,7 @@ public class PassportBunitTests : TestContext
     [Fact]
     public void PassportCard_hides_open_for_work_when_employers_off_flag_simulated()
     {
-        var cut = RenderComponent<PassportCard>(p => p
+        var cut = Render<PassportCard>(p => p
             .Add(x => x.DisplayName, "Samira")
             .Add(x => x.Initials, "SE")
             .Add(x => x.MemberNumber, "LB-1")
@@ -78,7 +78,7 @@ public class PassportBunitTests : TestContext
     [Fact]
     public void PassportOverview_not_yet_state_links_to_tests()
     {
-        var cut = RenderComponent<PassportOverview>(p => p
+        var cut = Render<PassportOverview>(p => p
             .Add(x => x.CompletedCount, 0));
 
         Assert.Contains("Nog niet ontdekt", cut.Markup, StringComparison.Ordinal);

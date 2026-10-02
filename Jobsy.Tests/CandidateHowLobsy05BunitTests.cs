@@ -20,7 +20,7 @@ namespace Jobsy.Tests;
 /// Carrière 05: <c>/candidate/hoe-werkt-lobsy</c> as five stones in the journey style, plus the
 /// H1–H3 fixes (no "_message" literal, stay on error, no inline style on the shared panel).
 /// </summary>
-public class CandidateHowLobsy05BunitTests : TestContext
+public class CandidateHowLobsy05BunitTests : BunitContext
 {
     private readonly StubHandler _handler = new();
     private bool _employers = true;
@@ -47,7 +47,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     [Fact]
     public void Page_renders_five_stones_in_Dennis_order()
     {
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
 
         Assert.Contains("journey-page career-page", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(1, Occurrences(cut.Markup, "<h1"));
@@ -69,7 +69,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     [Fact]
     public void Page_never_renders_the_message_literal_or_the_old_guide_panel()
     {
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
 
         Assert.DoesNotContain("_message", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("how-lobsy-steps", cut.Markup, StringComparison.Ordinal);
@@ -102,7 +102,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     public void Werkgevers_off_hides_the_job_map_and_applications_stones()
     {
         _employers = false;
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
 
         Assert.Contains("Drie stenen, in je eigen tempo", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(
@@ -115,7 +115,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     public void Passport_off_swaps_stone_two_for_my_profile()
     {
         _passport = false;
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
 
         Assert.Equal(
             [
@@ -145,7 +145,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
             applicationsDone = false
         };
 
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
 
         var rows = cut.FindAll("li.how-stone").ToList();
         Assert.Equal(5, rows.Count);
@@ -163,7 +163,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     [Fact]
     public void Nothing_done_puts_now_on_the_first_stone_and_uses_the_starting_bubble()
     {
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
 
         var rows = cut.FindAll("li.how-stone").ToList();
         Assert.Contains("how-stone--now", rows[0].ClassName, StringComparison.Ordinal);
@@ -176,7 +176,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     [Fact]
     public void Ik_snap_het_calls_the_api_once_and_stays_on_the_page()
     {
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
         var navigation = Services.GetRequiredService<NavigationManager>();
         var before = navigation.Uri;
 
@@ -192,7 +192,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     public void A_failing_save_keeps_the_candidate_on_the_page_with_an_alert()
     {
         _handler.CompleteStatus = HttpStatusCode.InternalServerError;
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
         var navigation = Services.GetRequiredService<NavigationManager>();
         var before = navigation.Uri;
 
@@ -216,7 +216,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
             applicationsDone = false
         };
 
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
         cut.Find(".career-btn--primary").Click();
 
         Assert.Equal(1, _handler.CompleteCalls);
@@ -229,7 +229,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     public void The_primary_still_navigates_when_the_save_fails()
     {
         _handler.CompleteStatus = HttpStatusCode.InternalServerError;
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
 
         cut.Find(".career-btn--primary").Click();
 
@@ -244,7 +244,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
     [Fact]
     public void The_language_line_tags_every_name_with_its_own_lang()
     {
-        var cut = RenderComponent<HowLobsyWorks>();
+        var cut = Render<HowLobsyWorks>();
         var langs = cut.Find(".how-safe__langs");
 
         Assert.Contains("Lobsy in jouw taal:", langs.TextContent, StringComparison.Ordinal);
@@ -275,7 +275,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
             await culture.SetLanguageAsync("ar");
             Assert.True(culture.IsRightToLeft);
 
-            var cut = RenderComponent<HowLobsyWorks>();
+            var cut = Render<HowLobsyWorks>();
 
             Assert.Contains("كيف يعمل لوبسي؟", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("على يسار الشاشة", cut.Markup, StringComparison.Ordinal);
@@ -300,7 +300,7 @@ public class CandidateHowLobsy05BunitTests : TestContext
 
     // ---------- helpers ----------
 
-    private static IReadOnlyList<string> StoneHrefs(IRenderedFragment cut)
+    private static IReadOnlyList<string> StoneHrefs(IRenderedComponent<HowLobsyWorks> cut)
         => cut.FindAll("a.how-stone__row").Select(a => a.GetAttribute("href") ?? "").ToList();
 
     private static int Occurrences(string haystack, string needle)

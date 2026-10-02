@@ -13,7 +13,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class AdminOrganisationsBunitTests : TestContext
+public class AdminOrganisationsBunitTests : BunitContext
 {
     public AdminOrganisationsBunitTests()
     {
@@ -24,7 +24,7 @@ public class AdminOrganisationsBunitTests : TestContext
             new FakeAuthStateProvider(CreateAdmin())));
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthStateProvider(CreateAdmin()));
         Services.AddAuthorizationCore();
-        this.AddTestAuthorization().SetAuthorized("admin").SetRoles("Admin");
+        this.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");
         Services.AddSingleton<IHostEnvironment>(new FakeHostEnv());
         Services.AddSingleton(new JobsyApiClient(new HttpClient { BaseAddress = new Uri("http://localhost") }));
     }
@@ -59,7 +59,7 @@ public class AdminOrganisationsBunitTests : TestContext
             }
         };
 
-        var cut = RenderComponent<CompaniesAdminHarness>(p => p
+        var cut = Render<CompaniesAdminHarness>(p => p
             .Add(x => x.Companies, companies));
 
         Assert.Contains("Boom", cut.Markup, StringComparison.OrdinalIgnoreCase);
@@ -102,7 +102,7 @@ public class AdminOrganisationsBunitTests : TestContext
             }
         };
 
-        var cut = RenderComponent<CompaniesAdminHarness>(p => p
+        var cut = Render<CompaniesAdminHarness>(p => p
             .Add(x => x.Companies, companies)
             .Add(x => x.SelectFirst, true));
 
@@ -129,7 +129,7 @@ public class AdminOrganisationsBunitTests : TestContext
             }
         };
 
-        var cut = RenderComponent<CompaniesAdminHarness>(p => p
+        var cut = Render<CompaniesAdminHarness>(p => p
             .Add(x => x.Companies, companies)
             .Add(x => x.SelectFirst, true)
             .Add(x => x.ForceDrawer, true));

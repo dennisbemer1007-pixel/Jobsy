@@ -28,7 +28,7 @@ namespace Jobsy.Tests;
 /// bUnit host for the static <c>/hoe-werkt-lobsy</c> page (public-pages 08). The route is static
 /// SSR, so rendering the component is exactly what a visitor's first byte contains.
 /// </summary>
-public abstract class HowLobsyRenderTestBase : TestContext
+public abstract class HowLobsyRenderTestBase : BunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
@@ -110,7 +110,7 @@ public abstract class HowLobsyRenderTestBase : TestContext
         Services.GetRequiredService<CultureState>().InitializeFromRequest(_http);
     }
 
-    protected IRenderedComponent<HowLobsyWorks> Render() => RenderComponent<HowLobsyWorks>();
+    protected IRenderedComponent<HowLobsyWorks> Render() => Render<HowLobsyWorks>();
 
     protected static string PageSource => File.ReadAllText(Path.Combine(
         RepoRoot(), "Jobsy.Web", "Components", "Pages", "HowLobsyWorks.razor"));

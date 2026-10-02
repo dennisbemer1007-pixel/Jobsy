@@ -12,7 +12,7 @@ using Microsoft.JSInterop;
 namespace Jobsy.Tests.Errors;
 
 /// <summary>errors 04 §04.4: the small "Dit stukje laadt nu niet." card.</summary>
-public class InlineErrorBlockTests : TestContext
+public class InlineErrorBlockTests : BunitContext
 {
     private const string Secret = "Secret boom detail from the database connection string.";
 
@@ -35,7 +35,7 @@ public class InlineErrorBlockTests : TestContext
     [Fact]
     public void Shows_the_calm_line_and_announces_itself_politely()
     {
-        var cut = RenderComponent<InlineErrorBlock>();
+        var cut = Render<InlineErrorBlock>();
 
         var card = cut.Find(".err-inline");
         Assert.Equal("status", card.GetAttribute("role"));
@@ -48,7 +48,7 @@ public class InlineErrorBlockTests : TestContext
     [Fact]
     public void Shows_the_support_code_the_api_error_carried()
     {
-        var cut = RenderComponent<InlineErrorBlock>(p => p
+        var cut = Render<InlineErrorBlock>(p => p
             .Add(x => x.Error, new ApiErrorException(ApiErrorException.RateLimited, 429, "LB-7Q3K", 30)));
 
         var code = cut.Find(".err-inline__code");
@@ -59,7 +59,7 @@ public class InlineErrorBlockTests : TestContext
     [Fact]
     public void Mints_a_support_code_for_an_error_without_one()
     {
-        var cut = RenderComponent<InlineErrorBlock>(p => p
+        var cut = Render<InlineErrorBlock>(p => p
             .Add(x => x.Error, new InvalidOperationException(Secret)));
 
         var shown = cut.Find(".err-inline__code").GetAttribute("data-support-code");
@@ -69,7 +69,7 @@ public class InlineErrorBlockTests : TestContext
     [Fact]
     public void Never_shows_exception_text()
     {
-        var cut = RenderComponent<InlineErrorBlock>(p => p
+        var cut = Render<InlineErrorBlock>(p => p
             .Add(x => x.Error, new InvalidOperationException(Secret)));
 
         Assert.DoesNotContain(Secret, cut.Markup, StringComparison.Ordinal);
@@ -80,7 +80,7 @@ public class InlineErrorBlockTests : TestContext
     public void Retry_button_only_appears_with_a_callback_and_fires_it()
     {
         var clicks = 0;
-        var cut = RenderComponent<InlineErrorBlock>(p => p
+        var cut = Render<InlineErrorBlock>(p => p
             .Add(x => x.Error, new HttpRequestException(Secret))
             .Add(x => x.OnRetry, EventCallback.Factory.Create(this, () => clicks++)));
 
@@ -94,7 +94,7 @@ public class InlineErrorBlockTests : TestContext
     [Fact]
     public void Shows_a_validation_message_the_api_wrote_for_users()
     {
-        var cut = RenderComponent<InlineErrorBlock>(p => p
+        var cut = Render<InlineErrorBlock>(p => p
             .Add(x => x.Error, new ApiErrorException(ApiErrorException.Validation, 400, userMessage: "Vul je postcode in.")));
 
         Assert.Equal("Vul je postcode in.", cut.Find(".err-inline__detail").TextContent);

@@ -13,7 +13,7 @@ using Bunit;
 
 namespace Jobsy.Tests;
 
-public class CandidateFitGateBunitTests : TestContext
+public class CandidateFitGateBunitTests : BunitContext
 {
     public CandidateFitGateBunitTests()
     {
@@ -29,7 +29,7 @@ public class CandidateFitGateBunitTests : TestContext
     [Fact]
     public void FitPill_closed_gate_has_no_percent_digits()
     {
-        var cut = RenderComponent<KbFitPill>(p => p
+        var cut = Render<KbFitPill>(p => p
             .Add(x => x.Fit, new KbFitView(false, null, null)));
         Assert.Contains("Maak je paspoort af", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("%", cut.Markup, StringComparison.Ordinal);

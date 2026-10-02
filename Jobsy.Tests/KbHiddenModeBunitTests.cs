@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class KbHiddenModeBunitTests : TestContext
+public class KbHiddenModeBunitTests : BunitContext
 {
     public KbHiddenModeBunitTests()
     {
@@ -24,7 +24,7 @@ public class KbHiddenModeBunitTests : TestContext
     [Fact]
     public void TravelTime_bureau_without_region_uses_simple_fallback_label()
     {
-        var cut = RenderComponent<KbTravelTime>(p => p
+        var cut = Render<KbTravelTime>(p => p
             .Add(x => x.Minutes, 14)
             .Add(x => x.Transport, "Fiets")
             .Add(x => x.ToBureau, true));
@@ -44,7 +44,7 @@ public class KbHiddenModeBunitTests : TestContext
             new("rank", "Staat lager: nachtdienst", "rank-lower"),
         };
         var fit = new KbFitView(true, 76, Jobsy.Core.Rules.KbFitBand.Strong);
-        var cut = RenderComponent<KbBadgeRow>(p => p
+        var cut = Render<KbBadgeRow>(p => p
             .Add(x => x.Badges, badges)
             .Add(x => x.MaxVisible, 2)
             .Add(x => x.Fit, fit));

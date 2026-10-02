@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public sealed class TestQuestionFlowBunitTests : TestContext
+public sealed class TestQuestionFlowBunitTests : BunitContext
 {
     public TestQuestionFlowBunitTests()
     {
@@ -30,7 +30,7 @@ public sealed class TestQuestionFlowBunitTests : TestContext
             .Select(i => new TestQuestionFlow.FlowQuestion(i, $"{i}. Statement {i}"))
             .ToList();
         var answers = new Dictionary<int, int>();
-        var cut = RenderComponent<TestQuestionFlow>(parameters => parameters
+        var cut = Render<TestQuestionFlow>(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Competence)
             .Add(p => p.Questions, questions)
             .Add(p => p.Answers, answers)
@@ -48,7 +48,7 @@ public sealed class TestQuestionFlowBunitTests : TestContext
         var questions = Enumerable.Range(1, 5)
             .Select(i => new TestQuestionFlow.FlowQuestion(i, $"Q{i}"))
             .ToList();
-        var cut = RenderComponent<TestQuestionFlow>(parameters => parameters
+        var cut = Render<TestQuestionFlow>(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Competence)
             .Add(p => p.Questions, questions)
             .Add(p => p.Answers, new Dictionary<int, int>())
@@ -62,7 +62,7 @@ public sealed class TestQuestionFlowBunitTests : TestContext
     [Fact]
     public void LikertRadioGroup_Has_Accessible_Names()
     {
-        var cut = RenderComponent<LikertRadioGroup>(parameters => parameters
+        var cut = Render<LikertRadioGroup>(parameters => parameters
             .Add(p => p.QuestionId, 1)
             .Add(p => p.StatementId, "stmt-1")
             .Add(p => p.Value, (int?)null));
@@ -78,7 +78,7 @@ public sealed class TestQuestionFlowBunitTests : TestContext
     [Fact]
     public void TestDiveScene_Is_Aria_Hidden()
     {
-        var cut = RenderComponent<TestDiveScene>(parameters => parameters
+        var cut = Render<TestDiveScene>(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Competence)
             .Add(p => p.Answered, 5)
             .Add(p => p.Target, 25)

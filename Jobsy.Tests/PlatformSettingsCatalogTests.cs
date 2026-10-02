@@ -135,7 +135,7 @@ public class PlatformFeaturesEnvLockApiTests
     }
 }
 
-public class PlatformSettingsEditorBunitTests : TestContext
+public class PlatformSettingsEditorBunitTests : BunitContext
 {
     private readonly CapturingHandler _handler = new();
 
@@ -148,7 +148,7 @@ public class PlatformSettingsEditorBunitTests : TestContext
             new FakeAuthStateProvider(CreateAdmin())));
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthStateProvider(CreateAdmin()));
         Services.AddAuthorizationCore();
-        this.AddTestAuthorization().SetAuthorized("admin").SetRoles("Admin");
+        this.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");
         Services.AddSingleton<IHostEnvironment>(new FakeHostEnv());
         Services.AddSingleton(new DeploymentEnvironmentLabel(DeploymentEnvironment.Lokaal));
         var http = new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") };
@@ -167,7 +167,7 @@ public class PlatformSettingsEditorBunitTests : TestContext
             UpdatedAtUtc = DateTime.UtcNow
         };
 
-        var cut = RenderComponent<PlatformSettingsEditor>(p => p
+        var cut = Render<PlatformSettingsEditor>(p => p
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
 
         cut.WaitForElement(".admin-settings-group");
@@ -195,7 +195,7 @@ public class PlatformSettingsEditorBunitTests : TestContext
             VacancyContentModerationEnabled = true,
             PublicWebBaseUrl = "http://localhost:5201"
         };
-        var cut = RenderComponent<PlatformSettingsEditor>(p => p
+        var cut = Render<PlatformSettingsEditor>(p => p
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
         cut.WaitForElement(".admin-settings-group");
         cut.Instance.SetDraftForTests("VacancyContentModerationEnabled", false);
@@ -210,7 +210,7 @@ public class PlatformSettingsEditorBunitTests : TestContext
     [Fact]
     public void Policy_row_has_lock_and_activation_disabled_in_productie()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddSingleton(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),
@@ -218,7 +218,7 @@ public class PlatformSettingsEditorBunitTests : TestContext
             new FakeAuthStateProvider(CreateAdmin())));
         ctx.Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthStateProvider(CreateAdmin()));
         ctx.Services.AddAuthorizationCore();
-        ctx.AddTestAuthorization().SetAuthorized("admin").SetRoles("Admin");
+        ctx.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");
         ctx.Services.AddSingleton<IHostEnvironment>(new FakeHostEnv());
         ctx.Services.AddSingleton(new DeploymentEnvironmentLabel(DeploymentEnvironment.Productie));
         var handler = new CapturingHandler
@@ -230,7 +230,7 @@ public class PlatformSettingsEditorBunitTests : TestContext
         };
         ctx.Services.AddSingleton(new JobsyApiClient(new HttpClient(handler) { BaseAddress = new Uri("http://localhost") }));
 
-        var cut = ctx.RenderComponent<PlatformSettingsEditor>(p => p
+        var cut = ctx.Render<PlatformSettingsEditor>(p => p
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
         cut.WaitForElement(".admin-settings-group");
 
@@ -242,7 +242,7 @@ public class PlatformSettingsEditorBunitTests : TestContext
     [Fact]
     public void Prices_tabs_include_sales()
     {
-        var cut = RenderComponent<AdminTabs>(p => p
+        var cut = Render<AdminTabs>(p => p
             .Add(x => x.BasePath, "/admin/financien/prijzen")
             .Add(x => x.ActiveKey, "tokens")
             .Add(x => x.Tabs, new List<AdminTabs.Tab>

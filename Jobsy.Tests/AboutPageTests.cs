@@ -25,7 +25,7 @@ namespace Jobsy.Tests;
 /// <c>/wie-zijn-wij</c> (public-pages 08): static SSR in five languages, contact via
 /// <c>Legal:SupportEmail</c>, and no HTML from the database anymore.
 /// </summary>
-public class AboutPageTests : TestContext
+public class AboutPageTests : BunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
@@ -74,7 +74,7 @@ public class AboutPageTests : TestContext
         Services.GetRequiredService<CultureState>().InitializeFromRequest(_http);
     }
 
-    private IRenderedComponent<WieZijnWij> Render() => RenderComponent<WieZijnWij>();
+    private IRenderedComponent<WieZijnWij> Render() => Render<WieZijnWij>();
 
     private static string PageSource => File.ReadAllText(Path.Combine(
         HowLobsyRenderTestBase.RepoRoot(), "Jobsy.Web", "Components", "Pages", "Legal", "WieZijnWij.razor"));

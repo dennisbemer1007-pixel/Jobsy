@@ -14,7 +14,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class AccountMakenBunitTests : TestContext
+public class AccountMakenBunitTests : BunitContext
 {
     public AccountMakenBunitTests()
     {
@@ -38,7 +38,7 @@ public class AccountMakenBunitTests : TestContext
     [Fact]
     public void Hides_providers_when_unconfigured_and_shows_email_form()
     {
-        var cut = RenderComponent<AccountMaken>();
+        var cut = Render<AccountMaken>();
         Assert.DoesNotContain("Doorgaan met Google", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Doorgaan met Microsoft", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Stuur mijn code", cut.Markup, StringComparison.Ordinal);
@@ -50,7 +50,7 @@ public class AccountMakenBunitTests : TestContext
     public void Shows_register_box_for_van_ontdek()
     {
         Services.AddSingleton<NavigationManager>(new FakeNavigation("/account-maken?van=ontdek"));
-        var cut = RenderComponent<AccountMaken>();
+        var cut = Render<AccountMaken>();
         Assert.Contains("gd-register-box", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Bedrijf registreren", cut.Markup, StringComparison.Ordinal);
     }
@@ -59,7 +59,7 @@ public class AccountMakenBunitTests : TestContext
     public void Hides_employer_register_when_employers_off()
     {
         Services.AddSingleton<IEmployersSwitch>(new FixedEmployersSwitch(false));
-        var cut = RenderComponent<AccountMaken>();
+        var cut = Render<AccountMaken>();
         Assert.DoesNotContain("Bedrijf registreren", cut.Markup, StringComparison.Ordinal);
     }
 

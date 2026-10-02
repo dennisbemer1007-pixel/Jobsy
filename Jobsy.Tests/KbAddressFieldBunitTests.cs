@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class KbAddressFieldBunitTests : TestContext
+public class KbAddressFieldBunitTests : BunitContext
 {
     public KbAddressFieldBunitTests()
     {
@@ -25,7 +25,7 @@ public class KbAddressFieldBunitTests : TestContext
     [Fact]
     public void Fast_input_then_stale_suggestions_do_not_change_value()
     {
-        var cut = RenderComponent<KbAddressField>(ps => ps
+        var cut = Render<KbAddressField>(ps => ps
             .Add(p => p.InputId, "test-address")
             .Add(p => p.Query, "")
             .Add(p => p.Suggestions, Array.Empty<AddressSuggestion>())
@@ -37,7 +37,7 @@ public class KbAddressFieldBunitTests : TestContext
         cut.Find("input").Focus(new FocusEventArgs());
         cut.Find("input").Input(typed);
 
-        cut.SetParametersAndRender(ps => ps
+        cut.Render(ps => ps
             .Add(p => p.Query, "Heta")
             .Add(p => p.Suggestions, new[]
             {

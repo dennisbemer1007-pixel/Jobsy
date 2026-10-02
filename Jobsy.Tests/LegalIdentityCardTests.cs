@@ -17,7 +17,7 @@ namespace Jobsy.Tests;
 /// The identity card only renders rows whose value is configured: an empty <c>Legal:*</c> value
 /// hides its line, never a placeholder (D1 / 02.6).
 /// </summary>
-public class LegalIdentityCardTests : TestContext
+public class LegalIdentityCardTests : BunitContext
 {
     private readonly AmbientCultureScope _culture = new();
     private string _legalJson = "{}";
@@ -51,7 +51,7 @@ public class LegalIdentityCardTests : TestContext
     public void Empty_values_render_neither_a_row_nor_a_label()
     {
         _legalJson = """{"tradeName":"Lobsy","supportEmail":"support@lobsy.nl"}""";
-        var cut = RenderComponent<LegalIdentityCard>();
+        var cut = Render<LegalIdentityCard>();
 
         var labels = cut.FindAll(".pp-identity__label").Select(l => l.TextContent.Trim()).ToList();
         Assert.Contains(UiStrings.Get("Legal.IdentityCard.Name"), labels);
@@ -72,7 +72,7 @@ public class LegalIdentityCardTests : TestContext
              "kvkNumber":"12345678","vatNumber":"NL001234567B01","privacyEmail":"privacy@lobsy.nl",
              "supportEmail":"support@lobsy.nl"}
             """;
-        var cut = RenderComponent<LegalIdentityCard>(p => p.Add(c => c.ShowPrivacyContact, true));
+        var cut = Render<LegalIdentityCard>(p => p.Add(c => c.ShowPrivacyContact, true));
 
         var labels = cut.FindAll(".pp-identity__label").Select(l => l.TextContent.Trim()).ToList();
         Assert.Contains(UiStrings.Get("Legal.IdentityCard.Address"), labels);
@@ -89,7 +89,7 @@ public class LegalIdentityCardTests : TestContext
     public void Terms_card_shows_the_support_contact_instead_of_privacy_questions()
     {
         _legalJson = """{"name":"Lobsy B.V.","supportEmail":"support@lobsy.nl","privacyEmail":"privacy@lobsy.nl"}""";
-        var cut = RenderComponent<LegalIdentityCard>();
+        var cut = Render<LegalIdentityCard>();
 
         var labels = cut.FindAll(".pp-identity__label").Select(l => l.TextContent.Trim()).ToList();
         Assert.Contains(UiStrings.Get("Legal.IdentityCard.Contact"), labels);
