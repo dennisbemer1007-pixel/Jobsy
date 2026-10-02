@@ -42,6 +42,8 @@ public class LegalDocumentRenderTests : TestContext
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = _http });
         Services.AddSingleton<IHttpClientFactory>(new OfflineHttpClientFactory());
         Services.AddSingleton<LegalIdentityProvider>();
+        // PublicLayout shows the maintenance admin banner (errors 05).
+        Services.AddSingleton(new Jobsy.Web.Hosting.MaintenanceState());
         Services.AddSingleton<LandingStatsClient>();
         Services.AddSingleton<LandingPriceClient>();
         Services.AddScoped<LandingVariantResolver>();

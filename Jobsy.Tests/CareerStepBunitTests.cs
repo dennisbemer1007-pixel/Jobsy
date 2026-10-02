@@ -32,6 +32,10 @@ public class CareerStepBunitTests : TestContext
             sp.GetRequiredService<AuthenticationStateProvider>()));
         var http = new HttpClient(new FakeHandler()) { BaseAddress = new Uri("http://localhost/") };
         Services.AddSingleton(new JobsyApiClient(http));
+        // CourseSuggestionBlock describes load failures via UserFacingError (errors 04).
+        Services.AddSingleton(sp => new Jobsy.Web.Services.UserFacingError(
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Web.Services.UserFacingError>.Instance,
+            sp.GetRequiredService<CultureState>()));
     }
 
     // ---------- detail: active / done / todo ----------

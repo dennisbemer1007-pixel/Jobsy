@@ -158,7 +158,10 @@ public static class ErrorPagesExtensions
         return dot > 0 && dot < segment.Length - 1;
     }
 
+    // No Accept header or */* (curl, simple crawlers) also gets the HTML page, as the public-pages
+    // hotfix already did on acceptatie; API/static/Blazor paths are excluded above.
     private static bool AcceptsHtml(string? accept)
-        => !string.IsNullOrEmpty(accept)
-           && accept.Contains("text/html", StringComparison.OrdinalIgnoreCase);
+        => string.IsNullOrEmpty(accept)
+           || accept.Contains("text/html", StringComparison.OrdinalIgnoreCase)
+           || accept.Contains("*/*", StringComparison.Ordinal);
 }
