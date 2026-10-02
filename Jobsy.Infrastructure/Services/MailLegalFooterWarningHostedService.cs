@@ -31,7 +31,21 @@ public sealed class MailLegalFooterWarningHostedService : IHostedService
             return Task.CompletedTask;
         }
 
-        var mail = _options.Value;
+        MailOptions mail;
+        try
+        {
+            mail = _options.Value;
+        }
+        catch (Exception ex)
+        {
+            // MailOptions post-configure reads the legal identity from the database. This service
+            // starts before DatabaseSeedHostedService has migrated a fresh database, so a missing
+            // table must not crash the API; the options are not cached on failure and resolve
+            // normally once the database is ready.
+            _logger.LogWarning(ex, "E-mailfooter kon bij het opstarten niet worden gecontroleerd.");
+            return Task.CompletedTask;
+        }
+
         if (mail.MissingLegalFooter)
         {
             _logger.LogWarning(
