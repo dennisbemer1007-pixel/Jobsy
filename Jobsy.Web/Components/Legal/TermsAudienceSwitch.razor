@@ -1,0 +1,30 @@
+@using Jobsy.Core.Legal
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+@* Two real links, so the switch works without JS (04.2). *@
+<nav class="pp-switch" aria-label="@Culture["Terms.Switch.Label"]">
+    <a class="pp-switch__link @ActiveClass(TermsAudience.Employer)"
+       href="@PublicRoutes.Terms"
+       aria-current="@AriaCurrent(TermsAudience.Employer)">
+        <span class="pp-switch__icon" aria-hidden="true">🏢</span>
+        <span>@Culture["Terms.Switch.Employers"]</span>
+    </a>
+    <a class="pp-switch__link @ActiveClass(TermsAudience.Candidate)"
+       href="@PublicRoutes.UsageTerms"
+       aria-current="@AriaCurrent(TermsAudience.Candidate)">
+        <span class="pp-switch__icon" aria-hidden="true">🙋</span>
+        <span>@Culture["Terms.Switch.Candidates"]</span>
+    </a>
+</nav>
+
+@code {
+    [Parameter, EditorRequired] public TermsAudience Active { get; set; }
+
+    private string ActiveClass(TermsAudience audience)
+        => audience == Active ? "pp-switch__link--active" : "";
+
+    private string? AriaCurrent(TermsAudience audience)
+        => audience == Active ? "page" : null;
+}

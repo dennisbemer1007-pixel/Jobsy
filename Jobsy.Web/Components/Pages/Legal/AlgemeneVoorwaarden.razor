@@ -3,10 +3,11 @@
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
 @layout PublicLayout
-@using Jobsy.Web.Components.Legal.Docs
+@using Jobsy.Core.Legal
+@using Jobsy.Web.Components.Legal
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
 <PageTitle>@Culture["Legal.Terms"] · Lobsy</PageTitle>
 
-<AlgemeneVoorwaardenNl />
+<TermsPage Audience="TermsAudience.Employer" />

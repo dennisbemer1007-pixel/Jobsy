@@ -86,6 +86,44 @@
   gap: 0.5rem;
 }
 
+/* —— Audience switch: two real links, no JS (04.2) —— */
+.pub-theme .pp-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pub-theme .pp-switch__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--pub-line);
+  border-radius: var(--pub-radius-pill);
+  background: var(--pub-card);
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pub-theme .pp-switch__link:hover,
+.pub-theme .pp-switch__link:focus-visible {
+  background: var(--pub-sky-soft);
+}
+
+.pub-theme .pp-switch__link--active {
+  background: var(--pub-coral-soft);
+  border-color: color-mix(in srgb, var(--coral-deep) 35%, transparent);
+  color: var(--coral-deep);
+  font-weight: 700;
+}
+
+.pub-theme .pp-switch__icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 .pub-theme .pp-doc__grid {
   display: grid;
   gap: 1.25rem;
@@ -421,7 +459,8 @@ html.pp-js .pub-theme .pp-toc__print {
   .pub-theme .pp-toc,
   .pub-theme .pp-toc-mobile,
   .pub-theme .pp-doc__note,
-  .pub-theme .pp-doc__langs {
+  .pub-theme .pp-doc__langs,
+  .pub-theme .pp-switch {
     display: none;
   }
 
