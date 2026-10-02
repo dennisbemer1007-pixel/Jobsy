@@ -28,6 +28,7 @@ public class CandidateInsightsLockedJsonTests : IClassFixture<CandidateInsightsU
     [Fact]
     public async Task Locked_json_omits_premium_values_for_bm_rm_vm()
     {
+        await _factory.ResetUnlocksAsync();
         foreach (var userId in new[] { _factory.EnterpriseUserId, _factory.RegionalUserId, _factory.BranchUserId })
         {
             using var client = Authed(userId);
