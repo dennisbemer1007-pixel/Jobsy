@@ -1,0 +1,96 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components
+@using Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<LobsyFriendlyDialog IsOpen="@IsOpen"
+                     Title="@Culture["CareerDream.DialogTitle"]"
+                     TitleId="career-dream-dialog-title"
+                     Lead="@Culture["CareerDream.DialogLead"]"
+                     Class="career-dialog"
+                     CloseDisabled="@Busy"
+                     CloseOnBackdrop="@(!Busy)"
+                     OnClose="OnCancel">
+    <div class="career-dialog__lob" aria-hidden="true">
+        <JourneyLobster PlatesShed="6" Size="56" Label="" />
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="career-card__error" role="alert">@ErrorText</p>
+    }
+
+    <CareerDreamPicker Id="career-dialog-dream"
+                       Suggestions="@Suggestions"
+                       Disabled="@Busy"
+                       OnSearch="@OnSearch"
+                       OnChoice="@OnChoice" />
+
+    <section class="career-keep" aria-labelledby="career-keep-title">
+        <h3 id="career-keep-title" class="career-keep__title">@Culture["CareerDream.KeepTitle"]</h3>
+        <ul class="career-keep__list">
+            <li>@Culture.Format("CareerDream.KeepLine1", ProofSummary)</li>
+            <li>@Culture["CareerDream.KeepLine2"]</li>
+            <li>@Culture["CareerDream.KeepLine3"]</li>
+        </ul>
+    </section>
+
+    <div class="career-dialog__actions">
+        <button type="button" class="career-btn career-btn--secondary" disabled="@Busy" @onclick="OnCancel">
+            <span class="career-only-desktop">@Culture.Format("CareerDream.Stay", CurrentDream)</span>
+            <span class="career-only-mobile">@Culture["CareerDream.StayShort"]</span>
+        </button>
+        <button type="button"
+                class="career-btn career-btn--primary"
+                disabled="@(Busy || !HasChoice)"
+                aria-busy="@(Busy ? "true" : "false")"
+                @onclick="OnConfirm">
+            @Culture["CareerDream.Confirm"]
+        </button>
+    </div>
+</LobsyFriendlyDialog>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool HasChoice { get; set; }
+    [Parameter] public string CurrentDream { get; set; } = "";
+    [Parameter] public int ProofCourseCount { get; set; }
+    [Parameter] public bool ProofHasExperience { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public IReadOnlyList<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
+    [Parameter] public EventCallback<CareerDreamChoice?> OnChoice { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public Func<string, CancellationToken, Task<IReadOnlyList<CareerDreamOptionApiItem>>>? OnSearch { get; set; }
+
+    private string ProofSummary
+    {
+        get
+        {
+            var parts = new List<string>(2);
+            if (ProofCourseCount == 1)
+            {
+                parts.Add(Culture["CareerDream.KeepSummaryCoursesOne"]);
+            }
+            else if (ProofCourseCount > 1)
+            {
+                parts.Add(Culture.Format("CareerDream.KeepSummaryCourses", ProofCourseCount));
+            }
+
+            if (ProofHasExperience)
+            {
+                parts.Add(Culture["CareerDream.KeepSummaryExperience"]);
+            }
+
+            return parts.Count switch
+            {
+                0 => Culture["CareerDream.KeepSummaryFallback"],
+                1 => parts[0],
+                _ => Culture.Format("CareerDream.KeepSummaryJoin", parts[0], parts[1])
+            };
+        }
+    }
+}

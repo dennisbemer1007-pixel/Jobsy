@@ -33,7 +33,13 @@
     @foreach (var row in _rows)
     {
         <article class="detail-card">
-            <p>@Culture["Talent.Status"]: <strong>@row.Status</strong></p>
+            <p>
+                @Culture["Talent.Status"]: <strong>@row.Status</strong>
+                @if (DeclineReasonKey(row) is string reasonKey)
+                {
+                    <span class="profile-address__hint"> · @Culture[reasonKey]</span>
+                }
+            </p>
             <p>@Culture.Format("Talent.RespondBy", row.RespondByUtc.ToLocalTime().ToString("g"))</p>
             <p>@row.Message</p>
             @if (row.PiiRevealed)
@@ -82,6 +88,17 @@
 
         return false;
     }
+
+    /// <summary>D14: why the candidate said no. Rows declined before D14 read as "geen interesse".</summary>
+    private static string? DeclineReasonKey(TalentContactRequestModel row)
+        => string.Equals(row.Status, nameof(TalentContactStatus.CandidateDeclined), StringComparison.OrdinalIgnoreCase)
+            ? string.Equals(
+                row.CandidateDeclineReason,
+                TalentContactDeclineReasons.AlreadyPlaced,
+                StringComparison.OrdinalIgnoreCase)
+                ? "Talent.DeclineReason.AlreadyPlaced"
+                : "Talent.DeclineReason.NotInterested"
+            : null;
 
     private static bool CanWithdraw(TalentContactRequestModel row)
         => Enum.TryParse<TalentContactStatus>(row.Status, ignoreCase: true, out var status)

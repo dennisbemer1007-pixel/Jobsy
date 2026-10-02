@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Features;
@@ -73,6 +74,13 @@ public static class SitemapXml
         sb.AppendLine("</urlset>");
         return sb.ToString();
     }
+
+    public static string WeakETag(string content, bool employersEnabled)
+    {
+        var payload = Encoding.UTF8.GetBytes(content + "|" + (employersEnabled ? "on" : "zw"));
+        var hash = Convert.ToHexString(SHA256.HashData(payload)).ToLowerInvariant();
+        return $"W/\"{hash[..16]}\"";
+    }
 }
 
 public sealed record SiteCrawlIndex(
@@ -91,7 +99,6 @@ public static class SeoEndpoints
             var origin = PageSeoResolver.Origin(
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
-            http.Response.Headers.CacheControl = "public,max-age=86400";
             var snap = await flags.GetAsync(http.RequestAborted);
             var robots = SitemapXml.RobotsTxt(origin);
             if (!snap.EmployersEnabled)
@@ -102,6 +109,9 @@ public static class SeoEndpoints
                     StringComparison.Ordinal);
             }
 
+            // Short cache + variant-aware ETag so a flag flip reaches crawlers quickly (§S).
+            http.Response.Headers.CacheControl = "public, max-age=300";
+            http.Response.Headers.ETag = SitemapXml.WeakETag(robots, snap.EmployersEnabled);
             return Results.Text(robots, "text/plain; charset=utf-8");
         }).AllowAnonymous();
 
@@ -116,9 +126,10 @@ public static class SeoEndpoints
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
             var snap = await flags.GetAsync(cancellationToken);
+            var enabled = snap.EmployersEnabled;
             var paths = new List<string>(PageSeoCatalog.StaticIndexablePathsFor(snap));
 
-            if (snap.EmployersEnabled)
+            if (enabled)
             {
                 try
                 {
@@ -151,8 +162,10 @@ public static class SeoEndpoints
                 }
             }
 
-            http.Response.Headers.CacheControl = "public,max-age=3600";
-            return Results.Text(SitemapXml.Build(origin, paths), "application/xml; charset=utf-8");
+            var body = SitemapXml.Build(origin, paths);
+            http.Response.Headers.CacheControl = "public, max-age=300";
+            http.Response.Headers.ETag = SitemapXml.WeakETag(body, enabled);
+            return Results.Text(body, "application/xml; charset=utf-8");
         }).AllowAnonymous();
     }
 }

@@ -27,17 +27,24 @@
             <div class="pub-landing__micro">
                 <span>@LandingText.For("Landing.Hero.MetaTime", Variant)</span>
                 <span>@LandingText.For("Landing.Hero.MetaPrivacy", Variant)</span>
-                @if (VacancyCount is int n)
+                @if (Variant == LandingVariant.On)
                 {
-                    <a href="@PublicRoutes.Banenkaart"
-                       data-kpi="LandingCtaMap"
-                       data-kpi-target="count">@string.Format(CultureInfo, LandingText.For("Landing.Hero.MetaMapCount", Variant), n.ToString("N0", CultureInfo))</a>
+                    @if (VacancyCount is int n)
+                    {
+                        <a href="@PublicRoutes.Banenkaart"
+                           data-kpi="LandingCtaMap"
+                           data-kpi-target="count">@string.Format(CultureInfo, LandingText.For("Landing.Hero.MetaMapCount", Variant), n.ToString("N0", CultureInfo))</a>
+                    }
+                    else
+                    {
+                        <a href="@PublicRoutes.Banenkaart"
+                           data-kpi="LandingCtaMap"
+                           data-kpi-target="fallback">@LandingText.For("Landing.Hero.MetaMap", Variant)</a>
+                    }
                 }
                 else
                 {
-                    <a href="@PublicRoutes.Banenkaart"
-                       data-kpi="LandingCtaMap"
-                       data-kpi-target="fallback">@LandingText.For("Landing.Hero.MetaMap", Variant)</a>
+                    <span>@LandingText.For("Landing.Hero.MetaPassport", Variant)</span>
                 }
             </div>
             <div class="pub-landing__for">
@@ -58,7 +65,14 @@
                 </div>
             </div>
         </div>
-        <LandingHeroMapDisc Variant="Variant" />
+        @if (Variant == LandingVariant.On)
+        {
+            <LandingHeroMapDisc Variant="Variant" />
+        }
+        else
+        {
+            <LandingHeroPassport Variant="Variant" />
+        }
     </div>
 </section>
 

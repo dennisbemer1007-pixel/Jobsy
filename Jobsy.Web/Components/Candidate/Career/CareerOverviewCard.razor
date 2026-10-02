@@ -1,0 +1,172 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="career-card career-card--overview" aria-labelledby="career-title">
+    <div class="career-card__top">
+        <p class="career-card__eyebrow">@EyebrowText</p>
+        @if (!Plan.GoalReached)
+        {
+            <button type="button"
+                    class="career-card__edit career-only-desktop"
+                    disabled="@Busy"
+                    @onclick="OnChangeDream">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+                <span>@Culture["Career.EditDream"]</span>
+            </button>
+        }
+    </div>
+
+    <h1 id="career-title" tabindex="-1">
+        <span class="career-only-desktop">@TitleText</span>
+        <span class="career-only-mobile">@TitleTextShort</span>
+    </h1>
+    <p class="career-card__lead">@Culture["Career.Overview.Lead"]</p>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="career-card__error" role="alert">@ErrorText</p>
+    }
+
+    @if (Busy)
+    {
+        <p class="career-card__busy" aria-live="polite">@Culture["Career.Generating"]</p>
+    }
+
+    @if (ShowCarriedOver && Plan.CarriedOverCount > 0)
+    {
+        <p class="career-note career-note--soft">
+            <span>@Culture.Format("Career.CarriedOver", Plan.CarriedOverCount)</span>
+            <button type="button" class="career-btn career-btn--text" @onclick="OnDismissCarriedOver">
+                @Culture["Career.Dismiss"]
+            </button>
+        </p>
+    }
+
+    <GrowingShellsStepper Stones="@Plan.Stones" Mobile="false" />
+
+    @if (Plan.GoalReached)
+    {
+        <h2 class="career-card__block-title">@Culture.Format("Career.Goal.Title", Plan.DreamTitle)</h2>
+        <div class="career-card__actions">
+            @if (EmployersOn)
+            {
+                <a class="career-btn career-btn--primary" href="/">@Culture["Career.Goal.Vacancies"]</a>
+            }
+            else
+            {
+                <a class="career-btn career-btn--primary" href="@PassportHref">@Culture["Career.Goal.Passport"]</a>
+            }
+            <button type="button" class="career-btn career-btn--text" disabled="@Busy" @onclick="OnChangeDream">
+                @Culture["Career.Goal.NewDream"]
+            </button>
+        </div>
+    }
+    else if (Plan.CurrentStep is { } step)
+    {
+        <section class="career-now" aria-labelledby="career-now-title">
+            <p class="career-now__eyebrow">@Culture["Career.Overview.NowEyebrow"]</p>
+            <h2 id="career-now-title" class="career-card__block-title">@step.Title</h2>
+            @if (Facts.Count > 0)
+            {
+                <ul class="career-facts">
+                    @foreach (var fact in Facts)
+                    {
+                        <li>@fact</li>
+                    }
+                </ul>
+            }
+            <div class="career-card__actions">
+                <a class="career-btn career-btn--primary" href="@StepHref(step)">@Culture["Career.Overview.ViewStep"]</a>
+            </div>
+        </section>
+    }
+
+    @if (Plan.AlreadyHave.Count > 0)
+    {
+        <section class="career-have" aria-labelledby="career-have-title">
+            <h2 id="career-have-title" class="career-card__block-title">@Culture["Career.Have.Title"]</h2>
+            <ul class="career-have__list">
+                @foreach (var item in Plan.AlreadyHave)
+                {
+                    <li>
+                        <span>@item</span>
+                        <span class="career-tag">@(PassportOn ? Culture["Career.Have.TagPassport"] : Culture["Career.Have.TagProfile"])</span>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    <p class="career-card__source">@(Plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])</p>
+
+    @if (Plan.LanguageDiffers)
+    {
+        <p class="career-card__language">
+            <span>@Culture.Format("Career.Language.Line", Culture[$"Career.Lang.{Plan.PlanLanguage}"], Culture[$"Career.Lang.{Culture.Language}"])</span>
+            <button type="button" class="career-btn career-btn--text" disabled="@Busy" @onclick="OnRegenerateLanguage">
+                @Culture["Career.Language.Action"]
+            </button>
+        </p>
+    }
+</section>
+
+@code {
+    [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool EmployersOn { get; set; } = true;
+    [Parameter] public bool PassportOn { get; set; }
+    [Parameter] public bool ShowCarriedOver { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public int FreeCourseCount { get; set; }
+    [Parameter] public EventCallback OnChangeDream { get; set; }
+    [Parameter] public EventCallback OnDismissCarriedOver { get; set; }
+    [Parameter] public EventCallback OnRegenerateLanguage { get; set; }
+
+    private string PassportHref => PassportOn ? "/candidate/paspoort" : "/candidate/profile";
+
+    private string EyebrowText => Plan.GoalReached || Plan.CurrentStepNumber == 0
+        ? Culture["Career.Eyebrow"]
+        : Culture.Format("Career.EyebrowStep", Plan.CurrentStepNumber, Plan.TotalSteps);
+
+    private string TitleText => Culture.Format("Career.Overview.Title", Plan.DreamTitle);
+
+    private string TitleTextShort => Culture.Format("Career.Overview.TitleShort", Plan.DreamTitle);
+
+    private List<string> Facts
+    {
+        get
+        {
+            var facts = new List<string>(3);
+            var step = Plan.CurrentStep;
+            if (step is null)
+            {
+                return facts;
+            }
+
+            if (step.GapCount > 0)
+            {
+                facts.Add(Culture.Format("Career.Fact.Claws", step.GapCount));
+            }
+
+            if (FreeCourseCount > 0 && step.CourseCount > 0)
+            {
+                facts.Add(Culture.Format("Career.Fact.Courses", step.CourseCount, FreeCourseCount));
+            }
+
+            if (!string.IsNullOrWhiteSpace(step.BandLabelKey))
+            {
+                facts.Add(Culture.Format("Career.Fact.Band", Culture[step.BandLabelKey].ToLowerInvariant()));
+            }
+
+            return facts.Take(3).ToList();
+        }
+    }
+
+    /// <summary>The step detail stays on <c>/carriere</c> as a query (03 §1), so back works.</summary>
+    private static string StepHref(CareerPlanStepView step)
+        => $"/carriere?stap={step.Order}";
+}

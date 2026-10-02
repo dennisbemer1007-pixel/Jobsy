@@ -5,6 +5,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Core.Features
+@using System.Net.Http
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -1612,6 +1613,10 @@
             {
                 _ = RefreshCultureFitLaterAsync();
             }
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            MarkVacancyNotFound();
         }
         finally
         {

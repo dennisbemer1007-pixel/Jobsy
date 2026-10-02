@@ -1,0 +1,84 @@
+@namespace Jobsy.Web.Components.Candidate.Contacts
+@using Jobsy.Web.Components
+@using Jobsy.Web.Components.Candidate.Discovery
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<LobsyFriendlyDialog IsOpen="@IsOpen"
+                     Title="@Culture.Format("TalentC.Dialog.Title", Company)"
+                     TitleId="talent-share-dialog-title"
+                     Lead="@Culture.Format("TalentC.Dialog.Sub", Company)"
+                     Class="talent-dialog"
+                     CloseDisabled="@Busy"
+                     CloseOnBackdrop="@(!Busy)"
+                     OnClose="OnCancel">
+    <div class="career-dialog__lob" aria-hidden="true">
+        <JourneyLobster PlatesShed="4" Size="56" Label="" />
+    </div>
+
+    @if (Loading)
+    {
+        <p class="career-card__busy" aria-live="polite">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="career-card__error" role="alert">@ErrorText</p>
+    }
+    else if (Preview is not null)
+    {
+        <dl class="talent-dialog__list">
+            <dt>@Culture["TalentC.Dialog.Name"]</dt>
+            <dd>@Value(Preview.Name)</dd>
+            <dt>@Culture["TalentC.Dialog.Email"]</dt>
+            <dd>@Value(Preview.Email)</dd>
+            <dt>@Culture["TalentC.Dialog.Phone"]</dt>
+            <dd>@Value(Preview.Phone)</dd>
+        </dl>
+    }
+
+    <p class="talent-dialog__hint">
+        <span class="talent-how__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6Z" />
+            </svg>
+        </span>
+        <span>@Culture["TalentC.Dialog.Hint"]</span>
+    </p>
+
+    <div class="career-dialog__actions">
+        <button type="button" class="career-btn career-btn--secondary" disabled="@Busy" @onclick="OnCancel">
+            @Culture["TalentC.Dialog.Cancel"]
+        </button>
+        @if (CanShare)
+        {
+            <button type="button"
+                    class="career-btn career-btn--primary talent-dialog__share"
+                    disabled="@Busy"
+                    aria-busy="@(Busy ? "true" : "false")"
+                    @onclick="OnShare">
+                @Culture["TalentC.Action.Yes"]
+            </button>
+        }
+    </div>
+</LobsyFriendlyDialog>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public TalentContactSharePreviewModel? Preview { get; set; }
+    [Parameter] public string? CompanyName { get; set; }
+    [Parameter] public EventCallback OnShare { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string Company =>
+        string.IsNullOrWhiteSpace(CompanyName) ? Culture["TalentC.Company.Unknown"] : CompanyName!;
+
+    /// <summary>No primary button while loading or when the preview failed (§4).</summary>
+    private bool CanShare => !Loading && string.IsNullOrWhiteSpace(ErrorText) && Preview is not null;
+
+    private string Value(string? value)
+        => string.IsNullOrWhiteSpace(value) ? Culture["TalentC.Dialog.Missing"] : value!;
+}

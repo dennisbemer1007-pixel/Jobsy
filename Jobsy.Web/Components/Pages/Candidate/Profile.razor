@@ -119,11 +119,14 @@
             <ConsentSection />
         }
 
-        <section class="profile-contacts-mini" aria-labelledby="talent-contacts-title">
-            <h2 id="talent-contacts-title" class="profile-page__title">@Culture["Talent.CandidateTitle"]</h2>
-            <p class="login-lead">@Culture["Talent.CandidateLead"]</p>
-            <a class="engagement-btn" href="/candidate/talent-contacts">@Culture["Talent.CandidateOpen"]</a>
-        </section>
+        @* D18: with Werkgevers off there are no contact requests, so the link is hidden too. *@
+        <FeatureVisible Feature="PlatformFeature.Employers">
+            <section class="profile-contacts-mini" aria-labelledby="talent-contacts-title">
+                <h2 id="talent-contacts-title" class="profile-page__title">@Culture["Talent.CandidateTitle"]</h2>
+                <p class="login-lead">@Culture["Talent.CandidateLead"]</p>
+                <a class="engagement-btn" href="/candidate/talent-contacts">@Culture["Talent.CandidateOpen"]</a>
+            </section>
+        </FeatureVisible>
 
         @if (!_loading)
         {

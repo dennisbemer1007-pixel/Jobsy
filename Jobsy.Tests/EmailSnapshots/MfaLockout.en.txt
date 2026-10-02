@@ -1,0 +1,31 @@
+KEY: MfaLockout
+SUBJECT: Someone tried to sign in to your Lobsy account
+PREHEADER: A wrong code was entered too often.
+KIND: Essential
+--- TEXT ---
+Someone knew your password, but not your code
+=============================================
+
+Someone entered your password correctly, but the code from your app wrongly
+10 times.
+
+Was this not you? Please contact support@lobsy.nl. You will soon also be
+able to change your password yourself.
+
+Choose a new password: https://lobsy.nl/wachtwoord-vergeten
+
+Team Lobsy
+
+You get this email to protect your account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Someone knew your password, but not your code
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Choose a new password -> https://lobsy.nl/wachtwoord-vergeten
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
