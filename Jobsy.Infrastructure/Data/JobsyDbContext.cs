@@ -1033,6 +1033,8 @@ public class JobsyDbContext : DbContext
             entity.ToTable("TalentContactRequests");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Message).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.CandidateDeclineReason)
+                .HasMaxLength(Jobsy.Core.Rules.TalentContactDeclineReasons.MaxLength);
             entity.HasIndex(e => new { e.CompanyId, e.CandidateUserId, e.Status });
             entity.HasIndex(e => e.RespondByUtc);
             entity.HasOne(e => e.Company)

@@ -832,6 +832,119 @@
 
 .career-done__undo-icon { display: inline-flex; }
 
+/* ---------------- contactverzoeken (04, cr-d6 / cr-d7 / cr-m6) ---------------- */
+
+.talent-how__sub { margin: 0 0 var(--space-3); color: var(--muted); font-size: 0.88rem; }
+
+.talent-how__list { margin: 0; padding: 0; list-style: none; }
+
+.talent-how__list li {
+  display: flex;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.talent-how__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-block-start: 2px;
+  color: var(--brand);
+}
+
+.talent-how--mobile { margin-block-start: var(--space-4); }
+
+.talent-list { margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+
+.talent-req {
+  margin-block-end: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.talent-req--open { border-color: var(--brand); }
+
+.talent-req__top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+}
+
+.talent-req__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.talent-req__company {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.talent-req__pill-icon { display: inline-flex; margin-inline-end: 6px; }
+
+.talent-pill--wait { border-color: var(--brand); color: var(--brand); }
+.talent-pill--yes { border-color: var(--success); color: var(--success); }
+.talent-pill--quiet { border-color: var(--border); color: var(--muted); }
+
+.talent-req__quote {
+  margin: 0 0 var(--space-3);
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--border);
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.talent-req__when { margin: 0; color: var(--muted); font-size: 0.88rem; }
+
+.talent-req__said { margin-block-start: var(--space-2); }
+
+.talent-req__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}
+
+.talent-empty { text-align: center; }
+
+.talent-empty__lob { display: flex; justify-content: center; margin-block-end: var(--space-3); }
+
+.talent-empty__text { margin: 0; color: var(--text); }
+
+.talent-dialog__list {
+  margin: 0 0 var(--space-3);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px var(--space-3);
+  font-size: 0.92rem;
+}
+
+.talent-dialog__list dt { color: var(--muted); }
+.talent-dialog__list dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+.talent-dialog__hint {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
 /* ---------------- responsive ---------------- */
 
 @media (max-width: 1023px) {
@@ -839,11 +952,20 @@
   .career-stage__rail,
   .career-stage__climb { display: none; }
   .career-scene--desktop { display: none; }
+
+  /* The rail card is gone below 1024, so the same copy returns as a disclosure. */
+  .talent-how--mobile { display: block; }
 }
 
 @media (max-width: 899px) {
   .career-only-mobile { display: block; }
   .career-only-desktop { display: none !important; }
+
+  /* cr-m6: no sticky footer; the actions live in each request, stacked and full width. */
+  .talent-page .career-stage { padding-block-end: var(--space-6); }
+  .talent-req__actions { flex-direction: column; }
+  .talent-req__actions .career-btn { width: 100%; }
+  .career-dialog__actions .career-btn { width: 100%; }
   .career-stage { padding: var(--space-3) var(--space-3) 140px; }
   .career-card { padding: var(--space-4); }
   .career-mobile-bar {

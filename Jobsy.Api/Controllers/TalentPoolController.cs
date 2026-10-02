@@ -185,6 +185,7 @@ public sealed record TalentUnlockRequest(Guid CandidateUserId, string? Message);
 [ApiController]
 [Route("api/me/talent-contacts")]
 [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class CandidateTalentContactsController : ControllerBase
 {
     private readonly ITalentPoolService _talent;
@@ -203,10 +204,30 @@ public sealed class CandidateTalentContactsController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound();
+            return NotFound(new { code = NotFoundCode });
         }
 
         return Ok(await _talent.ListForCandidateAsync(user.Id, cancellationToken));
+    }
+
+    /// <summary>
+    /// Exactly what the employer receives when the candidate says yes (04 §1). Own request only.
+    /// </summary>
+    [HttpGet("{requestId:guid}/share-preview")]
+    public async Task<ActionResult<TalentContactSharePreviewDto>> SharePreview(
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { code = NotFoundCode });
+        }
+
+        var preview = await _talent.GetSharePreviewAsync(user.Id, requestId, cancellationToken);
+        return preview is null
+            ? NotFound(new { code = NotFoundCode })
+            : Ok(preview);
     }
 
     [HttpPost("{requestId:guid}/respond")]
@@ -219,7 +240,14 @@ public sealed class CandidateTalentContactsController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound();
+            return NotFound(new { code = NotFoundCode });
+        }
+
+        // Accepting shares name, e-mail and phone; old clients and scripts must send the
+        // explicit confirmation from the share dialog (04 §1).
+        if (body.Accept && !body.AlreadyPlaced && !body.ConfirmedShare)
+        {
+            return BadRequest(new { code = ConfirmShareRequiredCode });
         }
 
         try
@@ -227,15 +255,22 @@ public sealed class CandidateTalentContactsController : ControllerBase
             return Ok(await _talent.CandidateRespondAsync(
                 user.Id, requestId, body.Accept, body.AlreadyPlaced, cancellationToken));
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            return BadRequest(new { message = ex.Message });
+            return Conflict(new { code = CannotRespondCode });
         }
         catch (KeyNotFoundException)
         {
-            return NotFound();
+            return NotFound(new { code = NotFoundCode });
         }
     }
+
+    private const string NotFoundCode = "not_found";
+    private const string CannotRespondCode = "cannot_respond";
+    private const string ConfirmShareRequiredCode = "confirm_share_required";
 }
 
-public sealed record TalentRespondRequest(bool Accept, bool AlreadyPlaced = false);
+public sealed record TalentRespondRequest(
+    bool Accept,
+    bool AlreadyPlaced = false,
+    bool ConfirmedShare = false);

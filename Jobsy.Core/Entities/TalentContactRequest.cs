@@ -37,4 +37,10 @@ public class TalentContactRequest
     public DateTime? RespondedAtUtc { get; set; }
     public DateTime? WithdrawnAtUtc { get; set; }
     public DateTime? ContactSharedAtUtc { get; set; }
+
+    /// <summary>
+    /// Why the candidate said no: <c>NotInterested</c> or <c>AlreadyPlaced</c>. Null for rows
+    /// declined before this field existed; the UI reads null as "geen interesse".
+    /// </summary>
+    public string? CandidateDeclineReason { get; set; }
 }

@@ -44,7 +44,7 @@ public class CareerDesignGuardTests
     [Fact]
     public void Career_code_never_uses_a_native_confirm()
     {
-        foreach (var file in CareerFiles().Concat([PagePath()]))
+        foreach (var file in CareerFiles().Concat([PagePath(), ContactsPagePath()]))
         {
             var text = File.ReadAllText(file);
             Assert.DoesNotContain("window.confirm", text, StringComparison.OrdinalIgnoreCase);
@@ -55,11 +55,22 @@ public class CareerDesignGuardTests
     [Fact]
     public void Career_surfaces_never_render_exception_messages()
     {
-        foreach (var file in CareerFiles().Concat([PagePath()]))
+        foreach (var file in CareerFiles().Concat([PagePath(), ContactsPagePath()]))
         {
             var text = File.ReadAllText(file);
             Assert.DoesNotContain("ex.Message", text, StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public void Contacts_page_uses_the_journey_shell_without_the_hidden_profile_header()
+    {
+        var text = File.ReadAllText(ContactsPagePath());
+        Assert.Contains("journey-page career-page", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("profile-page__header", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("panel-page", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Competency.BackToProfile", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("ToLocalTime", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -88,12 +99,17 @@ public class CareerDesignGuardTests
     private static string PagePath()
         => Path.Combine(Repo(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor");
 
+    /// <summary>04: the contact-request page joins the same guards.</summary>
+    private static string ContactsPagePath()
+        => Path.Combine(Repo(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateTalentContacts.razor");
+
     private static IEnumerable<string> CareerFiles()
     {
         var root = Path.Combine(Repo(), "Jobsy.Web");
         var dirs = new[]
         {
             Path.Combine(root, "Components", "Candidate", "Career"),
+            Path.Combine(root, "Components", "Candidate", "Contacts"),
             Path.Combine(root, "Components", "Candidate", "Journey")
         };
 
