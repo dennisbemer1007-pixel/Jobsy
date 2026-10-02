@@ -322,6 +322,7 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 | `/mail/afmelden` | POST; RFC 8058 one-click / form unsubscribe (no antiforgery; rate-limited) |
 | `/account/mail-instellingen` | POST; antiforgery; save optional mail toggles (Web → API) |
 | `/melden` | POST; antiforgery; forwards a content report to `api/reports` (rate-limited; no IP stored) |
+| `/partner/flyer.pdf` | GET; anonymous; proxies the partner flyer pdf (`?code=` optional); 302 → `/` with werkgevers-actief OFF; rate-limited |
 | `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |
 | `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |
 

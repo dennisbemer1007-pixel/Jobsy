@@ -383,6 +383,8 @@ public static class UiStringsPublicInfo
 
         MergeHowLobsy(Add);
         MergeAbout(Add);
+        MergePartnerPage(Add);
+        MergeCompanyPage(Add);
     }
 
     private delegate void AddKey(string key, string nl, string en, string pl, string ro, string ar);
@@ -876,5 +878,288 @@ public static class UiStringsPublicInfo
             "Pytanie dotyczy prywatności lub danych? Przeczytaj najpierw politykę prywatności.",
             "Întrebarea ta e despre confidențialitate sau datele tale? Citește mai întâi declarația de confidențialitate.",
             "هل سؤالك عن خصوصيتك أو بياناتك؟ اقرأ بيان الخصوصية أولاً.");
+    }
+
+    /// <summary>Static <c>/partner</c> (public-pages 09): B1 copy, prices excl. btw (D5), no jargon.</summary>
+    private static void MergePartnerPage(AddKey Add)
+    {
+        Add("PartnerPage.Seo.Title",
+            "Personeel vinden dichtbij",
+            "Find staff nearby",
+            "Znajdź pracowników blisko",
+            "Găsește personal aproape",
+            "اعثر على موظفين قريبين");
+        Add("PartnerPage.Seo.Description",
+            "Laat je vacature zien aan mensen in de buurt. Je betaalt alleen als je een vacature plaatst.",
+            "Show your vacancy to people nearby. You only pay when you publish a vacancy.",
+            "Pokaż swoją ofertę ludziom z okolicy. Płacisz tylko, gdy publikujesz ofertę.",
+            "Arată jobul tău oamenilor din apropiere. Plătești doar când publici un job.",
+            "اعرض وظيفتك على أشخاص قريبين. تدفع فقط عند نشر وظيفة.");
+        Add("PartnerPage.Eyebrow",
+            "Voor werkgevers",
+            "For employers",
+            "Dla pracodawców",
+            "Pentru angajatori",
+            "لأصحاب العمل");
+        Add("PartnerPage.Title",
+            "Vind personeel dichtbij.",
+            "Find staff nearby.",
+            "Znajdź pracowników blisko.",
+            "Găsește personal aproape.",
+            "اعثر على موظفين قريبين.");
+        Add("PartnerPage.Lead",
+            "Lobsy laat je vacature zien aan mensen in de buurt, op fiets-, OV- of autotijd. Je betaalt alleen als je een vacature plaatst.",
+            "Lobsy shows your vacancy to people nearby, by bike, public transport or car time. You only pay when you publish a vacancy.",
+            "Lobsy pokazuje Twoją ofertę ludziom z okolicy, według czasu na rowerze, komunikacją lub samochodem. Płacisz tylko, gdy publikujesz ofertę.",
+            "Lobsy arată jobul tău oamenilor din apropiere, după timpul cu bicicleta, transportul public sau mașina. Plătești doar când publici un job.",
+            "يعرض Lobsy وظيفتك على أشخاص قريبين، بحسب زمن الدراجة أو المواصلات أو السيارة. تدفع فقط عند نشر وظيفة.");
+        Add("PartnerPage.RegisterCta",
+            "Bedrijf registreren",
+            "Register your company",
+            "Zarejestruj firmę",
+            "Înregistrează firma",
+            "سجّل شركتك");
+        Add("PartnerPage.RatesCta",
+            "Bekijk de tarieven",
+            "See the rates",
+            "Zobacz cennik",
+            "Vezi tarifele",
+            "اطّلع على الأسعار");
+        Add("PartnerPage.MascotAlt",
+            "De Lobsy-kreeft zwaait naar je",
+            "The Lobsy lobster waves at you",
+            "Homar Lobsy macha do Ciebie",
+            "Homarul Lobsy îți face semn",
+            "سرطان Lobsy يلوّح لك");
+
+        Add("PartnerPage.Usps.Label",
+            "Waarom Lobsy",
+            "Why Lobsy",
+            "Dlaczego Lobsy",
+            "De ce Lobsy",
+            "لماذا Lobsy");
+        Add("PartnerPage.Usp.Nearby.Title",
+            "Kandidaten dichtbij",
+            "Candidates nearby",
+            "Kandydaci w okolicy",
+            "Candidați din apropiere",
+            "مرشّحون قريبون");
+        Add("PartnerPage.Usp.Nearby.Body",
+            "We laten je vacature zien aan mensen die er snel kunnen zijn.",
+            "We show your vacancy to people who can get there quickly.",
+            "Pokazujemy Twoją ofertę osobom, które mogą tam szybko dotrzeć.",
+            "Arătăm jobul tău celor care pot ajunge repede acolo.",
+            "نعرض وظيفتك على مَن يمكنه الوصول بسرعة.");
+        Add("PartnerPage.Usp.PerVacancy.Title",
+            "Betaal per vacature",
+            "Pay per vacancy",
+            "Płać za ofertę",
+            "Plătești per job",
+            "ادفع لكل وظيفة");
+        Add("PartnerPage.Usp.PerVacancy.Body",
+            "Geen abonnement. Je koopt tokens en gebruikt ze als je wilt.",
+            "No subscription. You buy tokens and use them when you want.",
+            "Bez abonamentu. Kupujesz tokeny i używasz ich, kiedy chcesz.",
+            "Fără abonament. Cumperi tokenuri și le folosești când vrei.",
+            "دون اشتراك. تشتري رموزاً وتستخدمها وقتما تريد.");
+        Add("PartnerPage.Usp.FreeHighlight.Title",
+            "Gratis start-highlight",
+            "Free starting highlight",
+            "Darmowe wyróżnienie na start",
+            "Evidențiere gratuită la start",
+            "تمييز مجاني في البداية");
+        Add("PartnerPage.Usp.FreeHighlight.Body",
+            "Met een salescode is je eerste highlight gratis (ter waarde van {0} tokens).",
+            "With a sales code your first highlight is free (worth {0} tokens).",
+            "Z kodem sprzedażowym pierwsze wyróżnienie jest darmowe (warte {0} tokenów).",
+            "Cu un cod de vânzări, prima evidențiere este gratuită (în valoare de {0} tokenuri).",
+            "مع رمز المبيعات يكون التمييز الأول مجانياً (بقيمة {0} رمزاً).");
+
+        Add("PartnerPage.Rates.Title",
+            "Tarieven",
+            "Rates",
+            "Cennik",
+            "Tarife",
+            "الأسعار");
+        Add("PartnerPage.Rates.TokenValue",
+            "1 token = {0} excl. btw",
+            "1 token = {0} excl. VAT",
+            "1 token = {0} bez VAT",
+            "1 token = {0} fără TVA",
+            "رمز واحد = {0} بدون ضريبة");
+        Add("PartnerPage.Rates.InclVat",
+            "{0} incl. btw",
+            "{0} incl. VAT",
+            "{0} z VAT",
+            "{0} cu TVA",
+            "{0} مع الضريبة");
+        Add("PartnerPage.Rates.Kind",
+            "Soort",
+            "Kind",
+            "Rodzaj",
+            "Tip",
+            "النوع");
+        Add("PartnerPage.Rates.Tokens",
+            "Tokens",
+            "Tokens",
+            "Tokeny",
+            "Tokenuri",
+            "الرموز");
+        Add("PartnerPage.Rates.Price",
+            "Prijs",
+            "Price",
+            "Cena",
+            "Preț",
+            "السعر");
+        Add("PartnerPage.Rates.Free",
+            "Gratis",
+            "Free",
+            "Bezpłatnie",
+            "Gratuit",
+            "مجاني");
+        Add("PartnerPage.Rates.NoTokens",
+            "—",
+            "—",
+            "—",
+            "—",
+            "—");
+        Add("PartnerPage.Rates.Highlight",
+            "Highlight ({0} dagen)",
+            "Highlight ({0} days)",
+            "Wyróżnienie ({0} dni)",
+            "Evidențiere ({0} zile)",
+            "تمييز ({0} أيام)");
+        Add("PartnerPage.Rates.ExclVatNote",
+            "Alle prijzen zijn exclusief btw.",
+            "All prices are excluding VAT.",
+            "Wszystkie ceny są bez VAT.",
+            "Toate prețurile sunt fără TVA.",
+            "جميع الأسعار بدون ضريبة القيمة المضافة.");
+        Add("PartnerPage.Rates.PackagesNote",
+            "Pakketten met korting vind je na het aanmelden.",
+            "You find discounted packages after you register.",
+            "Pakiety ze zniżką znajdziesz po rejestracji.",
+            "Pachetele cu discount le găsești după înregistrare.",
+            "تجد الحزم المخفّضة بعد التسجيل.");
+        Add("PartnerPage.RatesUnavailable",
+            "De tarieven laden nu niet. Probeer het later nog eens.",
+            "The rates are not loading right now. Please try again later.",
+            "Cennik nie ładuje się teraz. Spróbuj później.",
+            "Tarifele nu se încarcă acum. Încearcă mai târziu.",
+            "الأسعار لا تُحمَّل الآن. حاول لاحقاً.");
+
+        Add("PartnerPage.Share.Title",
+            "Deel met een collega",
+            "Share with a colleague",
+            "Podziel się z kolegą",
+            "Trimite unui coleg",
+            "شارِكها مع زميل");
+        Add("PartnerPage.Share.Body",
+            "Stuur deze pagina door. Je salescode gaat automatisch mee.",
+            "Forward this page. Your sales code comes along automatically.",
+            "Przekaż tę stronę. Twój kod sprzedażowy idzie automatycznie.",
+            "Trimite mai departe această pagină. Codul tău de vânzări merge automat.",
+            "أعد إرسال هذه الصفحة. ينتقل رمز المبيعات تلقائياً.");
+        Add("PartnerPage.Share.WhatsApp",
+            "WhatsApp",
+            "WhatsApp",
+            "WhatsApp",
+            "WhatsApp",
+            "واتساب");
+        Add("PartnerPage.Share.Mail",
+            "Mail",
+            "E-mail",
+            "E-mail",
+            "E-mail",
+            "بريد");
+        Add("PartnerPage.Share.Flyer",
+            "Flyer (pdf)",
+            "Flyer (pdf)",
+            "Ulotka (pdf)",
+            "Flyer (pdf)",
+            "منشور (pdf)");
+        Add("PartnerPage.Share.Subject",
+            "Lobsy: personeel vinden dichtbij",
+            "Lobsy: find staff nearby",
+            "Lobsy: znajdź pracowników blisko",
+            "Lobsy: găsește personal aproape",
+            "Lobsy: اعثر على موظفين قريبين");
+        Add("PartnerPage.Share.Body.Mail",
+            "Hoi,\n\nMet Lobsy laat je je vacature zien aan mensen in de buurt. Je betaalt alleen als je een vacature plaatst.\n\n{0}\n",
+            "Hi,\n\nWith Lobsy you show your vacancy to people nearby. You only pay when you publish a vacancy.\n\n{0}\n",
+            "Cześć,\n\nZ Lobsy pokazujesz swoją ofertę ludziom z okolicy. Płacisz tylko, gdy publikujesz ofertę.\n\n{0}\n",
+            "Salut,\n\nCu Lobsy arăți jobul tău oamenilor din apropiere. Plătești doar când publici un job.\n\n{0}\n",
+            "مرحباً،\n\nمع Lobsy تعرض وظيفتك على أشخاص قريبين. تدفع فقط عند نشر وظيفة.\n\n{0}\n");
+        Add("PartnerPage.Share.Text",
+            "Met Lobsy laat je je vacature zien aan mensen in de buurt: {0}",
+            "With Lobsy you show your vacancy to people nearby: {0}",
+            "Z Lobsy pokazujesz swoją ofertę ludziom z okolicy: {0}",
+            "Cu Lobsy arăți jobul tău oamenilor din apropiere: {0}",
+            "مع Lobsy تعرض وظيفتك على أشخاص قريبين: {0}");
+        Add("PartnerPage.SalesCode",
+            "Salescode",
+            "Sales code",
+            "Kod sprzedażowy",
+            "Cod de vânzări",
+            "رمز المبيعات");
+    }
+
+    /// <summary><c>/{kvk}</c> in the public layout (public-pages 09, D4).</summary>
+    private static void MergeCompanyPage(AddKey Add)
+    {
+        Add("CompanyPage.Breadcrumb.Map",
+            "Banenkaart",
+            "Job map",
+            "Mapa ofert",
+            "Harta joburilor",
+            "خريطة الوظائف");
+        Add("CompanyPage.Breadcrumb.Label",
+            "Waar je bent",
+            "Where you are",
+            "Gdzie jesteś",
+            "Unde te afli",
+            "موضعك");
+        Add("CompanyPage.KvkVerified",
+            "KvK gecontroleerd",
+            "Chamber of Commerce checked",
+            "Sprawdzone w rejestrze",
+            "Verificat la registrul comerțului",
+            "تم التحقق من السجل التجاري");
+        Add("CompanyPage.VacancyCount.One",
+            "1 vacature",
+            "1 vacancy",
+            "1 oferta",
+            "1 job",
+            "وظيفة واحدة");
+        Add("CompanyPage.VacancyCount.Many",
+            "{0} vacatures",
+            "{0} vacancies",
+            "{0} ofert",
+            "{0} joburi",
+            "{0} وظائف");
+        Add("CompanyPage.Branches.Label",
+            "Vestigingen",
+            "Locations",
+            "Placówki",
+            "Filiale",
+            "الفروع");
+        Add("CompanyPage.Branches.All",
+            "Alle vestigingen ({0})",
+            "All locations ({0})",
+            "Wszystkie placówki ({0})",
+            "Toate filialele ({0})",
+            "كل الفروع ({0})");
+        Add("CompanyPage.Vacancies.Label",
+            "Vacatures van dit bedrijf",
+            "Vacancies of this company",
+            "Oferty tej firmy",
+            "Joburile acestei firme",
+            "وظائف هذه الشركة");
+        Add("CompanyPage.Map.Label",
+            "Kaart met de vacatures",
+            "Map with the vacancies",
+            "Mapa z ofertami",
+            "Hartă cu joburile",
+            "خريطة الوظائف");
     }
 }

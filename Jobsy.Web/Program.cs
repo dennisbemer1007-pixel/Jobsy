@@ -170,6 +170,16 @@ builder.Services.AddHttpClient(Jobsy.Web.Hosting.PrivacyDataExportEndpoints.Http
     client.Timeout = TimeSpan.FromSeconds(20);
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
+// GET /partner/flyer.pdf forwards the anonymous API flyer so the share link needs no JavaScript (09).
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.PartnerFlyerEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(20);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
 builder.Services.AddHttpClient("JobsySeo", client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
@@ -327,6 +337,17 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // GET /partner/flyer.pdf (09): PDF rendering is costly, so keep it tighter than public-read.
+    options.AddPolicy("partner-flyer", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     // GET /privacy/data/export (07): per signed-in user, not per IP (shared Web→API hop).
     options.AddPolicy("export", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -421,6 +442,7 @@ app.MapPublicTokenEndpoints();
 app.MapMailUnsubscribeEndpoints();
 app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
+app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
 app.MapLanguageEndpoints();

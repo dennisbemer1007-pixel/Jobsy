@@ -91,6 +91,18 @@ public static class PageSeoResolver
         return "https://lobsy.nl";
     }
 
+    /// <summary>
+    /// Origin for structured data (public-pages 09): <c>PublicWebBaseUrl</c> wins over the request
+    /// host, so a JSON-LD <c>url</c> never points at a preview or proxy host.
+    /// </summary>
+    public static string ConfiguredOrigin(string navigationUri, IConfiguration configuration)
+    {
+        var configured = JobsyPublicUrl.NormalizeOrigin(configuration["PublicWebBaseUrl"]);
+        return string.IsNullOrWhiteSpace(configured)
+            ? Origin(navigationUri, configuration)
+            : configured.TrimEnd('/');
+    }
+
     public static string AbsoluteAssetUrl(string? url, string canonicalPageUrl)
     {
         if (string.IsNullOrWhiteSpace(url))

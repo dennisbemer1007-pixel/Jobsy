@@ -127,6 +127,7 @@ public static class RoutesDocGenerator
         sb.AppendLine("| `/mail/afmelden` | POST; RFC 8058 one-click / form unsubscribe (no antiforgery; rate-limited) |");
         sb.AppendLine("| `/account/mail-instellingen` | POST; antiforgery; save optional mail toggles (Web → API) |");
         sb.AppendLine("| `/melden` | POST; antiforgery; forwards a content report to `api/reports` (rate-limited; no IP stored) |");
+        sb.AppendLine("| `/partner/flyer.pdf` | GET; anonymous; proxies the partner flyer pdf (`?code=` optional); 302 → `/` with werkgevers-actief OFF; rate-limited |");
         sb.AppendLine("| `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |");
         sb.AppendLine("| `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |");
         sb.AppendLine();
