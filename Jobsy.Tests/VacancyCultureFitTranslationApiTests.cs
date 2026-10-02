@@ -212,7 +212,7 @@ public class VacancyCultureFitTranslationApiTests : IClassFixture<VacancyCulture
     }
 }
 
-public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<Program>
+public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid CandidateId { get; } = Guid.Parse("e2000000-0000-0000-0000-000000000020");
     public Guid CompanyId { get; } = Guid.Parse("e2000000-0000-0000-0000-000000000001");

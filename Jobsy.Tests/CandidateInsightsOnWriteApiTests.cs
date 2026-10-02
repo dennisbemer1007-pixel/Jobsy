@@ -143,7 +143,7 @@ public class CandidateInsightsOnWriteApiTests : IClassFixture<CandidateInsightsO
     }
 }
 
-public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Program>
+public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid CandidateId { get; } = Guid.Parse("d1000000-0000-0000-0000-000000000020");
     public string CandidateEmail => "insights-kandidaat@jobsy.local";

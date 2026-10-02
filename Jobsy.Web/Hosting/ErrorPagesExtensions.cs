@@ -107,12 +107,17 @@ public static class ErrorPagesExtensions
     /// <summary>
     /// Re-executes HTML page requests that ended in a bare status code through
     /// <c>/status/{code}</c>. API, Blazor, framework and static-file responses are untouched.
+    /// On .NET 10+, <c>createScopeForStatusCodePages</c> is required so Blazor SSR can
+    /// initialize <c>RemoteNavigationManager</c> again on the re-executed path.
     /// </summary>
     public static IApplicationBuilder UseHtmlStatusCodePages(this IApplicationBuilder app)
         => app.UseWhen(
             WantsHtmlStatusPage,
             branch => branch
-                .UseStatusCodePagesWithReExecute(StatusPathTemplate)
+                .UseStatusCodePagesWithReExecute(
+                    StatusPathTemplate,
+                    queryFormat: null,
+                    createScopeForStatusCodePages: true)
                 .Use(async (context, next) =>
                 {
                     await next(context);

@@ -23,6 +23,8 @@ Jobsy.Web  → Jobsy.Core only (project reference)
 | `Jobsy.Web` | Blazor Server UI, cookie auth, MFA UX, MapLibre banenkaart |
 | `Jobsy.Tests` | xUnit + WebApplicationFactory + Playwright + source guards |
 
+**Runtime:** .NET 10 LTS (`net10.0`) for all projects; EF Core / Npgsql 10.x.
+
 New business logic belongs in **services**, not fat controllers ([ADR 0002](adr/0002-thin-controllers.md)). DTOs are currently mirrored between Api and Web ([ADR 0003](adr/0003-api-contracts.md)).
 
 ## Auth flow

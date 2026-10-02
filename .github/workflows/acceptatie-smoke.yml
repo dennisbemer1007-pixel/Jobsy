@@ -34,7 +34,7 @@ jobs:
         if: steps.gate.outputs.skip != 'true'
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Restore + build tests
         if: steps.gate.outputs.skip != 'true'
@@ -44,7 +44,7 @@ jobs:
 
       - name: Install Playwright Chromium
         if: steps.gate.outputs.skip != 'true'
-        run: pwsh Jobsy.Tests/bin/Release/net9.0/playwright.ps1 install --with-deps chromium
+        run: pwsh Jobsy.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
       - name: Wait for Acceptatie healthy
         if: steps.gate.outputs.skip != 'true'

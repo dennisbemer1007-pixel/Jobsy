@@ -13,7 +13,7 @@ See [ADR 0001](adr/0001-keep-jobsy-code-name.md).
 
 ## First hour checklist
 
-1. Install .NET 9 SDK; `dotnet tool restore`; Docker for PostGIS.
+1. Install .NET 10 SDK; `dotnet tool restore`; Docker for PostGIS.
 2. Start stack (README Option A or B); open `http://localhost:5201`.
 3. Log in with a seeded `@jobsy.local` demo user (`DemoUsersSeeder`).
 4. Read [`security/roles-matrix.md`](security/roles-matrix.md) and [`ROUTES.md`](ROUTES.md).

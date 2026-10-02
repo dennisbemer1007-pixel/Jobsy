@@ -21,8 +21,8 @@ dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter "FullyQualifiedName~RoutesDo
 CI splits **unit/integration** from **Playwright smoke** (see `.github/workflows/pr-tests.yml`). Locally, install Chromium once:
 
 ```bash
-pwsh Jobsy.Tests/bin/Debug/net9.0/playwright.ps1 install --with-deps chromium
-# or after Release build: bin/Release/net9.0/playwright.ps1
+pwsh Jobsy.Tests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+# or after Release build: bin/Release/net10.0/playwright.ps1
 ```
 
 Live Acc / CI stack: set `JOBSY_E2E_BASE_URL` (and optional candidate credentials). Without a URL, many Playwright tests soft-skip.

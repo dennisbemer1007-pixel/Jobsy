@@ -99,7 +99,7 @@ public class CompanyUsersOrgApiTests : IClassFixture<CompanyUsersOrgApiFactory>
     }
 }
 
-public sealed class CompanyUsersOrgApiFactory : WebApplicationFactory<Program>
+public sealed class CompanyUsersOrgApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid OrgId { get; } = Guid.Parse("a3000000-0000-0000-0000-000000000001");
     public Guid BranchId { get; } = Guid.Parse("a3000000-0000-0000-0000-000000000011");

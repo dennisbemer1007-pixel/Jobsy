@@ -171,6 +171,14 @@ Render markeert de deploy pas live als `healthCheckPath` (`/health`) herhaaldeli
 
 Mitigatie in repo: API `AllowedHosts=*`, geen HTTPS-redirect in Production, seed via background hosted service (luistert meteen), `/health` anonymous.
 
+## Runtime (.NET 10)
+
+API en Web bouwen via Docker (`Jobsy.Api/Dockerfile`, `Jobsy.Web/Dockerfile`) op
+`mcr.microsoft.com/dotnet/sdk:10.0` / `aspnet:10.0` (Ubuntu “noble”). `render.yaml`
+blijft `runtime: docker` — geen Blueprint-wijziging nodig voor de LTS-bump.
+Eerste deploy na merge haalt nieuwe base images (langere build). De Data Protection
+key ring blijft compatibel over 9 → 10.
+
 ## Crash: inotify / FileSystemWatcher limit
 
 Als de API crasht met:
