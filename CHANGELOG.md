@@ -48,6 +48,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Landing zonder werkgevers (07):** `-zw` variant on `/` (server-rendered via `IEmployersSwitch` / `ForceVariant`), passport hero + OFF “Wat je krijgt” / “Voor wie”, `/banenkaart` + `/banen` gated OFF → `/`, flag-aware sitemap/robots ETag + JSON-LD without SearchAction, GratisDna OFF copy (“Alleen jij”, unlock list, “Past dit beroep?”), mobile passport chips overflow fix. Dependencies A/B still absent → AlwaysOn + follow-up doc (D20 + Passport.Tab.Fit).
 - **De ontdekkingsreis (08):** tests 7–10 with deeper question sets (5/10/25, Cultuur 18), “Weer een laag eraf” shed moment, end screen (`?stap=klaar`) with mini passport + `CompleteMyOnboardingAsync`, Discovery nav slot + short labels, “Verder ontdekken” overview, `OnboardingRoutes.StartPath` for flag-aware entry points. Old wizard kept for flag OFF.
 - **De ontdekkingsreis (07a):** `/candidate/ontdekkingsreis` behind CandidatePassport flag; journey shell (scene, lobster plates, progress rail, save status); wizard v3 step maps; Start + steps 1–2; extracted shared onboarding step components. Steps 3–10 deferred to 07b.
 - **Mijn Paspoort · Mijn tests:** depth rows, quota line, locked-report preview, Groei verder course slots (curated `ShowInPassport`); TrainingOffer passport fields + admin; no demo course seeds in production.

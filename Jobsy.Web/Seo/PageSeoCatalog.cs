@@ -89,6 +89,30 @@ public static partial class PageSeoCatalog
         ];
     }
 
+    /// <summary>
+    /// Sitemap static paths by employers switch (landing §S). OFF drops employer/map surfaces but keeps "/"
+    /// (the landing -zw variant). Used once the <c>IEmployersSwitch</c> adapter over <c>IFeatureFlags</c> lands
+    /// (see docs/feature-flags-landing-followup.md); until then the sitemap uses the flag-snapshot overload.
+    /// </summary>
+    public static IReadOnlyList<string> StaticIndexablePathsFor(bool employersEnabled)
+    {
+        if (employersEnabled)
+        {
+            return StaticIndexablePaths;
+        }
+
+        return StaticIndexablePaths
+            .Where(p => !IsEmployersOnlySitemapPath(p))
+            .ToArray();
+    }
+
+    public static bool IsEmployersOnlySitemapPath(string? path)
+    {
+        var p = Normalize(path);
+        return p is "/banenkaart" or "/partner" or "/westland" or "/lancering" or "/werkgevers"
+               || p.StartsWith("/vacancies/", StringComparison.Ordinal);
+    }
+
     public static string Normalize(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
