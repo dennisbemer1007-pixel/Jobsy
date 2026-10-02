@@ -89,6 +89,25 @@ public class AccountEmailCopyTests
         Assert.Contains("sanne@example.nl", mail.Text, StringComparison.Ordinal);
     }
 
+
+    [Theory]
+    [InlineData(15)]
+    [InlineData(240)]
+    public void AccountLockout_nl_body_contains_duration_label(int minutes)
+    {
+        var duration = TimeSpan.FromMinutes(minutes);
+        var label = EmailFormat.Duration(duration, EmailCulture.Nl);
+        var mail = TransactionalEmails.AccountLockout(
+            "https://lobsy.nl",
+            LoginLockoutRules.FailedAttemptsBeforeLockout,
+            DateTime.UtcNow.Add(duration),
+            duration,
+            EmailCulture.Nl);
+        Assert.Contains(label, mail.Text, StringComparison.Ordinal);
+        Assert.Contains("Wachtwoord vergeten?", mail.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("nieuw wachtwoord", mail.Text, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static int Count(string haystack, string needle)
     {
         var n = 0;

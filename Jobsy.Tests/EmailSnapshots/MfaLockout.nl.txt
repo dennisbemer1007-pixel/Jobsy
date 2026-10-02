@@ -11,7 +11,7 @@ Iemand vulde je wachtwoord goed in, maar de code uit je app 10 keer niet.
 Was jij dit niet? Neem dan contact op met support@lobsy.nl. Je wachtwoord
 veranderen kan binnenkort ook zelf.
 
-Nieuw wachtwoord kiezen: https://lobsy.nl/wachtwoord-vergeten
+Wachtwoord vergeten?: https://lobsy.nl/wachtwoord-vergeten
 
 Team Lobsy
 
@@ -24,7 +24,7 @@ h1: Iemand kende je wachtwoord, maar niet je code
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Nieuw wachtwoord kiezen -> https://lobsy.nl/wachtwoord-vergeten
+a: Wachtwoord vergeten? -> https://lobsy.nl/wachtwoord-vergeten
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
