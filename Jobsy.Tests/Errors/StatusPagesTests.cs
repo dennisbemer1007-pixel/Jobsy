@@ -105,7 +105,7 @@ public class StatusPagesTests
         Assert.Contains("href=\"/banenkaart\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/hoe-werkt-lobsy\"", html, StringComparison.Ordinal);
-        Assert.Equal(1, Regex.Matches(html, "<h1", RegexOptions.IgnoreCase).Count);
+        Assert.Single(Regex.Matches(html, "<h1", RegexOptions.IgnoreCase));
     }
 
     [Fact]

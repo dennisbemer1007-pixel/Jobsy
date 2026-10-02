@@ -57,7 +57,7 @@ public class CodeHealth01Rz10012Tests : BunitContext
         var imports = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "_Imports.razor"));
         Assert.Contains("@using Jobsy.Web.Components.Employer", imports, StringComparison.Ordinal);
         Assert.Contains("@using Jobsy.Web.Components.Werkgever.Insights", imports, StringComparison.Ordinal);
-        Assert.Equal(1, Regex.Matches(imports, @"@using Jobsy\.Web\.Features\b").Count);
+        Assert.Single(Regex.Matches(imports, @"@using Jobsy\.Web\.Features\b"));
 
         var companyDetails = File.ReadAllText(Path.Combine(
             root, "Jobsy.Web", "Components", "Werkgever", "Sections", "CompanyDetailsSection.razor"));

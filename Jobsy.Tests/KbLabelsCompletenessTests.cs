@@ -82,10 +82,10 @@ public class KbLabelsCompletenessTests
     }
 
     [Fact]
-    public void DislikeSource_fallback_returns_none()
+    public async Task DislikeSource_fallback_returns_none()
     {
         var source = KbNoDislikeSource.Instance;
-        var result = source.GetMatchingDislikeCodesAsync(Guid.NewGuid(), Guid.NewGuid()).GetAwaiter().GetResult();
+        var result = await source.GetMatchingDislikeCodesAsync(Guid.NewGuid(), Guid.NewGuid());
         Assert.Empty(result);
     }
 

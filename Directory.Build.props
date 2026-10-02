@@ -1,9 +1,15 @@
 <Project>
-  <!-- Central build defaults for Jobsy.* projects (prompt 01). Do not set TreatWarningsAsErrors. -->
+  <!-- Code health 11 (Dennis, 2 Oct 2026): warnings fail the build. Fix them in the same PR.
+       The CI auto-fix job applies safe dotnet-format fixes on PR branches.
+       NuGet audit warnings stay warnings: a new CVE must not break every build overnight;
+       the "Vulnerable package gate" in code-quality.yml fails on High/Critical. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <!-- Pinned so SDK/analyzer updates don't add warnings silently; raise it on purpose in its own PR. -->
     <AnalysisLevel>10.0-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <NuGetAudit>true</NuGetAudit>

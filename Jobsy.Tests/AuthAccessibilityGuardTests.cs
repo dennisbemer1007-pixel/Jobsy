@@ -23,8 +23,8 @@ public sealed class AuthAccessibilityGuardTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
 
-        Assert.Equal(1, Regex.Matches(html, @"<main\b", RegexOptions.IgnoreCase).Count);
-        Assert.Equal(1, Regex.Matches(html, @"<h1\b", RegexOptions.IgnoreCase).Count);
+        Assert.Single(Regex.Matches(html, @"<main\b", RegexOptions.IgnoreCase));
+        Assert.Single(Regex.Matches(html, @"<h1\b", RegexOptions.IgnoreCase));
 
         var isAr = path.Contains("lang=ar", StringComparison.Ordinal);
         if (isAr)

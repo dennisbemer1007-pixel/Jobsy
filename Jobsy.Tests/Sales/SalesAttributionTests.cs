@@ -230,7 +230,7 @@ public class SalesAttributionTests
         var stale = await db.SalesLinkClickDailies.Where(c => c.Date < cutoff).ToListAsync();
         db.SalesLinkClickDailies.RemoveRange(stale);
         await db.SaveChangesAsync();
-        Assert.Equal(1, stale.Count);
+        Assert.Single(stale);
         Assert.Equal(1, await db.SalesLinkClickDailies.CountAsync());
     }
 

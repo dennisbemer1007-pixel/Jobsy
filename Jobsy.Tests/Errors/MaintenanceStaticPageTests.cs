@@ -79,9 +79,8 @@ public class MaintenanceStaticPageTests
     {
         var html = File.ReadAllText(PathTo("cloudflare-500.html"));
 
-        Assert.Equal(
-            1,
-            Regex.Matches(html, "::CLOUDFLARE_ERROR_500S_BOX::", RegexOptions.None, TimeSpan.FromSeconds(2)).Count);
+        Assert.Single(
+            Regex.Matches(html, "::CLOUDFLARE_ERROR_500S_BOX::", RegexOptions.None, TimeSpan.FromSeconds(2)));
 
         // Cloudflare drops its diagnostics box when a referrer meta tag is present.
         Assert.DoesNotContain("name=\"referrer\"", html, StringComparison.OrdinalIgnoreCase);

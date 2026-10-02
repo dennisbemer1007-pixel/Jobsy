@@ -223,7 +223,7 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
         var reporting = new SchoolReportingService(db, new StubFeatures(7, 31));
         var view = await reporting.GetReportAsync(new SchoolReportFilterDto(2026, schoolId, null, null));
         Assert.Equal(6, view.CompletedCount);
-        Assert.False(view.RiasecTop3.Any(r => r.Masked));
+        Assert.DoesNotContain(view.RiasecTop3, r => r.Masked);
 
         var masked = await reporting.GetReportAsync(new SchoolReportFilterDto(2026, schoolId, SchoolLevel.Vwo, 6));
         Assert.Null(masked.CompletedCount);

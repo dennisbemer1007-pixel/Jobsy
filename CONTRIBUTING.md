@@ -19,7 +19,7 @@ There is no GitHub PR template file yet; treat the list above as the template.
 
 ## Warnings
 
-Every PR must deliver a **Release build with 0 new warnings** compared with the base branch (and 0 warnings once code-health step 11 lands `TreatWarningsAsErrors`). Files you touch must be warning-free.
+Every PR must deliver a **Release build with 0 warnings**, enforced by `TreatWarningsAsErrors=true` (code-health 11). NuGet audit `NU190x` stay warnings; High/Critical still fail the vulnerable-package gate. Files you touch must be warning-free.
 
 Local checks:
 
