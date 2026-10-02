@@ -214,7 +214,133 @@
 }
 
 
-/* Banenkaart 03 — filter chips, start prompt, travel legend, address field */
+/* Banenkaart 02/03 — filter bar, chips, start prompt, travel legend, address field */
+
+/* Mobile filter bar: two rows, no horizontal chip scrolling */
+.kb-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem 0.65rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--pearl-mid, var(--border));
+  min-width: 0;
+  max-width: 100%;
+}
+
+.kb-filter-bar__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.kb-filter-bar__spacer {
+  flex: 1 1 auto;
+  min-width: 0.25rem;
+}
+
+.kb-filter-search--bar {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kb-filter-search--bar input {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface);
+  font-size: 16px;
+  color: var(--text);
+}
+
+.kb-filter-search--bar input:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-color: var(--brand);
+}
+
+.kb-filters-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface);
+  color: var(--brand);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.kb-filters-button:focus-visible,
+.kb-filters-button.is-active {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.kb-filters-button__icon {
+  display: inline-flex;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.kb-filters-button__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.kb-filters-button .jobsy-action__badge {
+  background: var(--brand);
+  color: #fff;
+}
+
+.kb-match-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--gold, #c9a227);
+  border-radius: 999px;
+  background: var(--gold-soft, #faf6e8);
+  color: var(--gold-ink, #5c4a0f);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.kb-match-button:hover,
+.kb-match-button:focus-visible {
+  color: var(--gold-ink, #5c4a0f);
+  text-decoration: none;
+  outline: 2px solid var(--gold, #c9a227);
+  outline-offset: 2px;
+}
+
+.kb-match-button__icon {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+}
+
+.kb-match-button__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Legacy chip row (desktop) — keep scroll helpers for any remaining overflow */
 .kb-filter-chips {
   position: relative;
   display: flex;
@@ -259,6 +385,11 @@
   align-items: center;
 }
 
+.kb-filter-chips--desktop .kb-filters-button {
+  height: 2.25rem;
+  min-height: 2.25rem;
+}
+
 .kb-chip {
   display: inline-flex;
   align-items: center;
@@ -266,6 +397,7 @@
   flex: 0 0 auto;
   scroll-snap-align: start;
   min-height: 2.25rem;
+  height: 36px;
   padding: 0.35rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -296,6 +428,7 @@
 
 .kb-filter-chips__travel {
   position: relative;
+  flex: 0 0 auto;
 }
 
 .kb-chip-popover {
@@ -317,7 +450,8 @@
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  margin: 0 0.85rem 0.5rem;
+  margin: 0.35rem 0 0;
+  width: 100%;
 }
 
 .kb-chip-popover__modes,
@@ -358,8 +492,9 @@
   background: var(--surface);
 }
 
-.kb-filter-search--mobile {
-  padding: 0 0.85rem 0.55rem;
+.kb-filter-search--desktop input {
+  border-radius: var(--radius-sm, 8px);
+  font-size: 1rem;
 }
 
 .kb-desktop-toolbar {
@@ -378,11 +513,52 @@
 .kb-address__field input {
   flex: 1;
   min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface);
+  font-size: 16px;
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.kb-address__field input:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-color: var(--brand);
 }
 
 .kb-address__geo,
 .kb-address__clear {
   flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface);
+  color: var(--brand);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.kb-address__geo:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.kb-address__geo:focus-visible,
+.kb-address__clear:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 .kb-start-prompt {

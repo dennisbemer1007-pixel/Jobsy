@@ -41,7 +41,7 @@ public class KandidaatBanenE2ePlaywrightTests
         await Assertions.Expect(page.Locator(".kb-chip").Filter(new() { HasTextString = "20 min" }).First)
             .ToBeVisibleAsync(new() { Timeout = 15_000 });
 
-        var badgeCount = await page.Locator(".kb-filter-chips .jobsy-action__badge, .kb-filter-badge").CountAsync();
+        var badgeCount = await page.Locator(".kb-filters-button .jobsy-action__badge, .kb-filter-chips .jobsy-action__badge, .kb-filter-badge").CountAsync();
         Assert.Equal(0, badgeCount);
 
         await page.WaitForTimeoutAsync(2_000);
@@ -108,7 +108,7 @@ public class KandidaatBanenE2ePlaywrightTests
             await Assertions.Expect(sheet.First).ToBeVisibleAsync();
         }
 
-        await Assertions.Expect(page.Locator(".kb-chip, .kb-filter-chips").First).ToBeVisibleAsync(new() { Timeout = 15_000 });
+        await Assertions.Expect(page.Locator(".kb-filter-bar, .kb-chip, .kb-filter-chips").First).ToBeVisibleAsync(new() { Timeout = 15_000 });
 
         await page.WaitForSelectorAsync("#job-map canvas, .map-pane canvas", new() { Timeout = 60_000 });
         var gap = await page.EvaluateAsync<double>("""

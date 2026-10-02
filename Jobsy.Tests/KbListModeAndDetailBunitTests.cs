@@ -172,7 +172,7 @@ public class KandidaatBanenListDetailPlaywrightTests
         });
         var page = await context.NewPageAsync();
         await page.GotoAsync(baseUrl + "/", new() { WaitUntil = Microsoft.Playwright.WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        var toggle = page.Locator("[data-testid=kb-mobile-view-toggle], .kb-chip--toggle").First;
+        var toggle = page.Locator(".kb-filter-bar [data-testid=kb-view-toggle], [data-testid=kb-mobile-view-toggle], .kb-chip--toggle").First;
         if (await toggle.CountAsync() > 0 && await toggle.IsVisibleAsync())
         {
             await toggle.ClickAsync();
