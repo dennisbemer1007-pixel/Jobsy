@@ -254,10 +254,10 @@ public class SalesManagerCommissionTests
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
         Assert.Equal(smId, branch.ReferredBySalesManagerUserId);
         Assert.Equal(1, branch.FirstYearSupplierSlot);
-        // Commission window starts at first purchase (CommissionStartsAtUtc); attribution is recorded at registration.
+        // Attribution + rate snapshot at registration; commission window starts at first purchase.
         Assert.NotNull(branch.SalesAttributedAtUtc);
         Assert.Null(branch.CommissionStartsAtUtc);
-        Assert.Null(branch.CommissionTermsSnapshottedAtUtc);
+        Assert.NotNull(branch.CommissionTermsSnapshottedAtUtc);
     }
 
     [Fact]
