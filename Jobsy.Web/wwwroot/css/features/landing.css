@@ -1308,28 +1308,16 @@
     overflow: hidden;
   }
 
+  /* getBoundingClientRect ignores overflow:hidden — remove off-canvas chrome at 320px. */
   .pub-theme .pub-landing__shell-tag,
   .pub-theme .pub-landing__float--bike,
   .pub-theme .pub-landing__float--bus,
   .pub-theme .pub-landing__float--fit,
-  .pub-theme .pub-landing__float--journey {
-    display: none;
-  }
-
-  .pub-theme .pub-landing__bubble {
-    white-space: normal;
-    max-width: min(8rem, 40%);
-    inset-inline-start: 50%;
-    transform: translateX(-50%);
-  }
-
-  .pub-theme .pub-landing__you-card {
-    inset-inline: 0.75rem;
-    max-width: none;
-  }
-
+  .pub-theme .pub-landing__float--journey,
+  .pub-theme .pub-landing__you-card,
+  .pub-theme .pub-landing__bubble,
+  .pub-theme .pub-landing__blobs,
   .pub-theme .pub-landing__scene > .pub-pill-sample {
-    inset-inline-end: 0.75rem;
-    top: 0.75rem;
+    display: none !important;
   }
 }

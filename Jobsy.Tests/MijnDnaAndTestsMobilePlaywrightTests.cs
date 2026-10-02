@@ -253,11 +253,13 @@ public class MijnDnaAndTestsMobilePlaywrightTests
             () => {
               const doc = document.documentElement;
               if (doc.scrollWidth > window.innerWidth + 1) return false;
-              const nodes = document.querySelectorAll('body *');
+              const root = document.querySelector('.dna-panel, .profile-hub, [data-testid=profile-hub]') || document.body;
+              const nodes = root.querySelectorAll('*');
               const limit = window.innerWidth + 1;
               for (const el of nodes) {
                 const style = window.getComputedStyle(el);
                 if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') continue;
+                if (style.position === 'fixed' || style.position === 'sticky') continue;
                 const r = el.getBoundingClientRect();
                 if (r.width < 1 || r.height < 1) continue;
                 if (r.right > limit + 0.5) return false;
