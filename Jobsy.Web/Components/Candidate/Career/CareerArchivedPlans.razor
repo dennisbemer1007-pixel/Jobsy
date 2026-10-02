@@ -1,0 +1,82 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Plans.Count > 0)
+{
+    <details class="career-archive">
+        <summary>@Culture.Format("CareerDream.ArchiveTitle", Plans.Count)</summary>
+        <ul class="career-archive__list">
+            @foreach (var plan in Plans)
+            {
+                <li>
+                    <div>
+                        <b>@plan.DreamTitle</b>
+                        <small>
+                            @Culture.Format("CareerDream.ArchiveDays", DaysLeft(plan))
+                            ·
+                            @Culture.Format("CareerDream.ArchiveSteps", plan.CompletedSteps, plan.TotalSteps)
+                        </small>
+                    </div>
+                    <button type="button"
+                            class="career-btn career-btn--text"
+                            disabled="@Busy"
+                            @onclick="() => Ask(plan)">
+                        @Culture["CareerDream.Restore"]
+                    </button>
+                </li>
+            }
+        </ul>
+    </details>
+
+    <LobsyFriendlyDialog IsOpen="@(_asking is not null)"
+                         Title="@(_asking is null ? "" : Culture.Format("CareerDream.RestoreTitle", _asking.DreamTitle))"
+                         TitleId="career-restore-title"
+                         Lead="@Culture["CareerDream.RestoreLead"]"
+                         Class="career-dialog"
+                         CloseDisabled="@Busy"
+                         CloseOnBackdrop="@(!Busy)"
+                         OnClose="Cancel">
+        <div class="career-dialog__actions">
+            <button type="button" class="career-btn career-btn--secondary" disabled="@Busy" @onclick="Cancel">
+                @Culture["CareerDream.Cancel"]
+            </button>
+            <button type="button"
+                    class="career-btn career-btn--primary"
+                    disabled="@Busy"
+                    aria-busy="@(Busy ? "true" : "false")"
+                    @onclick="Confirm">
+                @Culture["CareerDream.Restore"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    private ArchivedCareerPlanApiModel? _asking;
+
+    [Parameter] public IReadOnlyList<ArchivedCareerPlanApiModel> Plans { get; set; } = [];
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<Guid> OnRestore { get; set; }
+
+    private static int DaysLeft(ArchivedCareerPlanApiModel plan)
+        => Math.Max(0, (int)Math.Ceiling((plan.ExpiresAtUtc - DateTime.UtcNow).TotalDays));
+
+    private void Ask(ArchivedCareerPlanApiModel plan) => _asking = plan;
+
+    private void Cancel() => _asking = null;
+
+    private async Task Confirm()
+    {
+        var plan = _asking;
+        if (plan is null)
+        {
+            return;
+        }
+
+        _asking = null;
+        await OnRestore.InvokeAsync(plan.PlanId);
+    }
+}

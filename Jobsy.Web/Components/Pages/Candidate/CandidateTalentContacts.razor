@@ -3,106 +3,262 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]
-@using Jobsy.Core.Enums
-@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.Contacts
+@using Jobsy.Web.Components.Candidate.Journey
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services.Careers
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject ILogger<CandidateTalentContacts> Logger
 
-<PageTitle>@Culture["Talent.CandidateTitle"] · Lobsy</PageTitle>
+<PageTitle>@Culture["TalentC.Eyebrow"] · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate">
-    <header class="saved-gate__header profile-page__header">
-        <h1>@Culture["Talent.CandidateTitle"]</h1>
-        <p class="login-lead">@Culture["Talent.CandidateLead"]</p>
-        <p><a href="/candidate/profile">@Culture["Competency.BackToProfile"]</a></p>
-    </header>
-
-    @if (!string.IsNullOrEmpty(_message))
+<div class="journey-page career-page talent-page">
+    @if (!_employersOn)
     {
-        <p class="state-message">@_message</p>
-    }
-
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (_rows.Count == 0)
-    {
-        <p class="state-message">@Culture["Talent.CandidateEmpty"]</p>
-    }
-
-    @foreach (var row in _rows)
-    {
-        <article class="detail-card">
-            <p>
-                <strong>@(string.IsNullOrWhiteSpace(row.CompanyName) ? Culture["Talent.CompanyUnknown"] : row.CompanyName)</strong>
+        <section class="career-card talent-card" aria-labelledby="talent-title">
+            <p class="career-card__eyebrow">@Culture["TalentC.Eyebrow"]</p>
+            <h1 id="talent-title" tabindex="-1">@Culture["TalentC.TitleNone"]</h1>
+            <p class="career-card__lead">@Culture["TalentC.Off.Title"]</p>
+            <p class="career-card__discovery">
+                <a href="@PassportHref">@Culture.Format("TalentC.Empty.Link", Word)</a>
             </p>
-            <p>@Culture["Talent.Status"]: <strong>@row.Status</strong></p>
-            <p>@Culture.Format("Talent.RespondBy", row.RespondByUtc.ToLocalTime().ToString("g"))</p>
-            <p>@row.Message</p>
-            @if (CanCandidateRespond(row))
-            {
-                <div class="profile-save-bar">
-                    <button class="login-submit" type="button" disabled="@_saving" @onclick="() => RespondAsync(row.Id, accept: true, alreadyPlaced: false)">
-                        @Culture["Talent.Accept"]
-                    </button>
-                    <button class="engagement-btn" type="button" disabled="@_saving" @onclick="() => RespondAsync(row.Id, accept: false, alreadyPlaced: true)">
-                        @Culture["Talent.AlreadyPlaced"]
-                    </button>
-                    <button class="engagement-btn" type="button" disabled="@_saving" @onclick="() => RespondAsync(row.Id, accept: false, alreadyPlaced: false)">
-                        @Culture["Talent.Decline"]
-                    </button>
-                </div>
-            }
-        </article>
+        </section>
+    }
+    else
+    {
+        <CareerStage Variant="ClimbVariant.Listen"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="0"
+                     PlatesShed="3"
+                     LobsterSizeDesktop="124"
+                     LobsterSizeMobile="66"
+                     BubbleDesktop="@Bubble"
+                     BubbleMobile="@Bubble">
+            <RailContent>
+                <TalentHowCard PassportOn="@_passportOn" />
+            </RailContent>
+            <ChildContent>
+                <TalentContactsCard @ref="_card"
+                                    Rows="@_rows"
+                                    Loading="@_loading"
+                                    Busy="@_busy"
+                                    ErrorText="@_error"
+                                    Announcement="@_announcement"
+                                    JustDeclinedId="@_justDeclinedId"
+                                    PassportOn="@_passportOn"
+                                    PassportHref="@PassportHref"
+                                    OnAccept="OpenShareDialogAsync"
+                                    OnDecline="DeclineAsync" />
+            </ChildContent>
+        </CareerStage>
+
+        <TalentShareDialog IsOpen="@(_dialogRow is not null)"
+                           Loading="@_previewLoading"
+                           Busy="@_busy"
+                           ErrorText="@_dialogError"
+                           Preview="@_preview"
+                           CompanyName="@_dialogRow?.CompanyName"
+                           OnShare="ShareAsync"
+                           OnCancel="CloseShareDialog" />
     }
 </div>
 
 @code {
-    private List<TalentContactRequestModel> _rows = [];
-    private string? _message;
+    private TalentContactsCard? _card;
+    private List<TalentContactRow> _rows = [];
+    private TalentContactRow? _dialogRow;
+    private TalentContactSharePreviewModel? _preview;
+    private Guid? _justDeclinedId;
+    private string? _error;
+    private string? _dialogError;
+    private string _announcement = "";
     private bool _loading = true;
-    private bool _saving;
+    private bool _busy;
+    private bool _previewLoading;
+    private bool _employersOn = true;
+    private bool _passportOn;
+
+    private string PassportHref => _passportOn ? "/candidate/paspoort" : "/candidate/profile";
+
+    private string Word => Culture[_passportOn ? "TalentC.Word.Passport" : "TalentC.Word.Profile"];
+
+    private string Bubble => _rows.Any(r => r.IsOpen)
+        ? Culture["TalentC.Say"]
+        : Culture["TalentC.Say.None"];
+
+    /// <summary>The listening scene needs stones but no step labels on this page.</summary>
+    private static IReadOnlyList<ClimbStone> SceneStones =>
+    [
+        new ClimbStone("", ClimbStoneState.Now),
+        new ClimbStone("", ClimbStoneState.Todo),
+        new ClimbStone("", ClimbStoneState.Todo),
+        new ClimbStone("", ClimbStoneState.Dream)
+    ];
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _rows = await Api.ListCandidateTalentContactsAsync() ?? [];
+            var flags = await FeatureFlags.GetAsync();
+            _employersOn = flags.EmployersEnabled;
+            _passportOn = flags.CandidatePassportEnabled;
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
+        if (!_employersOn)
+        {
+            _loading = false;
+            return;
+        }
+
+        await ReloadAsync();
+        _loading = false;
+    }
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            _rows = TalentContactViewBuilder.Build(await Api.ListCandidateTalentContactsAsync());
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _loading = false;
+            _error = FailureMessage(ex);
         }
     }
 
-    private static bool CanCandidateRespond(TalentContactRequestModel row)
-        => Enum.TryParse<TalentContactStatus>(row.Status, ignoreCase: true, out var status)
-           && TalentContactRules.CanCandidateRespond(status);
-
-    private async Task RespondAsync(Guid id, bool accept, bool alreadyPlaced)
+    private async Task OpenShareDialogAsync(TalentContactRow row)
     {
-        _saving = true;
-        _message = null;
+        if (_busy)
+        {
+            return;
+        }
+
+        _dialogRow = row;
+        _dialogError = null;
+        _preview = null;
+        _previewLoading = true;
+        _error = null;
         try
         {
-            await Api.RespondToTalentContactAsync(id, accept, alreadyPlaced);
-            _rows = await Api.ListCandidateTalentContactsAsync() ?? [];
-            _message = accept && !alreadyPlaced
-                ? Culture["Talent.Accepted"]
-                : Culture["Talent.Declined"];
+            _preview = await Api.GetTalentContactSharePreviewAsync(row.Id);
+            if (_preview is null)
+            {
+                _dialogError = Culture["TalentC.Err.Preview"];
+            }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _message = ex.Message;
+            _dialogError = Culture["TalentC.Err.Preview"];
         }
         finally
         {
-            _saving = false;
+            _previewLoading = false;
         }
+    }
+
+    /// <summary>Closing, Esc or "Nog niet" sends nothing (§4).</summary>
+    private void CloseShareDialog()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _dialogRow = null;
+        _preview = null;
+        _dialogError = null;
+        _previewLoading = false;
+    }
+
+    private async Task ShareAsync()
+    {
+        if (_busy || _dialogRow is not { } row || _preview is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _dialogError = null;
+        try
+        {
+            await Api.RespondToTalentContactAsync(
+                row.Id, accept: true, alreadyPlaced: false, confirmedShare: true);
+            _dialogRow = null;
+            _preview = null;
+            _justDeclinedId = null;
+            await ReloadAsync();
+            _announcement = Culture.Format(
+                "TalentC.Shared.Announce",
+                string.IsNullOrWhiteSpace(row.CompanyName)
+                    ? Culture["TalentC.Company.Unknown"]
+                    : row.CompanyName!);
+        }
+        catch (Exception ex)
+        {
+            _dialogError = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+
+        if (_dialogRow is null && _card is not null)
+        {
+            await _card.FocusRequestAsync(row.Id);
+        }
+    }
+
+    private async Task DeclineAsync(TalentDeclineRequest request)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.RespondToTalentContactAsync(
+                request.Row.Id, accept: false, alreadyPlaced: request.AlreadyPlaced);
+            await ReloadAsync();
+            _justDeclinedId = request.Row.Id;
+            _announcement = Culture["TalentC.Said.No"];
+        }
+        catch (Exception ex)
+        {
+            _error = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    /// <summary>Codes only; raw API text never reaches the candidate (T5).</summary>
+    private string FailureMessage(Exception ex)
+    {
+        if (ex is CareerApiError api)
+        {
+            var key = TalentContactViewBuilder.ErrorKey(api.Code);
+            if (string.Equals(key, "Common.Error", StringComparison.Ordinal))
+            {
+                Logger.LogWarning(
+                    "Unmapped talent-contact API code {Code} ({Status}).", api.Code, api.StatusCode);
+            }
+
+            return Culture[key];
+        }
+
+        Logger.LogWarning(ex, "Talent-contact action failed.");
+        return Culture["Common.Error"];
     }
 }

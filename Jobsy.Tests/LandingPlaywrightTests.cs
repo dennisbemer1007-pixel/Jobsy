@@ -122,6 +122,55 @@ public class LandingPlaywrightTests
             $"CTA overlaps cookie banner (ctaBottom={ctaBox.Y + ctaBox.Height}, bannerTop={bannerBox.Y})");
     }
 
+    [Fact]
+    public async Task Hero_scene_chips_stay_inside_viewport_both_variants()
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        foreach (var width in new[] { 320, 360, 390, 414 })
+        foreach (var variant in new[] { "on", "zw" })
+        foreach (var lang in new[] { "nl", "ar" })
+        {
+            await using var context = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = 844 },
+                Locale = lang == "ar" ? "ar" : "nl-NL"
+            });
+            var page = await context.NewPageAsync();
+            await page.GotoAsync(
+                $"{baseUrl}/?_variant={variant}&lang={lang}",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+
+            var ok = await page.EvaluateAsync<bool>("""
+                () => {
+                  const scene = document.querySelector('.pub-landing__hero-scene');
+                  if (!scene) return false;
+                  const vw = window.innerWidth;
+                  const nodes = [scene, ...scene.querySelectorAll('*')];
+                  for (const el of nodes) {
+                    if (!(el instanceof HTMLElement)) continue;
+                    const r = el.getBoundingClientRect();
+                    if (r.width < 1 || r.height < 1) continue;
+                    if (r.left < 12 - 0.5 || r.right > vw - 12 + 0.5) return false;
+                  }
+                  for (const chip of scene.querySelectorAll('.pub-landing__ppc-chip, .pub-chip, .pub-landing__float')) {
+                    if (chip.scrollWidth > chip.clientWidth + 1) return false;
+                  }
+                  return true;
+                }
+                """);
+            Assert.True(ok, $"hero scene overflow at {width}px variant={variant} lang={lang}");
+        }
+    }
+
     private static async Task<bool> IsReachableAsync(string baseUrl)
     {
         try

@@ -1,11 +1,13 @@
 using System.Net;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Seo;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
@@ -70,15 +72,32 @@ public class BanenkaartRouteTests
         Assert.Equal("Page.JobMapTitle", entryMap.TitleKey);
     }
 
-    private static async Task<WebApplication> CreateAppAsync()
+    [Fact]
+    public async Task Banen_and_banenkaart_redirect_home_when_employers_off()
+    {
+        await using var app = await CreateAppAsync(employersEnabled: false);
+        var client = app.GetTestClient();
+
+        using var banen = await client.GetAsync("/banen?q=zorg");
+        Assert.Equal(HttpStatusCode.Found, banen.StatusCode);
+        Assert.Equal("/", banen.Headers.Location?.ToString());
+
+        using var map = await client.GetAsync("/banenkaart");
+        Assert.Equal(HttpStatusCode.Found, map.StatusCode);
+        Assert.Equal("/", map.Headers.Location?.ToString());
+    }
+
+    private static async Task<WebApplication> CreateAppAsync(bool employersEnabled = true)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             EnvironmentName = Environments.Development
         });
         builder.WebHost.UseTestServer();
+        builder.Services.AddSingleton<IEmployersSwitch>(new FixedEmployersSwitch(employersEnabled));
         var app = builder.Build();
         app.UseBanenRedirect();
+        app.UseBanenkaartGate();
         app.Run(async ctx =>
         {
             ctx.Response.StatusCode = StatusCodes.Status404NotFound;
