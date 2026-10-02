@@ -84,7 +84,11 @@ jobs:
             --filter-not-class '*AuthRtlKeyboardPlaywrightTests' \
             --filter-not-class '*CspSmokePlaywrightTests' \
             --filter-not-class '*StatusPagesPlaywrightTests' \
-            --filter-not-class '*PublicPagesPlaywrightTests'
+            --filter-not-class '*PublicPagesPlaywrightTests' \
+            --filter-not-class '*AdminOrganisationsPlaywrightTests' \
+            --filter-not-class '*AdminShellPlaywrightTests' \
+            --filter-not-class '*AdminUsersPlaywrightTests' \
+            --filter-not-class '*AdminEmailPreviewSmokeTests'
 
       - name: Install Playwright Chromium
         run: |
@@ -129,7 +133,10 @@ jobs:
             --filter-class '*AuthRtlKeyboardPlaywrightTests' \
             --filter-class '*CspSmokePlaywrightTests' \
             --filter-class '*StatusPagesPlaywrightTests' \
-            --filter-class '*PublicPagesPlaywrightTests'
+            --filter-class '*PublicPagesPlaywrightTests' \
+            --filter-class '*AdminOrganisationsPlaywrightTests' \
+            --filter-class '*AdminShellPlaywrightTests' \
+            --filter-class '*AdminUsersPlaywrightTests'
 
       - name: Upload test results
         if: always()
