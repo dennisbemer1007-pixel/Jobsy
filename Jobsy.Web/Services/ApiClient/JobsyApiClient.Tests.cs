@@ -6,6 +6,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
+using Jobsy.Web.Services.Careers;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 
@@ -229,14 +230,33 @@ public sealed partial class JobsyApiClient
         }
     }
 
-    public async Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(string dreamTitle, CancellationToken ct = default)
+    public Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(string dreamTitle, CancellationToken ct = default)
+        => GenerateCareerPathAsync(catalogKey: null, freeText: dreamTitle, force: false, ct);
+
+    public async Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(
+        string? catalogKey,
+        string? freeText,
+        bool force = false,
+        CancellationToken ct = default)
+        => await GenerateCareerPathAsync(catalogKey, freeText, force, planLanguage: null, ct);
+
+    public async Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(
+        string? catalogKey,
+        string? freeText,
+        bool force,
+        string? planLanguage,
+        CancellationToken ct = default)
     {
         try
         {
-            var response = await _http.PostAsJsonAsync("api/me/career-path", new { dreamTitle }, ct);
+            var response = await _http.PostAsJsonAsync(
+                "api/me/career-path",
+                new { catalogKey, freeText, force, planLanguage },
+                ct);
             if (!response.IsSuccessStatusCode)
             {
-                return null;
+                var body = await response.Content.ReadAsStringAsync(ct);
+                throw CareerApiError.FromResponse(response.StatusCode, body);
             }
 
             return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -245,6 +265,52 @@ public sealed partial class JobsyApiClient
         {
             return null;
         }
+    }
+
+    public async Task<CareerDreamOptionsApiModel?> GetCareerDreamOptionsAsync(string? q = null, CancellationToken ct = default)
+    {
+        try
+        {
+            var url = "api/me/career-path/dream-options";
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                url += "?q=" + Uri.EscapeDataString(q);
+            }
+
+            return await _http.GetFromJsonAsync<CareerDreamOptionsApiModel>(url, ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<ArchivedCareerPlanApiModel>> GetArchivedCareerPlansAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<ArchivedCareerPlanApiModel>>("api/me/career-path/archived", ct)
+                   ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task<CareerPathPlanApiModel?> RestoreArchivedCareerPlanAsync(Guid planId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/career-path/archived/{planId:D}/restore",
+            content: null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw CareerApiError.FromResponse(response.StatusCode, body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
     }
 
     public async Task<CareerPathPlanApiModel?> CompleteCareerStepAsync(string stepKey, CancellationToken ct = default)
@@ -256,7 +322,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Stap voltooien mislukt.");
+            throw CareerApiError.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -271,7 +337,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Stap openzetten mislukt.");
+            throw CareerApiError.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -280,10 +346,17 @@ public sealed partial class JobsyApiClient
     public async Task<CareerPathPlanApiModel?> ClaimCareerCourseAsync(string courseName, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/me/career-path/courses/claim", new { courseName }, ct);
+        if (response.StatusCode == HttpStatusCode.Gone)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw CareerApiError.TryParse(response.StatusCode, body)
+                  ?? new CareerApiError("use_passport_proof", HttpStatusCode.Gone);
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Cursus toevoegen mislukt.");
+            throw CareerApiError.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);

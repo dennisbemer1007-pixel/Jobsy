@@ -85,6 +85,25 @@ public class BlazorPageRoleAttributesTests
         Assert.DoesNotContain(JobsyRoles.RegionalManager, roles, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>05 §1 H2: the candidate how-to guide is candidate-only; other roles use /hoe-werkt-lobsy.</summary>
+    [Fact]
+    public void Candidate_how_to_guide_is_candidate_only()
+    {
+        var path = Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web",
+            "Components",
+            "Pages",
+            "Candidate",
+            "HowLobsyWorks.razor");
+        var text = File.ReadAllText(path);
+        Assert.Contains("@page \"/candidate/hoe-werkt-lobsy\"", text, StringComparison.Ordinal);
+
+        var roles = AuthorizeRoles.Match(text).Groups[1].Value
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        Assert.Equal([JobsyRoles.Candidate], roles);
+    }
+
     private static bool ImpliesMutation(string fileName, string text)
     {
         if (fileName.Contains("Create", StringComparison.OrdinalIgnoreCase)

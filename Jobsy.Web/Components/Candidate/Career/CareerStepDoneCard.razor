@@ -1,0 +1,171 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+@*
+    The growth moment (03 §5). Replaces the old completion toast: the old shell falls,
+    the lobster grows a gold new shell and moves up a stone. Undo is right here.
+*@
+<section class="career-card career-card--done" aria-labelledby="career-title">
+    <div class="career-done__top">
+        <p class="career-card__eyebrow">@Culture.Format("Career.Done.Eyebrow", StepNumber, TotalSteps)</p>
+        <p class="career-done__shard career-only-desktop">
+            <span class="career-done__shard-icon" aria-hidden="true">@((MarkupString)NavIcons.Shell)</span>
+            <span>@Culture["Career.Done.OldShell"]</span>
+        </p>
+    </div>
+
+    <h1 id="career-title" tabindex="-1" @ref="_heading">@Culture["Career.Done.Title"]</h1>
+    <p class="career-card__lead">@Culture.Format("Career.Done.Lead", StepTitle)</p>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="career-card__error" role="alert">@ErrorText</p>
+    }
+
+    <ul class="career-done__gained">
+        @foreach (var line in Gained)
+        {
+            <li>
+                <span class="career-done__gained-icon" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
+                <span>@line</span>
+            </li>
+        }
+    </ul>
+
+    <GrowingShellsStepper Stones="@Stones" Mobile="false" />
+
+    @if (NextTitle is { Length: > 0 })
+    {
+        <section class="career-done__next" aria-labelledby="career-done-next-title">
+            <h2 id="career-done-next-title" class="career-card__block-title">@Culture["Career.Done.NextTitle"]</h2>
+            <p class="career-done__next-step">@Culture.Format("Career.Done.NextStep", NextNumber, NextTitle)</p>
+            @if (NextFacts is { Length: > 0 })
+            {
+                <p class="career-done__next-facts">@NextFacts</p>
+            }
+        </section>
+    }
+
+    <div class="career-card__actions career-card__actions--sticky">
+        <button type="button" class="career-btn career-btn--text" disabled="@Busy" @onclick="OnUndo">
+            <span class="career-done__undo-icon" aria-hidden="true">@((MarkupString)ActionIcons.Withdraw)</span>
+            <span>@Culture["CareerStep.Undo"]</span>
+        </button>
+        @if (NextTitle is { Length: > 0 })
+        {
+            <button type="button" class="career-btn career-btn--primary" disabled="@Busy" @onclick="OnNext">
+                @Culture.Format("Career.Done.Next", NextNumber)
+            </button>
+        }
+        else
+        {
+            <a class="career-btn career-btn--primary" href="/carriere">@Culture["Career.Done.Dream"]</a>
+        }
+    </div>
+</section>
+
+@code {
+    private ElementReference _heading;
+    private bool _focused;
+
+    [Parameter] public int StepNumber { get; set; }
+    [Parameter] public int TotalSteps { get; set; }
+    [Parameter] public string StepTitle { get; set; } = "";
+    [Parameter] public string ShortTitle { get; set; } = "";
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool PassportOn { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+
+    /// <summary>Proof that really landed in the paspoort; empty means the line is not claimed.</summary>
+    [Parameter] public string ProofName { get; set; } = "";
+
+    /// <summary>Claws that were missing before and are covered now.</summary>
+    [Parameter] public IReadOnlyList<string> GrownClaws { get; set; } = [];
+
+    /// <summary>Already gated: 0 with Werkgevers OFF, a closed fit gate or no matches.</summary>
+    [Parameter] public int VacancyCount { get; set; }
+
+    [Parameter] public IReadOnlyList<CareerStoneModel> Stones { get; set; } = [];
+    [Parameter] public string? NextTitle { get; set; }
+    [Parameter] public int NextNumber { get; set; }
+    [Parameter] public int NextGapCount { get; set; }
+    [Parameter] public int NextCourseCount { get; set; }
+
+    /// <summary>Course counts only exist with Dependency B present.</summary>
+    [Parameter] public bool ShowCourseCounts { get; set; } = true;
+
+    [Parameter] public EventCallback OnUndo { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+
+    private List<string> Gained
+    {
+        get
+        {
+            var lines = new List<string>(3);
+
+            if (!string.IsNullOrWhiteSpace(ProofName))
+            {
+                lines.Add(Culture.Format(
+                    PassportOn ? "Career.Done.GainProof" : "Career.Done.GainProofProfile",
+                    ProofName));
+            }
+
+            foreach (var claw in GrownClaws)
+            {
+                if (lines.Count == 3)
+                {
+                    break;
+                }
+
+                lines.Add(Culture.Format("Career.Done.GainClaw", claw));
+            }
+
+            if (lines.Count < 3 && VacancyCount > 0)
+            {
+                lines.Add(Culture.Format("Career.Done.GainVacancies", VacancyCount, ShortTitle));
+            }
+
+            if (lines.Count == 0)
+            {
+                lines.Add(Culture.Format("Career.Done.GainNone", StepNumber));
+            }
+
+            return lines.Take(3).ToList();
+        }
+    }
+
+    private string NextFacts
+    {
+        get
+        {
+            if (NextGapCount <= 0 && (!ShowCourseCounts || NextCourseCount <= 0))
+            {
+                return "";
+            }
+
+            return ShowCourseCounts && NextCourseCount > 0
+                ? Culture.Format("Career.Done.NextFacts", NextGapCount, NextCourseCount)
+                : Culture.Format("Career.Done.NextFactsGapsOnly", NextGapCount);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focused)
+        {
+            return;
+        }
+
+        _focused = true;
+        try
+        {
+            await _heading.FocusAsync();
+        }
+        catch (Exception)
+        {
+            // Focus is a nicety; the aria-live region already announced the moment.
+        }
+    }
+}

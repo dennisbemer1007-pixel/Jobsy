@@ -1,416 +1,283 @@
 @page "/carriere"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.Journey
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
-@inject CareerPathService CareerPaths
+@using Jobsy.Web.Services.Careers
 @inject JobsyApiClient Api
 @inject CultureState Culture
-@inject IJSRuntime Js
+@inject IFeatureFlags FeatureFlags
+@inject ICareerStepVacancyFit VacancyFit
+@inject NavigationManager Navigation
 
-<PageTitle>@Culture["CareerDash.Title"] · Lobsy</PageTitle>
+<PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page career-dash">
-    <header class="panel-header career-dash__page-header">
-        <div>
-            <h1>@Culture["CareerDash.Title"]</h1>
-            <p class="login-lead">@Culture["CareerDash.Lead"]</p>
-        </div>
-    </header>
+<div class="journey-page career-page">
+    <p class="career-live visually-hidden" role="status" aria-live="polite">@_announcement</p>
 
     @if (_bootstrapping)
     {
-        <div class="horizon-skeleton" aria-busy="true" aria-live="polite">
-            <p class="visually-hidden">@Culture["Common.Loading"]</p>
-            <div class="horizon-skeleton__hero"></div>
-            <div class="horizon-skeleton__stepper"></div>
-            <div class="horizon-skeleton__card"></div>
-        </div>
+        <CareerStage Variant="ClimbVariant.Stones"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="0">
+            <RailContent>
+                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
+            </RailContent>
+            <ChildContent>
+                <section class="career-card career-card--skeleton" aria-busy="true" aria-live="polite">
+                    <p class="visually-hidden">@Culture["Career.Loading"]</p>
+                    <span class="career-skeleton career-skeleton--title"></span>
+                    <span class="career-skeleton"></span>
+                    <span class="career-skeleton"></span>
+                </section>
+            </ChildContent>
+        </CareerStage>
     }
-    else if (_model is null || !_model.HasPlan)
+    else if (!_plan.HasPlan)
     {
-        <section class="horizon-hero" aria-labelledby="horizon-dream-title">
-            <div class="horizon-hero__art" aria-hidden="true">
-                @HorizonArt()
-            </div>
-            <div class="horizon-hero__content">
-                <p class="horizon-hero__eyebrow">@Culture["CareerDash.HorizonEyebrow"]</p>
-                <h2 id="horizon-dream-title" class="horizon-hero__title">@Culture["CareerDash.DreamPlaceholder"]</h2>
-            </div>
-            <div id="career-dream-sheet" class="horizon-dream-sheet" role="region" aria-label="@Culture["CareerDash.DreamRole"]">
-                <label class="horizon-dream-sheet__label" for="career-dream-input">@Culture["CareerDash.DreamRole"]</label>
-                <input id="career-dream-input"
-                       class="career-dash__input"
-                       type="text"
-                       maxlength="80"
-                       autocomplete="off"
-                       list="career-dream-suggestions"
-                       placeholder="@Culture["CareerDash.DreamPlaceholder"]"
-                       value="@_dreamDraft"
-                       disabled="@_busy"
-                       @oninput="OnDreamInput"
-                       @onkeydown="OnDreamKeyDown" />
-                <datalist id="career-dream-suggestions">
-                    @foreach (var option in CareerPaths.GetDreamSuggestions())
-                    {
-                        <option value="@option.Title"></option>
-                    }
-                </datalist>
-                <button type="button" class="login-submit horizon-card__cta" disabled="@_busy" @onclick="CreatePlanAsync">
-                    @Culture["CareerDash.CreatePlan"]
-                </button>
-            </div>
-        </section>
-        @if (_busy)
-        {
-            <p class="state-message" aria-live="polite">@Culture["CareerDash.Generating"]</p>
-        }
-        else if (!string.IsNullOrWhiteSpace(_message))
-        {
-            <p class="state-message error">@_message</p>
-        }
+        <CareerStage Variant="ClimbVariant.Listen"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="0"
+                     PlatesShed="2"
+                     LobsterSizeDesktop="124"
+                     LobsterSizeMobile="66"
+                     BubbleDesktop="@Culture["Career.Say.Empty"]"
+                     BubbleMobile="@Culture["Career.Say.EmptyShort"]">
+            <RailContent>
+                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
+            </RailContent>
+            <ChildContent>
+                <CareerEmptyCard Suggestions="@_suggestions"
+                                 Busy="@_busy"
+                                 HasChoice="@(_choice is not null)"
+                                 ErrorText="@_error"
+                                 DiscoveryHref="@DiscoveryHref"
+                                 OnChoice="SetChoice"
+                                 OnSearch="SearchDreamsAsync"
+                                 OnSubmit="GeneratePlanAsync" />
+            </ChildContent>
+        </CareerStage>
+    }
+    else if (_done is { } done)
+    {
+        <CareerStage Variant="ClimbVariant.Climb"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="@_plan.CurrentStoneIndex"
+                     Celebrate="true"
+                     PlatesShed="@_plan.PlatesShed"
+                     FallingPlate="@FallingPlateIndex"
+                     LobsterLabel="@Culture["Career.Lobster.Celebrate"]"
+                     LobsterSizeDesktop="170"
+                     LobsterSizeMobile="86"
+                     BubbleDesktop="@Culture["Career.Say.NewShell"]"
+                     BubbleMobile="@Culture["Career.Say.NewShellShort"]">
+            <RailContent>
+                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
+            </RailContent>
+            <ChildContent>
+                <CareerStepDoneCard StepNumber="@done.Order"
+                                    TotalSteps="@done.TotalSteps"
+                                    StepTitle="@done.Title"
+                                    ShortTitle="@done.ShortTitle"
+                                    Busy="@_busy"
+                                    PassportOn="@_passportOn"
+                                    ErrorText="@_error"
+                                    ProofName="@_doneGained.ProofName"
+                                    GrownClaws="@_doneGained.GrownClaws"
+                                    VacancyCount="@DoneVacancyCount"
+                                    Stones="@_plan.Stones"
+                                    NextTitle="@done.NextStep?.Title"
+                                    NextNumber="@(done.NextStep?.Order ?? 0)"
+                                    NextGapCount="@(done.NextStep?.GapCount ?? 0)"
+                                    NextCourseCount="@(done.NextStep?.CourseCount ?? 0)"
+                                    OnUndo="UndoStepAsync"
+                                    OnNext="GoToNextStepAsync" />
+            </ChildContent>
+        </CareerStage>
+    }
+    else if (_step is { } step)
+    {
+        <CareerStage Variant="ClimbVariant.Climb"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="@_plan.CurrentStoneIndex"
+                     PlatesShed="@_plan.PlatesShed"
+                     LobsterSizeDesktop="@_plan.LobsterSizeDesktop"
+                     LobsterSizeMobile="@_plan.LobsterSizeMobile"
+                     BubbleDesktop="@BubbleDesktop"
+                     BubbleMobile="@BubbleMobile">
+            <RailContent>
+                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
+            </RailContent>
+            <ChildContent>
+                <CareerStepDetailCard Step="@step"
+                                      Busy="@_busy"
+                                      EmployersOn="@_employersOn"
+                                      PassportOn="@_passportOn"
+                                      ErrorText="@_error"
+                                      CourseSlots="@_courseSlots"
+                                      VacancyFit="@_stepFit"
+                                      OnComplete="CompleteStepAsync"
+                                      OnUndo="UndoStepAsync" />
+            </ChildContent>
+        </CareerStage>
     }
     else
     {
-        var selected = SelectedStep;
-        var active = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
-        var stepCount = _model.Steps.Count;
-        var goalReached = _model.GoalReached;
+        <CareerStage Variant="ClimbVariant.Climb"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="@_plan.CurrentStoneIndex"
+                     Celebrate="@_plan.GoalReached"
+                     PlatesShed="@_plan.PlatesShed"
+                     LobsterSizeDesktop="@_plan.LobsterSizeDesktop"
+                     LobsterSizeMobile="@_plan.LobsterSizeMobile"
+                     BubbleDesktop="@BubbleDesktop"
+                     BubbleMobile="@BubbleMobile">
+            <RailContent>
+                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
+            </RailContent>
+            <ChildContent>
+                <CareerOverviewCard Plan="@_plan"
+                                    Busy="@_busy"
+                                    EmployersOn="@_employersOn"
+                                    PassportOn="@_passportOn"
+                                    ShowCarriedOver="@_showCarriedOver"
+                                    ErrorText="@_error"
+                                    OnChangeDream="OpenDreamDialog"
+                                    OnDismissCarriedOver="DismissCarriedOver"
+                                    OnRegenerateLanguage="RegenerateForLanguageAsync" />
 
-        <section class="horizon-hero" aria-labelledby="horizon-dream-title">
-            <div class="horizon-hero__art" aria-hidden="true">
-                @HorizonArt()
-            </div>
+                <CareerArchivedPlans Plans="@_archived" Busy="@_busy" OnRestore="RestoreAsync" />
 
-            <div class="horizon-hero__content">
-                <p class="horizon-hero__eyebrow">@Culture["CareerDash.HorizonEyebrow"]</p>
-                <div class="horizon-hero__title-row">
-                    <h2 id="horizon-dream-title" class="horizon-hero__title">@_model.DreamRoleTitle</h2>
+                <div class="career-mobile-bar career-only-mobile">
                     <button type="button"
-                            class="horizon-hero__edit"
-                            aria-expanded="@_editingDream"
-                            aria-controls="career-dream-sheet"
-                            title="@Culture["CareerDash.EditDream"]"
-                            @onclick="ToggleDreamEdit">
-                        <span class="visually-hidden">@Culture["CareerDash.EditDream"]</span>
+                            class="career-btn career-btn--icon"
+                            aria-label="@Culture["Career.EditDream"]"
+                            disabled="@_busy"
+                            @onclick="OpenDreamDialog">
                         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 20h9"/>
-                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                         </svg>
                     </button>
                 </div>
-                <p class="horizon-hero__match">
-                    @Culture.Format("CareerDash.MatchWithProfile", _model.MatchPercent)
-                </p>
-            </div>
+            </ChildContent>
+        </CareerStage>
 
-            @if (_editingDream)
-            {
-                <div id="career-dream-sheet" class="horizon-dream-sheet" role="region" aria-label="@Culture["CareerDash.DreamRole"]">
-                    <label class="horizon-dream-sheet__label" for="career-dream-input">@Culture["CareerDash.DreamRole"]</label>
-                    <input id="career-dream-input"
-                           class="career-dash__input"
-                           type="text"
-                           maxlength="80"
-                           autocomplete="off"
-                           list="career-dream-suggestions"
-                           placeholder="@Culture["CareerDash.DreamPlaceholder"]"
-                           value="@_dreamDraft"
-                           disabled="@_busy"
-                           @oninput="OnDreamInput"
-                           @onkeydown="OnDreamKeyDown"
-                           @onblur="CommitDreamAsync" />
-                    <datalist id="career-dream-suggestions">
-                        @foreach (var option in _model.DreamOptions)
-                        {
-                            <option value="@option.Title"></option>
-                        }
-                    </datalist>
-                    <p class="horizon-dream-sheet__hint muted">@Culture["CareerDash.RegenerateHint"]</p>
-                </div>
-            }
-        </section>
-
-        @if (_busy)
-        {
-            <p class="state-message" aria-live="polite">@Culture["CareerDash.Generating"]</p>
-        }
-        else if (!string.IsNullOrWhiteSpace(_message))
-        {
-            <p class="state-message error">@_message</p>
-        }
-
-        <nav class="horizon-stepper" aria-label="@Culture["CareerDash.PlanTitle"]">
-            <ol class="horizon-stepper__list">
-                @foreach (var step in _model.Steps)
-                {
-                    var isSelected = string.Equals(_selectedStepId, step.Id, StringComparison.Ordinal);
-                    var isCompleted = step.Status == CareerStepStatus.Completed;
-                    var label = StepperLabel(step, active);
-                    <li class="horizon-stepper__item @StatusClass(step.Status) @(isSelected ? "is-selected" : null)">
-                        @if (step.Order > 1)
-                        {
-                            <span class="horizon-stepper__line @(IsLineFilled(step) ? "is-filled" : null)" aria-hidden="true"></span>
-                        }
-                        <button type="button"
-                                class="horizon-stepper__node"
-                                id="@($"horizon-step-{step.Id}")"
-                                aria-current="@(isSelected ? "step" : null)"
-                                aria-label="@Culture.Format("CareerDash.StepN", step.Order): @step.Title"
-                                @onclick="() => SelectStep(step.Id)">
-                            @if (isCompleted)
-                            {
-                                <span class="horizon-stepper__check" aria-hidden="true">
-                                    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M3.5 8.2 6.4 11l6.1-6.5"/>
-                                    </svg>
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="horizon-stepper__num" aria-hidden="true">@step.Order</span>
-                            }
-                        </button>
-                        @if (!string.IsNullOrEmpty(label))
-                        {
-                            <span class="horizon-stepper__caption">@label</span>
-                        }
-                    </li>
-                }
-                <li class="horizon-stepper__item horizon-stepper__item--goal @(goalReached ? "is-goal-reached" : null)">
-                    <span class="horizon-stepper__line @(goalReached || active is null ? "is-filled" : null)" aria-hidden="true"></span>
-                    <span class="horizon-stepper__node horizon-stepper__node--goal" aria-hidden="true" title="@Culture["CareerDash.StepperGoal"]">
-                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
-                            <path d="M3 1.5v13"/>
-                            <path d="M3.5 2.2h7.2l-1.4 2.4 1.4 2.4H3.5z"/>
-                        </svg>
-                    </span>
-                    <span class="horizon-stepper__caption">@Culture["CareerDash.StepperGoal"]</span>
-                </li>
-            </ol>
-        </nav>
-
-        @if (goalReached)
-        {
-            <article class="horizon-card horizon-card--goal" aria-label="@Culture["CareerDash.GoalReachedTitle"]">
-                <p class="horizon-card__eyebrow">@Culture["CareerDash.GoalReachedEyebrow"]</p>
-                <h2 class="horizon-card__title">@Culture["CareerDash.GoalReachedTitle"]</h2>
-                <p class="horizon-card__lead">@Culture.Format("CareerDash.GoalReachedLead", _model.DreamRoleTitle)</p>
-            </article>
-        }
-        else if (selected is not null)
-        {
-            <article class="horizon-card @( _cardExpanded ? "is-expanded" : "is-collapsed" )"
-                     aria-label="@selected.Title">
-                @if (_cardExpanded)
-                {
-                    <button type="button"
-                            class="horizon-card__collapse"
-                            aria-label="@Culture["CareerDash.CollapseStep"]"
-                            @onclick="CollapseCard">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="m6 14 6-6 6 6"/>
-                        </svg>
-                    </button>
-
-                    <p class="horizon-card__eyebrow">@CollapsedEyebrow(selected, stepCount)</p>
-                    <h2 id="horizon-card-title" class="horizon-card__title">@selected.Title</h2>
-                    <p class="horizon-card__lead">@selected.Summary</p>
-
-                    @if (selected.SkillsGap.Count > 0)
-                    {
-                        <section class="horizon-card__block" aria-labelledby="horizon-gaps-title">
-                            <h3 id="horizon-gaps-title" class="horizon-card__block-title">@Culture["CareerDash.SkillsGap"]</h3>
-                            <ul class="horizon-chips">
-                                @foreach (var gap in selected.SkillsGap)
-                                {
-                                    <li>@gap</li>
-                                }
-                            </ul>
-                        </section>
-                    }
-
-                    @if (selected.Courses.Count > 0)
-                    {
-                        <section class="horizon-card__block" aria-labelledby="horizon-courses-title">
-                            <h3 id="horizon-courses-title" class="horizon-card__block-title">
-                                @Culture["CareerDash.Courses"]
-                                <span class="horizon-card__block-meta">
-                                    · @Culture.Format("CareerDash.CoursesOnProfile", selected.MatchedCourseCount, selected.Courses.Count)
-                                </span>
-                            </h3>
-                            <ul class="horizon-courses">
-                                @foreach (var course in selected.Courses)
-                                {
-                                    <li>
-                                        <div class="horizon-course @(course.OnProfile ? "is-on-profile" : null)">
-                                            <span class="horizon-course__icon" aria-hidden="true">
-                                                @if (course.OnProfile)
-                                                {
-                                                    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M3.5 8.2 6.4 11l6.1-6.5"/>
-                                                    </svg>
-                                                }
-                                                else
-                                                {
-                                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M22 10 12 5 2 10l10 5 10-5Z"/>
-                                                        <path d="M6 12.5v4.2c0 .8 2.7 2.3 6 2.3s6-1.5 6-2.3v-4.2"/>
-                                                        <path d="M22 10v6"/>
-                                                    </svg>
-                                                }
-                                            </span>
-                                            <span class="horizon-course__body">
-                                                <span class="horizon-course__label">@course.Name</span>
-                                                @if (course.OnProfile)
-                                                {
-                                                    <span class="horizon-course__status">@Culture["CareerDash.CourseOnProfile"]</span>
-                                                }
-                                                else
-                                                {
-                                                    <button type="button"
-                                                            class="horizon-course__claim"
-                                                            disabled="@_busy"
-                                                            @onclick="() => ClaimCourseAsync(course.Name)">
-                                                        @Culture["CareerDash.CourseClaim"]
-                                                    </button>
-                                                }
-                                            </span>
-                                        </div>
-                                    </li>
-                                }
-                            </ul>
-                        </section>
-                    }
-
-                    <div class="horizon-card__meta-grid">
-                        <section class="horizon-card__meta" aria-labelledby="horizon-req-title">
-                            <h3 id="horizon-req-title" class="horizon-card__block-title">@Culture["CareerDash.MinRequirements"]</h3>
-                            @if (selected.MinRequirements.Count > 0)
-                            {
-                                <ul class="horizon-card__meta-list">
-                                    @foreach (var req in selected.MinRequirements)
-                                    {
-                                        <li>@req</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p>@Culture["CareerDash.MinRequirementsNone"]</p>
-                            }
-                        </section>
-                        <section class="horizon-card__meta" aria-labelledby="horizon-exp-title">
-                            <h3 id="horizon-exp-title" class="horizon-card__block-title">@Culture["CareerDash.YearsExperience"]</h3>
-                            <p>@Culture.Format("CareerDash.YearsExperienceValue", selected.YearsExperienceNeeded)</p>
-                        </section>
-                    </div>
-
-                    <section class="horizon-card__match" aria-labelledby="horizon-step-match-title">
-                        <div class="horizon-card__match-row">
-                            <h3 id="horizon-step-match-title" class="horizon-card__block-title">@Culture["CareerDash.StepMatchLabel"]</h3>
-                            <strong>@selected.StepMatchPercent%</strong>
-                        </div>
-                        <div class="horizon-card__match-bar"
-                             role="progressbar"
-                             aria-valuemin="0"
-                             aria-valuemax="100"
-                             aria-valuenow="@selected.StepMatchPercent"
-                             aria-label="@Culture.Format("CareerDash.StepMatch", selected.StepMatchPercent)">
-                            <span style="width: @Math.Clamp(selected.StepMatchPercent, 0, 100)%"></span>
-                        </div>
-                    </section>
-
-                    <a class="login-submit horizon-card__cta" href="@selected.ActionHref">@selected.ActionLabel</a>
-
-                    @if (selected.Status == CareerStepStatus.Completed)
-                    {
-                        <button type="button"
-                                class="horizon-card__ghost"
-                                disabled="@_busy"
-                                @onclick="() => UncompleteStepAsync(selected)">
-                            @Culture["CareerDash.MarkIncomplete"]
-                        </button>
-                    }
-                    else
-                    {
-                        <button type="button"
-                                class="horizon-card__ghost"
-                                disabled="@_busy"
-                                @onclick="() => CompleteStepAsync(selected)">
-                            @Culture["CareerDash.MarkComplete"]
-                        </button>
-                    }
-                }
-                else
-                {
-                    <p class="horizon-card__eyebrow">@CollapsedEyebrow(selected, stepCount)</p>
-                    <h2 id="horizon-card-title" class="horizon-card__title">@selected.Title</h2>
-                    <p class="horizon-card__meta-line">
-                        @Culture.Format("CareerDash.CollapsedMeta", selected.SkillsGap.Count, selected.Courses.Count)
-                        @if (selected.StepMatchPercent > 0)
-                        {
-                            <span> · @Culture.Format("CareerDash.CollapsedMatch", selected.StepMatchPercent)</span>
-                        }
-                    </p>
-                    <button type="button" class="login-submit horizon-card__cta" @onclick="ExpandCard">
-                        @Culture["CareerDash.ViewStep"]
-                    </button>
-                }
-            </article>
-        }
-
-        <p class="career-dash__regen">
-            <button type="button" class="career-dash__regen-btn" disabled="@_busy" @onclick="ConfirmRegenerateAsync">
-                @Culture["CareerDash.Regenerate"]
-            </button>
-        </p>
+        <CareerDreamDialog IsOpen="@_dialogOpen"
+                           Busy="@_busy"
+                           HasChoice="@(_choice is not null)"
+                           CurrentDream="@_plan.DreamTitle"
+                           ProofCourseCount="@_plan.ProofCourseCount"
+                           ProofHasExperience="@_plan.ProofHasExperience"
+                           ErrorText="@_dialogError"
+                           Suggestions="@DialogSuggestions"
+                           OnChoice="SetChoice"
+                           OnSearch="SearchDreamsAsync"
+                           OnConfirm="ChangeDreamAsync"
+                           OnCancel="CloseDreamDialog" />
     }
-
-    <LobsyToast Message="@_toastMessage"
-                UndoLabel="@Culture["CareerDash.ToastUndo"]"
-                ShowUndo="@(!string.IsNullOrWhiteSpace(_toastUndoStepKey))"
-                OnUndo="UndoToastAsync" />
 </div>
 
 @code {
-    private CareerDashboardModel? _model;
-    private string? _selectedStepId;
-    private bool _cardExpanded;
-    private bool _editingDream;
-    private string _dreamDraft = "";
-    private bool _busy;
-    private bool _bootstrapping = true;
-    private string? _message;
-    private string? _toastMessage;
-    private string? _toastUndoStepKey;
-    private int? _toastCompletedOrder;
+    /// <summary>Deep-linkable step detail: <c>/carriere?stap={order}</c> (03 §1). Invalid ⇒ overview.</summary>
+    [SupplyParameterFromQuery(Name = "stap")] public int? Stap { get; set; }
 
-    private CareerPathDashboardStep? SelectedStep
-        => _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, _selectedStepId, StringComparison.Ordinal))
-           ?? _model?.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)
-           ?? _model?.Steps.FirstOrDefault();
+    private CareerPathPlanApiModel? _planApi;
+    private CareerStepDetailView? _step;
+    private CareerStepDetailView? _done;
+    private CareerStepDoneView _doneGained = new();
+    private CareerStepVacancyFit _stepFit = CareerStepVacancyFit.None;
+    private List<PassportCourseCard> _courseSlots = [];
+    private string _stepContextId = "";
+    private CareerPlanViewModel _plan = CareerPlanViewModel.Empty;
+    private IReadOnlyList<CareerDreamOptionApiItem> _suggestions = [];
+    private IReadOnlyList<ArchivedCareerPlanApiModel> _archived = [];
+    private CareerDreamChoice? _choice;
+    private string _nowLabel = "";
+    private string? _error;
+    private string? _dialogError;
+    private string _announcement = "";
+    private bool _bootstrapping = true;
+    private bool _busy;
+    private bool _dialogOpen;
+    private bool _showCarriedOver;
+    private bool _employersOn = true;
+    private bool _passportOn;
+
+    private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
+
+    private IReadOnlyList<ClimbStone> SceneStones
+    {
+        get
+        {
+            if (!_plan.HasPlan)
+            {
+                return
+                [
+                    new ClimbStone(Culture["Career.Rail.Now"], ClimbStoneState.Now),
+                    new ClimbStone("", ClimbStoneState.Todo),
+                    new ClimbStone("", ClimbStoneState.Todo),
+                    new ClimbStone("", ClimbStoneState.Dream)
+                ];
+            }
+
+            return _plan.Stones
+                .Select(s => new ClimbStone(
+                    string.IsNullOrWhiteSpace(s.Label) && s.StateTextKey == "Career.Rail.Now"
+                        ? Culture["Career.Rail.NowUnknown"]
+                        : s.Label,
+                    s.State,
+                    s.StateTextKey is null ? s.Number?.ToString() : Culture[s.StateTextKey]))
+                .ToList();
+        }
+    }
+
+    private IReadOnlyList<CareerDreamOptionApiItem> DialogSuggestions
+        => _suggestions
+            .Where(s => !string.Equals(s.Title, _plan.DreamTitle, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    private string BubbleDesktop => _plan.GoalReached
+        ? Culture["Career.Say.Goal"]
+        : Culture.Format("Career.Say.Climb", Math.Max(1, _plan.CurrentStepNumber));
+
+    private string BubbleMobile => _plan.GoalReached
+        ? Culture["Career.Say.Goal"]
+        : Culture.Format("Career.Say.ClimbShort", Math.Max(1, _plan.CurrentStepNumber));
+
+    /// <summary>One plate falls once during the moment (§S); the newest shed plate.</summary>
+    private int FallingPlateIndex => Math.Clamp(_plan.PlatesShed - 1, 0, 9);
+
+    private int DoneVacancyCount => _employersOn && _stepFit.ShowsCount ? _stepFit.GoodCount : 0;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var saved = await Api.GetCareerPathAsync();
-            if (saved is not null && saved.Steps.Count > 0)
-            {
-                ApplyDashboard(CareerPaths.FromApi(saved), expandActive: false);
-            }
-            else
-            {
-                _model = CareerPaths.EmptyDashboard();
-                _dreamDraft = "";
-                _editingDream = true;
-            }
+            var flags = await FeatureFlags.GetAsync();
+            _employersOn = flags.EmployersEnabled;
+            _passportOn = flags.CandidatePassportEnabled;
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
+        try
+        {
+            var plan = await Api.GetCareerPathAsync();
+            ApplyPlan(plan);
+            var options = await Api.GetCareerDreamOptionsAsync();
+            _suggestions = options?.Suggestions ?? [];
+            _archived = await Api.GetArchivedCareerPlansAsync();
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
-            _model = CareerPaths.EmptyDashboard();
+            _error = FailureMessage(ex);
         }
         finally
         {
@@ -418,148 +285,111 @@
         }
     }
 
-    private void OnDreamInput(ChangeEventArgs e)
-        => _dreamDraft = e.Value?.ToString() ?? "";
-
-    private async Task OnDreamKeyDown(KeyboardEventArgs e)
+    protected override async Task OnParametersSetAsync()
     {
-        if (e.Key is "Enter")
+        if (_bootstrapping)
         {
-            if (_model?.HasPlan == true)
+            return;
+        }
+
+        await SyncStepAsync();
+    }
+
+    /// <summary>Resolves <c>?stap=</c> to a step; an unknown or foreign order falls back to the overview.</summary>
+    private async Task SyncStepAsync()
+    {
+        if (_done is not null)
+        {
+            if (Stap == _done.Order)
             {
-                await CommitDreamAsync();
+                return;
             }
-            else
+
+            _done = null;
+            _doneGained = new CareerStepDoneView();
+        }
+
+        if (Stap is not int order || !_plan.HasPlan)
+        {
+            ClearStep();
+            return;
+        }
+
+        var next = CareerPlanViewBuilder.BuildStep(_planApi, order);
+        if (next is null)
+        {
+            ClearStep();
+            return;
+        }
+
+        _step = next;
+        if (!string.Equals(_stepContextId, next.Id, StringComparison.Ordinal))
+        {
+            _stepContextId = next.Id;
+            await LoadStepContextAsync(next);
+        }
+    }
+
+    private void ClearStep()
+    {
+        _step = null;
+        _stepContextId = "";
+        _courseSlots = [];
+        _stepFit = CareerStepVacancyFit.None;
+    }
+
+    /// <summary>Courses (D5) and vacancy fit (Dependency E). Read-only: nothing is seeded here.</summary>
+    private async Task LoadStepContextAsync(CareerStepDetailView step)
+    {
+        _courseSlots = [];
+        _stepFit = CareerStepVacancyFit.None;
+
+        if (step.CourseSearchKeys.Count > 0)
+        {
+            try
             {
-                await CreatePlanAsync();
+                _courseSlots = await Api.GetPassportTrainingOffersAsync(
+                    string.Join(' ', step.CourseSearchKeys));
+            }
+            catch (Exception)
+            {
+                _courseSlots = [];
             }
         }
-    }
 
-    private void ToggleDreamEdit()
-    {
-        _editingDream = !_editingDream;
-        if (_editingDream)
+        if (_employersOn)
         {
-            _dreamDraft = _model?.DreamRoleTitle ?? "";
+            _stepFit = await VacancyFit.GetAsync([step.ShortTitle, step.Title]);
         }
     }
 
-    private async Task CreatePlanAsync()
+    private async Task CompleteStepAsync()
     {
-        var next = (_dreamDraft ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(next))
-        {
-            _message = Culture["CareerDash.DreamRequired"];
-            return;
-        }
-
-        await RefreshFromApiAsync(next, regenerating: true);
-    }
-
-    private async Task CommitDreamAsync()
-    {
-        var next = (_dreamDraft ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(next))
-        {
-            _dreamDraft = _model?.DreamRoleTitle ?? "";
-            return;
-        }
-
-        if (_model is not null
-            && string.Equals(next, _model.DreamRoleTitle, StringComparison.OrdinalIgnoreCase)
-            && !_busy)
-        {
-            _editingDream = false;
-            return;
-        }
-
-        var confirmed = await ConfirmRegenerateUiAsync();
-        if (!confirmed)
-        {
-            _dreamDraft = _model?.DreamRoleTitle ?? next;
-            _editingDream = false;
-            return;
-        }
-
-        await RefreshFromApiAsync(next, regenerating: true);
-        _editingDream = false;
-    }
-
-    private async Task ConfirmRegenerateAsync()
-    {
-        if (!await ConfirmRegenerateUiAsync())
+        if (_busy || _step is not { Status: CareerStepStatus.Active } step)
         {
             return;
         }
 
-        var dream = _model?.DreamRoleTitle ?? _dreamDraft;
-        if (string.IsNullOrWhiteSpace(dream))
-        {
-            _editingDream = true;
-            return;
-        }
-
-        await RefreshFromApiAsync(dream, regenerating: true);
-    }
-
-    private async Task<bool> ConfirmRegenerateUiAsync()
-    {
-        try
-        {
-            return await Js.InvokeAsync<bool>("confirm", Culture["CareerDash.RegenerateConfirm"]);
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
-    private async Task RefreshFromApiAsync(string dream, bool regenerating)
-    {
         _busy = true;
-        _message = null;
-        try
-        {
-            var plan = regenerating
-                ? await Api.GenerateCareerPathAsync(dream)
-                : await Api.GetCareerPathAsync();
-            if (plan is not null)
-            {
-                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: false);
-            }
-            else if (regenerating)
-            {
-                _message = Culture["Common.Error"];
-            }
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
-
-    private async Task CompleteStepAsync(CareerPathDashboardStep step)
-    {
-        _busy = true;
-        _message = null;
+        _error = null;
         try
         {
             var plan = await Api.CompleteCareerStepAsync(step.Id);
-            if (plan is not null)
+            if (plan is null)
             {
-                var completedOrder = step.Order;
-                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: false);
-                ShowCompletionToast(completedOrder, step.Id);
+                _error = Culture["Common.Error"];
+                return;
             }
+
+            _doneGained = CareerPlanViewBuilder.BuildDone(step, plan, step.Order);
+            ApplyPlan(plan);
+            _done = step;
+            _step = null;
+            _announcement = Culture.Format("Career.Done.Announce", step.Order);
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _error = FailureMessage(ex);
         }
         finally
         {
@@ -567,94 +397,34 @@
         }
     }
 
-    private async Task UncompleteStepAsync(CareerPathDashboardStep step)
+    private async Task UndoStepAsync()
     {
-        _busy = true;
-        _message = null;
-        try
+        var target = _done ?? _step;
+        if (_busy || target is null)
         {
-            var plan = await Api.UncompleteCareerStepAsync(step.Id);
-            if (plan is not null)
-            {
-                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: true);
-                ClearToast();
-            }
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
-
-    private async Task ClaimCourseAsync(string courseName)
-    {
-        _busy = true;
-        _message = null;
-        var beforeKey = SelectedStep?.Id;
-        var beforeCompleted = SelectedStep?.Status == CareerStepStatus.Completed;
-        try
-        {
-            var plan = await Api.ClaimCareerCourseAsync(courseName);
-            if (plan is not null)
-            {
-                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: false);
-                if (beforeKey is not null)
-                {
-                    _selectedStepId = beforeKey;
-                    _cardExpanded = true;
-                }
-
-                var after = _model?.Steps.FirstOrDefault(s => string.Equals(s.Id, beforeKey, StringComparison.Ordinal));
-                if (after is not null && !beforeCompleted && after.Status == CareerStepStatus.Completed)
-                {
-                    ShowCompletionToast(after.Order, after.Id);
-                    var next = _model!.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
-                    if (next is not null && next.Order > after.Order)
-                    {
-                        _selectedStepId = next.Id;
-                        _cardExpanded = false;
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
-    }
-
-    private async Task UndoToastAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_toastUndoStepKey))
-        {
-            ClearToast();
             return;
         }
 
-        var key = _toastUndoStepKey;
-        ClearToast();
         _busy = true;
+        _error = null;
         try
         {
-            var plan = await Api.UncompleteCareerStepAsync(key);
-            if (plan is not null)
+            var plan = await Api.UncompleteCareerStepAsync(target.Id);
+            if (plan is null)
             {
-                ApplyDashboard(CareerPaths.FromApi(plan), expandActive: true);
-                _selectedStepId = key;
-                _cardExpanded = true;
+                _error = Culture["Common.Error"];
+                return;
             }
+
+            ApplyPlan(plan);
+            _done = null;
+            _doneGained = new CareerStepDoneView();
+            _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order);
+            _announcement = Culture.Format("Career.Undo.Announce", target.Order);
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _error = FailureMessage(ex);
         }
         finally
         {
@@ -662,132 +432,207 @@
         }
     }
 
-    private void ClearToast()
+    private Task GoToNextStepAsync()
     {
-        _toastMessage = null;
-        _toastUndoStepKey = null;
-        _toastCompletedOrder = null;
+        var next = _done?.NextStep;
+        if (next is null)
+        {
+            Navigation.NavigateTo("/carriere");
+            return Task.CompletedTask;
+        }
+
+        Navigation.NavigateTo($"/carriere?stap={next.Order}");
+        return Task.CompletedTask;
     }
 
-    private void ShowCompletionToast(int completedOrder, string stepKey)
+    private void SetChoice(CareerDreamChoice? choice) => _choice = choice;
+
+    private async Task<IReadOnlyList<CareerDreamOptionApiItem>> SearchDreamsAsync(string term, CancellationToken ct)
     {
-        _toastCompletedOrder = completedOrder;
-        _toastUndoStepKey = stepKey;
-        if (_model?.GoalReached == true)
+        try
         {
-            _toastMessage = Culture.Format("CareerDash.ToastGoal", completedOrder);
+            var options = await Api.GetCareerDreamOptionsAsync(term, ct);
+            return options?.Results ?? [];
+        }
+        catch (Exception)
+        {
+            return [];
+        }
+    }
+
+    private void OpenDreamDialog()
+    {
+        _choice = null;
+        _dialogError = null;
+        _dialogOpen = true;
+    }
+
+    /// <summary>Closing, Esc or an error keeps the current plan (no auto-yes, B2/D3).</summary>
+    private void CloseDreamDialog()
+    {
+        if (_busy)
+        {
             return;
         }
 
-        var next = _model?.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
-        if (next is not null && next.Order > completedOrder)
+        _dialogOpen = false;
+        _dialogError = null;
+        _choice = null;
+    }
+
+    private void DismissCarriedOver() => _showCarriedOver = false;
+
+    private async Task GeneratePlanAsync()
+    {
+        if (_busy || _choice is null)
         {
-            _toastMessage = Culture.Format("CareerDash.ToastCompleted", completedOrder, next.Order);
             return;
         }
 
-        _toastMessage = Culture.Format("CareerDash.ToastCompletedSimple", completedOrder);
-    }
-
-    private void ApplyDashboard(CareerDashboardModel model, bool expandActive)
-    {
-        _model = model;
-        _dreamDraft = model.DreamRoleTitle;
-        _selectedStepId = model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Id
-                          ?? model.Steps.LastOrDefault(s => s.Status == CareerStepStatus.Completed)?.Id
-                          ?? model.Steps.FirstOrDefault()?.Id;
-        _cardExpanded = expandActive && !model.GoalReached;
-    }
-
-    private void SelectStep(string id)
-    {
-        _selectedStepId = id;
-        _cardExpanded = false;
-    }
-
-    private void ExpandCard() => _cardExpanded = true;
-
-    private void CollapseCard() => _cardExpanded = false;
-
-    private bool IsLineFilled(CareerPathDashboardStep step)
-    {
-        if (_model is null)
+        _busy = true;
+        _error = null;
+        var choice = _choice;
+        try
         {
-            return false;
+            var plan = await Api.GenerateCareerPathAsync(
+                choice.CatalogKey,
+                choice.FreeText,
+                force: false,
+                planLanguage: Culture.Language);
+            if (plan is null)
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
+
+            ApplyPlan(plan);
+            _choice = null;
+            _archived = await Api.GetArchivedCareerPlansAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ChangeDreamAsync()
+    {
+        if (_busy || _choice is null)
+        {
+            return;
         }
 
-        if (_model.GoalReached)
+        _busy = true;
+        _dialogError = null;
+        var choice = _choice;
+        try
         {
-            return true;
-        }
+            var plan = await Api.GenerateCareerPathAsync(
+                choice.CatalogKey,
+                choice.FreeText,
+                force: true,
+                planLanguage: Culture.Language);
+            if (plan is null)
+            {
+                _dialogError = Culture["Common.Error"];
+                return;
+            }
 
-        var activeOrder = _model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)?.Order
-                          ?? _model.Steps.Count(s => s.Status == CareerStepStatus.Completed) + 1;
-        return step.Order <= activeOrder;
+            ApplyPlan(plan);
+            _showCarriedOver = plan.CarriedOverCount > 0;
+            _announcement = Culture["CareerDream.Ready"];
+            _dialogOpen = false;
+            _choice = null;
+            _archived = await Api.GetArchivedCareerPlansAsync();
+        }
+        catch (Exception ex)
+        {
+            _dialogError = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
-    private string StepperLabel(CareerPathDashboardStep step, CareerPathDashboardStep? active)
+    private async Task RegenerateForLanguageAsync()
     {
-        if (step.Order == 1)
+        if (_busy || !_plan.HasPlan)
         {
-            return Culture["CareerDash.StepperBasis"];
+            return;
         }
 
-        if (active is not null && string.Equals(step.Id, active.Id, StringComparison.Ordinal))
+        _busy = true;
+        _error = null;
+        try
         {
-            return Culture["CareerDash.StepperNow"];
-        }
+            var plan = await Api.GenerateCareerPathAsync(
+                catalogKey: null,
+                freeText: _plan.DreamTitle,
+                force: true,
+                planLanguage: Culture.Language);
+            if (plan is null)
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
 
-        return "";
+            ApplyPlan(plan);
+        }
+        catch (Exception ex)
+        {
+            _error = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
-    private string CollapsedEyebrow(CareerPathDashboardStep step, int stepCount)
+    private async Task RestoreAsync(Guid planId)
     {
-        if (step.Status == CareerStepStatus.Active)
+        if (_busy)
         {
-            return Culture.Format("CareerDash.NextStepEyebrow", step.Order, stepCount);
+            return;
         }
 
-        return step.Status == CareerStepStatus.Completed
-            ? Culture.Format("CareerDash.StepEyebrowCompleted", step.Order, stepCount)
-            : Culture.Format("CareerDash.StepEyebrowOpen", step.Order, stepCount);
+        _busy = true;
+        _error = null;
+        try
+        {
+            var plan = await Api.RestoreArchivedCareerPlanAsync(planId);
+            if (plan is null)
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
+
+            ApplyPlan(plan);
+            _announcement = Culture["CareerDream.Ready"];
+            _archived = await Api.GetArchivedCareerPlansAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
-    private static string StatusClass(CareerStepStatus status) => status switch
+    private void ApplyPlan(CareerPathPlanApiModel? plan)
     {
-        CareerStepStatus.Completed => "is-completed",
-        CareerStepStatus.Active => "is-active",
-        _ => "is-open-step"
-    };
+        _planApi = plan;
+        _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel);
+    }
 
-    private RenderFragment HorizonArt() => __builder =>
-    {
-        <svg class="horizon-hero__svg" viewBox="0 0 390 190" preserveAspectRatio="xMidYMid slice" focusable="false">
-            <defs>
-                <linearGradient id="horizon-sky" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#0f2d5c"/>
-                    <stop offset="48%" stop-color="#5b3a7a"/>
-                    <stop offset="78%" stop-color="#c44a3a"/>
-                    <stop offset="100%" stop-color="#f54a1b"/>
-                </linearGradient>
-                <radialGradient id="horizon-sun-glow" cx="78%" cy="78%" r="42%">
-                    <stop offset="0%" stop-color="#ffd27a" stop-opacity="0.9"/>
-                    <stop offset="55%" stop-color="#f54a1b" stop-opacity="0.35"/>
-                    <stop offset="100%" stop-color="#f54a1b" stop-opacity="0"/>
-                </radialGradient>
-            </defs>
-            <rect width="390" height="190" fill="url(#horizon-sky)"/>
-            <circle cx="48" cy="36" r="1.4" fill="#fff" opacity="0.55"/>
-            <circle cx="112" cy="22" r="1.1" fill="#fff" opacity="0.4"/>
-            <circle cx="168" cy="48" r="1.3" fill="#fff" opacity="0.5"/>
-            <circle cx="230" cy="28" r="1" fill="#fff" opacity="0.35"/>
-            <circle cx="290" cy="42" r="1.2" fill="#fff" opacity="0.45"/>
-            <circle cx="330" cy="18" r="1" fill="#fff" opacity="0.3"/>
-            <rect width="390" height="190" fill="url(#horizon-sun-glow)"/>
-            <path d="M0 148 C70 128 120 156 180 142 C240 128 280 150 390 136 L390 190 L0 190 Z" fill="#2a1a4a" opacity="0.92"/>
-            <path d="M0 162 C90 148 150 168 220 156 C290 144 340 160 390 152 L390 190 L0 190 Z" fill="#1a1238" opacity="0.95"/>
-            <circle cx="318" cy="148" r="28" fill="#ffb347"/>
-            <circle cx="318" cy="148" r="22" fill="#ffd27a"/>
-        </svg>
-    };
+    private string FailureMessage(Exception ex)
+        => ex is CareerApiError api
+            ? CareerPathService.ErrorMessage(key => Culture[key], api)
+            : Culture["Common.Error"];
 }
