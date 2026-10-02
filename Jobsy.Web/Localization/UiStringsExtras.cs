@@ -454,7 +454,7 @@ internal static class UiStringsExtras
         ["Partner.DownloadFlyer"] = "Download PDF-flyer",
         ["Partner.UspsTitle"] = "Waarom Lobsy",
         ["Partner.Usp1"] = "Kandidaten uit de buurt, op reistijd",
-        ["Partner.Usp2"] = "Je vacature op de banenkaart, met een highlight erbij",
+        ["Partner.Usp2"] = "Je vacature op de banenkaart, en je kunt hem uitlichten",
         ["Partner.Usp3"] = "Tokens i.p.v. abonnementen — betaal per plaatsing",
         ["Partner.Usp4"] = "Gratis start-highlight t.w.v. {0} tokens via salescode",
         ["Partner.RatesTitle"] = "Actuele tarieven per vacaturetype",

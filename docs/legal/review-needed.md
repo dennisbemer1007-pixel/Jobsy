@@ -134,3 +134,37 @@ optional e-mail address and never an IP address.
 | No IP address | `ContentReport` (no IP column); rate limit `report` partitions by IP in memory only | 5 per hour and 20 per day per IP; the key is never persisted. | Would a retained IP be needed as evidence for an abuse policy (art. 23), and if so on what basis and for how long? |
 | Retention | `PrivacyConstants.ContentReportRetentionDays = 365`, `ContentReportEmailRetentionDays = 30` | The reporter e-mail is cleared 30 days after the decision; the whole report is purged 365 days after the decision. Open reports are kept until decided. Both periods appear in the privacy retention table (`Legal.Retention.ContentReports`). | Is 365 days after the decision long enough to defend an appeal or an authority request, and is clearing the e-mail after 30 days compatible with a 6-month objection window (we then can no longer reach the notifier)? |
 | Log redaction | `PlatformLog` `report.created` | Stores report id, type and reason; the e-mail is redacted (`EmailServiceStub.RedactEmail`). The admin audit row (`report.decided`) holds the decision and the report ids and no free text. | — |
+
+## Go-live checklist (public-pages 10)
+
+Everything below must be reviewed by a lawyer **before these texts go to `main` / lobsy.nl**.
+Merging to `acceptatie` is fine. The sections above hold the detail; this is the short list the
+stack-end report (`docs/reports/public-pages-stack-report.md`) points at.
+
+| # | Document | Section | The question in one line |
+|---|---|---|---|
+| 1 | Privacy | §1 `wie` | Is "we have no data protection officer" correct for our scale and the data we process (test results of minors, talent pool)? |
+| 2 | Privacy | §4 `delen` | Per US party: is the transfer basis right (DPF vs SCC)? Render says SCC with an EU region and a US parent; Pingen leans on the Swiss adequacy decision. |
+| 3 | Privacy | §4 `delen` | Must the Sentry row name the actual DSN region (EU) instead of "EU or United States, depending on our setting"? |
+| 4 | Privacy | §5 `bewaren` | Is keeping a hash of a deleted account's e-mail (to honour an unsubscribe) defensible, and is 2 years for the access log proportionate? |
+| 5 | Privacy | §6 `cookies` | Is `lobsy_sales_ref` functional or does it need consent? |
+| 6 | Privacy | §7 `ai` | Is the "no automated decision-making" wording strong enough for AVG art. 22, given the Top-10 ranking and the Cultuur Fit? |
+| 7 | Privacy / gebruiksvoorwaarden | §9 `jonger` / §2 `voor-wie` | Is 13+ with parental consent under 16 acceptable under the Dutch implementation of AVG art. 8, and is mailing a parent enough verification? |
+| 8 | Algemene voorwaarden | §11 `aansprakelijkheid` | Is a € 250 floor with a 12-month ceiling proportionate B2B, and must indirect / consequential damage be named explicitly (D6)? |
+| 9 | Algemene voorwaarden | §5 `tokens` / §6 `betalen` | Is "excl. btw on the tariff page, incl. btw in the checkout" correct B2B, and is "no refund of unused tokens" enforceable against a small business? |
+| 10 | Gebruiksvoorwaarden | §6 `bedenktijd` | Does the waiver sentence satisfy art. 6:230m/6:230v BW, and who gives the waiver for a minor — the parent? (D7) |
+| 11 | Gebruiksvoorwaarden | §11 `aansprakelijkheid` | Are the remaining exclusions unfair terms now that a paid extra exists? |
+| 12 | Both terms | §8 `melden` | Is Lobsy an online platform under the DSA at this scale, and are 5 working days, a 6-month objection window and one support mailbox enough (art. 11, 12, 16, 17, 20)? |
+| 13 | DSA mails | `ContentRemoved` / `ReportDecided` | Art. 17(3) lists mandatory elements (facts, automated means, ground, out-of-court redress). Our mail names only the internal objection route. Which elements must we add, and must decisions go into the DSA transparency database? |
+| 14 | DSA retention | `PrivacyConstants` | Is 365 days after the decision long enough, and does clearing the reporter e-mail after 30 days clash with the 6-month objection window? |
+| 15 | DSA misuse | `Report.FalseWarning` | Do we need an explicit art. 23 misuse policy and a suspension mechanism before launch? |
+
+### Not a legal question, but it blocks a complete review
+
+- The `Legal:*` values are empty on Render, so the identity card and the footer legal line show only
+  "Lobsy" and the support address. A lawyer reading the page today sees an incomplete identity
+  block (D1, D14). Dennis fills them (see the stack-end report).
+- `privacy@lobsy.nl` must be a real, monitored inbox before go-live, otherwise privacy questions
+  keep going to support@ (D14).
+- The pl / ro / ar "In het kort" blocks are dev-team drafts awaiting a native review
+  (`docs/i18n/public-pages-review.md`). Only the Dutch text is official (D3).

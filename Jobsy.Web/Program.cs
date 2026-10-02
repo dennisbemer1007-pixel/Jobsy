@@ -396,8 +396,9 @@ app.UseWhen(
     ctx => ShouldReExecuteStatusPages(ctx),
     branch => branch.UseStatusCodePagesWithReExecute("/status/{0}"));
 
-// Re-run endpoint routing after status-code re-execute rewrites the path to /status/{code}.
-// WebApplication would otherwise only route once at the start of the pipeline.
+// Routing must run *after* the re-execute so the rewritten /status/{code} request still matches an
+// endpoint. With the implicit UseRouting (at the top of the pipeline) a 404 re-executed into an
+// empty body, because the cleared endpoint was never resolved again.
 app.UseRouting();
 
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
