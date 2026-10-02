@@ -50,45 +50,12 @@ jobs:
           # otherwise launch browsers during this phase and fail.
           # xunit.v3 + MTP (.NET 10): pass filters as first-class options (no `--` separator).
           # After `--`, --results-directory was misread as a project directory and zero tests ran.
+          # One wildcard covers every *Playwright* class (allowlist was incomplete and leaked failures).
           mkdir -p test-results
           dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
             --results-directory test-results \
             --report-trx \
-            --filter-not-class '*MobileSmokePlaywrightTests' \
-            --filter-not-class '*Mobile_candidate_tab_switching*' \
-            --filter-not-class '*Blazor_circuit_starts*' \
-            --filter-not-class '*Acc2709PlaywrightTests' \
-            --filter-not-class '*OnboardingWizardV2PlaywrightTests' \
-            --filter-not-class '*BanenkaartPersistSizePlaywrightTests' \
-            --filter-not-class '*BanenkaartMapReusePlaywrightTests' \
-            --filter-not-class '*BanenkaartV3PlaywrightTests' \
-            --filter-not-class '*BanenkaartClusterCardPlaywrightTests' \
-            --filter-not-class '*FilterSheetFooterPlaywrightTests' \
-            --filter-not-class '*BanenkaartCookiePaddingPlaywrightTests' \
-            --filter-not-class '*BanenkaartListRerenderPlaywrightTests' \
-            --filter-not-class '*CandidateTabStabilityPlaywrightTests' \
-            --filter-not-class '*JobMapPinsClustersPlaywrightTests' \
-            --filter-not-class '*CandidateApplicationsPlaywrightTests' \
-            --filter-not-class '*MijnDnaAndTestsMobilePlaywrightTests' \
-            --filter-not-class '*LoginPlaywrightTests' \
-            --filter-not-class '*GratisDnaPlaywrightTests' \
-            --filter-not-class '*MainLayoutTtfbPlaywrightTests' \
-            --filter-not-class '*PersistLcpPlaywrightTests' \
-            --filter-not-class '*BanenkaartMapPerfPlaywrightTests' \
-            --filter-not-class '*LandingPlaywrightTests' \
-            --filter-not-class '*EmailRenderPlaywrightTests' \
-            --filter-not-class '*AuthA11yPlaywrightTests' \
-            --filter-not-class '*AuthE2EPlaywrightTests' \
-            --filter-not-class '*AuthMfaE2EPlaywrightTests' \
-            --filter-not-class '*AuthProviderE2EPlaywrightTests' \
-            --filter-not-class '*AuthRtlKeyboardPlaywrightTests' \
-            --filter-not-class '*CspSmokePlaywrightTests' \
-            --filter-not-class '*StatusPagesPlaywrightTests' \
-            --filter-not-class '*PublicPagesPlaywrightTests' \
-            --filter-not-class '*AdminOrganisationsPlaywrightTests' \
-            --filter-not-class '*AdminShellPlaywrightTests' \
-            --filter-not-class '*AdminUsersPlaywrightTests' \
-            --filter-not-class '*AdminEmailPreviewSmokeTests'
+            --filter-not-class '*Playwright*'
 
       - name: Install Playwright Chromium
         run: |
@@ -136,7 +103,8 @@ jobs:
             --filter-class '*PublicPagesPlaywrightTests' \
             --filter-class '*AdminOrganisationsPlaywrightTests' \
             --filter-class '*AdminShellPlaywrightTests' \
-            --filter-class '*AdminUsersPlaywrightTests'
+            --filter-class '*AdminUsersPlaywrightTests' \
+            --filter-class '*CandidateTestsPlaywrightTests'
 
       - name: Upload test results
         if: always()
