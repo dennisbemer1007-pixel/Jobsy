@@ -2,15 +2,15 @@
 
 ## Unreleased
 
-### Ops
-- Acceptatie-only test accounts CLI (`dotnet Jobsy.Api.dll test-accounts seed|cleanup|status`): hard deployment guard, `IsTestAccount`/`IsTestData` flags (migration `AddTestAccountFlags`), MFA exemption while the guard is active, test↔real boundary helpers, admin “Testaccount” badge, mail drop for test→real. Passwords only from `TestAccounts__Password__*` env vars. See `docs/deploy-render.md` and `docs/testaccounts-followups.md`.
-
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.
 
 - Auth roles/policy (02): SalesManager local MFA required (Ambassadeur not); admins blocked from Google / personal Microsoft; stale privileged sessions without MFA re-login instead of dead-end; device session AuthMethod. Migration `AddDeviceSessionAuthMethod`.
 
 - Auth hotfix: per-visitor trusted client IP for Web→API auth rate limits; typed login/2FA failures (`invalid_credentials`, `locked_out`, `rate_limited`, `invalid_code`, `challenge_expired`, `mfa_locked`); visible “Even pauze” lockout with counter reset and max 1 lockout mail / 24 h; unknown-e-mail lockout parity; dummy-hash timing; 2FA attempt limits + TOTP replay block; recovery-code-used mail; CSP-safe MFA scripts; “Blijf ingelogd” off by default. Migration `AddAuthHardening`.
+
+### Ops
+- Acceptatie-only test accounts CLI (`dotnet Jobsy.Api.dll test-accounts seed|cleanup|status`): hard deployment guard, `IsTestAccount`/`IsTestData` flags (migration `AddTestAccountFlags`), MFA exemption while the guard is active, test↔real boundary helpers, admin “Testaccount” badge, mail drop for test→real. Passwords only from `TestAccounts__Password__*` env vars. See `docs/deploy-render.md` and `docs/testaccounts-followups.md`.
 
 
 ## Candidate tests stack (02–07)
