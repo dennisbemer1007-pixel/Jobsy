@@ -70,25 +70,30 @@ nl and en are final (copy from `pb-d03`, `pb-d05`, `pb-m05`, `pb-m08`). pl / ro 
 | Key | Notes |
 |---|---|
 | `Privacy.Doc.Lead` | pl / ro / ar draft |
-| `Privacy.Sec.verantwoordelijk.Title` | pl / ro / ar draft |
-| `Privacy.Sec.verantwoordelijk.Summary` | pl / ro / ar draft |
+| `Privacy.Sec.wie.Title` | pl / ro / ar draft |
+| `Privacy.Sec.wie.Summary` | pl / ro / ar draft |
 | `Privacy.Sec.gegevens.Title` | pl / ro / ar draft |
-| `Privacy.Sec.grondslag.Title` | pl / ro / ar draft |
+| `Privacy.Sec.gegevens.Summary` | pl / ro / ar draft |
+| `Privacy.Sec.waarom.Title` | pl / ro / ar draft |
+| `Privacy.Sec.waarom.Summary` | pl / ro / ar draft |
 | `Privacy.Sec.delen.Title` | pl / ro / ar draft |
 | `Privacy.Sec.delen.Summary` | pl / ro / ar draft |
-| `Privacy.Sec.locatie.Title` | pl / ro / ar draft |
-| `Privacy.Sec.jeugdige-arbeid.Title` | pl / ro / ar draft |
-| `Privacy.Sec.tests.Title` | pl / ro / ar draft |
 | `Privacy.Sec.bewaren.Title` | pl / ro / ar draft |
 | `Privacy.Sec.bewaren.Summary` | pl / ro / ar draft |
-| `Privacy.Sec.salesmanager.Title` | pl / ro / ar draft |
 | `Privacy.Sec.cookies.Title` | pl / ro / ar draft |
+| `Privacy.Sec.cookies.Summary` | pl / ro / ar draft |
 | `Privacy.Sec.ai.Title` | pl / ro / ar draft |
-| `Privacy.Sec.beveiliging.Title` | pl / ro / ar draft |
+| `Privacy.Sec.ai.Summary` | pl / ro / ar draft |
+| `Privacy.Sec.tests.Title` | pl / ro / ar draft |
+| `Privacy.Sec.tests.Summary` | pl / ro / ar draft |
+| `Privacy.Sec.jonger.Title` | pl / ro / ar draft |
+| `Privacy.Sec.jonger.Summary` | pl / ro / ar draft |
 | `Privacy.Sec.rechten.Title` | pl / ro / ar draft |
 | `Privacy.Sec.rechten.Summary` | pl / ro / ar draft |
-| `Privacy.Sec.jonger.Title` | pl / ro / ar draft |
+| `Privacy.Sec.beveiliging.Title` | pl / ro / ar draft |
+| `Privacy.Sec.beveiliging.Summary` | pl / ro / ar draft |
 | `Privacy.Sec.wijzigingen.Title` | pl / ro / ar draft |
+| `Privacy.Sec.wijzigingen.Summary` | pl / ro / ar draft |
 
 ### Terms.* (section titles and “In het kort”, shared by both terms pages)
 
@@ -124,4 +129,24 @@ nl and en are final (copy from `pb-d03`, `pb-d05`, `pb-m05`, `pb-m08`). pl / ro 
 | `Terms.Sec.wijzigingen.Title` | pl / ro / ar draft |
 | `Terms.Sec.recht.Title` | pl / ro / ar draft |
 
-Later files (03+) add their new Privacy.* / Terms.* rows here.
+## 03 — privacy statement (`UiStringsLegal.cs`)
+
+The Dutch body of the privacy statement is the official version and is not translated (D3).
+These are the chrome strings the rewrite added.
+
+| Key | Notes |
+|---|---|
+| `Legal.Processors.Basis` | pl / ro / ar draft |
+| `Legal.Transfer.Eu` | pl / ro / ar draft |
+| `Legal.Transfer.Dpf` | pl / ro / ar draft |
+| `Legal.Transfer.Scc` | pl / ro / ar draft |
+| `Legal.Transfer.Adequacy` | pl / ro / ar draft |
+| `Legal.Cookies.Name` | pl / ro / ar draft |
+| `Legal.Cookies.Why` | pl / ro / ar draft |
+| `Legal.Cookies.HowLong` | pl / ro / ar draft |
+| `Legal.Cookies.Needed` | pl / ro / ar draft |
+| `Legal.Processor.pingen.Planned` | pl / ro / ar draft |
+| `Legal.Processor.{render, cloudflare, resend, sentry, mollie, pingen, openai, cursor, google-ms, kvk, routing, maps, push, video}.Purpose` | pl / ro / ar draft (14 keys) |
+| `Legal.Processor.{same 14 ids}.Data` | pl / ro / ar draft (14 keys) |
+
+Later files (04+) add their new Privacy.* / Terms.* rows here.

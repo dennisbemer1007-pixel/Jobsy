@@ -13,6 +13,7 @@
                     <th scope="col">@Culture["Legal.Processors.Where"]</th>
                     <th scope="col">@Culture["Legal.Processors.Purpose"]</th>
                     <th scope="col">@Culture["Legal.Processors.Data"]</th>
+                    <th scope="col">@Culture["Legal.Processors.Basis"]</th>
                 </tr>
             </thead>
             <tbody>
@@ -23,12 +24,13 @@
                             @row.Name
                             @if (row.Status == ProcessorStatus.Planned)
                             {
-                                <span class="pp-table__planned">(@Culture["Legal.Processors.Planned"])</span>
+                                <span class="pp-table__planned">(@Culture[row.PlannedNoteKey ?? "Legal.Processors.Planned"])</span>
                             }
                         </th>
                         <td data-label="@Culture["Legal.Processors.Where"]">@row.Region</td>
                         <td data-label="@Culture["Legal.Processors.Purpose"]">@Culture[row.PurposeKey]</td>
                         <td data-label="@Culture["Legal.Processors.Data"]">@Culture[row.DataKey]</td>
+                        <td data-label="@Culture["Legal.Processors.Basis"]">@Culture[row.TransferBasisKey ?? LegalProcessors.InsideEu]</td>
                     </tr>
                 }
             </tbody>

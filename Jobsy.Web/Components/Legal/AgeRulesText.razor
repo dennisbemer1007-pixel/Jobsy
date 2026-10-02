@@ -1,0 +1,17 @@
+@using Jobsy.Core.Privacy
+
+@* The one age sentence of the platform (D11). Privacy §9 and gebruiksvoorwaarden §2 both render this. *@
+<p>
+    Je mag Lobsy gebruiken vanaf @MinimumAge jaar.
+    Ben je jonger dan @ParentalAge jaar? Dan vragen we eerst toestemming aan je ouder of voogd
+    voor de tests en de AI-analyse.
+    De talentpool is vanaf @TalentPoolAge jaar.
+</p>
+
+@code {
+    private static int MinimumAge => CandidateConsentRules.MinimumCandidateAge;
+
+    private static int ParentalAge => CandidateConsentRules.ParentalConsentAge;
+
+    private static int TalentPoolAge => CandidateConsentRules.TalentPoolMinimumAge;
+}

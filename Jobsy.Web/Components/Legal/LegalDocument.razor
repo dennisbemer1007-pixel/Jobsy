@@ -70,6 +70,10 @@
             {
                 var headingId = $"{item.Id}-title";
                 <section id="@item.Id" class="pp-sec" aria-labelledby="@headingId">
+                    @foreach (var alias in item.AliasIds)
+                    {
+                        <span id="@alias" aria-hidden="true"></span>
+                    }
                     <h2 id="@headingId" class="pp-sec__title">@SectionHeading(item)</h2>
 
                     @if (!string.IsNullOrWhiteSpace(item.SummaryKey))
