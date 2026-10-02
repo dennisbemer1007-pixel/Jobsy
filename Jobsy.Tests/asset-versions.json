@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "401465e185d748c19b08fc8798990685586823789538cce40211b6e65f8a28e2",
-    "v": "20261002-kp01"
+    "sha256": "10a456c9dfd90ebd1872ad983d16f1342575123921f603a598c7545f12f186e9",
+    "v": "20261002-kp03"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -40,8 +40,8 @@
     "v": "20260930-landing-6"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "6f142bfbfee4d053dca8d4a00e0a455c20e0b51662450f4eefbfbc259f110718",
-    "v": "20261002-kp02"
+    "sha256": "43dbf1cca344910a02c2c9a4b4c3f17db276ddd6bc5c4dd193b5652413bde55f",
+    "v": "20261002-kp03"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
