@@ -34,15 +34,17 @@ public class EmployerLinks11Tests
     [Fact]
     public void Targets_today_routes_absent_case()
     {
-        Assert.Equal("/home", EmployerLinks.Home);
+        // Werkgever redesign: EmployerLinks is the single source of /werkgever/* deep-links
+        // (legacy /employer/* and /branch/* must not return from this helper).
+        Assert.Equal("/werkgever", EmployerLinks.Home);
         Assert.Equal("/register/verifieren", EmployerLinks.Verify);
         Assert.Equal("/register/verifieren/brief", EmployerLinks.VerifyBrief);
         Assert.Equal("/register/bedrijf", EmployerLinks.AboutCompany);
-        Assert.Equal("/employer/vacancies", EmployerLinks.Vacancies);
-        Assert.Equal("/branch/vacancies", EmployerLinks.VacanciesForRole(isBranchManagerOnly: true));
-        Assert.Equal("/employer/users", EmployerLinks.Users);
-        Assert.Equal("/employer/branches", EmployerLinks.Branches);
-        Assert.Equal("/employer/culture", EmployerLinks.CultureProfile);
+        Assert.Equal("/werkgever/vacatures", EmployerLinks.Vacancies);
+        Assert.Equal("/werkgever/vacatures", EmployerLinks.VacanciesForRole(isBranchManagerOnly: true));
+        Assert.Equal("/werkgever/organisatie/team", EmployerLinks.Users);
+        Assert.Equal("/werkgever/organisatie/vestigingen", EmployerLinks.Branches);
+        Assert.Equal("/werkgever/organisatie/profiel?tab=cultuur", EmployerLinks.CultureProfile);
     }
 }
 
