@@ -1,0 +1,10 @@
+maplibre-gl 5.24.0 (3-Clause BSD)
+Source: https://www.npmjs.com/package/maplibre-gl/v/5.24.0
+Vendored CSP build:
+  dist/maplibre-gl-csp.js
+  dist/maplibre-gl-csp-worker.js
+  dist/maplibre-gl.css
+  + accompanying .map
+
+Blocked for 6.x: MapLibre 6 is ESM-only and no longer publishes maplibre-gl-csp.js /
+maplibre-gl.js UMD bundles (changelog #6254). See docs/code-health/10-maplibre6-esm-blocker.md.
