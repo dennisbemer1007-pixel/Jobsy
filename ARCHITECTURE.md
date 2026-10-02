@@ -8,4 +8,4 @@ Historical notes below are superseded; kept only so old links do not 404.
 
 ## Legacy summary (stale)
 
-Prefer `docs/ARCHITECTURE.md`. Stack today: .NET 9 Blazor Server + ASP.NET Core API + PostgreSQL/PostGIS + **MapLibre** on Render. Product brand **Lobsy**; code name **Jobsy**.
+Prefer `docs/ARCHITECTURE.md`. Stack today: .NET 10 Blazor Server + ASP.NET Core API + PostgreSQL/PostGIS + **MapLibre** on Render. Product brand **Lobsy**; code name **Jobsy**.

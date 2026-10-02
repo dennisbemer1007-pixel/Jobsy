@@ -6,7 +6,7 @@ Hyper-local job matching for Westland and The Hague (and beyond). Candidates sea
 
 | Layer | Choice |
 |-------|--------|
-| Frontend | .NET 9 **Blazor Server** (`Jobsy.Web`) |
+| Frontend | .NET 10 **Blazor Server** (`Jobsy.Web`) |
 | API | ASP.NET Core Web API (`Jobsy.Api`) |
 | Domain / data | `Jobsy.Core` ← `Jobsy.Infrastructure` (EF Core, PostgreSQL + PostGIS) |
 | Map | **MapLibre** GL (local CSP build) + OpenFreeMap tiles |
@@ -14,7 +14,7 @@ Hyper-local job matching for Westland and The Hague (and beyond). Candidates sea
 
 ## Run locally
 
-**Prerequisites:** [.NET 9 SDK](https://dotnet.microsoft.com/), Docker (Postgres/PostGIS), `dotnet tool restore`.
+**Prerequisites:** [.NET 10 SDK](https://dotnet.microsoft.com/), Docker (Postgres/PostGIS), `dotnet tool restore`.
 
 **Option A — CI-style stack** (API `:5200` + Web `:5201`, seeded Development):
 
