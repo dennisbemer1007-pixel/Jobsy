@@ -179,9 +179,9 @@ public static class PageHelpDocs
 
         ["/candidate/hoe-werkt-lobsy"] = new(
             "Hoe werkt Lobsy (kandidaat)",
-            "Stapsgewijze uitleg voor kandidaten: banenkaart, profiel, bewaren, solliciteren en opvolging.",
-            "Lees de stappen en ga daarna door naar de banenkaart of je profiel. Eerste keer afronden markeert de uitleg als gezien.",
-            "Weten hoe je een baan vindt en solliciteert zonder te verdwalen."),
+            "Lobsy als vijf stenen: de ontdekkingsreis, Mijn Paspoort, Carrière, Banenkaart en Sollicitaties, met per steen of die al klaar is.",
+            "Kies zelf een steen en ga daar verder; de kreeft staat op de steen waar je nu bent. ‘Ik snap het’ markeert de uitleg als gezien en je blijft op de pagina.",
+            "In twintig seconden zien wat Lobsy voor je doet en waar je verder kunt."),
 
         ["/candidate/liked"] = new(
             "Bewaard",
@@ -262,9 +262,9 @@ public static class PageHelpDocs
 
         ["/carriere"] = new(
             "Mijn carrière",
-            "Kies je stip op de horizon en zie je voortgang via een uitklapbaar stappenplan.",
-            "Selecteer een droombaan. De voortgangsbalk toont je totale match. Klap stappen open voor skills gap, competenties en een concrete actie (cursussen of vacatures).",
-            "Loopbaandoel scherp houden en gericht doorgroeien."),
+            "Kies je droombaan en klim steen voor steen omhoog, van waar je nu bent naar het licht.",
+            "Kies een beroep uit de suggesties of zoek er zelf een. Lobsy maakt een plan met kleine stappen. Elke stap die je afrondt geeft een nieuwe schaal. Wisselen van droombaan mag altijd: je oude plan bewaren we 30 dagen en wat je haalde blijft staan.",
+            "Rustig doorgroeien met kleine stappen die kloppen."),
 
         ["/profiel"] = new(
             "Profiel",
@@ -274,8 +274,8 @@ public static class PageHelpDocs
 
         ["/candidate/talent-contacts"] = new(
             "Contactverzoeken",
-            "Berichten van werkgevers uit de anonieme talentpool.",
-            "Reageer binnen 48 uur. Bij akkoord worden contactgegevens gedeeld. Als je al voorzien bent, kan de werkgever het token terugkrijgen.",
+            "Werkgevers die je willen spreken. Jij beslist per verzoek.",
+            "Zeg je ja, dan zie je eerst in een venster precies wat de werkgever krijgt: je naam, e-mail en telefoon. Pas na dat 'ja' wordt er iets gedeeld. Zeg je niets, dan wordt er niets gedeeld; nee zeggen laat alleen 'geen interesse' zien.",
             "Contact leggen zonder dat je 06 of e-mail publiek staat."),
 
         ["/werkgever/talentpool"] = new(

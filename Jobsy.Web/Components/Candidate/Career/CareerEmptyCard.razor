@@ -1,0 +1,52 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<section class="career-card career-card--empty" aria-labelledby="career-title">
+    <p class="career-card__eyebrow">@Culture["Career.Eyebrow"]</p>
+    <h1 id="career-title" tabindex="-1">@Culture["Career.Empty.Title"]</h1>
+    <p class="career-card__lead">@Culture["Career.Empty.Lead"]</p>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="career-card__error" role="alert">@ErrorText</p>
+    }
+
+    @if (Busy)
+    {
+        <LobsyBubble Text="@Culture["Career.Generating"]" Variant="LobsyBubble.BubbleVariant.Inline" />
+    }
+
+    <CareerDreamPicker Id="career-empty-dream"
+                       Suggestions="@Suggestions"
+                       Disabled="@Busy"
+                       OnSearch="@OnSearch"
+                       OnChoice="@OnChoice" />
+
+    <p class="career-card__discovery career-only-desktop">
+        <a href="@DiscoveryHref">@Culture["Career.Empty.DiscoveryHint"]</a>
+    </p>
+
+    <div class="career-card__actions career-card__actions--sticky">
+        <button type="button"
+                class="career-btn career-btn--primary"
+                disabled="@(Busy || !HasChoice)"
+                aria-busy="@(Busy ? "true" : "false")"
+                @onclick="OnSubmit">
+            @Culture["Career.Empty.Cta"]
+        </button>
+    </div>
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool HasChoice { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public string DiscoveryHref { get; set; } = "/candidate/ontdekkingsreis";
+    [Parameter] public EventCallback<CareerDreamChoice?> OnChoice { get; set; }
+    [Parameter] public EventCallback OnSubmit { get; set; }
+    [Parameter] public Func<string, CancellationToken, Task<IReadOnlyList<CareerDreamOptionApiItem>>>? OnSearch { get; set; }
+}

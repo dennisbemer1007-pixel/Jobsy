@@ -457,6 +457,7 @@ public static class DependencyInjection
         services.AddScoped<ICareerCompassGenerationService, CareerCompassGenerationService>();
         services.AddScoped<ICareerPathPlanGenerationService, CareerPathPlanGenerationService>();
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();
+        services.AddScoped<CareerGenerationGuard>();
         services.AddScoped<ICandidateOnboardingService, CandidateOnboardingService>();
         services.AddHttpClient(CareerPathPlanGenerationService.HttpClientName, client =>
         {
@@ -571,6 +572,7 @@ public static class DependencyInjection
         services.AddHostedService<UnverifiedCompanyCleanupHostedService>();
         services.AddHostedService<AccessRequestEscalationHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
+        services.AddHostedService<CareerPlanArchiveCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();

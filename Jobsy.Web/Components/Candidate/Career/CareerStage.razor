@@ -1,0 +1,73 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.Journey
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<CareerClimbScene Variant="@Variant"
+                  ShowLobster="@ShowLobster"
+                  Mobile="false"
+                  Stones="@DesktopStones"
+                  CurrentIndex="@CurrentIndex"
+                  Celebrate="@Celebrate"
+                  PlatesShed="@PlatesShed"
+                  FallingPlate="@FallingPlate"
+                  LobsterLabel="@LobsterLabel"
+                  LobsterSize="@LobsterSizeDesktop" />
+
+<div class="career-band career-only-mobile">
+    <CareerClimbScene Variant="@Variant"
+                      ShowLobster="@ShowLobster"
+                      Mobile="true"
+                      Stones="@DesktopStones"
+                      CurrentIndex="@CurrentIndex"
+                      Celebrate="@Celebrate"
+                      PlatesShed="@PlatesShed"
+                      FallingPlate="@FallingPlate"
+                      LobsterLabel="@LobsterLabel"
+                      LobsterSize="@LobsterSizeMobile" />
+    <div class="career-band__say">
+        <LobsyBubble Text="@BubbleMobile" Variant="LobsyBubble.BubbleVariant.Scene" />
+    </div>
+</div>
+
+<div class="career-stage">
+    <div class="career-stage__rail career-only-desktop">
+        @RailContent
+    </div>
+
+    <div class="career-stage__card">
+        @if (!string.IsNullOrWhiteSpace(BubbleDesktop))
+        {
+            <div class="career-stage__say career-only-desktop">
+                <LobsyBubble Text="@BubbleDesktop" Variant="LobsyBubble.BubbleVariant.Scene" />
+            </div>
+        }
+        @ChildContent
+    </div>
+
+    <div class="career-stage__climb" aria-hidden="true"></div>
+</div>
+
+@code {
+    [Parameter] public ClimbVariant Variant { get; set; } = ClimbVariant.Climb;
+
+    /// <summary>05 §2: keep the lobster in the stones scene, standing on the <c>now</c> stone.</summary>
+    [Parameter] public bool ShowLobster { get; set; }
+
+    [Parameter] public IReadOnlyList<ClimbStone> DesktopStones { get; set; } = [];
+    [Parameter] public int CurrentIndex { get; set; }
+    [Parameter] public bool Celebrate { get; set; }
+    [Parameter] public int PlatesShed { get; set; } = 4;
+
+    /// <summary>The old-shell plate that falls once during the growth moment (03 §5).</summary>
+    [Parameter] public int? FallingPlate { get; set; }
+
+    [Parameter] public string LobsterLabel { get; set; } = "";
+    [Parameter] public int LobsterSizeDesktop { get; set; } = 118;
+    [Parameter] public int LobsterSizeMobile { get; set; } = 62;
+    [Parameter] public string BubbleDesktop { get; set; } = "";
+    [Parameter] public string BubbleMobile { get; set; } = "";
+    [Parameter] public RenderFragment? RailContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

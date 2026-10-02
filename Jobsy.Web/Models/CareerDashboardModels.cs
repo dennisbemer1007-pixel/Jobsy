@@ -33,6 +33,8 @@ public sealed class CareerPathDashboardStep
     public int Order { get; set; }
     public string Title { get; set; } = "";
     public CareerStepStatus Status { get; set; }
+    public bool HeldBack { get; set; }
+    public string StepFitBand { get; set; } = "";
     public string Summary { get; set; } = "";
     public IReadOnlyList<string> SkillsGap { get; set; } = [];
     public IReadOnlyList<CareerPathCourseStatus> Courses { get; set; } = [];
@@ -41,6 +43,7 @@ public sealed class CareerPathDashboardStep
     public IReadOnlyList<string> Competencies { get; set; } = [];
     public string ActionLabel { get; set; } = "";
     public string ActionHref { get; set; } = "";
+    public IReadOnlyList<string> ActionKinds { get; set; } = [];
     public int StepMatchPercent { get; set; }
     public int MatchedCourseCount { get; set; }
 }
@@ -54,8 +57,12 @@ public sealed class CareerPathCourseStatus
 public sealed class CareerPathPlanApiModel
 {
     public string DreamTitle { get; set; } = "";
+    public bool FromAi { get; set; }
+    public string PlanLanguage { get; set; } = "nl";
+    public string DreamFitBand { get; set; } = "";
+    public int CarriedOverCount { get; set; }
     public int MatchPercent { get; set; }
-    public string MatchSummary { get; set; } = "";
+    public string? MatchSummary { get; set; }
     public bool GoalReached { get; set; }
     public List<CareerPathStepApiModel> Steps { get; set; } = [];
 }
@@ -66,16 +73,45 @@ public sealed class CareerPathStepApiModel
     public int Order { get; set; }
     public string Title { get; set; } = "";
     public string Status { get; set; } = "Open";
+    public string StepFitBand { get; set; } = "";
+    public bool HeldBack { get; set; }
     public string Summary { get; set; } = "";
     public List<string> SkillsGap { get; set; } = [];
     public List<string> Courses { get; set; } = [];
     public List<CareerPathCourseApiModel> CourseStatuses { get; set; } = [];
     public List<string> MinRequirements { get; set; } = [];
     public int YearsExperienceNeeded { get; set; }
+    public List<string> ActionKinds { get; set; } = [];
+    [Obsolete("Legacy AI label; use ActionKinds.")]
     public string ActionLabel { get; set; } = "";
+    [Obsolete("Legacy AI href; derived from ActionKinds on the Web.")]
     public string ActionHref { get; set; } = "";
+    [Obsolete("Replaced by StepFitBand from the API.")]
     public int StepMatchPercent { get; set; }
     public int MatchedCourseCount { get; set; }
+}
+
+public sealed class CareerDreamOptionsApiModel
+{
+    public List<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
+    public List<CareerDreamOptionApiItem> Results { get; set; } = [];
+}
+
+public sealed class CareerDreamOptionApiItem
+{
+    public string? CatalogKey { get; set; }
+    public string Title { get; set; } = "";
+    public string? ReasonKey { get; set; }
+}
+
+public sealed class ArchivedCareerPlanApiModel
+{
+    public Guid PlanId { get; set; }
+    public string DreamTitle { get; set; } = "";
+    public DateTime ArchivedAtUtc { get; set; }
+    public int CompletedSteps { get; set; }
+    public int TotalSteps { get; set; }
+    public DateTime ExpiresAtUtc { get; set; }
 }
 
 public sealed class CareerPathCourseApiModel
