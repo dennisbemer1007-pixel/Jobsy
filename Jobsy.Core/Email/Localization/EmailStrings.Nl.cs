@@ -2,7 +2,7 @@ namespace Jobsy.Core.Email.Localization;
 
 internal static class EmailStringsNl
 {
-            public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
+    public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
     {
         ["Email.AccessRequestEmailVerification.Heading"] = "Bevestig je e-mailadres",
         ["Email.AccessRequestEmailVerification.P1"] = "Bevestig je e-mailadres om toegang aan te vragen tot {0}. Code geldig {1} minuten:",
@@ -33,7 +33,8 @@ internal static class EmailStringsNl
         ["Email.AccessRequestToManager.P1"] = "Er is een toegangsverzoek voor {0}.",
         ["Email.AccessRequestToManager.P2"] = "Aanvrager: {0}{1} - {2}. Gevraagde rol: {3}.",
         ["Email.AccessRequestToManager.Preheader"] = "Toegangsverzoek op Lobsy",
-        ["Email.AccessRequestToManager.Subject"] = "Toegangsverzoek",        ["Email.RecoveryCodeUsed.Eyebrow"] = "Beveiliging",
+        ["Email.AccessRequestToManager.Subject"] = "Toegangsverzoek",
+        ["Email.RecoveryCodeUsed.Eyebrow"] = "Beveiliging",
         ["Email.RecoveryCodeUsed.P2"] = "Was jij dit niet? Neem dan meteen contact op met {0}.",
         ["Email.RecoveryCodeUsed.P1"] = "Je bent net ingelogd met een herstelcode. Je hebt er nog {0}.",
         ["Email.RecoveryCodeUsed.Preheader"] = "Je hebt er nog {0}.",

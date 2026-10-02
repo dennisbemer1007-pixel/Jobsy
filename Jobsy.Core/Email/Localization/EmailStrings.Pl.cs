@@ -2,7 +2,7 @@ namespace Jobsy.Core.Email.Localization;
 
 internal static class EmailStringsPl
 {
-            public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
+    public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
     {
         ["Email.AccessRequestEmailVerification.Heading"] = "Potwierdź adres e-mail",
         ["Email.AccessRequestEmailVerification.P1"] = "Potwierdź e-mail, aby poprosić o dostęp do {0}. Kod ważny {1} minut:",
@@ -33,7 +33,8 @@ internal static class EmailStringsPl
         ["Email.AccessRequestToManager.P1"] = "Jest wniosek o dostęp do {0}.",
         ["Email.AccessRequestToManager.P2"] = "Wnioskodawca: {0}{1} - {2}. Żądana rola: {3}.",
         ["Email.AccessRequestToManager.Preheader"] = "Wniosek o dostęp w Lobsy",
-        ["Email.AccessRequestToManager.Subject"] = "Wniosek o dostęp",        ["Email.RecoveryCodeUsed.Eyebrow"] = "Security",
+        ["Email.AccessRequestToManager.Subject"] = "Wniosek o dostęp",
+        ["Email.RecoveryCodeUsed.Eyebrow"] = "Security",
         ["Email.RecoveryCodeUsed.P2"] = "Was this not you? Contact {0} right away.",
         ["Email.RecoveryCodeUsed.P1"] = "You just signed in with a recovery code. You have {0} left.",
         ["Email.RecoveryCodeUsed.Preheader"] = "You have {0} left.",

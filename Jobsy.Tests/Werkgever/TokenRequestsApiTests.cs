@@ -171,10 +171,14 @@ public sealed class TokenRequestsApiFactory : WebApplicationFactory<Jobsy.Api.Ap
             {
                 Id = OrgId,
                 VerificationStatus = CompanyVerificationStatus.Verified,
-                Name = "Org", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4) },
+                Name = "Org",
+                KvkNumber = "1",
+                Address = "a",
+                Location = new GeoPoint(52, 4)
+            },
             new Company
             {
-                
+
                 VerificationStatus = CompanyVerificationStatus.Verified,
                 Id = BranchId,
                 Name = "Branch",
@@ -186,7 +190,7 @@ public sealed class TokenRequestsApiFactory : WebApplicationFactory<Jobsy.Api.Ap
             },
             new Company
             {
-                
+
                 VerificationStatus = CompanyVerificationStatus.Verified,
                 Id = SiblingId,
                 Name = "Sibling",
