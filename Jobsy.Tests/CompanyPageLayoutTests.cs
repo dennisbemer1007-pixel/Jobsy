@@ -20,7 +20,7 @@ namespace Jobsy.Tests;
 /// and the KvK chip, vestiging tabs only for branches with a public vacancy, and a real 404 with the
 /// shared status page for every not-found case.
 /// </summary>
-public class CompanyPageLayoutTests : TestContext
+public class CompanyPageLayoutTests : BunitContext
 {
     private const string Kvk = "12345678";
 
@@ -97,7 +97,7 @@ public class CompanyPageLayoutTests : TestContext
             .Build();
 
     private IRenderedComponent<CompanyPublicPage> Render(string? vestiging = null)
-        => RenderComponent<CompanyPublicPage>(p =>
+        => Render<CompanyPublicPage>(p =>
         {
             p.Add(x => x.KvkNumber, Kvk);
             p.Add(x => x.Vestigingsnummer, vestiging);

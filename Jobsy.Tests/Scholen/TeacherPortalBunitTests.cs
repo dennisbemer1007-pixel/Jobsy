@@ -14,7 +14,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests.Scholen;
 
-public class TeacherPortalBunitTests : TestContext
+public class TeacherPortalBunitTests : BunitContext
 {
     public TeacherPortalBunitTests()
     {
@@ -29,7 +29,7 @@ public class TeacherPortalBunitTests : TestContext
     [Fact]
     public void EntKpiCard_renders_label_and_value_for_overview_kpis()
     {
-        var cut = RenderComponent<EntKpiCard>(ps => ps
+        var cut = Render<EntKpiCard>(ps => ps
             .Add(p => p.Label, "Afgerond")
             .Add(p => p.Value, "19/28")
             .Add(p => p.Delta, "68%")

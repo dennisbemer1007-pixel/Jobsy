@@ -10,7 +10,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class TokensBunitTests : TestContext
+public class TokensBunitTests : BunitContext
 {
     public TokensBunitTests()
     {
@@ -32,7 +32,7 @@ public class TokensBunitTests : TestContext
             new() { Reason = "PushBom", CostTokens = 5 },
         };
 
-        var cut = RenderComponent<WgTokenCostsPanel>(p => p
+        var cut = Render<WgTokenCostsPanel>(p => p
             .Add(x => x.Costs, costs)
             .Add(x => x.StartOpen, true));
 
@@ -52,7 +52,7 @@ public class TokensBunitTests : TestContext
             new(Guid.NewGuid(), "Naaldwijk", "Westland", 40, 12, 28)
         };
 
-        var cut = RenderComponent<WgTokenUsageTable>(p => p
+        var cut = Render<WgTokenUsageTable>(p => p
             .Add(x => x.Rows, rows)
             .Add(x => x.Take, 5)
             .Add(x => x.CanAllocate, true));

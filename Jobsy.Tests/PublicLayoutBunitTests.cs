@@ -18,7 +18,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class PublicLayoutBunitTests : TestContext
+public class PublicLayoutBunitTests : BunitContext
 {
     public PublicLayoutBunitTests()
     {
@@ -49,7 +49,7 @@ public class PublicLayoutBunitTests : TestContext
     [Fact]
     public void Renders_one_cookie_banner_skip_link_and_available_header_only()
     {
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b => b.AddMarkupContent(0, "<div data-testid=\"body\">body</div>"))));
 
         Assert.Single(cut.FindAll(".cookie-consent"));
@@ -76,7 +76,7 @@ public class PublicLayoutBunitTests : TestContext
         var culture = Services.GetRequiredService<CultureState>();
         culture.InitializeFromRequest(http);
 
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b => b.AddContent(0, "ar"))));
         var root = cut.Find(".pub-theme");
         Assert.Equal("rtl", root.GetAttribute("dir"));
@@ -86,7 +86,7 @@ public class PublicLayoutBunitTests : TestContext
     [Fact]
     public void Probe_content_renders_under_layout()
     {
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b =>
             {
                 b.OpenComponent<PublicLayoutProbe>(0);

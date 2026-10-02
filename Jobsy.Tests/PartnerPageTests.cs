@@ -20,7 +20,7 @@ namespace Jobsy.Tests;
 /// The static <c>/partner</c> page (public-pages 09.2): B1 copy, amounts excl. btw with the incl.
 /// amount next to them (D5), "Gratis" for free vacancy types and no jargon.
 /// </summary>
-public class PartnerPageTests : TestContext
+public class PartnerPageTests : BunitContext
 {
     /// <summary>1 token = € 12,50 incl. btw → € 10,33 excl. Vrijwilligerswerk is free.</summary>
     private const string CatalogJson =
@@ -77,7 +77,7 @@ public class PartnerPageTests : TestContext
         }
     }
 
-    private IRenderedComponent<PartnerSales> Render() => RenderComponent<PartnerSales>();
+    private IRenderedComponent<PartnerSales> Render() => Render<PartnerSales>();
 
     private static string PageSource => File.ReadAllText(Path.Combine(
         HowLobsyRenderTestBase.RepoRoot(),
@@ -111,7 +111,7 @@ public class PartnerPageTests : TestContext
     [Fact]
     public void A_sales_code_rides_along_in_the_register_link_and_the_flyer_link()
     {
-        var cut = RenderComponent<PartnerSales>(p => p.Add(x => x.TrackingCode, "SM-7K2Q9D"));
+        var cut = Render<PartnerSales>(p => p.Add(x => x.TrackingCode, "SM-7K2Q9D"));
 
         Assert.Equal(
             $"{PublicRoutes.CompanyRegister}?ref=SM-7K2Q9D",
@@ -189,7 +189,7 @@ public class PartnerPageTests : TestContext
     [Fact]
     public void Sharing_works_without_javascript_as_plain_links()
     {
-        var cut = RenderComponent<PartnerSales>(p => p.Add(x => x.TrackingCode, "SM-7K2Q9D"));
+        var cut = Render<PartnerSales>(p => p.Add(x => x.TrackingCode, "SM-7K2Q9D"));
         var links = cut.FindAll(".pp-partner__share-link")
             .Select(a => a.GetAttribute("href")!)
             .ToList();

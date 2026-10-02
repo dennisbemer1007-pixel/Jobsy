@@ -26,7 +26,7 @@ namespace Jobsy.Tests;
 /// Shared bUnit host for the privacy statement (03.7). The statement is static SSR, so a plain
 /// render is exactly what a visitor gets.
 /// </summary>
-public abstract class PrivacyRenderTestBase : TestContext
+public abstract class PrivacyRenderTestBase : BunitContext
 {
     protected static readonly string[] Languages = ["nl", "en", "pl", "ro", "ar"];
 
@@ -74,7 +74,7 @@ public abstract class PrivacyRenderTestBase : TestContext
         Services.GetRequiredService<CultureState>().InitializeFromRequest(_http);
     }
 
-    protected IRenderedComponent<PrivacyNl> RenderPrivacy() => RenderComponent<PrivacyNl>();
+    protected IRenderedComponent<PrivacyNl> RenderPrivacy() => Render<PrivacyNl>();
 
     protected static string PrivacyMarkupSource => File.ReadAllText(Path.Combine(
         RepoRoot(), "Jobsy.Web", "Components", "Legal", "Docs", "PrivacyNl.razor"));
@@ -198,7 +198,7 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
     {
         var planned = LegalProcessors.ById("pingen") with { Status = ProcessorStatus.Planned };
 
-        var cut = RenderComponent<ProcessorTable>(p => p.Add(c => c.Rows, [planned]));
+        var cut = Render<ProcessorTable>(p => p.Add(c => c.Rows, [planned]));
 
         Assert.Contains(
             UiStrings.Get("Legal.Processor.pingen.Planned", "nl"),
@@ -247,7 +247,7 @@ public class PrivacyRetentionTests : PrivacyRenderTestBase
             () => LegalRetention.FormatDays(1095),
             [nameof(PrivacyConstants.PersonalDataAccessLogRetentionDays)]);
 
-        var cut = RenderComponent<RetentionTable>(p => p.Add(c => c.Rows, [patched]));
+        var cut = Render<RetentionTable>(p => p.Add(c => c.Rows, [patched]));
 
         Assert.Contains("3 jaar", cut.Find(".pp-table__grid").TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain(
@@ -290,7 +290,7 @@ public class PrivacyAgeTextTests : PrivacyRenderTestBase
     [Fact]
     public void The_shared_component_reads_all_three_constants()
     {
-        var text = RenderComponent<AgeRulesText>().Markup;
+        var text = Render<AgeRulesText>().Markup;
 
         Assert.Contains(
             CandidateConsentRules.MinimumCandidateAge.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -381,7 +381,7 @@ public class PrivacyAnchorsTests : PrivacyRenderTestBase
     [Fact]
     public void The_rendered_footer_links_privacy_cookies()
     {
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b =>
             {
                 b.OpenComponent<PrivacyNl>(0);

@@ -21,7 +21,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class LandingVariantTests : TestContext
+public class LandingVariantTests : BunitContext
 {
     public LandingVariantTests()
     {
@@ -57,7 +57,7 @@ public class LandingVariantTests : TestContext
     [Fact]
     public void Zw_variant_renders_off_sections_without_employer_links()
     {
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b =>
             {
                 b.OpenComponent<Landing>(0);
@@ -127,7 +127,7 @@ public class LandingVariantTests : TestContext
             "De Ontdekkingsreis, stap voor stap",
             LandingText.For("GratisDna.Signup.Unlock.Journey", LandingVariant.Zw, "nl"));
 
-        var result = RenderComponent<GratisDnaResultView>(p => p
+        var result = Render<GratisDnaResultView>(p => p
             .Add(c => c.Variant, LandingVariant.Zw)
             .Add(c => c.ShowSticky, false)
             .Add(c => c.StrengthSentence, "x"));

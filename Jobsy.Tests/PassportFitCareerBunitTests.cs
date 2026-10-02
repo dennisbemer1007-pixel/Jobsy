@@ -14,7 +14,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class PassportFitCareerBunitTests : TestContext
+public class PassportFitCareerBunitTests : BunitContext
 {
     public PassportFitCareerBunitTests()
     {
@@ -33,7 +33,7 @@ public class PassportFitCareerBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: true, passport: true));
         RegisterApi(UnlockedJson(cultureLabel: null));
 
-        var cut = RenderComponent<PassportFitTab>(p => p
+        var cut = Render<PassportFitTab>(p => p
             .Add(x => x.Active, true)
             .Add(x => x.Snapshot, new CandidateKompasState()));
 
@@ -48,7 +48,7 @@ public class PassportFitCareerBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: false, passport: true));
         RegisterApi(UnlockedJson(cultureLabel: null));
 
-        var cut = RenderComponent<PassportFitTab>(p => p
+        var cut = Render<PassportFitTab>(p => p
             .Add(x => x.Active, true)
             .Add(x => x.Snapshot, new CandidateKompasState
             {
@@ -74,7 +74,7 @@ public class PassportFitCareerBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: true, passport: true));
         RegisterApi(UnlockedJson(cultureLabel: null));
 
-        var cut = RenderComponent<PassportFitTab>(p => p
+        var cut = Render<PassportFitTab>(p => p
             .Add(x => x.Active, true)
             .Add(x => x.Snapshot, new CandidateKompasState()));
 
@@ -92,7 +92,7 @@ public class PassportFitCareerBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: true, passport: true));
         RegisterApi(UnlockedJson(cultureLabel: "klein, warm team", culturePercent: 78));
 
-        var cut = RenderComponent<PassportFitTab>(p => p
+        var cut = Render<PassportFitTab>(p => p
             .Add(x => x.Active, true)
             .Add(x => x.Snapshot, new CandidateKompasState()));
 
@@ -107,7 +107,7 @@ public class PassportFitCareerBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: false, passport: true));
         RegisterApi(roleFitJson: UnlockedJson(null), careerJson: "null");
 
-        var cut = RenderComponent<PassportCareerTab>(p => p.Add(x => x.Active, true));
+        var cut = Render<PassportCareerTab>(p => p.Add(x => x.Active, true));
 
         Assert.Contains("Kies je droombaan", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("/carriere", cut.Markup, StringComparison.Ordinal);
@@ -120,7 +120,7 @@ public class PassportFitCareerBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: false, passport: true));
         RegisterApi(roleFitJson: UnlockedJson(null), careerJson: SampleCareerJson());
 
-        var cut = RenderComponent<PassportCareerTab>(p => p.Add(x => x.Active, true));
+        var cut = Render<PassportCareerTab>(p => p.Add(x => x.Active, true));
 
         Assert.Contains("MBO-verpleegkundige", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("passport-career__shell", cut.Markup, StringComparison.Ordinal);
@@ -135,7 +135,7 @@ public class PassportFitCareerBunitTests : TestContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: true, passport: true));
         RegisterApi(roleFitJson: UnlockedJson(null), careerJson: SampleCareerJson());
 
-        var cut = RenderComponent<PassportCareerTab>(p => p.Add(x => x.Active, true));
+        var cut = Render<PassportCareerTab>(p => p.Add(x => x.Active, true));
 
         Assert.Contains("Vacatures voor deze stap", cut.Markup, StringComparison.Ordinal);
     }

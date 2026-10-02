@@ -17,7 +17,7 @@ namespace Jobsy.Tests;
 /// Carrière 03: the step detail (claws, band, vacancies, courses, proof), the growth moment
 /// and undo. No percentages, no "0 jaar", no clickable AI course names.
 /// </summary>
-public class CareerStepBunitTests : TestContext
+public class CareerStepBunitTests : BunitContext
 {
     /// <summary>D4: no percentage is ever rendered on a career surface.</summary>
     private static readonly System.Text.RegularExpressions.Regex Percentage = new(@"\d\s*%");
@@ -43,7 +43,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Active_step_shows_the_growing_eyebrow_and_one_primary_action()
     {
-        var cut = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2)));
+        var cut = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2)));
 
         Assert.Equal(1, Occurrences(cut.Markup, "<h1"));
         Assert.Contains("De klim · stap 2 van 3 · groeit nu", cut.Markup, StringComparison.Ordinal);
@@ -57,20 +57,20 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Done_step_offers_undo_only_when_it_is_the_last_completed_step()
     {
-        var last = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(1, allDone: false)));
+        var last = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(1, allDone: false)));
         Assert.Contains("· gehaald", last.Markup, StringComparison.Ordinal);
         Assert.Contains("Toch nog niet klaar", last.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Deze stap is klaar", last.Markup, StringComparison.Ordinal);
 
         // Step 1 of a fully completed plan is no longer the last completed step (D9).
-        var earlier = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(1, allDone: true)));
+        var earlier = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(1, allDone: true)));
         Assert.DoesNotContain("Toch nog niet klaar", earlier.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Todo_step_is_read_only_and_says_which_step_comes_first()
     {
-        var cut = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(3)));
+        var cut = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(3)));
 
         Assert.Contains("· later", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Eerst stap 2 afmaken.", cut.Markup, StringComparison.Ordinal);
@@ -82,14 +82,14 @@ public class CareerStepBunitTests : TestContext
     public void Completing_reports_once_and_stays_quiet_while_busy()
     {
         var completed = 0;
-        var cut = RenderComponent<CareerStepDetailCard>(p => p
+        var cut = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.OnComplete, () => completed++));
 
         cut.Find(".career-only-desktop .career-btn--primary").Click();
         Assert.Equal(1, completed);
 
-        cut.SetParametersAndRender(p => p.Add(x => x.Busy, true));
+        cut.Render(p => p.Add(x => x.Busy, true));
         Assert.True(cut.Find(".career-only-desktop .career-btn--primary").HasAttribute("disabled"));
     }
 
@@ -99,7 +99,7 @@ public class CareerStepBunitTests : TestContext
     public void Gaps_show_missing_claws_and_present_items_with_show_all()
     {
         var step = Step(2, extraGaps: 6);
-        var cut = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, step));
+        var cut = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, step));
 
         Assert.Contains("Welke klauwen je al hebt", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(6, cut.FindAll(".career-step__gap").Count);
@@ -113,11 +113,11 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Years_line_is_hidden_for_zero_years()
     {
-        var zero = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2)));
+        var zero = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2)));
         Assert.DoesNotContain("jaar ervaring helpt", zero.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("0 jaar", zero.Markup, StringComparison.Ordinal);
 
-        var two = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2, years: 2)));
+        var two = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2, years: 2)));
         Assert.Contains("2 jaar ervaring helpt", two.Markup, StringComparison.Ordinal);
     }
 
@@ -129,7 +129,7 @@ public class CareerStepBunitTests : TestContext
     [InlineData("NotYet", "Past nog niet", "Deze steen is nog wat groot.")]
     public void Band_pill_and_sentence_follow_the_band(string band, string pill, string sentence)
     {
-        var cut = RenderComponent<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2, band: band)));
+        var cut = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, Step(2, band: band)));
 
         Assert.Contains("career-pill", cut.Markup, StringComparison.Ordinal);
         Assert.Contains(pill, cut.Markup, StringComparison.Ordinal);
@@ -140,7 +140,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Unknown_band_shows_no_pill_but_the_test_link()
     {
-        var cut = RenderComponent<CareerStepDetailCard>(p => p
+        var cut = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2, band: ""))
             .Add(x => x.PassportOn, true));
 
@@ -154,7 +154,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Vacancy_link_is_hidden_with_the_employer_gate_off()
     {
-        var off = RenderComponent<CareerStepDetailCard>(p => p
+        var off = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.EmployersOn, false)
             .Add(x => x.VacancyFit, new CareerStepVacancyFit(GateOpen: true, GoodCount: 14)));
@@ -166,18 +166,18 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Vacancy_count_needs_an_open_fit_gate_and_at_least_one_match()
     {
-        var closed = RenderComponent<CareerStepDetailCard>(p => p
+        var closed = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.VacancyFit, new CareerStepVacancyFit(GateOpen: false, GoodCount: 14)));
         Assert.Contains("Vacatures voor Keukenervaring", closed.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("vacatures passen goed", closed.Markup, StringComparison.Ordinal);
 
-        var none = RenderComponent<CareerStepDetailCard>(p => p
+        var none = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.VacancyFit, new CareerStepVacancyFit(GateOpen: true, GoodCount: 0)));
         Assert.DoesNotContain("vacatures passen goed", none.Markup, StringComparison.Ordinal);
 
-        var open = RenderComponent<CareerStepDetailCard>(p => p
+        var open = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.VacancyFit, new CareerStepVacancyFit(GateOpen: true, GoodCount: 14)));
         Assert.Contains("14 vacatures passen goed", open.Markup, StringComparison.Ordinal);
@@ -188,7 +188,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Course_block_puts_free_first_labels_the_partner_and_discloses_it()
     {
-        var cut = RenderComponent<CareerStepCourses>(p => p
+        var cut = Render<CareerStepCourses>(p => p
             .Add(x => x.Slots, Slots())
             .Add(x => x.CourseNames, new List<string> { "Veilig werken" })
             .Add(x => x.SkillLabel, "Snijtechniek"));
@@ -205,7 +205,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Without_a_curated_match_the_block_is_hidden_and_course_names_are_plain_text()
     {
-        var cut = RenderComponent<CareerStepCourses>(p => p
+        var cut = Render<CareerStepCourses>(p => p
             .Add(x => x.Slots, new List<PassportCourseCard>())
             .Add(x => x.CourseNames, new List<string> { "Veilig werken", "Snijcursus" }));
 
@@ -218,7 +218,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Nothing_renders_without_slots_and_without_course_names()
     {
-        var cut = RenderComponent<CareerStepCourses>(p => p
+        var cut = Render<CareerStepCourses>(p => p
             .Add(x => x.Slots, new List<PassportCourseCard>())
             .Add(x => x.CourseNames, new List<string>()));
 
@@ -230,7 +230,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Proof_link_opens_the_passport_bewijzen_tab_with_the_name_prefilled()
     {
-        var cut = RenderComponent<CareerStepDetailCard>(p => p
+        var cut = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.PassportOn, true));
 
@@ -244,7 +244,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Without_the_passport_flag_proof_opens_the_profile_certificates()
     {
-        var cut = RenderComponent<CareerStepDetailCard>(p => p
+        var cut = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.PassportOn, false));
 
@@ -258,7 +258,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Done_card_replaces_the_toast_and_focuses_its_heading()
     {
-        var cut = RenderComponent<CareerStepDoneCard>(p => p
+        var cut = Render<CareerStepDoneCard>(p => p
             .Add(x => x.StepNumber, 2)
             .Add(x => x.TotalSteps, 3)
             .Add(x => x.StepTitle, "Keukenervaring opdoen")
@@ -284,7 +284,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Gained_list_claims_only_true_items()
     {
-        var bare = RenderComponent<CareerStepDoneCard>(p => p
+        var bare = Render<CareerStepDoneCard>(p => p
             .Add(x => x.StepNumber, 2)
             .Add(x => x.TotalSteps, 3)
             .Add(x => x.StepTitle, "Keukenervaring opdoen"));
@@ -293,7 +293,7 @@ public class CareerStepBunitTests : TestContext
         Assert.DoesNotContain("staat in je paspoort", bare.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("vacatures", bare.Markup, StringComparison.Ordinal);
 
-        var full = RenderComponent<CareerStepDoneCard>(p => p
+        var full = Render<CareerStepDoneCard>(p => p
             .Add(x => x.StepNumber, 2)
             .Add(x => x.TotalSteps, 3)
             .Add(x => x.StepTitle, "Keukenervaring opdoen")
@@ -313,7 +313,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Vacancy_gain_line_is_absent_when_the_gate_left_the_count_at_zero()
     {
-        var cut = RenderComponent<CareerStepDoneCard>(p => p
+        var cut = Render<CareerStepDoneCard>(p => p
             .Add(x => x.StepNumber, 2)
             .Add(x => x.TotalSteps, 3)
             .Add(x => x.StepTitle, "Keukenervaring opdoen")
@@ -326,7 +326,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Last_step_points_at_the_dream_job_instead_of_a_next_step()
     {
-        var cut = RenderComponent<CareerStepDoneCard>(p => p
+        var cut = Render<CareerStepDoneCard>(p => p
             .Add(x => x.StepNumber, 3)
             .Add(x => x.TotalSteps, 3)
             .Add(x => x.StepTitle, "Zelfstandig koken"));
@@ -340,7 +340,7 @@ public class CareerStepBunitTests : TestContext
     public void Undo_is_always_within_reach_on_the_done_card()
     {
         var undone = 0;
-        var cut = RenderComponent<CareerStepDoneCard>(p => p
+        var cut = Render<CareerStepDoneCard>(p => p
             .Add(x => x.StepNumber, 2)
             .Add(x => x.TotalSteps, 3)
             .Add(x => x.StepTitle, "Keukenervaring opdoen")
@@ -353,7 +353,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Undo_conflict_code_is_shown_as_friendly_text()
     {
-        var cut = RenderComponent<CareerStepDoneCard>(p => p
+        var cut = Render<CareerStepDoneCard>(p => p
             .Add(x => x.StepNumber, 2)
             .Add(x => x.TotalSteps, 3)
             .Add(x => x.StepTitle, "Keukenervaring opdoen")
@@ -369,7 +369,7 @@ public class CareerStepBunitTests : TestContext
         var error = ErrorTextFor("complete_previous_first");
         Assert.Equal("Maak eerst de stap ervoor af.", error);
 
-        var cut = RenderComponent<CareerStepDetailCard>(p => p
+        var cut = Render<CareerStepDetailCard>(p => p
             .Add(x => x.Step, Step(2))
             .Add(x => x.ErrorText, error));
 
@@ -411,7 +411,7 @@ public class CareerStepBunitTests : TestContext
     [Fact]
     public void Overview_links_to_the_step_as_a_query_on_carriere()
     {
-        var cut = RenderComponent<CareerOverviewCard>(p => p.Add(x => x.Plan, Plan()));
+        var cut = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, Plan()));
 
         Assert.Contains("href=\"/carriere?stap=2\"", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("/carriere/stap/", cut.Markup, StringComparison.Ordinal);

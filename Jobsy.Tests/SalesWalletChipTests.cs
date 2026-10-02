@@ -13,13 +13,13 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class SalesWalletChipV2Tests : TestContext
+public class SalesWalletChipV2Tests : BunitContext
 {
     [Fact]
     public void Anonymous_makes_zero_dashboard_calls()
     {
         var counter = Arrange(CreateAnonymous());
-        var cut = RenderComponent<SalesWalletChipV2>();
+        var cut = Render<SalesWalletChipV2>();
         cut.WaitForState(() => cut.Instance is not null, TimeSpan.FromSeconds(1));
 
         Assert.Equal(0, counter.DashboardCalls);
@@ -30,7 +30,7 @@ public class SalesWalletChipV2Tests : TestContext
     public void Candidate_makes_zero_dashboard_calls()
     {
         var counter = Arrange(CreateUser("Candidate"));
-        var cut = RenderComponent<SalesWalletChipV2>();
+        var cut = Render<SalesWalletChipV2>();
         cut.WaitForState(() => cut.Instance is not null, TimeSpan.FromSeconds(1));
 
         Assert.Equal(0, counter.DashboardCalls);
@@ -41,7 +41,7 @@ public class SalesWalletChipV2Tests : TestContext
     public void SalesManager_makes_exactly_one_dashboard_call()
     {
         var counter = Arrange(CreateUser("SalesManager"), dashboardOk: true);
-        var cut = RenderComponent<SalesWalletChipV2>();
+        var cut = Render<SalesWalletChipV2>();
 
         cut.WaitForAssertion(
             () => Assert.Contains("sp-wallet-chip", cut.Markup, StringComparison.Ordinal),
@@ -62,7 +62,7 @@ public class SalesWalletChipV2Tests : TestContext
         Services.AddSingleton<AuthenticationStateProvider>(auth);
         Services.AddAuthorizationCore();
         var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
-        var authCtx = this.AddTestAuthorization();
+        var authCtx = this.AddAuthorization();
         if (user.Identity?.IsAuthenticated == true)
         {
             authCtx.SetAuthorized(user.Identity.Name ?? "user");

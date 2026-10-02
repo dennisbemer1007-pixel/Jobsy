@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class CandidateInsightsBunitTests : TestContext
+public class CandidateInsightsBunitTests : BunitContext
 {
     public CandidateInsightsBunitTests()
     {

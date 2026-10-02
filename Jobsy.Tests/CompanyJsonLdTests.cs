@@ -19,7 +19,7 @@ namespace Jobsy.Tests;
 /// configured public base URL, the address carries the city only, and no <c>JobPosting</c> is
 /// duplicated here.
 /// </summary>
-public class CompanyJsonLdTests : TestContext
+public class CompanyJsonLdTests : BunitContext
 {
     private const string Kvk = "12345678";
 
@@ -83,7 +83,7 @@ public class CompanyJsonLdTests : TestContext
         Services.AddSingleton<IConfiguration>(CompanyPageLayoutTests.Configuration(configuredOrigin));
         Services.AddSingleton<NavigationManager>(new HostNavigation(requestHost, $"/{Kvk}"));
 
-        RenderComponent<CompanyPublicPage>(p =>
+        Render<CompanyPublicPage>(p =>
         {
             p.Add(x => x.KvkNumber, Kvk);
             p.Add(x => x.Vestigingsnummer, null);

@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Components;
 
 namespace Jobsy.Tests;
 
-public class LobsyMascotBunitTests : TestContext
+public class LobsyMascotBunitTests : BunitContext
 {
     [Fact]
     public void Fallback_waving_priority_renders_todays_mascot_with_fb_class()
     {
-        var cut = RenderComponent<LobsyMascot>(p => p
+        var cut = Render<LobsyMascot>(p => p
             .Add(c => c.Pose, MascotPose.Waving)
             .Add(c => c.Size, MascotSize.Hero)
             .Add(c => c.Priority, true));
@@ -34,7 +34,7 @@ public class LobsyMascotBunitTests : TestContext
     [Fact]
     public void Lazy_default_is_decorative_without_priority()
     {
-        var cut = RenderComponent<LobsyMascot>(p => p
+        var cut = Render<LobsyMascot>(p => p
             .Add(c => c.Pose, MascotPose.Default)
             .Add(c => c.Size, MascotSize.Tiny));
 
@@ -49,7 +49,7 @@ public class LobsyMascotBunitTests : TestContext
     [Fact]
     public void Alt_makes_mascot_non_decorative()
     {
-        var cut = RenderComponent<LobsyMascot>(p => p
+        var cut = Render<LobsyMascot>(p => p
             .Add(c => c.Alt, "Lobsy zwaait")
             .Add(c => c.Pose, MascotPose.Waving));
 
@@ -62,7 +62,7 @@ public class LobsyMascotBunitTests : TestContext
     [Fact]
     public void Mirror_adds_class()
     {
-        var cut = RenderComponent<LobsyMascot>(p => p
+        var cut = Render<LobsyMascot>(p => p
             .Add(c => c.Mirror, true)
             .Add(c => c.Pose, MascotPose.Celebrating));
 
@@ -73,7 +73,7 @@ public class LobsyMascotBunitTests : TestContext
     [Fact]
     public void Shell_fallback_uses_ghost_class()
     {
-        var cut = RenderComponent<LobsyMascot>(p => p
+        var cut = Render<LobsyMascot>(p => p
             .Add(c => c.Pose, MascotPose.Shell));
 
         var root = cut.Find("span.pub-mascot");
@@ -87,7 +87,7 @@ public class LobsyMascotBunitTests : TestContext
         using var _ = MascotAssets.OverrideArts(
             new MascotArt(MascotPose.Waving, MascotArtFormat.Svg, "20260930-test-waving"));
 
-        var cut = RenderComponent<LobsyMascot>(p => p
+        var cut = Render<LobsyMascot>(p => p
             .Add(c => c.Pose, MascotPose.Waving)
             .Add(c => c.Size, MascotSize.Hero)
             .Add(c => c.Priority, true));
@@ -108,7 +108,7 @@ public class LobsyMascotBunitTests : TestContext
         using var _ = MascotAssets.OverrideArts(
             new MascotArt(MascotPose.Celebrating, MascotArtFormat.Raster, "20260930-test-cele"));
 
-        var cut = RenderComponent<LobsyMascot>(p => p
+        var cut = Render<LobsyMascot>(p => p
             .Add(c => c.Pose, MascotPose.Celebrating)
             .Add(c => c.Size, MascotSize.Medium));
 

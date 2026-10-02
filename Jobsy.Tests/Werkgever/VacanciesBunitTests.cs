@@ -11,7 +11,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class VacanciesBunitTests : TestContext
+public class VacanciesBunitTests : BunitContext
 {
     public VacanciesBunitTests()
     {
@@ -35,7 +35,7 @@ public class VacanciesBunitTests : TestContext
             new("concept", "Concept (0)"),
             new("gesloten", "Gesloten (0)"),
         };
-        var cut = RenderComponent<EntTabs>(p => p
+        var cut = Render<EntTabs>(p => p
             .Add(x => x.Tabs, tabs)
             .Add(x => x.ActiveKey, "alle")
             .Add(x => x.BasePath, "/werkgever/vacatures")
@@ -56,7 +56,7 @@ public class VacanciesBunitTests : TestContext
             new("alle", "Alle (1)"),
             new("verloopt", "Verloopt binnenkort (1)"),
         };
-        var cut = RenderComponent<EntTabs>(p => p
+        var cut = Render<EntTabs>(p => p
             .Add(x => x.Tabs, tabs)
             .Add(x => x.ActiveKey, "verloopt")
             .Add(x => x.BasePath, "/werkgever/vacatures"));
@@ -78,7 +78,7 @@ public class VacanciesBunitTests : TestContext
             EmployerRole.Regiomanager,
             [new EmployerScopeOption(EmployerScopeKind.Region, Guid.NewGuid(), "Westland")],
             new Dictionary<string, IReadOnlyList<Guid>>());
-        var cut = RenderComponent<WgAction>(p => p
+        var cut = Render<WgAction>(p => p
             .Add(x => x.RequiresWrite, true)
             .Add(x => x.Kind, WgAction.WgActionKind.Primary)
             .AddChildContent("Vacature plaatsen"));
@@ -89,7 +89,7 @@ public class VacanciesBunitTests : TestContext
     [Fact]
     public void EntBulkBar_shows_cost_labels_from_caller()
     {
-        var cut = RenderComponent<EntBulkBar>(p => p
+        var cut = Render<EntBulkBar>(p => p
             .Add(x => x.SelectedCount, 2)
             .AddChildContent(b =>
             {

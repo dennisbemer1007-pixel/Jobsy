@@ -21,7 +21,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class LandingBunitTests : TestContext
+public class LandingBunitTests : BunitContext
 {
     public LandingBunitTests()
     {
@@ -54,7 +54,7 @@ public class LandingBunitTests : TestContext
     [Fact]
     public void On_variant_renders_section_ids_ctas_and_one_cookie_banner()
     {
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b =>
             {
                 b.OpenComponent<Landing>(0);
@@ -80,12 +80,12 @@ public class LandingBunitTests : TestContext
     [Fact]
     public void Vacancy_count_hidden_when_null_or_below_25()
     {
-        var heroLow = RenderComponent<LandingHero>(p => p
+        var heroLow = Render<LandingHero>(p => p
             .Add(c => c.Variant, LandingVariant.On)
             .Add(c => c.VacancyCount, (int?)null));
         Assert.Contains("Of kijk eerst op de banenkaart", heroLow.Markup, StringComparison.Ordinal);
 
-        var heroOk = RenderComponent<LandingHero>(p => p
+        var heroOk = Render<LandingHero>(p => p
             .Add(c => c.Variant, LandingVariant.On)
             .Add(c => c.VacancyCount, 120));
         Assert.Contains("vacatures op de banenkaart", heroOk.Markup, StringComparison.Ordinal);
@@ -111,7 +111,7 @@ public class LandingBunitTests : TestContext
         http.Request.QueryString = new QueryString("?lang=ar");
         var culture = Services.GetRequiredService<CultureState>();
         culture.InitializeFromRequest(http);
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b =>
             {
                 b.OpenComponent<LandingHero>(0);
@@ -133,7 +133,7 @@ public class LandingBunitTests : TestContext
     [Fact]
     public void Landing_markup_under_60kb_gzip()
     {
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b =>
             {
                 b.OpenComponent<Landing>(0);

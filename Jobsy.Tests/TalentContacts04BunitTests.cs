@@ -20,7 +20,7 @@ namespace Jobsy.Tests;
 /// Carrière 04 §2–§5: the contact-request page in the journey style. The h1 is visible, statuses
 /// are words, the share dialog lists the exact preview and nothing is shared without a yes.
 /// </summary>
-public class TalentContacts04BunitTests : TestContext
+public class TalentContacts04BunitTests : BunitContext
 {
     private readonly StubHandler _handler = new();
     private bool _employers = true;
@@ -48,7 +48,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Page_shows_a_visible_h1_outside_the_old_profile_header()
     {
         _handler.Rows = [Row(TalentStatus.Pending)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         var h1 = cut.Find("h1");
         Assert.Equal("Een werkgever wil je spreken", h1.TextContent.Trim());
@@ -65,7 +65,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Without_open_requests_the_heading_is_the_calm_variant()
     {
         _handler.Rows = [Row(TalentStatus.CandidateDeclined)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
         Assert.Equal("Contactverzoeken", cut.Find("h1").TextContent.Trim());
     }
 
@@ -80,7 +80,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Status_pills_are_words_not_enum_names(string status, string expected)
     {
         _handler.Rows = [Row(status)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         Assert.Contains(expected, cut.Find(".career-pill").TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain(status, cut.Markup, StringComparison.Ordinal);
@@ -90,7 +90,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Refund_eligible_keeps_the_answer_open_without_scary_copy()
     {
         _handler.Rows = [Row(TalentStatus.RefundEligible)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         Assert.Contains("De tijd is om, maar je kunt nog reageren.", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(3, cut.FindAll(".talent-req__actions .career-btn").Count);
@@ -100,7 +100,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Declined_because_already_placed_adds_the_reason_line()
     {
         _handler.Rows = [Row(TalentStatus.CandidateDeclined, declineReason: "AlreadyPlaced")];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         Assert.Contains("Er is niets gedeeld.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Je had al werk", cut.Markup, StringComparison.Ordinal);
@@ -110,7 +110,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Withdrawn_says_nothing_was_shared()
     {
         _handler.Rows = [Row(TalentStatus.WithdrawnRefunded)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
         Assert.Contains(
             "De werkgever heeft het verzoek ingetrokken. Er is niets gedeeld.",
             cut.Markup,
@@ -124,7 +124,7 @@ public class TalentContacts04BunitTests : TestContext
     {
         var respondBy = new DateTime(2026, 7, 10, 8, 30, 0, DateTimeKind.Utc);
         _handler.Rows = [Row(TalentStatus.Pending, respondByUtc: respondBy)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         var expected = LobsyTime.Deadline(respondBy, CultureInfo.GetCultureInfo("nl-NL"));
         Assert.Contains(expected, cut.Find(".talent-req__when").TextContent, StringComparison.Ordinal);
@@ -145,7 +145,7 @@ public class TalentContacts04BunitTests : TestContext
             Phone = null
         };
 
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
         cut.Find(".talent-req__actions .career-btn--primary").Click();
 
         var values = cut.FindAll(".talent-dialog__list dd").Select(d => d.TextContent.Trim()).ToList();
@@ -159,7 +159,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Nog_niet_closes_the_dialog_and_sends_nothing()
     {
         _handler.Rows = [Row(TalentStatus.Pending)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
         cut.Find(".talent-req__actions .career-btn--primary").Click();
         Assert.NotEmpty(cut.FindAll(".talent-dialog"));
 
@@ -173,7 +173,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Confirming_shares_once_and_sends_the_confirmation_token()
     {
         _handler.Rows = [Row(TalentStatus.Pending)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
         cut.Find(".talent-req__actions .career-btn--primary").Click();
 
         _handler.RowsAfterRespond = [Row(TalentStatus.ContactShared)];
@@ -192,7 +192,7 @@ public class TalentContacts04BunitTests : TestContext
         _handler.Rows = [Row(TalentStatus.Pending)];
         _handler.PreviewFails = true;
 
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
         cut.Find(".talent-req__actions .career-btn--primary").Click();
 
         Assert.Empty(cut.FindAll(".talent-dialog__share"));
@@ -206,7 +206,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Declining_immediately_sends_the_reason_and_confirms_in_place()
     {
         _handler.Rows = [Row(TalentStatus.Pending)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         _handler.RowsAfterRespond = [Row(TalentStatus.CandidateDeclined, declineReason: "AlreadyPlaced")];
         cut.Find(".talent-req__actions .career-btn--secondary").Click();
@@ -221,7 +221,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Geen_interesse_declines_without_the_already_placed_reason()
     {
         _handler.Rows = [Row(TalentStatus.Pending)];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         _handler.RowsAfterRespond = [Row(TalentStatus.CandidateDeclined)];
         cut.Find(".talent-req__actions .career-btn--text").Click();
@@ -236,7 +236,7 @@ public class TalentContacts04BunitTests : TestContext
         _handler.RespondStatus = HttpStatusCode.Conflict;
         _handler.RespondBody = "{\"code\":\"cannot_respond\",\"message\":\"raw server text\"}";
 
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
         cut.Find(".talent-req__actions .career-btn--text").Click();
 
         Assert.Contains("Op dit verzoek kun je niet meer reageren.", cut.Markup, StringComparison.Ordinal);
@@ -249,7 +249,7 @@ public class TalentContacts04BunitTests : TestContext
     public void Empty_state_invites_a_stronger_profile_when_the_passport_is_off()
     {
         _handler.Rows = [];
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         Assert.Contains("Nog geen contactverzoeken.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("profiel", cut.Markup, StringComparison.Ordinal);
@@ -262,7 +262,7 @@ public class TalentContacts04BunitTests : TestContext
     {
         _handler.Rows = [];
         _passport = true;
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         Assert.Contains("paspoort", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("href=\"/candidate/paspoort\"", cut.Markup, StringComparison.Ordinal);
@@ -272,7 +272,7 @@ public class TalentContacts04BunitTests : TestContext
     public void With_the_employers_gate_off_the_page_stays_calm_and_loads_nothing()
     {
         _employers = false;
-        var cut = RenderComponent<CandidateTalentContacts>();
+        var cut = Render<CandidateTalentContacts>();
 
         Assert.Contains("Contactverzoeken staan nu uit.", cut.Markup, StringComparison.Ordinal);
         Assert.Empty(cut.FindAll(".talent-req"));
@@ -292,7 +292,7 @@ public class TalentContacts04BunitTests : TestContext
             Assert.True(culture.IsRightToLeft);
 
             _handler.Rows = [Row(TalentStatus.Pending)];
-            var cut = RenderComponent<CandidateTalentContacts>();
+            var cut = Render<CandidateTalentContacts>();
 
             Assert.Contains("طلبات التواصل", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("القرار لك، دائماً.", cut.Markup, StringComparison.Ordinal);

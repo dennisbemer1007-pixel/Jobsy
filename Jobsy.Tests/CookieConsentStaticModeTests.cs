@@ -17,7 +17,7 @@ using System.Text.Json;
 
 namespace Jobsy.Tests;
 
-public class CookieConsentStaticModeTests : TestContext
+public class CookieConsentStaticModeTests : BunitContext
 {
     public CookieConsentStaticModeTests()
     {
@@ -35,7 +35,7 @@ public class CookieConsentStaticModeTests : TestContext
     [Fact]
     public void Static_markup_has_data_consent_and_no_blazor_onclick()
     {
-        var cut = RenderComponent<CookieConsentBanner>(p =>
+        var cut = Render<CookieConsentBanner>(p =>
             p.Add(c => c.Mode, CookieConsentBanner.CookieConsentMode.Static));
         var markup = cut.Markup;
         Assert.Contains("data-consent=\"necessary\"", markup, StringComparison.Ordinal);

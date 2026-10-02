@@ -18,7 +18,7 @@ namespace Jobsy.Tests;
 /// support-access card shows Europe/Amsterdam date/time, the empty state has no raw audit copy,
 /// and the markup carries no inline <c>style=</c> (design-system rule).
 /// </summary>
-public class PrivacyDataPageTests : TestContext
+public class PrivacyDataPageTests : BunitContext
 {
     public PrivacyDataPageTests()
     {
@@ -48,7 +48,7 @@ public class PrivacyDataPageTests : TestContext
     public void Page_renders_hero_and_cards_without_a_loading_placeholder()
     {
         RegisterApi([]);
-        var cut = RenderComponent<PrivacyData>();
+        var cut = Render<PrivacyData>();
 
         Assert.Single(cut.FindAll("h1"));
         Assert.Contains("Mijn gegevens", cut.Find("h1").TextContent);
@@ -67,7 +67,7 @@ public class PrivacyDataPageTests : TestContext
             new DateTime(2026, 12, 1, 12, 0, 0, DateTimeKind.Utc)
         ]);
 
-        var cut = RenderComponent<PrivacyData>();
+        var cut = Render<PrivacyData>();
         var markup = cut.Markup;
 
         Assert.Contains("14:00", markup, StringComparison.Ordinal);
@@ -78,7 +78,7 @@ public class PrivacyDataPageTests : TestContext
     public void Empty_state_shows_the_translated_sentence_not_the_admin_audit_string()
     {
         RegisterApi([]);
-        var cut = RenderComponent<PrivacyData>();
+        var cut = Render<PrivacyData>();
 
         Assert.Contains("Niemand van Lobsy heeft je gegevens bekeken.", cut.Markup, StringComparison.Ordinal);
     }
@@ -87,7 +87,7 @@ public class PrivacyDataPageTests : TestContext
     public void Support_card_is_hidden_when_the_api_call_fails_instead_of_a_raw_error()
     {
         RegisterFailingApi();
-        var cut = RenderComponent<PrivacyData>();
+        var cut = Render<PrivacyData>();
 
         Assert.DoesNotContain("Wie heeft je gegevens bekeken?", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Exception", cut.Markup, StringComparison.Ordinal);
@@ -97,7 +97,7 @@ public class PrivacyDataPageTests : TestContext
     public void Markup_has_no_inline_styles()
     {
         RegisterApi([]);
-        var cut = RenderComponent<PrivacyData>();
+        var cut = Render<PrivacyData>();
 
         Assert.DoesNotContain("style=", cut.Markup, StringComparison.Ordinal);
     }
@@ -107,7 +107,7 @@ public class PrivacyDataPageTests : TestContext
     {
         RegisterApi([]);
         Services.AddSingleton<NavigationManager>(new StaticNavigation("/privacy/data?export=failed"));
-        var cut = RenderComponent<PrivacyData>();
+        var cut = Render<PrivacyData>();
 
         Assert.Contains("Downloaden lukte niet", cut.Markup, StringComparison.Ordinal);
     }

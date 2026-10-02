@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests.Scholen;
 
-public class PupilPagesNoCandidateChromeTests : TestContext
+public class PupilPagesNoCandidateChromeTests : BunitContext
 {
     public PupilPagesNoCandidateChromeTests()
     {
@@ -46,7 +46,7 @@ public class PupilPagesNoCandidateChromeTests : TestContext
     [Fact]
     public void LeerlingLobster_renders_svg_with_plates()
     {
-        var cut = RenderComponent<LeerlingLobster>(ps => ps
+        var cut = Render<LeerlingLobster>(ps => ps
             .Add(p => p.PlatesShed, 2)
             .Add(p => p.Size, 80));
         Assert.Contains("ll-lob", cut.Markup, StringComparison.Ordinal);

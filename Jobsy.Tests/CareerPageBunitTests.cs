@@ -6,13 +6,14 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class CareerPageBunitTests : TestContext
+public class CareerPageBunitTests : BunitContext
 {
     public CareerPageBunitTests()
     {
@@ -30,7 +31,7 @@ public class CareerPageBunitTests : TestContext
     [Fact]
     public void Empty_state_shows_one_h1_and_a_radiogroup_of_suggestions()
     {
-        var cut = RenderComponent<CareerEmptyCard>(p => p
+        var cut = Render<CareerEmptyCard>(p => p
             .Add(x => x.Suggestions, Suggestions(3)));
 
         Assert.Equal(1, Occurrences(cut.Markup, "<h1"));
@@ -44,7 +45,7 @@ public class CareerPageBunitTests : TestContext
     [Fact]
     public void Empty_state_without_suggestions_starts_with_the_search_field()
     {
-        var cut = RenderComponent<CareerEmptyCard>(p => p
+        var cut = Render<CareerEmptyCard>(p => p
             .Add(x => x.Suggestions, Suggestions(0)));
 
         Assert.DoesNotContain("role=\"radiogroup\"", cut.Markup, StringComparison.Ordinal);
@@ -54,13 +55,13 @@ public class CareerPageBunitTests : TestContext
     [Fact]
     public void Primary_stays_disabled_until_a_dream_is_chosen()
     {
-        var cut = RenderComponent<CareerEmptyCard>(p => p
+        var cut = Render<CareerEmptyCard>(p => p
             .Add(x => x.Suggestions, Suggestions(2))
             .Add(x => x.HasChoice, false));
 
         Assert.True(cut.Find(".career-btn--primary").HasAttribute("disabled"));
 
-        cut.SetParametersAndRender(p => p.Add(x => x.HasChoice, true));
+        cut.Render(p => p.Add(x => x.HasChoice, true));
         Assert.False(cut.Find(".career-btn--primary").HasAttribute("disabled"));
     }
 
@@ -68,7 +69,7 @@ public class CareerPageBunitTests : TestContext
     public void Picking_a_suggestion_reports_the_catalog_key()
     {
         CareerDreamChoice? chosen = null;
-        var cut = RenderComponent<CareerDreamPicker>(p => p
+        var cut = Render<CareerDreamPicker>(p => p
             .Add(x => x.Suggestions, Suggestions(2))
             .Add(x => x.OnChoice, c => chosen = c));
 
@@ -83,7 +84,7 @@ public class CareerPageBunitTests : TestContext
     public async Task Combobox_lists_results_and_enter_selects_the_active_one()
     {
         CareerDreamChoice? chosen = null;
-        var cut = RenderComponent<CareerDreamPicker>(p => p
+        var cut = Render<CareerDreamPicker>(p => p
             .Add(x => x.Suggestions, Suggestions(0))
             .Add(x => x.OnChoice, c => chosen = c)
             .Add(x => x.OnSearch, (string _, CancellationToken _) =>
@@ -101,7 +102,7 @@ public class CareerPageBunitTests : TestContext
         Assert.Equal("true", cut.Find("input[role=\"combobox\"]").GetAttribute("aria-expanded"));
         Assert.Equal(2, cut.FindAll("[role=\"option\"]").Count);
 
-        await cut.Find("input[role=\"combobox\"]").KeyDownAsync(new() { Key = "Enter" });
+        await cut.Find("input[role=\"combobox\"]").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
         cut.WaitForAssertion(() => Assert.NotNull(chosen), TimeSpan.FromSeconds(3));
         Assert.Equal("monteur", chosen!.CatalogKey);
     }
@@ -111,7 +112,7 @@ public class CareerPageBunitTests : TestContext
     {
         var reported = 0;
         CareerDreamChoice? chosen = null;
-        var cut = RenderComponent<CareerDreamPicker>(p => p
+        var cut = Render<CareerDreamPicker>(p => p
             .Add(x => x.Suggestions, Suggestions(0))
             .Add(x => x.OnChoice, c =>
             {
@@ -137,7 +138,7 @@ public class CareerPageBunitTests : TestContext
     public void Overview_shows_the_current_step_with_claws_and_band_facts()
     {
         var plan = Build(PlanJson());
-        var cut = RenderComponent<CareerOverviewCard>(p => p.Add(x => x.Plan, plan));
+        var cut = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, plan));
 
         Assert.Equal(1, Occurrences(cut.Markup, "<h1"));
         Assert.Contains("Op weg naar Kok", cut.Markup, StringComparison.Ordinal);
@@ -152,13 +153,13 @@ public class CareerPageBunitTests : TestContext
     public void Overview_hides_the_course_fact_without_free_courses()
     {
         var plan = Build(PlanJson());
-        var cut = RenderComponent<CareerOverviewCard>(p => p
+        var cut = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, plan)
             .Add(x => x.FreeCourseCount, 0));
 
         Assert.DoesNotContain("opleidingen ·", cut.Markup, StringComparison.Ordinal);
 
-        cut.SetParametersAndRender(p => p.Add(x => x.FreeCourseCount, 1));
+        cut.Render(p => p.Add(x => x.FreeCourseCount, 1));
         Assert.Contains("opleidingen ·", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -166,12 +167,12 @@ public class CareerPageBunitTests : TestContext
     public void Overview_shows_the_local_line_when_the_plan_is_not_from_ai()
     {
         var local = Build(PlanJson(fromAi: false));
-        var cut = RenderComponent<CareerOverviewCard>(p => p.Add(x => x.Plan, local));
+        var cut = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, local));
         Assert.Contains("Plan gemaakt op basis van je paspoort.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("met hulp van AI", cut.Markup, StringComparison.Ordinal);
 
         var ai = Build(PlanJson(fromAi: true));
-        var cut2 = RenderComponent<CareerOverviewCard>(p => p.Add(x => x.Plan, ai));
+        var cut2 = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, ai));
         Assert.Contains("met hulp van AI", cut2.Markup, StringComparison.Ordinal);
     }
 
@@ -179,11 +180,11 @@ public class CareerPageBunitTests : TestContext
     public void Overview_shows_the_language_line_only_when_the_plan_language_differs()
     {
         var same = CareerPlanViewBuilder.BuildPage(PlanJson(), "nl");
-        var cut = RenderComponent<CareerOverviewCard>(p => p.Add(x => x.Plan, same));
+        var cut = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, same));
         Assert.DoesNotContain("career-card__language", cut.Markup, StringComparison.Ordinal);
 
         var differs = CareerPlanViewBuilder.BuildPage(PlanJson(), "en");
-        var cut2 = RenderComponent<CareerOverviewCard>(p => p.Add(x => x.Plan, differs));
+        var cut2 = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, differs));
         Assert.Contains("career-card__language", cut2.Markup, StringComparison.Ordinal);
     }
 
@@ -192,14 +193,14 @@ public class CareerPageBunitTests : TestContext
     {
         var plan = Build(PlanJson(allDone: true));
 
-        var off = RenderComponent<CareerOverviewCard>(p => p
+        var off = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, plan)
             .Add(x => x.EmployersOn, false));
         Assert.Contains("Je bent er!", off.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Bekijk vacatures", off.Markup, StringComparison.Ordinal);
         Assert.Contains("Bekijk je paspoort", off.Markup, StringComparison.Ordinal);
 
-        var on = RenderComponent<CareerOverviewCard>(p => p
+        var on = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, plan)
             .Add(x => x.EmployersOn, true));
         Assert.Contains("Bekijk vacatures", on.Markup, StringComparison.Ordinal);
@@ -210,7 +211,7 @@ public class CareerPageBunitTests : TestContext
     {
         var plan = Build(PlanJson(carriedOver: 2));
         var dismissed = false;
-        var cut = RenderComponent<CareerOverviewCard>(p => p
+        var cut = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, plan)
             .Add(x => x.ShowCarriedOver, true)
             .Add(x => x.OnDismissCarriedOver, () => dismissed = true));
@@ -224,17 +225,17 @@ public class CareerPageBunitTests : TestContext
     public void Already_have_section_is_hidden_when_nothing_matched()
     {
         var fresh = Build(PlanJson(nothingCompleted: true));
-        var cut = RenderComponent<CareerOverviewCard>(p => p.Add(x => x.Plan, fresh));
+        var cut = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, fresh));
         Assert.DoesNotContain("career-have", cut.Markup, StringComparison.Ordinal);
 
         var withProof = Build(PlanJson(onProfileCourse: true));
-        var cut2 = RenderComponent<CareerOverviewCard>(p => p
+        var cut2 = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, withProof)
             .Add(x => x.PassportOn, true));
         Assert.Contains("career-have", cut2.Markup, StringComparison.Ordinal);
         Assert.Contains("In je paspoort", cut2.Markup, StringComparison.Ordinal);
 
-        var cut3 = RenderComponent<CareerOverviewCard>(p => p
+        var cut3 = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, withProof)
             .Add(x => x.PassportOn, false));
         Assert.Contains("In je profiel", cut3.Markup, StringComparison.Ordinal);
@@ -246,7 +247,7 @@ public class CareerPageBunitTests : TestContext
     public void Stepper_uses_step_short_titles_and_marks_the_current_step()
     {
         var plan = Build(PlanJson());
-        var cut = RenderComponent<GrowingShellsStepper>(p => p.Add(x => x.Stones, plan.Stones));
+        var cut = Render<GrowingShellsStepper>(p => p.Add(x => x.Stones, plan.Stones));
 
         Assert.Contains("Basisdiploma", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Keukenervaring", cut.Markup, StringComparison.Ordinal);
@@ -259,7 +260,7 @@ public class CareerPageBunitTests : TestContext
     public void Rail_never_invents_a_current_job()
     {
         var plan = Build(PlanJson());
-        var cut = RenderComponent<CareerRail>(p => p
+        var cut = Render<CareerRail>(p => p
             .Add(x => x.Plan, plan)
             .Add(x => x.NowLabel, ""));
 
@@ -273,7 +274,7 @@ public class CareerPageBunitTests : TestContext
     [Fact]
     public void Empty_rail_says_the_plan_is_private()
     {
-        var cut = RenderComponent<CareerRail>(p => p
+        var cut = Render<CareerRail>(p => p
             .Add(x => x.Plan, CareerPlanViewModel.Empty));
 
         Assert.Contains("Nog geen droombaan gekozen", cut.Markup, StringComparison.Ordinal);
@@ -287,7 +288,7 @@ public class CareerPageBunitTests : TestContext
     {
         var confirmed = 0;
         var cancelled = 0;
-        var cut = RenderComponent<CareerDreamDialog>(p => p
+        var cut = Render<CareerDreamDialog>(p => p
             .Add(x => x.IsOpen, true)
             .Add(x => x.CurrentDream, "Kok")
             .Add(x => x.Suggestions, Suggestions(2))
@@ -307,7 +308,7 @@ public class CareerPageBunitTests : TestContext
     [Fact]
     public void Dialog_promises_nothing_is_lost()
     {
-        var cut = RenderComponent<CareerDreamDialog>(p => p
+        var cut = Render<CareerDreamDialog>(p => p
             .Add(x => x.IsOpen, true)
             .Add(x => x.CurrentDream, "Kok")
             .Add(x => x.ProofCourseCount, 1)
@@ -322,7 +323,7 @@ public class CareerPageBunitTests : TestContext
     public void Dialog_error_keeps_the_plan_visible()
     {
         var confirmed = 0;
-        var cut = RenderComponent<CareerDreamDialog>(p => p
+        var cut = Render<CareerDreamDialog>(p => p
             .Add(x => x.IsOpen, true)
             .Add(x => x.CurrentDream, "Kok")
             .Add(x => x.ErrorText, "Je kunt morgen weer een nieuw plan maken.")
@@ -338,7 +339,7 @@ public class CareerPageBunitTests : TestContext
     {
         Guid? restored = null;
         var planId = Guid.NewGuid();
-        var cut = RenderComponent<CareerArchivedPlans>(p => p
+        var cut = Render<CareerArchivedPlans>(p => p
             .Add(x => x.Plans, new List<ArchivedCareerPlanApiModel>
             {
                 new()
@@ -366,7 +367,7 @@ public class CareerPageBunitTests : TestContext
     [Fact]
     public void Archive_disclosure_is_hidden_without_archived_plans()
     {
-        var cut = RenderComponent<CareerArchivedPlans>(p => p
+        var cut = Render<CareerArchivedPlans>(p => p
             .Add(x => x.Plans, new List<ArchivedCareerPlanApiModel>()));
 
         Assert.DoesNotContain("career-archive", cut.Markup, StringComparison.Ordinal);
@@ -382,7 +383,7 @@ public class CareerPageBunitTests : TestContext
             .Select(s => new ClimbStone(s.Label, s.State, s.Number?.ToString()))
             .ToList();
 
-        var cut = RenderComponent<CareerClimbScene>(p => p
+        var cut = Render<CareerClimbScene>(p => p
             .Add(x => x.Stones, stones)
             .Add(x => x.CurrentIndex, plan.CurrentStoneIndex)
             .Add(x => x.LobsterSize, plan.LobsterSizeDesktop)
@@ -402,7 +403,7 @@ public class CareerPageBunitTests : TestContext
         await culture.SetLanguageAsync("ar");
         Assert.True(culture.IsRightToLeft);
 
-        var cut = RenderComponent<CareerEmptyCard>(p => p
+        var cut = Render<CareerEmptyCard>(p => p
             .Add(x => x.Suggestions, Suggestions(2)));
         Assert.Contains("إلى أين تريد أن تنمو؟", cut.Markup, StringComparison.Ordinal);
 

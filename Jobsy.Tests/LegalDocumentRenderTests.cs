@@ -24,7 +24,7 @@ namespace Jobsy.Tests;
 /// LegalDocument shell: table of contents matches the section ids, "In het kort" follows the reader's
 /// language, the Dutch body stays <c>lang="nl"</c> and the ar page is right-to-left (02.8).
 /// </summary>
-public class LegalDocumentRenderTests : TestContext
+public class LegalDocumentRenderTests : BunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
@@ -71,7 +71,7 @@ public class LegalDocumentRenderTests : TestContext
     }
 
     private IRenderedComponent<PrivacyNl> RenderPrivacy()
-        => RenderComponent<PrivacyNl>();
+        => Render<PrivacyNl>();
 
     [Fact]
     public void Toc_links_match_the_section_ids()
@@ -114,7 +114,7 @@ public class LegalDocumentRenderTests : TestContext
     [Fact]
     public void Terms_toc_has_no_my_data_link()
     {
-        var cut = RenderComponent<AlgemeneVoorwaardenNl>();
+        var cut = Render<AlgemeneVoorwaardenNl>();
         Assert.DoesNotContain(cut.FindAll("nav.pp-toc a"), a => a.GetAttribute("href") == "/privacy/data");
     }
 
@@ -160,7 +160,7 @@ public class LegalDocumentRenderTests : TestContext
     public void Arabic_page_root_is_right_to_left()
     {
         UseLanguage("ar");
-        var cut = RenderComponent<PublicLayout>(p => p
+        var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b =>
             {
                 b.OpenComponent<PrivacyNl>(0);
@@ -228,9 +228,9 @@ public class LegalDocumentRenderTests : TestContext
     [Fact]
     public void All_three_documents_render_their_own_sections()
     {
-        Assert.NotEmpty(RenderComponent<PrivacyNl>().FindAll("section.pp-sec"));
-        Assert.NotEmpty(RenderComponent<AlgemeneVoorwaardenNl>().FindAll("section.pp-sec"));
-        Assert.NotEmpty(RenderComponent<GebruiksvoorwaardenNl>().FindAll("section.pp-sec"));
+        Assert.NotEmpty(Render<PrivacyNl>().FindAll("section.pp-sec"));
+        Assert.NotEmpty(Render<AlgemeneVoorwaardenNl>().FindAll("section.pp-sec"));
+        Assert.NotEmpty(Render<GebruiksvoorwaardenNl>().FindAll("section.pp-sec"));
     }
 
     [Fact]

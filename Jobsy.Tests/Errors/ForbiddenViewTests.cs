@@ -15,7 +15,7 @@ namespace Jobsy.Tests.Errors;
 /// Errors 02 (bUnit): the account card comes from claims only — no API client is even
 /// registered, so a bug that tried to call one would throw instead of silently rendering.
 /// </summary>
-public class ForbiddenViewTests : TestContext
+public class ForbiddenViewTests : BunitContext
 {
     public ForbiddenViewTests()
     {
@@ -48,7 +48,7 @@ public class ForbiddenViewTests : TestContext
         var http = SignedInHttpContext("Candidate", "kim.kandidaat@example.nl", "Kim Kandidaat");
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = http });
 
-        var cut = RenderComponent<AccessDeniedView>(p => p
+        var cut = Render<AccessDeniedView>(p => p
             .Add(x => x.ReturnUrl, "/admin/users")
             .Add(x => x.Reason, "role"));
 
@@ -69,7 +69,7 @@ public class ForbiddenViewTests : TestContext
         var http = new DefaultHttpContext { User = new ClaimsPrincipal(identity) };
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = http });
 
-        var cut = RenderComponent<AccessDeniedView>(p => p.Add(x => x.ReturnUrl, "/admin"));
+        var cut = Render<AccessDeniedView>(p => p.Add(x => x.ReturnUrl, "/admin"));
 
         Assert.Contains("a***@b.nl", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("err-account__role", cut.Markup, StringComparison.Ordinal);
@@ -81,7 +81,7 @@ public class ForbiddenViewTests : TestContext
         var http = SignedInHttpContext("Candidate", "kim@example.nl", "Kim");
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = http });
 
-        var cut = RenderComponent<AccessDeniedView>(p => p
+        var cut = Render<AccessDeniedView>(p => p
             .Add(x => x.ReturnUrl, "/admin/users")
             .Add(x => x.Reason, "role"));
 
@@ -101,7 +101,7 @@ public class ForbiddenViewTests : TestContext
         var http = SignedInHttpContext("Candidate", "kim@example.nl", "Kim");
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = http });
 
-        var cut = RenderComponent<AccessDeniedView>(p => p
+        var cut = Render<AccessDeniedView>(p => p
             .Add(x => x.ReturnUrl, "/banenkaart")
             .Add(x => x.Reason, "employers-off"));
 
@@ -118,7 +118,7 @@ public class ForbiddenViewTests : TestContext
         var http = SignedInHttpContext("Candidate", "kim@example.nl", "Kim");
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = http });
 
-        var cut = RenderComponent<AccessDeniedView>(p => p
+        var cut = Render<AccessDeniedView>(p => p
             .Add(x => x.ReturnUrl, "/admin")
             .Add(x => x.Reason, "something-else"));
 

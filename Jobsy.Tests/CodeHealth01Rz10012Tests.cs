@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 namespace Jobsy.Tests;
 
 /// <summary>Code-health 01 §1: RZ10012 components must render, not as raw HTML tags.</summary>
-public class CodeHealth01Rz10012Tests : TestContext
+public class CodeHealth01Rz10012Tests : BunitContext
 {
     public CodeHealth01Rz10012Tests()
     {
@@ -27,7 +27,7 @@ public class CodeHealth01Rz10012Tests : TestContext
     [Fact]
     public void Insights_components_render_css_hooks_not_raw_tags()
     {
-        var story = RenderComponent<InsightsStoryCard>(p => p
+        var story = Render<InsightsStoryCard>(p => p
             .Add(c => c.Index, 0)
             .Add(c => c.Current, 0)
             .Add(c => c.Title, "Story")
@@ -35,16 +35,16 @@ public class CodeHealth01Rz10012Tests : TestContext
         AssertNoRawTag(story.Markup, "insightsstorycard");
         Assert.Contains("insights-story-card", story.Markup, StringComparison.Ordinal);
 
-        var locked = RenderComponent<WgLockedCard>(p => p
+        var locked = Render<WgLockedCard>(p => p
             .Add(c => c.Title, "Locked")
             .Add(c => c.TestId, "wg-locked"));
         AssertNoRawTag(locked.Markup, "wglockedcard");
         Assert.Contains("wg-locked-card", locked.Markup, StringComparison.Ordinal);
 
-        var bars = RenderComponent<InsightsDistributionBars>();
+        var bars = Render<InsightsDistributionBars>();
         AssertNoRawTag(bars.Markup, "insightsdistributionbars");
 
-        var wrapper = RenderComponent<InsightsLockedBlock>(p => p
+        var wrapper = Render<InsightsLockedBlock>(p => p
             .Add(c => c.TestId, "insights-locked-block"));
         AssertNoRawTag(wrapper.Markup, "wglockedcard");
         Assert.Contains("wg-locked-card", wrapper.Markup, StringComparison.Ordinal);

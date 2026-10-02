@@ -12,7 +12,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class AdminUsersBunitTests : TestContext
+public class AdminUsersBunitTests : BunitContext
 {
     public AdminUsersBunitTests()
     {
@@ -23,7 +23,7 @@ public class AdminUsersBunitTests : TestContext
             new FakeAuthStateProvider(CreateAdmin())));
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthStateProvider(CreateAdmin()));
         Services.AddAuthorizationCore();
-        this.AddTestAuthorization().SetAuthorized("admin").SetRoles("Admin");
+        this.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");
         Services.AddSingleton(new JobsyApiClient(new HttpClient { BaseAddress = new Uri("http://localhost") }));
     }
 
@@ -38,7 +38,7 @@ public class AdminUsersBunitTests : TestContext
     [Fact]
     public void MfaResetDialog_disabled_until_reason_and_six_digits()
     {
-        var cut = RenderComponent<MfaResetDialog>(p => p
+        var cut = Render<MfaResetDialog>(p => p
             .Add(x => x.IsOpen, true)
             .Add(x => x.UserId, Guid.NewGuid())
             .Add(x => x.MaskedName, "M. de V…")
@@ -60,7 +60,7 @@ public class AdminUsersBunitTests : TestContext
     [Fact]
     public void MfaResetDialog_external_admin_has_no_code_field()
     {
-        var cut = RenderComponent<MfaResetDialog>(p => p
+        var cut = Render<MfaResetDialog>(p => p
             .Add(x => x.IsOpen, true)
             .Add(x => x.UserId, Guid.NewGuid())
             .Add(x => x.MaskedName, "M. de V…")
@@ -76,7 +76,7 @@ public class AdminUsersBunitTests : TestContext
     [Fact]
     public void MfaResetDialog_paste_fills_all_digit_boxes()
     {
-        var cut = RenderComponent<MfaResetDialog>(p => p
+        var cut = Render<MfaResetDialog>(p => p
             .Add(x => x.IsOpen, true)
             .Add(x => x.UserId, Guid.NewGuid())
             .Add(x => x.MaskedName, "A. B…")
@@ -104,12 +104,12 @@ public class AdminUsersBunitTests : TestContext
     [Fact]
     public void AdminBulkBar_appears_when_selection_positive()
     {
-        var cut = RenderComponent<AdminBulkBar>(p => p
+        var cut = Render<AdminBulkBar>(p => p
             .Add(x => x.SelectedCount, 2)
             .AddChildContent("<button type=\"button\">Actie</button>"));
         Assert.Contains("2 geselecteerd", cut.Markup, StringComparison.Ordinal);
 
-        cut = RenderComponent<AdminBulkBar>(p => p.Add(x => x.SelectedCount, 0));
+        cut = Render<AdminBulkBar>(p => p.Add(x => x.SelectedCount, 0));
         Assert.DoesNotContain("admin-bulk-bar", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -122,7 +122,7 @@ public class AdminUsersBunitTests : TestContext
             new("kandidaten", "Kandidaten (8)"),
             new("beheerders", "Beheerders (2)"),
         };
-        var cut = RenderComponent<AdminTabs>(p => p
+        var cut = Render<AdminTabs>(p => p
             .Add(x => x.Tabs, tabs)
             .Add(x => x.ActiveKey, "alle")
             .Add(x => x.BasePath, "/admin/gebruikers"));

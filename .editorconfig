@@ -157,6 +157,9 @@ dotnet_diagnostic.CA1859.severity = none
 dotnet_diagnostic.CA1875.severity = none
 # ASP0006: bUnit RenderTreeBuilder helpers in tests use seq++. Rendering diff stability is not under test here.
 dotnet_diagnostic.ASP0006.severity = none
+# xUnit1051 (v3): CancellationToken on every HttpClient/EF call site. Wiring TestContext.Current
+# everywhere is mechanical follow-up; CI warning counter already excludes xUnit* codes.
+dotnet_diagnostic.xUnit1051.severity = none
 
 [**/Jobsy.Tests/**/*.cs]
 dotnet_diagnostic.CA1707.severity = none
@@ -169,6 +172,7 @@ dotnet_diagnostic.CA1869.severity = none
 dotnet_diagnostic.CA1859.severity = none
 dotnet_diagnostic.CA1875.severity = none
 dotnet_diagnostic.ASP0006.severity = none
+dotnet_diagnostic.xUnit1051.severity = none
 
 # --- EF migrations: generated ---
 [Jobsy.Infrastructure/Data/Migrations/**.cs]

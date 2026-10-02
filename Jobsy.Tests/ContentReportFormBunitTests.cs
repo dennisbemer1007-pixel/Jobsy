@@ -15,7 +15,7 @@ namespace Jobsy.Tests;
 /// <c>/melden</c> is a plain POST form (public-pages 06): it must render without JS and carry an
 /// antiforgery token, because a visitor reporting content may well have scripts disabled.
 /// </summary>
-public class ContentReportFormBunitTests : TestContext
+public class ContentReportFormBunitTests : BunitContext
 {
     public ContentReportFormBunitTests()
     {
@@ -37,7 +37,7 @@ public class ContentReportFormBunitTests : TestContext
     [Fact]
     public void Form_posts_to_melden_with_an_antiforgery_token_and_six_reasons()
     {
-        var cut = RenderComponent<Melden>();
+        var cut = Render<Melden>();
 
         var form = cut.Find("form");
         Assert.Equal("post", form.GetAttribute("method"));
@@ -57,7 +57,7 @@ public class ContentReportFormBunitTests : TestContext
     public void Success_state_thanks_the_visitor_and_hides_the_form()
     {
         Services.AddSingleton<NavigationManager>(new StaticNavigation("/melden?type=vacancy&id=x&verzonden=mail"));
-        var cut = RenderComponent<Melden>();
+        var cut = Render<Melden>();
 
         Assert.Contains("Dank je. We kijken ernaar.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Je krijgt een bevestiging per e-mail.", cut.Markup, StringComparison.Ordinal);
@@ -68,7 +68,7 @@ public class ContentReportFormBunitTests : TestContext
     public void Rate_limited_visitor_sees_a_plain_message()
     {
         Services.AddSingleton<NavigationManager>(new StaticNavigation("/melden?type=company&id=90000601&fout=teveel"));
-        var cut = RenderComponent<Melden>();
+        var cut = Render<Melden>();
 
         Assert.Contains("Je hebt al veel gemeld.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Exception", cut.Markup, StringComparison.Ordinal);

@@ -27,7 +27,7 @@ namespace Jobsy.Tests;
 /// Shared bUnit host for the two terms documents (04.9). Both routes are static SSR, so a plain
 /// render of <see cref="TermsPage"/> is exactly what a visitor gets.
 /// </summary>
-public abstract class TermsRenderTestBase : TestContext
+public abstract class TermsRenderTestBase : BunitContext
 {
     protected static readonly string[] Languages = ["nl", "en", "pl", "ro", "ar"];
 
@@ -81,7 +81,7 @@ public abstract class TermsRenderTestBase : TestContext
     }
 
     protected IRenderedComponent<TermsPage> Render(TermsAudience audience)
-        => RenderComponent<TermsPage>(p => p.Add(c => c.Audience, audience));
+        => Render<TermsPage>(p => p.Add(c => c.Audience, audience));
 
     protected IRenderedComponent<TermsPage> Employer() => Render(TermsAudience.Employer);
 
@@ -585,9 +585,9 @@ public class TermsAgeRulesSharingTests : TermsRenderTestBase
     [Fact]
     public void Privacy_and_the_terms_render_the_same_sentence()
     {
-        var shared = Normalize(RenderComponent<AgeRulesText>().Markup);
+        var shared = Normalize(Render<AgeRulesText>().Markup);
         var inTerms = Normalize(Candidate().Find("#voor-wie").TextContent);
-        var inPrivacy = Normalize(RenderComponent<PrivacyNl>().Find("#jonger").TextContent);
+        var inPrivacy = Normalize(Render<PrivacyNl>().Find("#jonger").TextContent);
 
         Assert.Contains(shared, inTerms, StringComparison.Ordinal);
         Assert.Contains(shared, inPrivacy, StringComparison.Ordinal);

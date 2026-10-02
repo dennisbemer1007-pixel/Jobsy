@@ -95,7 +95,7 @@ public class ContentReportMeldenReasonTests
     }
 }
 
-public class ContentReportMeldenReasonBunitTests : TestContext
+public class ContentReportMeldenReasonBunitTests : BunitContext
 {
     public ContentReportMeldenReasonBunitTests()
     {
@@ -118,7 +118,7 @@ public class ContentReportMeldenReasonBunitTests : TestContext
     {
         Services.AddSingleton<NavigationManager>(
             new StaticNavigation("/melden?type=vacancy&id=abc&fout=opnieuw&reden=Fake"));
-        var cut = RenderComponent<Melden>();
+        var cut = Render<Melden>();
 
         var checkedRadio = cut.Find("input[name='reason'][value='Fake']");
         Assert.True(checkedRadio.HasAttribute("checked"));
@@ -129,7 +129,7 @@ public class ContentReportMeldenReasonBunitTests : TestContext
     {
         Services.AddSingleton<NavigationManager>(
             new StaticNavigation("/melden?type=vacancy&id=abc&fout=opnieuw&reden=Scam"));
-        var cut = RenderComponent<Melden>();
+        var cut = Render<Melden>();
 
         Assert.Empty(cut.FindAll("input[name='reason'][checked]"));
     }

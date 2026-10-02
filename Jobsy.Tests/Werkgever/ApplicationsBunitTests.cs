@@ -10,7 +10,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class ApplicationsBunitTests : TestContext
+public class ApplicationsBunitTests : BunitContext
 {
     public ApplicationsBunitTests()
     {
@@ -38,7 +38,7 @@ public class ApplicationsBunitTests : TestContext
             MatchPercent = 92
         };
 
-        var cut = RenderComponent<ApplicationCandidateDetail>(p => p
+        var cut = Render<ApplicationCandidateDetail>(p => p
             .Add(x => x.Item, item)
             .Add(x => x.Tab, "profiel"));
 
@@ -66,7 +66,7 @@ public class ApplicationsBunitTests : TestContext
             MatchPercent = 90
         };
 
-        var cut = RenderComponent<ApplicationCandidateDetail>(p => p
+        var cut = Render<ApplicationCandidateDetail>(p => p
             .Add(x => x.Item, item)
             .Add(x => x.Tab, "profiel"));
 
@@ -88,13 +88,13 @@ public class ApplicationsBunitTests : TestContext
             CreatedAt = DateTime.UtcNow
         };
 
-        var bm = RenderComponent<ApplicationCandidateActions>(p => p
+        var bm = Render<ApplicationCandidateActions>(p => p
             .Add(x => x.Item, pending)
             .Add(x => x.CanWrite, true));
         Assert.Contains("Accepteren", bm.Markup);
         Assert.Contains("Afwijzen", bm.Markup);
 
-        var rm = RenderComponent<ApplicationCandidateActions>(p => p
+        var rm = Render<ApplicationCandidateActions>(p => p
             .Add(x => x.Item, pending)
             .Add(x => x.CanWrite, false));
         Assert.Contains("Reageren doet de vestigings- of bedrijfsmanager", rm.Markup);

@@ -582,7 +582,7 @@ public class UsersActiveCandidatesMetricTests
     }
 }
 
-public class AdminDashboardBunitTests : TestContext
+public class AdminDashboardBunitTests : BunitContext
 {
     public AdminDashboardBunitTests()
     {
@@ -593,7 +593,7 @@ public class AdminDashboardBunitTests : TestContext
             new FakeAuthStateProvider(CreateAdmin())));
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthStateProvider(CreateAdmin()));
         Services.AddAuthorizationCore();
-        this.AddTestAuthorization().SetAuthorized("admin").SetRoles("Admin");
+        this.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");
         Services.AddSingleton(new AdminTodoCountsStore());
         Services.AddSingleton(new AdminTodoChanged());
     }
@@ -601,7 +601,7 @@ public class AdminDashboardBunitTests : TestContext
     [Fact]
     public void Kpi_card_renders_delta_text()
     {
-        var cut = RenderComponent<AdminKpiCard>(p => p
+        var cut = Render<AdminKpiCard>(p => p
             .Add(x => x.Label, "Actieve kandidaten")
             .Add(x => x.Value, "4.812")
             .Add(x => x.Delta, "↑ +6,2% vs vorige")

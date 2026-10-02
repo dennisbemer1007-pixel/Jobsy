@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-public class KbListModeAndDetailBunitTests : TestContext
+public class KbListModeAndDetailBunitTests : BunitContext
 {
     public KbListModeAndDetailBunitTests()
     {
@@ -84,7 +84,7 @@ public class KbListModeAndDetailBunitTests : TestContext
     [Fact]
     public void Travel_time_large_variant_renders_minutes()
     {
-        var cut = RenderComponent<KbTravelTime>(p => p
+        var cut = Render<KbTravelTime>(p => p
             .Add(x => x.Minutes, 8)
             .Add(x => x.Transport, "Fiets")
             .Add(x => x.Large, true)

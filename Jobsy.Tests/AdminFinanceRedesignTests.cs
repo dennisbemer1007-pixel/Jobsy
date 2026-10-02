@@ -19,7 +19,7 @@ using Xunit;
 
 namespace Jobsy.Tests;
 
-public class AdminFinanceRedesignTests : TestContext
+public class AdminFinanceRedesignTests : BunitContext
 {
     public AdminFinanceRedesignTests()
     {
@@ -66,7 +66,7 @@ public class AdminFinanceRedesignTests : TestContext
     [Fact]
     public void Uitbetalingen_tabs_exclude_goodwill()
     {
-        var cut = RenderComponent<AdminTabs>(p => p
+        var cut = Render<AdminTabs>(p => p
             .Add(x => x.BasePath, "/admin/financien/uitbetalingen")
             .Add(x => x.ActiveKey, "uitbetalingen")
             .Add(x => x.Tabs, new List<AdminTabs.Tab>
@@ -84,7 +84,7 @@ public class AdminFinanceRedesignTests : TestContext
     [Fact]
     public void Pricing_what_drives_shows_overlap_notes()
     {
-        var cut = RenderComponent<PricingWhatDrivesSection>();
+        var cut = Render<PricingWhatDrivesSection>();
         Assert.Contains("Wat bepaalt welke prijs?", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("admin-impact-note", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Tokenpakketten", cut.Markup, StringComparison.Ordinal);
@@ -95,7 +95,7 @@ public class AdminFinanceRedesignTests : TestContext
     [Fact]
     public void Admin_kpi_card_renders_value()
     {
-        var cut = RenderComponent<AdminKpiCard>(p => p
+        var cut = Render<AdminKpiCard>(p => p
             .Add(x => x.Label, "Omzet")
             .Add(x => x.Value, "€ 18.420")
             .Add(x => x.Delta, "+11%")

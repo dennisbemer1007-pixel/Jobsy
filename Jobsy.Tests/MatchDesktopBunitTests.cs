@@ -18,7 +18,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class MatchDesktopBunitTests : TestContext
+public class MatchDesktopBunitTests : BunitContext
 {
     private readonly CountingLikeHandler _likeHandler = new();
 

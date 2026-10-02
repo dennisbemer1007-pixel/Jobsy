@@ -3,12 +3,12 @@ using Jobsy.Web.Components.Ui.Enterprise;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class EntPrimitiveBunitTests : TestContext
+public class EntPrimitiveBunitTests : BunitContext
 {
     [Fact]
     public void EntTabs_marks_active_tab()
     {
-        var cut = RenderComponent<EntTabs>(p => p
+        var cut = Render<EntTabs>(p => p
             .Add(x => x.Tabs, [new EntTabs.Tab("a", "A"), new EntTabs.Tab("b", "B")])
             .Add(x => x.ActiveKey, "b")
             .Add(x => x.BasePath, "/werkgever/x"));
@@ -19,7 +19,7 @@ public class EntPrimitiveBunitTests : TestContext
     [Fact]
     public void EntImpactNote_renders_child()
     {
-        var cut = RenderComponent<EntImpactNote>(p => p
+        var cut = Render<EntImpactNote>(p => p
             .Add(x => x.Tone, "info")
             .AddChildContent("Hallo"));
         Assert.Contains("Hallo", cut.Markup);
@@ -29,7 +29,7 @@ public class EntPrimitiveBunitTests : TestContext
     [Fact]
     public void EntKpiCard_shows_label_and_value()
     {
-        var cut = RenderComponent<EntKpiCard>(p => p
+        var cut = Render<EntKpiCard>(p => p
             .Add(x => x.Label, "Actief")
             .Add(x => x.Value, "12"));
         Assert.Contains("Actief", cut.Markup);

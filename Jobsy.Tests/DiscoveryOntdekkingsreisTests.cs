@@ -298,7 +298,7 @@ public class DiscoveryDislikeGuardTests
     }
 }
 
-public class DiscoveryPassportBunitTests : TestContext
+public class DiscoveryPassportBunitTests : BunitContext
 {
     public DiscoveryPassportBunitTests()
     {
@@ -313,7 +313,7 @@ public class DiscoveryPassportBunitTests : TestContext
     [Fact]
     public void PassportCard_shows_languages_fact_filled_and_empty()
     {
-        var empty = RenderComponent<PassportCard>(p => p
+        var empty = Render<PassportCard>(p => p
             .Add(x => x.DisplayName, "Samira")
             .Add(x => x.Initials, "SE")
             .Add(x => x.MemberNumber, "LB-1")
@@ -322,7 +322,7 @@ public class DiscoveryPassportBunitTests : TestContext
         Assert.Contains("Talen", empty.Markup, StringComparison.Ordinal);
         Assert.Contains("—", empty.Markup, StringComparison.Ordinal);
 
-        var filled = RenderComponent<PassportCard>(p => p
+        var filled = Render<PassportCard>(p => p
             .Add(x => x.DisplayName, "Samira")
             .Add(x => x.Initials, "SE")
             .Add(x => x.MemberNumber, "LB-1")
@@ -334,12 +334,12 @@ public class DiscoveryPassportBunitTests : TestContext
     [Fact]
     public void DnaTab_hides_hobbies_when_empty_shows_when_filled()
     {
-        var empty = RenderComponent<PassportDnaTab>(p => p
+        var empty = Render<PassportDnaTab>(p => p
             .Add(x => x.BubbleText, "hoi")
             .Add(x => x.Hobbies, Array.Empty<string>()));
         Assert.DoesNotContain("Waar word je blij van", empty.Markup, StringComparison.Ordinal);
 
-        var filled = RenderComponent<PassportDnaTab>(p => p
+        var filled = Render<PassportDnaTab>(p => p
             .Add(x => x.BubbleText, "hoi")
             .Add(x => x.Hobbies, ["Sport", "Muziek", "Koken", "Games", "Extra"]));
         Assert.Contains("Waar word je blij van", filled.Markup, StringComparison.Ordinal);
