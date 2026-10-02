@@ -272,13 +272,19 @@ public class MijnDnaAndTestsMobilePlaywrightTests
     {
         var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
         var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
-        await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
         await page.FillAsync("input[name='email']", email);
         await page.FillAsync("input[name='password']", password);
-        await page.ClickAsync("button.login-submit");
-        await page.WaitForURLAsync(
-            url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 60_000 });
+        var submit = page.Locator("button.login-submit, button.au-submit[type=submit]");
+        await page.WaitForFunctionAsync(
+            "() => { const b = document.querySelector('button.login-submit, button.au-submit[type=submit]'); return b && !b.disabled; }",
+            null,
+            new() { Timeout = 30_000 });
+        await Task.WhenAll(
+            page.WaitForURLAsync(
+                url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+                new() { Timeout = 60_000 }),
+            submit.ClickAsync());
     }
 
     private static NetworkGuard AttachGuards(IPage page)

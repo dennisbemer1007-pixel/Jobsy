@@ -17,6 +17,9 @@ export JOBSY_CSP_ALLOW_UNSAFE_EVAL=1
 export Errors__ForceHandler=true
 export Errors__EnableTestThrow=true
 export VerificationCodes__Pepper="${VerificationCodes__Pepper:-ci-verification-otp-pepper-32chars}"
+# Playwright public-pages suites POST /melden after many GETs; keep DSA limits from blocking CI.
+export RateLimiting__ReportHourlyPermitLimit=100
+export RateLimiting__ReportDailyPermitLimit=200
 export ConnectionStrings__JobsyDb="${ConnectionStrings__JobsyDb:-Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres}"
 export Cors__AllowedOrigins__0=http://localhost:5201
 export PublicWebBaseUrl=http://localhost:5201

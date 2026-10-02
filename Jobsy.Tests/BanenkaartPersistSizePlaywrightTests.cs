@@ -308,10 +308,11 @@ public class BanenkaartPersistSizePlaywrightTests
                 "() => { const b = document.querySelector('button.login-submit'); return b && !b.disabled; }",
                 null,
                 new() { Timeout = 30_000 });
-            await submit.ClickAsync();
-            await page.WaitForURLAsync(
-                url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
-                new() { Timeout = 60_000 });
+            await Task.WhenAll(
+                page.WaitForURLAsync(
+                    url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = 60_000 }),
+                submit.ClickAsync());
             return true;
         }
         catch

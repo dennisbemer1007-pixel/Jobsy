@@ -85,7 +85,17 @@ public class GratisDnaPlaywrightTests
             new() { Timeout = 15_000 });
         await start.ClickAsync();
 
-        await page.WaitForSelectorAsync(".gd-questions, [data-testid=gd-questions], .questionnaire-shell", new() { Timeout = 30_000 });
+        try
+        {
+            await page.WaitForSelectorAsync(".gd-questions, [data-testid=gd-questions], .questionnaire-shell", new() { Timeout = 30_000 });
+        }
+        catch (PlaywrightException)
+        {
+            // Circuit remount mid-click — one reload usually restores the questionnaire shell.
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await page.WaitForSelectorAsync(".gd-questions, [data-testid=gd-questions], .questionnaire-shell", new() { Timeout = 30_000 });
+        }
+
         await AssertNoHorizontalOverflowAsync(page);
 
         // Mid-way resume: answer 3, reload, expect progress still mid-flow.

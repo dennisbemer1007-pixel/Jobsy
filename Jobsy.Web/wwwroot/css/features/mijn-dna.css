@@ -9,6 +9,15 @@
     overflow-x: clip;
 }
 
+/* Profile hub DNA tab: keep score rows/chips inside narrow phones. */
+.profile-hub:has(.dna-panel),
+.profile-hub-dna,
+[data-testid="profile-hub"] {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow-x: clip;
+}
+
 .dna-section__title {
     margin: 0;
     font-size: var(--text-md, 1.05rem);

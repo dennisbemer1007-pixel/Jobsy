@@ -1302,40 +1302,34 @@
     max-width: 100%;
   }
 
-  /* Keep hero floats/chips inside the 12px viewport inset used by LandingPlaywrightTests. */
+  /* Keep hero chrome inside the 12px viewport inset (LandingPlaywrightTests).
+     Rotated labels and dual floats blow past getBoundingClientRect at 320px. */
   .pub-theme .pub-landing__hero-scene {
     overflow: hidden;
   }
 
-  .pub-theme .pub-landing__float {
-    max-width: min(9.5rem, calc(100% - 1.75rem));
-    padding: 0.4rem 0.55rem;
-  }
-
-  .pub-theme .pub-landing__float--bike {
-    inset-inline-start: 0.75rem;
-    top: 8%;
-  }
-
-  .pub-theme .pub-landing__float--bus {
-    inset-inline-end: 0.75rem;
-    top: 44%;
-  }
-
-  .pub-theme .pub-landing__float--fit {
-    inset-inline-end: 0.75rem;
-    max-width: min(9.5rem, calc(100% - 1.75rem));
+  .pub-theme .pub-landing__shell-tag,
+  .pub-theme .pub-landing__float--bike,
+  .pub-theme .pub-landing__float--bus,
+  .pub-theme .pub-landing__float--fit,
+  .pub-theme .pub-landing__float--journey {
+    display: none;
   }
 
   .pub-theme .pub-landing__bubble {
     white-space: normal;
-    max-width: min(8.5rem, 42%);
-    inset-inline-start: 48%;
+    max-width: min(8rem, 40%);
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
   }
 
   .pub-theme .pub-landing__you-card {
-    inset-inline-end: 0.75rem;
-    inset-inline-start: 0.75rem;
+    inset-inline: 0.75rem;
     max-width: none;
+  }
+
+  .pub-theme .pub-landing__scene > .pub-pill-sample {
+    inset-inline-end: 0.75rem;
+    top: 0.75rem;
   }
 }
