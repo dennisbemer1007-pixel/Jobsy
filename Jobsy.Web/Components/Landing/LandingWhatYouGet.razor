@@ -15,134 +15,222 @@
             <span class="pub-pill-sample">@LandingText.For("Landing.Get.Note", Variant)</span>
         </div>
 
-        <div class="pub-landing__showmap">
-            <div class="pub-landing__showmap-list">
-                <h3>@LandingText.For("Landing.Get.MapTitle", Variant)</h3>
-                <p class="pub-landing__sm">@LandingText.For("Landing.Get.MapLead", Variant)</p>
-                <div class="pub-landing__seg" aria-hidden="true">
-                    <span class="is-on"><PubEmoji Glyph="🚲" /> @LandingText.For("Landing.Get.MapBike", Variant)</span>
-                    <span><PubEmoji Glyph="🚌" /> @LandingText.For("Landing.Get.MapOv", Variant)</span>
-                    <span><PubEmoji Glyph="🚗" /> @LandingText.For("Landing.Get.MapCar", Variant)</span>
-                </div>
-                <p class="pub-landing__xs">@LandingText.For("Landing.Get.MapWithin", Variant) <span class="pub-pill-sample">@Culture["Public.Sample"]</span></p>
-                <div class="pub-landing__jobs">
-                    <div class="pub-landing__job">
-                        <PubEmoji Glyph="🏥" />
-                        <div>
-                            <h5>@LandingText.For("Landing.Get.MapJob1", Variant)</h5>
-                            <small>@LandingText.For("Landing.Get.MapJob1Meta", Variant)</small>
-                            <span class="pub-pill pub-pill--ok">@LandingText.For("Landing.Get.MapFit", Variant)</span>
+        @if (Variant == LandingVariant.On)
+        {
+            <div class="pub-landing__showmap">
+                <div class="pub-landing__showmap-list">
+                    <h3>@LandingText.For("Landing.Get.MapTitle", Variant)</h3>
+                    <p class="pub-landing__sm">@LandingText.For("Landing.Get.MapLead", Variant)</p>
+                    <div class="pub-landing__seg" aria-hidden="true">
+                        <span class="is-on"><PubEmoji Glyph="🚲" /> @LandingText.For("Landing.Get.MapBike", Variant)</span>
+                        <span><PubEmoji Glyph="🚌" /> @LandingText.For("Landing.Get.MapOv", Variant)</span>
+                        <span><PubEmoji Glyph="🚗" /> @LandingText.For("Landing.Get.MapCar", Variant)</span>
+                    </div>
+                    <p class="pub-landing__xs">@LandingText.For("Landing.Get.MapWithin", Variant) <span class="pub-pill-sample">@Culture["Public.Sample"]</span></p>
+                    <div class="pub-landing__jobs">
+                        <div class="pub-landing__job">
+                            <PubEmoji Glyph="🏥" />
+                            <div>
+                                <h5>@LandingText.For("Landing.Get.MapJob1", Variant)</h5>
+                                <small>@LandingText.For("Landing.Get.MapJob1Meta", Variant)</small>
+                                <span class="pub-pill pub-pill--ok">@LandingText.For("Landing.Get.MapFit", Variant)</span>
+                            </div>
+                            <div class="pub-landing__tt"><b>12 min</b>@LandingText.For("Landing.Get.MapTravel", Variant)</div>
                         </div>
-                        <div class="pub-landing__tt"><b>12 min</b>@LandingText.For("Landing.Get.MapTravel", Variant)</div>
-                    </div>
-                    <div class="pub-landing__job">
-                        <PubEmoji Glyph="🔧" />
-                        <div>
-                            <h5>@LandingText.For("Landing.Get.MapJob2", Variant)</h5>
-                            <small>@LandingText.For("Landing.Get.MapJob2Meta", Variant)</small>
-                            <span class="pub-pill pub-pill--ok">@LandingText.For("Landing.Get.MapFit", Variant)</span>
+                        <div class="pub-landing__job">
+                            <PubEmoji Glyph="🔧" />
+                            <div>
+                                <h5>@LandingText.For("Landing.Get.MapJob2", Variant)</h5>
+                                <small>@LandingText.For("Landing.Get.MapJob2Meta", Variant)</small>
+                                <span class="pub-pill pub-pill--ok">@LandingText.For("Landing.Get.MapFit", Variant)</span>
+                            </div>
+                            <div class="pub-landing__tt"><b>24 min</b>@LandingText.For("Landing.Get.MapTravel", Variant)</div>
                         </div>
-                        <div class="pub-landing__tt"><b>24 min</b>@LandingText.For("Landing.Get.MapTravel", Variant)</div>
-                    </div>
-                    <div class="pub-landing__job">
-                        <PubEmoji Glyph="🌱" />
-                        <div>
-                            <h5>@LandingText.For("Landing.Get.MapJob3", Variant)</h5>
-                            <small>@LandingText.For("Landing.Get.MapJob3Meta", Variant)</small>
-                            <span class="pub-pill">@LandingText.For("Landing.Get.MapFitOk", Variant)</span>
+                        <div class="pub-landing__job">
+                            <PubEmoji Glyph="🌱" />
+                            <div>
+                                <h5>@LandingText.For("Landing.Get.MapJob3", Variant)</h5>
+                                <small>@LandingText.For("Landing.Get.MapJob3Meta", Variant)</small>
+                                <span class="pub-pill">@LandingText.For("Landing.Get.MapFitOk", Variant)</span>
+                            </div>
+                            <div class="pub-landing__tt"><b>9 min</b>@LandingText.For("Landing.Get.MapTravel", Variant)</div>
                         </div>
-                        <div class="pub-landing__tt"><b>9 min</b>@LandingText.For("Landing.Get.MapTravel", Variant)</div>
+                    </div>
+                </div>
+                <div class="pub-landing__showmap-vis" aria-hidden="true">
+                    <svg viewBox="0 0 320 280" class="pub-landing__rings">
+                        <circle cx="160" cy="150" r="120" fill="none" stroke="var(--coral)" stroke-opacity=".35" stroke-dasharray="3 8"/>
+                        <circle cx="160" cy="150" r="80" fill="none" stroke="var(--coral)" stroke-opacity=".45" stroke-dasharray="3 8"/>
+                        <circle cx="160" cy="150" r="40" fill="none" stroke="var(--coral)" stroke-opacity=".6"/>
+                        <circle cx="100" cy="100" r="6" fill="var(--map-pin)"/><circle cx="210" cy="90" r="6" fill="var(--map-pin)"/>
+                        <circle cx="230" cy="170" r="6" fill="var(--map-pin)"/><circle cx="120" cy="200" r="6" fill="var(--map-pin)"/>
+                    </svg>
+                    <LobsyMascot Pose="MascotPose.Default" Size="MascotSize.Tiny" Alt="" Class="pub-landing__home-mark" />
+                    <span class="pub-pill">@LandingText.For("Landing.Get.MapRings", Variant)</span>
+                </div>
+            </div>
+
+            <div class="pub-landing__four" id="ontdekkingsreis">
+                @PassportCardSmall()
+                @JourneyCard()
+                @MatchCard()
+                @ReportCard()
+            </div>
+        }
+        else
+        {
+            <div class="pub-landing__showpp">
+                <div class="pub-landing__spnav">
+                    <h3><PubEmoji Glyph="🪪" /> @LandingText.For("Landing.Get.PassportTitle", Variant)</h3>
+                    <span class="is-on"><PubEmoji Glyph="🪪" /> @LandingText.For("Landing.Get.Passport.TabPassport", Variant)</span>
+                    <span><PubEmoji Glyph="🧬" /> @LandingText.For("Landing.Get.Passport.TabDna", Variant)</span>
+                    <span><PubEmoji Glyph="🧪" /> @LandingText.For("Landing.Get.Passport.TabTests", Variant)</span>
+                    <span><PubEmoji Glyph="✅" /> @LandingText.For("Landing.Get.Passport.TabFit", Variant)</span>
+                    <span><PubEmoji Glyph="🪜" /> @LandingText.For("Landing.Get.Passport.TabCareer", Variant)</span>
+                    <span><PubEmoji Glyph="📜" /> @LandingText.For("Landing.Get.Passport.TabProofs", Variant)</span>
+                    <p class="pub-landing__spnote">@LandingText.For("Landing.Get.PassportNote", Variant)</p>
+                </div>
+                <div class="pub-landing__spmain">
+                    <svg class="pub-landing__wheel" viewBox="0 0 200 200" width="200" height="200" aria-hidden="true">
+                        <circle cx="100" cy="100" r="78" fill="none" stroke="color-mix(in srgb, var(--border) 70%, var(--surface))" stroke-width="22" stroke-dasharray="115 122" transform="rotate(-90 100 100)"/>
+                        <circle cx="100" cy="100" r="78" fill="none" stroke="var(--coral)" stroke-width="22" stroke-linecap="round" stroke-dasharray="99 240" transform="rotate(-90 100 100)"/>
+                        <circle cx="100" cy="100" r="78" fill="none" stroke="var(--gold)" stroke-width="22" stroke-linecap="round" stroke-dasharray="90 240" transform="rotate(0 100 100)"/>
+                        <circle cx="100" cy="100" r="78" fill="none" stroke="var(--success)" stroke-width="22" stroke-linecap="round" stroke-dasharray="74 240" transform="rotate(90 100 100)"/>
+                        <circle cx="100" cy="100" r="78" fill="none" stroke="var(--brand)" stroke-width="22" stroke-linecap="round" stroke-dasharray="82 240" transform="rotate(180 100 100)"/>
+                        <text x="100" y="96" text-anchor="middle" class="pub-landing__wheel-t">@LandingText.For("Landing.Hero.WheelCenter", Variant)</text>
+                        <text x="100" y="118" text-anchor="middle" class="pub-landing__wheel-s">@LandingText.For("Landing.Hero.WheelSub", Variant)</text>
+                    </svg>
+                    <div class="pub-landing__sum">
+                        <div class="pub-landing__sum-pills">
+                            @if (LandingFeatureAvailability.ShowPassportSoon)
+                            {
+                                <span class="pub-pill pub-pill--soon">@Culture["Public.Soon"]</span>
+                            }
+                            <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
+                        </div>
+                        <h4>@LandingText.For("Landing.Get.PassportStoryTitle", Variant)</h4>
+                        <p>@LandingText.For("Landing.Get.PassportStoryBody", Variant)</p>
+                        <div class="pub-landing__rows">
+                            <div class="pub-landing__rw"><small><PubEmoji Glyph="🤝" /> @LandingText.For("Landing.Get.PassportRow1Label", Variant)</small><b>@LandingText.For("Landing.Get.PassportRow1Value", Variant)</b></div>
+                            <div class="pub-landing__rw"><small><PubEmoji Glyph="💛" /> @LandingText.For("Landing.Get.PassportRow2Label", Variant)</small><b>@LandingText.For("Landing.Get.PassportRow2Value", Variant)</b></div>
+                            <div class="pub-landing__rw"><small><PubEmoji Glyph="🏡" /> @LandingText.For("Landing.Get.PassportRow3Label", Variant)</small><b>@LandingText.For("Landing.Get.PassportRow3Value", Variant)</b></div>
+                            <div class="pub-landing__rw"><small><PubEmoji Glyph="🧭" /> @LandingText.For("Landing.Get.PassportRow4Label", Variant)</small><b>@LandingText.For("Landing.Get.PassportRow4Value", Variant)</b></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="pub-landing__showmap-vis" aria-hidden="true">
-                <svg viewBox="0 0 320 280" class="pub-landing__rings">
-                    <circle cx="160" cy="150" r="120" fill="none" stroke="var(--coral)" stroke-opacity=".35" stroke-dasharray="3 8"/>
-                    <circle cx="160" cy="150" r="80" fill="none" stroke="var(--coral)" stroke-opacity=".45" stroke-dasharray="3 8"/>
-                    <circle cx="160" cy="150" r="40" fill="none" stroke="var(--coral)" stroke-opacity=".6"/>
-                    <circle cx="100" cy="100" r="6" fill="var(--map-pin)"/><circle cx="210" cy="90" r="6" fill="var(--map-pin)"/>
-                    <circle cx="230" cy="170" r="6" fill="var(--map-pin)"/><circle cx="120" cy="200" r="6" fill="var(--map-pin)"/>
-                </svg>
-                <LobsyMascot Pose="MascotPose.Default" Size="MascotSize.Tiny" Alt="" Class="pub-landing__home-mark" />
-                <span class="pub-pill">@LandingText.For("Landing.Get.MapRings", Variant)</span>
-            </div>
-        </div>
 
-        <div class="pub-landing__four" id="ontdekkingsreis">
-            <div class="pub-landing__fc">
-                <div class="pub-landing__fc-top">
-                    <PubEmoji Glyph="🪪" />
-                    @if (LandingFeatureAvailability.ShowPassportSoon)
-                    {
-                        <span class="pub-pill pub-pill--soon">@Culture["Public.Soon"]</span>
-                    }
-                </div>
-                <h4>@LandingText.For("Landing.Get.PassportTitle", Variant)</h4>
-                <p>@LandingText.For("Landing.Get.PassportBody", Variant)</p>
-                <div class="pub-landing__tabs" aria-hidden="true">
-                    <span class="is-on">@LandingText.For("Landing.Get.Passport.TabDna", Variant)</span>
-                    <span>@LandingText.For("Landing.Get.Passport.TabTests", Variant)</span>
-                    <span>@LandingText.For("Landing.Get.Passport.TabFit", Variant)</span>
-                    <span>@LandingText.For("Landing.Get.Passport.TabCareer", Variant)</span>
-                    <span>@LandingText.For("Landing.Get.Passport.TabProofs", Variant)</span>
-                </div>
-                <div class="pub-landing__bar"><span>@LandingText.For("Landing.Get.Passport.BarSocial", Variant)</span><b style="--pct:82%"></b></div>
-                <div class="pub-landing__bar pub-landing__bar--2"><span>@LandingText.For("Landing.Get.Passport.BarPractical", Variant)</span><b style="--pct:70%"></b></div>
-                <div class="pub-landing__bar pub-landing__bar--3"><span>@LandingText.For("Landing.Get.Passport.BarCareful", Variant)</span><b style="--pct:58%"></b></div>
-            </div>
-
-            <div class="pub-landing__fc">
-                <div class="pub-landing__fc-top">
-                    <PubEmoji Glyph="🧭" />
-                    @if (LandingFeatureAvailability.ShowDiscoverySoon)
-                    {
-                        <span class="pub-pill pub-pill--soon">@Culture["Public.Soon"]</span>
-                    }
-                </div>
-                <h4>@LandingText.For("Landing.Get.JourneyTitle", Variant)</h4>
-                <p>@LandingText.For("Landing.Get.JourneyBody", Variant)</p>
-                <ol class="pub-landing__jr">
-                    <li class="is-done">@LandingText.For("Landing.Get.Journey1", Variant)</li>
-                    <li class="is-done">@LandingText.For("Landing.Get.Journey2", Variant)</li>
-                    <li class="is-cur">@LandingText.For("Landing.Get.Journey3", Variant)</li>
-                    <li>@LandingText.For("Landing.Get.Journey4", Variant)</li>
-                </ol>
-            </div>
-
-            <div class="pub-landing__fc">
-                <div class="pub-landing__fc-top"><PubEmoji Glyph="💘" /></div>
-                <h4>@LandingText.For("Landing.Get.MatchTitle", Variant)</h4>
-                <p>@LandingText.For("Landing.Get.MatchBody", Variant)</p>
-                <div class="pub-landing__swipe">
-                    <span class="pub-pill">@LandingText.For("Landing.Get.MatchBadge", Variant)</span>
-                    <div class="pub-landing__pc">91%</div>
-                    <b>@LandingText.For("Landing.Get.MatchRole", Variant)</b>
-                    <small>@LandingText.For("Landing.Get.MatchMeta", Variant)</small>
-                </div>
-            </div>
-
-            <div class="pub-landing__fc">
-                <div class="pub-landing__fc-top"><PubEmoji Glyph="📘" /></div>
-                <h4>@LandingText.For("Landing.Get.ReportTitle", Variant)</h4>
-                <p>@LandingText.For("Landing.Get.ReportBody", Variant)</p>
-                <div class="pub-landing__rep" aria-hidden="true">
-                    <h6>@LandingText.For("Landing.Get.ReportName", Variant)</h6>
-                    <div class="pub-landing__ln"></div>
-                    <div class="pub-landing__ln pub-landing__ln--2"></div>
-                    <div class="pub-landing__ln pub-landing__ln--3"></div>
-                </div>
-                @if (PriceEuro is decimal price)
-                {
-                    <div class="pub-landing__price">
-                        @string.Format(LandingText.For("Landing.Get.ReportPrice", Variant), price.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))
+            <div class="pub-landing__four" id="ontdekkingsreis">
+                <div class="pub-landing__fc">
+                    <div class="pub-landing__fc-top"><PubEmoji Glyph="✅" /></div>
+                    <h4>@LandingText.For("Landing.Get.FitTitle", Variant)</h4>
+                    <p>@LandingText.For("Landing.Get.FitBody", Variant)</p>
+                    <div class="pub-landing__fit" aria-hidden="true">
+                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc1", Variant)<span class="pub-landing__occ-m" style="--pct:82%"></span><b>82%</b></div>
+                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc2", Variant)<span class="pub-landing__occ-m" style="--pct:74%"></span><b>74%</b></div>
+                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc3", Variant)<span class="pub-landing__occ-m" style="--pct:69%"></span><b>69%</b></div>
                     </div>
-                }
+                </div>
+                <div class="pub-landing__fc">
+                    <div class="pub-landing__fc-top"><PubEmoji Glyph="🪜" /></div>
+                    <h4>@LandingText.For("Landing.Get.DreamTitle", Variant)</h4>
+                    <p>@LandingText.For("Landing.Get.DreamBody", Variant)</p>
+                    <div class="pub-landing__path" aria-hidden="true">
+                        <div class="is-now"><i></i><span><b>@LandingText.For("Landing.Get.DreamNow", Variant)</b><small>@LandingText.For("Landing.Get.DreamNowRole", Variant)</small></span></div>
+                        <div><i></i><span><b>@LandingText.For("Landing.Get.DreamNext", Variant)</b><small>@LandingText.For("Landing.Get.DreamNextRole", Variant)</small></span></div>
+                        <div class="is-goal"><i>★</i><span><b>@LandingText.For("Landing.Get.DreamGoal", Variant)</b><small>@LandingText.For("Landing.Get.DreamGoalRole", Variant)</small></span></div>
+                    </div>
+                </div>
+                @JourneyCard()
+                @ReportCard()
             </div>
-        </div>
+        }
     </div>
 </section>
 
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
     [Parameter] public decimal? PriceEuro { get; set; }
+
+    private RenderFragment PassportCardSmall() => __builder =>
+    {
+        <div class="pub-landing__fc">
+            <div class="pub-landing__fc-top">
+                <PubEmoji Glyph="🪪" />
+                @if (LandingFeatureAvailability.ShowPassportSoon)
+                {
+                    <span class="pub-pill pub-pill--soon">@Culture["Public.Soon"]</span>
+                }
+            </div>
+            <h4>@LandingText.For("Landing.Get.PassportTitle", Variant)</h4>
+            <p>@LandingText.For("Landing.Get.PassportBody", Variant)</p>
+            <div class="pub-landing__tabs" aria-hidden="true">
+                <span class="is-on">@LandingText.For("Landing.Get.Passport.TabDna", Variant)</span>
+                <span>@LandingText.For("Landing.Get.Passport.TabTests", Variant)</span>
+                <span>@LandingText.For("Landing.Get.Passport.TabFit", Variant)</span>
+                <span>@LandingText.For("Landing.Get.Passport.TabCareer", Variant)</span>
+                <span>@LandingText.For("Landing.Get.Passport.TabProofs", Variant)</span>
+            </div>
+            <div class="pub-landing__bar"><span>@LandingText.For("Landing.Get.Passport.BarSocial", Variant)</span><b style="--pct:82%"></b></div>
+            <div class="pub-landing__bar pub-landing__bar--2"><span>@LandingText.For("Landing.Get.Passport.BarPractical", Variant)</span><b style="--pct:70%"></b></div>
+            <div class="pub-landing__bar pub-landing__bar--3"><span>@LandingText.For("Landing.Get.Passport.BarCareful", Variant)</span><b style="--pct:58%"></b></div>
+        </div>
+    };
+
+    private RenderFragment JourneyCard() => __builder =>
+    {
+        <div class="pub-landing__fc">
+            <div class="pub-landing__fc-top">
+                <PubEmoji Glyph="🧭" />
+                @if (LandingFeatureAvailability.ShowDiscoverySoon)
+                {
+                    <span class="pub-pill pub-pill--soon">@Culture["Public.Soon"]</span>
+                }
+            </div>
+            <h4>@LandingText.For("Landing.Get.JourneyTitle", Variant)</h4>
+            <p>@LandingText.For("Landing.Get.JourneyBody", Variant)</p>
+            <ol class="pub-landing__jr">
+                <li class="is-done">@LandingText.For("Landing.Get.Journey1", Variant)</li>
+                <li class="is-done">@LandingText.For("Landing.Get.Journey2", Variant)</li>
+                <li class="is-cur">@LandingText.For("Landing.Get.Journey3", Variant)</li>
+                <li>@LandingText.For("Landing.Get.Journey4", Variant)</li>
+            </ol>
+        </div>
+    };
+
+    private RenderFragment MatchCard() => __builder =>
+    {
+        <div class="pub-landing__fc">
+            <div class="pub-landing__fc-top"><PubEmoji Glyph="💘" /></div>
+            <h4>@LandingText.For("Landing.Get.MatchTitle", Variant)</h4>
+            <p>@LandingText.For("Landing.Get.MatchBody", Variant)</p>
+            <div class="pub-landing__swipe">
+                <span class="pub-pill">@LandingText.For("Landing.Get.MatchBadge", Variant)</span>
+                <div class="pub-landing__pc">91%</div>
+                <b>@LandingText.For("Landing.Get.MatchRole", Variant)</b>
+                <small>@LandingText.For("Landing.Get.MatchMeta", Variant)</small>
+            </div>
+        </div>
+    };
+
+    private RenderFragment ReportCard() => __builder =>
+    {
+        <div class="pub-landing__fc">
+            <div class="pub-landing__fc-top"><PubEmoji Glyph="📘" /></div>
+            <h4>@LandingText.For("Landing.Get.ReportTitle", Variant)</h4>
+            <p>@LandingText.For("Landing.Get.ReportBody", Variant)</p>
+            <div class="pub-landing__rep" aria-hidden="true">
+                <h6>@LandingText.For("Landing.Get.ReportName", Variant)</h6>
+                <div class="pub-landing__ln"></div>
+                <div class="pub-landing__ln pub-landing__ln--2"></div>
+                <div class="pub-landing__ln pub-landing__ln--3"></div>
+            </div>
+            @if (PriceEuro is decimal price)
+            {
+                <div class="pub-landing__price">
+                    @string.Format(LandingText.For("Landing.Get.ReportPrice", Variant), price.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))
+                </div>
+            }
+        </div>
+    };
 }
