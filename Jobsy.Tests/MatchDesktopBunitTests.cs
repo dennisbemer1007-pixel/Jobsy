@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using Bunit;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Web.Components;
 using Jobsy.Web.Components.Match;
@@ -33,6 +34,7 @@ public class MatchDesktopBunitTests : BunitContext
             sp.GetRequiredService<AuthenticationStateProvider>()));
         var http = new HttpClient(_likeHandler) { BaseAddress = new Uri("http://localhost/") };
         Services.AddSingleton(new JobsyApiClient(http));
+        Services.AddSingleton<IFeatureFlags>(new DefaultFeatureFlags());
         JSInterop.SetupVoid("jobsyDialog.trap", _ => true);
         JSInterop.SetupVoid("jobsyDialog.release", _ => true);
     }
@@ -540,5 +542,18 @@ public class MatchDesktopBunitTests : BunitContext
 
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
             => Task.FromResult(new AuthenticationState(_user));
+    }
+
+    private sealed class DefaultFeatureFlags : IFeatureFlags
+    {
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(FeatureFlagSnapshot.Defaults);
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(FeatureFlagSnapshot.Defaults.IsEnabled(feature));
+
+        public void Invalidate()
+        {
+        }
     }
 }

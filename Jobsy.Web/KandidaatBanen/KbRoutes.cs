@@ -6,7 +6,7 @@ namespace Jobsy.Web.KandidaatBanen;
 /// </summary>
 public static class KbRoutes
 {
-    // Landing 04 is on acceptatie — map lives at /banenkaart.
+    // Landing 04+: canonical map route (see Banenkaart.razor).
     public const string Map = "/banenkaart";
 
     public const string Applications = "/candidate/applications";

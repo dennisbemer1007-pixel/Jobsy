@@ -1,6 +1,8 @@
 @page "/werkgever"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using System.Globalization
 @using System.Text
 @using Jobsy.Core.Interfaces

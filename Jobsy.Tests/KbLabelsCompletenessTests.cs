@@ -74,7 +74,7 @@ public class KbLabelsCompletenessTests
     [Fact]
     public void KbRoutes_map_uses_fallback_home_when_banenkaart_absent()
     {
-        Assert.Equal("/", KbRoutes.Map); // KB-FALLBACK(E)
+        Assert.Equal("/banenkaart", KbRoutes.Map); // Landing stack: map lives at /banenkaart
         Assert.Equal("/candidate/applications", KbRoutes.Applications);
         Assert.Equal("/candidate/liked", KbRoutes.Saved);
         Assert.Equal("/candidate/shared", KbRoutes.Shared);
@@ -82,10 +82,10 @@ public class KbLabelsCompletenessTests
     }
 
     [Fact]
-    public void DislikeSource_fallback_returns_none()
+    public async Task DislikeSource_fallback_returns_none()
     {
         var source = KbNoDislikeSource.Instance;
-        var result = source.GetMatchingDislikeCodesAsync(Guid.NewGuid(), Guid.NewGuid()).GetAwaiter().GetResult();
+        var result = await source.GetMatchingDislikeCodesAsync(Guid.NewGuid(), Guid.NewGuid());
         Assert.Empty(result);
     }
 

@@ -25,6 +25,8 @@
 @page "/employer/sales/payout-checkout"
 @page "/branch"
 @page "/regional"
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @using Jobsy.Web.Navigation
 @inject NavigationManager Navigation

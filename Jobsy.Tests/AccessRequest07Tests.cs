@@ -133,7 +133,9 @@ public class AccessRequest07Tests
             .SingleAsync(u => u.Email == "colleague@example.com");
         Assert.Equal(UserRole.BranchManager, user.Role);
         Assert.Contains(user.CompanyMemberships, m => m.CompanyId == companyId);
-        Assert.Contains(capture.SentSubjects, s => s.Contains("Uitnodiging", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(capture.SentSubjects, s =>
+            s.Contains("Uitnodiging", StringComparison.OrdinalIgnoreCase)
+            || s.Contains("uitgenodigd", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

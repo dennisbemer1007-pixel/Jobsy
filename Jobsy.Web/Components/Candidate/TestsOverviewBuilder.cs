@@ -153,7 +153,7 @@ public static class TestsOverviewBuilder
             if (extended)
             {
                 accent = "gold";
-                statusKey = "DeepPay.Title";
+                statusKey = "Test.Status.Extended";
                 icon = "★";
             }
             else if (freeDone)

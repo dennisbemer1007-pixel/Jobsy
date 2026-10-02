@@ -1,6 +1,6 @@
 KEY: deep_test_receipt
 SUBJECT: Your extended test is ready
-PREHEADER: Paid — you can start with question 1
+PREHEADER: Paid: you can start with question 1
 KIND: Essential
 --- TEXT ---
 Hi Alex,
@@ -11,7 +11,7 @@ Paid. You can start
 Paid: Extended test Competenties
 
 Amount (incl. VAT): € 2.99
-Date: 1 October 2026, 05:49
+Date: 1 October 2026, 14:00
 Invoice number: LOB-KT-2026-0001
 Terms version: 2026-10
 

@@ -44,10 +44,10 @@ public class ContentReportMailTests
             ContentReportStatus.Removed,
             "Nep vacature."));
 
-        var toReporter = Assert.Single(harness.Mailer.Sent.Where(m => m.Mail.Key == "ReportDecided"));
+        var toReporter = Assert.Single(harness.Mailer.Sent, m => m.Mail.Key == "ReportDecided");
         Assert.Equal("melder@test.nl", toReporter.To);
 
-        var toEmployer = Assert.Single(harness.Mailer.Sent.Where(m => m.Mail.Key == "ContentRemoved"));
+        var toEmployer = Assert.Single(harness.Mailer.Sent, m => m.Mail.Key == "ContentRemoved");
         Assert.Equal(ContentReportHarness.ManagerEmail, toEmployer.To);
         Assert.DoesNotContain("melder@test.nl", toEmployer.Mail.Html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("melder@test.nl", toEmployer.Mail.Text, StringComparison.OrdinalIgnoreCase);
@@ -66,7 +66,7 @@ public class ContentReportMailTests
             ContentReportStatus.Restricted,
             "<script>alert('x')</script> onveilig"));
 
-        var mail = Assert.Single(harness.Mailer.Sent.Where(m => m.Mail.Key == "ContentRemoved"));
+        var mail = Assert.Single(harness.Mailer.Sent, m => m.Mail.Key == "ContentRemoved");
         Assert.DoesNotContain("<script>", mail.Mail.Html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("&lt;script&gt;", mail.Mail.Html, StringComparison.Ordinal);
     }

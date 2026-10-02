@@ -112,9 +112,11 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `api/vacancies/{id}/pushbom` | yes | no | yes |
 | `api/vacancies/{id}/extend` | yes | no | yes |
 | `api/vacancies/{id}/inactive` | yes | no | yes |
+| `api/vacancies/{id}/ready` | yes | no | yes |
 | `api/vacancies/{id}/contact-preference` | yes | no | yes |
 | `api/vacancies/{id}/email-verification` | yes | no | yes |
 | `api/applications/{id}/react` | yes | no | yes |
+| `api/applications/{id}/viewed` | yes | no | yes |
 | `api/applications/{id}/contact` | yes | no | yes |
 | `api/applications/vacancies/{vacancyId}/fulfill/{applicationId}` | yes | no | yes |
 | `api/company-users/invite` | yes | no | no |

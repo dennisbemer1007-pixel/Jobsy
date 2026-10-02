@@ -1,6 +1,6 @@
 KEY: deep_test_receipt
 SUBJECT: Je uitgebreide test staat klaar
-PREHEADER: Betaald — je kunt met vraag 1 beginnen
+PREHEADER: Betaald: je kunt met vraag 1 beginnen
 KIND: Essential
 --- TEXT ---
 Hoi Alex,
@@ -11,7 +11,7 @@ Betaald. Je kunt beginnen
 Betaald: Uitgebreide test Competenties
 
 Bedrag (incl. btw): € 2,99
-Datum: 1 oktober 2026, 05:49
+Datum: 1 oktober 2026, 14:00
 Factuurnummer: LOB-KT-2026-0001
 Voorwaarden versie: 2026-10
 

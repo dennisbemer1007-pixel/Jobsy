@@ -167,9 +167,19 @@ public sealed class TokenRequestsApiFactory : WebApplicationFactory<Jobsy.Api.Ap
         if (db.Users.Any()) { _seeded = true; return; }
 
         db.Companies.AddRange(
-            new Company { Id = OrgId, Name = "Org", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4) },
             new Company
             {
+                Id = OrgId,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                Name = "Org",
+                KvkNumber = "1",
+                Address = "a",
+                Location = new GeoPoint(52, 4)
+            },
+            new Company
+            {
+
+                VerificationStatus = CompanyVerificationStatus.Verified,
                 Id = BranchId,
                 Name = "Branch",
                 KvkNumber = "1",
@@ -180,6 +190,8 @@ public sealed class TokenRequestsApiFactory : WebApplicationFactory<Jobsy.Api.Ap
             },
             new Company
             {
+
+                VerificationStatus = CompanyVerificationStatus.Verified,
                 Id = SiblingId,
                 Name = "Sibling",
                 KvkNumber = "1",

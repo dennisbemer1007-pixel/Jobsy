@@ -249,7 +249,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/organisatie/salaristabellen/{TableId:guid}` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
 | `/werkgever/organisatie/team` | `Pages/Werkgever/Users.razor` | EnterpriseManager, Admin |
 | `/werkgever/organisatie/vestigingen` | `Pages/Werkgever/BranchesRegions.razor` | RegionalManager, EnterpriseManager, Admin |
-| `/werkgever/overnames` | `Pages/Werkgever/Takeovers.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
+| `/werkgever/overnames` | `Pages/Werkgever/Takeovers.razor` | BranchManager, EnterpriseManager, Admin |
 | `/werkgever/partner` | `Pages/Werkgever/PartnerSales.razor` | EnterpriseManager, Intermediary |
 | `/werkgever/partner/uitbetalen` | `Pages/Werkgever/PartnerSalesPayoutCheckoutStub.razor` | EnterpriseManager, Intermediary |
 | `/werkgever/sollicitaties` | `Pages/Werkgever/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |

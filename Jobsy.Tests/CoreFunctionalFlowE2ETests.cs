@@ -86,8 +86,9 @@ public class CoreFunctionalFlowE2ETests
         var regRow = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.NotNull(regRow.ContactEmailVerifiedAt);
         Assert.Equal(direct.UserId, company.ReferredBySalesManagerUserId);
-        // Indirect SM + rate snapshots are frozen at first purchase activation (02), not at registration.
-        Assert.Null(company.CommissionIndirectSalesManagerUserId);
+        // Upline + rate snapshots are frozen at registration attribution; commission window
+        // (CommissionStartsAtUtc) still opens only on first purchase activation.
+        Assert.Equal(upline.UserId, company.CommissionIndirectSalesManagerUserId);
         Assert.Null(company.CommissionStartsAtUtc);
         Assert.NotNull(company.SalesAttributedAtUtc);
         Assert.False(company.HasReceivedWelcomeToken);

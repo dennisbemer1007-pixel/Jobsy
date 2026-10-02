@@ -11,8 +11,10 @@ public class SalesFoundationUnitTests
     [Fact]
     public void MfaPolicy_requires_SalesManager_and_Ambassadeur()
     {
+        // ADR 0005 amendment + Decision 7: SalesManager requires MFA; Ambassadeur is parked
+        // behind AmbassadorsEnabled (default false) and does not require Lobsy MFA.
         Assert.True(MfaPolicy.IsRequired(UserRole.SalesManager));
-        Assert.True(MfaPolicy.IsRequired(UserRole.Ambassadeur));
+        Assert.False(MfaPolicy.IsRequired(UserRole.Ambassadeur));
     }
 
     [Theory]

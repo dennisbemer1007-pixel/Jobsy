@@ -37,7 +37,7 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
             .Add(p => p.Target, TestDepthLevel.First));
 
         Assert.Contains("Vraag 1 van 5", cut.Markup);
-        Assert.Equal(1, cut.FindAll("[role=radiogroup]").Count);
+        Assert.Single(cut.FindAll("[role=radiogroup]"));
         Assert.DoesNotContain("1. Statement", cut.Markup);
         Assert.Contains("Statement 1", cut.Markup);
     }

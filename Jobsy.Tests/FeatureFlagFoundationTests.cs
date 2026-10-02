@@ -298,10 +298,12 @@ public class FeatureFlagReflectionTests
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();
 
-        Assert.Contains(gated, n => n.Contains("Home", StringComparison.Ordinal));
         Assert.Contains(gated, n => n.Contains("VacancyDetail", StringComparison.Ordinal));
         Assert.Contains(gated, n => n.Contains("Register", StringComparison.Ordinal));
         Assert.Contains(gated, n => n.Contains("Applications", StringComparison.Ordinal));
+        Assert.Contains(gated, n => n.Contains("Werkgever", StringComparison.Ordinal));
+        // /home (RoleHome) is multi-role and must not be Employers-gated.
+        Assert.DoesNotContain(gated, n => n.EndsWith(".RoleHome", StringComparison.Ordinal));
         Assert.True(gated.Count >= 40, $"Expected many gated pages, got {gated.Count}");
     }
 

@@ -42,7 +42,7 @@ public class EmailRendererTests
         Assert.Contains("format-detection", html);
         Assert.Contains("color-scheme", html);
         Assert.Contains("supported-color-schemes", html);
-        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(html, "<style>").Count);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "<style>"));
         Assert.Contains("data-lobsy-layout=\"2\"", html);
         Assert.Contains("<!--[if mso]><table role=\"presentation\" width=\"600\"", html);
         Assert.Contains("&#8199;&#65279;&#847;", html);
@@ -56,7 +56,7 @@ public class EmailRendererTests
         Assert.Contains("data-lobsy-cta", html);
         Assert.Contains("v:roundrect", html);
         Assert.Contains("href=\"https://lobsy.nl/login\"", html);
-        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(html, "data-lobsy-cta").Count);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "data-lobsy-cta"));
     }
 
     [Fact]

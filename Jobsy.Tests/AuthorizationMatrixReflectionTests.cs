@@ -53,6 +53,8 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("WebPushController", "Unsubscribe", "Own push subscription"),
         ("MfaController", "Enroll", "Own MFA enroll"),
         ("MfaController", "Verify", "Own MFA challenge"),
+        ("MfaController", "RegenerateRecoveryCodes", "Own MFA recovery codes"),
+        ("MeEmailPreferencesController", "Put", "Own e-mail notification preferences"),
         ("PrivacyController", "RequestUnsubscribe", "Own unsubscribe request"),
         ("PrivacyController", "ConfirmUnsubscribe", "Own unsubscribe confirm"),
         ("PrivacyController", "DeleteAccount", "Own account delete"),

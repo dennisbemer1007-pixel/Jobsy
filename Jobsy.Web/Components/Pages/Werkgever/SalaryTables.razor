@@ -2,6 +2,8 @@
 @page "/werkgever/organisatie/salaristabellen/{TableId:guid}"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Navigation

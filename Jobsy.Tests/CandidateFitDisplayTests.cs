@@ -121,11 +121,10 @@ public class CandidateFitDisplayTests
     }
 
     [Fact]
-    public void No_dislike_source_returns_none()
+    public async Task No_dislike_source_returns_none()
     {
-        var codes = KbNoDislikeSource.Instance
-            .GetMatchingDislikeCodesAsync(Guid.NewGuid(), Guid.NewGuid())
-            .GetAwaiter().GetResult();
+        var codes = await KbNoDislikeSource.Instance
+            .GetMatchingDislikeCodesAsync(Guid.NewGuid(), Guid.NewGuid());
         Assert.Empty(codes);
     }
 

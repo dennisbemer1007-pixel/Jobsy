@@ -173,6 +173,6 @@ public class OntdekkingsreisMiniSkipLogicTests
     public void All_five_locked_means_empty_step()
     {
         var locked = OnboardingWizardCatalog.CompetencyQuestionIds.ToHashSet();
-        Assert.Empty(OnboardingWizardCatalog.CompetencyQuestionIds.Where(id => !locked.Contains(id)));
+        Assert.All(OnboardingWizardCatalog.CompetencyQuestionIds, id => Assert.Contains(id, locked));
     }
 }

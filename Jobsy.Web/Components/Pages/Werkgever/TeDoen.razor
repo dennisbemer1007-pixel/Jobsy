@@ -1,6 +1,8 @@
 @page "/werkgever/te-doen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Core.Interfaces
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Components.Werkgever.Dashboard

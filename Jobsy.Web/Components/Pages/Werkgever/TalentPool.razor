@@ -1,6 +1,8 @@
 @page "/werkgever/talentpool"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Components.Ui.Enterprise
 @using Jobsy.Web.Components.Werkgever.Sections
 @using Microsoft.AspNetCore.WebUtilities

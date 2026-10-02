@@ -1,6 +1,6 @@
 KEY: deep_test_receipt
 SUBJECT: Your extended test is ready
-PREHEADER: Paid — you can start with question 1
+PREHEADER: Paid: you can start with question 1
 KIND: Essential
 --- TEXT ---
 مرحبًا ⁨Alex⁩،
@@ -10,7 +10,7 @@ Paid. You can start
 Paid: Extended test ⁨Competenties⁩
 
 € 2.99 :Amount (incl. VAT)
-1 أكتوبر 2026, 05:49 :Date
+1 أكتوبر 2026, 14:00 :Date
 LOB-KT-2026-0001 :Invoice number
 2026-10 :Terms version
 

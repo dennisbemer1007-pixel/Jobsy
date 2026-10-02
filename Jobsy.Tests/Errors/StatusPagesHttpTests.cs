@@ -306,7 +306,7 @@ public class StatusPagesHttpTests : IClassFixture<StatusPagesHttpFixture>
         Assert.Contains("noindex", string.Join(",", robots!), StringComparison.OrdinalIgnoreCase);
         Assert.Matches(@"<meta\s+name=""robots""\s+content=""noindex", body);
 
-        Assert.Equal(1, Regex.Matches(body, "<h1", RegexOptions.IgnoreCase).Count);
+        Assert.Single(Regex.Matches(body, "<h1", RegexOptions.IgnoreCase));
 
         foreach (var fragment in ForbiddenFragments)
         {

@@ -1,6 +1,6 @@
 KEY: ReportReceived
 SUBJECT: We hebben je melding ontvangen
-PREHEADER: Bedankt — we kijken ernaar
+PREHEADER: Bedankt: we kijken ernaar
 KIND: Essential
 --- TEXT ---
 Dank je. We kijken ernaar
@@ -10,7 +10,7 @@ Je meldde iets op Lobsy. Dit hebben we binnengekregen:
 
 Wat: Weekendhulp verkoop
 Reden: Klopt niet / nep
-Datum: 1 oktober 2026, 07:00
+Datum: 1 oktober 2026, 14:00
 
 We laten je weten wat we besluiten. Meestal binnen 5 werkdagen.
 

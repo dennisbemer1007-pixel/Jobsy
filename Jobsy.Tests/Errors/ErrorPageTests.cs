@@ -63,7 +63,7 @@ public class ErrorPageTests
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Contains("Er ging iets mis", html, StringComparison.Ordinal);
-        Assert.True(SupportCodePattern.IsMatch(html));
+        Assert.Matches(SupportCodePattern, html);
     }
 
     [Fact]

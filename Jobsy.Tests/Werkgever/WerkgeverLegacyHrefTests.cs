@@ -15,6 +15,7 @@ public class WerkgeverLegacyHrefTests
         "WerkgeverLegacyRedirectMiddleware.cs",
         "OnboardingCheckout.razor",
         "WerkgeverNav.cs", // aliases intentionally keep old paths
+        "AuthRedirects.cs", // detects legacy /employer /branch prefixes for redirect
     ];
 
     [Fact]

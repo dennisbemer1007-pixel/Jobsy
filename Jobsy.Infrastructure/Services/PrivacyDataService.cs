@@ -1330,6 +1330,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateCareerStepProgress.RemoveRange(careerStepProgress);
         }
 
+        var careerGenerations = await _db.CandidateCareerGenerations
+            .Where(g => g.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (careerGenerations.Count > 0)
+        {
+            _db.CandidateCareerGenerations.RemoveRange(careerGenerations);
+        }
+
         var careerPlans = await _db.CandidateCareerPlans
             .Where(p => p.UserId == user.Id)
             .ToListAsync(cancellationToken);

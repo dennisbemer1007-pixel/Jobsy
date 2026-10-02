@@ -75,7 +75,7 @@ public class RateLimitPageTests
         await ExhaustAsync(client, LimitedPath);
 
         var line = Assert.Single(
-            factory.Logs.Messages.Where(m => m.Contains("Rate limit rejected", StringComparison.Ordinal)));
+            factory.Logs.Messages, m => m.Contains("Rate limit rejected", StringComparison.Ordinal));
         Assert.Matches(@"LB-[23456789ABCDEFGHJKMNPQRSTVWXYZ]{4}", line);
         Assert.Contains("policy=public-redirect", line, StringComparison.Ordinal);
         Assert.DoesNotContain("127.0.0.1", line, StringComparison.Ordinal);

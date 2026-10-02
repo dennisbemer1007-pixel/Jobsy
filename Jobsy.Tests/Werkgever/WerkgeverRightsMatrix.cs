@@ -54,10 +54,12 @@ public static class WerkgeverRightsMatrix
         new("api/vacancies/{id}/pushbom", true, false, true),
         new("api/vacancies/{id}/extend", true, false, true),
         new("api/vacancies/{id}/inactive", true, false, true),
+        new("api/vacancies/{id}/ready", true, false, true),
         new("api/vacancies/{id}/contact-preference", true, false, true),
         new("api/vacancies/{id}/email-verification", true, false, true),
         // Applications mutate (employer)
         new("api/applications/{id}/react", true, false, true),
+        new("api/applications/{id}/viewed", true, false, true),
         new("api/applications/{id}/contact", true, false, true),
         new("api/applications/vacancies/{vacancyId}/fulfill/{applicationId}", true, false, true),
         // Company users / org

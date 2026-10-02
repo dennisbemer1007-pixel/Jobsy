@@ -20,6 +20,9 @@ public sealed record LegalRetentionRow(
 /// </summary>
 public static class LegalRetention
 {
+    /// <summary>EU consumer withdrawal window for digital services that start immediately (art. 6:230m BW).</summary>
+    public const int DigitalServiceWithdrawalDays = 14;
+
     public static readonly IReadOnlyList<LegalRetentionRow> Rows =
     [
         new(

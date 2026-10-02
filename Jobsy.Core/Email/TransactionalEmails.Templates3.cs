@@ -1,4 +1,5 @@
 using Jobsy.Core.Email.Model;
+using Jobsy.Core.Legal;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
@@ -333,7 +334,10 @@ public static partial class TransactionalEmails
             [
                 P(T(c, "Email.DeepTestReceipt.P1", EmailArg.Bold(testName))),
                 F(facts),
-                N(S(c, "Email.DeepTestReceipt.Waiver")),
+                N(T(c, "Email.DeepTestReceipt.Waiver",
+                    EmailArg.Plain(
+                        LegalRetention.DigitalServiceWithdrawalDays.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        isolate: false))),
                 P(S(c, "Email.DeepTestReceipt.Support"))
             ],
             Button(S(c, "Email.DeepTestReceipt.Cta"), startUrl),
@@ -399,11 +403,12 @@ public static partial class TransactionalEmails
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var url = links.Absolute($"/account/wachtwoord-instellen?token={Uri.EscapeDataString(token)}&doel=reset");
+        var durationLabel = EmailFormat.Duration(OneTimeLinkRules.PasswordResetLifetime, c);
         return Finish(Doc("PasswordReset", S(c, "Email.PasswordReset.Subject"),
-            S(c, "Email.PasswordReset.Preheader"),
+            Sf(c, "Email.PasswordReset.Preheader", durationLabel),
             S(c, "Email.PasswordReset.Heading"),
             [
-                P(S(c, "Email.PasswordReset.P1")),
+                P(T(c, "Email.PasswordReset.P1", EmailArg.Plain(durationLabel, isolate: false))),
                 P(S(c, "Email.PasswordReset.P2"))
             ],
             Button(S(c, "Email.PasswordReset.Cta"), url),

@@ -2,7 +2,7 @@ namespace Jobsy.Core.Email.Localization;
 
 internal static class EmailStringsNl
 {
-            public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
+    public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
     {
         ["Email.AccessRequestEmailVerification.Heading"] = "Bevestig je e-mailadres",
         ["Email.AccessRequestEmailVerification.P1"] = "Bevestig je e-mailadres om toegang aan te vragen tot {0}. Code geldig {1} minuten:",
@@ -33,7 +33,8 @@ internal static class EmailStringsNl
         ["Email.AccessRequestToManager.P1"] = "Er is een toegangsverzoek voor {0}.",
         ["Email.AccessRequestToManager.P2"] = "Aanvrager: {0}{1} - {2}. Gevraagde rol: {3}.",
         ["Email.AccessRequestToManager.Preheader"] = "Toegangsverzoek op Lobsy",
-        ["Email.AccessRequestToManager.Subject"] = "Toegangsverzoek",        ["Email.RecoveryCodeUsed.Eyebrow"] = "Beveiliging",
+        ["Email.AccessRequestToManager.Subject"] = "Toegangsverzoek",
+        ["Email.RecoveryCodeUsed.Eyebrow"] = "Beveiliging",
         ["Email.RecoveryCodeUsed.P2"] = "Was jij dit niet? Neem dan meteen contact op met {0}.",
         ["Email.RecoveryCodeUsed.P1"] = "Je bent net ingelogd met een herstelcode. Je hebt er nog {0}.",
         ["Email.RecoveryCodeUsed.Preheader"] = "Je hebt er nog {0}.",
@@ -53,9 +54,9 @@ internal static class EmailStringsNl
         ["Email.MfaLockout.Cta"] = "Wachtwoord vergeten?",
         ["Email.PasswordReset.Eyebrow"] = "Beveiliging",
         ["Email.PasswordReset.Subject"] = "Wachtwoord opnieuw instellen voor Lobsy",
-        ["Email.PasswordReset.Preheader"] = "De link werkt 30 minuten en één keer.",
+        ["Email.PasswordReset.Preheader"] = "De link werkt {0} en één keer.",
         ["Email.PasswordReset.Heading"] = "Wachtwoord opnieuw instellen",
-        ["Email.PasswordReset.P1"] = "Je vroeg om je wachtwoord opnieuw in te stellen. Klik op de knop. De link werkt 30 minuten en één keer.",
+        ["Email.PasswordReset.P1"] = "Je vroeg om je wachtwoord opnieuw in te stellen. Klik op de knop. De link werkt {0} en één keer.",
         ["Email.PasswordReset.P2"] = "Was jij dit niet? Dan hoef je niets te doen. Je wachtwoord blijft hetzelfde.",
         ["Email.PasswordReset.Cta"] = "Wachtwoord opnieuw instellen",
         ["Email.PasswordResetExternalOnly.Eyebrow"] = "Beveiliging",
@@ -432,7 +433,7 @@ internal static class EmailStringsNl
         ["Email.UserInvite.P2SetPassword"] = "Je kunt ook inloggen met Google of Microsoft met dit e-mailadres.",
         ["Email.UserInvite.P3Promoted"] = "Je oude sollicitaties blijven zichtbaar.",
         ["Email.UserInvite.Preheader"] = "Kies een wachtwoord en begin.",
-        ["Email.UserInvite.Subject"] = "Je bent uitgenodigd voor {0} op Lobsy",
+        ["Email.UserInvite.Subject"] = "Uitnodiging voor {0} op Lobsy",
         ["Email.VacancyEngagementReminder.Cta"] = "Vacature verbeteren",
         ["Email.VacancyEngagementReminder.Eyebrow"] = "Even checken",
         ["Email.VacancyEngagementReminder.Fact.Applications"] = "Sollicitaties",
@@ -454,7 +455,7 @@ internal static class EmailStringsNl
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "Er is interesse, maar nog geen sollicitaties. Maak eisen realistischer of verduidelijk het uurloon.",
 
         ["Email.DeepTestReceipt.Subject"] = "Je uitgebreide test staat klaar",
-        ["Email.DeepTestReceipt.Preheader"] = "Betaald — je kunt met vraag 1 beginnen",
+        ["Email.DeepTestReceipt.Preheader"] = "Betaald: je kunt met vraag 1 beginnen",
         ["Email.DeepTestReceipt.Heading"] = "Betaald. Je kunt beginnen",
         ["Email.DeepTestReceipt.Eyebrow"] = "Uitgebreide test",
         ["Email.DeepTestReceipt.P1"] = "Betaald: Uitgebreide test {0}",
@@ -462,7 +463,7 @@ internal static class EmailStringsNl
         ["Email.DeepTestReceipt.Fact.Date"] = "Datum",
         ["Email.DeepTestReceipt.Fact.Invoice"] = "Factuurnummer",
         ["Email.DeepTestReceipt.Fact.TermsVersion"] = "Voorwaarden versie",
-        ["Email.DeepTestReceipt.Waiver"] = "Je koos ervoor om meteen te beginnen. Daarom kun je niet binnen 14 dagen annuleren.",
+        ["Email.DeepTestReceipt.Waiver"] = "Je koos ervoor om meteen te beginnen. Daarom kun je niet binnen {0} dagen annuleren.",
         ["Email.DeepTestReceipt.Cta"] = "Begin met vraag 1",
         ["Email.DeepTestReceipt.Support"] = "Vragen over je betaling? Mail support@lobsy.nl.",
         // —— Meldknop / DSA (public-pages 06) ——
@@ -485,7 +486,7 @@ internal static class EmailStringsNl
         ["Email.Report.What.Vacancy"] = "Vacature",
         ["Email.Report.Cta.Map"] = "Naar de banenkaart",
         ["Email.ReportReceived.Subject"] = "We hebben je melding ontvangen",
-        ["Email.ReportReceived.Preheader"] = "Bedankt \u2014 we kijken ernaar",
+        ["Email.ReportReceived.Preheader"] = "Bedankt: we kijken ernaar",
         ["Email.ReportReceived.Heading"] = "Dank je. We kijken ernaar",
         ["Email.ReportReceived.P1"] = "Je meldde iets op Lobsy. Dit hebben we binnengekregen:",
         ["Email.ReportReceived.Note"] = "We laten je weten wat we besluiten. Meestal binnen 5 werkdagen.",

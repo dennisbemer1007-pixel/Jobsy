@@ -1,6 +1,8 @@
 @page "/werkgever/partner"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Components.Werkgever.Shell
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api

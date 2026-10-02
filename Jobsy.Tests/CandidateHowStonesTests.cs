@@ -123,7 +123,7 @@ public class CandidateHowStonesTests
         Assert.Equal(2, CandidateHowRows.DoneCount(rows));
         Assert.Equal(CandidateHowStoneKind.Career, CandidateHowRows.Target(rows)!.Stone.Kind);
         Assert.Equal([1, 2, 3, 4, 5], rows.Select(r => r.Number));
-        Assert.Single(rows.Where(r => r.IsNow));
+        Assert.Single(rows, r => r.IsNow);
     }
 
     [Fact]

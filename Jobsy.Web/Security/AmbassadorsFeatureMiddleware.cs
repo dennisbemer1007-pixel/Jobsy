@@ -93,8 +93,8 @@ public sealed class AmbassadorsFeatureMiddleware
     private static bool IsGated(string path)
         => path.Equals("/ambassadeur", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/ambassadeur/", StringComparison.OrdinalIgnoreCase)
-           || path.Equals("/admin/ambassadeurs", StringComparison.OrdinalIgnoreCase)
-           || path.StartsWith("/admin/ambassadeurs/", StringComparison.OrdinalIgnoreCase)
+           || path.Equals("/admin/gebruikers/sales", StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith("/admin/gebruikers/sales/", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/api/ambassadeurs", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasEmployerRole(System.Security.Claims.ClaimsPrincipal user)

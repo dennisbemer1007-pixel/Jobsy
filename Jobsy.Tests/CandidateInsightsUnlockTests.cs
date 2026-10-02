@@ -28,6 +28,7 @@ public class CandidateInsightsLockedJsonTests : IClassFixture<CandidateInsightsU
     [Fact]
     public async Task Locked_json_omits_premium_values_for_bm_rm_vm()
     {
+        await _factory.ResetUnlocksAsync();
         foreach (var userId in new[] { _factory.EnterpriseUserId, _factory.RegionalUserId, _factory.BranchUserId })
         {
             using var client = Authed(userId);
@@ -93,9 +94,28 @@ public class CandidateInsightsAccessTests
     [Fact]
     public void Company_unlock_covers_all_branches()
     {
-        var org = new Company { Id = Guid.NewGuid(), Name = "Org" };
-        var b1 = new Company { Id = Guid.NewGuid(), Name = "B1", ParentCompanyId = org.Id, TokensManagedByEnterprise = true };
-        var b2 = new Company { Id = Guid.NewGuid(), Name = "B2", ParentCompanyId = org.Id, TokensManagedByEnterprise = true };
+        var org = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "Org"
+        };
+        var b1 = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "B1",
+            ParentCompanyId = org.Id,
+            TokensManagedByEnterprise = true
+        };
+        var b2 = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "B2",
+            ParentCompanyId = org.Id,
+            TokensManagedByEnterprise = true
+        };
         var now = DateTime.UtcNow;
         var unlocks = new[]
         {
@@ -116,9 +136,26 @@ public class CandidateInsightsAccessTests
     [Fact]
     public void Partial_branch_coverage_is_not_full()
     {
-        var org = new Company { Id = Guid.NewGuid(), Name = "Org" };
-        var b1 = new Company { Id = Guid.NewGuid(), Name = "B1", ParentCompanyId = org.Id };
-        var b2 = new Company { Id = Guid.NewGuid(), Name = "B2", ParentCompanyId = org.Id };
+        var org = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "Org"
+        };
+        var b1 = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "B1",
+            ParentCompanyId = org.Id
+        };
+        var b2 = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "B2",
+            ParentCompanyId = org.Id
+        };
         var now = DateTime.UtcNow;
         var unlocks = new[]
         {
@@ -140,7 +177,12 @@ public class CandidateInsightsAccessTests
     [Fact]
     public void Exactly_at_expiry_is_locked()
     {
-        var company = new Company { Id = Guid.NewGuid(), Name = "C" };
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "C"
+        };
         var exp = DateTime.UtcNow;
         var unlocks = new[]
         {
@@ -159,7 +201,12 @@ public class CandidateInsightsAccessTests
     [Fact]
     public void Branch_unlock_stays_valid_when_settings_switch_to_company()
     {
-        var company = new Company { Id = Guid.NewGuid(), Name = "C" };
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "C"
+        };
         var now = DateTime.UtcNow;
         var unlocks = new[]
         {
@@ -178,7 +225,12 @@ public class CandidateInsightsAccessTests
     [Fact]
     public void CanRenew_within_14_days()
     {
-        var company = new Company { Id = Guid.NewGuid(), Name = "C" };
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            Name = "C"
+        };
         var now = DateTime.UtcNow;
         var unlocks = new[]
         {
@@ -398,8 +450,26 @@ public sealed class CandidateInsightsUnlockFactory : WebApplicationFactory<Jobsy
         }
 
         db.Companies.AddRange(
-            new Company { Id = OrgId, Name = "Org", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4.2) },
-            new Company { Id = BranchId, Name = "Branch", KvkNumber = "2", Address = "b", ParentCompanyId = OrgId, TokensManagedByEnterprise = true, Location = new GeoPoint(52.01, 4.21) });
+            new Company
+            {
+                Id = OrgId,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                Name = "Org",
+                KvkNumber = "1",
+                Address = "a",
+                Location = new GeoPoint(52, 4.2)
+            },
+            new Company
+            {
+                Id = BranchId,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                Name = "Branch",
+                KvkNumber = "2",
+                Address = "b",
+                ParentCompanyId = OrgId,
+                TokensManagedByEnterprise = true,
+                Location = new GeoPoint(52.01, 4.21)
+            });
         db.Users.AddRange(
             new User { Id = EnterpriseUserId, Email = "em@unlock.local", FullName = "EM", Role = UserRole.EnterpriseManager, IsActive = true, CompanyId = OrgId },
             new User { Id = BranchUserId, Email = "bm@unlock.local", FullName = "BM", Role = UserRole.BranchManager, IsActive = true, CompanyId = BranchId },

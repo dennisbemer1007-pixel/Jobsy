@@ -2,7 +2,7 @@ namespace Jobsy.Core.Email.Localization;
 
 internal static class EmailStringsEn
 {
-            public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
+    public static IReadOnlyDictionary<string, string> Map { get; } = new Dictionary<string, string>
     {
         ["Email.AccessRequestEmailVerification.Heading"] = "Confirm your email address",
         ["Email.AccessRequestEmailVerification.P1"] = "Confirm your email to request access to {0}. Code valid {1} minutes:",
@@ -33,7 +33,8 @@ internal static class EmailStringsEn
         ["Email.AccessRequestToManager.P1"] = "There is an access request for {0}.",
         ["Email.AccessRequestToManager.P2"] = "Applicant: {0}{1} - {2}. Requested role: {3}.",
         ["Email.AccessRequestToManager.Preheader"] = "Access request on Lobsy",
-        ["Email.AccessRequestToManager.Subject"] = "Access request",        ["Email.RecoveryCodeUsed.Eyebrow"] = "Security",
+        ["Email.AccessRequestToManager.Subject"] = "Access request",
+        ["Email.RecoveryCodeUsed.Eyebrow"] = "Security",
         ["Email.RecoveryCodeUsed.P2"] = "Was this not you? Contact {0} right away.",
         ["Email.RecoveryCodeUsed.P1"] = "You just signed in with a recovery code. You have {0} left.",
         ["Email.RecoveryCodeUsed.Preheader"] = "You have {0} left.",
@@ -53,9 +54,9 @@ internal static class EmailStringsEn
         ["Email.MfaLockout.Cta"] = "Forgot your password?",
         ["Email.PasswordReset.Eyebrow"] = "Security",
         ["Email.PasswordReset.Subject"] = "Reset your password for Lobsy",
-        ["Email.PasswordReset.Preheader"] = "The link works for 30 minutes and once.",
+        ["Email.PasswordReset.Preheader"] = "The link works for {0} and once.",
         ["Email.PasswordReset.Heading"] = "Reset your password",
-        ["Email.PasswordReset.P1"] = "You asked to reset your password. Click the button. The link works for 30 minutes and once.",
+        ["Email.PasswordReset.P1"] = "You asked to reset your password. Click the button. The link works for {0} and once.",
         ["Email.PasswordReset.P2"] = "Was this not you? Then you do not need to do anything. Your password stays the same.",
         ["Email.PasswordReset.Cta"] = "Reset your password",
         ["Email.PasswordResetExternalOnly.Eyebrow"] = "Security",
@@ -454,7 +455,7 @@ internal static class EmailStringsEn
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "There is interest, but no applications yet. Make requirements more realistic or clarify the wage.",
 
         ["Email.DeepTestReceipt.Subject"] = "Your extended test is ready",
-        ["Email.DeepTestReceipt.Preheader"] = "Paid — you can start with question 1",
+        ["Email.DeepTestReceipt.Preheader"] = "Paid: you can start with question 1",
         ["Email.DeepTestReceipt.Heading"] = "Paid. You can start",
         ["Email.DeepTestReceipt.Eyebrow"] = "Extended test",
         ["Email.DeepTestReceipt.P1"] = "Paid: Extended test {0}",
@@ -462,7 +463,7 @@ internal static class EmailStringsEn
         ["Email.DeepTestReceipt.Fact.Date"] = "Date",
         ["Email.DeepTestReceipt.Fact.Invoice"] = "Invoice number",
         ["Email.DeepTestReceipt.Fact.TermsVersion"] = "Terms version",
-        ["Email.DeepTestReceipt.Waiver"] = "You chose to start right away. That means you cannot cancel within 14 days.",
+        ["Email.DeepTestReceipt.Waiver"] = "You chose to start right away. That means you cannot cancel within {0} days.",
         ["Email.DeepTestReceipt.Cta"] = "Start with question 1",
         ["Email.DeepTestReceipt.Support"] = "Questions about your payment? Email support@lobsy.nl.",
         // —— Meldknop / DSA (public-pages 06) ——
@@ -485,7 +486,7 @@ internal static class EmailStringsEn
         ["Email.Report.What.Vacancy"] = "Vacancy",
         ["Email.Report.Cta.Map"] = "To the job map",
         ["Email.ReportReceived.Subject"] = "We received your report",
-        ["Email.ReportReceived.Preheader"] = "Thanks \u2014 we are looking into it",
+        ["Email.ReportReceived.Preheader"] = "Thanks: we are looking into it",
         ["Email.ReportReceived.Heading"] = "Thank you. We are looking into it",
         ["Email.ReportReceived.P1"] = "You reported something on Lobsy. This is what we received:",
         ["Email.ReportReceived.Note"] = "We will tell you what we decide. Usually within 5 working days.",

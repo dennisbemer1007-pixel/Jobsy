@@ -1,5 +1,5 @@
 KEY: UserInvite
-SUBJECT: Je bent uitgenodigd voor Bakkerij De Gouden Korrel op Lobsy
+SUBJECT: Uitnodiging voor Bakkerij De Gouden Korrel op Lobsy
 PREHEADER: Kies een wachtwoord en begin.
 KIND: Essential
 --- TEXT ---

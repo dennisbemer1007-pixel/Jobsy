@@ -748,6 +748,9 @@
         }
     }
 
+    private Task<Models.DeepAnalysisCheckout> StartDeepAnalysisCheckoutAsync(bool waiverAccepted)
+        => Api.StartDeepAnalysisCheckoutAsync(_def!.Key, waiverAccepted, Culture.Language);
+
     private async Task GoToOfferAsync()
     {
         if (_def is null)

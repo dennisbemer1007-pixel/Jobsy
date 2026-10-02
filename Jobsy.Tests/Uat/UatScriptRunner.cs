@@ -44,7 +44,8 @@ public static class UatScriptRunner
     /// <summary>Server redirects (middleware / Minimal API) — no Blazor <c>@page</c>.</summary>
     private static readonly HashSet<string> KnownRedirectRoutes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "/banen"
+        "/banen",
+        "/register/activate"
     };
 
     public static void Execute(UatScenario scenario)
@@ -247,7 +248,7 @@ public static class UatScriptRunner
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal)
             && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules", "sidebar", "AdminNav"))
         {
-var available = AdminNav.AvailableItems().ToList();
+            var available = AdminNav.AvailableItems().ToList();
             Assert.True(available.Count >= 10, $"{scenario.Id}: expected available admin nav items");
             foreach (var item in available)
             {

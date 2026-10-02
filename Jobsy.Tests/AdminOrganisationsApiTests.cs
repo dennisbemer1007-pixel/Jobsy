@@ -117,7 +117,7 @@ public class AdminOrganisationsApiTests : IClassFixture<RoleFunctionalWebAppFact
         var page = await client.GetFromJsonAsync<AdminCompaniesPageDto>(
             "api/admin/companies?q=Tree%20Parent%20Org%20ZZ&page=1&pageSize=50", Json);
         Assert.NotNull(page);
-        var parent = Assert.Single(page.Items.Where(c => c.Id == parentId));
+        var parent = Assert.Single(page.Items, c => c.Id == parentId);
         Assert.Equal(1, parent.BranchCount);
         Assert.True(parent.UserCount >= 1);
         Assert.Equal(13, parent.TokenBalance);
@@ -216,7 +216,7 @@ public class AdminOrganisationsApiTests : IClassFixture<RoleFunctionalWebAppFact
         var adminItems = await AdminClient().GetFromJsonAsync<List<TakeoverInboxItemDto>>(
             "api/registration/takeovers", Json);
         Assert.NotNull(adminItems);
-        var adminRow = Assert.Single(adminItems.Where(t => t.TakeoverId == takeoverId));
+        var adminRow = Assert.Single(adminItems, t => t.TakeoverId == takeoverId);
         Assert.Equal(PersonalDataMasker.MaskEmail("aanvrager@example.com"), adminRow.RequesterEmail);
         Assert.DoesNotContain("aanvrager@example.com", adminRow.RequesterEmail);
 

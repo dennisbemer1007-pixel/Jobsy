@@ -120,7 +120,7 @@
             }
             <button type="button"
                     class="test-flow__next engagement-btn"
-                    disabled="@(!answered)"
+                    disabled="@(!answered || LoadFailed)"
                     @onclick="GoNextAsync">
                 @(isLast ? Culture["TestFlow.Finish"] : Culture["TestFlow.Next"])
             </button>
@@ -144,6 +144,7 @@
     [Parameter] public EventCallback OnLater { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
+    [Parameter] public bool LoadFailed { get; set; }
     /// <summary>When set, advancing past this 0-based index fires <see cref="OnPauseAfter"/> instead of moving on.</summary>
     [Parameter] public Func<int, bool>? ShouldPauseAfterIndex { get; set; }
     [Parameter] public EventCallback<int> OnPauseAfter { get; set; }

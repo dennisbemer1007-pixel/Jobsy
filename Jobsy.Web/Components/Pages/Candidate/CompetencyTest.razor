@@ -1,3 +1,4 @@
+@* PrivacyHref="/privacy" *@
 @page "/candidate/competencies"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
@@ -38,6 +39,10 @@ else
                                BubbleText="@IntroBubble">
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
+                        <p class="test-privacy muted">
+                            @Culture["Competency.PrivacyNote"]
+                            <a href="/privacy">@Culture["Legal.Privacy"]</a>
+                        </p>
                         <fieldset class="test-depth-pick" role="radiogroup" aria-label="@Culture["TestFlow.DepthPick"]">
                             <legend>@Culture["TestFlow.DepthPick"]</legend>
                             @foreach (var band in TestDepthRules.Levels(AssessmentKind.Competence))
@@ -78,6 +83,7 @@ else
                                           Answers="_autosave.Answers"
                                           Target="_target"
                                           Autosave="_autosave"
+                                          LoadFailed="_loadFailed"
                                           OnLevelReached="OnLevelReached"
                                           OnFinished="OnFinished"
                                           OnLater="LaterAsync"
