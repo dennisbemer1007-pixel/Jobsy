@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Bunit;
@@ -12,6 +11,7 @@ using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 
 namespace Jobsy.Tests;
 

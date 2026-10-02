@@ -1,6 +1,6 @@
-using System.Globalization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
+using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;

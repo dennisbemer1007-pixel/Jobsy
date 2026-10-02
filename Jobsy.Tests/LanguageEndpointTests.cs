@@ -1,4 +1,3 @@
-using System.Net;
 using Jobsy.Core.Localization;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Localization;
@@ -7,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Net;
 
 namespace Jobsy.Tests;
 

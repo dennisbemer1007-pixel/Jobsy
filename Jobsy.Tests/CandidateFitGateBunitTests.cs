@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using Bunit;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Web.Components.KandidaatBanen;
@@ -10,6 +8,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using System.Security.Claims;
+using Bunit;
 
 namespace Jobsy.Tests;
 

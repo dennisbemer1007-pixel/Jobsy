@@ -1,10 +1,10 @@
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Jobsy.Core.Options;
 
 namespace Jobsy.Tests;
 

@@ -25,11 +25,11 @@ public class Sprint5EmployerUiFoundationTests
                 Address = "A",
                 Location = new GeoPoint(52, 4),
                 Type = CompanyType.Employer,
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            },
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = toId,
@@ -38,11 +38,11 @@ public class Sprint5EmployerUiFoundationTests
                 Address = "B",
                 Location = new GeoPoint(52.1, 4.1),
                 Type = CompanyType.Employer,
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            });
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         db.TokenTransactions.Add(new TokenTransaction
         {
             Id = Guid.NewGuid(),

@@ -4,11 +4,9 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
-using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
-using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
+using Jobsy.Core.Security;
 
 namespace Jobsy.Tests;
 
@@ -300,30 +300,18 @@ public class PlatformRobustnessTests
         var b = Guid.NewGuid();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Companies.AddRange(
-            new Company
-            {
-                Id = a,
-                Name = "A",
-                KvkNumber = "1",
-                Address = "x",
-                Location = new GeoPoint(52, 4),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            },
-            new Company
-            {
-                Id = b,
-                Name = "B",
-                KvkNumber = "2",
-                Address = "y",
-                Location = new GeoPoint(52, 4),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            });
+            new Company { Id = a, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
+            new Company { Id = b, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         db.Vacancies.AddRange(
             new Vacancy
             {

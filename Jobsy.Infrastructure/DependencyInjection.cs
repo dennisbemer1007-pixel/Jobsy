@@ -1,12 +1,12 @@
 using Jobsy.Core.Admin;
 using Jobsy.Core.Email;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Ops;

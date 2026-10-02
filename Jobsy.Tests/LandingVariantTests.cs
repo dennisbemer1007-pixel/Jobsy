@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bunit;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components.Landing;
@@ -18,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 
 namespace Jobsy.Tests;
 

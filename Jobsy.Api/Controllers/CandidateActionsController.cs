@@ -1,9 +1,7 @@
-using System.Net;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
-using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -12,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 

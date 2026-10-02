@@ -1,10 +1,9 @@
+using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using System.Globalization;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using Jobsy.Core;
-using Jobsy.Core.Email;
-using Jobsy.Core.Email.Model;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -15,6 +14,7 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Jobsy.Core;
 
 namespace Jobsy.Infrastructure.Services;
 

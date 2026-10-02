@@ -433,7 +433,7 @@ internal static class Sprint8MetricsSeeder
                 Status = ApplicationStatus.Accepted,
                 PreferencesSummary = candidate.PreferencesJson,
                 CreatedAt = now.AddDays(-4),
-                EmailVerifiedAt = DateTime.UtcNow,
+                    EmailVerifiedAt = DateTime.UtcNow,
                 RespondedAt = now.AddDays(-3)
             });
         }
@@ -456,7 +456,7 @@ internal static class Sprint8MetricsSeeder
                 Status = ApplicationStatus.Rejected,
                 PreferencesSummary = candidate.PreferencesJson,
                 CreatedAt = now.AddDays(-9),
-                EmailVerifiedAt = DateTime.UtcNow,
+                    EmailVerifiedAt = DateTime.UtcNow,
                 RespondedAt = now.AddDays(-8)
             });
         }

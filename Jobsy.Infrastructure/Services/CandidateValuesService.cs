@@ -1,5 +1,5 @@
-using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;

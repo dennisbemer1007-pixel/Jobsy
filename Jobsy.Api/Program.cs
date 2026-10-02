@@ -1,3 +1,4 @@
+using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
 using Jobsy.Api;
 using Jobsy.Api.Authorization;
@@ -11,7 +12,6 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
-using Scalar.AspNetCore;
 
 if (args.Length > 0 && args[0] == "test-accounts")
 {
@@ -392,12 +392,12 @@ app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
 app.UseMiddleware<Jobsy.Api.Middleware.TestAccountScopeMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(new
-{
-    status = "ok",
-    commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
+    {
+        status = "ok",
+        commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
             ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
             ?? "local"
-}))
+    }))
     .AllowAnonymous();
 
 // Partner OpenAPI for the external vacancy API (X-API-Key). Development only —

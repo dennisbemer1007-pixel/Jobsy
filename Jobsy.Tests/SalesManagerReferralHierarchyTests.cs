@@ -171,11 +171,7 @@ public class SalesManagerReferralHierarchyTests
         var started = DateTime.UtcNow.AddYears(-3).AddDays(-1);
         db.Users.Add(new User
         {
-            Id = smId,
-            Email = "sm@t.local",
-            FullName = "SM",
-            Role = UserRole.SalesManager,
-            IsActive = true
+            Id = smId, Email = "sm@t.local", FullName = "SM", Role = UserRole.SalesManager, IsActive = true
         });
         db.SalesManagerProfiles.Add(new SalesManagerProfile
         {

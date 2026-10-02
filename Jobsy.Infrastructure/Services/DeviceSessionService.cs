@@ -91,86 +91,77 @@ public sealed class DeviceSessionService : IDeviceSessionService
 
         try
         {
-            var session = await _db.UserDeviceSessions
-                .FirstOrDefaultAsync(
-                    s => s.RefreshTokenHash == hash || s.PreviousRefreshTokenHash == hash,
-                    cancellationToken);
+        var session = await _db.UserDeviceSessions
+            .FirstOrDefaultAsync(
+                s => s.RefreshTokenHash == hash || s.PreviousRefreshTokenHash == hash,
+                cancellationToken);
 
-            if (session is null)
+        if (session is null)
+        {
+            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel)
             {
-                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel)
-                {
-                    await rel.RollbackAsync(cancellationToken);
-                }
-
-                return null;
+                await rel.RollbackAsync(cancellationToken);
             }
 
-            if (session.RevokedAtUtc is not null)
-            {
-                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel2)
-                {
-                    await rel2.RollbackAsync(cancellationToken);
-                }
+            return null;
+        }
 
-                return null;
+        if (session.RevokedAtUtc is not null)
+        {
+            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel2)
+            {
+                await rel2.RollbackAsync(cancellationToken);
             }
 
-            if (session.ExpiresAtUtc <= now)
-            {
-                session.RevokedAtUtc = now;
-                session.RevokedReason = DeviceSessionRules.RevokeReasonExpired;
-                await _db.SaveChangesAsync(cancellationToken);
-                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel3)
-                {
-                    await rel3.CommitAsync(cancellationToken);
-                }
+            return null;
+        }
 
-                return null;
+        if (session.ExpiresAtUtc <= now)
+        {
+            session.RevokedAtUtc = now;
+            session.RevokedReason = DeviceSessionRules.RevokeReasonExpired;
+            await _db.SaveChangesAsync(cancellationToken);
+            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel3)
+            {
+                await rel3.CommitAsync(cancellationToken);
             }
 
-            var matchedCurrent = string.Equals(session.RefreshTokenHash, hash, StringComparison.Ordinal);
-            var matchedPrevious = !matchedCurrent
-                && string.Equals(session.PreviousRefreshTokenHash, hash, StringComparison.Ordinal)
-                && session.PreviousTokenGraceUntilUtc is DateTime grace
-                && grace > now;
+            return null;
+        }
 
-            if (!matchedCurrent && !matchedPrevious)
+        var matchedCurrent = string.Equals(session.RefreshTokenHash, hash, StringComparison.Ordinal);
+        var matchedPrevious = !matchedCurrent
+            && string.Equals(session.PreviousRefreshTokenHash, hash, StringComparison.Ordinal)
+            && session.PreviousTokenGraceUntilUtc is DateTime grace
+            && grace > now;
+
+        if (!matchedCurrent && !matchedPrevious)
+        {
+            // Token reuse outside the grace window → revoke the whole family.
+            await RevokeFamilyInternalAsync(
+                session.FamilyId,
+                DeviceSessionRules.RevokeReasonTokenReuse,
+                cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel4)
             {
-                // Token reuse outside the grace window → revoke the whole family.
-                await RevokeFamilyInternalAsync(
-                    session.FamilyId,
-                    DeviceSessionRules.RevokeReasonTokenReuse,
-                    cancellationToken);
-                await _db.SaveChangesAsync(cancellationToken);
-                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel4)
-                {
-                    await rel4.CommitAsync(cancellationToken);
-                }
-
-                _logger.LogWarning(
-                    "Device refresh token reuse detected; revoked family {FamilyId} for user {UserId}",
-                    session.FamilyId,
-                    session.UserId);
-                return null;
+                await rel4.CommitAsync(cancellationToken);
             }
 
-            string newRaw;
-            if (matchedPrevious)
-            {
-                // Concurrent tab/request still holding the pre-rotation token: return the same
-                // newly issued token without rotating again (avoids false theft detection).
-                if (!_cache.TryGetValue(CurrentTokenCacheKey(session.Id), out newRaw!)
-                    || string.IsNullOrWhiteSpace(newRaw))
-                {
-                    newRaw = DeviceRefreshToken.Generate();
-                    session.PreviousRefreshTokenHash = session.RefreshTokenHash;
-                    session.PreviousTokenGraceUntilUtc = now.Add(DeviceSessionRules.RotationGraceWindow);
-                    session.RefreshTokenHash = DeviceRefreshToken.Hash(newRaw);
-                    CacheCurrentToken(session.Id, newRaw);
-                }
-            }
-            else
+            _logger.LogWarning(
+                "Device refresh token reuse detected; revoked family {FamilyId} for user {UserId}",
+                session.FamilyId,
+                session.UserId);
+            return null;
+        }
+
+        string newRaw;
+        if (matchedPrevious)
+        {
+            // Concurrent tab/request still holding the pre-rotation token: return the same
+            // newly issued token without rotating again (avoids false theft detection).
+            if (!_cache.TryGetValue(CurrentTokenCacheKey(session.Id), out newRaw!)
+                || string.IsNullOrWhiteSpace(newRaw))
             {
                 newRaw = DeviceRefreshToken.Generate();
                 session.PreviousRefreshTokenHash = session.RefreshTokenHash;
@@ -178,118 +169,127 @@ public sealed class DeviceSessionService : IDeviceSessionService
                 session.RefreshTokenHash = DeviceRefreshToken.Hash(newRaw);
                 CacheCurrentToken(session.Id, newRaw);
             }
+        }
+        else
+        {
+            newRaw = DeviceRefreshToken.Generate();
+            session.PreviousRefreshTokenHash = session.RefreshTokenHash;
+            session.PreviousTokenGraceUntilUtc = now.Add(DeviceSessionRules.RotationGraceWindow);
+            session.RefreshTokenHash = DeviceRefreshToken.Hash(newRaw);
+            CacheCurrentToken(session.Id, newRaw);
+        }
 
-            session.ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime);
-            if (now - session.LastUsedAtUtc >= DeviceSessionRules.LastUsedWriteThrottle)
-            {
-                session.LastUsedAtUtc = now;
-            }
+        session.ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime);
+        if (now - session.LastUsedAtUtc >= DeviceSessionRules.LastUsedWriteThrottle)
+        {
+            session.LastUsedAtUtc = now;
+        }
 
-            if (!string.IsNullOrWhiteSpace(userAgent))
-            {
-                session.UserAgent = Truncate(userAgent, 512);
-                session.DeviceName = DeviceNameFormatter.FromUserAgent(userAgent);
-            }
+        if (!string.IsNullOrWhiteSpace(userAgent))
+        {
+            session.UserAgent = Truncate(userAgent, 512);
+            session.DeviceName = DeviceNameFormatter.FromUserAgent(userAgent);
+        }
 
-            var user = await _db.Users
-                .Include(u => u.CompanyMemberships)
-                .FirstOrDefaultAsync(u => u.Id == session.UserId, cancellationToken);
+        var user = await _db.Users
+            .Include(u => u.CompanyMemberships)
+            .FirstOrDefaultAsync(u => u.Id == session.UserId, cancellationToken);
 
-            if (user is null || !user.IsActive)
-            {
-                session.RevokedAtUtc = now;
-                session.RevokedReason = DeviceSessionRules.RevokeReasonAdminBlock;
-                await _db.SaveChangesAsync(cancellationToken);
-                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel5)
-                {
-                    await rel5.CommitAsync(cancellationToken);
-                }
-
-                return null;
-            }
-
-            if (user.Role == UserRole.Admin)
-            {
-                var allowed = AdminLoginProviderPolicy.ParseAllowedTenants(
-                    _configuration["JobsyAuth:AdminAllowedEntraTenants"]);
-                var method = session.AuthMethod;
-                string? provider = null;
-                if (!string.IsNullOrWhiteSpace(method)
-                    && method.StartsWith("external:", StringComparison.OrdinalIgnoreCase))
-                {
-                    provider = method["external:".Length..];
-                }
-
-                var methodDisallowed = !string.IsNullOrWhiteSpace(provider)
-                    && !AdminLoginProviderPolicy.IsAllowed(user.Role, provider, session.AuthTenantId, allowed);
-                var legacyWithoutMfa = string.IsNullOrWhiteSpace(method)
-                    && (session.MfaVerifiedUntilUtc is null || session.MfaVerifiedUntilUtc <= now);
-                if (methodDisallowed || legacyWithoutMfa)
-                {
-                    if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction relAdmin)
-                    {
-                        await relAdmin.RollbackAsync(cancellationToken);
-                    }
-
-                    return null;
-                }
-            }
-
-            var minVersion = await _db.PlatformFeatureSettings.AsNoTracking()
-                .Select(s => (int?)s.MinimumSessionVersion)
-                .FirstOrDefaultAsync(cancellationToken) ?? 0;
-
-            if (user.SessionVersion < minVersion)
-            {
-                await RevokeFamilyInternalAsync(
-                    session.FamilyId,
-                    DeviceSessionRules.RevokeReasonLogoutAll,
-                    cancellationToken);
-                await _db.SaveChangesAsync(cancellationToken);
-                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel6)
-                {
-                    await rel6.CommitAsync(cancellationToken);
-                }
-
-                return null;
-            }
-
+        if (user is null || !user.IsActive)
+        {
+            session.RevokedAtUtc = now;
+            session.RevokedReason = DeviceSessionRules.RevokeReasonAdminBlock;
             await _db.SaveChangesAsync(cancellationToken);
-            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel7)
+            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel5)
             {
-                await rel7.CommitAsync(cancellationToken);
+                await rel5.CommitAsync(cancellationToken);
             }
 
-            var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
-            if (user.CompanyId is Guid home && !companyIds.Contains(home))
+            return null;
+        }
+
+        if (user.Role == UserRole.Admin)
+        {
+            var allowed = AdminLoginProviderPolicy.ParseAllowedTenants(
+                _configuration["JobsyAuth:AdminAllowedEntraTenants"]);
+            var method = session.AuthMethod;
+            string? provider = null;
+            if (!string.IsNullOrWhiteSpace(method)
+                && method.StartsWith("external:", StringComparison.OrdinalIgnoreCase))
             {
-                companyIds.Insert(0, home);
+                provider = method["external:".Length..];
             }
 
-            var showHowTo = await ResolveShowCandidateHowToAsync(user, cancellationToken);
-            var hasApps = await _db.Applications.AsNoTracking()
-                .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
-            var hasSales = user.CompanyId is Guid cid
-                && await _db.Companies.AsNoTracking()
-                    .AnyAsync(c => c.Id == cid && c.ReferredBySalesManagerUserId != null, cancellationToken);
+            var methodDisallowed = !string.IsNullOrWhiteSpace(provider)
+                && !AdminLoginProviderPolicy.IsAllowed(user.Role, provider, session.AuthTenantId, allowed);
+            var legacyWithoutMfa = string.IsNullOrWhiteSpace(method)
+                && (session.MfaVerifiedUntilUtc is null || session.MfaVerifiedUntilUtc <= now);
+            if (methodDisallowed || legacyWithoutMfa)
+            {
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction relAdmin)
+                {
+                    await relAdmin.RollbackAsync(cancellationToken);
+                }
 
-            return new DeviceSessionRotateResult(
-                user.Id,
-                session.Id,
-                newRaw,
-                session.ExpiresAtUtc,
-                user.Email,
-                user.FullName,
-                user.Role.ToString(),
-                user.CompanyId,
-                companyIds,
-                showHowTo,
-                hasApps,
-                hasSales,
-                user.SessionVersion,
-                CreateLocalSessionToken(user.Email, user.Id),
-                session.MfaVerifiedUntilUtc > now,
-                user.IsTestAccount);
+                return null;
+            }
+        }
+
+        var minVersion = await _db.PlatformFeatureSettings.AsNoTracking()
+            .Select(s => (int?)s.MinimumSessionVersion)
+            .FirstOrDefaultAsync(cancellationToken) ?? 0;
+
+        if (user.SessionVersion < minVersion)
+        {
+            await RevokeFamilyInternalAsync(
+                session.FamilyId,
+                DeviceSessionRules.RevokeReasonLogoutAll,
+                cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel6)
+            {
+                await rel6.CommitAsync(cancellationToken);
+            }
+
+            return null;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel7)
+        {
+            await rel7.CommitAsync(cancellationToken);
+        }
+
+        var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
+        if (user.CompanyId is Guid home && !companyIds.Contains(home))
+        {
+            companyIds.Insert(0, home);
+        }
+
+        var showHowTo = await ResolveShowCandidateHowToAsync(user, cancellationToken);
+        var hasApps = await _db.Applications.AsNoTracking()
+            .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
+        var hasSales = user.CompanyId is Guid cid
+            && await _db.Companies.AsNoTracking()
+                .AnyAsync(c => c.Id == cid && c.ReferredBySalesManagerUserId != null, cancellationToken);
+
+        return new DeviceSessionRotateResult(
+            user.Id,
+            session.Id,
+            newRaw,
+            session.ExpiresAtUtc,
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.CompanyId,
+            companyIds,
+            showHowTo,
+            hasApps,
+            hasSales,
+            user.SessionVersion,
+            CreateLocalSessionToken(user.Email, user.Id),
+            session.MfaVerifiedUntilUtc > now,
+            user.IsTestAccount);
         }
         finally
         {

@@ -1,5 +1,3 @@
-using Jobsy.Api.Admin;
-using Jobsy.Core.Admin;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -7,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 

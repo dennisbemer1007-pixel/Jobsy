@@ -50,11 +50,11 @@ public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserPro
                     Address = "Teststraat 1",
                     Location = new GeoPoint(52.1, 5.1),
                     Type = CompanyType.Employer,
-                    VerificationStatus = CompanyVerificationStatus.Verified,
-                    VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                    VerifiedAtUtc = DateTime.UtcNow,
-                    VerificationUpdatedAtUtc = DateTime.UtcNow
-                });
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
             }
 
             if (!await db.Users.AnyAsync(u => u.Id == userId))

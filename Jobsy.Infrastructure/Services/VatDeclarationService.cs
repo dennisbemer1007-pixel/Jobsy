@@ -242,7 +242,7 @@ public sealed class VatDeclarationService : IVatDeclarationService
             inv.VatDeclarationStatusLabel = statusLabel;
         }
 
-
+        
         foreach (var inv in consumers)
         {
             inv.VatDeclarationId = declarationId;

@@ -1,6 +1,4 @@
 using System.Text.Json;
-using Jobsy.Core.Email;
-using Jobsy.Core.Email.Model;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -9,6 +7,9 @@ using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
+using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 
 namespace Jobsy.Infrastructure.Sales;
 

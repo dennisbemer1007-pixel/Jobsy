@@ -1,6 +1,6 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
-using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -143,21 +143,13 @@ public class AmbassadeurAttributionTests
         db.Users.AddRange(
             new User
             {
-                Id = c1,
-                Email = "c1@t.local",
-                FullName = "C1",
-                Role = UserRole.Candidate,
-                IsActive = true,
-                ReferredByAmbassadeurUserId = ambassadeurId
+                Id = c1, Email = "c1@t.local", FullName = "C1", Role = UserRole.Candidate,
+                IsActive = true, ReferredByAmbassadeurUserId = ambassadeurId
             },
             new User
             {
-                Id = c2,
-                Email = "c2@t.local",
-                FullName = "C2",
-                Role = UserRole.Candidate,
-                IsActive = true,
-                ReferredByAmbassadeurUserId = ambassadeurId
+                Id = c2, Email = "c2@t.local", FullName = "C2", Role = UserRole.Candidate,
+                IsActive = true, ReferredByAmbassadeurUserId = ambassadeurId
             });
 
         var companyId = Guid.NewGuid();

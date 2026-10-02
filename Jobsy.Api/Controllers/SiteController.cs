@@ -1,10 +1,10 @@
-using System.Text.Json.Serialization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Text.Json.Serialization;
 
 namespace Jobsy.Api.Controllers;
 

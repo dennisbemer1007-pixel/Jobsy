@@ -1,4 +1,3 @@
-using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
@@ -8,6 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Jobsy.Core.Entities;
 
 namespace Jobsy.Tests;
 

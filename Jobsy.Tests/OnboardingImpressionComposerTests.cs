@@ -33,11 +33,7 @@ public class OnboardingImpressionComposerTests
     {
         var competencyAnswers = new Dictionary<int, int>
         {
-            [1] = 5,
-            [6] = 1,
-            [11] = 1,
-            [16] = 1,
-            [21] = 1
+            [1] = 5, [6] = 1, [11] = 1, [16] = 1, [21] = 1
         };
         var competency = ProvisionalAssessmentScores.ResolveCompetency(
             CandidateCompetencyStatuses.Draft,
@@ -46,11 +42,7 @@ public class OnboardingImpressionComposerTests
 
         var careerAnswers = new Dictionary<int, int>
         {
-            [1] = 1,
-            [6] = 1,
-            [14] = 5,
-            [18] = 1,
-            [22] = 1
+            [1] = 1, [6] = 1, [14] = 5, [18] = 1, [22] = 1
         };
         var career = ProvisionalAssessmentScores.ResolveCareer(
             CandidateCompetencyStatuses.Draft,
@@ -59,11 +51,7 @@ public class OnboardingImpressionComposerTests
 
         var cultureAnswers = new Dictionary<int, int>
         {
-            [1] = 2,
-            [3] = 2,
-            [5] = 5,
-            [7] = 2,
-            [11] = 2
+            [1] = 2, [3] = 2, [5] = 5, [7] = 2, [11] = 2
         };
         var culture = ProvisionalAssessmentScores.ResolveCulture(
             CandidateCompetencyStatuses.Draft,
@@ -72,11 +60,7 @@ public class OnboardingImpressionComposerTests
 
         var valuesAnswers = new Dictionary<int, int>
         {
-            [1] = 1,
-            [6] = 1,
-            [11] = 5,
-            [16] = 1,
-            [21] = 1
+            [1] = 1, [6] = 1, [11] = 5, [16] = 1, [21] = 1
         };
         var values = ProvisionalAssessmentScores.ResolveValues(
             CandidateCompetencyStatuses.Draft,

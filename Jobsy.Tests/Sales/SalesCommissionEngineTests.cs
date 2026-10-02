@@ -228,11 +228,8 @@ public class SalesCommissionEngineTests
         var checkoutId = Guid.NewGuid();
         db.Users.Add(new User
         {
-            Id = smId,
-            Email = "sm@test.local",
-            FullName = "SM",
-            Role = UserRole.SalesManager,
-            IsActive = true
+            Id = smId, Email = "sm@test.local", FullName = "SM",
+            Role = UserRole.SalesManager, IsActive = true
         });
         var original = new CommissionLedgerEntry
         {
@@ -275,11 +272,8 @@ public class SalesCommissionEngineTests
         var checkoutId = Guid.NewGuid();
         db.Users.Add(new User
         {
-            Id = smId,
-            Email = "sm@test.local",
-            FullName = "SM",
-            Role = UserRole.SalesManager,
-            IsActive = true
+            Id = smId, Email = "sm@test.local", FullName = "SM",
+            Role = UserRole.SalesManager, IsActive = true
         });
         db.CommissionLedgerEntries.Add(new CommissionLedgerEntry
         {
@@ -308,11 +302,8 @@ public class SalesCommissionEngineTests
         var adminId = Guid.NewGuid();
         db.Users.Add(new User
         {
-            Id = smId,
-            Email = "sm@test.local",
-            FullName = "SM",
-            Role = UserRole.SalesManager,
-            IsActive = true
+            Id = smId, Email = "sm@test.local", FullName = "SM",
+            Role = UserRole.SalesManager, IsActive = true
         });
         await db.SaveChangesAsync();
 

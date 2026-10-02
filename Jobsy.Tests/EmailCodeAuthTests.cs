@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Api.Security;
-using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -11,7 +10,6 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
-using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +19,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 

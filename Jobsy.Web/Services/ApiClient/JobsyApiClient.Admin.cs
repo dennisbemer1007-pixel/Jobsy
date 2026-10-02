@@ -1,6 +1,6 @@
-using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net;
 using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
@@ -1350,10 +1350,10 @@ public sealed partial class JobsyApiClient
     public async Task<AdminMfaOverview?> GetAdminMfaOverviewAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<AdminMfaOverview>("api/admin/audit/mfa-overview", ct);
 
-    public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>> GetAdminSchoolsAsync(
-            CancellationToken ct = default)
-            => await _http.GetFromJsonAsync<List<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>(
-                "api/admin/schools", ct) ?? [];
+public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>> GetAdminSchoolsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>(
+            "api/admin/schools", ct) ?? [];
 
     public async Task<Jobsy.Core.Contracts.Scholen.SchoolDetailDto?> GetAdminSchoolAsync(
         Guid schoolId,

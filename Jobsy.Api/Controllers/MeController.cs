@@ -1,17 +1,17 @@
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
-using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -90,7 +90,7 @@ public class MeController : ControllerBase
             companies is null));
     }
 
-    [HttpGet("profile")]
+        [HttpGet("profile")]
     public async Task<ActionResult<MeProfileDto>> GetProfile(CancellationToken cancellationToken)
     {
         try

@@ -1,9 +1,9 @@
-using Jobsy.Core.Sales;
-using Jobsy.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Jobsy.Core.Sales;
+using Jobsy.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Jobs;
 

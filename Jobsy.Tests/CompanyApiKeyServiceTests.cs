@@ -1,8 +1,7 @@
+using Jobsy.Core.Enums;
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
-using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
@@ -10,6 +9,7 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -124,18 +124,12 @@ public class CompanyApiKeyServiceTests
         var childId = Guid.NewGuid();
         var foreignId = Guid.NewGuid();
         db.Companies.AddRange(
-            new Company
-            {
-                Id = parentId,
-                Name = "Parent",
-                KvkNumber = "1",
-                Address = "a",
-                Location = new GeoPoint(52, 4),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            },
+            new Company { Id = parentId, Name = "Parent", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = childId,
@@ -144,23 +138,17 @@ public class CompanyApiKeyServiceTests
                 Address = "b",
                 Location = new GeoPoint(52.1, 4.1),
                 ParentCompanyId = parentId,
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            },
-            new Company
-            {
-                Id = foreignId,
-                Name = "Other",
-                KvkNumber = "9",
-                Address = "c",
-                Location = new GeoPoint(52.2, 4.2),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            });
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
+            new Company { Id = foreignId, Name = "Other", KvkNumber = "9", Address = "c", Location = new GeoPoint(52.2, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var auth = new CompanyAuthorizationService(db);

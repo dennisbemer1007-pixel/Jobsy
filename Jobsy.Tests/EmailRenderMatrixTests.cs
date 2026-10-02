@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using AngleSharp.Html.Parser;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Localization;
@@ -12,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
 
 namespace Jobsy.Tests;
 

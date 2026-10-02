@@ -1,6 +1,6 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
-using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;

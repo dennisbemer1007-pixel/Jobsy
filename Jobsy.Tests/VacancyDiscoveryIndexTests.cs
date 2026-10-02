@@ -318,11 +318,11 @@ public class VacancyDiscoveryIndexTests
                 KvkNumber = "11223344",
                 Address = "Plein 3",
                 Location = new GeoPoint(52.00, 4.20),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            });
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
             db.Vacancies.AddRange(
                 new Vacancy
                 {

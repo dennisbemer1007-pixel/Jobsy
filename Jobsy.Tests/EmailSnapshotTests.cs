@@ -1,7 +1,7 @@
-using System.Text;
 using AngleSharp.Html.Parser;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
+using System.Text;
 
 namespace Jobsy.Tests;
 

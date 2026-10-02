@@ -17,7 +17,6 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
-using Jobsy.Tests.TestSupport;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Hosting;
@@ -31,6 +30,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 

@@ -16,12 +16,7 @@ public class IntermediaryVacancyRulesTests
     [Fact]
     public void ValidateEndClientKvk_requires_kvk_and_establishment()
     {
-        var missing = new Company
-        {
-            Id = Guid.NewGuid(),
-            Name = "X",
-            Address = "a",
-            Location = new GeoPoint(1, 2),
+        var missing = new Company { Id = Guid.NewGuid(), Name = "X", Address = "a", Location = new GeoPoint(1, 2),
             VerificationStatus = CompanyVerificationStatus.Verified,
             VerificationMethod = CompanyVerificationMethod.AdminCreated,
             VerifiedAtUtc = DateTime.UtcNow,

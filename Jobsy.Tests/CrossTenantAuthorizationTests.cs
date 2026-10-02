@@ -263,11 +263,11 @@ public sealed class CrossTenantWebAppFactory : WebApplicationFactory<Jobsy.Api.A
                 KvkNumber = "11111111",
                 Address = "A",
                 Location = new GeoPoint(52.0, 4.2),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            },
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = BranchA1Id,
@@ -276,11 +276,11 @@ public sealed class CrossTenantWebAppFactory : WebApplicationFactory<Jobsy.Api.A
                 Address = "A1",
                 ParentCompanyId = OrgAId,
                 Location = new GeoPoint(52.01, 4.21),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            },
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = BranchA2Id,
@@ -289,11 +289,11 @@ public sealed class CrossTenantWebAppFactory : WebApplicationFactory<Jobsy.Api.A
                 Address = "A2",
                 ParentCompanyId = OrgAId,
                 Location = new GeoPoint(52.02, 4.22),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            },
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        },
             new Company
             {
                 Id = BranchBId,
@@ -301,11 +301,11 @@ public sealed class CrossTenantWebAppFactory : WebApplicationFactory<Jobsy.Api.A
                 KvkNumber = "22222222",
                 Address = "B",
                 Location = new GeoPoint(51.9, 4.3),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow
-            });
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
+        });
 
         db.CompanySalaryTables.AddRange(
             new CompanySalaryTable

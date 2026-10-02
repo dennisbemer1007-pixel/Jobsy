@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
 using Jobsy.Core.Admin;
@@ -11,6 +9,8 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
 
 namespace Jobsy.Api.Controllers;
 

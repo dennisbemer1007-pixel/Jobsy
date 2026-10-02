@@ -1,19 +1,19 @@
-using System.Net;
-using System.Security.Claims;
-using System.Text.Json;
-using Bunit;
 using Jobsy.Core.Privacy;
 using Jobsy.Web.Components;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Bunit;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Net;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace Jobsy.Tests;
 

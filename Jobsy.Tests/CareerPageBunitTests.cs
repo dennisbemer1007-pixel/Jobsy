@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Bunit;
 using Jobsy.Web.Components.Candidate;
 using Jobsy.Web.Components.Candidate.Career;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 
 namespace Jobsy.Tests;
 

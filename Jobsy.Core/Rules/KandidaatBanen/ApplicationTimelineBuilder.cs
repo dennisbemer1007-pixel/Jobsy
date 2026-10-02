@@ -101,8 +101,7 @@ public static class ApplicationTimelineBuilder
             // Accepted without a recorded view still advances past Sent.
             steps[0] = steps[0] with { State = ApplicationTimelineStepState.Done };
             steps[1] = Step(ApplicationTimelineStepKey.Seen, LabelSeen, respondedAt, done: false)
-                with
-            { State = ApplicationTimelineStepState.Current };
+                with { State = ApplicationTimelineStepState.Current };
         }
 
         steps[2] = ResolveStep(
@@ -116,8 +115,7 @@ public static class ApplicationTimelineBuilder
         if (status == ApplicationStatus.EmployerContacting)
         {
             steps[2] = Step(ApplicationTimelineStepKey.Interview, LabelInterview, interviewAt, done: false)
-                with
-            { State = ApplicationTimelineStepState.Current };
+                with { State = ApplicationTimelineStepState.Current };
         }
 
         var outcomeState = outcomeStatuses

@@ -2,16 +2,16 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Jobsy.Core;
 using Jobsy.Core.Contracts;
+using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
-using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Jobsy.Infrastructure.Data;
 
 namespace Jobsy.Infrastructure.Services;
 

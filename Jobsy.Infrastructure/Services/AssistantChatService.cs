@@ -23,9 +23,9 @@ public sealed class AssistantChatService : IAssistantChatService
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private static readonly string[] SearchStopwords =
-[
-    "ik", "zoek", "zoeken", "een", "de", "het", "vacature", "vacatures", "baan", "banen",
+        private static readonly string[] SearchStopwords =
+    [
+        "ik", "zoek", "zoeken", "een", "de", "het", "vacature", "vacatures", "baan", "banen",
         "job", "jobs", "als", "voor", "naar", "op", "kaart", "toon", "tonen", "vind", "vinden",
         "show", "find", "search", "looking", "want", "wil", "graag", "bij", "met", "van",
         "in", "mijn", "me", "kan", "je", "jij", "mij", "please", "for", "the", "a", "an", "and",
@@ -37,7 +37,7 @@ public sealed class AssistantChatService : IAssistantChatService
         "lopen", "lopend", "loopafstand", "vandaan", "reistijd", "travel", "walking", "walk",
         "fiets", "fietsen", "bike", "cycling", "auto", "car", "rijden", "driving",
         "ov", "tram", "bus", "metro", "transit", "voet"
-];
+    ];
 
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;

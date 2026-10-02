@@ -1,5 +1,5 @@
-using System.Net.Mail;
 using Jobsy.Core.Entities;
+using System.Net.Mail;
 
 namespace Jobsy.Core.Rules;
 

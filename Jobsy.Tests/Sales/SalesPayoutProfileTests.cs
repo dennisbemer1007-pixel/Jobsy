@@ -1,5 +1,4 @@
 using Jobsy.Core.Authorization;
-using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -9,6 +8,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests.Sales;
 

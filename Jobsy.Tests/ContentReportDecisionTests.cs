@@ -1,5 +1,6 @@
-using Jobsy.Core.Admin;
+using Microsoft.Extensions.DependencyInjection;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Entities;
@@ -9,7 +10,6 @@ using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests;
