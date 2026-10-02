@@ -13,7 +13,7 @@
 
 <PageTitle>@Culture["Saved.TabShared"] · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page kb-shared">
     <header class="panel-header">
         <div>
             <h1>@Culture["Saved.Title"]</h1>
@@ -34,15 +34,15 @@
     }
     else
     {
-        <div class="table-list">
+        <div class="table-list kb-shared__list">
             @foreach (var group in _groups)
             {
                 <a class="table-row table-row--link" href="@($"/vacancies/{group.VacancyId}")">
-                    <div>
+                    <div class="kb-shared__main">
                         <strong>@group.VacancyTitle</strong>
                         <span class="muted">@group.CompanyName · @SharedWithLabel(group.ShareCount)</span>
                     </div>
-                    <span class="muted">@group.LastSharedAt.ToLocalTime().ToString("dd-MM-yyyy")</span>
+                    <span class="muted kb-shared__date">@group.LastSharedAt.ToLocalTime().ToString("dd-MM-yyyy")</span>
                 </a>
             }
         </div>

@@ -322,8 +322,8 @@ public static class UiStringsKandidaatBanen
             "Bewaard", "Saved",
             "Zapisane", "Salvat", "محفوظ");
         Add("Kb.Saved.Applied",
-            "Je hebt gesolliciteerd", "You have applied",
-            "Aplikowano", "Ai aplicat", "لقد تقدّمت");
+            "Gesolliciteerd", "Applied",
+            "Aplikowano", "Ai aplicat", "تم التقديم");
         Add("Kb.Saved.Closed",
             "Gesloten", "Closed",
             "Zamknięte", "Închis", "مغلق");
@@ -345,6 +345,9 @@ public static class UiStringsKandidaatBanen
             "Oferty, które chcesz zapamiętać. Także z Match.",
             "Joburi pe care vrei să le ții minte. Inclusiv din Match.",
             "وظائف تريد تذكّرها. بما فيها من Match.");
+        Add("Kb.Saved.Count",
+            "{0} banen", "{0} jobs",
+            "{0} ofert", "{0} joburi", "{0} وظائف");
         Add("Kb.Saved.FilterAll",
             "Alles", "All",
             "Wszystkie", "Toate", "الكل");
@@ -375,6 +378,9 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Saved.Remove",
             "Weg", "Remove",
             "Usuń", "Elimină", "إزالة");
+        Add("Kb.Saved.Unsave",
+            "Uit Bewaard halen", "Remove from Saved",
+            "Usuń z zapisanych", "Scoate din Salvate", "إزالة من المحفوظات");
         Add("Kb.Saved.SavedOn",
             "Bewaard {0}", "Saved {0}",
             "Zapisano {0}", "Salvat {0}", "حُفظ في {0}");
