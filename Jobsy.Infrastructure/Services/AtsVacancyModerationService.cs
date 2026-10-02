@@ -90,7 +90,7 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
         listing.LocationLabel = Truncate(locationLabel, 256);
         listing.Description = TruncateRequired(description, 20_000);
         if (!AtsListingValidation.TryValidateForReview(
-                listing.Title, listing.CompanyName, listing.LocationLabel, listing.Description, out var reason))
+                listing.Title, listing.CompanyName, listing.Description, out var reason))
         {
             throw new InvalidOperationException(reason ?? "Listing is onvolledig.");
         }

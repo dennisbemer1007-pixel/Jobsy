@@ -1643,7 +1643,7 @@ public static class AuthServiceCollectionExtensions
         var cacheKey = $"session-validity:{email.Trim().ToLowerInvariant()}";
         if (!cache.TryGetValue(cacheKey, out SessionValidityCacheEntry? entry) || entry is null)
         {
-            entry = await FetchSessionValidityAsync(context.HttpContext, email);
+            entry = await FetchSessionValidityAsync(context.HttpContext);
             if (entry is not null)
             {
                 cache.Set(cacheKey, entry, TimeSpan.FromSeconds(45));
@@ -1664,7 +1664,7 @@ public static class AuthServiceCollectionExtensions
         }
     }
 
-    private static async Task<SessionValidityCacheEntry?> FetchSessionValidityAsync(HttpContext http, string email)
+    private static async Task<SessionValidityCacheEntry?> FetchSessionValidityAsync(HttpContext http)
     {
         try
         {

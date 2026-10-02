@@ -17,13 +17,6 @@ public class MijnDnaAndTestsMobilePlaywrightTests
     private const string DefaultPassword = "Jobsy123!";
     private const int MaxHtmlBytes = 60_000;
 
-    private static readonly (int Width, int Height)[] Viewports =
-    [
-        (360, 780),
-        (390, 844),
-        (430, 932)
-    ];
-
     private static readonly string[] TestRoutes =
     [
         "/candidate/competencies",

@@ -57,12 +57,12 @@ public static class PupilStoryTemplates
         var riasecKey = RiasecSentenceKey(top2);
 
         var topValue = string.IsNullOrWhiteSpace(result.TopValue)
-            ? TopByOrder(values, SchwartzValuesCatalog.CategoryCodes, c => values?.Get(c) ?? 0)
+            ? TopByOrder(SchwartzValuesCatalog.CategoryCodes, c => values?.Get(c) ?? 0)
             : result.TopValue.Trim();
         var schwartzKey = $"LeerlingStory.Val.{topValue}";
 
         var topCulture = string.IsNullOrWhiteSpace(result.TopCulture)
-            ? TopByOrder(culture, CulturePersonalityCatalog.CultureDimensionCodes, c => culture?.Get(c) ?? 0)
+            ? TopByOrder(CulturePersonalityCatalog.CultureDimensionCodes, c => culture?.Get(c) ?? 0)
             : result.TopCulture.Trim();
         var cultureKey = $"LeerlingStory.Cult.{topCulture}";
 
@@ -229,7 +229,7 @@ public static class PupilStoryTemplates
         return $"LeerlingStory.Riasec.{a}{b}";
     }
 
-    private static string TopByOrder<T>(T? scores, IReadOnlyList<string> order, Func<string, int> getter)
+    private static string TopByOrder(IReadOnlyList<string> order, Func<string, int> getter)
     {
         string best = order[0];
         var bestVal = int.MinValue;

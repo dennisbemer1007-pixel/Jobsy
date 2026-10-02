@@ -71,6 +71,7 @@ public static class UatScriptRunner
 
     private static void AssertChromeContracts(UatScenario scenario, string blob)
     {
+        _ = scenario;
         var root = RepoRoot.Find();
         if (Contains(blob, "cookie", "Alleen noodzakelijk", "Accepteer cookies"))
         {
@@ -432,6 +433,7 @@ var available = AdminNav.AvailableItems().ToList();
 
     private static void AssertDomainRules(UatScenario scenario, string blob, string? jobsyRole)
     {
+        _ = scenario;
         if (Contains(blob, "PII", "progressive", "vóór Accept", "pre-accept", "PiiRevealed"))
         {
             Assert.False(ApplicationRules.IsPiiRevealed(Jobsy.Core.Enums.ApplicationStatus.Pending));

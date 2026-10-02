@@ -130,7 +130,7 @@ public class PlatformFeaturesEnvLockApiTests
     public async Task Activation_links_setting_removed_always_false()
     {
         await using var dbAcc = CreateDb();
-        var acc = CreateController(dbAcc, DeploymentEnvironment.Acceptatie);
+        var acc = CreateController(dbAcc);
         var allow = await acc.UpdatePlatformFeatures(
             new UpdatePlatformFeatureRequest(ExposeRegistrationActivationLinks: true),
             CancellationToken.None);
@@ -143,7 +143,7 @@ public class PlatformFeaturesEnvLockApiTests
             d => string.Equals(d.Key, "ExposeRegistrationActivationLinks", StringComparison.Ordinal));
     }
 
-    private static Jobsy.Api.Controllers.SettingsController CreateController(JobsyDbContext db, string env)
+    private static Jobsy.Api.Controllers.SettingsController CreateController(JobsyDbContext db)
     {
         var features = new PlatformFeatureService(
             db,
@@ -163,7 +163,6 @@ public class PlatformFeaturesEnvLockApiTests
                 new PlatformCompanySettingsService(db),
                 features),
             new FlexCommercialService(db),
-            new DeploymentEnvironmentLabel(env),
             new NoOpAdminAuditLog(),
             new NoOpAdminAuditContext(),
             new FakeUserLookup());

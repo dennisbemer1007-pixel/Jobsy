@@ -88,6 +88,12 @@ public static class PrivacyConstants
     /// <summary>
     /// Every account must re-accept after a privacy/terms version bump.
     /// </summary>
+    // TODO(code-health): honor role-specific consent rules (see ConsentVersionTests).
     public static bool RequiresAccountConsentReaccept(UserRole role, string? consentVersion)
-        => !IsCurrentConsent(consentVersion);
+    {
+#pragma warning disable IDE0060 // role reserved for per-role consent policy
+        _ = role;
+#pragma warning restore IDE0060
+        return !IsCurrentConsent(consentVersion);
+    }
 }

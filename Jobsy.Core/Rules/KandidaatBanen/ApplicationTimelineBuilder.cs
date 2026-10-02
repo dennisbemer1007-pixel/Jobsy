@@ -88,8 +88,7 @@ public static class ApplicationTimelineBuilder
             seenAt,
             done: seenDone,
             current: status is ApplicationStatus.Pending or ApplicationStatus.Accepted && seenAt.HasValue
-                     && !interviewDone,
-            upcoming: !seenDone && !outcomeStatuses);
+                     && !interviewDone);
 
         // Pending before any view: Seen is current only when viewed; otherwise Sent stays current.
         if (status == ApplicationStatus.Pending && !seenAt.HasValue)
@@ -111,7 +110,6 @@ public static class ApplicationTimelineBuilder
             interviewAt,
             done: interviewDone && (interviewAt.HasValue || outcomeStatuses),
             current: status == ApplicationStatus.EmployerContacting,
-            upcoming: !interviewDone && !outcomeStatuses,
             skipped: outcomeStatuses && !interviewAt.HasValue);
 
         if (status == ApplicationStatus.EmployerContacting)
@@ -282,7 +280,6 @@ public static class ApplicationTimelineBuilder
         DateTime? at,
         bool done,
         bool current,
-        bool upcoming,
         bool skipped = false)
     {
         var state = skipped ? ApplicationTimelineStepState.Skipped

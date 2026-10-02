@@ -1868,29 +1868,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         _logger.LogInformation("Deleted unconfirmed registration {Id}", registrationId);
     }
 
-    private async Task ValidateSalesOrAmbassadeurTrackingCodeAsync(
-        string trackingCode,
-        CancellationToken cancellationToken)
-    {
-        var validSm = await _db.SalesManagerProfiles.AsNoTracking().AnyAsync(
-            p => p.TrackingCode != null
-                 && p.TrackingCode.ToUpper() == trackingCode
-                 && p.OnboardingCompletedAt != null
-                 && p.AgreementSignedAt != null,
-            cancellationToken);
-        var validAm = !validSm && await _db.AmbassadeurProfiles.AsNoTracking().AnyAsync(
-            p => p.TrackingCode != null
-                 && p.TrackingCode.ToUpper() == trackingCode
-                 && p.OnboardingCompletedAt != null
-                 && p.AgreementSignedAt != null,
-            cancellationToken);
-        if (!validSm && !validAm)
-        {
-            throw new ArgumentException(
-                "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
-        }
-    }
-
     private async Task ApplySalesManagerReferralAsync(
         CompanyRegistration registration,
         Company branch,

@@ -2,7 +2,6 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
-using Jobsy.Core.Hosting;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -29,7 +28,6 @@ public class SettingsController : ControllerBase
     private readonly IMarketingFlyerSettingsService _marketingFlyer;
     private readonly IMarketingFlyerPdfService _marketingFlyerPdf;
     private readonly IFlexCommercialService _flexCommercial;
-    private readonly DeploymentEnvironmentLabel _deploymentEnv;
     private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
     private readonly IUserLookupService _users;
@@ -42,7 +40,6 @@ public class SettingsController : ControllerBase
         IMarketingFlyerSettingsService marketingFlyer,
         IMarketingFlyerPdfService marketingFlyerPdf,
         IFlexCommercialService flexCommercial,
-        DeploymentEnvironmentLabel deploymentEnv,
         IAdminAuditLog audit,
         IAdminAuditContext auditContext,
         IUserLookupService users)
@@ -54,7 +51,6 @@ public class SettingsController : ControllerBase
         _marketingFlyer = marketingFlyer;
         _marketingFlyerPdf = marketingFlyerPdf;
         _flexCommercial = flexCommercial;
-        _deploymentEnv = deploymentEnv;
         _audit = audit;
         _auditContext = auditContext;
         _users = users;

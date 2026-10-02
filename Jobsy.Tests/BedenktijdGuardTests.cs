@@ -158,7 +158,7 @@ public class BedenktijdGuardTests
         return new DeepTestPaymentService(
             db,
             new FlexCommercialService(db),
-            CreateDeep(db, config, env),
+            CreateDeep(db),
             mollie,
             new StubFeatures(),
             new StubInvoices(db),
@@ -169,12 +169,10 @@ public class BedenktijdGuardTests
             NullLogger<DeepTestPaymentService>.Instance);
     }
 
-    private static DeepAnalysisService CreateDeep(JobsyDbContext db, IConfiguration config, IHostEnvironment env)
+    private static DeepAnalysisService CreateDeep(JobsyDbContext db)
         => new(
             db,
             new FlexCommercialService(db),
-            env,
-            config,
             new StubCareerCompass(),
             new StubCompetenceDeepReportService(),
             NullLogger<DeepAnalysisService>.Instance,
@@ -183,7 +181,7 @@ public class BedenktijdGuardTests
     private static DeepAnalysisController CreateController(JobsyDbContext db, IMollieApiClient mollie, Guid userId)
     {
         var payments = CreatePayments(db, mollie);
-        var deep = CreateDeep(db, new ConfigurationBuilder().Build(), new FakeHostEnvironment(Environments.Development));
+        var deep = CreateDeep(db);
         var controller = new DeepAnalysisController(
             deep,
             payments,

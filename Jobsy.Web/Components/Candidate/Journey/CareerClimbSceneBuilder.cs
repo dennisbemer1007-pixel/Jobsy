@@ -55,6 +55,7 @@ public static class CareerClimbSceneBuilder
         bool mobile,
         bool celebrate)
     {
+        _ = h;
         var target = stones.Count > 0 ? stones[^1] : new CareerClimbGeometry.Point(w * 0.5, 0);
         var cls = celebrate ? "career-scene__ray career-scene__ray--bright" : "career-scene__ray";
         var spread = mobile ? 26.0 : 74.0;

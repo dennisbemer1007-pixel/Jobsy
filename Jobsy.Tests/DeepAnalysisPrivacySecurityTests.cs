@@ -150,12 +150,9 @@ public class DeepAnalysisPrivacySecurityTests
 
     private static DeepAnalysisService CreateDeep(JobsyDbContext db)
     {
-        var config = new ConfigurationBuilder().Build();
         return new DeepAnalysisService(
             db,
             new FlexCommercialService(db),
-            new FakeHostEnvironment(Environments.Development),
-            config,
             new StubCareerCompass(),
             new StubCompetenceDeepReportService(),
             NullLogger<DeepAnalysisService>.Instance,

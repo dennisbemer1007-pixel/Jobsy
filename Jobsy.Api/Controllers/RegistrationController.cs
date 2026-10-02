@@ -27,8 +27,6 @@ public class RegistrationController : ControllerBase
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IUserLookupService _users;
     private readonly JobsyDbContext _db;
-    private readonly IPlatformFeatureService _features;
-    private readonly IHostEnvironment _environment;
     private readonly IConfiguration _configuration;
     private readonly ICompanyVerificationService _verification;
 
@@ -38,8 +36,6 @@ public class RegistrationController : ControllerBase
         ICompanyAuthorizationService companyAuth,
         IUserLookupService users,
         JobsyDbContext db,
-        IPlatformFeatureService features,
-        IHostEnvironment environment,
         IConfiguration configuration,
         ICompanyVerificationService verification)
     {
@@ -48,8 +44,6 @@ public class RegistrationController : ControllerBase
         _companyAuth = companyAuth;
         _users = users;
         _db = db;
-        _features = features;
-        _environment = environment;
         _configuration = configuration;
         _verification = verification;
     }

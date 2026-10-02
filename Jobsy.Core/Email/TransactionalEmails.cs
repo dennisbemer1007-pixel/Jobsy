@@ -122,18 +122,14 @@ public static partial class TransactionalEmails
     }
 
     private static EmailText Plain(string text) => EmailText.Plain(text);
-    private static EmailText Bold(string text) => EmailText.Bold(text);
     private static ParagraphBlock P(string text) => new(Plain(text));
     private static ParagraphBlock P(EmailText text) => new(text);
     private static NoteBlock N(string text, EmailLink? link = null) => new(Plain(text), link);
     private static NoteBlock N(EmailText text, EmailLink? link = null) => new(text, link);
     private static FactsBlock F(IEnumerable<(string Label, string Value)> rows, EmailTone tone = EmailTone.Sky)
         => new(rows.Select(r => (r.Label, Plain(r.Value))).ToList(), tone);
-    private static FactsBlock F(IEnumerable<(string Label, EmailText Value)> rows, EmailTone tone = EmailTone.Sky)
-        => new(rows.ToList(), tone);
     private static CodeBlock C(string digits, string validity) => new(digits, validity);
     private static EmailCta Button(string label, string url) => new(label, url);
-    private static EmailText Fmt(string format, params EmailArg[] args) => EmailText.Format(format, args);
 
     public static ComposedEmail Compose(string key, EmailSampleContext ctx, EmailCulture? culture = null)
     {

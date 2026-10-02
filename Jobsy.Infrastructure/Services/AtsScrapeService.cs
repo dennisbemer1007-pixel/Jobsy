@@ -663,7 +663,7 @@ public sealed class AtsScrapeService : IAtsScrapeService
         var locationKey = FirstNonEmpty(postal, locationLabel, companyName);
 
         if (!AtsListingValidation.TryValidateForReview(
-                title, companyName, locationLabel, description, out var rejectReason))
+                title, companyName, description, out var rejectReason))
         {
             _logger.LogInformation(
                 "ATS invalid skip reason={Reason} title={Title} url={Url}",

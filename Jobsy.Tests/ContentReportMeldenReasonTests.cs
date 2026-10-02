@@ -89,8 +89,8 @@ public class ContentReportMeldenReasonTests
 
         public AntiforgeryTokenSet GetTokens(HttpContext httpContext) => GetAndStoreTokens(httpContext);
         public Task<bool> IsRequestValidAsync(HttpContext httpContext) => Task.FromResult(true);
-        public void ValidateRequest(HttpContext httpContext) { }
-        public Task ValidateRequestAsync(HttpContext httpContext) => Task.CompletedTask;
+        public void ValidateRequest(HttpContext _) { }
+        public Task ValidateRequestAsync(HttpContext _) => Task.CompletedTask;
         public void SetCookieTokenAndHeader(HttpContext httpContext) { }
     }
 }
@@ -141,8 +141,8 @@ public class ContentReportMeldenReasonBunitTests : TestContext
 
         public AntiforgeryTokenSet GetTokens(HttpContext httpContext) => GetAndStoreTokens(httpContext);
         public Task<bool> IsRequestValidAsync(HttpContext httpContext) => Task.FromResult(true);
-        public void ValidateRequest(HttpContext httpContext) { }
-        public Task ValidateRequestAsync(HttpContext httpContext) => Task.CompletedTask;
+        public void ValidateRequest(HttpContext _) { }
+        public Task ValidateRequestAsync(HttpContext _) => Task.CompletedTask;
         public void SetCookieTokenAndHeader(HttpContext httpContext) { }
     }
 

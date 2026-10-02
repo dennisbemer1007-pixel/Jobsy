@@ -9,8 +9,6 @@ using Jobsy.Core.Reports.Values;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
@@ -19,8 +17,6 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 {
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
-    private readonly IHostEnvironment _environment;
-    private readonly IConfiguration _configuration;
     private readonly ICareerCompassGenerationService _careerCompass;
     private readonly ICompetenceDeepReportService _competenceReport;
     private readonly IKindDeepReportService? _kindReports;
@@ -31,21 +27,17 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     public DeepAnalysisService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        IHostEnvironment environment,
-        IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
         ICompetenceDeepReportService competenceReport,
         ILogger<DeepAnalysisService> logger,
         AssessmentSaveGuard saveGuard)
-        : this(db, commercial, environment, configuration, careerCompass, competenceReport, new CandidateInsightsQueue(), logger, null, saveGuard)
+        : this(db, commercial, careerCompass, competenceReport, new CandidateInsightsQueue(), logger, null, saveGuard)
     {
     }
 
     public DeepAnalysisService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        IHostEnvironment environment,
-        IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
         ICompetenceDeepReportService competenceReport,
         ICandidateInsightsQueue queue,
@@ -55,8 +47,6 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     {
         _db = db;
         _commercial = commercial;
-        _environment = environment;
-        _configuration = configuration;
         _careerCompass = careerCompass;
         _competenceReport = competenceReport;
         _kindReports = kindReports;
@@ -67,7 +57,11 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 
     /// <summary>Localization key for deep upsell copy (Web formats with question count).</summary>
     public static string FormatUpsellCopy(decimal priceEuro, AssessmentKind kind = AssessmentKind.Competence)
-        => "DeepPay.Upsell";
+    {
+        _ = priceEuro;
+        _ = kind;
+        return "DeepPay.Upsell";
+    }
 
     public async Task<DeepAnalysisStateDto> GetStateAsync(
         Guid userId,

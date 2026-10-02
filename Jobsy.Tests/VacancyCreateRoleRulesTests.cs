@@ -40,6 +40,7 @@ public class VacancyCreateRoleRulesTests
     [InlineData(UserRole.EnterpriseManager, true, true)]
     public void CanPurchaseTokens_with_em_flag(UserRole role, bool hasEm, bool expectedWhenEmMeansBlockedForVm)
     {
+        _ = expectedWhenEmMeansBlockedForVm;
         // hasEnterpriseManager=true → VM cannot buy; false → VM can (orphan org).
         var expected = role == UserRole.BranchManager ? !hasEm : JobsyRoles.CanPurchaseTokens(role);
         Assert.Equal(expected, JobsyRoles.CanPurchaseTokens(role, hasEm));

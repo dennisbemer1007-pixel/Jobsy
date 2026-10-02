@@ -364,7 +364,7 @@ public sealed class SalesPayoutRequestService : ISalesPayoutRequestService
         return available;
     }
 
-    private List<SalesPayoutBlockerDto> BuildBlockers(PayoutContext ctx, bool mfaSatisfied)
+    private static List<SalesPayoutBlockerDto> BuildBlockers(PayoutContext ctx, bool mfaSatisfied)
     {
         var blockers = new List<SalesPayoutBlockerDto>();
         var available = decimal.Round(ctx.Available, 2, MidpointRounding.AwayFromZero);

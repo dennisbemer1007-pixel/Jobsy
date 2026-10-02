@@ -25,7 +25,6 @@ public static class AtsListingValidation
     public static bool TryValidateForReview(
         string? title,
         string? companyName,
-        string? locationLabel,
         string? description,
         out string? rejectReason)
     {

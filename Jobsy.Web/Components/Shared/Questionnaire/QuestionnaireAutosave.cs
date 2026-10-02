@@ -63,6 +63,7 @@ public sealed class QuestionnaireAutosave : IAsyncDisposable
 
     public async Task SetAnswerAsync(int id, int value, CancellationToken ct = default)
     {
+        _ = ct;
         if (_disposed)
         {
             return;

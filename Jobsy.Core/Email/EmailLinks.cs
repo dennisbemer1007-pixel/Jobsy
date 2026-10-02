@@ -100,6 +100,6 @@ public sealed class EmailLinks
             : Absolute($"/admin/werkgeververificatie?tab={Uri.EscapeDataString(tab)}");
 
     public string HowLobsyWorks => Absolute("/hoe-werkt-lobsy");
-    public string SupportMailto(string supportAddress)
+    public static string SupportMailto(string supportAddress)
         => $"mailto:{supportAddress}";
 }

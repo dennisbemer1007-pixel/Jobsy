@@ -63,10 +63,12 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
+    // TODO(code-health): wire vacancyId into CTA/deep link when product wants vacancy-specific apply URL.
     public static ComposedEmail ApplicationVerificationCode(
         string? baseUrl, string candidateName, string vacancyTitle, Guid vacancyId, string code,
         EmailCulture? culture = null, bool codeInSubject = true)
     {
+        _ = vacancyId;
         var c = culture ?? EmailCulture.Nl;
         var minutes = ApplicationRules.EmailVerificationCodeMinutes;
         var subject = codeInSubject
@@ -142,10 +144,12 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
+    // TODO(code-health): use hiredApplicationId for tokenized withdraw link when withdrawAbsoluteUrl is null.
     public static ComposedEmail ApplicationHired(
         string? baseUrl, string candidateName, string vacancyTitle, string companyName,
         Guid hiredApplicationId, string? withdrawAbsoluteUrl = null, EmailCulture? culture = null)
     {
+        _ = hiredApplicationId;
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var blocks = new List<EmailBlock>
@@ -420,6 +424,7 @@ public static partial class TransactionalEmails
     public static ComposedEmail CompanyReEngagement(
         string? baseUrl, string companyName, string? recipientName = null, EmailCulture? culture = null)
     {
+        _ = recipientName;
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         return Finish(Doc("CompanyReEngagement", S(c, "Email.CompanyReEngagement.Subject"),

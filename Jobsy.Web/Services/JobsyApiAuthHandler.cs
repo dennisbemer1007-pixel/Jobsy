@@ -307,6 +307,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         byte[]? bodyBytes,
         CancellationToken cancellationToken)
     {
+        _ = cancellationToken;
         var clone = new HttpRequestMessage(request.Method, request.RequestUri);
         foreach (var header in request.Headers)
         {

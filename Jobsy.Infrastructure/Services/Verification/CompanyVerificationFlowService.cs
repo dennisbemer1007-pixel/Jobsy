@@ -587,7 +587,7 @@ public sealed class CompanyVerificationFlowService : ICompanyVerificationFlowSer
     private static LetterVerificationStartResult FailLetter(string code, string message)
         => new(false, code, message, null, null, null, null, null, 0);
 
-    private LetterProviderKind ResolveProviderKind(CompanyVerificationSettings settings)
+    private static LetterProviderKind ResolveProviderKind(CompanyVerificationSettings settings)
     {
         if (settings.LetterProvider == LetterProviderKind.Pingen
             && !string.IsNullOrWhiteSpace(settings.PingenClientId)
@@ -752,7 +752,7 @@ public sealed class CompanyVerificationFlowService : ICompanyVerificationFlowSer
             _ => null
         };
 
-    private string PublicBase()
+    private static string PublicBase()
     {
         // Prefer configured public URL from features when available via brand/options; fall back.
         return "https://lobsy.nl";

@@ -211,17 +211,9 @@ public class CompletedTestAutosaveTests
 
     private static DeepAnalysisService CreateDeepSut(JobsyDbContext db)
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["JobsyAuth:AllowStubPayments"] = "true"
-            })
-            .Build();
         return new DeepAnalysisService(
             db,
             new FlexCommercialService(db),
-            new FakeHostEnvironment(),
-            config,
             new StubCareerCompass(),
             new StubCompetenceDeepReportService(),
             NullLogger<DeepAnalysisService>.Instance,
