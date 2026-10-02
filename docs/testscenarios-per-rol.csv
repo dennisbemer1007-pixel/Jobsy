@@ -819,3 +819,16 @@ Alle drie,"Legacy URL /employer/vacancies openen.","301/redirect naar /werkgever
 UAT-TESTS-01,Kandidaat,Gratis test intro→vragen→klaar,Open /candidate/career?stap=intro; kies Heel diep; beantwoord; klaar,Passpoort tests toont status
 UAT-TESTS-02,Kandidaat,Uitgebreide offer+stub,TestDetail free first; Uitgebreide→offer; waiver; stub pay; Begin vraag 1,Paid unlock only
 UAT-TESTS-03,Kandidaat,RTL ar,Zet taal ar; open intro 390,dir=rtl geen overflow
+Kandidaat,`/carriere` zonder plan: kies een droombaan en klik **Maak mijn plan**.,"Eén kaart met de vraag waar je naartoe wil groeien; knop gaat na de eerste klik op disabled (één generatie); daarna het overzicht met de groeiende schelpen. Geen percentages, geen “stip op de horizon”."
+Kandidaat,`/carriere` overzicht: open de stap die nu aan de beurt is.,`/carriere?stap={n}` met de stapkaart; alleen deze stap heeft een afrondknop.
+Kandidaat,Stap afronden en daarna ongedaan maken.,Groeimoment (“Je nieuwe schaal past”) met de volgende stap; ongedaan maken zet de stap terug zonder de rest van het plan te wijzigen.
+Kandidaat,Open via `?stap=` een stap die nog niet aan de beurt is.,Stap is leesbaar maar heeft geen afrondknop; afronden kan alleen op de huidige stap.
+Kandidaat,Droombaan wijzigen: dialoog openen en weer sluiten.,Plan en voortgang onveranderd; de dialoog vertelt wat je meeneemt.
+Kandidaat,Droombaan wijzigen naar een andere baan en daarna het oude plan uit Eerdere plannen terugzetten.,Nieuw plan met behoud van gehaalde stappen (“Die tellen mee”); het oude plan staat 30 dagen in het archief en komt na terugzetten weer bovenaan.
+Kandidaat,Stapdetail: zoek een knop om een cursus zelf af te vinken.,Bestaat niet; cursussen bewijs je via het paspoort. `POST api/me/career-path/courses/claim` geeft 410 en raakt je certificaten niet.
+Kandidaat,`/candidate/talent-contacts` met een openstaand contactverzoek (mobiel 390 en desktop 1440).,Eerst de vraag of je je gegevens wil delen met een preview van wat de werkgever ziet; pas na Ja de bedrijfsgegevens. Bij Nee blijft “Je zei nee” staan en wordt niets gedeeld.
+Kandidaat,`/candidate/hoe-werkt-lobsy`.,"Vijf stenen in volgorde ontdekkingsreis/start, paspoort, carrière, banenkaart, sollicitaties; de huidige steen heeft `aria-current=""step""`; links blijven binnen de kandidaatroutes."
+Kandidaat,"Zet de taal op en, pl, ro en ar en open carrière, contactverzoeken en de how-to.","Alles vertaald (geen `Career.`/`TalentC.`/`HowC.`-sleutels als tekst); in ar is `dir=rtl`, spiegelt de scène mee en is er geen horizontale overflow op 390."
+Kandidaat,Zet in het systeem “verminder beweging” aan en rond een stap af.,"Het groeimoment is er wel, maar zonder animatie van de kreeft of de vallende schaal."
+Kandidaat,"Werkgevers-feature UIT: open carrière, contactverzoeken en de how-to.",Geen vacature- of banenkaartlinks meer op deze pagina's; de rest van het plan blijft werken.
+Kandidaat,"Navigeer met de muis en daarna met Tab over carrière, contactverzoeken en de how-to.",Muisklik op de titel geeft geen focuskader; de eerste Tab landt zichtbaar op een element.

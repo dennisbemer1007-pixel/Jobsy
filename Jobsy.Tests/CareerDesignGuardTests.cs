@@ -107,6 +107,23 @@ public class CareerDesignGuardTests
         }
     }
 
+    /// <summary>
+    /// 06 §5: the career stylesheet is one extra request on every candidate page, so it has a
+    /// page-weight budget. The soft target from the stack plan is 25 kB unminified; the ceiling
+    /// here leaves a little room above today's ~27 kB without letting the file creep further.
+    /// </summary>
+    [Fact]
+    public void Career_stylesheet_stays_within_its_page_weight_budget()
+    {
+        var css = new FileInfo(Path.Combine(
+            Repo(), "Jobsy.Web", "wwwroot", "css", "features", "carriere.css"));
+
+        Assert.True(css.Exists, $"Missing {css.FullName}");
+        Assert.True(
+            css.Length <= 28_000,
+            $"carriere.css grew to {css.Length} bytes; split a feature out instead of passing 28 kB.");
+    }
+
     private static string PagePath()
         => Path.Combine(Repo(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor");
 

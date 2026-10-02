@@ -8,6 +8,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
     /// <inheritdoc />
     public partial class AddOneTimeLinks : Migration
     {
+        // Users.SchoolId, PersonalDataAccessLogs.SubjectPupilCodeId and their index/foreign key
+        // already come from the earlier AddScholenFoundation migration; repeating them here made
+        // every fresh database fail with "column ... already exists".
+
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {

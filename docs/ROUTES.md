@@ -329,6 +329,14 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 - Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.
 - Map route constant: `KbRoutes.Map` (`/banenkaart`).
 
+## Carrière notes
+
+- `/carriere` deep-links one step with `?stap={n}`; an unknown or future step falls back to the overview.
+- `/candidate/talent-contacts` only shows employer contact details after the candidate accepts; a Pending request shows the share preview first.
+- `/candidate/hoe-werkt-lobsy` is the candidate how-to guide (Kandidaat only); other roles get their own guide and never see the five stones.
+- Career API: `GET api/me/career-path/dream-options`, `GET api/me/career-path/archived`, `POST api/me/career-path/archived/{id}/restore`, `GET api/me/talent-contacts/{id}/share-preview`, `GET api/me/journey-summary`.
+- `POST api/me/career-path/courses/claim` is a **410 Gone** stub (`use_passport_proof`); candidates prove courses through the passport. Removed after 2026-10-30.
+
 ## Notes
 
 - **Admin redesign 06.4 must host `PayoutRunsSection` in a tab Rondes** on `/admin/financien/uitbetalingen` and keep mark-paid closing payout requests. Until then the fallback is `/admin/sales-managers?tab=uitbetalingen`.
