@@ -4,6 +4,7 @@
 
 ### Added
 - Carrière 01 (Web): career API wiring on `/carriere` — fit bands, action kinds, error codes, dream-options/archive client stubs; `UiStringsCareer` for nl/en/pl/ro/ar.
+- Carrière 02 (Web): `/carriere` in the ontdekkingsreis style — `CareerClimbScene` with the lobster climbing stone by stone to the golden dream stone, `CareerRail`, `GrowingShellsStepper`, empty state with real job suggestions + job search, overview with "nu aan de beurt", and a calm dream-change dialog that keeps what you achieved (archive restore from the UI). Removes `HorizonArt`, the native `window.confirm`, the blur-commit dream input, the datalist and every percentage; new `features/carriere.css` (`?v=20260930-carriere`) and copy in nl/en/pl/ro/ar incl. `ar` RTL.
 
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.

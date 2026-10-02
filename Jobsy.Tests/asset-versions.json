@@ -23,6 +23,10 @@
     "sha256": "a83c0048d9a4fcea8e0008499db6b00e81d3d1f825a723481fe3e0f05119731f",
     "v": "20260930-kb3"
   },
+  "css/features/carriere.css": {
+    "sha256": "66a4cb5940ee5c7166b7fbfb3cd9546ed44dbfaca417b05243693bf5765ed57e",
+    "v": "20260930-carriere"
+  },
   "css/features/enterprise-ui.css": {
     "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
     "v": "20260929-ent-ui"
@@ -137,7 +141,7 @@
   },
   "js/features/auth.js": {
     "sha256": "abe562c0ae9e57649701c7512e6cddf34476ccd519d48caf51eff2677ab5a456",
-    "v": "20260930-auth03"
+    "v": "20260930-auth05"
   },
   "js/features/kandidaatinzichten-map.js": {
     "sha256": "54ad7d6c5ef51bb5ddcfff758509d7e96a597ad11d897c2454badaf2944a6a5b",

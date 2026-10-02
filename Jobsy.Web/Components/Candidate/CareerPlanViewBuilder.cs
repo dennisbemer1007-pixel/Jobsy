@@ -1,4 +1,7 @@
+using Jobsy.Core.Careers;
 using Jobsy.Core.Rules;
+using Jobsy.Web.Components.Candidate.Career;
+using Jobsy.Web.Components.Candidate.Journey;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services.Careers;
 
@@ -39,6 +42,158 @@ public static class CareerPlanViewBuilder
         int StepMatchPercent,
         string VacanciesHref,
         bool GoalReached);
+
+    /// <summary>
+    /// Everything <c>/carriere</c> (02) renders. <paramref name="nowLabel"/> is the candidate's
+    /// current work when the paspoort knows it; pass an empty string to get "waar je nu bent"
+    /// handling in the view (never invent a job title).
+    /// </summary>
+    public static CareerPlanViewModel BuildPage(
+        CareerPathPlanApiModel? plan,
+        string uiLanguage,
+        string nowLabel = "")
+    {
+        if (plan is null || plan.Steps.Count == 0)
+        {
+            return CareerPlanViewModel.Empty;
+        }
+
+        var steps = plan.Steps
+            .OrderBy(s => s.Order)
+            .Select(MapStep)
+            .Select(s => new CareerPlanStepView(
+                s.Id,
+                s.Order,
+                s.Title,
+                ShortTitle(s.Title),
+                s.Status,
+                s.SkillsGap.Count + s.MinRequirements.Count,
+                StepBandLabelKey(s),
+                s.Courses.Count,
+                s.Summary))
+            .ToList();
+
+        var completed = steps.Count(s => s.Status == CareerStepStatus.Completed);
+        var current = steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active);
+        var entry = CareerDreamCatalog.FindByTitleOrAlias(plan.DreamTitle);
+
+        var stones = new List<CareerStoneModel>(steps.Count + 2)
+        {
+            new(nowLabel, ClimbStoneState.Done, "Career.Rail.Now", null)
+        };
+
+        foreach (var step in steps)
+        {
+            var state = step.Status switch
+            {
+                CareerStepStatus.Completed => ClimbStoneState.Done,
+                CareerStepStatus.Active => ClimbStoneState.Now,
+                _ => ClimbStoneState.Todo
+            };
+            var stateKey = state switch
+            {
+                ClimbStoneState.Done => "Career.Rail.NewShell",
+                ClimbStoneState.Now => "Career.Rail.GrowingNow",
+                _ => null
+            };
+            stones.Add(new CareerStoneModel(step.ShortTitle, state, stateKey, step.Order));
+        }
+
+        stones.Add(new CareerStoneModel(
+            plan.DreamTitle,
+            ClimbStoneState.Dream,
+            "Career.Rail.Goal",
+            null));
+
+        var have = BuildAlreadyHave(plan, steps);
+
+        return new CareerPlanViewModel
+        {
+            HasPlan = true,
+            GoalReached = plan.GoalReached,
+            DreamTitle = plan.DreamTitle,
+            DreamLevel = entry?.Level ?? "",
+            DreamBandLabelKey = FitBandLabelKey(plan.DreamFitBand),
+            FromAi = plan.FromAi,
+            PlanLanguage = string.IsNullOrWhiteSpace(plan.PlanLanguage) ? "nl" : plan.PlanLanguage,
+            LanguageDiffers = !string.IsNullOrWhiteSpace(plan.PlanLanguage)
+                              && !string.IsNullOrWhiteSpace(uiLanguage)
+                              && !string.Equals(plan.PlanLanguage, uiLanguage, StringComparison.OrdinalIgnoreCase),
+            CarriedOverCount = plan.CarriedOverCount,
+            Steps = steps,
+            CurrentStep = current,
+            CompletedSteps = completed,
+            CurrentStepNumber = plan.GoalReached ? 0 : current?.Order ?? 0,
+            Stones = stones,
+            CurrentStoneIndex = plan.GoalReached ? steps.Count + 1 : completed,
+            PlatesShed = Math.Min(10, 4 + 2 * completed),
+            LobsterSizeDesktop = Math.Min(190, 118 + 14 * completed),
+            LobsterSizeMobile = Math.Min(100, 62 + 8 * completed),
+            AlreadyHave = have,
+            ProofCourseCount = plan.Steps
+                .SelectMany(s => s.CourseStatuses)
+                .Count(c => c.OnProfile),
+            ProofHasExperience = !string.IsNullOrWhiteSpace(nowLabel)
+        };
+    }
+
+    /// <summary>Short title for the stepper/stones: the first clause, capped on a word boundary.</summary>
+    public static string ShortTitle(string title)
+    {
+        var text = (title ?? "").Trim();
+        if (text.Length == 0)
+        {
+            return "";
+        }
+
+        var cut = text.IndexOfAny([':', '·', '–', '—', '(', ',', ';']);
+        if (cut > 2)
+        {
+            text = text[..cut].Trim();
+        }
+
+        if (text.Length <= 22)
+        {
+            return text;
+        }
+
+        var space = text.LastIndexOf(' ', Math.Min(21, text.Length - 1));
+        return space > 6 ? text[..space] : text[..22];
+    }
+
+    private static IReadOnlyList<string> BuildAlreadyHave(
+        CareerPathPlanApiModel plan,
+        IReadOnlyList<CareerPlanStepView> steps)
+    {
+        var have = new List<string>(3);
+
+        foreach (var step in steps.Where(s => s.Status == CareerStepStatus.Completed))
+        {
+            if (have.Count == 3)
+            {
+                return have;
+            }
+
+            have.Add(step.ShortTitle);
+        }
+
+        foreach (var course in plan.Steps
+            .SelectMany(s => s.CourseStatuses)
+            .Where(c => c.OnProfile && !string.IsNullOrWhiteSpace(c.Name)))
+        {
+            if (have.Count == 3)
+            {
+                return have;
+            }
+
+            if (!have.Any(h => string.Equals(h, course.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                have.Add(course.Name.Trim());
+            }
+        }
+
+        return have;
+    }
 
     public static CareerDashboardModel FromApi(
         CareerPathPlanApiModel plan,

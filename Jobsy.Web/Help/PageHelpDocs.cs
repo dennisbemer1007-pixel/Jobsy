@@ -262,9 +262,9 @@ public static class PageHelpDocs
 
         ["/carriere"] = new(
             "Mijn carrière",
-            "Kies je stip op de horizon en zie je voortgang via een uitklapbaar stappenplan.",
-            "Selecteer een droombaan. De voortgangsbalk toont je totale match. Klap stappen open voor skills gap, competenties en een concrete actie (cursussen of vacatures).",
-            "Loopbaandoel scherp houden en gericht doorgroeien."),
+            "Kies je droombaan en klim steen voor steen omhoog, van waar je nu bent naar het licht.",
+            "Kies een beroep uit de suggesties of zoek er zelf een. Lobsy maakt een plan met kleine stappen. Elke stap die je afrondt geeft een nieuwe schaal. Wisselen van droombaan mag altijd: je oude plan bewaren we 30 dagen en wat je haalde blijft staan.",
+            "Rustig doorgroeien met kleine stappen die kloppen."),
 
         ["/profiel"] = new(
             "Profiel",

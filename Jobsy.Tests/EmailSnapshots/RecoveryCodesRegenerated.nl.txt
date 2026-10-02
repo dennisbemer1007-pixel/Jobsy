@@ -1,0 +1,30 @@
+KEY: RecoveryCodesRegenerated
+SUBJECT: Je hebt nieuwe herstelcodes gemaakt
+PREHEADER: Je oude herstelcodes werken niet meer.
+KIND: Essential
+--- TEXT ---
+Nieuwe herstelcodes
+===================
+
+Je hebt zojuist nieuwe herstelcodes aangemaakt. Je oude codes werken niet
+meer.
+
+Was jij dit niet? Neem dan meteen contact op met support@lobsy.nl.
+
+Bekijk je herstelcodes: https://lobsy.nl/account/mfa/herstelcodes
+
+Team Lobsy
+
+Je krijgt deze mail om je account te beschermen.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Nieuwe herstelcodes
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk je herstelcodes -> https://lobsy.nl/account/mfa/herstelcodes
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
