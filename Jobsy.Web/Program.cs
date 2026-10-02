@@ -333,6 +333,7 @@ app.UseMfaEnforcement();
 app.UseAntiforgery();
 app.UseRegisterOntdekRedirect();
 app.UseBanenRedirect();
+app.UseBanenkaartGate();
 app.UseLandingRedirect();
 
 // Legacy /employer|/branch|/regional → /werkgever (GET/HEAD 301). Needs auth for /home.

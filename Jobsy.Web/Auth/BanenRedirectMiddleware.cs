@@ -1,10 +1,10 @@
+using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Auth;
 
 /// <summary>
-/// Legacy <c>/banen</c> → permanent redirect to <see cref="PublicRoutes.Banenkaart"/>,
-/// preserving the query string.
+/// Legacy <c>/banen</c>: ON → 301 <see cref="PublicRoutes.Banenkaart"/>; OFF → 302 "/".
 /// </summary>
 public sealed class BanenRedirectMiddleware(RequestDelegate next)
 {
@@ -17,6 +17,15 @@ public sealed class BanenRedirectMiddleware(RequestDelegate next)
             if (string.Equals(path, "/banen", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(path, "/banen/", StringComparison.OrdinalIgnoreCase))
             {
+                var employers = context.RequestServices.GetService<IEmployersSwitch>();
+                var enabled = employers is null || await employers.IsEnabledAsync(context.RequestAborted);
+                if (!enabled)
+                {
+                    context.Response.StatusCode = StatusCodes.Status302Found;
+                    context.Response.Headers.Location = "/";
+                    return;
+                }
+
                 var location = PublicRoutes.Banenkaart;
                 if (context.Request.QueryString.HasValue)
                 {
