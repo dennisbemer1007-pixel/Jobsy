@@ -166,6 +166,7 @@
         }
     }
 
+    /// <summary>The step detail stays on <c>/carriere</c> as a query (03 §1), so back works.</summary>
     private static string StepHref(CareerPlanStepView step)
-        => $"/carriere/stap/{Uri.EscapeDataString(step.Id)}";
+        => $"/carriere?stap={step.Order}";
 }

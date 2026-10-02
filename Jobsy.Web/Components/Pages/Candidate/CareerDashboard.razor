@@ -11,6 +11,8 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
+@inject ICareerStepVacancyFit VacancyFit
+@inject NavigationManager Navigation
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
@@ -57,6 +59,69 @@
                                  OnChoice="SetChoice"
                                  OnSearch="SearchDreamsAsync"
                                  OnSubmit="GeneratePlanAsync" />
+            </ChildContent>
+        </CareerStage>
+    }
+    else if (_done is { } done)
+    {
+        <CareerStage Variant="ClimbVariant.Climb"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="@_plan.CurrentStoneIndex"
+                     Celebrate="true"
+                     PlatesShed="@_plan.PlatesShed"
+                     FallingPlate="@FallingPlateIndex"
+                     LobsterLabel="@Culture["Career.Lobster.Celebrate"]"
+                     LobsterSizeDesktop="170"
+                     LobsterSizeMobile="86"
+                     BubbleDesktop="@Culture["Career.Say.NewShell"]"
+                     BubbleMobile="@Culture["Career.Say.NewShellShort"]">
+            <RailContent>
+                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
+            </RailContent>
+            <ChildContent>
+                <CareerStepDoneCard StepNumber="@done.Order"
+                                    TotalSteps="@done.TotalSteps"
+                                    StepTitle="@done.Title"
+                                    ShortTitle="@done.ShortTitle"
+                                    Busy="@_busy"
+                                    PassportOn="@_passportOn"
+                                    ErrorText="@_error"
+                                    ProofName="@_doneGained.ProofName"
+                                    GrownClaws="@_doneGained.GrownClaws"
+                                    VacancyCount="@DoneVacancyCount"
+                                    Stones="@_plan.Stones"
+                                    NextTitle="@done.NextStep?.Title"
+                                    NextNumber="@(done.NextStep?.Order ?? 0)"
+                                    NextGapCount="@(done.NextStep?.GapCount ?? 0)"
+                                    NextCourseCount="@(done.NextStep?.CourseCount ?? 0)"
+                                    OnUndo="UndoStepAsync"
+                                    OnNext="GoToNextStepAsync" />
+            </ChildContent>
+        </CareerStage>
+    }
+    else if (_step is { } step)
+    {
+        <CareerStage Variant="ClimbVariant.Climb"
+                     DesktopStones="@SceneStones"
+                     CurrentIndex="@_plan.CurrentStoneIndex"
+                     PlatesShed="@_plan.PlatesShed"
+                     LobsterSizeDesktop="@_plan.LobsterSizeDesktop"
+                     LobsterSizeMobile="@_plan.LobsterSizeMobile"
+                     BubbleDesktop="@BubbleDesktop"
+                     BubbleMobile="@BubbleMobile">
+            <RailContent>
+                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
+            </RailContent>
+            <ChildContent>
+                <CareerStepDetailCard Step="@step"
+                                      Busy="@_busy"
+                                      EmployersOn="@_employersOn"
+                                      PassportOn="@_passportOn"
+                                      ErrorText="@_error"
+                                      CourseSlots="@_courseSlots"
+                                      VacancyFit="@_stepFit"
+                                      OnComplete="CompleteStepAsync"
+                                      OnUndo="UndoStepAsync" />
             </ChildContent>
         </CareerStage>
     }
@@ -118,6 +183,16 @@
 </div>
 
 @code {
+    /// <summary>Deep-linkable step detail: <c>/carriere?stap={order}</c> (03 §1). Invalid ⇒ overview.</summary>
+    [SupplyParameterFromQuery(Name = "stap")] public int? Stap { get; set; }
+
+    private CareerPathPlanApiModel? _planApi;
+    private CareerStepDetailView? _step;
+    private CareerStepDetailView? _done;
+    private CareerStepDoneView _doneGained = new();
+    private CareerStepVacancyFit _stepFit = CareerStepVacancyFit.None;
+    private List<PassportCourseCard> _courseSlots = [];
+    private string _stepContextId = "";
     private CareerPlanViewModel _plan = CareerPlanViewModel.Empty;
     private IReadOnlyList<CareerDreamOptionApiItem> _suggestions = [];
     private IReadOnlyList<ArchivedCareerPlanApiModel> _archived = [];
@@ -174,6 +249,11 @@
         ? Culture["Career.Say.Goal"]
         : Culture.Format("Career.Say.ClimbShort", Math.Max(1, _plan.CurrentStepNumber));
 
+    /// <summary>One plate falls once during the moment (§S); the newest shed plate.</summary>
+    private int FallingPlateIndex => Math.Clamp(_plan.PlatesShed - 1, 0, 9);
+
+    private int DoneVacancyCount => _employersOn && _stepFit.ShowsCount ? _stepFit.GoodCount : 0;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -203,6 +283,166 @@
         {
             _bootstrapping = false;
         }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_bootstrapping)
+        {
+            return;
+        }
+
+        await SyncStepAsync();
+    }
+
+    /// <summary>Resolves <c>?stap=</c> to a step; an unknown or foreign order falls back to the overview.</summary>
+    private async Task SyncStepAsync()
+    {
+        if (_done is not null)
+        {
+            if (Stap == _done.Order)
+            {
+                return;
+            }
+
+            _done = null;
+            _doneGained = new CareerStepDoneView();
+        }
+
+        if (Stap is not int order || !_plan.HasPlan)
+        {
+            ClearStep();
+            return;
+        }
+
+        var next = CareerPlanViewBuilder.BuildStep(_planApi, order);
+        if (next is null)
+        {
+            ClearStep();
+            return;
+        }
+
+        _step = next;
+        if (!string.Equals(_stepContextId, next.Id, StringComparison.Ordinal))
+        {
+            _stepContextId = next.Id;
+            await LoadStepContextAsync(next);
+        }
+    }
+
+    private void ClearStep()
+    {
+        _step = null;
+        _stepContextId = "";
+        _courseSlots = [];
+        _stepFit = CareerStepVacancyFit.None;
+    }
+
+    /// <summary>Courses (D5) and vacancy fit (Dependency E). Read-only: nothing is seeded here.</summary>
+    private async Task LoadStepContextAsync(CareerStepDetailView step)
+    {
+        _courseSlots = [];
+        _stepFit = CareerStepVacancyFit.None;
+
+        if (step.CourseSearchKeys.Count > 0)
+        {
+            try
+            {
+                _courseSlots = await Api.GetPassportTrainingOffersAsync(
+                    string.Join(' ', step.CourseSearchKeys));
+            }
+            catch (Exception)
+            {
+                _courseSlots = [];
+            }
+        }
+
+        if (_employersOn)
+        {
+            _stepFit = await VacancyFit.GetAsync([step.ShortTitle, step.Title]);
+        }
+    }
+
+    private async Task CompleteStepAsync()
+    {
+        if (_busy || _step is not { Status: CareerStepStatus.Active } step)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var plan = await Api.CompleteCareerStepAsync(step.Id);
+            if (plan is null)
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
+
+            _doneGained = CareerPlanViewBuilder.BuildDone(step, plan, step.Order);
+            ApplyPlan(plan);
+            _done = step;
+            _step = null;
+            _announcement = Culture.Format("Career.Done.Announce", step.Order);
+        }
+        catch (Exception ex)
+        {
+            _error = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task UndoStepAsync()
+    {
+        var target = _done ?? _step;
+        if (_busy || target is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var plan = await Api.UncompleteCareerStepAsync(target.Id);
+            if (plan is null)
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
+
+            ApplyPlan(plan);
+            _done = null;
+            _doneGained = new CareerStepDoneView();
+            _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order);
+            _announcement = Culture.Format("Career.Undo.Announce", target.Order);
+        }
+        catch (Exception ex)
+        {
+            _error = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task GoToNextStepAsync()
+    {
+        var next = _done?.NextStep;
+        if (next is null)
+        {
+            Navigation.NavigateTo("/carriere");
+            return Task.CompletedTask;
+        }
+
+        Navigation.NavigateTo($"/carriere?stap={next.Order}");
+        return Task.CompletedTask;
     }
 
     private void SetChoice(CareerDreamChoice? choice) => _choice = choice;
@@ -386,7 +626,10 @@
     }
 
     private void ApplyPlan(CareerPathPlanApiModel? plan)
-        => _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel);
+    {
+        _planApi = plan;
+        _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel);
+    }
 
     private string FailureMessage(Exception ex)
         => ex is CareerApiError api

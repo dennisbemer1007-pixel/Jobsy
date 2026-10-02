@@ -10,6 +10,8 @@
                   CurrentIndex="@CurrentIndex"
                   Celebrate="@Celebrate"
                   PlatesShed="@PlatesShed"
+                  FallingPlate="@FallingPlate"
+                  LobsterLabel="@LobsterLabel"
                   LobsterSize="@LobsterSizeDesktop" />
 
 <div class="career-band career-only-mobile">
@@ -19,6 +21,8 @@
                       CurrentIndex="@CurrentIndex"
                       Celebrate="@Celebrate"
                       PlatesShed="@PlatesShed"
+                      FallingPlate="@FallingPlate"
+                      LobsterLabel="@LobsterLabel"
                       LobsterSize="@LobsterSizeMobile" />
     <div class="career-band__say">
         <LobsyBubble Text="@BubbleMobile" Variant="LobsyBubble.BubbleVariant.Scene" />
@@ -49,6 +53,11 @@
     [Parameter] public int CurrentIndex { get; set; }
     [Parameter] public bool Celebrate { get; set; }
     [Parameter] public int PlatesShed { get; set; } = 4;
+
+    /// <summary>The old-shell plate that falls once during the growth moment (03 §5).</summary>
+    [Parameter] public int? FallingPlate { get; set; }
+
+    [Parameter] public string LobsterLabel { get; set; } = "";
     [Parameter] public int LobsterSizeDesktop { get; set; } = 118;
     [Parameter] public int LobsterSizeMobile { get; set; } = 62;
     [Parameter] public string BubbleDesktop { get; set; } = "";

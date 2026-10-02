@@ -101,6 +101,8 @@ public static class UiStringsCareer
         AddRail(Add);
         AddDream(Add);
         AddSay(Add);
+        AddStep(Add);
+        AddDone(Add);
     }
 
     private delegate void AddString(string key, string nl, string en, string pl, string ro, string ar);
@@ -675,5 +677,301 @@ public static class UiStringsCareer
             "Stoisz na złotym kamieniu. Dobra wspinaczka!",
             "Stai pe piatra de aur. Ai urcat frumos!",
             "أنت على الحجر الذهبي. صعود جميل!");
+        Add("Career.Say.NewShell",
+            "Voel je dat? Mijn oude schaal was te krap. Deze nieuwe past precies.",
+            "Do you feel that? My old shell was too tight. This new one fits perfectly.",
+            "Czujesz to? Moja stara skorupa była za ciasna. Ta nowa pasuje idealnie.",
+            "Simți? Carapacea veche era prea strâmtă. Cea nouă se potrivește perfect.",
+            "أتشعر بذلك؟ قوقعتي القديمة كانت ضيقة. هذه الجديدة تناسبني تماماً.");
+        Add("Career.Say.NewShellShort",
+            "Voel je dat? Deze nieuwe schaal past precies.",
+            "Do you feel that? This new shell fits perfectly.",
+            "Czujesz to? Ta nowa skorupa pasuje idealnie.",
+            "Simți? Carapacea nouă se potrivește perfect.",
+            "أتشعر بذلك؟ هذه القوقعة الجديدة تناسبني تماماً.");
+        Add("Career.Lobster.Celebrate",
+            "Lobsy met een nieuwe gouden schaal",
+            "Lobsy with a new golden shell",
+            "Lobsy w nowej złotej skorupie",
+            "Lobsy cu o carapace nouă, aurie",
+            "لوبسي بقوقعة ذهبية جديدة");
+    }
+
+    private static void AddStep(AddString Add)
+    {
+        Add("CareerStep.Eyebrow.Now",
+            "De klim · stap {0} van {1} · groeit nu",
+            "The climb · step {0} of {1} · growing now",
+            "Wspinaczka · krok {0} z {1} · rośnie teraz",
+            "Urcarea · pasul {0} din {1} · crește acum",
+            "الصعود · الخطوة {0} من {1} · ينمو الآن");
+        Add("CareerStep.Eyebrow.Done",
+            "De klim · stap {0} van {1} · gehaald",
+            "The climb · step {0} of {1} · done",
+            "Wspinaczka · krok {0} z {1} · zaliczony",
+            "Urcarea · pasul {0} din {1} · finalizat",
+            "الصعود · الخطوة {0} من {1} · مُنجزة");
+        Add("CareerStep.Eyebrow.Todo",
+            "De klim · stap {0} van {1} · later",
+            "The climb · step {0} of {1} · later",
+            "Wspinaczka · krok {0} z {1} · później",
+            "Urcarea · pasul {0} din {1} · mai târziu",
+            "الصعود · الخطوة {0} من {1} · لاحقاً");
+        Add("CareerStep.Back",
+            "Mijn groeireis",
+            "My growth journey",
+            "Moja podróż rozwoju",
+            "Călătoria mea de creștere",
+            "رحلة نموي");
+        Add("CareerStep.Gaps.Title",
+            "Wat je nog mist",
+            "What you still miss",
+            "Czego ci jeszcze brakuje",
+            "Ce îți lipsește încă",
+            "ما ينقصك بعد");
+        Add("CareerStep.Gaps.Sub",
+            "Welke klauwen je al hebt, en welke je nog laat groeien.",
+            "Which claws you already have, and which ones you are still growing.",
+            "Które szczypce już masz, a które jeszcze hodujesz.",
+            "Ce clești ai deja și pe care îi mai crești.",
+            "أي المخالب لديك بالفعل، وأيها ما زلت تنميه.");
+        Add("CareerStep.Gaps.Have",
+            "heb je al",
+            "you already have",
+            "już masz",
+            "ai deja",
+            "لديك بالفعل");
+        Add("CareerStep.Gaps.ShowAll",
+            "Toon alles ({0})",
+            "Show all ({0})",
+            "Pokaż wszystko ({0})",
+            "Arată tot ({0})",
+            "أظهر الكل ({0})");
+        Add("CareerStep.Gaps.None",
+            "Voor deze stap mis je niets meer.",
+            "You are not missing anything for this step.",
+            "Do tego kroku nic ci nie brakuje.",
+            "Pentru acest pas nu îți lipsește nimic.",
+            "لا ينقصك شيء لهذه الخطوة.");
+        Add("CareerStep.Years",
+            "{0} jaar ervaring helpt",
+            "{0} years of experience helps",
+            "{0} lat doświadczenia pomaga",
+            "{0} ani de experiență ajută",
+            "{0} سنوات من الخبرة تساعد");
+        Add("CareerStep.Band.Title",
+            "Match op deze stap",
+            "Fit for this step",
+            "Dopasowanie do tego kroku",
+            "Potrivirea pe acest pas",
+            "التوافق مع هذه الخطوة");
+        Add("CareerStep.Band.Eyebrow",
+            "Groei eerst. Match daarna.",
+            "Grow first. Match after.",
+            "Najpierw rośnij. Potem dopasowanie.",
+            "Crește mai întâi. Potrivirea vine după.",
+            "انمُ أولاً. والتوافق بعد ذلك.");
+        Add("CareerStep.Band.Good",
+            "Deze steen past goed bij jouw formaat.",
+            "This stone is a good fit for your size.",
+            "Ten kamień dobrze pasuje do twojego rozmiaru.",
+            "Piatra aceasta se potrivește bine cu mărimea ta.",
+            "هذا الحجر يناسب حجمك جيداً.");
+        Add("CareerStep.Band.Fair",
+            "Deze steen past al redelijk bij jouw formaat. Met {0} worden je matches sterker.",
+            "This stone already fits your size reasonably. With {0} your matches get stronger.",
+            "Ten kamień już całkiem pasuje do twojego rozmiaru. Z {0} twoje dopasowania będą mocniejsze.",
+            "Piatra aceasta se potrivește deja rezonabil cu mărimea ta. Cu {0} potrivirile tale devin mai puternice.",
+            "هذا الحجر يناسب حجمك بشكل معقول. مع {0} تصبح مطابقاتك أقوى.");
+        Add("CareerStep.Band.NotYet",
+            "Deze steen is nog wat groot. Dat is normaal: je groeit ernaartoe.",
+            "This stone is still a bit big. That is normal: you grow into it.",
+            "Ten kamień jest jeszcze trochę duży. To normalne: dorośniesz do niego.",
+            "Piatra aceasta e încă puțin mare. E normal: crești spre ea.",
+            "هذا الحجر كبير قليلاً بعد. هذا طبيعي: أنت تنمو نحوه.");
+        Add("CareerStep.Band.Unknown",
+            "Doe de Beroepen-test in je paspoort, dan zie je hoe goed dit past.",
+            "Take the careers test in your passport to see how well this fits.",
+            "Zrób test zawodów w swoim paszporcie, wtedy zobaczysz, jak to pasuje.",
+            "Fă testul de meserii în pașaportul tău, apoi vezi cât de bine se potrivește.",
+            "أجرِ اختبار المهن في جوازك لترى مدى ملاءمة ذلك.");
+        Add("CareerStep.Band.TestLink",
+            "Doe de Beroepen-test",
+            "Take the careers test",
+            "Zrób test zawodów",
+            "Fă testul de meserii",
+            "أجرِ اختبار المهن");
+        Add("CareerStep.Vacancies",
+            "Vacatures voor {0}",
+            "Jobs for {0}",
+            "Ogłoszenia dla {0}",
+            "Joburi pentru {0}",
+            "وظائف لـ {0}");
+        Add("CareerStep.VacancyCount",
+            "{0} vacatures passen goed",
+            "{0} jobs are a good fit",
+            "{0} ogłoszeń dobrze pasuje",
+            "{0} joburi se potrivesc bine",
+            "{0} وظائف تناسبك جيداً");
+        Add("CareerStep.Courses.Title",
+            "Opleiding die past",
+            "A course that fits",
+            "Szkolenie, które pasuje",
+            "Un curs care ți se potrivește",
+            "دورة تناسبك");
+        Add("CareerStep.Courses.Eyebrow",
+            "Laat je klauw groeien",
+            "Grow your claw",
+            "Wyhoduj swoje szczypce",
+            "Crește-ți cleștele",
+            "أنمِ مخلبك");
+        Add("CareerStep.Courses.Disclosure",
+            "Gratis staat altijd bovenaan. Partnerlink: Lobsy kan een vergoeding krijgen.",
+            "Free is always on top. Partner link: Lobsy may receive a fee.",
+            "Bezpłatne jest zawsze na górze. Link partnerski: Lobsy może dostać wynagrodzenie.",
+            "Gratuit este mereu primul. Link partener: Lobsy poate primi o remunerație.",
+            "المجاني دائماً في الأعلى. رابط شريك: قد يحصل لوبسي على عائد.");
+        Add("CareerStep.Courses.Plain",
+            "Wat kan helpen: {0}",
+            "What can help: {0}",
+            "Co może pomóc: {0}",
+            "Ce poate ajuta: {0}",
+            "ما قد يساعد: {0}");
+        Add("CareerStep.Proof",
+            "Heb je dit al? Voeg bewijs toe",
+            "Do you already have this? Add proof",
+            "Masz to już? Dodaj dowód",
+            "Ai deja asta? Adaugă dovada",
+            "هل لديك هذا بالفعل؟ أضف إثباتاً");
+        Add("CareerStep.ProofShort",
+            "Bewijs toevoegen",
+            "Add proof",
+            "Dodaj dowód",
+            "Adaugă dovada",
+            "أضف إثباتاً");
+        Add("CareerStep.Complete",
+            "Deze stap is klaar",
+            "This step is done",
+            "Ten krok jest gotowy",
+            "Acest pas e gata",
+            "هذه الخطوة جاهزة");
+        Add("CareerStep.Undo",
+            "Toch nog niet klaar",
+            "Not done after all",
+            "Jednak jeszcze nie gotowy",
+            "Totuși nu e gata",
+            "لم تكتمل بعد");
+        Add("CareerStep.FinishFirst",
+            "Eerst stap {0} afmaken.",
+            "Finish step {0} first.",
+            "Najpierw skończ krok {0}.",
+            "Termină mai întâi pasul {0}.",
+            "أكمل الخطوة {0} أولاً.");
+    }
+
+    private static void AddDone(AddString Add)
+    {
+        Add("Career.Done.Eyebrow",
+            "De klim · stap {0} van {1} klaar",
+            "The climb · step {0} of {1} done",
+            "Wspinaczka · krok {0} z {1} gotowy",
+            "Urcarea · pasul {0} din {1} gata",
+            "الصعود · الخطوة {0} من {1} مكتملة");
+        Add("Career.Done.OldShell",
+            "Oude schaal",
+            "Old shell",
+            "Stara skorupa",
+            "Carapace veche",
+            "القوقعة القديمة");
+        Add("Career.Done.Title",
+            "Je nieuwe schaal past",
+            "Your new shell fits",
+            "Twoja nowa skorupa pasuje",
+            "Noua ta carapace se potrivește",
+            "قوقعتك الجديدة تناسبك");
+        Add("Career.Done.Lead",
+            "{0} is gehaald. Je oude schaal was te krap. Je bent weer gegroeid.",
+            "{0} is done. Your old shell was too tight. You grew again.",
+            "{0} zaliczone. Twoja stara skorupa była za ciasna. Znów urosłeś.",
+            "{0} e finalizat. Carapacea veche era prea strâmtă. Ai crescut din nou.",
+            "{0} أُنجزت. قوقعتك القديمة كانت ضيقة. لقد نموت مرة أخرى.");
+        Add("Career.Done.GainProof",
+            "{0} staat in je paspoort",
+            "{0} is in your passport",
+            "{0} jest w twoim paszporcie",
+            "{0} este în pașaportul tău",
+            "{0} موجودة في جوازك");
+        Add("Career.Done.GainProofProfile",
+            "{0} staat in je profiel",
+            "{0} is in your profile",
+            "{0} jest w twoim profilu",
+            "{0} este în profilul tău",
+            "{0} موجودة في ملفك");
+        Add("Career.Done.GainClaw",
+            "Je klauw ‘{0}’ is gegroeid",
+            "Your claw “{0}” has grown",
+            "Twoje szczypce „{0}” urosły",
+            "Cleștele tău „{0}” a crescut",
+            "مخلبك «{0}» قد نما");
+        Add("Career.Done.GainVacancies",
+            "Nieuw: {0} vacatures als {1} passen bij je",
+            "New: {0} jobs as {1} fit you",
+            "Nowe: {0} ogłoszeń jako {1} do ciebie pasuje",
+            "Nou: {0} joburi ca {1} ți se potrivesc",
+            "جديد: {0} وظائف كـ {1} تناسبك");
+        Add("Career.Done.GainNone",
+            "Stap {0} staat als gehaald in je plan.",
+            "Step {0} is marked as done in your plan.",
+            "Krok {0} jest zaliczony w twoim planie.",
+            "Pasul {0} e marcat ca finalizat în planul tău.",
+            "الخطوة {0} مُسجّلة كمكتملة في خطتك.");
+        Add("Career.Done.NextTitle",
+            "Je volgende steen",
+            "Your next stone",
+            "Twój następny kamień",
+            "Următoarea ta piatră",
+            "حجرك التالي");
+        Add("Career.Done.NextStep",
+            "Stap {0}: {1}",
+            "Step {0}: {1}",
+            "Krok {0}: {1}",
+            "Pasul {0}: {1}",
+            "الخطوة {0}: {1}");
+        Add("Career.Done.NextFacts",
+            "Nog {0} klauwen · {1} opleidingen",
+            "{0} claws still · {1} courses",
+            "Jeszcze {0} szczypce · {1} szkoleń",
+            "Încă {0} clești · {1} cursuri",
+            "بقي {0} مخالب · {1} دورات");
+        Add("Career.Done.NextFactsGapsOnly",
+            "Nog {0} klauwen",
+            "{0} claws still",
+            "Jeszcze {0} szczypce",
+            "Încă {0} clești",
+            "بقي {0} مخالب");
+        Add("Career.Done.Next",
+            "Op naar stap {0}",
+            "On to step {0}",
+            "Do kroku {0}",
+            "Spre pasul {0}",
+            "إلى الخطوة {0}");
+        Add("Career.Done.Dream",
+            "Bekijk je droombaan",
+            "View your dream job",
+            "Zobacz swoją wymarzoną pracę",
+            "Vezi jobul tău visat",
+            "اعرض وظيفة أحلامك");
+        Add("Career.Done.Announce",
+            "Stap {0} is klaar. Je nieuwe schaal past.",
+            "Step {0} is done. Your new shell fits.",
+            "Krok {0} gotowy. Twoja nowa skorupa pasuje.",
+            "Pasul {0} e gata. Noua ta carapace se potrivește.",
+            "الخطوة {0} مكتملة. قوقعتك الجديدة تناسبك.");
+        Add("Career.Undo.Announce",
+            "Stap {0} staat weer open.",
+            "Step {0} is open again.",
+            "Krok {0} jest znów otwarty.",
+            "Pasul {0} e din nou deschis.",
+            "الخطوة {0} مفتوحة مرة أخرى.");
     }
 }
