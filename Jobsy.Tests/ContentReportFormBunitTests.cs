@@ -41,7 +41,7 @@ public class ContentReportFormBunitTests : BunitContext
 
         var form = cut.Find("form");
         Assert.Equal("post", form.GetAttribute("method"));
-        Assert.Equal("/melden", form.GetAttribute("action"));
+        Assert.Equal("/melden/verstuur", form.GetAttribute("action"));
         Assert.Equal("false", form.GetAttribute("data-enhance"));
 
         var token = cut.Find("input[name='form']");

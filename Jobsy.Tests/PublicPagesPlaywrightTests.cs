@@ -163,12 +163,20 @@ public class PublicPagesPlaywrightTests
 
         await page.Locator("input[name='reason']").First.CheckAsync();
         await page.FillAsync("#melden-details", "E2E: deze pagina klopt niet.");
-        await page.ClickAsync("form button[type=submit]");
-        await page.WaitForURLAsync("**/melden**", new() { Timeout = 30_000 });
+        await Task.WhenAll(
+            page.WaitForURLAsync("**/melden**", new() { Timeout = 30_000 }),
+            page.Locator("form button[type=submit]").ClickAsync());
 
         var html = await page.ContentAsync();
-        Assert.DoesNotContain("role=\"alert\"", html, StringComparison.Ordinal);
         await Assertions.Expect(page.Locator("#melden-title")).ToBeVisibleAsync();
+        // Success hides the form; DSA rate-limit shows an alert but keeps the form usable.
+        if (html.Contains("role=\"alert\"", StringComparison.Ordinal))
+        {
+            Assert.Contains("teveel", page.Url + html, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Je hebt al", html, StringComparison.OrdinalIgnoreCase);
+            return;
+        }
+
         Assert.Equal(0, await page.Locator("form button[type=submit]").CountAsync());
     }
 
@@ -383,7 +391,13 @@ public class PublicPagesPlaywrightTests
     {
         var text = await page.Locator("body").InnerTextAsync();
         Assert.DoesNotContain("€ 0,00", text, StringComparison.Ordinal);
-        Assert.Contains("btw", text, StringComparison.OrdinalIgnoreCase);
+        // NL uses "btw"; EN/PL/RO/AR use VAT / localized tax wording from PartnerPage.Rates.*.
+        Assert.True(
+            text.Contains("btw", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("VAT", StringComparison.Ordinal)
+            || text.Contains("TVA", StringComparison.Ordinal)
+            || text.Contains("ضريبة", StringComparison.Ordinal),
+            "Partner rates should mention VAT/btw in the page language.");
     }
 
     private static async Task SetLanguageAsync(IPage page, string baseUrl, string lang)

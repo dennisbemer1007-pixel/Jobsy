@@ -43,7 +43,7 @@
                 <p class="login-error" role="alert">@_errorMessage</p>
             }
 
-            <form method="post" action="/melden" class="login-form" data-enhance="false">
+            <form method="post" action="/melden/verstuur" class="login-form" data-enhance="false">
                 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
                 <input type="hidden" name="type" value="@_type" />
                 <input type="hidden" name="id" value="@_id" />
