@@ -34,7 +34,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (228 routes)
+## Table (229 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -233,6 +233,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
 | `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
 | `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
+| `/status/{Code:int}` | `Pages/Status/StatusPage.razor` | anonymous |
 | `/toestemming` | `Pages/Public/ParentalConsent.razor` | anonymous |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |

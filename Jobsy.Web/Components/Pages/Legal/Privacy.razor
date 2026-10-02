@@ -1,7 +1,7 @@
 @page "/privacy"
 @attribute [AllowAnonymous]
-@using Jobsy.Core.Privacy
 @inject CultureState Culture
+@inject Jobsy.Web.Services.LegalIdentityProvider LegalIdentity
 
 <PageTitle>@Culture["Legal.Privacy"] · Lobsy</PageTitle>
 
@@ -26,9 +26,11 @@
                 verwerken, waarom we dat doen en welke rechten je hebt.
             </p>
             <p>
-                <strong>Verwerkingsverantwoordelijke:</strong> @PlatformLegalIdentity.CompanyName,
-                KVK @PlatformLegalIdentity.KvkNumber, @PlatformLegalIdentity.Address.
-                Vragen over privacy: <a href="mailto:@PlatformLegalIdentity.PrivacyEmail">@PlatformLegalIdentity.PrivacyEmail</a>.
+                <strong>Verwerkingsverantwoordelijke:</strong> @_legalLine
+                @if (!string.IsNullOrWhiteSpace(_privacyContact))
+                {
+                    <text> Vragen over privacy: <a href="mailto:@_privacyContact">@_privacyContact</a>.</text>
+                }
             </p>
         </section>
 
@@ -107,8 +109,11 @@
                 zonder Big Five-antwoorden. In de anonieme talentpool kunnen werkgevers wel de afgeleide
                 tags en competentiepercentages zien (zie §5b). Scores zijn informatieve schattingen
                 om jou en werkgevers te helpen; zij vormen geen besluit tot aanname of afwijzing.
-                Je kunt een score betwisten of een menselijke beoordeling vragen via
-                <a href="mailto:@PlatformLegalIdentity.PrivacyEmail">@PlatformLegalIdentity.PrivacyEmail</a>.
+                @if (!string.IsNullOrWhiteSpace(_privacyContact))
+                {
+                    <text>Je kunt een score betwisten of een menselijke beoordeling vragen via
+                    <a href="mailto:@_privacyContact">@_privacyContact</a>.</text>
+                }
             </p>
         </section>
 
@@ -257,3 +262,26 @@
         </section>
     </article>
 </div>
+
+@code {
+    private string _legalLine = "Lobsy";
+    private string? _privacyContact;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var legal = await LegalIdentity.GetAsync();
+        var parts = new List<string> { legal.DisplayName };
+        if (!string.IsNullOrWhiteSpace(legal.KvkNumber))
+        {
+            parts.Add($"KvK {legal.KvkNumber.Trim()}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(legal.AddressLine))
+        {
+            parts.Add(legal.AddressLine);
+        }
+
+        _legalLine = string.Join(", ", parts) + ".";
+        _privacyContact = legal.PrivacyContact;
+    }
+}

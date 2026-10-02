@@ -19,7 +19,7 @@ public class PageSeoCatalogTests
     [InlineData("/westland", true)]
     [InlineData("/lancering", true)]
     [InlineData("/partner", true)]
-    [InlineData("/partner/SM-ABCDEF", true)]
+    [InlineData("/partner/SM-ABCDEF", false)]
     [InlineData("/hoe-werkt-lobsy", true)]
     [InlineData("/vacancies/c1000000-0000-0000-0000-000000000010", true)]
     [InlineData("/12345678", true)]

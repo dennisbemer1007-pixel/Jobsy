@@ -1,0 +1,49 @@
+@page "/status/{Code:int}"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+@using Microsoft.AspNetCore.Http
+
+<PageTitle>@(IsNotFound ? Culture["Status.NotFound.Title"] : Culture["Status.Generic.Title"]) · Lobsy</PageTitle>
+<PageSeo Index="false" />
+
+<div class="login-page">
+    <div class="login-card">
+        @if (IsNotFound)
+        {
+            <h1>@Culture["Status.NotFound.Title"]</h1>
+            <p class="login-lead">@Culture["Status.NotFound.Lead"]</p>
+            <div class="inline-actions">
+                <a class="login-submit" href="/">@Culture["Status.NotFound.ToMap"]</a>
+                <a class="btn-compact" href="/hoe-werkt-lobsy">@Culture["Status.NotFound.HowLobsy"]</a>
+            </div>
+        }
+        else
+        {
+            <h1>@Culture["Status.Generic.Title"]</h1>
+            <p class="login-lead">@Culture["Status.Generic.Lead"]</p>
+            <a class="login-submit" href="/">@Culture["Status.Generic.Home"]</a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Code { get; set; }
+
+    private bool IsNotFound => Code == StatusCodes.Status404NotFound;
+
+    protected override void OnParametersSet()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null || http.Response.HasStarted)
+        {
+            return;
+        }
+
+        // Keep/re-apply the status for direct GETs and re-execute.
+        var status = Code is >= 400 and < 600 ? Code : StatusCodes.Status500InternalServerError;
+        http.Response.StatusCode = status;
+    }
+}

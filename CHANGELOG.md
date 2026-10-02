@@ -17,6 +17,9 @@
 
 - Carrière 03 (Web): step detail on `/carriere?stap={n}` (deep-linkable, back button works) with "Wat je nog mist" in claws, a fit band instead of a percentage, real courses (free first, at most one labelled Partnerlink) and "Voeg bewijs toe" into the paspoort Bewijzen tab. Completing a step is now a warm moment in the scene — the old shell falls, the lobster grows a gold new shell and moves up a stone — instead of a toast, announced politely with focus on the new heading, with "Toch nog niet klaar" right there. Werkgevers OFF hides every vacancy link, count and "Nieuw: … vacatures" line; never "0 jaar", never a clickable AI course name. Copy in nl/en/pl/ro/ar. Closes B6 (step), B7 (UI), B8, B9, B13 (step copy), B15.
 
+### Security / legal
+- Public-pages hotfix: `Legal:*` config + `ILegalIdentity` + `GET api/site/legal` (no placeholders; mail footer via MailOptions); `/{kvk}` only verified KvK with public vacancies (city only, no ids/coords); `/partner/{code}` noindex + canonical; mailto `%0A` fix; real HTML `/status/{code}` 404 + vacancy 404 status.
+
 ### Security
 - Auth login redesign (03): `/login` static SSR on PublicLayout (`au-*` theme), honest status/pause cards, configured providers only, Werkgevers-aware "Bedrijf registreren", Account maken links, LoginHint cookie (no e-mail in URL), `AuthFeatures.PasswordResetAvailable=false` until 05.
 

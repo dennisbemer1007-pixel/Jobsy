@@ -1,17 +1,19 @@
 using Jobsy.Api.Models;
+using Jobsy.Core.Contracts;
+using Jobsy.Core.Features;
+using Jobsy.Core.Interfaces;
+using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
-using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
-using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 /// <summary>
 /// Anonymous employer/vestiging pages keyed by KVK (+ optional vestigingsnummer).
-/// Returns public identity only — no contact PII.
+/// Returns public identity only — city, no contact PII, no GUIDs/coordinates.
 /// </summary>
 [ApiController]
 [Route("api/public/companies")]
@@ -20,14 +22,15 @@ namespace Jobsy.Api.Controllers;
 [RequiresFeature(PlatformFeature.Employers)]
 public sealed class PublicCompaniesController : ControllerBase
 {
-    private readonly JobsyDbContext _db;
+    private readonly IPublicCompanyQuery _query;
+    private readonly IVacancyDiscoveryIndex _discovery;
 
-    public PublicCompaniesController(JobsyDbContext db)
+    public PublicCompaniesController(IPublicCompanyQuery query, IVacancyDiscoveryIndex discovery)
     {
-        _db = db;
+        _query = query;
+        _discovery = discovery;
     }
 
-    /// <summary>All registered vestigingen under a KVK (ondernemer-pagina).</summary>
     [HttpGet("{kvkNumber}")]
     public async Task<ActionResult<PublicCompanyPageDto>> GetByKvk(
         string kvkNumber,
@@ -36,32 +39,26 @@ public sealed class PublicCompaniesController : ControllerBase
         var kvk = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
         if (kvk is null)
         {
-            return BadRequest(new { message = "Ongeldig KVK-nummer." });
+            return BadRequest(new { code = "not_found" });
         }
 
-        var companies = await QueryPublicRows(_db, kvk)
-            .ToListAsync(cancellationToken);
-
-        // Organisation page requires a verified organisation shell (ParentCompanyId null).
-        // A verified vestiging under an unverified org must not surface the KvK-wide page.
+        var companies = await _query.GetByKvkAsync(kvk, cancellationToken);
         if (companies.Count == 0 || companies.All(c => c.ParentCompanyId is not null))
         {
-            return NotFound(new { message = "Ondernemer niet gevonden." });
+            return NotFound(new { code = "not_found" });
         }
 
         var branches = companies
+            .Where(c => c.PublicVacancyCount > 0)
             .Select(c =>
             {
                 var vestiging = CompanyPublicPaths.TryParseVestigingsnummer(c.KvkEstablishmentId, kvk);
                 return new PublicCompanyBranchDto(
-                    c.Id,
                     c.Name,
-                    c.Address,
-                    c.LogoUrl,
-                    c.Latitude,
-                    c.Longitude,
+                    c.City,
                     vestiging,
-                    CompanyPublicPaths.TryBuildPath(kvk, c.KvkEstablishmentId));
+                    CompanyPublicPaths.TryBuildPath(kvk, c.KvkEstablishmentId),
+                    c.PublicVacancyCount);
             })
             .ToList();
 
@@ -70,20 +67,15 @@ public sealed class PublicCompaniesController : ControllerBase
             .ThenBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)
             .First();
 
-        var displayName = StripBranchSuffix(primary.Name);
         return Ok(new PublicCompanyPageDto(
             kvk,
             Vestigingsnummer: null,
-            displayName,
-            primary.Address,
+            StripBranchSuffix(primary.Name),
+            primary.City,
             primary.LogoUrl,
-            primary.Latitude,
-            primary.Longitude,
-            companies.Select(c => c.Id).ToList(),
             branches));
     }
 
-    /// <summary>Single vestiging page.</summary>
     [HttpGet("{kvkNumber}/{vestigingsnummer}")]
     public async Task<ActionResult<PublicCompanyPageDto>> GetByVestiging(
         string kvkNumber,
@@ -91,37 +83,15 @@ public sealed class PublicCompaniesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var kvk = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
-        if (kvk is null)
+        if (kvk is null || !CompanyPublicPaths.IsValidVestigingRouteSegment(vestigingsnummer))
         {
-            return BadRequest(new { message = "Ongeldig KVK-nummer." });
+            return BadRequest(new { code = "not_found" });
         }
 
-        if (!CompanyPublicPaths.IsValidVestigingRouteSegment(vestigingsnummer))
-        {
-            return BadRequest(new { message = "Ongeldig vestigingsnummer." });
-        }
-
-        var establishmentId = CompanyPublicPaths.BuildEstablishmentId(kvk, vestigingsnummer.Trim());
-        var company = await QueryPublicRows(_db, kvk)
-            .FirstOrDefaultAsync(
-                c => c.KvkEstablishmentId == establishmentId
-                     || c.KvkEstablishmentId == vestigingsnummer.Trim(),
-                cancellationToken);
-
+        var company = await _query.GetVestigingAsync(kvk, vestigingsnummer, cancellationToken);
         if (company is null)
         {
-            // Soft match: same KVK and establishment suffix ignoring formatting.
-            var all = await QueryPublicRows(_db, kvk).ToListAsync(cancellationToken);
-            company = all.FirstOrDefault(c =>
-                string.Equals(
-                    CompanyPublicPaths.TryParseVestigingsnummer(c.KvkEstablishmentId, kvk),
-                    vestigingsnummer.Trim(),
-                    StringComparison.Ordinal));
-        }
-
-        if (company is null)
-        {
-            return NotFound(new { message = "Vestiging niet gevonden." });
+            return NotFound(new { code = "not_found" });
         }
 
         var vestiging = CompanyPublicPaths.TryParseVestigingsnummer(company.KvkEstablishmentId, kvk)
@@ -131,27 +101,104 @@ public sealed class PublicCompaniesController : ControllerBase
             kvk,
             vestiging,
             company.Name,
-            company.Address,
+            company.City,
             company.LogoUrl,
-            company.Latitude,
-            company.Longitude,
-            [company.Id],
             Branches: null));
     }
 
-    private static IQueryable<CompanyPublicRow> QueryPublicRows(JobsyDbContext db, string kvk)
-        => db.Companies.AsNoTracking()
-            .Where(PublicVisibility.CompanyIsPublic)
-            .Where(c => c.KvkNumber == kvk)
-            .Select(c => new CompanyPublicRow(
-                c.Id,
-                c.Name,
-                c.Address,
-                c.LogoUrl,
-                c.KvkEstablishmentId,
-                c.ParentCompanyId,
-                c.Location == null ? 0 : c.Location.Latitude,
-                c.Location == null ? 0 : c.Location.Longitude));
+    [HttpGet("{kvkNumber}/vacancies")]
+    public async Task<ActionResult<IReadOnlyList<VacancyListItemDto>>> GetVacanciesByKvk(
+        string kvkNumber,
+        CancellationToken cancellationToken)
+    {
+        var kvk = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
+        if (kvk is null)
+        {
+            return BadRequest(new { code = "not_found" });
+        }
+
+        var companies = await _query.GetByKvkAsync(kvk, cancellationToken);
+        if (companies.Count == 0)
+        {
+            return NotFound(new { code = "not_found" });
+        }
+
+        var ids = companies.Select(c => c.Id).ToHashSet();
+        return Ok(await MapVacanciesAsync(kvk, ids, vestiging: null, cancellationToken));
+    }
+
+    [HttpGet("{kvkNumber}/{vestigingsnummer}/vacancies")]
+    public async Task<ActionResult<IReadOnlyList<VacancyListItemDto>>> GetVacanciesByVestiging(
+        string kvkNumber,
+        string vestigingsnummer,
+        CancellationToken cancellationToken)
+    {
+        var kvk = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
+        if (kvk is null || !CompanyPublicPaths.IsValidVestigingRouteSegment(vestigingsnummer))
+        {
+            return BadRequest(new { code = "not_found" });
+        }
+
+        var company = await _query.GetVestigingAsync(kvk, vestigingsnummer, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { code = "not_found" });
+        }
+
+        return Ok(await MapVacanciesAsync(
+            kvk,
+            new HashSet<Guid> { company.Id },
+            vestigingsnummer.Trim(),
+            cancellationToken));
+    }
+
+    private async Task<IReadOnlyList<VacancyListItemDto>> MapVacanciesAsync(
+        string kvk,
+        HashSet<Guid> companyIds,
+        string? vestiging,
+        CancellationToken cancellationToken)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var records = await _discovery.GetActiveAsync(cancellationToken);
+        var filtered = records
+            .Where(r => VacancyVisibilityRules.IsPubliclyVisible(r, today)
+                        && companyIds.Contains(r.CompanyId)
+                        && string.Equals(r.KvkNumber, kvk, StringComparison.Ordinal)
+                        && (vestiging is null
+                            || string.Equals(r.Vestigingsnummer, vestiging, StringComparison.Ordinal)))
+            .Take(100)
+            .Select(MapRecord)
+            .ToList();
+        return filtered;
+    }
+
+    private static VacancyListItemDto MapRecord(VacancyDiscoveryRecord r)
+    {
+        var workType = r.WorkTypeLabelList.FirstOrDefault();
+        return new VacancyListItemDto(
+            r.Id,
+            r.Title,
+            Description: null,
+            HourlyWage: null,
+            r.StartDate,
+            r.EndDate,
+            r.Status.ToString(),
+            r.CompanyId,
+            r.CompanyName,
+            r.CompanyAddress,
+            VacancyImageUrls.Normalize(r.CompanyLogoUrl),
+            VacancyImageUrls.ForCard(r.ImageUrl, r.CompanyLogoUrl, r.Id, workType),
+            r.Latitude,
+            r.Longitude,
+            r.RequiredTransportLabels,
+            WageVisible: false,
+            WorkTypes: r.WorkTypeLabelList,
+            KvkNumber: r.KvkNumber,
+            Vestigingsnummer: r.Vestigingsnummer,
+            IsHighlighted: VacancyHighlightRules.IsActive(r.IsHighlighted, r.HighlightedUntil, DateTime.UtcNow),
+            Kind: r.Kind.ToString(),
+            OfferedByLabel: r.OfferedByLabel);
+    }
 
     private static string StripBranchSuffix(string name)
     {
@@ -161,32 +208,16 @@ public sealed class PublicCompaniesController : ControllerBase
 }
 
 public sealed record PublicCompanyBranchDto(
-    Guid CompanyId,
     string Name,
-    string Address,
-    string? LogoUrl,
-    double Latitude,
-    double Longitude,
+    string? City,
     string? Vestigingsnummer,
-    string? PublicPath);
+    string? Path,
+    int VacancyCount);
 
 public sealed record PublicCompanyPageDto(
-    string KvkNumber,
+    string Kvk,
     string? Vestigingsnummer,
     string Name,
-    string Address,
+    string? City,
     string? LogoUrl,
-    double Latitude,
-    double Longitude,
-    IReadOnlyList<Guid> CompanyIds,
     IReadOnlyList<PublicCompanyBranchDto>? Branches = null);
-
-internal sealed record CompanyPublicRow(
-    Guid Id,
-    string Name,
-    string Address,
-    string? LogoUrl,
-    string? KvkEstablishmentId,
-    Guid? ParentCompanyId,
-    double Latitude,
-    double Longitude);
