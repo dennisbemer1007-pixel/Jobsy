@@ -3364,8 +3364,10 @@
 
     private Dictionary<string, object?> MapUiLabels() => new()
     {
-        ["vacanciesAtPlace"] = Culture["Map.VacanciesCount"],
-        ["vacanciesAtPlaceWithPlace"] = Culture["Map.VacanciesCountPlace"],
+        ["vacanciesAtPlace"] = Culture["Kb.Map.JobsAtPlace"],
+        ["vacancyAtPlace"] = Culture["Kb.Map.JobAtPlace"],
+        ["vacanciesAtPlaceWithPlace"] = Culture["Kb.Map.JobsAtPlaceWithPlace"],
+        ["vacancyAtPlaceWithPlace"] = Culture["Kb.Map.JobAtPlaceWithPlace"],
         ["vacanciesInView"] = Culture["Map.VacanciesInView"],
         ["prevVacancy"] = Culture["Map.PrevVacancy"],
         ["nextVacancy"] = Culture["Map.NextVacancy"],
@@ -3377,6 +3379,16 @@
         ["unavailableHint"] = Culture["Map.UnavailableHint"],
         ["retry"] = Culture["Common.Retry"],
         ["view"] = Culture["Common.Open"],
+        ["viewJob"] = Culture["Kb.Map.ViewJob"],
+        ["whyPrefix"] = Culture["Kb.Map.WhyPrefix"],
+        ["travelFromHome"] = Culture["Kb.Map.TravelFromHome"],
+        ["save"] = Culture["Kb.Map.Save"],
+        ["saved"] = Culture["Kb.Map.Saved"],
+        ["fitPercent"] = Culture["Kb.Map.FitPercent"],
+        ["fitGate"] = Culture["Kb.Fit.Gate"],
+        ["hoursSingle"] = Culture["Kb.Map.HoursSingle"],
+        ["hoursRange"] = Culture["Kb.Map.HoursRange"],
+        ["passportHref"] = Culture["Kb.Map.PassportHref"],
         ["pagerNav"] = Culture["Map.PagerNav"],
         ["noVacancies"] = Culture["Kb.Map.NoVacancies"],
         ["vacancyFallback"] = Culture["Kb.Map.VacancyFallback"],
@@ -3384,7 +3396,8 @@
         ["transportCar"] = Culture["Transport.Verb.Car"],
         ["transportTransit"] = Culture["Transport.Verb.Transit"],
         ["transportWalk"] = Culture["Transport.Verb.Walk"],
-        ["transportDefault"] = Culture["Transport.Verb.Default"]
+        ["transportDefault"] = Culture["Transport.Verb.Default"],
+        ["canSave"] = _isAuthenticated
     };
 
     private void OnTravelSliderInput(ChangeEventArgs e)

@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "10a456c9dfd90ebd1872ad983d16f1342575123921f603a598c7545f12f186e9",
-    "v": "20261002-kp03"
+    "sha256": "b00e78d66b038a3aaa24af61b8df1217337385a581d523e32731802b5f2a5b94",
+    "v": "20261002-kp04"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -20,8 +20,8 @@
     "v": "20260930-auth04b"
   },
   "css/features/banenkaart.css": {
-    "sha256": "060393cd4e868f54faab55f47ffbb6e00fbb1dcf939fa05ee84e10d29d7eeb9e",
-    "v": "20261002-kp01"
+    "sha256": "caa42b9fe039b27a83623ed386f30454fd49d4d4bfa446ad8d0f7a5f6c86d390",
+    "v": "20261002-kp04"
   },
   "css/features/carriere.css": {
     "sha256": "38a5169943c3e3c01c6ffa9aea4f38cf45b205b1da9ff89eae5cc3a465ffbe4f",
@@ -128,8 +128,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "cd11b34d64a74e57767f77199bead470e19120ac8cb6afb9321070991977b1bd",
-    "v": "20261002-kp01"
+    "sha256": "da71e52161eada4287fe3aefd5c5e5fab8dda8c2ae67799f202b0b87134f679a",
+    "v": "20261002-kp04"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -164,8 +164,8 @@
     "v": "20260930-landing-6"
   },
   "js/jobMap.min.js": {
-    "sha256": "3b564f65c9eb9e70d12f57e201bfff4dccb5db0294eee91e5b2f9a02b9d12a86",
-    "v": "20261002-kp01"
+    "sha256": "2b6d44a927e62c63c9320d288008c98dca6d52a918e0e8f064a43b75133e434f",
+    "v": "20261002-kp04"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "7398c432fd1e38c3840753ca918919adeed81ed19074c0fdcf75b33e1972b825",

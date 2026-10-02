@@ -4092,26 +4092,14 @@ html[dir="rtl"] .account-menu__panel {
     flex-direction: column;
 }
 
-/* Desktop cluster: fixed card size (v3). Content height lives under banenkaart.css. */
+/* Cluster sheet height/layout lives in banenkaart.css (auto sheet, calm card). */
 @media (min-width: 769px) {
-    .job-map-popup--cluster .map-popup__main,
-    .job-map-popup--cluster .map-popup__media,
-    .job-map-popup--cluster .map-popup__body {
-        height: 252px;
-        min-height: 252px;
-        max-height: 252px;
-    }
-
     .job-map-popup--cluster .map-cluster-card .map-popup__main,
     .job-map-popup--cluster .map-cluster-card .map-popup__media,
     .job-map-popup--cluster .map-cluster-card .map-popup__body {
-        height: 100%;
+        height: auto;
         min-height: 0;
         max-height: none;
-    }
-
-    .job-map-popup--cluster .map-popup__header {
-        overflow: hidden;
     }
 }
 
@@ -4161,13 +4149,18 @@ html[dir="rtl"] .account-menu__panel {
     display: flex;
     align-items: stretch;
     width: 100%;
-    min-height: 252px;
+    min-height: 0;
     height: auto;
     min-width: 0;
     background: var(--surface);
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
+}
+
+/* Legacy non-cluster floating popup only — calm sheet overrides in banenkaart.css */
+.job-map-popup:not(.job-map-popup--cluster) .map-popup:not(.map-popup--calm) .map-popup__main {
+    min-height: 252px;
 }
 
 .map-popup--skeleton .map-popup__shimmer,
@@ -4231,12 +4224,16 @@ html[dir="rtl"] .account-menu__panel {
     flex: 0 0 200px;
     width: 200px;
     align-self: stretch;
-    min-height: 252px;
+    min-height: 0;
     height: auto;
     background: linear-gradient(160deg, var(--accent-soft), color-mix(in srgb, var(--brand) 28%, white));
     text-decoration: none;
     color: inherit;
     overflow: hidden;
+}
+
+.job-map-popup:not(.job-map-popup--cluster) .map-popup:not(.map-popup--calm) .map-popup__media {
+    min-height: 252px;
 }
 
 .map-popup__media--logo-only {
@@ -4309,13 +4306,22 @@ html[dir="rtl"] .account-menu__panel {
     position: relative;
     flex: 1;
     min-width: 0;
-    min-height: 252px;
+    min-height: 0;
     height: auto;
     padding: 0.75rem 0.95rem 0.7rem;
     display: flex;
     flex-direction: column;
     gap: 0.28rem;
     overflow: hidden;
+}
+
+.job-map-popup:not(.job-map-popup--cluster) .map-popup:not(.map-popup--calm) .map-popup__body {
+    min-height: 252px;
+}
+
+.map-popup--calm .map-popup__body {
+    padding: 0;
+    overflow: visible;
 }
 
 /* Orange € control — parked next to MapLibre close via JS */

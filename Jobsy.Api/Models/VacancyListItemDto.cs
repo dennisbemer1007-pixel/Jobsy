@@ -181,6 +181,8 @@ public sealed record VacancyCardDto(
     string? FitGate = null,
     string? FitWhyLine = null,
     string? RankLowerReason = null,
+    decimal? MinHoursPerWeek = null,
+    decimal? MaxHoursPerWeek = null,
     /// <summary>Crow-flies km from the requested origin (closed-vacancy "similar" list fallback
     /// when the visitor has no geolocation origin yet). Null when an origin wasn't supplied.</summary>
     double? DistanceKm = null);

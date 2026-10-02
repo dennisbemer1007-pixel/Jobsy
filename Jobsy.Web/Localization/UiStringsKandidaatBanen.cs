@@ -481,6 +481,50 @@ public static class UiStringsKandidaatBanen
             "Vacature", "Vacancy",
             "Oferta", "Ofertă", "وظيفة");
 
+        // Calm vacancy sheet / popup (kandidaat-polish 04)
+        Add("Kb.Map.JobsAtPlace",
+            "{count} banen", "{count} jobs",
+            "{count} ofert", "{count} joburi", "{count} وظائف");
+        Add("Kb.Map.JobAtPlace",
+            "1 baan", "1 job",
+            "1 oferta", "1 job", "وظيفة واحدة");
+        Add("Kb.Map.JobsAtPlaceWithPlace",
+            "{count} banen in {place}", "{count} jobs in {place}",
+            "{count} ofert w {place}", "{count} joburi în {place}", "{count} وظائف في {place}");
+        Add("Kb.Map.JobAtPlaceWithPlace",
+            "1 baan in {place}", "1 job in {place}",
+            "1 oferta w {place}", "1 job în {place}", "وظيفة واحدة في {place}");
+        Add("Kb.Map.TravelFromHome",
+            "{minutes} min {mode} van huis",
+            "{minutes} min {mode} from home",
+            "{minutes} min {mode} od domu",
+            "{minutes} min {mode} de acasă",
+            "{minutes} د {mode} من المنزل");
+        Add("Kb.Map.WhyPrefix",
+            "Waarom:", "Why:",
+            "Dlaczego:", "De ce:", "لماذا:");
+        Add("Kb.Map.ViewJob",
+            "Bekijk deze baan", "View this job",
+            "Zobacz tę ofertę", "Vezi acest job", "عرض هذه الوظيفة");
+        Add("Kb.Map.Save",
+            "Bewaar", "Save",
+            "Zapisz", "Salvează", "احفظ");
+        Add("Kb.Map.Saved",
+            "Bewaard", "Saved",
+            "Zapisano", "Salvat", "محفوظ");
+        Add("Kb.Map.FitPercent",
+            "{percent}% past bij jou", "{percent}% fit for you",
+            "{percent}% pasuje do ciebie", "{percent}% ți se potrivește", "{percent}% تناسبك");
+        Add("Kb.Map.HoursSingle",
+            "{hours} uur", "{hours} hrs",
+            "{hours} godz.", "{hours} ore", "{hours} ساعة");
+        Add("Kb.Map.HoursRange",
+            "{min}–{max} uur", "{min}–{max} hrs",
+            "{min}–{max} godz.", "{min}–{max} ore", "{min}–{max} ساعة");
+        Add("Kb.Map.PassportHref",
+            "/profiel", "/profiel",
+            "/profiel", "/profiel", "/profiel");
+
         // Banenkaart start / location prompt (03)
         Add("Kb.Start.Title",
             "Waar woon je?", "Where do you live?",
