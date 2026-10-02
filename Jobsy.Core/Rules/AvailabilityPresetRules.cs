@@ -103,9 +103,9 @@ public static class AvailabilityPresetRules
             }
 
             var code = raw.Trim();
-            if (Definitions.ContainsKey(code))
+            if (Definitions.TryGetValue(code, out var value))
             {
-                selected.Add(Definitions[code].Code);
+                selected.Add(value.Code);
             }
         }
 

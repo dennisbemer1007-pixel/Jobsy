@@ -92,7 +92,7 @@ public class PlatformSettingsCatalogTests
     [Fact]
     public void Dashboard_rows_use_show_on_dashboard_entries()
     {
-        var snap = new PlatformFeatureSnapshot(true, true, false, "http://localhost:5201", DateTime.UtcNow);
+        var snap = new PlatformFeatureSnapshot(true, true, "http://localhost:5201", DateTime.UtcNow);
         var rows = PlatformSettingsCatalog.DashboardRows(snap);
         Assert.Contains(rows, r => r.Key == "VacancyContentModerationEnabled" && r.IsOn);
         Assert.Contains(rows, r => r.Key == "MfaPolicy" && r.IsPolicyReadonly);
@@ -127,53 +127,11 @@ public class PlatformSettingsCatalogTests
 public class PlatformFeaturesEnvLockApiTests
 {
     [Fact]
-    public async Task Activation_links_setting_removed_always_false()
+    public void Activation_links_setting_removed_from_catalog()
     {
-        await using var dbAcc = CreateDb();
-        var acc = CreateController(dbAcc);
-        var allow = await acc.UpdatePlatformFeatures(
-            new UpdatePlatformFeatureRequest(ExposeRegistrationActivationLinks: true),
-            CancellationToken.None);
-        var ok = Assert.IsType<OkObjectResult>(allow.Result);
-        var dto = Assert.IsType<PlatformFeatureDto>(ok.Value);
-        Assert.False(dto.ExposeRegistrationActivationLinks);
-
         Assert.DoesNotContain(
             PlatformSettingsCatalog.Entries,
             d => string.Equals(d.Key, "ExposeRegistrationActivationLinks", StringComparison.Ordinal));
-    }
-
-    private static Jobsy.Api.Controllers.SettingsController CreateController(JobsyDbContext db)
-    {
-        var features = new PlatformFeatureService(
-            db,
-            Options.Create(new JobsyFeatureOptions()),
-            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["PublicWebBaseUrl"] = "http://localhost:5201"
-            }).Build());
-        return new Jobsy.Api.Controllers.SettingsController(
-            db,
-            new IntegrationCredentialService(db, new PassthroughSecretProtector()),
-            features,
-            new PlatformCompanySettingsService(db),
-            new MarketingFlyerSettingsService(db),
-            new MarketingFlyerPdfService(
-                new MarketingFlyerSettingsService(db),
-                new PlatformCompanySettingsService(db),
-                features),
-            new FlexCommercialService(db),
-            new NoOpAdminAuditLog(),
-            new NoOpAdminAuditContext(),
-            new FakeUserLookup());
-    }
-
-    private static JobsyDbContext CreateDb()
-    {
-        var options = new DbContextOptionsBuilder<JobsyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new JobsyDbContext(options);
     }
 }
 
@@ -267,7 +225,6 @@ public class PlatformSettingsEditorBunitTests : TestContext
         {
             Features = new PlatformFeatureItem
             {
-                ExposeRegistrationActivationLinks = false,
                 PublicWebBaseUrl = "http://localhost:5201"
             }
         };

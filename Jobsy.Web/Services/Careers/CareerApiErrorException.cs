@@ -4,9 +4,9 @@ using System.Text.Json;
 namespace Jobsy.Web.Services.Careers;
 
 /// <summary>Expected career API failure with a stable <see cref="Code"/> (B12).</summary>
-public sealed class CareerApiError : Exception
+public sealed class CareerApiErrorException : Exception
 {
-    public CareerApiError(string code, HttpStatusCode? statusCode = null)
+    public CareerApiErrorException(string code, HttpStatusCode? statusCode = null)
         : base(code)
     {
         Code = code;
@@ -17,25 +17,25 @@ public sealed class CareerApiError : Exception
 
     public HttpStatusCode? StatusCode { get; }
 
-    public static CareerApiError? TryParse(HttpStatusCode statusCode, string? body)
+    public static CareerApiErrorException? TryParse(HttpStatusCode statusCode, string? body)
     {
         var code = ExtractCode(body);
         if (string.IsNullOrWhiteSpace(code))
         {
             if (statusCode == HttpStatusCode.Gone)
             {
-                return new CareerApiError("use_passport_proof", statusCode);
+                return new CareerApiErrorException("use_passport_proof", statusCode);
             }
 
             return null;
         }
 
-        return new CareerApiError(code, statusCode);
+        return new CareerApiErrorException(code, statusCode);
     }
 
-    public static CareerApiError FromResponse(HttpStatusCode statusCode, string? body)
+    public static CareerApiErrorException FromResponse(HttpStatusCode statusCode, string? body)
         => TryParse(statusCode, body)
-           ?? new CareerApiError("error", statusCode);
+           ?? new CareerApiErrorException("error", statusCode);
 
     /// <summary>Maps API snake_case codes to <c>CareerErr.*</c> localization keys.</summary>
     public static string LocalizationKey(string code)

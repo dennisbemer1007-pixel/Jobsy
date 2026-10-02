@@ -13,7 +13,7 @@ namespace Jobsy.Web.Services;
 /// <see cref="UserFacingError"/> instead.
 /// </para>
 /// </summary>
-public sealed class ApiError : Exception
+public sealed class ApiErrorException : Exception
 {
     public const string RateLimited = "rate_limited";
     public const string NotFound = "not_found";
@@ -22,7 +22,7 @@ public sealed class ApiError : Exception
     public const string Maintenance = "maintenance";
     public const string Unknown = "unknown";
 
-    public ApiError(
+    public ApiErrorException(
         string code,
         int? statusCode = null,
         string? supportCode = null,
@@ -52,11 +52,11 @@ public sealed class ApiError : Exception
     /// </summary>
     public string? UserMessage { get; }
 
-    public static ApiError TooManyRequests(int retryAfterSeconds, string? supportCode = null)
+    public static ApiErrorException TooManyRequests(int retryAfterSeconds, string? supportCode = null)
         => new(RateLimited, 429, supportCode, retryAfterSeconds);
 
     /// <summary>Reads the ProblemDetails body of a failed response; never throws.</summary>
-    public static async Task<ApiError> FromResponseAsync(
+    public static async Task<ApiErrorException> FromResponseAsync(
         HttpResponseMessage response,
         CancellationToken ct = default)
     {
@@ -98,7 +98,7 @@ public sealed class ApiError : Exception
             // Not ProblemDetails (an HTML error page, an empty body): fall back on the status.
         }
 
-        return new ApiError(
+        return new ApiErrorException(
             code ?? CodeForStatus(status),
             status,
             supportCode,

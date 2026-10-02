@@ -148,8 +148,8 @@ public sealed class PendingTokenActionService : IPendingTokenActionService
                         action.OptionPushBom,
                         action.OptionExtend),
                     action.ActorUserId,
-                    cancellationToken,
-                    allowPendingApproval: false),
+                    allowPendingApproval: false,
+                    cancellationToken),
                 PendingTokenActionKind.Highlight => await _products.HighlightAsync(
                     vacancy, action.ActorUserId, cancellationToken),
                 PendingTokenActionKind.PushBom => await _products.PushBomAsync(

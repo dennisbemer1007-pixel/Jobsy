@@ -17,8 +17,8 @@ public class DreamJobCatalogTests
     [Fact]
     public void Search_prioritizes_prefix_and_ignores_case_and_diacritics()
     {
-        Assert.Equal("dierenarts", DreamJobCatalog.Search("DIER").First().Key);
-        Assert.Equal("dierenarts", DreamJobCatalog.Search("díér").First().Key);
+        Assert.Equal("dierenarts", DreamJobCatalog.Search("DIER")[0].Key);
+        Assert.Equal("dierenarts", DreamJobCatalog.Search("díér")[0].Key);
         Assert.Contains(DreamJobCatalog.Search("dier"), item => item.Key == "dierenverzorger");
     }
 }

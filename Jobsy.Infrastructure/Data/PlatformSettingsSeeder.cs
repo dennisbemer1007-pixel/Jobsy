@@ -274,7 +274,6 @@ internal static class PlatformSettingsSeeder
                 Id = FlexCommercialService.SettingsSingletonId,
                 MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
                 BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
-                DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
                 DeepTestPriceCompetenceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
                 DeepTestPriceCareerEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
                 DeepTestPriceValuesEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,

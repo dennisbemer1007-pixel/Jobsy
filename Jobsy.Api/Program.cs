@@ -50,7 +50,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // and break Secure cookies. Client IP is still overridden from CF-Connecting-IP only
     // after CloudflareOriginMiddleware validates the origin secret.
     options.ForwardLimit = 2;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 

@@ -197,8 +197,7 @@ public class EmployerRaamflyerServiceTests
     private sealed class FakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                false, false, false, "https://lobsy.nl", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.nl", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

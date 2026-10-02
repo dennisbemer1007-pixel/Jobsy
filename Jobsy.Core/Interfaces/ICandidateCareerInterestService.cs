@@ -7,8 +7,8 @@ public interface ICandidateCareerInterestService
 {
     Task<CandidateCareerInterestStateDto> GetAsync(
         Guid userId,
-        CancellationToken cancellationToken = default,
-        bool includeMatches = true);
+        bool includeMatches = true,
+        CancellationToken cancellationToken = default);
 
     Task<CandidateCareerInterestStateDto> SaveAsync(
         Guid userId,

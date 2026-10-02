@@ -75,7 +75,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             .FirstOrDefaultAsync(cancellationToken);
 
         var competencies = await _competencies.GetAsync(userId, cancellationToken);
-        var careerState = await _career.GetAsync(userId, cancellationToken, includeMatches: false);
+        var careerState = await _career.GetAsync(userId, includeMatches: false, cancellationToken);
         var culture = await _culture.GetAsync(userId, cancellationToken);
         var values = await _values.GetAsync(userId, cancellationToken);
         var (matches, matchStatus) = await _matches.GetAsync(userId, cancellationToken);

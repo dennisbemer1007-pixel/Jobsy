@@ -632,7 +632,7 @@
     }
 
     private string FailureMessage(Exception ex)
-        => ex is CareerApiError api
+        => ex is CareerApiErrorException api
             ? CareerPathService.ErrorMessage(key => Culture[key], api)
             : Culture["Common.Error"];
 }

@@ -725,7 +725,7 @@ public sealed class CompanyVerificationFlowService : ICompanyVerificationFlowSer
 
     private static string MaskAddress(LetterAddress address)
     {
-        var street = address.AddressLines.LastOrDefault() ?? "";
+        var street = address.AddressLines.Count > 0 ? address.AddressLines[^1] : "";
         var streetMasked = street.Length <= 3
             ? street
             : street[..Math.Min(3, street.Length)] + "…";

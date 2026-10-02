@@ -432,8 +432,7 @@ public class SalesPayoutProfileServiceTests
     private sealed class StubFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                false, true, false, "https://lobsy.test", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, true, "https://lobsy.test", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

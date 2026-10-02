@@ -97,7 +97,7 @@ public class EmailTestSendLimitsTests
     private sealed class FakeFeatures(bool ambassadors) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, ambassadors, false, "https://lobsy.nl", DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, ambassadors, "https://lobsy.nl", DateTime.UtcNow));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

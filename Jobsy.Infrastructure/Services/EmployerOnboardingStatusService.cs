@@ -157,7 +157,7 @@ public sealed class EmployerOnboardingStatusService : IEmployerOnboardingStatusS
             .Where(uc => treeIds.Contains(uc.CompanyId) && uc.UserId != userId)
             .Select(uc => uc.UserId)
             .Distinct()
-            .CountAsync(cancellationToken) > 0
+            .AnyAsync(cancellationToken)
             || await _db.Users.AsNoTracking()
                 .AnyAsync(
                     u => u.CompanyId != null

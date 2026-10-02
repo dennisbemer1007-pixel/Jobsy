@@ -50,8 +50,8 @@ public sealed class TranslationServiceStub : ITranslationService
         string description,
         string sourceLanguage,
         string targetLanguage,
-        CancellationToken cancellationToken = default,
-        Guid? vacancyId = null)
+        Guid? vacancyId = null,
+        CancellationToken cancellationToken = default)
     {
         var source = JobsyLanguages.Normalize(sourceLanguage);
         var target = JobsyLanguages.Normalize(targetLanguage);
@@ -87,8 +87,8 @@ public sealed class TranslationServiceStub : ITranslationService
                 item.Description,
                 sourceLanguage,
                 targetLanguage,
-                cancellationToken,
-                item.VacancyId));
+                item.VacancyId,
+                cancellationToken));
         }
 
         return list;

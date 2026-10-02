@@ -83,7 +83,7 @@ public sealed class AdminSchoolsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
-        var sy = schoolYearStart ?? years.FirstOrDefault();
+        var sy = schoolYearStart ?? (years.Count > 0 ? years[0] : 0);
         if (sy == 0)
         {
             sy = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));
@@ -108,7 +108,7 @@ public sealed class AdminSchoolsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
-        var sy = schoolYearStart ?? years.FirstOrDefault();
+        var sy = schoolYearStart ?? (years.Count > 0 ? years[0] : 0);
         if (sy == 0)
         {
             sy = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));
@@ -169,7 +169,7 @@ public sealed class AdminSchoolsController : ControllerBase
     {
         var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
         var sy = schoolYearStart
-                 ?? years.FirstOrDefault();
+                 ?? (years.Count > 0 ? years[0] : 0);
         if (sy == 0)
         {
             sy = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));

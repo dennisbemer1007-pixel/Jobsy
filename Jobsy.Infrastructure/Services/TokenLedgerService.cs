@@ -385,7 +385,7 @@ public sealed class TokenLedgerService : ITokenLedgerService
         return new TokenSpendOutcome(
             multi.Succeeded,
             multi.ErrorMessage,
-            multi.Transactions.FirstOrDefault(),
+            multi.Transactions.Count > 0 ? multi.Transactions[0] : null,
             multi.Balance);
     }
 

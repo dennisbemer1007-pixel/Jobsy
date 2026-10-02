@@ -365,7 +365,7 @@ public class SalesManagerCommissionTests
         // Welcome token is granted on verification (03), not activation.
         var features = new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            Options.Create(new JobsyFeatureOptions()),
             new ConfigurationBuilder().Build());
         var ledger = new TokenLedgerService(db);
         var verification = new CompanyVerificationService(
@@ -639,7 +639,7 @@ public class SalesManagerCommissionTests
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            Options.Create(new JobsyFeatureOptions()),
             config);
 
         if (!db.PlatformFeatureSettings.Any())
@@ -647,7 +647,6 @@ public class SalesManagerCommissionTests
             db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
             {
                 Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-                ExposeRegistrationActivationLinks = true,
                 FreePublishUntil = null,
                 UpdatedAtUtc = DateTime.UtcNow
             });
@@ -835,8 +834,7 @@ public class SalesManagerCommissionTests
     private sealed class FakePublicWebFeatures(string publicWebBaseUrl) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                false, false, false, publicWebBaseUrl, DateTime.UtcNow, 120));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, publicWebBaseUrl, DateTime.UtcNow, 120));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

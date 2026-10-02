@@ -8,10 +8,7 @@ public static class SalesQr
     public static byte[] Png(string url, int pixelsPerModule = 8)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
-        if (pixelsPerModule < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(pixelsPerModule));
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(pixelsPerModule, 1);
 
         using var generator = new QRCodeGenerator();
         using var data = generator.CreateQrCode(url.Trim(), QRCodeGenerator.ECCLevel.Q);
@@ -23,10 +20,7 @@ public static class SalesQr
     public static byte[] PngForSize(string url, int targetPixels = 1024)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
-        if (targetPixels < 32)
-        {
-            throw new ArgumentOutOfRangeException(nameof(targetPixels));
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(targetPixels, 32);
 
         using var generator = new QRCodeGenerator();
         using var data = generator.CreateQrCode(url.Trim(), QRCodeGenerator.ECCLevel.Q);

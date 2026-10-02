@@ -52,7 +52,6 @@ public class FeatureFlagFoundationTests
         var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: true,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             EmployersEnabled: false,
             CandidatePassportEnabled: true));

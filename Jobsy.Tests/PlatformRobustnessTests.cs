@@ -28,10 +28,7 @@ public class PlatformRobustnessTests
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions
-            {
-                ExposeRegistrationActivationLinks = true
-            }),
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
             config);
 
         var sut = new CompanyRegistrationService(

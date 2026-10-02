@@ -130,7 +130,7 @@ public static class WmlSalaryTableService
             db.ChangeTracker.Clear();
         }
 
-        await FillEmptySalaryTablesAsync(db, cancellationToken);
+        await FillEmptySalaryTablesAsync(db, cancellationToken: cancellationToken);
         await AssignMissingVacancySalaryTablesAsync(db, cancellationToken);
     }
 
@@ -200,8 +200,8 @@ public static class WmlSalaryTableService
     /// </summary>
     public static async Task FillEmptySalaryTablesAsync(
         JobsyDbContext db,
-        CancellationToken cancellationToken = default,
-        Guid? organizationId = null)
+        Guid? organizationId = null,
+        CancellationToken cancellationToken = default)
     {
         var rates = await LoadCurrentWmlRatesAsync(db, cancellationToken);
         if (rates.Count == 0)

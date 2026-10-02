@@ -42,9 +42,9 @@ public sealed class CareerPathService
         => CareerPlanViewBuilder.FromApi(plan, GetDreamSuggestions());
 
     /// <summary>Maps API error codes to localized user messages (never raw API text).</summary>
-    public static string ErrorMessage(Func<string, string> localize, CareerApiError error)
+    public static string ErrorMessage(Func<string, string> localize, CareerApiErrorException error)
     {
-        var key = CareerApiError.LocalizationKey(error.Code);
+        var key = CareerApiErrorException.LocalizationKey(error.Code);
         var text = localize(key);
         if (string.IsNullOrWhiteSpace(text) || string.Equals(text, key, StringComparison.Ordinal))
         {

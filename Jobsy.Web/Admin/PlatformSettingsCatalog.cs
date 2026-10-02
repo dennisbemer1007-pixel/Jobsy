@@ -371,7 +371,6 @@ public static class PlatformSettingsCatalog
     {
         bool? moderation = null;
         bool? authenticator = null;
-        bool? expose = null;
         string? publicUrl = null;
         int? inactive = null;
         int? timeout = null;
@@ -394,7 +393,6 @@ public static class PlatformSettingsCatalog
         {
             if (p.VacancyContentModerationEnabled is not null) moderation = p.VacancyContentModerationEnabled;
             if (p.AuthenticatorEnabled is not null) authenticator = p.AuthenticatorEnabled;
-            if (p.ExposeRegistrationActivationLinks is not null) expose = p.ExposeRegistrationActivationLinks;
             if (p.PublicWebBaseUrl is not null) publicUrl = p.PublicWebBaseUrl;
             if (p.InactiveCompanyDays is not null) inactive = p.InactiveCompanyDays;
             if (p.SessionInactivityTimeoutMinutes is not null) timeout = p.SessionInactivityTimeoutMinutes;
@@ -426,7 +424,6 @@ public static class PlatformSettingsCatalog
         return new PlatformFeatureUpdate(
             moderation,
             authenticator,
-            expose,
             publicUrl,
             inactive,
             timeout,

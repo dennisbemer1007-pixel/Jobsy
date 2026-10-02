@@ -33,7 +33,7 @@ public sealed class CandidateCareerInterestsController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
-        return Ok(await _career.GetAsync(user.Id, cancellationToken));
+        return Ok(await _career.GetAsync(user.Id, cancellationToken: cancellationToken));
     }
 
     [HttpPut("career-interests")]

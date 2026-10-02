@@ -185,7 +185,7 @@ public class SalesCommercialServiceTests
     private sealed class FlyerFakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(false, false, false, "https://lobsy.nl", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.nl", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

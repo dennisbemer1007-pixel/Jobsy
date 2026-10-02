@@ -8,8 +8,8 @@ public interface IVacancyProductService
         Vacancy vacancy,
         VacancyPublishOptions options,
         Guid? actorUserId,
-        CancellationToken cancellationToken = default,
-        bool allowPendingApproval = true);
+        bool allowPendingApproval = true,
+        CancellationToken cancellationToken = default);
 
     Task<VacancyProductOutcome> ApprovePublishAsync(
         Vacancy vacancy,

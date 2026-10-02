@@ -50,9 +50,12 @@ public static class EntraOidcOptionsApplier
     /// </summary>
     public static string ValidateMicrosoftIssuer(
         string issuer,
-        SecurityToken _,
-        TokenValidationParameters __)
+        SecurityToken securityToken,
+        TokenValidationParameters validationParameters)
     {
+        _ = securityToken;
+        _ = validationParameters;
+
         if (string.IsNullOrWhiteSpace(issuer))
         {
             throw new SecurityTokenInvalidIssuerException("Issuer ontbreekt op het Microsoft-token.");

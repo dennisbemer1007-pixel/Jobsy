@@ -133,10 +133,10 @@ public class LegalDocumentRenderTests : TestContext
         UseLanguage("ar");
         var cut = RenderPrivacy();
 
-        var label = cut.FindAll(".pp-short__label").First().TextContent.Trim();
+        var label = cut.FindAll(".pp-short__label")[0].TextContent.Trim();
         Assert.Equal(UiStrings.Get("Legal.InShort", "ar"), label);
 
-        var summary = cut.FindAll(".pp-short__text").First().TextContent.Trim();
+        var summary = cut.FindAll(".pp-short__text")[0].TextContent.Trim();
         Assert.Equal(UiStrings.Get("Privacy.Sec.wie.Summary", "ar"), summary);
         Assert.NotEqual(UiStrings.Get("Privacy.Sec.wie.Summary", "nl"), summary);
     }
@@ -148,7 +148,7 @@ public class LegalDocumentRenderTests : TestContext
         var cut = RenderPrivacy();
 
         Assert.Single(cut.FindAll(".pp-doc__note"));
-        var body = cut.FindAll(".pp-sec__body").First();
+        var body = cut.FindAll(".pp-sec__body")[0];
         Assert.Equal("nl", body.GetAttribute("lang"));
         Assert.Equal("ltr", body.GetAttribute("dir"));
         Assert.NotEmpty(cut.FindAll(".pp-sec__dutch-label"));

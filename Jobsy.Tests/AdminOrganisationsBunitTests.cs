@@ -72,7 +72,7 @@ public class AdminOrganisationsBunitTests : TestContext
         Assert.Equal("true", cut.Find("button.admin-org-caret").GetAttribute("aria-expanded"));
         Assert.Contains("Child Branch", cut.Markup, StringComparison.Ordinal);
 
-        cut.FindAll("button.admin-segment__btn").Last().Click();
+        cut.FindAll("button.admin-segment__btn")[^1].Click();
         Assert.Contains("Child Branch", cut.Markup, StringComparison.Ordinal);
         Assert.Empty(cut.FindAll("button.admin-org-caret"));
     }

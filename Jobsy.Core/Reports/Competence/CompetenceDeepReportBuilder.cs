@@ -124,7 +124,7 @@ public static class CompetenceDeepReportBuilder
         foreach (var trait in topTraits)
         {
             var candidates = CompetenceDeepReportTexts.OccupationsFor(trait.Domain);
-            var pick = candidates.FirstOrDefault();
+            var pick = candidates.Count > 0 ? candidates[0] : default;
             if (pick.Title is null)
             {
                 continue;

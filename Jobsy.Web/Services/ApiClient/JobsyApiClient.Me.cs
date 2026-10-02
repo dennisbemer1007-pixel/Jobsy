@@ -189,7 +189,7 @@ public sealed partial class JobsyApiClient
                     var value = await FetchOnboardingAsync(token);
                     return MeGetResult<OnboardingState>.Ok(value);
                 },
-                ct);
+                ct: ct);
             return cached.Value;
         }
 
@@ -344,7 +344,7 @@ public sealed partial class JobsyApiClient
         {
             // errors 04 §04.5: a typed error (code + supportCode + retryAfterSeconds) instead of
             // the raw body, which used to end up on screen through ex.Message.
-            throw await ApiError.FromResponseAsync(response, ct);
+            throw await ApiErrorException.FromResponseAsync(response, ct);
         }
 
         return await response.Content.ReadAsStringAsync(ct);

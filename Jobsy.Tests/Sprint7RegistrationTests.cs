@@ -18,7 +18,7 @@ public class Sprint7RegistrationTests
     public async Task Submit_and_activate_branch_only_creates_enterprise_manager_on_vestiging()
     {
         await using var db = CreateDb();
-        var sut = CreateService(db, exposeActivationLinks: true);
+        var sut = CreateService(db);
 
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001",
@@ -115,7 +115,7 @@ public class Sprint7RegistrationTests
     public async Task Submit_hides_activation_url_when_flag_off_even_if_mail_stubbed()
     {
         await using var db = CreateDb();
-        var sut = CreateService(db, exposeActivationLinks: false);
+        var sut = CreateService(db);
 
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001", "99990001_0001", RegistrationScope.Organization,
@@ -787,17 +787,13 @@ public class Sprint7RegistrationTests
 
     private static CompanyRegistrationService CreateService(
         JobsyDbContext db,
-        bool exposeActivationLinks = true,
         ITransactionalMailer? email = null)
     {
-        EnsurePaidPublishPeriod(db, exposeActivationLinks);
+        EnsurePaidPublishPeriod(db);
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions
-            {
-                ExposeRegistrationActivationLinks = exposeActivationLinks
-            }),
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
             config);
 
         return new CompanyRegistrationService(
@@ -809,7 +805,7 @@ public class Sprint7RegistrationTests
             NullLogger<CompanyRegistrationService>.Instance);
     }
 
-    private static void EnsurePaidPublishPeriod(JobsyDbContext db, bool exposeActivationLinks = true)
+    private static void EnsurePaidPublishPeriod(JobsyDbContext db)
     {
         var row = db.PlatformFeatureSettings.Local.FirstOrDefault()
                   ?? db.PlatformFeatureSettings.FirstOrDefault();
@@ -818,7 +814,6 @@ public class Sprint7RegistrationTests
             db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
             {
                 Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-                ExposeRegistrationActivationLinks = exposeActivationLinks,
                 FreePublishUntil = null,
                 UpdatedAtUtc = DateTime.UtcNow
             });
@@ -826,7 +821,6 @@ public class Sprint7RegistrationTests
         else
         {
             row.FreePublishUntil = null;
-            row.ExposeRegistrationActivationLinks = exposeActivationLinks;
         }
 
         db.SaveChanges();

@@ -161,7 +161,6 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
         var update = await admin.PutAsJsonAsync("api/settings/platform-features", new UpdatePlatformFeatureRequest(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 5));
@@ -176,7 +175,6 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
         var restore = await admin.PutAsJsonAsync("api/settings/platform-features", new UpdatePlatformFeatureRequest(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 30));

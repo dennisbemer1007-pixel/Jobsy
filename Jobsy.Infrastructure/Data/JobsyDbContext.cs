@@ -1070,7 +1070,6 @@ public class JobsyDbContext : DbContext
             entity.ToTable("FlexCommercialSettings");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.MarginPerHourEuro).HasPrecision(10, 2);
-            entity.Property(e => e.DeepAnalysisPriceEuro).HasPrecision(10, 2);
             entity.Property(e => e.DeepTestPriceCompetenceEuro).HasPrecision(10, 2);
             entity.Property(e => e.DeepTestPriceCareerEuro).HasPrecision(10, 2);
             entity.Property(e => e.DeepTestPriceValuesEuro).HasPrecision(10, 2);

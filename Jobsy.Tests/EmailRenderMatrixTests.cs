@@ -229,8 +229,7 @@ public class EmailRenderMatrixTests
     private sealed class Features : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                true, true, false, "https://lobsy.nl", DateTime.UtcNow,
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, "https://lobsy.nl", DateTime.UtcNow,
                 AmbassadorsEnabled: true));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)

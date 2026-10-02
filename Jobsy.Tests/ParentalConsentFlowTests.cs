@@ -106,7 +106,7 @@ public class ParentalConsentFlowTests
     private sealed class StubFeatures(string baseUrl) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, true, false, baseUrl, null));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, baseUrl, null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();

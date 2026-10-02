@@ -234,8 +234,8 @@ public sealed class MfaController : ControllerBase
             var device = await _deviceSessions.CreateAsync(
                 user.Id,
                 Request.Headers.UserAgent.ToString(),
-                cancellationToken,
-                mfaVerified: true);
+                mfaVerified: true,
+                cancellationToken: cancellationToken);
             deviceSessionId = device.DeviceSessionId;
             deviceRefresh = device.RefreshToken;
             deviceExpires = device.ExpiresAtUtc;

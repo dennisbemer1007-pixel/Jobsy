@@ -57,7 +57,7 @@ public class SalaryTablesController : ControllerBase
 
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branchId, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
-            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, organizationId);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, organizationId, cancellationToken);
 
             var forBranch = await _db.CompanySalaryTables
                 .AsNoTracking()
@@ -111,7 +111,7 @@ public class SalaryTablesController : ControllerBase
         foreach (var organizationId in organizationIds)
         {
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, organizationId, cancellationToken);
-            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, organizationId);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, organizationId, cancellationToken);
         }
 
         var tables = await _db.CompanySalaryTables
@@ -159,7 +159,7 @@ public class SalaryTablesController : ControllerBase
                 _db, existing.CompanyId, cancellationToken);
             if (organizationId is Guid orgId)
             {
-                await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, orgId);
+                await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, orgId, cancellationToken);
             }
         }
 

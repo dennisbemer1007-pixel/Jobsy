@@ -682,11 +682,11 @@ public sealed class MockInterviewService : IMockInterviewService
             var workTypes = vacancy.WorkTypes ?? [];
             var transportModes = vacancy.RequiredTransport ?? [];
             var haystack = $"{title} {plain} {string.Join(' ', workTypes)}".ToLowerInvariant();
-            var transport = transportModes.FirstOrDefault() ?? "fiets of OV";
+            var transport = transportModes.Count > 0 ? transportModes[0] : "fiets of OV";
 
             var themes = new List<InterviewTheme>();
             var snippets = ExtractDutySnippets(plain, max: 3);
-            var snippet = snippets.FirstOrDefault() ?? title.ToLowerInvariant();
+            var snippet = snippets.Count > 0 ? snippets[0] : title.ToLowerInvariant();
 
             // Lead with a question that quotes the vacancy text when we have a duty sentence.
             if (snippets.Count > 0)

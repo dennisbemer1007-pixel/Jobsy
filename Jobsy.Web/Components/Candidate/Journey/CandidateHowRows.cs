@@ -48,7 +48,17 @@ public static class CandidateHowRows
 
     /// <summary>The stone the primary button walks to: the <c>now</c> row, else the last stone.</summary>
     public static CandidateHowRow? Target(IReadOnlyList<CandidateHowRow> rows)
-        => rows.FirstOrDefault(r => r.IsNow) ?? rows.LastOrDefault();
+    {
+        foreach (var row in rows)
+        {
+            if (row.IsNow)
+            {
+                return row;
+            }
+        }
+
+        return rows.Count > 0 ? rows[^1] : null;
+    }
 
     private static bool IsDone(CandidateHowStoneKind kind, CandidateJourneySummaryApiModel? summary)
     {

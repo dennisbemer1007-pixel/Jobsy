@@ -34,10 +34,10 @@ public sealed class DeviceSessionService : IDeviceSessionService
     public async Task<DeviceSessionCreateResult> CreateAsync(
         Guid userId,
         string? userAgent,
-        CancellationToken cancellationToken = default,
         bool mfaVerified = false,
         string? authMethod = null,
-        string? authTenantId = null)
+        string? authTenantId = null,
+        CancellationToken cancellationToken = default)
     {
         var raw = DeviceRefreshToken.Generate();
         var now = DateTime.UtcNow;
@@ -447,7 +447,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
         DeviceSessionCreateResult? device = null;
         if (handoff.RememberDevice)
         {
-            device = await CreateAsync(user.Id, userAgent ?? handoff.UserAgent, cancellationToken);
+            device = await CreateAsync(user.Id, userAgent ?? handoff.UserAgent, cancellationToken: cancellationToken);
         }
         else
         {

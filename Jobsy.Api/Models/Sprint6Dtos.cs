@@ -242,7 +242,6 @@ public record IntegrationCredentialDto(
 public record UpdatePlatformFeatureRequest(
     bool? VacancyContentModerationEnabled = null,
     bool? AuthenticatorEnabled = null,
-    bool? ExposeRegistrationActivationLinks = null,
     string? PublicWebBaseUrl = null,
     int? InactiveCompanyDays = null,
     int? SessionInactivityTimeoutMinutes = null,
@@ -265,7 +264,6 @@ public record UpdatePlatformFeatureRequest(
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
     bool AuthenticatorEnabled,
-    bool ExposeRegistrationActivationLinks,
     string PublicWebBaseUrl,
     DateTime? UpdatedAtUtc,
     int InactiveCompanyDays = 120,

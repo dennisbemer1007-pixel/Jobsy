@@ -292,8 +292,8 @@ public sealed class CompanyVerificationService : ICompanyVerificationService
                     vacancy.RequestedPushBom,
                     vacancy.RequestedExtend),
                 actor,
-                cancellationToken,
-                allowPendingApproval: false);
+                allowPendingApproval: false,
+                cancellationToken);
 
             if (result.Succeeded)
             {

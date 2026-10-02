@@ -131,7 +131,6 @@ public class StubServicesTests
         var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: false,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201"));
 
         Assert.False(updated.VacancyContentModerationEnabled);

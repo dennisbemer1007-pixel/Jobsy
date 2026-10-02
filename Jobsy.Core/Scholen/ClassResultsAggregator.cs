@@ -255,9 +255,9 @@ public static class ClassResultsAggregator
             foreach (var ch in r.HollandCode.Trim().ToUpperInvariant())
             {
                 var letter = ch.ToString();
-                if (counts.ContainsKey(letter))
+                if (counts.TryGetValue(letter, out var value))
                 {
-                    counts[letter]++;
+                    counts[letter] = ++value;
                 }
             }
 
@@ -278,9 +278,9 @@ public static class ClassResultsAggregator
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(top) && counts.ContainsKey(top))
+            if (!string.IsNullOrWhiteSpace(top) && counts.TryGetValue(top, out var value))
             {
-                counts[top]++;
+                counts[top] = ++value;
             }
         }
         catch (JsonException)

@@ -29,10 +29,7 @@ public sealed class OneTimeLinkService : IOneTimeLinkService
         Guid? createdByUserId = null,
         CancellationToken cancellationToken = default)
     {
-        if (lifetime <= TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(lifetime));
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lifetime, TimeSpan.Zero);
 
         var normalized = NormalizeEmail(email);
         if (string.IsNullOrWhiteSpace(normalized) || !normalized.Contains('@', StringComparison.Ordinal))

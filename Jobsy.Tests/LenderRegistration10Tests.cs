@@ -352,14 +352,12 @@ public class LenderRegistration10Tests
             {
                 Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
                 FreePublishUntil = null,
-                ExposeRegistrationActivationLinks = true,
                 UpdatedAtUtc = DateTime.UtcNow
             });
         }
         else
         {
             existing.FreePublishUntil = null;
-            existing.ExposeRegistrationActivationLinks = true;
         }
 
         db.SaveChanges();
@@ -393,10 +391,7 @@ public class LenderRegistration10Tests
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions
-            {
-                ExposeRegistrationActivationLinks = true
-            }),
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
             config);
         var ledger = new TokenLedgerService(db);
         var partners = new PartnerAffiliateService(db, ledger, features);

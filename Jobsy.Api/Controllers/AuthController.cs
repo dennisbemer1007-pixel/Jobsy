@@ -219,8 +219,8 @@ public class AuthController : ControllerBase
                     var device = await _deviceSessions.CreateAsync(
                         user.Id,
                         Request.Headers.UserAgent.ToString(),
-                        cancellationToken,
-                        mfaVerified: true);
+                        mfaVerified: true,
+                        cancellationToken: cancellationToken);
                     trustedDeviceId = device.DeviceSessionId;
                     trustedRefresh = device.RefreshToken;
                     trustedExpires = device.ExpiresAtUtc;
@@ -278,7 +278,7 @@ public class AuthController : ControllerBase
             var device = await _deviceSessions.CreateAsync(
                 user.Id,
                 Request.Headers.UserAgent.ToString(),
-                cancellationToken);
+                cancellationToken: cancellationToken);
             deviceSessionId = device.DeviceSessionId;
             deviceRefresh = device.RefreshToken;
             deviceExpires = device.ExpiresAtUtc;
@@ -833,7 +833,7 @@ public class AuthController : ControllerBase
             var device = await _deviceSessions.CreateAsync(
                 user.Id,
                 request.UserAgent ?? Request.Headers.UserAgent.ToString(),
-                cancellationToken);
+                cancellationToken: cancellationToken);
             deviceSessionId = device.DeviceSessionId;
             deviceRefresh = device.RefreshToken;
             deviceExpires = device.ExpiresAtUtc;

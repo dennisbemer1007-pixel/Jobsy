@@ -27,7 +27,7 @@ internal static class TestSaveErrors
             return UnknownQuestion();
         }
 
-        if (msg.Contains("1") && msg.Contains("5"))
+        if (msg.Contains('1') && msg.Contains('5'))
         {
             return InvalidAnswer();
         }

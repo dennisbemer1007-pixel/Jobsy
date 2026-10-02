@@ -386,7 +386,6 @@ public class SettingsController : ControllerBase
                 new PlatformFeatureUpdate(
                     request.VacancyContentModerationEnabled,
                     request.AuthenticatorEnabled,
-                    ExposeRegistrationActivationLinks: null,
                     request.PublicWebBaseUrl,
                     request.InactiveCompanyDays,
                     request.SessionInactivityTimeoutMinutes,
@@ -457,7 +456,6 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
 
         Add("VacancyContentModerationEnabled", before.VacancyContentModerationEnabled.ToString(), after.VacancyContentModerationEnabled.ToString());
         Add("AuthenticatorEnabled", before.AuthenticatorEnabled.ToString(), after.AuthenticatorEnabled.ToString());
-        Add("ExposeRegistrationActivationLinks", before.ExposeRegistrationActivationLinks.ToString(), after.ExposeRegistrationActivationLinks.ToString());
         Add("PublicWebBaseUrl", before.PublicWebBaseUrl, after.PublicWebBaseUrl);
         Add("InactiveCompanyDays", before.InactiveCompanyDays.ToString(), after.InactiveCompanyDays.ToString());
         Add("SessionInactivityTimeoutMinutes", before.SessionInactivityTimeoutMinutes.ToString(), after.SessionInactivityTimeoutMinutes.ToString());
@@ -678,7 +676,6 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         new(
             snap.VacancyContentModerationEnabled,
             snap.AuthenticatorEnabled,
-            snap.ExposeRegistrationActivationLinks,
             snap.PublicWebBaseUrl,
             snap.UpdatedAtUtc,
             snap.InactiveCompanyDays,

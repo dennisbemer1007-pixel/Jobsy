@@ -33,7 +33,7 @@ public static class TestAccountCatalog
         => $"test-{emailSlug}@{emailDomain.Trim()}";
 
     public static bool RoleExistsInBuild(UserRole role)
-        => Enum.IsDefined(typeof(UserRole), role);
+        => Enum.IsDefined(role);
 
     public static Entry? FindByKey(string accountKey)
         => All.FirstOrDefault(e =>

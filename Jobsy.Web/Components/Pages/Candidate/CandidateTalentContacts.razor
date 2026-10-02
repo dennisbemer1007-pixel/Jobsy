@@ -246,7 +246,7 @@
     /// <summary>Codes only; raw API text never reaches the candidate (T5).</summary>
     private string FailureMessage(Exception ex)
     {
-        if (ex is CareerApiError api)
+        if (ex is CareerApiErrorException api)
         {
             var key = TalentContactViewBuilder.ErrorKey(api.Code);
             if (string.Equals(key, "Common.Error", StringComparison.Ordinal))

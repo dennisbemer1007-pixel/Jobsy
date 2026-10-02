@@ -117,7 +117,7 @@ public class SupportAccessServiceTests
     private sealed class StubFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, true, false, "http://localhost", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, "http://localhost", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

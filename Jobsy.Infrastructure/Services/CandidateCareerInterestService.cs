@@ -31,8 +31,8 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
 
     public async Task<CandidateCareerInterestStateDto> GetAsync(
         Guid userId,
-        CancellationToken cancellationToken = default,
-        bool includeMatches = true)
+        bool includeMatches = true,
+        CancellationToken cancellationToken = default)
     {
         var row = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);

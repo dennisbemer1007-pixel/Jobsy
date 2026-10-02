@@ -422,7 +422,7 @@ public class RecoveryCodeRegenerationTests
 file sealed class Auth04StubFeatures(bool authenticatorEnabled) : IPlatformFeatureService
 {
     public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(new PlatformFeatureSnapshot(true, authenticatorEnabled, false, "https://lobsy.test", null));
+        => Task.FromResult(new PlatformFeatureSnapshot(true, authenticatorEnabled, "https://lobsy.test", null));
 
     public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();

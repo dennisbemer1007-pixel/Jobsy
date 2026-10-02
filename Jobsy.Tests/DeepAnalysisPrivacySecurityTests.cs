@@ -201,7 +201,6 @@ public class DeepAnalysisPrivacySecurityTests
             => Task.FromResult(new PlatformFeatureSnapshot(
                 VacancyContentModerationEnabled: false,
                 AuthenticatorEnabled: false,
-                ExposeRegistrationActivationLinks: false,
                 PublicWebBaseUrl: "https://lobsy.test",
                 UpdatedAtUtc: DateTime.UtcNow));
 

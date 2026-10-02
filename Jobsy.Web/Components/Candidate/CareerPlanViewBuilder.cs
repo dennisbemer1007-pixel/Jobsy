@@ -401,9 +401,7 @@ public static class CareerPlanViewBuilder
             ? s.CourseStatuses.Select(c => new CareerPathCourseStatus { Name = c.Name, OnProfile = c.OnProfile }).ToList()
             : (s.Courses ?? []).Select(c => new CareerPathCourseStatus { Name = c, OnProfile = false }).ToList();
 
-#pragma warning disable CS0618
-        var legacyHref = s.ActionHref;
-#pragma warning restore CS0618
+var legacyHref = s.ActionHref;
 
         return new CareerPathDashboardStep
         {
@@ -419,11 +417,9 @@ public static class CareerPlanViewBuilder
             MinRequirements = s.MinRequirements ?? [],
             YearsExperienceNeeded = s.YearsExperienceNeeded,
             ActionKinds = s.ActionKinds ?? [],
-#pragma warning disable CS0618
             ActionLabel = s.ActionLabel,
             ActionHref = CareerStepActionLinks.PrimaryHref(s.ActionKinds, s.Title, legacyHref),
             StepMatchPercent = s.StepMatchPercent,
-#pragma warning restore CS0618
             MatchedCourseCount = s.MatchedCourseCount > 0
                 ? s.MatchedCourseCount
                 : courses.Count(c => c.OnProfile)
