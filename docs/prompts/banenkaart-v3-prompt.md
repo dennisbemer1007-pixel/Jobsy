@@ -1,3 +1,5 @@
+> **Warnings:** deliver a Release build with 0 new warnings vs the base branch (0 warnings after code-health step 11). Run `dotnet format` and `.github/scripts/count-build-warnings.sh` before opening the PR. No blanket `<NoWarn>`.
+
 # Cursor prompt: Banenkaart v3, calmer markers, real isochrones, and a cluster popup that never jumps
 
 ## 0. Rules (read first)
