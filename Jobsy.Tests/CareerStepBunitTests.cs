@@ -478,7 +478,7 @@ public class CareerStepBunitTests : TestContext
         var culture = Services.GetRequiredService<CultureState>();
         return CareerPathService.ErrorMessage(
             key => culture[key],
-            new CareerApiError(code, System.Net.HttpStatusCode.Conflict));
+            new CareerApiErrorException(code, System.Net.HttpStatusCode.Conflict));
     }
 
     private static CareerPlanViewModel Plan()

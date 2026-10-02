@@ -133,6 +133,7 @@ public class LegalDocumentRenderTests : TestContext
         UseLanguage("ar");
         var cut = RenderPrivacy();
 
+#pragma warning disable CA1826 // bunit FindAll indexer hits AngleSharp MissingMethodException
         var label = cut.FindAll(".pp-short__label").First().TextContent.Trim();
         Assert.Equal(UiStrings.Get("Legal.InShort", "ar"), label);
 
@@ -149,6 +150,7 @@ public class LegalDocumentRenderTests : TestContext
 
         Assert.Single(cut.FindAll(".pp-doc__note"));
         var body = cut.FindAll(".pp-sec__body").First();
+#pragma warning restore CA1826
         Assert.Equal("nl", body.GetAttribute("lang"));
         Assert.Equal("ltr", body.GetAttribute("dir"));
         Assert.NotEmpty(cut.FindAll(".pp-sec__dutch-label"));

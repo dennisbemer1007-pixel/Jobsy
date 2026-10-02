@@ -12,9 +12,6 @@ public class PlatformFeatureSettings
 
     public bool AuthenticatorEnabled { get; set; } = true;
 
-    [Obsolete("Unused since auth 06; drop in a later migration")]
-    public bool ExposeRegistrationActivationLinks { get; set; }
-
     public string? PublicWebBaseUrl { get; set; }
 
     /// <summary>

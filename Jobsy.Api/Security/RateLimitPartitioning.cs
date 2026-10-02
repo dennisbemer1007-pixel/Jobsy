@@ -133,7 +133,7 @@ public static class RateLimitPartitioning
         http.Response.ContentType = "application/problem+json; charset=utf-8";
 
         // errors 04 §04.2: ProblemDetails with a machine-readable code the Web client maps to
-        // ApiError.RateLimited, plus the same LB-XXXX support code the error pages show.
+        // ApiErrorException.RateLimited, plus the same LB-XXXX support code the error pages show.
         var problem = new ProblemDetails
         {
             Type = "https://tools.ietf.org/html/rfc6585#section-4",

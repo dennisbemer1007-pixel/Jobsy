@@ -54,7 +54,12 @@ public sealed class OpenAiTranslationService : ITranslationService
         string targetLanguage,
         CancellationToken cancellationToken = default)
     {
-        var batch = await TranslateVacancyAsync(text, string.Empty, sourceLanguage, targetLanguage, cancellationToken);
+        var batch = await TranslateVacancyAsync(
+            text,
+            string.Empty,
+            sourceLanguage,
+            targetLanguage,
+            cancellationToken: cancellationToken);
         return batch.Title;
     }
 
@@ -63,8 +68,8 @@ public sealed class OpenAiTranslationService : ITranslationService
         string description,
         string sourceLanguage,
         string targetLanguage,
-        CancellationToken cancellationToken = default,
-        Guid? vacancyId = null)
+        Guid? vacancyId = null,
+        CancellationToken cancellationToken = default)
     {
         var source = JobsyLanguages.Normalize(sourceLanguage);
         var target = JobsyLanguages.Normalize(targetLanguage);
@@ -174,8 +179,8 @@ public sealed class OpenAiTranslationService : ITranslationService
                     item.Description,
                     source,
                     target,
-                    cancellationToken,
-                    item.VacancyId);
+                    item.VacancyId,
+                    cancellationToken);
             }
             finally
             {

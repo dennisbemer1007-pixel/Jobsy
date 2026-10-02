@@ -82,11 +82,11 @@ public sealed class CareerPathStepApiModel
     public List<string> MinRequirements { get; set; } = [];
     public int YearsExperienceNeeded { get; set; }
     public List<string> ActionKinds { get; set; } = [];
-    [Obsolete("Legacy AI label; use ActionKinds.")]
+    /// <summary>Legacy wire field; prefer <see cref="ActionKinds"/>.</summary>
     public string ActionLabel { get; set; } = "";
-    [Obsolete("Legacy AI href; derived from ActionKinds on the Web.")]
+    /// <summary>Legacy wire field; href is derived from <see cref="ActionKinds"/> on the Web.</summary>
     public string ActionHref { get; set; } = "";
-    [Obsolete("Replaced by StepFitBand from the API.")]
+    /// <summary>Legacy wire field; prefer <see cref="StepFitBand"/>.</summary>
     public int StepMatchPercent { get; set; }
     public int MatchedCourseCount { get; set; }
 }

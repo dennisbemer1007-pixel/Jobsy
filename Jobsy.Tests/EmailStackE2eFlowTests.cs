@@ -281,7 +281,7 @@ public class EmailStackE2eFlowTests
     private sealed class AlwaysOnFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, true, false, "https://lobsy.nl", DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, "https://lobsy.nl", DateTime.UtcNow));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);
@@ -290,7 +290,7 @@ public class EmailStackE2eFlowTests
     private sealed class Features(string url) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, true, false, url, DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, url, DateTime.UtcNow));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);

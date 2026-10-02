@@ -73,8 +73,8 @@ public sealed class VacancyProductService : IVacancyProductService
         Vacancy vacancy,
         VacancyPublishOptions options,
         Guid? actorUserId,
-        CancellationToken cancellationToken = default,
-        bool allowPendingApproval = true)
+        bool allowPendingApproval = true,
+        CancellationToken cancellationToken = default)
     {
         if (vacancy.Status == VacancyStatus.PendingApproval)
         {

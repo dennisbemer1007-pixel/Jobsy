@@ -13,15 +13,15 @@ public class UserFacingErrorTests
     private const string Secret = "Secret boom detail from the database connection string.";
 
     [Theory]
-    [InlineData(ApiError.RateLimited, "Common.Error.RateLimited")]
-    [InlineData(ApiError.NotFound, "Common.Error.NotFound")]
-    [InlineData(ApiError.Forbidden, "Common.Error.Forbidden")]
-    [InlineData(ApiError.Validation, "Common.Error.Validation")]
-    [InlineData(ApiError.Maintenance, "Status.Maintenance.Short")]
-    [InlineData(ApiError.Unknown, "Common.Error.TryAgain")]
+    [InlineData(ApiErrorException.RateLimited, "Common.Error.RateLimited")]
+    [InlineData(ApiErrorException.NotFound, "Common.Error.NotFound")]
+    [InlineData(ApiErrorException.Forbidden, "Common.Error.Forbidden")]
+    [InlineData(ApiErrorException.Validation, "Common.Error.Validation")]
+    [InlineData(ApiErrorException.Maintenance, "Status.Maintenance.Short")]
+    [InlineData(ApiErrorException.Unknown, "Common.Error.TryAgain")]
     [InlineData("something_new", "Common.Error.TryAgain")]
     public void Api_error_codes_map_to_their_key(string code, string expectedKey)
-        => Assert.Equal(expectedKey, UserFacingError.MessageKeyFor(new ApiError(code)));
+        => Assert.Equal(expectedKey, UserFacingError.MessageKeyFor(new ApiErrorException(code)));
 
     [Fact]
     public void Network_and_timeout_map_to_the_network_key()
@@ -74,7 +74,7 @@ public class UserFacingErrorTests
         Assert.True(Jobsy.Web.Diagnostics.SupportCode.IsValid(generated.SupportCode));
         Assert.Null(generated.ApiUserMessage);
 
-        var fromApi = helper.From(new ApiError(ApiError.RateLimited, 429, "LB-7Q3K", 42));
+        var fromApi = helper.From(new ApiErrorException(ApiErrorException.RateLimited, 429, "LB-7Q3K", 42));
         Assert.Equal("LB-7Q3K", fromApi.SupportCode);
         Assert.Equal("Common.Error.RateLimited", fromApi.MessageKey);
     }
@@ -83,7 +83,7 @@ public class UserFacingErrorTests
     public void A_validation_message_written_for_users_is_shown_as_is()
     {
         var helper = Create();
-        var error = new ApiError(ApiError.Validation, 400, userMessage: "Vul je postcode in.");
+        var error = new ApiErrorException(ApiErrorException.Validation, 400, userMessage: "Vul je postcode in.");
 
         Assert.Equal("Vul je postcode in.", helper.Describe(error));
     }
@@ -109,8 +109,8 @@ public class UserFacingErrorTests
         yield return new InvalidOperationException(Secret);
         yield return new HttpRequestException(Secret);
         yield return new TaskCanceledException(Secret);
-        yield return new ApiError(ApiError.RateLimited, 429, "LB-7Q3K", 30);
-        yield return new ApiError("weird_code", 500);
+        yield return new ApiErrorException(ApiErrorException.RateLimited, 429, "LB-7Q3K", 30);
+        yield return new ApiErrorException("weird_code", 500);
     }
 
     private static UserFacingError Create(string language = "nl")

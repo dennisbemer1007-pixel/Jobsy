@@ -5,10 +5,10 @@ public interface IDeviceSessionService
     Task<DeviceSessionCreateResult> CreateAsync(
         Guid userId,
         string? userAgent,
-        CancellationToken cancellationToken = default,
         bool mfaVerified = false,
         string? authMethod = null,
-        string? authTenantId = null);
+        string? authTenantId = null,
+        CancellationToken cancellationToken = default);
 
     Task<DeviceSessionRotateResult?> RotateAsync(
         string refreshToken,

@@ -549,7 +549,7 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
     private sealed class StubFeatures(bool authenticatorEnabled) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, authenticatorEnabled, false, "http://localhost", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, authenticatorEnabled, "http://localhost", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();

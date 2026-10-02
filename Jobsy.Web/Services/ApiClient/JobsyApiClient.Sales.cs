@@ -719,7 +719,7 @@ public sealed partial class JobsyApiClient
             AmountInclVat = preview.TotalInclVat,
             MaskedIban = preview.MaskedIban,
             CanPayout = preview.CanRequest,
-            BlockReason = preview.Blockers.FirstOrDefault()?.MessageKey
+            BlockReason = preview.Blockers.Count > 0 ? preview.Blockers[0].MessageKey : null
         };
     }
 
@@ -1010,7 +1010,7 @@ public sealed partial class JobsyApiClient
 
         return System.Text.Json.JsonSerializer.Deserialize<SalesIbanChangeBeginClientResult>(
                    body,
-                   new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                   CaseInsensitiveJson)
                ?? new SalesIbanChangeBeginClientResult();
     }
 

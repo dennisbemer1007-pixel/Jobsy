@@ -240,7 +240,7 @@ file static class PasswordResetFixtures
     private sealed class StubFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, true, false, "https://lobsy.test", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, "https://lobsy.test", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();

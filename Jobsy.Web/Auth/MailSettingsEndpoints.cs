@@ -10,6 +10,8 @@ namespace Jobsy.Web.Auth;
 
 public static class MailSettingsEndpoints
 {
+    private static readonly string[] handler = new[] { "PushBom", "VacancyEngagementReminder", "CompanyReEngagement" };
+
     public static IEndpointRouteBuilder MapMailSettingsEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/account/mail-instellingen", async (
@@ -30,7 +32,7 @@ public static class MailSettingsEndpoints
             }
 
             var form = await http.Request.ReadFormAsync();
-            var keys = new[] { "PushBom", "VacancyEngagementReminder", "CompanyReEngagement" };
+            var keys = handler;
             var items = keys.Select(k => new
             {
                 key = k,

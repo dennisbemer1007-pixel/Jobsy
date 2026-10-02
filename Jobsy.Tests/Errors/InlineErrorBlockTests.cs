@@ -49,7 +49,7 @@ public class InlineErrorBlockTests : TestContext
     public void Shows_the_support_code_the_api_error_carried()
     {
         var cut = RenderComponent<InlineErrorBlock>(p => p
-            .Add(x => x.Error, new ApiError(ApiError.RateLimited, 429, "LB-7Q3K", 30)));
+            .Add(x => x.Error, new ApiErrorException(ApiErrorException.RateLimited, 429, "LB-7Q3K", 30)));
 
         var code = cut.Find(".err-inline__code");
         Assert.Equal("LB-7Q3K", code.GetAttribute("data-support-code"));
@@ -95,7 +95,7 @@ public class InlineErrorBlockTests : TestContext
     public void Shows_a_validation_message_the_api_wrote_for_users()
     {
         var cut = RenderComponent<InlineErrorBlock>(p => p
-            .Add(x => x.Error, new ApiError(ApiError.Validation, 400, userMessage: "Vul je postcode in.")));
+            .Add(x => x.Error, new ApiErrorException(ApiErrorException.Validation, 400, userMessage: "Vul je postcode in.")));
 
         Assert.Equal("Vul je postcode in.", cut.Find(".err-inline__detail").TextContent);
     }

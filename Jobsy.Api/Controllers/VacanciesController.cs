@@ -1495,8 +1495,8 @@ public class VacanciesController : ControllerBase
             vacancy,
             new VacancyPublishOptions(request.Highlight, request.PushBom, request.Extend),
             actor?.Id,
-            cancellationToken,
-            allowPendingApproval: !canPurchase);
+            allowPendingApproval: !canPurchase,
+            cancellationToken);
 
         if (result.InsufficientTokens)
         {
@@ -2142,8 +2142,8 @@ public class VacanciesController : ControllerBase
             dto.Description ?? string.Empty,
             VacancySourceLanguage,
             targetLanguage,
-            cancellationToken,
-            dto.Id);
+            dto.Id,
+            cancellationToken);
 
         return dto with
         {

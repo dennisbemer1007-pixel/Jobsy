@@ -60,10 +60,7 @@ public sealed class MolliePaymentService : IPaymentService
                 "Betalingen zijn niet geconfigureerd. Sla een Mollie API-key op onder Admin → Integraties.");
         }
 
-        if (packSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(packSize));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(packSize);
 
         var company = await _db.Companies.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)

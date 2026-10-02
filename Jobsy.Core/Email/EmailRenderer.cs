@@ -398,7 +398,7 @@ public static class EmailRenderer
         AppendInline(sb, note.Text, muted);
         if (note.Link is not null)
         {
-            sb.Append(" ");
+            sb.Append(' ');
             sb.Append($"<a href=\"{Escape(note.Link.AbsoluteUrl)}\" style=\"color:{muted};text-decoration:underline;\">{Escape(note.Link.Label)}</a>");
         }
 

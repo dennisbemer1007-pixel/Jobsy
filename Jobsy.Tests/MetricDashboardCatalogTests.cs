@@ -20,7 +20,7 @@ public sealed class MetricDashboardCatalogTests
 
         Assert.Equal(new[] { "growth", "engagement", "marketing", "system" }, groups.Select(g => g.Category.Id));
         Assert.Equal("active_vacancies", groups[0].Metrics[0].Key);
-        Assert.Contains(groups.Last().Metrics, m => m.Key == "errors");
+        Assert.Contains(groups[^1].Metrics, m => m.Key == "errors");
     }
 
     [Fact]

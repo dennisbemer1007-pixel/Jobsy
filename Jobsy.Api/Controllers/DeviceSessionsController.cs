@@ -42,7 +42,7 @@ public sealed class DeviceSessionsController : ControllerBase
         var created = await _sessions.CreateAsync(
             user.Id,
             request?.UserAgent ?? Request.Headers.UserAgent.ToString(),
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         return Ok(new DeviceSessionCreatedDto(
             created.DeviceSessionId,
@@ -220,7 +220,7 @@ public sealed class DeviceSessionsController : ControllerBase
         var created = await _sessions.CreateAsync(
             user.Id,
             request.UserAgent ?? Request.Headers.UserAgent.ToString(),
-            cancellationToken);
+            cancellationToken: cancellationToken);
         return Ok(new DeviceSessionCreatedDto(
             created.DeviceSessionId,
             created.RefreshToken,

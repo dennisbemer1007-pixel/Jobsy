@@ -275,7 +275,6 @@ public class CoreFunctionalFlowE2ETests
         var custom = await platform.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 5));
@@ -301,7 +300,6 @@ public class CoreFunctionalFlowE2ETests
         await platform.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 30));
@@ -593,11 +591,11 @@ public class CoreFunctionalFlowE2ETests
 
     private static CompanyRegistrationService CreateRegistrationService(JobsyDbContext db)
     {
-        EnsurePaidPublishPeriod(db, exposeActivationLinks: true);
+        EnsurePaidPublishPeriod(db);
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            Options.Create(new JobsyFeatureOptions()),
             config);
 
         return new CompanyRegistrationService(
@@ -640,17 +638,17 @@ public class CoreFunctionalFlowE2ETests
 
     private static IPlatformFeatureService CreateFeatures(JobsyDbContext db)
     {
-        EnsurePaidPublishPeriod(db, exposeActivationLinks: true);
+        EnsurePaidPublishPeriod(db);
         return new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            Options.Create(new JobsyFeatureOptions()),
             new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["PublicWebBaseUrl"] = "http://localhost:5201"
             }).Build());
     }
 
-    private static void EnsurePaidPublishPeriod(JobsyDbContext db, bool exposeActivationLinks = true)
+    private static void EnsurePaidPublishPeriod(JobsyDbContext db)
     {
         var row = db.PlatformFeatureSettings.Local.FirstOrDefault()
                   ?? db.PlatformFeatureSettings.FirstOrDefault();
@@ -659,7 +657,6 @@ public class CoreFunctionalFlowE2ETests
             db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
             {
                 Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-                ExposeRegistrationActivationLinks = exposeActivationLinks,
                 FreePublishUntil = null,
                 UpdatedAtUtc = DateTime.UtcNow
             });
@@ -667,7 +664,6 @@ public class CoreFunctionalFlowE2ETests
         else
         {
             row.FreePublishUntil = null;
-            row.ExposeRegistrationActivationLinks = exposeActivationLinks;
         }
 
         db.SaveChanges();

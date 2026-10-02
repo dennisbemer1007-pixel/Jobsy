@@ -77,6 +77,8 @@ public static class MascotAssets
         }
     }
 
+    private static readonly int[] sourceArray = new[] { 64, 128, 256, 512 };
+
     public static MascotArt GetArt(MascotPose pose)
     {
         if (Override.Value is not null && Override.Value.TryGetValue(pose, out var over))
@@ -109,9 +111,9 @@ public static class MascotAssets
         if (art.Format == MascotArtFormat.Raster)
         {
             var webp = string.Join(", ",
-                new[] { 64, 128, 256, 512 }.Select(w => $"{Folder}/mascot-{slug}-{w}.webp?v={art.Version} {w}w"));
+sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.webp?v={art.Version} {w}w"));
             var avif = string.Join(", ",
-                new[] { 64, 128, 256, 512 }.Select(w => $"{Folder}/mascot-{slug}-{w}.avif?v={art.Version} {w}w"));
+sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.avif?v={art.Version} {w}w"));
             var src = $"{Folder}/mascot-{slug}-256.webp?v={art.Version}";
             return new MascotSource(
                 Src: src,

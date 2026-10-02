@@ -192,7 +192,6 @@ public sealed class PlatformFeatureItem
 {
     public bool VacancyContentModerationEnabled { get; set; } = true;
     public bool AuthenticatorEnabled { get; set; }
-    public bool ExposeRegistrationActivationLinks { get; set; }
     public string PublicWebBaseUrl { get; set; } = "http://localhost:5201";
     public DateTime? UpdatedAtUtc { get; set; }
     public int InactiveCompanyDays { get; set; } = 120;
@@ -218,7 +217,6 @@ public sealed class PlatformFeaturePatch
 {
     public bool? VacancyContentModerationEnabled { get; set; }
     public bool? AuthenticatorEnabled { get; set; }
-    public bool? ExposeRegistrationActivationLinks { get; set; }
     public string? PublicWebBaseUrl { get; set; }
     public int? InactiveCompanyDays { get; set; }
     public int? SessionInactivityTimeoutMinutes { get; set; }

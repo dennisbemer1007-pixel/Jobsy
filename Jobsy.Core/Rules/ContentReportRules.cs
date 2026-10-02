@@ -55,7 +55,7 @@ public static class ContentReportRules
         }
 
         var at = trimmed.IndexOf('@', StringComparison.Ordinal);
-        if (at <= 0 || at == trimmed.Length - 1 || trimmed.IndexOf(' ', StringComparison.Ordinal) >= 0)
+        if (at <= 0 || at == trimmed.Length - 1 || trimmed.Contains(' '))
         {
             return null;
         }

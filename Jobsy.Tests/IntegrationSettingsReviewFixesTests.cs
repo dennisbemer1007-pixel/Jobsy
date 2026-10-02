@@ -83,7 +83,6 @@ public class IntegrationSettingsReviewFixesTests
         await features.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: false,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201"));
 
         var sut = new VacancyContentModerationService(

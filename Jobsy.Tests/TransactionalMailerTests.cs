@@ -113,8 +113,7 @@ public class TransactionalMailerTests
     private sealed class Features(bool ambassadors) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                true, false, false, "https://lobsy.nl", DateTime.UtcNow, AmbassadorsEnabled: ambassadors));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, false, "https://lobsy.nl", DateTime.UtcNow, AmbassadorsEnabled: ambassadors));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);

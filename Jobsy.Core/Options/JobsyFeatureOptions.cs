@@ -13,12 +13,6 @@ public sealed class JobsyFeatureOptions
     public bool AuthenticatorEnabled { get; set; } = true;
 
     /// <summary>
-    /// Unused since auth 06 (activation links removed). Kept for config binding compatibility.
-    /// </summary>
-    [Obsolete("Unused since auth 06; drop with PlatformFeatureSettings column")]
-    public bool ExposeRegistrationActivationLinks { get; set; }
-
-    /// <summary>
     /// When false, vacancy create skips content moderation (AI and heuristics).
     /// </summary>
     public bool VacancyContentModerationEnabled { get; set; } = true;

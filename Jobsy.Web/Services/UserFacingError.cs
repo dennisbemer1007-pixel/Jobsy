@@ -54,12 +54,12 @@ public sealed class UserFacingError
 
     /// <summary>
     /// Pure mapping, without logging, so the table is testable:
-    /// known <see cref="ApiError.Code"/> → its key, network/timeout → <c>Common.Error.Network</c>,
+    /// known <see cref="ApiErrorException.Code"/> → its key, network/timeout → <c>Common.Error.Network</c>,
     /// everything else → <c>Common.Error.TryAgain</c>.
     /// </summary>
     public static string MessageKeyFor(Exception ex) => ex switch
     {
-        ApiError api => KeyForCode(api.Code),
+        ApiErrorException api => KeyForCode(api.Code),
         HttpRequestException => "Common.Error.Network",
         TaskCanceledException or TimeoutException => "Common.Error.Network",
         _ => "Common.Error.TryAgain"
@@ -67,21 +67,21 @@ public sealed class UserFacingError
 
     private static string KeyForCode(string code) => code switch
     {
-        ApiError.RateLimited => "Common.Error.RateLimited",
-        ApiError.NotFound => "Common.Error.NotFound",
-        ApiError.Forbidden => "Common.Error.Forbidden",
-        ApiError.Validation => "Common.Error.Validation",
+        ApiErrorException.RateLimited => "Common.Error.RateLimited",
+        ApiErrorException.NotFound => "Common.Error.NotFound",
+        ApiErrorException.Forbidden => "Common.Error.Forbidden",
+        ApiErrorException.Validation => "Common.Error.Validation",
         // errors 05 §05.2: the maintenance wording lives with the 503 page.
-        ApiError.Maintenance => "Status.Maintenance.Short",
+        ApiErrorException.Maintenance => "Status.Maintenance.Short",
         _ => "Common.Error.TryAgain"
     };
 
     private static string? UserMessageFor(Exception ex)
-        => ex is ApiError { UserMessage: { Length: > 0 } message } ? message : null;
+        => ex is ApiErrorException { UserMessage: { Length: > 0 } message } ? message : null;
 
     /// <summary>The code the API already minted, else one code per request so support can match.</summary>
     private string SupportCodeFor(Exception ex)
-        => ex is ApiError { SupportCode: { Length: > 0 } fromApi }
+        => ex is ApiErrorException { SupportCode: { Length: > 0 } fromApi }
             ? fromApi
             : SupportCode.GetOrCreate(_httpContextAccessor?.HttpContext);
 }

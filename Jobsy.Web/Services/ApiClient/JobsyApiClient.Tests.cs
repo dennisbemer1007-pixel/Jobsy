@@ -256,7 +256,7 @@ public sealed partial class JobsyApiClient
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync(ct);
-                throw CareerApiError.FromResponse(response.StatusCode, body);
+                throw CareerApiErrorException.FromResponse(response.StatusCode, body);
             }
 
             return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -307,7 +307,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw CareerApiError.FromResponse(response.StatusCode, body);
+            throw CareerApiErrorException.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -322,7 +322,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw CareerApiError.FromResponse(response.StatusCode, body);
+            throw CareerApiErrorException.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -337,7 +337,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw CareerApiError.FromResponse(response.StatusCode, body);
+            throw CareerApiErrorException.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -349,14 +349,14 @@ public sealed partial class JobsyApiClient
         if (response.StatusCode == HttpStatusCode.Gone)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw CareerApiError.TryParse(response.StatusCode, body)
-                  ?? new CareerApiError("use_passport_proof", HttpStatusCode.Gone);
+            throw CareerApiErrorException.TryParse(response.StatusCode, body)
+                  ?? new CareerApiErrorException("use_passport_proof", HttpStatusCode.Gone);
         }
 
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw CareerApiError.FromResponse(response.StatusCode, body);
+            throw CareerApiErrorException.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<CareerPathPlanApiModel>(cancellationToken: ct);
@@ -416,7 +416,7 @@ public sealed partial class JobsyApiClient
         return _meCache.GetOrCreateAsync(
             KompasCacheKey,
             token => GetMeJsonAsync<CandidateKompasState>("api/me/kompas", token),
-            ct);
+            ct: ct);
     }
 
     public Task<MeGetResult<CandidateDnaSummary>> GetMyKompasDnaResultAsync(CancellationToken ct = default)
@@ -429,7 +429,7 @@ public sealed partial class JobsyApiClient
         return _meCache.GetOrCreateAsync(
             KompasDnaCacheKey,
             token => GetMeJsonAsync<CandidateDnaSummary>("api/me/kompas/dna", token),
-            ct);
+            ct: ct);
     }
 
     public async Task<RoleFitCheckState> EvaluateRoleFitAsync(

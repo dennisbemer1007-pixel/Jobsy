@@ -473,7 +473,7 @@ public class SalesPayoutRunTests
             UpdatedAt = DateTime.UtcNow
         };
         db.SalesManagerProfiles.Add(profile);
-        if (await db.SalesCommercialSettings.CountAsync() == 0)
+        if (!await db.SalesCommercialSettings.AnyAsync())
         {
             db.SalesCommercialSettings.Add(new SalesCommercialSettings
             {
@@ -585,8 +585,7 @@ public class SalesPayoutRunTests
         public FeatureStub(bool ambassadors) => _ambassadors = ambassadors;
 
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                false, true, false, "https://lobsy.nl", null, AmbassadorsEnabled: _ambassadors));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, true, "https://lobsy.nl", null, AmbassadorsEnabled: _ambassadors));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,
@@ -597,8 +596,7 @@ public class SalesPayoutRunTests
     private sealed class AlwaysOnFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                false, true, false, "https://lobsy.nl", null, AmbassadorsEnabled: true));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, true, "https://lobsy.nl", null, AmbassadorsEnabled: true));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

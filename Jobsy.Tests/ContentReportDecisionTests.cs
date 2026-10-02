@@ -285,7 +285,7 @@ internal sealed class ContentReportHarness
             return new VacancyProductOutcome(true, null, vacancy);
         }
 
-        public Task<VacancyProductOutcome> PublishAsync(Vacancy vacancy, VacancyPublishOptions options, Guid? actorUserId, CancellationToken cancellationToken = default, bool allowPendingApproval = true)
+        public Task<VacancyProductOutcome> PublishAsync(Vacancy vacancy, VacancyPublishOptions options, Guid? actorUserId, bool allowPendingApproval = true, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
         public Task<VacancyProductOutcome> ApprovePublishAsync(Vacancy vacancy, Guid? actorUserId, CancellationToken cancellationToken = default)
@@ -315,7 +315,7 @@ internal sealed class ContentReportHarness
     private sealed class StubPlatformFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(false, false, false, "https://lobsy.test", DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.test", DateTime.UtcNow));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

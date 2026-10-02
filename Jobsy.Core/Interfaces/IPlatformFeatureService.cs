@@ -12,7 +12,6 @@ public interface IPlatformFeatureService
 public sealed record PlatformFeatureSnapshot(
     bool VacancyContentModerationEnabled,
     bool AuthenticatorEnabled,
-    bool ExposeRegistrationActivationLinks,
     string PublicWebBaseUrl,
     DateTime? UpdatedAtUtc,
     int InactiveCompanyDays = 120,
@@ -45,7 +44,6 @@ public sealed record PlatformFeatureSnapshot(
 public sealed record PlatformFeatureUpdate(
     bool? VacancyContentModerationEnabled = null,
     bool? AuthenticatorEnabled = null,
-    bool? ExposeRegistrationActivationLinks = null,
     string? PublicWebBaseUrl = null,
     int? InactiveCompanyDays = null,
     int? SessionInactivityTimeoutMinutes = null,

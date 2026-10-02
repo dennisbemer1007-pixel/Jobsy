@@ -148,7 +148,7 @@ public sealed partial class JobsyApiClient
 
     /// <summary>
     /// Exactly the fields the employer receives when the candidate accepts (04 §4).
-    /// Throws <see cref="Jobsy.Web.Services.Careers.CareerApiError"/> with a stable code on failure.
+    /// Throws <see cref="Jobsy.Web.Services.Careers.CareerApiErrorException"/> with a stable code on failure.
     /// </summary>
     public async Task<TalentContactSharePreviewModel?> GetTalentContactSharePreviewAsync(
         Guid requestId,
@@ -158,7 +158,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw Jobsy.Web.Services.Careers.CareerApiError.FromResponse(response.StatusCode, body);
+            throw Jobsy.Web.Services.Careers.CareerApiErrorException.FromResponse(response.StatusCode, body);
         }
 
         return await response.Content.ReadFromJsonAsync<TalentContactSharePreviewModel>(cancellationToken: ct);
@@ -182,7 +182,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw Jobsy.Web.Services.Careers.CareerApiError.FromResponse(response.StatusCode, body);
+            throw Jobsy.Web.Services.Careers.CareerApiErrorException.FromResponse(response.StatusCode, body);
         }
     }
 

@@ -197,7 +197,6 @@ public class CompanyVerificationServiceTests
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             VacancyContentModerationEnabled = false,
-            ExposeRegistrationActivationLinks = true,
             FreePublishUntil = freeUntil,
             PublicWebBaseUrl = "https://lobsy.nl",
             UpdatedAtUtc = DateTime.UtcNow

@@ -234,7 +234,7 @@ public class BedenktijdGuardTests
     private sealed class StubFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(false, false, false, "https://lobsy.test", DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.test", DateTime.UtcNow));
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
     }

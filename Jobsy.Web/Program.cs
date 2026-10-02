@@ -34,7 +34,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // Client IP still comes from CF-Connecting-IP only after CloudflareOriginMiddleware
     // validates the origin secret — do not treat X-Forwarded-For as authoritative alone.
     options.ForwardLimit = 2;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 

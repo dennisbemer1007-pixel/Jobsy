@@ -76,9 +76,6 @@ public sealed class FlexCommercialService : IFlexCommercialService
         settings.DeepTestPriceCareerEuro = RoundPrice(update.DeepTestPriceCareerEuro);
         settings.DeepTestPriceValuesEuro = RoundPrice(update.DeepTestPriceValuesEuro);
         settings.DeepTestPriceCultureEuro = RoundPrice(update.DeepTestPriceCultureEuro);
-#pragma warning disable CS0618
-        settings.DeepAnalysisPriceEuro = settings.DeepTestPriceCompetenceEuro;
-#pragma warning restore CS0618
         settings.AgencyAnnualPriceEuro = Math.Round(update.AgencyAnnualPriceEuro, 2, MidpointRounding.AwayFromZero);
         settings.ContactUnlockCostTokens = Math.Round(update.ContactUnlockCostTokens, 2, MidpointRounding.AwayFromZero);
         settings.UpdatedAtUtc = DateTime.UtcNow;
@@ -191,9 +188,6 @@ public sealed class FlexCommercialService : IFlexCommercialService
             Id = SettingsSingletonId,
             MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
             BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
-#pragma warning disable CS0618
-            DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
-#pragma warning restore CS0618
             DeepTestPriceCompetenceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
             DeepTestPriceCareerEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
             DeepTestPriceValuesEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
@@ -209,29 +203,25 @@ public sealed class FlexCommercialService : IFlexCommercialService
 
     private static void EnsurePerKindDefaults(FlexCommercialSettings settings)
     {
-#pragma warning disable CS0618
-        var legacy = settings.DeepAnalysisPriceEuro > 0
-            ? settings.DeepAnalysisPriceEuro
-            : FlexCommercialSettings.DefaultDeepAnalysisPriceEuro;
-#pragma warning restore CS0618
+        var fallback = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro;
         if (settings.DeepTestPriceCompetenceEuro <= 0)
         {
-            settings.DeepTestPriceCompetenceEuro = legacy;
+            settings.DeepTestPriceCompetenceEuro = fallback;
         }
 
         if (settings.DeepTestPriceCareerEuro <= 0)
         {
-            settings.DeepTestPriceCareerEuro = legacy;
+            settings.DeepTestPriceCareerEuro = fallback;
         }
 
         if (settings.DeepTestPriceValuesEuro <= 0)
         {
-            settings.DeepTestPriceValuesEuro = legacy;
+            settings.DeepTestPriceValuesEuro = fallback;
         }
 
         if (settings.DeepTestPriceCultureEuro <= 0)
         {
-            settings.DeepTestPriceCultureEuro = legacy;
+            settings.DeepTestPriceCultureEuro = fallback;
         }
     }
 

@@ -68,7 +68,7 @@ public class EmailPreviewTests
     private sealed class FakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, false, false, "https://lobsy.nl", DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, false, "https://lobsy.nl", DateTime.UtcNow));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

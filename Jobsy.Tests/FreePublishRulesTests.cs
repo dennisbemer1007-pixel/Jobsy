@@ -334,7 +334,6 @@ public class FreePublishProductTests
         var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             FreePublishUntil: new DateOnly(2026, 12, 31)));
 
@@ -344,7 +343,6 @@ public class FreePublishProductTests
         var preserved = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             SessionInactivityTimeoutMinutes: 15));
         Assert.Equal(new DateOnly(2026, 12, 31), preserved.FreePublishUntil);
@@ -353,7 +351,6 @@ public class FreePublishProductTests
         var cleared = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             FreePublishUntil: null,
             ClearFreePublishUntil: true));
@@ -368,7 +365,6 @@ public class FreePublishProductTests
         var created = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             SessionInactivityTimeoutMinutes: 30));
         Assert.Equal(FreePublishRules.DefaultUntil, created.FreePublishUntil);
@@ -380,7 +376,6 @@ public class FreePublishProductTests
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             VacancyContentModerationEnabled = true,
-            ExposeRegistrationActivationLinks = true,
             FreePublishUntil = freeUntil,
             UpdatedAtUtc = DateTime.UtcNow
         });

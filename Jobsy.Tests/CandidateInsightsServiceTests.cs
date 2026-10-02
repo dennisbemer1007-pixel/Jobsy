@@ -291,8 +291,7 @@ public class CandidateInsightsServiceTests
     private sealed class StubFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                true, true, false, "http://localhost:5201", DateTime.UtcNow,
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, "http://localhost:5201", DateTime.UtcNow,
                 CandidateInsightsEnabled: true,
                 CandidateInsightsUnlockDays: 90,
                 CandidateInsightsUnlockPerBranch: false));

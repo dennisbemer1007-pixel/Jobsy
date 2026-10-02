@@ -223,7 +223,7 @@ public class SalesPayoutRequestTests
         };
         db.SalesManagerProfiles.Add(profile);
 
-        if (await db.SalesCommercialSettings.CountAsync() == 0)
+        if (!await db.SalesCommercialSettings.AnyAsync())
         {
             db.SalesCommercialSettings.Add(new SalesCommercialSettings
             {

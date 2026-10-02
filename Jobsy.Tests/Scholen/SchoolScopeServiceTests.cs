@@ -96,8 +96,7 @@ public class SchoolScopeServiceTests
         public StubFeatures(bool perCode) => PerCode = perCode;
 
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                true, true, false, "http://localhost", DateTime.UtcNow,
+            => Task.FromResult(new PlatformFeatureSnapshot(true, true, "http://localhost", DateTime.UtcNow,
                 SchoolPerCodeResultsEnabled: PerCode));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(

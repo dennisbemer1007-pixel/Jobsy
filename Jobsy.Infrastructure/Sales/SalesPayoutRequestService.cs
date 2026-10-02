@@ -115,7 +115,7 @@ public sealed class SalesPayoutRequestService : ISalesPayoutRequestService
         var preview = await PreviewAsync(beneficiaryUserId, mfaSatisfied, now, cancellationToken);
         if (!preview.CanRequest || preview.Blockers.Count > 0)
         {
-            var first = preview.Blockers.FirstOrDefault();
+            var first = preview.Blockers.Count > 0 ? preview.Blockers[0] : null;
             throw new InvalidOperationException(first?.MessageKey ?? "Sales.Payout.Blocked");
         }
 

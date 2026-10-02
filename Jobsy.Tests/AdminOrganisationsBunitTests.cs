@@ -72,7 +72,9 @@ public class AdminOrganisationsBunitTests : TestContext
         Assert.Equal("true", cut.Find("button.admin-org-caret").GetAttribute("aria-expanded"));
         Assert.Contains("Child Branch", cut.Markup, StringComparison.Ordinal);
 
+#pragma warning disable CA1826 // bunit FindAll indexer hits AngleSharp MissingMethodException
         cut.FindAll("button.admin-segment__btn").Last().Click();
+#pragma warning restore CA1826
         Assert.Contains("Child Branch", cut.Markup, StringComparison.Ordinal);
         Assert.Empty(cut.FindAll("button.admin-org-caret"));
     }

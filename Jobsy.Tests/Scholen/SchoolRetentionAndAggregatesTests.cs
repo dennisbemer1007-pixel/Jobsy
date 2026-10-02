@@ -512,7 +512,6 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
             => Task.FromResult(new PlatformFeatureSnapshot(
                 VacancyContentModerationEnabled: false,
                 AuthenticatorEnabled: false,
-                ExposeRegistrationActivationLinks: false,
                 PublicWebBaseUrl: "",
                 UpdatedAtUtc: null,
                 InactiveCompanyDays: 120,

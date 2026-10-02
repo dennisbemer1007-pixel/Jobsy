@@ -54,7 +54,6 @@ public class SessionSecurityTests
         var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 45));
