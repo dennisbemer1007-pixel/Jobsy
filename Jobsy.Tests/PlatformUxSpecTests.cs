@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Auth;
 
@@ -34,7 +35,13 @@ public class PlatformUxSpecTests
     public void Auth_preserves_vacancy_return_url()
     {
         Assert.Equal("/vacancies/123", AuthRedirects.ResolveCandidateReturnUrl("/vacancies/123", true));
-        Assert.Equal(AuthRedirects.BanenkaartPath, AuthRedirects.ResolveCandidateReturnUrl("/home", false));
+        Assert.Equal(
+            FeatureRoutes.CandidatePassportPath,
+            AuthRedirects.ResolveCandidateReturnUrl("/home", false));
+        var off = new FeatureFlagSnapshot(true, false);
+        Assert.Equal(
+            AuthRedirects.BanenkaartPath,
+            AuthRedirects.ResolveCandidateReturnUrl("/home", false, off));
     }
 
     [Fact]

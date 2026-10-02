@@ -60,8 +60,16 @@ public class CandidateLandingTests
     [Fact]
     public void CandidatePostLoginUrl_passport_off_unchanged()
     {
-        Assert.Equal("/candidate/start", AuthRedirects.CandidatePostLoginUrl(true));
-        Assert.Equal(AuthRedirects.BanenkaartPath, AuthRedirects.CandidatePostLoginUrl(false));
+        var off = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: false);
+        Assert.Equal("/candidate/start", AuthRedirects.CandidatePostLoginUrl(true, off));
+        Assert.Equal(AuthRedirects.BanenkaartPath, AuthRedirects.CandidatePostLoginUrl(false, off));
+    }
+
+    [Fact]
+    public void CandidatePostLoginUrl_defaults_are_passport_on()
+    {
+        Assert.Equal(FeatureRoutes.CandidateDiscoveryPath, AuthRedirects.CandidatePostLoginUrl(true));
+        Assert.Equal(FeatureRoutes.CandidatePassportPath, AuthRedirects.CandidatePostLoginUrl(false));
     }
 
     [Fact]

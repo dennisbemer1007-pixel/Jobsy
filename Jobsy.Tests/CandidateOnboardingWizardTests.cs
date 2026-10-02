@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
 using Jobsy.Web.Auth;
@@ -175,7 +176,9 @@ public class CandidateOnboardingWizardTests
     {
         Assert.Equal("/candidate/start", AuthRedirects.CandidateHowToPath);
         Assert.Equal("/candidate/hoe-werkt-lobsy", AuthRedirects.CandidateHowToGuidePath);
-        Assert.Equal("/candidate/start", AuthRedirects.CandidatePostLoginUrl(true));
+        Assert.Equal(FeatureRoutes.CandidateDiscoveryPath, AuthRedirects.CandidatePostLoginUrl(true));
+        var off = new FeatureFlagSnapshot(true, false);
+        Assert.Equal("/candidate/start", AuthRedirects.CandidatePostLoginUrl(true, off));
 
         var incomplete = new User
         {

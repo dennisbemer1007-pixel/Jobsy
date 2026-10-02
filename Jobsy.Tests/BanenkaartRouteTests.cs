@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Core.Features;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
@@ -29,7 +30,9 @@ public class BanenkaartRouteTests
     public void BanenkaartPath_and_RoleNav_point_at_banenkaart()
     {
         Assert.Equal(PublicRoutes.Banenkaart, AuthRedirects.BanenkaartPath);
-        Assert.Equal("/banenkaart", AuthRedirects.CandidatePostLoginUrl(false));
+        var passportOff = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: false);
+        Assert.Equal("/banenkaart", AuthRedirects.CandidatePostLoginUrl(false, passportOff));
+        Assert.Equal(FeatureRoutes.CandidatePassportPath, AuthRedirects.CandidatePostLoginUrl(false));
 
         // Passport ON (default) and OFF both use SearchItem href /banenkaart ("Zoeken").
         Assert.Contains(RoleNavCatalog.Candidate, i => i.TitleKey == "Nav.Search" && i.Href == "/banenkaart");
