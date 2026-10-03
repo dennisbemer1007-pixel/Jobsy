@@ -31,7 +31,7 @@ public static class PassportTabs
                 => Dna,
             Tests or "competenties" or "competences" or "mijn-tests" or "mijn tests"
                 => Tests,
-            Fit or "functiefit" or "role-fit" or "past-dit" or "past dit bij mij"
+            Fit or "functiefit" or "role-fit" or "past-dit" or "past dit bij mij" or "match"
                 => Fit,
             Career or "carriere" or "carrière" or "loopbaan"
                 => Career,
@@ -43,21 +43,29 @@ public static class PassportTabs
         };
     }
 
+    /// <summary>Tabs the candidate can open. Job-fit stays hidden while employers are off.</summary>
+    public static IReadOnlyList<string> Visible(bool employersEnabled)
+        => employersEnabled ? All : All.Where(t => t != Fit).ToArray();
+
     public static string Neighbor(string current, int delta)
+        => Neighbor(current, delta, employersEnabled: true);
+
+    public static string Neighbor(string current, int delta, bool employersEnabled)
     {
-        var index = Array.IndexOf(All, Normalize(current));
+        var tabs = Visible(employersEnabled);
+        var index = tabs.ToList().IndexOf(Normalize(current));
         if (index < 0)
         {
             index = 0;
         }
 
-        var next = (index + delta) % All.Length;
+        var next = (index + delta) % tabs.Count;
         if (next < 0)
         {
-            next += All.Length;
+            next += tabs.Count;
         }
 
-        return All[next];
+        return tabs[next];
     }
 
     /// <summary>Maps a passport tab to the classic Kompas tab id.</summary>

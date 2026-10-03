@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Shared
@@ -31,21 +32,23 @@
                                         <div class="profile-employer-card__dates">
                                             <label class="profile-employer-card__field profile-employer-card__field--start">
                                                 <span>@Culture["Profile.EmployerFrom"]</span>
-                                                <input type="month"
-                                                       min="1950-01"
-                                                       max="2100-12"
-                                                       value="@(Editor.Employers[idx].StartMonth ?? "")"
-                                                       @onchange="e => Editor.SetEmployerStartMonth(idx, e.Value?.ToString())" />
+                                                <MonthYearInput Value="@Editor.Employers[idx].StartMonth"
+                                                                ValueChanged="value => Editor.SetEmployerStartMonth(idx, value)" />
                                             </label>
-                                            <label class="profile-employer-card__field profile-employer-card__field--end">
-                                                <span>@Culture["Profile.EmployerTo"]</span>
-                                                <input type="month"
-                                                       min="1950-01"
-                                                       max="2100-12"
-                                                       value="@(Editor.Employers[idx].EndMonth ?? "")"
-                                                       @onchange="e => Editor.SetEmployerEndMonth(idx, e.Value?.ToString())" />
+                                            <label class="ob-wizard__check">
+                                                <input type="checkbox"
+                                                       checked="@string.IsNullOrWhiteSpace(Editor.Employers[idx].EndMonth)"
+                                                       @onchange="e => SetCurrentJob(idx, e.Value is true)" />
+                                                @Culture["Profile.CurrentJob"]
                                             </label>
-                                            <p class="profile-employer-card__dates-hint">@Culture["Profile.EmployerToHint"]</p>
+                                            @if (!string.IsNullOrWhiteSpace(Editor.Employers[idx].EndMonth))
+                                            {
+                                                <label class="profile-employer-card__field profile-employer-card__field--end">
+                                                    <span>@Culture["Profile.EmployerTo"]</span>
+                                                    <MonthYearInput Value="@Editor.Employers[idx].EndMonth"
+                                                                    ValueChanged="value => Editor.SetEmployerEndMonth(idx, value)" />
+                                                </label>
+                                            }
                                         </div>
                                         <label class="profile-employer-card__field profile-employer-card__field--description">
                                             <span>@Culture["Profile.WhatDidYouDo"]</span>
@@ -65,4 +68,12 @@
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private void SetCurrentJob(int index, bool current)
+    {
+        var end = current
+            ? null
+            : Editor.Employers[index].StartMonth ?? DateTime.UtcNow.ToString("yyyy-MM");
+        Editor.SetEmployerEndMonth(index, end);
+    }
 }

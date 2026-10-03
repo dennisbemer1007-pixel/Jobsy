@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Careers
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
@@ -29,12 +30,24 @@
     @if (Draft.DreamSearch.Length > 0)
     {
         <div role="listbox">
-            @foreach (var dreamJob in DreamJobCatalog.Search(Draft.DreamSearch))
+            @if (Young)
             {
-                <button type="button" role="option" @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
-                    @((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))
-                    <span>@Culture[$"DreamJob.{dreamJob.Key}"]</span>
-                </button>
+                @foreach (var dreamJob in DreamJobCatalog.Search(Draft.DreamSearch))
+                {
+                    <button type="button" role="option" @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
+                        @((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))
+                        <span>@Culture[$"DreamJob.{dreamJob.Key}"]</span>
+                    </button>
+                }
+            }
+            else
+            {
+                @foreach (var entry in CareerDreamCatalog.Search(Draft.DreamSearch, 8))
+                {
+                    <button type="button" role="option" @onclick="() => ChooseTitle.InvokeAsync(entry.Title)">
+                        <span>@entry.Title</span>
+                    </button>
+                }
             }
             <button type="button" @onclick="ChooseOwnDream">
                 ＋ @Culture.Format("Onboarding.DreamOwn", Draft.DreamSearch.Trim())
@@ -42,23 +55,37 @@
         </div>
     }
 </div>
-<div class="ob-wizard__dream-grid">
-    @foreach (var dreamJob in DreamJobCatalog.All)
-    {
-        var isSelected = Draft.Dream == dreamJob.TitleNl;
-        <button type="button" aria-pressed="@isSelected"
-                class="@(isSelected ? "is-selected" : null)"
-                @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
-            <span>@((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))</span>
-            <small>@Culture[$"DreamJob.{dreamJob.Key}"]</small>
-        </button>
-    }
-</div>
+@if (ShowChosenChip)
+{
+    <p class="journey-chip is-selected" role="status">@Draft.Dream</p>
+}
+@if (Young)
+{
+    <div class="ob-wizard__dream-grid">
+        @foreach (var dreamJob in DreamJobCatalog.All)
+        {
+            var isSelected = Draft.Dream == dreamJob.TitleNl;
+            <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
+                    class="@(isSelected ? "is-selected" : null)"
+                    @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
+                <span>@((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))</span>
+                <small>@Culture[$"DreamJob.{dreamJob.Key}"]</small>
+            </button>
+        }
+    </div>
+}
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
     [Parameter] public EventCallback<DreamJob> ChooseDream { get; set; }
+    [Parameter] public EventCallback<string> ChooseTitle { get; set; }
     [Parameter] public EventCallback ChooseOwnDream { get; set; }
+    /// <summary>Teen grid only when age is known and under 18. Unknown age uses the adult catalog.</summary>
+    [Parameter] public bool Young { get; set; }
+
+    private bool ShowChosenChip =>
+        !string.IsNullOrWhiteSpace(Draft.Dream)
+        && (!Young || DreamJobCatalog.All.All(job => job.TitleNl != Draft.Dream));
     [Parameter] public EventCallback<KeyboardEventArgs> DreamKeyDown { get; set; }
     /// <summary>Optional override title key (journey: Discovery.Step4.DreamTitle).</summary>
     [Parameter] public string? TitleKey { get; set; }

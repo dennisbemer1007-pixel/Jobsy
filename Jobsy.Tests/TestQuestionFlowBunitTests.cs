@@ -1,4 +1,5 @@
 using Bunit;
+using Microsoft.AspNetCore.Components;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Tests;
@@ -73,6 +74,59 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
         Assert.Equal(5, radios.Count);
         Assert.Contains("past niet", radios[0].GetAttribute("aria-label")!, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("past heel goed", radios[4].GetAttribute("aria-label")!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Finish_with_a_gap_jumps_to_the_first_unanswered_question()
+    {
+        var questions = Enumerable.Range(1, 5)
+            .Select(i => new TestQuestionFlow.FlowQuestion(i, $"{i}. Statement {i}"))
+            .ToList();
+        var answers = new Dictionary<int, int>
+        {
+            [1] = 4,
+            [3] = 4,
+            [4] = 4,
+            [5] = 4
+        };
+        var finished = false;
+        var cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Competence)
+            .Add(p => p.Questions, questions)
+            .Add(p => p.Answers, answers)
+            .Add(p => p.Target, TestDepthLevel.First)
+            .Add(p => p.ExternalIndex, 4)
+            .Add(p => p.OnFinished, () => finished = true));
+
+        cut.Find("button.test-flow__next").Click();
+
+        Assert.False(finished);
+        Assert.Contains("Vraag 2 van 5", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Statement 2", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Next_cancels_pending_auto_advance_so_a_question_is_not_skipped()
+    {
+        var questions = Enumerable.Range(1, 5)
+            .Select(i => new TestQuestionFlow.FlowQuestion(i, $"{i}. Statement {i}"))
+            .ToList();
+        var answers = new Dictionary<int, int>();
+        var cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Competence)
+            .Add(p => p.Questions, questions)
+            .Add(p => p.Answers, answers)
+            .Add(p => p.Target, TestDepthLevel.First)
+            .Add(p => p.OnAnswer, (Action<(int Id, int Value)>)(pair => answers[pair.Id] = pair.Value)));
+
+        cut.Find("input[type=radio][value='4']").Change(new ChangeEventArgs { Value = "4" });
+        cut.WaitForAssertion(() =>
+            Assert.False(cut.Find("button.test-flow__next").HasAttribute("disabled")));
+        cut.Find("button.test-flow__next").Click();
+        await Task.Delay(400);
+
+        Assert.Contains("Vraag 2 van 5", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vraag 3 van 5", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

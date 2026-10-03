@@ -72,12 +72,22 @@ public class EmployersRouteGateTests
     }
 
     [Fact]
-    public void Anonymous_candidate_vacancy_page_stays_on_home()
+    public void Anonymous_candidate_vacancy_page_shows_coming_soon()
     {
         var off = new FeatureFlagSnapshot(false, true);
         Assert.Equal(
-            "/",
+            FeatureRoutes.CandidateEmployersComingSoonPath,
             FeatureRoutes.EmployersOffRedirect(null, off, false, candidateVacancySurface: true, explicitFallback: null));
+    }
+
+    [Fact]
+    public void Signed_in_candidate_vacancy_page_shows_coming_soon()
+    {
+        var off = new FeatureFlagSnapshot(false, true);
+        var user = Principal(JobsyRoles.Candidate);
+        Assert.Equal(
+            FeatureRoutes.CandidateEmployersComingSoonPath,
+            FeatureRoutes.EmployersOffRedirect(user, off, true, candidateVacancySurface: true, explicitFallback: null));
     }
 
     [Fact]

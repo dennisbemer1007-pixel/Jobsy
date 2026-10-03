@@ -287,6 +287,19 @@ public class Ontdekkingsreis08ShedBunitTests : BunitContext
         Assert.Null(JourneyTestFlow.EndFacts(null).Strength);
     }
 
+    [Fact]
+    public void Shed_query_keeps_the_finished_step()
+    {
+        Assert.Equal("shed-8", JourneyTestFlow.ShedQuery(8));
+        Assert.Equal("shed-10", JourneyTestFlow.ShedQuery(10));
+        Assert.True(JourneyTestFlow.TryParseShedStep("shed-9", out var nine));
+        Assert.Equal(9, nine);
+        Assert.True(JourneyTestFlow.TryParseShedStep("shed", out var bare));
+        Assert.Equal(7, bare);
+        Assert.False(JourneyTestFlow.TryParseShedStep("shed-6", out _));
+        Assert.False(JourneyTestFlow.TryParseShedStep("klaar", out _));
+    }
+
     private sealed class FakeAuth : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -308,6 +321,9 @@ public class Ontdekkingsreis08SourceTests
         Assert.Contains("JourneyOverview", src, StringComparison.Ordinal);
         Assert.Contains("CompleteMyOnboardingAsync", src, StringComparison.Ordinal);
         Assert.Contains("ShowEndAsync", src, StringComparison.Ordinal);
+        Assert.Contains("PrepareShedAsync", src, StringComparison.Ordinal);
+        Assert.Contains("JourneyTestFlow.ShedQuery", src, StringComparison.Ordinal);
+        Assert.DoesNotContain("NavigateStep(\"shed\")", src, StringComparison.Ordinal);
         Assert.Contains("DeclineConsentAndFinishAsync", src, StringComparison.Ordinal);
         Assert.Contains("OnboardingInstallPrompt",
             File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Candidate/Discovery/JourneyEndScreen.razor")),

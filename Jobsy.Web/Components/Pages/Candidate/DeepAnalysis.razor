@@ -283,6 +283,11 @@ else
 
         _kindOk = true;
         _slug = AssessmentKindLabels.ToSlug(_kind);
+        if (!string.Equals(Kind, _slug, StringComparison.Ordinal))
+        {
+            Navigation.NavigateTo($"/candidate/deep-analysis/{_slug}", replace: true);
+            return;
+        }
         _titleKey = _slug switch
         {
             "career" => "Deep.CareerTitle",

@@ -60,7 +60,7 @@
     /// <summary>The candidate's current work from the paspoort; empty when unknown (never invented).</summary>
     [Parameter] public string NowLabel { get; set; } = "";
 
-    private string CountText => Plan.HasPlan
+    private string CountText => !string.IsNullOrWhiteSpace(Plan.DreamTitle)
         ? Culture.Format("Career.Rail.To", Plan.DreamTitle)
         : Culture["Career.Rail.NoDream"];
 

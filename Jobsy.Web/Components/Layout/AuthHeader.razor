@@ -1,11 +1,15 @@
 @using System.Security.Claims
+@using Jobsy.Core.Authorization
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
 @inject FeedbackHost FeedbackHost
 @inject IJSRuntime Js
+@inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
 
 <div class="auth-header">
     <AuthorizeView>
@@ -92,15 +96,58 @@
     private bool _forceClosed;
     private bool _showInstall;
     private bool _installChecked;
+    private string? _profileName;
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         Navigation.LocationChanged += OnLocationChanged;
+        CandidateNameBroadcast.Changed += OnProfileNameChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await RefreshProfileNameAsync();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => InvokeAsync(StateHasChanged);
+        => InvokeAsync(async () =>
+        {
+            await RefreshProfileNameAsync();
+            StateHasChanged();
+        });
+
+    private void OnProfileNameChanged(string name)
+    {
+        _profileName = name;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RefreshProfileNameAsync()
+    {
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            if (user.Identity?.IsAuthenticated != true
+                || !RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+            {
+                return;
+            }
+
+            var profile = await Api.GetMyProfileAsync();
+            var name = $"{profile?.FirstName} {profile?.LastName}".Trim();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                _profileName = name;
+            }
+        }
+        catch
+        {
+            // Claims stay the fallback when the profile call fails.
+        }
+    }
 
     private bool IsLoginRoute
     {
@@ -203,6 +250,11 @@
 
     private string DisplayName(ClaimsPrincipal user)
     {
+        if (!string.IsNullOrWhiteSpace(_profileName))
+        {
+            return _profileName;
+        }
+
         var given = user.FindFirst(ClaimTypes.GivenName)?.Value
                     ?? user.FindFirst("given_name")?.Value;
         var family = user.FindFirst(ClaimTypes.Surname)?.Value
@@ -233,6 +285,7 @@
     public override void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
+        CandidateNameBroadcast.Changed -= OnProfileNameChanged;
         base.Dispose();
     }
 }

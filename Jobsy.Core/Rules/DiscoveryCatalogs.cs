@@ -12,6 +12,10 @@ public static class DiscoveryCatalogs
         "nl", "en", "ar", "tr", "pl", "ro", "uk", "so", "ti", "fa", "es", "fr", "de"
     ];
 
+    /// <summary>Languages offered in “add a language”. Dutch is the separate Dutch-level field.</summary>
+    public static IEnumerable<string> AddableSpokenLanguageCodes
+        => SpokenLanguageCodes.Where(code => !string.Equals(code, "nl", StringComparison.OrdinalIgnoreCase));
+
     public static readonly string[] DutchLevels =
     [
         "beginner", "basis", "goed", "vloeiend", "moedertaal"

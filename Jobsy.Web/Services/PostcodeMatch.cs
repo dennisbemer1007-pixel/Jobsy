@@ -68,6 +68,30 @@ public static partial class PostcodeMatch
         return contains;
     }
 
+    /// <summary>
+    /// Splits "2671 AA Naaldwijk" or "2671AA Naaldwijk" into postcode and city.
+    /// A value without a postcode is returned as the city.
+    /// </summary>
+    public static (string Postcode, string City) SplitHomeAddress(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return ("", "");
+        }
+
+        var trimmed = value.Trim();
+        var match = HomeAddress().Match(trimmed);
+        if (!match.Success)
+        {
+            return ("", trimmed);
+        }
+
+        return (Normalize(match.Groups[1].Value), match.Groups[2].Value.Trim());
+    }
+
+    [GeneratedRegex(@"^(\d{4}\s?[A-Za-z]{2})\s+(.+)$", RegexOptions.CultureInvariant)]
+    private static partial Regex HomeAddress();
+
     /// <summary>City after a leading postcode. Returns null when the label is a street.</summary>
     public static string? CityFromLabel(string? label, string normalizedPostcode)
     {

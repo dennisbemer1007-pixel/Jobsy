@@ -23,9 +23,9 @@ public sealed class AssistantChatService : IAssistantChatService
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-        private static readonly string[] SearchStopwords =
-    [
-        "ik", "zoek", "zoeken", "een", "de", "het", "vacature", "vacatures", "baan", "banen",
+    private static readonly string[] SearchStopwords =
+[
+    "ik", "zoek", "zoeken", "een", "de", "het", "vacature", "vacatures", "baan", "banen",
         "job", "jobs", "als", "voor", "naar", "op", "kaart", "toon", "tonen", "vind", "vinden",
         "show", "find", "search", "looking", "want", "wil", "graag", "bij", "met", "van",
         "in", "mijn", "me", "kan", "je", "jij", "mij", "please", "for", "the", "a", "an", "and",
@@ -37,7 +37,7 @@ public sealed class AssistantChatService : IAssistantChatService
         "lopen", "lopend", "loopafstand", "vandaan", "reistijd", "travel", "walking", "walk",
         "fiets", "fietsen", "bike", "cycling", "auto", "car", "rijden", "driving",
         "ov", "tram", "bus", "metro", "transit", "voet"
-    ];
+];
 
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -77,7 +77,8 @@ public sealed class AssistantChatService : IAssistantChatService
         var lastUser = sanitized.LastOrDefault(m => m.Role == "user")?.Content?.Trim() ?? "";
         if (lastUser.Length == 0 && sanitized.Count == 0)
         {
-            return new AssistantChatResult(Greeting(context), UsedAi: false, []);
+            var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+            return new AssistantChatResult(Greeting(context, employersOn), UsedAi: false, []);
         }
 
         if (IsOffTopicOrForbidden(lastUser, context.Role))
@@ -111,7 +112,8 @@ public sealed class AssistantChatService : IAssistantChatService
             }
         }
 
-        return new AssistantChatResult(FallbackHelp(context), UsedAi: false, []);
+        var employersStillOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        return new AssistantChatResult(FallbackHelp(context, employersStillOn), UsedAi: false, []);
     }
 
     private async Task<AssistantChatResult?> TryScriptedAsync(
@@ -123,21 +125,48 @@ public sealed class AssistantChatService : IAssistantChatService
 
         if (string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
         {
+            var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
             if (LooksLikeHowLobsy(text))
             {
                 var lang = JobsyLanguages.Normalize(context.Language);
-                var reply = lang switch
-                {
-                    "en" => "As a candidate on Lobsy you: (1) browse the job map, (2) complete your profile, (3) like/share jobs, (4) apply, (5) track applications, (6) wait for the employer. I can open the how-to page for you.",
-                    "pl" => "Jako kandydat w Lobsy: (1) przeglądasz mapę ofert, (2) uzupełniasz profil, (3) lubisz/udostępniasz oferty, (4) aplikujesz, (5) śledzisz status, (6) czekasz na pracodawcę. Mogę otworzyć stronę z instrukcją.",
-                    "ro" => "Ca și candidat pe Lobsy: (1) vezi harta joburilor, (2) completezi profilul, (3) like/share, (4) aplici, (5) urmărești statusul, (6) aștepți angajatorul. Pot deschide ghidul.",
-                    "ar" => "كمترشح على Lobsy: (1) تستعرض خريطة الوظائف، (2) تكمل ملفك، (3) تعجب/تشارك، (4) تتقدم، (5) تتابع الطلبات، (6) تنتظر صاحب العمل. يمكنني فتح صفحة الشرح.",
-                    _ => "Als kandidaat op Lobsy: (1) bekijk de banenkaart, (2) vul je profiel, (3) like/deel vacatures, (4) solliciteer, (5) volg je sollicitaties, (6) wacht op de werkgever. Ik kan de uitlegpagina openen."
-                };
+                var reply = employersOn
+                    ? lang switch
+                    {
+                        "en" => "As a candidate on Lobsy you: (1) browse the job map, (2) complete your profile, (3) like/share jobs, (4) apply, (5) track applications, (6) wait for the employer. I can open the how-to page for you.",
+                        "pl" => "Jako kandydat w Lobsy: (1) przeglądasz mapę ofert, (2) uzupełniasz profil, (3) lubisz/udostępniasz oferty, (4) aplikujesz, (5) śledzisz status, (6) czekasz na pracodawcę. Mogę otworzyć stronę z instrukcją.",
+                        "ro" => "Ca și candidat pe Lobsy: (1) vezi harta joburilor, (2) completezi profilul, (3) like/share, (4) aplici, (5) urmărești statusul, (6) aștepți angajatorul. Pot deschide ghidul.",
+                        "ar" => "كمترشح على Lobsy: (1) تستعرض خريطة الوظائف، (2) تكمل ملفك، (3) تعجب/تشارك، (4) تتقدم، (5) تتابع الطلبات، (6) تنتظر صاحب العمل. يمكنني فتح صفحة الشرح.",
+                        _ => "Als kandidaat op Lobsy: (1) bekijk de banenkaart, (2) vul je profiel, (3) like/deel vacatures, (4) solliciteer, (5) volg je sollicitaties, (6) wacht op de werkgever. Ik kan de uitlegpagina openen."
+                    }
+                    : lang switch
+                    {
+                        "en" => "As a candidate on Lobsy you work on your passport, tests and career plan. Jobs and applications come later. Nothing goes to an employer.",
+                        "pl" => "Jako kandydat w Lobsy pracujesz nad paszportem, testami i planem kariery. Oferty i aplikacje pojawią się później. Nic nie trafia do pracodawcy.",
+                        "ro" => "Ca și candidat pe Lobsy lucrezi la pașaport, teste și planul de carieră. Joburile și candidaturile vin mai târziu. Nimic nu ajunge la un angajator.",
+                        "ar" => "كمترشح على Lobsy تعمل على جوازك واختباراتك وخطة مسارك. الوظائف والطلبات تأتي لاحقاً. لا شيء يذهب إلى صاحب عمل.",
+                        _ => "Als kandidaat op Lobsy werk je aan je paspoort, tests en loopbaanplan. Banen en sollicitaties komen later. Niets gaat naar een werkgever."
+                    };
                 return new AssistantChatResult(
                     reply,
                     false,
                     [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/hoe-werkt-lobsy", Label: "Hoe werkt Lobsy")]);
+            }
+
+            if (!employersOn && (LooksLikeApplicationStatus(text) || IsVacancySearchIntent(text, DetectWorkType(text), ExtractJobSearchQuery(lastUser, DetectWorkType(text)))))
+            {
+                var lang = JobsyLanguages.Normalize(context.Language);
+                var soon = lang switch
+                {
+                    "en" => "Jobs and applications come later. Your passport, tests and career plan stay yours.",
+                    "pl" => "Oferty i aplikacje pojawią się później. Twój paszport, testy i plan kariery zostają twoje.",
+                    "ro" => "Joburile și candidaturile vin mai târziu. Pașaportul, testele și planul rămân ale tale.",
+                    "ar" => "الوظائف والطلبات تأتي لاحقاً. جوازك واختباراتك وخطة مسارك تبقى لك.",
+                    _ => "Banen en sollicitaties komen later. Je paspoort, tests en loopbaanplan blijven van jou."
+                };
+                return new AssistantChatResult(
+                    soon,
+                    false,
+                    [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/paspoort", Label: "Mijn paspoort")]);
             }
 
             if (LooksLikeApplicationStatus(text))
@@ -154,7 +183,6 @@ public sealed class AssistantChatService : IAssistantChatService
             var maxTravelMinutes = DetectMaxTravelMinutes(text);
             var transport = DetectTransport(text);
             var jobQuery = ExtractJobSearchQuery(lastUser, workType);
-            var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
             if (employersOn
                 && (IsVacancySearchIntent(text, workType, jobQuery)
                     || (workType is not null && (maxTravelMinutes is not null || transport is not null))))
@@ -1009,11 +1037,34 @@ Verbetervoorstellen:
         {
             if (string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
             {
+                var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
                 var stats = await _candidateMetrics.GetSummaryAsync(context.UserId, "month", cancellationToken);
-                var apps = await _db.Applications.AsNoTracking()
-                    .CountAsync(a => a.CandidateUserId == context.UserId, cancellationToken);
-                return $"Candidate facts (own profile only): total applications={apps}; month metrics: "
-                       + string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}"));
+                var user = await _db.Users.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+                var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+                var dream = await _db.CandidateCareerPlans.AsNoTracking()
+                    .Where(p => p.UserId == context.UserId)
+                    .Select(p => p.DreamTitle)
+                    .FirstOrDefaultAsync(cancellationToken);
+                var sb = new StringBuilder();
+                sb.Append(employersOn
+                    ? "Candidate facts (own profile only): "
+                    : "Candidate facts (own profile only; employers OFF, do not suggest vacancies, applications or employer contact): ");
+                if (!employersOn)
+                {
+                    sb.Append("jobs and applications are hidden; ");
+                }
+                else
+                {
+                    var apps = await _db.Applications.AsNoTracking()
+                        .CountAsync(a => a.CandidateUserId == context.UserId, cancellationToken);
+                    sb.Append($"total applications={apps}; ");
+                }
+
+                AppendPreferenceFacts(sb, prefs, dream);
+                sb.Append("month metrics: ");
+                sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
+                return sb.ToString();
             }
 
             if (string.Equals(context.Role, JobsyRoles.SalesManager, StringComparison.Ordinal))
@@ -1056,13 +1107,81 @@ Verbetervoorstellen:
         return "No extra facts.";
     }
 
+    private static void AppendPreferenceFacts(StringBuilder sb, CandidatePreferencesDto? prefs, string? dream)
+    {
+        if (!string.IsNullOrWhiteSpace(dream))
+        {
+            sb.Append($"dream={dream.Trim()}; ");
+        }
+
+        if (prefs is null)
+        {
+            return;
+        }
+
+        var city = HomeAddressCity.From(prefs.HomeAddress);
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            sb.Append($"city={city}; ");
+        }
+
+        if (!string.IsNullOrWhiteSpace(prefs.PreferredTransport))
+        {
+            sb.Append($"transport={prefs.PreferredTransport.Trim()}; ");
+        }
+
+        if (prefs.MaxTravelMinutes is int minutes)
+        {
+            sb.Append($"maxTravelMinutes={minutes}; ");
+        }
+
+        if (prefs.Educations is { Count: > 0 })
+        {
+            sb.Append($"education={string.Join(", ", prefs.Educations)}; ");
+        }
+
+        if (!string.IsNullOrWhiteSpace(prefs.EducationDirection))
+        {
+            sb.Append($"direction={prefs.EducationDirection.Trim()}; ");
+        }
+
+        var roles = (prefs.Employers ?? [])
+            .Select(e => e.Role)
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Select(r => r!.Trim());
+        var experience = string.Join(", ", roles);
+        if (experience.Length > 0)
+        {
+            sb.Append($"experience={experience}; ");
+        }
+    }
+
+    private static CandidatePreferencesDto? ParseAssistantPreferences(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<CandidatePreferencesDto>(json, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     private static string BuildSystemPrompt(AssistantChatContext context, string languageName, string facts)
     {
         var role = context.Role;
         var scope = role switch
         {
             JobsyRoles.Candidate =>
-                "You help a JOBSEEKER on Lobsy only: listen to their question and answer from their own profile data (applications, likes, shares, open-for-work, preferences) OR search vacancies by keywords that appear in vacancy title/description (e.g. chauffeur). Never invent vacancies. Never access other users’ data.",
+                "You help a JOBSEEKER on Lobsy only: answer from their own profile (preferences, experience, education, dream job, tests, career plan). " +
+                "If the scoped facts say employers are OFF, do not mention vacancies, applications, likes or employer contact, and do not claim you lack their preferences when the facts include them. " +
+                "Never invent vacancies. Never access other users’ data. Never send the candidate's data to an employer.",
             JobsyRoles.SalesManager =>
                 "You help a SALESMANAGER on Lobsy only: their referrals, commissions, invoices, onboarding, tracking code. Stay inside their account. No candidate personal NAW data of third parties.",
             JobsyRoles.Admin =>
@@ -1078,11 +1197,14 @@ Verbetervoorstellen:
             $"Scoped facts:\n{facts}";
     }
 
-    private static string Greeting(AssistantChatContext context)
+    private static string Greeting(AssistantChatContext context, bool employersOn = true)
     {
         var lang = JobsyLanguages.Normalize(context.Language);
         return context.Role switch
         {
+            JobsyRoles.Candidate when !employersOn => lang == "en"
+                ? "Hi! I’m Lobsy. Ask me about your passport, tests or career plan. Jobs and applications come later."
+                : "Hoi! Ik ben Lobsy. Vraag me naar je paspoort, tests of loopbaanplan. Banen en sollicitaties komen later.",
             JobsyRoles.Candidate => lang == "en"
                 ? "Hi! I’m Lobsy. Ask me anything in your profile (applications, likes), or search vacancies by keyword (e.g. chauffeur)."
                 : "Hoi! Ik ben Lobsy. Stel me elke vraag binnen jouw profiel (sollicitaties, likes), of zoek vacatures op trefwoord (bijv. chauffeur).",
@@ -1098,11 +1220,14 @@ Verbetervoorstellen:
         };
     }
 
-    private static string FallbackHelp(AssistantChatContext context)
+    private static string FallbackHelp(AssistantChatContext context, bool employersOn = true)
     {
         var lang = JobsyLanguages.Normalize(context.Language);
         return context.Role switch
         {
+            JobsyRoles.Candidate when !employersOn => lang == "en"
+                ? "I can explain how Lobsy works and answer from your profile: preferences, experience, education and your career plan. Jobs come later."
+                : "Ik leg uit hoe Lobsy werkt en antwoord vanuit je profiel: voorkeuren, ervaring, opleiding en je loopbaanplan. Banen komen later.",
             JobsyRoles.Candidate => lang == "en"
                 ? "I can search vacancies by keyword (e.g. “chauffeur”), explain how Lobsy works, or answer questions about your profile and applications."
                 : "Ik kan vacatures zoeken op trefwoord (bijv. “chauffeur”), uitleggen hoe Lobsy werkt, of vragen beantwoorden over jouw profiel en sollicitaties.",

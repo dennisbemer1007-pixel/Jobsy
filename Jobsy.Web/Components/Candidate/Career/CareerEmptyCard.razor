@@ -25,9 +25,12 @@
                        OnSearch="@OnSearch"
                        OnChoice="@OnChoice" />
 
-    <p class="career-card__discovery career-only-desktop">
-        <a href="@DiscoveryHref">@Culture["Career.Empty.DiscoveryHint"]</a>
-    </p>
+    @if (ShowDiscoveryHint)
+    {
+        <p class="career-card__discovery career-only-desktop">
+            <a href="@DiscoveryHref">@Culture["Career.Empty.DiscoveryHint"]</a>
+        </p>
+    }
 
     <div class="career-card__actions career-card__actions--sticky">
         <button type="button"
@@ -46,6 +49,7 @@
     [Parameter] public bool HasChoice { get; set; }
     [Parameter] public string? ErrorText { get; set; }
     [Parameter] public string DiscoveryHref { get; set; } = "/candidate/ontdekkingsreis";
+    [Parameter] public bool ShowDiscoveryHint { get; set; } = true;
     [Parameter] public EventCallback<CareerDreamChoice?> OnChoice { get; set; }
     [Parameter] public EventCallback OnSubmit { get; set; }
     [Parameter] public Func<string, CancellationToken, Task<IReadOnlyList<CareerDreamOptionApiItem>>>? OnSearch { get; set; }
