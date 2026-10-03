@@ -40,6 +40,9 @@ public static class UiStringsScholen
         nl["School.Col.Level"] = "Niveau";
         nl["School.Col.Year"] = "Leerjaar";
         nl["School.Col.QuestionSet"] = "Vragenlijst";
+        nl["School.QuestionSet.Groep78"] = "Vragenlijst groep 7/8 (60 vragen)";
+        nl["School.QuestionSet.Vo"] = "Vragenlijst VO";
+        nl["School.Results.TestSwitch"] = "Vragenlijst";
         nl["School.Col.Teacher"] = "Leraar";
         nl["School.Col.Codes"] = "Codes";
         nl["School.Col.Started"] = "Gestart";
@@ -521,6 +524,7 @@ public static class UiStringsScholen
         nl["AdminScholen.Report.Filter.AllSchools"] = "Alle scholen";
         nl["AdminScholen.Report.Filter.Level"] = "Niveau";
         nl["AdminScholen.Report.Filter.Leerjaar"] = "Leerjaar";
+        nl["AdminScholen.Report.Filter.QuestionSet"] = "Vragenlijst";
         nl["AdminScholen.Report.Kpi.Schools"] = "Scholen actief";
         nl["AdminScholen.Report.Kpi.Classes"] = "Klassen";
         nl["AdminScholen.Report.Kpi.Started"] = "Leerlingen gestart";

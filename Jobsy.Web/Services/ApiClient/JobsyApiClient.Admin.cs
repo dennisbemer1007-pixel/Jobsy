@@ -1350,7 +1350,7 @@ public sealed partial class JobsyApiClient
     public async Task<AdminMfaOverview?> GetAdminMfaOverviewAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<AdminMfaOverview>("api/admin/audit/mfa-overview", ct);
 
-public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>> GetAdminSchoolsAsync(
+    public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>> GetAdminSchoolsAsync(
         CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>(
             "api/admin/schools", ct) ?? [];
@@ -1441,14 +1441,18 @@ public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>
         Guid? schoolId = null,
         Jobsy.Core.Enums.SchoolLevel? level = null,
         int? year = null,
+        Jobsy.Core.Enums.PupilQuestionSet questionSet = Jobsy.Core.Enums.PupilQuestionSet.Vo,
         CancellationToken ct = default)
     {
-        var q = new List<string>();
+        var q = new List<string>
+        {
+            $"questionSet={questionSet}"
+        };
         if (schoolYearStart is int sy) q.Add($"schoolYearStart={sy}");
         if (schoolId is Guid sid) q.Add($"schoolId={sid:D}");
         if (level is { } lv) q.Add($"level={lv}");
         if (year is int y) q.Add($"year={y}");
-        var url = "api/admin/schools/rapportage" + (q.Count == 0 ? "" : "?" + string.Join('&', q));
+        var url = "api/admin/schools/rapportage?" + string.Join('&', q);
         return await _http.GetFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolReportViewDto>(url, ct);
     }
 
@@ -1519,14 +1523,18 @@ public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>
         int? schoolYearStart = null,
         Guid? schoolId = null,
         Jobsy.Core.Enums.SchoolLevel? level = null,
-        int? year = null)
+        int? year = null,
+        Jobsy.Core.Enums.PupilQuestionSet questionSet = Jobsy.Core.Enums.PupilQuestionSet.Vo)
     {
-        var q = new List<string>();
+        var q = new List<string>
+        {
+            $"questionSet={questionSet}"
+        };
         if (schoolYearStart is int sy) q.Add($"schoolYearStart={sy}");
         if (schoolId is Guid sid) q.Add($"schoolId={sid:D}");
         if (level is { } lv) q.Add($"level={lv}");
         if (year is int y) q.Add($"year={y}");
-        return "api/admin/schools/rapportage.csv" + (q.Count == 0 ? "" : "?" + string.Join('&', q));
+        return "api/admin/schools/rapportage.csv?" + string.Join('&', q);
     }
 
     public async Task<IReadOnlyList<AdminContentReportItem>> GetContentReportsAsync(
