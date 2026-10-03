@@ -373,6 +373,7 @@ public static class UiStringsScholen
         nl["Leerling.Reis.QuestionOf"] = "Vraag {0} van {1}";
         nl["Leerling.Reis.Imagine"] = "Stel je voor…";
         nl["Leerling.Reis.Answers"] = "Jouw antwoord";
+        nl["Leerling.Reis.AnswerPosition"] = "{0} van {1}";
         nl["Leerling.Reis.Saved"] = "Bewaard";
         nl["Leerling.Reis.SaveFailed"] = "Niet bewaard — probeer opnieuw";
         nl["Leerling.Reis.ResultPending"] = "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.";

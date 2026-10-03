@@ -6,6 +6,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -61,7 +62,7 @@ else
     var infoId = "ll-imagine-" + (item?.Id ?? "x");
     var cheerKey = _def.CheerKey(_state.AnsweredCount);
 
-    <div class="ll-reis" @onkeydown="OnKey" tabindex="0">
+    <div class="ll-reis">
         <aside class="ll-rail" aria-label="@Culture["Leerling.Reis.Journey"]">
             <p class="ll-rail__title">@Culture["Leerling.Reis.Journey"]</p>
             <p class="ll-rail__meta">@string.Format(Culture["Leerling.Reis.WorldOf"], worldNum, 4)</p>
@@ -92,6 +93,9 @@ else
         </aside>
 
         <section class="ll-card ll-question" role="group" aria-labelledby="ll-q-title">
+            <LeerlingCheerToast Text="@Culture[cheerKey]"
+                                Show="_cheerToast"
+                                OnHidden="HideCheerToast" />
             <p class="ll-question__meta">
                 @string.Format(Culture["Leerling.Reis.QuestionOf"], _state.CurrentIndex + 1, _state.TotalItems)
                 · @Culture["Leerling.World.Label"] @worldNum
@@ -112,19 +116,12 @@ else
                 <button type="button" class="ll-info__close" @onclick="() => _infoOpen = false" aria-label="Sluiten">×</button>
             </div>
 
-            <div class="ll-answers" role="radiogroup" aria-label="@Culture["Leerling.Reis.Answers"]">
-                @foreach (var (value, key) in _def.AnswerLabels)
-                {
-                    var selected = _selected == value;
-                    <button type="button"
-                            class="ll-answer @(selected ? "is-selected" : null)"
-                            aria-pressed="@selected"
-                            @onclick="() => SelectAnswer(value)">
-                        <span class="ll-answer__dot" aria-hidden="true"></span>
-                        @Culture[key]
-                    </button>
-                }
-            </div>
+            <LeerlingAnswerScale Labels="_def.AnswerLabels"
+                                 Set="_def.Set"
+                                 Selected="_selected"
+                                 OnSelect="SelectAnswer"
+                                 GroupLabel="@Culture["Leerling.Reis.Answers"]"
+                                 Disabled="_busy" />
 
             @if (!string.IsNullOrEmpty(_saveError))
             {
@@ -140,7 +137,7 @@ else
             </div>
         </section>
 
-        <div class="ll-lob-zone">
+        <div class="ll-lob-zone" data-testid="ll-cheer-desktop">
             <p class="ll-bubble">@Culture[cheerKey]</p>
             <LeerlingLobster PlatesShed="@plates" NewShell="@_state.NewShell" Mobile="false" />
         </div>
@@ -163,6 +160,8 @@ else
     private string? _saveError;
     private int? _selected;
     private bool _busy;
+    private bool _cheerToast;
+    private int _platesSeen = int.MinValue;
 
     protected override async Task OnInitializedAsync()
     {
@@ -228,6 +227,7 @@ else
             }
 
             _infoOpen = false;
+            MaybeShowCheerToast();
         }
         catch
         {
@@ -239,6 +239,24 @@ else
             _loading = false;
         }
     }
+
+    private void MaybeShowCheerToast()
+    {
+        if (_state is null)
+        {
+            return;
+        }
+
+        var plates = _state.PlatesShed;
+        if (_platesSeen != int.MinValue && plates > _platesSeen)
+        {
+            _cheerToast = true;
+        }
+
+        _platesSeen = plates;
+    }
+
+    private void HideCheerToast() => _cheerToast = false;
 
     private async Task RetryPending()
     {
@@ -346,14 +364,6 @@ else
     }
 
     private void ToggleInfo() => _infoOpen = !_infoOpen;
-
-    private async Task OnKey(KeyboardEventArgs e)
-    {
-        if (e.Key is "1" or "2" or "3" or "4" or "5")
-        {
-            await SelectAnswer(e.Key[0] - '0');
-        }
-    }
 
     private bool IsWorldDone(string worldKey)
     {
