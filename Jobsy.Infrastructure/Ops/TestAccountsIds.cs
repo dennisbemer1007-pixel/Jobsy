@@ -23,6 +23,7 @@ internal static class TestAccountsIds
 
     public static readonly Guid School = Guid.Parse("b0000001-0000-4000-8000-000000000050");
     public static readonly Guid SchoolClass = Guid.Parse("b0000001-0000-4000-8000-000000000051");
+    public static readonly Guid SchoolClassGroep78 = Guid.Parse("b0000001-0000-4000-8000-000000000052");
 
     // Reserved KvK range for test data (never call out for IsTestData companies).
     public const string RootKvk = "00000991";

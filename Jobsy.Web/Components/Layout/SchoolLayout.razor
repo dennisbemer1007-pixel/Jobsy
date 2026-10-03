@@ -184,7 +184,10 @@
         }
 
         _scopeOptions = _assigned
-            .Select(c => new EntScopeChip.ScopeOption(c.Id.ToString("D"), $"Klas {c.ClassName}", $"{c.Level} {c.Year}"))
+            .Select(c => new EntScopeChip.ScopeOption(
+                c.Id.ToString("D"),
+                $"Klas {c.ClassName}",
+                SchoolLevelRules.YearLabel(c.Level, c.Year)))
             .ToList();
     }
 

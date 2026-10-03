@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Ui.Enterprise
 @inject JobsyApiClient Api
@@ -106,13 +107,13 @@
                         <option value="">—</option>
                         @foreach (SchoolLevel lv in Enum.GetValues<SchoolLevel>())
                         {
-                            <option value="@lv">@lv</option>
+                            <option value="@lv">@Culture[SchoolLevelRules.LabelKey(lv)]</option>
                         }
                     </select>
                 </label>
                 <label>
                     @Culture["AdminScholen.Report.Filter.Leerjaar"]
-                    <input class="input" type="number" min="1" max="6" style="width:4rem" @bind="_leerjaarText" @bind:after="ReloadReportAsync" />
+                    <input class="input" type="number" min="1" max="8" @bind="_leerjaarText" @bind:after="ReloadReportAsync" />
                 </label>
                 <button type="button" class="btn-compact" disabled="@_busy" @onclick="RefreshAggregatesAsync">@Culture["AdminScholen.Report.Refresh"]</button>
                 <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="ExportCsvAsync">@Culture["AdminScholen.Report.Export"]</button>
@@ -216,8 +217,8 @@
                         @foreach (var row in _report.PerLevelYear)
                         {
                             <tr>
-                                <td>@row.Level</td>
-                                <td class="tabular">@row.Year</td>
+                                <td>@Culture[SchoolLevelRules.LabelKey(row.Level)]</td>
+                                <td>@SchoolLevelRules.YearLabel(row.Level, row.Year)</td>
                                 <td class="tabular">@(row.Masked ? Culture["AdminScholen.Report.Lt5"] : row.ClassCount?.ToString())</td>
                                 <td class="tabular">@(row.Masked ? Culture["AdminScholen.Report.Lt5"] : row.StartedCount?.ToString())</td>
                                 <td class="tabular">@(row.Masked ? Culture["AdminScholen.Report.Lt5"] : row.CompletedCount?.ToString())</td>

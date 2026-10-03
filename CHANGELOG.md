@@ -12,6 +12,9 @@
 
 - Carrière 06 (tests + docs): the carrière stack (01–06) is closed off. `CarrierePlaywrightTests` walks the eleven candidate flows end to end on desktop 1440 and mobile 390, in nl/en/pl/ro/ar incl. `ar` RTL, with reduced motion and with Werkgevers OFF, and soft-skips without `JOBSY_E2E_BASE_URL` (same contract as the other Playwright suites). Screenshots land in `artifacts/e2e/carriere`. Cleanup: the unused Horizon dashboard CSS, the `career-dash` rules and the orphaned `LobsyToast` component are gone (`app.min.css?v=20260930-carriere6`), and `POST api/me/career-path/courses/claim` keeps its `410 use_passport_proof` stub until 2026-10-30. `carriere.css` now has a page-weight budget guard. Docs: `docs/ROUTES.md` carrière notes, thirteen candidate scenarios in `docs/TESTSCENARIOS_PER_ROL.md` / `docs/testscenarios-per-rol.csv`, and the stack report in `docs/reports/carriere-stack-report.md` with the native-review strings in `docs/i18n/carriere-review.csv`.
 
+### Added
+- Scholen vragensets 02: class level picks the question set. `SchoolLevel.Groep78`, `PupilQuestionSet` on `SchoolClass` (never on pupil codes), `SchoolLevelRules`, migration `AddClassQuestionSet` (existing classes → VO), school portal create/edit form with Basisschool/VO picker and lock rule once codes have started (`409 level_locked`), readable labels everywhere, seed class `7A`.
+
 ### Fixed
 - Scholen hotfix (vragensets 01): never leave a pupil `Completed` without a `PupilResult` when the result builder fails after the last answer. `SaveAnswerAsync` builds first (status stays `InProgress` + `ResultPending` on failure); login/progress/result self-heal via `EnsureResultAsync`; pupil UI shows “We maken je verhaal klaar” with retry; teacher detail shows “Bezig met afronden”. Group results still read `PupilResult` rows only.
 
