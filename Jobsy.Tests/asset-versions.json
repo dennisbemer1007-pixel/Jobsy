@@ -48,8 +48,8 @@
     "v": "20260929-insights-7"
   },
   "css/features/landing.css": {
-    "sha256": "1ca9ddd1a7ac555d403a4313de07ee4706ae1f79d4eb603d6fb10adfd222ad37",
-    "v": "20261002-ci-mtp3"
+    "sha256": "fa784797cf21626a06bd7b7d8e8c18498071f2d7496200cfe5c3f1300e95e1f3",
+    "v": "20261003-a11y"
   },
   "css/features/match-desktop.css": {
     "sha256": "719535fb31e05c285f519f7a047a872dcd91ab67d42b56ae5b03b4cb8f13d672",
@@ -76,12 +76,12 @@
     "v": "20260929-or-08"
   },
   "css/features/public-pages.css": {
-    "sha256": "a1b8b718c93d7c31eecc3df83375f1280156f724b31c1ec232c14cbda2cec08c",
-    "v": "20261001-pp09"
+    "sha256": "39f0f31e9a77869d77bcc58c12fa41349882e9dd9d16d999dd20f088aac3fe14",
+    "v": "20261003-a11y"
   },
   "css/features/public-theme.css": {
-    "sha256": "dae311dc566e1532c210e13d2d532ba15f39e458d1d01fd737937b7a136352cd",
-    "v": "20260930-landing-5"
+    "sha256": "54460d0465e4cec4b095bf5512fb4822bec014da397d8e4b1a7c3b05519f45ab",
+    "v": "20261003-a11y"
   },
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",

@@ -14,7 +14,7 @@
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--coral);
+  color: var(--pub-coral-ink);
   margin-bottom: 0.5rem;
 }
 
@@ -59,11 +59,6 @@
   min-height: 3.1rem;
   padding-inline: 1.5rem;
   font-size: 1.05rem;
-}
-
-.pub-theme .pub-btn--disabled {
-  opacity: 0.55;
-  pointer-events: none;
 }
 
 .pub-theme .pub-pill {
@@ -285,9 +280,11 @@
   width: min(14rem, 70%);
 }
 
-.pub-theme .pub-landing__you-card h4 {
+.pub-theme .pub-landing__you-card h2 {
   margin: 0 0 0.55rem;
   font-size: 0.95rem;
+  font-weight: 700;
+  line-height: normal;
 }
 
 .pub-theme .pub-landing__bar {
@@ -499,9 +496,11 @@
   border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
-.pub-theme .pub-landing__job h5 {
+.pub-theme .pub-landing__job h4 {
   margin: 0;
   font-size: 0.95rem;
+  font-weight: 700;
+  line-height: normal;
 }
 
 .pub-theme .pub-landing__tt {
@@ -621,6 +620,14 @@
   background: color-mix(in srgb, var(--gold) 16%, var(--surface));
 }
 
+/* Was an h6. Keep the user-agent h6 size so the level change is not a visual change. */
+.pub-theme .pub-landing__rep h5 {
+  font-size: 0.67em;
+  font-weight: 700;
+  margin-block: 2.33em;
+  line-height: normal;
+}
+
 .pub-theme .pub-landing__ln {
   height: 0.4rem;
   border-radius: var(--pub-radius-pill);
@@ -703,8 +710,11 @@
   padding: 1.1rem;
 }
 
-.pub-theme .pub-landing__tg h4 {
+.pub-theme .pub-landing__tg h3 {
   margin: 0.55rem 0 0.35rem;
+  font-size: 1em;
+  font-weight: 700;
+  line-height: normal;
 }
 
 .pub-theme .pub-landing__tg p {
@@ -781,7 +791,7 @@
 
 .pub-theme .pub-landing__final p {
   margin: 0;
-  color: var(--muted);
+  color: var(--pub-ink-muted);
 }
 
 .pub-theme .pub-landing__sm,
