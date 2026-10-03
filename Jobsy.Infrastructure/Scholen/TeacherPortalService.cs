@@ -373,7 +373,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         if (code.Status == PupilCodeStatus.Completed && code.Result is not null)
         {
             story = _story.Render(code.Result, code.Progress);
-            dream = EnrichDreamTitle(_story.RenderDreamRoute(code.Result, code.Progress));
+            dream = EnrichDreamTitle(_story.RenderDreamRoute(code.Result, code.Progress, PupilClassContext.From(code.SchoolClass!)));
             starters = _story.ConversationStarterKeys(code.Result);
             likes = ParseChipList(code.Progress?.LikesJson);
             dislikes = ParseChipList(code.Progress?.DislikesJson);
@@ -432,7 +432,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             ? PupilCodeFormat.Display(raw)
             : "******";
         var story = _story.Render(code.Result, code.Progress);
-        var dream = _story.RenderDreamRoute(code.Result, code.Progress);
+        var classContext = PupilClassContext.From(code.SchoolClass!);
+        var dream = _story.RenderDreamRoute(code.Result, code.Progress, classContext);
         var likes = ParseChipList(code.Progress?.LikesJson).Select(ChipDutch).ToList();
         var dislikes = ParseChipList(code.Progress?.DislikesJson).Select(ChipDutch).ToList();
         if (!string.IsNullOrWhiteSpace(code.Progress?.LikeOtherWord))
@@ -460,7 +461,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
                 ? null
                 : dream.JobTitle,
             RouteSteps: dream.RouteSteps,
-            Encouragement: dream.Encouragement);
+            Encouragement: dream.Encouragement,
+            Footer: PupilVerhaalCopy.Get("LeerlingPdf.Footer", classContext));
 
         var bytes = _pdf.Render(model);
         var safeClass = new string(code.SchoolClass.Name.Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());

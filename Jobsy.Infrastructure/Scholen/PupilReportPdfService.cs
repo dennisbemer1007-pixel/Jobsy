@@ -140,7 +140,7 @@ public sealed class PupilReportPdfService : IPupilReportPdfService
                     foot.Item().LineHorizontal(0.5f).LineColor(Soft);
                     foot.Item().PaddingTop(4).Row(r =>
                     {
-                        r.RelativeItem().Text(PupilReportPdfCopy.Footer).FontSize(7).FontColor(Muted);
+                        r.RelativeItem().Text(model.Footer ?? PupilReportPdfCopy.Footer).FontSize(7).FontColor(Muted);
                         r.ConstantItem(90).AlignRight().Text(text =>
                         {
                             text.Span("Pagina ").FontSize(7).FontColor(Muted);

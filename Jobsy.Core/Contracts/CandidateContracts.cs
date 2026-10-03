@@ -38,7 +38,23 @@ public record CandidatePreferencesDto(
     /// <summary>Free-text learning goals. Max 5 × 60 chars.</summary>
     IReadOnlyList<string>? LearningGoals = null,
     /// <summary>Hobby catalog codes and/or free text. Max 10.</summary>
-    IReadOnlyList<string>? Hobbies = null);
+    IReadOnlyList<string>? Hobbies = null,
+    /// <summary>Shareable work-environment choices. Null on older JSON.</summary>
+    SharedWorkPreferences? WorkPreferences = null,
+    /// <summary>When true, employer-preference codes may appear on the passport.</summary>
+    bool? ShareEmployerPreferences = null,
+    /// <summary>City or region the candidate wants to work in. No postcode.</summary>
+    string? WorkRegion = null,
+    bool? HasOwnCar = null,
+    /// <summary>Contract codes, max 3. <c>geen-voorkeur</c> is exclusive.</summary>
+    IReadOnlyList<string>? ContractPreferences = null);
+
+/// <summary>Positive, shareable work preferences. Not private dislikes.</summary>
+public record SharedWorkPreferences(
+    string? Indoor = null,
+    string? Outdoor = null,
+    string? PhysicalWork = null,
+    string? Pace = null);
 
 public record CandidateLanguageDto(string Code, string? Level = null);
 

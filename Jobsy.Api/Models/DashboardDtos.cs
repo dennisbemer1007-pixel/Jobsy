@@ -203,7 +203,9 @@ public record MeProfileDto(
     DateTime? TestAiConsentAt = null,
     string? TestAiConsentVersion = null,
     DateTime? ParentalConsentAt = null,
-    string? ParentalConsentEmail = null);
+    string? ParentalConsentEmail = null,
+    bool EmailVerified = false,
+    bool PhoneVerified = false);
 
 public record CandidateUploadedCvInfoDto(
     string FileName,
@@ -221,6 +223,8 @@ public record CandidateReferenceDto(
     string Phone);
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
+
+public record PhoneVerificationRequest(Guid ChallengeId, string? Code);
 public record RequestParentalConsentRequest(string? ParentEmail);
 
 public record UpdateCandidateProfileRequest(

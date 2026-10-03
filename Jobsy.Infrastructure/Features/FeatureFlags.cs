@@ -41,14 +41,19 @@ public sealed class FeatureFlags : IFeatureFlags
             await using var scope = _scopeFactory.CreateAsyncScope();
             var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
             var snap = await features.GetAsync(cancellationToken);
-            var flags = new FeatureFlagSnapshot(snap.EmployersEnabled, snap.CandidatePassportEnabled);
+            var flags = new FeatureFlagSnapshot(
+                snap.EmployersEnabled,
+                snap.CandidatePassportEnabled,
+                snap.PassportPartnersEnabled,
+                snap.PassportPdfV2Enabled,
+                snap.PhoneVerificationEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex,
-                "Failed to load platform feature flags; using defaults (Employers ON, Passport OFF).");
+                "Failed to load platform feature flags; using defaults (Employers OFF, Passport ON).");
             var fallback = FeatureFlagSnapshot.Defaults;
             _cache.Set(CacheKey, fallback, TimeSpan.FromSeconds(10));
             return fallback;

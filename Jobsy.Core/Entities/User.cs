@@ -18,6 +18,15 @@ public class User
     /// <summary>Candidate phone (E.164 or NL local). Shared with employers only post-Accept via CV/PII.</summary>
     public string? PhoneNumber { get; set; }
 
+    /// <summary>Set when the candidate proved this e-mail (code or external IdP). Null until then.</summary>
+    public DateTime? EmailVerifiedAtUtc { get; set; }
+
+    /// <summary>Set when the candidate confirmed <see cref="PhoneVerifiedE164"/> with an SMS code.</summary>
+    public DateTime? PhoneVerifiedAtUtc { get; set; }
+
+    /// <summary>Normalized phone that was verified. Cleared when the number changes.</summary>
+    public string? PhoneVerifiedE164 { get; set; }
+
     /// <summary>Candidate consents that employers may contact via WhatsApp on the phone number.</summary>
     public bool WhatsAppContactAllowed { get; set; }
 

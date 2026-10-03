@@ -1,13 +1,13 @@
 using Jobsy.Core.Admin;
 using Jobsy.Core.Email;
-using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
-using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Ops;
@@ -344,6 +344,8 @@ public static class DependencyInjection
         services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.NewFeedbackSource>();
         services.AddScoped<IAdminTodoService, Jobsy.Infrastructure.Services.AdminTodo.AdminTodoService>();
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
+        services.AddSingleton<ISmsSender, SmsSenderStub>();
+        services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
         services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Infrastructure.Features.FeatureFlags>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<ILegalIdentity, LegalIdentityService>();

@@ -70,5 +70,41 @@ public static class UiStringsFeatureFlags
             "Pracodawcy wyłączeni",
             "Angajatorii sunt opriți",
             "أصحاب العمل متوقفون");
+        Add("AdminSettings.PassportPartners.Enabled.Title",
+            "Paspoortpartners",
+            "Passport partners",
+            "Partnerzy paszportu",
+            "Parteneri pașaport",
+            "شركاء جواز السفر");
+        Add("AdminSettings.PassportPartners.Enabled.Desc",
+            "Uit = partnerportaal, codes en toestemming blijven verborgen. Er wordt niets verwijderd.",
+            "Off = the partner portal, codes and consent stay hidden. Nothing is deleted.",
+            "Wył. = portal partnera, kody i zgoda pozostają ukryte. Nic nie jest usuwane.",
+            "Oprit = portalul partenerilor, codurile și consimțământul rămân ascunse. Nimic nu este șters.",
+            "إيقاف = تبقى بوابة الشركاء والرموز والموافقة مخفية. لا يُحذف شيء.");
+        Add("AdminSettings.PassportPdfV2.Enabled.Title",
+            "Paspoort PDF v2",
+            "Passport PDF v2",
+            "Paszport PDF v2",
+            "Pașaport PDF v2",
+            "جواز السفر PDF v2");
+        Add("AdminSettings.PassportPdfV2.Enabled.Desc",
+            "Uit = kandidaten zien de extra deelbare voorkeuren niet. De PDF v2 komt in een latere stap.",
+            "Off = candidates do not see the extra shareable preferences. PDF v2 arrives in a later step.",
+            "Wył. = kandydaci nie widzą dodatkowych preferencji. PDF v2 przyjdzie później.",
+            "Oprit = candidații nu văd preferințele partajabile. PDF v2 vine mai târziu.",
+            "إيقاف = لا يرى المرشحون التفضيلات القابلة للمشاركة. ملف PDF v2 يأتي لاحقاً.");
+        Add("AdminSettings.PhoneVerification.Enabled.Title",
+            "Telefoon bevestigen",
+            "Confirm phone",
+            "Potwierdź telefon",
+            "Confirmă telefonul",
+            "تأكيد الهاتف");
+        Add("AdminSettings.PhoneVerification.Enabled.Desc",
+            "Blijft uit tot er een sms-provider is. Er wordt nog geen sms verstuurd buiten Development.",
+            "Stays off until an SMS provider is chosen. No SMS is sent outside Development.",
+            "Pozostaje wyłączone do wyboru dostawcy SMS. Poza Development nie ma SMS.",
+            "Rămâne oprit până la un furnizor SMS. Nu se trimite SMS în afara Development.",
+            "يبقى متوقفاً حتى اختيار مزود رسائل. لا تُرسل رسالة خارج بيئة التطوير.");
     }
 }

@@ -212,6 +212,9 @@ public sealed class PlatformFeatureItem
     public bool AmbassadorsEnabled { get; set; }
     public bool EmployersEnabled { get; set; }
     public bool CandidatePassportEnabled { get; set; } = true;
+    public bool PassportPartnersEnabled { get; set; }
+    public bool PassportPdfV2Enabled { get; set; }
+    public bool PhoneVerificationEnabled { get; set; }
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>
@@ -236,6 +239,9 @@ public sealed class PlatformFeaturePatch
     public bool? AmbassadorsEnabled { get; set; }
     public bool? EmployersEnabled { get; set; }
     public bool? CandidatePassportEnabled { get; set; }
+    public bool? PassportPartnersEnabled { get; set; }
+    public bool? PassportPdfV2Enabled { get; set; }
+    public bool? PhoneVerificationEnabled { get; set; }
     public string? Reason { get; set; }
 }
 

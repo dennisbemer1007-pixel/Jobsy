@@ -6,6 +6,7 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -79,7 +80,7 @@ else
                 }
             </div>
 
-            <p class="ll-privacy" role="note">@Culture["LeerlingStory.Privacy"]</p>
+            <p class="ll-privacy" role="note">@Culture[PupilCopy.Key(_result.QuestionSet, "LeerlingStory.Privacy")]</p>
         </section>
 
         <div class="ll-result__actions">

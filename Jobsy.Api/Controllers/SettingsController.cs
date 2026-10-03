@@ -1,4 +1,6 @@
+using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -11,8 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Jobsy.Api.Admin;
-using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -402,7 +402,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     SchoolRetentionCutoffDay: request.SchoolRetentionCutoffDay,
                     AmbassadorsEnabled: request.AmbassadorsEnabled,
                     EmployersEnabled: request.EmployersEnabled,
-                    CandidatePassportEnabled: request.CandidatePassportEnabled),
+                    CandidatePassportEnabled: request.CandidatePassportEnabled,
+                    PassportPartnersEnabled: request.PassportPartnersEnabled,
+                    PassportPdfV2Enabled: request.PassportPdfV2Enabled,
+                    PhoneVerificationEnabled: request.PhoneVerificationEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -470,6 +473,9 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("SchoolRetentionCutoffMonth", before.SchoolRetentionCutoffMonth.ToString(), after.SchoolRetentionCutoffMonth.ToString());
         Add("SchoolRetentionCutoffDay", before.SchoolRetentionCutoffDay.ToString(), after.SchoolRetentionCutoffDay.ToString());
         Add("AmbassadorsEnabled", before.AmbassadorsEnabled.ToString(), after.AmbassadorsEnabled.ToString());
+        Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
+        Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
+        Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         return list;
     }
 
@@ -484,7 +490,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         return Ok(new
         {
             employersEnabled = snap.EmployersEnabled,
-            candidatePassportEnabled = snap.CandidatePassportEnabled
+            candidatePassportEnabled = snap.CandidatePassportEnabled,
+            passportPartnersEnabled = snap.PassportPartnersEnabled,
+            passportPdfV2Enabled = snap.PassportPdfV2Enabled,
+            phoneVerificationEnabled = snap.PhoneVerificationEnabled
         });
     }
 
@@ -692,7 +701,10 @@ snap.CandidateInsightsEnabled,
             snap.SchoolRetentionCutoffDay,
             snap.AmbassadorsEnabled,
             snap.EmployersEnabled,
-            snap.CandidatePassportEnabled);
+            snap.CandidatePassportEnabled,
+            snap.PassportPartnersEnabled,
+            snap.PassportPdfV2Enabled,
+            snap.PhoneVerificationEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

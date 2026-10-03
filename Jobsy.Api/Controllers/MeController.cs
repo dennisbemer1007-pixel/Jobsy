@@ -211,7 +211,7 @@ public class MeController : ControllerBase
                 return BadRequest(new { message = "Ongeldig telefoonnummer." });
             }
 
-            user.PhoneNumber = phone;
+            ContactVerification.ApplyPhone(user, phone);
             if (phone is null)
             {
                 user.WhatsAppContactAllowed = false;
@@ -304,7 +304,12 @@ public class MeController : ControllerBase
                 request.Preferences.DutchLevel ?? existing.DutchLevel,
                 request.Preferences.EmployerPreferences ?? existing.EmployerPreferences,
                 request.Preferences.LearningGoals ?? existing.LearningGoals,
-                request.Preferences.Hobbies ?? existing.Hobbies);
+                request.Preferences.Hobbies ?? existing.Hobbies,
+                ShareablePreferenceNormalizer.NormalizeWork(request.Preferences.WorkPreferences, existing.WorkPreferences),
+                request.Preferences.ShareEmployerPreferences ?? existing.ShareEmployerPreferences,
+                ShareablePreferenceNormalizer.NormalizeRegion(request.Preferences.WorkRegion, existing.WorkRegion),
+                request.Preferences.HasOwnCar ?? existing.HasOwnCar,
+                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences));
 
             user.PreferencesJson = SerializePreferences(merged);
         }
@@ -869,7 +874,7 @@ public class MeController : ControllerBase
 
             if (!string.IsNullOrWhiteSpace(merged.PhoneNumber) && CandidatePhoneRules.IsValid(merged.PhoneNumber))
             {
-                user.PhoneNumber = merged.PhoneNumber;
+                ContactVerification.ApplyPhone(user, merged.PhoneNumber);
             }
 
             user.PreferencesJson = SerializePreferences(merged.Preferences with
@@ -1107,6 +1112,63 @@ public class MeController : ControllerBase
         return Ok(new { message = "We hebben je ouder of voogd een e-mail met een bevestigingslink gestuurd." });
     }
 
+    [HttpPost("phone-verification/start")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("otp-verify")]
+    public async Task<ActionResult> StartPhoneVerification(
+        [FromServices] IPhoneVerificationService phones,
+        CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound();
+        }
+
+        var result = await phones.StartAsync(lookup.Id, cancellationToken);
+        if (!result.Ok)
+        {
+            return result.Error switch
+            {
+                "phone_verification_disabled" => NotFound(new { error = "feature_disabled" }),
+                "invalid_phone" => BadRequest(new { message = "Ongeldig telefoonnummer." }),
+                _ => NotFound()
+            };
+        }
+
+        return Ok(new { challengeId = result.ChallengeId });
+    }
+
+    [HttpPost("phone-verification/verify")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("otp-verify")]
+    public async Task<ActionResult> VerifyPhone(
+        [FromBody] PhoneVerificationRequest request,
+        [FromServices] IPhoneVerificationService phones,
+        CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound();
+        }
+
+        var result = await phones.VerifyAsync(lookup.Id, request.ChallengeId, request.Code ?? "", cancellationToken);
+        if (!result.Ok)
+        {
+            return result.Error switch
+            {
+                "phone_verification_disabled" => NotFound(new { error = "feature_disabled" }),
+                "code_expired" => StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" }),
+                _ => Unauthorized(new { message = "invalid_code" })
+            };
+        }
+
+        var user = await _db.Users.FirstAsync(u => u.Id == lookup.Id, cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
+    }
+
     private async Task<MeProfileDto> BuildProfileDtoAsync(
         Core.Entities.User user,
         bool authenticatorEnabled,
@@ -1184,7 +1246,9 @@ public class MeController : ControllerBase
             user.TestAiConsentAt,
             user.TestAiConsentVersion,
             user.ParentalConsentAt,
-            user.ParentalConsentEmail);
+            user.ParentalConsentEmail,
+            user.EmailVerifiedAtUtc is not null,
+            user.PhoneVerifiedAtUtc is not null);
     }
 
     private async Task<Core.Entities.User?> ResolveActiveCandidateAsync(CancellationToken cancellationToken)
@@ -1668,6 +1732,26 @@ public class MeController : ControllerBase
                 hobbies = ReadStringArray(hobbiesEl);
             }
 
+            SharedWorkPreferences? workPreferences = null;
+            if (root.TryGetProperty("workPreferences", out var workEl) && workEl.ValueKind == JsonValueKind.Object)
+            {
+                workPreferences = new SharedWorkPreferences(
+                    ReadOptionalString(workEl, "indoor"),
+                    ReadOptionalString(workEl, "outdoor"),
+                    ReadOptionalString(workEl, "physicalWork"),
+                    ReadOptionalString(workEl, "pace"));
+            }
+
+            var shareEmployerPreferences = ReadOptionalBool(root, "shareEmployerPreferences");
+            var workRegion = ReadOptionalString(root, "workRegion");
+            var hasOwnCar = ReadOptionalBool(root, "hasOwnCar");
+            List<string>? contractPreferences = null;
+            if (root.TryGetProperty("contractPreferences", out var contractEl)
+                && contractEl.ValueKind == JsonValueKind.Array)
+            {
+                contractPreferences = ReadStringArray(contractEl);
+            }
+
             var parsed = new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -1694,7 +1778,12 @@ public class MeController : ControllerBase
                 dutchLevel,
                 employerPreferences,
                 learningGoals,
-                hobbies);
+                hobbies,
+                ShareablePreferenceNormalizer.NormalizeWork(workPreferences, null),
+                shareEmployerPreferences,
+                ShareablePreferenceNormalizer.NormalizeRegion(workRegion, null),
+                hasOwnCar,
+                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null));
 
             return CandidatePreferencesValidator.Sanitize(parsed);
         }
@@ -1702,6 +1791,28 @@ public class MeController : ControllerBase
         {
             return EmptyPreferences();
         }
+    }
+
+    private static string? ReadOptionalString(JsonElement obj, string name)
+    {
+        if (!obj.TryGetProperty(name, out var el) || el.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        var value = el.GetString()?.Trim();
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    private static bool? ReadOptionalBool(JsonElement obj, string name)
+    {
+        if (!obj.TryGetProperty(name, out var el)
+            || el.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+        {
+            return null;
+        }
+
+        return el.GetBoolean();
     }
 
     private static List<string> ReadStringArray(JsonElement arrayEl)
@@ -1882,7 +1993,20 @@ public class MeController : ControllerBase
             dutchLevel = sanitized.DutchLevel,
             employerPreferences = sanitized.EmployerPreferences,
             learningGoals = sanitized.LearningGoals,
-            hobbies = sanitized.Hobbies
+            hobbies = sanitized.Hobbies,
+            workPreferences = sanitized.WorkPreferences is null
+                ? null
+                : new
+                {
+                    indoor = sanitized.WorkPreferences.Indoor,
+                    outdoor = sanitized.WorkPreferences.Outdoor,
+                    physicalWork = sanitized.WorkPreferences.PhysicalWork,
+                    pace = sanitized.WorkPreferences.Pace
+                },
+            shareEmployerPreferences = sanitized.ShareEmployerPreferences,
+            workRegion = sanitized.WorkRegion,
+            hasOwnCar = sanitized.HasOwnCar,
+            contractPreferences = sanitized.ContractPreferences
         }, JsonOptions);
     }
 

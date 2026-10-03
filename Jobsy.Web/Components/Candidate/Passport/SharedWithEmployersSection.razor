@@ -1,0 +1,134 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="shared-prefs" data-testid="shared-with-employers">
+    <p class="shared-prefs__help">@Culture["Passport.Shared.Help"]</p>
+
+    <fieldset class="shared-prefs__group">
+        <legend>@Culture["Passport.Shared.Indoor"]</legend>
+        @foreach (var code in WorkPreferenceCatalogs.IndoorCodes)
+        {
+            <button type="button" class="chip @(Editor.WorkIndoor == code ? "is-on" : null)"
+                    @onclick="() => SetIndoor(code)">@Culture[WorkPreferenceCatalogs.IndoorLabelKey(code)]</button>
+        }
+    </fieldset>
+    <fieldset class="shared-prefs__group">
+        <legend>@Culture["Passport.Shared.Outdoor"]</legend>
+        @foreach (var code in WorkPreferenceCatalogs.OutdoorCodes)
+        {
+            <button type="button" class="chip @(Editor.WorkOutdoor == code ? "is-on" : null)"
+                    @onclick="() => SetOutdoor(code)">@Culture[WorkPreferenceCatalogs.OutdoorLabelKey(code)]</button>
+        }
+    </fieldset>
+    <fieldset class="shared-prefs__group">
+        <legend>@Culture["Passport.Shared.Physical"]</legend>
+        @foreach (var code in WorkPreferenceCatalogs.PhysicalWorkCodes)
+        {
+            <button type="button" class="chip @(Editor.WorkPhysical == code ? "is-on" : null)"
+                    @onclick="() => SetPhysical(code)">@Culture[WorkPreferenceCatalogs.PhysicalLabelKey(code)]</button>
+        }
+    </fieldset>
+    <fieldset class="shared-prefs__group">
+        <legend>@Culture["Passport.Shared.Pace"]</legend>
+        @foreach (var code in WorkPreferenceCatalogs.PaceCodes)
+        {
+            <button type="button" class="chip @(Editor.WorkPace == code ? "is-on" : null)"
+                    @onclick="() => SetPace(code)">@Culture[WorkPreferenceCatalogs.PaceLabelKey(code)]</button>
+        }
+    </fieldset>
+
+    <label class="detail-card passport-data__switch">
+        <input type="checkbox" checked="@Editor.ShareEmployerPreferences" @onchange="ToggleShareEmployers" />
+        <span>@Culture["Passport.Shared.ShareEmployers"]</span>
+    </label>
+
+    <label class="field">
+        <span>@Culture["Passport.Shared.WorkRegion"]</span>
+        <input data-testid="work-region" value="@Editor.WorkRegion" @onchange="OnRegion" maxlength="60" />
+    </label>
+    @if (!string.IsNullOrWhiteSpace(Editor.WorkRegionSuggestion) && string.IsNullOrWhiteSpace(Editor.WorkRegion))
+    {
+        <button type="button" class="btn-compact" @onclick="UseSuggestion">@Editor.WorkRegionSuggestion</button>
+    }
+
+    <fieldset class="shared-prefs__group">
+        <legend>@Culture["Passport.Shared.OwnCar"]</legend>
+        <button type="button" class="chip @(Editor.HasOwnCar == true ? "is-on" : null)" @onclick="() => SetCar(true)">@Culture["Passport.Shared.Yes"]</button>
+        <button type="button" class="chip @(Editor.HasOwnCar == false ? "is-on" : null)" @onclick="() => SetCar(false)">@Culture["Passport.Shared.No"]</button>
+    </fieldset>
+
+    <fieldset class="shared-prefs__group">
+        <legend>@Culture["Passport.Shared.Contract"]</legend>
+        @foreach (var code in WorkPreferenceCatalogs.ContractCodes)
+        {
+            <button type="button" class="chip @(Editor.ContractPreferences.Contains(code) ? "is-on" : null)"
+                    @onclick="() => ToggleContract(code)">@Culture[WorkPreferenceCatalogs.ContractLabelKey(code)]</button>
+        }
+    </fieldset>
+
+    <p data-testid="email-verified">
+        @(Editor.EmailVerified ? Culture["Passport.Shared.EmailVerified"] : Culture["Passport.Shared.EmailConfirm"])
+    </p>
+    @if (PhoneVerificationEnabled)
+    {
+        <p data-testid="phone-verify">
+            @(Editor.PhoneVerified ? Culture["Passport.Shared.PhoneVerified"] : Culture["Passport.Shared.PhoneConfirm"])
+        </p>
+    }
+</section>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    [Parameter] public bool PhoneVerificationEnabled { get; set; }
+
+    private void SetIndoor(string code) { Editor.WorkIndoor = code; Editor.Notify(); }
+    private void SetOutdoor(string code) { Editor.WorkOutdoor = code; Editor.Notify(); }
+    private void SetPhysical(string code) { Editor.WorkPhysical = code; Editor.Notify(); }
+    private void SetPace(string code) { Editor.WorkPace = code; Editor.Notify(); }
+    private void SetCar(bool value) { Editor.HasOwnCar = value; Editor.Notify(); }
+
+    private void ToggleShareEmployers(ChangeEventArgs _)
+    {
+        Editor.ShareEmployerPreferences = !Editor.ShareEmployerPreferences;
+        Editor.Notify();
+    }
+
+    private void OnRegion(ChangeEventArgs e)
+    {
+        Editor.WorkRegion = e.Value?.ToString();
+        Editor.Notify();
+    }
+
+    private void UseSuggestion()
+    {
+        Editor.WorkRegion = Editor.WorkRegionSuggestion;
+        Editor.Notify();
+    }
+
+    private void ToggleContract(string code)
+    {
+        if (code == WorkPreferenceCatalogs.NoContractPreference)
+        {
+            Editor.ContractPreferences.Clear();
+            Editor.ContractPreferences.Add(code);
+        }
+        else
+        {
+            Editor.ContractPreferences.Remove(WorkPreferenceCatalogs.NoContractPreference);
+            if (!Editor.ContractPreferences.Add(code))
+            {
+                Editor.ContractPreferences.Remove(code);
+            }
+            else if (Editor.ContractPreferences.Count > WorkPreferenceCatalogs.MaxContractPreferences)
+            {
+                Editor.ContractPreferences.Remove(code);
+            }
+        }
+
+        Editor.Notify();
+    }
+}

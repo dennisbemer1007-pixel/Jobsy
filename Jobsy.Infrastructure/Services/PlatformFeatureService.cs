@@ -144,6 +144,21 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.CandidatePassportEnabled = passportEnabled;
         }
 
+        if (update.PassportPartnersEnabled is bool partnersEnabled)
+        {
+            row.PassportPartnersEnabled = partnersEnabled;
+        }
+
+        if (update.PassportPdfV2Enabled is bool pdfV2Enabled)
+        {
+            row.PassportPdfV2Enabled = pdfV2Enabled;
+        }
+
+        if (update.PhoneVerificationEnabled is bool phoneVerificationEnabled)
+        {
+            row.PhoneVerificationEnabled = phoneVerificationEnabled;
+        }
+
         if (update.MaintenanceEnabled is bool maintenanceEnabled)
         {
             row.MaintenanceEnabled = maintenanceEnabled;
@@ -321,6 +336,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MaintenanceExpectedEndUtc is DateTime end
                 ? DateTime.SpecifyKind(end, DateTimeKind.Utc)
                 : null,
-            row?.MaintenanceNote);
+            row?.MaintenanceNote,
+            row?.PassportPartnersEnabled ?? false,
+            row?.PassportPdfV2Enabled ?? false,
+            row?.PhoneVerificationEnabled ?? false);
     }
 }
