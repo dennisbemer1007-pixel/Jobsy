@@ -1,4 +1,4 @@
-# Vragenbank leerlingen (review)
+# Vragenbank leerlingen groep 7/8 (review)
 
 Gegenereerd uit `PupilQuestionBank` + `UiStringsLeerlingVragen`. Wijzig de bronnen, niet dit bestand met de hand.
 

@@ -243,9 +243,10 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
         {
             Id = Guid.NewGuid(),
             SchoolId = school.Id,
-            Name = "2H",
-            Level = SchoolLevel.Havo,
-            Year = 2,
+            Name = "8A",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
             SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
             PupilCount = 3,
             TestWindow = TestWindowState.Open,

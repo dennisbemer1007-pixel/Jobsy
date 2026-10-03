@@ -7,7 +7,9 @@
 
 <section class="ll-card ll-stop">
     <h1>@Culture["Leerling.Stop.Title"]</h1>
-    <p>@Culture["Leerling.Stop.Body"]</p>
+    <p>@(string.Equals(Done, "deel1", StringComparison.Ordinal)
+        ? Culture["Leerling.Vo.Stop.Part1Body"]
+        : Culture["Leerling.Stop.Body"])</p>
     <a class="btn-primary" href="/leerling">@Culture["Leerling.Stop.Again"]</a>
 </section>
 
