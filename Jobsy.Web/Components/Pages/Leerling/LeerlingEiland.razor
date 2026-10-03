@@ -7,6 +7,7 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -19,8 +20,12 @@
 {
     <section class="ll-card">
         <h1>@Culture["Leerling.WindowClosed.Title"]</h1>
-        <p>@Culture["Leerling.WindowClosed.Body"]</p>
+        <p>@Culture[PupilCopy.Key(_state?.QuestionSet ?? _def?.Set ?? Jobsy.Core.Enums.PupilQuestionSet.Vo, "Leerling.WindowClosed.Body")]</p>
     </section>
+}
+else if (_partBreak)
+{
+    <LeerlingVoPartBreak />
 }
 else if (_loading)
 {
@@ -142,6 +147,7 @@ else
     private bool _loading = true;
     private bool _windowClosed;
     private bool _busy;
+    private bool _partBreak;
     private string? _error;
     private readonly HashSet<string> _likes = new(StringComparer.Ordinal);
     private readonly HashSet<string> _dislikes = new(StringComparer.Ordinal);
@@ -262,6 +268,12 @@ else
             if (result is null)
             {
                 _error = Culture["Leerling.Reis.SaveFailed"];
+                return;
+            }
+
+            if (_def?.PartBreakAfterIsland == true)
+            {
+                _partBreak = true;
                 return;
             }
 

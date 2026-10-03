@@ -67,7 +67,9 @@ public static class PupilAuthEndpoints
                     err = "window";
                 }
 
-                return Results.Redirect($"/leerling?error={err}");
+                var qs = QuestionSetQuerySuffix(body);
+                return Results.Redirect(
+                    $"/leerling?error={err}&schoolId={schoolId:D}&classId={classId:D}{qs}");
             }
 
             var login = JsonSerializer.Deserialize<PupilLoginResponse>(body, WebJson);
@@ -99,6 +101,13 @@ public static class PupilAuthEndpoints
             }
 
             await http.SignOutAsync(PupilAuthDefaults.Scheme);
+            var form = await http.Request.ReadFormAsync();
+            var part = form["part"].ToString();
+            if (string.Equals(part, "1", StringComparison.Ordinal))
+            {
+                return Results.Redirect("/leerling/stop?done=deel1");
+            }
+
             return Results.Redirect("/leerling/stop?done=1");
         }).AllowAnonymous();
     }
@@ -118,5 +127,39 @@ public static class PupilAuthEndpoints
             new(PupilClaimTypes.CodeDisplay, login.CodeDisplay),
         };
         return new ClaimsPrincipal(new ClaimsIdentity(claims, PupilAuthDefaults.Scheme));
+    }
+
+    private static string QuestionSetQuerySuffix(string body)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("questionSet", out var qs)
+                && qs.ValueKind is JsonValueKind.String or JsonValueKind.Number)
+            {
+                var raw = qs.ValueKind == JsonValueKind.Number
+                    ? qs.GetInt32().ToString(CultureInfo.InvariantCulture)
+                    : qs.GetString();
+                if (!string.IsNullOrWhiteSpace(raw)
+                    && (string.Equals(raw, "Vo", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(raw, "2", StringComparison.Ordinal)))
+                {
+                    return "&questionSet=Vo";
+                }
+
+                if (!string.IsNullOrWhiteSpace(raw)
+                    && (string.Equals(raw, "Groep78", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(raw, "1", StringComparison.Ordinal)))
+                {
+                    return "&questionSet=Groep78";
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            // Fall through — login page defaults to G78 copy.
+        }
+
+        return string.Empty;
     }
 }

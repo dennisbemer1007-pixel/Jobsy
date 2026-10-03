@@ -34,6 +34,7 @@ public class BanenkaartMobileOverflowPlaywrightTests
             IsMobile = true,
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
 
         if (loggedIn && !await TryLoginAsync(page, baseUrl))
@@ -47,33 +48,15 @@ public class BanenkaartMobileOverflowPlaywrightTests
             Timeout = 90_000
         });
         await page.WaitForSelectorAsync(".jobsy-discovery, #job-map, .kb-filter-bar", new() { Timeout = 60_000 });
-
-        var later = page.Locator(".kb-start-prompt__later");
-        if (await later.CountAsync() > 0)
-        {
-            await later.ClickAsync();
-            await page.WaitForTimeoutAsync(400);
-        }
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await WaitForBlazorInteractiveAsync(page);
+        await DismissStartPromptAsync(page);
 
         await AssertNoHorizontalOverflowAsync(page);
         await AssertFilterBarFitsAsync(page);
         await AssertMapWidthAsync(page);
 
-        var filters = page.Locator(".kb-filter-bar [data-testid=kb-filters-button]");
-        if (await filters.CountAsync() > 0)
-        {
-            await filters.First.ClickAsync(new() { Force = true });
-            await page.WaitForSelectorAsync("#discovery-filters", new() { Timeout = 10_000 });
-            var close = page.Locator("#discovery-filters button[aria-label], #discovery-filters .filter-sheet__close, #discovery-filters .btn-close");
-            if (await close.CountAsync() > 0)
-            {
-                await close.First.ClickAsync();
-            }
-            else
-            {
-                await page.Keyboard.PressAsync("Escape");
-            }
-        }
+        await OpenAndCloseFilterSheetIfPresentAsync(page);
 
         var lijst = page.Locator(".kb-filter-bar [data-testid=kb-view-toggle], .kb-chip--toggle")
             .Filter(new() { HasTextString = "Lijst" });
@@ -129,6 +112,77 @@ public class BanenkaartMobileOverflowPlaywrightTests
             await lijst.First.ClickAsync(new() { Force = true });
             await page.WaitForTimeoutAsync(400);
             await AssertNoHorizontalOverflowAsync(page);
+        }
+    }
+
+    private static async Task WaitForBlazorInteractiveAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            "() => !!(window.Blazor && window.Blazor._internal)",
+            null,
+            new() { Timeout = 30_000 });
+    }
+
+    private static async Task DismissStartPromptAsync(IPage page)
+    {
+        var later = page.Locator(".kb-start-prompt__later");
+        if (await later.CountAsync() == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await later.First.ClickAsync(new() { Timeout = 5_000 });
+            await page.WaitForTimeoutAsync(400);
+        }
+        catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
+        {
+            // Prompt may already have closed itself after the circuit started.
+        }
+    }
+
+    private static async Task OpenAndCloseFilterSheetIfPresentAsync(IPage page)
+    {
+        var filters = page.Locator(".kb-filter-bar [data-testid=kb-filters-button]");
+        if (await filters.CountAsync() == 0)
+        {
+            return;
+        }
+
+        var button = filters.First;
+        await button.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+        var sheet = page.Locator("#discovery-filters");
+        Exception? lastError = null;
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            await button.ClickAsync();
+            try
+            {
+                await sheet.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 8_000 });
+                lastError = null;
+                break;
+            }
+            catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
+            {
+                lastError = ex;
+                await page.WaitForTimeoutAsync(400);
+            }
+        }
+
+        if (lastError is not null)
+        {
+            throw lastError;
+        }
+
+        var close = page.Locator("#discovery-filters button[aria-label], #discovery-filters .filter-sheet__close, #discovery-filters .btn-close");
+        if (await close.CountAsync() > 0)
+        {
+            await close.First.ClickAsync();
+        }
+        else
+        {
+            await page.Keyboard.PressAsync("Escape");
         }
     }
 
