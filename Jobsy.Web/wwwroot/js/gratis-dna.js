@@ -343,19 +343,16 @@ window.jobsyGratisDna = (function () {
         var el = document.getElementById(id);
         if (!banner || root.classList.contains("cookie-consent-known")) {
             if (el) el.remove();
+            root.style.removeProperty("--pub-cookie-banner-height");
             return;
         }
+        if (el) el.remove();
         var h = Math.ceil(banner.getBoundingClientRect().height || 0);
         if (h <= 0) {
-            if (el) el.remove();
+            root.style.removeProperty("--pub-cookie-banner-height");
             return;
         }
-        if (!el) {
-            el = document.createElement("style");
-            el.id = id;
-            document.head.appendChild(el);
-        }
-        el.textContent = ":root{--pub-cookie-banner-height:" + h + "px}";
+        root.style.setProperty("--pub-cookie-banner-height", h + "px");
     }
 
     function bindCookiePadding() {

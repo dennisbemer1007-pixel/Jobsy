@@ -141,6 +141,7 @@
                     var tag = String(tagName || "").toLowerCase();
                     if (tag === "script" || tag === "style") {
                         el.nonce = nonce;
+                        el.setAttribute("nonce", nonce);
                     }
                     return el;
                 };
@@ -291,7 +292,7 @@
             }
         });
     </script>
-        <script src="js/gratis-dna.js?v=20261003-csp2" nonce="@Nonce" defer></script>
+        <script src="js/gratis-dna.js?v=20261003-csp3" nonce="@Nonce" defer></script>
         <script src="js/app-core.js?v=20261003-shell" nonce="@Nonce" defer></script>
         <script src="js/landing.js?v=20260930-landing-5" nonce="@Nonce" defer></script>
         <script src="js/public-pages.js?v=20261001-pp07" nonce="@Nonce" defer></script>

@@ -32,4 +32,14 @@ public class JourneyMiniTestFixesTests
         Assert.Contains("Options.Count > 0", source, StringComparison.Ordinal);
         Assert.Contains("aria-checked=\"@(selected ? \"true\" : \"false\")\"", source, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Cookie_banner_height_does_not_inject_a_style_element()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "wwwroot", "js", "gratis-dna.js"));
+        Assert.Contains("setProperty(\"--pub-cookie-banner-height\"", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("createElement(\"style\")", source, StringComparison.Ordinal);
+    }
 }
