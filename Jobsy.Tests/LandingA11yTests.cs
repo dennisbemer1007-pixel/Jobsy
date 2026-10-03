@@ -75,15 +75,15 @@ public class LandingA11yTests : LandingA11yHarness
         var landing = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "landing.css"));
         var pages = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "public-pages.css"));
 
-        var surface = Hex(app, "--surface");
-        var warn = Hex(app, "--warn-soft");
-        var gold = Hex(app, "--gold");
-        var coral = Hex(app, "--coral");
-        var accentSoft = Hex(app, "--accent-soft");
-        var border = Hex(app, "--border");
-        var text = Hex(app, "--text");
-        var ink = Hex(theme, "--pub-coral-ink");
-        var mutedInk = Hex(theme, "--pub-ink-muted");
+        var surface = Resolve(app, theme, "--surface");
+        var warn = Resolve(app, theme, "--warn-soft");
+        var gold = Resolve(app, theme, "--gold");
+        var coral = Resolve(app, theme, "--coral");
+        var accentSoft = Resolve(app, theme, "--accent-soft");
+        var border = Resolve(app, theme, "--border");
+        var text = Resolve(app, theme, "--text");
+        var ink = Resolve(app, theme, "--pub-coral-ink");
+        var mutedInk = Resolve(app, theme, "--pub-ink-muted");
 
         var pearl = warn;
         var trust = Mix(gold, surface, 0.12);
@@ -160,16 +160,36 @@ public class LandingA11yTests : LandingA11yHarness
         throw new InvalidOperationException($"unclosed rule {selector}");
     }
 
-    private static string Hex(string css, string token)
+    private static string Resolve(string appCss, string themeCss, string token)
+    {
+        var value = TokenValue(themeCss, token) ?? TokenValue(appCss, token)
+            ?? throw new InvalidOperationException($"missing token {token}");
+        if (value.StartsWith('#'))
+        {
+            return value[..7];
+        }
+
+        var mix = System.Text.RegularExpressions.Regex.Match(
+            value,
+            """color-mix\(\s*in\s+srgb\s*,\s*var\((--[\w-]+)\)\s+([\d.]+)%\s*,\s*var\((--[\w-]+)\)\s*\)""",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+        Assert.True(mix.Success, $"token {token} is not a hex or srgb color-mix: {value}");
+        var weight = double.Parse(mix.Groups[2].Value, CultureInfo.InvariantCulture) / 100d;
+        return Mix(Resolve(appCss, themeCss, mix.Groups[1].Value), Resolve(appCss, themeCss, mix.Groups[3].Value), weight);
+    }
+
+    private static string? TokenValue(string css, string token)
     {
         var marker = token + ":";
         var at = css.IndexOf(marker, StringComparison.Ordinal);
-        Assert.True(at >= 0, $"missing token {token}");
+        if (at < 0)
+        {
+            return null;
+        }
+
         var rest = css[(at + marker.Length)..].TrimStart();
         var end = rest.IndexOf(';');
-        var value = rest[..end].Trim();
-        Assert.StartsWith("#", value, StringComparison.Ordinal);
-        return value[..7];
+        return rest[..end].Trim();
     }
 
     private static string Mix(string a, string b, double weightA)
