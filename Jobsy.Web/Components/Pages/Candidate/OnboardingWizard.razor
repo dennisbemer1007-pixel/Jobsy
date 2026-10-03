@@ -235,7 +235,7 @@
                             break;
 
                         case 7 when !Draft.HasConsent:
-                            <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" />
+                            <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
                             break;
 
                         case >= 7 and <= 10:
@@ -369,6 +369,12 @@
         : _step is >= 7 ? Culture["Onboarding.NextTest"]
         : Draft.FineTune && _step == 2 ? Culture["Onboarding.Done"]
         : Culture["Onboarding.Next"];
+    private void OnConsentChanged(bool value)
+    {
+        Draft.ConsentRequested = value;
+        StateHasChanged();
+    }
+
     private bool CanNext => _step switch
     {
         1 => !string.IsNullOrWhiteSpace(Draft.FirstName)

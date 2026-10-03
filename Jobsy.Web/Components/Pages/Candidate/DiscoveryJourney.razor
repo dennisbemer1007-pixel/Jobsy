@@ -109,7 +109,7 @@
                 else if (_screen == "toestemming")
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
-                    <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" />
+                    <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
                     <div class="journey-step__foot">
                         <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                         <span class="journey-step__sp"></span>
@@ -723,6 +723,12 @@
             parts.AddRange(Draft.SpokenLanguages.Select(l => LanguageDisplay(l.Code)).Take(3));
             return string.Join(", ", parts);
         }
+    }
+
+    private void OnConsentChanged(bool value)
+    {
+        Draft.ConsentRequested = value;
+        StateHasChanged();
     }
 
     private bool CanNext => _screen == "toestemming"
