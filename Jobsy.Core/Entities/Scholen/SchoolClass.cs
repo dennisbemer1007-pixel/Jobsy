@@ -13,7 +13,12 @@ public class SchoolClass
     /// <summary>True only for acceptatie CLI-seeded sample classes.</summary>
     public bool IsTestData { get; set; }
     public SchoolLevel Level { get; set; }
-    /// <summary>School year number 1–6.</summary>
+    /// <summary>
+    /// Which pupil test this class uses. Derived from <see cref="Level"/> on create/update;
+    /// never stored per pupil code. See scholen-vragensets README §S.
+    /// </summary>
+    public PupilQuestionSet QuestionSet { get; set; } = PupilQuestionSet.Vo;
+    /// <summary>School year number: 1–6 for VO; 7–8 for Groep78.</summary>
     public int Year { get; set; }
     /// <summary>Calendar year the school year starts (2026 = "2026–2027").</summary>
     public int SchoolYearStart { get; set; }

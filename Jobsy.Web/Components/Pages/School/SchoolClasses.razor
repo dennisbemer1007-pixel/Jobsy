@@ -6,6 +6,7 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.School
 @using Jobsy.Web.Components.Ui.Enterprise
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -18,7 +19,7 @@
     <h1>@Culture["School.Class.Title"]</h1>
     <p class="muted">@Culture["School.Class.Lead"]</p>
     <div class="sch-admin-toolbar">
-        <button type="button" class="btn-primary" @onclick="() => _drawerOpen = true">@Culture["School.Class.New"]</button>
+        <button type="button" class="btn-primary" @onclick="OpenCreate">@Culture["School.Class.New"]</button>
     </div>
 </header>
 
@@ -41,6 +42,7 @@ else
             <th scope="col">@Culture["School.Col.Class"]</th>
             <th scope="col">@Culture["School.Col.Level"]</th>
             <th scope="col">@Culture["School.Col.Year"]</th>
+            <th scope="col">@Culture["School.Col.QuestionSet"]</th>
             <th scope="col">@Culture["School.Col.Teacher"]</th>
             <th scope="col">@Culture["School.Col.Codes"]</th>
             <th scope="col">@Culture["School.Col.Completed"]</th>
@@ -52,8 +54,13 @@ else
             {
                 <tr class="ent-data-table__row" @onclick="() => OpenClass(row.Id)">
                     <td>@row.ClassName</td>
-                    <td>@row.Level</td>
-                    <td class="tabular">@row.Year</td>
+                    <td>@Culture[SchoolLevelRules.LabelKey(row.Level)]</td>
+                    <td>@SchoolLevelRules.YearLabel(row.Level, row.Year)</td>
+                    <td>
+                        <span class="sch-pill @(row.QuestionSet == PupilQuestionSet.Groep78 ? "sch-pill--ok" : "sch-pill--muted")">
+                            @SchoolLevelRules.QuestionSetPillLabel(row.QuestionSet)
+                        </span>
+                    </td>
                     <td>@(row.TeacherNames.Count == 0 ? "—" : string.Join(", ", row.TeacherNames))</td>
                     <td class="tabular">@row.CodeCount</td>
                     <td class="tabular">@row.CompletedCount</td>
@@ -76,42 +83,13 @@ else
 
 <EntDrawer @bind-Open="_drawerOpen" Title="@Culture["School.Class.New"]">
     <EditForm Model="_create" OnValidSubmit="CreateAsync">
-        <label>
-            @Culture["School.Class.Field.Name"]
-            <InputText class="input" @bind-Value="_create.ClassName" />
-        </label>
-        <label>
-            @Culture["School.Class.Field.Level"]
-            <InputSelect class="input" @bind-Value="_create.Level">
-                @foreach (SchoolLevel level in Enum.GetValues<SchoolLevel>())
-                {
-                    <option value="@level">@level</option>
-                }
-            </InputSelect>
-        </label>
-        <label>
-            @Culture["School.Class.Field.Year"]
-            <InputNumber class="input" @bind-Value="_create.Year" />
-        </label>
-        <label>
-            @Culture["School.Class.Field.Count"]
-            <InputNumber class="input" @bind-Value="_create.PupilCount" />
-        </label>
-        <p class="muted">@Culture["School.Class.CodesNote"]</p>
-        @if (_teachers.Count > 0)
-        {
-            <fieldset class="sch-check-list">
-                <legend>@Culture["School.Class.Field.Teachers"]</legend>
-                @foreach (var t in _teachers)
-                {
-                    <label class="filter-check">
-                        <input type="checkbox" checked="@_selectedTeachers.Contains(t.UserId)"
-                               @onchange="e => ToggleTeacher(t.UserId, (bool)(e.Value ?? false))" />
-                        @t.DisplayName
-                    </label>
-                }
-            </fieldset>
-        }
+        <SchoolClassForm @bind-ClassName="_create.ClassName"
+                         @bind-Level="_create.Level"
+                         @bind-Year="_create.Year"
+                         @bind-PupilCount="_create.PupilCount"
+                         ShowPupilCount="true"
+                         Teachers="_teacherOptions"
+                         SelectedTeacherIds="_selectedTeachers" />
         @if (!string.IsNullOrEmpty(_drawerError))
         {
             <p class="state-message error">@_drawerError</p>
@@ -131,7 +109,7 @@ else
     private string? _error;
     private string? _drawerError;
     private List<SchoolPortalClassListItemDto> _rows = [];
-    private List<SchoolPortalTeacherListItemDto> _teachers = [];
+    private List<SchoolClassForm.TeacherOption> _teacherOptions = [];
     private readonly HashSet<Guid> _selectedTeachers = [];
     private CreateForm _create = new();
 
@@ -155,7 +133,10 @@ else
         try
         {
             _rows = (await Api.GetSchoolClassesAsync()).ToList();
-            _teachers = (await Api.GetSchoolTeachersAsync()).ToList();
+            var teachers = (await Api.GetSchoolTeachersAsync()).ToList();
+            _teacherOptions = teachers
+                .Select(t => new SchoolClassForm.TeacherOption(t.UserId, t.DisplayName))
+                .ToList();
             _error = null;
         }
         catch (Exception ex)
@@ -170,10 +151,12 @@ else
 
     private void OpenClass(Guid id) => Nav.NavigateTo($"/school/klassen/{id}");
 
-    private void ToggleTeacher(Guid id, bool on)
+    private void OpenCreate()
     {
-        if (on) _selectedTeachers.Add(id);
-        else _selectedTeachers.Remove(id);
+        _create = new CreateForm();
+        _selectedTeachers.Clear();
+        _drawerError = null;
+        _drawerOpen = true;
     }
 
     private async Task CreateAsync()
