@@ -1,10 +1,11 @@
+using Jobsy.Core.Features;
 using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Auth;
 
 /// <summary>
-/// Legacy <c>/banen</c>: ON → 301 <see cref="PublicRoutes.Banenkaart"/>; OFF → 302 "/".
+/// Legacy <c>/banen</c>: ON → 301 <see cref="PublicRoutes.Banenkaart"/>; OFF → the candidate coming-soon page.
 /// </summary>
 public sealed class BanenRedirectMiddleware(RequestDelegate next)
 {
@@ -22,7 +23,7 @@ public sealed class BanenRedirectMiddleware(RequestDelegate next)
                 if (!enabled)
                 {
                     context.Response.StatusCode = StatusCodes.Status302Found;
-                    context.Response.Headers.Location = "/";
+                    context.Response.Headers.Location = FeatureRoutes.CandidateEmployersComingSoonPath;
                     return;
                 }
 
