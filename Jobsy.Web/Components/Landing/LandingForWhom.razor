@@ -45,7 +45,7 @@
                         }
                         else
                         {
-                            <span class="pub-btn pub-btn--disabled">@LandingText.For("Landing.For.EmpCta", Variant)</span>
+                            @UnavailableCta("Landing.For.EmpCta")
                         }
                     </div>
                 </article>
@@ -68,7 +68,7 @@
                         }
                         else
                         {
-                            <span class="pub-btn pub-btn--disabled">@LandingText.For("Landing.For.SchCta", Variant)</span>
+                            @UnavailableCta("Landing.For.SchCta")
                         }
                     </div>
                 </article>
@@ -157,7 +157,7 @@
                         }
                         else
                         {
-                            <span class="pub-btn pub-btn--disabled">@LandingText.For("Landing.For.SchCta", Variant)</span>
+                            @UnavailableCta("Landing.For.SchCta")
                         }
                     </div>
                 </article>
@@ -174,4 +174,12 @@
 
     private bool SchoolsAvailable =>
         PublicNavCatalog.Header(Variant).Any(i => i.Href == PublicRoutes.Schools && i.IsAvailable);
+
+    private RenderFragment UnavailableCta(string textKey) => __builder =>
+    {
+        <span class="pub-btn pub-btn--disabled" role="link" aria-disabled="true">
+            @LandingText.For(textKey, Variant)
+            <span class="pub-btn__soon">@Culture["Public.Soon"]</span>
+        </span>
+    };
 }

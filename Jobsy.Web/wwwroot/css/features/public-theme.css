@@ -8,6 +8,11 @@
   --pub-line: var(--border);
   --pub-coral: var(--coral);
   --pub-coral-soft: color-mix(in srgb, var(--coral) 12%, var(--surface));
+  /* Small-text coral. Brand #f54a1b is ~3.4:1 and #d93a12 ~3.9:1 on pearl / coral-soft.
+     #c02c0e stays in the lobster hue and is ≥4.9:1 on those surfaces and on the gold and sky section tints. */
+  --pub-coral-ink: #c02c0e;
+  /* Secondary text on the warm gold closing panel. --muted (#5a6a7d) is 4.18:1 there; this is 5.16:1. */
+  --pub-ink-muted: #4e5c6d;
   --pub-gold-soft: color-mix(in srgb, var(--gold) 26%, var(--surface));
   --pub-sky-soft: var(--accent-soft);
   --pub-mint-soft: var(--success-soft);
@@ -356,6 +361,27 @@
   border-color: transparent;
 }
 
+/* Unavailable, but still AA text. Opacity would blend the label under 4.5:1. */
+.pub-theme .pub-btn--disabled {
+  flex-wrap: wrap;
+  pointer-events: none;
+  cursor: not-allowed;
+  color: var(--text);
+  background: color-mix(in srgb, var(--border) 50%, var(--surface));
+  border-color: color-mix(in srgb, var(--muted) 40%, var(--border));
+  box-shadow: none;
+}
+
+.pub-theme .pub-btn__soon {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--pub-radius-pill);
+  background: var(--surface);
+  color: var(--text);
+}
+
 .pub-theme .pub-chip {
   display: inline-flex;
   align-items: center;
@@ -377,7 +403,7 @@
 }
 
 .pub-theme .pub-eyebrow {
-  color: var(--pub-coral);
+  color: var(--pub-coral-ink);
   font-weight: 600;
   font-size: 0.95rem;
   margin: 0 0 0.5rem;

@@ -29,7 +29,7 @@
   padding: 0.3rem 0.8rem;
   border-radius: var(--pub-radius-pill);
   background: var(--pub-coral-soft);
-  color: var(--coral-deep);
+  color: var(--pub-coral-ink);
   font-weight: 700;
   font-size: 0.85rem;
 }
@@ -115,7 +115,7 @@
 .pub-theme .pp-switch__link--active {
   background: var(--pub-coral-soft);
   border-color: color-mix(in srgb, var(--coral-deep) 35%, transparent);
-  color: var(--coral-deep);
+  color: var(--pub-coral-ink);
   font-weight: 700;
 }
 
@@ -172,7 +172,7 @@
 
 .pub-theme .pp-toc__link[aria-current="location"] {
   font-weight: 700;
-  color: var(--coral-deep);
+  color: var(--pub-coral-ink);
 }
 
 .pub-theme .pp-toc__print {
@@ -913,7 +913,7 @@ html.pp-js .pub-theme .pp-toc__print {
 }
 
 .pub-theme .pp-partner__free {
-  color: var(--coral-deep);
+  color: var(--pub-coral-ink);
 }
 
 .pub-theme .pp-partner__share {
@@ -1042,7 +1042,7 @@ html.pp-js .pub-theme .pp-toc__print {
 
 .pub-theme .pp-company__tab--active {
   background: var(--pub-coral-soft);
-  color: var(--coral-deep);
+  color: var(--pub-coral-ink);
   border-color: transparent;
 }
 
