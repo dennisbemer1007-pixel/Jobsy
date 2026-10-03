@@ -501,8 +501,8 @@
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
                                         ResolveQuestionText="QuestionText"
-                                        OnFinished="FinishMiniAsync" />
-                    @RenderFooter(showBack: !_reviewMode, showPrimary: CanNext || _reviewMode)
+                                        OnFinished="FinishMiniAsync"
+                                        OnLeave="BackAsync" />
                 }
             </section>
 
@@ -791,6 +791,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Culture.Changed += OnCultureChanged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
         try
@@ -2315,8 +2316,29 @@
 
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
 
+    private async void OnGratisDnaMerged()
+    {
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                if (_countedStep is >= 7 and <= 10)
+                {
+                    await PrepareMiniAsync();
+                }
+
+                StateHasChanged();
+            });
+        }
+        catch
+        {
+            // A later step load still reads the merged answers.
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        GratisDnaMergeNotifier.Merged -= OnGratisDnaMerged;
         Culture.Changed -= OnCultureChanged;
         _saveCts?.Cancel();
         _privateCts?.Cancel();

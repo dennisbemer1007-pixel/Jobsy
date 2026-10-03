@@ -84,11 +84,12 @@
 
         @if (!Compact)
         {
-            var recent = RecentAnswered().Take(_recentLimit).ToList();
+            var answeredEarlier = RecentAnswered().ToList();
+            var recent = answeredEarlier.Take(_recentLimit).ToList();
             @if (recent.Count > 0)
             {
                 <div class="test-flow__recent">
-                    <p class="test-flow__recent-title">@Culture.Format("TestFlow.Answered", recent.Count)</p>
+                    <p class="test-flow__recent-title">@Culture.Format("TestFlow.Answered", answeredEarlier.Count)</p>
                     <ul>
                         @foreach (var (q, val, qi) in recent)
                         {
@@ -108,7 +109,7 @@
         <footer class="test-flow__footer">
             <button type="button"
                     class="test-flow__back"
-                    disabled="@(index <= 0)"
+                    disabled="@(index <= 0 && !OnLeave.HasDelegate)"
                     @onclick="GoBackAsync">
                 @Culture["TestFlow.Back"]
             </button>
@@ -142,6 +143,7 @@
     [Parameter] public EventCallback<TestDepthLevel> OnLevelReached { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
     [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public EventCallback OnLeave { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
     [Parameter] public bool LoadFailed { get; set; }
@@ -153,7 +155,7 @@
     private int _index;
     private bool _focusRequest;
     private bool _exampleOpen = true;
-    private int _recentLimit = 3;
+    private int _recentLimit = 8;
     private readonly HashSet<TestDepthLevel> _firedLevels = [];
     private CancellationTokenSource? _advanceCts;
     private int _advanceGeneration;
@@ -191,7 +193,7 @@
                 }
 
                 var narrow = await Js.InvokeAsync<bool>("eval", "window.matchMedia && window.matchMedia('(max-width: 639px)').matches");
-                _recentLimit = narrow ? 1 : 3;
+                _recentLimit = narrow ? 5 : 8;
                 _exampleOpen = !narrow;
             }
             catch
@@ -346,7 +348,15 @@
     private async Task GoBackAsync()
     {
         CancelPendingAdvance();
-        if (_index <= 0) return;
+        if (_index <= 0)
+        {
+            if (OnLeave.HasDelegate)
+            {
+                await OnLeave.InvokeAsync();
+            }
+
+            return;
+        }
         _index--;
         _focusRequest = true;
         await InvokeAsync(StateHasChanged);

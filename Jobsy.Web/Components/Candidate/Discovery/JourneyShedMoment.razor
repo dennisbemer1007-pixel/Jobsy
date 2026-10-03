@@ -56,7 +56,10 @@
         {
             <fieldset class="journey-shed__fieldset">
                 <legend class="journey-q">@Culture["Discovery.Shed.DeeperLegend"]</legend>
-                <p class="journey-qs">@Culture["Discovery.Shed.DeeperSub"]</p>
+                @if (Options.Count > 0)
+                {
+                    <p class="journey-qs">@Culture["Discovery.Shed.DeeperSub"]</p>
+                }
                 <div class="journey-dive" role="radiogroup" aria-label="@Culture["Discovery.Shed.DeeperLegend"]">
                     @foreach (var opt in Options)
                     {
@@ -64,7 +67,7 @@
                         <button type="button"
                                 class="journey-dive__opt @(selected ? "is-on" : null) @(opt.Disabled ? "is-done" : null)"
                                 role="radio"
-                                aria-checked="@selected"
+                                aria-checked="@(selected ? "true" : "false")"
                                 disabled="@opt.Disabled"
                                 @onclick="() => SelectLevel.InvokeAsync(opt.Level)">
                             <b>
