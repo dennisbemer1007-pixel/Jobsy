@@ -190,6 +190,7 @@ public class AuthController : ControllerBase
             {
                 return Unauthorized(new
                 {
+                    code = "ambassadors_paused",
                     message =
                         "Het ambassadeursprogramma is gepauzeerd. Je gegevens en je tegoed blijven bewaard. Vragen? Mail support@lobsy.nl."
                 });

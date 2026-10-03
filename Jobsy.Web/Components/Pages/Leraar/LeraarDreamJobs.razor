@@ -3,12 +3,11 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
 @using Jobsy.Core.Contracts.Scholen
-@using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
-@inject IPlatformFeatureService Features
+@inject IFeatureFlags Features
 
 <PageTitle>@Culture["Leraar.DreamJobs.Title"] · Lobsy</PageTitle>
 

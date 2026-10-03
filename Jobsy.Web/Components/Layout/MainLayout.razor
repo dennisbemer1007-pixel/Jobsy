@@ -46,6 +46,10 @@
     }
 
     <main class="app-main">
+        @if (ShowInstallBanner)
+        {
+            <PwaInstallBanner />
+        }
         <CircuitErrorBoundary BoundaryTag="main">
             @if (RendererInfo.IsInteractive)
             {
@@ -67,7 +71,6 @@
     {
         <GratisDnaMerge />
         <PushPermissionBanner />
-        <PwaInstallBanner />
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
         <ConsentReacceptDialog />
@@ -85,6 +88,10 @@
     private bool _hasBottomNav;
     private bool _isMatchPage;
     private bool _isQuestionnairePage;
+    private bool _suppressInstallBanner;
+
+    private bool ShowInstallBanner =>
+        RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage && !_suppressInstallBanner;
     private string _homeHref = "/";
 
     protected override async Task OnInitializedAsync()
@@ -223,10 +230,17 @@
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
         var questionnaire = IsQuestionnairePath(path, relative);
+        var suppressInstall = SuppressesInstallBanner(path);
         var changed = false;
         if (_isMatchPage != match)
         {
             _isMatchPage = match;
+            changed = true;
+        }
+
+        if (_suppressInstallBanner != suppressInstall)
+        {
+            _suppressInstallBanner = suppressInstall;
             changed = true;
         }
 
@@ -242,6 +256,19 @@
         }
 
         return changed;
+    }
+
+    public static bool SuppressesInstallBanner(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool IsQuestionnairePath(string path)

@@ -52,7 +52,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         try
         {
             var progress = await Api.GetPupilProgressAsync();

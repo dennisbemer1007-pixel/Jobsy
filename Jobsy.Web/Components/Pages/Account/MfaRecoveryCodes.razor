@@ -228,7 +228,10 @@
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/", Secure = true });
         http.Response.Cookies.Delete("Jobsy.MfaReturnUrl", new CookieOptions { Path = "/" });
 
-        http.Response.Headers.CacheControl = "no-store";
+        if (!http.Response.HasStarted)
+        {
+            http.Response.Headers.CacheControl = "no-store";
+        }
         http.Response.Headers["Referrer-Policy"] = "no-referrer";
     }
 }

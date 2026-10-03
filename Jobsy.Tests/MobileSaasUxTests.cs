@@ -89,8 +89,8 @@ public class MobileSaasUxTests
     public void Mobile_shell_locks_horizontal_overflow_and_moves_logout_into_the_account_menu()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains("html, body {\n    margin: 0;\n    height: 100%;\n    max-width: 100%;\n    overflow-x: hidden;", css);
-        Assert.Contains(".app-shell {\n    display: flex;\n    flex-direction: column;\n    height: 100vh;\n    min-height: 100vh;\n    max-width: 100%;\n    min-width: 0;\n    overflow-x: hidden;", css);
+        Assert.Contains("html, body {\n    margin: 0;\n    min-height: 100%;\n    max-width: 100%;\n    overflow-x: clip;", css);
+        Assert.Contains(".app-shell {\n    display: flex;\n    flex-direction: column;\n    min-height: 100dvh;\n    max-width: 100%;\n    min-width: 0;\n    overflow-x: clip;", css);
         Assert.Contains(".app-header__actions {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 1 1 auto;\n    min-width: 0;", css);
 
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
@@ -106,7 +106,7 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("NavIcons.Logout", header);
 
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        Assert.Contains("max-width: 100%; overflow-x: hidden;", app);
+        Assert.Contains("max-width: 100%; overflow-x: clip;", app);
     }
 
     [Fact]

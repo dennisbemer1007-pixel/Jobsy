@@ -14,7 +14,8 @@ public sealed record FeatureFlagSnapshot(
     bool CandidatePassportEnabled,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
-    bool PhoneVerificationEnabled = false)
+    bool PhoneVerificationEnabled = false,
+    bool SchoolsEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -24,6 +25,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.CandidatePassport => CandidatePassportEnabled,
         PlatformFeature.PassportPartners => PassportPartnersEnabled,
         PlatformFeature.PassportPdfV2 => PassportPdfV2Enabled,
+        PlatformFeature.Schools => SchoolsEnabled,
         _ => false
     };
 }

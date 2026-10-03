@@ -54,14 +54,6 @@
   .journey-mlob { display: flex; }
   .journey-mprog.journey-only-mobile { display: block; }
   .journey-only-desktop { display: none !important; }
-  .journey-stage {
-    display: flex;
-    flex-direction: column;
-    padding: 0 var(--space-3) 150px;
-    gap: 0;
-  }
-  .journey-step { order: 2; padding: 18px 16px; }
-  .journey-mlob { order: 1; }
 }
 
 .journey-scene__svg { display: block; }
@@ -147,13 +139,30 @@
   padding: var(--space-5) var(--space-5) 88px;
   align-items: start;
   min-height: calc(100vh - 64px);
+  min-width: 0;
+  max-width: 100%;
 }
 
-.journey--mobile .journey-stage {
-  display: flex;
-  flex-direction: column;
-  padding: 0 var(--space-3) 150px;
-  gap: 0;
+@media (max-width: 899px) {
+  .journey-stage,
+  .journey--mobile .journey-stage {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 var(--space-3) 150px;
+    gap: 0;
+    width: 100%;
+  }
+
+  .journey-step {
+    order: 2;
+    padding: 18px 16px;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .journey-mlob { order: 1; }
 }
 
 /* ---- rail ---- */

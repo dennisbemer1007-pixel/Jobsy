@@ -4,6 +4,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Sales;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,17 +26,20 @@ public partial class SalesCommercialController : ControllerBase
     private readonly IPartnerFlyerPdfService _flyerPdf;
     private readonly ISalesAttributionResolver _attribution;
     private readonly ISalesLinkClickService _clicks;
+    private readonly IUserLookupService _users;
 
     public SalesCommercialController(
         ISalesCommercialService sales,
         IPartnerFlyerPdfService flyerPdf,
         ISalesAttributionResolver attribution,
-        ISalesLinkClickService clicks)
+        ISalesLinkClickService clicks,
+        IUserLookupService users)
     {
         _sales = sales;
         _flyerPdf = flyerPdf;
         _attribution = attribution;
         _clicks = clicks;
+        _users = users;
     }
 
     /// <summary>Public partner catalog (rates + packages) for the sales landing page.</summary>
@@ -71,7 +75,7 @@ public partial class SalesCommercialController : ControllerBase
             });
         }
 
-        if (request.CountClick)
+        if (request.CountClick && !await IsStatsViewerExcludedAsync(cancellationToken))
         {
             var channel = Enum.TryParse<SalesLinkChannel>(request.Channel, true, out var parsed)
                 ? parsed
@@ -264,6 +268,17 @@ public partial class SalesCommercialController : ControllerBase
     {
         await _sales.DeletePackageAsync(id, cancellationToken);
         return NoContent();
+    }
+
+    private async Task<bool> IsStatsViewerExcludedAsync(CancellationToken cancellationToken)
+    {
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        return PublicStatsExclusion.ShouldSkip(user, User);
     }
 
     private static string? NormalizeTrackingCode(string? trackingCode)

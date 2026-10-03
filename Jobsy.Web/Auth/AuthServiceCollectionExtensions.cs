@@ -396,6 +396,7 @@ public static class AuthServiceCollectionExtensions
                         LocalLoginFailureKind.Locked => "locked",
                         LocalLoginFailureKind.TooMany => "too-many",
                         LocalLoginFailureKind.Unavailable => "unavailable",
+                        LocalLoginFailureKind.AmbassadorsPaused => "ambassadors-paused",
                         _ => "invalid"
                     };
                     if (error is "invalid" or "locked" or "too-many")

@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -21,6 +22,15 @@ public sealed partial class JobsyApiClient : IAsyncDisposable
     {
         PropertyNameCaseInsensitive = true
     };
+
+    private static readonly JsonSerializerOptions EnumJson = CreateEnumJson();
+
+    private static JsonSerializerOptions CreateEnumJson()
+    {
+        var options = new JsonSerializerOptions(CaseInsensitiveJson);
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
+    }
 
     private readonly HttpClient _http;
     private readonly MeGetCache? _meCache;

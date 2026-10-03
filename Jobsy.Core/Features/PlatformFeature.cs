@@ -13,5 +13,8 @@ public enum PlatformFeature
     PassportPartners,
 
     /// <summary>DNA-paspoort PDF v2 and the shareable-preferences section. Default false.</summary>
-    PassportPdfV2
+    PassportPdfV2,
+
+    /// <summary>School, teacher and pupil surfaces. Default false until enabled in platform settings.</summary>
+    Schools
 }

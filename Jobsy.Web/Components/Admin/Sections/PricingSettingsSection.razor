@@ -104,7 +104,7 @@ else
                 {
                     <div class="table-row">
                         <div>
-                            <strong>@cost.Reason</strong>
+                            <strong>@CostLabel(cost.Reason)</strong>
                             <span class="muted">@(cost.IsActive ? "actief" : "inactief")</span>
                         </div>
                         <div class="inline-actions">
@@ -210,6 +210,13 @@ else
     private bool Show(string key)
         => string.Equals(Mode, "all", StringComparison.OrdinalIgnoreCase)
            || string.Equals(Mode, key, StringComparison.OrdinalIgnoreCase);
+
+    private string CostLabel(string reason)
+    {
+        var key = "TokenSpendCost." + reason;
+        var label = Culture[key];
+        return string.Equals(label, key, StringComparison.Ordinal) ? reason : label;
+    }
 
     private TokenPricingSettings? _settings;
     private PushBomSettingsItem? _pushBomSettings;

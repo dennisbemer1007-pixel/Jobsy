@@ -69,7 +69,10 @@
         var http = HttpContext ?? HttpContextAccessor.HttpContext;
         if (http is not null)
         {
-            http.Response.Headers.CacheControl = "no-store";
+            if (!http.Response.HasStarted)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
             var tokens = Antiforgery.GetAndStoreTokens(http);
             _antiforgeryFieldName = tokens.FormFieldName;
             _antiforgeryToken = tokens.RequestToken ?? "";

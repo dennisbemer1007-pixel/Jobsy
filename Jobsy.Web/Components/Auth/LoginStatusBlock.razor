@@ -65,6 +65,8 @@
                 "danger", "alert", null, Culture["Login.ErrorGoogleFailed"], "⚠️"),
             LoginState.UnknownProvider => (
                 "sky", "status", null, Culture["Login.ErrorProvider"], "ℹ️"),
+            LoginState.AmbassadorsPaused => (
+                "sun", "status", null, Culture["Sales.Ambassadors.ParkedLogin"], "ℹ️"),
             _ => (
                 "sky", "status", null, Culture["Login.ErrorGeneric"], "ℹ️")
         };

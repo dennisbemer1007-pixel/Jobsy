@@ -754,7 +754,7 @@
     min-width: 0;
 }
 
-.admin-status-dot {
+.admin-status-list .admin-status-dot {
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
@@ -1063,7 +1063,16 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    width: auto;
+    height: auto;
+    background: transparent;
     font-size: var(--text-sm, 0.875rem);
+}
+
+.admin-main .status-pill svg {
+    width: 1em;
+    height: 1em;
+    flex: 0 0 auto;
 }
 
 .admin-status-dot::before {
@@ -1946,4 +1955,44 @@
 .admin-maintenance__hint {
     color: var(--muted);
     font-size: var(--text-xs, 0.75rem);
+}
+
+.admin-main {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.admin-data-table th,
+.admin-data-table td {
+    overflow-wrap: anywhere;
+}
+
+.masterdata-row__fields--4 {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr) minmax(0, 0.7fr) minmax(4.5rem, 0.5fr);
+}
+
+.masterdata-row__fields--4wide {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(4.5rem, 0.5fr);
+}
+
+.masterdata-row__fields--3 {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr) minmax(0, 0.7fr);
+}
+
+.masterdata-row__fields--export {
+    grid-template-columns: 8rem 8rem auto;
+    align-items: end;
+}
+
+@media (max-width: 720px) {
+    .masterdata-row__fields--4,
+    .masterdata-row__fields--4wide,
+    .masterdata-row__fields--3,
+    .masterdata-row__fields--export {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .masterdata-row__sort {
+        max-width: none;
+    }
 }

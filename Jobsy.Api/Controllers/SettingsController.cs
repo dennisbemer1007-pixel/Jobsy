@@ -493,7 +493,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             candidatePassportEnabled = snap.CandidatePassportEnabled,
             passportPartnersEnabled = snap.PassportPartnersEnabled,
             passportPdfV2Enabled = snap.PassportPdfV2Enabled,
-            phoneVerificationEnabled = snap.PhoneVerificationEnabled
+            phoneVerificationEnabled = snap.PhoneVerificationEnabled,
+            schoolsEnabled = snap.SchoolsEnabled
         });
     }
 

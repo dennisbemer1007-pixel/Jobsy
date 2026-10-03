@@ -102,13 +102,23 @@
 
 html, body {
     margin: 0;
-    height: 100%;
+    min-height: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
     font-family: var(--font);
     color: var(--text);
     background: var(--bg);
     accent-color: var(--accent);
+}
+
+html:has(.jobsy-discovery),
+html:has(.app-shell--match),
+html:has(.app-shell--questionnaire),
+body:has(.jobsy-discovery),
+body:has(.app-shell--match),
+body:has(.app-shell--questionnaire) {
+    height: 100%;
+    overflow: hidden;
 }
 
 a {
@@ -119,11 +129,19 @@ a {
 .app-shell {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    min-height: 100vh;
+    min-height: 100dvh;
     max-width: 100%;
     min-width: 0;
-    overflow-x: hidden;
+    overflow-x: clip;
+}
+
+.app-shell:has(.jobsy-discovery),
+.app-shell:has(.funda-layout),
+.app-shell.app-shell--match,
+.app-shell.app-shell--questionnaire {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
 }
 
 .app-header {
@@ -19563,11 +19581,9 @@ html:not(.cookie-consent-known) .login-modal__dialog {
 
 /* ==== pwa-install-banner ==== */
 .pwa-install-banner {
-    position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: calc(var(--bottom-nav-clearance, 4.5rem) + 0.5rem + env(safe-area-inset-bottom, 0px));
-    z-index: 70;
+    position: relative;
+    z-index: 1;
+    margin: 0.75rem 0.75rem 0;
     display: flex;
     align-items: center;
     gap: 0.65rem;
@@ -19615,7 +19631,19 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     font-size: 0.9rem;
 }
 
-/* Header menus stay usable when the Blazor circuit has not attached yet. */
+/* One header menu at a time. html[data-header-menu] is set by app-core.js
+   (works with or without the Blazor circuit). Triggers stay above the backdrop. */
+.page-help > .page-help__btn,
+.notification-bell > .notification-bell__toggle,
+.language-selector > .language-selector__toggle,
+.account-menu > .account-menu__toggle,
+.app-header__actions > a,
+.app-header__actions > .token-wallet,
+.app-header__actions > .sales-wallet {
+    position: relative;
+    z-index: 70;
+}
+
 .account-menu__panel,
 .language-selector__menu,
 .page-help__panel,
@@ -19625,17 +19653,11 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     display: none;
 }
 
-.account-menu:focus-within:not(.is-closed) > .account-menu__panel,
-.account-menu.is-open > .account-menu__panel,
-.language-selector:focus-within:not(.is-closed) > .language-selector__menu,
-.language-selector.is-open > .language-selector__menu,
-.page-help:focus-within:not(.is-closed) > .page-help__panel,
-.page-help.is-open > .page-help__panel,
-.page-help:focus-within:not(.is-closed) > .header-dropdown-backdrop,
-.page-help.is-open > .header-dropdown-backdrop,
-.notification-bell:focus-within:not(.is-closed) > .notification-bell__panel,
-.notification-bell.is-open > .notification-bell__panel,
-.notification-bell:focus-within:not(.is-closed) > .header-dropdown-backdrop,
-.notification-bell.is-open > .header-dropdown-backdrop {
+html[data-header-menu="help"] .page-help > .page-help__panel,
+html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
+html[data-header-menu="notifications"] .notification-bell > .notification-bell__panel,
+html[data-header-menu="notifications"] .notification-bell > .header-dropdown-backdrop,
+html[data-header-menu="language"] .language-selector > .language-selector__menu,
+html[data-header-menu="account"] .account-menu > .account-menu__panel {
     display: block;
 }

@@ -31,11 +31,11 @@
             </span>
             <div class="pub-header__actions">
                 <PublicLangMenu ReturnPath="@ReturnPath" />
-                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                <PublicHeaderAccount />
             </div>
             <div class="pub-header__mobile pub-header__mobile--compact">
                 <PublicLangMenu ReturnPath="@ReturnPath" />
-                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                <PublicHeaderAccount />
             </div>
         }
         else
@@ -49,12 +49,12 @@
 
             <div class="pub-header__actions">
                 <PublicLangMenu ReturnPath="@ReturnPath" />
-                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                <PublicHeaderAccount />
                 <a class="pub-btn pub-btn--primary pub-header__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>
             </div>
 
             <div class="pub-header__mobile">
-                <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                <PublicHeaderAccount />
                 <details class="pub-menu" id="pub-menu">
                     <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
                         <span class="pub-menu__icon" aria-hidden="true"></span>

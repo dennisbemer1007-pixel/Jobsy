@@ -23,9 +23,15 @@ internal sealed class AlwaysOnFeatureFlags : IFeatureFlags
 /// <see cref="FeatureFlagSnapshot.Defaults"/> (employers OFF). Suites that still exercise the
 /// employers-on product pass the flag explicitly.
 /// </summary>
-internal sealed class FixedFeatureFlags(bool employersEnabled, bool candidatePassportEnabled = true) : IFeatureFlags
+internal sealed class FixedFeatureFlags(
+    bool employersEnabled,
+    bool candidatePassportEnabled = true,
+    bool schoolsEnabled = false) : IFeatureFlags
 {
-    private readonly FeatureFlagSnapshot _snapshot = new(employersEnabled, candidatePassportEnabled);
+    private readonly FeatureFlagSnapshot _snapshot = new(
+        EmployersEnabled: employersEnabled,
+        CandidatePassportEnabled: candidatePassportEnabled,
+        SchoolsEnabled: schoolsEnabled);
 
     public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
         => ValueTask.FromResult(_snapshot);

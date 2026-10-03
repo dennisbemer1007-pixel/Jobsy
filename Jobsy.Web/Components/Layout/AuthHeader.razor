@@ -10,8 +10,9 @@
 <div class="auth-header">
     <AuthorizeView>
         <Authorized>
-            <div class="account-menu @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" @onfocusout="OnFocusOut">
+            <div class="account-menu @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="account" @onfocusout="OnFocusOut" @onkeydown="OnMenuKeyDown">
                 <button type="button"
+                        data-menu-trigger
                         class="account-menu__toggle"
                         title="@Culture["Footer.Legal"]"
                         aria-label="@Culture["Auth.AccountMenu"]"
@@ -109,6 +110,15 @@
             var path = relative.Split('?', '#')[0];
             return path.Equals("login", StringComparison.OrdinalIgnoreCase)
                 || path.StartsWith("login/", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private void OnMenuKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _open = false;
+            _forceClosed = true;
         }
     }
 

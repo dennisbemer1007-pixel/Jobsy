@@ -1453,7 +1453,7 @@ public sealed partial class JobsyApiClient
         if (level is { } lv) q.Add($"level={lv}");
         if (year is int y) q.Add($"year={y}");
         var url = "api/admin/schools/rapportage?" + string.Join('&', q);
-        return await _http.GetFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolReportViewDto>(url, ct);
+        return await _http.GetFromJsonAsync<Jobsy.Core.Contracts.Scholen.SchoolReportViewDto>(url, EnumJson, ct);
     }
 
     public async Task<IReadOnlyList<int>> GetAdminSchoolReportYearsAsync(CancellationToken ct = default)

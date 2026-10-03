@@ -1,4 +1,4 @@
-using Jobsy.Core.Interfaces;
+using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
 
 namespace Jobsy.Web.Security;
@@ -18,8 +18,7 @@ public sealed class SchoolsFeatureMiddleware
         var path = context.Request.Path.Value ?? "";
         if (IsGated(path))
         {
-            var features = context.RequestServices.GetService(typeof(IPlatformFeatureService))
-                as IPlatformFeatureService;
+            var features = context.RequestServices.GetService<IFeatureFlags>();
             if (features is not null
                 && !await SchoolsFeatureGate.IsEnabledAsync(features, context.RequestAborted))
             {

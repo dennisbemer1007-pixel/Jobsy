@@ -3,6 +3,7 @@ using Jobsy.Api.Security;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -53,6 +54,11 @@ public class AnalyticsController : ControllerBase
         if (User.Identity?.IsAuthenticated == true)
         {
             var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (PublicStatsExclusion.ShouldSkip(user, User))
+            {
+                return Ok(new { recorded = 0 });
+            }
+
             userId = user?.Id;
         }
 
@@ -120,6 +126,11 @@ public class AnalyticsController : ControllerBase
         if (User.Identity?.IsAuthenticated == true)
         {
             var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (PublicStatsExclusion.ShouldSkip(user, User))
+            {
+                return Ok(new { recorded = false });
+            }
+
             userId = user?.Id;
         }
 

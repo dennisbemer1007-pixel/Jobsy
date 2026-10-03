@@ -466,6 +466,7 @@ app.UseAuthorization();
 // After auth so the admin bypass reads the cookie principal (errors 05).
 app.UseMiddleware<MaintenanceMiddleware>();
 app.UseMiddleware<SchoolsFeatureMiddleware>();
+app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();
 app.UseMfaEnforcement();

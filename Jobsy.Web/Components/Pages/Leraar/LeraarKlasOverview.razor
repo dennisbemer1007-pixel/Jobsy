@@ -5,7 +5,6 @@
 @attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
-@using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.School
 @using Jobsy.Web.Components.Ui.Enterprise
@@ -14,7 +13,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IJSRuntime Js
-@inject IPlatformFeatureService Features
+@inject IFeatureFlags Features
 
 <PageTitle>@( _overview is null ? Culture["Leraar.Overview.Title"] : $"Klas {_overview.ClassName}") · Lobsy</PageTitle>
 

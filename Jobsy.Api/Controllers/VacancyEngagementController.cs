@@ -3,6 +3,7 @@ using Jobsy.Api.Security;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -49,6 +50,11 @@ public class VacancyEngagementController : ControllerBase
         if (User.Identity?.IsAuthenticated == true)
         {
             var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (PublicStatsExclusion.ShouldSkip(user, User))
+            {
+                return Ok(new { recorded = false });
+            }
+
             userId = user?.Id;
         }
 
@@ -163,7 +169,7 @@ public class VacancyEngagementController : ControllerBase
     [HttpPost("shares")]
     [AllowAnonymous]
     [EnableRateLimiting("public-write")]
-    public async Task<ActionResult<ShareRecordedDto>> Share(
+    public async Task<IActionResult> Share(
         Guid vacancyId,
         [FromBody] ShareVacancyRequest request,
         CancellationToken cancellationToken)
@@ -187,6 +193,11 @@ public class VacancyEngagementController : ControllerBase
         if (User.Identity?.IsAuthenticated == true)
         {
             var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (PublicStatsExclusion.ShouldSkip(user, User))
+            {
+                return Ok(new { recorded = false });
+            }
+
             userId = user?.Id;
         }
 

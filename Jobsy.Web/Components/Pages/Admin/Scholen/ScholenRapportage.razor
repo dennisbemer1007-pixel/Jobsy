@@ -298,9 +298,9 @@
             _report = await Api.GetAdminSchoolReportAsync(
                 _year == 0 ? null : _year, schoolId, level, year, questionSet);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["AdminScholen.Report.LoadFailed"];
         }
         finally
         {
@@ -318,9 +318,9 @@
             _message = $"Totalen bijgewerkt ({result?.AggregatesWritten ?? 0} rijen).";
             await ReloadReportAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["AdminScholen.Report.LoadFailed"];
         }
         finally
         {
@@ -344,9 +344,9 @@
             // Absolute API path via navigation (cookie auth on same origin).
             await Js.InvokeVoidAsync("open", Nav.ToAbsoluteUri(url).ToString(), "_blank");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["AdminScholen.Report.LoadFailed"];
         }
         finally
         {
@@ -362,9 +362,9 @@
         {
             _dryRun = await Api.DryRunAdminSchoolRetentionAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["AdminScholen.Report.LoadFailed"];
         }
         finally
         {

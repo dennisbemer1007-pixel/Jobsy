@@ -99,11 +99,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         var http = HttpContextAccessor.HttpContext;
         if (http is not null)
         {
-            http.Response.Headers.CacheControl = "no-store";
             var staff = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             if (staff.Succeeded && staff.Principal?.Identity?.IsAuthenticated == true)
             {

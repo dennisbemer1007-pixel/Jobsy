@@ -4,12 +4,11 @@
 @attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
-@using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
-@inject IPlatformFeatureService Features
+@inject IFeatureFlags Features
 
 <PageTitle>@Culture["Leraar.Group.Title"] · Lobsy</PageTitle>
 

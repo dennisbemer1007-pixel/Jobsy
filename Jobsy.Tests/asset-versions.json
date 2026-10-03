@@ -1,15 +1,15 @@
 {
   "css/app.min.css": {
-    "sha256": "16701d4cb288223cd1cd18cbad87f940e1bdcec6c52c32caad6b778fe673b378",
-    "v": "20261003-cssbuild"
+    "sha256": "cdd32b409c211bd3326cf40625255fb50cb7ce22bfd54db05fb780351753da2a",
+    "v": "20261003-layout"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "862b8b48630d8592fed20f728d0197e01c77ccfc6982651bb19b1e630f8da70f",
-    "v": "20261001-errors-5"
+    "sha256": "7a3203e1f3f4ccc548787e4ba51059ab76aace6ce98e4430fdeadb1a566d0e72",
+    "v": "20261003-adminfit"
   },
   "css/features/applications.css": {
     "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
@@ -24,8 +24,8 @@
     "v": "20261002-kp04"
   },
   "css/features/carriere.css": {
-    "sha256": "8739ec5fa7fb7738a0c31390e511a1d045be82ae3bbaa23adf0376cbe3ec86c0",
-    "v": "20261003-kp07"
+    "sha256": "6fb90f6189b8295731f2ed8adf656e7dc0a4887a4915fb2402fcd02518099afe",
+    "v": "20261003-sticky"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
@@ -72,16 +72,16 @@
     "v": "20261003-ob-fields"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "a9af4cbb708a561675fa74380473ea850ca9dd8430fb1c6c8a3556180bf44178",
-    "v": "20261003-mascot"
+    "sha256": "4bf884cc0cc123b83a29e52e5b57bca186279484bd1bfe07c95934816ab1aa45",
+    "v": "20261003-journey"
   },
   "css/features/public-pages.css": {
-    "sha256": "39f0f31e9a77869d77bcc58c12fa41349882e9dd9d16d999dd20f088aac3fe14",
-    "v": "20261003-a11y"
+    "sha256": "5517416d9a7ca622dd7a2ab65e0f85828531671b42d58772e42f5900056750c5",
+    "v": "20261003-email"
   },
   "css/features/public-theme.css": {
-    "sha256": "54460d0465e4cec4b095bf5512fb4822bec014da397d8e4b1a7c3b05519f45ab",
-    "v": "20261003-a11y"
+    "sha256": "75fe69937158bfd03ff273e79958a9a383829145d7f3e1ba0e036d4439d97831",
+    "v": "20261003-header"
   },
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
@@ -132,8 +132,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "446a1843956312b4afee8c4a3d3b8fa2b450a6fe3892f30061e1272cb521e019",
-    "v": "20261003-circuit"
+    "sha256": "59b367cf52956b99cab18641e841f1aff157d1d6a39db28adb34895e112600ea",
+    "v": "20261003-shell"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -164,8 +164,8 @@
     "v": "20261002-ch10"
   },
   "js/gratis-dna.js": {
-    "sha256": "19000b99949de3b2f16b0afd361e4f96724fec2d1cb0de90ac5cd01bfcc8c314",
-    "v": "20260930-landing-6"
+    "sha256": "7b6fa341f0b6778b133ed66cd4eccb10018ebf4248a1575d43231aff7aee467d",
+    "v": "20261003-csp2"
   },
   "js/jobMap.min.js": {
     "sha256": "2b6d44a927e62c63c9320d288008c98dca6d52a918e0e8f064a43b75133e434f",
@@ -180,8 +180,8 @@
     "v": "20260930-landing-5"
   },
   "js/lobsyPush.js": {
-    "sha256": "caae5ac7a13ee20709e492535302314c8e89a9e3e9f23625f040243250c1a267",
-    "v": "20261003-circuit"
+    "sha256": "2fa7a7d1804d9d4f227bba333866625e21779938530fa34f65cacd60d76a2d3e",
+    "v": "20261003-shell"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -200,11 +200,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "ffa08470ccb009384dc6cb7fe977e4c0c462a340544b5a2acb8a81237300b53f",
-    "v": "20261003-circuit"
+    "sha256": "ce6b0add9d27f3f00304d7896355124d006d9dd4d7e2e6dc84cdefa500ff7e7a",
+    "v": "20261003-shell"
   },
   "service-worker.published.js": {
-    "sha256": "6ca620a41e27eea0a4eb81b772425e70a77758f4aa8d7dc44e51d67dbffd13fb",
-    "v": "20261003-circuit"
+    "sha256": "c8e644fa0a32fa6b79b3646d393ae3e964bbff3c747672507b88bb00ec10431d",
+    "v": "20261003-shell"
   }
 }

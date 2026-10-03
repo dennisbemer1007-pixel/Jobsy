@@ -704,6 +704,32 @@ html:not(.cookie-consent-known) .pub-theme .pub-fixed-bottom {
   min-height: 2.75rem;
 }
 
+@media (max-width: 420px) {
+  .pub-theme .pub-header__inner {
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+
+  .pub-theme .pub-header__mobile,
+  .pub-theme .pub-header__mobile--compact {
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .pub-theme .pub-header .auth-user__role {
+    display: none;
+  }
+
+  .pub-theme .pub-header .auth-user__name {
+    display: inline-block;
+    max-width: 6.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pub-theme .pub-btn--primary,
   .pub-theme .pub-nav__link,
