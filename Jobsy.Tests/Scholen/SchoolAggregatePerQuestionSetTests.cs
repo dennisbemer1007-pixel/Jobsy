@@ -87,18 +87,18 @@ public class SchoolAggregatePerQuestionSetTests
         int year,
         PupilQuestionSet set,
         int pupilCount) => new()
-    {
-        Id = Guid.NewGuid(),
-        SchoolId = schoolId,
-        Name = name,
-        Level = level,
-        Year = year,
-        QuestionSet = set,
-        SchoolYearStart = 2026,
-        PupilCount = pupilCount,
-        TestWindow = TestWindowState.Open,
-        CreatedAtUtc = DateTime.UtcNow
-    };
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = schoolId,
+            Name = name,
+            Level = level,
+            Year = year,
+            QuestionSet = set,
+            SchoolYearStart = 2026,
+            PupilCount = pupilCount,
+            TestWindow = TestWindowState.Open,
+            CreatedAtUtc = DateTime.UtcNow
+        };
 
     private static async Task SeedCompletedAsync(
         JobsyDbContext db,

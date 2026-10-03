@@ -53,21 +53,21 @@ public class ClassResultsAggregatorTests
         string topValue,
         string dream,
         string scoringVersion = "1") => new()
-    {
-        PupilCodeId = Guid.NewGuid(),
-        SchoolClassId = Guid.NewGuid(),
-        CompletedAtUtc = DateTime.UtcNow,
-        HollandCode = holland,
-        TopValue = topValue,
-        DreamJobKey = dream,
-        CompetenceScoresJson = "{}",
-        RiasecScoresJson = "{}",
-        ValuesScoresJson = "{}",
-        CultureScoresJson = "{}",
-        ScoringVersion = scoringVersion,
-        StoryTemplateVersion = "t",
-        StoryKeysJson = "[]"
-    };
+        {
+            PupilCodeId = Guid.NewGuid(),
+            SchoolClassId = Guid.NewGuid(),
+            CompletedAtUtc = DateTime.UtcNow,
+            HollandCode = holland,
+            TopValue = topValue,
+            DreamJobKey = dream,
+            CompetenceScoresJson = "{}",
+            RiasecScoresJson = "{}",
+            ValuesScoresJson = "{}",
+            CultureScoresJson = "{}",
+            ScoringVersion = scoringVersion,
+            StoryTemplateVersion = "t",
+            StoryKeysJson = "[]"
+        };
 }
 
 public class SchoolTodoBuilderTests

@@ -1350,7 +1350,7 @@ public sealed partial class JobsyApiClient
     public async Task<AdminMfaOverview?> GetAdminMfaOverviewAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<AdminMfaOverview>("api/admin/audit/mfa-overview", ct);
 
-public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>> GetAdminSchoolsAsync(
+    public async Task<IReadOnlyList<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>> GetAdminSchoolsAsync(
         CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<Jobsy.Core.Contracts.Scholen.SchoolListItemDto>>(
             "api/admin/schools", ct) ?? [];
