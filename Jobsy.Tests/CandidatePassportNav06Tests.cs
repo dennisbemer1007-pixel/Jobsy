@@ -153,7 +153,7 @@ public class CandidatePassportNavLandingTests
     [Fact]
     public void Existing_candidate_without_onboarding_lands_on_discovery_with_full_nav()
     {
-        var flags = FeatureFlagSnapshot.Defaults;
+        var flags = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
         Assert.True(flags.CandidatePassportEnabled);
 
         var home = FeatureRoutes.CandidateHome(flags, passportReady: false);
@@ -171,7 +171,8 @@ public class CandidatePassportNavLandingTests
     public void Search_item_is_active_on_match_page()
     {
         Assert.True(RoleNavCatalog.IsActive(RoleNavCatalog.SearchItem, "/candidate/match"));
-        var items = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
+        var items = RoleNavCatalog.CandidateItems(
+            new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true));
         var search = items.Single(i => i.TitleKey == "Nav.Search");
         Assert.True(RoleNavCatalog.IsActive(search, "/candidate/match", items));
         Assert.False(RoleNavCatalog.IsActive(items.First(i => i.TitleKey == "Nav.Applications"), "/candidate/match", items));

@@ -1,0 +1,50 @@
+@page "/werkgevers/binnenkort"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Auth
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["WgSoon.Title"] · Lobsy</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+</HeadContent>
+
+<section class="pub-section" aria-labelledby="wg-soon-title">
+    <header class="pp-doc__hero">
+        <h1 id="wg-soon-title" class="pp-doc__title">@Culture["WgSoon.Title"]</h1>
+        <p class="pp-doc__lead">@Culture["WgSoon.Lead"]</p>
+    </header>
+    <p class="inline-actions">
+        <a class="pub-btn pub-btn--primary" href="/">@Culture["WgSoon.CtaHome"]</a>
+        @if (_candidateHome is not null)
+        {
+            <a class="pub-btn" href="@_candidateHome">@Culture["WgSoon.CtaCandidate"]</a>
+        }
+    </p>
+</section>
+
+@code {
+    private string? _candidateHome;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true
+            || !RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            return;
+        }
+
+        var flags = await FeatureFlags.GetAsync();
+        _candidateHome = FeatureRoutes.HomeFor(
+            user,
+            flags,
+            passportReady: AuthRedirects.PassportReadyFromClaims(user));
+    }
+}

@@ -13,7 +13,7 @@ public class EmployersOffReasonTests
     [Fact]
     public async Task Employers_off_reason_shows_its_own_copy_without_a_switch_button()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(JobsyRoles.Candidate);
 
         var response = await client.GetAsync("/access-denied?reason=employers-off");
@@ -21,7 +21,7 @@ public class EmployersOffReasonTests
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Contains(
-            "Werkgevers kunnen Lobsy nu even niet gebruiken. We laten het je weten als het weer kan.",
+            "Lobsy is nu eerst voor kandidaten. De omgeving voor werkgevers komt terug in een volgende fase.",
             html,
             StringComparison.Ordinal);
         Assert.DoesNotContain("Inloggen met een ander account", html, StringComparison.Ordinal);
@@ -30,7 +30,7 @@ public class EmployersOffReasonTests
     [Fact]
     public async Task Candidate_gets_naar_mijn_start_because_a_candidate_home_exists()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(JobsyRoles.Candidate);
 
         var html = await (await client.GetAsync("/access-denied?reason=employers-off"))
@@ -43,7 +43,7 @@ public class EmployersOffReasonTests
     [Fact]
     public async Task Employer_side_only_role_gets_naar_de_voorpagina_instead()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(JobsyRoles.BranchManager);
 
         var html = await (await client.GetAsync("/access-denied?reason=employers-off"))
@@ -56,7 +56,7 @@ public class EmployersOffReasonTests
     [Fact]
     public async Task Unknown_reason_falls_back_to_the_role_copy()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(JobsyRoles.Candidate);
 
         var html = await (await client.GetAsync("/access-denied?reason=something-else"))

@@ -482,7 +482,7 @@ public class PlatformModeSummaryTests
         var rows = PlatformModeSummary.Build(vacancyContentModerationEnabled: true);
         Assert.Contains(rows, r => r.Key == "MfaPolicy" && r.ValueKey == "AdminDash.Mode.Required" && r.IsPolicyReadonly);
         Assert.Contains(rows, r => r.Key == "VacancyContentModerationEnabled" && r.IsOn);
-        Assert.Contains(rows, r => r.Key == "EmployersEnabled" && r.IsOn);
+        Assert.Contains(rows, r => r.Key == "EmployersEnabled" && !r.IsOn);
         Assert.Contains(rows, r => r.Key == "CandidatePassportEnabled" && r.IsOn);
 
         var off = PlatformModeSummary.Build(false, employersEnabled: false, candidatePassportEnabled: false);

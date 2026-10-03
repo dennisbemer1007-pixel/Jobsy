@@ -24,6 +24,8 @@ public class BanenkaartMobileOverflowPlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         await using var browser = await LaunchAsync();
         await using var context = await browser.NewContextAsync(new()
         {

@@ -8,7 +8,7 @@ public class StatusPagesTests
     [Fact]
     public async Task Unknown_html_page_answers_404_with_the_friendly_page()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/bestaat-niet");
@@ -23,7 +23,7 @@ public class StatusPagesTests
     [Fact]
     public async Task Unknown_api_path_stays_a_bare_404()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/api/bestaat-niet");
@@ -37,7 +37,7 @@ public class StatusPagesTests
     [Fact]
     public async Task Missing_static_file_stays_a_bare_404()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/img/missing.png");
@@ -50,7 +50,7 @@ public class StatusPagesTests
     [Fact]
     public async Task Direct_status_404_answers_404()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/status/404");
@@ -69,7 +69,7 @@ public class StatusPagesTests
     [InlineData(418, HttpStatusCode.NotFound)]
     public async Task Direct_status_route_keeps_known_codes_and_falls_back_to_404(int code, HttpStatusCode expected)
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync($"/status/{code}");
@@ -81,7 +81,7 @@ public class StatusPagesTests
     [Fact]
     public async Task Unknown_vacancy_answers_404_and_noindex()
     {
-        await using var factory = new ErrorPagesWebFactory { ApiAnswersNotFound = true };
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true, ApiAnswersNotFound = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync($"/vacancies/{Guid.NewGuid()}");
@@ -95,7 +95,7 @@ public class StatusPagesTests
     [Fact]
     public async Task Status_page_never_caches_and_links_the_three_actions()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/status/404");

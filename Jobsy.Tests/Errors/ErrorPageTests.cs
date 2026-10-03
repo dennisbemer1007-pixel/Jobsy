@@ -10,7 +10,7 @@ public class ErrorPageTests
     [Fact]
     public async Task Thrown_request_answers_500_with_a_support_code_and_no_internals()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync(ErrorPagesWebFactory.ThrowPath);
@@ -35,7 +35,7 @@ public class ErrorPageTests
     [Fact]
     public async Task Support_code_is_logged_exactly_once_with_the_page_value()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var html = await (await client.GetAsync(ErrorPagesWebFactory.ThrowPath)).Content.ReadAsStringAsync();
@@ -53,7 +53,7 @@ public class ErrorPageTests
     [Fact]
     public async Task Post_that_throws_also_renders_the_error_page()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.PostAsync(
@@ -69,7 +69,7 @@ public class ErrorPageTests
     [Fact]
     public async Task Get_that_throws_offers_the_failing_page_as_the_retry_link()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var html = await (await client.GetAsync(ErrorPagesWebFactory.ThrowPath)).Content.ReadAsStringAsync();
@@ -80,7 +80,7 @@ public class ErrorPageTests
     [Fact]
     public async Task Error_page_offers_a_mail_link_with_the_code_in_the_subject()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var html = await (await client.GetAsync(ErrorPagesWebFactory.ThrowPath)).Content.ReadAsStringAsync();

@@ -1,4 +1,5 @@
 @page "/salesmanager/onboarding"
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [Authorize(Roles = "SalesManager")]
 @inject NavigationManager Navigation
 

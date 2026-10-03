@@ -8,6 +8,7 @@ using Jobsy.Infrastructure.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
@@ -20,17 +21,20 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private readonly JobsyFeatureOptions _options;
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache? _cache;
+    private readonly IHostEnvironment? _environment;
 
     public PlatformFeatureService(
         JobsyDbContext db,
         IOptions<JobsyFeatureOptions> options,
         IConfiguration configuration,
-        IMemoryCache? cache = null)
+        IMemoryCache? cache = null,
+        IHostEnvironment? environment = null)
     {
         _db = db;
         _options = options.Value;
         _configuration = configuration;
         _cache = cache;
+        _environment = environment;
     }
 
     public async Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
@@ -194,6 +198,30 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         return ToSnapshot(row);
     }
 
+    /// <summary>
+    /// No settings row means employers OFF (decision 20). Development test hosts may set
+    /// <c>Jobsy:TestEmployersEnabled</c> so existing suites keep the previous no-row behaviour.
+    /// A stored row always wins, including an explicit false.
+    /// </summary>
+    private bool ResolveEmployersEnabled(bool? stored)
+    {
+        if (stored is bool value)
+        {
+            return value;
+        }
+
+        var env = _environment?.EnvironmentName
+            ?? _configuration["ASPNETCORE_ENVIRONMENT"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase)
+            && bool.TryParse(_configuration["Jobsy:TestEmployersEnabled"], out var testOverride))
+        {
+            return testOverride;
+        }
+
+        return false;
+    }
+
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
     {
         row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
@@ -287,7 +315,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
                 ? row.SchoolRetentionCutoffDay
                 : 31,
             row?.AmbassadorsEnabled ?? false,
-            row?.EmployersEnabled ?? true,
+            ResolveEmployersEnabled(row?.EmployersEnabled),
             row?.CandidatePassportEnabled ?? true,
             row?.MaintenanceEnabled ?? false,
             row?.MaintenanceExpectedEndUtc is DateTime end

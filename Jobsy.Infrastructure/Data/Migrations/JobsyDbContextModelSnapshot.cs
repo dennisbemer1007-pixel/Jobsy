@@ -4360,7 +4360,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasDefaultValue(true);
 
                     b.Property<bool>("EmployersEnabled")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateOnly?>("FreePublishUntil")
                         .HasColumnType("date");

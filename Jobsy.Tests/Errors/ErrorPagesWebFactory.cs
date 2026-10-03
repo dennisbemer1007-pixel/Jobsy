@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Hosting;
@@ -26,7 +27,7 @@ public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAs
     /// <summary>Replaces <see cref="IErrorChromeProvider"/> with one that throws (layout fallback).</summary>
     public bool BreakLayout { get; init; }
 
-    public bool EmployersEnabled { get; init; } = true;
+    public bool EmployersEnabled { get; init; }
 
     /// <summary>
     /// By default every API call throws. Pages that legitimately call the API (the vacancy
@@ -68,6 +69,8 @@ public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAs
 
             services.RemoveAll<IEmployersSwitch>();
             services.AddSingleton<IEmployersSwitch>(new FixedEmployersSwitch(EmployersEnabled));
+            services.RemoveAll<IFeatureFlags>();
+            services.AddSingleton<IFeatureFlags>(new FixedFeatureFlags(EmployersEnabled));
 
             // Any API call from an error page is a bug: make it loud.
             var apiAnswersNotFound = ApiAnswersNotFound;

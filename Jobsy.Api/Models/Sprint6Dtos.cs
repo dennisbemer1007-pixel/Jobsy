@@ -279,7 +279,7 @@ public record PlatformFeatureDto(
     int SchoolRetentionCutoffMonth = 7,
     int SchoolRetentionCutoffDay = 31,
     bool AmbassadorsEnabled = false,
-    bool EmployersEnabled = true,
+    bool EmployersEnabled = false,
     bool CandidatePassportEnabled = true);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);

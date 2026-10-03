@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using Jobsy.Core.Features;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Hosting;
@@ -27,7 +28,7 @@ namespace Jobsy.Tests.Errors;
 /// </summary>
 public sealed class ForbiddenWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
 {
-    public bool EmployersEnabled { get; init; } = true;
+    public bool EmployersEnabled { get; init; }
 
     public HttpClient CreateHtmlClient()
     {
@@ -68,6 +69,8 @@ public sealed class ForbiddenWebFactory : WebApplicationFactory<Jobsy.Web.WebAss
 
             services.RemoveAll<IEmployersSwitch>();
             services.AddSingleton<IEmployersSwitch>(new FixedEmployersSwitch(EmployersEnabled));
+            services.RemoveAll<IFeatureFlags>();
+            services.AddSingleton<IFeatureFlags>(new FixedFeatureFlags(EmployersEnabled));
 
             services.RemoveAll<JobsyApiClient>();
             services.AddScoped(sp => new JobsyApiClient(

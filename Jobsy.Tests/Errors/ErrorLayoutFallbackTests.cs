@@ -11,7 +11,7 @@ public class ErrorLayoutFallbackTests
     [Fact]
     public async Task Broken_layout_on_an_unknown_page_still_answers_404_with_minimal_html()
     {
-        await using var factory = new ErrorPagesWebFactory { BreakLayout = true };
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true, BreakLayout = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/bestaat-niet");
@@ -28,7 +28,7 @@ public class ErrorLayoutFallbackTests
     [Fact]
     public async Task Broken_layout_on_a_thrown_request_still_answers_500_with_minimal_html()
     {
-        await using var factory = new ErrorPagesWebFactory { BreakLayout = true };
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true, BreakLayout = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync(ErrorPagesWebFactory.ThrowPath);

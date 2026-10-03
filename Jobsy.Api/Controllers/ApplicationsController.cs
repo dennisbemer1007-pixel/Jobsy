@@ -1,26 +1,26 @@
 using System.Net;
+using System.Text.Json;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
-using Jobsy.Core.ValueObjects;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
@@ -312,7 +312,7 @@ public class ApplicationsController : ControllerBase
                     CvPdfAvailable: revealed,
                     CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
                     WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
-                    CandidateAgeYears: a.CandidateAgeYears,
+                    YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
                     AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                         availability.Slots,
                         availability.FlexibleTimes),
@@ -396,7 +396,7 @@ public class ApplicationsController : ControllerBase
                 CvPdfAvailable: unmask,
                 CandidatePhone: phone,
                 WhatsAppContactAllowed: unmask && a.SnapshotWhatsAppAllowed,
-                CandidateAgeYears: unmask ? a.CandidateAgeYears : null,
+                YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
                 AvailabilitySummary: unmask
                     ? LobsyCvModelFactory.FormatAvailability(
                         LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).Slots,
@@ -1680,7 +1680,7 @@ public class ApplicationsController : ControllerBase
             CvPdfAvailable: revealed,
             CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
             WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
-            CandidateAgeYears: a.CandidateAgeYears,
+            YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
             AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                 availability.Slots,
                 availability.FlexibleTimes),
