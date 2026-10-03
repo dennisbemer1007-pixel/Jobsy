@@ -1209,6 +1209,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.OneTimeLinks.RemoveRange(oneTimeLinks);
         }
 
+        var phoneChallenges = await _db.PhoneVerificationChallenges
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (phoneChallenges.Count > 0)
+        {
+            _db.PhoneVerificationChallenges.RemoveRange(phoneChallenges);
+        }
+
         var feedbackRows = await _db.PlatformFeedbacks
             .Where(f => f.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1231,6 +1239,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.FirstName = null;
         user.LastName = null;
         user.PhoneNumber = null;
+        user.PhoneVerifiedAtUtc = null;
+        user.PhoneVerifiedE164 = null;
+        user.EmailVerifiedAtUtc = null;
         user.WhatsAppContactAllowed = false;
         user.DateOfBirth = null;
         user.HomeLocation = null;

@@ -106,6 +106,17 @@ public sealed class CandidateProfileEditor : IDisposable
     public string? DutchLevel { get; set; }
     public List<CandidateLanguage> SpokenLanguages { get; } = [];
     public HashSet<string> EmployerPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public string? WorkIndoor { get; set; }
+    public string? WorkOutdoor { get; set; }
+    public string? WorkPhysical { get; set; }
+    public string? WorkPace { get; set; }
+    public bool ShareEmployerPreferences { get; set; }
+    public string? WorkRegion { get; set; }
+    public string? WorkRegionSuggestion { get; set; }
+    public bool? HasOwnCar { get; set; }
+    public HashSet<string> ContractPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public bool EmailVerified { get; private set; }
+    public bool PhoneVerified { get; private set; }
     public List<string> LearningGoals { get; } = [];
     public HashSet<string> Hobbies { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<string> HobbyFreeText { get; } = [];
@@ -187,6 +198,26 @@ public sealed class CandidateProfileEditor : IDisposable
                 EmployerPreferences.Add(code);
             }
         }
+
+        WorkIndoor = prefs.WorkPreferences?.Indoor;
+        WorkOutdoor = prefs.WorkPreferences?.Outdoor;
+        WorkPhysical = prefs.WorkPreferences?.PhysicalWork;
+        WorkPace = prefs.WorkPreferences?.Pace;
+        ShareEmployerPreferences = prefs.ShareEmployerPreferences == true;
+        WorkRegion = prefs.WorkRegion;
+        WorkRegionSuggestion = WorkRegionRules.SuggestFromHomeAddress(prefs.HomeAddress);
+        HasOwnCar = prefs.HasOwnCar;
+        ContractPreferences.Clear();
+        foreach (var code in prefs.ContractPreferences ?? [])
+        {
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                ContractPreferences.Add(code);
+            }
+        }
+
+        EmailVerified = profile.EmailVerified;
+        PhoneVerified = profile.PhoneVerified;
 
         LearningGoals.Clear();
         LearningGoals.AddRange((prefs.LearningGoals ?? []).Where(g => !string.IsNullOrWhiteSpace(g)).Take(DiscoveryCatalogs.MaxLearningGoals));
@@ -843,7 +874,18 @@ public sealed class CandidateProfileEditor : IDisposable
                     Hobbies = Hobbies
                         .Concat(HobbyFreeText.Where(h => !string.IsNullOrWhiteSpace(h)).Select(h => h.Trim()))
                         .Take(DiscoveryCatalogs.MaxHobbies)
-                        .ToList()
+                        .ToList(),
+                    WorkPreferences = new SharedWorkPreferenceChoices
+                    {
+                        Indoor = WorkIndoor,
+                        Outdoor = WorkOutdoor,
+                        PhysicalWork = WorkPhysical,
+                        Pace = WorkPace
+                    },
+                    ShareEmployerPreferences = ShareEmployerPreferences,
+                    WorkRegion = WorkRegion,
+                    HasOwnCar = HasOwnCar,
+                    ContractPreferences = ContractPreferences.OrderBy(x => x).ToList()
                 },
                 homeLatitude: clearHome || !HomeLocationDirty ? null : HomeLat,
                 homeLongitude: clearHome || !HomeLocationDirty ? null : HomeLng,

@@ -534,6 +534,7 @@ public class AccountUnsubscribeTests
             typeof(MfaTrustedDevice),
             typeof(OneTimeLink),
             typeof(PartnerAffiliateProfile),
+            typeof(PhoneVerificationChallenge),
             typeof(PlatformFeedback),
             typeof(SalesIbanChangePending),
             typeof(SalesManagerProfile),

@@ -503,6 +503,7 @@ public class AuthController : ControllerBase
             await EnsureExternalLoginBoundAsync(user.Id, provider, subject, email, cancellationToken);
         }
 
+        ContactVerification.MarkEmailVerified(user, DateTime.UtcNow);
         await _db.SaveChangesAsync(cancellationToken);
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
@@ -805,6 +806,8 @@ public class AuthController : ControllerBase
 
             user = existing;
         }
+
+        ContactVerification.MarkEmailVerified(user, now);
 
         if (!IsTestAccountExempt(user)
             && (user.AuthenticatorEnabled

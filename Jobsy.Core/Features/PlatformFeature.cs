@@ -7,5 +7,11 @@ public enum PlatformFeature
     Employers,
 
     /// <summary>Candidate passport profile UI. Default OFF until enabled in a later release.</summary>
-    CandidatePassport
+    CandidatePassport,
+
+    /// <summary>Partner portal, partner codes and consent. Default false.</summary>
+    PassportPartners,
+
+    /// <summary>DNA-paspoort PDF v2 and the shareable-preferences section. Default false.</summary>
+    PassportPdfV2
 }

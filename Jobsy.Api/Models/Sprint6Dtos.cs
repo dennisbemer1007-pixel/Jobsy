@@ -259,7 +259,10 @@ public record UpdatePlatformFeatureRequest(
     string? Reason = null,
     bool? AmbassadorsEnabled = null,
     bool? EmployersEnabled = null,
-    bool? CandidatePassportEnabled = null);
+    bool? CandidatePassportEnabled = null,
+    bool? PassportPartnersEnabled = null,
+    bool? PassportPdfV2Enabled = null,
+    bool? PhoneVerificationEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -280,7 +283,10 @@ public record PlatformFeatureDto(
     int SchoolRetentionCutoffDay = 31,
     bool AmbassadorsEnabled = false,
     bool EmployersEnabled = false,
-    bool CandidatePassportEnabled = true);
+    bool CandidatePassportEnabled = true,
+    bool PassportPartnersEnabled = false,
+    bool PassportPdfV2Enabled = false,
+    bool PhoneVerificationEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 
