@@ -70,7 +70,8 @@ public static class CareerPlanViewBuilder
                 s.SkillsGap.Count + s.MinRequirements.Count,
                 StepBandLabelKey(s),
                 s.Courses.Count,
-                s.Summary))
+                s.Summary,
+                GapNames(s)))
             .ToList();
 
         var completed = steps.Count(s => s.Status == CareerStepStatus.Completed);
@@ -206,7 +207,8 @@ public static class CareerPlanViewBuilder
                     next.SkillsGap.Count + next.MinRequirements.Count,
                     StepBandLabelKey(next),
                     next.Courses.Count,
-                    next.Summary)
+                    next.Summary,
+                    GapNames(next))
         };
     }
 
@@ -344,6 +346,29 @@ public static class CareerPlanViewBuilder
         return space > 6 ? text[..space] : text[..22];
     }
 
+    /// <summary>Gap names for the overview "Meer" subline (skills + min requirements).</summary>
+    private static IReadOnlyList<string> GapNames(CareerPathDashboardStep step)
+    {
+        var names = new List<string>(step.SkillsGap.Count + step.MinRequirements.Count);
+        foreach (var gap in step.SkillsGap)
+        {
+            if (!string.IsNullOrWhiteSpace(gap))
+            {
+                names.Add(gap.Trim());
+            }
+        }
+
+        foreach (var req in step.MinRequirements)
+        {
+            if (!string.IsNullOrWhiteSpace(req))
+            {
+                names.Add(req.Trim());
+            }
+        }
+
+        return names;
+    }
+
     private static IReadOnlyList<string> BuildAlreadyHave(
         CareerPathPlanApiModel plan,
         IReadOnlyList<CareerPlanStepView> steps)
@@ -401,7 +426,7 @@ public static class CareerPlanViewBuilder
             ? s.CourseStatuses.Select(c => new CareerPathCourseStatus { Name = c.Name, OnProfile = c.OnProfile }).ToList()
             : (s.Courses ?? []).Select(c => new CareerPathCourseStatus { Name = c, OnProfile = false }).ToList();
 
-var legacyHref = s.ActionHref;
+        var legacyHref = s.ActionHref;
 
         return new CareerPathDashboardStep
         {

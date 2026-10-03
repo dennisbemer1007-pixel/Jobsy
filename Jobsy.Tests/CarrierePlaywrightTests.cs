@@ -752,6 +752,123 @@ public class CarrierePlaywrightTests
         Assert.True(visibleOutline, $"F11 {path}: the first Tab must land on a visibly focused element.");
     }
 
+    // -------------------------------------------------------------- 12. one-screen mobile (07)
+
+    [Theory]
+    [InlineData("nl")]
+    [InlineData("ar")]
+    public async Task F12_mobile_overview_fits_one_screen_when_collapsed(string language)
+    {
+        var baseUrl = await CareerE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            return;
+        }
+
+        await using var browser = await CareerE2e.LaunchAsync();
+        await using var context = await browser.NewContextAsync(CareerE2e.MobileContext());
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        if (!await CareerE2e.TryLoginAsync(page, baseUrl))
+        {
+            return;
+        }
+
+        try
+        {
+            await CareerE2e.GoAsync(page, baseUrl, CareerE2e.CareerPath);
+            if (!await CareerE2e.TrySwitchLanguageAsync(page, baseUrl, language, CareerE2e.CareerPath))
+            {
+                return;
+            }
+
+            if (!await EnsurePlanAsync(page))
+            {
+                return;
+            }
+
+            // Archive rows below the card can force scroll; collapse them when present.
+            var archive = page.Locator("details.career-archive[open]");
+            if (await archive.CountAsync() > 0)
+            {
+                await archive.Locator("summary").First.ClickAsync();
+            }
+
+            await CareerE2e.AssertNoHorizontalOverflowAsync(page, $"F12 {language} collapsed");
+
+            var metrics = await page.EvaluateAsync<MobileOverviewMetrics>("""
+                () => {
+                  const scroll = document.scrollingElement || document.documentElement;
+                  const hero = document.querySelector('.career-band') || document.querySelector('.career-scene--mobile');
+                  const source = document.querySelector('.career-card__source');
+                  const bubble = document.querySelector('.career-band__bubble .passport-bubble');
+                  const stepper = document.querySelector('.career-stepper--mobile .career-stepper__list');
+                  const labels = [...document.querySelectorAll('.career-scene--mobile .career-scene__label')]
+                    .map(el => {
+                      const r = el.getBoundingClientRect();
+                      return { left: r.left, right: r.right };
+                    });
+                  let heroToSource = -1;
+                  if (hero && source) {
+                    heroToSource = source.getBoundingClientRect().bottom - hero.getBoundingClientRect().top;
+                  }
+                  let bubbleInside = true;
+                  if (hero && bubble) {
+                    const h = hero.getBoundingClientRect();
+                    const b = bubble.getBoundingClientRect();
+                    bubbleInside = b.top >= h.top - 1 && b.bottom <= h.bottom + 1
+                      && b.left >= h.left - 1 && b.right <= h.right + 1;
+                  }
+                  return {
+                    noPageScroll: scroll.scrollHeight <= window.innerHeight + 1,
+                    heroToSource,
+                    bubbleInside,
+                    stepperFits: !stepper || stepper.scrollWidth <= stepper.clientWidth + 1,
+                    labelsInside: labels.every(l => l.left >= -1 && l.right <= 391),
+                    hasMobileBar: !!document.querySelector('.career-mobile-bar'),
+                    hasPencil: !!document.querySelector('.career-card__edit--icon')
+                  };
+                }
+                """);
+
+            Assert.False(metrics.HasMobileBar, $"F12 {language}: floating mobile bar must be gone.");
+            Assert.True(metrics.HasPencil, $"F12 {language}: pencil must sit in the card header.");
+            Assert.True(metrics.HeroToSource > 0 && metrics.HeroToSource <= 560,
+                $"F12 {language}: hero→AI was {metrics.HeroToSource:0} px (max 560).");
+            Assert.True(metrics.BubbleInside, $"F12 {language}: bubble must sit inside the hero.");
+            Assert.True(metrics.StepperFits, $"F12 {language}: stepper must not scroll horizontally.");
+            Assert.True(metrics.LabelsInside, $"F12 {language}: every scene label must stay in [0,390].");
+            Assert.True(metrics.NoPageScroll, $"F12 {language}: collapsed overview must not page-scroll.");
+
+            await CareerE2e.ShotAsync(page, $"carriere-390-collapsed-{language}");
+
+            var more = page.Locator(".career-now__more").First;
+            if (await more.CountAsync() > 0)
+            {
+                await more.ClickAsync();
+                await Assertions.Expect(more).ToHaveAttributeAsync("aria-expanded", "true");
+                await Assertions.Expect(page.Locator("#career-now-meer")).ToBeVisibleAsync();
+                Assert.True(
+                    await page.Locator("#career-now-meer li").CountAsync() > 0,
+                    $"F12 {language}: Meer must reveal detail lines.");
+                await CareerE2e.ShotAsync(page, $"carriere-390-meer-{language}");
+            }
+        }
+        finally
+        {
+            await CareerE2e.TrySwitchLanguageAsync(page, baseUrl, "nl", CareerE2e.CareerPath);
+        }
+    }
+
+    private sealed record MobileOverviewMetrics(
+        bool NoPageScroll,
+        double HeroToSource,
+        bool BubbleInside,
+        bool StepperFits,
+        bool LabelsInside,
+        bool HasMobileBar,
+        bool HasPencil);
+
     // ------------------------------------------------------------------------------- helpers
 
     /// <summary>
