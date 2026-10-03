@@ -37,4 +37,21 @@ public class CandidateDreamJobTests
         Assert.Equal("Teamleider logistiek", page.DreamTitle);
         Assert.Equal("Mbo4", page.DreamLevel);
     }
+
+    [Fact]
+    public void Logistics_experience_marks_matching_gaps_done_and_drops_placeholders()
+    {
+        var step = new CareerPathDashboardStep
+        {
+            SkillsGap = ["Basiskennis Logistiek", "Geen specifieke vereisten", "Projectmanagement"],
+            MinRequirements = ["Ervaring in Logistiek"]
+        };
+
+        var gaps = CareerPlanViewBuilder.BuildGaps(step, "Orderpicker logistiek MBO Logistiek");
+        Assert.DoesNotContain(gaps, g => g.Text.Contains("vereisten", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(gaps, g => g.Text == "Basiskennis Logistiek" && g.Met);
+        Assert.Contains(gaps, g => g.Text == "Ervaring in Logistiek" && g.Met);
+        Assert.Contains(gaps, g => g.Text == "Projectmanagement" && !g.Met);
+        Assert.Equal("Leidinggevende Vaardigheden", CareerPlanViewBuilder.ShortTitle("Leidinggevende Vaardigheden"));
+    }
 }

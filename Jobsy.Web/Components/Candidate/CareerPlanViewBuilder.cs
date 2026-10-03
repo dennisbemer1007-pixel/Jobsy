@@ -153,7 +153,7 @@ public static class CareerPlanViewBuilder
     /// One step, fully explained (03 §1–§4). Returns null for an unknown order so the
     /// page falls back to the overview. <paramref name="order"/> is the 1-based step order.
     /// </summary>
-    public static CareerStepDetailView? BuildStep(CareerPathPlanApiModel? plan, int order)
+    public static CareerStepDetailView? BuildStep(CareerPathPlanApiModel? plan, int order, string evidence = "")
     {
         if (plan is null || plan.Steps.Count == 0)
         {
@@ -174,7 +174,7 @@ public static class CareerPlanViewBuilder
 
         var missing = new List<CareerStepGapLine>();
         var present = new List<CareerStepGapLine>();
-        foreach (var line in BuildGaps(step))
+        foreach (var line in BuildGaps(step, evidence))
         {
             (line.Met ? present : missing).Add(new CareerStepGapLine(line.Text, line.Met));
         }
@@ -348,13 +348,13 @@ public static class CareerPlanViewBuilder
             text = text[..cut].Trim();
         }
 
-        if (text.Length <= 22)
+        if (text.Length <= 36)
         {
             return text;
         }
 
-        var space = text.LastIndexOf(' ', Math.Min(21, text.Length - 1));
-        return space > 6 ? text[..space] : text[..22];
+        var space = text.LastIndexOf(' ', Math.Min(35, text.Length - 1));
+        return space > 6 ? text[..space] : text[..36];
     }
 
     /// <summary>Gap names for the overview "Meer" subline (skills + min requirements).</summary>
@@ -496,7 +496,7 @@ public static class CareerPlanViewBuilder
                 CareerStepStatus.Active => ShellKind.Current,
                 _ => ShellKind.Future
             };
-            shells.Add(new ShellStep(step.Id, step.Order, step.Title, kind, step.Status, IsGoal: false));
+            shells.Add(new ShellStep(step.Id, step.Order, ShortTitle(step.Title), kind, step.Status, IsGoal: false));
         }
 
         shells.Add(new ShellStep(
@@ -589,7 +589,7 @@ public static class CareerPlanViewBuilder
         return "/";
     }
 
-    public static IReadOnlyList<GapLine> BuildGaps(CareerPathDashboardStep? step)
+    public static IReadOnlyList<GapLine> BuildGaps(CareerPathDashboardStep? step, string evidence = "")
     {
         if (step is null)
         {
@@ -599,17 +599,17 @@ public static class CareerPlanViewBuilder
         var lines = new List<GapLine>();
         foreach (var gap in step.SkillsGap)
         {
-            if (!string.IsNullOrWhiteSpace(gap))
+            if (IsRealGap(gap))
             {
-                lines.Add(new GapLine(gap.Trim(), Met: false));
+                lines.Add(new GapLine(gap.Trim(), Met: GapMatchesEvidence(gap, evidence)));
             }
         }
 
         foreach (var req in step.MinRequirements)
         {
-            if (!string.IsNullOrWhiteSpace(req))
+            if (IsRealGap(req))
             {
-                lines.Add(new GapLine(req.Trim(), Met: false));
+                lines.Add(new GapLine(req.Trim(), Met: GapMatchesEvidence(req, evidence)));
             }
         }
 
@@ -623,6 +623,39 @@ public static class CareerPlanViewBuilder
         }
 
         return lines;
+    }
+
+    private static bool IsRealGap(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var folded = text.Trim();
+        return !folded.Equals("Geen specifieke vereisten", StringComparison.OrdinalIgnoreCase)
+               && !folded.Equals("Geen specifieke eisen", StringComparison.OrdinalIgnoreCase)
+               && !folded.Equals("No specific requirements", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>A gap is already met when a meaningful word also appears in the profile evidence.</summary>
+    public static bool GapMatchesEvidence(string gap, string evidence)
+    {
+        if (string.IsNullOrWhiteSpace(gap) || string.IsNullOrWhiteSpace(evidence))
+        {
+            return false;
+        }
+
+        var evidenceFold = CareerOccupationKeys.Fold(evidence);
+        foreach (var token in CareerOccupationKeys.Fold(gap).Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (token.Length >= 5 && CareerOccupationKeys.Hits(evidenceFold, token))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static IReadOnlyList<string> BuildCourseKeys(CareerPathDashboardStep? step)
