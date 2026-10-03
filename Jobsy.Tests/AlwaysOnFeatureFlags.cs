@@ -2,7 +2,7 @@ using Jobsy.Core.Features;
 
 namespace Jobsy.Tests;
 
-/// <summary>Test double: employers ON, passport OFF (production defaults).</summary>
+/// <summary>Test double: employers ON, passport ON (production defaults).</summary>
 internal sealed class AlwaysOnFeatureFlags : IFeatureFlags
 {
     public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)

@@ -288,7 +288,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
                 : 31,
             row?.AmbassadorsEnabled ?? false,
             row?.EmployersEnabled ?? true,
-            row?.CandidatePassportEnabled ?? false,
+            row?.CandidatePassportEnabled ?? true,
             row?.MaintenanceEnabled ?? false,
             row?.MaintenanceExpectedEndUtc is DateTime end
                 ? DateTime.SpecifyKind(end, DateTimeKind.Utc)

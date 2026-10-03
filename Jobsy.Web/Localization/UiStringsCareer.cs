@@ -250,18 +250,72 @@ public static class UiStringsCareer
             "Homar rośnie tylko wtedy, gdy zrzuci starą skorupę. Ty rośniesz tak samo: kamień po kamieniu.",
             "Un homar crește doar când își lasă carapacea veche. Așa crești și tu: piatră cu piatră.",
             "لا ينمو الكركند إلا إذا تخلّى عن قوقعته القديمة. وأنت تنمو كذلك: حجراً بعد حجر.");
+        Add("Career.Overview.LeadShort",
+            "Steen voor steen groei je naar je droombaan.",
+            "Stone by stone you grow towards your dream job.",
+            "Kamień po kamieniu rośniesz ku wymarzonej pracy.",
+            "Piatră cu piatră crești spre jobul visat.",
+            "حجراً بعد حجر تنمو نحو وظيفة أحلامك.");
         Add("Career.Overview.NowEyebrow",
-            "Nu aan de beurt · groeit nu",
-            "Up next · growing now",
-            "Teraz twoja kolej · rośnie teraz",
-            "Acum e rândul · crește acum",
-            "الدور الآن · ينمو الآن");
+            "Nu aan de beurt",
+            "Up next",
+            "Teraz twoja kolej",
+            "Acum e rândul",
+            "الدور الآن");
         Add("Career.Overview.ViewStep",
             "Bekijk deze stap",
             "View this step",
             "Zobacz ten krok",
             "Vezi acest pas",
             "اعرض هذه الخطوة");
+        Add("Career.Overview.ViewStepN",
+            "Bekijk stap {0}",
+            "View step {0}",
+            "Zobacz krok {0}",
+            "Vezi pasul {0}",
+            "اعرض الخطوة {0}");
+        Add("Career.Overview.More",
+            "Meer",
+            "More",
+            "Więcej",
+            "Mai mult",
+            "المزيد");
+        Add("Career.Overview.Less",
+            "Minder",
+            "Less",
+            "Mniej",
+            "Mai puțin",
+            "أقل");
+        Add("Career.Overview.Summary",
+            "Nog {0} klauwen · {1} opleidingen",
+            "{0} claws left · {1} courses",
+            "Jeszcze {0} szczypce · {1} szkoleń",
+            "Mai ai {0} clești · {1} cursuri",
+            "بقي {0} مخالب · {1} دورات");
+        Add("Career.Overview.SummaryClaws",
+            "Nog {0} klauwen",
+            "{0} claws left",
+            "Jeszcze {0} szczypce",
+            "Mai ai {0} clești",
+            "بقي {0} مخالب");
+        Add("Career.Overview.SummaryCourses",
+            "{0} opleidingen",
+            "{0} courses",
+            "{0} szkoleń",
+            "{0} cursuri",
+            "{0} دورات");
+        Add("Career.Overview.HaveCount",
+            "Wat je al hebt: {0} dingen",
+            "What you already have: {0} things",
+            "Co już masz: {0} rzeczy",
+            "Ce ai deja: {0} lucruri",
+            "ما لديك بالفعل: {0} أشياء");
+        Add("Career.Overview.FreeCourseHint",
+            "Begin met de gratis online les",
+            "Start with the free online lesson",
+            "Zacznij od darmowej lekcji online",
+            "Începe cu lecția online gratuită",
+            "ابدأ بالدرس المجاني عبر الإنترنت");
         Add("Career.Fact.Claws",
             "Nog {0} klauwen laten groeien",
             "{0} claws still to grow",
@@ -274,6 +328,12 @@ public static class UiStringsCareer
             "{0} szkoleń · {1} jest bezpłatne",
             "{0} cursuri · {1} este gratuit",
             "{0} دورات · {1} مجانية");
+        Add("Career.Fact.CoursesPlain",
+            "{0} opleidingen",
+            "{0} courses",
+            "{0} szkoleń",
+            "{0} cursuri",
+            "{0} دورات");
         Add("Career.Fact.Band",
             "Deze steen past al {0} bij jou",
             "This stone already fits you {0}",
@@ -501,12 +561,30 @@ public static class UiStringsCareer
             "Twoje kroki: od Teraz do wymarzonej pracy",
             "Pașii tăi: de la Acum la jobul visat",
             "خطواتك: من الآن إلى وظيفة أحلامك");
+        Add("Career.Stepper.Now",
+            "Nu",
+            "Now",
+            "Teraz",
+            "Acum",
+            "الآن");
+        Add("Career.Stepper.Step",
+            "Stap {0}",
+            "Step {0}",
+            "Krok {0}",
+            "Pasul {0}",
+            "الخطوة {0}");
         Add("Career.Stepper.Goal",
             "Doel",
             "Goal",
             "Cel",
             "Obiectiv",
             "الهدف");
+        Add("Career.Mark.Now",
+            "Nu",
+            "Now",
+            "Teraz",
+            "Acum",
+            "الآن");
     }
 
     private static void AddDream(AddString Add)

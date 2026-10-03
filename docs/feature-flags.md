@@ -5,7 +5,7 @@ Admin toggles live in the singleton `PlatformFeatureSettings` row and are read t
 | Flag | Default | Meaning |
 |---|---|---|
 | `EmployersEnabled` | **true** | ON = today’s product. OFF = self-discovery only; employer/vacancy surfaces are hidden and return 404 `feature_disabled`. Data is never deleted. |
-| `CandidatePassportEnabled` | **false** | When ON: candidates see Mijn Paspoort (`/candidate/paspoort`) instead of Profiel; nav order per §N; default landing via `FeatureRoutes.HomeFor` (not ready → ontdekkingsreis, ready → passport). |
+| `CandidatePassportEnabled` | **true** | When ON (default): candidates see Mijn Paspoort (`/candidate/paspoort`) instead of Profiel; nav order Discovery · Passport · Zoeken · Sollicitaties · Carrière; Bewaard is a tab under Sollicitaties; default landing via `FeatureRoutes.HomeFor` (not ready → ontdekkingsreis, ready → passport). Admin can still turn it OFF. |
 
 Gate with `[RequiresFeature(PlatformFeature.Employers)]` (pages, controllers, actions) or `<FeatureVisible Feature="PlatformFeature.Employers">` (sections). Minimal APIs: `.RequireFeature(PlatformFeature.Employers)`.
 
@@ -57,9 +57,9 @@ New-vacancy / employer-reaction / PushBom / Match categories suppressed when OFF
 
 | Passport | Employers | Items (left → right) | Count |
 |---|---|---|---|
-| OFF | ON (default) | Zoeken · Bewaard · Sollicitaties · Carrière · Profiel (D1, exactly today) | 5 |
-| OFF | OFF | Carrière · Profiel | 2 |
-| ON | ON | De ontdekkingsreis · Mijn Paspoort · Carrière · Banenkaart · Sollicitaties (Bewaard is a tab inside Sollicitaties, D8) | 5 |
+| ON (default) | ON | De ontdekkingsreis · Mijn Paspoort · Zoeken · Sollicitaties · Carrière (Bewaard is a tab inside Sollicitaties) | 5 |
 | ON | OFF | De ontdekkingsreis · Mijn Paspoort · Carrière | 3 |
+| OFF | ON | Zoeken · Bewaard · Sollicitaties · Carrière · Profiel (legacy D1) | 5 |
+| OFF | OFF | Carrière · Profiel | 2 |
 
-Employer-side catalogs empty when OFF (Admin unchanged). Career sits directly after Passport when the paspoort flag is ON (no longer always last).
+Employer-side catalogs empty when OFF (Admin unchanged). Match is a map button, never a nav item.

@@ -466,7 +466,17 @@
             f.SessionInactivityTimeoutMinutes,
             f.FreePublishUntil,
             SupportAccessNotifyAdmins: f.SupportAccessNotifyAdmins,
-            SupportAccessNotifySubject: f.SupportAccessNotifySubject);
+            SupportAccessNotifySubject: f.SupportAccessNotifySubject,
+            CandidateInsightsEnabled: f.CandidateInsightsEnabled,
+            CandidateInsightsUnlockDays: f.CandidateInsightsUnlockDays,
+            CandidateInsightsUnlockPerBranch: f.CandidateInsightsUnlockPerBranch,
+            SchoolsEnabled: f.SchoolsEnabled,
+            SchoolPerCodeResultsEnabled: f.SchoolPerCodeResultsEnabled,
+            SchoolRetentionCutoffMonth: f.SchoolRetentionCutoffMonth,
+            SchoolRetentionCutoffDay: f.SchoolRetentionCutoffDay,
+            AmbassadorsEnabled: f.AmbassadorsEnabled,
+            EmployersEnabled: f.EmployersEnabled,
+            CandidatePassportEnabled: f.CandidatePassportEnabled);
 
     private sealed record KpiVm(
         string Label,

@@ -24,8 +24,8 @@
     "v": "20261002-kp04"
   },
   "css/features/carriere.css": {
-    "sha256": "38a5169943c3e3c01c6ffa9aea4f38cf45b205b1da9ff89eae5cc3a465ffbe4f",
-    "v": "20260930-carriere5"
+    "sha256": "8739ec5fa7fb7738a0c31390e511a1d045be82ae3bbaa23adf0376cbe3ec86c0",
+    "v": "20261003-kp07"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
@@ -40,8 +40,8 @@
     "v": "20260930-landing-6"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "30bdb97f8c5fdb00bf193d136e5b1a3291893eb9d592534d3615f5e93563b0c6",
-    "v": "20261002-kp03b"
+    "sha256": "474f33a517f76c9b1290a3bee730b63fd8bbf7314c013f3d6a84d00aee3f1551",
+    "v": "20261002-kp05"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -60,8 +60,8 @@
     "v": "20261002-ci-mtp"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "299c0863e6a1abf7fa094820262565f5e5c93be064bdf0d7aace263199a5e3ec",
-    "v": "20260929-discovery-1"
+    "sha256": "88232c204445ecbd1bee2f748fa31b44b89130cffd6194bc30bd8b367492e14c",
+    "v": "20261002-kp06"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",

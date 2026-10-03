@@ -17,7 +17,12 @@ public enum ClimbStoneState
 }
 
 /// <summary>One stone with its HTML label (the SVG itself is aria-hidden).</summary>
-public sealed record ClimbStone(string Label, ClimbStoneState State, string? StateText = null);
+/// <param name="ShortMark">Mobile hero mark inside the stone (Nu / 1…n); null for the dream star.</param>
+public sealed record ClimbStone(
+    string Label,
+    ClimbStoneState State,
+    string? StateText = null,
+    string? ShortMark = null);
 
 /// <summary>Scene pose (§S).</summary>
 public enum ClimbVariant

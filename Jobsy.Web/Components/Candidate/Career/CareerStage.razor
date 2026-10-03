@@ -26,9 +26,12 @@
                       FallingPlate="@FallingPlate"
                       LobsterLabel="@LobsterLabel"
                       LobsterSize="@LobsterSizeMobile" />
-    <div class="career-band__say">
-        <LobsyBubble Text="@BubbleMobile" Variant="LobsyBubble.BubbleVariant.Scene" />
-    </div>
+    @if (!string.IsNullOrWhiteSpace(BubbleMobile))
+    {
+        <div class="career-band__bubble">
+            <LobsyBubble Text="@BubbleMobile" Variant="LobsyBubble.BubbleVariant.Scene" />
+        </div>
+    }
 </div>
 
 <div class="career-stage">

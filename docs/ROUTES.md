@@ -21,9 +21,10 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 
 ## Landing + banenkaart (landing 04–05)
 
-- `/` — public landing page (static SSR, no MapLibre / no Blazor runtime; indexed). Signed-in users are **302** → role home (`/banenkaart` for candidates). Legacy map deep-link query on `/` → **301** `/banenkaart?…`.
+- `/` — public landing page (static SSR, no MapLibre / no Blazor runtime; indexed). Signed-in users are **302** → role home (passport ON default: discovery/paspoort for candidates; passport OFF: `/banenkaart`). Legacy map deep-link query on `/` → **301** `/banenkaart?…`.
 - `/banenkaart` — public job map (indexed).
 - `/banen` — legacy; **301** → `/banenkaart` (query preserved; middleware, not a Blazor page).
+- `/bewaard`, `/candidate/saved`, `/candidate/bewaard` — legacy Bewaard URLs; **302** → `/candidate/liked` (query preserved; `BewaardRedirectMiddleware`).
 
 ## Access column
 
@@ -325,13 +326,16 @@ Not Blazor `@page` routes — documented here for discoverability (landing stack
 | `/partner/flyer.pdf` | GET; anonymous; proxies the partner flyer pdf (`?code=` optional); 302 → `/` with werkgevers-actief OFF; rate-limited |
 | `/register?van=ontdek` | GET; 302 → `/account-maken?van=ontdek` (legacy test CTA) |
 | `/banen` | GET/HEAD; **301** → `/banenkaart` (+ query) |
+| `/bewaard` | GET/HEAD; **302** → `/candidate/liked` (+ query) |
+| `/candidate/saved` | GET/HEAD; **302** → `/candidate/liked` (+ query) |
+| `/candidate/bewaard` | GET/HEAD; **302** → `/candidate/liked` (+ query) |
 
 ## Kandidaat banen notes
 
 - Banenkaart list mode: query `?weergave=lijst` on `/banenkaart`. Persisted in `sessionStorage jobsy.kb.weergave`.
 - Employer viewed hook: `POST api/applications/{id}/viewed` (07) records at most one `EmployerViewed` timeline event.
 - Werkgevers gating (paspoort 01): when `PlatformFeature.Employers` lands, candidate job pages/APIs return the feature gate / `404 feature_disabled`. Until then KB-FALLBACK(C) comments mark the intended sites.
-- Map route constant: `KbRoutes.Map` (`/banenkaart`).
+- Map route constant: `KbRoutes.Map` (`/banenkaart`). Saved: `KbRoutes.Saved` (`/candidate/liked`). With passport ON, Bewaard is a tab under Sollicitaties.
 
 ## Carrière notes
 

@@ -53,28 +53,82 @@
                             @Culture["Kb.Saved.FilterClosed"] · @_countClosed
                         </button>
                     </div>
-                    <label class="kb-saved__sort">
-                        <span class="visually-hidden">@Culture["Kb.Saved.SortBestFit"]</span>
-                        <select @bind="_sort" @bind:after="ApplyFilter">
-                            <option value="fit">@Culture["Kb.Saved.SortBestFit"]</option>
-                            <option value="newest">@Culture["Kb.Saved.SortNewest"]</option>
-                            <option value="closing">@Culture["Kb.Saved.SortClosing"]</option>
-                        </select>
-                    </label>
+                    <div class="kb-saved__meta">
+                        <span class="kb-saved__count">@string.Format(Culture["Kb.Saved.Count"], _filtered.Count)</span>
+                        <label class="kb-saved__sort">
+                            <span class="visually-hidden">@Culture["Kb.Filter.Sort"]</span>
+                            <select @bind="_sort" @bind:after="ApplyFilter">
+                                <option value="newest">@Culture["Kb.Saved.SortNewest"]</option>
+                                <option value="fit">@Culture["Kb.Saved.SortBestFit"]</option>
+                                <option value="closing">@Culture["Kb.Saved.SortClosing"]</option>
+                            </select>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="kb-saved__grid">
                     @foreach (var item in _filtered)
                     {
                         var closed = IsClosed(item);
+                        var rowHref = closed ? SimilarHref(item) : $"/vacancies/{item.VacancyId}";
+                        var companyPlace = string.IsNullOrWhiteSpace(item.LocationLabel)
+                            ? item.CompanyName
+                            : $"{item.CompanyName} · {item.LocationLabel}";
+                        <article class="kb-saved-row @(closed ? "kb-saved-row--closed" : null)">
+                            <div class="kb-saved-row__thumb">
+                                <VacancyPhoto Src="@item.ImageUrl"
+                                              FallbackSrc="@item.CompanyLogoUrl"
+                                              VacancyId="item.VacancyId"
+                                              Class="kb-saved-row__photo"
+                                              Sizes="72px"
+                                              Width="72"
+                                              Height="72" />
+                            </div>
+                            <div class="kb-saved-row__body">
+                                <h2 class="kb-saved-row__title">
+                                    <a class="kb-saved-row__link" href="@rowHref">@item.VacancyTitle</a>
+                                </h2>
+                                <p class="kb-saved-row__place">@companyPlace</p>
+                                <div class="kb-saved-row__tags">
+                                    @if (item.FitGateClosed)
+                                    {
+                                        <a class="kb-fit kb-fit--gate kb-saved-row__fit" href="@KbRoutes.PaspoortTests">@Culture["Kb.Fit.Gate"]</a>
+                                    }
+                                    else if (item.FitPercent is int pct)
+                                    {
+                                        <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ?? "some") kb-saved-row__fit">
+                                            @string.Format(Culture["Kb.Fit.Percent"], pct)
+                                        </span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.SavedStateKind)
+                                         && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal))
+                                    {
+                                        <span class="kb-saved-row__status kb-saved-row__status--@KbLabels.SavedStateCss(item.SavedStateKind)">
+                                            @KbLabels.SavedStateLabel(Culture, item.SavedStateKind, item.DaysUntilEnd)
+                                        </span>
+                                    }
+                                    @if (item.HasApplied)
+                                    {
+                                        <span class="kb-saved-row__applied">@Culture["Kb.Saved.Applied"]</span>
+                                    }
+                                </div>
+                            </div>
+                            <button type="button"
+                                    class="kb-saved-row__heart"
+                                    aria-label="@Culture["Kb.Saved.Unsave"]"
+                                    @onclick="() => UnsaveAsync(item)"
+                                    @onclick:stopPropagation="true">
+                                ♥
+                            </button>
+                        </article>
                         <article class="kb-saved-card @(closed ? "kb-saved-card--closed" : null)">
                             <div class="kb-saved-card__media">
-                                <a href="@($"/vacancies/{item.VacancyId}")">
+                                <a class="kb-saved-card__media-link" href="@($"/vacancies/{item.VacancyId}")">
                                     <VacancyPhoto Src="@item.ImageUrl"
                                                   FallbackSrc="@item.CompanyLogoUrl"
                                                   VacancyId="item.VacancyId"
                                                   Class="kb-saved-card__photo"
-                                                  Sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                                                  Sizes="(max-width: 1024px) 33vw, 25vw" />
                                 </a>
                                 @if (!string.IsNullOrWhiteSpace(item.SavedStateKind)
                                      && !string.Equals(item.SavedStateKind, nameof(KbSavedJobStateKind.Hidden), StringComparison.Ordinal))
@@ -85,7 +139,7 @@
                                 }
                                 <button type="button"
                                         class="kb-saved-card__heart"
-                                        aria-label="@Culture["Kb.Saved.Remove"]"
+                                        aria-label="@Culture["Kb.Saved.Unsave"]"
                                         @onclick="() => UnsaveAsync(item)">
                                     ♥
                                 </button>
@@ -94,9 +148,7 @@
                                 <h2 class="kb-saved-card__title">
                                     <a href="@($"/vacancies/{item.VacancyId}")">@item.VacancyTitle</a>
                                 </h2>
-                                <p class="kb-saved-card__company">
-                                    @item.CompanyName@(string.IsNullOrWhiteSpace(item.LocationLabel) ? "" : $" · {item.LocationLabel}")
-                                </p>
+                                <p class="kb-saved-card__company">@companyPlace</p>
                                 <p class="kb-saved-card__meta">
                                     @if (item.HoursPerWeekMin.HasValue || item.HoursPerWeekMax.HasValue)
                                     {
@@ -108,10 +160,10 @@
                                 {
                                     <a class="kb-fit kb-fit--gate" href="@KbRoutes.PaspoortTests">@Culture["Kb.Fit.Gate"]</a>
                                 }
-                                else if (item.FitPercent is int pct)
+                                else if (item.FitPercent is int pctCard)
                                 {
                                     <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ?? "some")">
-                                        @string.Format(Culture["Kb.Fit.Percent"], pct)
+                                        @string.Format(Culture["Kb.Fit.Percent"], pctCard)
                                     </span>
                                 }
                             </div>

@@ -20,11 +20,27 @@
         }
     </div>
 
-    <h1 id="career-title" tabindex="-1">
-        <span class="career-only-desktop">@TitleText</span>
-        <span class="career-only-mobile">@TitleTextShort</span>
-    </h1>
-    <p class="career-card__lead">@Culture["Career.Overview.Lead"]</p>
+    <div class="career-card__title-row">
+        <h1 id="career-title" tabindex="-1">
+            <span class="career-only-desktop">@TitleText</span>
+            <span class="career-only-mobile">@TitleTextShort</span>
+        </h1>
+        @if (!Plan.GoalReached)
+        {
+            <button type="button"
+                    class="career-card__edit career-card__edit--icon career-only-mobile"
+                    aria-label="@Culture["Career.EditDream"]"
+                    disabled="@Busy"
+                    @onclick="OnChangeDream">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+            </button>
+        }
+    </div>
+    <p class="career-card__lead career-only-desktop">@Culture["Career.Overview.Lead"]</p>
+    <p class="career-card__lead career-card__lead--short career-only-mobile">@Culture["Career.Overview.LeadShort"]</p>
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))
     {
@@ -46,7 +62,12 @@
         </p>
     }
 
-    <GrowingShellsStepper Stones="@Plan.Stones" Mobile="false" />
+    <div class="career-only-desktop">
+        <GrowingShellsStepper Stones="@Plan.Stones" Mobile="false" />
+    </div>
+    <div class="career-only-mobile">
+        <GrowingShellsStepper Stones="@Plan.Stones" Mobile="true" />
+    </div>
 
     @if (Plan.GoalReached)
     {
@@ -67,7 +88,7 @@
     }
     else if (Plan.CurrentStep is { } step)
     {
-        <section class="career-now" aria-labelledby="career-now-title">
+        <section class="career-now career-only-desktop" aria-labelledby="career-now-title">
             <p class="career-now__eyebrow">@Culture["Career.Overview.NowEyebrow"]</p>
             <h2 id="career-now-title" class="career-card__block-title">@step.Title</h2>
             @if (Facts.Count > 0)
@@ -83,11 +104,47 @@
                 <a class="career-btn career-btn--primary" href="@StepHref(step)">@Culture["Career.Overview.ViewStep"]</a>
             </div>
         </section>
+
+        <section class="career-now career-now--compact career-only-mobile" aria-labelledby="career-now-title-m">
+            <p class="career-now__eyebrow">@Culture["Career.Overview.NowEyebrow"]</p>
+            <h2 id="career-now-title-m" class="career-card__block-title">@step.Title</h2>
+            @if (!string.IsNullOrWhiteSpace(SummaryLine))
+            {
+                <p class="career-now__summary">@SummaryLine</p>
+            }
+            <ul class="career-now__details @(_nowExpanded ? null : "is-collapsed")"
+                id="career-now-meer"
+                hidden="@(!_nowExpanded)">
+                @foreach (var line in DetailLines)
+                {
+                    <li>
+                        <span class="career-now__detail-main">@line.Main</span>
+                        @if (!string.IsNullOrWhiteSpace(line.Sub))
+                        {
+                            <small class="career-now__detail-sub">@line.Sub</small>
+                        }
+                    </li>
+                }
+            </ul>
+            <div class="career-now__row">
+                <button type="button"
+                        class="career-now__more"
+                        aria-expanded="@(_nowExpanded ? "true" : "false")"
+                        aria-controls="career-now-meer"
+                        @onclick="ToggleNow">
+                    @(_nowExpanded ? Culture["Career.Overview.Less"] : Culture["Career.Overview.More"])
+                    <span class="career-now__chev" aria-hidden="true">@(_nowExpanded ? "▴" : "▾")</span>
+                </button>
+                <a class="career-btn career-btn--primary" href="@StepHref(step)">
+                    @Culture.Format("Career.Overview.ViewStepN", step.Order)
+                </a>
+            </div>
+        </section>
     }
 
     @if (Plan.AlreadyHave.Count > 0)
     {
-        <section class="career-have" aria-labelledby="career-have-title">
+        <section class="career-have career-only-desktop" aria-labelledby="career-have-title">
             <h2 id="career-have-title" class="career-card__block-title">@Culture["Career.Have.Title"]</h2>
             <ul class="career-have__list">
                 @foreach (var item in Plan.AlreadyHave)
@@ -101,7 +158,13 @@
         </section>
     }
 
-    <p class="career-card__source">@(Plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])</p>
+    <p class="career-card__source">
+        <svg class="career-card__source-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m15.5 8.5-2 5-5 2 2-5z" />
+        </svg>
+        <span>@(Plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])</span>
+    </p>
 
     @if (Plan.LanguageDiffers)
     {
@@ -126,6 +189,8 @@
     [Parameter] public EventCallback OnDismissCarriedOver { get; set; }
     [Parameter] public EventCallback OnRegenerateLanguage { get; set; }
 
+    private bool _nowExpanded;
+
     private string PassportHref => PassportOn ? "/candidate/paspoort" : "/candidate/profile";
 
     private string EyebrowText => Plan.GoalReached || Plan.CurrentStepNumber == 0
@@ -135,6 +200,37 @@
     private string TitleText => Culture.Format("Career.Overview.Title", Plan.DreamTitle);
 
     private string TitleTextShort => Culture.Format("Career.Overview.TitleShort", Plan.DreamTitle);
+
+    private string SummaryLine
+    {
+        get
+        {
+            var step = Plan.CurrentStep;
+            if (step is null)
+            {
+                return "";
+            }
+
+            var claws = step.GapCount;
+            var courses = step.CourseCount;
+            if (claws > 0 && courses > 0)
+            {
+                return Culture.Format("Career.Overview.Summary", claws, courses);
+            }
+
+            if (claws > 0)
+            {
+                return Culture.Format("Career.Overview.SummaryClaws", claws);
+            }
+
+            if (courses > 0)
+            {
+                return Culture.Format("Career.Overview.SummaryCourses", courses);
+            }
+
+            return "";
+        }
+    }
 
     private List<string> Facts
     {
@@ -152,9 +248,11 @@
                 facts.Add(Culture.Format("Career.Fact.Claws", step.GapCount));
             }
 
-            if (FreeCourseCount > 0 && step.CourseCount > 0)
+            if (step.CourseCount > 0)
             {
-                facts.Add(Culture.Format("Career.Fact.Courses", step.CourseCount, FreeCourseCount));
+                facts.Add(FreeCourseCount > 0
+                    ? Culture.Format("Career.Fact.Courses", step.CourseCount, FreeCourseCount)
+                    : Culture.Format("Career.Fact.CoursesPlain", step.CourseCount));
             }
 
             if (!string.IsNullOrWhiteSpace(step.BandLabelKey))
@@ -165,6 +263,55 @@
             return facts.Take(3).ToList();
         }
     }
+
+    private List<(string Main, string Sub)> DetailLines
+    {
+        get
+        {
+            var lines = new List<(string, string)>(4);
+            var step = Plan.CurrentStep;
+            if (step is null)
+            {
+                return lines;
+            }
+
+            if (step.GapCount > 0)
+            {
+                lines.Add((
+                    Culture.Format("Career.Fact.Claws", step.GapCount),
+                    string.Join(" · ", step.GapNames.Take(3))));
+            }
+
+            if (step.CourseCount > 0)
+            {
+                var main = FreeCourseCount > 0
+                    ? Culture.Format("Career.Fact.Courses", step.CourseCount, FreeCourseCount)
+                    : Culture.Format("Career.Fact.CoursesPlain", step.CourseCount);
+                var sub = FreeCourseCount > 0 ? Culture["Career.Overview.FreeCourseHint"] : "";
+                lines.Add((main, sub));
+            }
+
+            if (!string.IsNullOrWhiteSpace(step.BandLabelKey))
+            {
+                lines.Add((
+                    Culture.Format("Career.Fact.Band", Culture[step.BandLabelKey].ToLowerInvariant()),
+                    ""));
+            }
+
+            if (Plan.AlreadyHave.Count > 0)
+            {
+                var tag = PassportOn ? Culture["Career.Have.TagPassport"] : Culture["Career.Have.TagProfile"];
+                var items = string.Join(" · ", Plan.AlreadyHave.Take(3));
+                lines.Add((
+                    Culture.Format("Career.Overview.HaveCount", Plan.AlreadyHave.Count),
+                    string.IsNullOrWhiteSpace(items) ? tag : $"{items}, {tag.ToLowerInvariant()}"));
+            }
+
+            return lines.Take(4).ToList();
+        }
+    }
+
+    private void ToggleNow() => _nowExpanded = !_nowExpanded;
 
     /// <summary>The step detail stays on <c>/carriere</c> as a query (03 §1), so back works.</summary>
     private static string StepHref(CareerPlanStepView step)

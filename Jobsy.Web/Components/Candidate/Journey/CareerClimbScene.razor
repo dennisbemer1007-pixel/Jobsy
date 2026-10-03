@@ -22,12 +22,28 @@
         @for (var i = 0; i < _points.Count && i < Stones.Count; i++)
         {
             var stone = Stones[i];
-            <span class="career-scene__label career-scene__label--@StateClass(stone.State)"
+            <span class="career-scene__label career-scene__label--@StateClass(stone.State) @(Mobile ? "career-scene__label--mark" : null)"
                   style="--x:@(Xp(i))%;--y:@(Yp(i))%">
-                <b>@stone.Label</b>
-                @if (!string.IsNullOrWhiteSpace(stone.StateText))
+                @if (Mobile)
                 {
-                    <small>@stone.StateText</small>
+                    @if (stone.State == ClimbStoneState.Dream)
+                    {
+                        <svg class="career-scene__star" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="currentColor">
+                            <path d="M8 1.5l1.9 4 4.4.6-3.2 3.1.8 4.3L8 11.5l-3.9 2 .8-4.3L1.7 6.1l4.4-.6z" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <b>@(stone.ShortMark ?? stone.Label)</b>
+                    }
+                }
+                else
+                {
+                    <b>@stone.Label</b>
+                    @if (!string.IsNullOrWhiteSpace(stone.StateText))
+                    {
+                        <small>@stone.StateText</small>
+                    }
                 }
             </span>
         }

@@ -13,7 +13,7 @@ public sealed record FeatureFlagSnapshot(
     bool EmployersEnabled,
     bool CandidatePassportEnabled)
 {
-    public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: true, CandidatePassportEnabled: false);
+    public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: true, CandidatePassportEnabled: true);
 
     public bool IsEnabled(PlatformFeature feature) => feature switch
     {

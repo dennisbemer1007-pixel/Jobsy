@@ -53,7 +53,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 cancellationToken);
             var flags = new FeatureFlagSnapshot(
                 dto?.EmployersEnabled ?? true,
-                dto?.CandidatePassportEnabled ?? false);
+                dto?.CandidatePassportEnabled ?? true);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -83,6 +83,6 @@ public sealed class WebFeatureFlags : IFeatureFlags
         public bool EmployersEnabled { get; set; } = true;
 
         [JsonPropertyName("candidatePassportEnabled")]
-        public bool CandidatePassportEnabled { get; set; }
+        public bool CandidatePassportEnabled { get; set; } = true;
     }
 }

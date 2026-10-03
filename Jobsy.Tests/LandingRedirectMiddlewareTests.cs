@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
@@ -42,13 +43,26 @@ public class LandingRedirectMiddlewareTests
     }
 
     [Fact]
-    public async Task Signed_in_candidate_redirects_to_banenkaart()
+    public async Task Signed_in_candidate_redirects_to_passport_when_ready()
     {
         await using var app = await CreateAppAsync(user: Authed(JobsyRoles.Candidate));
         var client = app.GetTestClient();
         using var response = await client.GetAsync("/");
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal(PublicRoutes.Banenkaart, response.Headers.Location?.ToString());
+        // No show_candidate_how_to claim ⇒ passport-ready under passport ON default.
+        Assert.Equal(FeatureRoutes.CandidatePassportPath, response.Headers.Location?.ToString());
+    }
+
+    [Fact]
+    public async Task Signed_in_candidate_not_ready_redirects_to_discovery()
+    {
+        var user = Authed(JobsyRoles.Candidate);
+        ((ClaimsIdentity)user.Identity!).AddClaim(new Claim("show_candidate_how_to", "1"));
+        await using var app = await CreateAppAsync(user: user);
+        var client = app.GetTestClient();
+        using var response = await client.GetAsync("/");
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(FeatureRoutes.CandidateDiscoveryPath, response.Headers.Location?.ToString());
     }
 
     [Theory]

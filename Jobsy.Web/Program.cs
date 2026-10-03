@@ -472,6 +472,7 @@ app.UseMfaEnforcement();
 app.UseAntiforgery();
 app.UseRegisterOntdekRedirect();
 app.UseBanenRedirect();
+app.UseBewaardRedirect();
 app.UseBanenkaartGate();
 app.UseLandingRedirect();
 

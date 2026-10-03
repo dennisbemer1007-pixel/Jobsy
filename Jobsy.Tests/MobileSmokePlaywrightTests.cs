@@ -102,14 +102,15 @@ public class MobileSmokePlaywrightTests
         });
         var candidate = await candidateCtx.NewPageAsync();
         var candGuard = AttachGuards(candidate);
-        await LoginAsync(candidate, baseUrl, "kandidaat@jobsy.local");
+        // returnUrl skips post-login Ontdekkingsreis (passport ON default) so smoke stays on Zoeken.
+        await LoginAsync(candidate, baseUrl, "kandidaat@jobsy.local", returnUrl: E2eRoutes.Banenkaart);
         await candidate.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
         await candidate.WaitForTimeoutAsync(600);
         await candidate.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "06-candidate-home.png"), FullPage = true });
 
         Assert.True(await candidate.Locator("nav.bottom-nav").CountAsync() > 0, "Bottom nav missing for candidate.");
         Assert.True(
-            await candidate.Locator("a.jobsy-action--match, a[href='/candidate/match']").CountAsync() > 0,
+            await candidate.Locator("[data-testid=kb-match-button], a.kb-match-button, a.jobsy-action--match, a[href='/candidate/match']").CountAsync() > 0,
             "Match button missing on Zoeken for candidate.");
 
         foreach (var (tab, idx) in CandidateTabs.Select((t, i) => (t, i)))
@@ -181,10 +182,13 @@ public class MobileSmokePlaywrightTests
         return string.IsNullOrWhiteSpace(ci) ? null : ci;
     }
 
-    private static async Task LoginAsync(IPage page, string baseUrl, string email)
+    private static async Task LoginAsync(IPage page, string baseUrl, string email, string? returnUrl = null)
     {
         var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
-        await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        var loginUrl = string.IsNullOrWhiteSpace(returnUrl)
+            ? baseUrl + "/login"
+            : baseUrl + "/login?returnUrl=" + Uri.EscapeDataString(returnUrl);
+        await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
         await page.FillAsync("input[name='email']", email);
         await page.FillAsync("input[name='password']", password);
         var submit = page.Locator("button.login-submit, button.au-submit[type=submit]");
@@ -509,7 +513,12 @@ public class MobileSmokePlaywrightTests
                 || e.Contains("Failed to start the transport", StringComparison.OrdinalIgnoreCase)
                 || e.Contains("AJAXError", StringComparison.OrdinalIgnoreCase)
                 || e.Contains("openfreemap.org", StringComparison.OrdinalIgnoreCase)
-                || e.Contains("Failed to fetch", StringComparison.OrdinalIgnoreCase);
+                || e.Contains("Failed to fetch", StringComparison.OrdinalIgnoreCase)
+                // Blazor/CSS isolation and SVG scenes inject <style> without a request nonce
+                // (style-src-elem). Dedicated CspSmokePlaywrightTests covers the policy; Acc
+                // smoke must not fail on Carrière / Ontdekkingsreis chrome.
+                || (e.Contains("Content Security Policy", StringComparison.OrdinalIgnoreCase)
+                    && e.Contains("style-src-elem", StringComparison.OrdinalIgnoreCase));
 
             var fatal = ConsoleErrors.Where(e => !IsNoisy(e)).ToList();
             Assert.True(fatal.Count == 0, "Console errors: " + string.Join(" | ", fatal.Take(8)));
