@@ -57,7 +57,17 @@ public static class DreamJobCatalog
         new("dierenverzorger", "Dierenverzorger", "rabbit", ["dierenartsassistent", "asiel"]),
         new("evenementenorganisator", "Evenementenorganisator", "party-popper", ["event", "organisatie"]),
         new("data-scientist", "Data scientist", "chart-line", ["data", "analist"]),
-        new("bakker", "Bakker", "croissant", ["banketbakker"])
+        new("bakker", "Bakker", "croissant", ["banketbakker"]),
+        new("logistiek-medewerker", "Logistiek medewerker", "truck", ["magazijn", "logistiek", "heftruck"]),
+        new("verkoper", "Verkoper", "shopping-bag", ["winkelmedewerker", "verkoop", "winkel"]),
+        new("beveiliger", "Beveiliger", "shield-check", ["beveiliging", "security"]),
+        new("installateur", "Installateur", "cable", ["installatietechniek", "zonnepanelen", "monteur"]),
+        new("verzorgende-ig", "Verzorgende IG", "hand-heart", ["verzorgende", "zorg", "thuiszorg"]),
+        new("schilder", "Schilder", "paint-roller", ["schilderwerk", "verven"]),
+        new("loodgieter", "Loodgieter", "droplets", ["sanitair", "leidingen"]),
+        new("doktersassistent", "Doktersassistent", "clipboard-plus", ["huisartsassistent", "praktijk"]),
+        new("ict-medewerker", "ICT-medewerker", "monitor-cog", ["ict", "systeembeheer", "helpdesk"]),
+        new("horecamedewerker", "Horecamedewerker", "utensils", ["horeca", "bediening", "restaurant"])
     ];
 
     /// <summary>

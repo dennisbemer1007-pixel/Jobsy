@@ -41,9 +41,19 @@ public class TeacherPortalUnitTests
         Assert.Equal(4, story.Tiles.Count);
         Assert.False(string.IsNullOrWhiteSpace(story.Body));
         Assert.DoesNotContain("Leraar.Detail.StoryPlaceholder", story.Body, StringComparison.Ordinal);
-        var route = renderer.RenderDreamRoute(result, new PupilProgress { DreamJobKey = "dierenarts", LikesJson = """["dieren"]""" });
+        var route = renderer.RenderDreamRoute(
+            result,
+            new PupilProgress { DreamJobKey = "dierenarts", LikesJson = """["dieren"]""" },
+            new PupilClassContext(SchoolLevel.Groep78, 8, PupilQuestionSet.Groep78));
         Assert.Equal("dierenarts", route.JobKey);
         Assert.Equal(5, route.TotalCount);
+        Assert.Contains("Nu: groep 8", route.RouteSteps[0], StringComparison.Ordinal);
+        var voRoute = renderer.RenderDreamRoute(
+            result,
+            new PupilProgress { DreamJobKey = "dierenarts", LikesJson = """["dieren"]""" },
+            new PupilClassContext(SchoolLevel.Havo, 3, PupilQuestionSet.Vo));
+        Assert.Equal(route.HaveCount, voRoute.HaveCount);
+        Assert.Contains("Nu: klas 3 havo", voRoute.RouteSteps[0], StringComparison.Ordinal);
         Assert.Equal(3, renderer.ConversationStarterKeys(result).Count);
         Assert.Equal(3, renderer.ClassDiscussionPromptKeys().Count);
     }
