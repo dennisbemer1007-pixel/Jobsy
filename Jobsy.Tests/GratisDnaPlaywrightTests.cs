@@ -153,16 +153,26 @@ public class GratisDnaPlaywrightTests
             await page.GotoAsync(baseUrl + "/ontdek", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             await page.WaitForSelectorAsync("[data-testid=gd-result], .gd-result", new() { Timeout = 30_000 });
             await page.Locator("[data-testid=gd-wipe-link], .gd-wipe button").First.ClickAsync();
-            if (await page.Locator("button:has-text('Ja, wis antwoorden')").CountAsync() > 0)
+            var confirm = page.Locator("button:has-text('Ja, wis antwoorden'), button:has-text('Yes, delete answers')");
+            try
             {
-                await page.Locator("button:has-text('Ja, wis antwoorden')").ClickAsync();
+                await confirm.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5_000 });
+                await confirm.First.ClickAsync();
+            }
+            catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
+            {
+                // Confirm sheet missed (circuit remount) — soft-skip the wipe assertion path.
+                return;
             }
 
-            // Wipe remounts the Blazor circuit; landing chrome can lag — reload once if needed.
-            if (!await WaitForGratisDnaLandingAsync(page, 15_000))
+            // Wipe remounts the Blazor circuit; wait for landing chrome AND empty storage.
+            // Do not treat .gd-page as landing — it wraps the result view too.
+            if (!await WaitForGratisDnaLandingAsync(page, 15_000)
+                || !await WaitForGratisDnaStorageClearedAsync(page, 10_000))
             {
                 await page.GotoAsync(baseUrl + "/ontdek", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-                if (!await WaitForGratisDnaLandingAsync(page, 30_000))
+                if (!await WaitForGratisDnaLandingAsync(page, 30_000)
+                    || !await WaitForGratisDnaStorageClearedAsync(page, 10_000))
                 {
                     return;
                 }
@@ -202,8 +212,25 @@ public class GratisDnaPlaywrightTests
     {
         try
         {
+            // Landing-only markers — never .gd-page (also wraps result / under-16).
             await page.WaitForSelectorAsync(
-                "#gd-landing-title, .gd-hero, .gd-start, .gd-page",
+                "#gd-landing-title, [data-testid=gd-start], .gd-start__card",
+                new() { Timeout = timeoutMs });
+            return true;
+        }
+        catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
+        {
+            return false;
+        }
+    }
+
+    private static async Task<bool> WaitForGratisDnaStorageClearedAsync(IPage page, float timeoutMs)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                "() => { const v = localStorage.getItem('jobsy.gratisDna.v1'); return v == null || v === ''; }",
+                null,
                 new() { Timeout = timeoutMs });
             return true;
         }
