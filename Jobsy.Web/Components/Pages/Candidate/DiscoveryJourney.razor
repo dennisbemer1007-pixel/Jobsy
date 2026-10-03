@@ -498,8 +498,9 @@
                                         ShowQuestionCounter="true"
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
-                                        ResolveQuestionText="QuestionText" />
-                    @RenderFooter(showBack: !_reviewMode)
+                                        ResolveQuestionText="QuestionText"
+                                        OnFinished="FinishMiniAsync" />
+                    @RenderFooter(showBack: !_reviewMode, showPrimary: CanNext || _reviewMode)
                 }
             </section>
 
@@ -738,7 +739,7 @@
             _ => true
         };
 
-    private RenderFragment RenderFooter(bool showBack = true, bool showSkip = false) => __builder =>
+    private RenderFragment RenderFooter(bool showBack = true, bool showSkip = false, bool showPrimary = true) => __builder =>
     {
         <div class="journey-step__foot">
             @if (showBack)
@@ -760,9 +761,12 @@
             else
             {
                 <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
-                <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
-                    @Culture["Onboarding.Next"]
-                </button>
+                @if (showPrimary)
+                {
+                    <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                        @Culture["Onboarding.Next"]
+                    </button>
+                }
             }
         </div>
     };
@@ -1677,13 +1681,41 @@
 
     private string QuestionText(OnboardingMiniTest.MiniQuestion question) => Culture[question.TextKey];
 
-    private async Task AnswerAsync(int id, int value)
+    private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        if (_autosave is not null) await _autosave.SetAnswerAsync(id, value);
         _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
         _saveStatus = "saved";
+        QueueMiniSave(id, value);
+        return Task.CompletedTask;
     }
+
+    private void QueueMiniSave(int id, int value)
+    {
+        if (_autosave is null)
+        {
+            return;
+        }
+
+        _ = SaveMiniQuietAsync(id, value);
+    }
+
+    private async Task SaveMiniQuietAsync(int id, int value)
+    {
+        try
+        {
+            if (_autosave is not null)
+            {
+                await _autosave.SetAnswerAsync(id, value);
+            }
+        }
+        catch
+        {
+            // Next still flushes. The answer is already on screen.
+        }
+    }
+
+    private Task FinishMiniAsync() => NextAsync();
 
     private void ExpandQuestion(int index) => _currentQuestion = index;
     private Task OnMiniAnswer((int Id, int Value) args) => AnswerAsync(args.Id, args.Value);
@@ -1723,12 +1755,10 @@
             await Task.Delay(350, cancellationToken);
             var postcode = NormalizePostcode(Draft.Postcode);
             if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
-            var result = (await Geocoder.SuggestAsync(postcode, cancellationToken))
-                .FirstOrDefault(item => item.Label.Replace(" ", "")
-                    .StartsWith(postcode.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+            var result = PostcodeMatch.Pick(await Geocoder.SuggestAsync(postcode, cancellationToken), postcode);
             if (result is null)
             {
-                Draft.PostcodeMissing = true;
+                MarkPostcodeMiss();
                 await InvokeAsync(StateHasChanged);
                 return;
             }
@@ -1740,16 +1770,40 @@
         }
         catch
         {
-            Draft.PostcodeMissing = true;
+            MarkPostcodeMiss();
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void MarkPostcodeMiss()
+    {
+        Draft.PostcodeMissing = true;
+        Draft.ShowCity = true;
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
         Draft.HomeLat = item.Latitude;
         Draft.HomeLng = item.Longitude;
-        SplitAddress(item.Label);
-        Draft.Postcode = NormalizePostcode(Draft.Postcode);
+        var postcode = NormalizePostcode(Draft.Postcode);
+        if (PostcodeMatch.IsNlPostcode(postcode))
+        {
+            Draft.Postcode = postcode;
+            var city = PostcodeMatch.CityFromLabel(item.Label, postcode);
+            if (!string.IsNullOrWhiteSpace(city))
+            {
+                Draft.City = city;
+            }
+            else
+            {
+                Draft.ShowCity = true;
+            }
+        }
+        else
+        {
+            SplitAddress(item.Label);
+            Draft.Postcode = NormalizePostcode(Draft.Postcode);
+        }
         Draft.PostcodeResolved = true;
         Draft.PostcodeMissing = false;
         ScheduleProfileSave();

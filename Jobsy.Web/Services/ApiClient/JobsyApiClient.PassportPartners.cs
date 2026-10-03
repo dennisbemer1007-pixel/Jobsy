@@ -7,8 +7,17 @@ namespace Jobsy.Web.Services;
 public sealed partial class JobsyApiClient
 {
     public async Task<IReadOnlyList<PassportPartnerAdminItem>> GetAdminPassportPartnersAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<PassportPartnerAdminItem>>(
-            "api/admin/passport-partners", CaseInsensitiveJson, ct) ?? [];
+    {
+        using var response = await _http.GetAsync("api/admin/passport-partners", ct);
+        // Feature off is a 404. An empty list is the right admin state, not a save error.
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return [];
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<List<PassportPartnerAdminItem>>(CaseInsensitiveJson, ct) ?? [];
+    }
 
     public async Task CreateAdminPassportPartnerAsync(
         Guid companyId, string? displayName, int? maxBranches, CancellationToken ct = default)

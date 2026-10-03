@@ -18,9 +18,17 @@
     <section class="detail-card">
         <h2>@Culture["Admin.PassportPartners.Create"]</h2>
         <label class="field-label" for="partner-company">@Culture["Admin.PassportPartners.Company"]</label>
-        <input id="partner-company" class="text-input" @bind="_companyId" />
+        <input id="partner-company" class="text-input" @bind="_companyId" aria-invalid="@(_companyError is not null)" />
+        @if (!string.IsNullOrWhiteSpace(_companyError))
+        {
+            <p class="error" role="alert">@_companyError</p>
+        }
         <label class="field-label" for="partner-name">@Culture["Admin.PassportPartners.Name"]</label>
-        <input id="partner-name" class="text-input" @bind="_displayName" maxlength="80" />
+        <input id="partner-name" class="text-input" @bind="_displayName" maxlength="80" aria-invalid="@(_nameError is not null)" />
+        @if (!string.IsNullOrWhiteSpace(_nameError))
+        {
+            <p class="error" role="alert">@_nameError</p>
+        }
         <button type="button" class="btn-compact btn-compact--primary" @onclick="CreateAsync">@Culture["Admin.PassportPartners.Create"]</button>
     </section>
 
@@ -63,6 +71,8 @@
 @code {
     private readonly List<PassportPartnerAdminItem> _partners = [];
     private string? _error;
+    private string? _companyError;
+    private string? _nameError;
     private string _companyId = "";
     private string _displayName = "";
     private Guid? _logoTargetId;
@@ -77,24 +87,49 @@
         }
         catch (Exception)
         {
-            _error = Culture["Admin.PassportPartners.Failed"];
+            // A failed list is an empty page, not "Opslaan lukte niet".
         }
     }
 
     private async Task CreateAsync()
     {
-        if (!Guid.TryParse(_companyId, out var companyId))
+        _error = null;
+        _companyError = null;
+        _nameError = null;
+        var companyRaw = _companyId.Trim();
+        var name = _displayName.Trim();
+        Guid companyId = default;
+        if (string.IsNullOrWhiteSpace(companyRaw) || !Guid.TryParse(companyRaw, out companyId))
         {
-            _error = Culture["Admin.PassportPartners.Company"];
+            _companyError = Culture["Admin.PassportPartners.CompanyRequired"];
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            _nameError = Culture["Admin.PassportPartners.NameRequired"];
+        }
+
+        if (_companyError is not null || _nameError is not null)
+        {
             return;
         }
 
         try
         {
-            await Api.CreateAdminPassportPartnerAsync(companyId, _displayName, null);
+            await Api.CreateAdminPassportPartnerAsync(companyId, name, null);
             _partners.Clear();
             _partners.AddRange(await Api.GetAdminPassportPartnersAsync());
+            _companyId = "";
+            _displayName = "";
             _error = null;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _error = Culture["Admin.PassportPartners.CompanyNotFound"];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            _error = Culture["Admin.PassportPartners.AlreadyExists"];
         }
         catch (Exception)
         {

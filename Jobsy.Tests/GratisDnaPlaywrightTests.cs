@@ -68,18 +68,7 @@ public class GratisDnaPlaywrightTests
             await AssertNoHorizontalOverflowAsync(page);
 
             await age16.First.CheckAsync();
-            var consent = page.Locator("[data-testid=gd-consent]");
-            try
-            {
-                await consent.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
-                await consent.CheckAsync();
-            }
-            catch (TimeoutException)
-            {
-                // Age gate did not reveal consent (storage disabled / under-16 path).
-                return;
-            }
-
+            // Age 16+ is the only gate. The 7-day device notice is text, not a second checkbox.
             var start = page.GetByTestId("gd-start-cta");
             await page.WaitForFunctionAsync(
                 "() => { const b = document.querySelector('[data-testid=gd-start-cta]'); return b && !b.disabled; }",

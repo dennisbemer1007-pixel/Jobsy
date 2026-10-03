@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "c1c21a2987786cc5931db79d22d62a47b1b08dd9df3a3ae7f1607ead530d4e1c",
-    "v": "20261003-reconnect"
+    "sha256": "23b98d4a20c4a141737ae94ffa991f04225c649e60fc8d18efaceaf23b8f4e1c",
+    "v": "20261003-header"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -36,8 +36,8 @@
     "v": "20261001-errors-5"
   },
   "css/features/gratis-dna.css": {
-    "sha256": "7eee9cb441a9b874474f93e3402c52f731bf88363306abebeb8a9f680f5513dc",
-    "v": "20260930-landing-6"
+    "sha256": "553f33aa2c745b397a9f9d9fcdc868f4329b79365617d5e8699f5323e0ce070f",
+    "v": "20261003-gd-start"
   },
   "css/features/kandidaat-banen.css": {
     "sha256": "474f33a517f76c9b1290a3bee730b63fd8bbf7314c013f3d6a84d00aee3f1551",
@@ -68,12 +68,12 @@
     "v": "20260928-nav-fb"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "5ee04db60aae5c26eaadf67dc9333bca45ddfac643be966643445c55f88becad",
-    "v": "20260927-dna-c"
+    "sha256": "4f89d88d9f53a5b121fab9a4348b87bd78eca1e964260ddac585177afa4fb6a7",
+    "v": "20261003-ob-fields"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "ae6b4e42acec649ea1465fe3f18c931d63881d4cf136d0a52b371944be286a46",
-    "v": "20260929-or-08"
+    "sha256": "a9af4cbb708a561675fa74380473ea850ca9dd8430fb1c6c8a3556180bf44178",
+    "v": "20261003-mascot"
   },
   "css/features/public-pages.css": {
     "sha256": "39f0f31e9a77869d77bcc58c12fa41349882e9dd9d16d999dd20f088aac3fe14",
@@ -132,8 +132,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "da71e52161eada4287fe3aefd5c5e5fab8dda8c2ae67799f202b0b87134f679a",
-    "v": "20261002-kp04"
+    "sha256": "446a1843956312b4afee8c4a3d3b8fa2b450a6fe3892f30061e1272cb521e019",
+    "v": "20261003-circuit"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -180,8 +180,8 @@
     "v": "20260930-landing-5"
   },
   "js/lobsyPush.js": {
-    "sha256": "8784b68ede39d40c60bdc370eecc5a461b61a6e7eea787415b3d0d6e064fd01a",
-    "v": "20260928-perf"
+    "sha256": "caae5ac7a13ee20709e492535302314c8e89a9e3e9f23625f040243250c1a267",
+    "v": "20261003-circuit"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -200,11 +200,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "a0958e5755ef7ac5ca423b5ff0e4f7f72009e66c4864684be0af32575b404a28",
-    "v": "20260928-perf"
+    "sha256": "ffa08470ccb009384dc6cb7fe977e4c0c462a340544b5a2acb8a81237300b53f",
+    "v": "20261003-circuit"
   },
   "service-worker.published.js": {
-    "sha256": "7fbbfcf8dc3ff118e4432c1ed2f84d2808f00464a350529fc334a2ee92b5b687",
-    "v": "20260928-perf"
+    "sha256": "6ca620a41e27eea0a4eb81b772425e70a77758f4aa8d7dc44e51d67dbffd13fb",
+    "v": "20261003-circuit"
   }
 }

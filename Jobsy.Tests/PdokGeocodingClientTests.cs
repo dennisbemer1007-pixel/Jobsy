@@ -67,6 +67,85 @@ public class PdokGeocodingClientTests
     }
 
     [Fact]
+    public async Task SuggestAsync_rewrites_postcode_docs_to_code_and_city()
+    {
+        const string json = """
+            {
+              "response": {
+                "docs": [
+                  {
+                    "weergavenaam": "Stationsplein, 1012AB Amsterdam",
+                    "type": "postcode",
+                    "centroide_ll": "POINT(4.900 52.378)",
+                    "score": 20.0,
+                    "postcode": "1012AB",
+                    "woonplaatsnaam": "Amsterdam"
+                  },
+                  {
+                    "weergavenaam": "Stationsplein 1, 1012AB Amsterdam",
+                    "type": "adres",
+                    "centroide_ll": "POINT(4.901 52.379)",
+                    "score": 5.0
+                  }
+                ]
+              }
+            }
+            """;
+
+        using var handler = new StubHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            });
+        using var http = new HttpClient(handler);
+        var client = new PdokGeocodingClient(http);
+        var results = await client.SuggestAsync("1012 AB");
+        var picked = PostcodeMatch.Pick(results, PostcodeMatch.Normalize("1012 AB"));
+        Assert.NotNull(picked);
+        Assert.Equal("1012AB Amsterdam", picked!.Label);
+        Assert.Equal("Amsterdam", PostcodeMatch.CityFromLabel(picked.Label, "1012 AB"));
+    }
+
+    [Fact]
+    public void Postcode_pick_ignores_a_street_that_does_not_start_with_the_code()
+    {
+        var picked = PostcodeMatch.Pick(
+            [new AddressSuggestion("Stationsplein, 1012AB Amsterdam", 52.3, 4.9)],
+            "1012 AB");
+        Assert.Null(PostcodeMatch.CityFromLabel("Stationsplein, 1012AB Amsterdam", "1012 AB"));
+        Assert.NotNull(picked);
+        Assert.Contains("1012AB", picked!.Label, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Composite_falls_back_to_nominatim_when_pdok_postcode_does_not_match()
+    {
+        var pdokHandler = new StubHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                    {"response":{"docs":[{"weergavenaam":"Stationsplein, 1012AB Amsterdam","type":"adres","centroide_ll":"POINT(4.9 52.3)","score":1}]}}
+                    """, Encoding.UTF8, "application/json")
+            });
+        var nomiHandler = new StubHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                    [{"display_name":"1012 AB, Amsterdam, Nederland","lat":"52.37","lon":"4.89","address":{"postcode":"1012 AB","city":"Amsterdam"}}]
+                    """, Encoding.UTF8, "application/json")
+            });
+        using var pdokHttp = new HttpClient(pdokHandler);
+        using var nomiHttp = new HttpClient(nomiHandler);
+        var composite = new CompositeGeocodingClient(
+            new PdokGeocodingClient(pdokHttp),
+            new NominatimGeocodingClient(nomiHttp));
+        var results = await composite.SuggestAsync("1012 AB");
+        var picked = PostcodeMatch.Pick(results, "1012 AB");
+        Assert.NotNull(picked);
+        Assert.Equal("Amsterdam", PostcodeMatch.CityFromLabel(picked!.Label, "1012 AB"));
+    }
+
+    [Fact]
     public async Task Composite_falls_back_to_nominatim_on_pdok_500()
     {
         var pdokHandler = new StubHandler(_ =>

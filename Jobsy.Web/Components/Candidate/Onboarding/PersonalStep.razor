@@ -4,6 +4,7 @@
 @using Jobsy.Web.Services
 @inject CultureState Culture
 
+<div class="ob-fields">
 <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step1.Lead"]</p>
 <div class="ob-wizard__field-row">
@@ -93,6 +94,7 @@
         @Culture["Profile.WhatsAppAllowed"]
     </label>
 }
+</div>
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;

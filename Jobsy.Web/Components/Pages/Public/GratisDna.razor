@@ -27,7 +27,7 @@
 <PageTitle>@Culture["GratisDna.Seo.Title"] · Lobsy</PageTitle>
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20260930-landing-6" />
+    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261003-gd-start" />
     <script>
         window.jobsyEnsureGratisDna = function () {
             if (window.jobsyGratisDna) {
@@ -112,17 +112,11 @@
                                @onchange="OnAgeCheckbox" />
                         <span>@Culture["GratisDna.Landing.Age16"]</span>
                     </label>
-                    @if (_age16Plus == true)
-                    {
-                        <label class="gd-consent gd-consent--check">
-                            <input type="checkbox" data-testid="gd-consent" @bind="_consentChecked" />
-                            <span>
-                                @LandingText.For("GratisDna.Landing.Consent", _variant)
-                                <a href="@PublicRoutes.Privacy">@Culture["GratisDna.Landing.PrivacyLink"]</a>
-                            </span>
-                        </label>
-                    }
-                    else
+                    <p class="gd-note" data-testid="gd-storage-note">
+                        @LandingText.For("GratisDna.Landing.Consent", _variant)
+                        <a href="@PublicRoutes.Privacy">@Culture["GratisDna.Landing.PrivacyLink"]</a>
+                    </p>
+                    @if (_age16Plus != true)
                     {
                         <p class="gd-under16-link">
                             <button type="button" class="gd-linkish" data-testid="gd-under16-choice" @onclick="() => ChooseAge(false)">
@@ -305,7 +299,6 @@
     private bool _employerView;
     private bool _storageDisabled;
     private bool? _age16Plus;
-    private bool _consentChecked;
     private bool _needsConsentRenew;
     private bool _resumeAvailable;
     private bool _showOwnLanguageHint;
@@ -327,7 +320,7 @@
 
     private string RegisterHref => PublicRoutes.CreateAccountFromTest;
 
-    private bool CanStart => _age16Plus == true && _consentChecked && !_storageDisabled;
+    private bool CanStart => _age16Plus == true && !_storageDisabled;
 
     private int AnsweredCount => _payload is null ? 0 : GratisDnaScoring.CountAnswers(_payload.Answers);
 
@@ -456,7 +449,6 @@
         }
 
         _age16Plus = null;
-        _consentChecked = false;
     }
 
     private async Task OpenLangMenu()
@@ -774,7 +766,6 @@
         _stickyDismissed = false;
         _state = FlowState.Landing;
         _age16Plus = null;
-        _consentChecked = false;
         _resumeAvailable = false;
     }
 

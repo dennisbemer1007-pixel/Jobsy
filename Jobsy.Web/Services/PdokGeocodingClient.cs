@@ -34,7 +34,7 @@ public sealed class PdokGeocodingClient(HttpClient http)
         var url = $"{SuggestBase}?q={Uri.EscapeDataString(q)}"
             + "&fq=" + Uri.EscapeDataString("type:(adres OR postcode OR weg OR woonplaats)")
             + "&rows=8"
-            + "&fl=weergavenaam,type,centroide_ll,score";
+            + "&fl=weergavenaam,type,centroide_ll,score,postcode,woonplaatsnaam";
 
         using var response = await http.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -94,7 +94,8 @@ public sealed class PdokGeocodingClient(HttpClient http)
         }
 
         var type = doc.Type?.Trim() ?? string.Empty;
-        return (new AddressSuggestion(doc.Weergavenaam.Trim(), lat, lon), type, doc.Score);
+        var label = LabelFor(doc, type);
+        return (new AddressSuggestion(label, lat, lon), type, doc.Score);
     }
 
     private sealed class PdokResponse
@@ -122,5 +123,30 @@ public sealed class PdokGeocodingClient(HttpClient http)
 
         [JsonPropertyName("score")]
         public double Score { get; set; }
+
+        [JsonPropertyName("postcode")]
+        public string? Postcode { get; set; }
+
+        [JsonPropertyName("woonplaatsnaam")]
+        public string? Woonplaatsnaam { get; set; }
+    }
+
+    /// <summary>
+    /// Postcode docs use a street in <c>weergavenaam</c> ("Stationsplein, 1012AB Amsterdam").
+    /// Rewrite those to "1012AB Amsterdam" so the wizard can split code and city.
+    /// </summary>
+    private static string LabelFor(PdokDoc doc, string type)
+    {
+        var display = doc.Weergavenaam!.Trim();
+        if (!type.Equals("postcode", StringComparison.OrdinalIgnoreCase))
+        {
+            return display;
+        }
+
+        var code = PostcodeMatch.Compact(doc.Postcode);
+        var city = doc.Woonplaatsnaam?.Trim();
+        return code is not null && !string.IsNullOrWhiteSpace(city)
+            ? code + " " + city
+            : display;
     }
 }

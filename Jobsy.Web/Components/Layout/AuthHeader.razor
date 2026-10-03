@@ -10,7 +10,7 @@
 <div class="auth-header">
     <AuthorizeView>
         <Authorized>
-            <div class="account-menu" @onfocusout="OnFocusOut">
+            <div class="account-menu @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" @onfocusout="OnFocusOut">
                 <button type="button"
                         class="account-menu__toggle"
                         title="@Culture["Footer.Legal"]"
@@ -27,8 +27,6 @@
                     </span>
                     <span class="account-menu__icon" aria-hidden="true">@((MarkupString)NavIcons.Profile)</span>
                 </button>
-                @if (_open)
-                {
                     <div class="account-menu__panel right-0 max-w-[90vw] z-50" role="menu" aria-label="@Culture["Auth.AccountMenu"]">
                         <div class="account-menu__identity" role="presentation">
                             <strong class="account-menu__identity-name">@DisplayName(context.User)</strong>
@@ -66,14 +64,14 @@
                         <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
                         <a class="account-menu__link" href="/wie-zijn-wij" role="menuitem">@Culture["Footer.About"]</a>
-                        <button type="button"
-                                class="account-menu__link account-menu__link--logout"
-                                role="menuitem"
-                                @onclick="LogoutAsync">
+                        <a class="account-menu__link account-menu__link--logout"
+                           href="/logout"
+                           role="menuitem"
+                           @onclick="DropPushAsync"
+                           @onclick:preventDefault="true">
                             @Culture["Auth.Logout"]
-                        </button>
+                        </a>
                     </div>
-                }
             </div>
         </Authorized>
         <NotAuthorized>
@@ -90,9 +88,9 @@
 
 @code {
     private bool _open;
+    private bool _forceClosed;
     private bool _showInstall;
     private bool _installChecked;
-    private bool _loggingOut;
 
     protected override void OnInitialized()
     {
@@ -115,7 +113,10 @@
     }
 
     private void Toggle()
-        => _open = !_open;
+    {
+        _open = !_open;
+        _forceClosed = !_open;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -145,6 +146,7 @@
     private Task OpenFeedbackAsync()
     {
         _open = false;
+        _forceClosed = true;
         FeedbackHost.RequestOpen();
         return Task.CompletedTask;
     }
@@ -152,6 +154,7 @@
     private async Task InstallAppAsync()
     {
         _open = false;
+        _forceClosed = true;
         try
         {
             var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
@@ -170,37 +173,21 @@
         }
     }
 
-    private async Task LogoutAsync()
+    private async Task DropPushAsync()
     {
-        if (_loggingOut)
-        {
-            return;
-        }
-
-        _loggingOut = true;
         _open = false;
-        // Best-effort; server still revokes linked subscriptions by device session.
+        _forceClosed = true;
+        // Best-effort; the link still navigates when the circuit is down.
+        // Cookie LogoutPath remains /account/logout; /logout uses the same handler.
         await CircuitInterop.InvokeVoidIgnoredAsync(Js, "lobsyPush.dropSubscription");
-
-        // Full document navigation — GET /account/logout always signs out.
-        // A form submit from inside the menu raced with focusout closing the panel.
         Navigation.NavigateTo("/account/logout", forceLoad: true);
     }
 
     private async Task OnFocusOut(FocusEventArgs _)
     {
-        if (_loggingOut)
-        {
-            return;
-        }
-
         await Task.Delay(150);
-        if (_loggingOut)
-        {
-            return;
-        }
-
         _open = false;
+        _forceClosed = false;
         await InvokeAsync(StateHasChanged);
     }
 

@@ -5,7 +5,7 @@
 
 @if (_doc is not null)
 {
-    <div class="page-help">
+    <div class="page-help @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)">
         <button type="button"
                 class="page-help__btn @(_open ? "is-open" : null)"
                 title="@Culture["Help.AboutPage"]"
@@ -16,8 +16,6 @@
             i
         </button>
 
-        @if (_open)
-        {
             <div class="header-dropdown-backdrop" @onclick="Close" aria-hidden="true"></div>
             <aside id="page-help-panel" class="page-help__panel info-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="@_doc.Title">
                 <div class="page-help__panel-head">
@@ -39,12 +37,12 @@
                     </div>
                 </dl>
             </aside>
-        }
     </div>
 }
 
 @code {
     private bool _open;
+    private bool _forceClosed;
     private string? _path;
     private PageHelpDocs.Doc? _doc;
 
@@ -58,6 +56,7 @@
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         _open = false;
+        _forceClosed = false;
         RefreshFromUri();
         _ = InvokeAsync(StateHasChanged);
     }
@@ -68,9 +67,17 @@
         _doc = PageHelpDocs.TryGet(_path);
     }
 
-    private void Toggle() => _open = !_open;
+    private void Toggle()
+    {
+        _open = !_open;
+        _forceClosed = !_open;
+    }
 
-    private void Close() => _open = false;
+    private void Close()
+    {
+        _open = false;
+        _forceClosed = true;
+    }
 
     public override void Dispose()
     {

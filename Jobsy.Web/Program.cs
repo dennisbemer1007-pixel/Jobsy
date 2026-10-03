@@ -245,7 +245,7 @@ builder.Services.AddHttpClient<NominatimGeocodingClient>(client =>
 });
 builder.Services.AddHttpClient<PdokGeocodingClient>(client =>
 {
-    client.Timeout = TimeSpan.FromSeconds(3);
+    client.Timeout = TimeSpan.FromSeconds(8);
     client.DefaultRequestHeaders.TryAddWithoutValidation(
         "User-Agent",
         "Lobsy/1.0 (demo; contact@jobsy.local)");
@@ -502,6 +502,9 @@ app.MapRazorComponents<App>()
         // CSP is issued once by SecurityHeadersMiddleware (frame-ancestors 'none').
         // A second Blazor CSP header makes Observatory treat script-src as unrestricted.
         o.ContentSecurityFrameAncestorsPolicy = null;
+        // Cloudflare in front of Render corrupts permessage-deflate frames, so the
+        // circuit looks connected and then ignores clicks. Long polling still works.
+        o.DisableWebSocketCompression = true;
     });
 
 app.Run();

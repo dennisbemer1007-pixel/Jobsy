@@ -9,7 +9,7 @@
 
 <AuthorizeView>
     <Authorized>
-        <div class="notification-bell" @onclick:stopPropagation="true">
+        <div class="notification-bell @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" @onclick:stopPropagation="true">
             <button type="button"
                     class="notification-bell__toggle @(_unread > 0 ? "notification-bell__toggle--unread" : null)"
                     title="@(_unread > 0 ? $"{_unread} ongelezen bericht{(_unread == 1 ? "" : "en")}" : "Notificaties")"
@@ -23,8 +23,6 @@
                 }
             </button>
 
-            @if (_open)
-            {
                 <div class="header-dropdown-backdrop" @onclick="Close" aria-hidden="true"></div>
                 <div class="notification-bell__panel notification-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="Je notificaties">
                     <div class="notification-bell__header">
@@ -94,13 +92,13 @@
                         </ul>
                     }
                 </div>
-            }
         </div>
     </Authorized>
 </AuthorizeView>
 
 @code {
     private bool _open;
+    private bool _forceClosed;
     private bool _loading;
     private bool _busy;
     private int _unread;
@@ -124,13 +122,18 @@
     private async Task ToggleAsync()
     {
         _open = !_open;
+        _forceClosed = !_open;
         if (_open)
         {
             await LoadListAsync();
         }
     }
 
-    private void Close() => _open = false;
+    private void Close()
+    {
+        _open = false;
+        _forceClosed = true;
+    }
 
     private async Task LoadListAsync()
     {

@@ -5713,6 +5713,7 @@ html[dir="rtl"] .language-selector__menu {
 
 .language-selector__option {
     display: flex;
+    text-decoration: none;
     align-items: center;
     gap: 0.5rem;
     width: 100%;
@@ -19612,4 +19613,29 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     margin: 0 0 0.5rem;
     color: var(--muted);
     font-size: 0.9rem;
+}
+
+/* Header menus stay usable when the Blazor circuit has not attached yet. */
+.account-menu__panel,
+.language-selector__menu,
+.page-help__panel,
+.notification-bell__panel,
+.page-help > .header-dropdown-backdrop,
+.notification-bell > .header-dropdown-backdrop {
+    display: none;
+}
+
+.account-menu:focus-within:not(.is-closed) > .account-menu__panel,
+.account-menu.is-open > .account-menu__panel,
+.language-selector:focus-within:not(.is-closed) > .language-selector__menu,
+.language-selector.is-open > .language-selector__menu,
+.page-help:focus-within:not(.is-closed) > .page-help__panel,
+.page-help.is-open > .page-help__panel,
+.page-help:focus-within:not(.is-closed) > .header-dropdown-backdrop,
+.page-help.is-open > .header-dropdown-backdrop,
+.notification-bell:focus-within:not(.is-closed) > .notification-bell__panel,
+.notification-bell.is-open > .notification-bell__panel,
+.notification-bell:focus-within:not(.is-closed) > .header-dropdown-backdrop,
+.notification-bell.is-open > .header-dropdown-backdrop {
+    display: block;
 }
