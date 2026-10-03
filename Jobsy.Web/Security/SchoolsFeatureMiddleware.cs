@@ -4,8 +4,10 @@ using Jobsy.Core.Scholen;
 namespace Jobsy.Web.Security;
 
 /// <summary>
-/// Returns 404 JSON <c>feature_disabled</c> for /school*, /leraar*, /leerling* and matching APIs
-/// when <see cref="PlatformFeatureSnapshot.SchoolsEnabled"/> is false. Admin routes stay open.
+/// When schools are off, /api/school|teacher|pupil stays a 404 JSON <c>feature_disabled</c>.
+/// Browser requests to /school*, /leraar* and /leerling* go to the friendly access-denied page
+/// (layout + logout) so school staff are not stuck on raw JSON. Admin routes stay open.
+/// Runs before authorization so a teacher and a school admin get the same page.
 /// </summary>
 public sealed class SchoolsFeatureMiddleware
 {
@@ -19,12 +21,20 @@ public sealed class SchoolsFeatureMiddleware
         if (IsGated(path))
         {
             var features = context.RequestServices.GetService<IFeatureFlags>();
-            if (features is not null
-                && !await SchoolsFeatureGate.IsEnabledAsync(features, context.RequestAborted))
+            // Fail closed: a missing flag service must not open the portal.
+            var enabled = features is not null
+                && await SchoolsFeatureGate.IsEnabledAsync(features, context.RequestAborted);
+            if (!enabled)
             {
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync("""{"error":"feature_disabled"}""");
+                if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsync("""{"error":"feature_disabled"}""");
+                    return;
+                }
+
+                context.Response.Redirect(FeatureRoutes.SchoolsOffAccessDeniedPath);
                 return;
             }
         }

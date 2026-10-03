@@ -197,6 +197,20 @@ public class AuthController : ControllerBase
             }
         }
 
+        if (user.Role is UserRole.SchoolAdmin or UserRole.Teacher)
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            if (!features.SchoolsEnabled)
+            {
+                return Unauthorized(new
+                {
+                    code = "schools_paused",
+                    message =
+                        "Het scholenportaal is nog niet open. Je account blijft bewaard. Vragen? Mail support@lobsy.nl."
+                });
+            }
+        }
+
         var testExempt = IsTestAccountExempt(user);
         if (!testExempt
             && (user.AuthenticatorEnabled

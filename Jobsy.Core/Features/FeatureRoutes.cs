@@ -13,6 +13,9 @@ public static class FeatureRoutes
     public const string CandidateDiscoveryPath = "/candidate/ontdekkingsreis";
     public const string AdminHomePath = "/home";
     public const string EmployersOffAccessDeniedPath = "/access-denied?reason=employers-off";
+    public const string SchoolsOffAccessDeniedPath = "/access-denied?reason=schools-off";
+    public const string SchoolPortalPath = "/school";
+    public const string TeacherPortalPath = "/leraar";
     /// <summary>Friendly page for anonymous visitors on employer routes while employers are OFF.</summary>
     public const string EmployersComingSoonPath = "/werkgevers/binnenkort";
 
@@ -43,6 +46,11 @@ public static class FeatureRoutes
                 return CandidateHome(flags, passportReady);
             }
 
+            if (TrySchoolStaffHome(user, flags, out var schoolHome))
+            {
+                return schoolHome;
+            }
+
             return AdminHomePath;
         }
 
@@ -60,6 +68,11 @@ public static class FeatureRoutes
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
             return CandidateHome(flags, passportReady);
+        }
+
+        if (TrySchoolStaffHome(user, flags, out var schoolHomeOff))
+        {
+            return schoolHomeOff;
         }
 
         // Employer-side / acquisition roles only
@@ -83,6 +96,53 @@ public static class FeatureRoutes
         }
 
         return flags.EmployersEnabled ? "/" : CandidateProfilePath;
+    }
+
+    /// <summary>
+    /// Portal path for a school admin or teacher who is not also an admin or candidate.
+    /// Null for every other principal. Does not look at the schools flag.
+    /// </summary>
+    public static string? SchoolStaffPortal(ClaimsPrincipal? user)
+    {
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Admin)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            return null;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin))
+        {
+            return SchoolPortalPath;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Teacher))
+        {
+            return TeacherPortalPath;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// School staff home. When the portal is off, this is the friendly access-denied page
+    /// so role landing does not send them back into /school or /leraar.
+    /// </summary>
+    public static bool TrySchoolStaffHome(ClaimsPrincipal? user, FeatureFlagSnapshot flags, out string path)
+    {
+        var portal = SchoolStaffPortal(user);
+        if (portal is null)
+        {
+            path = "";
+            return false;
+        }
+
+        path = flags.SchoolsEnabled ? portal : SchoolsOffAccessDeniedPath;
+        return true;
     }
 
     /// <summary>

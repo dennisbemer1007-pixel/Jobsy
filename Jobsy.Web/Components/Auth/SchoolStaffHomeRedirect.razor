@@ -1,0 +1,20 @@
+@namespace Jobsy.Web.Components.Auth
+@using Jobsy.Core.Features
+@inject IFeatureFlags Flags
+@inject NavigationManager Navigation
+
+@*
+  School admin and teacher land here from /home. When the portal is off, do not
+  send them to /school or /leraar — that page only redirects back.
+*@
+
+@code {
+    [Parameter] public string Path { get; set; } = "/school";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await Flags.GetAsync();
+        var target = flags.SchoolsEnabled ? Path : FeatureRoutes.SchoolsOffAccessDeniedPath;
+        Navigation.NavigateTo(target, replace: true);
+    }
+}

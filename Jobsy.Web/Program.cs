@@ -462,10 +462,12 @@ app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAdminProviderGuard();
+// Before authorization: with schools off, teacher (/school) and school admin (/leraar)
+// both get the friendly page instead of 403 vs raw JSON.
+app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseAuthorization();
 // After auth so the admin bypass reads the cookie principal (errors 05).
 app.UseMiddleware<MaintenanceMiddleware>();
-app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();
