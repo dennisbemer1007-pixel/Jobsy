@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -224,8 +225,25 @@ public class LobsyCvPdfServiceTests
         Assert.Equal("Logistiek", model.EducationDirection);
         Assert.DoesNotContain(PrivacyConstants.CurrentConsentVersion, model.TestHighlights!);
 
-        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
-        var pdf = await service.RenderAsync(model);
+        // A parallel test can leave a non-Gregorian culture on the thread (ar-SA uses Hijri).
+        // The PDF must still print the consent date on the Gregorian calendar.
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+        var arabic = CultureInfo.GetCultureInfo("ar-SA");
+        CultureInfo.CurrentCulture = arabic;
+        CultureInfo.CurrentUICulture = arabic;
+        byte[] pdf;
+        try
+        {
+            var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+            pdf = await service.RenderAsync(model);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+
         using var doc = UglyToad.PdfPig.PdfDocument.Open(pdf);
         var text = string.Join('\n', doc.GetPages().Select(p => p.Text));
         Assert.Contains("Talen", text, StringComparison.Ordinal);
@@ -233,6 +251,7 @@ public class LobsyCvPdfServiceTests
         Assert.Contains("Uit je tests", text, StringComparison.Ordinal);
         Assert.Contains("Samenwerken", text, StringComparison.Ordinal);
         Assert.Contains("03-10-2026", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("22-04-1448", text, StringComparison.Ordinal);
         Assert.DoesNotContain(PrivacyConstants.CurrentConsentVersion, text, StringComparison.Ordinal);
         Assert.DoesNotContain("Voorstraat", text, StringComparison.Ordinal);
     }

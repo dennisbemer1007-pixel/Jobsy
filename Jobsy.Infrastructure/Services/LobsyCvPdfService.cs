@@ -364,7 +364,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                     }
 
                                     card.Item().Text(
-                                            $"{evaluation.EvaluationDate:dd-MM-yyyy} · {evaluation.ReferenceNumber}")
+                                            $"{evaluation.EvaluationDate.ToString("dd-MM-yyyy", culture)} · {evaluation.ReferenceNumber}")
                                         .FontSize(8).FontColor(Muted);
                                 });
                             }
@@ -442,7 +442,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             .FontSize(7.5f).FontColor(Muted);
                         if (model.ConsentAcceptedAt is DateTime accepted)
                         {
-                            text.Span($" · toestemming {accepted:dd-MM-yyyy}")
+                            text.Span(" · toestemming " + accepted.ToString("dd-MM-yyyy", culture))
                                 .FontSize(7.5f).FontColor(Muted);
                         }
                     });
