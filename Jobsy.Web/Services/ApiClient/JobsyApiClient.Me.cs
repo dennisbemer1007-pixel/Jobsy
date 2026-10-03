@@ -73,6 +73,102 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
     }
 
+    public async Task<DiplomaEvaluationItem> SaveDiplomaEvaluationAsync(
+        DiplomaEvaluationDraft draft,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            diplomaTitle = draft.DiplomaTitle,
+            issuingBody = draft.IssuingBody,
+            issuingBodyOther = draft.IssuingBodyOther,
+            equivalentLevelText = draft.EquivalentLevelText,
+            equivalentLevelCode = string.IsNullOrWhiteSpace(draft.EquivalentLevelCode) ? null : draft.EquivalentLevelCode,
+            evaluationDate = draft.DateInput,
+            referenceNumber = draft.ReferenceNumber
+        };
+        var response = draft.Id is Guid id
+            ? await _http.PutAsJsonAsync($"api/me/diploma-evaluations/{id:D}", payload, ct)
+            : await _http.PostAsJsonAsync("api/me/diploma-evaluations", payload, ct);
+        return await ReadDiplomaEvaluationAsync(response, ct);
+    }
+
+    public async Task<DiplomaEvaluationItem> UploadDiplomaEvaluationDocumentAsync(
+        Guid id,
+        string fileName,
+        string contentType,
+        byte[] bytes,
+        CancellationToken ct = default)
+    {
+        using var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(bytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+            string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType);
+        content.Add(fileContent, "file", string.IsNullOrWhiteSpace(fileName) ? "waardering.pdf" : fileName);
+        var response = await _http.PostAsync($"api/me/diploma-evaluations/{id:D}/document", content, ct);
+        return await ReadDiplomaEvaluationAsync(response, ct);
+    }
+
+    public async Task<DiplomaEvaluationItem> DeleteDiplomaEvaluationDocumentAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/me/diploma-evaluations/{id:D}/document", ct);
+        return await ReadDiplomaEvaluationAsync(response, ct);
+    }
+
+    public async Task DeleteDiplomaEvaluationAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/me/diploma-evaluations/{id:D}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractDiplomaErrorCode(body) ?? ExtractMessage(body) ?? "diploma_eval_failed");
+        }
+    }
+
+    public Task DownloadDiplomaEvaluationDocumentAsync(IJSRuntime js, Guid id, CancellationToken ct = default)
+        => DownloadNamedFileAsync($"api/me/diploma-evaluations/{id:D}/document", js, "waardering.pdf", ct);
+
+    private static async Task<DiplomaEvaluationItem> ReadDiplomaEvaluationAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException(ExtractDiplomaErrorCode(body) ?? ExtractMessage(body) ?? "diploma_eval_failed");
+        }
+
+        return JsonSerializer.Deserialize<DiplomaEvaluationItem>(body, DiplomaJson)
+               ?? throw new InvalidOperationException("diploma_eval_failed");
+    }
+
+    private static string? ExtractDiplomaErrorCode(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("code", out var code))
+            {
+                var value = code.GetString();
+                if (DiplomaEvaluationRules.IsErrorCode(value))
+                {
+                    return value;
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    private static readonly JsonSerializerOptions DiplomaJson = new(JsonSerializerDefaults.Web);
+
     public async Task<MeProfile?> AcceptConsentAsync(CancellationToken ct = default)
     {
         var response = await _http.PostAsync("api/me/accept-consent", null, ct);

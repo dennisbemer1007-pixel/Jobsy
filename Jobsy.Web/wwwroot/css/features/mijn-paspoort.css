@@ -1981,3 +1981,164 @@
 .passport-proof__learn {
     margin-block-start: var(--space-3, 0.75rem);
 }
+
+/* Foreign diploma evaluation — mobile first, used on profile and passport proof. */
+.diploma-eval {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+    max-width: 100%;
+    margin-top: 0.85rem;
+}
+
+.diploma-eval__title {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.diploma-eval__empty p,
+.diploma-eval__hint,
+.diploma-eval__meta,
+.diploma-eval__choice,
+.diploma-eval__diploma,
+.diploma-eval__attribution {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.diploma-eval__hint,
+.diploma-eval__meta,
+.diploma-eval__attribution,
+.diploma-eval__choice {
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.diploma-eval__level {
+    margin: 0;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.diploma-eval__links {
+    margin: 0.35rem 0;
+    padding-inline-start: 1.1rem;
+}
+
+.diploma-eval__links a {
+    color: var(--brand);
+    text-underline-offset: 0.15em;
+}
+
+.diploma-eval__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.diploma-eval__fact {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 8px);
+    padding: 0.75rem;
+    background: var(--surface, #fffcfa);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.diploma-eval__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-width: 0;
+}
+
+.diploma-eval__form label,
+.diploma-eval__file {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    font-weight: 600;
+}
+
+.diploma-eval__form input,
+.diploma-eval__form select {
+    width: 100%;
+    max-width: 100%;
+    min-height: 2.75rem;
+    margin: 0;
+    font: inherit;
+    font-weight: 400;
+    box-sizing: border-box;
+}
+
+.diploma-eval__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.diploma-eval__actions .btn-compact,
+.diploma-eval__upload {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+}
+
+.diploma-eval__upload {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.diploma-eval__upload input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    min-height: 2.75rem;
+}
+
+.diploma-eval__alert {
+    margin: 0;
+    padding: 0.55rem 0.7rem;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--danger-soft, #fef2f2);
+    color: var(--danger, #9b1c1c);
+}
+
+.diploma-eval__alert[role="status"] {
+    background: var(--success-soft, #ecfdf3);
+    color: var(--success, #15803d);
+}
+
+.diploma-eval a:focus-visible,
+.diploma-eval button:focus-visible,
+.diploma-eval input:focus-visible,
+.diploma-eval select:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.diploma-eval__passport > li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.passport-proof__list .diploma-eval__attribution {
+    display: block;
+}

@@ -905,6 +905,8 @@ public class ApplicationsController : ControllerBase
         application.SnapshotHomeLongitude = candidate.HomeLocation?.Longitude;
         application.SnapshotCertificatesJson =
             LobsyCvModelFactory.SerializeCertificatesSnapshot(preferences.Certificates, maxLength: 4000);
+        application.SnapshotDiplomaEvaluationsJson =
+            await SnapshotDiplomaEvaluationsAsync(candidate.Id, cancellationToken);
         // Home address is never shown on Lobsy-CV; keep snapshot flag false for privacy consistency.
         application.SnapshotShowAddressOnCv = false;
         application.CandidateName = CandidateNameRules.ComposeFullName(
@@ -1718,6 +1720,24 @@ public class ApplicationsController : ControllerBase
         snapshot.Content = uploaded.Content;
         snapshot.SizeBytes = uploaded.SizeBytes;
         application.UploadedCv = snapshot;
+    }
+
+    /// <summary>Facts only. The evaluation document is not copied onto the application.</summary>
+    private async Task<string?> SnapshotDiplomaEvaluationsAsync(Guid candidateUserId, CancellationToken cancellationToken)
+    {
+        var rows = await _db.CandidateDiplomaEvaluations.AsNoTracking()
+            .Where(e => e.UserId == candidateUserId)
+            .OrderBy(e => e.CreatedAtUtc)
+            .Select(e => new DiplomaEvaluationSharedFact(
+                e.DiplomaTitle,
+                e.IssuingBody,
+                e.IssuingBodyOther,
+                e.EquivalentLevelText,
+                e.EquivalentLevelCode,
+                e.EvaluationDate,
+                e.ReferenceNumber))
+            .ToListAsync(cancellationToken);
+        return DiplomaEvaluationRules.SerializeSnapshot(rows);
     }
 
     private async Task SendApplicationConfirmationAsync(

@@ -67,6 +67,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.SnapshotAboutMe,
                 a.SnapshotWhoAmIJson,
                 a.SnapshotCertificatesJson,
+                a.SnapshotDiplomaEvaluationsJson,
                 a.SnapshotShowAddressOnCv,
                 a.CandidateCity,
                 a.CandidateAddress,
@@ -502,6 +503,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 user.ParentalConsentEmail,
                 user.IsActive
             },
+            DiplomaEvaluations = await ExportDiplomaEvaluationsAsync(user.Id, cancellationToken),
             UploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .Select(c => new
@@ -997,6 +999,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotHomeLatitude = null;
             app.SnapshotHomeLongitude = null;
             app.SnapshotCertificatesJson = null;
+            app.SnapshotDiplomaEvaluationsJson = null;
             app.SnapshotShowAddressOnCv = false;
             app.SnapshotDateOfBirth = null;
             app.Motivation = null;
@@ -1369,6 +1372,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateUploadedCvs.RemoveRange(uploadedCvs);
         }
 
+        var diplomaEvaluations = await _db.CandidateDiplomaEvaluations
+            .Where(e => e.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (diplomaEvaluations.Count > 0)
+        {
+            _db.CandidateDiplomaEvaluations.RemoveRange(diplomaEvaluations);
+        }
+
         var references = await _db.CandidateReferences
             .Where(r => r.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1598,6 +1609,33 @@ public sealed class PrivacyDataService : IPrivacyDataService
                    .Include(u => u.CompanyMemberships)
                    .FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken)
                ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
+    }
+
+    private async Task<List<object>> ExportDiplomaEvaluationsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var rows = await _db.CandidateDiplomaEvaluations.AsNoTracking()
+            .Where(e => e.UserId == userId)
+            .OrderBy(e => e.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+        return rows.Select(e => (object)new
+        {
+            e.Id,
+            e.DiplomaTitle,
+            e.IssuingBody,
+            e.IssuingBodyOther,
+            e.EquivalentLevelText,
+            e.EquivalentLevelCode,
+            e.EvaluationDate,
+            e.ReferenceNumber,
+            e.DocumentFileName,
+            e.DocumentContentType,
+            e.DocumentSizeBytes,
+            DocumentBase64 = e.DocumentContent is { Length: > 0 } bytes
+                ? Convert.ToBase64String(bytes)
+                : null,
+            e.CreatedAtUtc,
+            e.UpdatedAtUtc
+        }).ToList();
     }
 
     private static string FormatUnsubscribeLogMessage(

@@ -205,7 +205,8 @@ public record MeProfileDto(
     DateTime? ParentalConsentAt = null,
     string? ParentalConsentEmail = null,
     bool EmailVerified = false,
-    bool PhoneVerified = false);
+    bool PhoneVerified = false,
+    IReadOnlyList<DiplomaEvaluationFactDto>? DiplomaEvaluations = null);
 
 public record CandidateUploadedCvInfoDto(
     string FileName,

@@ -24,7 +24,7 @@ namespace Jobsy.Api.Controllers;
 [ApiController]
 [Route("api/me")]
 [Authorize]
-public class MeController : ControllerBase
+public partial class MeController : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -778,6 +778,7 @@ public class MeController : ControllerBase
         var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
             .AnyAsync(c => c.UserId == user.Id, cancellationToken);
         var preferences = ParsePreferences(user.PreferencesJson);
+        var diplomaEvaluations = await LoadDiplomaEvaluationSharedFactsAsync(user.Id, cancellationToken);
         // AI "Wie ben ik" is not attached to the Lobsy-CV (decision 22). The profile stays in the app.
         var model = LobsyCvModelFactory.FromLiveProfile(
             user.FullName,
@@ -790,7 +791,8 @@ public class MeController : ControllerBase
             DateTime.UtcNow,
             user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion,
             dateOfBirth: user.DateOfBirth,
-            hasUploadedOwnCv: hasUploadedCv);
+            hasUploadedOwnCv: hasUploadedCv,
+            diplomaEvaluations: diplomaEvaluations);
 
         var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
         var fileName = _lobsyCvPdf.BuildFileName(model);
@@ -1219,6 +1221,8 @@ public class MeController : ControllerBase
             .Select(r => new CandidateReferenceDto(r.Id, r.EmployerName, r.ContactName, r.Email, r.Phone))
             .ToListAsync(cancellationToken);
 
+        var diplomaEvaluations = await LoadDiplomaEvaluationFactsAsync(user.Id, cancellationToken);
+
         return new MeProfileDto(
             user.Id,
             user.Email,
@@ -1248,7 +1252,8 @@ public class MeController : ControllerBase
             user.ParentalConsentAt,
             user.ParentalConsentEmail,
             user.EmailVerifiedAtUtc is not null,
-            user.PhoneVerifiedAtUtc is not null);
+            user.PhoneVerifiedAtUtc is not null,
+            diplomaEvaluations);
     }
 
     private async Task<Core.Entities.User?> ResolveActiveCandidateAsync(CancellationToken cancellationToken)

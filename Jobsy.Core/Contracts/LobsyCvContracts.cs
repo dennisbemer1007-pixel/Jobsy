@@ -48,7 +48,9 @@ public sealed record LobsyCvModel(
     /// <summary>
     /// Not rendered. Callers may still carry the opt-in payload; the PDF never prints AI output (decision 22).
     /// </summary>
-    LobsyCvWhoAmI? WhoAmI = null);
+    LobsyCvWhoAmI? WhoAmI = null,
+    /// <summary>Candidate-entered foreign-diploma evaluations. Fields only; never the uploaded file.</summary>
+    IReadOnlyList<LobsyCvDiplomaEvaluationEntry>? DiplomaEvaluations = null);
 
 public sealed record LobsyCvWhoAmI(
     string Story,
@@ -69,3 +71,12 @@ public sealed record LobsyCvEmployerEntry(
 public sealed record LobsyCvCertificateEntry(
     string Name,
     int? Year);
+
+/// <summary>Printed diploma evaluation. <see cref="EquivalentLevelText"/> is the candidate's wording, not a derived level.</summary>
+public sealed record LobsyCvDiplomaEvaluationEntry(
+    string? DiplomaTitle,
+    string EquivalentLevelText,
+    string Attribution,
+    DateOnly EvaluationDate,
+    string ReferenceNumber,
+    string? EquivalentLevelCode);

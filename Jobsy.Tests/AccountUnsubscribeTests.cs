@@ -518,6 +518,7 @@ public class AccountUnsubscribeTests
             typeof(CandidateCompetency),
             typeof(CandidateCulturePersonalityProfile),
             typeof(CandidateDeepAnalysis),
+            typeof(CandidateDiplomaEvaluation),
             typeof(CandidateMatchSnapshot),
             typeof(CandidateOnboarding),
             typeof(CandidateReference),

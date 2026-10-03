@@ -61,6 +61,11 @@ public class Application
     /// <summary>JSON array of { name, year } certificates/courses at apply.</summary>
     public string? SnapshotCertificatesJson { get; set; }
 
+    /// <summary>
+    /// JSON array of foreign-diploma evaluation facts at apply. Document bytes are never snapshotted.
+    /// </summary>
+    public string? SnapshotDiplomaEvaluationsJson { get; set; }
+
     /// <summary>Whether the candidate allows address/map on the Lobsy-CV.</summary>
     public bool SnapshotShowAddressOnCv { get; set; } = true;
 

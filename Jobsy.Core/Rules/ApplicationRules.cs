@@ -98,6 +98,7 @@ public static class ApplicationRules
         application.SnapshotHomeLatitude = null;
         application.SnapshotHomeLongitude = null;
         application.SnapshotCertificatesJson = null;
+        application.SnapshotDiplomaEvaluationsJson = null;
         application.SnapshotShowAddressOnCv = false;
         application.SnapshotDateOfBirth = null;
         application.Motivation = null;
