@@ -97,6 +97,7 @@ jobs:
             --filter-class '*AuthProviderE2EPlaywrightTests' \
             --filter-class '*AuthRtlKeyboardPlaywrightTests' \
             --filter-class '*CspSmokePlaywrightTests' \
+            --filter-class '*ReconnectOverlayPlaywrightTests' \
             --filter-class '*StatusPagesPlaywrightTests' \
             --filter-class '*PublicPagesPlaywrightTests' \
             --filter-class '*AdminOrganisationsPlaywrightTests' \

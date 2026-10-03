@@ -64,9 +64,14 @@ public class BlazorReconnectAndHealthzTests
         Assert.Contains("await Blazor.reconnect()", tryFn, StringComparison.Ordinal);
         Assert.Contains("location.reload()", tryFn, StringComparison.Ordinal);
 
-        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/reconnect.css"));
         Assert.Contains("1.5s", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast.components-reconnect-show", css, StringComparison.Ordinal);
+        Assert.Contains("components-reconnect-retrying", css, StringComparison.Ordinal);
+        Assert.Contains("safePublicPage", boot, StringComparison.Ordinal);
+        Assert.Contains("hasDraftInput", boot, StringComparison.Ordinal);
+        Assert.Contains("components-reconnect-state-changed", boot, StringComparison.Ordinal);
+        Assert.Contains("8000", boot, StringComparison.Ordinal);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Program.cs"));
         Assert.Contains("FromMinutes(15)", program, StringComparison.Ordinal);

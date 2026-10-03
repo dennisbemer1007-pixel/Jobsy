@@ -15544,77 +15544,8 @@ html.cookie-consent-known .cookie-consent {
     }
 }
 
-/* —— Global mobile SaaS: reconnect toast, vacancy cards, availability read-only —— */
-.reconnect-toast {
-    display: none;
-    position: fixed;
-    left: 50%;
-    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
-    z-index: 10001;
-    width: min(22rem, calc(100vw - 1.5rem));
-    pointer-events: none;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.2s ease, visibility 0s linear 0.5s;
-}
-
-/* Brief blips (<1.5s) stay invisible; failed/rejected stay immediate. */
-.reconnect-toast.components-reconnect-show {
-    display: block;
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-    transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
-}
-
-.reconnect-toast.components-reconnect-failed,
-.reconnect-toast.components-reconnect-rejected {
-    display: block;
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-    transition-delay: 0s;
-}
-
-.reconnect-toast.components-reconnect-hide {
-    display: none;
-}
-
-.reconnect-toast__panel {
-    padding: 0.7rem 0.9rem;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
-    color: var(--text);
-    font-size: 0.9rem;
-    font-weight: 650;
-    text-align: center;
-}
-
-.reconnect-toast__msg {
-    display: none;
-    margin: 0;
-}
-
-.reconnect-toast.components-reconnect-show .reconnect-toast__msg--show,
-.reconnect-toast.components-reconnect-failed .reconnect-toast__msg--failed,
-.reconnect-toast.components-reconnect-rejected .reconnect-toast__msg--rejected {
-    display: block;
-}
-
-.reconnect-toast__action {
-    margin-left: 0.35rem;
-    border: none;
-    background: transparent;
-    color: var(--brand);
-    font: inherit;
-    font-weight: 800;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
+/* Reconnect toast lives in css/features/reconnect.css (linked on every page, including NoBlazorRuntime). */
+/* —— Global mobile SaaS: vacancy cards, availability read-only —— */
 .vacancy-card-list {
     display: flex;
     flex-direction: column;
