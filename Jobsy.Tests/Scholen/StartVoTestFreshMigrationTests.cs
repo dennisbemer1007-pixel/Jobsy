@@ -152,17 +152,17 @@ public class StartVoTestFreshMigrationTests
 
     private static SchoolClass MakeClass(
         Guid schoolId, string name, SchoolLevel level, int year, PupilQuestionSet set) => new()
-    {
-        Id = Guid.NewGuid(),
-        SchoolId = schoolId,
-        Name = name,
-        Level = level,
-        Year = year,
-        QuestionSet = set,
-        SchoolYearStart = 2026,
-        PupilCount = 3,
-        CreatedAtUtc = DateTime.UtcNow
-    };
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = schoolId,
+            Name = name,
+            Level = level,
+            Year = year,
+            QuestionSet = set,
+            SchoolYearStart = 2026,
+            PupilCount = 3,
+            CreatedAtUtc = DateTime.UtcNow
+        };
 
     private static PupilCode MakeCode(Guid classId, int number, PupilCodeStatus status, int session) => new()
     {
