@@ -655,7 +655,7 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         var story = _story.Render(code.Result, code.Progress);
-        var dream = _story.RenderDreamRoute(code.Result, code.Progress);
+        var dream = _story.RenderDreamRoute(code.Result, code.Progress, PupilClassContext.From(schoolClass));
         var likes = ResolveChipLabels(ParseTagList(code.Progress?.LikesJson));
         var dislikes = ResolveChipLabels(ParseTagList(code.Progress?.DislikesJson));
         if (!string.IsNullOrWhiteSpace(code.Progress?.LikeOtherWord))
@@ -727,7 +727,7 @@ public sealed class PupilPortalService : IPupilPortalService
         code.Result.FitSnapshotJson = fit is null ? null : PupilDreamJobFit.SerializeSnapshot(fit.Snapshot);
         await _db.SaveChangesAsync(cancellationToken);
 
-        var dream = _story.RenderDreamRoute(code.Result, code.Progress);
+        var dream = _story.RenderDreamRoute(code.Result, code.Progress, PupilClassContext.From(ctx.Class!));
         return (new PupilDreamJobResponse(storeKey, dream), null, 200);
     }
 
@@ -753,7 +753,7 @@ public sealed class PupilPortalService : IPupilPortalService
             .Select(s => s.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "";
         var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
-        var model = BuildPdfModel(code, schoolClass.Name, schoolName, display);
+        var model = BuildPdfModel(code, schoolClass, schoolName, display);
         var bytes = _pdf.Render(model);
         var fileName = $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
         return (bytes, fileName, null, 200);
@@ -761,13 +761,14 @@ public sealed class PupilPortalService : IPupilPortalService
 
     private PupilReportPdfModel BuildPdfModel(
         PupilCode code,
-        string className,
+        SchoolClass schoolClass,
         string schoolName,
         string displayCode)
     {
         var result = code.Result!;
+        var classContext = PupilClassContext.From(schoolClass);
         var story = _story.Render(result, code.Progress);
-        var dream = _story.RenderDreamRoute(result, code.Progress);
+        var dream = _story.RenderDreamRoute(result, code.Progress, classContext);
         var likes = ResolveChipLabels(ParseTagList(code.Progress?.LikesJson));
         var dislikes = ResolveChipLabels(ParseTagList(code.Progress?.DislikesJson));
         if (!string.IsNullOrWhiteSpace(code.Progress?.LikeOtherWord))
@@ -786,7 +787,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         return new PupilReportPdfModel(
             SchoolName: schoolName,
-            ClassName: className,
+            ClassName: schoolClass.Name,
             DisplayCode: displayCode,
             Date: date,
             StoryBody: story.Body,
@@ -799,7 +800,8 @@ public sealed class PupilPortalService : IPupilPortalService
                 ? null
                 : dream.JobTitle,
             RouteSteps: dream.RouteSteps,
-            Encouragement: dream.Encouragement);
+            Encouragement: dream.Encouragement,
+            Footer: PupilVerhaalCopy.Get("LeerlingPdf.Footer", classContext));
     }
 
     private static List<string> ResolveChipLabels(IReadOnlyList<string> keys)

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Scholen;
@@ -19,6 +20,9 @@ public class PupilStoryAndDreamJobTests
     ];
 
     private readonly PupilStoryRenderer _renderer = new();
+    private static readonly PupilClassContext Groep8 = new(SchoolLevel.Groep78, 8, PupilQuestionSet.Groep78);
+    private static readonly PupilClassContext Havo3 = new(SchoolLevel.Havo, 3, PupilQuestionSet.Vo);
+    private static readonly PupilClassContext Mix1 = new(SchoolLevel.Mix, 1, PupilQuestionSet.Vo);
 
     [Fact]
     public void Every_story_and_dream_key_has_nl_text()
@@ -68,10 +72,10 @@ public class PupilStoryAndDreamJobTests
     }
 
     [Fact]
-    public void Dream_routes_cover_all_48_jobs_with_five_needs_and_no_urls()
+    public void Dream_routes_cover_the_catalog_with_five_needs_and_no_urls()
     {
         Assert.Equal(DreamJobCatalog.All.Count, PupilDreamJobRoutes.All.Count);
-        Assert.Equal(48, PupilDreamJobRoutes.All.Count);
+        Assert.True(PupilDreamJobRoutes.All.Count >= 58);
         foreach (var job in DreamJobCatalog.All)
         {
             var route = PupilDreamJobRoutes.TryGet(job.Key);
@@ -88,6 +92,12 @@ public class PupilStoryAndDreamJobTests
             {
                 Assert.True(PupilVerhaalCopy.TryGet($"LeerlingDroom.Route.{job.Key}.{i}", out var step), $"{job.Key}.{i}");
                 AssertNoUrl(step);
+                if (i == 1)
+                {
+                    Assert.StartsWith("Nu: {nu}|", step, StringComparison.Ordinal);
+                }
+
+                Assert.DoesNotContain("klas 2", step, StringComparison.Ordinal);
             }
 
             Assert.True(PupilVerhaalCopy.TryGet($"LeerlingDroom.Route.{job.Key}.Goal", out var goal));
@@ -98,6 +108,70 @@ public class PupilStoryAndDreamJobTests
                 AssertNoUrl(alt);
             }
         }
+    }
+
+    [Fact]
+    public void NowLabel_matches_level_and_year()
+    {
+        Assert.Equal("groep 8", PupilDreamJobRoutes.NowLabel(Groep8));
+        Assert.Equal("groep 7", PupilDreamJobRoutes.NowLabel(new(SchoolLevel.Groep78, 7, PupilQuestionSet.Groep78)));
+        Assert.Equal("klas 3 havo", PupilDreamJobRoutes.NowLabel(Havo3));
+        Assert.Equal("klas 1", PupilDreamJobRoutes.NowLabel(Mix1));
+        Assert.Equal("klas 2 vmbo", PupilDreamJobRoutes.NowLabel(new(SchoolLevel.VmboB, 2, PupilQuestionSet.Vo)));
+        Assert.Equal("klas 4 mavo", PupilDreamJobRoutes.NowLabel(new(SchoolLevel.Mavo, 4, PupilQuestionSet.Vo)));
+        Assert.Equal("klas 5 vwo", PupilDreamJobRoutes.NowLabel(new(SchoolLevel.Vwo, 5, PupilQuestionSet.Vo)));
+        Assert.Equal("klas 1", PupilDreamJobRoutes.NowLabel(new(SchoolLevel.Anders, 1, PupilQuestionSet.Vo)));
+    }
+
+    [Fact]
+    public void Every_route_renders_for_groep8_havo3_and_mix1_without_placeholders()
+    {
+        var result = FixtureResult();
+        var progress = new PupilProgress { PupilCodeId = result.PupilCodeId, LikesJson = "[]" };
+        foreach (var job in DreamJobCatalog.All)
+        {
+            result.DreamJobKey = job.Key;
+            progress.DreamJobKey = job.Key;
+            foreach (var ctx in new[] { Groep8, Havo3, Mix1 })
+            {
+                var dream = _renderer.RenderDreamRoute(result, progress, ctx);
+                Assert.NotEmpty(dream.RouteSteps);
+                Assert.StartsWith(
+                    "Nu: " + PupilDreamJobRoutes.NowLabel(ctx) + " — ",
+                    dream.RouteSteps[0],
+                    StringComparison.Ordinal);
+                var blob = string.Join(" ", dream.RouteSteps.Concat(dream.HaveItems).Concat(dream.LearnItems)
+                    .Append(dream.Encouragement ?? "").Append(dream.AltRoute ?? ""));
+                Assert.DoesNotContain("{", blob, StringComparison.Ordinal);
+                Assert.DoesNotContain("{nu}", blob, StringComparison.Ordinal);
+                if (ctx.Year != 2)
+                {
+                    Assert.DoesNotContain("klas 2", blob, StringComparison.Ordinal);
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void Vo_copy_uses_docent_of_mentor_g78_keeps_leraar()
+    {
+        Assert.Contains("leraar", PupilVerhaalCopy.Get("LeerlingDroom.UndecidedHint", PupilQuestionSet.Groep78), StringComparison.Ordinal);
+        Assert.Contains("docent of mentor", PupilVerhaalCopy.Get("LeerlingDroom.UndecidedHint", PupilQuestionSet.Vo), StringComparison.Ordinal);
+        Assert.DoesNotContain("leraar", PupilVerhaalCopy.Get("LeerlingDroom.UndecidedHint", PupilQuestionSet.Vo), StringComparison.Ordinal);
+        Assert.Contains("docent of mentor", PupilVerhaalCopy.Get("LeerlingDroom.Cheer.Low", PupilQuestionSet.Vo), StringComparison.Ordinal);
+        Assert.Contains("leraar", PupilVerhaalCopy.Get("LeerlingDroom.Cheer.Low", PupilQuestionSet.Groep78), StringComparison.Ordinal);
+        Assert.Contains("mentor", PupilVerhaalCopy.Get("LeerlingDroom.Need.Ruimte.Next", PupilQuestionSet.Vo), StringComparison.Ordinal);
+        Assert.Contains("leraar", PupilVerhaalCopy.Get("LeerlingDroom.Need.Ruimte.Next", PupilQuestionSet.Groep78), StringComparison.Ordinal);
+
+        var low = FixtureResult(competence: 10, riasec: 10, values: 10);
+        low.DreamJobKey = "piloot";
+        var progress = new PupilProgress { PupilCodeId = low.PupilCodeId, DreamJobKey = "piloot", LikesJson = "[]" };
+        var vo = _renderer.RenderDreamRoute(low, progress, Havo3);
+        var g78 = _renderer.RenderDreamRoute(low, progress, Groep8);
+        Assert.Contains("docent of mentor", vo.Encouragement ?? "", StringComparison.Ordinal);
+        Assert.Contains("leraar", g78.Encouragement ?? "", StringComparison.Ordinal);
+        Assert.DoesNotContain("leraar", vo.Encouragement ?? "", StringComparison.Ordinal);
+        Assert.Contains("mentor", string.Join(" ", vo.LearnItems), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -154,7 +228,8 @@ public class PupilStoryAndDreamJobTests
             DreamJobKey = "dierenarts"
         };
         var story = _renderer.Render(result, progress);
-        var dream = _renderer.RenderDreamRoute(result, progress);
+        var dream = _renderer.RenderDreamRoute(result, progress, Groep8);
+        var footer = PupilVerhaalCopy.Get("LeerlingPdf.Footer", Groep8);
         var pdf = new PupilReportPdfService();
         var bytes = pdf.Render(new PupilReportPdfModel(
             SchoolName: "Voorbeeld College",
@@ -168,7 +243,8 @@ public class PupilStoryAndDreamJobTests
             JobIdeas: story.JobIdeas,
             DreamJobTitle: dream.JobTitle,
             RouteSteps: dream.RouteSteps,
-            Encouragement: dream.Encouragement));
+            Encouragement: dream.Encouragement,
+            Footer: footer));
 
         Assert.True(bytes.Length > 500);
         Assert.StartsWith("%PDF", Encoding.ASCII.GetString(bytes.AsSpan(0, 4)));
@@ -179,6 +255,10 @@ public class PupilStoryAndDreamJobTests
         Assert.Contains("PupilReportPdfCopy.Footer", pdfSrc, StringComparison.Ordinal);
         Assert.Equal("Naam (vul zelf in)", PupilReportPdfCopy.NameLine);
         Assert.Contains("Lobsy bewaart geen namen", PupilReportPdfCopy.Footer, StringComparison.Ordinal);
+        Assert.Contains("leraar", footer, StringComparison.Ordinal);
+        Assert.Contains("docent", PupilVerhaalCopy.Get("LeerlingPdf.Footer", Havo3), StringComparison.Ordinal);
+        Assert.Contains("Nu: groep 8", dream.RouteSteps[0], StringComparison.Ordinal);
+        Assert.DoesNotContain("{nu}", dream.RouteSteps[0], StringComparison.Ordinal);
         Assert.Contains("Belangrijk voor jou", story.Body, StringComparison.Ordinal);
         Assert.DoesNotContain(
             typeof(PupilReportPdfService).GetConstructors()

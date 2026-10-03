@@ -55,6 +55,16 @@ public static class DreamJobIcons
     public const string PartyPopper = SvgStart + "<path d=\"M5 21 14 12M7 17l-3-3 4-4 3 3M14 12l4-4M16 4h.01M20 6h.01M18 10h.01\"/>" + SvgEnd;
     public const string ChartLine = SvgStart + "<path d=\"M3 3v18h18M7 16l4-5 3 3 5-7\"/>" + SvgEnd;
     public const string Croissant = SvgStart + "<path d=\"M4 15a8 8 0 0 1 13-8 8 8 0 0 1 3 11 8 8 0 0 1-16-3ZM8 8c2 2 4 5 4 9M16 8c-2 2-4 5-4 9\"/>" + SvgEnd;
+    public const string Truck = SvgStart + "<path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"/><path d=\"M15 18H9\"/><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/>" + SvgEnd;
+    public const string ShoppingBag = SvgStart + "<path d=\"M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z\"/><path d=\"M3 6h18\"/><path d=\"M16 10a4 4 0 0 1-8 0\"/>" + SvgEnd;
+    public const string ShieldCheck = SvgStart + "<path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z\"/><path d=\"m9 12 2 2 4-4\"/>" + SvgEnd;
+    public const string Cable = SvgStart + "<path d=\"M4 9a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v1H4V9Z\"/><path d=\"M9 10h6\"/><path d=\"M15 9a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v1h-5V9Z\"/><path d=\"M6 12v3a2 2 0 0 0 2 2h1\"/><path d=\"M18 12v3a2 2 0 0 1-2 2h-1\"/><path d=\"M9 17v3M15 17v3\"/>" + SvgEnd;
+    public const string HandHeart = SvgStart + "<path d=\"M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16\"/><path d=\"m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9\"/><path d=\"m2 15 6 6\"/><path d=\"M19.5 8.5c.7-.7 1.5-1.6 1.5-2.7A2.73 2.73 0 0 0 16 4a2.78 2.78 0 0 0-5 1.8c0 1.2.8 2 1.5 2.8L16 12Z\"/>" + SvgEnd;
+    public const string PaintRoller = SvgStart + "<rect x=\"5\" y=\"2\" width=\"14\" height=\"6\" rx=\"1\"/><path d=\"M9 8v3a1 1 0 0 0 1 1h1\"/><path d=\"M12 12v8\"/><path d=\"M9 20h6\"/>" + SvgEnd;
+    public const string Droplets = SvgStart + "<path d=\"M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z\"/><path d=\"M12.56 6.6A11 11 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a7 7 0 0 1-11.91 4.97\"/>" + SvgEnd;
+    public const string ClipboardPlus = SvgStart + "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"M9 14h6\"/><path d=\"M12 11v6\"/>" + SvgEnd;
+    public const string MonitorCog = SvgStart + "<rect x=\"2\" y=\"3\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M8 21h8\"/><path d=\"M12 17v4\"/><circle cx=\"12\" cy=\"10\" r=\"2\"/><path d=\"M12 6.5v1M12 12.5v1M8.6 8.6l.7.7M14.7 11.7l.7.7M8.6 11.4l.7-.7M14.7 8.3l.7-.7\"/>" + SvgEnd;
+    public const string Utensils = SvgStart + "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\"/><path d=\"M7 2v20\"/><path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3\"/><path d=\"M21 15v7\"/>" + SvgEnd;
 
     private static readonly Dictionary<string, string> Lookup = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -64,7 +74,9 @@ public static class DreamJobIcons
         ["brain"] = Brain, ["activity"] = Activity, ["baby"] = Baby, ["pill"] = Pill, ["gavel"] = Gavel, ["stamp"] = Stamp, ["cog"] = Cog, ["plug-zap"] = PlugZap,
         ["wrench"] = Wrench, ["hammer"] = Hammer, ["trees"] = Trees, ["leaf"] = Leaf, ["flask-conical"] = FlaskConical, ["pen-tool"] = PenTool, ["music"] = Music,
         ["drama"] = Drama, ["trophy"] = Trophy, ["dumbbell"] = Dumbbell, ["video"] = Video, ["megaphone"] = Megaphone, ["calculator"] = Calculator, ["house"] = House,
-        ["luggage"] = Luggage, ["medal"] = Medal, ["blocks"] = Blocks, ["rabbit"] = Rabbit, ["party-popper"] = PartyPopper, ["chart-line"] = ChartLine, ["croissant"] = Croissant
+        ["luggage"] = Luggage, ["medal"] = Medal, ["blocks"] = Blocks, ["rabbit"] = Rabbit, ["party-popper"] = PartyPopper, ["chart-line"] = ChartLine, ["croissant"] = Croissant,
+        ["truck"] = Truck, ["shopping-bag"] = ShoppingBag, ["shield-check"] = ShieldCheck, ["cable"] = Cable, ["hand-heart"] = HandHeart,
+        ["paint-roller"] = PaintRoller, ["droplets"] = Droplets, ["clipboard-plus"] = ClipboardPlus, ["monitor-cog"] = MonitorCog, ["utensils"] = Utensils
     };
 
     public static string? TryGet(string iconKey) => Lookup.TryGetValue(iconKey, out var svg) ? svg : null;
