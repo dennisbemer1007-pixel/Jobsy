@@ -397,6 +397,14 @@ public class PublicPagesPlaywrightTests
 
     private static async Task AssertPartnerPricesAsync(IPage page)
     {
+        // Employers OFF gates /partner onto the coming-soon page (no rate table).
+        if (page.Url.Contains("/werkgevers/binnenkort", StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.Equal(1, await page.Locator("h1").CountAsync());
+            Assert.Contains("noindex", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+            return;
+        }
+
         var text = await page.Locator("body").InnerTextAsync();
         Assert.DoesNotContain("€ 0,00", text, StringComparison.Ordinal);
         // NL uses "btw"; EN/PL/RO/AR use VAT / localized tax wording from PartnerPage.Rates.*.
