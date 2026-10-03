@@ -7,6 +7,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -76,7 +77,7 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly JobsyDbContext _db;
     private readonly IPupilCodeService _codes;
     private readonly IPupilLoginProtection _protection;
-    private readonly IPupilQuestionBank _bank;
+    private readonly IPupilQuestionSetRegistry _registry;
     private readonly IPupilResultBuilder _results;
     private readonly ISchoolScopeService _scope;
     private readonly IMemoryCache _cache;
@@ -89,7 +90,7 @@ public sealed class PupilPortalService : IPupilPortalService
         JobsyDbContext db,
         IPupilCodeService codes,
         IPupilLoginProtection protection,
-        IPupilQuestionBank bank,
+        IPupilQuestionSetRegistry registry,
         IPupilResultBuilder results,
         ISchoolScopeService scope,
         IMemoryCache cache,
@@ -101,7 +102,7 @@ public sealed class PupilPortalService : IPupilPortalService
         _db = db;
         _codes = codes;
         _protection = protection;
-        _bank = bank;
+        _registry = registry;
         _results = results;
         _scope = scope;
         _cache = cache;
@@ -267,7 +268,8 @@ public sealed class PupilPortalService : IPupilPortalService
                 "Even pauze. Probeer het over een kwartier opnieuw of vraag je leraar."), 429);
         }
 
-        await EnsureResultAsync(code, cancellationToken);
+        var def = _registry.ForClass(schoolClass);
+        await EnsureResultAsync(code, def, cancellationToken);
 
         var completed = code.Status == PupilCodeStatus.Completed
                         || code.Progress?.CompletedAtUtc is not null
@@ -292,11 +294,11 @@ public sealed class PupilPortalService : IPupilPortalService
         _cache.Remove($"pupil-sv:{code.Id:D}");
         _cache.Remove($"pupil-session:{code.Id:D}");
 
-        var total = _bank.AllItems.Count;
+        var total = def.Bank.AllItems.Count;
         var currentIndex = code.Progress?.CurrentIndex ?? 0;
         if (code.Progress is not null && !string.IsNullOrWhiteSpace(code.Progress.AnswersJson))
         {
-            currentIndex = FirstUnansweredIndex(code.Progress.AnswersJson, total);
+            currentIndex = FirstUnansweredIndex(def, code.Progress.AnswersJson);
             if (code.Progress.CurrentIndex != currentIndex && !completed)
             {
                 code.Progress.CurrentIndex = currentIndex;
@@ -354,20 +356,29 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        await EnsureResultAsync(code, cancellationToken);
+        var def = _registry.ForClass(schoolClass);
+        await EnsureResultAsync(code, def, cancellationToken);
 
         var answers = ParseAnswers(code.Progress?.AnswersJson);
-        var total = _bank.AllItems.Count;
+        var total = def.Bank.AllItems.Count;
         var answered = answers.Count;
-        var currentIndex = FirstUnansweredIndex(code.Progress?.AnswersJson ?? "{}", total);
+        var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
         var completed = code.Status == PupilCodeStatus.Completed
                         || code.Progress?.CompletedAtUtc is not null
                         || code.Result is not null;
         var windowOpen = schoolClass.TestWindow == TestWindowState.Open;
-        var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
-        var needsIsland = !completed && answered >= 30 && !islandDone;
-        var item = completed || needsIsland ? null : _bank.GetByGlobalIndex(currentIndex);
-        var plates = PupilWorldCatalog.PlatesShed(answered);
+        var step = completed
+            ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
+            : PupilFlow.Next(def, answers, islandDone);
+        var nextStep = PupilFlow.ToNextStepToken(step.Kind);
+        var needsIsland = step.Kind == PupilFlowStepKind.Island;
+        var currentIndex = step.Kind == PupilFlowStepKind.Done
+            ? total
+            : step.Index;
+        var item = step.Kind == PupilFlowStepKind.Question
+            ? def.Bank.GetByGlobalIndex(step.Index)
+            : null;
+        var plates = def.PlatesShed(answered);
         var likes = ParseTagList(code.Progress?.LikesJson);
         var dislikes = ParseTagList(code.Progress?.DislikesJson);
 
@@ -380,9 +391,9 @@ public sealed class PupilPortalService : IPupilPortalService
             total,
             answered,
             plates,
-            answered >= PupilWorldCatalog.TotalTestItems || plates >= PupilWorldCatalog.PlateCount,
+            answered >= total || plates >= def.PlateCount,
             item?.Id,
-            needsIsland ? "pauze-eiland" : item?.WorldKey,
+            step.Kind == PupilFlowStepKind.Island ? "pauze-eiland" : item?.WorldKey ?? step.WorldKey,
             answers,
             windowOpen,
             completed,
@@ -391,7 +402,10 @@ public sealed class PupilPortalService : IPupilPortalService
             likes,
             dislikes,
             code.Progress?.LikeOtherWord,
-            code.Progress?.DislikeOtherWord), null, 200);
+            code.Progress?.DislikeOtherWord,
+            schoolClass.QuestionSet,
+            nextStep,
+            step.PuzzleKey), null, 200);
     }
 
     public async Task<(PupilAnswerResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveAnswerAsync(
@@ -405,12 +419,6 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, new PupilErrorDto("validation", "Antwoord moet 1–5 zijn."), 400);
         }
 
-        var item = _bank.GetById(itemId);
-        if (item is null)
-        {
-            return (null, new PupilErrorDto("not_found", "Vraag niet gevonden."), 404);
-        }
-
         var ctx = await ResolveSessionAsync(pupil, cancellationToken);
         if (ctx.Error is not null)
         {
@@ -419,6 +427,19 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
+        var def = _registry.ForClass(schoolClass);
+        var item = def.Bank.GetById(itemId);
+        if (item is null)
+        {
+            // Known in another registered test → wrong_set. Unknown (e.g. 9101 before VO lands) → 404.
+            if (_registry.All.Any(d => d.Set != def.Set && d.Bank.GetById(itemId) is not null))
+            {
+                return (null, new PupilErrorDto("wrong_set", "Deze vraag hoort niet bij jouw test."), 400);
+            }
+
+            return (null, new PupilErrorDto("not_found", "Vraag niet gevonden."), 404);
+        }
+
         var now = _clock.GetUtcNow().UtcDateTime;
 
         if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
@@ -448,6 +469,22 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         var answers = ParseAnswers(progress.AnswersJson);
+        var islandDone = progress.ChipsSavedAtUtc is not null;
+        var step = PupilFlow.Next(def, answers, islandDone);
+        var alreadyAnswered = answers.ContainsKey(item.Id);
+        var allowed =
+            alreadyAnswered
+            || (step.Kind == PupilFlowStepKind.Question && item.GlobalIndex <= step.Index);
+
+        if (!allowed)
+        {
+            return (null, new PupilErrorDto(
+                "step_pending",
+                "Eerst de volgende stap afronden.",
+                PupilFlow.ToNextStepToken(step.Kind),
+                step.PuzzleKey), 409);
+        }
+
         answers[item.Id] = value;
         progress.AnswersJson = JsonSerializer.Serialize(answers);
         progress.UpdatedAtUtc = now;
@@ -457,18 +494,14 @@ public sealed class PupilPortalService : IPupilPortalService
             code.Status = PupilCodeStatus.InProgress;
         }
 
-        var total = _bank.AllItems.Count;
-        var nextIndex = FirstUnansweredIndex(progress.AnswersJson, total);
+        var total = def.Bank.AllItems.Count;
+        var nextIndex = FirstUnansweredIndex(def, progress.AnswersJson);
         progress.CurrentIndex = nextIndex;
         var allAnswered = answers.Count >= total
-                        && _bank.AllItems.All(i => answers.ContainsKey(i.Id));
-        var islandDone = progress.ChipsSavedAtUtc is not null;
-        var needsIsland = !allAnswered && answers.Count >= 30 && !islandDone;
+                        && def.Bank.AllItems.All(i => answers.ContainsKey(i.Id));
         var resultPending = false;
         var completed = false;
 
-        string? nextId = null;
-        string? nextWorld = null;
         // Persist answers first. Never mark Completed before BuildAsync succeeds —
         // otherwise a builder failure leaves the pupil stuck without a PupilResult.
         await _db.SaveChangesAsync(cancellationToken);
@@ -505,26 +538,28 @@ public sealed class PupilPortalService : IPupilPortalService
                 completed = false;
             }
         }
-        else if (needsIsland)
-        {
-            nextWorld = "pauze-eiland";
-        }
-        else
-        {
-            var next = _bank.GetByGlobalIndex(nextIndex);
-            nextId = next?.Id;
-            nextWorld = next?.WorldKey;
-        }
+
+        var nextStep = completed
+            ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
+            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null);
+        var needsIsland = nextStep.Kind == PupilFlowStepKind.Island;
+        string? nextId = nextStep.Kind == PupilFlowStepKind.Question ? nextStep.ItemId : null;
+        string? nextWorld = nextStep.Kind == PupilFlowStepKind.Island
+            ? "pauze-eiland"
+            : nextStep.WorldKey;
+        var responseIndex = nextStep.Kind == PupilFlowStepKind.Done ? total : nextStep.Index;
 
         return (new PupilAnswerResponse(
-            nextIndex,
+            responseIndex,
             answers.Count,
-            PupilWorldCatalog.PlatesShed(answers.Count),
+            def.PlatesShed(answers.Count),
             completed,
             nextId,
             nextWorld,
             needsIsland,
-            resultPending), null, 200);
+            resultPending,
+            PupilFlow.ToNextStepToken(nextStep.Kind),
+            nextStep.PuzzleKey), null, 200);
     }
 
     public async Task<(PupilChipsResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveChipsAsync(
@@ -582,13 +617,20 @@ public sealed class PupilPortalService : IPupilPortalService
         progress.UpdatedAtUtc = now;
         code.LastSeenAtUtc = now;
 
-        var total = _bank.AllItems.Count;
-        var nextIndex = FirstUnansweredIndex(progress.AnswersJson, total);
+        var def = _registry.ForClass(schoolClass);
+        var nextIndex = FirstUnansweredIndex(def, progress.AnswersJson);
         progress.CurrentIndex = nextIndex;
         await _db.SaveChangesAsync(cancellationToken);
 
-        var next = _bank.GetByGlobalIndex(nextIndex);
-        return (new PupilChipsResponse(true, nextIndex, next?.Id, next?.WorldKey), null, 200);
+        var answers = ParseAnswers(progress.AnswersJson);
+        var step = PupilFlow.Next(def, answers, islandDone: true);
+        return (new PupilChipsResponse(
+            true,
+            step.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : step.Index,
+            step.ItemId,
+            step.WorldKey,
+            PupilFlow.ToNextStepToken(step.Kind),
+            step.PuzzleKey), null, 200);
     }
 
     public async Task<(PupilResultPageDto? Ok, PupilErrorDto? Error, int StatusCode)> GetResultAsync(
@@ -603,7 +645,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        await EnsureResultAsync(code, cancellationToken);
+        var def = _registry.ForClass(schoolClass);
+        await EnsureResultAsync(code, def, cancellationToken);
         if (code.Status != PupilCodeStatus.Completed || code.Result is null)
         {
             return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
@@ -954,10 +997,13 @@ public sealed class PupilPortalService : IPupilPortalService
     }
 
     /// <summary>
-    /// Self-heal: when every item is answered (or status is already Completed) but
+    /// Self-heal: when every item of this class's test is answered (or status is already Completed) but
     /// <see cref="PupilResult"/> is missing, retry <see cref="IPupilResultBuilder.BuildAsync"/> once.
     /// </summary>
-    private async Task<bool> EnsureResultAsync(PupilCode code, CancellationToken cancellationToken)
+    private async Task<bool> EnsureResultAsync(
+        PupilCode code,
+        PupilQuestionSetDef def,
+        CancellationToken cancellationToken)
     {
         if (code.Result is not null)
         {
@@ -965,9 +1011,9 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         var answers = ParseAnswers(code.Progress?.AnswersJson);
-        var total = _bank.AllItems.Count;
+        var total = def.Bank.AllItems.Count;
         var allAnswered = answers.Count >= total
-                          && _bank.AllItems.All(i => answers.ContainsKey(i.Id));
+                          && def.Bank.AllItems.All(i => answers.ContainsKey(i.Id));
         if (!allAnswered && code.Status != PupilCodeStatus.Completed)
         {
             return false;
@@ -1044,20 +1090,8 @@ public sealed class PupilPortalService : IPupilPortalService
         }
     }
 
-    private int FirstUnansweredIndex(string answersJson, int total)
-    {
-        var answers = ParseAnswers(answersJson);
-        for (var i = 0; i < total; i++)
-        {
-            var item = _bank.GetByGlobalIndex(i);
-            if (item is null || !answers.ContainsKey(item.Id))
-            {
-                return i;
-            }
-        }
-
-        return total;
-    }
+    private static int FirstUnansweredIndex(PupilQuestionSetDef def, string answersJson)
+        => PupilFlow.FirstUnansweredIndex(def, ParseAnswers(answersJson));
 
     private static string FormatLevel(SchoolLevel level) => level switch
     {

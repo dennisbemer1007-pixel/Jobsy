@@ -8,6 +8,7 @@ using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -133,7 +134,6 @@ public interface ISchoolPortalService
 public sealed class SchoolPortalService : ISchoolPortalService
 {
     public const int MaxCodesPerClass = 40;
-    public const int ProgressTotalQuestions = 60;
     private static readonly Regex ClassNameRegex = new(
         @"^[\p{L}\d\- ]+$",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -165,6 +165,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly ISchoolAggregateSnapshotter _snapshotter;
     private readonly ISchoolRetentionService _retention;
+    private readonly IPupilQuestionSetRegistry _registry;
 
     public SchoolPortalService(
         JobsyDbContext db,
@@ -175,7 +176,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
         IPlatformFeatureService features,
         IPersonalDataAccessLogger accessLog,
         ISchoolAggregateSnapshotter snapshotter,
-        ISchoolRetentionService retention)
+        ISchoolRetentionService retention,
+        IPupilQuestionSetRegistry registry)
     {
         _db = db;
         _scope = scope;
@@ -186,6 +188,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
         _accessLog = accessLog;
         _snapshotter = snapshotter;
         _retention = retention;
+        _registry = registry;
     }
 
     public async Task EnsureTestWindowsClosedAsync(Guid schoolId, CancellationToken cancellationToken = default)
@@ -602,14 +605,16 @@ public sealed class SchoolPortalService : ISchoolPortalService
 
         var code = await _db.PupilCodes
             .Include(c => c.Progress)
+            .Include(c => c.SchoolClass)
             .FirstOrDefaultAsync(c => c.Id == codeId && c.SchoolClassId == classId, cancellationToken);
-        if (code is null)
+        if (code?.SchoolClass is null)
         {
             return (null, "not_found");
         }
 
         await _codes.ReplaceAsync(code, cancellationToken);
-        return (MapCodeRow(code), null);
+        var total = _registry.ForClass(code.SchoolClass).Bank.AllItems.Count;
+        return (MapCodeRow(code, total), null);
     }
 
     public async Task<(bool Ok, string? Error)> DeleteCodeAsync(
@@ -1240,9 +1245,10 @@ public sealed class SchoolPortalService : ISchoolPortalService
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
+        var total = _registry.ForClass(entity).Bank.AllItems.Count;
         var codes = entity.PupilCodes
             .OrderBy(c => c.Number)
-            .Select(MapCodeRow)
+            .Select(c => MapCodeRow(c, total))
             .ToList();
 
         var levelLocked = await ClassHasStartedCodesAsync(classId, cancellationToken);
@@ -1280,15 +1286,16 @@ public sealed class SchoolPortalService : ISchoolPortalService
                      || _db.PupilResults.Any(r => r.PupilCodeId == c.Id)),
             cancellationToken);
 
-    private SchoolPortalCodeRowDto MapCodeRow(PupilCode c)
+    private SchoolPortalCodeRowDto MapCodeRow(PupilCode c, int totalQuestions)
     {
         var display = _codes.Unprotect(c.CodeProtected) is { } raw
             ? PupilCodeFormat.Display(raw)
             : "******";
+        var answered = CountAnswers(c.Progress?.AnswersJson);
         var current = c.Status switch
         {
-            PupilCodeStatus.Completed => ProgressTotalQuestions,
-            PupilCodeStatus.InProgress => c.Progress?.CurrentIndex ?? 0,
+            PupilCodeStatus.Completed => totalQuestions,
+            PupilCodeStatus.InProgress => answered,
             _ => 0
         };
         return new SchoolPortalCodeRowDto(
@@ -1297,8 +1304,25 @@ public sealed class SchoolPortalService : ISchoolPortalService
             display,
             c.Status,
             current,
-            ProgressTotalQuestions,
+            totalQuestions,
             c.LastSeenAtUtc);
+    }
+
+    private static int CountAnswers(string? answersJson)
+    {
+        if (string.IsNullOrWhiteSpace(answersJson))
+        {
+            return 0;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(answersJson)?.Count ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     private async Task<(string SchoolName, string ClassName, string YearLabel, IReadOnlyList<SchoolCodeListRow> Rows)?>

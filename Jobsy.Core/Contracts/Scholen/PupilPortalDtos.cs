@@ -46,7 +46,10 @@ public sealed record PupilProgressStateDto(
     IReadOnlyList<string> Likes,
     IReadOnlyList<string> Dislikes,
     string? LikeOtherWord,
-    string? DislikeOtherWord);
+    string? DislikeOtherWord,
+    PupilQuestionSet QuestionSet = PupilQuestionSet.Vo,
+    string NextStep = "question",
+    string? NextPuzzleKey = null);
 
 public sealed record PupilAnswerRequest(int Value);
 
@@ -58,7 +61,9 @@ public sealed record PupilAnswerResponse(
     string? NextItemId,
     string? NextWorldKey,
     bool NeedsIsland,
-    bool ResultPending = false);
+    bool ResultPending = false,
+    string NextStep = "question",
+    string? NextPuzzleKey = null);
 
 public sealed record PupilChipsRequest(
     IReadOnlyList<string>? Likes,
@@ -70,7 +75,15 @@ public sealed record PupilChipsResponse(
     bool Ok,
     int CurrentIndex,
     string? NextItemId,
-    string? NextWorldKey);
+    string? NextWorldKey,
+    string NextStep = "question",
+    string? NextPuzzleKey = null);
+
+public sealed record PupilErrorDto(
+    string Error,
+    string Message,
+    string? NextStep = null,
+    string? NextPuzzleKey = null);
 
 public sealed record PupilResultPageDto(
     string ClassLabel,
@@ -85,5 +98,3 @@ public sealed record PupilResultPageDto(
 public sealed record PupilDreamJobRequest(string? Key);
 
 public sealed record PupilDreamJobResponse(string Key, DreamJobRouteStubDto DreamJob);
-
-public sealed record PupilErrorDto(string Error, string Message);

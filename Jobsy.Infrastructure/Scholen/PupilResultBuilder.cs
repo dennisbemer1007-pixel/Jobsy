@@ -3,24 +3,28 @@ using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Scholen;
 
-/// <summary>Scores the 60 pupil answers with the adult catalog math and writes <see cref="PupilResult"/>.</summary>
+/// <summary>Scores pupil answers with the adult catalog math for the class's own test and writes <see cref="PupilResult"/>.</summary>
 public sealed class PupilResultBuilder : IPupilResultBuilder
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private readonly JobsyDbContext _db;
-    private readonly PupilQuestionBank _bank;
+    private readonly IPupilQuestionSetRegistry _registry;
     private readonly TimeProvider _clock;
 
-    public PupilResultBuilder(JobsyDbContext db, IPupilQuestionBank bank, TimeProvider? clock = null)
+    public PupilResultBuilder(
+        JobsyDbContext db,
+        IPupilQuestionSetRegistry registry,
+        TimeProvider? clock = null)
     {
         _db = db;
-        _bank = bank as PupilQuestionBank ?? new PupilQuestionBank();
+        _registry = registry;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -29,26 +33,36 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         var code = await _db.PupilCodes
             .Include(c => c.Progress)
             .Include(c => c.Result)
+            .Include(c => c.SchoolClass)
             .FirstOrDefaultAsync(c => c.Id == pupilCodeId, cancellationToken);
-        if (code?.Progress is null)
+        if (code?.Progress is null || code.SchoolClass is null)
         {
             return;
         }
 
-        var answersByString = ParseAnswers(code.Progress.AnswersJson);
-        var answers = new Dictionary<int, int>();
-        foreach (var (key, value) in answersByString)
+        var def = _registry.ForClass(code.SchoolClass);
+        if (def.Bank is not PupilQuestionBank bank)
         {
-            if (int.TryParse(key, out var id) && LikertAnswerJson.IsValidAnswer(value))
+            throw new InvalidOperationException(
+                $"Question set '{def.Key}' bank type is not supported by the result builder yet.");
+        }
+
+        var answersByString = ParseAnswers(code.Progress.AnswersJson);
+        // Only this code's answers of this test — no lookup of earlier answers, other codes or the other test.
+        var answers = new Dictionary<int, int>();
+        foreach (var item in bank.AllItems)
+        {
+            if (answersByString.TryGetValue(item.Id, out var value)
+                && LikertAnswerJson.IsValidAnswer(value))
             {
-                answers[id] = value;
+                answers[item.NumericId] = value;
             }
         }
 
-        var competence = CompetencyTestCatalog.Score(answers, _bank.AsCompetencyItems());
-        var riasec = CareerTestCatalog.Score(answers, _bank.AsCareerItems());
-        var values = SchwartzValuesCatalog.Score(answers, _bank.AsValuesItems());
-        var culture = CulturePersonalityCatalog.Score(answers, _bank.AsCultureItems());
+        var competence = CompetencyTestCatalog.Score(answers, bank.AsCompetencyItems());
+        var riasec = CareerTestCatalog.Score(answers, bank.AsCareerItems());
+        var values = SchwartzValuesCatalog.Score(answers, bank.AsValuesItems());
+        var culture = CulturePersonalityCatalog.Score(answers, bank.AsCultureItems());
 
         var holland = CareerTestCatalog.HollandCode(riasec);
         var topValue = TopByCatalogOrder(values, SchwartzValuesCatalog.CategoryCodes, v => v switch
@@ -89,6 +103,7 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         result.TopValue = topValue;
         result.CultureScoresJson = JsonSerializer.Serialize(culture, Json);
         result.TopCulture = topCulture;
+        // 03a: keep writing bank version "1" (byte-identical). 03b switches to def.ScoringVersion.
         result.ScoringVersion = PupilQuestionBank.ScoringVersion.ToString(System.Globalization.CultureInfo.InvariantCulture);
         result.DreamJobKey = code.Progress.DreamJobKey;
 

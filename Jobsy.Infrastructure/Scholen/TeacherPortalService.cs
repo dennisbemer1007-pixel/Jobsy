@@ -7,6 +7,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -76,7 +77,6 @@ public interface ITeacherPortalService
 
 public sealed class TeacherPortalService : ITeacherPortalService
 {
-    public const int ProgressTotalQuestions = SchoolPortalService.ProgressTotalQuestions;
     public const int CodesPreviewLimit = 10;
 
     private readonly JobsyDbContext _db;
@@ -87,6 +87,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
     private readonly IPupilReportPdfService _pdf;
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly IPlatformFeatureService _features;
+    private readonly IPupilQuestionSetRegistry _registry;
 
     public TeacherPortalService(
         JobsyDbContext db,
@@ -96,7 +97,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
         IPupilStoryRenderer story,
         IPupilReportPdfService pdf,
         IPersonalDataAccessLogger accessLog,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        IPupilQuestionSetRegistry registry)
     {
         _db = db;
         _scope = scope;
@@ -106,6 +108,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         _pdf = pdf;
         _accessLog = accessLog;
         _features = features;
+        _registry = registry;
     }
 
     public async Task<IReadOnlyList<TeacherAssignedClassDto>> ListAssignedClassesAsync(
@@ -193,7 +196,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
             .ToListAsync(cancellationToken);
         var group = MapGroupInsights(results);
 
-        var preview = codes.Take(CodesPreviewLimit).Select(MapCodeRow).ToList();
+        var preview = codes.Take(CodesPreviewLimit).Select(c => MapCodeRow(c, schoolClass)).ToList();
         var snap = await _features.GetAsync(cancellationToken);
         var banner = SchoolPortalService.BuildRetentionBanner(
             SchoolPortalService.TodayAmsterdam(),
@@ -233,13 +236,20 @@ public sealed class TeacherPortalService : ITeacherPortalService
             return null;
         }
 
+        var schoolClass = await _db.SchoolClasses.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (schoolClass is null)
+        {
+            return null;
+        }
+
         var codes = await _db.PupilCodes.AsNoTracking()
             .Include(c => c.Progress)
             .Where(c => c.SchoolClassId == classId)
             .OrderBy(c => c.Number)
             .ToListAsync(cancellationToken);
 
-        return codes.Select(MapCodeRow).ToList();
+        return codes.Select(c => MapCodeRow(c, schoolClass)).ToList();
     }
 
     public async Task<TeacherGroupInsightsDto?> GetGroupAsync(
@@ -319,15 +329,16 @@ public sealed class TeacherPortalService : ITeacherPortalService
             }
         }
 
+        var totalQuestions = _registry.ForClass(code.SchoolClass).Bank.AllItems.Count;
         var resultPending = code.Result is null
                             && (code.Status == PupilCodeStatus.Completed
-                                || answersCount >= ProgressTotalQuestions);
+                                || answersCount >= totalQuestions);
 
         var progressCurrent = code.Status switch
         {
-            PupilCodeStatus.Completed => ProgressTotalQuestions,
-            PupilCodeStatus.InProgress when resultPending => ProgressTotalQuestions,
-            PupilCodeStatus.InProgress => Math.Clamp(code.Progress?.CurrentIndex ?? 0, 0, ProgressTotalQuestions),
+            PupilCodeStatus.Completed => totalQuestions,
+            PupilCodeStatus.InProgress when resultPending => totalQuestions,
+            PupilCodeStatus.InProgress => Math.Clamp(answersCount, 0, totalQuestions),
             _ => 0
         };
 
@@ -365,7 +376,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
             ClassName: code.SchoolClass.Name,
             Status: code.Status,
             ProgressCurrent: progressCurrent,
-            ProgressTotal: ProgressTotalQuestions,
+            ProgressTotal: totalQuestions,
             CompletedAtUtc: code.Result?.CompletedAtUtc ?? code.Progress?.CompletedAtUtc,
             DurationMinutes: duration,
             Story: story,
@@ -538,13 +549,17 @@ public sealed class TeacherPortalService : ITeacherPortalService
         }
 
         await _codes.ReplaceAsync(code, cancellationToken);
+        var schoolClass = await _db.SchoolClasses.AsNoTracking()
+            .FirstAsync(c => c.Id == classId, cancellationToken);
+        var totalQuestions = _registry.ForClass(schoolClass).Bank.AllItems.Count;
         var display = _codes.Unprotect(code.CodeProtected) is { } raw
             ? PupilCodeFormat.Display(raw)
             : "******";
+        var answered = CountAnswers(code.Progress?.AnswersJson);
         var progressCurrent = code.Status switch
         {
-            PupilCodeStatus.Completed => ProgressTotalQuestions,
-            PupilCodeStatus.InProgress => Math.Clamp(code.Progress?.CurrentIndex ?? 0, 0, ProgressTotalQuestions),
+            PupilCodeStatus.Completed => totalQuestions,
+            PupilCodeStatus.InProgress => Math.Clamp(answered, 0, totalQuestions),
             _ => 0
         };
         return (new SchoolPortalCodeRowDto(
@@ -553,7 +568,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
             display,
             code.Status,
             progressCurrent,
-            ProgressTotalQuestions,
+            totalQuestions,
             code.LastSeenAtUtc), null);
     }
 
@@ -637,14 +652,16 @@ public sealed class TeacherPortalService : ITeacherPortalService
                 var display = _codes.Unprotect(c.CodeProtected) is { } raw
                     ? PupilCodeFormat.Display(raw)
                     : "******";
+                var totalQuestions = _registry.ForClass(entity).Bank.AllItems.Count;
+                var answered = CountAnswers(c.Progress?.AnswersJson);
                 var progressCurrent = c.Status switch
                 {
-                    PupilCodeStatus.Completed => ProgressTotalQuestions,
-                    PupilCodeStatus.InProgress => Math.Clamp(c.Progress?.CurrentIndex ?? 0, 0, ProgressTotalQuestions),
+                    PupilCodeStatus.Completed => totalQuestions,
+                    PupilCodeStatus.InProgress => Math.Clamp(answered, 0, totalQuestions),
                     _ => 0
                 };
                 return new SchoolPortalCodeRowDto(
-                    c.Id, c.Number, display, c.Status, progressCurrent, ProgressTotalQuestions, c.LastSeenAtUtc);
+                    c.Id, c.Number, display, c.Status, progressCurrent, totalQuestions, c.LastSeenAtUtc);
             }).ToList(),
             entity.QuestionSet,
             levelLocked);
@@ -680,15 +697,17 @@ public sealed class TeacherPortalService : ITeacherPortalService
             DiscussionPromptKeys: prompts);
     }
 
-    private TeacherCodeRowDto MapCodeRow(PupilCode code)
+    private TeacherCodeRowDto MapCodeRow(PupilCode code, SchoolClass schoolClass)
     {
         var display = _codes.Unprotect(code.CodeProtected) is { } raw
             ? PupilCodeFormat.Display(raw)
             : "******";
+        var totalQuestions = _registry.ForClass(schoolClass).Bank.AllItems.Count;
+        var answered = CountAnswers(code.Progress?.AnswersJson);
         var progressCurrent = code.Status switch
         {
-            PupilCodeStatus.Completed => ProgressTotalQuestions,
-            PupilCodeStatus.InProgress => Math.Clamp(code.Progress?.CurrentIndex ?? 0, 0, ProgressTotalQuestions),
+            PupilCodeStatus.Completed => totalQuestions,
+            PupilCodeStatus.InProgress => Math.Clamp(answered, 0, totalQuestions),
             _ => 0
         };
         return new TeacherCodeRowDto(
@@ -697,8 +716,26 @@ public sealed class TeacherPortalService : ITeacherPortalService
             display,
             code.Status,
             progressCurrent,
-            ProgressTotalQuestions,
+            totalQuestions,
             code.LastSeenAtUtc);
+    }
+
+    private static int CountAnswers(string? answersJson)
+    {
+        if (string.IsNullOrWhiteSpace(answersJson))
+        {
+            return 0;
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer
+                .Deserialize<Dictionary<string, int>>(answersJson)?.Count ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     private static DreamJobRouteStubDto EnrichDreamTitle(DreamJobRouteStubDto stub)
