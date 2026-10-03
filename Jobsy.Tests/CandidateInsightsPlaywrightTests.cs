@@ -17,6 +17,8 @@ public class CandidateInsightsPlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_EMAIL") ?? "").Trim();
         var password = (Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_PASSWORD") ?? "").Trim();
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))

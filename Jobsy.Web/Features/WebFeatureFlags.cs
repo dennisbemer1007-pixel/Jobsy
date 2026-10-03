@@ -52,7 +52,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 "api/settings/feature-flags",
                 cancellationToken);
             var flags = new FeatureFlagSnapshot(
-                dto?.EmployersEnabled ?? true,
+                dto?.EmployersEnabled ?? false,
                 dto?.CandidatePassportEnabled ?? true,
                 dto?.PassportPartnersEnabled ?? false,
                 dto?.PassportPdfV2Enabled ?? false,
@@ -83,7 +83,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
     private sealed class FeatureFlagsResponse
     {
         [JsonPropertyName("employersEnabled")]
-        public bool EmployersEnabled { get; set; } = true;
+        public bool EmployersEnabled { get; set; }
 
         [JsonPropertyName("candidatePassportEnabled")]
         public bool CandidatePassportEnabled { get; set; } = true;

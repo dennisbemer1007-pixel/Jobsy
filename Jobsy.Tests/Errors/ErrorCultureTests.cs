@@ -89,7 +89,7 @@ public class ErrorCultureRenderTests
     [Fact]
     public async Task Arabic_cookie_renders_rtl_and_arabic_copy()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
         client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
 
@@ -102,7 +102,7 @@ public class ErrorCultureRenderTests
     [Fact]
     public async Task Polish_accept_language_renders_polish_copy()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
         client.DefaultRequestHeaders.Add("Accept-Language", "pl");
 
@@ -114,7 +114,7 @@ public class ErrorCultureRenderTests
     [Fact]
     public async Task Unknown_language_falls_back_to_dutch()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
         client.DefaultRequestHeaders.Add("Accept-Language", "de-DE,de;q=0.9");
 

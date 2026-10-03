@@ -546,11 +546,13 @@ public class MatchDesktopBunitTests : BunitContext
 
     private sealed class DefaultFeatureFlags : IFeatureFlags
     {
+        private static readonly FeatureFlagSnapshot On = new(EmployersEnabled: true, CandidatePassportEnabled: true);
+
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(FeatureFlagSnapshot.Defaults);
+            => ValueTask.FromResult(On);
 
         public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(FeatureFlagSnapshot.Defaults.IsEnabled(feature));
+            => ValueTask.FromResult(On.IsEnabled(feature));
 
         public void Invalidate()
         {

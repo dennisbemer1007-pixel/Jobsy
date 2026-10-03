@@ -107,7 +107,7 @@ public class ForbiddenViewTests : BunitContext
 
         Assert.Empty(cut.FindAll("form"));
         Assert.Contains(
-            "Werkgevers kunnen Lobsy nu even niet gebruiken",
+            "Lobsy is nu eerst voor kandidaten",
             cut.Markup,
             StringComparison.Ordinal);
     }

@@ -294,6 +294,7 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Jobsy.A
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             FreePublishUntil = null,
+            EmployersEnabled = true,
             UpdatedAtUtc = DateTime.UtcNow
         });
         db.Companies.Add(new Company

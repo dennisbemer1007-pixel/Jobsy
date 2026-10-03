@@ -756,7 +756,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Null(pending.CandidateEmail);
         Assert.Null(pending.CandidateCity);
         Assert.Equal(4.2, pending.DistanceKm);
-        Assert.Equal(19, pending.CandidateAgeYears);
+        Assert.Equal(true, pending.YouthWageApplies);
         Assert.False(string.IsNullOrWhiteSpace(pending.AvailabilitySummary));
         Assert.False(string.IsNullOrWhiteSpace(pending.SnapshotAvailabilityJson));
         Assert.Contains("avond", pending.SnapshotAvailabilityJson, StringComparison.OrdinalIgnoreCase);
@@ -1706,26 +1706,47 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Ap
         });
     }
 
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+        // Seed before the first test touches the database. A parallel test that inserts
+        // its own users must not skip the canonical admin/employer rows.
+        EnsureSeeded(host.Services);
+        return host;
+    }
+
     protected override void ConfigureClient(HttpClient client)
     {
-        EnsureSeeded();
+        EnsureSeeded(Services);
         base.ConfigureClient(client);
     }
 
-    private void EnsureSeeded()
-    {
-        if (_seeded)
-        {
-            return;
-        }
+    private readonly object _seedGate = new();
 
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        if (db.Users.Any())
+    private void EnsureSeeded(IServiceProvider services)
+    {
+        lock (_seedGate)
         {
+            if (_seeded)
+            {
+                return;
+            }
+
+            using var scope = services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            if (db.Users.Any(u => u.Id == AdminId))
+            {
+                _seeded = true;
+                return;
+            }
+
+            SeedDatabase(db);
             _seeded = true;
-            return;
         }
+    }
+
+    private void SeedDatabase(JobsyDbContext db)
+    {
 
         var categories = new VacancyCategoryService(db);
         categories.EnsureDefaultsAsync().GetAwaiter().GetResult();
@@ -2092,8 +2113,9 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Ap
         });
 
         db.SaveChanges();
-        _seeded = true;
     }
+
+    private void EnsureSeeded() => EnsureSeeded(Services);
 
     /// <summary>
     /// Isolated vacancy + pending verified application for react/hire tests (does not mutate shared seed).

@@ -1,13 +1,15 @@
-using Jobsy.Core.Interfaces;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.TestSupport;
 using Jobsy.Web.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Jobsy.Core.Security;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -89,9 +89,10 @@ public class ExternalAuthAndInvitePromotionTests
     [Fact]
     public void ResolveCandidateReturnUrl_keeps_vacancy_deep_link()
     {
+        var on = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
         Assert.Equal(
             "/vacancies/abc",
-            AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true));
+            AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true, on));
         Assert.Equal(
             FeatureRoutes.CandidateDiscoveryPath,
             AuthRedirects.ResolveCandidateReturnUrl("/home", showCandidateHowTo: true));

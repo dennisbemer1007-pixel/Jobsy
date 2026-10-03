@@ -479,7 +479,8 @@ public sealed class CandidateInsightsUnlockFactory : WebApplicationFactory<Jobsy
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             CandidateInsightsEnabled = true,
             CandidateInsightsUnlockDays = 90,
-            CandidateInsightsUnlockPerBranch = false
+            CandidateInsightsUnlockPerBranch = false,
+            EmployersEnabled = true
         });
         db.TokenSpendCosts.Add(new TokenSpendCost
         {

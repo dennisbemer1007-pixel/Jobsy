@@ -63,6 +63,8 @@ public class BanenkaartPersistSizePlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         await RunAnonymousScenarioAsync(baseUrl, width, height);
     }
 
@@ -76,6 +78,8 @@ public class BanenkaartPersistSizePlaywrightTests
         {
             return;
         }
+
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
 
         await RunCandidateScenarioAsync(baseUrl, width, height);
     }

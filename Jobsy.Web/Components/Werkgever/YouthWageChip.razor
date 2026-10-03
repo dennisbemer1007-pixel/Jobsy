@@ -1,0 +1,11 @@
+@inject CultureState Culture
+
+@if (Applies == true)
+{
+    <span class="wg-chip" data-testid="youth-wage">@Culture["WgApp.YouthWageApplies"]</span>
+}
+
+@code {
+    /// <summary>True shows the chip. False or null shows nothing (no age, no band).</summary>
+    [Parameter] public bool? Applies { get; set; }
+}

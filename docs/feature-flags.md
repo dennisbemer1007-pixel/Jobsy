@@ -4,7 +4,7 @@ Admin toggles live in the singleton `PlatformFeatureSettings` row and are read t
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `EmployersEnabled` | **true** | ON = today’s product. OFF = self-discovery only; employer/vacancy surfaces are hidden and return 404 `feature_disabled`. Data is never deleted. |
+| `EmployersEnabled` | **false** | OFF by default until phase 2 (decision 20, 03-10-2026). The phase-2 employer view is redesigned later and is out of scope: no match percentages or personality scores. ON = today’s employer product, behind an admin confirm dialog. OFF = self-discovery only; employer/vacancy surfaces are hidden, anonymous visitors see `/werkgevers/binnenkort`, and APIs return 404 `feature_disabled`. Data is never deleted. |
 | `CandidatePassportEnabled` | **true** | When ON (default): candidates see Mijn Paspoort (`/candidate/paspoort`) instead of Profiel; nav order Discovery · Passport · Zoeken · Sollicitaties · Carrière; Bewaard is a tab under Sollicitaties; default landing via `FeatureRoutes.HomeFor` (not ready → ontdekkingsreis, ready → passport). Admin can still turn it OFF. |
 | `PassportPartnersEnabled` | **false** | Partner portal, partner codes and consent. Off hides those surfaces. Nothing is deleted. Does not turn on PDF v2. |
 | `PassportPdfV2Enabled` | **false** | Shareable work preferences on the passport Data tab, and later the PDF v2 download. Off leaves the Data tab as it is today. |
@@ -20,7 +20,11 @@ Candidate: `/candidate/match`, `/candidate/vacancies`, `/candidate/liked`, `/can
 
 Employer portals: `/employer/*`, `/branch/*`, `/regional/*`, `/intermediary`, `/intermediary/team`, `/tokens/checkout-*`
 
-Acquisition: `/salesmanager/*`, `/ambassadeur/*`, `/werven/{code}`, `/ambassadeur/ref/{code}`, `/partner`, `/partner/{code}`
+Acquisition: `/sales`, `/sales/*`, `/salesmanager/*`, `/ambassadeur/*`, `/werven/{code}`, `/ambassadeur/ref/{code}`, `/partner`, `/partner/{code}`
+
+Company registration: `/register/bedrijf`, `/register/koppelen`, `/register/toegang`, `/register/verifieren`, `/register/verifieren/brief`, `/home/metrics/{Key}`
+
+Anonymous fallback while OFF: `/werkgevers/binnenkort` (noindex). Signed-in employer-side users still land on `/access-denied?reason=employers-off`.
 
 ## Gated API controllers (Employers)
 

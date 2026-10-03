@@ -34,7 +34,8 @@ public class PlatformUxSpecTests
     [Fact]
     public void Auth_preserves_vacancy_return_url()
     {
-        Assert.Equal("/vacancies/123", AuthRedirects.ResolveCandidateReturnUrl("/vacancies/123", true));
+        var on = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        Assert.Equal("/vacancies/123", AuthRedirects.ResolveCandidateReturnUrl("/vacancies/123", true, on));
         Assert.Equal(
             FeatureRoutes.CandidatePassportPath,
             AuthRedirects.ResolveCandidateReturnUrl("/home", false));

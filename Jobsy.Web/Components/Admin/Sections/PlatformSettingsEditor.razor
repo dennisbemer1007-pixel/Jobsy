@@ -182,7 +182,7 @@ else if (_snapshot is not null)
 
 <LobsyFriendlyDialog IsOpen="_confirmOpen"
                      Title="@(_confirmEntry is null ? "" : Culture[_confirmEntry.TitleKey])"
-                     Lead="@(_confirmEntry?.ImpactKey is null ? null : Culture[_confirmEntry.ImpactKey])"
+                     Lead="@ConfirmLead(_confirmEntry, _confirmValue)"
                      OnClose="() => { _confirmOpen = false; return Task.CompletedTask; }">
     <div class="inline-actions">
         <button type="button" class="btn-compact" @onclick="() => _confirmOpen = false">@Culture["Common.Cancel"]</button>
@@ -294,7 +294,7 @@ else if (_snapshot is not null)
         }
 
         var next = !(CurrentValue(entry) is true);
-        if (entry.ConfirmOnChange && next == false)
+        if (NeedsConfirm(entry, next))
         {
             _confirmEntry = entry;
             _confirmValue = next;
@@ -397,7 +397,7 @@ else if (_snapshot is not null)
         foreach (var (key, value) in _draft.ToList())
         {
             var entry = _entries.First(e => e.Key == key);
-            if (entry.ConfirmOnChange && value is false && !_confirmOpen)
+            if (NeedsConfirm(entry, value) && !_confirmOpen)
             {
                 _confirmEntry = entry;
                 _confirmValue = value;
@@ -466,6 +466,25 @@ else if (_snapshot is not null)
     }
 
     public Task SaveForTestsAsync() => SaveAsync();
+
+    private string? ConfirmLead(PlatformSettingDescriptor? entry, object? next)
+    {
+        if (entry is null)
+        {
+            return null;
+        }
+
+        if (entry.Key == "EmployersEnabled" && next is true)
+        {
+            return Culture["AdminSettings.Employers.EnableConfirm"];
+        }
+
+        return entry.ImpactKey is null ? null : Culture[entry.ImpactKey];
+    }
+
+    private static bool NeedsConfirm(PlatformSettingDescriptor entry, object? next)
+        => (entry.Key == "EmployersEnabled" && next is true)
+           || (entry.ConfirmOnChange && next is false);
 
     public void CancelForTests() => Cancel();
 

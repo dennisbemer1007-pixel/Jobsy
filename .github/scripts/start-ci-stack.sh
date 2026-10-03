@@ -47,7 +47,8 @@ for i in $(seq 1 120); do
     api_health=1
   fi
   pins_code="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5200/api/vacancies/pins || true)"
-  if echo "$pins_code" | grep -Eq '200|304'; then
+  # 200/304 = employers ON. 404 = employers OFF (feature_disabled, decision 20) once /health is up.
+  if echo "$pins_code" | grep -Eq '200|304|404'; then
     pins_ok=1
   fi
   web_code="$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5201/ || true)"

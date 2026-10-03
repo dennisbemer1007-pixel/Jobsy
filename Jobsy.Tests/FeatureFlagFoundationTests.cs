@@ -27,12 +27,12 @@ namespace Jobsy.Tests;
 public class FeatureFlagFoundationTests
 {
     [Fact]
-    public void FeatureFlagSnapshot_defaults_employers_on_passport_on()
+    public void FeatureFlagSnapshot_defaults_employers_off_passport_on()
     {
         var d = FeatureFlagSnapshot.Defaults;
-        Assert.True(d.EmployersEnabled);
+        Assert.False(d.EmployersEnabled);
         Assert.True(d.CandidatePassportEnabled);
-        Assert.True(d.IsEnabled(PlatformFeature.Employers));
+        Assert.False(d.IsEnabled(PlatformFeature.Employers));
         Assert.True(d.IsEnabled(PlatformFeature.CandidatePassport));
     }
 
@@ -40,7 +40,7 @@ public class FeatureFlagFoundationTests
     public void PlatformFeatureSettings_entity_defaults()
     {
         var row = new PlatformFeatureSettings();
-        Assert.True(row.EmployersEnabled);
+        Assert.False(row.EmployersEnabled);
         Assert.True(row.CandidatePassportEnabled);
     }
 
@@ -70,12 +70,12 @@ public class FeatureFlagFoundationTests
         db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            // EmployersEnabled / CandidatePassportEnabled use CLR defaults (both true)
+            // EmployersEnabled CLR default is false (decision 20). Passport stays true.
         });
         await db.SaveChangesAsync();
 
         var snap = await CreateFeatureService(db).GetAsync();
-        Assert.True(snap.EmployersEnabled);
+        Assert.False(snap.EmployersEnabled);
         Assert.True(snap.CandidatePassportEnabled);
     }
 
@@ -102,7 +102,7 @@ public class FeatureFlagFoundationTests
     {
         await using var db = CreateDb();
         var snap = await CreateFeatureService(db).GetAsync();
-        Assert.True(snap.EmployersEnabled);
+        Assert.False(snap.EmployersEnabled);
         Assert.True(snap.CandidatePassportEnabled);
     }
 
@@ -163,7 +163,7 @@ public class FeatureFlagFoundationTests
         var on = new FeatureFlagSnapshot(true, false);
         var off = new FeatureFlagSnapshot(false, false);
         Assert.Equal("/", FeatureRoutes.HomeFor(null, on));
-        Assert.Equal(FeatureRoutes.OntdekPath, FeatureRoutes.HomeFor(null, off));
+        Assert.Equal("/", FeatureRoutes.HomeFor(null, off));
 
         var candidate = Principal(JobsyRoles.Candidate);
         Assert.Equal("/", FeatureRoutes.HomeFor(candidate, on));

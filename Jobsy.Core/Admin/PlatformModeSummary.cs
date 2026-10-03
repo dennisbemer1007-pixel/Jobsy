@@ -19,7 +19,7 @@ public static class PlatformModeSummary
 {
     public static IReadOnlyList<PlatformModeRow> Build(
         bool vacancyContentModerationEnabled,
-        bool employersEnabled = true,
+        bool employersEnabled = false,
         bool candidatePassportEnabled = true)
     {
         var rows = new List<PlatformModeRow>
