@@ -260,6 +260,7 @@ public static class UiStringsScholen
 
         nl["Leraar.Detail.Title"] = "Codedetail";
         nl["Leraar.Detail.InProgress"] = "Deze code is nog bezig ({0}/{1}).";
+        nl["Leraar.Detail.ResultPending"] = "Bezig met afronden";
         nl["Leraar.Detail.CompletedOn"] = "klaar op";
         nl["Leraar.Detail.Questions"] = "vragen";
         nl["Leraar.Detail.Pdf"] = "PDF downloaden";
@@ -337,6 +338,8 @@ public static class UiStringsScholen
         nl["Leerling.Reis.Answers"] = "Jouw antwoord";
         nl["Leerling.Reis.Saved"] = "Bewaard";
         nl["Leerling.Reis.SaveFailed"] = "Niet bewaard — probeer opnieuw";
+        nl["Leerling.Reis.ResultPending"] = "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.";
+        nl["Leerling.Reis.Retry"] = "Probeer opnieuw";
         nl["Leerling.Reis.Prev"] = "Vorige";
         nl["Leerling.Reis.Bubble"] = "Goed bezig! Elke 6 vragen valt er een schaaltje af.";
         nl["Leerling.Reis.PlatesGone"] = "{0} van 10 eraf";

@@ -76,7 +76,8 @@ public sealed record TeacherCodeDetailDto(
     string? DislikeOtherWord,
     IReadOnlyList<string> ConversationStarterKeys,
     DreamJobRouteStubDto? DreamJob,
-    bool PdfAvailable);
+    bool PdfAvailable,
+    bool ResultPending = false);
 
 /// <summary>Rendered "Dit ben jij" story (text regenerated from templates).</summary>
 public sealed record PupilStoryViewDto(
