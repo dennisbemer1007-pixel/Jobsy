@@ -87,6 +87,8 @@
             .jobsy-discovery:not(.jobsy-discovery--branch) #job-map { min-height: 70vh; width: 100%; }
         }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
+        /* Static shell always includes the reconnect markup. Hide it until Blazor sets a state class, even before reconnect.css arrives. */
+        #components-reconnect-modal:not(.components-reconnect-show):not(.components-reconnect-retrying):not(.components-reconnect-failed):not(.components-reconnect-rejected):not(.components-reconnect-paused) { display: none; }
     </style>
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261003-a11y" />
@@ -95,10 +97,12 @@
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261003-a11y" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
     <link rel="stylesheet" href="css/features/errors.css?v=20261001-errors-5" />
+    @* Outside LoadBlazorRuntime: NoBlazor pages (landing, legal) still ship the modal markup. *@
+    <link rel="stylesheet" href="css/features/reconnect.css?v=20261003-reconnect" data-reconnect-css />
     @if (LoadBlazorRuntime)
     {
         @* Render-blocking versioned CSS — critical shell is already inlined above; full stylesheet is cacheable. *@
-        <link rel="stylesheet" href="css/app.min.css?v=20261002-kp04" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20261003-reconnect" data-app-css />
         <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" />
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" />
         <link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" />
@@ -123,7 +127,7 @@
         <link rel="stylesheet" href="css/features/carriere.css?v=20261003-kp07" />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261002-kp04" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" /><link rel="stylesheet" href="css/features/applications.css?v=20261002-ci-mtp2" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261002-kp04" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20260930-landing-6" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20260929-ent-ui" /><link rel="stylesheet" href="css/features/werkgever.css?v=20260929-wg-insights" /><link rel="stylesheet" href="css/features/scholen.css?v=20261003-vragensets5b" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/auth.css?v=20260930-auth04b" /><link rel="stylesheet" href="css/features/landing.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/errors.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261002-kp05" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261002-kp06" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20260929-or-08" /><link rel="stylesheet" href="css/features/tests.css?v=20260930-tests-6" /><link rel="stylesheet" href="css/features/carriere.css?v=20261003-kp07" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261003-reconnect" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20260927-dna-c" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" /><link rel="stylesheet" href="css/features/applications.css?v=20261002-ci-mtp2" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261002-kp04" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20260930-landing-6" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20260929-ent-ui" /><link rel="stylesheet" href="css/features/werkgever.css?v=20260929-wg-insights" /><link rel="stylesheet" href="css/features/scholen.css?v=20261003-vragensets5b" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/auth.css?v=20260930-auth04b" /><link rel="stylesheet" href="css/features/landing.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/errors.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/reconnect.css?v=20261003-reconnect" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261002-kp05" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261002-kp06" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20260929-or-08" /><link rel="stylesheet" href="css/features/tests.css?v=20260930-tests-6" /><link rel="stylesheet" href="css/features/carriere.css?v=20261003-kp07" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -293,7 +297,7 @@
     {
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20260928-perf" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261003-reconnect" nonce="@Nonce" defer></script>
     }
 </body>
 

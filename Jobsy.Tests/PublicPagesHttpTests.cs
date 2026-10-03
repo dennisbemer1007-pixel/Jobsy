@@ -233,6 +233,23 @@ public class PublicPagesWebGuardTests
         Assert.Matches(new Regex("<link[^>]+rel=\"canonical\"[^>]+href=\"[^\"]*/partner\""), html);
     }
 
+    [Fact]
+    public async Task Landing_links_reconnect_css_and_skips_the_blazor_bundle()
+    {
+        await using var factory = new PublicPagesWebFactory();
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var response = await client.GetAsync("/");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("pub-landing", html, StringComparison.Ordinal);
+        Assert.Contains("data-reconnect-css", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"components-reconnect-modal\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-app-css", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("_framework/blazor.web.js", html, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("/privacy")]
     [InlineData("/algemene-voorwaarden")]

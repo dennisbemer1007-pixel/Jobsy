@@ -54,6 +54,21 @@ public class ReconnectToastTests
     }
 
     [Fact]
+    public async Task NoBlazor_shell_links_reconnect_css_without_the_app_bundle()
+    {
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
+        using var client = factory.CreateHtmlClient();
+
+        var html = await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync();
+
+        Assert.Contains("data-reconnect-css", html, StringComparison.Ordinal);
+        Assert.Contains("css/features/reconnect.css?v=", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-app-css", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("_framework/blazor.web.js", html, StringComparison.Ordinal);
+        Assert.Contains("id=\"components-reconnect-modal\"", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void App_razor_has_no_hard_coded_reconnect_text()
     {
         var app = File.ReadAllText(Path.Combine(RepoRoot(), "Jobsy.Web", "Components", "App.razor"));
