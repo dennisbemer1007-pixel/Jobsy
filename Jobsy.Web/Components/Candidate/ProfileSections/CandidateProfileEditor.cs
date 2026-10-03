@@ -86,6 +86,12 @@ public sealed class CandidateProfileEditor : IDisposable
     public bool HomeLocationDirty { get; set; }
     public int? MaxTravel { get; set; } = 30;
     public string PreferredTransport { get; set; } = "";
+
+    public bool HasTransport(string label)
+        => TransportLabels.SplitMany(PreferredTransport).Contains(label, StringComparer.OrdinalIgnoreCase);
+
+    public void ToggleTransport(string label)
+        => PreferredTransport = TransportLabels.Toggle(PreferredTransport, label);
     public decimal? MinHours { get; set; } = 8;
     public decimal? MaxHours { get; set; } = 24;
     public bool FlexibleTimes { get; set; }
@@ -160,9 +166,7 @@ public sealed class CandidateProfileEditor : IDisposable
         HomeLat = profile.HomeLatitude;
         HomeLng = profile.HomeLongitude;
         MaxTravel = prefs.MaxTravelMinutes ?? 30;
-        PreferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
-            ? ""
-            : TransportLabels.Canonical(prefs.PreferredTransport);
+        PreferredTransport = TransportLabels.Normalize(prefs.PreferredTransport);
         SelectedRoles.Clear();
         foreach (var role in prefs.Roles ?? [])
         {

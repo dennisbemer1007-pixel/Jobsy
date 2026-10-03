@@ -67,7 +67,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
             }
             else if (model.ReachTravelMinutes is int reachMins and > 0)
             {
-                var mode = TransportLabels.Parse(model.PreferredTransport ?? TransportLabels.Bike);
+                var mode = TravelReach.Fastest(TransportLabels.ParseMany(model.PreferredTransport));
                 radiusMeters = TravelReach.RingRadiusMeters(mode, reachMins);
             }
 

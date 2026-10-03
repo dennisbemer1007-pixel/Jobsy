@@ -449,8 +449,11 @@
         _aboutMe = _profile?.Preferences?.AboutMe;
         _city = CityFromAddress(_profile?.Preferences?.HomeAddress);
         var prefs = _profile?.Preferences;
-        _travel = prefs?.MaxTravelMinutes is int m
-            ? $"{TransportLabels.Canonical(prefs.PreferredTransport)} {m} min"
+        var transportLabel = string.Join(
+            " + ",
+            TransportLabels.SplitMany(prefs?.PreferredTransport).Select(mode => UiLabels.Transport(Culture, mode)));
+        _travel = prefs?.MaxTravelMinutes is int m && transportLabel.Length > 0
+            ? $"{transportLabel} {m} min"
             : null;
         if (prefs?.MinHoursPerWeek is decimal || prefs?.MaxHoursPerWeek is decimal)
         {

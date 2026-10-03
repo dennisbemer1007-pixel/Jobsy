@@ -963,9 +963,7 @@
         Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
         Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
         Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
-        Draft.Transport = preferences.PreferredTransport is null
-            ? ""
-            : TransportLabels.Canonical(preferences.PreferredTransport);
+        Draft.Transport = TransportLabels.Normalize(preferences.PreferredTransport);
         Draft.Immediate = profile.AvailableFromDate is null;
         Draft.AvailableFrom = profile.AvailableFromDate;
         Draft.Presets.Clear();
@@ -1895,7 +1893,7 @@
 
     private void SelectTransport(string transport)
     {
-        Draft.Transport = transport;
+        Draft.Transport = TransportLabels.Toggle(Draft.Transport, transport);
         ScheduleProfileSave();
     }
 
