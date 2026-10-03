@@ -56,7 +56,7 @@ public class LobsyCvPdfServiceTests
         Assert.Equal(2, model.Certificates.Count);
         Assert.Null(model.Latitude);
         Assert.Null(model.Address);
-        Assert.Null(model.City);
+        Assert.Equal("Naaldwijk", model.City);
         Assert.False(model.IncludeFullAddress);
         Assert.Null(model.WorkplaceLatitude);
         Assert.Null(model.ReachTravelMinutes);
@@ -168,7 +168,7 @@ public class LobsyCvPdfServiceTests
 
         Assert.False(model.IncludeFullAddress);
         Assert.Null(model.Address);
-        Assert.Null(model.City);
+        Assert.Equal("Naaldwijk", model.City);
         Assert.Null(model.Latitude);
         Assert.Null(model.Longitude);
         Assert.Null(model.ReachTravelMinutes);
@@ -180,6 +180,61 @@ public class LobsyCvPdfServiceTests
         Assert.True(pdf.Length > 500);
         Assert.Equal(0, maps.CallCount);
         Assert.Equal(0, maps.ReachCallCount);
+        using var doc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        var text = string.Join('\n', doc.GetPages().Select(p => p.Text));
+        Assert.Contains("Naaldwijk", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Voorstraat", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("2671", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Live_cv_shows_languages_highlights_and_consent_date()
+    {
+        var prefs = new CandidatePreferencesDto(
+            Roles: [],
+            MaxTravelMinutes: 25,
+            PreferredTransport: "Fiets",
+            HomeAddress: "2671 AA Naaldwijk",
+            DutchLevel: "vloeiend",
+            SpokenLanguages: [new CandidateLanguageDto("en", "goed")],
+            EducationDirection: "Logistiek",
+            Educations: ["MBO 2"]);
+        var highlights = LobsyCvHighlightLines.Build(
+            new CompetencyScores(90, 40, 30, 20, 10),
+            new RiasecScores(90, 38, 31, 88, 81, 100),
+            culture: null,
+            values: null);
+        var accepted = new DateTime(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Sanne",
+            "sanne@test.local",
+            null,
+            false,
+            prefs,
+            null,
+            null,
+            accepted,
+            PrivacyConstants.CurrentConsentVersion,
+            testHighlights: highlights,
+            consentAcceptedAt: accepted);
+
+        Assert.Equal("Naaldwijk", model.City);
+        Assert.Contains("Nederlands (vloeiend)", model.Languages!);
+        Assert.Contains("Engels (goed)", model.Languages!);
+        Assert.Equal("Logistiek", model.EducationDirection);
+        Assert.DoesNotContain(PrivacyConstants.CurrentConsentVersion, model.TestHighlights!);
+
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+        var pdf = await service.RenderAsync(model);
+        using var doc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        var text = string.Join('\n', doc.GetPages().Select(p => p.Text));
+        Assert.Contains("Talen", text, StringComparison.Ordinal);
+        Assert.Contains("Engels", text, StringComparison.Ordinal);
+        Assert.Contains("Uit je tests", text, StringComparison.Ordinal);
+        Assert.Contains("Samenwerken", text, StringComparison.Ordinal);
+        Assert.Contains("03-10-2026", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(PrivacyConstants.CurrentConsentVersion, text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Voorstraat", text, StringComparison.Ordinal);
     }
 
     [Fact]

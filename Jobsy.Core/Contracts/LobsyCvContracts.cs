@@ -50,7 +50,15 @@ public sealed record LobsyCvModel(
     /// </summary>
     LobsyCvWhoAmI? WhoAmI = null,
     /// <summary>Candidate-entered foreign-diploma evaluations. Fields only; never the uploaded file.</summary>
-    IReadOnlyList<LobsyCvDiplomaEvaluationEntry>? DiplomaEvaluations = null);
+    IReadOnlyList<LobsyCvDiplomaEvaluationEntry>? DiplomaEvaluations = null,
+    /// <summary>Spoken languages for the candidate's own CV. Not a street address.</summary>
+    IReadOnlyList<string>? Languages = null,
+    /// <summary>Rule-based test lines for the candidate's own CV. Not the AI story.</summary>
+    IReadOnlyList<string>? TestHighlights = null,
+    /// <summary>When the candidate accepted the terms. The policy version is not a date.</summary>
+    DateTime? ConsentAcceptedAt = null,
+    /// <summary>Study direction, printed next to the education level.</summary>
+    string? EducationDirection = null);
 
 public sealed record LobsyCvWhoAmI(
     string Story,

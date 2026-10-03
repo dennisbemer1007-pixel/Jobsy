@@ -5,6 +5,7 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
@@ -780,6 +781,7 @@ public partial class MeController : ControllerBase
         var preferences = ParsePreferences(user.PreferencesJson);
         var diplomaEvaluations = await LoadDiplomaEvaluationSharedFactsAsync(user.Id, cancellationToken);
         // AI "Wie ben ik" is not attached to the Lobsy-CV (decision 22). The profile stays in the app.
+        var highlights = await LoadCvHighlightsAsync(user.Id, cancellationToken);
         var model = LobsyCvModelFactory.FromLiveProfile(
             user.FullName,
             user.Email,
@@ -792,11 +794,70 @@ public partial class MeController : ControllerBase
             user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion,
             dateOfBirth: user.DateOfBirth,
             hasUploadedOwnCv: hasUploadedCv,
-            diplomaEvaluations: diplomaEvaluations);
+            diplomaEvaluations: diplomaEvaluations,
+            testHighlights: highlights,
+            consentAcceptedAt: user.TermsAcceptedAt);
 
         var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
         var fileName = _lobsyCvPdf.BuildFileName(model);
         return File(pdf, "application/pdf", fileName);
+    }
+
+    private async Task<IReadOnlyList<string>> LoadCvHighlightsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var competencyRow = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(
+                c => c.UserId == userId && c.Status == CandidateCompetencyStatuses.Completed,
+                cancellationToken);
+        var careerRow = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(
+                c => c.UserId == userId && c.Status == CandidateCompetencyStatuses.Completed,
+                cancellationToken);
+        var cultureRow = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(
+                c => c.UserId == userId && c.Status == CandidateCompetencyStatuses.Completed,
+                cancellationToken);
+        var valuesRow = await _db.CandidateValuesProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(
+                c => c.UserId == userId && c.Status == CandidateCompetencyStatuses.Completed,
+                cancellationToken);
+
+        CompetencyScores? competency = competencyRow is null
+            ? null
+            : new CompetencyScores(
+                competencyRow.SamenwerkenPercent,
+                competencyRow.ResultaatgerichtheidPercent,
+                competencyRow.StressbestendigheidPercent,
+                competencyRow.InnovatiePercent,
+                competencyRow.ExtraversiePercent);
+        RiasecScores? career = careerRow is null
+            ? null
+            : new RiasecScores(
+                careerRow.RealisticPercent,
+                careerRow.InvestigativePercent,
+                careerRow.ArtisticPercent,
+                careerRow.SocialPercent,
+                careerRow.EnterprisingPercent,
+                careerRow.ConventionalPercent);
+        CulturePersonalityScores? culture = cultureRow is null
+            ? null
+            : new CulturePersonalityScores(
+                cultureRow.AutonomyPercent,
+                cultureRow.InformalPercent,
+                cultureRow.CollaborationPercent,
+                cultureRow.FlexibilityPercent,
+                cultureRow.InnovationPercent,
+                cultureRow.PeopleFirstPercent);
+        SchwartzValuesScores? values = valuesRow is null
+            ? null
+            : new SchwartzValuesScores(
+                valuesRow.AutonomyPercent,
+                valuesRow.ConnectionPercent,
+                valuesRow.AchievementPercent,
+                valuesRow.StabilityPercent,
+                valuesRow.ImpactPercent);
+
+        return LobsyCvHighlightLines.Build(competency, career, culture, values);
     }
 
     [HttpPost("cv")]
