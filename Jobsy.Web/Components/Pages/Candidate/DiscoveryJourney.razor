@@ -177,7 +177,7 @@
                                 {
                                     var selected = Draft.EmployerPreferences.Contains(code);
                                     <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
-                                            aria-pressed="@selected"
+                                            aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleEmployerPref(code)">
                                         @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
                                     </button>
@@ -342,7 +342,7 @@
                                 {
                                     var selected = Draft.Hobbies.Contains(code);
                                     <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
-                                            aria-pressed="@selected"
+                                            aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleHobby(code)">
                                         @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
                                     </button>
@@ -403,7 +403,7 @@
                                 {
                                     var selected = Draft.Dislikes.Contains(code);
                                     <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
-                                            aria-pressed="@selected"
+                                            aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleDislike(code)">
                                         @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
                                     </button>
@@ -2102,14 +2102,16 @@
     }
 
     private IEnumerable<string> AvailableLanguageCodes()
-        => DiscoveryCatalogs.SpokenLanguageCodes
+        => DiscoveryCatalogs.AddableSpokenLanguageCodes
             .Where(code => !Draft.SpokenLanguages.Any(l =>
                 string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase)));
 
     private void OnAddLanguage(ChangeEventArgs e)
     {
         var code = DiscoveryCatalogs.CanonicalLanguage(e.Value?.ToString());
-        if (code is null || Draft.SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages) return;
+        if (code is null
+            || string.Equals(code, "nl", StringComparison.OrdinalIgnoreCase)
+            || Draft.SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages) return;
         if (Draft.SpokenLanguages.Any(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase))) return;
         Draft.SpokenLanguages.Add(new CandidateLanguage { Code = code });
         ScheduleProfileSave();

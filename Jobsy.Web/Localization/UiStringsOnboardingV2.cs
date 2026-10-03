@@ -60,6 +60,14 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Refill"] = english ? "Fill in again" : "Opnieuw invullen";
         map["Onboarding.AvailabilityRequired"] = english ? "Choose at least one moment when you can work." : "Kies minstens één moment waarop je kunt";
         map["Onboarding.Transport"] = english ? "Transport" : "Vervoer"; map["Onboarding.MaxTravel"] = english ? "Maximum travel" : "Maximaal reizen"; map["Onboarding.Minutes"] = english ? "min" : "min"; map["Onboarding.Other"] = english ? "Other" : "Anders";
+        map["Profile.CurrentJob"] = language switch
+        {
+            "nl" => "Dit is mijn huidige baan",
+            "pl" => "To moja obecna praca",
+            "ro" => "Acesta este jobul meu actual",
+            "ar" => "هذه وظيفتي الحالية",
+            _ => "This is my current job"
+        };
         map["Onboarding.TransportMulti"] = language switch
         {
             "nl" => "Je kunt meer dan één kiezen. De maximale reistijd geldt voor allemaal.",

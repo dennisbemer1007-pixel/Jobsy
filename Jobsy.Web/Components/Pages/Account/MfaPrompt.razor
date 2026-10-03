@@ -108,6 +108,11 @@
                     <a href="@_supportMailto">@Culture["Mfa.AdminHelp"]</a>
                 </p>
             }
+            else if (_signedIn)
+            {
+                <p class="au-lead">@Culture["Mfa.AlreadySignedIn"]</p>
+                <p><a class="au-submit" href="/home">@Culture["Mfa.Continue"]</a></p>
+            }
             else if (_expired)
             {
                 <p><a class="au-submit" href="/login">@Culture["Mfa.BackToLogin"]</a></p>
@@ -124,6 +129,7 @@
     private string? _maskedEmail;
     private bool _ready;
     private bool _expired;
+    private bool _signedIn;
     private bool _openRecovery;
     private string _supportMailto = "mailto:support@lobsy.nl";
 
@@ -134,6 +140,12 @@
             || !http.Request.Cookies.TryGetValue("Jobsy.MfaChallenge", out var challenge)
             || string.IsNullOrWhiteSpace(challenge))
         {
+            if (http?.User.Identity?.IsAuthenticated == true)
+            {
+                _signedIn = true;
+                return;
+            }
+
             _loginState = LoginState.Generic;
             _expired = true;
             return;

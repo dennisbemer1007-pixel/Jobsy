@@ -424,6 +424,16 @@
             _payError = Culture["Tests.PaymentFailed"];
         }
 
+        if (AssessmentKindLabels.TryParse(TestKey, out var kind))
+        {
+            var canonical = AssessmentKindLabels.ToSlug(kind);
+            if (!string.Equals(TestKey, canonical, StringComparison.Ordinal))
+            {
+                Navigation.NavigateTo(AssessmentTestCatalog.DetailHref(kind), replace: true);
+                return;
+            }
+        }
+
         _def = AssessmentTestCatalog.TryGetByKey(TestKey);
         _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
         if (string.Equals(Buy, "1", StringComparison.Ordinal))

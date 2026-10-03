@@ -14600,6 +14600,12 @@ html.cookie-consent-known .cookie-consent {
 .feedback-dialog__field textarea,
 .feedback-dialog__field select {
     width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
     font: inherit;
 }
 

@@ -374,7 +374,9 @@ public sealed class CandidateProfileEditor : IDisposable
     public void AddSpokenLanguage(string code)
     {
         var canonical = DiscoveryCatalogs.CanonicalLanguage(code);
-        if (canonical is null || SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages)
+        if (canonical is null
+            || string.Equals(canonical, "nl", StringComparison.OrdinalIgnoreCase)
+            || SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages)
         {
             return;
         }
