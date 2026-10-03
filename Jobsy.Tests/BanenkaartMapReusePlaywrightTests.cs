@@ -52,7 +52,7 @@ public class BanenkaartMapReusePlaywrightTests
         Assert.Contains("844", src);
         Assert.Contains("1280", src);
         Assert.Contains("RepeatCount = 5", src);
-        Assert.Contains("PinsVisibleMs = 3_000", src);
+        Assert.Contains("PinsVisibleMs = 15_000", src);
         Assert.Contains("__testGetMapCreateCount", src);
         Assert.Contains("kandidaat@jobsy.local", src);
     }
