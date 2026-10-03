@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "23b98d4a20c4a141737ae94ffa991f04225c649e60fc8d18efaceaf23b8f4e1c",
-    "v": "20261003-header"
+    "sha256": "16701d4cb288223cd1cd18cbad87f940e1bdcec6c52c32caad6b778fe673b378",
+    "v": "20261003-cssbuild"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
