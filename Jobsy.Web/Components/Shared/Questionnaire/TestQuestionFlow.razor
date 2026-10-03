@@ -156,6 +156,7 @@
     private int _recentLimit = 3;
     private readonly HashSet<TestDepthLevel> _firedLevels = [];
     private CancellationTokenSource? _advanceCts;
+    private int _advanceGeneration;
     private IReadOnlyList<FlowQuestion> Ordered => Questions;
 
     private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
@@ -258,7 +259,8 @@
             return;
         }
 
-        _advanceCts?.Cancel();
+        CancelPendingAdvance();
+        var generation = _advanceGeneration;
         _advanceCts = new CancellationTokenSource();
         var token = _advanceCts.Token;
         var delayMs = 250;
@@ -279,10 +281,33 @@
             return;
         }
 
-        if (token.IsCancellationRequested) return;
+        if (token.IsCancellationRequested || generation != _advanceGeneration) return;
+        if (_index >= TargetCount - 1) return;
         _index++;
         _focusRequest = true;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void CancelPendingAdvance()
+    {
+        _advanceGeneration++;
+        _advanceCts?.Cancel();
+        _advanceCts?.Dispose();
+        _advanceCts = null;
+    }
+
+    private int? FirstGapIndex()
+    {
+        var count = TargetCount;
+        for (var i = 0; i < count; i++)
+        {
+            if (!Answers.ContainsKey(Ordered[i].Id))
+            {
+                return i;
+            }
+        }
+
+        return null;
     }
 
     protected override void OnParametersSet()
@@ -313,12 +338,14 @@
 
     private void JumpTo(int index)
     {
-        _index = Math.Clamp(index, 0, TargetCount - 1);
+        CancelPendingAdvance();
+        _index = Math.Clamp(index, 0, Math.Max(0, TargetCount - 1));
         _focusRequest = true;
     }
 
     private async Task GoBackAsync()
     {
+        CancelPendingAdvance();
         if (_index <= 0) return;
         _index--;
         _focusRequest = true;
@@ -327,11 +354,22 @@
 
     private async Task GoNextAsync()
     {
+        CancelPendingAdvance();
+        if (Ordered.Count == 0 || TargetCount <= 0) return;
+        _index = Math.Clamp(_index, 0, TargetCount - 1);
         var question = Ordered[_index];
         if (!Answers.ContainsKey(question.Id)) return;
 
         if (_index >= TargetCount - 1)
         {
+            if (FirstGapIndex() is int gap)
+            {
+                _index = gap;
+                _focusRequest = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
             if (Autosave is not null) await Autosave.FlushAsync();
             await OnFinished.InvokeAsync();
             return;
