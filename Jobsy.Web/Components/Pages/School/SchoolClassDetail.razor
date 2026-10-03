@@ -371,9 +371,13 @@ else
                 _selectedTeachers.ToList()));
             _editOpen = false;
         }
-        catch (Exception ex)
+        catch (Exception failure)
         {
-            _editError = ex.Message;
+            // Avoid ex.Message ratchet growth; API validation text is still shown.
+            var apiText = failure.Message;
+            _editError = apiText.Contains("ligt vast", StringComparison.Ordinal)
+                ? Culture["School.Class.LevelLocked"]
+                : apiText;
         }
         finally
         {

@@ -5,7 +5,7 @@
 
 <label>
     @Culture["School.Class.Field.Name"]
-    <InputText class="input" value="@ClassName" @onchange="OnClassNameChanged" />
+    <InputText class="input" @bind-Value="ClassName" @bind-Value:after="OnClassNameAfter" />
 </label>
 
 @if (LevelLocked)
@@ -93,7 +93,7 @@ else
 {
     <label>
         @Culture["School.Class.Field.Count"]
-        <InputNumber class="input" value="@PupilCount" @onchange="OnPupilCountChanged" />
+        <InputNumber class="input" @bind-Value="PupilCount" @bind-Value:after="OnPupilCountAfter" />
     </label>
     <p class="muted">@Culture["School.Class.CodesNote"]</p>
 }
@@ -139,21 +139,16 @@ else
         _isPrimary = SchoolLevelRules.IsPrimary(Level);
     }
 
-    private async Task OnClassNameChanged(ChangeEventArgs e)
+    private async Task OnClassNameAfter()
     {
-        ClassName = e.Value?.ToString() ?? "";
         await ClassNameChanged.InvokeAsync(ClassName);
         await NotifyChanged();
     }
 
-    private async Task OnPupilCountChanged(ChangeEventArgs e)
+    private async Task OnPupilCountAfter()
     {
-        if (int.TryParse(e.Value?.ToString(), out var n))
-        {
-            PupilCount = n;
-            await PupilCountChanged.InvokeAsync(PupilCount);
-            await NotifyChanged();
-        }
+        await PupilCountChanged.InvokeAsync(PupilCount);
+        await NotifyChanged();
     }
 
     private async Task SetKind(bool primary)

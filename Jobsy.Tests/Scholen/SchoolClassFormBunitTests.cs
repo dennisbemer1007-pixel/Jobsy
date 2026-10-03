@@ -75,9 +75,7 @@ public class SchoolClassFormBunitTests : BunitContext
 
         Assert.Contains("Soort klas ligt vast", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("role=\"note\"", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("disabled", cut.Find("fieldset.sch-kind").GetAttribute("disabled") ??
-                                    (cut.Find("input[value='primary']").HasAttribute("disabled") ? "disabled" : ""),
-            StringComparison.Ordinal);
+        Assert.NotNull(cut.Find("fieldset.sch-kind").GetAttribute("disabled"));
         Assert.True(cut.Find("input[value='primary']").HasAttribute("disabled"));
         Assert.True(cut.Find("input[value='secondary']").HasAttribute("disabled"));
     }
