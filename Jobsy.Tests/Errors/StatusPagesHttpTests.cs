@@ -268,7 +268,8 @@ public class StatusPagesHttpTests : IClassFixture<StatusPagesHttpFixture>
     public void App_razor_reconnect_markup_has_no_hard_coded_dutch()
     {
         var app = File.ReadAllText(Path.Combine(RepoRoot(), "Jobsy.Web", "Components", "App.razor"));
-        var start = app.IndexOf("components-reconnect-modal", StringComparison.Ordinal);
+        // The critical CSS also mentions #components-reconnect-modal. The guard covers the element.
+        var start = app.IndexOf("id=\"components-reconnect-modal\"", StringComparison.Ordinal);
         Assert.True(start > 0, "The reconnect modal markup moved; update this guard.");
         var markup = app[start..Math.Min(app.Length, start + 2_000)];
 
