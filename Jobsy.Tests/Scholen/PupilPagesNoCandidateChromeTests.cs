@@ -37,12 +37,24 @@ public class PupilPagesNoCandidateChromeTests : BunitContext
     }
 
     [Fact]
-    public void Answer_labels_are_five_likert_values()
+    public void Answer_labels_are_five_likert_values_for_every_set()
     {
-        var labels = new PupilQuestionSetRegistry().Get(PupilQuestionSet.Groep78).AnswerLabels;
-        Assert.Equal(5, labels.Count);
-        Assert.Equal(1, labels[0].Value);
-        Assert.Equal(5, labels[4].Value);
+        var registry = new PupilQuestionSetRegistry();
+        foreach (var def in registry.All)
+        {
+            Assert.Equal(5, def.AnswerLabels.Count);
+            Assert.Equal(Enumerable.Range(1, 5), def.AnswerLabels.Select(l => l.Value));
+        }
+    }
+
+    [Fact]
+    public void Reis_uses_answer_scale_component_without_aria_pressed()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling", "LeerlingReis.razor"));
+        Assert.Contains("<LeerlingAnswerScale", reis, StringComparison.Ordinal);
+        Assert.DoesNotContain("aria-pressed", reis, StringComparison.Ordinal);
+        Assert.DoesNotContain("@onkeydown=\"OnKey\"", reis, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -1,0 +1,143 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Core.Enums
+@inject CultureState Culture
+
+<div class="ll-answers @(Set == PupilQuestionSet.Vo ? "ll-answers--vo" : null)"
+     role="radiogroup"
+     aria-label="@GroupLabel"
+     @onkeydown="OnKeyDownAsync">
+    @for (var i = 0; i < Labels.Count; i++)
+    {
+        var index = i;
+        var (value, key) = Labels[index];
+        var selected = Selected == value;
+        var label = Culture[key];
+        <button type="button"
+                class="ll-answer @(Set == PupilQuestionSet.Vo ? "ll-answer--vo" : null) @(selected ? "is-selected" : null)"
+                role="radio"
+                aria-checked="@(selected ? "true" : "false")"
+                tabindex="@TabIndexFor(value)"
+                disabled="@Disabled"
+                @ref="_buttonRefs[index]"
+                @onclick="() => SelectAsync(value)">
+            @if (Set == PupilQuestionSet.Vo)
+            {
+                <span class="ll-answer__box" aria-hidden="true">
+                    @if (selected)
+                    {
+                        <svg viewBox="0 0 16 16" focusable="false">
+                            <path fill="currentColor" d="M6.2 11.4 2.8 8l1.1-1.1 2.3 2.3 5.9-5.9L13.2 4.4z" />
+                        </svg>
+                    }
+                </span>
+            }
+            else
+            {
+                <span class="ll-answer__dot" aria-hidden="true"></span>
+            }
+            <span class="ll-answer__label">@label</span>
+            <span class="visually-hidden">, @string.Format(Culture["Leerling.Reis.AnswerPosition"], value, Labels.Count)</span>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<(int Value, string Key)> Labels { get; set; } = [];
+    [Parameter] public PupilQuestionSet Set { get; set; } = PupilQuestionSet.Groep78;
+    [Parameter] public int? Selected { get; set; }
+    [Parameter] public EventCallback<int> OnSelect { get; set; }
+    [Parameter] public string GroupLabel { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; }
+
+    private ElementReference[] _buttonRefs = [];
+
+    protected override void OnParametersSet()
+    {
+        if (_buttonRefs.Length != Labels.Count)
+        {
+            _buttonRefs = new ElementReference[Labels.Count];
+        }
+    }
+
+    private int TabIndexFor(int value)
+    {
+        if (Disabled || Labels.Count == 0)
+        {
+            return -1;
+        }
+
+        if (Selected is int selected)
+        {
+            return value == selected ? 0 : -1;
+        }
+
+        return value == Labels[0].Value ? 0 : -1;
+    }
+
+    private async Task SelectAsync(int value)
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        await OnSelect.InvokeAsync(value);
+        await FocusValueAsync(value);
+    }
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (Disabled || Labels.Count == 0)
+        {
+            return;
+        }
+
+        var values = Labels.Select(l => l.Value).ToList();
+        var current = Selected ?? values[0];
+        var index = Math.Max(0, values.IndexOf(current));
+        int? next = e.Key switch
+        {
+            "ArrowRight" or "ArrowDown" => values[Math.Min(index + 1, values.Count - 1)],
+            "ArrowLeft" or "ArrowUp" => values[Math.Max(index - 1, 0)],
+            "Home" => values[0],
+            "End" => values[^1],
+            "1" or "2" or "3" or "4" or "5" => e.Key[0] - '0',
+            " " or "Spacebar" or "Enter" => current,
+            _ => null
+        };
+
+        if (next is null || !values.Contains(next.Value))
+        {
+            return;
+        }
+
+        await SelectAsync(next.Value);
+    }
+
+    private async Task FocusValueAsync(int value)
+    {
+        var index = -1;
+        for (var i = 0; i < Labels.Count; i++)
+        {
+            if (Labels[i].Value == value)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0 || index >= _buttonRefs.Length)
+        {
+            return;
+        }
+
+        try
+        {
+            await _buttonRefs[index].FocusAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            // bUnit / prerender: no interactive runtime.
+        }
+    }
+}

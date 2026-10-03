@@ -6,6 +6,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -61,7 +62,7 @@ else
     var infoId = "ll-imagine-" + (item?.Id ?? "x");
     var cheerKey = _def.CheerKey(_state.AnsweredCount);
 
-    <div class="ll-reis" @onkeydown="OnKey" tabindex="0">
+    <div class="ll-reis">
         <aside class="ll-rail" aria-label="@Culture["Leerling.Reis.Journey"]">
             <p class="ll-rail__title">@Culture["Leerling.Reis.Journey"]</p>
             <p class="ll-rail__meta">@string.Format(Culture["Leerling.Reis.WorldOf"], worldNum, 4)</p>
@@ -112,19 +113,12 @@ else
                 <button type="button" class="ll-info__close" @onclick="() => _infoOpen = false" aria-label="Sluiten">×</button>
             </div>
 
-            <div class="ll-answers" role="radiogroup" aria-label="@Culture["Leerling.Reis.Answers"]">
-                @foreach (var (value, key) in _def.AnswerLabels)
-                {
-                    var selected = _selected == value;
-                    <button type="button"
-                            class="ll-answer @(selected ? "is-selected" : null)"
-                            aria-pressed="@selected"
-                            @onclick="() => SelectAnswer(value)">
-                        <span class="ll-answer__dot" aria-hidden="true"></span>
-                        @Culture[key]
-                    </button>
-                }
-            </div>
+            <LeerlingAnswerScale Labels="_def.AnswerLabels"
+                                 Set="_def.Set"
+                                 Selected="_selected"
+                                 OnSelect="SelectAnswer"
+                                 GroupLabel="@Culture["Leerling.Reis.Answers"]"
+                                 Disabled="_busy" />
 
             @if (!string.IsNullOrEmpty(_saveError))
             {
@@ -346,14 +340,6 @@ else
     }
 
     private void ToggleInfo() => _infoOpen = !_infoOpen;
-
-    private async Task OnKey(KeyboardEventArgs e)
-    {
-        if (e.Key is "1" or "2" or "3" or "4" or "5")
-        {
-            await SelectAnswer(e.Key[0] - '0');
-        }
-    }
 
     private bool IsWorldDone(string worldKey)
     {
