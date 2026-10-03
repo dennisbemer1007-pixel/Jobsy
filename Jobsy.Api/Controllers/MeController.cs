@@ -9,6 +9,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
@@ -309,7 +310,10 @@ public class MeController : ControllerBase
                 request.Preferences.ShareEmployerPreferences ?? existing.ShareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(request.Preferences.WorkRegion, existing.WorkRegion),
                 request.Preferences.HasOwnCar ?? existing.HasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences));
+                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences),
+                request.Preferences.PassportSectors is null
+                    ? existing.PassportSectors
+                    : PassportSectorSuggestions.Sanitize(request.Preferences.PassportSectors));
 
             user.PreferencesJson = SerializePreferences(merged);
         }
@@ -1752,6 +1756,8 @@ public class MeController : ControllerBase
                 contractPreferences = ReadStringArray(contractEl);
             }
 
+            var passportSectors = ReadPassportSectors(root);
+
             var parsed = new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -1783,7 +1789,8 @@ public class MeController : ControllerBase
                 shareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(workRegion, null),
                 hasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null));
+                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null),
+                passportSectors);
 
             return CandidatePreferencesValidator.Sanitize(parsed);
         }
@@ -1791,6 +1798,44 @@ public class MeController : ControllerBase
         {
             return EmptyPreferences();
         }
+    }
+
+    private static IReadOnlyList<PassportSectorChoice>? ReadPassportSectors(JsonElement root)
+    {
+        if (!root.TryGetProperty("passportSectors", out var sectorEl))
+        {
+            return null;
+        }
+
+        if (sectorEl.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var choices = new List<PassportSectorChoice>();
+        foreach (var item in sectorEl.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            var code = ReadOptionalString(item, "code");
+            if (code is null)
+            {
+                continue;
+            }
+
+            var reasons = item.TryGetProperty("reasonCodes", out var reasonEl) && reasonEl.ValueKind == JsonValueKind.Array
+                ? ReadStringArray(reasonEl)
+                : [];
+            var examples = item.TryGetProperty("exampleRoles", out var roleEl) && roleEl.ValueKind == JsonValueKind.Array
+                ? ReadStringArray(roleEl)
+                : [];
+            choices.Add(new PassportSectorChoice(code, reasons, ReadOptionalString(item, "ownReason"), examples));
+        }
+
+        return choices;
     }
 
     private static string? ReadOptionalString(JsonElement obj, string name)
@@ -2006,7 +2051,16 @@ public class MeController : ControllerBase
             shareEmployerPreferences = sanitized.ShareEmployerPreferences,
             workRegion = sanitized.WorkRegion,
             hasOwnCar = sanitized.HasOwnCar,
-            contractPreferences = sanitized.ContractPreferences
+            contractPreferences = sanitized.ContractPreferences,
+            passportSectors = sanitized.PassportSectors?
+                .Select(sector => new
+                {
+                    code = sector.Code,
+                    reasonCodes = sector.ReasonCodes,
+                    ownReason = sector.OwnReason,
+                    exampleRoles = sector.ExampleRoles
+                })
+                .ToArray()
         }, JsonOptions);
     }
 

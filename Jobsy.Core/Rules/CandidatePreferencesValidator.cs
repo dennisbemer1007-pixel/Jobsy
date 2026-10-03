@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Passport;
 
 namespace Jobsy.Core.Rules;
 
@@ -36,7 +37,8 @@ public static class CandidatePreferencesValidator
             DutchLevel = dutch,
             EmployerPreferences = employers,
             LearningGoals = goals,
-            Hobbies = hobbies
+            Hobbies = hobbies,
+            PassportSectors = PassportSectorSuggestions.Sanitize(prefs.PassportSectors)
         };
     }
 
