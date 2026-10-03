@@ -144,7 +144,8 @@ public class CareerPageBunitTests : BunitContext
         Assert.Contains("Op weg naar Kok", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Een kreeft groeit alleen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Nog 2 klauwen laten groeien", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("past al past goed bij jou", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("past goed bij jou", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("past al past", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("0 jaar", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("%", cut.Markup, StringComparison.Ordinal);
     }

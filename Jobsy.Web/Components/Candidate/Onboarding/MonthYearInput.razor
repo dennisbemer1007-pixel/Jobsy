@@ -1,0 +1,101 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using System.Globalization
+@inject CultureState Culture
+
+<span class="month-year">
+    <select aria-label="@Culture["Onboarding.Month"]" value="@_month" @onchange="OnMonthAsync">
+        <option value="">—</option>
+        @for (var month = 1; month <= 12; month++)
+        {
+            <option value="@month">@MonthName(month)</option>
+        }
+    </select>
+    <select aria-label="@Culture["Onboarding.Year"]" value="@_year" @onchange="OnYearAsync">
+        <option value="">—</option>
+        @foreach (var year in Years)
+        {
+            <option value="@year">@year</option>
+        }
+    </select>
+</span>
+
+@code {
+    private string? _synced;
+    private string _month = "";
+    private string _year = "";
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    private static IEnumerable<int> Years
+        => Enumerable.Range(1950, DateTime.UtcNow.Year - 1950 + 1).Reverse();
+
+    protected override void OnParametersSet()
+    {
+        if (string.Equals(Value, _synced, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _synced = Value;
+        (_year, _month) = Split(Value);
+    }
+
+    private string MonthName(int month)
+    {
+        var name = CultureInfo.GetCultureInfo(CultureName).DateTimeFormat.GetMonthName(month);
+        return string.IsNullOrEmpty(name) ? month.ToString() : char.ToUpper(name[0]) + name[1..];
+    }
+
+    private string CultureName => Culture.Language switch
+    {
+        "nl" => "nl-NL",
+        "pl" => "pl-PL",
+        "ro" => "ro-RO",
+        "ar" => "ar",
+        _ => "en-GB"
+    };
+
+    private async Task OnMonthAsync(ChangeEventArgs e)
+    {
+        _month = e.Value?.ToString() ?? "";
+        await PublishAsync();
+    }
+
+    private async Task OnYearAsync(ChangeEventArgs e)
+    {
+        _year = e.Value?.ToString() ?? "";
+        await PublishAsync();
+    }
+
+    private async Task PublishAsync()
+    {
+        string? next = null;
+        if (int.TryParse(_month, out var month)
+            && int.TryParse(_year, out var year)
+            && month is >= 1 and <= 12
+            && year is >= 1950 and <= 2100)
+        {
+            next = $"{year:0000}-{month:00}";
+        }
+
+        _synced = next;
+        await ValueChanged.InvokeAsync(next);
+    }
+
+    private static (string Year, string Month) Split(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return ("", "");
+        }
+
+        var parts = value.Split('-', 2, StringSplitOptions.TrimEntries);
+        if (parts.Length < 2 || !int.TryParse(parts[1], out var month))
+        {
+            return ("", "");
+        }
+
+        return (parts[0], month.ToString());
+    }
+}

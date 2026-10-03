@@ -11,7 +11,7 @@
         @foreach (var preset in Presets)
         {
             var isSelected = Draft.Presets.Contains(preset.Code);
-            <button type="button" aria-pressed="@isSelected"
+            <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
                     class="@(isSelected ? "is-selected" : null)"
                     @onclick="() => TogglePreset.InvokeAsync(preset.Code)">
                 <span>@(isSelected ? "✓" : "")</span>
@@ -23,7 +23,7 @@
 </fieldset>
 <div class="ob-wizard__availability-summary">
     <strong>@Culture["Onboarding.AvailabilitySummary"]</strong>
-    <button type="button" aria-expanded="@Draft.FineTune" @onclick="ToggleFineTune">
+    <button type="button" aria-expanded="@(Draft.FineTune ? "true" : "false")" @onclick="ToggleFineTune">
         @Culture["Onboarding.Adjust"]
     </button>
     <dl>
@@ -35,10 +35,13 @@
             <dt>@Culture["Profile.Availability"]</dt>
             <dd>@DaysSummary</dd>
         </div>
-        <div>
-            <dt>@Culture["Onboarding.AvailableFrom"]</dt>
-            <dd>@AvailableFromLabel</dd>
-        </div>
+        @if (Draft.Immediate)
+        {
+            <div>
+                <dt>@Culture["Onboarding.AvailableFrom"]</dt>
+                <dd>@AvailableFromLabel</dd>
+            </div>
+        }
     </dl>
 </div>
 @if (!Draft.Immediate)
@@ -73,7 +76,7 @@
                         var key = $"{day}:{slot}";
                         var isAvailable = Draft.Availability.Contains(key);
                         <button type="button"
-                                aria-pressed="@isAvailable"
+                                aria-pressed="@(isAvailable ? "true" : "false")"
                                 aria-label="@AvailabilityLabel(day, slot)"
                                 class="@(isAvailable ? "is-on" : null)"
                                 @onclick="() => ToggleAvailability.InvokeAsync(key)">

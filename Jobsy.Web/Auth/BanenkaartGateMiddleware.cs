@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
 
@@ -15,7 +16,11 @@ public sealed class BanenkaartGateMiddleware(RequestDelegate next)
         {
             var employers = context.RequestServices.GetService<IEmployersSwitch>();
             if (employers is not null
-                && !await EmployersGate.AllowOrRedirectAsync(context, employers, "/", context.RequestAborted))
+                && !await EmployersGate.AllowOrRedirectAsync(
+                    context,
+                    employers,
+                    FeatureRoutes.CandidateEmployersComingSoonPath,
+                    context.RequestAborted))
             {
                 return;
             }

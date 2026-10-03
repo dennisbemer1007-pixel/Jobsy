@@ -67,7 +67,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
             }
             else if (model.ReachTravelMinutes is int reachMins and > 0)
             {
-                var mode = TransportLabels.Parse(model.PreferredTransport ?? TransportLabels.Bike);
+                var mode = TravelReach.Fastest(TransportLabels.ParseMany(model.PreferredTransport));
                 radiusMeters = TravelReach.RingRadiusMeters(mode, reachMins);
             }
 
@@ -254,6 +254,11 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             {
                                 loc.Item().Height(92).Image(mapPng).FitArea();
                             }
+                            else if (!string.IsNullOrWhiteSpace(model.City))
+                            {
+                                loc.Item().Text("Woonplaats").FontSize(8).FontColor(Muted);
+                                loc.Item().Text(model.City!).FontSize(12).Bold().FontColor(BrandNavy);
+                            }
                             else
                             {
                                 loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
@@ -308,9 +313,27 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                         Section(body, "Rijbewijs", string.Join(", ", model.DrivingLicenses));
                     }
 
-                    if (model.Educations.Count > 0)
+                    if (model.Educations.Count > 0 || !string.IsNullOrWhiteSpace(model.EducationDirection))
                     {
-                        Section(body, "Opleiding", string.Join(", ", model.Educations));
+                        var education = string.Join(", ", model.Educations);
+                        if (!string.IsNullOrWhiteSpace(model.EducationDirection))
+                        {
+                            education = string.IsNullOrWhiteSpace(education)
+                                ? model.EducationDirection!
+                                : $"{education} · {model.EducationDirection}";
+                        }
+
+                        Section(body, "Opleiding", education);
+                    }
+
+                    if (model.Languages is { Count: > 0 })
+                    {
+                        Section(body, "Talen", string.Join(", ", model.Languages));
+                    }
+
+                    if (model.TestHighlights is { Count: > 0 })
+                    {
+                        Section(body, "Uit je tests", string.Join(" · ", model.TestHighlights));
                     }
 
                     if (model.DiplomaEvaluations is { Count: > 0 })
@@ -341,7 +364,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                     }
 
                                     card.Item().Text(
-                                            $"{evaluation.EvaluationDate:dd-MM-yyyy} · {evaluation.ReferenceNumber}")
+                                            $"{evaluation.EvaluationDate.ToString("dd-MM-yyyy", culture)} · {evaluation.ReferenceNumber}")
                                         .FontSize(8).FontColor(Muted);
                                 });
                             }
@@ -417,9 +440,9 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 ? "Gegenereerd door Lobsy · visitekaartje van de kandidaat · eigen CV toegevoegd"
                                 : "Gegenereerd door Lobsy · visitekaartje van de kandidaat, geen upload-CV")
                             .FontSize(7.5f).FontColor(Muted);
-                        if (!string.IsNullOrWhiteSpace(model.ConsentVersion))
+                        if (model.ConsentAcceptedAt is DateTime accepted)
                         {
-                            text.Span($" · consent {model.ConsentVersion}")
+                            text.Span(" · toestemming " + accepted.ToString("dd-MM-yyyy", culture))
                                 .FontSize(7.5f).FontColor(Muted);
                         }
                     });

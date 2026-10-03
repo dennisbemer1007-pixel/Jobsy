@@ -15,6 +15,8 @@ public static class FeatureRoutes
     public const string EmployersOffAccessDeniedPath = "/access-denied?reason=employers-off";
     /// <summary>Friendly page for anonymous visitors on employer routes while employers are OFF.</summary>
     public const string EmployersComingSoonPath = "/werkgevers/binnenkort";
+    /// <summary>Same page, with copy for candidates who opened a job or application route.</summary>
+    public const string CandidateEmployersComingSoonPath = "/werkgevers/binnenkort?voor=kandidaat";
 
     /// <summary>
     /// Role home. For candidates with the paspoort flag ON,
@@ -124,14 +126,16 @@ public static class FeatureRoutes
             return EmployersOffAccessDeniedPath;
         }
 
+        if (candidateVacancySurface
+            && (user?.Identity?.IsAuthenticated != true
+                || RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)))
+        {
+            return CandidateEmployersComingSoonPath;
+        }
+
         if (user?.Identity?.IsAuthenticated == true)
         {
             return HomeFor(user, flags, passportReady);
-        }
-
-        if (candidateVacancySurface)
-        {
-            return HomeFor(null, flags, passportReady);
         }
 
         if (!string.IsNullOrWhiteSpace(explicitFallback))

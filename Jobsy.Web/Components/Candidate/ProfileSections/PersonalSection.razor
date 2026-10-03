@@ -153,7 +153,7 @@
     [Parameter] public bool ShowDiscoveryFields { get; set; }
 
     private IEnumerable<string> AvailableLanguageCodes()
-        => DiscoveryCatalogs.SpokenLanguageCodes
+        => DiscoveryCatalogs.AddableSpokenLanguageCodes
             .Where(code => !Editor.SpokenLanguages.Any(l =>
                 string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase)));
 

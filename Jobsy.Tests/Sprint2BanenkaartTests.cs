@@ -143,6 +143,33 @@ public class TransportLabelsTests
         Assert.Contains(TransportLabels.Car, labels);
         Assert.DoesNotContain(TransportLabels.Walking, labels);
     }
+
+    [Fact]
+    public void Toggle_keeps_bike_and_car_with_one_max_time()
+    {
+        var stored = TransportLabels.Toggle("", TransportLabels.Bike);
+        stored = TransportLabels.Toggle(stored, TransportLabels.Car);
+        Assert.Equal("Fiets, Auto", stored);
+        Assert.Equal(TransportMode.Bike | TransportMode.Car, TransportLabels.ParseMany(stored));
+        Assert.Equal(TransportMode.Car, TravelReach.Fastest(TransportLabels.ParseMany(stored)));
+        stored = TransportLabels.Toggle(stored, TransportLabels.Bike);
+        Assert.Equal("Auto", stored);
+    }
+
+    [Fact]
+    public void Relevance_accepts_any_selected_mode()
+    {
+        Assert.True(MatchVacancyRelevance.IsRelevant(
+            ["MBO"], 30, "Fiets, Auto",
+            vacancyRequiredEducation: null,
+            vacancyTravelMinutes: 20,
+            vacancyRequiredTransport: ["Auto"]));
+        Assert.False(MatchVacancyRelevance.IsRelevant(
+            ["MBO"], 30, "Fiets",
+            vacancyRequiredEducation: null,
+            vacancyTravelMinutes: 20,
+            vacancyRequiredTransport: ["Auto"]));
+    }
 }
 
 public class MockRoutingServiceTests

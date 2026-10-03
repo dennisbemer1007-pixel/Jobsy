@@ -335,11 +335,11 @@ public static class UiStringsCareer
             "{0} cursuri",
             "{0} دورات");
         Add("Career.Fact.Band",
-            "Deze steen past al {0} bij jou",
-            "This stone already fits you {0}",
-            "Ten kamień już {0} do ciebie pasuje",
-            "Piatra aceasta ți se potrivește deja {0}",
-            "هذا الحجر يناسبك {0} بالفعل");
+            "Deze steen {0} bij jou",
+            "This stone is a {0}",
+            "Ten kamień: {0}",
+            "Această piatră: {0}",
+            "هذا الحجر: {0}");
         Add("Career.Have.Title",
             "Wat je al hebt",
             "What you already have",

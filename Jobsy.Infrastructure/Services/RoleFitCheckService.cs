@@ -575,7 +575,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         }
 
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
-        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
+        var transport = TravelReach.Fastest(TransportLabels.ParseMany(context.Prefs.PreferredTransport));
         var scored = await _matches.ScoreAsync(
             context,
             vacancies.Select(vacancy =>

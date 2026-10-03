@@ -58,6 +58,18 @@ public static class UiStringsFeatureFlags
             "Na stronę główną",
             "Spre pagina principală",
             "إلى الصفحة الرئيسية");
+        Add("WgSoon.CandidateTitle",
+            "Banen en sollicitaties: binnenkort",
+            "Jobs and applications: coming soon",
+            "Oferty i aplikacje: wkrótce",
+            "Joburi și candidaturi: în curând",
+            "الوظائف والطلبات: قريباً");
+        Add("WgSoon.CandidateLead",
+            "Die onderdelen komen later. Je paspoort, tests en loopbaanplan blijven van jou. Niets gaat naar een werkgever.",
+            "Those parts come later. Your passport, tests and career plan stay yours. Nothing goes to an employer.",
+            "Te części pojawią się później. Twój paszport, testy i plan kariery zostają twoje. Nic nie trafia do pracodawcy.",
+            "Părțile acelea vin mai târziu. Pașaportul, testele și planul de carieră rămân ale tale. Nimic nu ajunge la un angajator.",
+            "هذه الأجزاء تأتي لاحقاً. جوازك واختباراتك وخطة مسارك تبقى لك. لا شيء يذهب إلى صاحب عمل.");
         Add("WgSoon.CtaCandidate",
             "Naar mijn start",
             "To my start",

@@ -17,7 +17,7 @@
             <p class="login-lead">Prestaties per opdrachtgever: werving, conversie, tokens en acties die aandacht vragen.</p>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:flex-end">
-            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+            <DashboardRefreshButton Period="@_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
             @foreach (var p in PeriodKeys)
             {

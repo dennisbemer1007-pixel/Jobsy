@@ -1,6 +1,7 @@
 @page "/carriere"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Careers
 @using Jobsy.Core.Features
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Career
@@ -45,7 +46,7 @@
                      PlatesShed="2"
                      LobsterSizeDesktop="124"
                      LobsterSizeMobile="66"
-                     BubbleDesktop="@Culture["Career.Say.Empty"]"
+                     BubbleDesktop="@(_suggestions.Count > 0 ? Culture["Career.Say.Empty"] : Culture["Career.Say.EmptyShort"])"
                      BubbleMobile="@Culture["Career.Say.EmptyShort"]">
             <RailContent>
                 <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
@@ -56,6 +57,7 @@
                                  HasChoice="@(_choice is not null)"
                                  ErrorText="@_error"
                                  DiscoveryHref="@DiscoveryHref"
+                                 ShowDiscoveryHint="@(!_journeyComplete)"
                                  OnChoice="SetChoice"
                                  OnSearch="SearchDreamsAsync"
                                  OnSubmit="GeneratePlanAsync" />
@@ -185,6 +187,8 @@
     private IReadOnlyList<ArchivedCareerPlanApiModel> _archived = [];
     private CareerDreamChoice? _choice;
     private string _nowLabel = "";
+    private string _evidence = "";
+    private bool _journeyComplete;
     private string? _error;
     private string? _dialogError;
     private string _announcement = "";
@@ -268,7 +272,13 @@
 
         try
         {
-            var plan = await Api.GetCareerPathAsync();
+            var planTask = Api.GetCareerPathAsync();
+            var profileTask = Api.GetMyProfileAsync();
+            var onboardingTask = Api.GetMyOnboardingAsync();
+            await Task.WhenAll(planTask, profileTask, onboardingTask);
+            ApplyProfileEvidence(await profileTask);
+            _journeyComplete = (await onboardingTask)?.IsComplete == true;
+            var plan = await planTask;
             ApplyPlan(plan);
             var options = await Api.GetCareerDreamOptionsAsync();
             _suggestions = options?.Suggestions ?? [];
@@ -317,7 +327,7 @@
             return;
         }
 
-        var next = CareerPlanViewBuilder.BuildStep(_planApi, order);
+        var next = CareerPlanViewBuilder.BuildStep(_planApi, order, _evidence);
         if (next is null)
         {
             ClearStep();
@@ -421,7 +431,7 @@
             ApplyPlan(plan);
             _done = null;
             _doneGained = new CareerStepDoneView();
-            _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order);
+            _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order, _evidence);
             _announcement = Culture.Format("Career.Undo.Announce", target.Order);
         }
         catch (Exception ex)
@@ -627,10 +637,42 @@
         }
     }
 
+    private void ApplyProfileEvidence(MeProfile? profile)
+    {
+        var prefs = profile?.Preferences;
+        if (prefs is null)
+        {
+            return;
+        }
+
+        var current = prefs.Employers.FirstOrDefault(e => string.IsNullOrWhiteSpace(e.EndMonth))
+                      ?? prefs.Employers.FirstOrDefault();
+        _nowLabel = current?.Role?.Trim() ?? "";
+        var bits = new List<string>();
+        bits.AddRange(prefs.Employers.Select(e => $"{e.Role} {e.EmployerName}"));
+        bits.AddRange(prefs.Roles);
+        bits.AddRange(prefs.Educations);
+        if (!string.IsNullOrWhiteSpace(prefs.EducationDirection))
+        {
+            bits.Add(prefs.EducationDirection);
+        }
+
+        bits.AddRange(prefs.Certificates.Select(c => c.Name));
+        _evidence = string.Join(' ', bits.Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
+
     private void ApplyPlan(CareerPathPlanApiModel? plan)
     {
         _planApi = plan;
         _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel);
+        if (!_plan.HasPlan && !string.IsNullOrWhiteSpace(_plan.DreamTitle))
+        {
+            var entry = CareerDreamCatalog.FindByTitleOrAlias(_plan.DreamTitle);
+            _choice = new CareerDreamChoice(
+                entry?.Key,
+                entry is null ? _plan.DreamTitle : null,
+                _plan.DreamTitle);
+        }
     }
 
     private string FailureMessage(Exception ex)

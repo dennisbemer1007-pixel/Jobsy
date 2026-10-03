@@ -346,13 +346,11 @@ public static class CandidateDnaViewBuilder
 
         if ((completed || provisional) && scores is not null)
         {
-            var ranked = Rank(
-                (CareerTestCatalog.Realistic, scores.Realistic),
-                (CareerTestCatalog.Investigative, scores.Investigative),
-                (CareerTestCatalog.Artistic, scores.Artistic),
-                (CareerTestCatalog.Social, scores.Social),
-                (CareerTestCatalog.Enterprising, scores.Enterprising),
-                (CareerTestCatalog.Conventional, scores.Conventional));
+            var ranked = RiasecRanking.Rank(
+                    scores.Realistic, scores.Investigative, scores.Artistic,
+                    scores.Social, scores.Enterprising, scores.Conventional)
+                .Select(x => (Code: x.Code, Percent: x.Value))
+                .ToList();
             foreach (var code in new[]
                      {
                          CareerTestCatalog.Realistic,
@@ -430,7 +428,9 @@ public static class CandidateDnaViewBuilder
                 poles.Add((t(low), t(high), value));
             }
 
-            var ranked = Rank(pairs);
+            var ranked = DimensionRanking.Rank(pairs, DimensionRanking.CultureTieBreak)
+                .Select(x => (Code: x.Code, Percent: x.Score))
+                .ToList();
             if (ranked.Count > 0)
             {
                 top = t(DnaSummarySentences.CulturePoles(ranked[0].Code).HighPoleKey);
@@ -477,12 +477,17 @@ public static class CandidateDnaViewBuilder
 
         if ((completed || provisional) && scores is not null)
         {
-            var ranked = Rank(
-                (SchwartzValuesCatalog.Autonomy, scores.Autonomy),
-                (SchwartzValuesCatalog.Connection, scores.Connection),
-                (SchwartzValuesCatalog.Achievement, scores.Achievement),
-                (SchwartzValuesCatalog.Stability, scores.Stability),
-                (SchwartzValuesCatalog.Impact, scores.Impact));
+            var ranked = DimensionRanking.Rank(
+                [
+                    (SchwartzValuesCatalog.Autonomy, scores.Autonomy),
+                    (SchwartzValuesCatalog.Connection, scores.Connection),
+                    (SchwartzValuesCatalog.Achievement, scores.Achievement),
+                    (SchwartzValuesCatalog.Stability, scores.Stability),
+                    (SchwartzValuesCatalog.Impact, scores.Impact)
+                ],
+                DimensionRanking.ValueTieBreak)
+                .Select(x => (Code: x.Code, Percent: x.Score))
+                .ToList();
             bars = ranked
                 .Select(r => new ChartAxisValue(DimensionLabels.For(r.Code), r.Percent))
                 .Concat(SchwartzValuesCatalog.CategoryCodes

@@ -29,7 +29,9 @@ public static class LobsyCvModelFactory
         string? workplaceAddress = null,
         double? distanceKm = null,
         bool hasUploadedOwnCv = false,
-        IReadOnlyList<DiplomaEvaluationSharedFact>? diplomaEvaluations = null)
+        IReadOnlyList<DiplomaEvaluationSharedFact>? diplomaEvaluations = null,
+        IReadOnlyList<string>? testHighlights = null,
+        DateTime? consentAcceptedAt = null)
     {
         // Home lat/lng retained in signature for call-site compatibility; never written to CV.
         _ = latitude;
@@ -60,13 +62,13 @@ public static class LobsyCvModelFactory
             ? (estimatedTravelMinutes ?? preferences.MaxTravelMinutes)
             : null;
 
-        // Candidate home address/coords are NEVER placed on the CV (privacy).
+        // Street and coordinates stay off the CV. The city is the location the candidate expects to see.
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
             PhoneNumber: phoneNumber,
             WhatsAppContactAllowed: whatsAppContactAllowed,
-            City: null,
+            City: HomeAddressCity.From(preferences.HomeAddress),
             Address: null,
             Latitude: null,
             Longitude: null,
@@ -99,7 +101,13 @@ public static class LobsyCvModelFactory
             ReachTravelMinutes: reachMinutes,
             DistanceKm: distanceKm is > 0 ? distanceKm : null,
             HasUploadedOwnCv: hasUploadedOwnCv,
-            DiplomaEvaluations: ToDiplomaPdfEntries(diplomaEvaluations));
+            DiplomaEvaluations: ToDiplomaPdfEntries(diplomaEvaluations),
+            Languages: FormatLanguages(preferences),
+            TestHighlights: testHighlights is { Count: > 0 } ? testHighlights : null,
+            ConsentAcceptedAt: consentAcceptedAt,
+            EducationDirection: string.IsNullOrWhiteSpace(preferences.EducationDirection)
+                ? null
+                : preferences.EducationDirection.Trim());
     }
 
     public static LobsyCvModel FromApplicationSnapshot(
@@ -549,6 +557,46 @@ public static class LobsyCvModelFactory
             return AvailabilityPayload.Empty;
         }
     }
+
+    private static IReadOnlyList<string>? FormatLanguages(CandidatePreferencesDto preferences)
+    {
+        var lines = new List<string>();
+        if (!string.IsNullOrWhiteSpace(preferences.DutchLevel))
+        {
+            lines.Add($"Nederlands ({preferences.DutchLevel.Trim()})");
+        }
+
+        foreach (var language in preferences.SpokenLanguages ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(language.Code)
+                || language.Code.Equals("nl", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var name = LanguageName(language.Code);
+            lines.Add(string.IsNullOrWhiteSpace(language.Level)
+                ? name
+                : $"{name} ({language.Level.Trim()})");
+        }
+
+        return lines.Count == 0 ? null : lines;
+    }
+
+    private static string LanguageName(string code) => code.Trim().ToLowerInvariant() switch
+    {
+        "en" => "Engels",
+        "de" => "Duits",
+        "fr" => "Frans",
+        "pl" => "Pools",
+        "ro" => "Roemeens",
+        "ar" => "Arabisch",
+        "tr" => "Turks",
+        "es" => "Spaans",
+        "uk" => "Oekraïens",
+        "it" => "Italiaans",
+        _ => code.Trim().ToUpperInvariant()
+    };
 
     private static IReadOnlyDictionary<string, string[]>? NormalizeSlots(
         IReadOnlyDictionary<string, string[]>? availability)

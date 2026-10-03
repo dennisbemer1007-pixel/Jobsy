@@ -424,6 +424,16 @@
             _payError = Culture["Tests.PaymentFailed"];
         }
 
+        if (AssessmentKindLabels.TryParse(TestKey, out var kind))
+        {
+            var canonical = AssessmentKindLabels.ToSlug(kind);
+            if (!string.Equals(TestKey, canonical, StringComparison.Ordinal))
+            {
+                Navigation.NavigateTo(AssessmentTestCatalog.DetailHref(kind), replace: true);
+                return;
+            }
+        }
+
         _def = AssessmentTestCatalog.TryGetByKey(TestKey);
         _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
         if (string.Equals(Buy, "1", StringComparison.Ordinal))
@@ -579,7 +589,13 @@
             : topCodes.Count == 1
                 ? $"{RiasecRanking.FormatTopEqualOrLabel(topCodes)} past het best"
                 : RiasecRanking.FormatTopEqualOrLabel(topCodes);
-        _headlineLead = Culture["Tests.CareerResultLead"];
+        var leadCode = topCodes.Count > 0
+            ? topCodes[0]
+            : RiasecRanking.Rank(
+                scores.Realistic, scores.Investigative, scores.Artistic,
+                scores.Social, scores.Enterprising, scores.Conventional)
+                .FirstOrDefault().Code;
+        _headlineLead = Culture[CareerResultLeadKey(leadCode)];
         AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social), scores.Social);
         AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional), scores.Conventional);
         AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising), scores.Enterprising);
@@ -639,6 +655,16 @@
         _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
+
+    private static string CareerResultLeadKey(string? code) => code switch
+    {
+        CareerTestCatalog.Realistic => "Tests.CareerResultLead.R",
+        CareerTestCatalog.Investigative => "Tests.CareerResultLead.I",
+        CareerTestCatalog.Artistic => "Tests.CareerResultLead.A",
+        CareerTestCatalog.Enterprising => "Tests.CareerResultLead.E",
+        CareerTestCatalog.Conventional => "Tests.CareerResultLead.C",
+        _ => "Tests.CareerResultLead.S"
+    };
 
     private void AddBar(string label, int? percent)
     {

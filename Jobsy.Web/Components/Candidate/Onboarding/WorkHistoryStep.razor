@@ -33,14 +33,23 @@
             <div class="ob-wizard__field-row">
                 <label>
                     @Culture["Profile.EmployerFrom"]
-                    <input type="month" value="@item.StartMonth"
-                           @onchange="e => SetJobStart.InvokeAsync((item, e.Value?.ToString()))" />
+                    <MonthYearInput Value="@item.StartMonth"
+                                    ValueChanged="value => SetJobStart.InvokeAsync((item, value))" />
                 </label>
-                <label>
-                    @Culture["Profile.EmployerTo"]
-                    <input type="month" value="@item.EndMonth"
-                           @onchange="e => SetJobEnd.InvokeAsync((item, e.Value?.ToString()))" />
+                <label class="ob-wizard__check">
+                    <input type="checkbox"
+                           checked="@string.IsNullOrWhiteSpace(item.EndMonth)"
+                           @onchange="e => SetCurrentJob(item, e.Value is true)" />
+                    @Culture["Profile.CurrentJob"]
                 </label>
+                @if (!string.IsNullOrWhiteSpace(item.EndMonth))
+                {
+                    <label>
+                        @Culture["Profile.EmployerTo"]
+                        <MonthYearInput Value="@item.EndMonth"
+                                        ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
+                    </label>
+                }
             </div>
         </article>
     }
@@ -61,4 +70,17 @@
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
 
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
+
+    private Task SetCurrentJob(CandidateEmployerHistory item, bool current)
+    {
+        if (current)
+        {
+            return SetJobEnd.InvokeAsync((item, null));
+        }
+
+        var end = string.IsNullOrWhiteSpace(item.StartMonth)
+            ? $"{DateTime.UtcNow:yyyy-MM}"
+            : item.StartMonth;
+        return SetJobEnd.InvokeAsync((item, end));
+    }
 }

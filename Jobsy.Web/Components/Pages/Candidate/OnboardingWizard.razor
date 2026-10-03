@@ -229,13 +229,15 @@
 
                         case 6:
                             <DreamJobStep Draft="Draft"
+                                          Young="@IsYoungCandidate"
                                           ChooseDream="ChooseDream"
+                                          ChooseTitle="ChooseDreamTitle"
                                           ChooseOwnDream="ChooseOwnDream"
                                           DreamKeyDown="DreamKeyDown" />
                             break;
 
                         case 7 when !Draft.HasConsent:
-                            <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" />
+                            <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
                             break;
 
                         case >= 7 and <= 10:
@@ -369,6 +371,12 @@
         : _step is >= 7 ? Culture["Onboarding.NextTest"]
         : Draft.FineTune && _step == 2 ? Culture["Onboarding.Done"]
         : Culture["Onboarding.Next"];
+    private void OnConsentChanged(bool value)
+    {
+        Draft.ConsentRequested = value;
+        StateHasChanged();
+    }
+
     private bool CanNext => _step switch
     {
         1 => !string.IsNullOrWhiteSpace(Draft.FirstName)
@@ -475,7 +483,7 @@
         Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
         Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
         Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
-        Draft.Transport = preferences.PreferredTransport is null ? "" : TransportLabels.Canonical(preferences.PreferredTransport);
+        Draft.Transport = TransportLabels.Normalize(preferences.PreferredTransport);
         Draft.Immediate = profile.AvailableFromDate is null;
         Draft.AvailableFrom = profile.AvailableFromDate;
         foreach (var preset in preferences.AvailabilityPresets.Where(AvailabilityPresetRules.IsKnown))
@@ -746,7 +754,7 @@
 
     private void SelectTransport(string transport)
     {
-        Draft.Transport = transport;
+        Draft.Transport = TransportLabels.Toggle(Draft.Transport, transport);
         ScheduleProfileSave();
     }
 
@@ -806,9 +814,15 @@
         ScheduleProfileSave();
     }
 
-    private void ChooseDream(DreamJob job)
+    private bool IsYoungCandidate => CandidateAge.IsYoung(Draft.BirthDate, DateOnly.FromDateTime(DateTime.Today));
+
+    private void ChooseDream(DreamJob job) => ChooseDreamTitle(job.TitleNl);
+
+    private void ChooseDreamTitle(string title)
     {
-        Draft.Dream = job.TitleNl;
+        var dream = (title ?? "").Trim();
+        if (dream.Length == 0) return;
+        Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
         ScheduleDreamSave();
     }

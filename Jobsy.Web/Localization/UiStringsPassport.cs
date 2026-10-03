@@ -41,7 +41,7 @@ public static class UiStringsPassport
         Add("Passport.StartedStamp",
             "GESTART {0}", "STARTED {0}", "START {0}", "ÎNCEPUT {0}", "بدأ {0}");
         Add("Passport.Layers",
-            "{0} van 5 lagen", "{0} of 5 layers", "{0} z 5 warstw", "{0} din 5 straturi", "{0} من 5 طبقات");
+            "{0} van {1} lagen", "{0} of {1} layers", "{0} z {1} warstw", "{0} din {1} straturi", "{0} من {1} طبقات");
         Add("Passport.LayersAria",
             "Profiel {0} procent compleet", "Profile {0} percent complete", "Profil kompletny w {0} procent", "Profil complet în proporție de {0} la sută", "الملف مكتمل بنسبة {0} بالمئة");
         Add("Passport.Fill",
@@ -206,6 +206,12 @@ public static class UiStringsPassport
         Add("Passport.Career.Open",
             "Mijn loopbaanplan", "My career plan", "Mój plan kariery", "Planul meu de carieră", "خطة مساري");
 
+        Add("Passport.Fit.Soon",
+            "Past deze baan? komt binnenkort. Tot die tijd blijft je paspoort van jou.",
+            "Does this job fit? is coming soon. Until then your passport stays yours.",
+            "Czy ta praca pasuje? pojawi się wkrótce. Do tego czasu paszport zostaje twój.",
+            "Se potrivește jobul? vine în curând. Până atunci pașaportul rămâne al tău.",
+            "هل تناسب هذه الوظيفة؟ قريباً. حتى ذلك الحين يبقى جوازك لك.");
         Add("Passport.Fit.Title",
             "Past deze baan bij mij?", "Does this job fit me?", "Czy ta praca do mnie pasuje?", "Mi se potrivește jobul?", "هل تناسبني هذه الوظيفة؟");
         Add("Passport.Fit.Subtitle",

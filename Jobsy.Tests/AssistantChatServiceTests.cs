@@ -2,6 +2,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
@@ -596,10 +597,26 @@ public class AssistantChatServiceTests
         return new JobsyDbContext(options);
     }
 
+    [Fact]
+    public async Task Candidate_how_to_hides_jobs_when_employers_are_off()
+    {
+        await using var db = CreateDb();
+        var sut = CreateSut(db, flags: new FixedFeatureFlags(employersEnabled: false));
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(Guid.NewGuid(), JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "Hoe werkt Lobsy?")],
+            CancellationToken.None);
+
+        Assert.Contains("paspoort", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("banenkaart", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("solliciteer", result.Reply, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static AssistantChatService CreateSut(
         JobsyDbContext db,
         StubMetrics? metrics = null,
-        StubSalesDashboard? sales = null)
+        StubSalesDashboard? sales = null,
+        IFeatureFlags? flags = null)
         => new(
             db,
             new StubHttpClientFactory(),
@@ -609,7 +626,7 @@ public class AssistantChatServiceTests
             new OpenAiEndpointResolver(
                 new StubIntegrationCredentials(),
                 Options.Create(new OpenAiOptions())),
-            new AlwaysOnFeatureFlags(),
+            flags ?? new AlwaysOnFeatureFlags(),
             NullLogger<AssistantChatService>.Instance);
 
     private sealed class StubHttpClientFactory : IHttpClientFactory

@@ -32,6 +32,11 @@ internal static class TestSaveErrors
             return InvalidAnswer();
         }
 
+        if (msg.Contains("Beantwoord alle", StringComparison.OrdinalIgnoreCase))
+        {
+            return new BadRequestObjectResult(new { code = "incomplete", message = msg });
+        }
+
         return new BadRequestObjectResult(new { code = "error", message = msg });
     }
 }

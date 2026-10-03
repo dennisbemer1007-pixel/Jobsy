@@ -8,7 +8,7 @@ var OFFLINE_URL = "/offline.html";
 var PRECACHE = [
     OFFLINE_URL,
     "/manifest.webmanifest?v=20260925-coral",
-    "/css/app.min.css?v=20261003-layout",
+    "/css/app.min.css?v=20261003-feedback-fields",
     "/js/app-core.js?v=20261003-shell",
     "/icons/icon-192.png?v=20260925-coral",
     "/icons/icon-512.png?v=20260925-coral",
