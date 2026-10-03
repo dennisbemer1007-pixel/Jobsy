@@ -39,6 +39,7 @@ public static class UiStringsScholen
         nl["School.Col.Class"] = "Klas";
         nl["School.Col.Level"] = "Niveau";
         nl["School.Col.Year"] = "Leerjaar";
+        nl["School.Col.QuestionSet"] = "Vragenlijst";
         nl["School.Col.Teacher"] = "Leraar";
         nl["School.Col.Codes"] = "Codes";
         nl["School.Col.Started"] = "Gestart";
@@ -50,17 +51,41 @@ public static class UiStringsScholen
         nl["School.Col.Status"] = "Status";
         nl["School.Col.LastActive"] = "Laatst actief";
 
+        nl["School.Level.VmboB"] = "Vmbo-b";
+        nl["School.Level.VmboK"] = "Vmbo-k";
+        nl["School.Level.VmboGt"] = "Vmbo-gt";
+        nl["School.Level.Mavo"] = "Mavo";
+        nl["School.Level.Havo"] = "Havo";
+        nl["School.Level.Vwo"] = "Vwo";
+        nl["School.Level.Mix"] = "Gemengd";
+        nl["School.Level.Anders"] = "Anders";
+        nl["School.Level.Groep78"] = "Groep 7/8";
+
         nl["School.Class.Title"] = "Klassen & codes";
         nl["School.Class.Lead"] = "Maak klassen aan, print de codelijst en beheer het testvenster.";
         nl["School.Class.New"] = "Nieuwe klas";
+        nl["School.Class.Edit"] = "Bewerken";
         nl["School.Class.Empty"] = "Nog geen klassen dit schooljaar.";
         nl["School.Class.NotFound"] = "Klas niet gevonden.";
         nl["School.Class.Field.Name"] = "Klasnaam";
+        nl["School.Class.Field.Kind"] = "Soort klas";
+        nl["School.Class.Kind.Primary"] = "Basisschool";
+        nl["School.Class.Kind.PrimaryHint"] = "Groep 7 of groep 8";
+        nl["School.Class.Kind.Secondary"] = "Middelbare school";
+        nl["School.Class.Kind.SecondaryHint"] = "Vmbo, mavo, havo, vwo";
+        nl["School.Class.Field.Group"] = "Groep";
+        nl["School.Class.Group.7"] = "Groep 7";
+        nl["School.Class.Group.8"] = "Groep 8";
         nl["School.Class.Field.Level"] = "Niveau";
         nl["School.Class.Field.Year"] = "Leerjaar";
         nl["School.Class.Field.Count"] = "Aantal leerlingen";
         nl["School.Class.Field.Teachers"] = "Leraar(en)";
         nl["School.Class.CodesNote"] = "Lobsy maakt voor elke leerling een code. Namen vul je zelf in op de geprinte lijst.";
+        nl["School.Class.SetNote.G78.Title"] = "Vragenlijst: Groep 7/8";
+        nl["School.Class.SetNote.G78.Body"] = "Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets.";
+        nl["School.Class.SetNote.Vo.Title"] = "Vragenlijst: Middelbare school";
+        nl["School.Class.SetNote.Vo.Body"] = "Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets.";
+        nl["School.Class.LevelLocked"] = "Soort klas ligt vast. Er zijn al leerlingen van deze klas begonnen. Wisselen tussen basisschool en middelbare school kan niet meer, want dan passen hun antwoorden niet bij de vragenlijst. Niveau en leerjaar binnen dezelfde soort kun je wel aanpassen.";
         nl["School.Class.Danger"] = "Klas verwijderen";
         nl["School.Class.Delete"] = "Klas verwijderen";
         nl["School.Class.DeleteConfirm"] = "Typ de klasnaam ter bevestiging";
@@ -260,6 +285,7 @@ public static class UiStringsScholen
 
         nl["Leraar.Detail.Title"] = "Codedetail";
         nl["Leraar.Detail.InProgress"] = "Deze code is nog bezig ({0}/{1}).";
+        nl["Leraar.Detail.ResultPending"] = "Bezig met afronden";
         nl["Leraar.Detail.CompletedOn"] = "klaar op";
         nl["Leraar.Detail.Questions"] = "vragen";
         nl["Leraar.Detail.Pdf"] = "PDF downloaden";
@@ -337,6 +363,8 @@ public static class UiStringsScholen
         nl["Leerling.Reis.Answers"] = "Jouw antwoord";
         nl["Leerling.Reis.Saved"] = "Bewaard";
         nl["Leerling.Reis.SaveFailed"] = "Niet bewaard — probeer opnieuw";
+        nl["Leerling.Reis.ResultPending"] = "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.";
+        nl["Leerling.Reis.Retry"] = "Probeer opnieuw";
         nl["Leerling.Reis.Prev"] = "Vorige";
         nl["Leerling.Reis.Bubble"] = "Goed bezig! Elke 6 vragen valt er een schaaltje af.";
         nl["Leerling.Reis.PlatesGone"] = "{0} van 10 eraf";

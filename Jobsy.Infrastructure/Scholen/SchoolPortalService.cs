@@ -36,7 +36,7 @@ public interface ISchoolPortalService
         CreateSchoolClassRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<(SchoolPortalClassDetailDto? Detail, string? Error)> UpdateClassAsync(
+    Task<(SchoolPortalClassDetailDto? Detail, string? Error, string? ErrorCode)> UpdateClassAsync(
         ClaimsPrincipal user,
         Guid classId,
         UpdateSchoolClassRequest request,
@@ -351,7 +351,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
             c.PupilCodes.Count(p => p.Status == PupilCodeStatus.Completed),
             c.ParentalInfoConfirmedAtUtc != null,
             c.TestWindow,
-            c.TestWindowClosesOn)).ToList();
+            c.TestWindowClosesOn,
+            c.QuestionSet)).ToList();
     }
 
     public async Task<SchoolPortalClassDetailDto?> GetClassAsync(
@@ -386,9 +387,10 @@ public sealed class SchoolPortalService : ISchoolPortalService
             return (null, nameError);
         }
 
-        if (request.Year is < 1 or > 6)
+        var yearError = SchoolLevelRules.ValidateYear(request.Level, request.Year);
+        if (yearError is not null)
         {
-            return (null, "Leerjaar moet 1–6 zijn.");
+            return (null, yearError);
         }
 
         if (request.PupilCount is < 1 or > MaxCodesPerClass)
@@ -424,6 +426,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
             SchoolId = schoolId,
             Name = name,
             Level = request.Level,
+            QuestionSet = SchoolLevelRules.QuestionSetFor(request.Level),
             Year = request.Year,
             SchoolYearStart = yearStart,
             PupilCount = request.PupilCount,
@@ -446,7 +449,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
         return (await MapClassDetailAsync(entity.Id, cancellationToken), null);
     }
 
-    public async Task<(SchoolPortalClassDetailDto? Detail, string? Error)> UpdateClassAsync(
+    public async Task<(SchoolPortalClassDetailDto? Detail, string? Error, string? ErrorCode)> UpdateClassAsync(
         ClaimsPrincipal user,
         Guid classId,
         UpdateSchoolClassRequest request,
@@ -454,18 +457,19 @@ public sealed class SchoolPortalService : ISchoolPortalService
     {
         if (!await _scope.CanManageClassAsync(user, classId, cancellationToken))
         {
-            return (null, "not_found");
+            return (null, "not_found", "not_found");
         }
 
         var nameError = ValidateClassName(request.ClassName);
         if (nameError is not null)
         {
-            return (null, nameError);
+            return (null, nameError, "validation");
         }
 
-        if (request.Year is < 1 or > 6)
+        var yearError = SchoolLevelRules.ValidateYear(request.Level, request.Year);
+        if (yearError is not null)
         {
-            return (null, "Leerjaar moet 1–6 zijn.");
+            return (null, yearError, "validation");
         }
 
         var entity = await _db.SchoolClasses
@@ -473,7 +477,15 @@ public sealed class SchoolPortalService : ISchoolPortalService
             .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
         if (entity is null)
         {
-            return (null, "not_found");
+            return (null, "not_found", "not_found");
+        }
+
+        if (SchoolLevelRules.StartedCodesBlockChange(entity.Level, request.Level)
+            && await ClassHasStartedCodesAsync(classId, cancellationToken))
+        {
+            return (null,
+                "Soort klas ligt vast: er zijn al leerlingen van deze klas begonnen.",
+                "level_locked");
         }
 
         var name = request.ClassName.Trim();
@@ -484,18 +496,19 @@ public sealed class SchoolPortalService : ISchoolPortalService
                      && c.Id != classId,
                 cancellationToken))
         {
-            return (null, "Er bestaat al een klas met deze naam in dit schooljaar.");
+            return (null, "Er bestaat al een klas met deze naam in dit schooljaar.", "validation");
         }
 
         var teacherIds = (request.TeacherUserIds ?? []).Distinct().ToList();
         if (teacherIds.Count > 0
             && !await TeachersBelongToSchoolAsync(entity.SchoolId, teacherIds, cancellationToken))
         {
-            return (null, "Een of meer leraren horen niet bij deze school.");
+            return (null, "Een of meer leraren horen niet bij deze school.", "validation");
         }
 
         entity.Name = name;
         entity.Level = request.Level;
+        entity.QuestionSet = SchoolLevelRules.QuestionSetFor(request.Level);
         entity.Year = request.Year;
 
         _db.TeacherClassAssignments.RemoveRange(entity.TeacherAssignments);
@@ -510,7 +523,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return (await MapClassDetailAsync(classId, cancellationToken), null);
+        return (await MapClassDetailAsync(classId, cancellationToken), null, null);
     }
 
     public async Task<(bool Ok, string? Error)> DeleteClassAsync(
@@ -1232,6 +1245,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
             .Select(MapCodeRow)
             .ToList();
 
+        var levelLocked = await ClassHasStartedCodesAsync(classId, cancellationToken);
+
         return new SchoolPortalClassDetailDto(
             entity.Id,
             entity.Name,
@@ -1248,8 +1263,22 @@ public sealed class SchoolPortalService : ISchoolPortalService
             entity.TestWindow,
             entity.TestWindowClosesOn,
             entity.School?.ProcessorAgreementSignedOn != null,
-            codes);
+            codes,
+            entity.QuestionSet,
+            levelLocked);
     }
+
+    /// <summary>
+    /// True when any code of the class has started (status, progress row, or result row).
+    /// Used for the level-lock rule — never loads answers.
+    /// </summary>
+    private Task<bool> ClassHasStartedCodesAsync(Guid classId, CancellationToken cancellationToken)
+        => _db.PupilCodes.AsNoTracking().AnyAsync(
+            c => c.SchoolClassId == classId
+                 && (c.Status != PupilCodeStatus.NotStarted
+                     || _db.PupilProgresses.Any(p => p.PupilCodeId == c.Id)
+                     || _db.PupilResults.Any(r => r.PupilCodeId == c.Id)),
+            cancellationToken);
 
     private SchoolPortalCodeRowDto MapCodeRow(PupilCode c)
     {

@@ -73,7 +73,12 @@ public class TeacherPortalUnitTests
         Assert.Equal("Maken", nl["Leraar.Riasec.R"]);
         Assert.Equal("Zichtbaar vanaf 5 afgeronde tests. Nu: {0}.", nl["Leraar.Group.Hidden"]);
         Assert.Equal("PDF downloaden", nl["Leraar.Detail.Pdf"]);
+        Assert.Equal("Bezig met afronden", nl["Leraar.Detail.ResultPending"]);
         Assert.Equal("Deel de kaartjes uit.", nl["Leraar.Material.Step1"]);
+        Assert.Equal(
+            "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.",
+            nl["Leerling.Reis.ResultPending"]);
+        Assert.Equal("Probeer opnieuw", nl["Leerling.Reis.Retry"]);
     }
 
     [Fact]
