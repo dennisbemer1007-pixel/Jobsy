@@ -2330,6 +2330,8 @@ public class VacanciesController : ControllerBase
             fitGate,
             fitWhyLine,
             rankLowerReason,
+            record.MinHoursPerWeek,
+            record.MaxHoursPerWeek,
             distanceKm);
     }
 

@@ -33,20 +33,33 @@ window.jobMap = (function () {
     let pinsFetchGen = 0;
     /** Localized map UI strings from VacancyDiscovery (nl fallbacks). */
     let uiLabels = {
-        vacanciesAtPlace: "{count} vacatures",
-        vacanciesAtPlaceWithPlace: "{count} vacatures · {place}",
+        vacanciesAtPlace: "{count} banen",
+        vacancyAtPlace: "1 baan",
+        vacanciesAtPlaceWithPlace: "{count} banen in {place}",
+        vacancyAtPlaceWithPlace: "1 baan in {place}",
         vacanciesInView: "{count} vacatures in beeld",
         prevVacancy: "Vorige vacature",
         nextVacancy: "Volgende vacature",
         vacancyOf: "Vacature {current} van {total}",
         close: "Sluiten",
         apply: "Solliciteer",
+        viewJob: "Bekijk deze baan",
+        whyPrefix: "Waarom:",
+        travelFromHome: "{minutes} min {mode} van huis",
+        save: "Bewaar",
+        saved: "Bewaard",
+        fitPercent: "{percent}% past bij jou",
+        fitGate: "Maak je paspoort af",
+        hoursSingle: "{hours} uur",
+        hoursRange: "{min}–{max} uur",
+        passportHref: "/profiel",
         featured: "Uitgelicht",
         unavailableTitle: "Vacature niet beschikbaar",
         unavailableHint: "Probeer het opnieuw of open de vacaturepagina.",
         retry: "Opnieuw proberen",
         view: "Bekijk",
-        pagerNav: "Vacatures op deze locatie"
+        pagerNav: "Vacatures op deze locatie",
+        canSave: false
     };
     let selectedClusterKey = null;
     let clusterUiState = null;
@@ -484,26 +497,139 @@ window.jobMap = (function () {
         });
     }
 
-    function buildPopupHtml(v) {
-        const hasImage = !!v.imageUrl;
-        const mediaClass = hasImage
-            ? "map-popup__media"
-            : "map-popup__media map-popup__media--logo-only";
+    function buildingIconHtml() {
+        return "<svg class=\"map-popup__co-icon\" viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" aria-hidden=\"true\" focusable=\"false\">" +
+            "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"1\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+            "<path d=\"M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+            "</svg>";
+    }
 
-        const badges = [];
-        if (v.highlighted) {
-            badges.push(
-                "<span class=\"map-popup__badge map-popup__badge--featured\">" +
-                escapeHtml(String(v.featuredLabel || uiLabels.featured || "Uitgelicht")) +
+    function sparkIconHtml() {
+        return "<svg class=\"map-popup__why-icon\" viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" aria-hidden=\"true\" focusable=\"false\">" +
+            "<path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"/>" +
+            "</svg>";
+    }
+
+    function heartIconHtml(filled) {
+        if (filled) {
+            return "<svg class=\"map-popup__heart-icon\" viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" aria-hidden=\"true\" focusable=\"false\">" +
+                "<path fill=\"currentColor\" d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z\"/>" +
+                "</svg>";
+        }
+        return "<svg class=\"map-popup__heart-icon\" viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" aria-hidden=\"true\" focusable=\"false\">" +
+            "<path fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z\"/>" +
+            "</svg>";
+    }
+
+    function hoursMetaText(v) {
+        const min = v.minHoursPerWeek != null ? Number(v.minHoursPerWeek) : NaN;
+        const max = v.maxHoursPerWeek != null ? Number(v.maxHoursPerWeek) : NaN;
+        const fmt = function (n) {
+            return Number.isInteger(n) ? String(n) : String(n).replace(".", ",");
+        };
+        if (Number.isFinite(min) && Number.isFinite(max)) {
+            if (min === max) {
+                return labelFormat(uiLabels.hoursSingle || "{hours} uur", { hours: fmt(min) });
+            }
+            return labelFormat(uiLabels.hoursRange || "{min}–{max} uur", { min: fmt(min), max: fmt(max) });
+        }
+        if (Number.isFinite(min)) {
+            return labelFormat(uiLabels.hoursSingle || "{hours} uur", { hours: fmt(min) });
+        }
+        if (Number.isFinite(max)) {
+            return labelFormat(uiLabels.hoursSingle || "{hours} uur", { hours: fmt(max) });
+        }
+        return "";
+    }
+
+    function metaRowHtml(v) {
+        const parts = [];
+        if (v.travelMinutes != null && v.travelMinutes !== "") {
+            const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+            parts.push(
+                "<span class=\"map-popup__meta-item map-popup__meta-item--travel\">" +
+                    "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\" focusable=\"false\">" +
+                        "<circle cx=\"6\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                        "<circle cx=\"18\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                        "<path d=\"M6 16l4-7h5l3 7M10 9 8.5 6H7M15 9l-3 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>" +
+                    "</svg>" +
+                    "<span>" + escapeHtml(String(v.travelMinutes)) + " min</span>" +
+                    "<span class=\"map-popup__meta-mode\" hidden>" + escapeHtml(mode) + "</span>" +
                 "</span>"
             );
         }
-        const badgesHtml = badges.length > 0
-            ? "<div class=\"map-popup__badges\">" + badges.join("") + "</div>"
-            : "";
+        const hours = hoursMetaText(v);
+        if (hours) {
+            parts.push(
+                "<span class=\"map-popup__meta-item\">" +
+                    "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\" focusable=\"false\">" +
+                        "<circle cx=\"12\" cy=\"12\" r=\"8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                        "<path d=\"M12 8v4l3 2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\"/>" +
+                    "</svg>" +
+                    "<span>" + escapeHtml(hours) + "</span></span>"
+            );
+        }
+        if (v.wageLabel) {
+            parts.push("<span class=\"map-popup__meta-item\">" + escapeHtml(String(v.wageLabel)) + "</span>");
+        } else if (v.wage != null && v.wage !== "") {
+            parts.push("<span class=\"map-popup__meta-item\">€ " + escapeHtml(formatWage(v.wage)) + "</span>");
+        }
+        if (!parts.length) {
+            return "";
+        }
+        return "<div class=\"map-popup__meta\">" + parts.join("") + "</div>";
+    }
 
+    function companyLineHtml(v, detailHref) {
+        if (v.offeredBy) {
+            return (
+                "<p class=\"map-popup__company map-popup__company--via\">" +
+                    buildingIconHtml() +
+                    "<span>" + escapeHtml(String(v.offeredBy)) + "</span>" +
+                "</p>"
+            );
+        }
+        const companyHref = v.companyHref ? String(v.companyHref) : detailHref;
+        return (
+            "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
+                (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
+                buildingIconHtml() +
+                "<b>" + escapeHtml(v.company || "") + "</b>" +
+            "</a>"
+        );
+    }
+
+    function whyLineHtml(v) {
+        if (!v.fitWhyLine) {
+            return "";
+        }
+        const prefix = uiLabels.whyPrefix || "Waarom:";
+        return (
+            "<p class=\"map-popup__why\">" +
+                sparkIconHtml() +
+                "<span>" + escapeHtml(prefix) + " " + escapeHtml(String(v.fitWhyLine)) + "</span>" +
+            "</p>"
+        );
+    }
+
+    function heartButtonHtml(v) {
+        const liked = !!v.liked;
+        const label = liked
+            ? (uiLabels.saved || "Bewaard")
+            : (uiLabels.save || "Bewaar");
+        return (
+            "<button type=\"button\" class=\"map-popup__heart" + (liked ? " is-saved" : "") + "\" " +
+                "data-save-job=\"" + escapeAttr(v.id) + "\" " +
+                "aria-pressed=\"" + (liked ? "true" : "false") + "\" " +
+                "aria-label=\"" + escapeAttr(label) + "\" title=\"" + escapeAttr(label) + "\">" +
+                heartIconHtml(liked) +
+            "</button>"
+        );
+    }
+
+    function buildPopupHtml(v) {
         let mediaInner = "";
-        let mediaClassFinal = mediaClass;
+        let mediaClassFinal = "map-popup__media";
         const photoSrc = v.imageUrl ? String(v.imageUrl) : "";
         const logoSrc = v.logoUrl ? String(v.logoUrl) : "";
         // Work-type SVG placeholders look empty next to a real company logo — prefer the logo.
@@ -514,11 +640,12 @@ window.jobMap = (function () {
                 : "";
             mediaInner +=
                 "<img class=\"map-popup__photo\" src=\"" + escapeAttr(photoSrc) +
-                "\" alt=\"\" width=\"96\" height=\"152\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\"" + fb + " />";
+                "\" alt=\"\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\"" + fb + " />";
         } else if (logoSrc) {
+            mediaClassFinal = "map-popup__media map-popup__media--logo-only";
             mediaInner +=
                 "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
-                escapeAttr(v.company) + " logo\" width=\"96\" height=\"96\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
+                escapeAttr(v.company) + " logo\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
         } else {
             mediaClassFinal = "map-popup__media map-popup__media--empty";
             mediaInner =
@@ -528,50 +655,29 @@ window.jobMap = (function () {
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
-        const applyHref = detailHref + "#apply";
-        const companyHref = v.companyHref
-            ? String(v.companyHref)
-            : detailHref;
-        const wage = wageInlineHtml(v);
-        const applyLabel = escapeHtml(uiLabels.apply || "Solliciteer");
+        const viewLabel = escapeHtml(uiLabels.viewJob || "Bekijk deze baan");
 
         return (
-            "<div class=\"map-popup\">" +
-                typeChipHtml(v) +
-                wageInfoHtml(v) +
+            "<div class=\"map-popup map-popup--calm\">" +
                 "<div class=\"map-popup__main\">" +
-                    badgesHtml +
                     "<a class=\"" + mediaClassFinal + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         mediaInner +
                     "</a>" +
                     "<div class=\"map-popup__body\">" +
-                        "<div class=\"map-popup__header\">" +
-                            "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                                escapeHtml(v.title || vacancyFallbackTitle()) +
-                            "</a>" +
-                            (v.address
-                                ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
-                                : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
-                            travelLineHtml(v) +
-                            matchLineHtml(v) +
-                            cultureFitHtml(v) +
-                            pushBomStatusHtml(v) +
-                        "</div>" +
-                        (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
-                        specsHtml(v) +
-                        "<div class=\"map-popup__footer\">" +
-                            "<div class=\"map-popup__footer-meta\">" +
-                                "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
-                                    (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
-                                    escapeHtml(v.company || "") +
-                                "</a>" +
-                                (v.offeredBy
-                                    ? "<p class=\"map-popup__offered-by\">" + escapeHtml(String(v.offeredBy)) + "</p>"
-                                    : "") +
-                            "</div>" +
-                            "<a class=\"map-popup__apply map-popup__cta\" href=\"" + applyHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" + applyLabel + "</a>" +
-                        "</div>" +
+                        "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                            escapeHtml(v.title || vacancyFallbackTitle()) +
+                        "</a>" +
+                        companyLineHtml(v, detailHref) +
+                        matchLineHtml(v) +
+                        metaRowHtml(v) +
                     "</div>" +
+                "</div>" +
+                whyLineHtml(v) +
+                "<div class=\"map-popup__actions\">" +
+                    "<a class=\"map-popup__view map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                        viewLabel + " <span aria-hidden=\"true\">›</span>" +
+                    "</a>" +
+                    heartButtonHtml(v) +
                 "</div>" +
             "</div>"
         );
@@ -579,9 +685,13 @@ window.jobMap = (function () {
 
     function matchLineHtml(v) {
         if (v.fitGate === "closed") {
+            const href = String(uiLabels.passportHref || "/profiel");
+            const label = String(v.fitGateLabel || uiLabels.fitGate || "Maak je paspoort af");
             return (
                 "<p class=\"map-popup__match kb-fit kb-fit--gate\">" +
-                    escapeHtml(String(v.fitGateLabel || "Maak je paspoort af")) +
+                    "<a class=\"map-popup__gate-link\" href=\"" + escapeAttr(href) + "\">" +
+                        escapeHtml(label) +
+                    "</a>" +
                 "</p>"
             );
         }
@@ -589,23 +699,15 @@ window.jobMap = (function () {
             return "";
         }
         const band = String(v.matchColorBand || "orange");
-        const why = v.fitWhyLine
-            ? "<p class=\"map-popup__why kb-why\"><span class=\"kb-why__text\">" +
-                escapeHtml(String(v.fitWhyLine)) +
-              "</span></p>"
-            : "";
-        const rank = v.rankLowerReason
-            ? "<p class=\"map-popup__rank-lower\">" + escapeHtml(String(v.rankLowerReason)) + "</p>"
-            : "";
+        const text = labelFormat(uiLabels.fitPercent || "{percent}% past bij jou", {
+            percent: String(v.matchPercent)
+        });
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
-                "<span class=\"match-score match-score--" + escapeHtml(band) + "\">" +
-                    escapeHtml(String(v.matchPercent)) + "% past bij jou" +
+                "<span class=\"map-popup__fit-pill match-score--" + escapeHtml(band) + "\">" +
+                    escapeHtml(text) +
                 "</span>" +
-                "<button type=\"button\" class=\"map-popup__match-help competency-help\" " +
-                    "data-job-id=\"" + escapeAttr(v.id) + "\" " +
-                    "title=\"Waarom past dit?\" aria-label=\"Waarom past dit?\">?</button>" +
-            "</p>" + why + rank
+            "</p>"
         );
     }
 
@@ -694,30 +796,69 @@ window.jobMap = (function () {
         return "";
     }
 
+    function clusterTitleText(total, place) {
+        const n = Math.max(0, Number(total) || 0);
+        if (n === 1) {
+            return place
+                ? labelFormat(uiLabels.vacancyAtPlaceWithPlace || "1 baan in {place}", { place: place })
+                : (uiLabels.vacancyAtPlace || "1 baan");
+        }
+        return place
+            ? labelFormat(uiLabels.vacanciesAtPlaceWithPlace, { count: n, place: place })
+            : labelFormat(uiLabels.vacanciesAtPlace, { count: n });
+    }
+
+    function travelFromHomeText(job) {
+        if (!job || job.travelMinutes == null || job.travelMinutes === "") {
+            return "";
+        }
+        const mode = String(job.transportLabel || transportVerb(job.transport || (travelOptions && travelOptions.transport)) || travelFallbackVerb());
+        return labelFormat(uiLabels.travelFromHome || "{minutes} min {mode} van huis", {
+            minutes: String(job.travelMinutes),
+            mode: mode
+        });
+    }
+
+    function buildClusterDotsHtml(total, current) {
+        const n = Math.max(1, Number(total) || 1);
+        const cur = Math.min(Math.max(1, Number(current) || 1), n);
+        if (n <= 1) {
+            return "<div class=\"map-cluster-card__dots\" data-cluster-dots hidden></div>";
+        }
+        let html = "<div class=\"map-cluster-card__dots\" data-cluster-dots aria-hidden=\"true\">";
+        for (let i = 1; i <= n; i++) {
+            html += "<i" + (i === cur ? " class=\"is-on\"" : "") + "></i>";
+        }
+        return html + "</div>";
+    }
+
     function buildClusterChromeHtml(total, place) {
-        const title = place
-            ? labelFormat(uiLabels.vacanciesAtPlaceWithPlace, { count: total, place: place })
-            : labelFormat(uiLabels.vacanciesAtPlace, { count: total });
+        const title = clusterTitleText(total, place);
+        const pagerHidden = total <= 1 ? " hidden" : "";
         return (
             "<div class=\"map-cluster-card\" data-cluster-card>" +
+                "<div class=\"map-cluster-card__grab\" aria-hidden=\"true\"></div>" +
                 "<div class=\"map-cluster-card__chrome\">" +
-                    "<div class=\"map-cluster-card__row\">" +
+                    "<div class=\"map-cluster-card__heading\">" +
                         "<span class=\"map-cluster-card__title\" data-cluster-title>" + escapeHtml(title) + "</span>" +
-                        "<div class=\"map-cluster-card__pager\" role=\"navigation\" aria-label=\"" +
-                            escapeAttr(uiLabels.pagerNav) + "\">" +
-                            "<button type=\"button\" class=\"map-cluster-card__nav\" data-cluster-prev aria-label=\"" +
-                                escapeAttr(uiLabels.prevVacancy) + "\">‹</button>" +
-                            "<span class=\"map-cluster-card__counter\" data-cluster-counter aria-live=\"polite\">1 / " +
-                                total + "</span>" +
-                            "<button type=\"button\" class=\"map-cluster-card__nav\" data-cluster-next aria-label=\"" +
-                                escapeAttr(uiLabels.nextVacancy) + "\">›</button>" +
-                            "<button type=\"button\" class=\"map-cluster-card__close\" data-cluster-close aria-label=\"" +
-                                escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>" +
-                        "</div>" +
+                        "<p class=\"map-cluster-card__sub\" data-cluster-travel></p>" +
                     "</div>" +
-                    "<div class=\"map-cluster-card__progress\" aria-hidden=\"true\"><i data-cluster-progress></i></div>" +
+                    "<div class=\"map-cluster-card__pager\" role=\"navigation\" aria-label=\"" +
+                        escapeAttr(uiLabels.pagerNav) + "\"" + pagerHidden + ">" +
+                        "<button type=\"button\" class=\"map-cluster-card__nav\" data-cluster-prev aria-label=\"" +
+                            escapeAttr(uiLabels.prevVacancy) + "\">‹</button>" +
+                        "<span class=\"map-cluster-card__counter\" data-cluster-counter aria-live=\"polite\">1 / " +
+                            total + "</span>" +
+                        "<button type=\"button\" class=\"map-cluster-card__nav\" data-cluster-next aria-label=\"" +
+                            escapeAttr(uiLabels.nextVacancy) + "\">›</button>" +
+                    "</div>" +
+                    "<button type=\"button\" class=\"map-cluster-card__close\" data-cluster-close aria-label=\"" +
+                        escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>" +
                 "</div>" +
-                "<div class=\"map-cluster-card__viewport\" data-cluster-viewport></div>" +
+                "<div class=\"map-cluster-card__body\" data-cluster-body>" +
+                    "<div class=\"map-cluster-card__viewport\" data-cluster-viewport></div>" +
+                    buildClusterDotsHtml(total, 1) +
+                "</div>" +
             "</div>"
         );
     }
@@ -822,10 +963,12 @@ window.jobMap = (function () {
         const total = state.pageCount;
         const current = state.page;
         const counter = state.root.querySelector("[data-cluster-counter]");
-        const progress = state.root.querySelector("[data-cluster-progress]");
         const prev = state.root.querySelector("[data-cluster-prev]");
         const next = state.root.querySelector("[data-cluster-next]");
         const title = state.root.querySelector("[data-cluster-title]");
+        const travel = state.root.querySelector("[data-cluster-travel]");
+        const dots = state.root.querySelector("[data-cluster-dots]");
+        const pager = state.root.querySelector(".map-cluster-card__pager");
         if (counter) {
             counter.textContent = current + " / " + total;
             counter.setAttribute("aria-label", labelFormat(uiLabels.vacancyOf, {
@@ -833,8 +976,12 @@ window.jobMap = (function () {
                 total: total
             }));
         }
-        if (progress) {
-            progress.style.width = Math.round((current / Math.max(1, total)) * 100) + "%";
+        if (pager) {
+            if (total <= 1) {
+                pager.setAttribute("hidden", "");
+            } else {
+                pager.removeAttribute("hidden");
+            }
         }
         if (prev) {
             if (current <= 1) {
@@ -851,11 +998,109 @@ window.jobMap = (function () {
             }
         }
         if (title) {
-            const place = clusterPlaceLabel(state.jobs);
-            title.textContent = place
-                ? labelFormat(uiLabels.vacanciesAtPlaceWithPlace, { count: total, place: place })
-                : labelFormat(uiLabels.vacanciesAtPlace, { count: total });
+            title.textContent = clusterTitleText(total, clusterPlaceLabel(state.jobs));
         }
+        if (travel) {
+            const job = state.jobs && state.jobs[current - 1];
+            const text = travelFromHomeText(job);
+            travel.textContent = text;
+            travel.hidden = !text;
+        }
+        if (dots) {
+            if (total <= 1) {
+                dots.setAttribute("hidden", "");
+                dots.innerHTML = "";
+            } else {
+                dots.removeAttribute("hidden");
+                let html = "";
+                for (let i = 1; i <= total; i++) {
+                    html += "<i" + (i === current ? " class=\"is-on\"" : "") + "></i>";
+                }
+                dots.innerHTML = html;
+            }
+        }
+        syncSheetChromeOffset();
+    }
+
+    function syncSheetChromeOffset() {
+        if (!map) {
+            return;
+        }
+        const pane = map.getContainer().closest(".map-pane") || map.getContainer();
+        if (!pane) {
+            return;
+        }
+        const sheet = pane.querySelector(".map-cluster-sheet");
+        const h = sheet && sheet.offsetParent !== null ? sheet.offsetHeight : 0;
+        pane.style.setProperty("--map-cluster-sheet-h", h + "px");
+    }
+
+    function setHeartButtonState(btn, liked) {
+        if (!btn) {
+            return;
+        }
+        const on = !!liked;
+        btn.classList.toggle("is-saved", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        const label = on ? (uiLabels.saved || "Bewaard") : (uiLabels.save || "Bewaar");
+        btn.setAttribute("aria-label", label);
+        btn.setAttribute("title", label);
+        btn.innerHTML = heartIconHtml(on);
+    }
+
+    function fetchLikedStatus(id) {
+        if (!id || !uiLabels.canSave) {
+            return Promise.resolve(false);
+        }
+        return fetch("/api/vacancies/" + encodeURIComponent(String(id)) + "/like", {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        }).then(function (res) {
+            if (!res.ok) {
+                return false;
+            }
+            return res.json().then(function (body) {
+                return !!(body && (body.liked === true || body.Liked === true));
+            }).catch(function () { return false; });
+        }).catch(function () { return false; });
+    }
+
+    function toggleLiked(id, nextLiked) {
+        const url = "/api/vacancies/" + encodeURIComponent(String(id)) + "/like";
+        return fetch(url, {
+            method: nextLiked ? "POST" : "DELETE",
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        }).then(function (res) {
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = "/login?returnUrl=" +
+                    encodeURIComponent("/vacancies/" + String(id));
+                return null;
+            }
+            if (!res.ok) {
+                throw new Error("like-failed");
+            }
+            return res.json().then(function (body) {
+                return !!(body && (body.liked === true || body.Liked === true));
+            });
+        });
+    }
+
+    function rememberJobLiked(id, liked, childMarkers) {
+        if (!id || !clusterUiState || !clusterUiState.jobs) {
+            return;
+        }
+        clusterUiState.jobs.forEach(function (job, idx) {
+            if (job && String(job.id) === String(id)) {
+                clusterUiState.jobs[idx] = Object.assign({}, job, { liked: !!liked });
+            }
+        });
+        (childMarkers || []).forEach(function (marker) {
+            if (marker.options && marker.options.jobData &&
+                String(marker.options.jobData.id) === String(id)) {
+                marker.options.jobData = Object.assign({}, marker.options.jobData, { liked: !!liked });
+            }
+        });
     }
 
     function bindClusterSlideInteractions(root, childMarkers) {
@@ -893,6 +1138,47 @@ window.jobMap = (function () {
                         }
                     });
                 }
+            });
+        });
+        root.querySelectorAll("[data-save-job]").forEach(function (btn) {
+            if (btn.dataset.boundSave) {
+                return;
+            }
+            btn.dataset.boundSave = "1";
+            const id = btn.getAttribute("data-save-job");
+            if (uiLabels.canSave) {
+                fetchLikedStatus(id).then(function (liked) {
+                    if (!btn.isConnected) {
+                        return;
+                    }
+                    setHeartButtonState(btn, liked);
+                    rememberJobLiked(id, liked, childMarkers);
+                });
+            }
+            btn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                if (!uiLabels.canSave) {
+                    window.location.href = "/login?returnUrl=" +
+                        encodeURIComponent("/vacancies/" + String(id || ""));
+                    return;
+                }
+                if (btn.dataset.saveBusy === "1") {
+                    return;
+                }
+                const next = btn.getAttribute("aria-pressed") !== "true";
+                btn.dataset.saveBusy = "1";
+                setHeartButtonState(btn, next);
+                toggleLiked(id, next).then(function (liked) {
+                    if (liked == null) {
+                        return;
+                    }
+                    setHeartButtonState(btn, liked);
+                    rememberJobLiked(id, liked, childMarkers);
+                }).catch(function () {
+                    setHeartButtonState(btn, !next);
+                }).finally(function () {
+                    delete btn.dataset.saveBusy;
+                });
             });
         });
     }
@@ -1164,10 +1450,10 @@ window.jobMap = (function () {
                     type: "circle",
                     source: sourceId,
                     paint: {
-                        "circle-color": "#0f5f2e",
+                        "circle-color": "#f54a1b",
                         "circle-radius": 25,
-                        "circle-opacity": 0.30,
-                        "circle-blur": 0.4
+                        "circle-opacity": 0.28,
+                        "circle-blur": 0.45
                     }
                 });
             }
@@ -1177,7 +1463,7 @@ window.jobMap = (function () {
                     type: "circle",
                     source: sourceId,
                     paint: {
-                        "circle-color": "#0f5f2e",
+                        "circle-color": "#f54a1b",
                         "circle-radius": 18,
                         "circle-stroke-width": 2,
                         "circle-stroke-color": "#ffffff"
@@ -1328,6 +1614,7 @@ window.jobMap = (function () {
         clearSelectedCluster();
         setClusterOpenChrome(false);
         unbindClusterEscape();
+        syncSheetChromeOffset();
     }
 
     function closePopupsIfClickOutside(ev) {
@@ -1604,26 +1891,21 @@ window.jobMap = (function () {
     }
 
     function skeletonPopupHtml(pin) {
-        // Same structure/size as buildPopupHtml so the popup never jumps when filled.
+        // Same structure as buildPopupHtml so the sheet does not jump when filled.
         return (
-            "<div class=\"map-popup map-popup--loading map-popup--skeleton\" aria-busy=\"true\">" +
+            "<div class=\"map-popup map-popup--calm map-popup--loading map-popup--skeleton\" aria-busy=\"true\">" +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"map-popup__media map-popup__media--logo-only map-popup__shimmer\" aria-hidden=\"true\"></div>" +
                     "<div class=\"map-popup__body\">" +
-                        "<div class=\"map-popup__header\">" +
-                            "<p class=\"map-popup__title map-popup__shimmer-line\">&nbsp;</p>" +
-                            "<p class=\"map-popup__address map-popup__shimmer-line\">&nbsp;</p>" +
-                            "<p class=\"map-popup__travel map-popup__shimmer-line\">&nbsp;</p>" +
-                        "</div>" +
-                        "<p class=\"map-popup__wage map-popup__shimmer-line\">&nbsp;</p>" +
-                        "<div class=\"map-popup__specs map-popup__specs--empty\" aria-hidden=\"true\"></div>" +
-                        "<div class=\"map-popup__footer\">" +
-                            "<div class=\"map-popup__footer-meta\">" +
-                                "<p class=\"map-popup__company map-popup__shimmer-line\">&nbsp;</p>" +
-                            "</div>" +
-                            "<span class=\"map-popup__apply map-popup__shimmer-line\" aria-hidden=\"true\">&nbsp;</span>" +
-                        "</div>" +
+                        "<p class=\"map-popup__title map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<p class=\"map-popup__company map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<p class=\"map-popup__match map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<div class=\"map-popup__meta map-popup__shimmer-line\">&nbsp;</div>" +
                     "</div>" +
+                "</div>" +
+                "<div class=\"map-popup__actions\">" +
+                    "<span class=\"map-popup__view map-popup__shimmer-line\" aria-hidden=\"true\">&nbsp;</span>" +
+                    "<span class=\"map-popup__heart map-popup__shimmer-line\" aria-hidden=\"true\">&nbsp;</span>" +
                 "</div>" +
             "</div>"
         );
@@ -1631,7 +1913,7 @@ window.jobMap = (function () {
 
     function unavailablePopupHtml(id) {
         return (
-            "<div class=\"map-popup\">" +
+            "<div class=\"map-popup map-popup--calm\">" +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"map-popup__media map-popup__media--empty\" aria-hidden=\"true\">" +
                         "<span class=\"map-popup__media-empty\">" +
@@ -1640,14 +1922,15 @@ window.jobMap = (function () {
                     "</div>" +
                     "<div class=\"map-popup__body\">" +
                         "<p class=\"map-popup__title\">" + escapeHtml(uiLabels.unavailableTitle) + "</p>" +
-                        "<p class=\"map-popup__address\">" + escapeHtml(uiLabels.unavailableHint) + "</p>" +
-                        "<div class=\"map-popup__footer\">" +
-                            "<button type=\"button\" class=\"map-popup__apply\" data-retry-card=\"" +
-                                escapeAttr(String(id || "")) + "\">" + escapeHtml(uiLabels.retry) + "</button>" +
-                            "<a class=\"map-popup__company map-popup__cta\" href=\"/vacancies/" +
-                                encodeURIComponent(String(id || "")) + "\">" + escapeHtml(uiLabels.view) + "</a>" +
-                        "</div>" +
+                        "<p class=\"map-popup__company\">" + escapeHtml(uiLabels.unavailableHint) + "</p>" +
                     "</div>" +
+                "</div>" +
+                "<div class=\"map-popup__actions\">" +
+                    "<button type=\"button\" class=\"map-popup__view\" data-retry-card=\"" +
+                        escapeAttr(String(id || "")) + "\">" + escapeHtml(uiLabels.retry) + "</button>" +
+                    "<a class=\"map-popup__heart map-popup__cta\" href=\"/vacancies/" +
+                        encodeURIComponent(String(id || "")) + "\" aria-label=\"" +
+                        escapeAttr(uiLabels.view) + "\">" + escapeHtml(uiLabels.view) + "</a>" +
                 "</div>" +
             "</div>"
         );
@@ -1681,6 +1964,9 @@ window.jobMap = (function () {
             fitWhyLine: card.fitWhyLine || pin.fitWhyLine || null,
             rankLowerReason: card.rankLowerReason || pin.rankLowerReason || null,
             wage: card.hourlyWage != null && card.wageVisible !== false ? card.hourlyWage : null,
+            minHoursPerWeek: card.minHoursPerWeek != null ? card.minHoursPerWeek : pin.minHoursPerWeek,
+            maxHoursPerWeek: card.maxHoursPerWeek != null ? card.maxHoursPerWeek : pin.maxHoursPerWeek,
+            liked: pin.liked === true,
             _detailLoaded: true
         });
     }
@@ -2418,11 +2704,11 @@ window.jobMap = (function () {
                     "fill-color": colors.fill,
                     "fill-opacity": [
                         "match", ["get", "minutes"],
-                        10, 0.22,
-                        20, 0.14,
-                        30, 0.09,
-                        45, 0.06,
-                        0.10
+                        10, 0.12,
+                        20, 0.09,
+                        30, 0.06,
+                        45, 0.05,
+                        0.08
                     ]
                 }
             }, beforeId);
@@ -2437,8 +2723,8 @@ window.jobMap = (function () {
                     "line-width": [
                         "case",
                         ["==", ["get", "chosen"], 1],
-                        10,
-                        7
+                        4.5,
+                        3
                     ],
                     "line-opacity": 0.85
                 }
@@ -2454,14 +2740,14 @@ window.jobMap = (function () {
                     "line-width": [
                         "case",
                         ["==", ["get", "chosen"], 1],
-                        5.5,
-                        3.5
+                        2.5,
+                        1.5
                     ],
                     "line-opacity": 1,
                     "line-dasharray": [
                         "case",
                         [">=", ["get", "minutes"], 30],
-                        ["literal", [1.2, 1.6]],
+                        ["literal", [2, 2]],
                         ["literal", [1, 0]]
                     ]
                 }
@@ -3501,6 +3787,7 @@ window.jobMap = (function () {
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
         if (options && options.labels && typeof options.labels === "object") {
             uiLabels = Object.assign({}, uiLabels, options.labels);
+            uiLabels.canSave = options.labels.canSave === true || options.labels.canSave === "true";
         }
         normalizeTravelOptions(options && options.travel);
         highlightSeed = options && Number.isFinite(Number(options.highlightSeed))
