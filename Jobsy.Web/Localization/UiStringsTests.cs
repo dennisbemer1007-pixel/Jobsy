@@ -153,7 +153,7 @@ public static class UiStringsTests
         Add("Deep.Done.Bubble", "Voel je dat? Nu ken ik je echt.", "Feel that? Now I really know you.", "Feel that? Now I really know ty.", "Feel that? Now I really know you.", "Feel that? لاw I really know you.");
         Add("Deep.Offer.Eyebrow", "De bodem · uitgebreide test", "The bottom · extended test", "The dno · extended test", "The fund · extended test", "The القاع · extended test");
         Add("Deep.Offer.Title", "Duik tot de bodem", "Dive to the bottom", "Zanurkuj na dno", "Scufundă-te până la fund", "اغص إلى القاع");
-        Add("Deep.Offer.Lead", "{0} vragen over {1}. Daarna krijg je een rapport, helemaal over jou.", "{0} questions about {1}. Then you get a report, all about you.", "{0} pytania about {1}. Then ty get a raport, all about ty.", "{0} întrebări about {1}. Then you get a raport, all about you.", "{0} أسئلة about {1}. Then you get a تقرير, all about you.");
+        Add("Deep.Offer.Lead", "{0} vragen in de {1}. Daarna krijg je een rapport, helemaal over jou.", "{0} questions in the {1}. Then you get a report, all about you.", "{0} pytań w teście „{1}”. Potem dostajesz raport, cały o tobie.", "{0} întrebări în testul „{1}”. Apoi primești un raport, numai despre tine.", "{0} سؤالًا في اختبار «{1}». بعدها تحصل على تقرير عنك بالكامل.");
         Add("Deep.Offer.WhatTitle", "Wat krijg je?", "What do you get?", "What do ty get?", "What do you get?", "‏What do you get?");
         Add("Deep.Offer.Sample", "Bekijk eerst een voorbeeld", "View a sample first", "View a sample first ·", "View a sample first", "‏View a sample first");
         Add("Deep.Offer.TileMin", "± {0} minuten", "± {0} minutes", "± {0} minuty", "± {0} minute", "± {0} دقائق");
