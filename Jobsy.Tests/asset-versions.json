@@ -200,11 +200,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "ce6b0add9d27f3f00304d7896355124d006d9dd4d7e2e6dc84cdefa500ff7e7a",
+    "sha256": "59f4b2415c43556c0527217e8b44ca701e82fdfd7be11ad54f260b5c9fcee3f3",
     "v": "20261003-shell"
   },
   "service-worker.published.js": {
-    "sha256": "c8e644fa0a32fa6b79b3646d393ae3e964bbff3c747672507b88bb00ec10431d",
+    "sha256": "1be3faccf3fcf8f840d143de0668573265237e75ad90b4863925ce7197738242",
     "v": "20261003-shell"
   }
 }
