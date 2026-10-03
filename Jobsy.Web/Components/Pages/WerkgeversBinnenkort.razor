@@ -17,8 +17,8 @@
 
 <section class="pub-section" aria-labelledby="wg-soon-title">
     <header class="pp-doc__hero">
-        <h1 id="wg-soon-title" class="pp-doc__title">@Culture["WgSoon.Title"]</h1>
-        <p class="pp-doc__lead">@Culture["WgSoon.Lead"]</p>
+        <h1 id="wg-soon-title" class="pp-doc__title">@Culture[_forCandidate ? "WgSoon.CandidateTitle" : "WgSoon.Title"]</h1>
+        <p class="pp-doc__lead">@Culture[_forCandidate ? "WgSoon.CandidateLead" : "WgSoon.Lead"]</p>
     </header>
     <p class="inline-actions">
         <a class="pub-btn pub-btn--primary" href="/">@Culture["WgSoon.CtaHome"]</a>
@@ -31,10 +31,16 @@
 
 @code {
     private string? _candidateHome;
+    private bool _forCandidate;
 
     protected override async Task OnInitializedAsync()
     {
-        var user = HttpContextAccessor.HttpContext?.User;
+        var http = HttpContextAccessor.HttpContext;
+        var voor = http?.Request.Query["voor"].ToString();
+        var user = http?.User;
+        _forCandidate = string.Equals(voor, "kandidaat", StringComparison.OrdinalIgnoreCase)
+            || (user?.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate));
         if (user?.Identity?.IsAuthenticated != true
             || !RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
