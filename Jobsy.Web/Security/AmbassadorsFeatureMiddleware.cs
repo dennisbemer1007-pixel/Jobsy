@@ -1,4 +1,4 @@
-using Jobsy.Core.Interfaces;
+using Jobsy.Core.Features;
 using Jobsy.Core.Sales;
 using Jobsy.Web.Navigation;
 using Microsoft.AspNetCore.Authentication;
@@ -50,9 +50,11 @@ public sealed class AmbassadorsFeatureMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var path = context.Request.Path.Value ?? "";
-        var features = context.RequestServices.GetService<IPlatformFeatureService>();
-        var enabled = features is null
-            || await AmbassadorsFeatureGate.IsEnabledAsync(features, context.RequestAborted);
+        var features = context.RequestServices.GetService<IFeatureFlags>();
+        // Fail closed. IPlatformFeatureService is not registered in the web host, so a null
+        // lookup used to leave the ambassador surfaces open.
+        var enabled = features is not null
+            && await AmbassadorsFeatureGate.IsEnabledAsync(features, context.RequestAborted);
 
         if (!enabled)
         {

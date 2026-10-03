@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 
 namespace Jobsy.Core.Sales;
@@ -11,6 +12,14 @@ public static class AmbassadorsFeatureGate
 
     public static async Task<bool> IsEnabledAsync(
         IPlatformFeatureService features,
+        CancellationToken cancellationToken = default)
+    {
+        var snap = await features.GetAsync(cancellationToken);
+        return snap.AmbassadorsEnabled;
+    }
+
+    public static async Task<bool> IsEnabledAsync(
+        IFeatureFlags features,
         CancellationToken cancellationToken = default)
     {
         var snap = await features.GetAsync(cancellationToken);

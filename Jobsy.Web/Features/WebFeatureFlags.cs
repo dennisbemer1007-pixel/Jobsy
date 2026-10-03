@@ -57,7 +57,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.PassportPartnersEnabled ?? false,
                 dto?.PassportPdfV2Enabled ?? false,
                 dto?.PhoneVerificationEnabled ?? false,
-                dto?.SchoolsEnabled ?? false);
+                dto?.SchoolsEnabled ?? false,
+                dto?.AmbassadorsEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -100,5 +101,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("schoolsEnabled")]
         public bool SchoolsEnabled { get; set; }
+
+        [JsonPropertyName("ambassadorsEnabled")]
+        public bool AmbassadorsEnabled { get; set; }
     }
 }
