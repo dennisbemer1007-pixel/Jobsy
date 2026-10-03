@@ -1,6 +1,7 @@
 using Jobsy.Core.Rules;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
+using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -91,6 +92,7 @@ public sealed class CandidateProfileEditor : IDisposable
     public HashSet<string> SelectedRoles { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedEducations { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public string EducationDirection { get; set; } = "";
     public HashSet<string> Availability { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Employers { get; } = [];
     public List<CandidateCertificate> Certificates { get; } = [];
@@ -271,20 +273,9 @@ public sealed class CandidateProfileEditor : IDisposable
             {
                 SelectedEducations.Add(level);
             }
-
-            foreach (var level in EducationLevelLabels.ProfileAll)
-            {
-                if (string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                if (education.Contains(level, StringComparison.OrdinalIgnoreCase))
-                {
-                    SelectedEducations.Add(level);
-                }
-            }
         }
+
+        EducationDirection = prefs.EducationDirection ?? "";
 
         if (HomeLat is not null && HomeLng is not null)
         {
@@ -846,6 +837,7 @@ public sealed class CandidateProfileEditor : IDisposable
                             return idx < 0 ? int.MaxValue : idx;
                         })
                         .ToList(),
+                    EducationDirection = string.IsNullOrWhiteSpace(EducationDirection) ? null : EducationDirection.Trim(),
                     HomeAddress = homeAddressToSave,
                     MinHoursPerWeek = MinHours,
                     MaxHoursPerWeek = MaxHours,
@@ -915,6 +907,7 @@ public sealed class CandidateProfileEditor : IDisposable
                     .ToList());
             HomeLocationDirty = false;
             Message = _culture["Profile.Saved"];
+            CandidateNameBroadcast.Publish(FirstName, LastName);
             if (AfterSaveAsync is not null)
             {
                 await AfterSaveAsync();
@@ -1126,6 +1119,11 @@ public sealed class CandidateProfileEditor : IDisposable
             {
                 SelectedEducations.Add(level);
             }
+        }
+
+        if (prefs.EducationDirection is not null)
+        {
+            EducationDirection = prefs.EducationDirection;
         }
 
         foreach (var role in prefs.Roles ?? [])

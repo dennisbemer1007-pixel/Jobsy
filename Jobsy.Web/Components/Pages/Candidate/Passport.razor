@@ -77,7 +77,7 @@
                                   CareerProgress="@Arc(AssessmentKind.Career)"
                                   CultureProgress="@Arc(AssessmentKind.Culture)"
                                   ValuesProgress="@Arc(AssessmentKind.Values)"
-                                  CompletedCount="_completedTests"
+                                  CompletedCount="@LobsterStage"
                                   Strongest="@_strongest"
                                   StrongestStatus="@_strongestStatus"
                                   WorkFit="@_workFit"
@@ -92,7 +92,7 @@
                      role="tablist"
                      aria-label="@Culture["Passport.Title"]"
                      @onkeydown="OnTabListKeyDown">
-                    @foreach (var tab in PassportTabs.All)
+                    @foreach (var tab in PassportTabs.Visible(_flags.EmployersEnabled))
                     {
                         var id = $"passport-tab-{tab}";
                         var selected = _tab == tab;
@@ -125,6 +125,7 @@
                             <PanelErrorBoundary Name="passport-dna">
                                 <PassportDnaTab BubbleText="@BubbleFor(PassportTabs.Dna)"
                                                 Highlights="_highlights"
+                                                TestsComplete="@(_completedTests >= 4)"
                                                 Story="@_story"
                                                 StoryGeneratedAt="_storyAt"
                                                 Keywords="_keywords"
@@ -158,10 +159,17 @@
                              hidden="@(_tab != PassportTabs.Fit)">
                         @if (_visited.Contains(PassportTabs.Fit))
                         {
-                            <LobsyBubble Text="@BubbleFor(PassportTabs.Fit)" />
-                            <PanelErrorBoundary Name="passport-fit">
-                                <PassportFitTab Active="@(_tab == PassportTabs.Fit)" Snapshot="_kompas" />
-                            </PanelErrorBoundary>
+                            @if (_flags.EmployersEnabled)
+                            {
+                                <LobsyBubble Text="@BubbleFor(PassportTabs.Fit)" />
+                                <PanelErrorBoundary Name="passport-fit">
+                                    <PassportFitTab Active="@(_tab == PassportTabs.Fit)" Snapshot="_kompas" />
+                                </PanelErrorBoundary>
+                            }
+                            else
+                            {
+                                <p class="login-lead" data-testid="passport-fit-soon">@Culture["Passport.Fit.Soon"]</p>
+                            }
                         }
                     </article>
 
@@ -295,22 +303,16 @@
                 return;
             }
 
-            if (_dna is null)
+            var dnaResult = await Api.GetMyKompasDnaResultAsync();
+            if (!dnaResult.TemporarilyUnavailable && dnaResult.Value is not null)
             {
-                var dnaResult = await Api.GetMyKompasDnaResultAsync();
-                if (!dnaResult.TemporarilyUnavailable)
-                {
-                    _dna = dnaResult.Value;
-                }
+                _dna = dnaResult.Value;
             }
 
-            if (_kompas is null)
+            var kompasResult = await Api.GetMyKompasResultAsync();
+            if (!kompasResult.TemporarilyUnavailable && kompasResult.Value is not null)
             {
-                var kompasResult = await Api.GetMyKompasResultAsync();
-                if (!kompasResult.TemporarilyUnavailable)
-                {
-                    _kompas = kompasResult.Value;
-                }
+                _kompas = kompasResult.Value;
             }
 
             ApplyModel();
@@ -407,19 +409,20 @@
             return;
         }
 
+        var visible = PassportTabs.Visible(_flags.EmployersEnabled);
         if (delta == int.MinValue)
         {
-            await SetTab(PassportTabs.All[0]);
+            await SetTab(visible[0]);
             return;
         }
 
         if (delta == int.MaxValue)
         {
-            await SetTab(PassportTabs.All[^1]);
+            await SetTab(visible[^1]);
             return;
         }
 
-        await SetTab(PassportTabs.Neighbor(_tab, delta));
+        await SetTab(PassportTabs.Neighbor(_tab, delta, _flags.EmployersEnabled));
     }
 
     private void ApplyModel()
@@ -591,6 +594,10 @@
 
         return Culture["Test.Status.NotDone"];
     }
+
+    private int LobsterStage => PassportShellRules.LobsterStage(
+        _completedTests,
+        _view?.Cards.Any(c => c.IsProvisional || c.Answered > 0) == true);
 
     private double Arc(AssessmentKind kind)
     {

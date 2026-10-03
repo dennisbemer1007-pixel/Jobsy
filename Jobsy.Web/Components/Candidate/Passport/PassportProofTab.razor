@@ -88,6 +88,10 @@
                         }
                     </div>
                 }
+                @if (!string.IsNullOrWhiteSpace(Editor.EducationDirection))
+                {
+                    <p class="passport-proof__direction">@Editor.EducationDirection</p>
+                }
                 @if (Editor.DiplomaEvaluations.Count > 0)
                 {
                     <ul class="passport-proof__list diploma-eval__passport" data-testid="diploma-eval-display">

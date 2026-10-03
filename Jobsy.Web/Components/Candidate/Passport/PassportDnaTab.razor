@@ -19,7 +19,7 @@
             <h3 id="passport-dna-you-title" class="passport-dna__h">@Culture["Passport.Dna.YouTitle"]</h3>
             @if (Highlights.Count == 0)
             {
-                <p class="login-lead">@Culture["Dna.StoryEmpty"]</p>
+                <p class="login-lead">@Culture[EmptyStoryKey]</p>
                 <button type="button" class="btn-compact btn-compact--primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
             }
             else
@@ -43,7 +43,7 @@
             <h3 id="passport-dna-story-title" class="passport-dna__h">@Culture["Dna.StoryTitle"]</h3>
             @if (string.IsNullOrWhiteSpace(Story))
             {
-                <p class="login-lead">@Culture["Dna.StoryEmpty"]</p>
+                <p class="login-lead">@Culture[EmptyStoryKey]</p>
                 <button type="button" class="btn-compact btn-compact--primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
             }
             else
@@ -145,6 +145,7 @@
 @code {
     [Parameter] public string BubbleText { get; set; } = "";
     [Parameter] public IReadOnlyList<CandidateDnaViewBuilder.DnaHighlight> Highlights { get; set; } = [];
+    [Parameter] public bool TestsComplete { get; set; }
     [Parameter] public string? Story { get; set; }
     [Parameter] public DateTime? StoryGeneratedAt { get; set; }
     [Parameter] public IReadOnlyList<string> Keywords { get; set; } = [];
@@ -156,6 +157,7 @@
     [Parameter] public EventCallback OnGoTests { get; set; }
 
     private bool _storyExpanded;
+    private string EmptyStoryKey => TestsComplete ? "Dna.StoryPending" : "Dna.StoryEmpty";
 
     private void ToggleStory() => _storyExpanded = !_storyExpanded;
 
