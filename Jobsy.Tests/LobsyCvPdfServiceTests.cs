@@ -108,7 +108,7 @@ public class LobsyCvPdfServiceTests
     }
 
     [Fact]
-    public async Task Render_includes_whoami_bijlage_when_opted_in()
+    public async Task Render_does_not_add_whoami_page_when_model_carries_story()
     {
         var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
         var prefs = new CandidatePreferencesDto(
@@ -117,11 +117,11 @@ public class LobsyCvPdfServiceTests
             PreferredTransport: "Fiets",
             AboutMe: "Ik werk graag met mensen.");
         var who = new LobsyCvWhoAmI(
-            "Ik werk graag samen en houd ritme in de ploeg.",
+            "ZZ-AI-MARKER-WHOAMI Ik werk graag samen en houd ritme in de ploeg.",
             ["samenwerken", "rust en ritme"],
             [new LobsyCvScoreBar("samenwerken", 88)],
             [new LobsyCvScoreBar("mensen meenemen", 80)]);
-        var model = LobsyCvModelFactory.FromLiveProfile(
+        var plain = LobsyCvModelFactory.FromLiveProfile(
             "Ada Candidate",
             "ada@test.local",
             null,
@@ -129,12 +129,20 @@ public class LobsyCvPdfServiceTests
             prefs,
             null,
             null,
-            DateTime.UtcNow,
-            whoAmI: who);
+            DateTime.UtcNow);
+        var model = plain with { WhoAmI = who };
         Assert.NotNull(model.WhoAmI);
         var pdf = await service.RenderAsync(model);
-        Assert.True(pdf.Length > 800);
+        var without = await service.RenderAsync(plain);
+        Assert.True(pdf.Length > 500);
         Assert.Equal((byte)'%', pdf[0]);
+        using var withDoc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        using var withoutDoc = UglyToad.PdfPig.PdfDocument.Open(without);
+        Assert.Equal(withoutDoc.NumberOfPages, withDoc.NumberOfPages);
+        var text = string.Join('\n', withDoc.GetPages().Select(p => p.Text));
+        Assert.DoesNotContain("ZZ-AI-MARKER-WHOAMI", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Wie ben ik", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Persoonsprofiel bijgevoegd", text, StringComparison.Ordinal);
     }
 
     [Fact]

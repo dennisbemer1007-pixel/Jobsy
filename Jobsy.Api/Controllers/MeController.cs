@@ -1,17 +1,17 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
-using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -41,7 +41,6 @@ public class MeController : ControllerBase
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
-    private readonly IWhoAmIService _whoAmI;
     private readonly ICandidateInsightsQueue _insightsQueue;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ITransactionalMailer _mailer;
@@ -56,7 +55,6 @@ public class MeController : ControllerBase
         ILobsyCvPdfService lobsyCvPdf,
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
-        IWhoAmIService whoAmI,
         ICandidateInsightsQueue insightsQueue,
         ICandidateMatchSnapshotService matchSnapshots,
         ITransactionalMailer mailer)
@@ -69,7 +67,6 @@ public class MeController : ControllerBase
         _lobsyCvPdf = lobsyCvPdf;
         _cvText = cvText;
         _cvExtraction = cvExtraction;
-        _whoAmI = whoAmI;
         _insightsQueue = insightsQueue;
         _matchSnapshots = matchSnapshots;
         _mailer = mailer;
@@ -90,7 +87,7 @@ public class MeController : ControllerBase
             companies is null));
     }
 
-        [HttpGet("profile")]
+    [HttpGet("profile")]
     public async Task<ActionResult<MeProfileDto>> GetProfile(CancellationToken cancellationToken)
     {
         try
@@ -776,7 +773,7 @@ public class MeController : ControllerBase
         var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
             .AnyAsync(c => c.UserId == user.Id, cancellationToken);
         var preferences = ParsePreferences(user.PreferencesJson);
-        var whoAmI = await _whoAmI.GetCvAttachmentAsync(user.Id, cancellationToken);
+        // AI "Wie ben ik" is not attached to the Lobsy-CV (decision 22). The profile stays in the app.
         var model = LobsyCvModelFactory.FromLiveProfile(
             user.FullName,
             user.Email,
@@ -788,8 +785,7 @@ public class MeController : ControllerBase
             DateTime.UtcNow,
             user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion,
             dateOfBirth: user.DateOfBirth,
-            hasUploadedOwnCv: hasUploadedCv,
-            whoAmI: whoAmI);
+            hasUploadedOwnCv: hasUploadedCv);
 
         var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
         var fileName = _lobsyCvPdf.BuildFileName(model);

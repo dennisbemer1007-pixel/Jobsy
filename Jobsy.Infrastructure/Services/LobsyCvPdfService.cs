@@ -130,29 +130,22 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             });
                     });
                     header.Item().Height(3).Background(AccentCoral);
+                });
+
+                page.Content().PaddingTop(14).Column(body =>
+                {
+                    body.Spacing(12);
+
+                    // Banners live in the content, not the repeating header, so they appear only on page 1.
                     if (model.HasUploadedOwnCv)
                     {
-                        header.Item().Background(SoftMint).PaddingHorizontal(12).PaddingVertical(8).Text(t =>
+                        body.Item().Background(SoftMint).PaddingHorizontal(12).PaddingVertical(8).Text(t =>
                         {
                             t.Span("Eigen CV toegevoegd. ").FontSize(9).Bold().FontColor(AccentTeal);
                             t.Span("Deze kandidaat heeft een eigen CV geüpload. Het Lobsy-CV is het visitekaartje; bekijk ook het geüploade bestand.")
                                 .FontSize(9).FontColor(Slate);
                         });
                     }
-                    if (model.WhoAmI is not null)
-                    {
-                        header.Item().Background(WarmSand).PaddingHorizontal(12).PaddingVertical(8).Text(t =>
-                        {
-                            t.Span("Persoonsprofiel bijgevoegd. ").FontSize(9).Bold().FontColor(AccentCoral);
-                            t.Span("De bijlage “Wie ben ik?” hoort bij dit Lobsy-CV.")
-                                .FontSize(9).FontColor(Slate);
-                        });
-                    }
-                });
-
-                page.Content().PaddingTop(14).Column(body =>
-                {
-                    body.Spacing(12);
 
                     body.Item().Row(hero =>
                     {
@@ -162,15 +155,6 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 .FontSize(9).FontColor(AccentCoral);
                             person.Item().Text(string.IsNullOrWhiteSpace(model.FullName) ? "Kandidaat" : model.FullName)
                                 .FontSize(24).Bold().FontColor(BrandNavy);
-                            var ageLine = FormatDateOfBirthAndAge(
-                                model.IncludeContactDetails ? model.DateOfBirth : null,
-                                model.AgeYears,
-                                culture);
-                            if (!string.IsNullOrWhiteSpace(ageLine))
-                            {
-                                person.Item().PaddingTop(2).Text(ageLine)
-                                    .FontSize(10).FontColor(Slate);
-                            }
                             person.Item().Text("Klaar voor werk dichterbij dan je denkt")
                                 .FontSize(10).FontColor(BrandDeep);
                         });
@@ -221,28 +205,6 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                         .FontSize(10).Bold();
                                 });
                             });
-                            if (model.DateOfBirth is DateOnly dob || model.AgeYears is int)
-                            {
-                                contact.Item().PaddingTop(4).Row(row =>
-                                {
-                                    row.RelativeItem().Column(col =>
-                                    {
-                                        col.Item().Text("Geboortedatum").FontSize(8).FontColor(Muted);
-                                        col.Item().Text(model.DateOfBirth is DateOnly d
-                                                ? d.ToString("d MMMM yyyy", culture)
-                                                : "—")
-                                            .FontSize(10).Bold();
-                                    });
-                                    row.RelativeItem().Column(col =>
-                                    {
-                                        col.Item().Text("Leeftijd").FontSize(8).FontColor(Muted);
-                                        col.Item().Text(model.AgeYears is int age
-                                                ? $"{age} jaar"
-                                                : "—")
-                                            .FontSize(10).Bold();
-                                    });
-                                });
-                            }
                             if (model.WhatsAppContactAllowed && !string.IsNullOrWhiteSpace(model.PhoneNumber))
                             {
                                 contact.Item().PaddingTop(2)
@@ -255,7 +217,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                     Section(body, "Over mij", model.AboutMe);
                     Section(body, "Motivatie", model.Motivation);
 
-                    body.Item().Row(split =>
+                    body.Item().ShowEntire().Row(split =>
                     {
                         split.RelativeItem().Background(SoftSky).Padding(8).Column(avail =>
                         {
@@ -353,13 +315,13 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
                     if (model.Employers.Count > 0)
                     {
-                        body.Item().Column(exp =>
+                        body.Item().EnsureSpace(72).Column(exp =>
                         {
                             exp.Spacing(3);
                             exp.Item().Text("Werkervaring").FontSize(11).Bold().FontColor(BrandNavy);
                             foreach (var employer in model.Employers)
                             {
-                                exp.Item().Background(SoftSky).Padding(7).Column(card =>
+                                exp.Item().ShowEntire().Background(SoftSky).Padding(7).Column(card =>
                                 {
                                     card.Spacing(1);
                                     card.Item().Row(row =>
@@ -390,13 +352,13 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
                     if (model.Certificates.Count > 0)
                     {
-                        body.Item().Column(certs =>
+                        body.Item().EnsureSpace(72).Column(certs =>
                         {
                             certs.Spacing(3);
                             certs.Item().Text("Certificaten & cursussen").FontSize(11).Bold().FontColor(BrandNavy);
                             foreach (var cert in model.Certificates)
                             {
-                                certs.Item().Row(row =>
+                                certs.Item().ShowEntire().Row(row =>
                                 {
                                     row.RelativeItem().Text(cert.Name).FontSize(9).FontColor(BrandNavy);
                                     if (cert.Year is int year)
@@ -428,115 +390,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                     });
                 });
             });
-
-            if (model.WhoAmI is { } whoAmI)
-            {
-                container.Page(page => RenderWhoAmIPage(page, model, whoAmI, brand, logo, culture, generatedLocal));
-            }
         }).GeneratePdf();
-    }
-
-    private static void RenderWhoAmIPage(
-        PageDescriptor page,
-        LobsyCvModel model,
-        LobsyCvWhoAmI whoAmI,
-        string brand,
-        byte[]? logo,
-        CultureInfo culture,
-        DateTime generatedLocal)
-    {
-        page.Size(PageSizes.A4);
-        page.MarginHorizontal(28);
-        page.MarginVertical(24);
-        page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
-
-        page.Header().Column(header =>
-        {
-            header.Item().Background(WarmSand).Padding(14).Row(row =>
-            {
-                if (logo is { Length: > 0 })
-                {
-                    row.ConstantItem(40).Height(26).Image(logo).FitArea();
-                    row.ConstantItem(8);
-                }
-
-                row.RelativeItem().AlignMiddle().Column(title =>
-                {
-                    title.Item().Text(brand).FontSize(16).Bold().FontColor(BrandNavy);
-                    title.Item().Text("Wie ben ik? — persoonsprofiel").FontSize(9).FontColor(AccentCoral);
-                });
-
-                row.ConstantItem(118).AlignMiddle().AlignRight().Column(meta =>
-                {
-                    meta.Item().Text("Bijlage bij Lobsy-CV").FontSize(9).Bold().FontColor(AccentTeal);
-                    meta.Item().Text(generatedLocal.ToString("d MMM yyyy", culture))
-                        .FontSize(8).FontColor(Muted);
-                });
-            });
-            header.Item().Height(3).Background(AccentTeal);
-        });
-
-        page.Content().PaddingTop(14).Column(body =>
-        {
-            body.Spacing(12);
-            body.Item().Text(string.IsNullOrWhiteSpace(model.FullName) ? "Kandidaat" : model.FullName)
-                .FontSize(18).Bold().FontColor(BrandNavy);
-            body.Item().Text(whoAmI.Story).FontSize(10.5f).LineHeight(1.35f).FontColor(Slate);
-
-            if (whoAmI.Keywords.Count > 0)
-            {
-                body.Item().Text("Sterke punten").FontSize(12).Bold().FontColor(BrandNavy);
-                body.Item().Row(chips =>
-                {
-                    foreach (var keyword in whoAmI.Keywords.Take(8))
-                    {
-                        chips.AutoItem().PaddingRight(6).PaddingBottom(4)
-                            .Background(SoftSky).PaddingHorizontal(8).PaddingVertical(4)
-                            .Text(keyword).FontSize(8).FontColor(BrandNavy);
-                    }
-                });
-            }
-
-            ScoreBars(body, "Competenties", whoAmI.Competencies);
-            ScoreBars(body, "Hoe ik graag werk", whoAmI.Culture);
-        });
-
-        page.Footer().AlignCenter().PaddingTop(6).Text("Bijlage persoonsprofiel · geen vaktermen · gegenereerd door Lobsy")
-            .FontSize(7.5f).FontColor(Muted);
-    }
-
-    private static void ScoreBars(ColumnDescriptor body, string title, IReadOnlyList<LobsyCvScoreBar> bars)
-    {
-        if (bars.Count == 0)
-        {
-            return;
-        }
-
-        body.Item().Text(title).FontSize(12).Bold().FontColor(BrandNavy);
-        foreach (var bar in bars)
-        {
-            var pct = Math.Clamp(bar.Percent, 0, 100);
-            body.Item().Column(col =>
-            {
-                col.Item().Row(row =>
-                {
-                    row.RelativeItem().Text(bar.Label).FontSize(9).FontColor(Slate);
-                    row.ConstantItem(36).AlignRight().Text($"{pct}%").FontSize(9).Bold().FontColor(BrandNavy);
-                });
-                col.Item().Height(7).Background(Line).Row(fill =>
-                {
-                    if (pct > 0)
-                    {
-                        fill.RelativeItem(pct).Background(AccentTeal);
-                    }
-
-                    if (pct < 100)
-                    {
-                        fill.RelativeItem(100 - pct);
-                    }
-                });
-            });
-        }
     }
 
     private static void DrawAvailabilityMatrix(
@@ -611,7 +465,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
             return;
         }
 
-        body.Item().Column(col =>
+        body.Item().EnsureSpace(72).Column(col =>
         {
             col.Spacing(3);
             col.Item().Text(title).FontSize(12).Bold().FontColor(BrandNavy);
@@ -632,21 +486,6 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         }
 
         return (min ?? max)!.Value.ToString("0.#", CultureInfo.GetCultureInfo("nl-NL"));
-    }
-
-    private static string? FormatDateOfBirthAndAge(DateOnly? dateOfBirth, int? ageYears, CultureInfo culture)
-    {
-        if (dateOfBirth is DateOnly dob && ageYears is int age)
-        {
-            return $"{dob.ToString("d MMMM yyyy", culture)} · {age} jaar";
-        }
-
-        if (dateOfBirth is DateOnly onlyDob)
-        {
-            return onlyDob.ToString("d MMMM yyyy", culture);
-        }
-
-        return ageYears is int onlyAge ? $"{onlyAge} jaar" : null;
     }
 
     private static string? FormatReachLabel(LobsyCvModel model)
@@ -702,9 +541,19 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
         var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var sb = new StringBuilder();
-        foreach (var part in parts.Take(3))
+        foreach (var part in parts)
         {
-            sb.Append(char.ToUpperInvariant(part[0]));
+            var letter = part.FirstOrDefault(char.IsLetter);
+            if (letter == default)
+            {
+                continue;
+            }
+
+            sb.Append(char.ToUpperInvariant(letter));
+            if (sb.Length == 3)
+            {
+                break;
+            }
         }
 
         return sb.Length == 0 ? "XX" : sb.ToString();
