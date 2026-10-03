@@ -1,7 +1,6 @@
 @namespace Jobsy.Web.Components.Layout
 @using System.Text.RegularExpressions
 @using Jobsy.Core.Contracts.Scholen
-@using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Ui.Enterprise
 @using Jobsy.Web.Navigation
@@ -10,7 +9,7 @@
 @inject CultureState Culture
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState
-@inject IPlatformFeatureService Features
+@inject IFeatureFlags Features
 @inject JobsyApiClient Api
 
 <div class="sch-shell" lang="nl">

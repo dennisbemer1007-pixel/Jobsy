@@ -339,14 +339,23 @@ window.jobsyGratisDna = (function () {
     function measureCookieBanner() {
         var banner = document.querySelector(".cookie-consent");
         var root = document.documentElement;
+        var id = "pub-cookie-banner-height-style";
+        var el = document.getElementById(id);
         if (!banner || root.classList.contains("cookie-consent-known")) {
-            root.style.removeProperty("--pub-cookie-banner-height");
+            if (el) el.remove();
             return;
         }
         var h = Math.ceil(banner.getBoundingClientRect().height || 0);
-        if (h > 0) {
-            root.style.setProperty("--pub-cookie-banner-height", h + "px");
+        if (h <= 0) {
+            if (el) el.remove();
+            return;
         }
+        if (!el) {
+            el = document.createElement("style");
+            el.id = id;
+            document.head.appendChild(el);
+        }
+        el.textContent = ":root{--pub-cookie-banner-height:" + h + "px}";
     }
 
     function bindCookiePadding() {
@@ -514,7 +523,7 @@ window.jobsyEnsureGratisDna = function () {
             return;
         }
         var s = document.createElement("script");
-        s.src = "/js/gratis-dna.js?v=20260930-landing-6";
+        s.src = "/js/gratis-dna.js?v=20261003-csp2";
         s.defer = true;
         s.dataset.gratisDna = "true";
         s.onload = function () { resolve(); };

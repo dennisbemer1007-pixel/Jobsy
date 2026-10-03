@@ -6,6 +6,7 @@
 @inject CultureState Culture
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
+@implements IDisposable
 
 <div class="ll-shell" lang="nl">
     <header class="ll-topbar">
@@ -33,10 +34,12 @@
 @code {
     private string _chip = "";
     private bool _showPause;
+    private IDisposable? _displayLanguage;
 
     protected override async Task OnParametersSetAsync()
     {
-        await Culture.SetLanguageAsync("nl");
+        // Dutch UI only. Do not persist: viewing /leerling must not rewrite a signed-in user's language.
+        _displayLanguage ??= Culture.PushDisplayLanguage("nl");
         _chip = "";
         _showPause = false;
         var http = HttpContextAccessor.HttpContext;
@@ -45,7 +48,6 @@
             return;
         }
 
-        http.Response.Headers.CacheControl = "no-store";
         var auth = await http.AuthenticateAsync(PupilAuthDefaults.Scheme);
         if (auth.Succeeded && auth.Principal?.Identity?.IsAuthenticated == true)
         {
@@ -62,4 +64,6 @@
                          && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);
         }
     }
+
+    public void Dispose() => _displayLanguage?.Dispose();
 }

@@ -5,8 +5,9 @@
 
 @if (_doc is not null)
 {
-    <div class="page-help @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)">
+    <div class="page-help @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="help" @onkeydown="OnKeyDown">
         <button type="button"
+                data-menu-trigger
                 class="page-help__btn @(_open ? "is-open" : null)"
                 title="@Culture["Help.AboutPage"]"
                 aria-label="@($"{Culture["Help.AboutPage"]}: {_doc.Title}")"
@@ -65,6 +66,14 @@
     {
         _path = new Uri(Navigation.Uri).AbsolutePath;
         _doc = PageHelpDocs.TryGet(_path);
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            Close();
+        }
     }
 
     private void Toggle()

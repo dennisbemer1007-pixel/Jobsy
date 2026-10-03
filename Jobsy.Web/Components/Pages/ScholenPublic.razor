@@ -1,0 +1,33 @@
+@page "/scholen"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@inject CultureState Culture
+
+<PageTitle>@Culture["HowLobsy.Schools.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section" aria-labelledby="schools-public-title">
+    <header class="pp-doc__hero">
+        <h1 id="schools-public-title" class="pp-doc__title">@Culture["HowLobsy.Schools.Title"]</h1>
+        <p class="pp-doc__lead">@Culture["HowLobsy.Schools.Lead"]</p>
+    </header>
+    <ol class="pp-how__guide-steps">
+        <li class="pp-how__guide-step">
+            <h2>@Culture["HowLobsy.Schools.Step1Title"]</h2>
+            <p>@Culture["HowLobsy.Schools.Step1Body"]</p>
+        </li>
+        <li class="pp-how__guide-step">
+            <h2>@Culture["HowLobsy.Schools.Step2Title"]</h2>
+            <p>@Culture["HowLobsy.Schools.Step2Body"]</p>
+        </li>
+        <li class="pp-how__guide-step">
+            <h2>@Culture["HowLobsy.Schools.Step3Title"]</h2>
+            <p>@Culture["HowLobsy.Schools.Step3Body"]</p>
+        </li>
+    </ol>
+    <p class="inline-actions">
+        <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Login">@Culture["Schools.Public.LoginCta"]</a>
+        <a class="pub-btn" href="mailto:support@lobsy.nl">@Culture["Schools.Public.SupportCta"]</a>
+    </p>
+</section>

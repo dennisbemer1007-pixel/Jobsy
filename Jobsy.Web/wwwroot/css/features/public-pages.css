@@ -391,6 +391,15 @@ html.pp-js .pub-theme .pp-toc__print {
 
 .pub-theme .pp-identity__value {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 420px) {
+  .pub-theme .pp-identity__row,
+  .pub-theme .pp-changes__item {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* —— Change log —— */

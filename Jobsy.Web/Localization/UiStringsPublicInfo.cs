@@ -765,6 +765,18 @@ public static class UiStringsPublicInfo
             "Widzisz obraz grupy do rozmowy. Pojedyncze odpowiedzi pozostają prywatne.",
             "Vezi imaginea grupei pentru discuție. Răspunsurile individuale rămân private.",
             "ترى صورة المجموعة للحوار. تبقى الإجابات الفردية خاصة.");
+        Add("Schools.Public.LoginCta",
+            "Inloggen voor scholen",
+            "Sign in for schools",
+            "Zaloguj się dla szkół",
+            "Autentificare pentru școli",
+            "تسجيل الدخول للمدارس");
+        Add("Schools.Public.SupportCta",
+            "Mail support",
+            "Email support",
+            "Napisz do wsparcia",
+            "Scrie la suport",
+            "راسل الدعم");
         Add("HowLobsy.Schools.Cta",
             "Lees meer voor scholen",
             "Read more for schools",

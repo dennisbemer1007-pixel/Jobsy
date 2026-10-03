@@ -166,6 +166,9 @@ public static class UiStringsCandidateInsights
         Add("Insights.Toast.Requested",
             "Aanvraag verstuurd naar je bedrijfsmanager.", "Request sent to your company manager.",
             "Wniosek wysłano do menedżera firmy.", "Cererea a fost trimisă managerului firmei.", "أُرسل الطلب إلى مدير شركتك.");
+        Add("Insights.Cta.Full",
+            "Volledige inzichten", "Full insights",
+            "Pełne wglądy", "Perspective complete", "رؤى كاملة");
         Add("Insights.Cta.Story",
             "Bekijk als story", "View as story",
             "Zobacz jako relację", "Vezi ca story", "عرض كقصة");

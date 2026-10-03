@@ -9,8 +9,9 @@
 
 <AuthorizeView>
     <Authorized>
-        <div class="notification-bell @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" @onclick:stopPropagation="true">
+        <div class="notification-bell @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="notifications" @onclick:stopPropagation="true" @onkeydown="OnKeyDown">
             <button type="button"
+                    data-menu-trigger
                     class="notification-bell__toggle @(_unread > 0 ? "notification-bell__toggle--unread" : null)"
                     title="@(_unread > 0 ? $"{_unread} ongelezen bericht{(_unread == 1 ? "" : "en")}" : "Notificaties")"
                     aria-label="@($"Notificaties{(_unread > 0 ? $", {_unread} ongelezen" : "")}")"
@@ -126,6 +127,14 @@
         if (_open)
         {
             await LoadListAsync();
+        }
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            Close();
         }
     }
 

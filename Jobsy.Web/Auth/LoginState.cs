@@ -18,7 +18,8 @@ public enum LoginState
     GoogleNotConfigured,
     GoogleFailed,
     UnknownProvider,
-    Generic
+    Generic,
+    AmbassadorsPaused
 }
 
 public static class LoginStateMapping
@@ -45,6 +46,7 @@ public static class LoginStateMapping
             "google-not-configured" => LoginState.GoogleNotConfigured,
             "google-failed" => LoginState.GoogleFailed,
             "unknown-provider" => LoginState.UnknownProvider,
+            "ambassadors-paused" => LoginState.AmbassadorsPaused,
             { Length: > 0 } => LoginState.Generic,
             _ => LoginState.None
         };

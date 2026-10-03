@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -908,6 +909,7 @@ public sealed class TestAccountsSeedService
 
         teacher.SchoolId = school.Id;
         schoolAdmin.SchoolId = school.Id;
+        var schoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow));
 
         var schoolClass = await _db.SchoolClasses
             .FirstOrDefaultAsync(c => c.Id == TestAccountsIds.SchoolClass, cancellationToken);
@@ -922,7 +924,7 @@ public sealed class TestAccountsSeedService
                 Level = SchoolLevel.VmboGt,
                 QuestionSet = PupilQuestionSet.Vo,
                 Year = 1,
-                SchoolYearStart = DateTime.UtcNow.Year,
+                SchoolYearStart = schoolYearStart,
                 PupilCount = 5,
                 IsTestData = true,
                 CreatedAtUtc = DateTime.UtcNow
@@ -936,6 +938,7 @@ public sealed class TestAccountsSeedService
             schoolClass.Level = SchoolLevel.VmboGt;
             schoolClass.QuestionSet = PupilQuestionSet.Vo;
             schoolClass.Year = 1;
+            schoolClass.SchoolYearStart = schoolYearStart;
             schoolClass.PupilCount = 5;
         }
 
@@ -955,7 +958,7 @@ public sealed class TestAccountsSeedService
                 Level = SchoolLevel.Groep78,
                 QuestionSet = PupilQuestionSet.Groep78,
                 Year = 7,
-                SchoolYearStart = DateTime.UtcNow.Year,
+                SchoolYearStart = schoolYearStart,
                 PupilCount = 5,
                 IsTestData = true,
                 CreatedAtUtc = DateTime.UtcNow
@@ -969,6 +972,7 @@ public sealed class TestAccountsSeedService
             groepClass.Level = SchoolLevel.Groep78;
             groepClass.QuestionSet = PupilQuestionSet.Groep78;
             groepClass.Year = 7;
+            groepClass.SchoolYearStart = schoolYearStart;
             groepClass.PupilCount = 5;
         }
 

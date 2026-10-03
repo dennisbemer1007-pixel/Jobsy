@@ -3,8 +3,9 @@
 @inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
 
-<div class="language-selector @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" @onfocusout="OnFocusOut">
+<div class="language-selector @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="language" @onfocusout="OnFocusOut" @onkeydown="OnKeyDown">
     <button type="button"
+            data-menu-trigger
             class="language-selector__toggle"
             aria-haspopup="listbox"
             aria-expanded="@(_open ? "true" : "false")"
@@ -38,6 +39,15 @@
     {
         _open = !_open;
         _forceClosed = !_open;
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _open = false;
+            _forceClosed = true;
+        }
     }
 
     private async Task OnFocusOut(FocusEventArgs _)

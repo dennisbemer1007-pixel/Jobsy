@@ -1154,9 +1154,12 @@
   .career-card__source { margin-block-start: 8px; font-size: 0.75rem; }
   .career-card__actions--sticky {
     position: sticky;
-    bottom: 72px;
+    bottom: var(--bottom-nav-clearance, 7rem);
     padding-block: var(--space-2);
     background: var(--surface);
+  }
+  .how-safe--mobile {
+    margin-block-end: calc(var(--bottom-nav-clearance, 7rem) + 0.5rem);
   }
   .career-card__actions--sticky .career-btn { flex: 1 1 100%; }
   .career-card__actions--sticky .career-btn--icon { flex: 0 0 44px; }

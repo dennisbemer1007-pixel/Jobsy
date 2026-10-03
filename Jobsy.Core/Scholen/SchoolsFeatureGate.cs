@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 
 namespace Jobsy.Core.Scholen;
@@ -10,6 +11,14 @@ public static class SchoolsFeatureGate
 {
     public static async Task<bool> IsEnabledAsync(
         IPlatformFeatureService features,
+        CancellationToken cancellationToken = default)
+    {
+        var snap = await features.GetAsync(cancellationToken);
+        return snap.SchoolsEnabled;
+    }
+
+    public static async Task<bool> IsEnabledAsync(
+        IFeatureFlags features,
         CancellationToken cancellationToken = default)
     {
         var snap = await features.GetAsync(cancellationToken);

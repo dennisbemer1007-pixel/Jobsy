@@ -446,6 +446,10 @@ public static class UiStringsDiscovery
             "Waar voel je je thuis?", "Where do you feel at home?", "Gdzie czujesz się jak w domu?", "Unde te simți acasă?", "أين تشعر بأنك في بيتك؟");
         Add("Discovery.Test.Values.Title",
             "Wat vind je belangrijk?", "What matters to you?", "Co jest dla Ciebie ważne?", "Ce este important pentru tine?", "ما المهم بالنسبة لك؟");
+        Add("Discovery.Test.CultureScan.Title",
+            "Waar voel je je thuis?", "Where do you feel at home?", "Gdzie czujesz się jak w domu?", "Unde te simți acasă?", "أين تشعر بأنك في بيتك؟");
+        Add("Discovery.Test.ValuesScan.Title",
+            "Wat vind je belangrijk?", "What matters to you?", "Co jest dla Ciebie ważne?", "Ce este important pentru tine?", "ما المهم بالنسبة لك؟");
         Add("Discovery.Test.Lead",
             "Hoe goed past deze zin bij jou? Er zijn geen foute antwoorden.",
             "How well does this sentence fit you? There are no wrong answers.",

@@ -144,6 +144,23 @@ public sealed class CultureState
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// Show <paramref name="language"/> for this circuit without writing the cookie or profile.
+    /// Dispose restores the previous language so a Dutch-only surface does not stick.
+    /// </summary>
+    public IDisposable PushDisplayLanguage(string language)
+    {
+        var previous = Language;
+        var normalized = JobsyLanguages.Normalize(language);
+        if (!JobsyLanguages.AreSame(previous, normalized))
+        {
+            Apply(normalized);
+            Changed?.Invoke();
+        }
+
+        return new DisplayLanguageScope(this, previous);
+    }
+
     private void Apply(string language)
     {
         Language = JobsyLanguages.Normalize(language);
@@ -180,6 +197,36 @@ public sealed class CultureState
         }
         catch (InvalidOperationException)
         {
+        }
+    }
+
+    private sealed class DisplayLanguageScope : IDisposable
+    {
+        private readonly CultureState _state;
+        private readonly string _previous;
+        private bool _disposed;
+
+        public DisplayLanguageScope(CultureState state, string previous)
+        {
+            _state = state;
+            _previous = previous;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            if (JobsyLanguages.AreSame(_state.Language, _previous))
+            {
+                return;
+            }
+
+            _state.Apply(_previous);
+            _state.Changed?.Invoke();
         }
     }
 }

@@ -47,7 +47,7 @@
                 <tr>
                     <td class="admin-mono">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
                     <td>@log.Level</td>
-                    <td>@log.Category</td>
+                    <td>@CategoryLabel(log.Category)</td>
                     <td>@log.Message</td>
                 </tr>
             }
@@ -63,6 +63,18 @@
     private DateTime? _toDate;
     private bool _loading = true;
     private string? _error;
+
+    private string CategoryLabel(string? category)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return "";
+        }
+
+        var key = "Logs.Category." + category;
+        var label = Culture[key];
+        return string.Equals(label, key, StringComparison.Ordinal) ? category : label;
+    }
 
     private List<PlatformLogItem> _filtered =>
         string.IsNullOrWhiteSpace(_category)

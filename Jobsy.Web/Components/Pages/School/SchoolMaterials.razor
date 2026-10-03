@@ -2,10 +2,9 @@
 @layout SchoolLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SchoolAdmin")]
-@using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
 @inject CultureState Culture
-@inject IPlatformFeatureService Features
+@inject IFeatureFlags Features
 
 <PageTitle>@Culture["School.Material.Title"] · Lobsy</PageTitle>
 

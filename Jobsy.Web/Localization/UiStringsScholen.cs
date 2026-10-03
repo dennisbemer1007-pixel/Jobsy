@@ -534,6 +534,7 @@ public static class UiStringsScholen
         nl["AdminScholen.Nav.Report"] = "Scholen-rapportage";
         nl["AdminScholen.Report.Title"] = "Scholen-rapportage";
         nl["AdminScholen.Report.Lead"] = "Anonieme totalen (k≥5) per schooljaar. Geen koppeling naar codes of leerlingen.";
+        nl["AdminScholen.Report.LoadFailed"] = "Het rapport kon niet geladen worden. Probeer het opnieuw.";
         nl["AdminScholen.Report.Tab.Overview"] = "Overzicht";
         nl["AdminScholen.Report.Tab.Retention"] = "Bewaartermijn";
         nl["AdminScholen.Report.Filter.Year"] = "Schooljaar";

@@ -28,28 +28,6 @@
 
 <HeadContent>
     <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261003-gd-start" />
-    <script>
-        window.jobsyEnsureGratisDna = function () {
-            if (window.jobsyGratisDna) {
-                return Promise.resolve();
-            }
-            return new Promise(function (resolve, reject) {
-                var existing = document.querySelector('script[data-gratis-dna]');
-                if (existing) {
-                    existing.addEventListener('load', function () { resolve(); });
-                    existing.addEventListener('error', reject);
-                    return;
-                }
-                var s = document.createElement('script');
-                s.src = '/js/gratis-dna.js?v=20260930-landing-6';
-                s.defer = true;
-                s.dataset.gratisDna = 'true';
-                s.onload = function () { resolve(); };
-                s.onerror = reject;
-                document.head.appendChild(s);
-            });
-        };
-    </script>
 </HeadContent>
 
 <div class="gd-page gd-page--warm" dir="@(Culture.IsRightToLeft ? "rtl" : null)" data-gd-page>
@@ -132,10 +110,13 @@
                         <button type="button" class="gd-cta" disabled="@(!CanStart)" @onclick="StartAsync" data-testid="gd-start-cta">
                             @Culture["GratisDna.Landing.StartCta"] →
                         </button>
-                        <p class="gd-start__login">
-                            @Culture["Signup.HaveAccount"]
-                            <a href="@PublicRoutes.Login">@Culture["Signup.Login"]</a>
-                        </p>
+                        @if (!_employerView)
+                        {
+                            <p class="gd-start__login">
+                                @Culture["Signup.HaveAccount"]
+                                <a href="@PublicRoutes.Login">@Culture["Signup.Login"]</a>
+                            </p>
+                        }
                     </div>
                 </section>
 
@@ -320,7 +301,7 @@
 
     private string RegisterHref => PublicRoutes.CreateAccountFromTest;
 
-    private bool CanStart => _age16Plus == true && !_storageDisabled;
+    private bool CanStart => _age16Plus == true;
 
     private int AnsweredCount => _payload is null ? 0 : GratisDnaScoring.CountAnswers(_payload.Answers);
 
@@ -521,8 +502,9 @@
             return;
         }
 
-        if (_payload is null && !_storageDisabled)
+        if (_payload is null)
         {
+            // Preview (signed-in non-candidates) keeps answers in memory only. PersistAsync no-ops.
             _payload = await Storage.CreateEmptyAsync(PrivacyConstants.CandidateProfilingConsentVersion);
         }
 
@@ -553,7 +535,7 @@
 
     private async Task AnswerAsync(DnaQuestion question, int value)
     {
-        if (_payload is null || _storageDisabled)
+        if (_payload is null)
         {
             return;
         }

@@ -1122,8 +1122,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261003-circuit"
-            : "/service-worker.js?v=20261003-circuit";
+            ? "/service-worker.published.js?v=20261003-shell"
+            : "/service-worker.js?v=20261003-shell";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1196,4 +1196,66 @@ window.lobsyPwaInstall = (function () {
       }
     }
   };
+})();
+
+/* Header menus: one open at a time, even when the Blazor circuit is down.
+   html[data-header-menu] is the only visibility source. */
+(function () {
+  if (window.__jobsyHeaderMenus) return;
+  window.__jobsyHeaderMenus = true;
+
+  function syncAria() {
+    var open = document.documentElement.getAttribute("data-header-menu");
+    document.querySelectorAll("[data-menu-id]").forEach(function (root) {
+      var id = root.getAttribute("data-menu-id");
+      var on = open === id;
+      var trigger = root.querySelector("[data-menu-trigger]");
+      if (trigger) trigger.setAttribute("aria-expanded", on ? "true" : "false");
+      root.classList.toggle("is-open", on);
+      root.classList.toggle("is-closed", !on);
+    });
+  }
+
+  function setOpen(id) {
+    if (id) document.documentElement.setAttribute("data-header-menu", id);
+    else document.documentElement.removeAttribute("data-header-menu");
+    syncAria();
+  }
+
+  document.addEventListener("click", function (event) {
+    var trigger = event.target.closest("[data-menu-trigger]");
+    if (trigger) {
+      var root = trigger.closest("[data-menu-id]");
+      if (!root) return;
+      var id = root.getAttribute("data-menu-id");
+      var current = document.documentElement.getAttribute("data-header-menu");
+      setOpen(current === id ? null : id);
+      return;
+    }
+    if (event.target.closest(".header-dropdown-backdrop")) {
+      setOpen(null);
+      return;
+    }
+    if (!event.target.closest("[data-menu-id]")) {
+      if (document.documentElement.hasAttribute("data-header-menu")) setOpen(null);
+    }
+  }, true);
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    if (!document.documentElement.hasAttribute("data-header-menu")) return;
+    setOpen(null);
+  });
+
+  document.addEventListener("focusout", function (event) {
+    var open = document.documentElement.getAttribute("data-header-menu");
+    if (!open) return;
+    var next = event.relatedTarget;
+    // A click with no next focus is handled by the click listener (toggle or switch).
+    if (!next) return;
+    var root = document.querySelector('[data-menu-id="' + open + '"]');
+    if (root && root.contains(next)) return;
+    if (next.closest && next.closest("[data-menu-trigger]")) return;
+    setOpen(null);
+  });
 })();
