@@ -520,9 +520,18 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.SearchPlaceholder",
             "Zoek op functie of bedrijf", "Search by role or company",
             "Szukaj stanowiska lub firmy", "Caută după rol sau firmă", "ابحث عن وظيفة أو شركة");
+        Add("Kb.Filter.KeywordPlaceholder",
+            "Wat voor werk zoek je?", "What kind of work are you looking for?",
+            "Jakiej pracy szukasz?", "Ce fel de muncă cauți?", "ما نوع العمل الذي تبحث عنه؟");
         Add("Kb.Filter.More",
             "Meer filters", "More filters",
             "Więcej filtrów", "Mai multe filtre", "المزيد من الفلاتر");
+        Add("Kb.Filter.FiltersAria",
+            "Filters openen", "Open filters",
+            "Otwórz filtry", "Deschide filtrele", "فتح عوامل التصفية");
+        Add("Kb.Filter.TravelAria",
+            "Reistijd en vervoer", "Travel time and transport",
+            "Czas dojazdu i transport", "Timp de deplasare și transport", "وقت التنقل ووسيلة المواصلات");
         Add("Kb.Filter.Clear",
             "Wis filters", "Clear filters",
             "Wyczyść filtry", "Șterge filtrele", "مسح الفلاتر");

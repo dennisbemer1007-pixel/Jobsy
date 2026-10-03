@@ -42,7 +42,7 @@ public class BanenkaartStartAndFiltersPlaywrightTests
         var travel = page.Locator(".kb-chip").Filter(new() { HasTextString = "20 min" }).First;
         await Assertions.Expect(travel).ToBeVisibleAsync(new() { Timeout = 15_000 });
 
-        var badgeCount = await page.Locator(".kb-filter-chips .jobsy-action__badge").CountAsync();
+        var badgeCount = await page.Locator(".kb-filters-button .jobsy-action__badge, .kb-filter-chips .jobsy-action__badge").CountAsync();
         Assert.Equal(0, badgeCount);
     }
 

@@ -1,8 +1,8 @@
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Kandidaat polish 01: mobile discovery grid must use minmax(0,1fr) so the filter
-/// chip row can scroll inside 390 px instead of stretching the column to ~662 px.
+/// Kandidaat polish 01+02: mobile discovery grid must use minmax(0,1fr); filter bar
+/// is a two-row layout without requiring horizontal chip scrolling.
 /// </summary>
 public class BanenkaartMobileOverflowCssTests
 {
@@ -17,8 +17,11 @@ public class BanenkaartMobileOverflowCssTests
         Assert.Contains("min-width: 0;\n        background: var(--surface);", appCss, StringComparison.Ordinal);
         Assert.Contains(".kb-chrome-search {\n        min-width: 0;\n    }", appCss, StringComparison.Ordinal);
 
+        Assert.Contains(".kb-filter-bar", kbCss, StringComparison.Ordinal);
+        Assert.Contains("flex-direction: column", kbCss, StringComparison.Ordinal);
+        Assert.Contains(".kb-filters-button", kbCss, StringComparison.Ordinal);
+        // Desktop chip row may still scroll; keep helpers.
         Assert.Contains("overscroll-behavior-x: contain", kbCss, StringComparison.Ordinal);
-        Assert.Contains("scroll-snap-type: x proximity", kbCss, StringComparison.Ordinal);
         Assert.Contains(".kb-filter-chips.has-more-end", kbCss, StringComparison.Ordinal);
     }
 

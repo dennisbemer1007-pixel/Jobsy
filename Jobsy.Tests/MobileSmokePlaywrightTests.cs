@@ -291,13 +291,18 @@ public class MobileSmokePlaywrightTests
 
     private static async Task OpenFiltersAsync(IPage page)
     {
-        var filter = page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Filter", RegexOptions.IgnoreCase) }).First;
-        if (await filter.CountAsync() == 0)
+        var filter = page.Locator("[data-testid=kb-filters-button]").First;
+        if (await filter.CountAsync() == 0 || !await filter.IsVisibleAsync())
+        {
+            filter = page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Filter", RegexOptions.IgnoreCase) }).First;
+        }
+
+        if (await filter.CountAsync() == 0 || !await filter.IsVisibleAsync())
         {
             filter = page.Locator("button:has-text('Filters'), .jobsy-action:has-text('Filters')").First;
         }
 
-        if (await filter.CountAsync() > 0)
+        if (await filter.CountAsync() > 0 && await filter.IsVisibleAsync())
         {
             await filter.ClickAsync();
             await page.WaitForTimeoutAsync(400);
@@ -342,13 +347,18 @@ public class MobileSmokePlaywrightTests
 
     private static async Task OpenListAsync(IPage page)
     {
-        var list = page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Lijst|List", RegexOptions.IgnoreCase) }).First;
-        if (await list.CountAsync() == 0)
+        var list = page.Locator("[data-testid=kb-view-toggle]").First;
+        if (await list.CountAsync() == 0 || !await list.IsVisibleAsync())
+        {
+            list = page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Lijst|List", RegexOptions.IgnoreCase) }).First;
+        }
+
+        if (await list.CountAsync() == 0 || !await list.IsVisibleAsync())
         {
             list = page.Locator("button:has-text('Lijst'), a:has-text('Lijst')").First;
         }
 
-        if (await list.CountAsync() > 0)
+        if (await list.CountAsync() > 0 && await list.IsVisibleAsync())
         {
             await list.ClickAsync();
             await page.WaitForTimeoutAsync(500);
@@ -357,27 +367,37 @@ public class MobileSmokePlaywrightTests
 
     private static async Task ClickLocateAsync(IPage page)
     {
-        var locate = page.Locator(
-            "button[title*='locatie' i], button[aria-label*='locatie' i], button[aria-label*='locate' i], .maplibregl-ctrl-geolocate").First;
-        if (await locate.CountAsync() > 0)
+        // Mobile chrome address is hidden (polish 02); prefer start-prompt CTA / map control / visible geo.
+        var candidates = page.Locator(
+            ".kb-start-prompt__primary, .job-map-locate, .maplibregl-ctrl-geolocate, .kb-desktop-toolbar .kb-address__geo, button.kb-address__geo");
+        var n = await candidates.CountAsync();
+        for (var i = 0; i < n; i++)
         {
-            await locate.ClickAsync(new() { Force = true });
+            var btn = candidates.Nth(i);
+            if (!await btn.IsVisibleAsync())
+            {
+                continue;
+            }
+
+            await btn.ClickAsync();
             await page.WaitForTimeoutAsync(500);
+            return;
         }
     }
 
     private static async Task TryAddressSearchAsync(IPage page)
     {
-        var input = page.Locator("input[placeholder*='adres' i], input[aria-label*='adres' i], input[name*='address' i]").First;
-        if (await input.CountAsync() == 0)
+        var input = page.Locator(
+            ".kb-start-prompt input, .kb-desktop-toolbar input[placeholder*='adres' i], input[placeholder*='adres' i]:visible, input[aria-label*='adres' i]:visible").First;
+        if (await input.CountAsync() == 0 || !await input.IsVisibleAsync())
         {
             return;
         }
 
         await input.FillAsync("Den Haag");
         await page.WaitForTimeoutAsync(800);
-        var suggestion = page.Locator(".address-suggest li, .suggestion, [role='option']").First;
-        if (await suggestion.CountAsync() > 0)
+        var suggestion = page.Locator(".address-suggest li, .address-suggestions__item, .suggestion, [role='option']").First;
+        if (await suggestion.CountAsync() > 0 && await suggestion.IsVisibleAsync())
         {
             await suggestion.ClickAsync();
         }

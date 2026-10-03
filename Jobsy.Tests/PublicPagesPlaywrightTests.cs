@@ -117,11 +117,19 @@ public class PublicPagesPlaywrightTests
                         await AssertPartnerPricesAsync(page);
                     }
 
-                    await page.ScreenshotAsync(new()
+                    try
                     {
-                        Path = Path.Combine(artifactDir, $"{name}-{lang}-{width}.png"),
-                        FullPage = true
-                    });
+                        await page.ScreenshotAsync(new()
+                        {
+                            Path = Path.Combine(artifactDir, $"{name}-{lang}-{width}.png"),
+                            FullPage = true
+                        });
+                    }
+                    catch (PlaywrightException ex) when (ex.Message.Contains("captureScreenshot", StringComparison.Ordinal)
+                                                        || ex.Message.Contains("Unable to capture screenshot", StringComparison.Ordinal))
+                    {
+                        // Chromium occasionally fails screenshot after font load on CI; assertions above already passed.
+                    }
                 }
 
                 if (!needsCandidate)

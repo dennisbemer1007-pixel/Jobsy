@@ -43,7 +43,8 @@
             </div>
         </header>
 
-        <div class="jobsy-chrome__search kb-chrome-search">
+        @* Address lives in the start prompt (mobile) / desktop toolbar — not in the filter bar. *@
+        <div class="jobsy-chrome__search kb-chrome-search kb-chrome-search--address" hidden>
             <KbAddressField InputId="discovery-address"
                             Placeholder="@Culture["Discovery.AddressPlaceholder"]"
                             Query="@_addressQuery"
@@ -63,125 +64,91 @@
             }
         </div>
 
-        <div class="kb-filter-chips" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
-            <div class="kb-filter-chips__travel">
+        <div class="kb-filter-bar" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+            <div class="kb-filter-bar__row">
+                <div class="kb-chrome-search kb-filter-search kb-filter-search--bar">
+                    <label class="visually-hidden" for="discovery-keyword-mobile">@Culture["Discovery.Keyword"]</label>
+                    <input id="discovery-keyword-mobile"
+                           type="search"
+                           autocomplete="off"
+                           data-testid="kb-keyword-search"
+                           placeholder="@Culture["Kb.Filter.KeywordPlaceholder"]"
+                           value="@(_searchDraft ?? _searchQuery ?? "")"
+                           @oninput="OnSearchInput"
+                           @onkeydown="OnSearchKeyDown" />
+                </div>
                 <button type="button"
-                        class="kb-chip @(_travelChipOpen ? "is-open" : null) @(_maxTravelMinutes != _filterDefaults.MaxTravelMinutes || _selectedTransport != _filterDefaults.Transport ? "is-active" : null)"
-                        aria-expanded="@(_travelChipOpen ? "true" : "false")"
-                        @onclick="ToggleTravelChip">
-                    <span>@TravelChipLabel</span>
-                    <span aria-hidden="true">▾</span>
+                        class="kb-filters-button @(_filtersOpen ? "is-active" : null)"
+                        data-testid="kb-filters-button"
+                        @onclick="ToggleFilters"
+                        aria-expanded="@(_filtersOpen ? "true" : "false")"
+                        aria-controls="@(_filtersOpen ? "discovery-filters" : null)"
+                        aria-label="@Culture["Kb.Filter.FiltersAria"]">
+                    <span class="kb-filters-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                    <span>@Culture["Discovery.Filters"]</span>
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <span class="jobsy-action__badge" data-testid="kb-filters-badge">@ActiveFilterCount</span>
+                    }
                 </button>
-                @if (_travelChipOpen)
-                {
-                    <div class="kb-chip-popover" role="dialog">
-                        <div class="kb-chip-popover__modes" role="group" aria-label="@Culture["Discovery.Transport"]">
-                            @foreach (var mode in new[] { "Fiets", "Auto", "Lopend", "OV" })
-                            {
-                                <button type="button"
-                                        class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
-                                        @onclick="() => SetTravelPresetAsync(mode, _maxTravelMinutes)">
-                                    @UiLabels.Transport(Culture, mode)
-                                </button>
-                            }
-                        </div>
-                        <div class="kb-chip-popover__minutes" role="group" aria-label="@Culture["Discovery.TravelMinutes"]">
-                            @foreach (var m in new[] { 10, 20, 30, 45 })
-                            {
-                                <button type="button"
-                                        class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
-                                        @onclick="() => SetTravelPresetAsync(_selectedTransport, m)">
-                                    @Culture.Format("Kb.Filter.MinutesPreset", m)
-                                </button>
-                            }
-                        </div>
-                    </div>
-                }
             </div>
 
-            <button type="button"
-                    class="kb-chip kb-chip--icon @(_searchExpanded || !string.IsNullOrWhiteSpace(_searchQuery) ? "is-active" : null)"
-                    @onclick="ToggleSearchExpanded"
-                    aria-expanded="@(_searchExpanded ? "true" : "false")"
-                    aria-label="@Culture["Discovery.Keyword"]">
-                <span aria-hidden="true">⌕</span>
-            </button>
+            <div class="kb-filter-bar__row">
+                <div class="kb-filter-chips__travel">
+                    <button type="button"
+                            class="kb-chip @(_travelChipOpen ? "is-open" : null) @(_maxTravelMinutes != _filterDefaults.MaxTravelMinutes || _selectedTransport != _filterDefaults.Transport ? "is-active" : null)"
+                            data-testid="kb-travel-chip"
+                            aria-expanded="@(_travelChipOpen ? "true" : "false")"
+                            aria-label="@Culture["Kb.Filter.TravelAria"]"
+                            @onclick="ToggleTravelChip">
+                        <span>@TravelChipLabel</span>
+                        <span aria-hidden="true">▾</span>
+                    </button>
+                    @if (_travelChipOpen)
+                    {
+                        <div class="kb-chip-popover" role="dialog" data-testid="kb-travel-popover">
+                            <div class="kb-chip-popover__modes" role="group" aria-label="@Culture["Discovery.Transport"]">
+                                @foreach (var mode in TravelChipModes)
+                                {
+                                    <button type="button"
+                                            class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
+                                            @onclick="() => SetTravelPresetAsync(mode, _maxTravelMinutes)">
+                                        @UiLabels.Transport(Culture, mode)
+                                    </button>
+                                }
+                            </div>
+                            <div class="kb-chip-popover__minutes" role="group" aria-label="@Culture["Discovery.TravelMinutes"]">
+                                @foreach (var m in TravelChipMinutes)
+                                {
+                                    <button type="button"
+                                            class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
+                                            @onclick="() => SetTravelPresetAsync(_selectedTransport, m)">
+                                        @Culture.Format("Kb.Filter.MinutesPreset", m)
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
 
-            <button type="button"
-                    class="kb-chip @(_selectedWorkTypes.Count > 0 ? "is-active" : null)"
-                    @onclick="ToggleFilters">
-                @Culture["Kb.Filter.WorkType"]
-            </button>
-            <button type="button"
-                    class="kb-chip @(_minHoursPerWeek != _filterDefaults.MinHoursPerWeek || _maxHoursPerWeek != _filterDefaults.MaxHoursPerWeek ? "is-active" : null)"
-                    @onclick="ToggleHoursChip">
-                @Culture["Kb.Filter.Hours"]
-            </button>
-            <button type="button"
-                    class="kb-chip @(_minHourlyWage is not null || _maxHourlyWage is not null ? "is-active" : null)"
-                    @onclick="ToggleWageChip">
-                @Culture["Kb.Filter.Wage"]
-            </button>
-            <button type="button"
-                    class="kb-chip @(_filtersOpen ? "is-active" : null)"
-                    @onclick="ToggleFilters"
-                    aria-expanded="@(_filtersOpen ? "true" : "false")"
-                    aria-controls="@(_filtersOpen ? "discovery-filters" : null)">
-                <span>@Culture["Kb.Filter.More"]</span>
-                @if (ActiveFilterCount > 0)
-                {
-                    <span class="jobsy-action__badge">@ActiveFilterCount</span>
-                }
-            </button>
-            @if (ActiveFilterCount > 0)
-            {
-                <button type="button" class="kb-chip kb-chip--clear" @onclick="ClearAllFiltersAsync">
-                    @Culture["Kb.Filter.Clear"]
+                <a class="kb-match-button jobsy-action--match"
+                   data-testid="kb-match-button"
+                   href="@MatchButtonHref">
+                    <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                    <span>@Culture["Nav.Match"]</span>
+                </a>
+
+                <span class="kb-filter-bar__spacer" aria-hidden="true"></span>
+
+                <button type="button"
+                        class="kb-chip kb-chip--toggle"
+                        data-testid="kb-view-toggle"
+                        data-kb-mobile-view-toggle="kb-mobile-view-toggle"
+                        @onclick="ToggleMobileView">
+                    @(showMapOnMobile ? Culture["Discovery.List"] : Culture["Discovery.Map"])
                 </button>
-            }
-            <AuthorizeView>
-                <Authorized>
-                    <a class="kb-chip kb-chip--match jobsy-action--match" href="/candidate/match">@Culture["Nav.Match"]</a>
-                </Authorized>
-            </AuthorizeView>
-            <button type="button"
-                    class="kb-chip kb-chip--toggle"
-                    data-testid="kb-mobile-view-toggle"
-                    @onclick="ToggleMobileView">
-                @(showMapOnMobile ? Culture["Discovery.List"] : Culture["Discovery.Map"])
-            </button>
+            </div>
         </div>
-
-        @if (_searchExpanded || !string.IsNullOrWhiteSpace(_searchDraft) || !string.IsNullOrWhiteSpace(_searchQuery))
-        {
-            <div class="kb-filter-search kb-filter-search--mobile">
-                <label class="visually-hidden" for="discovery-keyword-mobile">@Culture["Discovery.Keyword"]</label>
-                <input id="discovery-keyword-mobile"
-                       type="search"
-                       autocomplete="off"
-                       placeholder="@Culture["Kb.Filter.SearchPlaceholder"]"
-                       value="@(_searchDraft ?? _searchQuery ?? "")"
-                       @oninput="OnSearchInput"
-                       @onkeydown="OnSearchKeyDown" />
-            </div>
-        }
-
-        @if (_hoursChipOpen)
-        {
-            <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(0, 16)">0–16</button>
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(16, 24)">16–24</button>
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(24, 32)">24–32</button>
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(32, 40)">32–40</button>
-                <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
-            </div>
-        }
-        @if (_wageChipOpen)
-        {
-            <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
-                <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
-            </div>
-        }
     </div>
 
     <aside class="vacancy-pane">
@@ -210,16 +177,18 @@
                 <div class="kb-filter-chips__travel">
                     <button type="button"
                             class="kb-chip @(_travelChipOpen ? "is-open" : null)"
+                            data-testid="kb-travel-chip"
                             aria-expanded="@(_travelChipOpen ? "true" : "false")"
+                            aria-label="@Culture["Kb.Filter.TravelAria"]"
                             @onclick="ToggleTravelChip">
                         <span>@TravelChipLabel</span>
                         <span aria-hidden="true">▾</span>
                     </button>
                     @if (_travelChipOpen)
                     {
-                        <div class="kb-chip-popover" role="dialog">
-                            <div class="kb-chip-popover__modes" role="group">
-                                @foreach (var mode in new[] { "Fiets", "Auto", "Lopend", "OV" })
+                        <div class="kb-chip-popover" role="dialog" data-testid="kb-travel-popover">
+                            <div class="kb-chip-popover__modes" role="group" aria-label="@Culture["Discovery.Transport"]">
+                                @foreach (var mode in TravelChipModes)
                                 {
                                     <button type="button"
                                             class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
@@ -228,8 +197,8 @@
                                     </button>
                                 }
                             </div>
-                            <div class="kb-chip-popover__minutes" role="group">
-                                @foreach (var m in new[] { 10, 20, 30, 45 })
+                            <div class="kb-chip-popover__minutes" role="group" aria-label="@Culture["Discovery.TravelMinutes"]">
+                                @foreach (var m in TravelChipMinutes)
                                 {
                                     <button type="button"
                                             class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
@@ -260,21 +229,24 @@
                     <span class="visually-hidden">@Culture["Discovery.Keyword"]</span>
                     <input type="search"
                            autocomplete="off"
-                           placeholder="@Culture["Kb.Filter.SearchPlaceholder"]"
+                           placeholder="@Culture["Kb.Filter.KeywordPlaceholder"]"
                            value="@(_searchDraft ?? _searchQuery ?? "")"
                            @oninput="OnSearchInput"
                            @onkeydown="OnSearchKeyDown" />
                 </label>
 
                 <button type="button"
-                        class="kb-chip @(_filtersOpen ? "is-active" : null)"
+                        class="kb-filters-button @(_filtersOpen ? "is-active" : null)"
+                        data-testid="kb-filters-button"
                         @onclick="ToggleFilters"
                         aria-expanded="@(_filtersOpen ? "true" : "false")"
-                        aria-controls="discovery-filters-desktop">
-                    <span>@Culture["Kb.Filter.More"]</span>
+                        aria-controls="discovery-filters-desktop"
+                        aria-label="@Culture["Kb.Filter.FiltersAria"]">
+                    <span class="kb-filters-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                    <span>@Culture["Discovery.Filters"]</span>
                     @if (ActiveFilterCount > 0)
                     {
-                        <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                        <span class="jobsy-action__badge" data-testid="kb-filters-badge">@ActiveFilterCount</span>
                     }
                 </button>
                 @if (ActiveFilterCount > 0)
@@ -283,6 +255,13 @@
                         @Culture["Kb.Filter.Clear"]
                     </button>
                 }
+
+                <a class="kb-match-button jobsy-action--match"
+                   data-testid="kb-match-button"
+                   href="@MatchButtonHref">
+                    <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                    <span>@Culture["Nav.Match"]</span>
+                </a>
 
                 <div class="kb-view-toggle"
                      role="radiogroup"
@@ -306,6 +285,23 @@
                     </button>
                 </div>
             </div>
+
+            @if (_hoursChipOpen)
+            {
+                <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(0, 16)">0–16</button>
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(16, 24)">16–24</button>
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(24, 32)">24–32</button>
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(32, 40)">32–40</button>
+                    <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
+                </div>
+            }
+            @if (_wageChipOpen)
+            {
+                <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
+                    <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
+                </div>
+            }
         </div>
 
         <div id="discovery-filters-desktop"
@@ -1191,7 +1187,12 @@
     private decimal? _minHourlyWage;
     private decimal? _maxHourlyWage;
     private bool _isCandidate;
+    private bool _isAuthenticated;
     private readonly MatchDeck _matchDeck = new();
+    private static readonly string[] TravelChipModes = ["Fiets", "E-bike", "Auto", "OV", "Lopend"];
+    private static readonly int[] TravelChipMinutes = [10, 20, 30];
+    private static readonly string MatchLoginHref =
+        "/login?returnUrl=" + Uri.EscapeDataString("/candidate/match");
     private bool _matchDeckLoadStarted;
     private bool _matchDialogOpen;
     private TopMatchTile? _topMatchTile;
@@ -1226,8 +1227,6 @@
     private bool _travelChipOpen;
     private bool _hoursChipOpen;
     private bool _wageChipOpen;
-    private bool _workTypeChipOpen;
-    private bool _searchExpanded;
     private string _isoMode = "approx";
     private KbFilterDefaults _filterDefaults = new();
     private int? _profileMinHours;
@@ -1555,6 +1554,10 @@
                 HasOrigin: _origin is not null),
             _filterDefaults);
 
+    private string MatchButtonHref => _isAuthenticated
+        ? "/candidate/match"
+        : MatchLoginHref;
+
     private string TravelChipLabel =>
         string.Equals(_selectedTransport, "Fiets", StringComparison.Ordinal)
             ? Culture.Format("Kb.Filter.TravelChipBike", _maxTravelMinutes)
@@ -1630,6 +1633,7 @@
             await LoadBranchOptionsAsync();
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
+            _isAuthenticated = user.Identity?.IsAuthenticated == true;
             _isCandidate = user.IsInRole("Candidate");
             _canShowMyVacancies = user.IsInRole("EnterpriseManager")
                 || user.IsInRole("RegionalManager")
@@ -3460,8 +3464,6 @@
     private void ToggleTravelChip() => _travelChipOpen = !_travelChipOpen;
     private void ToggleHoursChip() => _hoursChipOpen = !_hoursChipOpen;
     private void ToggleWageChip() => _wageChipOpen = !_wageChipOpen;
-    private void ToggleWorkTypeChip() => _workTypeChipOpen = !_workTypeChipOpen;
-    private void ToggleSearchExpanded() => _searchExpanded = !_searchExpanded;
 
     private void ToggleLegend()
         => _legendOpen = !_legendOpen;

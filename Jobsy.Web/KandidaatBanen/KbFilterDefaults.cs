@@ -47,13 +47,7 @@ public static class KbFilterBadge
         }
 
         if (state.MyVacanciesOnly) n++;
-        if (state.HasOrigin && state.MaxTravelMinutes != defaults.MaxTravelMinutes) n++;
-        if (state.HasOrigin
-            && !string.Equals(state.Transport, defaults.Transport, StringComparison.Ordinal))
-        {
-            n++;
-        }
-
+        // Travel preset (mode + minutes) is shown on its own chip — exclude from Filters (n).
         if (state.HasOrigin && state.RadiusKm != defaults.RadiusKm) n++;
         if (state.MinMatchPercent > 0) n++;
         return n;

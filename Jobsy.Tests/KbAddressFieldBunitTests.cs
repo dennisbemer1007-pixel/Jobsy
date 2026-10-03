@@ -48,6 +48,24 @@ public class KbAddressFieldBunitTests : BunitContext
         Assert.Equal(typed, cut.Find("input").GetAttribute("value"));
     }
 
+    [Fact]
+    public void Renders_geo_button_and_fld_field_structure()
+    {
+        var cut = Render<KbAddressField>(ps => ps
+            .Add(p => p.InputId, "test-address-geo")
+            .Add(p => p.Query, "")
+            .Add(p => p.Suggestions, Array.Empty<AddressSuggestion>())
+            .Add(p => p.Suggesting, false)
+            .Add(p => p.ShowSuggestions, false)
+            .Add(p => p.ShowLocate, true)
+            .Add(p => p.OriginSet, true));
+
+        Assert.NotNull(cut.Find(".kb-address__field input"));
+        Assert.NotNull(cut.Find("button.kb-address__geo"));
+        Assert.NotNull(cut.Find("button.kb-address__clear"));
+        Assert.Equal("combobox", cut.Find("input").GetAttribute("role"));
+    }
+
     private sealed class FakeAuth : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -62,8 +80,9 @@ public class KbFilterBarBunitTests
     {
         var root = FindRepoRoot();
         var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        Assert.Contains("kb-filter-chips", discovery, StringComparison.Ordinal);
-        Assert.Contains("Kb.Filter.SearchPlaceholder", discovery, StringComparison.Ordinal);
+        Assert.Contains("kb-filter-bar", discovery, StringComparison.Ordinal);
+        Assert.Contains("kb-filter-chips--desktop", discovery, StringComparison.Ordinal);
+        Assert.Contains("Kb.Filter.KeywordPlaceholder", discovery, StringComparison.Ordinal);
         Assert.Contains("kb-filter-search--desktop", discovery, StringComparison.Ordinal);
         Assert.Contains("KbAddressField", discovery, StringComparison.Ordinal);
         Assert.Contains("kb-start-prompt", discovery, StringComparison.Ordinal);
