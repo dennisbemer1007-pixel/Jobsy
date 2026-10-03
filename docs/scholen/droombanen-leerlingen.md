@@ -12,7 +12,7 @@ Needs:
 - `BiologieInteresse` (ChipDieren ≥ 60): Je houdt van dieren / Kies straks biologie in je pakket
 
 Route:
-- Nu: klas 2|Kies straks biologie en scheikunde
+- Nu: {nu}|Kies straks biologie en scheikunde
 - Havo of vwo afmaken|Zit je op vmbo? Via mbo Dierenartsassistent kan je ook verder.
 - Diergeneeskunde studeren|Universiteit Utrecht · 6 jaar
 - Goal: Dierenarts!|In een praktijk, dierentuin of op de boerderij
@@ -28,7 +28,7 @@ Needs:
 - `Rekenen` (ChipRekenen ≥ 60): Je houdt van rekenen / Oefen rekenen tot het soepel gaat
 
 Route:
-- Nu: klas 2|Kies straks wiskunde en natuurkunde
+- Nu: {nu}|Kies straks wiskunde en natuurkunde
 - Havo of vwo afmaken|Goede cijfers voor bètavakken helpen
 - Vliegopleiding|Vaak hbo of private school · enkele jaren
 - Goal: Piloot!|Bij een luchtvaartmaatschappij of in de kleine luchtvaart
@@ -43,7 +43,7 @@ Needs:
 - `Rechtvaardig` (ValueImpact ≥ 60): Je vindt eerlijkheid belangrijk / Praat over wat jij eerlijk vindt
 
 Route:
-- Nu: klas 2|Kies straks Nederlands en geschiedenis
+- Nu: {nu}|Kies straks Nederlands en geschiedenis
 - Havo of vwo afmaken|Vwo helpt voor de universiteit
 - Rechten studeren|Universiteit · ongeveer 4 tot 6 jaar
 - Goal: Advocaat!|In een kantoor of bij de overheid
@@ -58,7 +58,7 @@ Needs:
 - `Kinderen` (ChipKleineKinderen ≥ 60): Je houdt van kleine kinderen / Help mee bij jongere leerlingen
 
 Route:
-- Nu: klas 2|Kies vakken die je later wilt uitleggen
+- Nu: {nu}|Kies vakken die je later wilt uitleggen
 - Havo of vwo afmaken|Of via mbo onderwijsassistent
 - Pabo of eerstegraads|Hbo pabo · ongeveer 4 jaar
 - Goal: Leraar!|Op een basisschool of middelbare school
@@ -74,7 +74,7 @@ Needs:
 - `Impact` (ValueImpact ≥ 60): Je wilt verschil maken / Kies een project dat anderen helpt
 
 Route:
-- Nu: klas 2|Kies straks biologie, scheikunde en wiskunde
+- Nu: {nu}|Kies straks biologie, scheikunde en wiskunde
 - Vwo afmaken|Geneeskunde vraagt vaak vwo
 - Geneeskunde|Universiteit · 6 jaar plus specialisatie
 - Goal: Arts!|In een ziekenhuis of huisartspraktijk
@@ -89,7 +89,7 @@ Needs:
 - `Tekenen` (ChipTekenen ≥ 60): Je houdt van tekenen / Teken elke week iets nieuws
 
 Route:
-- Nu: klas 2|Kies straks tekenen, wiskunde en techniek
+- Nu: {nu}|Kies straks tekenen, wiskunde en techniek
 - Havo of vwo afmaken|Technische route helpt
 - Bouwkunde of Architectuur|Hbo of wo · 4 tot 5 jaar
 - Goal: Architect!|Bij een bureau of in de bouw
@@ -104,7 +104,7 @@ Needs:
 - `Koken` (ChipKoken ≥ 60): Je houdt van koken of bakken / Kook of bak iets eenvoudigs
 
 Route:
-- Nu: klas 2|Kies straks consumptief of economie
+- Nu: {nu}|Kies straks consumptief of economie
 - Vmbo of havo|Praktijkervaring telt mee
 - Mbo Kok|Mbo niveau 2 tot 4 · 2 tot 4 jaar
 - Goal: Kok!|In een restaurant, keuken of catering
@@ -120,7 +120,7 @@ Needs:
 - `Sport` (ChipSport ≥ 60): Je houdt van sport / Blijf bewegen naast school
 
 Route:
-- Nu: klas 2|Blijf sporten en samenwerken oefenen
+- Nu: {nu}|Blijf sporten en samenwerken oefenen
 - Diploma middelbaar|Vmbo, havo of vwo
 - Brandweeropleiding|Interne opleiding bij de brandweer
 - Goal: Brandweer!|Bij een kazerne in je regio
@@ -135,7 +135,7 @@ Needs:
 - `Gamen` (ChipGamen ≥ 60): Je houdt van gamen / Gebruik die interesse om iets te leren
 
 Route:
-- Nu: klas 2|Kies straks informatica of wiskunde
+- Nu: {nu}|Kies straks informatica of wiskunde
 - Havo of vwo|Of mbo software development
 - Game of software-opleiding|Mbo of hbo · 3 tot 4 jaar
 - Goal: Game developer!|Bij een studio of als zelfstandige
@@ -151,7 +151,7 @@ Needs:
 - `Rekenen` (ChipRekenen ≥ 60): Je houdt van rekenen / Oefen rekenen tot het soepel gaat
 
 Route:
-- Nu: klas 2|Kies straks wiskunde, natuurkunde en Engels
+- Nu: {nu}|Kies straks wiskunde, natuurkunde en Engels
 - Vwo afmaken|Sterke bèta-cijfers helpen
 - Technische of vliegopleiding|Lange route via wo of luchtvaart
 - Goal: Astronaut!|Bij een ruimtevaartorganisatie — een zeldzaam doel
@@ -166,7 +166,7 @@ Needs:
 - `Rechtvaardig` (ValueStability ≥ 60): Je vindt eerlijkheid belangrijk / Praat over wat jij eerlijk vindt
 
 Route:
-- Nu: klas 2|Oefen samenwerken en rustig blijven
+- Nu: {nu}|Oefen samenwerken en rustig blijven
 - Diploma middelbaar|Vmbo-kader of hoger
 - Politieopleiding|Politieacademie · enkele jaren
 - Goal: Politieagent!|Op straat, op kantoor of in een team
@@ -181,7 +181,7 @@ Needs:
 - `Impact` (ValueImpact ≥ 60): Je wilt verschil maken / Kies een project dat anderen helpt
 
 Route:
-- Nu: klas 2|Kies straks biologie en zorg & welzijn
+- Nu: {nu}|Kies straks biologie en zorg & welzijn
 - Vmbo, havo of vwo|Zorgprofiel helpt
 - Mbo of hbo Verpleegkunde|3 tot 4 jaar · daarna BIG-registratie
 - Goal: Verpleegkundige!|In een ziekenhuis, wijk of zorginstelling
@@ -197,7 +197,7 @@ Needs:
 - `Vrijheid` (ValueAutonomy ≥ 60): Je wilt vrijheid / Praat over zelfstandig werken
 
 Route:
-- Nu: klas 2|Oefen een klein idee uitwerken
+- Nu: {nu}|Oefen een klein idee uitwerken
 - Diploma middelbaar|Elk niveau kan
 - Mbo of hbo bedrijfskunde|Of starten naast school
 - Goal: Ondernemer!|Met een eigen zaak of project
@@ -212,7 +212,7 @@ Needs:
 - `Impact` (ValueImpact ≥ 60): Je wilt verschil maken / Kies een project dat anderen helpt
 
 Route:
-- Nu: klas 2|Kies straks Nederlands en geschiedenis
+- Nu: {nu}|Kies straks Nederlands en geschiedenis
 - Havo of vwo|Schrijven oefenen helpt
 - Journalistiek|Hbo · ongeveer 4 jaar
 - Goal: Journalist!|Bij een medium of als freelancer
@@ -227,7 +227,7 @@ Needs:
 - `Tekenen` (ChipTekenen ≥ 60): Je houdt van tekenen / Teken elke week iets nieuws
 
 Route:
-- Nu: klas 2|Oefen foto's maken en kijken
+- Nu: {nu}|Oefen foto's maken en kijken
 - Vmbo, havo of vwo|Portfolio telt
 - Mbo Fotografie|Of hbo beeldende opleiding · 3 tot 4 jaar
 - Goal: Fotograaf!|In een studio, op locatie of freelance
@@ -243,7 +243,7 @@ Needs:
 - `Mode` (ChipTekenen ≥ 60): Je houdt van vormgeven / Teken of knip een ontwerp
 
 Route:
-- Nu: klas 2|Oefen netjes werken met je handen
+- Nu: {nu}|Oefen netjes werken met je handen
 - Vmbo of mavo|Praktijkroute past goed
 - Mbo Kapper|Niveau 2 tot 3 · 2 tot 3 jaar
 - Goal: Kapper!|In een salon of als zelfstandige
@@ -259,7 +259,7 @@ Needs:
 - `Computers` (ChipProgrammeren ≥ 60): Je vindt computers interessant / Probeer een eenvoudig digitaal project
 
 Route:
-- Nu: klas 2|Kies straks informatica of wiskunde
+- Nu: {nu}|Kies straks informatica of wiskunde
 - Havo of vwo|Of mbo software
 - Mbo of hbo ICT|3 tot 4 jaar
 - Goal: Programmeur!|Bij een bedrijf of als freelancer
@@ -275,7 +275,7 @@ Needs:
 - `Techniek` (ChipTechniek ≥ 60): Je vindt techniek interessant / Kies straks een techniek- of NaSk-vak
 
 Route:
-- Nu: klas 2|Kies straks wiskunde en techniek
+- Nu: {nu}|Kies straks wiskunde en techniek
 - Havo of vwo|Of mbo bouwkunde
 - Bouwkunde|Mbo of hbo · 3 tot 4 jaar
 - Goal: Bouwkundige!|Op kantoor of op de bouwplaats
@@ -291,7 +291,7 @@ Needs:
 - `Netjes` (ValueAchievement ≥ 60): Je werkt netjes / Rond werk netjes af
 
 Route:
-- Nu: klas 2|Kies straks biologie en scheikunde
+- Nu: {nu}|Kies straks biologie en scheikunde
 - Vwo afmaken|Tandheelkunde vraagt vaak vwo
 - Tandheelkunde|Universiteit · 6 jaar
 - Goal: Tandarts!|In een praktijk of kliniek
@@ -306,7 +306,7 @@ Needs:
 - `Impact` (ValueImpact ≥ 60): Je wilt verschil maken / Kies een project dat anderen helpt
 
 Route:
-- Nu: klas 2|Kies straks biologie en maatschappijleer
+- Nu: {nu}|Kies straks biologie en maatschappijleer
 - Vwo afmaken|Universiteit helpt
 - Psychologie|Universiteit · 3 plus 1 of 2 jaar
 - Goal: Psycholoog!|In de zorg, op school of in een praktijk
@@ -321,7 +321,7 @@ Needs:
 - `Sport` (ChipSport ≥ 60): Je houdt van sport / Blijf bewegen naast school
 
 Route:
-- Nu: klas 2|Kies straks biologie en sport
+- Nu: {nu}|Kies straks biologie en sport
 - Havo of vwo|Hbo-route
 - Fysiotherapie|Hbo · 4 jaar
 - Goal: Fysiotherapeut!|In een praktijk of ziekenhuis
@@ -337,7 +337,7 @@ Needs:
 - `Impact` (ValueImpact ≥ 60): Je wilt verschil maken / Kies een project dat anderen helpt
 
 Route:
-- Nu: klas 2|Kies straks biologie en zorg
+- Nu: {nu}|Kies straks biologie en zorg
 - Havo of vwo|Hbo-route
 - Verloskunde|Hbo · 4 jaar
 - Goal: Verloskundige!|In een praktijk of ziekenhuis
@@ -352,7 +352,7 @@ Needs:
 - `Netjes` (ValueStability ≥ 60): Je werkt netjes / Rond werk netjes af
 
 Route:
-- Nu: klas 2|Kies straks scheikunde en biologie
+- Nu: {nu}|Kies straks scheikunde en biologie
 - Vwo afmaken|Universiteit
 - Farmacie|Universiteit · 6 jaar
 - Goal: Apotheker!|In een apotheek of ziekenhuis
@@ -367,7 +367,7 @@ Needs:
 - `Taal` (RiasecS ≥ 60): Je bent sterk met taal / Lees en schrijf regelmatig
 
 Route:
-- Nu: klas 2|Kies straks Nederlands en geschiedenis
+- Nu: {nu}|Kies straks Nederlands en geschiedenis
 - Vwo afmaken|Rechtenstudie
 - Rechten plus ervaring|Lange route via wo en praktijk
 - Goal: Rechter!|Bij de rechtspraak
@@ -382,7 +382,7 @@ Needs:
 - `Netjes` (CompetenceInnovatie ≥ 40): Je werkt netjes / Rond werk netjes af
 
 Route:
-- Nu: klas 2|Kies straks Nederlands en economie
+- Nu: {nu}|Kies straks Nederlands en economie
 - Vwo afmaken|Notarieel recht
 - Notarieel recht|Universiteit · daarna stage
 - Goal: Notaris!|In een notariskantoor
@@ -397,7 +397,7 @@ Needs:
 - `Nieuw` (CompetenceInnovatie ≥ 60): Je staat open voor nieuw / Probeer een nieuwe werkwijze
 
 Route:
-- Nu: klas 2|Kies straks wiskunde, natuurkunde en techniek
+- Nu: {nu}|Kies straks wiskunde, natuurkunde en techniek
 - Havo of vwo|Technische route
 - Technische opleiding|Hbo of wo · 4 tot 5 jaar
 - Goal: Ingenieur!|In de techniek, bouw of industrie
@@ -413,7 +413,7 @@ Needs:
 - `Bouwen` (ChipBouwen ≥ 60): Je bouwt graag / Maak iets met hout, LEGO of techniek
 
 Route:
-- Nu: klas 2|Kies straks techniek of NaSk
+- Nu: {nu}|Kies straks techniek of NaSk
 - Vmbo of havo|Praktijkroute
 - Mbo Elektricien|Niveau 2 tot 4 · 2 tot 4 jaar
 - Goal: Elektricien!|Bij installatiebedrijven of in de bouw
@@ -429,7 +429,7 @@ Needs:
 - `Autos` (ChipBouwen ≥ 60): Je vindt techniek leuk / Bekijk hoe iets mechanisch werkt
 
 Route:
-- Nu: klas 2|Kies straks techniek
+- Nu: {nu}|Kies straks techniek
 - Vmbo|Praktijkroute past goed
 - Mbo Autotechniek|Niveau 2 tot 4 · 2 tot 4 jaar
 - Goal: Automonteur!|In een garage of werkplaats
@@ -445,7 +445,7 @@ Needs:
 - `Doorzetten` (ValueAchievement ≥ 60): Je zet door / Maak een lastige taak af
 
 Route:
-- Nu: klas 2|Kies straks techniek of bouwen
+- Nu: {nu}|Kies straks techniek of bouwen
 - Vmbo|Praktijkroute
 - Mbo Timmerman|Niveau 2 tot 3 · 2 tot 3 jaar
 - Goal: Timmerman!|Op de bouw of in een werkplaats
@@ -461,7 +461,7 @@ Needs:
 - `Dieren` (ChipDieren ≥ 60): Je houdt van dieren / Help mee met dieren of natuur
 
 Route:
-- Nu: klas 2|Kies straks biologie of groen
+- Nu: {nu}|Kies straks biologie of groen
 - Vmbo|Buiten werken past
 - Mbo Hovenier|Niveau 2 tot 3 · 2 tot 3 jaar
 - Goal: Hovenier!|In tuinen, parken of groenvoorziening
@@ -477,7 +477,7 @@ Needs:
 - `Dieren` (ChipDieren ≥ 60): Je houdt van dieren / Help mee met dieren of natuur
 
 Route:
-- Nu: klas 2|Kies straks biologie en scheikunde
+- Nu: {nu}|Kies straks biologie en scheikunde
 - Havo of vwo|Universiteit of hbo
 - Biologie|Wo of hbo · 3 tot 5 jaar
 - Goal: Bioloog!|In onderzoek, natuur of onderwijs
@@ -492,7 +492,7 @@ Needs:
 - `Rekenen` (ChipRekenen ≥ 60): Je houdt van rekenen / Oefen rekenen tot het soepel gaat
 
 Route:
-- Nu: klas 2|Kies straks bètavakken
+- Nu: {nu}|Kies straks bètavakken
 - Vwo afmaken|Onderzoek vraagt vaak wo
 - Wetenschappelijke studie|Universiteit · 3 plus master
 - Goal: Wetenschapper!|In een lab, universiteit of instituut
@@ -507,7 +507,7 @@ Needs:
 - `Ideeën` (CompetenceInnovatie ≥ 60): Je bedenkt graag nieuwe ideeën / Schrijf drie ideeën op na de les
 
 Route:
-- Nu: klas 2|Kies straks tekenen of digitaal
+- Nu: {nu}|Kies straks tekenen of digitaal
 - Vmbo, havo of vwo|Portfolio telt
 - Mbo of hbo vormgeving|3 tot 4 jaar
 - Goal: Grafisch ontwerper!|Bij een bureau of als freelancer
@@ -523,7 +523,7 @@ Needs:
 - `Vrijheid` (ValueAutonomy ≥ 60): Je wilt vrijheid / Praat over zelfstandig werken
 
 Route:
-- Nu: klas 2|Blijf oefenen op je instrument
+- Nu: {nu}|Blijf oefenen op je instrument
 - Diploma middelbaar|Conservatorium of mbo muziek
 - Muziekopleiding|Mbo of hbo · enkele jaren
 - Goal: Muzikant!|Op podium, in les of studio
@@ -539,7 +539,7 @@ Needs:
 - `Theater` (ChipMuziek ≥ 60): Je houdt van spelen en tonen / Doe mee aan een toneelstukje
 
 Route:
-- Nu: klas 2|Doe mee aan toneel of presenteren
+- Nu: {nu}|Doe mee aan toneel of presenteren
 - Diploma middelbaar|Toneelschool of mbo
 - Toneelopleiding|Hbo of mbo · enkele jaren
 - Goal: Acteur!|Op toneel, film of televisie
@@ -555,7 +555,7 @@ Needs:
 - `Presteren` (ValueAchievement ≥ 60): Je wilt graag presteren / Zet een klein doel en haal het
 
 Route:
-- Nu: klas 2|Train gericht naast school
+- Nu: {nu}|Train gericht naast school
 - Diploma middelbaar|Topsportrajecten bestaan
 - Talentontwikkeling|Club, bond en soms sportopleiding
 - Goal: Profsporter!|Bij een club of bond — een zeldzaam pad
@@ -570,7 +570,7 @@ Needs:
 - `Lichaam` (RiasecR ≥ 60): Je let op hoe het lichaam werkt / Kies straks biologie of sport
 
 Route:
-- Nu: klas 2|Blijf sporten en mensen helpen
+- Nu: {nu}|Blijf sporten en mensen helpen
 - Vmbo, havo of vwo|Sportopleiding helpt
 - Mbo Sport of fitness|2 tot 3 jaar plus certificaten
 - Goal: Personal trainer!|In een sportschool of als coach
@@ -586,7 +586,7 @@ Needs:
 - `Filmpjes` (ChipGamen ≥ 60): Je maakt graag filmpjes / Maak een kort filmpje over iets wat je kunt
 
 Route:
-- Nu: klas 2|Oefen filmpjes en verhalen maken
+- Nu: {nu}|Oefen filmpjes en verhalen maken
 - Vmbo, havo of vwo|Portfolio telt
 - Mbo media of creatief|2 tot 4 jaar
 - Goal: Contentmaker!|Online, bij media of als freelancer
@@ -602,7 +602,7 @@ Needs:
 - `Presteren` (ValueAchievement ≥ 60): Je wilt graag presteren / Zet een klein doel en haal het
 
 Route:
-- Nu: klas 2|Kies straks economie of Nederlands
+- Nu: {nu}|Kies straks economie of Nederlands
 - Havo of vwo|Of mbo marketing
 - Marketing opleiding|Mbo of hbo · 3 tot 4 jaar
 - Goal: Marketeer!|Bij een bedrijf of bureau
@@ -617,7 +617,7 @@ Needs:
 - `Uitzoeken` (RiasecI ≥ 60): Je wilt weten hoe iets werkt / Kies straks een onderzoekend vak
 
 Route:
-- Nu: klas 2|Kies straks economie en wiskunde
+- Nu: {nu}|Kies straks economie en wiskunde
 - Havo of vwo|Of mbo finance
 - Accountancy|Mbo of hbo · 3 tot 4 jaar
 - Goal: Accountant!|Bij een kantoor of bedrijf
@@ -633,7 +633,7 @@ Needs:
 - `Presteren` (ValueAchievement ≥ 60): Je wilt graag presteren / Zet een klein doel en haal het
 
 Route:
-- Nu: klas 2|Oefen praten en plannen
+- Nu: {nu}|Oefen praten en plannen
 - Havo of vwo|Of mbo vastgoed
 - Vastgoedopleiding|Mbo of hbo · plus branchecertificaat
 - Goal: Makelaar!|In de woning- of bedrijfsmarkt
@@ -648,7 +648,7 @@ Needs:
 - `Reizen` (ValueAutonomy ≥ 60): Je houdt van onderweg zijn / Praat over reizen en talen
 
 Route:
-- Nu: klas 2|Oefen talen en klantcontact
+- Nu: {nu}|Oefen talen en klantcontact
 - Diploma middelbaar|Havo helpt vaak
 - Luchtvaartopleiding|Korte opleiding bij een airline
 - Goal: Cabinepersoneel!|In een vliegtuigteam
@@ -663,7 +663,7 @@ Needs:
 - `Sport` (ChipSport ≥ 60): Je houdt van sport / Blijf bewegen naast school
 
 Route:
-- Nu: klas 2|Blijf sporten en samenwerken
+- Nu: {nu}|Blijf sporten en samenwerken
 - Diploma middelbaar|Afhankelijk van functie
 - Defensieopleiding|Interne opleiding bij Defensie
 - Goal: Militair!|Bij Defensie in verschillende functies
@@ -678,7 +678,7 @@ Needs:
 - `Spelen` (RiasecA ≥ 60): Je speelt graag mee / Help bij een spel met jongeren
 
 Route:
-- Nu: klas 2|Kies straks zorg & welzijn
+- Nu: {nu}|Kies straks zorg & welzijn
 - Vmbo of havo|Praktijkroute past
 - Mbo Pedagogisch werk|Niveau 3 tot 4 · 3 tot 4 jaar
 - Goal: Pedagogisch medewerker!|In de kinderopvang of bso
@@ -694,7 +694,7 @@ Needs:
 - `Natuur` (ChipNatuur ≥ 60): Je houdt van natuur / Leer een plant of dier kennen
 
 Route:
-- Nu: klas 2|Kies straks biologie of groen
+- Nu: {nu}|Kies straks biologie of groen
 - Vmbo|Praktijkroute
 - Mbo Dier|Niveau 2 tot 4 · 2 tot 4 jaar
 - Goal: Dierenverzorger!|In een asiel, pension of dierentuin
@@ -710,7 +710,7 @@ Needs:
 - `Team` (CompetenceSamenwerken ≥ 60): Je werkt graag in een team / Help je groep op gang
 
 Route:
-- Nu: klas 2|Oefen organiseren van een klein event
+- Nu: {nu}|Oefen organiseren van een klein event
 - Havo of vwo|Of mbo events
 - Event of leisure opleiding|Mbo of hbo · 3 tot 4 jaar
 - Goal: Evenementenorganisator!|Bij festivals, bedrijven of bureaus
@@ -726,7 +726,7 @@ Needs:
 - `Ordenen` (RiasecC ≥ 60): Je houdt van ordenen / Maak een nette planning
 
 Route:
-- Nu: klas 2|Kies straks wiskunde en informatica
+- Nu: {nu}|Kies straks wiskunde en informatica
 - Havo of vwo|Sterke bèta helpt
 - Data of AI opleiding|Hbo of wo · 3 tot 5 jaar
 - Goal: Data scientist!|Bij bedrijven of onderzoek
@@ -741,8 +741,168 @@ Needs:
 - `Creatief` (RiasecA ≥ 60): Je bent creatief / Probeer een nieuw creatief ding
 
 Route:
-- Nu: klas 2|Oefen vroeg opstaan en netjes werken
+- Nu: {nu}|Oefen vroeg opstaan en netjes werken
 - Vmbo|Praktijkroute
 - Mbo Bakker|Niveau 2 tot 3 · 2 tot 3 jaar
 - Goal: Bakker!|In een bakkerij of keuken
 - Alt: Via mbo Bakker kun je snel starten.
+
+## Logistiek medewerker (`logistiek-medewerker`)
+
+Needs:
+- `Handig` (RiasecR ≥ 60): Je bent handig / Repareer of maak iets kleins
+- `Ordenen` (RiasecC ≥ 60): Je houdt van ordenen / Maak een nette planning
+- `Precies` (CompetenceResultaat ≥ 60): Je werkt precies / Oefen met foutloos overschrijven
+- `Team` (CompetenceSamenwerken ≥ 60): Je werkt graag in een team / Help je groep op gang
+- `Betrouwbaar` (ValueStability ≥ 60): Je bent betrouwbaar / Kom kleine afspraken na
+
+Route:
+- Nu: {nu}|Oefen ordenen en samenwerken
+- Mbo logistiek (niveau 2–4)|Vaak 2 tot 4 jaar, ook via bbl
+- Stage / bbl|Oefen in een magazijn of op school
+- Goal: Logistiek medewerker!|In een magazijn, haven of transport
+- Alt: Via mbo logistiek kun je snel starten.
+
+## Verkoper (`verkoper`)
+
+Needs:
+- `Overtuigen` (RiasecE ≥ 60): Je kunt anderen meekrijgen / Oefen een kort verhaal voor de klas
+- `Helpen` (RiasecS ≥ 60): Je helpt graag anderen / Bied hulp aan bij een klasgenoot
+- `Mensen` (CompetenceExtraversie ≥ 60): Je vindt mensen leuk / Praat met iemand nieuws in de klas
+- `Samen` (CompetenceSamenwerken ≥ 60): Je werkt graag samen / Kies vaker een groepstaak
+- `Luisteren` (ValueConnection ≥ 60): Je luistert goed / Oefen echt luisteren naar een ander
+
+Route:
+- Nu: {nu}|Oefen praten en helpen
+- Mbo verkoop (niveau 2–4)|Vaak 2 tot 4 jaar, ook via bbl
+- Stage / bbl|Oefen in een winkel of op school
+- Goal: Verkoper!|In een winkel of webshop
+- Alt: Via mbo verkoop kun je snel starten.
+
+## Beveiliger (`beveiliger`)
+
+Needs:
+- `Kalm` (CompetenceStress ≥ 60): Je blijft kalm / Oefen kalm blijven bij spanning
+- `Aanpakken` (RiasecR ≥ 60): Je pakt dingen graag aan / Neem een kleine klus op je
+- `Precies` (CompetenceResultaat ≥ 60): Je werkt precies / Oefen met foutloos overschrijven
+- `Betrouwbaar` (ValueStability ≥ 60): Je bent betrouwbaar / Kom kleine afspraken na
+- `Rechtvaardig` (ValueImpact ≥ 60): Je vindt eerlijkheid belangrijk / Praat over wat jij eerlijk vindt
+
+Route:
+- Nu: {nu}|Oefen kalm blijven en samenwerken
+- Mbo beveiliging (niveau 2–3)|Vaak 2 tot 3 jaar, ook via bbl
+- Stage / bbl|Oefen alert zijn in een team
+- Goal: Beveiliger!|Op school, evenement of terrein
+- Alt: Via mbo beveiliging kun je snel starten.
+
+## Installateur (`installateur`)
+
+Needs:
+- `Handig` (RiasecR ≥ 60): Je bent handig / Repareer of maak iets kleins
+- `Techniek` (ChipTechniek ≥ 60): Je vindt techniek interessant / Kies straks een techniek- of NaSk-vak
+- `Precies` (CompetenceResultaat ≥ 60): Je werkt precies / Oefen met foutloos overschrijven
+- `Uitzoeken` (RiasecI ≥ 60): Je wilt weten hoe iets werkt / Kies straks een onderzoekend vak
+- `Vrijheid` (ValueAutonomy ≥ 60): Je wilt vrijheid / Praat over zelfstandig werken
+
+Route:
+- Nu: {nu}|Kies straks techniek of NaSk
+- Mbo installatie (niveau 2–4)|Vaak 2 tot 4 jaar, ook via bbl
+- Stage / bbl|Oefen leidingen of panelen maken
+- Goal: Installateur!|In huizen, scholen of gebouwen
+- Alt: Via mbo installatie kun je snel starten.
+
+## Verzorgende IG (`verzorgende-ig`)
+
+Needs:
+- `Zorgen` (RiasecS ≥ 60): Je zorgt graag voor anderen / Oefen kleine zorg-taken thuis of op school
+- `Samen` (CompetenceSamenwerken ≥ 60): Je werkt graag samen / Kies vaker een groepstaak
+- `Kalm` (CompetenceStress ≥ 60): Je blijft kalm / Oefen kalm blijven bij spanning
+- `Luisteren` (ValueConnection ≥ 60): Je luistert goed / Oefen echt luisteren naar een ander
+- `Impact` (ValueImpact ≥ 60): Je wilt verschil maken / Kies een project dat anderen helpt
+
+Route:
+- Nu: {nu}|Kies straks zorg & welzijn
+- Mbo verzorgende IG (niveau 3)|Vaak 3 jaar, ook via bbl
+- Stage / bbl|Oefen zorgen in een team
+- Goal: Verzorgende IG!|In de zorg of thuiszorg
+- Alt: Via mbo zorg kun je starten.
+
+## Schilder (`schilder`)
+
+Needs:
+- `Maken` (RiasecR ≥ 60): Je maakt graag iets met je handen / Maak een klein project af
+- `Creatief` (RiasecA ≥ 60): Je bent creatief / Probeer een nieuw creatief ding
+- `Precies` (CompetenceResultaat ≥ 60): Je werkt precies / Oefen met foutloos overschrijven
+- `Vrijheid` (ValueAutonomy ≥ 60): Je wilt vrijheid / Praat over zelfstandig werken
+- `Bouwen` (ChipBouwen ≥ 60): Je bouwt graag / Maak iets met hout, LEGO of techniek
+
+Route:
+- Nu: {nu}|Oefen netjes werken met je handen
+- Mbo schilderen (niveau 2–3)|Vaak 2 tot 3 jaar, ook via bbl
+- Stage / bbl|Oefen verven en afwerken
+- Goal: Schilder!|In huizen, scholen of buiten
+- Alt: Via mbo schilderen kun je snel starten.
+
+## Loodgieter (`loodgieter`)
+
+Needs:
+- `Handig` (RiasecR ≥ 60): Je bent handig / Repareer of maak iets kleins
+- `Techniek` (ChipTechniek ≥ 60): Je vindt techniek interessant / Kies straks een techniek- of NaSk-vak
+- `Kalm` (CompetenceStress ≥ 60): Je blijft kalm / Oefen kalm blijven bij spanning
+- `Vrijheid` (ValueAutonomy ≥ 60): Je wilt vrijheid / Praat over zelfstandig werken
+- `Uitzoeken` (RiasecI ≥ 60): Je wilt weten hoe iets werkt / Kies straks een onderzoekend vak
+
+Route:
+- Nu: {nu}|Kies straks techniek
+- Mbo sanitair (niveau 2–3)|Vaak 2 tot 3 jaar, ook via bbl
+- Stage / bbl|Oefen leidingen maken en herstellen
+- Goal: Loodgieter!|In huizen, scholen of gebouwen
+- Alt: Via mbo sanitair kun je snel starten.
+
+## Doktersassistent (`doktersassistent`)
+
+Needs:
+- `Zorgen` (RiasecS ≥ 60): Je zorgt graag voor anderen / Oefen kleine zorg-taken thuis of op school
+- `Ordenen` (RiasecC ≥ 60): Je houdt van ordenen / Maak een nette planning
+- `Precies` (CompetenceResultaat ≥ 60): Je werkt precies / Oefen met foutloos overschrijven
+- `Kalm` (CompetenceStress ≥ 60): Je blijft kalm / Oefen kalm blijven bij spanning
+- `Luisteren` (ValueConnection ≥ 60): Je luistert goed / Oefen echt luisteren naar een ander
+
+Route:
+- Nu: {nu}|Kies straks biologie en zorg
+- Mbo doktersassistent (niveau 4)|Vaak 3 tot 4 jaar
+- Stage / bbl|Oefen helpen in een praktijk
+- Goal: Doktersassistent!|In een huisartspraktijk of ziekenhuis
+- Alt: Via mbo doktersassistent kun je starten.
+
+## ICT-medewerker (`ict-medewerker`)
+
+Needs:
+- `Uitzoeken` (RiasecI ≥ 60): Je wilt weten hoe iets werkt / Kies straks een onderzoekend vak
+- `Computers` (ChipComputers ≥ 60): Je vindt computers interessant / Probeer een eenvoudig digitaal project
+- `Ordenen` (RiasecC ≥ 60): Je houdt van ordenen / Maak een nette planning
+- `Nieuw` (CompetenceInnovatie ≥ 60): Je staat open voor nieuw / Probeer een nieuwe werkwijze
+- `Vrijheid` (ValueAutonomy ≥ 60): Je wilt vrijheid / Praat over zelfstandig werken
+
+Route:
+- Nu: {nu}|Kies straks informatica of wiskunde
+- Mbo ICT (niveau 3–4)|Vaak 3 tot 4 jaar, ook via bbl
+- Stage / bbl|Oefen computers helpen op school
+- Goal: ICT-medewerker!|Op school of bij een helpdesk
+- Alt: Via mbo ICT kun je snel starten.
+
+## Horecamedewerker (`horecamedewerker`)
+
+Needs:
+- `Helpen` (RiasecS ≥ 60): Je helpt graag anderen / Bied hulp aan bij een klasgenoot
+- `Mensen` (CompetenceExtraversie ≥ 60): Je vindt mensen leuk / Praat met iemand nieuws in de klas
+- `Drukte` (CompetenceStress ≥ 60): Je kunt tegen drukte / Oefen rust houden in een drukke klas
+- `Team` (CompetenceSamenwerken ≥ 60): Je werkt graag in een team / Help je groep op gang
+- `Koken` (ChipKoken ≥ 60): Je houdt van koken of bakken / Kook of bak iets eenvoudigs
+
+Route:
+- Nu: {nu}|Oefen koken of mensen helpen
+- Mbo horeca (niveau 2–4)|Vaak 2 tot 4 jaar, ook via bbl
+- Stage / bbl|Oefen in een keuken of restaurant
+- Goal: Horecamedewerker!|In een keuken, restaurant of kantine
+- Alt: Via mbo horeca kun je snel starten.

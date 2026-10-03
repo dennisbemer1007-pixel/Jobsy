@@ -18,7 +18,8 @@ public sealed record PupilReportPdfModel(
     IReadOnlyList<string> JobIdeas,
     string? DreamJobTitle,
     IReadOnlyList<string> RouteSteps,
-    string? Encouragement);
+    string? Encouragement,
+    string? Footer = null);
 
 public static class PupilReportPdfCopy
 {

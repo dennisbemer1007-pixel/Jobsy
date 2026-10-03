@@ -89,17 +89,41 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who are you" : "Wie ben jij";
         map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
         AddPresets(map, english);
-        AddDreamJobs(map);
+        AddDreamJobs(map, language);
     }
 
     private static void AddPresets(Dictionary<string, string> map, bool english)
     {
-        var values = new[] { ("Direct","Per direct","Ik kan meteen beginnen","Immediately","I can start right away"), ("School","Bijbaan naast school","Na school en in het weekend","Job alongside school","After school and weekends"), ("Weekend","Weekenden","Za en zo","Weekends","Saturday and Sunday"), ("Evening","Avonden","Ma–vr na 18:00","Evenings","Weekdays after 18:00"), ("Office","Kantoordagen","Ma–vr, 9–17 uur","Office days","Weekdays, 9–17"), ("Holiday","Vakantiewerk","In de schoolvakanties","Holiday work","During school holidays"), ("Parttime","Parttime","12–32 uur per week","Part-time","12–32 hours a week"), ("Fulltime","Fulltime","36–40 uur per week","Full-time","36–40 hours a week") };
+        var values = new[] { ("Direct", "Per direct", "Ik kan meteen beginnen", "Immediately", "I can start right away"), ("School", "Bijbaan naast school", "Na school en in het weekend", "Job alongside school", "After school and weekends"), ("Weekend", "Weekenden", "Za en zo", "Weekends", "Saturday and Sunday"), ("Evening", "Avonden", "Ma–vr na 18:00", "Evenings", "Weekdays after 18:00"), ("Office", "Kantoordagen", "Ma–vr, 9–17 uur", "Office days", "Weekdays, 9–17"), ("Holiday", "Vakantiewerk", "In de schoolvakanties", "Holiday work", "During school holidays"), ("Parttime", "Parttime", "12–32 uur per week", "Part-time", "12–32 hours a week"), ("Fulltime", "Fulltime", "36–40 uur per week", "Full-time", "36–40 hours a week") };
         foreach (var item in values) { map[$"Onboarding.Preset.{item.Item1}"] = english ? item.Item4 : item.Item2; map[$"Onboarding.Preset.{item.Item1}.Lead"] = english ? item.Item5 : item.Item3; }
     }
 
-    private static void AddDreamJobs(Dictionary<string, string> map)
+    private static void AddDreamJobs(Dictionary<string, string> map, string language)
     {
-        foreach (var (key, title) in new[] { ("dierenarts","Dierenarts"),("piloot","Piloot"),("advocaat","Advocaat"),("leraar","Leraar"),("arts","Arts"),("architect","Architect"),("kok","Kok"),("brandweer","Brandweerman/-vrouw"),("game-developer","Game developer"),("astronaut","Astronaut"),("politie","Politieagent"),("verpleegkundige","Verpleegkundige"),("ondernemer","Ondernemer"),("journalist","Journalist"),("fotograaf","Fotograaf"),("kapper","Kapper"),("programmeur","Programmeur"),("bouwkundige","Bouwkundige"),("tandarts","Tandarts"),("psycholoog","Psycholoog"),("fysiotherapeut","Fysiotherapeut"),("verloskundige","Verloskundige"),("apotheker","Apotheker"),("rechter","Rechter"),("notaris","Notaris"),("ingenieur","Ingenieur"),("elektricien","Elektricien"),("automonteur","Automonteur"),("timmerman","Timmerman"),("hovenier","Hovenier"),("bioloog","Bioloog"),("wetenschapper","Wetenschapper"),("grafisch-ontwerper","Grafisch ontwerper"),("muzikant","Muzikant"),("acteur","Acteur"),("profsporter","Profsporter"),("personal-trainer","Personal trainer"),("contentmaker","Contentmaker"),("marketeer","Marketeer"),("accountant","Accountant"),("makelaar","Makelaar"),("cabinepersoneel","Cabinepersoneel"),("militair","Militair"),("pedagogisch-medewerker","Pedagogisch medewerker"),("dierenverzorger","Dierenverzorger"),("evenementenorganisator","Evenementenorganisator"),("data-scientist","Data scientist"),("bakker","Bakker") }) map[$"DreamJob.{key}"] = title;
+        foreach (var (key, title) in new[] { ("dierenarts", "Dierenarts"), ("piloot", "Piloot"), ("advocaat", "Advocaat"), ("leraar", "Leraar"), ("arts", "Arts"), ("architect", "Architect"), ("kok", "Kok"), ("brandweer", "Brandweerman/-vrouw"), ("game-developer", "Game developer"), ("astronaut", "Astronaut"), ("politie", "Politieagent"), ("verpleegkundige", "Verpleegkundige"), ("ondernemer", "Ondernemer"), ("journalist", "Journalist"), ("fotograaf", "Fotograaf"), ("kapper", "Kapper"), ("programmeur", "Programmeur"), ("bouwkundige", "Bouwkundige"), ("tandarts", "Tandarts"), ("psycholoog", "Psycholoog"), ("fysiotherapeut", "Fysiotherapeut"), ("verloskundige", "Verloskundige"), ("apotheker", "Apotheker"), ("rechter", "Rechter"), ("notaris", "Notaris"), ("ingenieur", "Ingenieur"), ("elektricien", "Elektricien"), ("automonteur", "Automonteur"), ("timmerman", "Timmerman"), ("hovenier", "Hovenier"), ("bioloog", "Bioloog"), ("wetenschapper", "Wetenschapper"), ("grafisch-ontwerper", "Grafisch ontwerper"), ("muzikant", "Muzikant"), ("acteur", "Acteur"), ("profsporter", "Profsporter"), ("personal-trainer", "Personal trainer"), ("contentmaker", "Contentmaker"), ("marketeer", "Marketeer"), ("accountant", "Accountant"), ("makelaar", "Makelaar"), ("cabinepersoneel", "Cabinepersoneel"), ("militair", "Militair"), ("pedagogisch-medewerker", "Pedagogisch medewerker"), ("dierenverzorger", "Dierenverzorger"), ("evenementenorganisator", "Evenementenorganisator"), ("data-scientist", "Data scientist"), ("bakker", "Bakker") }) map[$"DreamJob.{key}"] = title;
+
+        foreach (var (key, nl, en, pl, ro, ar) in new (string Key, string Nl, string En, string Pl, string Ro, string Ar)[]
+        {
+            ("logistiek-medewerker", "Logistiek medewerker", "Logistics worker", "Pracownik logistyki", "Lucrător logistică", "عامل لوجستيات"),
+            ("verkoper", "Verkoper", "Shop assistant", "Sprzedawca", "Vânzător", "بائع"),
+            ("beveiliger", "Beveiliger", "Security guard", "Ochroniarz", "Agent de pază", "حارس أمن"),
+            ("installateur", "Installateur", "Installer", "Monter instalacji", "Instalator", "فنّي تركيب"),
+            ("verzorgende-ig", "Verzorgende IG", "Care worker IG", "Opiekun IG", "Îngrijitor IG", "مقدّم رعاية IG"),
+            ("schilder", "Schilder", "House painter", "Malarz", "Zugrav", "دهّان"),
+            ("loodgieter", "Loodgieter", "Plumber", "Hydraulik", "Instalator sanitar", "سباك"),
+            ("doktersassistent", "Doktersassistent", "Doctor's assistant", "Asystent lekarza", "Asistent medical", "مساعد طبيب"),
+            ("ict-medewerker", "ICT-medewerker", "IT support", "Pracownik IT", "Specialist IT", "موظف تقنية معلومات"),
+            ("horecamedewerker", "Horecamedewerker", "Hospitality worker", "Pracownik gastronomii", "Lucrător HoReCa", "عامل ضيافة"),
+        })
+        {
+            map[$"DreamJob.{key}"] = language switch
+            {
+                "en" => en,
+                "pl" => pl,
+                "ro" => ro,
+                "ar" => ar,
+                _ => nl
+            };
+        }
     }
 }

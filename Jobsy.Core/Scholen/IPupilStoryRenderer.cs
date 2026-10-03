@@ -10,7 +10,7 @@ public interface IPupilStoryRenderer
 {
     PupilStoryViewDto Render(PupilResult result, PupilProgress? progress);
 
-    DreamJobRouteStubDto RenderDreamRoute(PupilResult result, PupilProgress? progress);
+    DreamJobRouteStubDto RenderDreamRoute(PupilResult result, PupilProgress? progress, PupilClassContext classContext);
 
     /// <summary>Resolved Dutch starter lines (not localization keys).</summary>
     IReadOnlyList<string> ConversationStarterKeys(PupilResult result);
