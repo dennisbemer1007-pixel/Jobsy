@@ -313,6 +313,41 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                         Section(body, "Opleiding", string.Join(", ", model.Educations));
                     }
 
+                    if (model.DiplomaEvaluations is { Count: > 0 })
+                    {
+                        body.Item().EnsureSpace(72).Column(evals =>
+                        {
+                            evals.Spacing(3);
+                            evals.Item().Text("Diplomawaardering").FontSize(11).Bold().FontColor(BrandNavy);
+                            foreach (var evaluation in model.DiplomaEvaluations)
+                            {
+                                evals.Item().ShowEntire().Background(SoftSky).Padding(7).Column(card =>
+                                {
+                                    card.Spacing(1);
+                                    if (!string.IsNullOrWhiteSpace(evaluation.DiplomaTitle))
+                                    {
+                                        card.Item().Text(evaluation.DiplomaTitle!).FontSize(8).FontColor(Muted);
+                                    }
+
+                                    card.Item().Text(evaluation.EquivalentLevelText).FontSize(10).Bold().FontColor(BrandNavy);
+                                    card.Item().Text(evaluation.Attribution).FontSize(8).Italic().FontColor(Slate);
+                                    if (!string.IsNullOrWhiteSpace(evaluation.EquivalentLevelCode))
+                                    {
+                                        var choice = DiplomaEvaluationRules.DutchLevelLabel(evaluation.EquivalentLevelCode);
+                                        if (choice.Length > 0)
+                                        {
+                                            card.Item().Text("Jouw keuze: " + choice).FontSize(8).FontColor(Muted);
+                                        }
+                                    }
+
+                                    card.Item().Text(
+                                            $"{evaluation.EvaluationDate:dd-MM-yyyy} · {evaluation.ReferenceNumber}")
+                                        .FontSize(8).FontColor(Muted);
+                                });
+                            }
+                        });
+                    }
+
                     if (model.Employers.Count > 0)
                     {
                         body.Item().EnsureSpace(72).Column(exp =>

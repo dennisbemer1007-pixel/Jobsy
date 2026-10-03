@@ -88,6 +88,27 @@
                         }
                     </div>
                 }
+                @if (Editor.DiplomaEvaluations.Count > 0)
+                {
+                    <ul class="passport-proof__list diploma-eval__passport" data-testid="diploma-eval-display">
+                        @foreach (var fact in Editor.DiplomaEvaluations)
+                        {
+                            <li>
+                                @if (!string.IsNullOrWhiteSpace(fact.DiplomaTitle))
+                                {
+                                    <span class="muted">@fact.DiplomaTitle</span>
+                                }
+                                <strong>@fact.EquivalentLevelText</strong>
+                                <span class="diploma-eval__attribution">@DiplomaEvalText.Attribution(Culture, fact.IssuingBody, fact.IssuingBodyOther)</span>
+                                @if (!string.IsNullOrWhiteSpace(fact.EquivalentLevelCode))
+                                {
+                                    <span class="diploma-eval__choice">@Culture.Format("DiplomaEval.YourChoice", DiplomaEvalText.Level(Culture, fact.EquivalentLevelCode))</span>
+                                }
+                                <span class="muted">@Culture.Format("DiplomaEval.FactMeta", fact.EvaluationDate.ToString("dd-MM-yyyy"), fact.ReferenceNumber)</span>
+                            </li>
+                        }
+                    </ul>
+                }
                 @if (!Editor.Certificates.Any(c => !string.IsNullOrWhiteSpace(c.Name)))
                 {
                     <p class="muted">@Culture["Passport.Proof.CertificatesEmpty"]</p>

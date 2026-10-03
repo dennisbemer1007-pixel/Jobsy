@@ -33,6 +33,7 @@ public class JobsyDbContext : DbContext
     public DbSet<Application> Applications => Set<Application>();
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistories => Set<ApplicationStatusHistory>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
+    public DbSet<CandidateDiplomaEvaluation> CandidateDiplomaEvaluations => Set<CandidateDiplomaEvaluation>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
     public DbSet<CandidateCulturePersonalityProfile> CandidateCulturePersonalityProfiles => Set<CandidateCulturePersonalityProfile>();
@@ -546,6 +547,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.SnapshotAboutMe).HasMaxLength(1024);
             entity.Property(e => e.SnapshotPhoneNumber).HasMaxLength(32);
             entity.Property(e => e.SnapshotCertificatesJson).HasMaxLength(4000);
+            entity.Property(e => e.SnapshotDiplomaEvaluationsJson).HasMaxLength(4000);
             entity.Property(e => e.Motivation).HasMaxLength(500);
             entity.Property(e => e.StudentNumber).HasMaxLength(64);
             entity.Property(e => e.SchoolEmail).HasMaxLength(256);
@@ -609,6 +611,25 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Content).IsRequired();
             entity.Property(e => e.FilledFieldsJson).HasMaxLength(1000);
             entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateDiplomaEvaluation>(entity =>
+        {
+            entity.ToTable("CandidateDiplomaEvaluations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DiplomaTitle).HasMaxLength(200);
+            entity.Property(e => e.IssuingBody).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.IssuingBodyOther).HasMaxLength(120);
+            entity.Property(e => e.EquivalentLevelText).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.EquivalentLevelCode).HasMaxLength(32);
+            entity.Property(e => e.ReferenceNumber).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.DocumentFileName).HasMaxLength(180);
+            entity.Property(e => e.DocumentContentType).HasMaxLength(128);
+            entity.HasIndex(e => new { e.UserId, e.CreatedAtUtc });
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

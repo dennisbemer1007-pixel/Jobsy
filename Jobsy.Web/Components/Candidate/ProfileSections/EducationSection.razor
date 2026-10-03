@@ -2,6 +2,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Forms
 @inject CultureState Culture
 
                             <fieldset class="profile-roles profile-check-grid">
@@ -16,6 +17,158 @@
                                     </label>
                                 }
                             </fieldset>
+
+                            <section class="diploma-eval" data-testid="diploma-eval" aria-labelledby="diploma-eval-title">
+                                <h3 id="diploma-eval-title" class="diploma-eval__title">@Culture["DiplomaEval.Title"]</h3>
+                                @if (Editor.DiplomaEvaluations.Count == 0 && Editor.EvaluationDraft is null)
+                                {
+                                    <div class="diploma-eval__empty" data-testid="diploma-eval-empty">
+                                        <p>@Culture["DiplomaEval.LeadEmpty"]</p>
+                                        <ul class="diploma-eval__links">
+                                            <li>
+                                                <a href="https://www.idw.nl/" target="_blank" rel="noopener noreferrer">
+                                                    @Culture["DiplomaEval.LinkNuffic"]
+                                                    <span class="visually-hidden">(@Culture["DiplomaEval.NewWindow"])</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="https://www.s-bb.nl/" target="_blank" rel="noopener noreferrer">
+                                                    @Culture["DiplomaEval.LinkSbb"]
+                                                    <span class="visually-hidden">(@Culture["DiplomaEval.NewWindow"])</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                        <p>@Culture["DiplomaEval.Statushouders"]</p>
+                                    </div>
+                                }
+
+                                @if (Editor.DiplomaEvaluations.Count > 0)
+                                {
+                                    <ul class="diploma-eval__list" data-testid="diploma-eval-list">
+                                        @foreach (var item in Editor.DiplomaEvaluations)
+                                        {
+                                            <li class="diploma-eval__fact">
+                                                @if (!string.IsNullOrWhiteSpace(item.DiplomaTitle))
+                                                {
+                                                    <p class="diploma-eval__diploma">@item.DiplomaTitle</p>
+                                                }
+                                                <p class="diploma-eval__level">@item.EquivalentLevelText</p>
+                                                <p class="diploma-eval__attribution">@DiplomaEvalText.Attribution(Culture, item.IssuingBody, item.IssuingBodyOther)</p>
+                                                @if (!string.IsNullOrWhiteSpace(item.EquivalentLevelCode))
+                                                {
+                                                    <p class="diploma-eval__choice">@Culture.Format("DiplomaEval.YourChoice", DiplomaEvalText.Level(Culture, item.EquivalentLevelCode))</p>
+                                                }
+                                                <p class="diploma-eval__meta">@Culture.Format("DiplomaEval.FactMeta", item.EvaluationDate.ToString("dd-MM-yyyy"), item.ReferenceNumber)</p>
+                                                <div class="diploma-eval__actions">
+                                                    <button type="button" class="btn-compact" disabled="@Editor.EvaluationBusy" @onclick="() => Editor.BeginEditDiplomaEvaluation(item)">
+                                                        @Culture["DiplomaEval.Edit"]
+                                                    </button>
+                                                    <button type="button" class="btn-compact" disabled="@Editor.EvaluationBusy" @onclick="() => Editor.DeleteDiplomaEvaluationAsync(item.Id)">
+                                                        @Culture["DiplomaEval.Remove"]
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+
+                                @if (Editor.EvaluationDraft is { } draft)
+                                {
+                                    <form class="diploma-eval__form" data-testid="diploma-eval-form" @onsubmit:preventDefault="true">
+                                        <label>
+                                            <span>@Culture["DiplomaEval.DiplomaTitle"]</span>
+                                            <input data-testid="diploma-eval-title-input" maxlength="200" @bind="draft.DiplomaTitle" @bind:event="oninput" autocomplete="off" />
+                                        </label>
+                                        <label>
+                                            <span>@Culture["DiplomaEval.Body"]</span>
+                                            <select data-testid="diploma-eval-body" @bind="draft.IssuingBody">
+                                                <option value="@DiplomaEvaluationRules.BodyNuffic">@Culture["DiplomaEval.Body.Nuffic"]</option>
+                                                <option value="@DiplomaEvaluationRules.BodySbb">@Culture["DiplomaEval.Body.Sbb"]</option>
+                                                <option value="@DiplomaEvaluationRules.BodyOther">@Culture["DiplomaEval.Body.Other"]</option>
+                                            </select>
+                                        </label>
+                                        @if (draft.IssuingBody == DiplomaEvaluationRules.BodyOther)
+                                        {
+                                            <label>
+                                                <span>@Culture["DiplomaEval.BodyOther"]</span>
+                                                <input data-testid="diploma-eval-body-other" maxlength="120" @bind="draft.IssuingBodyOther" @bind:event="oninput" autocomplete="organization" />
+                                            </label>
+                                        }
+                                        <label>
+                                            <span>@Culture["DiplomaEval.LevelText"]</span>
+                                            <input data-testid="diploma-eval-level" maxlength="200" required @bind="draft.EquivalentLevelText" @bind:event="oninput" aria-describedby="diploma-eval-level-hint" />
+                                            <span id="diploma-eval-level-hint" class="diploma-eval__hint">@Culture["DiplomaEval.LevelTextHint"]</span>
+                                        </label>
+                                        <label>
+                                            <span>@Culture["DiplomaEval.LevelCode"]</span>
+                                            <select data-testid="diploma-eval-level-code" @bind="draft.EquivalentLevelCode">
+                                                <option value="">@Culture["DiplomaEval.LevelCode.None"]</option>
+                                                @foreach (var code in DiplomaEvaluationRules.LevelCodes)
+                                                {
+                                                    <option value="@(code)">@DiplomaEvalText.Level(Culture, code)</option>
+                                                }
+                                            </select>
+                                        </label>
+                                        <label>
+                                            <span>@Culture["DiplomaEval.Date"]</span>
+                                            <input data-testid="diploma-eval-date" type="date" required value="@draft.DateInput" @onchange="@(e => draft.DateInput = e.Value?.ToString() ?? string.Empty)" />
+                                        </label>
+                                        <label>
+                                            <span>@Culture["DiplomaEval.Reference"]</span>
+                                            <input data-testid="diploma-eval-reference" maxlength="80" required @bind="draft.ReferenceNumber" @bind:event="oninput" autocomplete="off" />
+                                        </label>
+                                        <div class="diploma-eval__file">
+                                            <span id="diploma-eval-file-label">@Culture["DiplomaEval.Document"]</span>
+                                            <p id="diploma-eval-file-hint" class="diploma-eval__hint">@Culture["DiplomaEval.DocumentHint"]</p>
+                                            @if (draft.HasDocument && !draft.RemoveDocument && draft.PendingBytes is null && draft.Id is Guid existingId)
+                                            {
+                                                <p class="diploma-eval__file-name">@draft.DocumentFileName</p>
+                                                <div class="diploma-eval__actions">
+                                                    <button type="button" class="btn-compact" disabled="@Editor.EvaluationBusy" @onclick="() => Editor.DownloadDiplomaDocumentAsync(existingId)">
+                                                        @Culture["DiplomaEval.Download"]
+                                                    </button>
+                                                    <button type="button" class="btn-compact" disabled="@Editor.EvaluationBusy" @onclick="Editor.MarkDiplomaDocumentRemoved">
+                                                        @Culture["DiplomaEval.RemoveDocument"]
+                                                    </button>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(draft.PendingFileName))
+                                            {
+                                                <p class="diploma-eval__file-name">@draft.PendingFileName</p>
+                                            }
+                                            <label class="btn-compact diploma-eval__upload">
+                                                @Culture["DiplomaEval.ChooseFile"]
+                                                <InputFile OnChange="Editor.OnDiplomaDocumentSelectedAsync"
+                                                           accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,application/pdf,image/png,image/jpeg,image/webp,image/gif"
+                                                           aria-labelledby="diploma-eval-file-label"
+                                                           aria-describedby="diploma-eval-file-hint" />
+                                            </label>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(Editor.EvaluationMessage))
+                                        {
+                                            <p class="diploma-eval__alert" role="alert">@Editor.EvaluationMessage</p>
+                                        }
+                                        <div class="diploma-eval__actions">
+                                            <button type="button" class="btn-compact" data-testid="diploma-eval-save" disabled="@Editor.EvaluationBusy" @onclick="Editor.SaveDiplomaEvaluationAsync">
+                                                @Culture["DiplomaEval.Save"]
+                                            </button>
+                                            <button type="button" class="btn-compact" data-testid="diploma-eval-cancel" disabled="@Editor.EvaluationBusy" @onclick="Editor.CancelDiplomaEvaluation">
+                                                @Culture["DiplomaEval.Cancel"]
+                                            </button>
+                                        </div>
+                                    </form>
+                                }
+                                else if (Editor.DiplomaEvaluations.Count < DiplomaEvaluationRules.MaxPerCandidate)
+                                {
+                                    @if (!string.IsNullOrWhiteSpace(Editor.EvaluationMessage))
+                                    {
+                                        <p class="diploma-eval__alert" role="status">@Editor.EvaluationMessage</p>
+                                    }
+                                    <button type="button" class="btn-compact" data-testid="diploma-eval-add" disabled="@Editor.EvaluationBusy" @onclick="Editor.BeginNewDiplomaEvaluation">
+                                        @Culture["DiplomaEval.Add"]
+                                    </button>
+                                }
+                            </section>
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;

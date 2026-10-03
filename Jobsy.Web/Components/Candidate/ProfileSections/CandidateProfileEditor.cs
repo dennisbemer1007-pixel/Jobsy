@@ -94,6 +94,10 @@ public sealed class CandidateProfileEditor : IDisposable
     public HashSet<string> Availability { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Employers { get; } = [];
     public List<CandidateCertificate> Certificates { get; } = [];
+    public List<DiplomaEvaluationItem> DiplomaEvaluations { get; } = [];
+    public DiplomaEvaluationDraft? EvaluationDraft { get; private set; }
+    public bool EvaluationBusy { get; private set; }
+    public string? EvaluationMessage { get; private set; }
     public List<CandidateReferenceItem> References { get; } = [];
     public CandidateUploadedCvInfo? UploadedCv { get; set; }
     public bool CvBusy { get; private set; }
@@ -257,6 +261,7 @@ public sealed class CandidateProfileEditor : IDisposable
         Employers.AddRange(prefs.Employers ?? []);
         Certificates.Clear();
         Certificates.AddRange(prefs.Certificates ?? []);
+        ApplyDiplomaEvaluations(profile);
         ApplyCvAndReferences(profile);
 
         SelectedEducations.Clear();
@@ -1104,6 +1109,7 @@ public sealed class CandidateProfileEditor : IDisposable
         Employers.AddRange(prefs.Employers ?? []);
         Certificates.Clear();
         Certificates.AddRange(prefs.Certificates ?? []);
+        ApplyDiplomaEvaluations(profile);
         SelectedLicenses.Clear();
         foreach (var license in prefs.DrivingLicenses ?? [])
         {
@@ -1276,6 +1282,243 @@ public sealed class CandidateProfileEditor : IDisposable
 
         return map;
     }
+
+    public void BeginNewDiplomaEvaluation()
+    {
+        EvaluationMessage = null;
+        EvaluationDraft = new DiplomaEvaluationDraft();
+        Notify();
+    }
+
+    public void BeginEditDiplomaEvaluation(DiplomaEvaluationItem item)
+    {
+        EvaluationMessage = null;
+        EvaluationDraft = new DiplomaEvaluationDraft
+        {
+            Id = item.Id,
+            DiplomaTitle = item.DiplomaTitle ?? "",
+            IssuingBody = string.IsNullOrWhiteSpace(item.IssuingBody) ? DiplomaEvaluationRules.BodyNuffic : item.IssuingBody,
+            IssuingBodyOther = item.IssuingBodyOther ?? "",
+            EquivalentLevelText = item.EquivalentLevelText,
+            EquivalentLevelCode = item.EquivalentLevelCode ?? "",
+            DateInput = item.EvaluationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+            ReferenceNumber = item.ReferenceNumber,
+            HasDocument = item.HasDocument,
+            DocumentFileName = item.DocumentFileName
+        };
+        Notify();
+    }
+
+    public void CancelDiplomaEvaluation()
+    {
+        EvaluationDraft = null;
+        EvaluationMessage = null;
+        Notify();
+    }
+
+    public void MarkDiplomaDocumentRemoved()
+    {
+        if (EvaluationDraft is null)
+        {
+            return;
+        }
+
+        EvaluationDraft.RemoveDocument = true;
+        EvaluationDraft.PendingBytes = null;
+        EvaluationDraft.PendingFileName = null;
+        EvaluationDraft.PendingContentType = null;
+        EvaluationDraft.HasDocument = false;
+        Notify();
+    }
+
+    public async Task OnDiplomaDocumentSelectedAsync(InputFileChangeEventArgs e)
+    {
+        if (EvaluationDraft is null || e.File is null)
+        {
+            return;
+        }
+
+        EvaluationMessage = null;
+        try
+        {
+            await using var stream = e.File.OpenReadStream(DiplomaEvaluationRules.MaxDocumentBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            var bytes = buffer.ToArray();
+            if (!DiplomaEvaluationRules.TryNormalizeDocument(
+                    e.File.Name,
+                    e.File.ContentType,
+                    bytes,
+                    out _,
+                    out _,
+                    out var error))
+            {
+                EvaluationMessage = EvaluationError(error);
+                Notify();
+                return;
+            }
+
+            EvaluationDraft.PendingBytes = bytes;
+            EvaluationDraft.PendingFileName = e.File.Name;
+            EvaluationDraft.PendingContentType = e.File.ContentType;
+            EvaluationDraft.RemoveDocument = false;
+        }
+        catch (Exception ex)
+        {
+            EvaluationMessage = Describe(ex);
+        }
+
+        Notify();
+    }
+
+    public async Task SaveDiplomaEvaluationAsync()
+    {
+        if (EvaluationDraft is null)
+        {
+            return;
+        }
+
+        EvaluationBusy = true;
+        EvaluationMessage = null;
+        Notify();
+        try
+        {
+            if (!DateOnly.TryParseExact(
+                    EvaluationDraft.DateInput,
+                    "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out var date))
+            {
+                EvaluationMessage = _culture["DiplomaEval.Error.date_required"];
+                return;
+            }
+
+            if (!DiplomaEvaluationRules.TryNormalize(
+                    EvaluationDraft.DiplomaTitle,
+                    EvaluationDraft.IssuingBody,
+                    EvaluationDraft.IssuingBodyOther,
+                    EvaluationDraft.EquivalentLevelText,
+                    EvaluationDraft.EquivalentLevelCode,
+                    date,
+                    EvaluationDraft.ReferenceNumber,
+                    DateOnly.FromDateTime(DateTime.UtcNow),
+                    out _,
+                    out var error))
+            {
+                EvaluationMessage = EvaluationError(error);
+                return;
+            }
+
+            var saved = await _api.SaveDiplomaEvaluationAsync(EvaluationDraft);
+            if (EvaluationDraft.PendingBytes is { Length: > 0 } bytes)
+            {
+                saved = await _api.UploadDiplomaEvaluationDocumentAsync(
+                    saved.Id,
+                    EvaluationDraft.PendingFileName ?? "waardering.pdf",
+                    EvaluationDraft.PendingContentType ?? "application/octet-stream",
+                    bytes);
+            }
+            else if (EvaluationDraft.Id is not null && EvaluationDraft.RemoveDocument)
+            {
+                saved = await _api.DeleteDiplomaEvaluationDocumentAsync(saved.Id);
+            }
+
+            ReplaceDiplomaEvaluation(saved);
+            EvaluationDraft = null;
+            EvaluationMessage = _culture["DiplomaEval.Saved"];
+        }
+        catch (ApiErrorException api) when (DiplomaEvaluationRules.IsErrorCode(api.Code))
+        {
+            EvaluationMessage = _culture["DiplomaEval.Error." + api.Code];
+        }
+        catch (Exception ex)
+        {
+            EvaluationMessage = Describe(ex);
+        }
+        finally
+        {
+            EvaluationBusy = false;
+            Notify();
+        }
+    }
+
+    public async Task DeleteDiplomaEvaluationAsync(Guid id)
+    {
+        EvaluationBusy = true;
+        EvaluationMessage = null;
+        Notify();
+        try
+        {
+            await _api.DeleteDiplomaEvaluationAsync(id);
+            DiplomaEvaluations.RemoveAll(e => e.Id == id);
+            if (EvaluationDraft?.Id == id)
+            {
+                EvaluationDraft = null;
+            }
+
+            EvaluationMessage = _culture["DiplomaEval.Removed"];
+        }
+        catch (ApiErrorException api) when (DiplomaEvaluationRules.IsErrorCode(api.Code))
+        {
+            EvaluationMessage = _culture["DiplomaEval.Error." + api.Code];
+        }
+        catch (Exception ex)
+        {
+            EvaluationMessage = Describe(ex);
+        }
+        finally
+        {
+            EvaluationBusy = false;
+            Notify();
+        }
+    }
+
+    public async Task DownloadDiplomaDocumentAsync(Guid id)
+    {
+        EvaluationBusy = true;
+        Notify();
+        try
+        {
+            await _api.DownloadDiplomaEvaluationDocumentAsync(_js, id);
+        }
+        catch (Exception ex)
+        {
+            EvaluationMessage = Describe(ex);
+        }
+        finally
+        {
+            EvaluationBusy = false;
+            Notify();
+        }
+    }
+
+    private void ApplyDiplomaEvaluations(MeProfile profile)
+    {
+        DiplomaEvaluations.Clear();
+        if (profile.DiplomaEvaluations is { Count: > 0 })
+        {
+            DiplomaEvaluations.AddRange(profile.DiplomaEvaluations);
+        }
+    }
+
+    private void ReplaceDiplomaEvaluation(DiplomaEvaluationItem saved)
+    {
+        var index = DiplomaEvaluations.FindIndex(e => e.Id == saved.Id);
+        if (index >= 0)
+        {
+            DiplomaEvaluations[index] = saved;
+        }
+        else
+        {
+            DiplomaEvaluations.Add(saved);
+        }
+    }
+
+    private string EvaluationError(string? code)
+        => DiplomaEvaluationRules.IsErrorCode(code)
+            ? _culture["DiplomaEval.Error." + code]
+            : _culture["DiplomaEval.Error.invalid"];
 
     public void Dispose()
     {

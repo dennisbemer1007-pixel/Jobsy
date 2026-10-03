@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Web.Models;
 
 public class VacancyListItem
@@ -177,6 +179,7 @@ public sealed class MeProfile
     public string? ParentalConsentEmail { get; set; }
     public bool EmailVerified { get; set; }
     public bool PhoneVerified { get; set; }
+    public List<DiplomaEvaluationItem> DiplomaEvaluations { get; set; } = [];
 }
 
 public sealed class CandidateUploadedCvInfo
@@ -270,6 +273,39 @@ public sealed class CandidateCertificate
 {
     public string Name { get; set; } = string.Empty;
     public int? Year { get; set; }
+}
+
+/// <summary>Owner view of a foreign-diploma evaluation. The file itself is downloaded separately.</summary>
+public sealed class DiplomaEvaluationItem
+{
+    public Guid Id { get; set; }
+    public string? DiplomaTitle { get; set; }
+    public string IssuingBody { get; set; } = string.Empty;
+    public string? IssuingBodyOther { get; set; }
+    public string EquivalentLevelText { get; set; } = string.Empty;
+    public string? EquivalentLevelCode { get; set; }
+    public DateOnly EvaluationDate { get; set; }
+    public string ReferenceNumber { get; set; } = string.Empty;
+    public bool HasDocument { get; set; }
+    public string? DocumentFileName { get; set; }
+}
+
+public sealed class DiplomaEvaluationDraft
+{
+    public Guid? Id { get; set; }
+    public string DiplomaTitle { get; set; } = string.Empty;
+    public string IssuingBody { get; set; } = DiplomaEvaluationRules.BodyNuffic;
+    public string IssuingBodyOther { get; set; } = string.Empty;
+    public string EquivalentLevelText { get; set; } = string.Empty;
+    public string EquivalentLevelCode { get; set; } = string.Empty;
+    public string DateInput { get; set; } = string.Empty;
+    public string ReferenceNumber { get; set; } = string.Empty;
+    public bool HasDocument { get; set; }
+    public string? DocumentFileName { get; set; }
+    public bool RemoveDocument { get; set; }
+    public byte[]? PendingBytes { get; set; }
+    public string? PendingFileName { get; set; }
+    public string? PendingContentType { get; set; }
 }
 
 public sealed class VacancyProductActionResult

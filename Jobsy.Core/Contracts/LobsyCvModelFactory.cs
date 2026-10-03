@@ -28,7 +28,8 @@ public static class LobsyCvModelFactory
         double? workplaceLongitude = null,
         string? workplaceAddress = null,
         double? distanceKm = null,
-        bool hasUploadedOwnCv = false)
+        bool hasUploadedOwnCv = false,
+        IReadOnlyList<DiplomaEvaluationSharedFact>? diplomaEvaluations = null)
     {
         // Home lat/lng retained in signature for call-site compatibility; never written to CV.
         _ = latitude;
@@ -97,7 +98,8 @@ public static class LobsyCvModelFactory
             WorkplaceAddress: string.IsNullOrWhiteSpace(workplaceAddress) ? null : workplaceAddress.Trim(),
             ReachTravelMinutes: reachMinutes,
             DistanceKm: distanceKm is > 0 ? distanceKm : null,
-            HasUploadedOwnCv: hasUploadedOwnCv);
+            HasUploadedOwnCv: hasUploadedOwnCv,
+            DiplomaEvaluations: ToDiplomaPdfEntries(diplomaEvaluations));
     }
 
     public static LobsyCvModel FromApplicationSnapshot(
@@ -132,7 +134,8 @@ public static class LobsyCvModelFactory
         string? workplaceAddress = null,
         int? maxTravelMinutes = null,
         double? distanceKm = null,
-        bool hasUploadedOwnCv = false)
+        bool hasUploadedOwnCv = false,
+        string? diplomaEvaluationsJson = null)
     {
         // Candidate home fields kept for API compatibility; never rendered on CV.
         _ = city;
@@ -195,7 +198,8 @@ public static class LobsyCvModelFactory
             WorkplaceAddress: string.IsNullOrWhiteSpace(workplaceAddress) ? null : workplaceAddress.Trim(),
             ReachTravelMinutes: reachMinutes,
             DistanceKm: distanceKm is > 0 ? distanceKm : null,
-            HasUploadedOwnCv: hasUploadedOwnCv);
+            HasUploadedOwnCv: hasUploadedOwnCv,
+            DiplomaEvaluations: ToDiplomaPdfEntries(DiplomaEvaluationRules.ParseSnapshot(diplomaEvaluationsJson)));
     }
 
     /// <summary>
@@ -249,8 +253,26 @@ public static class LobsyCvModelFactory
             workplaceAddress: display.DisplayAddress,
             maxTravelMinutes: null,
             distanceKm: application.DistanceKm,
-            hasUploadedOwnCv: application.HasUploadedCv);
+            hasUploadedOwnCv: application.HasUploadedCv,
+            diplomaEvaluationsJson: application.SnapshotDiplomaEvaluationsJson);
     }
+
+    /// <summary>
+    /// Copies the candidate's text onto the PDF. The optional pick-list code is kept beside it
+    /// and is never used as the printed level.
+    /// </summary>
+    public static IReadOnlyList<LobsyCvDiplomaEvaluationEntry> ToDiplomaPdfEntries(
+        IEnumerable<DiplomaEvaluationSharedFact>? facts)
+        => (facts ?? [])
+            .Where(f => !string.IsNullOrWhiteSpace(f.EquivalentLevelText))
+            .Select(f => new LobsyCvDiplomaEvaluationEntry(
+                string.IsNullOrWhiteSpace(f.DiplomaTitle) ? null : f.DiplomaTitle.Trim(),
+                f.EquivalentLevelText.Trim(),
+                DiplomaEvaluationRules.DutchAttribution(f.IssuingBody, f.IssuingBodyOther),
+                f.EvaluationDate,
+                f.ReferenceNumber.Trim(),
+                string.IsNullOrWhiteSpace(f.EquivalentLevelCode) ? null : f.EquivalentLevelCode.Trim()))
+            .ToList();
 
     public static string SerializeCertificatesSnapshot(
         IEnumerable<CandidateCertificateDto>? certificates,
