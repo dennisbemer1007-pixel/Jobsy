@@ -11,7 +11,7 @@ public class ErrorLayoutIsolationTests
     [Fact]
     public async Task Status_404_renders_fully_while_every_api_call_throws()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/status/404");
@@ -26,7 +26,7 @@ public class ErrorLayoutIsolationTests
     [Fact]
     public async Task Error_page_renders_fully_while_every_api_call_throws()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync(ErrorPagesWebFactory.ThrowPath);
@@ -40,7 +40,7 @@ public class ErrorLayoutIsolationTests
     [Fact]
     public async Task Error_pages_do_not_load_the_blazor_runtime()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var html = await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync();
@@ -52,7 +52,7 @@ public class ErrorLayoutIsolationTests
     [Fact]
     public async Task Footer_shows_the_brand_legal_line_only()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var html = System.Net.WebUtility.HtmlDecode(

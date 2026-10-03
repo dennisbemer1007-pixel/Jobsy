@@ -3,6 +3,7 @@ using System;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Jobsy.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(JobsyDbContext))]
-    partial class JobsyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261003063416_SetEmployersDefaultOff")]
+    partial class SetEmployersDefaultOff
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4274,42 +4277,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("PersonalDataAccessLogs");
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.PhoneVerificationChallenge", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CodeHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("ConsumedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("FailedAttempts")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PhoneE164")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PhoneVerificationChallenges");
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.PlatformCompanySettings", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4418,21 +4385,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("MinimumSessionVersion")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("PassportPartnersEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("PassportPdfV2Enabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("PhoneVerificationEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
 
                     b.Property<string>("PublicWebBaseUrl")
                         .HasMaxLength(512)
@@ -5721,9 +5673,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("PupilCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuestionSet")
-                        .HasColumnType("integer");
-
                     b.Property<string>("RiasecTop3CountsJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -5753,7 +5702,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolId", "SchoolYearStart", "QuestionSet");
+                    b.HasIndex("SchoolId", "SchoolYearStart");
 
                     b.ToTable("SchoolClassAggregates", (string)null);
                 });
@@ -5875,9 +5824,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("PupilCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuestionSet")
-                        .HasColumnType("integer");
-
                     b.Property<string>("RiasecTop3CountsJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -5904,7 +5850,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolId", "SchoolYearStart", "QuestionSet");
+                    b.HasIndex("SchoolId", "SchoolYearStart");
 
                     b.ToTable("SchoolYearAggregates", (string)null);
                 });
@@ -6815,9 +6761,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTime?>("EmailVerifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("FirstName")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
@@ -6878,13 +6821,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
-
-                    b.Property<DateTime?>("PhoneVerifiedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PhoneVerifiedE164")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("PreferencesJson")
                         .HasMaxLength(8000)
@@ -8762,17 +8698,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("Vacancy");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.PhoneVerificationChallenge", b =>
-                {
-                    b.HasOne("Jobsy.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeedback", b =>

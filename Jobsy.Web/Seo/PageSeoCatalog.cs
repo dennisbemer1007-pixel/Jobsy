@@ -68,27 +68,10 @@ public static partial class PageSeoCatalog
 
     /// <summary>
     /// Static sitemap paths for the current feature flags.
-    /// When employers are OFF, vacancy/marketing URLs are dropped and home is /ontdek.
+    /// When employers are OFF, employer-only URLs are dropped and home stays "/" (landing -zw).
     /// </summary>
     public static IReadOnlyList<string> StaticIndexablePathsFor(Jobsy.Core.Features.FeatureFlagSnapshot flags)
-    {
-        if (flags.EmployersEnabled)
-        {
-            return StaticIndexablePaths;
-        }
-
-        return
-        [
-            "/ontdek",
-            "/login",
-            "/privacy",
-            "/algemene-voorwaarden",
-            "/gebruiksvoorwaarden",
-            "/wie-zijn-wij",
-            "/dna",
-            "/hoe-werkt-lobsy"
-        ];
-    }
+        => StaticIndexablePathsFor(flags.EmployersEnabled);
 
     /// <summary>
     /// Sitemap static paths by employers switch (landing §S). OFF drops employer/map surfaces but keeps "/"
@@ -164,6 +147,7 @@ public static partial class PageSeoCatalog
             ["/register/bedrijf"] = Private("Wa.Steps.4.Title", "Wa.Steps.4.Sub"),
             ["/register/verifieren"] = Private("WaVerify.Eyebrow", "WaVerify.Lead"),
             ["/register/verifieren/brief"] = Private("WaVerify.Brief.Title", "WaVerify.Brief.Lead"),
+            ["/werkgevers/binnenkort"] = Private("WgSoon.Title", "WgSoon.Lead"),
             ["/admin/werkgeververificatie"] = Private("AdminWa.Title", "AdminWa.Lead"),
             ["/privacy"] = Public("Legal.Privacy", "Seo.PrivacyDescription"),
             ["/algemene-voorwaarden"] = Public("Legal.Terms", "Seo.TermsDescription"),

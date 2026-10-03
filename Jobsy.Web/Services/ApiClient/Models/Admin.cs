@@ -210,7 +210,7 @@ public sealed class PlatformFeatureItem
     public int SchoolRetentionCutoffMonth { get; set; } = 7;
     public int SchoolRetentionCutoffDay { get; set; } = 31;
     public bool AmbassadorsEnabled { get; set; }
-    public bool EmployersEnabled { get; set; } = true;
+    public bool EmployersEnabled { get; set; }
     public bool CandidatePassportEnabled { get; set; } = true;
     public bool PassportPartnersEnabled { get; set; }
     public bool PassportPdfV2Enabled { get; set; }
@@ -312,7 +312,7 @@ public sealed class SalesParkedBalanceApiItem
     public string MaskedDisplayName { get; set; } = "";
     public decimal OpenBalanceExVat { get; set; }
     public DateTime? LastLineAtUtc { get; set; }
-    public bool EmployersEnabled { get; set; } = true;
+    public bool EmployersEnabled { get; set; }
     public bool CandidatePassportEnabled { get; set; } = true;
 }
 

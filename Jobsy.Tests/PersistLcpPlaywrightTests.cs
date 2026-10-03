@@ -25,6 +25,9 @@ public class PersistLcpPlaywrightTests
             return;
         }
 
+        // Vacancy detail is an employer surface. With employers OFF the banenkaart redirects home.
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         EnsureChromium();
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });

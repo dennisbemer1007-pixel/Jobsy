@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Web.Hosting;
@@ -456,6 +457,8 @@ file sealed class PublicPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAss
         {
             services.RemoveAll<IVacancyMapApiForwarder>();
             services.AddSingleton<IVacancyMapApiForwarder>(_ => new NoopForwarder());
+            services.RemoveAll<IFeatureFlags>();
+            services.AddSingleton<IFeatureFlags>(new AlwaysOnFeatureFlags());
 
             // An API that answers 404 stands in for "this thing is not public": the page must turn
             // that into a real 404 instead of an error screen.

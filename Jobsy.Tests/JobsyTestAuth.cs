@@ -19,6 +19,9 @@ public static class JobsyTestAuth
         builder.UseSetting("JobsyAuth:Jwt:Issuer", JobsyAccessToken.DefaultIssuer);
         builder.UseSetting("JobsyAuth:Jwt:Audience", JobsyAccessToken.DefaultAudience);
         builder.UseSetting("Training:TrackingSecret", "test-training-tracking-secret");
+        // Suites that assumed "no settings row ⇒ employers ON" keep that behaviour.
+        // Production and acceptatie do not set this key. An explicit DB false still wins.
+        builder.UseSetting("Jobsy:TestEmployersEnabled", "true");
     }
 
     public static void ApplyProductionJwtSettings(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)

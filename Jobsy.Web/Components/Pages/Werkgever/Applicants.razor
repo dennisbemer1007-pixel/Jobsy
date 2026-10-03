@@ -3,12 +3,12 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]
-@using System.Globalization
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever
 @using Jobsy.Web.Components.Werkgever.Applications
 @using Jobsy.Web.Components.Werkgever.Shell
 @using Jobsy.Web.Localization
@@ -158,6 +158,10 @@
                                                         @foreach (var fact in CardFacts(a).Take(factTake))
                                                         {
                                                             <li>@fact</li>
+                                                        }
+                                                        @if (a.YouthWageApplies == true)
+                                                        {
+                                                            <li><YouthWageChip Applies="true" /></li>
                                                         }
                                                     </ul>
                                                     @if (col.Column == ApplicationPipelineRules.PipelineColumn.Nieuw)
@@ -837,10 +841,6 @@
         if (!string.IsNullOrWhiteSpace(prefs))
         {
             yield return prefs;
-        }
-        else if (item.CandidateAgeYears is int age)
-        {
-            yield return age.ToString(CultureInfo.InvariantCulture);
         }
     }
 

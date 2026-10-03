@@ -17,6 +17,12 @@ public static class UiStringsWerkgever
         }
 
         // Terminology overrides (D11) — replace jargon left in UiStringsExtras
+        Add("WgApp.YouthWageApplies",
+            "Jeugdloon van toepassing",
+            "Youth wage applies",
+            "Obowiązuje płaca młodocianych",
+            "Se aplică salariul pentru tineri",
+            "ينطبق أجر الشباب");
         Add("Employer.FilterMatched", "Aangenomen", "Hired", "Zatrudniony", "Angajat", "مُعيَّن");
         Add("Employer.ApplicantsReadOnly", "Je kunt sollicitaties inzien; reageren doet de vestigings- of bedrijfsmanager.", "You can view applications; the branch or company manager responds.", "Możesz przeglądać aplikacje; reaguje menedżer placówki lub firmy.", "Poți vedea aplicațiile; răspunde managerul de filială sau de firmă.", "يمكنك عرض الطلبات؛ يرد مدير الفرع أو الشركة.");
         Add("Register.RoleBranch", "Vestigingsmanager", "Branch manager", "Menedżer placówki", "Manager de filială", "مدير الفرع");

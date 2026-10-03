@@ -282,7 +282,7 @@ public record PlatformFeatureDto(
     int SchoolRetentionCutoffMonth = 7,
     int SchoolRetentionCutoffDay = 31,
     bool AmbassadorsEnabled = false,
-    bool EmployersEnabled = true,
+    bool EmployersEnabled = false,
     bool CandidatePassportEnabled = true,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,

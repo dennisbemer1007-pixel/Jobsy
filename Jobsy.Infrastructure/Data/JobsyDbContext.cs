@@ -1579,6 +1579,7 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.PublicWebBaseUrl).HasMaxLength(512);
             entity.Property(e => e.MaintenanceNote).HasMaxLength(200);
+            entity.Property(e => e.EmployersEnabled).HasDefaultValue(false);
             entity.Property(e => e.CandidatePassportEnabled).HasDefaultValue(true);
             entity.Property(e => e.PassportPartnersEnabled).HasDefaultValue(false);
             entity.Property(e => e.PassportPdfV2Enabled).HasDefaultValue(false);

@@ -80,7 +80,8 @@ public sealed class UatScenarioTests
                 .ToList();
         }
 
-        return RoleNavCatalog.ForUser(principal);
+        var on = new Jobsy.Core.Features.FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        return RoleNavCatalog.ForUser(principal, on);
     }
 
     [Theory]

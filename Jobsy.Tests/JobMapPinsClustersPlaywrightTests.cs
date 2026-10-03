@@ -51,6 +51,8 @@ public class JobMapPinsClustersPlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         if (!await IsReachableAsync(baseUrl))
         {
             return;

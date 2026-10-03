@@ -222,7 +222,7 @@ public class EmployerApplicationItem
     public bool CvPdfAvailable { get; set; }
     public string? CandidatePhone { get; set; }
     public bool WhatsAppContactAllowed { get; set; }
-    public int? CandidateAgeYears { get; set; }
+    public bool? YouthWageApplies { get; set; }
     public string? AvailabilitySummary { get; set; }
     public bool UploadedCvAvailable { get; set; }
     public int CandidateReferenceCount { get; set; }

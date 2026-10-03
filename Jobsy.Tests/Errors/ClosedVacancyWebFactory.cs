@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Hosting;
@@ -54,6 +55,8 @@ public sealed class ClosedVacancyWebFactory : WebApplicationFactory<Jobsy.Web.We
 
             services.RemoveAll<IEmployersSwitch>();
             services.AddSingleton<IEmployersSwitch>(new FixedEmployersSwitch(true));
+            services.RemoveAll<IFeatureFlags>();
+            services.AddSingleton<IFeatureFlags>(new AlwaysOnFeatureFlags());
 
             // "http://api.test/" fails the API host's AllowedHosts check (TestServer runs the real
             // middleware pipeline); "http://localhost/" matches WebApplicationFactory.CreateClient's
