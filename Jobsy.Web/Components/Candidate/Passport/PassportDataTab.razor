@@ -8,6 +8,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject CandidateProfileEditor Editor
+@inject IFeatureFlags Flags
 @implements IDisposable
 
 <div class="passport-data">
@@ -70,7 +71,7 @@
             </div>
 
             <div class="passport-data__accordions" role="list">
-                @foreach (var section in Sections)
+                @foreach (var section in VisibleSections)
                 {
                     var open = string.Equals(_openSection, section.Id, StringComparison.Ordinal);
                     var panelId = $"passport-data-panel-{section.Id}";
@@ -101,6 +102,10 @@
                                 else if (section.Id == "preferences")
                                 {
                                     <PreferencesSection ShowDiscoveryFields="true" />
+                                }
+                                else if (section.Id == "shared")
+                                {
+                                    <SharedWithEmployersSection PhoneVerificationEnabled="_phoneVerification" />
                                 }
                                 else if (section.Id == "joy")
                                 {
@@ -174,6 +179,7 @@
     [
         new("personal", "Profile.Section.Personal", "Passport.Data.PersonalSub", NavIcons.Profile, false),
         new("preferences", "Profile.Section.Preferences", "Passport.Data.PreferencesSub", NavIcons.Transport, false),
+        new("shared", "Passport.Shared.Title", "Passport.Shared.Sub", NavIcons.Users, false),
         new("joy", "Profile.Section.JoyAndLearning", "Passport.Data.JoySub", NavIcons.Feedback, false),
         new("dislikes", "Profile.Section.Dislikes", "Passport.Data.DislikesSub", NavIcons.Shield, false),
         new("availability", "Profile.Section.Availability", "Passport.Data.AvailabilitySub", NavIcons.Calendar, false),
@@ -187,7 +193,12 @@
     private bool _loading = true;
     private bool _loadFailed;
     private bool _loaded;
+    private bool _pdfV2;
+    private bool _phoneVerification;
     private string? _openSection;
+
+    private IEnumerable<DataSection> VisibleSections
+        => _pdfV2 ? Sections : Sections.Where(s => s.Id != "shared");
 
     private string TestAiSubtext => Editor.TestAiConsentAt is DateTime at
         ? Culture.Format("Passport.Data.ConsentSince", at.ToLocalTime().ToString("dd-MM-yyyy"))
@@ -216,6 +227,9 @@
         _loadFailed = false;
         try
         {
+            var flags = await Flags.GetAsync();
+            _pdfV2 = flags.PassportPdfV2Enabled;
+            _phoneVerification = flags.PhoneVerificationEnabled;
             await Editor.LoadMasterdataAsync();
             var me = await Api.GetMyProfileAsync();
             if (me is null)

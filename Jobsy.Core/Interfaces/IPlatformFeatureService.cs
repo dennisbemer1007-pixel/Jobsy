@@ -36,7 +36,10 @@ public sealed record PlatformFeatureSnapshot(
     bool MaintenanceEnabled = false,
     DateTime? MaintenanceExpectedEndUtc = null,
     /// <summary>Admin-only note. Never returned on a public endpoint.</summary>
-    string? MaintenanceNote = null);
+    string? MaintenanceNote = null,
+    bool PassportPartnersEnabled = false,
+    bool PassportPdfV2Enabled = false,
+    bool PhoneVerificationEnabled = false);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -78,4 +81,7 @@ public sealed record PlatformFeatureUpdate(
     /// <summary>When true, clears <see cref="MaintenanceExpectedEndUtc"/> (no expected end).</summary>
     bool ClearMaintenanceExpectedEndUtc = false,
     /// <summary>Null = keep existing. Empty string clears the note.</summary>
-    string? MaintenanceNote = null);
+    string? MaintenanceNote = null,
+    bool? PassportPartnersEnabled = null,
+    bool? PassportPdfV2Enabled = null,
+    bool? PhoneVerificationEnabled = null);

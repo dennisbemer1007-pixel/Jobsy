@@ -41,7 +41,12 @@ public sealed class FeatureFlags : IFeatureFlags
             await using var scope = _scopeFactory.CreateAsyncScope();
             var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
             var snap = await features.GetAsync(cancellationToken);
-            var flags = new FeatureFlagSnapshot(snap.EmployersEnabled, snap.CandidatePassportEnabled);
+            var flags = new FeatureFlagSnapshot(
+                snap.EmployersEnabled,
+                snap.CandidatePassportEnabled,
+                snap.PassportPartnersEnabled,
+                snap.PassportPdfV2Enabled,
+                snap.PhoneVerificationEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

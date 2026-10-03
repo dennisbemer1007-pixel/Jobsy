@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Api.Security;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -10,6 +11,7 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,8 +21,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jobsy.Tests.TestSupport;
-using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -163,6 +163,42 @@ public class EmailCodeAuthTests
         Assert.NotNull(user.TermsAcceptedAt);
         Assert.Equal(UserRole.Candidate, user.Role);
         Assert.Equal(amb.Id, user.ReferredByAmbassadeurUserId);
+        Assert.NotNull(user.EmailVerifiedAtUtc);
+    }
+
+    [Fact]
+    public async Task Verify_sets_email_verified_once_and_does_not_overwrite()
+    {
+        await using var db = CreateDb();
+        var emailSvc = new CapturingEmail();
+        var sut = CreateAuthController(db, emailSvc, secret: "prov-secret");
+        sut.ControllerContext = WithProvisionSecret("prov-secret");
+
+        var start = await sut.StartEmailCode(
+            new EmailCodeStartRequest("once@example.com", FirstName: "Once"),
+            CancellationToken.None);
+        var startBody = Assert.IsType<EmailCodeStartResponse>(Assert.IsType<AcceptedResult>(start.Result).Value);
+        var code = ExtractOtp(emailSvc.Sent.Single(m => m.Category == "EmailSignUpCode").BodyHtml);
+        var verify = await sut.VerifyEmailCode(
+            new EmailCodeVerifyRequest(startBody.ChallengeId, code, RememberDevice: false),
+            CancellationToken.None);
+        Assert.IsType<OkObjectResult>(verify.Result);
+
+        var created = await db.Users.SingleAsync(u => u.Email == "once@example.com");
+        var stamp = created.EmailVerifiedAtUtc;
+        Assert.NotNull(stamp);
+
+        emailSvc.Sent.Clear();
+        var again = await sut.StartEmailCode(new EmailCodeStartRequest("once@example.com"), CancellationToken.None);
+        var againBody = Assert.IsType<EmailCodeStartResponse>(Assert.IsType<AcceptedResult>(again.Result).Value);
+        var signIn = ExtractOtp(emailSvc.Sent.Single(m => m.Category == "EmailSignInCode").BodyHtml);
+        var second = await sut.VerifyEmailCode(
+            new EmailCodeVerifyRequest(againBody.ChallengeId, signIn, RememberDevice: false),
+            CancellationToken.None);
+        Assert.IsType<OkObjectResult>(second.Result);
+
+        var reloaded = await db.Users.SingleAsync(u => u.Email == "once@example.com");
+        Assert.Equal(stamp, reloaded.EmailVerifiedAtUtc);
     }
 
     [Fact]

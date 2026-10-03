@@ -175,6 +175,8 @@ public sealed class MeProfile
     public string? TestAiConsentVersion { get; set; }
     public DateTime? ParentalConsentAt { get; set; }
     public string? ParentalConsentEmail { get; set; }
+    public bool EmailVerified { get; set; }
+    public bool PhoneVerified { get; set; }
 }
 
 public sealed class CandidateUploadedCvInfo
@@ -225,6 +227,19 @@ public sealed class CandidatePreferences
     public List<string> EmployerPreferences { get; set; } = [];
     public List<string> LearningGoals { get; set; } = [];
     public List<string> Hobbies { get; set; } = [];
+    public SharedWorkPreferenceChoices? WorkPreferences { get; set; }
+    public bool? ShareEmployerPreferences { get; set; }
+    public string? WorkRegion { get; set; }
+    public bool? HasOwnCar { get; set; }
+    public List<string> ContractPreferences { get; set; } = [];
+}
+
+public sealed class SharedWorkPreferenceChoices
+{
+    public string? Indoor { get; set; }
+    public string? Outdoor { get; set; }
+    public string? PhysicalWork { get; set; }
+    public string? Pace { get; set; }
 }
 
 public sealed class CandidateLanguage

@@ -6,6 +6,9 @@ Admin toggles live in the singleton `PlatformFeatureSettings` row and are read t
 |---|---|---|
 | `EmployersEnabled` | **true** | ON = today’s product. OFF = self-discovery only; employer/vacancy surfaces are hidden and return 404 `feature_disabled`. Data is never deleted. |
 | `CandidatePassportEnabled` | **true** | When ON (default): candidates see Mijn Paspoort (`/candidate/paspoort`) instead of Profiel; nav order Discovery · Passport · Zoeken · Sollicitaties · Carrière; Bewaard is a tab under Sollicitaties; default landing via `FeatureRoutes.HomeFor` (not ready → ontdekkingsreis, ready → passport). Admin can still turn it OFF. |
+| `PassportPartnersEnabled` | **false** | Partner portal, partner codes and consent. Off hides those surfaces. Nothing is deleted. Does not turn on PDF v2. |
+| `PassportPdfV2Enabled` | **false** | Shareable work preferences on the passport Data tab, and later the PDF v2 download. Off leaves the Data tab as it is today. |
+| `PhoneVerificationEnabled` | **false** | SMS phone confirmation. Not a route gate. Stays off until an SMS provider exists. The stub logs the code only in Development. |
 
 Gate with `[RequiresFeature(PlatformFeature.Employers)]` (pages, controllers, actions) or `<FeatureVisible Feature="PlatformFeature.Employers">` (sections). Minimal APIs: `.RequireFeature(PlatformFeature.Employers)`.
 

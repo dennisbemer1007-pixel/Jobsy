@@ -99,6 +99,7 @@ public class JobsyDbContext : DbContext
     public DbSet<IntegrationCredential> IntegrationCredentials => Set<IntegrationCredential>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
+    public DbSet<PhoneVerificationChallenge> PhoneVerificationChallenges => Set<PhoneVerificationChallenge>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
 #pragma warning disable CS0618 // Table kept until the public-pages 08 cleanup migration drops it.
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
@@ -175,6 +176,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.FirstName).HasMaxLength(128);
             entity.Property(e => e.LastName).HasMaxLength(128);
             entity.Property(e => e.PhoneNumber).HasMaxLength(32);
+            entity.Property(e => e.PhoneVerifiedE164).HasMaxLength(20);
             entity.Property(e => e.PreferencesJson).HasMaxLength(8000);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
             entity.Property(e => e.TalentPoolConsentVersion).HasMaxLength(32);
@@ -1578,6 +1580,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PublicWebBaseUrl).HasMaxLength(512);
             entity.Property(e => e.MaintenanceNote).HasMaxLength(200);
             entity.Property(e => e.CandidatePassportEnabled).HasDefaultValue(true);
+            entity.Property(e => e.PassportPartnersEnabled).HasDefaultValue(false);
+            entity.Property(e => e.PassportPdfV2Enabled).HasDefaultValue(false);
+            entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<PlatformCompanySettings>(entity =>

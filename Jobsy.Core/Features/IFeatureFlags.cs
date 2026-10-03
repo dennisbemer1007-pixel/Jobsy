@@ -11,7 +11,10 @@ public interface IFeatureFlags
 
 public sealed record FeatureFlagSnapshot(
     bool EmployersEnabled,
-    bool CandidatePassportEnabled)
+    bool CandidatePassportEnabled,
+    bool PassportPartnersEnabled = false,
+    bool PassportPdfV2Enabled = false,
+    bool PhoneVerificationEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: true, CandidatePassportEnabled: true);
 
@@ -19,6 +22,8 @@ public sealed record FeatureFlagSnapshot(
     {
         PlatformFeature.Employers => EmployersEnabled,
         PlatformFeature.CandidatePassport => CandidatePassportEnabled,
+        PlatformFeature.PassportPartners => PassportPartnersEnabled,
+        PlatformFeature.PassportPdfV2 => PassportPdfV2Enabled,
         _ => false
     };
 }

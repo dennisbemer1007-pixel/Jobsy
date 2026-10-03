@@ -89,6 +89,15 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool CandidatePassportEnabled { get; set; } = true;
 
+    /// <summary>Partner portal, codes and consent. Default false. Does not imply PDF v2.</summary>
+    public bool PassportPartnersEnabled { get; set; }
+
+    /// <summary>Passport PDF v2 and the shareable-preferences editor. Default false.</summary>
+    public bool PassportPdfV2Enabled { get; set; }
+
+    /// <summary>SMS phone verification. Stays false until an SMS provider is chosen.</summary>
+    public bool PhoneVerificationEnabled { get; set; }
+
     /// <summary>
     /// When true, everyone except admins gets the 503 maintenance page (errors 05). Default false.
     /// </summary>

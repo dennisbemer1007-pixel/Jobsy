@@ -156,6 +156,45 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("PassportPartnersEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "PassportPartnersEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.PassportPartners.Enabled.Title",
+                DescriptionKey: "AdminSettings.PassportPartners.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.PassportPartnersEnabled,
+                Write: v => new PlatformFeatureUpdate(PassportPartnersEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
+        if (FieldExists("PassportPdfV2Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "PassportPdfV2Enabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.PassportPdfV2.Enabled.Title",
+                DescriptionKey: "AdminSettings.PassportPdfV2.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.PassportPdfV2Enabled,
+                Write: v => new PlatformFeatureUpdate(PassportPdfV2Enabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
+        if (FieldExists("PhoneVerificationEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "PhoneVerificationEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.PhoneVerification.Enabled.Title",
+                DescriptionKey: "AdminSettings.PhoneVerification.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.PhoneVerificationEnabled,
+                Write: v => new PlatformFeatureUpdate(PhoneVerificationEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         // --- Vacatures ---
         list.Add(new PlatformSettingDescriptor(
             Key: "VacancyContentModerationEnabled",
@@ -390,6 +429,9 @@ public static class PlatformSettingsCatalog
         bool? ambassadorsEnabled = null;
         bool? employersEnabled = null;
         bool? candidatePassportEnabled = null;
+        bool? passportPartnersEnabled = null;
+        bool? passportPdfV2Enabled = null;
+        bool? phoneVerificationEnabled = null;
 
         foreach (var p in parts)
         {
@@ -421,6 +463,9 @@ public static class PlatformSettingsCatalog
             if (p.AmbassadorsEnabled is not null) ambassadorsEnabled = p.AmbassadorsEnabled;
             if (p.EmployersEnabled is not null) employersEnabled = p.EmployersEnabled;
             if (p.CandidatePassportEnabled is not null) candidatePassportEnabled = p.CandidatePassportEnabled;
+            if (p.PassportPartnersEnabled is not null) passportPartnersEnabled = p.PassportPartnersEnabled;
+            if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
+            if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -442,6 +487,9 @@ public static class PlatformSettingsCatalog
             SchoolRetentionCutoffDay: schoolRetentionDay,
             AmbassadorsEnabled: ambassadorsEnabled,
             EmployersEnabled: employersEnabled,
-            CandidatePassportEnabled: candidatePassportEnabled);
+            CandidatePassportEnabled: candidatePassportEnabled,
+            PassportPartnersEnabled: passportPartnersEnabled,
+            PassportPdfV2Enabled: passportPdfV2Enabled,
+            PhoneVerificationEnabled: phoneVerificationEnabled);
     }
 }

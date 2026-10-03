@@ -53,7 +53,10 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 cancellationToken);
             var flags = new FeatureFlagSnapshot(
                 dto?.EmployersEnabled ?? true,
-                dto?.CandidatePassportEnabled ?? true);
+                dto?.CandidatePassportEnabled ?? true,
+                dto?.PassportPartnersEnabled ?? false,
+                dto?.PassportPdfV2Enabled ?? false,
+                dto?.PhoneVerificationEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -84,5 +87,14 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("candidatePassportEnabled")]
         public bool CandidatePassportEnabled { get; set; } = true;
+
+        [JsonPropertyName("passportPartnersEnabled")]
+        public bool PassportPartnersEnabled { get; set; }
+
+        [JsonPropertyName("passportPdfV2Enabled")]
+        public bool PassportPdfV2Enabled { get; set; }
+
+        [JsonPropertyName("phoneVerificationEnabled")]
+        public bool PhoneVerificationEnabled { get; set; }
     }
 }
