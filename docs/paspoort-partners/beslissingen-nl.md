@@ -1,6 +1,6 @@
 # DNA-paspoort als CV-bijlage + partners: beslissingen (akkoord Dennis 03-10-2026)
 
-*Status: Dennis gaf op 03-10-2026 "akkoord" op alle 19 voorstellen, precies zoals voorgesteld. Later die dag keurde hij twee aanvullende besluiten goed (20 en 21, onderaan). Besluit 21 scherpt besluit 4 aan. Mockups staan in `docs/mockups/paspoort-partners/`.*
+*Status: Dennis gaf op 03-10-2026 "akkoord" op alle 19 voorstellen, precies zoals voorgesteld. Later die dag keurde hij aanvullende besluiten goed (20, 21 en 22, onderaan). Besluit 21 scherpt besluit 4 aan. Mockups staan in `docs/mockups/paspoort-partners/`.*
 *Bron: branch `acceptatie` (commit 7aacb6c8). Alle voorbeelddata is fictief.*
 
 ## Kort: wat er nu is
@@ -146,3 +146,22 @@ Twee uitzonderingen op het AI-verbod:
 Dit geldt voor de PDF, de live weergave en het partnerportaal. In de partnervoorwaarden komt contractueel te staan dat de partner kandidaten niet scoort of rangschikt.
 
 Onderbouwing: `ai-act-beoordeling.md` (in deze map), §4.2 variant B en §4.4.
+
+**22. Openstaande punten beslist (akkoord Dennis 03-10-2026)**
+1. Telefoonverificatie blijft uit tot er een sms-provider is gekozen. "Lobsy-geverifieerd" betekent: 4/4 tests afgerond + geverifieerd e-mailadres.
+2. De minimumleeftijd voor partnerkoppelingen is 18. Voor 16–17 jaar volgt later een apart besluit.
+3. Op de sollicitantenschermen voor werkgevers vervangen we de exacte leeftijd door alleen de indicator "jeugdloon van toepassing". Dit zit in hotfix 01b en past bij fase 2.
+4. 2FA voor partners volgt de bestaande regel: inloggen met Google of Microsoft telt als 2FA.
+5. Vertalingen op het paspoort lopen via de bestaande vertaaldienst van OpenAI, en de kandidaat keurt elke vertaling goed. We kijken hier opnieuw naar zodra er een EU-provider is gekozen.
+6. Het bestaande uitzendabonnement van €4.000 blijft apart en ongewijzigd.
+7. Facturatie gaat voorlopig handmatig.
+8. Partnervoorwaarden, toestemmingsteksten en de afspraak over gegevensdeling in de pilot worden juridisch getoetst voordat de partnerflag in productie live gaat.
+9. Ook de PDF v2 die de kandidaat zelf downloadt bevat geen AI-output. Dit was al besloten en is nu bevestigd.
+10. Hotfix 01 haalt ook de AI-pagina "Wie ben ik" uit de huidige Lobsy-cv-download.
+11. Productie is nog niet echt live (er zijn geen echte gebruikers), dus er is geen haast. 01b gaat mee met de volgende release.
+
+Nog open:
+- Het productiegeheim `PassportPartners:CodeHmacKey` moet zijn ingesteld voordat de flag aangaat.
+- Stap 02 controleert of we de e-mailverificatie met terugwerkende kracht kunnen invullen (backfill).
+- Over de talentpool wordt apart besloten.
+- Of de werkgeverstoggle op slot moet. Standaard gaat hij niet op slot; aanzetten vraagt om bevestiging en wordt gelogd.

@@ -41,14 +41,14 @@ Cursor: **read this file completely**, then **execute the step files strictly in
 > - **Report per PR** with the template at the bottom.
 
 **Source:**
-- On 03-10-2026 Dennis approved all 19 proposals in `beslissingen-nl.md` exactly as proposed, plus decisions 20 (employer part OFF until phase 2) and 21 (no AI output on the partner passport). That file is in this folder, in Dutch, and is the decision record.
+- On 03-10-2026 Dennis approved all 19 proposals in `beslissingen-nl.md` exactly as proposed, plus decisions 20 (employer part OFF until phase 2), 21 (no AI output on the partner passport) and 22 (the former open points, see below). That file is in this folder, in Dutch, and is the decision record.
 - The AI Act rationale is in `ai-act-beoordeling.md` (concept analysis of 03-10-2026, Dutch, to be reviewed by a lawyer), copied from the DPIA work.
 - Code facts were checked on `origin/acceptatie` `85a43263`.
 - Where the mockups differ from the spec, **the spec wins** (see "Mockup deviations" below).
 
 ## What this stack delivers
-- **01: hotfix.** The current Lobsy-CV PDF prints the candidate's **date of birth and age** on every download, for the candidate and for employers. That is an AVG data-minimisation and age-discrimination risk. The step also fixes layout faults: banners repeat on every page, cards split across pages, and the file name breaks on names with punctuation.
-- **01b: hotfix.** The employer part is OFF by default until phase 2 (`EmployersEnabled` = false in all defaults, plus a one-shot migration). Data is kept, employer routes show a friendly "binnenkort" page, and candidate flows keep working. On acceptatie, employers currently see match % with breakdown, a talent pool with personality scores and the AI "Wie ben ik" story.
+- **01: hotfix.** The current Lobsy-CV PDF prints the candidate's **date of birth and age** on every download, for the candidate and for employers. That is an AVG data-minimisation and age-discrimination risk. It can also attach the **AI "Wie ben ik" page**, which the hotfix removes too (decision 22). The step also fixes layout faults: banners repeat on every page, cards split across pages, and the file name breaks on names with punctuation.
+- **01b: hotfix.** The employer part is OFF by default until phase 2 (`EmployersEnabled` = false in all defaults, plus a one-shot migration). Data is kept, employer routes show a friendly "binnenkort" page, and candidate flows keep working. Employer screens show "jeugdloon van toepassing" instead of an exact age. On acceptatie, employers currently see match % with breakdown, a talent pool with personality scores and the AI "Wie ben ik" story.
 - **02:** shareable work preferences, work region, own car and contract preference (stored in `PreferencesJson`), plus email/phone verified flags and the two feature flags.
 - **03:** the partner model: `PassportPartner` (type Uitzendbureau/Werkgever from `Company.Type`, logo, branches), partner codes in the school-code format, candidate links with consent, withdrawal and 6-month reconfirmation, a maximum of 3 partners, and an access log.
 - **04:** the new **DNA-paspoort PDF v2**:
@@ -113,8 +113,8 @@ All new types therefore use the prefix **`PassportPartner…`** (or `Passport…
 
 | # | File | Branch | Branches from | PR into |
 |---|---|---|---|---|
-| 01 | `01-hotfix-lobsy-cv-pdf.md`: **standalone hotfix**. Remove DOB/age from all Lobsy-CV PDFs, banners only on page 1, no split cards, safe file name | `cursor/paspoort-partners-hotfix` | `origin/acceptatie` | `acceptatie` |
-| 01b | `01b-hotfix-werkgevers-standaard-uit.md`: **standalone hotfix**. `EmployersEnabled` default OFF (code + one-shot migration), real `IEmployersSwitch`, gate the remaining employer pages, "binnenkort" page, candidate flows intact | `cursor/paspoort-partners-hotfix-werkgevers` | `origin/acceptatie` | `acceptatie` |
+| 01 | `01-hotfix-lobsy-cv-pdf.md`: **standalone hotfix**. Remove DOB/age and the AI "Wie ben ik" page from all Lobsy-CV PDFs, banners only on page 1, no split cards, safe file name | `cursor/paspoort-partners-hotfix` | `origin/acceptatie` | `acceptatie` |
+| 01b | `01b-hotfix-werkgevers-standaard-uit.md`: **standalone hotfix**. `EmployersEnabled` default OFF (code + one-shot migration), real `IEmployersSwitch`, gate the remaining employer pages, "binnenkort" page, youth-wage indicator instead of age, candidate flows intact | `cursor/paspoort-partners-hotfix-werkgevers` | `origin/acceptatie` | `acceptatie` |
 | 02 | `02-datamodel-voorkeuren-verificatie.md`: shareable work prefs, work region, own car, contract pref (PreferencesJson), `EmailVerifiedAtUtc`/`PhoneVerifiedAtUtc`, SMS stub, flags `PassportPartnersEnabled`/`PassportPdfV2Enabled`/`PhoneVerificationEnabled` | `cursor/paspoort-partners-2` | `cursor/paspoort-partners-hotfix` (or `origin/acceptatie` once 01 is merged) | `acceptatie` |
 | 03 | `03-partnermodel.md`: `PassportPartner`, `PassportPartnerCode` (shared short-code format + HMAC lookup), `PassportPartnerCandidateLink` (consent, revoke, 6-month reconfirm, max 3), `PassportAccessLog`, candidate/public APIs, minimal admin page, privacy hooks | `cursor/paspoort-partners-3` | `cursor/paspoort-partners-2` | `acceptatie` |
 | 04 | `04-paspoort-pdf-v2.md`: sector choices + CV-field confirmation + translation approval, no-AI rule, `PassportDocument`, PDF v2 (p1/p2, bilingual, co-branding, QR, Lobsy-geverifieerd), download dialog | `cursor/paspoort-partners-4` | `cursor/paspoort-partners-3` | `acceptatie` |
@@ -152,29 +152,29 @@ Branch cursor/paspoort-partners-hotfix-werkgevers from origin/acceptatie, ONE PR
 Never merge, never deploy, never use rule 123, never push to main or acceptatie, never force-push. Don't start other files.
 ```
 
-## Open points for Dennis (Cursor: do not decide these; use the stated default and list them in the PR report)
-1. **SMS provider** for phone verification. Default: `PhoneVerificationEnabled` = false, so the badge is earned on 4/4 tests + verified e-mail only (02, 04).
-2. **Minimum age for partner links.** Default 18, like the talent pool. Should 16–17-year-old holiday workers be allowed, with parental consent? (03, 06)
-3. **Production secret `PassportPartners:CodeHmacKey`** must be set before `PassportPartnersEnabled` goes ON (03).
-4. **Age on employer applicant screens/Lobsy-CV for employers.** 01 removes DOB/age from the PDF only. The model fields stay because of youth-wage logic. Should the screens drop age too? (01)
-5. **E-mail-verified backfill.** It is only safe if every candidate sign-up path proves the e-mail (02 checks and reports).
-6. **Invoicing of partner subscriptions** is manual/admin for now. There is no Mollie and no automatic invoices (08).
-7. **Relationship with the existing €4,000 `AgencyAnnualSubscription`.** Bundle or separate? Untouched in this stack (08).
-8. **Talent pool future** (decided separately; the partner portal never gets talent-pool access).
-9. **Legal check** (start from `ai-act-beoordeling.md`, a concept that a lawyer must review):
-   - partner terms + consent texts + independent-controller clause + pilot data-sharing agreement
-   - **contractual clause in the partner terms:** the partner does not score or rank candidates, does not feed passport data into its own AI/matching tools, and makes no white-label use (03; `ai-act-beoordeling.md` §4.4 point 6)
-   - documenting the art. 6(3) position for confirmed CV extraction (`ai-act-beoordeling.md` §4.2 variant B)
-   - AI-Act position before anything "Pro matching" or the phase-2 employer view is built
-10. **External IdP logins skip Lobsy 2FA** (existing `MfaPolicy`). The portal follows that rule (`IsMfaSatisfiedInSession`). Should partner users always need Lobsy 2FA? (07)
-11. **Machine translation of free text** uses the existing OpenAI `ITranslationService`. The candidate approves every translation before it is used (04). Confirm that this processor is OK for passport texts.
+## Decided on 03-10-2026 (decision 22 in `beslissingen-nl.md`; formerly open points)
+1. **Phone verification** stays OFF (`PhoneVerificationEnabled = false`) until an SMS provider is chosen. **Lobsy-geverifieerd = 4/4 tests + verified e-mail** (02, 04).
+2. **Minimum age for partner links: 18.** 16–17-year-olds come later, as a separate decision (03, 06).
+3. **Employer applicant screens:** the exact age is replaced by a **"jeugdloon van toepassing"** indicator only. Stored data is kept (01b, section 4). This is part of the phase-2 direction.
+4. **Partner 2FA:** the existing rule applies, so a Google/Microsoft login counts as 2FA (03, 07).
+5. **Passport translations** use the existing OpenAI `ITranslationService`, and the candidate approves each one. Revisit when an EU provider is chosen (04).
+6. **The existing €4,000 `AgencyAnnualSubscription`** stays separate and untouched (08).
+7. **Invoicing** of partner subscriptions is manual for now (08).
+8. **Legal check** before `PassportPartnersEnabled` goes live in production. Start from `ai-act-beoordeling.md`, a concept that a lawyer must review. It covers:
+   - partner terms
+   - consent texts
+   - the pilot data-sharing agreement
+   - the contractual clause: the partner does not score or rank candidates, does not feed passport data into its own AI/matching tools, and makes no white-label use (03)
+   - also: document the art. 6(3) position for confirmed CV extraction, and check the AI Act before anything "Pro matching" or the phase-2 employer view is built
+9. **The candidate's own PDF v2** has no AI output either, confirmed (04).
+10. **Hotfix 01** also removes the AI "Wie ben ik" page from the current Lobsy-CV download (candidate + employer application CV). Data is kept.
+11. **Production has no real users yet**, so there is no production urgency. 01b ships with the next regular release. (Production = `origin/main`, which has no `EmployersEnabled` flag, so the employer part is always on there; promoting acceptatie with 01b turns it OFF.)
 
-12. **Production today** (`origin/main` `9a2c0d49`, deployed by `render.yaml` with autoDeploy on commit):
-    - There is no `EmployersEnabled` flag at all. The employer part is always on and cannot be switched off.
-    - `/employer/talent` shows competency % incl. Stressbestendigheid, and `/branch/applicants` shows match %. There is no WhoAmI snapshot on main.
-    - Promoting acceptatie **with** 01b turns it OFF in production; promoting **without** 01b keeps it ON.
-    - Should anything be done on production before the next promotion (e.g. check whether real employers use it)? That is outside this stack, since we never push to main.
-13. **Re-enabling employers before phase 2.** 01b keeps an admin toggle behind a confirm dialog. Should it be locked completely instead?
+## Still open (Cursor: use the stated default, list in the PR report)
+1. **Production secret `PassportPartners:CodeHmacKey`** must be set before `PassportPartnersEnabled` goes ON (03).
+2. **E-mail-verified backfill.** Step 02 checks whether every candidate sign-up path proves the e-mail. It backfills only if all do, and reports the result.
+3. **Talent pool future:** decided separately. The partner portal never gets talent-pool access.
+4. **Locking the employer toggle before phase 2.** Default: **not locked**. Switching ON needs a confirm dialog and is logged in `AdminAuditLog` (01b).
 
 ## Report template (per PR)
 ```

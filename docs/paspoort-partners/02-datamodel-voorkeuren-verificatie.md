@@ -71,7 +71,7 @@ Extend `CandidatePreferencesDto` with optional members. Defaults are `null`, so 
 - **Telephone:**
   - New `IPhoneVerificationService`: start sends a 6-digit code and stores only a hash, re-using `VerificationCodes` attempt/lockout rules; verify checks the code.
   - New `ISmsSender` with `SmsSenderStub` (logs the code in Development, no-op elsewhere).
-  - The production provider is **not chosen** (open point for Dennis; see the PR report). While `PhoneVerificationEnabled = false`, the UI hides "Bevestig telefoon".
+  - **Decided (decision 22):** phone verification stays **OFF** (`PhoneVerificationEnabled = false`) until an SMS provider is chosen. Build only the stub and the switch. While OFF, the UI hides "Bevestig telefoon" and "Lobsy-geverifieerd" = 4/4 tests + verified e-mail.
   - Changing `User.PhoneNumber` to a different normalized number clears `PhoneVerifiedAtUtc` / `PhoneVerifiedE164`, both in `UpdateProfile` and in `CvProfileMerge`, ~L874.
   - Endpoints: `POST api/me/phone-verification/start` and `POST api/me/phone-verification/verify`, rate-limit policy `otp-verify`.
 - `MeProfileDto` gains `EmailVerified` and `PhoneVerified` (bools), plus the new preference members.

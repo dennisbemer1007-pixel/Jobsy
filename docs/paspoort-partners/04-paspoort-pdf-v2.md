@@ -36,7 +36,7 @@ A new, separate document **"DNA-paspoort"** that adds strongly to a CV and is us
   - what "Lobsy-geverifieerd" means
 
 ### The no-AI rule (decision 21; rationale: `ai-act-beoordeling.md` §4.2 variant B and §4.4)
-**Applies to:** every PDF v2 render (own download included, because it is made to hand to recruiters), the `/v` live view (05) and the partner portal (07). Together these are the **partner view**.
+**Applies to:** every PDF v2 render (**own download included**, confirmed by decision 22), the `/v` live view (05) and the partner portal (07). Together these are the **partner view**.
 
 **Contains only facts the candidate entered or confirmed:**
 - availability, shifts, hours
@@ -74,7 +74,7 @@ The existing **Lobsy-CV stays** for applications (employer download after Accept
 - Sectors: `OccupationTaxonomy` (`Jobsy.Core/Rules/OccupationTaxonomy.cs`), sector → family → title. Sectors include zorg, onderwijs, horeca, logistiek, techniek, groen (tuinbouw: `greenhouse` "Medewerker tuinbouw"), retail, it, admin, lab, dieren, luchtvaart.
 - WhoAmI (LLM story + keywords) and RoleFit (LLM, `RoleFitBandRules`) exist in the passport tabs. They are **excluded** from the partner view (see the no-AI rule).
 - CV extraction: `MeController` upload (~L835–895) calls `ICvExtractionService` (LLM) and **auto-fills empty fields** via `CvProfileMerge.Apply`. The filled keys are stored in `CandidateUploadedCv.FilledFieldsJson`: `voornaam`, `achternaam`, `telefoon`, `over mij`, `rijbewijs`, `opleiding`, `gewenste rollen`, `werkervaring`, `certificaten`. Nothing records that the candidate checked them.
-- Machine translation: `ITranslationService.TranslateAsync` (OpenAI; stub fallback).
+- Machine translation: `ITranslationService.TranslateAsync` (OpenAI; stub fallback). **Decided (decision 22):** use the existing OpenAI service; the candidate approves every translation. Revisit when an EU provider is chosen; keep the service behind the interface so it can be swapped.
 - `ReportLanguage` only knows nl/en. Lato (QuestPDF default) renders Polish/Romanian diacritics, not Arabic.
 - Public base URL: `PlatformFeatureSettings.PublicWebBaseUrl`.
 
@@ -140,7 +140,7 @@ If not ready:
 
 ### Lobsy-geverifieerd (decision 6)
 `PassportVerificationRules.Evaluate(...)` returns `{ IsVerified, TestDates[4], EmailVerified, PhoneVerified, PhoneRequired }`.
-- `IsVerified` = all 4 tests completed + `EmailVerifiedAtUtc` set + (`PhoneVerifiedAtUtc` set **if** `PhoneVerificationEnabled`).
+- `IsVerified` = all 4 tests completed + `EmailVerifiedAtUtc` set + (`PhoneVerifiedAtUtc` set **if** `PhoneVerificationEnabled`). Decision 22: phone verification is OFF until an SMS provider is chosen, so in v1 **Lobsy-geverifieerd = 4/4 tests + verified e-mail**.
 - The badge text is "**Lobsy-geverifieerd**" + "4/4 DNA-tests afgerond · {date of the last test}". Use this exact name.
 - The p2 box lists exactly what was checked (tests with dates, e-mail, telephone if required) and what was **not**: identity/werkvergunning, diploma's/certificaten, referenties.
 - Not verified → no badge; p1 shows "{n}/4 DNA-tests afgerond" as plain status.

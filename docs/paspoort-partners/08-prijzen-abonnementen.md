@@ -14,7 +14,7 @@ Mockup: `docs/mockups/paspoort-partners/h-prijzen-partners.png` (src `src/h.html
 ## Goal
 Decisions 14–16. One public page explains the offer to agencies **and** employers: the same plans for both, with copy switched by type. Admins can activate a partner subscription (incl. pilot) that drives `PassportPartner.IsActive`.
 
-There is no online payment and no tokens: invoicing is manual for now (open point).
+There is no online payment and no tokens. **Decided (decision 22): invoicing is manual for now.**
 
 **Plans (indicative, admin-editable):**
 | Plan | What the partner gets |
@@ -33,10 +33,11 @@ There is no online payment and no tokens: invoicing is manual for now (open poin
 - then 50% discount until 2027-07-01
 - in exchange for 2 feedback conversations + a usable quote
 - requires a written pilot agreement + data-sharing agreement beforehand: an admin checkbox with date, required before activation
+- Decision 22: the partner terms, consent texts and pilot data-sharing agreement need a **legal check before `PassportPartnersEnabled` goes live in production**. The code only stores the agreement dates; it does not block on this.
 
 ## Facts
 - Existing commercial singleton: `FlexCommercialSettings` (Flex margin, deep analysis, `DefaultAgencyAnnualPriceEuro = 4000`, contact unlock tokens) with admin page `/admin/financien/prijzen`. **Do not change its values or behaviour** (out of scope). Add a separate section/tab.
-- `AgencyAnnualSubscription` exists for the €4,000 agency plan. It is unrelated, and the relationship is an open point. Do not reuse it.
+- `AgencyAnnualSubscription` exists for the €4,000 agency plan. **Decided (decision 22): it stays separate and untouched.** Do not reuse, bundle or reference it.
 - Rate limit `public-write` exists (Api). Lead e-mails go via `IEmailService` + template registry.
 - Public page style: see `HowLobsyWorks.razor` / `LandingFaq.razor` components.
 

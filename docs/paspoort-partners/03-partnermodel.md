@@ -82,7 +82,7 @@ Backend foundation for decisions 7–13:
 ### Rules (`Jobsy.Core/Rules/PassportPartnerRules.cs`)
 - `MaxActivePartners = 3`. **Active** = consent given, not revoked. Suspended links count as active (the candidate can reconfirm).
 - `ReconfirmInterval = 6 months`, `ReconfirmReminderLead = 14 days`.
-- `MinimumAge = 18`. Partner links and consent need age ≥ 18 by `User.DateOfBirth`. Candidates without a DOB are asked their age band ("Ik ben 18 of ouder") at consent time (step 06). See open point 2.
+- `MinimumAge = 18`. Partner links and consent need age ≥ 18 by `User.DateOfBirth`. Candidates without a DOB are asked their age band ("Ik ben 18 of ouder") at consent time (step 06). **Decided (decision 22): 18.** 16–17-year-olds come later, as a separate decision with parental consent. Do not build anything for them now.
 - `CountDisclosureThreshold = 5`: any count that includes not-consented links is shown as the exact number only when it is ≥ 5, otherwise as "minder dan 5" (0–4 look the same). Partner surfaces must not let a partner derive a sub-5 count by subtraction (see step 07). Same spirit as `SchoolAnonymity.MinGroupSize`.
 - `PrivacyConstants.PartnerShareConsentVersion = "2026-10-03"`.
 - `PassportPartnerTerms.CurrentVersion = "2026-10-03"`. The terms text must state:
@@ -105,7 +105,7 @@ Backend foundation for decisions 7–13:
   - the flag is ON and the partner is active
   - the user is a member of the partner's company or a branch
   - the user's role is BranchManager / RegionalManager / EnterpriseManager / Intermediary
-  - MFA is satisfied for this session. The caller passes `mfaSatisfied`, computed with the existing `AdminSessionClaims.IsMfaSatisfiedInSession` (`mfa_verified` = "1" or an external-IdP `auth_method`, same as `MfaPolicy`/`MfaEnforcementMiddleware`). The API side uses the equivalent check from `PersonalDataAccessLogExtensions`.
+  - MFA is satisfied for this session (decision 22: the existing rule, so a Google/Microsoft login counts as 2FA). The caller passes `mfaSatisfied`, computed with the existing `AdminSessionClaims.IsMfaSatisfiedInSession` (`mfa_verified` = "1" or an external-IdP `auth_method`, same as `MfaPolicy`/`MfaEnforcementMiddleware`). The API side uses the equivalent check from `PersonalDataAccessLogExtensions`.
   - consent is given, not revoked, not suspended
   - the candidate is active and not anonymized
 - `LogAccessAsync(...)`

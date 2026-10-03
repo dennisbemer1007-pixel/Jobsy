@@ -2,7 +2,7 @@
 
 **Standalone hotfix, not stacked.**
 - Branch: `cursor/paspoort-partners-hotfix-werkgevers` from **`origin/acceptatie`**.
-- ONE PR into `acceptatie`, titled **"fix(werkgevers): EmployersEnabled default OFF until phase 2"**.
+- ONE PR into `acceptatie`, titled **"fix(werkgevers): EmployersEnabled default OFF until phase 2, youth-wage indicator instead of age"**.
 - The PR body starts with "Standalone hotfix (not stacked)".
 - Rules: see README.
 - Independent of 01 and of 02–09. Either can merge first. If 01b merges before 02, nothing changes for the stack.
@@ -54,6 +54,7 @@ This hotfix turns the whole employer part **OFF by default until phase 2**:
 - There is **no** `EmployersEnabled` flag and no `IFeatureFlags`. The employer part is always on and cannot be switched off.
 - `/employer/talent` shows competency % incl. Stressbestendigheid, and `/branch/applicants` shows match %. There is no WhoAmI snapshot on main.
 - When acceptatie is promoted to main, the migration in this hotfix makes production OFF as well. Without this hotfix it would stay ON (column default `true`).
+- Production has no real users yet (decision 22, point 11). There is no production urgency: 01b ships with the next regular release.
 
 ## Scope
 
@@ -65,7 +66,7 @@ This hotfix turns the whole employer part **OFF by default until phase 2**:
   - `Down` restores only the column default and never flips row data
 - **No data is deleted or modified:** vacancies, applications, talent pool, tokens, companies and WhoAmI snapshots stay as they are.
 - Update `docs/feature-flags.md`: default **false**, plus one line saying phase 2 is redesigned and out of scope.
-- **Admin toggle** (`PlatformSettingsCatalog` / `PlatformSettingsEditor`): turning it ON shows a confirm dialog in 5 languages. The NL copy is: "Fase 2 wordt opnieuw ontworpen. Als je dit aanzet, zien werkgevers weer matchpercentages, persoonlijkheidsscores in de talentpool en het AI-verhaal. Weet je het zeker?" Log the change in `AdminAuditLog`.
+- **Admin toggle** (`PlatformSettingsCatalog` / `PlatformSettingsEditor`) stays **unlocked** (decision 22). Turning it ON shows a confirm dialog in 5 languages. The NL copy is: "Fase 2 wordt opnieuw ontworpen. Als je dit aanzet, zien werkgevers weer matchpercentages, persoonlijkheidsscores in de talentpool en het AI-verhaal. Weet je het zeker?" Log the change in `AdminAuditLog`.
 
 ### 2. Make the switch real
 - Replace the `AlwaysOnEmployersSwitch` registration with an adapter over `IFeatureFlags` (follow-up doc item 1). Keep `AlwaysOnEmployersSwitch` and `FixedEmployersSwitch` for tests only, or delete the former if unused.
@@ -90,7 +91,20 @@ This hotfix turns the whole employer part **OFF by default until phase 2**:
 - **API:** unchanged (404 `feature_disabled`).
 - The nav and footer contain no employer links when OFF (existing `FeatureVisible`; verify `MainLayout`, `AppFooter` and the landing CTAs).
 
-### 4. Candidate flows must not break (flag OFF)
+### 4. Employer screens: "jeugdloon van toepassing" instead of exact age (decision 22, point 3)
+This applies when employers are switched ON again. It is a first piece of the phase-2 direction (no unnecessary personal data for employers).
+- **Employer-facing DTOs:** replace `CandidateAgeYears` with `YouthWageApplies` (bool?). Find them with `rg CandidateAgeYears Jobsy.Api`: `ApplicationsController` ~L247, ~L315, ~L399, ~L1683 and `Sprint5Dtos` ~L191.
+- `YouthWageApplies` is true when the age at application time is < the youth-wage cut-off (21, from the existing `YouthWageFractions`/minimum-wage tables; use their constant, never a literal). It is null when the age is unknown.
+- **`Applicants.razor`** (~L841, `CardFacts`) and any other employer screen showing age: show a neutral chip **"Jeugdloon van toepassing"** (5 languages) when true, and nothing otherwise.
+- **No exact age, no date of birth and no age band** anywhere on employer surfaces. Sweep `Werkgever/*`, `Employer/*`, `Intermediary/*` and the talent-pool cards.
+- **Keep** the stored `Application.CandidateAgeYears` / `SnapshotDateOfBirth` and the server-side youth-labour rules (`YouthLaborRules`). Data is unchanged.
+- **Wage tables** (`SalaryTables.razor`, `CreateVacancy.razor`) keep their per-age rates. Those are vacancy rates, not candidate data.
+- **Tests:**
+  - DTO mapping: age 17 → true, 21 → false, unknown → null
+  - a reflection guard that no employer-facing DTO has `*Age*`/`DateOfBirth` members (allow-list: wage-table DTOs)
+  - bUnit: applicant card shows the chip, never a number
+
+### 5. Candidate flows must not break (flag OFF)
 Smoke-test all of these with the flag OFF:
 - sign-up (`/account-maken`, code), onboarding (`/candidate/start`)
 - ontdekkingsreis, the 4 tests
@@ -134,6 +148,6 @@ Check that:
 ## Out of scope
 - The phase-2 employer redesign (candidate-driven matching, chronological applicants, no percentages/personality scores).
 - Deleting or migrating employer data.
-- Changing `ProfileVacancyMatchCalculator` or the talent pool.
+- Changing `ProfileVacancyMatchCalculator` or the talent pool (apart from removing age, section 4).
 - Production deploys or main merges (never).
 - The passport-partner portal. It is **not** behind `EmployersEnabled`; see step 07.

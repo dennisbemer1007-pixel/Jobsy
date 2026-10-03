@@ -38,7 +38,7 @@ No search in the Lobsy pool. No scores, rankings, filters on traits or automatic
 - MFA:
   - `MfaPolicy.IsRequired` already covers these roles for local passwords
   - `MfaEnforcementMiddleware` redirects non-MFA sessions
-  - `AdminSessionClaims.IsMfaSatisfiedInSession` = `mfa_verified` or an external IdP (open point: external IdP skips Lobsy 2FA, same as today)
+  - `AdminSessionClaims.IsMfaSatisfiedInSession` = `mfa_verified` or an external IdP. **Decided (decision 22):** the existing rule applies, so a Google/Microsoft login counts as 2FA for partner users.
 - Existing affiliate flyer: `PartnerFlyerPdfService` (IM/BM tracking codes) + `PartnerFlyerEndpoints` + rate limit `partner-flyer`. **Do not change it.** Build a separate passport-partner flyer.
 - Renderer and model from 04. `CanPartnerViewAsync` / `LogAccessAsync` from 03.
 
