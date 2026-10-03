@@ -5,7 +5,7 @@
 
 <nav class="career-stepper @(Mobile ? "career-stepper--mobile" : null)"
      aria-label="@Culture["Career.Stepper.Aria"]"
-     style="@(Mobile ? $"--step-count:{Stones.Count}" : null)">
+     style="--step-count:@(Stones.Count)">
     <ol class="career-stepper__list">
         @for (var i = 0; i < Stones.Count; i++)
         {
