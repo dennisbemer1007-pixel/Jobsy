@@ -76,7 +76,8 @@ public sealed record SchoolPortalResultsDto(
     string ClassName,
     bool PerCodeEnabled,
     ClassResultsAggregate Totals,
-    IReadOnlyList<SchoolPortalPerCodeResultDto>? PerCode);
+    IReadOnlyList<SchoolPortalPerCodeResultDto>? PerCode,
+    PupilQuestionSet QuestionSet);
 
 public sealed record SchoolPortalPerCodeResultDto(
     Guid CodeId,
@@ -152,7 +153,9 @@ public sealed record SchoolPrivacyDto(
     DateOnly RetentionCutoff,
     string RetentionYearLabel,
     IReadOnlyList<SchoolPrivacyClassConfirmationDto> ClassConfirmations,
-    string OuderbriefText);
+    IReadOnlyList<SchoolOuderbriefDto> Ouderbrieven);
+
+public sealed record SchoolOuderbriefDto(PupilQuestionSet QuestionSet, string Text);
 
 public sealed record SchoolPrivacyClassConfirmationDto(
     Guid ClassId,

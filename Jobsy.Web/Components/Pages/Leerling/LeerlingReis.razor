@@ -20,7 +20,7 @@
 {
     <section class="ll-card">
         <h1>@Culture["Leerling.WindowClosed.Title"]</h1>
-        <p>@Culture["Leerling.WindowClosed.Body"]</p>
+        <p>@Culture[PupilCopy.Key(_state?.QuestionSet ?? _def?.Set ?? Jobsy.Core.Enums.PupilQuestionSet.Vo, "Leerling.WindowClosed.Body")]</p>
     </section>
 }
 else if (_loading)

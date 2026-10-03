@@ -134,7 +134,7 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Tile.Cult.PeopleFirst"] = "Klein groepje, rustig";
         d["LeerlingStory.Tile.Cult.PeopleFirst.Explain"] = "Hier voel je je thuis.";
         d["LeerlingStory.Title"] = "Dit ben jij!";
-        d["LeerlingStory.DonePill"] = "Klaar · 60 van 60";
+        d["LeerlingStory.DonePill"] = "Klaar · {0} van {0}";
         d["LeerlingStory.Lobster"] = "Kijk, mijn nieuwe schaal glimt! En dit ben jij.";
         d["LeerlingStory.LikesTitle"] = "Je houdt van";
         d["LeerlingStory.DislikesTitle"] = "Niet zo leuk vind je";

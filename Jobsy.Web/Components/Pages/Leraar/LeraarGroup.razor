@@ -3,6 +3,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Services
@@ -29,6 +30,7 @@ else
     <header class="sch-page-header">
         <p class="sch-breadcrumb"><a href="@($"/leraar/klas/{ClassId:D}")">@Culture["Leraar.Nav.Overview"]</a> / @Culture["Leraar.Group.Title"]</p>
         <h1>@Culture["Leraar.Group.Title"]</h1>
+        <p class="muted">@Culture[_group.QuestionSet == PupilQuestionSet.Groep78 ? "School.QuestionSet.Groep78" : "School.QuestionSet.Vo"]</p>
     </header>
 
     @if (!_group.Visible)

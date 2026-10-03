@@ -81,7 +81,7 @@ public sealed class SchoolAggregateSnapshotter : ISchoolAggregateSnapshotter
         var snapshotAt = _clock.GetUtcNow().UtcDateTime.Date; // date precision only
         var snapshotAtUtc = DateTime.SpecifyKind(snapshotAt, DateTimeKind.Utc);
 
-        // Idempotent replace for this school+year
+        // Idempotent replace for this school+year (all tests)
         var oldClass = await _db.SchoolClassAggregates
             .Where(a => a.SchoolId == schoolId && a.SchoolYearStart == schoolYearStart)
             .ToListAsync(cancellationToken);
@@ -97,6 +97,7 @@ public sealed class SchoolAggregateSnapshotter : ISchoolAggregateSnapshotter
         foreach (var schoolClass in classes)
         {
             var classResults = resultsByClass.GetValueOrDefault(schoolClass.Id) ?? [];
+            ClassResultsAggregator.EnsureResultsBelongToSet(schoolClass.QuestionSet, classResults);
             var codes = schoolClass.PupilCodes;
             var pupilCount = codes.Count;
             var startedCount = codes.Count(c => c.Status != PupilCodeStatus.NotStarted);
@@ -106,6 +107,7 @@ public sealed class SchoolAggregateSnapshotter : ISchoolAggregateSnapshotter
                 schoolClass.Name,
                 schoolClass.Level,
                 schoolClass.Year,
+                schoolClass.QuestionSet,
                 pupilCount,
                 startedCount,
                 completedCount,
@@ -124,6 +126,7 @@ public sealed class SchoolAggregateSnapshotter : ISchoolAggregateSnapshotter
                 SchoolYearStart = schoolYearStart,
                 ClassLabel = schoolClass.Name,
                 Level = schoolClass.Level,
+                QuestionSet = schoolClass.QuestionSet,
                 Year = schoolClass.Year,
                 PupilCount = pupilCount,
                 StartedCount = startedCount,
@@ -138,24 +141,30 @@ public sealed class SchoolAggregateSnapshotter : ISchoolAggregateSnapshotter
             written++;
         }
 
-        var schoolCompleted = classBuckets.Sum(b => b.CompletedCount);
-        if (schoolCompleted >= SchoolAnonymity.MinGroupSize)
+        // School-year aggregates: one row per (school, year, test). Never mix tests.
+        foreach (var setGroup in classBuckets.GroupBy(b => b.QuestionSet))
         {
-            // Class aggregates (≥5) + small classes merged into school total only when school ≥ 5.
-            var includeAll = classBuckets;
-            var pupilCount = includeAll.Sum(b => b.PupilCount);
-            var startedCount = includeAll.Sum(b => b.StartedCount);
-            var riasec = ClassResultsAggregator.MergeCounts(includeAll.Select(b => b.Raw.Riasec));
-            var values = ClassResultsAggregator.MergeCounts(includeAll.Select(b => b.Raw.Values));
-            var cultures = ClassResultsAggregator.MergeCounts(includeAll.Select(b => b.Raw.Cultures));
-            var bands = ClassResultsAggregator.MergeCounts(includeAll.Select(b => b.Raw.CompetenceBands));
-            var dreams = ClassResultsAggregator.MergeCounts(includeAll.Select(b => b.Raw.DreamJobs));
+            var setBuckets = setGroup.ToList();
+            var schoolCompleted = setBuckets.Sum(b => b.CompletedCount);
+            if (schoolCompleted < SchoolAnonymity.MinGroupSize)
+            {
+                continue;
+            }
+
+            var pupilCount = setBuckets.Sum(b => b.PupilCount);
+            var startedCount = setBuckets.Sum(b => b.StartedCount);
+            var riasec = ClassResultsAggregator.MergeCounts(setBuckets.Select(b => b.Raw.Riasec));
+            var values = ClassResultsAggregator.MergeCounts(setBuckets.Select(b => b.Raw.Values));
+            var cultures = ClassResultsAggregator.MergeCounts(setBuckets.Select(b => b.Raw.Cultures));
+            var bands = ClassResultsAggregator.MergeCounts(setBuckets.Select(b => b.Raw.CompetenceBands));
+            var dreams = ClassResultsAggregator.MergeCounts(setBuckets.Select(b => b.Raw.DreamJobs));
 
             _db.SchoolYearAggregates.Add(new SchoolYearAggregate
             {
                 Id = Guid.NewGuid(),
                 SchoolId = schoolId,
                 SchoolYearStart = schoolYearStart,
+                QuestionSet = setGroup.Key,
                 PupilCount = pupilCount,
                 StartedCount = startedCount,
                 CompletedCount = schoolCompleted,
@@ -194,38 +203,43 @@ public sealed class SchoolAggregateSnapshotter : ISchoolAggregateSnapshotter
             return 0;
         }
 
-        var completed = schoolRows.Sum(r => r.CompletedCount);
-        if (completed < SchoolAnonymity.MinGroupSize)
+        var written = 0;
+        foreach (var setGroup in schoolRows.GroupBy(r => r.QuestionSet))
         {
-            await _db.SaveChangesAsync(cancellationToken);
-            return 0;
+            var rows = setGroup.ToList();
+            var completed = rows.Sum(r => r.CompletedCount);
+            if (completed < SchoolAnonymity.MinGroupSize)
+            {
+                continue;
+            }
+
+            var riasec = ClassResultsAggregator.MergeCounts(rows.Select(r => FromJson(r.RiasecTop3CountsJson)));
+            var values = ClassResultsAggregator.MergeCounts(rows.Select(r => FromJson(r.TopValueCountsJson)));
+            var cultures = ClassResultsAggregator.MergeCounts(rows.Select(r => FromJson(r.TopCultureCountsJson)));
+            var bands = ClassResultsAggregator.MergeCounts(rows.Select(r => FromJson(r.CompetenceBandCountsJson)));
+            var dreams = ClassResultsAggregator.MergeCounts(rows.Select(r => FromJson(r.DreamJobCountsJson)));
+
+            _db.SchoolYearAggregates.Add(new SchoolYearAggregate
+            {
+                Id = Guid.NewGuid(),
+                SchoolId = null,
+                SchoolYearStart = schoolYearStart,
+                QuestionSet = setGroup.Key,
+                PupilCount = rows.Sum(r => r.PupilCount),
+                StartedCount = rows.Sum(r => r.StartedCount),
+                CompletedCount = completed,
+                RiasecTop3CountsJson = ToJson(ClassResultsAggregator.Top3Riasec(riasec)),
+                TopValueCountsJson = ToJson(TopN(values, 10)),
+                TopCultureCountsJson = ToJson(TopN(cultures, 10)),
+                CompetenceBandCountsJson = ToJson(bands),
+                DreamJobCountsJson = ToJson(ClassResultsAggregator.CollapseSparseDreamJobs(dreams)),
+                SnapshotAtUtc = snapshotAtUtc
+            });
+            written++;
         }
 
-        var riasec = ClassResultsAggregator.MergeCounts(schoolRows.Select(r => FromJson(r.RiasecTop3CountsJson)));
-        // Platform should reflect full dimension counts when possible; school rows store top-3 only for RIASEC.
-        // Re-merge what we have (top-3 per school) — best available from aggregates-only storage.
-        var values = ClassResultsAggregator.MergeCounts(schoolRows.Select(r => FromJson(r.TopValueCountsJson)));
-        var cultures = ClassResultsAggregator.MergeCounts(schoolRows.Select(r => FromJson(r.TopCultureCountsJson)));
-        var bands = ClassResultsAggregator.MergeCounts(schoolRows.Select(r => FromJson(r.CompetenceBandCountsJson)));
-        var dreams = ClassResultsAggregator.MergeCounts(schoolRows.Select(r => FromJson(r.DreamJobCountsJson)));
-
-        _db.SchoolYearAggregates.Add(new SchoolYearAggregate
-        {
-            Id = Guid.NewGuid(),
-            SchoolId = null,
-            SchoolYearStart = schoolYearStart,
-            PupilCount = schoolRows.Sum(r => r.PupilCount),
-            StartedCount = schoolRows.Sum(r => r.StartedCount),
-            CompletedCount = completed,
-            RiasecTop3CountsJson = ToJson(ClassResultsAggregator.Top3Riasec(riasec)),
-            TopValueCountsJson = ToJson(TopN(values, 10)),
-            TopCultureCountsJson = ToJson(TopN(cultures, 10)),
-            CompetenceBandCountsJson = ToJson(bands),
-            DreamJobCountsJson = ToJson(ClassResultsAggregator.CollapseSparseDreamJobs(dreams)),
-            SnapshotAtUtc = snapshotAtUtc
-        });
         await _db.SaveChangesAsync(cancellationToken);
-        return 1;
+        return written;
     }
 
     private static IReadOnlyDictionary<string, int> TopN(IReadOnlyDictionary<string, int> source, int n)
@@ -256,6 +270,7 @@ public sealed class SchoolAggregateSnapshotter : ISchoolAggregateSnapshotter
         string ClassLabel,
         SchoolLevel Level,
         int Year,
+        PupilQuestionSet QuestionSet,
         int PupilCount,
         int StartedCount,
         int CompletedCount,

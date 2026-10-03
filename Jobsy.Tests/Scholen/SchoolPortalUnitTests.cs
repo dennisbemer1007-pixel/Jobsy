@@ -1,5 +1,6 @@
 using System.Text;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 
 namespace Jobsy.Tests.Scholen;
@@ -10,7 +11,7 @@ public class ClassResultsAggregatorTests
     public void Hides_totals_below_k_anonymity()
     {
         var results = Enumerable.Range(0, 4).Select(i => MakeResult($"R", "Helpen", "arts")).ToList();
-        var agg = ClassResultsAggregator.Aggregate(results, totalCodes: 28);
+        var agg = ClassResultsAggregator.Aggregate(results, totalCodes: 28, PupilQuestionSet.Vo);
         Assert.False(agg.TotalsVisible);
         Assert.Empty(agg.RiasecTop3);
     }
@@ -26,7 +27,7 @@ public class ClassResultsAggregatorTests
             MakeResult("ESA", "Samen", "kapper"),
             MakeResult("CSE", "Zekerheid", "elektricien"),
         };
-        var agg = ClassResultsAggregator.Aggregate(results, totalCodes: 28);
+        var agg = ClassResultsAggregator.Aggregate(results, totalCodes: 28, PupilQuestionSet.Vo);
         Assert.True(agg.TotalsVisible);
         Assert.Equal(5, agg.CompletedCount);
         Assert.Contains(agg.DreamJobs, d => d.Key == "arts" && d.Count == 2);
@@ -35,22 +36,38 @@ public class ClassResultsAggregatorTests
         Assert.Equal(3, overig.Count);
     }
 
-    private static PupilResult MakeResult(string holland, string topValue, string dream) => new()
+    [Fact]
+    public void Guard_throws_when_result_belongs_to_other_test()
     {
-        PupilCodeId = Guid.NewGuid(),
-        SchoolClassId = Guid.NewGuid(),
-        CompletedAtUtc = DateTime.UtcNow,
-        HollandCode = holland,
-        TopValue = topValue,
-        DreamJobKey = dream,
-        CompetenceScoresJson = "{}",
-        RiasecScoresJson = "{}",
-        ValuesScoresJson = "{}",
-        CultureScoresJson = "{}",
-        ScoringVersion = "t",
-        StoryTemplateVersion = "t",
-        StoryKeysJson = "[]"
-    };
+        var results = new List<PupilResult>
+        {
+            MakeResult("SAE", "Helpen", "arts", scoringVersion: "g78-1"),
+            MakeResult("RIC", "Vrijheid", "kok", scoringVersion: "1"),
+        };
+        Assert.Throws<InvalidOperationException>(() =>
+            ClassResultsAggregator.Aggregate(results, totalCodes: 28, PupilQuestionSet.Groep78));
+    }
+
+    private static PupilResult MakeResult(
+        string holland,
+        string topValue,
+        string dream,
+        string scoringVersion = "1") => new()
+        {
+            PupilCodeId = Guid.NewGuid(),
+            SchoolClassId = Guid.NewGuid(),
+            CompletedAtUtc = DateTime.UtcNow,
+            HollandCode = holland,
+            TopValue = topValue,
+            DreamJobKey = dream,
+            CompetenceScoresJson = "{}",
+            RiasecScoresJson = "{}",
+            ValuesScoresJson = "{}",
+            CultureScoresJson = "{}",
+            ScoringVersion = scoringVersion,
+            StoryTemplateVersion = "t",
+            StoryKeysJson = "[]"
+        };
 }
 
 public class SchoolTodoBuilderTests

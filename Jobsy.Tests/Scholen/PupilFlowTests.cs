@@ -93,9 +93,31 @@ public class PupilFlowTests
         _ = bank;
     }
 
-    private Dictionary<string, int> Fill(int count)
+    [Fact]
+    public void Vo_fifty_answered_without_island_yields_island_not_at_thirty()
     {
-        var bank = _g78.Bank;
+        var vo = new PupilQuestionSetRegistry().Get(Jobsy.Core.Enums.PupilQuestionSet.Vo);
+        var thirty = Fill(vo, 30);
+        var stillQuestion = PupilFlow.Next(vo, thirty, islandDone: false);
+        Assert.Equal(PupilFlowStepKind.Question, stillQuestion.Kind);
+        Assert.Equal(30, stillQuestion.Index);
+
+        var fifty = Fill(vo, 50);
+        var island = PupilFlow.Next(vo, fifty, islandDone: false);
+        Assert.Equal(PupilFlowStepKind.Island, island.Kind);
+        Assert.Equal(50, island.Index);
+
+        var after = PupilFlow.Next(vo, fifty, islandDone: true);
+        Assert.Equal(PupilFlowStepKind.Question, after.Kind);
+        Assert.Equal(50, after.Index);
+        Assert.Equal("9151", after.ItemId);
+    }
+
+    private Dictionary<string, int> Fill(int count) => Fill(_g78, count);
+
+    private static Dictionary<string, int> Fill(PupilQuestionSetDef def, int count)
+    {
+        var bank = def.Bank;
         var map = new Dictionary<string, int>(StringComparer.Ordinal);
         for (var i = 0; i < count; i++)
         {

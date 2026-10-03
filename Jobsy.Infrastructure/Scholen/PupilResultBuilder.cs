@@ -41,10 +41,10 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         }
 
         var def = _registry.ForClass(code.SchoolClass);
-        if (def.Bank is not PupilQuestionBank bank)
+        if (def.Bank is not PupilQuestionBankBase bank)
         {
             throw new InvalidOperationException(
-                $"Question set '{def.Key}' bank type is not supported by the result builder yet.");
+                $"Question set '{def.Key}' bank type is not supported by the result builder.");
         }
 
         var answersByString = ParseAnswers(code.Progress.AnswersJson);
@@ -103,8 +103,8 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         result.TopValue = topValue;
         result.CultureScoresJson = JsonSerializer.Serialize(culture, Json);
         result.TopCulture = topCulture;
-        // 03a: keep writing bank version "1" (byte-identical). 03b switches to def.ScoringVersion.
-        result.ScoringVersion = PupilQuestionBank.ScoringVersion.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        // Per-test scoring version (G78 → "g78-1"; VO → "vo-1").
+        result.ScoringVersion = def.ScoringVersion;
         result.DreamJobKey = code.Progress.DreamJobKey;
 
         var likeKeys = ParseChipKeys(code.Progress.LikesJson);

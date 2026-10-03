@@ -181,6 +181,7 @@ public sealed class PupilPortalService : IPupilPortalService
                 c.Year,
                 c.TestWindow,
                 c.SchoolYearStart,
+                c.QuestionSet,
                 HasCompleted = c.PupilCodes.Any(p => p.Status == PupilCodeStatus.Completed)
             })
             .ToListAsync(cancellationToken);
@@ -199,7 +200,8 @@ public sealed class PupilPortalService : IPupilPortalService
             }
 
             var label = $"{c.Name} · {FormatLevel(c.Level)} {c.Year}";
-            result.Add(new PupilClassOptionDto(c.Id, label, c.Name, c.Level, c.Year, readOnly && !open));
+            result.Add(new PupilClassOptionDto(
+                c.Id, label, c.Name, c.Level, c.Year, readOnly && !open, c.QuestionSet));
         }
 
         return result;
@@ -216,8 +218,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
         if (!_protection.TryAcquireClassPartition(request.ClassId, partition))
         {
-            return (null, new PupilErrorDto(CooldownError,
-                "Even pauze. Probeer het over een kwartier opnieuw of vraag je leraar."), 429);
+            var earlySet = await ResolveQuestionSetAsync(request.ClassId, cancellationToken);
+            return (null, LoginErr(CooldownError, earlySet, PupilCopy.LoginCooldown(earlySet)), 429);
         }
 
         var schoolClass = await _db.SchoolClasses
@@ -231,20 +233,20 @@ public sealed class PupilPortalService : IPupilPortalService
         {
             _protection.RecordFailure(request.ClassId, partition);
             await MaybePauseClassAsync(request.ClassId, cancellationToken);
-            return GenericFail();
+            return GenericFail(schoolClass?.QuestionSet ?? PupilQuestionSet.Groep78);
         }
 
         if (schoolClass.LoginPausedUntilUtc is DateTime paused && paused > now)
         {
-            return (null, new PupilErrorDto(LoginPausedError,
-                "Even pauze. Probeer het over een kwartier opnieuw of vraag je leraar."), 429);
+            return (null, LoginErr(LoginPausedError, schoolClass.QuestionSet,
+                PupilCopy.LoginCooldown(schoolClass.QuestionSet)), 429);
         }
 
         if (!PupilCodeFormat.TryNormalize(request.Code, out var normalized))
         {
             _protection.RecordFailure(request.ClassId, partition);
             await MaybePauseClassAsync(request.ClassId, cancellationToken);
-            return GenericFail();
+            return GenericFail(schoolClass.QuestionSet);
         }
 
         var hash = _codes.LookupHash(normalized);
@@ -259,13 +261,13 @@ public sealed class PupilPortalService : IPupilPortalService
         {
             _protection.RecordFailure(request.ClassId, partition);
             await MaybePauseClassAsync(request.ClassId, cancellationToken);
-            return GenericFail();
+            return GenericFail(schoolClass.QuestionSet);
         }
 
         if (code.LockedUntilUtc is DateTime locked && locked > now)
         {
-            return (null, new PupilErrorDto(CooldownError,
-                "Even pauze. Probeer het over een kwartier opnieuw of vraag je leraar."), 429);
+            return (null, LoginErr(CooldownError, schoolClass.QuestionSet,
+                PupilCopy.LoginCooldown(schoolClass.QuestionSet)), 429);
         }
 
         var def = _registry.ForClass(schoolClass);
@@ -276,8 +278,8 @@ public sealed class PupilPortalService : IPupilPortalService
                         || code.Result is not null;
         if (schoolClass.TestWindow != TestWindowState.Open && !completed)
         {
-            return (null, new PupilErrorDto(WindowClosedError,
-                "Het testvenster van je klas is dicht. Je leraar zet het weer open."), 409);
+            return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
+                PupilCopy.LoginWindow(schoolClass.QuestionSet)), 409);
         }
 
         // Success path
@@ -449,8 +451,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
         if (schoolClass.TestWindow != TestWindowState.Open)
         {
-            return (null, new PupilErrorDto(WindowClosedError,
-                "Je antwoorden zijn bewaard. Je leraar zet de test weer open."), 409);
+            return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
+                PupilCopy.AnswersSavedWindow(schoolClass.QuestionSet)), 409);
         }
 
         var progress = code.Progress;
@@ -584,8 +586,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
         if (schoolClass.TestWindow != TestWindowState.Open)
         {
-            return (null, new PupilErrorDto(WindowClosedError,
-                "Je antwoorden zijn bewaard. Je leraar zet de test weer open."), 409);
+            return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
+                PupilCopy.AnswersSavedWindow(schoolClass.QuestionSet)), 409);
         }
 
         var (likes, dislikes, likeOther, dislikeOther, error) = ValidateChips(request);
@@ -679,7 +681,9 @@ public sealed class PupilPortalService : IPupilPortalService
             Likes: likes,
             Dislikes: dislikes,
             DreamJob: dream,
-            DreamJobKey: code.Result.DreamJobKey ?? code.Progress?.DreamJobKey), null, 200);
+            DreamJobKey: code.Result.DreamJobKey ?? code.Progress?.DreamJobKey,
+            TotalItems: def.Bank.AllItems.Count,
+            QuestionSet: def.Set), null, 200);
     }
 
     public async Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
@@ -1051,9 +1055,23 @@ public sealed class PupilPortalService : IPupilPortalService
         }
     }
 
-    private static (PupilLoginResponse? Ok, PupilErrorDto? Error, int StatusCode) GenericFail()
-        => (null, new PupilErrorDto(GenericCodeError,
-            "Die code klopt niet bij deze klas. Kijk goed op je kaartje of vraag je leraar."), 400);
+    private static (PupilLoginResponse? Ok, PupilErrorDto? Error, int StatusCode) GenericFail(
+        PupilQuestionSet set)
+        => (null, LoginErr(GenericCodeError, set, PupilCopy.LoginInvalid(set)), 400);
+
+    private static PupilErrorDto LoginErr(string code, PupilQuestionSet set, string message)
+        => new(code, message, QuestionSet: set);
+
+    private async Task<PupilQuestionSet> ResolveQuestionSetAsync(
+        Guid classId,
+        CancellationToken cancellationToken)
+    {
+        var set = await _db.SchoolClasses.AsNoTracking()
+            .Where(c => c.Id == classId)
+            .Select(c => (PupilQuestionSet?)c.QuestionSet)
+            .FirstOrDefaultAsync(cancellationToken);
+        return set ?? PupilQuestionSet.Groep78;
+    }
 
     private static Dictionary<string, int> ParseAnswers(string? json)
     {

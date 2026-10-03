@@ -51,7 +51,8 @@ public sealed record TeacherGroupInsightsDto(
     IReadOnlyList<NamedCountDto> DreamJobs,
     IReadOnlyList<NamedCountDto> TopCultures,
     IReadOnlyList<NamedCountDto> CompetenceBands,
-    IReadOnlyList<string> DiscussionPromptKeys);
+    IReadOnlyList<string> DiscussionPromptKeys,
+    PupilQuestionSet QuestionSet);
 
 public sealed record RiasecBarDto(string Letter, string KidLabelKey, int Count);
 

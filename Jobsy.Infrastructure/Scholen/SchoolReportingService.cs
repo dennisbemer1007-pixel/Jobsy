@@ -30,10 +30,10 @@ public interface ISchoolReportingService
 public sealed class SchoolReportingService : ISchoolReportingService
 {
     public const string CsvHeader =
-        "school_year;school_id;school_name;level;year;metric;key;count_or_lt5";
+        "school_year;school_id;school_name;vragenlijst;level;year;metric;key;count_or_lt5";
 
     public const string CsvHeaderHelp =
-        "CSV uit aggregaten (k≥5). Kolommen: school_year;school_id;school_name;level;year;metric;key;count_or_lt5. "
+        "CSV uit aggregaten (k≥5), één vragenlijst per export. Kolommen: school_year;school_id;school_name;vragenlijst;level;year;metric;key;count_or_lt5. "
         + "Waarde \"< 5\" wanneer de onderliggende telling onder de anonymiteitsdrempel ligt. Geen code- of leerling-id’s.";
 
     private static readonly JsonSerializerOptions JsonOpts = new();
@@ -120,7 +120,9 @@ public sealed class SchoolReportingService : ISchoolReportingService
         if (filter.SchoolId is null && !hasClassFilter)
         {
             activeSchools = await _db.SchoolYearAggregates.AsNoTracking()
-                .Where(a => a.SchoolYearStart == filter.SchoolYearStart && a.SchoolId != null)
+                .Where(a => a.SchoolYearStart == filter.SchoolYearStart
+                            && a.SchoolId != null
+                            && a.QuestionSet == filter.QuestionSet)
                 .Select(a => a.SchoolId)
                 .Distinct()
                 .CountAsync(cancellationToken);
@@ -182,6 +184,7 @@ public sealed class SchoolReportingService : ISchoolReportingService
             schoolName,
             filter.Level,
             filter.Year,
+            filter.QuestionSet,
             MaskInt(activeSchools, masked && filter.SchoolId is null),
             MaskInt(classCount, masked),
             MaskInt(started, masked),
@@ -202,6 +205,7 @@ public sealed class SchoolReportingService : ISchoolReportingService
         var view = await GetReportAsync(filter, cancellationToken);
         var sb = new StringBuilder();
         sb.AppendLine(CsvHeader);
+        var vragenlijst = view.QuestionSet == PupilQuestionSet.Groep78 ? "groep78" : "vo";
         void Row(string metric, string key, int? count, bool masked)
         {
             var school = view.SchoolId?.ToString("D") ?? "";
@@ -212,6 +216,7 @@ public sealed class SchoolReportingService : ISchoolReportingService
             sb.Append(view.SchoolYearStart).Append(';')
                 .Append(school).Append(';')
                 .Append(Escape(schoolName)).Append(';')
+                .Append(vragenlijst).Append(';')
                 .Append(level).Append(';')
                 .Append(year).Append(';')
                 .Append(metric).Append(';')
@@ -250,6 +255,7 @@ public sealed class SchoolReportingService : ISchoolReportingService
             sb.Append(view.SchoolYearStart).Append(';')
                 .Append(view.SchoolId?.ToString("D") ?? "").Append(';')
                 .Append(Escape(view.SchoolName ?? "")).Append(';')
+                .Append(vragenlijst).Append(';')
                 .Append(r.Level).Append(';')
                 .Append(r.Year).Append(';')
                 .Append("level_year").Append(';')
@@ -259,7 +265,7 @@ public sealed class SchoolReportingService : ISchoolReportingService
         }
 
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
-        var name = $"scholen-rapportage-{view.SchoolYearStart}.csv";
+        var name = $"scholen-rapportage-{view.SchoolYearStart}-{vragenlijst}.csv";
         return (bytes, name);
     }
 
@@ -268,7 +274,8 @@ public sealed class SchoolReportingService : ISchoolReportingService
         CancellationToken cancellationToken)
     {
         var q = _db.SchoolClassAggregates.AsNoTracking()
-            .Where(a => a.SchoolYearStart == filter.SchoolYearStart);
+            .Where(a => a.SchoolYearStart == filter.SchoolYearStart
+                        && a.QuestionSet == filter.QuestionSet);
         if (filter.SchoolId is Guid sid)
         {
             q = q.Where(a => a.SchoolId == sid);
@@ -291,9 +298,11 @@ public sealed class SchoolReportingService : ISchoolReportingService
         SchoolReportFilterDto filter,
         CancellationToken cancellationToken)
     {
-        // Prefer exact school year row; platform row when no school filter.
+        // Prefer exact school year+test row; platform row when no school filter.
         return await _db.SchoolYearAggregates.AsNoTracking()
-            .Where(a => a.SchoolYearStart == filter.SchoolYearStart && a.SchoolId == filter.SchoolId)
+            .Where(a => a.SchoolYearStart == filter.SchoolYearStart
+                        && a.SchoolId == filter.SchoolId
+                        && a.QuestionSet == filter.QuestionSet)
             .FirstOrDefaultAsync(cancellationToken);
     }
 

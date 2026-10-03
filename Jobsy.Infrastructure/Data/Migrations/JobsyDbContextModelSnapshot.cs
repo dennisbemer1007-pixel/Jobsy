@@ -5668,6 +5668,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("PupilCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("QuestionSet")
+                        .HasColumnType("integer");
+
                     b.Property<string>("RiasecTop3CountsJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -5697,7 +5700,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolId", "SchoolYearStart");
+                    b.HasIndex("SchoolId", "SchoolYearStart", "QuestionSet");
 
                     b.ToTable("SchoolClassAggregates", (string)null);
                 });
@@ -5819,6 +5822,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("PupilCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("QuestionSet")
+                        .HasColumnType("integer");
+
                     b.Property<string>("RiasecTop3CountsJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -5845,7 +5851,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolId", "SchoolYearStart");
+                    b.HasIndex("SchoolId", "SchoolYearStart", "QuestionSet");
 
                     b.ToTable("SchoolYearAggregates", (string)null);
                 });

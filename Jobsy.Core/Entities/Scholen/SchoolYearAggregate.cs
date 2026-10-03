@@ -1,13 +1,18 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Entities.Scholen;
 
 /// <summary>
-/// School-year aggregate (and optional platform-wide row with SchoolId null). Survives class deletion.
+/// School-year aggregate (and optional platform-wide row with SchoolId null),
+/// always scoped to a single <see cref="PupilQuestionSet"/>. Survives class deletion.
 /// </summary>
 public class SchoolYearAggregate
 {
     public Guid Id { get; set; }
     public Guid? SchoolId { get; set; }
     public int SchoolYearStart { get; set; }
+    /// <summary>Which pupil test this year/platform aggregate belongs to (never mixed).</summary>
+    public PupilQuestionSet QuestionSet { get; set; }
     public int PupilCount { get; set; }
     public int StartedCount { get; set; }
     public int CompletedCount { get; set; }

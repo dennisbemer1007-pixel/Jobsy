@@ -2,24 +2,32 @@ using System.Globalization;
 using System.Text;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Tests.Scholen;
 
 /// <summary>
-/// Keeps <c>docs/scholen/vragenbank-leerlingen.md</c> in sync with the bank + strings.
-/// Regenerate: JOBSY_UPDATE_PUPIL_QBANK_DOC=1 dotnet test --filter FullyQualifiedName~PupilQuestionBankDocFreshness
+/// Keeps generated vragenbank docs in sync. Regenerate:
+/// JOBSY_UPDATE_PUPIL_QBANK_DOC=1 dotnet test --filter FullyQualifiedName~PupilQuestionBankDocFreshness
 /// </summary>
 public class PupilQuestionBankDocFreshnessTests
 {
-    public const string RelativeDocPath = "docs/scholen/vragenbank-leerlingen.md";
+    public const string G78RelativeDocPath = "docs/scholen/vragenbank-leerlingen.md";
+    public const string VoRelativeDocPath = "docs/scholen/vragenbank-leerlingen-vo.md";
 
     [Fact]
-    public void Vragenbank_doc_matches_catalog_and_strings()
+    public void Vragenbank_docs_match_catalog_and_strings()
     {
-        var generated = Normalize(Generate());
+        AssertDoc(G78RelativeDocPath, GenerateG78);
+        AssertDoc(VoRelativeDocPath, GenerateVo);
+    }
+
+    private static void AssertDoc(string relative, Func<string> generate)
+    {
+        var generated = Normalize(generate());
         var root = FindRepoRoot();
-        var path = Path.Combine(root, RelativeDocPath);
+        var path = Path.Combine(root, relative);
         var update = string.Equals(
             Environment.GetEnvironmentVariable("JOBSY_UPDATE_PUPIL_QBANK_DOC"),
             "1",
@@ -31,24 +39,41 @@ public class PupilQuestionBankDocFreshnessTests
             File.WriteAllText(path, generated);
         }
 
-        Assert.True(File.Exists(path), $"Missing {RelativeDocPath}");
+        Assert.True(File.Exists(path), $"Missing {relative}");
         var onDisk = Normalize(File.ReadAllText(path));
         Assert.True(
             string.Equals(generated, onDisk, StringComparison.Ordinal),
-            $"{RelativeDocPath} is outdated. Regenerate with:\n" +
+            $"{relative} is outdated. Regenerate with:\n" +
             "JOBSY_UPDATE_PUPIL_QBANK_DOC=1 dotnet test Jobsy.Tests/Jobsy.Tests.csproj " +
             "--filter \"FullyQualifiedName~PupilQuestionBankDocFreshness\"");
     }
 
-    public static string Generate()
+    public static string GenerateG78()
+        => Generate(
+            new PupilQuestionBank(),
+            strings => UiStringsLeerlingVragen.MergeNl(strings),
+            "# Vragenbank leerlingen groep 7/8 (review)",
+            "`PupilQuestionBank` + `UiStringsLeerlingVragen`");
+
+    public static string GenerateVo()
+        => Generate(
+            new PupilQuestionBankVo(),
+            strings => UiStringsLeerlingVragenVo.MergeNl(strings),
+            "# Vragenbank leerlingen VO (review)",
+            "`PupilQuestionBankVo` + `UiStringsLeerlingVragenVo`");
+
+    private static string Generate(
+        PupilQuestionBankBase bank,
+        Action<Dictionary<string, string>> merge,
+        string title,
+        string sources)
     {
-        var bank = new PupilQuestionBank();
         var strings = new Dictionary<string, string>(StringComparer.Ordinal);
-        UiStringsLeerlingVragen.MergeNl(strings);
+        merge(strings);
         var sb = new StringBuilder();
-        sb.AppendLine("# Vragenbank leerlingen (review)");
+        sb.AppendLine(title);
         sb.AppendLine();
-        sb.AppendLine("Gegenereerd uit `PupilQuestionBank` + `UiStringsLeerlingVragen`. Wijzig de bronnen, niet dit bestand met de hand.");
+        sb.AppendLine($"Gegenereerd uit {sources}. Wijzig de bronnen, niet dit bestand met de hand.");
         sb.AppendLine();
         sb.AppendLine("| # | Wereld | Model | Categorie | Omgekeerd | Vraag | Stel je voor… |");
         sb.AppendLine("|---|---|---|---|---|---|---|");
@@ -58,14 +83,13 @@ public class PupilQuestionBankDocFreshnessTests
             var text = Esc(strings.GetValueOrDefault(q.TextKey, ""));
             var example = Esc(strings.GetValueOrDefault(q.ExampleKey, ""));
             sb.AppendLine(
-                $"| {n} | {PupilQuestionBank.WorldTitle(q.World)} | {ModelLabel(q.Model)} | {q.Category} | {(q.Reverse ? "ja" : "nee")} | {text} | {example} |");
+                $"| {n} | {PupilQuestionBankBase.WorldTitle(q.World)} | {ModelLabel(q.Model)} | {q.Category} | {(q.Reverse ? "ja" : "nee")} | {text} | {example} |");
             n++;
         }
 
         sb.AppendLine();
         var report = DutchReadability.Analyze(bank.Questions.SelectMany(q =>
             new[] { strings.GetValueOrDefault(q.TextKey, ""), strings.GetValueOrDefault(q.ExampleKey, "") }));
-        // InvariantCulture: full-suite culture changes (nl-NL) must not rewrite the decimal.
         sb.AppendLine(string.Create(
             CultureInfo.InvariantCulture,
             $"Readability: gemiddelde zinslengte **{report.AverageWordsPerSentence:0.00}** woorden; " +
