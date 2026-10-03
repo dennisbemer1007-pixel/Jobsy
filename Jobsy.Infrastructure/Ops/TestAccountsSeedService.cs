@@ -9,6 +9,7 @@ using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -28,6 +29,12 @@ public sealed record TestAccountSeedRow(
     string Role,
     TestAccountSeedAction Action,
     string Reason);
+
+public sealed class TestAccountSeedProgress
+{
+    public string Step { get; set; } = "seed";
+    public string? AccountKey { get; set; }
+}
 
 public sealed class TestAccountsSeedResult
 {
@@ -59,8 +66,10 @@ public sealed class TestAccountsSeedService
     public async Task<TestAccountsSeedResult> SeedAsync(
         bool dryRun,
         IReadOnlySet<string>? onlyKeys,
+        TestAccountSeedProgress? progress = null,
         CancellationToken cancellationToken = default)
     {
+        progress ??= new TestAccountSeedProgress();
         var result = new TestAccountsSeedResult();
         var domain = _configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
         var usersByKey = new Dictionary<string, User>(StringComparer.OrdinalIgnoreCase);
@@ -72,6 +81,9 @@ public sealed class TestAccountsSeedService
             {
                 continue;
             }
+
+            progress.Step = "user";
+            progress.AccountKey = entry.AccountKey;
 
             if (!TestAccountCatalog.RoleExistsInBuild(entry.Role))
             {
@@ -198,7 +210,9 @@ public sealed class TestAccountsSeedService
             return result;
         }
 
-        await EnsureSampleDataAsync(usersByKey, domain, dryRun, cancellationToken);
+        await EnsureSampleDataAsync(usersByKey, domain, dryRun, progress, cancellationToken);
+        progress.Step = "save";
+        progress.AccountKey = null;
         return result;
     }
 
@@ -270,8 +284,11 @@ public sealed class TestAccountsSeedService
         IReadOnlyDictionary<string, User> usersByKey,
         string domain,
         bool dryRun,
+        TestAccountSeedProgress progress,
         CancellationToken cancellationToken)
     {
+        progress.Step = "companies";
+        progress.AccountKey = null;
         var root = await EnsureCompanyAsync(
             TestAccountsIds.RootCompany,
             "Testbedrijf Lobsy (test)",
@@ -316,14 +333,17 @@ public sealed class TestAccountsSeedService
             "Den Haag",
             cancellationToken);
 
+        progress.Step = "memberships";
         if (usersByKey.TryGetValue("BranchManager", out var bm))
         {
+            progress.AccountKey = "BranchManager";
             bm.CompanyId = haag.Id;
             await EnsureMembershipAsync(bm.Id, haag.Id, cancellationToken);
         }
 
         if (usersByKey.TryGetValue("EnterpriseManager", out var em))
         {
+            progress.AccountKey = "EnterpriseManager";
             em.CompanyId = root.Id;
             await EnsureMembershipAsync(em.Id, root.Id, cancellationToken);
             await EnsureMembershipAsync(em.Id, haag.Id, cancellationToken);
@@ -332,6 +352,7 @@ public sealed class TestAccountsSeedService
 
         if (usersByKey.TryGetValue("RegionalManager", out var rm))
         {
+            progress.AccountKey = "RegionalManager";
             rm.CompanyId = root.Id;
             await EnsureMembershipAsync(rm.Id, haag.Id, cancellationToken);
             await EnsureMembershipAsync(rm.Id, delft.Id, cancellationToken);
@@ -340,12 +361,15 @@ public sealed class TestAccountsSeedService
 
         if (usersByKey.TryGetValue("Intermediary", out var im))
         {
+            progress.AccountKey = "Intermediary";
             im.CompanyId = bureau.Id;
             await EnsureMembershipAsync(im.Id, bureau.Id, cancellationToken);
         }
 
         if (usersByKey.TryGetValue("SalesManager", out var sm))
         {
+            progress.Step = "sales-profile";
+            progress.AccountKey = "SalesManager";
             await EnsureSalesProfileAsync(sm.Id, cancellationToken);
             root.ReferredBySalesManagerUserId = sm.Id;
             root.SalesAttributedAtUtc ??= DateTime.UtcNow;
@@ -353,19 +377,28 @@ public sealed class TestAccountsSeedService
 
         if (usersByKey.TryGetValue("Ambassadeur", out var am))
         {
+            progress.Step = "ambassadeur-profile";
+            progress.AccountKey = "Ambassadeur";
             await EnsureAmbassadeurProfileAsync(am.Id, cancellationToken);
         }
 
+        progress.Step = "token-grant";
+        progress.AccountKey = null;
         await EnsureTokenGrantAsync(root.Id, cancellationToken);
-        await EnsureVacanciesAsync(haag, delft, bureau, cancellationToken);
+        progress.Step = "vacancies";
+        await EnsureVacanciesAsync(haag, delft, bureau, dryRun, cancellationToken);
 
         if (usersByKey.TryGetValue("Candidate", out var candidate))
         {
+            progress.Step = "candidate";
+            progress.AccountKey = "Candidate";
             await EnsureCompleteCandidateAsync(candidate, cancellationToken);
         }
 
         if (usersByKey.TryGetValue("CandidateNew", out var candidateNew))
         {
+            progress.Step = "candidate-new";
+            progress.AccountKey = "CandidateNew";
             candidateNew.OpenForWork = false;
             candidateNew.PreferencesJson = null;
             candidateNew.HomeLocation = null;
@@ -380,6 +413,8 @@ public sealed class TestAccountsSeedService
         if (usersByKey.TryGetValue("Teacher", out var teacher)
             && usersByKey.TryGetValue("SchoolAdmin", out var schoolAdmin))
         {
+            progress.Step = "school";
+            progress.AccountKey = "Teacher";
             await EnsureSchoolAsync(teacher, schoolAdmin, dryRun, cancellationToken);
         }
 
@@ -516,8 +551,17 @@ public sealed class TestAccountsSeedService
         Company haag,
         Company delft,
         Company bureau,
+        bool dryRun,
         CancellationToken cancellationToken)
     {
+        // The CLI does not run the API hosted seeder. Categories are reference data the
+        // vacancy FK requires; EnsureDefaults is idempotent when the API already seeded them.
+        // Skip on dry-run so nothing is written (EnsureDefaults calls SaveChanges).
+        if (!dryRun)
+        {
+            await new VacancyCategoryService(_db).EnsureDefaultsAsync(cancellationToken);
+        }
+
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var end = today.AddMonths(3);
 
@@ -867,6 +911,7 @@ public sealed class TestAccountsSeedService
 
         var schoolClass = await _db.SchoolClasses
             .FirstOrDefaultAsync(c => c.Id == TestAccountsIds.SchoolClass, cancellationToken);
+        var insertedVo = schoolClass is null;
         if (schoolClass is null)
         {
             schoolClass = new SchoolClass
@@ -883,14 +928,6 @@ public sealed class TestAccountsSeedService
                 CreatedAtUtc = DateTime.UtcNow
             };
             _db.SchoolClasses.Add(schoolClass);
-            if (!dryRun)
-            {
-                await _db.SaveChangesAsync(cancellationToken);
-                if (_pupilCodes is not null)
-                {
-                    await _pupilCodes.GenerateAsync(5, schoolClass, cancellationToken);
-                }
-            }
         }
         else
         {
@@ -899,22 +936,15 @@ public sealed class TestAccountsSeedService
             schoolClass.Level = SchoolLevel.VmboGt;
             schoolClass.QuestionSet = PupilQuestionSet.Vo;
             schoolClass.Year = 1;
+            schoolClass.PupilCount = 5;
         }
 
-        if (!await _db.TeacherClassAssignments.AnyAsync(
-                a => a.TeacherUserId == teacher.Id && a.SchoolClassId == schoolClass.Id,
-                cancellationToken))
-        {
-            _db.TeacherClassAssignments.Add(new TeacherClassAssignment
-            {
-                TeacherUserId = teacher.Id,
-                SchoolClassId = schoolClass.Id,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-        }
+        await EnsurePupilCodesAsync(schoolClass, insertedVo, dryRun, cancellationToken);
+        await EnsureTeacherAssignmentAsync(teacher.Id, schoolClass.Id, cancellationToken);
 
         var groepClass = await _db.SchoolClasses
             .FirstOrDefaultAsync(c => c.Id == TestAccountsIds.SchoolClassGroep78, cancellationToken);
+        var insertedGroep = groepClass is null;
         if (groepClass is null)
         {
             groepClass = new SchoolClass
@@ -931,14 +961,6 @@ public sealed class TestAccountsSeedService
                 CreatedAtUtc = DateTime.UtcNow
             };
             _db.SchoolClasses.Add(groepClass);
-            if (!dryRun)
-            {
-                await _db.SaveChangesAsync(cancellationToken);
-                if (_pupilCodes is not null)
-                {
-                    await _pupilCodes.GenerateAsync(5, groepClass, cancellationToken);
-                }
-            }
         }
         else
         {
@@ -947,18 +969,57 @@ public sealed class TestAccountsSeedService
             groepClass.Level = SchoolLevel.Groep78;
             groepClass.QuestionSet = PupilQuestionSet.Groep78;
             groepClass.Year = 7;
+            groepClass.PupilCount = 5;
         }
 
+        await EnsurePupilCodesAsync(groepClass, insertedGroep, dryRun, cancellationToken);
+        await EnsureTeacherAssignmentAsync(teacher.Id, groepClass.Id, cancellationToken);
+    }
+
+    private async Task EnsureTeacherAssignmentAsync(
+        Guid teacherId,
+        Guid schoolClassId,
+        CancellationToken cancellationToken)
+    {
         if (!await _db.TeacherClassAssignments.AnyAsync(
-                a => a.TeacherUserId == teacher.Id && a.SchoolClassId == groepClass.Id,
+                a => a.TeacherUserId == teacherId && a.SchoolClassId == schoolClassId,
                 cancellationToken))
         {
             _db.TeacherClassAssignments.Add(new TeacherClassAssignment
             {
-                TeacherUserId = teacher.Id,
-                SchoolClassId = groepClass.Id,
+                TeacherUserId = teacherId,
+                SchoolClassId = schoolClassId,
                 CreatedAtUtc = DateTime.UtcNow
             });
+        }
+    }
+
+    /// <summary>
+    /// Inserts the class before generating codes (FK), then tops up to <see cref="SchoolClass.PupilCount"/>.
+    /// A later seed with <c>Scholen:CodeHmacKey</c> fills codes that were skipped earlier.
+    /// </summary>
+    private async Task EnsurePupilCodesAsync(
+        SchoolClass schoolClass,
+        bool inserted,
+        bool dryRun,
+        CancellationToken cancellationToken)
+    {
+        if (dryRun || _pupilCodes is null)
+        {
+            return;
+        }
+
+        if (inserted)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        var existing = await _db.PupilCodes.CountAsync(
+            c => c.SchoolClassId == schoolClass.Id, cancellationToken);
+        var missing = schoolClass.PupilCount - existing;
+        if (missing > 0)
+        {
+            await _pupilCodes.GenerateAsync(missing, schoolClass, cancellationToken);
         }
     }
 }
