@@ -93,6 +93,9 @@ else
         </aside>
 
         <section class="ll-card ll-question" role="group" aria-labelledby="ll-q-title">
+            <LeerlingCheerToast Text="@Culture[cheerKey]"
+                                Show="_cheerToast"
+                                OnHidden="HideCheerToast" />
             <p class="ll-question__meta">
                 @string.Format(Culture["Leerling.Reis.QuestionOf"], _state.CurrentIndex + 1, _state.TotalItems)
                 · @Culture["Leerling.World.Label"] @worldNum
@@ -134,7 +137,7 @@ else
             </div>
         </section>
 
-        <div class="ll-lob-zone">
+        <div class="ll-lob-zone" data-testid="ll-cheer-desktop">
             <p class="ll-bubble">@Culture[cheerKey]</p>
             <LeerlingLobster PlatesShed="@plates" NewShell="@_state.NewShell" Mobile="false" />
         </div>
@@ -157,6 +160,8 @@ else
     private string? _saveError;
     private int? _selected;
     private bool _busy;
+    private bool _cheerToast;
+    private int _platesSeen = int.MinValue;
 
     protected override async Task OnInitializedAsync()
     {
@@ -222,6 +227,7 @@ else
             }
 
             _infoOpen = false;
+            MaybeShowCheerToast();
         }
         catch
         {
@@ -233,6 +239,24 @@ else
             _loading = false;
         }
     }
+
+    private void MaybeShowCheerToast()
+    {
+        if (_state is null)
+        {
+            return;
+        }
+
+        var plates = _state.PlatesShed;
+        if (_platesSeen != int.MinValue && plates > _platesSeen)
+        {
+            _cheerToast = true;
+        }
+
+        _platesSeen = plates;
+    }
+
+    private void HideCheerToast() => _cheerToast = false;
 
     private async Task RetryPending()
     {
