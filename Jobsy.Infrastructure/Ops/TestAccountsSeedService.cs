@@ -875,6 +875,7 @@ public sealed class TestAccountsSeedService
                 SchoolId = school.Id,
                 Name = "1A",
                 Level = SchoolLevel.VmboGt,
+                QuestionSet = PupilQuestionSet.Vo,
                 Year = 1,
                 SchoolYearStart = DateTime.UtcNow.Year,
                 PupilCount = 5,
@@ -895,6 +896,9 @@ public sealed class TestAccountsSeedService
         {
             schoolClass.IsTestData = true;
             schoolClass.Name = "1A";
+            schoolClass.Level = SchoolLevel.VmboGt;
+            schoolClass.QuestionSet = PupilQuestionSet.Vo;
+            schoolClass.Year = 1;
         }
 
         if (!await _db.TeacherClassAssignments.AnyAsync(
@@ -905,6 +909,54 @@ public sealed class TestAccountsSeedService
             {
                 TeacherUserId = teacher.Id,
                 SchoolClassId = schoolClass.Id,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        var groepClass = await _db.SchoolClasses
+            .FirstOrDefaultAsync(c => c.Id == TestAccountsIds.SchoolClassGroep78, cancellationToken);
+        if (groepClass is null)
+        {
+            groepClass = new SchoolClass
+            {
+                Id = TestAccountsIds.SchoolClassGroep78,
+                SchoolId = school.Id,
+                Name = "7A",
+                Level = SchoolLevel.Groep78,
+                QuestionSet = PupilQuestionSet.Groep78,
+                Year = 7,
+                SchoolYearStart = DateTime.UtcNow.Year,
+                PupilCount = 5,
+                IsTestData = true,
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            _db.SchoolClasses.Add(groepClass);
+            if (!dryRun)
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+                if (_pupilCodes is not null)
+                {
+                    await _pupilCodes.GenerateAsync(5, groepClass, cancellationToken);
+                }
+            }
+        }
+        else
+        {
+            groepClass.IsTestData = true;
+            groepClass.Name = "7A";
+            groepClass.Level = SchoolLevel.Groep78;
+            groepClass.QuestionSet = PupilQuestionSet.Groep78;
+            groepClass.Year = 7;
+        }
+
+        if (!await _db.TeacherClassAssignments.AnyAsync(
+                a => a.TeacherUserId == teacher.Id && a.SchoolClassId == groepClass.Id,
+                cancellationToken))
+        {
+            _db.TeacherClassAssignments.Add(new TeacherClassAssignment
+            {
+                TeacherUserId = teacher.Id,
+                SchoolClassId = groepClass.Id,
                 CreatedAtUtc = DateTime.UtcNow
             });
         }

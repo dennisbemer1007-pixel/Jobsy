@@ -26,6 +26,20 @@ else if (_detail is null)
 {
     <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
 }
+else if (_detail.ResultPending || (_detail.Status == PupilCodeStatus.Completed && _detail.Story is null))
+{
+    <header class="sch-page-header">
+        <p class="sch-breadcrumb">
+            <a href="@($"/leraar/klas/{ClassId:D}")">Klas @_detail.ClassName</a> /
+            <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.Title"]</a> /
+            @_detail.DisplayCode
+        </p>
+        <h1>@_detail.DisplayCode</h1>
+    </header>
+    <p class="sch-empty-state panel-section">
+        @Culture["Leraar.Detail.ResultPending"]
+    </p>
+}
 else if (_detail.Status != PupilCodeStatus.Completed)
 {
     <header class="sch-page-header">

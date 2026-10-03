@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
@@ -2455,6 +2456,9 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).HasMaxLength(12).IsRequired();
             entity.Property(e => e.Level).HasConversion<int>();
+            entity.Property(e => e.QuestionSet)
+                .HasConversion<int>()
+                .HasDefaultValue(PupilQuestionSet.Vo);
             entity.Property(e => e.TestWindow).HasConversion<int>();
             entity.Property(e => e.ParentalInfoTextVersion).HasMaxLength(64);
             entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart, e.Name }).IsUnique();

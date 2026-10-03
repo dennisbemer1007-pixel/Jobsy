@@ -15,7 +15,8 @@ public sealed record SchoolPortalClassListItemDto(
     int CompletedCount,
     bool ParentalInfoConfirmed,
     TestWindowState TestWindow,
-    DateOnly? TestWindowClosesOn);
+    DateOnly? TestWindowClosesOn,
+    PupilQuestionSet QuestionSet);
 
 public sealed record SchoolPortalClassDetailDto(
     Guid Id,
@@ -33,7 +34,9 @@ public sealed record SchoolPortalClassDetailDto(
     TestWindowState TestWindow,
     DateOnly? TestWindowClosesOn,
     bool ProcessorAgreementPresent,
-    IReadOnlyList<SchoolPortalCodeRowDto> Codes);
+    IReadOnlyList<SchoolPortalCodeRowDto> Codes,
+    PupilQuestionSet QuestionSet,
+    bool LevelLocked);
 
 public sealed record SchoolPortalTeacherChipDto(Guid UserId, string DisplayName);
 

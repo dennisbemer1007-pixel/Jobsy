@@ -249,6 +249,7 @@ public sealed class PupilPortalService : IPupilPortalService
         var hash = _codes.LookupHash(normalized);
         var code = await _db.PupilCodes
             .Include(c => c.Progress)
+            .Include(c => c.Result)
             .FirstOrDefaultAsync(
                 c => c.SchoolClassId == request.ClassId && c.CodeLookupHash == hash,
                 cancellationToken);
@@ -266,8 +267,11 @@ public sealed class PupilPortalService : IPupilPortalService
                 "Even pauze. Probeer het over een kwartier opnieuw of vraag je leraar."), 429);
         }
 
+        await EnsureResultAsync(code, cancellationToken);
+
         var completed = code.Status == PupilCodeStatus.Completed
-                        || code.Progress?.CompletedAtUtc is not null;
+                        || code.Progress?.CompletedAtUtc is not null
+                        || code.Result is not null;
         if (schoolClass.TestWindow != TestWindowState.Open && !completed)
         {
             return (null, new PupilErrorDto(WindowClosedError,
@@ -350,12 +354,15 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
+        await EnsureResultAsync(code, cancellationToken);
+
         var answers = ParseAnswers(code.Progress?.AnswersJson);
         var total = _bank.AllItems.Count;
         var answered = answers.Count;
         var currentIndex = FirstUnansweredIndex(code.Progress?.AnswersJson ?? "{}", total);
         var completed = code.Status == PupilCodeStatus.Completed
-                        || code.Progress?.CompletedAtUtc is not null;
+                        || code.Progress?.CompletedAtUtc is not null
+                        || code.Result is not null;
         var windowOpen = schoolClass.TestWindow == TestWindowState.Open;
         var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
         var needsIsland = !completed && answered >= 30 && !islandDone;
@@ -453,40 +460,60 @@ public sealed class PupilPortalService : IPupilPortalService
         var total = _bank.AllItems.Count;
         var nextIndex = FirstUnansweredIndex(progress.AnswersJson, total);
         progress.CurrentIndex = nextIndex;
-        var completed = answers.Count >= total
+        var allAnswered = answers.Count >= total
                         && _bank.AllItems.All(i => answers.ContainsKey(i.Id));
         var islandDone = progress.ChipsSavedAtUtc is not null;
-        var needsIsland = !completed && answers.Count >= 30 && !islandDone;
+        var needsIsland = !allAnswered && answers.Count >= 30 && !islandDone;
+        var resultPending = false;
+        var completed = false;
 
         string? nextId = null;
         string? nextWorld = null;
-        if (completed)
+        // Persist answers first. Never mark Completed before BuildAsync succeeds —
+        // otherwise a builder failure leaves the pupil stuck without a PupilResult.
+        await _db.SaveChangesAsync(cancellationToken);
+
+        if (allAnswered)
         {
-            progress.CompletedAtUtc = now;
-            code.Status = PupilCodeStatus.Completed;
-            await _db.SaveChangesAsync(cancellationToken);
             try
             {
                 await _results.BuildAsync(code.Id, cancellationToken);
+                await _db.Entry(code).ReloadAsync(cancellationToken);
+                if (code.Progress is not null)
+                {
+                    await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
+                }
+
+                await _db.Entry(code).Reference(c => c.Result).LoadAsync(cancellationToken);
+                completed = code.Status == PupilCodeStatus.Completed && code.Result is not null;
+                if (!completed)
+                {
+                    resultPending = true;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Pupil result builder failed for {CodeId}", code.Id);
+                // Builder may have mutated tracked entities before failing — restore DB state.
+                await _db.Entry(code).ReloadAsync(cancellationToken);
+                if (code.Progress is not null)
+                {
+                    await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
+                }
+
+                resultPending = true;
+                completed = false;
             }
+        }
+        else if (needsIsland)
+        {
+            nextWorld = "pauze-eiland";
         }
         else
         {
-            await _db.SaveChangesAsync(cancellationToken);
-            if (needsIsland)
-            {
-                nextWorld = "pauze-eiland";
-            }
-            else
-            {
-                var next = _bank.GetByGlobalIndex(nextIndex);
-                nextId = next?.Id;
-                nextWorld = next?.WorldKey;
-            }
+            var next = _bank.GetByGlobalIndex(nextIndex);
+            nextId = next?.Id;
+            nextWorld = next?.WorldKey;
         }
 
         return (new PupilAnswerResponse(
@@ -496,7 +523,8 @@ public sealed class PupilPortalService : IPupilPortalService
             completed,
             nextId,
             nextWorld,
-            needsIsland), null, 200);
+            needsIsland,
+            resultPending), null, 200);
     }
 
     public async Task<(PupilChipsResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveChipsAsync(
@@ -575,6 +603,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
+        await EnsureResultAsync(code, cancellationToken);
         if (code.Status != PupilCodeStatus.Completed || code.Result is null)
         {
             return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
@@ -922,6 +951,58 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         return (code, code.SchoolClass, null, 200);
+    }
+
+    /// <summary>
+    /// Self-heal: when every item is answered (or status is already Completed) but
+    /// <see cref="PupilResult"/> is missing, retry <see cref="IPupilResultBuilder.BuildAsync"/> once.
+    /// </summary>
+    private async Task<bool> EnsureResultAsync(PupilCode code, CancellationToken cancellationToken)
+    {
+        if (code.Result is not null)
+        {
+            return true;
+        }
+
+        var answers = ParseAnswers(code.Progress?.AnswersJson);
+        var total = _bank.AllItems.Count;
+        var allAnswered = answers.Count >= total
+                          && _bank.AllItems.All(i => answers.ContainsKey(i.Id));
+        if (!allAnswered && code.Status != PupilCodeStatus.Completed)
+        {
+            return false;
+        }
+
+        try
+        {
+            await _results.BuildAsync(code.Id, cancellationToken);
+            await _db.Entry(code).ReloadAsync(cancellationToken);
+            if (code.Progress is not null)
+            {
+                await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
+            }
+
+            await _db.Entry(code).Reference(c => c.Result).LoadAsync(cancellationToken);
+            return code.Result is not null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Pupil result builder failed for {CodeId}", code.Id);
+            try
+            {
+                await _db.Entry(code).ReloadAsync(cancellationToken);
+                if (code.Progress is not null)
+                {
+                    await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
+                }
+            }
+            catch
+            {
+                // Best-effort restore; the warning above already captured the builder failure.
+            }
+
+            return false;
+        }
     }
 
     private static (PupilLoginResponse? Ok, PupilErrorDto? Error, int StatusCode) GenericFail()
