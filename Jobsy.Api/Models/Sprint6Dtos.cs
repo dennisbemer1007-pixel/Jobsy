@@ -280,7 +280,7 @@ public record PlatformFeatureDto(
     int SchoolRetentionCutoffDay = 31,
     bool AmbassadorsEnabled = false,
     bool EmployersEnabled = true,
-    bool CandidatePassportEnabled = false);
+    bool CandidatePassportEnabled = true);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

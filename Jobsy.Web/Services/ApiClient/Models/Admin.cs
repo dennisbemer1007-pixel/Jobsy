@@ -210,6 +210,8 @@ public sealed class PlatformFeatureItem
     public int SchoolRetentionCutoffMonth { get; set; } = 7;
     public int SchoolRetentionCutoffDay { get; set; } = 31;
     public bool AmbassadorsEnabled { get; set; }
+    public bool EmployersEnabled { get; set; } = true;
+    public bool CandidatePassportEnabled { get; set; } = true;
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>
@@ -232,6 +234,8 @@ public sealed class PlatformFeaturePatch
     public int? SchoolRetentionCutoffMonth { get; set; }
     public int? SchoolRetentionCutoffDay { get; set; }
     public bool? AmbassadorsEnabled { get; set; }
+    public bool? EmployersEnabled { get; set; }
+    public bool? CandidatePassportEnabled { get; set; }
     public string? Reason { get; set; }
 }
 
@@ -303,7 +307,7 @@ public sealed class SalesParkedBalanceApiItem
     public decimal OpenBalanceExVat { get; set; }
     public DateTime? LastLineAtUtc { get; set; }
     public bool EmployersEnabled { get; set; } = true;
-    public bool CandidatePassportEnabled { get; set; }
+    public bool CandidatePassportEnabled { get; set; } = true;
 }
 
 public sealed class PlatformCompanyItem

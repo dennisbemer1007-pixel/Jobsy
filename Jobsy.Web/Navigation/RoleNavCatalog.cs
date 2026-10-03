@@ -40,15 +40,11 @@ public static class RoleNavCatalog
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"])
     ];
 
-    public static readonly NavItem SearchItem =
-        new("Nav.Search", "/banenkaart", NavIcons.Search, ["/"]);
-
     /// <summary>
-    /// Banenkaart slot for passport-ON nav (label <c>Nav.Banenkaart</c>; href stays /banenkaart).
-    /// Legacy passport-OFF order keeps <see cref="SearchItem"/> ("Zoeken").
+    /// Zoeken / banenkaart. Match stays a map button (not a nav item) but marks Zoeken active.
     /// </summary>
-    public static readonly NavItem BanenkaartItem =
-        new("Nav.Banenkaart", "/banenkaart", NavIcons.Search, ["/"]);
+    public static readonly NavItem SearchItem =
+        new("Nav.Search", "/banenkaart", NavIcons.Search, ["/", "/candidate/match"]);
 
     public static readonly NavItem SavedItem =
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]);
@@ -113,9 +109,9 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Teacher = [];
 
     /// <summary>
-    /// Pure-function candidate nav. Passport OFF keeps today's order (D1); passport ON uses §N
-    /// slots with Career directly after Passport. Employers OFF hides Banenkaart / Bewaard /
-    /// Sollicitaties.
+    /// Pure-function candidate nav. Passport OFF keeps today's order (D1); passport ON (default)
+    /// uses Discovery · Passport · Zoeken · Sollicitaties · Carrière. Employers OFF hides
+    /// Zoeken / Bewaard / Sollicitaties. Match is never a nav item.
     /// </summary>
     public static IReadOnlyList<NavItem> CandidateItems(FeatureFlagSnapshot flags)
     {
@@ -129,8 +125,8 @@ public static class RoleNavCatalog
                 return [DiscoveryItem, PassportItem, CareerItem];
             }
 
-            // De ontdekkingsreis · Mijn Paspoort · Carrière · Banenkaart · Sollicitaties
-            return [DiscoveryItem, PassportItem, CareerItem, BanenkaartItem, ApplicationsWithSavedAliases];
+            // De ontdekkingsreis · Mijn Paspoort · Zoeken · Sollicitaties · Carrière
+            return [DiscoveryItem, PassportItem, SearchItem, ApplicationsWithSavedAliases, CareerItem];
         }
 
         if (!flags.EmployersEnabled)
@@ -139,13 +135,13 @@ public static class RoleNavCatalog
             return [CareerItem, ProfileItem];
         }
 
-        // Employers ON + passport OFF: exactly today's order
+        // Employers ON + passport OFF: exactly today's legacy order
         return Candidate;
     }
 
     /// <summary>
-    /// True when Bewaard is its own bottom-nav item (legacy order).
-    /// False when passport is ON (Saved moves into Sollicitaties tabs) or employers OFF.
+    /// True when Bewaard is its own bottom-nav item (legacy passport-OFF order).
+    /// False when passport is ON (Bewaard is a Sollicitaties tab) or employers OFF.
     /// </summary>
     public static bool ShowsSavedInNav(FeatureFlagSnapshot flags)
         => flags.EmployersEnabled && !flags.CandidatePassportEnabled;

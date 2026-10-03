@@ -94,9 +94,9 @@ public class PassportBunitTests : BunitContext
         Assert.Equal("Nav.Discovery", items[0].TitleKey);
         Assert.Equal("/candidate/ontdekkingsreis", items[0].Href);
         Assert.Equal("Nav.Passport", items[1].TitleKey);
-        Assert.Equal("Nav.CareerPath", items[2].TitleKey);
-        Assert.Equal("Nav.Banenkaart", items[3].TitleKey);
-        Assert.Equal("Nav.Applications", items[4].TitleKey);
+        Assert.Equal("Nav.Search", items[2].TitleKey);
+        Assert.Equal("Nav.Applications", items[3].TitleKey);
+        Assert.Equal("Nav.CareerPath", items[4].TitleKey);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

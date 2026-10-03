@@ -716,6 +716,38 @@
     font-weight: 600;
 }
 
+/* Bewaard / Gedeeld pills (mockup C) */
+.candidate-saved-subnav.admin-sublinks {
+    gap: 0.5rem;
+    margin-block-end: var(--space-3);
+}
+
+.candidate-saved-subnav .admin-sublink {
+    border-radius: var(--radius-pill);
+    min-block-size: 40px;
+    padding-inline: 1rem;
+    background: var(--accent-soft);
+    color: var(--brand);
+    border: none;
+}
+
+.candidate-saved-subnav .admin-sublink--active,
+.candidate-saved-subnav .admin-sublink[aria-current="page"] {
+    background: var(--brand);
+    color: #fff;
+}
+
+.candidate-saved-subnav .admin-sublink:hover {
+    background: var(--accent-hover);
+    color: #fff;
+}
+
+.candidate-saved-subnav .admin-sublink--active:hover,
+.candidate-saved-subnav .admin-sublink[aria-current="page"]:hover {
+    background: var(--brand-deep);
+    color: #fff;
+}
+
 /* —— Mijn tests tab —— */
 .passport-tests {
     display: flex;

@@ -121,7 +121,7 @@ public class RoleNavCatalogSnapshotTests
         var passportOn = RoleNavCatalog.CandidateItems(
             new Jobsy.Core.Features.FeatureFlagSnapshot(true, true));
         Assert.Equal(
-            ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/carriere", "/banenkaart", "/candidate/applications"],
+            ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/banenkaart", "/candidate/applications", "/carriere"],
             passportOn.Select(i => i.Href));
     }
 }

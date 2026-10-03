@@ -59,6 +59,15 @@ public class KbSavedListBunitTests : BunitContext
         var cut = Render<Liked>();
         cut.WaitForAssertion(() => Assert.Contains("kb-saved-row", cut.Markup, StringComparison.Ordinal));
 
+        Assert.Contains("candidate-job-list-tabs", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("candidate-saved-subnav", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("href=\"/candidate/applications\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("href=\"/candidate/liked\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("href=\"/candidate/shared\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Bewaard", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Sollicitaties", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Gedeeld", cut.Markup, StringComparison.Ordinal);
+
         var row = cut.Find("article.kb-saved-row");
         Assert.Contains("kb-saved-row__photo", row.InnerHtml, StringComparison.Ordinal);
         Assert.Contains("Schoonmaker kantoren", row.TextContent, StringComparison.Ordinal);

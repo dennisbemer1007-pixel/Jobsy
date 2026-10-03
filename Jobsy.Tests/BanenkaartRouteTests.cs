@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Core.Features;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Navigation;
@@ -29,17 +30,19 @@ public class BanenkaartRouteTests
     public void BanenkaartPath_and_RoleNav_point_at_banenkaart()
     {
         Assert.Equal(PublicRoutes.Banenkaart, AuthRedirects.BanenkaartPath);
-        Assert.Equal("/banenkaart", AuthRedirects.CandidatePostLoginUrl(false));
+        var passportOff = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: false);
+        Assert.Equal("/banenkaart", AuthRedirects.CandidatePostLoginUrl(false, passportOff));
+        Assert.Equal(FeatureRoutes.CandidatePassportPath, AuthRedirects.CandidatePostLoginUrl(false));
 
-        // Passport OFF legacy order keeps Nav.Search; passport ON uses Nav.Banenkaart.
+        // Passport ON (default) and OFF both use SearchItem href /banenkaart ("Zoeken").
         Assert.Contains(RoleNavCatalog.Candidate, i => i.TitleKey == "Nav.Search" && i.Href == "/banenkaart");
-        Assert.Equal("/banenkaart", RoleNavCatalog.BanenkaartItem.Href);
-        Assert.Equal("Nav.Banenkaart", RoleNavCatalog.BanenkaartItem.TitleKey);
+        Assert.Equal("/banenkaart", RoleNavCatalog.SearchItem.Href);
+        Assert.Equal("Nav.Search", RoleNavCatalog.SearchItem.TitleKey);
 
-        var search = RoleNavCatalog.Candidate.First(i => i.TitleKey == "Nav.Search");
+        var search = RoleNavCatalog.SearchItem;
         Assert.True(RoleNavCatalog.IsActive(search, "/banenkaart"));
         Assert.True(RoleNavCatalog.IsActive(search, "/"));
-        Assert.True(RoleNavCatalog.IsActive(RoleNavCatalog.BanenkaartItem, "/banenkaart"));
+        Assert.True(RoleNavCatalog.IsActive(search, "/candidate/match"));
     }
 
     [Fact]

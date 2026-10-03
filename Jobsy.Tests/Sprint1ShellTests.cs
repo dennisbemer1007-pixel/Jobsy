@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Web.Auth;
@@ -104,12 +105,40 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_candidate_gets_search_saved_applications_career_profile()
+    public void ForUser_candidate_gets_passport_nav_by_default()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
         var user = new ClaimsPrincipal(identity);
         var items = RoleNavCatalog.ForUser(user);
         Assert.Equal(5, items.Count);
+        Assert.Equal(
+            new[]
+            {
+                "/candidate/ontdekkingsreis",
+                "/candidate/paspoort",
+                "/banenkaart",
+                "/candidate/applications",
+                "/carriere"
+            },
+            items.Select(i => i.Href));
+        Assert.Equal("Nav.Discovery", items[0].TitleKey);
+        Assert.Equal("Nav.Passport", items[1].TitleKey);
+        Assert.Equal("Nav.Search", items[2].TitleKey);
+        Assert.Equal("Nav.Applications", items[3].TitleKey);
+        Assert.Equal("Nav.CareerPath", items[4].TitleKey);
+        Assert.Contains("/candidate/liked", items[3].ExtraActivePaths ?? []);
+        Assert.Contains("/candidate/match", items[2].ExtraActivePaths ?? []);
+        Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
+        Assert.DoesNotContain(items, i => i.Href.Contains("match", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("/candidate/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
+    }
+
+    [Fact]
+    public void ForUser_candidate_legacy_order_when_passport_off()
+    {
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
+        var user = new ClaimsPrincipal(identity);
+        var items = RoleNavCatalog.ForUser(user, new FeatureFlagSnapshot(true, false));
         Assert.Equal(
             new[]
             {
@@ -120,20 +149,6 @@ public class RoleNavCatalogTests
                 "/candidate/profile"
             },
             items.Select(i => i.Href));
-        Assert.Equal("Nav.Search", items[0].TitleKey);
-        Assert.Equal("Nav.Applications", items[2].TitleKey);
-        Assert.Equal("Nav.CareerPath", items[3].TitleKey);
-        Assert.Equal("Nav.Profile", items[4].TitleKey);
-        Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
-        Assert.DoesNotContain(items, i => i.Href == "/home");
-        Assert.DoesNotContain(items, i => i.Href == "/profiel");
-        var saved = items.First(i => i.Href == "/candidate/liked");
-        Assert.Contains("/candidate/shared", saved.ExtraActivePaths ?? []);
-        Assert.DoesNotContain("/candidate/applications", saved.ExtraActivePaths ?? []);
-        var profile = items.First(i => i.Href == "/candidate/profile");
-        Assert.Contains("/profiel", profile.ExtraActivePaths ?? []);
-        Assert.Contains("/home", profile.ExtraActivePaths ?? []);
-        Assert.Equal("/candidate/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
 
     [Fact]

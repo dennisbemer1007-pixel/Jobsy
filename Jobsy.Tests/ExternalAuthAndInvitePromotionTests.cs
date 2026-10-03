@@ -3,6 +3,7 @@ using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
@@ -45,7 +46,7 @@ public class ExternalAuthAndInvitePromotionTests
     }
 
     [Fact]
-    public async Task Ensure_external_second_login_skips_how_to_for_candidate()
+    public async Task Ensure_external_second_login_without_onboarding_is_not_passport_ready()
     {
         await using var db = CreateDb();
         db.Users.Add(new User
@@ -70,17 +71,18 @@ public class ExternalAuthAndInvitePromotionTests
         var body = Assert.IsType<EnsureExternalUserResponse>(ok.Value);
         Assert.False(body.IsNewUser);
         Assert.Equal("Candidate", body.Role);
-        Assert.False(body.ShowCandidateHowTo);
+        // Passport ON default: no CompletedAtUtc ⇒ not ready ⇒ ShowCandidateHowTo (→ ontdekkingsreis).
+        Assert.True(body.ShowCandidateHowTo);
     }
 
     [Fact]
-    public void CandidatePostLoginUrl_first_vs_returning()
+    public void CandidatePostLoginUrl_defaults_use_passport_home()
     {
         Assert.Equal(
-            AuthRedirects.CandidateHowToPath,
+            FeatureRoutes.CandidateDiscoveryPath,
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: true));
         Assert.Equal(
-            AuthRedirects.BanenkaartPath,
+            FeatureRoutes.CandidatePassportPath,
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: false));
     }
 
@@ -91,10 +93,10 @@ public class ExternalAuthAndInvitePromotionTests
             "/vacancies/abc",
             AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true));
         Assert.Equal(
-            AuthRedirects.CandidateHowToPath,
+            FeatureRoutes.CandidateDiscoveryPath,
             AuthRedirects.ResolveCandidateReturnUrl("/home", showCandidateHowTo: true));
         Assert.Equal(
-            AuthRedirects.BanenkaartPath,
+            FeatureRoutes.CandidatePassportPath,
             AuthRedirects.ResolveCandidateReturnUrl("/", showCandidateHowTo: false));
         Assert.True(AuthRedirects.IsGenericPostLoginLanding("/banen"));
         Assert.False(AuthRedirects.IsGenericPostLoginLanding("/vacancies/1"));
