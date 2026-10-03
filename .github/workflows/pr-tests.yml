@@ -83,6 +83,7 @@ jobs:
             --filter-class '*FilterSheetFooterPlaywrightTests' \
             --filter-class '*BanenkaartCookiePaddingPlaywrightTests' \
             --filter-class '*BanenkaartListRerenderPlaywrightTests' \
+            --filter-class '*BanenkaartMobileOverflowPlaywrightTests' \
             --filter-class '*LoginPlaywrightTests' \
             --filter-class '*GratisDnaPlaywrightTests' \
             --filter-class '*MainLayoutTtfbPlaywrightTests' \

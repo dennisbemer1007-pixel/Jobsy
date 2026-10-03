@@ -25,7 +25,7 @@
 
 <PageSeo JsonLd="@JobListJsonLd" />
 <HeadContent>
-    <script src="js/discoveryHover.js?v=20261002-ci-mtp" defer data-discovery-hover="true"></script>
+    <script src="js/discoveryHover.js?v=20261002-kp01m" defer data-discovery-hover="true"></script>
 </HeadContent>
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null) @(_desktopListMode && _wideViewport ? "jobsy-discovery--list" : null)">
     <div class="jobsy-chrome">
@@ -43,7 +43,8 @@
             </div>
         </header>
 
-        <div class="jobsy-chrome__search kb-chrome-search">
+        @* Address lives in the start prompt (mobile) / desktop toolbar — not in the filter bar. *@
+        <div class="jobsy-chrome__search kb-chrome-search kb-chrome-search--address" hidden>
             <KbAddressField InputId="discovery-address"
                             Placeholder="@Culture["Discovery.AddressPlaceholder"]"
                             Query="@_addressQuery"
@@ -63,125 +64,91 @@
             }
         </div>
 
-        <div class="kb-filter-chips" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
-            <div class="kb-filter-chips__travel">
+        <div class="kb-filter-bar" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+            <div class="kb-filter-bar__row">
+                <div class="kb-chrome-search kb-filter-search kb-filter-search--bar">
+                    <label class="visually-hidden" for="discovery-keyword-mobile">@Culture["Discovery.Keyword"]</label>
+                    <input id="discovery-keyword-mobile"
+                           type="search"
+                           autocomplete="off"
+                           data-testid="kb-keyword-search"
+                           placeholder="@Culture["Kb.Filter.KeywordPlaceholder"]"
+                           value="@(_searchDraft ?? _searchQuery ?? "")"
+                           @oninput="OnSearchInput"
+                           @onkeydown="OnSearchKeyDown" />
+                </div>
                 <button type="button"
-                        class="kb-chip @(_travelChipOpen ? "is-open" : null) @(_maxTravelMinutes != _filterDefaults.MaxTravelMinutes || _selectedTransport != _filterDefaults.Transport ? "is-active" : null)"
-                        aria-expanded="@(_travelChipOpen ? "true" : "false")"
-                        @onclick="ToggleTravelChip">
-                    <span>@TravelChipLabel</span>
-                    <span aria-hidden="true">▾</span>
+                        class="kb-filters-button @(_filtersOpen ? "is-active" : null)"
+                        data-testid="kb-filters-button"
+                        @onclick="ToggleFilters"
+                        aria-expanded="@(_filtersOpen ? "true" : "false")"
+                        aria-controls="@(_filtersOpen ? "discovery-filters" : null)"
+                        aria-label="@Culture["Kb.Filter.FiltersAria"]">
+                    <span class="kb-filters-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                    <span>@Culture["Discovery.Filters"]</span>
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <span class="jobsy-action__badge" data-testid="kb-filters-badge">@ActiveFilterCount</span>
+                    }
                 </button>
-                @if (_travelChipOpen)
-                {
-                    <div class="kb-chip-popover" role="dialog">
-                        <div class="kb-chip-popover__modes" role="group" aria-label="@Culture["Discovery.Transport"]">
-                            @foreach (var mode in new[] { "Fiets", "Auto", "Lopend", "OV" })
-                            {
-                                <button type="button"
-                                        class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
-                                        @onclick="() => SetTravelPresetAsync(mode, _maxTravelMinutes)">
-                                    @UiLabels.Transport(Culture, mode)
-                                </button>
-                            }
-                        </div>
-                        <div class="kb-chip-popover__minutes" role="group" aria-label="@Culture["Discovery.TravelMinutes"]">
-                            @foreach (var m in new[] { 10, 20, 30, 45 })
-                            {
-                                <button type="button"
-                                        class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
-                                        @onclick="() => SetTravelPresetAsync(_selectedTransport, m)">
-                                    @Culture.Format("Kb.Filter.MinutesPreset", m)
-                                </button>
-                            }
-                        </div>
-                    </div>
-                }
             </div>
 
-            <button type="button"
-                    class="kb-chip kb-chip--icon @(_searchExpanded || !string.IsNullOrWhiteSpace(_searchQuery) ? "is-active" : null)"
-                    @onclick="ToggleSearchExpanded"
-                    aria-expanded="@(_searchExpanded ? "true" : "false")"
-                    aria-label="@Culture["Discovery.Keyword"]">
-                <span aria-hidden="true">⌕</span>
-            </button>
+            <div class="kb-filter-bar__row">
+                <div class="kb-filter-chips__travel">
+                    <button type="button"
+                            class="kb-chip @(_travelChipOpen ? "is-open" : null) @(_maxTravelMinutes != _filterDefaults.MaxTravelMinutes || _selectedTransport != _filterDefaults.Transport ? "is-active" : null)"
+                            data-testid="kb-travel-chip"
+                            aria-expanded="@(_travelChipOpen ? "true" : "false")"
+                            aria-label="@Culture["Kb.Filter.TravelAria"]"
+                            @onclick="ToggleTravelChip">
+                        <span>@TravelChipLabel</span>
+                        <span aria-hidden="true">▾</span>
+                    </button>
+                    @if (_travelChipOpen)
+                    {
+                        <div class="kb-chip-popover" role="dialog" data-testid="kb-travel-popover">
+                            <div class="kb-chip-popover__modes" role="group" aria-label="@Culture["Discovery.Transport"]">
+                                @foreach (var mode in TravelChipModes)
+                                {
+                                    <button type="button"
+                                            class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
+                                            @onclick="() => SetTravelPresetAsync(mode, _maxTravelMinutes)">
+                                        @UiLabels.Transport(Culture, mode)
+                                    </button>
+                                }
+                            </div>
+                            <div class="kb-chip-popover__minutes" role="group" aria-label="@Culture["Discovery.TravelMinutes"]">
+                                @foreach (var m in TravelChipMinutes)
+                                {
+                                    <button type="button"
+                                            class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
+                                            @onclick="() => SetTravelPresetAsync(_selectedTransport, m)">
+                                        @Culture.Format("Kb.Filter.MinutesPreset", m)
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
 
-            <button type="button"
-                    class="kb-chip @(_selectedWorkTypes.Count > 0 ? "is-active" : null)"
-                    @onclick="ToggleFilters">
-                @Culture["Kb.Filter.WorkType"]
-            </button>
-            <button type="button"
-                    class="kb-chip @(_minHoursPerWeek != _filterDefaults.MinHoursPerWeek || _maxHoursPerWeek != _filterDefaults.MaxHoursPerWeek ? "is-active" : null)"
-                    @onclick="ToggleHoursChip">
-                @Culture["Kb.Filter.Hours"]
-            </button>
-            <button type="button"
-                    class="kb-chip @(_minHourlyWage is not null || _maxHourlyWage is not null ? "is-active" : null)"
-                    @onclick="ToggleWageChip">
-                @Culture["Kb.Filter.Wage"]
-            </button>
-            <button type="button"
-                    class="kb-chip @(_filtersOpen ? "is-active" : null)"
-                    @onclick="ToggleFilters"
-                    aria-expanded="@(_filtersOpen ? "true" : "false")"
-                    aria-controls="@(_filtersOpen ? "discovery-filters" : null)">
-                <span>@Culture["Kb.Filter.More"]</span>
-                @if (ActiveFilterCount > 0)
-                {
-                    <span class="jobsy-action__badge">@ActiveFilterCount</span>
-                }
-            </button>
-            @if (ActiveFilterCount > 0)
-            {
-                <button type="button" class="kb-chip kb-chip--clear" @onclick="ClearAllFiltersAsync">
-                    @Culture["Kb.Filter.Clear"]
+                <a class="kb-match-button jobsy-action--match"
+                   data-testid="kb-match-button"
+                   href="@MatchButtonHref">
+                    <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                    <span>@Culture["Nav.Match"]</span>
+                </a>
+
+                <span class="kb-filter-bar__spacer" aria-hidden="true"></span>
+
+                <button type="button"
+                        class="kb-chip kb-chip--toggle"
+                        data-testid="kb-view-toggle"
+                        data-kb-mobile-view-toggle="kb-mobile-view-toggle"
+                        @onclick="ToggleMobileView">
+                    @(showMapOnMobile ? Culture["Discovery.List"] : Culture["Discovery.Map"])
                 </button>
-            }
-            <AuthorizeView>
-                <Authorized>
-                    <a class="kb-chip kb-chip--match jobsy-action--match" href="/candidate/match">@Culture["Nav.Match"]</a>
-                </Authorized>
-            </AuthorizeView>
-            <button type="button"
-                    class="kb-chip kb-chip--toggle"
-                    data-testid="kb-mobile-view-toggle"
-                    @onclick="ToggleMobileView">
-                @(showMapOnMobile ? Culture["Discovery.List"] : Culture["Discovery.Map"])
-            </button>
+            </div>
         </div>
-
-        @if (_searchExpanded || !string.IsNullOrWhiteSpace(_searchDraft) || !string.IsNullOrWhiteSpace(_searchQuery))
-        {
-            <div class="kb-filter-search kb-filter-search--mobile">
-                <label class="visually-hidden" for="discovery-keyword-mobile">@Culture["Discovery.Keyword"]</label>
-                <input id="discovery-keyword-mobile"
-                       type="search"
-                       autocomplete="off"
-                       placeholder="@Culture["Kb.Filter.SearchPlaceholder"]"
-                       value="@(_searchDraft ?? _searchQuery ?? "")"
-                       @oninput="OnSearchInput"
-                       @onkeydown="OnSearchKeyDown" />
-            </div>
-        }
-
-        @if (_hoursChipOpen)
-        {
-            <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(0, 16)">0–16</button>
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(16, 24)">16–24</button>
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(24, 32)">24–32</button>
-                <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(32, 40)">32–40</button>
-                <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
-            </div>
-        }
-        @if (_wageChipOpen)
-        {
-            <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
-                <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
-            </div>
-        }
     </div>
 
     <aside class="vacancy-pane">
@@ -210,16 +177,18 @@
                 <div class="kb-filter-chips__travel">
                     <button type="button"
                             class="kb-chip @(_travelChipOpen ? "is-open" : null)"
+                            data-testid="kb-travel-chip"
                             aria-expanded="@(_travelChipOpen ? "true" : "false")"
+                            aria-label="@Culture["Kb.Filter.TravelAria"]"
                             @onclick="ToggleTravelChip">
                         <span>@TravelChipLabel</span>
                         <span aria-hidden="true">▾</span>
                     </button>
                     @if (_travelChipOpen)
                     {
-                        <div class="kb-chip-popover" role="dialog">
-                            <div class="kb-chip-popover__modes" role="group">
-                                @foreach (var mode in new[] { "Fiets", "Auto", "Lopend", "OV" })
+                        <div class="kb-chip-popover" role="dialog" data-testid="kb-travel-popover">
+                            <div class="kb-chip-popover__modes" role="group" aria-label="@Culture["Discovery.Transport"]">
+                                @foreach (var mode in TravelChipModes)
                                 {
                                     <button type="button"
                                             class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
@@ -228,8 +197,8 @@
                                     </button>
                                 }
                             </div>
-                            <div class="kb-chip-popover__minutes" role="group">
-                                @foreach (var m in new[] { 10, 20, 30, 45 })
+                            <div class="kb-chip-popover__minutes" role="group" aria-label="@Culture["Discovery.TravelMinutes"]">
+                                @foreach (var m in TravelChipMinutes)
                                 {
                                     <button type="button"
                                             class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
@@ -260,21 +229,24 @@
                     <span class="visually-hidden">@Culture["Discovery.Keyword"]</span>
                     <input type="search"
                            autocomplete="off"
-                           placeholder="@Culture["Kb.Filter.SearchPlaceholder"]"
+                           placeholder="@Culture["Kb.Filter.KeywordPlaceholder"]"
                            value="@(_searchDraft ?? _searchQuery ?? "")"
                            @oninput="OnSearchInput"
                            @onkeydown="OnSearchKeyDown" />
                 </label>
 
                 <button type="button"
-                        class="kb-chip @(_filtersOpen ? "is-active" : null)"
+                        class="kb-filters-button @(_filtersOpen ? "is-active" : null)"
+                        data-testid="kb-filters-button"
                         @onclick="ToggleFilters"
                         aria-expanded="@(_filtersOpen ? "true" : "false")"
-                        aria-controls="discovery-filters-desktop">
-                    <span>@Culture["Kb.Filter.More"]</span>
+                        aria-controls="discovery-filters-desktop"
+                        aria-label="@Culture["Kb.Filter.FiltersAria"]">
+                    <span class="kb-filters-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                    <span>@Culture["Discovery.Filters"]</span>
                     @if (ActiveFilterCount > 0)
                     {
-                        <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                        <span class="jobsy-action__badge" data-testid="kb-filters-badge">@ActiveFilterCount</span>
                     }
                 </button>
                 @if (ActiveFilterCount > 0)
@@ -283,6 +255,13 @@
                         @Culture["Kb.Filter.Clear"]
                     </button>
                 }
+
+                <a class="kb-match-button jobsy-action--match"
+                   data-testid="kb-match-button"
+                   href="@MatchButtonHref">
+                    <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                    <span>@Culture["Nav.Match"]</span>
+                </a>
 
                 <div class="kb-view-toggle"
                      role="radiogroup"
@@ -306,6 +285,23 @@
                     </button>
                 </div>
             </div>
+
+            @if (_hoursChipOpen)
+            {
+                <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(0, 16)">0–16</button>
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(16, 24)">16–24</button>
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(24, 32)">24–32</button>
+                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(32, 40)">32–40</button>
+                    <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
+                </div>
+            }
+            @if (_wageChipOpen)
+            {
+                <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
+                    <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
+                </div>
+            }
         </div>
 
         <div id="discovery-filters-desktop"
@@ -555,13 +551,10 @@
                         {
                             <option value="distance">@Culture["Kb.List.SortNear"]</option>
                         }
-                        <option value="recent">@Culture["Kb.List.SortNew"]</option>
-                        @if (!_useListRows)
-                        {
-                            <option value="type">@Culture["Discovery.SortType"]</option>
-                            <option value="title">@Culture["Discovery.SortAlphaAsc"]</option>
-                            <option value="title-desc">@Culture["Discovery.SortAlphaDesc"]</option>
-                        }
+                        <option value="type">@Culture["Kb.Filter.WorkType"]</option>
+                        <option value="recent">@(_useListRows ? Culture["Kb.List.SortNew"] : Culture["Kb.Filter.SortStart"])</option>
+                        <option value="title">@Culture["Discovery.SortAlphaAsc"]</option>
+                        <option value="title-desc">@Culture["Discovery.SortAlphaDesc"]</option>
                     </select>
                 </label>
             </div>
@@ -779,73 +772,33 @@
     @if (_filtersOpen)
     {
         <div class="filter-sheet-backdrop" @onclick="CloseFiltersAsync"></div>
-        <div id="discovery-filters" class="filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
+        <div id="discovery-filters"
+             class="filter-sheet"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="filter-sheet-title"
+             data-testid="kb-filter-sheet">
             <div class="filter-sheet__header">
-                <img src="@Jobsy.Web.Media.BrandImages.AbsoluteWebp128"
-                     alt=""
-                     class="filter-sheet__mascot"
-                     width="40"
-                     height="40"
-                     decoding="async"
-                     draggable="false"
-                     aria-hidden="true" />
-                <h2 id="filter-sheet-title">
-                    @Culture["Discovery.Filters"]
-                    @if (ActiveFilterCount > 0)
-                    {
-                        <span class="jobsy-action__badge">@ActiveFilterCount</span>
-                    }
-                </h2>
-                <div class="filter-sheet__header-actions">
-                    @if (ActiveFilterCount > 0)
-                    {
-                        <button type="button"
-                                class="filter-sheet__clear-icon"
-                                title="@Culture["Discovery.ClearFilters"]"
-                                @onclick="ClearAllFiltersAsync"
-                                aria-label="@Culture["Discovery.ClearFilters"]">
-                            <span aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
-                        </button>
-                    }
-                    <button type="button" class="share-modal__close" @onclick="CloseFiltersAsync" aria-label="@Culture["Common.Close"]">×</button>
-                </div>
+                <h2 id="filter-sheet-title">@Culture["Discovery.Filters"]</h2>
+                <button type="button"
+                        class="filter-sheet__clear-all"
+                        data-testid="kb-filter-clear-all"
+                        @onclick="ClearAllFiltersAsync">
+                    @Culture["Kb.Filter.ClearAll"]
+                </button>
+                <button type="button"
+                        class="filter-sheet__close"
+                        @onclick="CloseFiltersAsync"
+                        aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">@((MarkupString)NavIcons.Close)</span>
+                </button>
             </div>
-
-            @if (ActiveFilterCount > 0)
-            {
-                <div class="filter-sheet__tags">
-                    @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
-                    {
-                        <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@UiLabels.WorkType(Culture, workType) ×</button>
-                    }
-                    @foreach (var cat in SelectedCategories)
-                    {
-                        <button type="button" class="filter-tag" @onclick="() => ClearCategoryAsync(cat.Id)">@cat.Name ×</button>
-                    }
-                    @if (!string.IsNullOrWhiteSpace(_searchQuery))
-                    {
-                        <button type="button" class="filter-tag" @onclick="ClearSearchQueryAsync">“@_searchQuery” ×</button>
-                    }
-                    @if (_ageYears is not null)
-                    {
-                        <button type="button" class="filter-tag" @onclick="ClearAgeAsync">@_ageYears ×</button>
-                    }
-                    <button type="button"
-                            class="filter-sheet__clear"
-                            title="@Culture["Discovery.ClearFilters"]"
-                            @onclick="ClearAllFiltersAsync"
-                            aria-label="@Culture["Discovery.ClearFilters"]">
-                        <span class="filter-sheet__clear-glyph" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
-                        <span>@Culture["Discovery.ClearFilters"]</span>
-                    </button>
-                </div>
-            }
 
             <div class="filter-sheet__body">
                 @if (_canShowMyVacancies)
                 {
-                    <section class="filter-section filter-section--focus">
-                        <h3>Vacatures</h3>
+                    <section class="filter-section filter-section--focus" data-filter-section="my-vacancies">
+                        <h3>@Culture["Kb.MyVacancies.Show"]</h3>
                         <button type="button"
                                 class="filter-sheet__focus @(_myVacanciesOnly ? "is-active" : null)"
                                 disabled="@_myVacanciesLoading"
@@ -853,7 +806,7 @@
                                 aria-pressed="@(_myVacanciesOnly ? "true" : "false")">
                             @MyVacanciesToggleLabel
                         </button>
-                        <p class="muted">Toon alleen actieve open vacatures van bedrijven die jij beheert.</p>
+                        <p class="filter-section__hint">Toon alleen actieve open vacatures van bedrijven die jij beheert.</p>
                         @if (!string.IsNullOrWhiteSpace(_myVacanciesError))
                         {
                             <p class="state-message error">@_myVacanciesError</p>
@@ -861,75 +814,155 @@
                     </section>
                 }
 
-                <section class="filter-section">
-                    <h3>@Culture["Discovery.Keyword"]</h3>
+                <section class="filter-section" data-filter-section="keyword">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Search)</span>
+                        @Culture["Kb.Filter.Keyword"]
+                    </h3>
                     <label class="filter-sheet__query">
-                        <span class="visually-hidden">@Culture["Discovery.Keyword"]</span>
+                        <span class="visually-hidden">@Culture["Kb.Filter.Keyword"]</span>
                         <input type="search"
                                autocomplete="off"
-                               placeholder="@Culture["Discovery.KeywordPlaceholder"]"
+                               data-testid="kb-sheet-keyword"
+                               placeholder="@Culture["Kb.Filter.SheetKeywordPlaceholder"]"
                                value="@(_searchDraft ?? _searchQuery ?? "")"
-                               @oninput="OnSearchInput"
+                               @oninput="OnSheetSearchInput"
                                @onkeydown="OnSearchKeyDown" />
                     </label>
                 </section>
 
-                <section class="filter-section filter-section--hero">
-                    <h3>@Culture["Discovery.TravelSlider"]</h3>
-                    <div class="travel-slider">
-                        <input type="range" min="5" max="90" step="5"
+                <section class="filter-section" data-filter-section="travel">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Map)</span>
+                        @Culture["Discovery.TravelSlider"]
+                        <span class="filter-section__value">@Culture.Format("Kb.Filter.TravelValue", _maxTravelMinutes)</span>
+                    </h3>
+                    <div class="filter-sheet__presets" role="group" aria-label="@Culture["Discovery.TravelMinutes"]">
+                        @foreach (var m in TravelChipMinutes)
+                        {
+                            <button type="button"
+                                    class="filter-sheet__chip @(_maxTravelMinutes == m ? "is-selected" : null)"
+                                    data-testid="kb-sheet-travel-@m"
+                                    @onclick="() => SetSheetTravelMinutesAsync(m)">
+                                @Culture.Format("Kb.Filter.MinutesPreset", m)
+                            </button>
+                        }
+                    </div>
+                    <div class="filter-sheet__slider">
+                        <input type="range"
+                               min="5"
+                               max="90"
+                               step="5"
                                value="@_maxTravelMinutes"
+                               data-testid="kb-sheet-travel-slider"
+                               aria-label="@Culture["Discovery.TravelSlider"]"
                                @oninput="OnTravelSliderInput"
-                               @onchange="OnMaxMinutesChanged" />
-                        <div class="travel-slider__value">
-                            <strong>@_maxTravelMinutes</strong> @Culture["Discovery.Minutes"]
+                               @onchange="OnSheetTravelSliderChanged" />
+                        <div class="filter-sheet__ticks" aria-hidden="true">
+                            <span>5 min</span><span>30</span><span>60</span><span>90 min</span>
                         </div>
                     </div>
-                    <label>
-                        @Culture["Discovery.Transport"]
-                        <select value="@_selectedTransport" @onchange="OnTransportChanged">
-                            <option value="Fiets">@Culture["Transport.Bike"]</option>
-                            <option value="E-bike">@Culture["Transport.EBike"]</option>
-                            <option value="Auto">@Culture["Transport.Car"]</option>
-                            <option value="OV">@Culture["Transport.Transit"]</option>
-                            <option value="Lopend">@Culture["Transport.Walk"]</option>
-                        </select>
-                    </label>
+                    <p class="filter-section__hint">@Culture["Kb.Filter.TravelHow"]</p>
+                    <div class="filter-sheet__modes" role="group" aria-label="@Culture["Kb.Filter.TravelHow"]">
+                        @foreach (var mode in TravelChipModes)
+                        {
+                            <button type="button"
+                                    class="filter-sheet__mode @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
+                                    data-testid="kb-sheet-transport-@mode"
+                                    @onclick="() => SetSheetTransportAsync(mode)">
+                                @UiLabels.Transport(Culture, mode)
+                            </button>
+                        }
+                    </div>
                 </section>
 
                 @if (_isCandidate && ShowFitFilters)
                 {
-                    <section class="filter-section">
-                        <h3>@Culture["Discovery.MinMatch"]</h3>
-                        <label>
-                            <select value="@_minMatchPercent.ToString()" @onchange="OnMinMatchChanged">
-                                <option value="0">@Culture["Discovery.MinMatchAny"]</option>
-                                <option value="60">@Culture["Discovery.MinMatch60"]</option>
-                                <option value="80">@Culture["Discovery.MinMatch80"]</option>
-                            </select>
-                        </label>
+                    <section class="filter-section" data-filter-section="match">
+                        <h3>
+                            <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                            @Culture["Kb.Filter.Match"]
+                        </h3>
+                        <p class="filter-section__hint">@Culture["Kb.Filter.MatchHint"]</p>
+                        <div class="filter-sheet__seg" role="group" aria-label="@Culture["Kb.Filter.Match"]">
+                            <button type="button"
+                                    class="filter-sheet__seg-btn @(_minMatchPercent == 0 ? "is-selected" : null)"
+                                    data-testid="kb-sheet-match-0"
+                                    @onclick="() => SetSheetMinMatchAsync(0)">
+                                @Culture["Kb.Filter.MatchAny"]
+                            </button>
+                            <button type="button"
+                                    class="filter-sheet__seg-btn @(_minMatchPercent == 60 ? "is-selected" : null)"
+                                    data-testid="kb-sheet-match-60"
+                                    @onclick="() => SetSheetMinMatchAsync(60)">
+                                @Culture["Kb.Filter.Match60"]
+                            </button>
+                            <button type="button"
+                                    class="filter-sheet__seg-btn @(_minMatchPercent == 80 ? "is-selected" : null)"
+                                    data-testid="kb-sheet-match-80"
+                                    @onclick="() => SetSheetMinMatchAsync(80)">
+                                @Culture["Kb.Filter.Match80"]
+                            </button>
+                        </div>
                     </section>
                 }
 
-                <section class="filter-section filter-section--hero">
-                    <h3>@Culture["Discovery.HoursSlider"]</h3>
-                    <HoursRangeSlider Min="0"
+                <section class="filter-section" data-filter-section="hours">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Vacancies)</span>
+                        @Culture["Discovery.HoursSlider"]
+                        <span class="filter-section__value">@Culture.Format("Kb.Filter.HoursValue", _minHoursPerWeek, _maxHoursPerWeek)</span>
+                    </h3>
+                    <HoursRangeSlider CssClass="hours-range--sheet"
+                                      Min="0"
                                       Max="40"
                                       Low="_minHoursPerWeek"
                                       High="_maxHoursPerWeek"
                                       LowChanged="OnMinHoursSliderValue"
                                       HighChanged="OnMaxHoursSliderValue"
                                       RangeCommitted="CommitHoursRangeAsync" />
+                    <div class="filter-sheet__ticks" aria-hidden="true">
+                        <span>0</span><span>10</span><span>20</span><span>30</span><span>40 uur</span>
+                    </div>
                 </section>
 
-                <section class="filter-section">
-                    <h3>@Culture["Discovery.WorkType"]</h3>
+                <section class="filter-section" data-filter-section="category">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Users)</span>
+                        @Culture["Kb.Filter.WorkType"]
+                    </h3>
+                    <div class="filter-sheet__chips" role="group" aria-label="@Culture["Kb.Filter.WorkType"]">
+                        @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                        {
+                            var selected = _selectedCategoryIds.Contains(cat.Id);
+                            <button type="button"
+                                    class="filter-sheet__chip filter-sheet__chip--category @(selected ? "is-selected" : null)"
+                                    data-testid="kb-sheet-category-@cat.Slug"
+                                    aria-pressed="@(selected ? "true" : "false")"
+                                    @onclick="() => ToggleCategoryChipAsync(cat.Id)">
+                                <span class="filter-sheet__dot" style="@KbCategoryColor.Style(cat.ColorHex)" aria-hidden="true"></span>
+                                <span>@cat.Name</span>
+                                @if (selected)
+                                {
+                                    <span class="filter-sheet__check" aria-hidden="true">✓</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                </section>
+
+                <section class="filter-section" data-filter-section="branch">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Branches)</span>
+                        @Culture["Discovery.WorkType"]
+                    </h3>
                     <div class="branch-multiselect branch-multiselect--sheet @(_branchMenuOpen ? "is-open" : null)">
                         <button type="button"
-                                class="branch-multiselect__trigger"
+                                class="branch-multiselect__trigger filter-sheet__select"
                                 aria-haspopup="listbox"
                                 aria-expanded="@(_branchMenuOpen ? "true" : "false")"
                                 aria-controls="@(_branchMenuOpen ? "branch-multiselect-panel-sheet" : null)"
+                                data-testid="kb-sheet-branch"
                                 @onclick="ToggleBranchMenu">
                             <span class="branch-multiselect__value @(_selectedWorkTypes.Count > 0 ? "is-selected" : null)">@BranchFilterSummary</span>
                             <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
@@ -960,91 +993,119 @@
                     </div>
                 </section>
 
-
-                <section class="filter-section">
-                    <h3>@Culture["Discovery.VacancyType"]</h3>
-                    <div class="branch-multiselect branch-multiselect--sheet @(_categoryMenuOpen ? "is-open" : null)">
-                        <button type="button"
-                                class="branch-multiselect__trigger"
-                                aria-haspopup="listbox"
-                                aria-expanded="@(_categoryMenuOpen ? "true" : "false")"
-                                aria-controls="@(_categoryMenuOpen ? "category-multiselect-panel-sheet" : null)"
-                                @onclick="ToggleCategoryMenu">
-                            <span class="branch-multiselect__value @(_selectedCategoryIds.Count > 0 ? "is-selected" : null)">@CategoryFilterSummary</span>
-                            <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
-                        </button>
-                        @if (_categoryMenuOpen)
-                        {
-                            <button type="button"
-                                    class="branch-multiselect__backdrop"
-                                    tabindex="-1"
-                                    aria-label="@Culture["Discovery.Cancel"]"
-                                    @onclick="CloseCategoryMenu"></button>
-                            <div id="category-multiselect-panel-sheet"
-                                 class="branch-multiselect__panel"
-                                 role="listbox"
-                                 aria-multiselectable="true"
-                                 aria-label="@Culture["Discovery.VacancyType"]">
-                                @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
-                                {
-                                    <label class="filter-check branch-multiselect__option">
-                                        <input type="checkbox"
-                                               checked="@_selectedCategoryIds.Contains(cat.Id)"
-                                               @onchange="e => ToggleCategoryAsync(cat.Id, e)" />
-                                        <span class="category-filter__swatch" style="@KbCategoryColor.Style(cat.ColorHex)" aria-hidden="true"></span>
-                                        @cat.Name
-                                    </label>
-                                }
-                            </div>
-                        }
-                    </div>
-                </section>
-
-
-                <section class="filter-section">
-                    <h3>@Culture["Discovery.Age"] · @Culture["Discovery.HourlyWageShort"]</h3>
-                    <label>
-                        @Culture["Discovery.Age"]
-                        <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
-                            <option value="all">@Culture["Discovery.AgeAny"]</option>
-                            @for (var age = 15; age <= 21; age++)
-                            {
-                                <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
-                            }
-                        </select>
-                    </label>
-                    @if (_ageYears is not null)
-                    {
+                <section class="filter-section" data-filter-section="wage">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Wages)</span>
+                        @Culture["Kb.Filter.WageHour"]
+                    </h3>
+                    <div class="filter-sheet__two">
                         <label>
-                            @Culture["Discovery.MinWage"]
-                            <input type="number" min="0" step="0.50" placeholder="—"
+                            @Culture["Kb.Filter.WageMin"]
+                            <input type="number"
+                                   min="0"
+                                   step="0.50"
+                                   inputmode="decimal"
+                                   data-testid="kb-sheet-wage-min"
+                                   placeholder="€"
                                    value="@(_minHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
                                    @onchange="OnMinWageChanged" />
                         </label>
                         <label>
-                            @Culture["Discovery.MaxWage"]
-                            <input type="number" min="0" step="0.50" placeholder="—"
+                            @Culture["Kb.Filter.WageMax"]
+                            <input type="number"
+                                   min="0"
+                                   step="0.50"
+                                   inputmode="decimal"
+                                   data-testid="kb-sheet-wage-max"
+                                   placeholder="@Culture["Kb.Filter.WageNoMax"]"
                                    value="@(_maxHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
                                    @onchange="OnMaxWageChanged" />
                         </label>
-                    }
+                    </div>
                 </section>
 
-                <section class="filter-section">
-                    <label>
-                        @Culture["Discovery.Radius"]
-                        <input type="number" min="1" max="50" value="@_radiusKm"
+                <section class="filter-section" data-filter-section="age">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Profile)</span>
+                        @Culture["Discovery.Age"]
+                    </h3>
+                    <p class="filter-section__hint">@Culture["Kb.Filter.AgeHint"]</p>
+                    <label class="visually-hidden" for="kb-sheet-age">@Culture["Discovery.Age"]</label>
+                    <select id="kb-sheet-age"
+                            class="filter-sheet__select"
+                            data-testid="kb-sheet-age"
+                            value="@AgeSelectValue"
+                            @onchange="OnAgeChanged"
+                            required>
+                        <option value="all">@Culture["Kb.Filter.AgeAny"]</option>
+                        @for (var age = 15; age <= 21; age++)
+                        {
+                            <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
+                        }
+                    </select>
+                </section>
+
+                <section class="filter-section" data-filter-section="distance">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Regions)</span>
+                        @Culture["Kb.Filter.Distance"]
+                        <span class="filter-section__value">@Culture.Format("Kb.Filter.DistanceValue", _radiusKm)</span>
+                    </h3>
+                    <div class="filter-sheet__slider">
+                        <input type="range"
+                               min="1"
+                               max="50"
+                               step="1"
+                               value="@_radiusKm"
+                               data-testid="kb-sheet-distance"
+                               aria-label="@Culture["Kb.Filter.Distance"]"
+                               @oninput="OnRadiusSliderInput"
                                @onchange="OnRadiusChanged" />
-                    </label>
+                        <div class="filter-sheet__ticks" aria-hidden="true">
+                            <span>1 km</span><span>25</span><span>50 km</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="filter-section" data-filter-section="sort">
+                    <h3>
+                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
+                        @Culture["Kb.Filter.Sort"]
+                    </h3>
+                    <label class="visually-hidden" for="kb-sheet-sort">@Culture["Kb.Filter.Sort"]</label>
+                    <select id="kb-sheet-sort"
+                            class="filter-sheet__select"
+                            data-testid="kb-sheet-sort"
+                            value="@EffectiveSortMode"
+                            @onchange="OnSortChanged">
+                        @if (_isCandidate && ShowFitFilters)
+                        {
+                            <option value="match">@Culture["Kb.List.SortBest"]</option>
+                        }
+                        @if (_origin is not null)
+                        {
+                            <option value="distance">@Culture["Kb.List.SortNear"]</option>
+                        }
+                        <option value="type">@Culture["Kb.Filter.WorkType"]</option>
+                        <option value="recent">@Culture["Kb.Filter.SortStart"]</option>
+                        <option value="title">@Culture["Discovery.SortAlphaAsc"]</option>
+                        <option value="title-desc">@Culture["Discovery.SortAlphaDesc"]</option>
+                    </select>
                 </section>
             </div>
 
             <div class="filter-sheet__footer">
-                <button type="button" class="filter-sheet__cancel" @onclick="CloseFiltersAsync">
+                <button type="button"
+                        class="filter-sheet__cancel"
+                        data-testid="kb-filter-cancel"
+                        @onclick="CloseFiltersAsync">
                     @Culture["Discovery.Cancel"]
                 </button>
-                <button type="button" class="filter-sheet__apply" @onclick="ApplySearch">
-                    @Culture["Discovery.Apply"]
+                <button type="button"
+                        class="filter-sheet__apply"
+                        data-testid="kb-filter-apply"
+                        @onclick="ApplySearch">
+                    @ApplyFiltersLabel
                 </button>
             </div>
         </div>
@@ -1176,6 +1237,10 @@
     private bool _sortChosenByUser;
     private int _minMatchPercent;
     private int _snapMinMatchPercent;
+    private string _snapSortMode = "title";
+    private bool _snapSortChosenByUser;
+    private int? _pendingResultCount;
+    private CancellationTokenSource? _pendingCountCts;
 
     /// <summary>D2: hide min-match chip and "Past het best" when the fit gate is closed.</summary>
     private bool ShowFitFilters =>
@@ -1191,7 +1256,12 @@
     private decimal? _minHourlyWage;
     private decimal? _maxHourlyWage;
     private bool _isCandidate;
+    private bool _isAuthenticated;
     private readonly MatchDeck _matchDeck = new();
+    private static readonly string[] TravelChipModes = ["Fiets", "E-bike", "Auto", "OV", "Lopend"];
+    private static readonly int[] TravelChipMinutes = [10, 20, 30];
+    private static readonly string MatchLoginHref =
+        "/login?returnUrl=" + Uri.EscapeDataString("/candidate/match");
     private bool _matchDeckLoadStarted;
     private bool _matchDialogOpen;
     private TopMatchTile? _topMatchTile;
@@ -1226,8 +1296,6 @@
     private bool _travelChipOpen;
     private bool _hoursChipOpen;
     private bool _wageChipOpen;
-    private bool _workTypeChipOpen;
-    private bool _searchExpanded;
     private string _isoMode = "approx";
     private KbFilterDefaults _filterDefaults = new();
     private int? _profileMinHours;
@@ -1555,10 +1623,19 @@
                 HasOrigin: _origin is not null),
             _filterDefaults);
 
+    private string MatchButtonHref => _isAuthenticated
+        ? "/candidate/match"
+        : MatchLoginHref;
+
     private string TravelChipLabel =>
         string.Equals(_selectedTransport, "Fiets", StringComparison.Ordinal)
             ? Culture.Format("Kb.Filter.TravelChipBike", _maxTravelMinutes)
             : Culture.Format("Kb.Filter.TravelChip", _maxTravelMinutes, UiLabels.TransportVerb(Culture, _selectedTransport));
+
+    private string ApplyFiltersLabel =>
+        _pendingResultCount is int n
+            ? Culture.Format("Kb.Filter.ShowCount", n)
+            : Culture["Kb.Filter.Show"];
 
     /// <summary>
     /// Default travel/origin can wipe the catalog when the stored home is far away.
@@ -1630,6 +1707,7 @@
             await LoadBranchOptionsAsync();
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
+            _isAuthenticated = user.Identity?.IsAuthenticated == true;
             _isCandidate = user.IsInRole("Candidate");
             _canShowMyVacancies = user.IsInRole("EnterpriseManager")
                 || user.IsInRole("RegionalManager")
@@ -2327,6 +2405,14 @@
             try
             {
                 await Js.InvokeVoidAsync("jobsyDiscovery.bindHover");
+                try
+                {
+                    await Js.InvokeVoidAsync("jobsyDiscovery.bindFilterChipFade");
+                }
+                catch (JSException)
+                {
+                    // Older cached discoveryHover.js without bindFilterChipFade — hover still works.
+                }
                 return;
             }
             catch (JSDisconnectedException)
@@ -2486,8 +2572,8 @@
                 _maxTravelMinutes,
                 useOrigin ? _radiusKm : null,
                 companyFocus ? null : _ageYears,
-                companyFocus || _ageYears is null ? null : _minHourlyWage,
-                companyFocus || _ageYears is null ? null : _maxHourlyWage,
+                companyFocus ? null : _minHourlyWage,
+                companyFocus ? null : _maxHourlyWage,
                 companyFocus || _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
                 companyFocus ? null : _searchQuery,
                 companyFocus ? null : _minHoursPerWeek,
@@ -2513,8 +2599,8 @@
                     _maxTravelMinutes,
                     radiusKm: null,
                     _ageYears,
-                    _ageYears is null ? null : _minHourlyWage,
-                    _ageYears is null ? null : _maxHourlyWage,
+                    _minHourlyWage,
+                    _maxHourlyWage,
                     _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
                     _searchQuery,
                     _minHoursPerWeek,
@@ -3278,8 +3364,10 @@
 
     private Dictionary<string, object?> MapUiLabels() => new()
     {
-        ["vacanciesAtPlace"] = Culture["Map.VacanciesCount"],
-        ["vacanciesAtPlaceWithPlace"] = Culture["Map.VacanciesCountPlace"],
+        ["vacanciesAtPlace"] = Culture["Kb.Map.JobsAtPlace"],
+        ["vacancyAtPlace"] = Culture["Kb.Map.JobAtPlace"],
+        ["vacanciesAtPlaceWithPlace"] = Culture["Kb.Map.JobsAtPlaceWithPlace"],
+        ["vacancyAtPlaceWithPlace"] = Culture["Kb.Map.JobAtPlaceWithPlace"],
         ["vacanciesInView"] = Culture["Map.VacanciesInView"],
         ["prevVacancy"] = Culture["Map.PrevVacancy"],
         ["nextVacancy"] = Culture["Map.NextVacancy"],
@@ -3291,6 +3379,16 @@
         ["unavailableHint"] = Culture["Map.UnavailableHint"],
         ["retry"] = Culture["Common.Retry"],
         ["view"] = Culture["Common.Open"],
+        ["viewJob"] = Culture["Kb.Map.ViewJob"],
+        ["whyPrefix"] = Culture["Kb.Map.WhyPrefix"],
+        ["travelFromHome"] = Culture["Kb.Map.TravelFromHome"],
+        ["save"] = Culture["Kb.Map.Save"],
+        ["saved"] = Culture["Kb.Map.Saved"],
+        ["fitPercent"] = Culture["Kb.Map.FitPercent"],
+        ["fitGate"] = Culture["Kb.Fit.Gate"],
+        ["hoursSingle"] = Culture["Kb.Map.HoursSingle"],
+        ["hoursRange"] = Culture["Kb.Map.HoursRange"],
+        ["passportHref"] = KbRoutes.PaspoortTests,
         ["pagerNav"] = Culture["Map.PagerNav"],
         ["noVacancies"] = Culture["Kb.Map.NoVacancies"],
         ["vacancyFallback"] = Culture["Kb.Map.VacancyFallback"],
@@ -3298,7 +3396,8 @@
         ["transportCar"] = Culture["Transport.Verb.Car"],
         ["transportTransit"] = Culture["Transport.Verb.Transit"],
         ["transportWalk"] = Culture["Transport.Verb.Walk"],
-        ["transportDefault"] = Culture["Transport.Verb.Default"]
+        ["transportDefault"] = Culture["Transport.Verb.Default"],
+        ["canSave"] = _isAuthenticated
     };
 
     private void OnTravelSliderInput(ChangeEventArgs e)
@@ -3306,6 +3405,22 @@
         if (int.TryParse(e.Value?.ToString(), out var value))
         {
             _maxTravelMinutes = Math.Clamp(value, 5, 90);
+            if (_filtersOpen)
+            {
+                SchedulePendingCountRefresh();
+            }
+        }
+    }
+
+    private void OnRadiusSliderInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            _radiusKm = Math.Clamp(value, 1, 50);
+            if (_filtersOpen)
+            {
+                SchedulePendingCountRefresh();
+            }
         }
     }
 
@@ -3314,9 +3429,59 @@
         if (int.TryParse(e.Value?.ToString(), out var value))
         {
             _maxTravelMinutes = Math.Clamp(value, 5, 90);
-            await PersistSessionOriginAsync();
+            if (!_filtersOpen)
+            {
+                await PersistSessionOriginAsync();
+            }
+
             await ReloadFiltersIfAppliedAsync();
         }
+    }
+
+    private Task OnSheetTravelSliderChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            _maxTravelMinutes = Math.Clamp(value, 5, 90);
+        }
+
+        return ReloadFiltersIfAppliedAsync();
+    }
+
+    private Task SetSheetTravelMinutesAsync(int minutes)
+    {
+        _maxTravelMinutes = Math.Clamp(minutes, 5, 90);
+        return ReloadFiltersIfAppliedAsync();
+    }
+
+    private Task SetSheetTransportAsync(string transport)
+    {
+        _selectedTransport = TransportLabels.Canonical(transport);
+        return ReloadFiltersIfAppliedAsync();
+    }
+
+    private Task SetSheetMinMatchAsync(int percent)
+    {
+        _minMatchPercent = Math.Clamp(percent, 0, 100);
+        return ReloadFiltersIfAppliedAsync();
+    }
+
+    private Task ToggleCategoryChipAsync(Guid categoryId)
+    {
+        if (!_selectedCategoryIds.Add(categoryId))
+        {
+            _selectedCategoryIds.Remove(categoryId);
+        }
+
+        return ReloadFiltersIfAppliedAsync();
+    }
+
+    private void OnSheetSearchInput(ChangeEventArgs e)
+    {
+        _searchDraft = e.Value?.ToString() ?? string.Empty;
+        // Keep query pending until "Toon n banen"; still refresh the live count.
+        _searchQuery = string.IsNullOrWhiteSpace(_searchDraft) ? null : _searchDraft.Trim();
+        SchedulePendingCountRefresh();
     }
 
     private void OnMinHoursSliderValue(int value)
@@ -3356,7 +3521,7 @@
             _myVacancyCompanyIds = null;
             _myVacancyIds = null;
             ApplyEffectiveCompanyFocus();
-            await LoadVacanciesAsync();
+            await ReloadFiltersIfAppliedAsync();
             return;
         }
 
@@ -3386,7 +3551,7 @@
 
             _myVacanciesOnly = true;
             ApplyEffectiveCompanyFocus();
-            await LoadVacanciesAsync();
+            await ReloadFiltersIfAppliedAsync();
         }
         catch (Exception ex)
         {
@@ -3415,6 +3580,12 @@
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
         _selectedTransport = e.Value?.ToString() ?? "Fiets";
+        if (_filtersOpen)
+        {
+            SchedulePendingCountRefresh();
+            return;
+        }
+
         // Travel rings update client-side; pin HTTP is cached per filter (not per transport).
         if (_mapReady)
         {
@@ -3452,8 +3623,6 @@
     private void ToggleTravelChip() => _travelChipOpen = !_travelChipOpen;
     private void ToggleHoursChip() => _hoursChipOpen = !_hoursChipOpen;
     private void ToggleWageChip() => _wageChipOpen = !_wageChipOpen;
-    private void ToggleWorkTypeChip() => _workTypeChipOpen = !_workTypeChipOpen;
-    private void ToggleSearchExpanded() => _searchExpanded = !_searchExpanded;
 
     private void ToggleLegend()
         => _legendOpen = !_legendOpen;
@@ -3583,6 +3752,12 @@
 
     private async Task ReloadFiltersIfAppliedAsync()
     {
+        if (_filtersOpen)
+        {
+            SchedulePendingCountRefresh();
+            return;
+        }
+
         if (_mapReady)
         {
             try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
@@ -3590,6 +3765,75 @@
         }
 
         await LoadVacanciesAsync();
+    }
+
+    private void SchedulePendingCountRefresh()
+    {
+        _pendingResultCount = null;
+        _ = DebouncePendingCountAsync();
+    }
+
+    private async Task DebouncePendingCountAsync()
+    {
+        _pendingCountCts?.Cancel();
+        _pendingCountCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _pendingCountCts = cts;
+        try
+        {
+            await Task.Delay(300, cts.Token);
+            if (!_filtersOpen)
+            {
+                return;
+            }
+
+            var companyFocus = _companyFocusIds is { Count: > 0 } || _myVacanciesOnly;
+            var useOrigin = _origin is not null && !companyFocus;
+            var items = await Api.DiscoverVacanciesAsync(
+                useOrigin ? _origin!.Latitude : null,
+                useOrigin ? _origin!.Longitude : null,
+                _selectedTransport,
+                _maxTravelMinutes,
+                useOrigin ? _radiusKm : null,
+                companyFocus ? null : _ageYears,
+                companyFocus ? null : _minHourlyWage,
+                companyFocus ? null : _maxHourlyWage,
+                companyFocus || _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
+                companyFocus ? null : _searchQuery,
+                companyFocus ? null : _minHoursPerWeek,
+                companyFocus ? null : _maxHoursPerWeek,
+                companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
+                suitableFor65Plus: null,
+                companyIds: _companyFocusIds,
+                minMatchPercent: _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
+                ct: cts.Token);
+
+            if (cts.IsCancellationRequested || !_filtersOpen)
+            {
+                return;
+            }
+
+            var count = items.Count;
+            if (_myVacanciesOnly && _myVacancyIds is { Count: > 0 })
+            {
+                count = items.Count(v => _myVacancyIds.Contains(v.Id));
+            }
+
+            _pendingResultCount = count;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException)
+        {
+            // Newer filter change superseded this debounce.
+        }
+        catch
+        {
+            if (!cts.IsCancellationRequested && _filtersOpen)
+            {
+                _pendingResultCount = null;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
     }
 
     private void OnSearchInput(ChangeEventArgs e)
@@ -3868,7 +4112,9 @@
         }
 
         CaptureFilterSnapshot();
+        _pendingResultCount = _vacancies.Count;
         _filtersOpen = true;
+        SchedulePendingCountRefresh();
     }
 
     private async Task CloseFiltersAsync()
@@ -3876,6 +4122,7 @@
         var wasOpen = _filtersOpen;
         // Drop pending keyword debounce so Cancel cannot re-apply a dismissed draft.
         _searchDebounceCts?.Cancel();
+        _pendingCountCts?.Cancel();
         if (wasOpen)
         {
             RestoreFilterSnapshot();
@@ -3884,6 +4131,7 @@
         _branchMenuOpen = false;
         _categoryMenuOpen = false;
         _filtersOpen = false;
+        _pendingResultCount = null;
 
         if (wasOpen)
         {
@@ -3908,6 +4156,8 @@
         _snapMyVacancyCompanyIds = _myVacancyCompanyIds?.ToHashSet();
         _snapMyVacancyIds = _myVacancyIds?.ToHashSet();
         _snapMinMatchPercent = _minMatchPercent;
+        _snapSortMode = _sortMode;
+        _snapSortChosenByUser = _sortChosenByUser;
     }
 
     private void RestoreFilterSnapshot()
@@ -3926,6 +4176,8 @@
         _myVacanciesOnly = _snapMyVacanciesOnly;
         _myVacancyCompanyIds = _snapMyVacancyCompanyIds?.ToHashSet();
         _myVacancyIds = _snapMyVacancyIds?.ToHashSet();
+        _sortMode = _snapSortMode;
+        _sortChosenByUser = _snapSortChosenByUser;
         ApplyEffectiveCompanyFocus();
         _selectedWorkTypes.Clear();
         _selectedCategoryIds.Clear();
@@ -3941,19 +4193,27 @@
 
     private async Task ApplySearch()
     {
-        await CommitSearchAsync(immediate: true);
+        _pendingCountCts?.Cancel();
+        // Sync draft → query without going through CommitSearchAsync while sheet is still open
+        // (that path would only schedule a pending count).
+        var next = string.IsNullOrWhiteSpace(_searchDraft) ? null : _searchDraft.Trim();
+        _searchQuery = next;
+        _searchDraft = next;
         await PersistAgeAsync();
+        await PersistSessionOriginAsync();
+
         if (_mapReady)
         {
             try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
             catch { /* ignore */ }
         }
 
-        await LoadVacanciesAsync();
-        CaptureFilterSnapshot();
         _branchMenuOpen = false;
         _categoryMenuOpen = false;
         _filtersOpen = false;
+        _pendingResultCount = null;
+        await LoadVacanciesAsync();
+        CaptureFilterSnapshot();
     }
 
     private async Task ClearWorkTypeAsync(string label)
@@ -4063,6 +4323,8 @@
         _suggestCts?.Dispose();
         _searchDebounceCts?.Cancel();
         _searchDebounceCts?.Dispose();
+        _pendingCountCts?.Cancel();
+        _pendingCountCts?.Dispose();
         try
         {
             await Js.InvokeVoidAsync("jobsyDiscovery.disconnect");

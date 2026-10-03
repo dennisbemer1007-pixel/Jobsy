@@ -41,10 +41,10 @@ public class IsochroneServiceTests
         Assert.Contains("isochrone fallback", js, StringComparison.Ordinal);
         Assert.Contains("featuresFromIsochroneFc", js, StringComparison.Ordinal);
         Assert.Contains("buildTravelRingFeatures", js, StringComparison.Ordinal);
-        // Graduated fill opacities (banenkaart 03 — stronger rings).
-        Assert.Contains("0.22", js, StringComparison.Ordinal);
-        Assert.Contains("0.14", js, StringComparison.Ordinal);
+        // Graduated fill opacities (kandidaat-polish 04 — thinner/lighter rings).
+        Assert.Contains("0.12", js, StringComparison.Ordinal);
         Assert.Contains("0.09", js, StringComparison.Ordinal);
+        Assert.Contains("0.06", js, StringComparison.Ordinal);
         Assert.Contains("getComputedStyle", js, StringComparison.Ordinal);
         Assert.Contains("--brand", js, StringComparison.Ordinal);
         Assert.Contains("data-iso-mode", js, StringComparison.Ordinal);

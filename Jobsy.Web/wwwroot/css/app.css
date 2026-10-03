@@ -2125,27 +2125,33 @@ html[dir="rtl"] .account-menu__panel {
     position: fixed;
     left: 0;
     right: 0;
+    top: 0;
     bottom: 0;
     z-index: 90;
-    /* Prefer nearly full viewport so all filters + footer fit on phones. */
-    max-height: min(92dvh, 92vh);
-    height: auto;
+    /* Full viewport on mobile; sticky header/footer stay reachable. */
+    max-height: min(100dvh, 100vh);
+    height: min(100dvh, 100vh);
     display: flex;
     flex-direction: column;
     overflow: hidden; /* required so body can scroll inside flex layout */
     background: var(--surface);
-    border-radius: 14px 14px 0 0;
+    border-radius: 0;
     box-shadow: var(--shadow-lg);
     padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
 }
 
 .filter-sheet__header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.65rem;
-    padding: 0.65rem 0.85rem 0.35rem;
+    padding: 0.75rem 1rem;
     flex-shrink: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--pearl-mid, var(--border));
 }
 
 .filter-sheet__mascot {
@@ -2265,17 +2271,22 @@ html[dir="rtl"] .account-menu__panel {
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 0.15rem 0.85rem 0.75rem;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: 0;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
 }
 
 .filter-section h3 {
-    margin: 0 0 0.35rem;
-    font-size: 0.88rem;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--brand);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .filter-section label {
@@ -2457,27 +2468,29 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 .filter-sheet__footer {
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
-    gap: 0.45rem;
-    padding: 0.55rem 0.85rem 0.65rem;
-    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.65rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--pearl-mid, var(--border));
     background: var(--surface);
     flex-shrink: 0;
     position: sticky;
     bottom: 0;
-    z-index: 1;
+    z-index: 2;
+    box-shadow: 0 -4px 12px rgba(15, 45, 92, 0.08);
 }
 
 .filter-sheet__cancel {
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm, 8px);
     background: var(--surface);
-    color: var(--secondary);
+    color: var(--brand);
     font: inherit;
     font-weight: 600;
-    font-size: 0.9rem;
-    padding: 0.7rem 0.75rem;
+    font-size: 0.9375rem;
+    min-height: 48px;
+    height: 48px;
+    padding: 0 1rem;
     cursor: pointer;
 }
 
@@ -2487,15 +2500,18 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 .filter-sheet__apply {
+    flex: 1 1 auto;
     margin: 0;
-    border: none;
-    border-radius: 8px;
-    padding: 0.7rem 0.75rem;
-    background: var(--secondary);
+    border: 1px solid var(--brand);
+    border-radius: var(--radius-sm, 8px);
+    padding: 0 1rem;
+    min-height: 48px;
+    height: 48px;
+    background: var(--brand);
     color: #fff;
     font: inherit;
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: 0.9375rem;
+    font-weight: 600;
     cursor: pointer;
 }
 
@@ -2504,7 +2520,7 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 /* Mobile: hide fixed bottom-nav + cookie banner while the filter sheet is open so
-   Toepassen/Annuleren are tappable. .app-main (z-index: 1) creates a stacking context
+   Annuleren / Toon n banen stay tappable. .app-main (z-index: 1) creates a stacking context
    that otherwise traps .filter-sheet (z-index 90) below .bottom-nav (z-index 50) and
    .cookie-consent (z-index 80). */
 @media (max-width: 768px) {
@@ -3811,6 +3827,9 @@ html[dir="rtl"] .account-menu__panel {
     display: flex;
     flex-direction: column;
     gap: 0;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 0.5rem 0.75rem 0.2rem;
     background: linear-gradient(
         180deg,
@@ -3828,7 +3847,10 @@ html[dir="rtl"] .account-menu__panel {
 .highlight-carousel__track {
     display: flex;
     gap: 0.65rem;
+    min-width: 0;
+    max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     padding: 0.15rem 0.1rem 0.45rem;
@@ -4070,26 +4092,14 @@ html[dir="rtl"] .account-menu__panel {
     flex-direction: column;
 }
 
-/* Desktop cluster: fixed card size (v3). Content height lives under banenkaart.css. */
+/* Cluster sheet height/layout lives in banenkaart.css (auto sheet, calm card). */
 @media (min-width: 769px) {
-    .job-map-popup--cluster .map-popup__main,
-    .job-map-popup--cluster .map-popup__media,
-    .job-map-popup--cluster .map-popup__body {
-        height: 252px;
-        min-height: 252px;
-        max-height: 252px;
-    }
-
     .job-map-popup--cluster .map-cluster-card .map-popup__main,
     .job-map-popup--cluster .map-cluster-card .map-popup__media,
     .job-map-popup--cluster .map-cluster-card .map-popup__body {
-        height: 100%;
+        height: auto;
         min-height: 0;
         max-height: none;
-    }
-
-    .job-map-popup--cluster .map-popup__header {
-        overflow: hidden;
     }
 }
 
@@ -4139,13 +4149,18 @@ html[dir="rtl"] .account-menu__panel {
     display: flex;
     align-items: stretch;
     width: 100%;
-    min-height: 252px;
+    min-height: 0;
     height: auto;
     min-width: 0;
     background: var(--surface);
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
+}
+
+/* Legacy non-cluster floating popup only — calm sheet overrides in banenkaart.css */
+.job-map-popup:not(.job-map-popup--cluster) .map-popup:not(.map-popup--calm) .map-popup__main {
+    min-height: 252px;
 }
 
 .map-popup--skeleton .map-popup__shimmer,
@@ -4209,12 +4224,16 @@ html[dir="rtl"] .account-menu__panel {
     flex: 0 0 200px;
     width: 200px;
     align-self: stretch;
-    min-height: 252px;
+    min-height: 0;
     height: auto;
     background: linear-gradient(160deg, var(--accent-soft), color-mix(in srgb, var(--brand) 28%, white));
     text-decoration: none;
     color: inherit;
     overflow: hidden;
+}
+
+.job-map-popup:not(.job-map-popup--cluster) .map-popup:not(.map-popup--calm) .map-popup__media {
+    min-height: 252px;
 }
 
 .map-popup__media--logo-only {
@@ -4287,13 +4306,22 @@ html[dir="rtl"] .account-menu__panel {
     position: relative;
     flex: 1;
     min-width: 0;
-    min-height: 252px;
+    min-height: 0;
     height: auto;
     padding: 0.75rem 0.95rem 0.7rem;
     display: flex;
     flex-direction: column;
     gap: 0.28rem;
     overflow: hidden;
+}
+
+.job-map-popup:not(.job-map-popup--cluster) .map-popup:not(.map-popup--calm) .map-popup__body {
+    min-height: 252px;
+}
+
+.map-popup--calm .map-popup__body {
+    padding: 0;
+    overflow: visible;
 }
 
 /* Orange € control — parked next to MapLibre close via JS */
@@ -4883,7 +4911,9 @@ a.map-popup__apply.map-popup__cta:visited {
 
     .jobsy-discovery,
     .funda-layout {
-        grid-template-columns: 1fr;
+        /* minmax(0,1fr): plain 1fr (= minmax(auto,1fr)) grew to the chip row's
+           natural width (~662px) and .app-main overflow-x:hidden clipped filters. */
+        grid-template-columns: minmax(0, 1fr);
         grid-template-rows: auto 1fr;
     }
 
@@ -4892,8 +4922,13 @@ a.map-popup__apply.map-popup__cta:visited {
         grid-column: 1;
         grid-row: 1;
         z-index: 15;
+        min-width: 0;
         background: var(--surface);
         border-bottom: 1px solid var(--border);
+    }
+
+    .kb-chrome-search {
+        min-width: 0;
     }
 
     .jobsy-chrome__header {
@@ -5095,6 +5130,7 @@ a.map-popup__apply.map-popup__cta:visited {
         grid-column: 1;
         grid-row: 2;
         height: 100%;
+        min-width: 0;
         min-height: 0;
     }
 

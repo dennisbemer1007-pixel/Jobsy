@@ -481,6 +481,47 @@ public static class UiStringsKandidaatBanen
             "Vacature", "Vacancy",
             "Oferta", "Ofertă", "وظيفة");
 
+        // Calm vacancy sheet / popup (kandidaat-polish 04)
+        Add("Kb.Map.JobsAtPlace",
+            "{count} banen", "{count} jobs",
+            "{count} ofert", "{count} joburi", "{count} وظائف");
+        Add("Kb.Map.JobAtPlace",
+            "1 baan", "1 job",
+            "1 oferta", "1 job", "وظيفة واحدة");
+        Add("Kb.Map.JobsAtPlaceWithPlace",
+            "{count} banen in {place}", "{count} jobs in {place}",
+            "{count} ofert w {place}", "{count} joburi în {place}", "{count} وظائف في {place}");
+        Add("Kb.Map.JobAtPlaceWithPlace",
+            "1 baan in {place}", "1 job in {place}",
+            "1 oferta w {place}", "1 job în {place}", "وظيفة واحدة في {place}");
+        Add("Kb.Map.TravelFromHome",
+            "{minutes} min {mode} van huis",
+            "{minutes} min {mode} from home",
+            "{minutes} min {mode} od domu",
+            "{minutes} min {mode} de acasă",
+            "{minutes} د {mode} من المنزل");
+        Add("Kb.Map.WhyPrefix",
+            "Waarom:", "Why:",
+            "Dlaczego:", "De ce:", "لماذا:");
+        Add("Kb.Map.ViewJob",
+            "Bekijk deze baan", "View this job",
+            "Zobacz tę ofertę", "Vezi acest job", "عرض هذه الوظيفة");
+        Add("Kb.Map.Save",
+            "Bewaar", "Save",
+            "Zapisz", "Salvează", "احفظ");
+        Add("Kb.Map.Saved",
+            "Bewaard", "Saved",
+            "Zapisano", "Salvat", "محفوظ");
+        Add("Kb.Map.FitPercent",
+            "{percent}% past bij jou", "{percent}% fit for you",
+            "{percent}% pasuje do ciebie", "{percent}% ți se potrivește", "{percent}% تناسبك");
+        Add("Kb.Map.HoursSingle",
+            "{hours} uur", "{hours} hrs",
+            "{hours} godz.", "{hours} ore", "{hours} ساعة");
+        Add("Kb.Map.HoursRange",
+            "{min}–{max} uur", "{min}–{max} hrs",
+            "{min}–{max} godz.", "{min}–{max} ore", "{min}–{max} ساعة");
+
         // Banenkaart start / location prompt (03)
         Add("Kb.Start.Title",
             "Waar woon je?", "Where do you live?",
@@ -520,9 +561,18 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.SearchPlaceholder",
             "Zoek op functie of bedrijf", "Search by role or company",
             "Szukaj stanowiska lub firmy", "Caută după rol sau firmă", "ابحث عن وظيفة أو شركة");
+        Add("Kb.Filter.KeywordPlaceholder",
+            "Wat voor werk zoek je?", "What kind of work are you looking for?",
+            "Jakiej pracy szukasz?", "Ce fel de muncă cauți?", "ما نوع العمل الذي تبحث عنه؟");
         Add("Kb.Filter.More",
             "Meer filters", "More filters",
             "Więcej filtrów", "Mai multe filtre", "المزيد من الفلاتر");
+        Add("Kb.Filter.FiltersAria",
+            "Filters openen", "Open filters",
+            "Otwórz filtry", "Deschide filtrele", "فتح عوامل التصفية");
+        Add("Kb.Filter.TravelAria",
+            "Reistijd en vervoer", "Travel time and transport",
+            "Czas dojazdu i transport", "Timp de deplasare și transport", "وقت التنقل ووسيلة المواصلات");
         Add("Kb.Filter.Clear",
             "Wis filters", "Clear filters",
             "Wyczyść filtry", "Șterge filtrele", "مسح الفلاتر");
@@ -538,6 +588,80 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.WageAny",
             "Elk loon", "Any wage",
             "Każda stawka", "Orice salariu", "أي أجر");
+
+        // Filter sheet (03 / mockup B)
+        Add("Kb.Filter.ClearAll",
+            "Wis alles", "Clear all",
+            "Wyczyść wszystko", "Șterge tot", "مسح الكل");
+        Add("Kb.Filter.Show",
+            "Toon banen", "Show jobs",
+            "Pokaż oferty", "Arată joburi", "عرض الوظائف");
+        Add("Kb.Filter.ShowCount",
+            "Toon {0} banen", "Show {0} jobs",
+            "Pokaż {0} ofert", "Arată {0} joburi", "عرض {0} وظائف");
+        Add("Kb.Filter.Keyword",
+            "Zoekwoord", "Keyword",
+            "Słowo kluczowe", "Cuvânt cheie", "كلمة البحث");
+        Add("Kb.Filter.SheetKeywordPlaceholder",
+            "Bedrijf, baan of woord", "Company, job or word",
+            "Firma, praca lub słowo", "Firmă, job sau cuvânt", "شركة أو وظيفة أو كلمة");
+        Add("Kb.Filter.TravelHow",
+            "Hoe ga je naar je werk?", "How do you get to work?",
+            "Jak dojeżdżasz do pracy?", "Cum ajungi la muncă?", "كيف تذهب إلى العمل؟");
+        Add("Kb.Filter.TravelValue",
+            "max. {0} min", "up to {0} min",
+            "maks. {0} min", "max. {0} min.", "حد أقصى {0} د");
+        Add("Kb.Filter.Match",
+            "Match", "Fit",
+            "Dopasowanie", "Potrivire", "التطابق");
+        Add("Kb.Filter.MatchHint",
+            "Hoe goed past de baan bij jou?", "How well does the job fit you?",
+            "Jak bardzo oferta do Ciebie pasuje?", "Cât de bine ți se potrivește jobul?", "ما مدى ملاءمة الوظيفة لك؟");
+        Add("Kb.Filter.MatchAny",
+            "Alle banen", "All jobs",
+            "Wszystkie oferty", "Toate joburile", "كل الوظائف");
+        Add("Kb.Filter.Match60",
+            "Vanaf 60%", "From 60%",
+            "Od 60%", "De la 60%", "من 60٪");
+        Add("Kb.Filter.Match80",
+            "Vanaf 80%", "From 80%",
+            "Od 80%", "De la 80%", "من 80٪");
+        Add("Kb.Filter.HoursValue",
+            "{0} – {1} uur", "{0} – {1} hrs",
+            "{0} – {1} godz.", "{0} – {1} ore", "{0} – {1} ساعة");
+        Add("Kb.Filter.Distance",
+            "Afstand", "Distance",
+            "Odległość", "Distanță", "المسافة");
+        Add("Kb.Filter.DistanceValue",
+            "max. {0} km", "up to {0} km",
+            "maks. {0} km", "max. {0} km.", "حد أقصى {0} كم");
+        Add("Kb.Filter.AgeHint",
+            "Sommige banen hebben een minimum leeftijd.",
+            "Some jobs have a minimum age.",
+            "Niektóre oferty mają minimalny wiek.",
+            "Unele joburi au o vârstă minimă.",
+            "بعض الوظائف لها حد أدنى للعمر.");
+        Add("Kb.Filter.AgeAny",
+            "Alle leeftijden", "All ages",
+            "Wszystkie wieki", "Toate vârstele", "كل الأعمار");
+        Add("Kb.Filter.WageHour",
+            "Loon per uur", "Wage per hour",
+            "Stawka godzinowa", "Salariu pe oră", "الأجر بالساعة");
+        Add("Kb.Filter.WageMin",
+            "Minimaal", "Minimum",
+            "Minimum", "Minim", "الحد الأدنى");
+        Add("Kb.Filter.WageMax",
+            "Maximaal", "Maximum",
+            "Maksimum", "Maxim", "الحد الأعلى");
+        Add("Kb.Filter.WageNoMax",
+            "Geen max.", "No max.",
+            "Bez max.", "Fără max.", "بدون حد أعلى");
+        Add("Kb.Filter.Sort",
+            "Volgorde", "Order",
+            "Kolejność", "Ordine", "الترتيب");
+        Add("Kb.Filter.SortStart",
+            "Startdatum", "Start date",
+            "Data rozpoczęcia", "Data de început", "تاريخ البدء");
 
         // Side list / bottom sheet header (03; fit sub-line lands in 04)
         Add("Kb.List.Header",

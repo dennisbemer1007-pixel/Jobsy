@@ -110,7 +110,33 @@ public class KbFilterBadgeTests
             MyVacanciesOnly: true,
             MinMatchPercent: 60,
             HasOrigin: true);
-        // work, category, search, age, minWage, maxWage, hours, myVac, minutes, transport, radius, match = 12
-        Assert.Equal(12, KbFilterBadge.Count(state, defaults));
+        // work, category, search, age, minWage, maxWage, hours, myVac, radius, match = 10
+        // (travel mode + minutes are excluded from Filters (n) — own chip)
+        Assert.Equal(10, KbFilterBadge.Count(state, defaults));
+    }
+
+    [Fact]
+    public void Travel_preset_deviations_do_not_count_toward_filters_badge()
+    {
+        var defaults = new KbFilterDefaults();
+        var onlyTravel = new KbFilterState(
+            Transport: "Auto",
+            MaxTravelMinutes: 45,
+            RadiusKm: 15,
+            AgeYears: null,
+            MinHoursPerWeek: 0,
+            MaxHoursPerWeek: 40,
+            SearchQuery: null,
+            WorkTypeCount: 0,
+            CategoryCount: 0,
+            HasMinWage: false,
+            HasMaxWage: false,
+            MyVacanciesOnly: false,
+            MinMatchPercent: 0,
+            HasOrigin: true);
+        Assert.Equal(0, KbFilterBadge.Count(onlyTravel, defaults));
+
+        var travelPlusSearch = onlyTravel with { SearchQuery = "zorg", WorkTypeCount = 1 };
+        Assert.Equal(2, KbFilterBadge.Count(travelPlusSearch, defaults));
     }
 }

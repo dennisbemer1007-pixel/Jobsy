@@ -116,7 +116,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
         Assert.Contains("maplibregl", js);
-        Assert.Contains("Solliciteer", js);
+        Assert.Contains("Bekijk deze baan", js);
+        Assert.Contains("map-popup--calm", js);
     }
 
     [Fact]
@@ -155,9 +156,10 @@ public class JobMapPrerenderGuardTests
         Assert.True(bindStart >= 0 && bindEnd > bindStart);
         var bindFn = js[bindStart..bindEnd];
         Assert.DoesNotContain("centerPopupInView", bindFn);
-        Assert.Contains(".job-map-popup--cluster .map-popup__main", css);
-        Assert.Contains("max-height: 252px", css);
         Assert.Contains("job-popup-featured-glow", css);
+        var banenkaart = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "banenkaart.css"));
+        Assert.Contains("max-height: min(60vh, 420px)", banenkaart);
+        Assert.Contains("height: auto", banenkaart);
         Assert.Contains(".job-map-popup--featured .map-popup::before", css);
         Assert.Contains("pointer-events: none", css[css.IndexOf(".job-map-popup--featured .map-popup::before", StringComparison.Ordinal)..]);
     }

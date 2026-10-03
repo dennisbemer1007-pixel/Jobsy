@@ -1,7 +1,7 @@
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Guard: mobile filter-sheet footer (Toepassen/Annuleren) must not sit under .bottom-nav.
+/// Guard: mobile filter-sheet footer (Toon n banen / Annuleren) must not sit under .bottom-nav.
 /// </summary>
 public class FilterSheetFooterNavTests
 {
@@ -22,9 +22,10 @@ public class FilterSheetFooterNavTests
             StringComparison.Ordinal);
         Assert.Contains("display: none !important;", css, StringComparison.Ordinal);
 
-        // Sheet stays viewport-bound with safe-area padding (footer remains reachable).
-        Assert.Contains("max-height: min(92dvh, 92vh);", css, StringComparison.Ordinal);
+        // Full-height sheet with safe-area padding (sticky footer remains reachable).
+        Assert.Contains("max-height: min(100dvh, 100vh);", css, StringComparison.Ordinal);
         Assert.Contains("padding-bottom: max(0.35rem, env(safe-area-inset-bottom));", css, StringComparison.Ordinal);
+        Assert.Contains("position: sticky;", css, StringComparison.Ordinal);
 
         // Do not change .app-main stacking globally for this fix.
         var appMainRules = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "app.css"));
@@ -32,7 +33,7 @@ public class FilterSheetFooterNavTests
     }
 
     [Fact]
-    public void VacancyDiscovery_still_renders_filter_sheet_apply_with_ApplySearch()
+    public void VacancyDiscovery_filter_sheet_footer_applies_with_Toon_banen()
     {
         var discovery = File.ReadAllText(
             Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
@@ -42,12 +43,14 @@ public class FilterSheetFooterNavTests
         Assert.Contains("class=\"filter-sheet__apply\"", discovery, StringComparison.Ordinal);
         Assert.Contains("@onclick=\"ApplySearch\"", discovery, StringComparison.Ordinal);
         Assert.Contains("class=\"filter-sheet__cancel\"", discovery, StringComparison.Ordinal);
-        Assert.Contains("class=\"filter-bar__search\"", discovery, StringComparison.Ordinal);
+        Assert.Contains("ApplyFiltersLabel", discovery, StringComparison.Ordinal);
+        Assert.Contains("Kb.Filter.Show", discovery, StringComparison.Ordinal);
 
         var applyIdx = discovery.IndexOf("class=\"filter-sheet__apply\"", StringComparison.Ordinal);
         Assert.True(applyIdx > 0);
-        var applySnippet = discovery.Substring(applyIdx, Math.Min(160, discovery.Length - applyIdx));
+        var applySnippet = discovery.Substring(applyIdx, Math.Min(220, discovery.Length - applyIdx));
         Assert.Contains("ApplySearch", applySnippet, StringComparison.Ordinal);
+        Assert.Contains("ApplyFiltersLabel", applySnippet, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

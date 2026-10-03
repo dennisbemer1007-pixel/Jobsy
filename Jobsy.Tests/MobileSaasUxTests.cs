@@ -287,22 +287,18 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Guest_discovery_omits_match_action_for_anonymous_users()
+    public void Guest_discovery_shows_match_with_login_return_url()
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/VacancyDiscovery.razor"));
-        Assert.Contains("AuthorizeView", discovery);
+        Assert.Contains("kb-match-button", discovery);
         Assert.Contains("jobsy-action--match", discovery);
-        Assert.Contains("href=\"/candidate/match\"", discovery);
+        Assert.Contains("MatchButtonHref", discovery);
+        Assert.Contains("MatchLoginHref", discovery);
+        Assert.Contains("/candidate/match", discovery);
+        Assert.Contains("returnUrl=", discovery);
         Assert.Contains("Nav.Match", discovery);
         Assert.DoesNotContain("jobsy-action--save", discovery);
         Assert.DoesNotContain("LikedLoginUrl", discovery);
-        Assert.DoesNotContain("<NotAuthorized>", discovery);
-
-        var authStart = discovery.IndexOf("<Authorized>", StringComparison.Ordinal);
-        Assert.True(authStart > 0);
-        var authBlock = discovery[authStart..Math.Min(discovery.Length, authStart + 450)];
-        Assert.Contains("href=\"/candidate/match\"", authBlock);
-        Assert.Contains("Nav.Match", authBlock);
     }
 
     [Fact]
