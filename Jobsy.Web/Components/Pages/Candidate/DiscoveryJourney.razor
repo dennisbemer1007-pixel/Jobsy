@@ -838,7 +838,11 @@
                     return;
                 }
             }
-            if (_screen != "start")
+            if (_screen == "shed")
+            {
+                await PrepareShedAsync();
+            }
+            else if (_screen != "start")
             {
                 await MarkStartedAsync();
                 if (_countedStep is >= 7 and <= 10 && Draft.HasConsent)
@@ -900,9 +904,12 @@
             return;
         }
 
-        if (_screen == "shed")
+        if (JourneyTestFlow.TryParseShedStep(_screen, out var shedStep))
         {
-            _depth = Math.Clamp(_shedStep, 7, 10);
+            _shedStep = shedStep;
+            _countedStep = _shedStep;
+            _screen = "shed";
+            _depth = _shedStep;
             return;
         }
 
@@ -1211,10 +1218,18 @@
 
     private async Task ShowShedAsync(int step)
     {
-        _shedStep = step;
+        _shedStep = Math.Clamp(step, 7, 10);
+        _countedStep = _shedStep;
         _screen = "shed";
-        _depth = step;
-        var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+        _depth = _shedStep;
+        await PrepareShedAsync();
+        NavigateStep(JourneyTestFlow.ShedQuery(_shedStep));
+        StateHasChanged();
+    }
+
+    private async Task PrepareShedAsync()
+    {
+        var kind = OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value;
         _answeredCount = await CountAnsweredAsync(kind);
         _shedFullyDone = JourneyTestFlow.IsFullyDone(_answeredCount, kind);
         _shedSelectedLevel = JourneyTestFlow.DefaultSelectedLevel(_answeredCount, kind);
@@ -1224,8 +1239,6 @@
         await RefreshImpressionAsync();
         _shedLines = JourneyTestFlow.ImpressionLinesForTest(
             kind, _state?.Impression, k => Culture[k], " " + Culture["Discovery.Shed.Provisional"]).ToList();
-        NavigateStep("shed");
-        StateHasChanged();
     }
 
     private Task OnShedSelectLevel(int level)
