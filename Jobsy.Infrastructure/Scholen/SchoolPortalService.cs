@@ -269,17 +269,22 @@ public sealed class SchoolPortalService : ISchoolPortalService
 
         var todos = await BuildTodosInternalAsync(schoolId, classes, snap, maxItems: 5, cancellationToken);
 
+        // One test at a time — never mix G78 + VO on the dashboard RIASEC strip.
         IReadOnlyList<NamedCountDto>? riasec = null;
-        var completedIds = classes.SelectMany(c => c.PupilCodes)
-            .Where(p => p.Status == PupilCodeStatus.Completed)
-            .Select(p => p.Id)
-            .ToList();
-        if (completedIds.Count >= SchoolAnonymity.MinGroupSize)
+        var completedBySet = classes
+            .SelectMany(c => c.PupilCodes
+                .Where(p => p.Status == PupilCodeStatus.Completed)
+                .Select(p => (p.Id, c.QuestionSet)))
+            .GroupBy(x => x.QuestionSet)
+            .Select(g => (Set: g.Key, Ids: g.Select(x => x.Id).ToList()))
+            .OrderByDescending(g => g.Ids.Count)
+            .FirstOrDefault();
+        if (completedBySet.Ids is { Count: >= SchoolAnonymity.MinGroupSize })
         {
             var results = await _db.PupilResults.AsNoTracking()
-                .Where(r => completedIds.Contains(r.PupilCodeId))
+                .Where(r => completedBySet.Ids.Contains(r.PupilCodeId))
                 .ToListAsync(cancellationToken);
-            riasec = ClassResultsAggregator.SchoolRiasecTop3(results)
+            riasec = ClassResultsAggregator.SchoolRiasecTop3(results, completedBySet.Set)
                 .Select(n => new NamedCountDto(n.Key, n.Count))
                 .ToList();
         }
@@ -832,7 +837,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
         var results = await _db.PupilResults.AsNoTracking()
             .Where(r => r.SchoolClassId == classId)
             .ToListAsync(cancellationToken);
-        var totals = ClassResultsAggregator.Aggregate(results, schoolClass.PupilCodes.Count);
+        var totals = ClassResultsAggregator.Aggregate(
+            results, schoolClass.PupilCodes.Count, schoolClass.QuestionSet);
 
         var snap = await _features.GetAsync(cancellationToken);
         // D4: when setting off, perCode is null (server-enforced — not just UI-hidden).
@@ -864,7 +870,8 @@ public sealed class SchoolPortalService : ISchoolPortalService
             schoolClass.Name,
             snap.SchoolPerCodeResultsEnabled,
             totals,
-            perCode), null);
+            perCode,
+            schoolClass.QuestionSet), null);
     }
 
     public async Task<IReadOnlyList<SchoolPortalTeacherListItemDto>> ListTeachersAsync(

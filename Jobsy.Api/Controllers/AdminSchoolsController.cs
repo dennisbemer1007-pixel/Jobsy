@@ -80,8 +80,14 @@ public sealed class AdminSchoolsController : ControllerBase
         [FromQuery] Guid? schoolId,
         [FromQuery] SchoolLevel? level,
         [FromQuery] int? year,
+        [FromQuery] PupilQuestionSet? questionSet,
         CancellationToken cancellationToken)
     {
+        if (questionSet is null)
+        {
+            return BadRequest(new { error = "question_set_required" });
+        }
+
         var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
         var sy = schoolYearStart ?? (years.Count > 0 ? years[0] : 0);
         if (sy == 0)
@@ -90,7 +96,7 @@ public sealed class AdminSchoolsController : ControllerBase
         }
 
         var view = await _reporting.GetReportAsync(
-            new SchoolReportFilterDto(sy, schoolId, level, year),
+            new SchoolReportFilterDto(sy, schoolId, level, year, questionSet.Value),
             cancellationToken);
         return Ok(view);
     }
@@ -105,8 +111,14 @@ public sealed class AdminSchoolsController : ControllerBase
         [FromQuery] Guid? schoolId,
         [FromQuery] SchoolLevel? level,
         [FromQuery] int? year,
+        [FromQuery] PupilQuestionSet? questionSet,
         CancellationToken cancellationToken)
     {
+        if (questionSet is null)
+        {
+            return BadRequest(new { error = "question_set_required" });
+        }
+
         var years = await _reporting.ListSchoolYearsAsync(cancellationToken);
         var sy = schoolYearStart ?? (years.Count > 0 ? years[0] : 0);
         if (sy == 0)
@@ -115,9 +127,9 @@ public sealed class AdminSchoolsController : ControllerBase
         }
 
         var (bytes, fileName) = await _reporting.ExportCsvAsync(
-            new SchoolReportFilterDto(sy, schoolId, level, year),
+            new SchoolReportFilterDto(sy, schoolId, level, year, questionSet.Value),
             cancellationToken);
-        Audit("school.rapportage.export", schoolId, new { schoolYearStart = sy, level, year, bytes = bytes.Length });
+        Audit("school.rapportage.export", schoolId, new { schoolYearStart = sy, level, year, questionSet, bytes = bytes.Length });
         await _db.SaveChangesAsync(cancellationToken);
         return File(bytes, "text/csv; charset=utf-8", fileName);
     }

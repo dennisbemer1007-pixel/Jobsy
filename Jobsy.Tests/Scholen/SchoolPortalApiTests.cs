@@ -174,7 +174,7 @@ public class SchoolPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             RiasecScoresJson = "{}",
             ValuesScoresJson = "{}",
             CultureScoresJson = "{}",
-            ScoringVersion = "t",
+            ScoringVersion = "1",
             StoryTemplateVersion = "t",
             StoryKeysJson = "[]"
         });
@@ -487,7 +487,7 @@ public class SchoolPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
                 RiasecScoresJson = """{"S":3,"A":2,"E":1}""",
                 ValuesScoresJson = "{}",
                 CultureScoresJson = "{}",
-                ScoringVersion = "t",
+                ScoringVersion = "1",
                 StoryTemplateVersion = "t",
                 StoryKeysJson = "[]"
             });
