@@ -15,4 +15,7 @@ public class CandidateUploadedCv
 
     /// <summary>JSON array of Dutch field labels filled from the CV (no PII values).</summary>
     public string? FilledFieldsJson { get; set; }
+
+    /// <summary>JSON array of filled keys the candidate confirmed. Unconfirmed keys stay off the passport.</summary>
+    public string? ConfirmedFieldsJson { get; set; }
 }

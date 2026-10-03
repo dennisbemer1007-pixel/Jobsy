@@ -104,6 +104,8 @@ public class JobsyDbContext : DbContext
     public DbSet<PassportPartnerCode> PassportPartnerCodes => Set<PassportPartnerCode>();
     public DbSet<PassportPartnerCandidateLink> PassportPartnerCandidateLinks => Set<PassportPartnerCandidateLink>();
     public DbSet<PassportAccessLog> PassportAccessLogs => Set<PassportAccessLog>();
+    public DbSet<PassportDocument> PassportDocuments => Set<PassportDocument>();
+    public DbSet<PassportTextTranslation> PassportTextTranslations => Set<PassportTextTranslation>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
 #pragma warning disable CS0618 // Table kept until the public-pages 08 cleanup migration drops it.
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
@@ -608,6 +610,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContentType).HasMaxLength(128).IsRequired();
             entity.Property(e => e.Content).IsRequired();
             entity.Property(e => e.FilledFieldsJson).HasMaxLength(1000);
+            entity.Property(e => e.ConfirmedFieldsJson).HasMaxLength(1000);
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()
@@ -1660,6 +1663,40 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.PassportPartnerId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PassportDocument>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PublicId).HasMaxLength(12).IsRequired();
+            entity.Property(e => e.PrimaryLanguage).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.SecondaryLanguage).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.ContentHash).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.PublicId).IsUnique();
+            entity.HasIndex(e => e.CandidateUserId);
+            entity.HasOne(e => e.Candidate)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<PassportPartner>()
+                .WithMany()
+                .HasForeignKey(e => e.PassportPartnerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PassportTextTranslation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FieldKey).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.SourceLanguage).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.TargetLanguage).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.SourceHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Text).HasMaxLength(4000).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.FieldKey, e.TargetLanguage });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<PlatformCompanySettings>(entity =>

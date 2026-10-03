@@ -468,6 +468,12 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .Where(p => accessPartnerIds.Contains(p.Id))
             .Select(p => new { p.Id, p.DisplayName })
             .ToListAsync(cancellationToken);
+        var passportDocuments = await _db.PassportDocuments.AsNoTracking()
+            .Where(d => d.CandidateUserId == user.Id)
+            .OrderByDescending(d => d.GeneratedAtUtc)
+            .Select(d => new { d.PublicId, d.GeneratedAtUtc, d.PrimaryLanguage, d.SecondaryLanguage })
+            .ToListAsync(cancellationToken);
+
         var passportAccessLog = accessRows.Select(l => new
         {
             PartnerName = accessPartnerNames.FirstOrDefault(p => p.Id == l.PassportPartnerId)?.DisplayName,
@@ -785,7 +791,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     .Select(a => new { a.Id, a.VacancyId, a.SnapshotWhoAmIJson })
             },
             PassportPartnerLinks = passportPartnerLinkExport,
-            PassportAccessLog = passportAccessLog
+            PassportAccessLog = passportAccessLog,
+            PassportDocuments = passportDocuments
         };
     }
 
@@ -1307,6 +1314,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
         foreach (var partner in termsAccepted)
         {
             partner.TermsAcceptedByUserId = null;
+        }
+
+        var passportDocuments = await _db.PassportDocuments
+            .Where(d => d.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (passportDocuments.Count > 0)
+        {
+            _db.PassportDocuments.RemoveRange(passportDocuments);
+        }
+
+        var passportTranslations = await _db.PassportTextTranslations
+            .Where(t => t.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (passportTranslations.Count > 0)
+        {
+            _db.PassportTextTranslations.RemoveRange(passportTranslations);
         }
 
         var feedbackRows = await _db.PlatformFeedbacks

@@ -47,7 +47,9 @@ public record CandidatePreferencesDto(
     string? WorkRegion = null,
     bool? HasOwnCar = null,
     /// <summary>Contract codes, max 3. <c>geen-voorkeur</c> is exclusive.</summary>
-    IReadOnlyList<string>? ContractPreferences = null);
+    IReadOnlyList<string>? ContractPreferences = null,
+    /// <summary>Sectors the candidate picked for the DNA passport. Max 3. Null on older JSON.</summary>
+    IReadOnlyList<Jobsy.Core.Passport.PassportSectorChoice>? PassportSectors = null);
 
 /// <summary>Positive, shareable work preferences. Not private dislikes.</summary>
 public record SharedWorkPreferences(
