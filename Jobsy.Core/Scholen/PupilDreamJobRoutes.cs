@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen;
@@ -400,6 +401,92 @@ public static class PupilDreamJobRoutes
                 N("Vroeg", PupilNeedSignal.CompetenceStress),
                 N("Creatief", PupilNeedSignal.RiasecA),
                 alt: true),
+            R("logistiek-medewerker",
+                N("Handig", PupilNeedSignal.RiasecR),
+                N("Ordenen", PupilNeedSignal.RiasecC),
+                N("Precies", PupilNeedSignal.CompetenceResultaat),
+                N("Team", PupilNeedSignal.CompetenceSamenwerken),
+                N("Betrouwbaar", PupilNeedSignal.ValueStability),
+                alt: true),
+            R("verkoper",
+                N("Overtuigen", PupilNeedSignal.RiasecE),
+                N("Helpen", PupilNeedSignal.RiasecS),
+                N("Mensen", PupilNeedSignal.CompetenceExtraversie),
+                N("Samen", PupilNeedSignal.CompetenceSamenwerken),
+                N("Luisteren", PupilNeedSignal.ValueConnection),
+                alt: true),
+            R("beveiliger",
+                N("Kalm", PupilNeedSignal.CompetenceStress),
+                N("Aanpakken", PupilNeedSignal.RiasecR),
+                N("Precies", PupilNeedSignal.CompetenceResultaat),
+                N("Betrouwbaar", PupilNeedSignal.ValueStability),
+                N("Rechtvaardig", PupilNeedSignal.ValueImpact),
+                alt: true),
+            R("installateur",
+                N("Handig", PupilNeedSignal.RiasecR),
+                N("Techniek", PupilNeedSignal.ChipTechniek),
+                N("Precies", PupilNeedSignal.CompetenceResultaat),
+                N("Uitzoeken", PupilNeedSignal.RiasecI),
+                N("Vrijheid", PupilNeedSignal.ValueAutonomy),
+                alt: true),
+            R("verzorgende-ig",
+                N("Zorgen", PupilNeedSignal.RiasecS),
+                N("Samen", PupilNeedSignal.CompetenceSamenwerken),
+                N("Kalm", PupilNeedSignal.CompetenceStress),
+                N("Luisteren", PupilNeedSignal.ValueConnection),
+                N("Impact", PupilNeedSignal.ValueImpact),
+                alt: true),
+            R("schilder",
+                N("Maken", PupilNeedSignal.RiasecR),
+                N("Creatief", PupilNeedSignal.RiasecA),
+                N("Precies", PupilNeedSignal.CompetenceResultaat),
+                N("Vrijheid", PupilNeedSignal.ValueAutonomy),
+                N("Bouwen", PupilNeedSignal.ChipBouwen),
+                alt: true),
+            R("loodgieter",
+                N("Handig", PupilNeedSignal.RiasecR),
+                N("Techniek", PupilNeedSignal.ChipTechniek),
+                N("Kalm", PupilNeedSignal.CompetenceStress),
+                N("Vrijheid", PupilNeedSignal.ValueAutonomy),
+                N("Uitzoeken", PupilNeedSignal.RiasecI),
+                alt: true),
+            R("doktersassistent",
+                N("Zorgen", PupilNeedSignal.RiasecS),
+                N("Ordenen", PupilNeedSignal.RiasecC),
+                N("Precies", PupilNeedSignal.CompetenceResultaat),
+                N("Kalm", PupilNeedSignal.CompetenceStress),
+                N("Luisteren", PupilNeedSignal.ValueConnection),
+                alt: true),
+            R("ict-medewerker",
+                N("Uitzoeken", PupilNeedSignal.RiasecI),
+                N("Computers", PupilNeedSignal.ChipComputers),
+                N("Ordenen", PupilNeedSignal.RiasecC),
+                N("Nieuw", PupilNeedSignal.CompetenceInnovatie),
+                N("Vrijheid", PupilNeedSignal.ValueAutonomy),
+                alt: true),
+            R("horecamedewerker",
+                N("Helpen", PupilNeedSignal.RiasecS),
+                N("Mensen", PupilNeedSignal.CompetenceExtraversie),
+                N("Drukte", PupilNeedSignal.CompetenceStress),
+                N("Team", PupilNeedSignal.CompetenceSamenwerken),
+                N("Koken", PupilNeedSignal.ChipKoken),
+                alt: true),
         ];
+    }
+
+    /// <summary>Lower-case "Nu" label: "groep 8", "klas 3 havo", "klas 1".</summary>
+    public static string NowLabel(PupilClassContext ctx)
+    {
+        ArgumentNullException.ThrowIfNull(ctx);
+        var year = SchoolLevelRules.YearLabel(ctx.Level, ctx.Year).ToLowerInvariant();
+        return ctx.Level switch
+        {
+            SchoolLevel.Groep78 => year,
+            SchoolLevel.VmboB or SchoolLevel.VmboK or SchoolLevel.VmboGt => year + " vmbo",
+            SchoolLevel.Mavo => year + " mavo",
+            SchoolLevel.Havo => year + " havo",
+            SchoolLevel.Vwo => year + " vwo",
+            _ => year
+        };
     }
 }

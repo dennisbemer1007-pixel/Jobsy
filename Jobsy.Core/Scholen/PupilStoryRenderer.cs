@@ -70,9 +70,10 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             LikeChipKeys: keys.LikeChipKeys.ToList());
     }
 
-    public DreamJobRouteStubDto RenderDreamRoute(PupilResult result, PupilProgress? progress)
+    public DreamJobRouteStubDto RenderDreamRoute(PupilResult result, PupilProgress? progress, PupilClassContext classContext)
     {
         ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(classContext);
         var key = result.DreamJobKey ?? progress?.DreamJobKey;
         if (string.IsNullOrWhiteSpace(key)
             || string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
@@ -97,9 +98,10 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             return new DreamJobRouteStubDto(key, title, 0, 5, [], [], [], null, null);
         }
 
-        var have = fit.HaveSentenceKeys.Select(ResolveNeedHave).ToList();
-        var learn = fit.NeedSentenceKeys.Select(ResolveNeedNext).ToList();
-        var steps = fit.RouteStepKeys.Select(ResolveRouteStep).ToList();
+        var now = PupilDreamJobRoutes.NowLabel(classContext);
+        var have = fit.HaveSentenceKeys.Select(k => ResolveCopy(k, classContext, now)).ToList();
+        var learn = fit.NeedSentenceKeys.Select(k => ResolveNeedNext(k, classContext, now)).ToList();
+        var steps = fit.RouteStepKeys.Select(k => ResolveRouteStep(k, classContext, now)).ToList();
 
         return new DreamJobRouteStubDto(
             JobKey: fit.JobKey,
@@ -109,8 +111,8 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             HaveItems: have,
             LearnItems: learn,
             RouteSteps: steps,
-            Encouragement: PupilVerhaalCopy.Get(fit.EncouragementKey),
-            AltRoute: fit.AltRouteKey is null ? null : PupilVerhaalCopy.Get(fit.AltRouteKey));
+            Encouragement: ResolveCopy(fit.EncouragementKey, classContext, now),
+            AltRoute: fit.AltRouteKey is null ? null : ResolveCopy(fit.AltRouteKey, classContext, now));
     }
 
     public IReadOnlyList<string> ConversationStarterKeys(PupilResult result)
@@ -123,24 +125,24 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             .Select(k => PupilVerhaalCopy.TryGet(k, out var t) ? t : k)
             .ToList();
 
-    private static string ResolveNeedHave(string key)
-    {
-        // Keys are LeerlingDroom.Need.{X} — positive sentence.
-        return PupilVerhaalCopy.Get(key);
-    }
-
-    private static string ResolveNeedNext(string key)
+    private static string ResolveNeedNext(string key, PupilClassContext ctx, string nowLabel)
     {
         var nextKey = key.EndsWith(".Next", StringComparison.Ordinal) ? key : key + ".Next";
-        return PupilVerhaalCopy.TryGet(nextKey, out var n) ? n : PupilVerhaalCopy.Get(key);
+        var resolved = ResolveCopy(nextKey, ctx, nowLabel);
+        return string.Equals(resolved, nextKey, StringComparison.Ordinal)
+            ? ResolveCopy(key, ctx, nowLabel)
+            : resolved;
     }
 
-    private static string ResolveRouteStep(string key)
+    private static string ResolveRouteStep(string key, PupilClassContext ctx, string nowLabel)
     {
-        var raw = PupilVerhaalCopy.Get(key);
+        var raw = ResolveCopy(key, ctx, nowLabel);
         var parts = raw.Split('|', 2);
         return parts.Length == 2 ? $"{parts[0]} — {parts[1]}" : raw;
     }
+
+    private static string ResolveCopy(string key, PupilClassContext ctx, string nowLabel)
+        => PupilVerhaalCopy.Get(key, ctx).Replace("{nu}", nowLabel, StringComparison.Ordinal);
 
     private static string ChipLabel(string chipKey)
     {

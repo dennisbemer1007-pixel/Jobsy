@@ -6,6 +6,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Rules
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -121,7 +122,7 @@ else
                         <span class="ll-job-idea">@job</span>
                     }
                 </div>
-                <p>@Culture["LeerlingDroom.UndecidedHint"]</p>
+                <p>@Culture[PupilCopy.Key(_result.QuestionSet, "LeerlingDroom.UndecidedHint")]</p>
             }
 
             @if (!string.IsNullOrEmpty(_error))
