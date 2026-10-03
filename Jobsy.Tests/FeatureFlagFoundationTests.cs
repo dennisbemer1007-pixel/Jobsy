@@ -299,13 +299,13 @@ public class RoleNavCatalogFeatureFlagTests
     public void CandidateItems_never_includes_match_for_any_flag_combo()
     {
         foreach (var employers in new[] { true, false })
-        foreach (var passport in new[] { true, false })
-        {
-            var items = RoleNavCatalog.CandidateItems(new FeatureFlagSnapshot(employers, passport));
-            Assert.DoesNotContain(items, i =>
-                i.Href.Contains("match", StringComparison.OrdinalIgnoreCase)
-                || i.TitleKey.Contains("Match", StringComparison.OrdinalIgnoreCase));
-        }
+            foreach (var passport in new[] { true, false })
+            {
+                var items = RoleNavCatalog.CandidateItems(new FeatureFlagSnapshot(employers, passport));
+                Assert.DoesNotContain(items, i =>
+                    i.Href.Contains("match", StringComparison.OrdinalIgnoreCase)
+                    || i.TitleKey.Contains("Match", StringComparison.OrdinalIgnoreCase));
+            }
     }
 
     [Fact]
