@@ -159,10 +159,10 @@ public static class CareerCompassBuilder
         IReadOnlyList<string> strengths,
         bool fromDeepAnalysis)
     {
-        var top = CareerTestCatalog.RiasecCodes
-            .Select(code => (Code: code, Percent: scores.Get(code)))
-            .OrderByDescending(x => x.Percent)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
+        var top = RiasecRanking.Rank(
+                scores.Realistic, scores.Investigative, scores.Artistic,
+                scores.Social, scores.Enterprising, scores.Conventional)
+            .Select(x => (Code: x.Code, Percent: x.Value))
             .First();
 
         var workplace = top.Code switch
