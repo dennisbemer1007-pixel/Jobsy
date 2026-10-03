@@ -187,8 +187,11 @@ public record EmployerApplicationDto(
     string? CandidatePhone = null,
     /// <summary>WhatsApp contact allowed (only meaningful when CandidatePhone is revealed).</summary>
     bool WhatsAppContactAllowed = false,
-    /// <summary>Age at apply — visible before Accept.</summary>
-    int? CandidateAgeYears = null,
+    /// <summary>
+    /// True when the age at apply is below the youth-wage cut-off (21).
+    /// Null when the age is unknown. The exact age is not exposed.
+    /// </summary>
+    bool? YouthWageApplies = null,
     /// <summary>Formatted availability — visible before Accept.</summary>
     string? AvailabilitySummary = null,
     /// <summary>True when employer may download the candidate-uploaded CV (post-Accept snapshot).</summary>

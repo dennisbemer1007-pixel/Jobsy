@@ -17,6 +17,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S1_kandidaat_desktop_banenkaart_home_fiets_fit_cards()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -84,6 +85,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S2_kandidaat_mobile_banenkaart_sheet_no_blank_strip()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -145,6 +147,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S3_anonymous_location_prompt_no_fit_address_typing(int width, int height)
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -203,6 +206,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S4_valentine_gate_closed_no_percent_match_unlock()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -300,6 +304,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S5_kandidaat_desktop_list_mode_sort_and_dislike_note()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -359,6 +364,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S6_kandidaat_vacancy_detail_fit_transport_primary(int width, int height)
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -437,6 +443,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S7_kandidaat_hidden_mode_intermediary_vacancy()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -513,6 +520,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S8_kandidaat_sollicitaties_timeline_and_rejected(int width, int height)
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -569,6 +577,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S9_kandidaat_bewaard_state_pills_unsave_nav_active()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -630,6 +639,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S10_kandidaat_match_dialog_why_skip_esc()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -690,6 +700,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S11_kandidaat_mobile_match_swipe_no_nav_overlap()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -749,6 +760,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S12_local_only_werkgevers_off_gates_surfaces()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;
@@ -775,6 +787,7 @@ public class KandidaatBanenE2ePlaywrightTests
     public async Task S13_two_enhanced_navigations_no_stack_h1_focus()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
         if (baseUrl is null)
         {
             return;

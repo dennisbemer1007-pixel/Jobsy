@@ -1,4 +1,5 @@
 @page "/sales/werkgevers"
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @layout SalesLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]

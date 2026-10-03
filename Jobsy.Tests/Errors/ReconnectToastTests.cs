@@ -20,7 +20,7 @@ public class ReconnectToastTests
     [Fact]
     public async Task App_shell_renders_the_toast_in_dutch_by_default()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         // Razor encodes non-ASCII (the ellipsis, Arabic) as numeric entities; compare decoded.
@@ -37,7 +37,7 @@ public class ReconnectToastTests
     [Fact]
     public async Task App_shell_renders_the_toast_in_arabic_when_the_culture_cookie_says_so()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
         client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
 

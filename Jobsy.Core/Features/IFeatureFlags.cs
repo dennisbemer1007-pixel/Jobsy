@@ -16,7 +16,7 @@ public sealed record FeatureFlagSnapshot(
     bool PassportPdfV2Enabled = false,
     bool PhoneVerificationEnabled = false)
 {
-    public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: true, CandidatePassportEnabled: true);
+    public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
     public bool IsEnabled(PlatformFeature feature) => feature switch
     {

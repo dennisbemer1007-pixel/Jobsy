@@ -79,10 +79,10 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool AmbassadorsEnabled { get; set; }
     /// <summary>
-    /// When false, employer/vacancy surfaces are hidden and blocked (self-discovery only). Default true.
-    /// Existing data is never deleted when toggled off.
+    /// When false (default until phase 2, decision 20), employer/vacancy surfaces are hidden and blocked.
+    /// Existing data is never deleted when toggled off. Admins can turn it on deliberately.
     /// </summary>
-    public bool EmployersEnabled { get; set; } = true;
+    public bool EmployersEnabled { get; set; }
 
     /// <summary>
     /// When true, candidates see Mijn Paspoort instead of the classic profile. Default true.

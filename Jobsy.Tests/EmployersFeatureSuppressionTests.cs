@@ -70,7 +70,8 @@ public class EmployersFeatureSuppressionTests
         var off = new FeatureFlagSnapshot(false, false);
         var paths = Jobsy.Web.Seo.PageSeoCatalog.StaticIndexablePathsFor(off);
         Assert.DoesNotContain(paths, p => p.Contains("vacancies", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain("/", paths);
+        Assert.DoesNotContain("/banenkaart", paths);
+        Assert.Contains("/", paths);
         Assert.Contains("/ontdek", paths);
     }
 

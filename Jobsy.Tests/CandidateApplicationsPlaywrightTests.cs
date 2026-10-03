@@ -30,6 +30,8 @@ public class CandidateApplicationsPlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         var artifactDir = Path.Combine(
             FindRepoRoot(),

@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Core.Sales;
 using Jobsy.Web.Features;
 
@@ -25,7 +26,7 @@ public static class PartnerFlyerEndpoints
         {
             if (!await employers.IsEnabledAsync(http.RequestAborted))
             {
-                return Results.Redirect("/");
+                return Results.Redirect(FeatureRoutes.EmployersComingSoonPath);
             }
 
             var code = SalesTrackingCodes.Normalize(http.Request.Query["code"].ToString());

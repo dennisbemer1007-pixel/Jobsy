@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
@@ -271,7 +272,9 @@ public static class UatScriptRunner
                 .ToList();
         }
 
-        return RoleNavCatalog.ForUser(principal);
+        // UAT grid describes the employers-on catalog. Production default is OFF (decision 20).
+        var on = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        return RoleNavCatalog.ForUser(principal, on);
     }
 
     private static void AssertHowTo(UatScenario scenario, string blob, string? jobsyRole)

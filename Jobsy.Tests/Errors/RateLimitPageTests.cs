@@ -23,7 +23,7 @@ public class RateLimitPageTests
     [Fact]
     public async Task Html_request_over_the_limit_gets_the_429_page_with_retry_after()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await ExhaustAsync(client, LimitedPath);
@@ -47,7 +47,7 @@ public class RateLimitPageTests
     [Fact]
     public async Task Json_request_over_the_limit_gets_problem_details_and_no_html()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Add("Accept", "application/json");
 
@@ -69,7 +69,7 @@ public class RateLimitPageTests
     [Fact]
     public async Task Rate_limit_log_line_carries_the_support_code_and_no_ip()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         await ExhaustAsync(client, LimitedPath);
@@ -125,7 +125,7 @@ public class RateLimitPageTests
     [Fact]
     public async Task Direct_status_429_also_carries_retry_after()
     {
-        await using var factory = new ErrorPagesWebFactory();
+        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/status/429");

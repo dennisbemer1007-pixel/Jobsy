@@ -40,6 +40,30 @@ public static class UiStringsFeatureFlags
             "Wł. (domyślnie) = kandydaci widzą Odkrywanie, Mój Paszport, Szukaj, Aplikacje, Kariera. Zapisane to zakładka. Wył. = klasyczna nawigacja.",
             "Pornit (implicit) = candidații văd Descoperire, Pașaportul meu, Căutare, Candidaturi, Carieră. Salvate e tab. Oprit = navigație clasică.",
             "تشغيل (افتراضي) = يرى المرشحون الاكتشاف وجواز سفري والبحث والطلبات والمسار. المحفوظات تبويب. إيقاف = التنقل الكلاسيكي.");
+        Add("WgSoon.Title",
+            "Voor werkgevers: binnenkort",
+            "For employers: coming soon",
+            "Dla pracodawców: wkrótce",
+            "Pentru angajatori: în curând",
+            "لأصحاب العمل: قريباً");
+        Add("WgSoon.Lead",
+            "Lobsy is nu eerst voor kandidaten. De omgeving voor werkgevers komt terug in een volgende fase.",
+            "Lobsy is for candidates first right now. The employer area returns in a later phase.",
+            "Lobsy jest teraz najpierw dla kandydatów. Strefa pracodawców wróci w kolejnej fazie.",
+            "Lobsy este acum mai întâi pentru candidați. Zona angajatorilor revine într-o fază următoare.",
+            "لوبسي الآن أولاً للمرشحين. ستعود بيئة أصحاب العمل في مرحلة لاحقة.");
+        Add("WgSoon.CtaHome",
+            "Naar de voorpagina",
+            "To the home page",
+            "Na stronę główną",
+            "Spre pagina principală",
+            "إلى الصفحة الرئيسية");
+        Add("WgSoon.CtaCandidate",
+            "Naar mijn start",
+            "To my start",
+            "Do mojego startu",
+            "Spre startul meu",
+            "إلى بدايتي");
         Add("Admin.EmployersOffPill",
             "Werkgevers staan uit",
             "Employers are off",
