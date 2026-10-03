@@ -25,7 +25,7 @@
 
 <PageSeo JsonLd="@JobListJsonLd" />
 <HeadContent>
-    <script src="js/discoveryHover.js?v=20261002-ci-mtp" defer data-discovery-hover="true"></script>
+    <script src="js/discoveryHover.js?v=20261002-kp01m" defer data-discovery-hover="true"></script>
 </HeadContent>
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null) @(_desktopListMode && _wideViewport ? "jobsy-discovery--list" : null)">
     <div class="jobsy-chrome">
@@ -2327,6 +2327,14 @@
             try
             {
                 await Js.InvokeVoidAsync("jobsyDiscovery.bindHover");
+                try
+                {
+                    await Js.InvokeVoidAsync("jobsyDiscovery.bindFilterChipFade");
+                }
+                catch (JSException)
+                {
+                    // Older cached discoveryHover.js without bindFilterChipFade — hover still works.
+                }
                 return;
             }
             catch (JSDisconnectedException)

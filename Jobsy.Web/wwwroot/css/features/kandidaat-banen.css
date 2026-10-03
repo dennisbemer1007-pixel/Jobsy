@@ -216,12 +216,39 @@
 
 /* Banenkaart 03 — filter chips, start prompt, travel legend, address field */
 .kb-filter-chips {
+  position: relative;
   display: flex;
   flex-wrap: nowrap;
   gap: var(--space-2, 0.5rem);
   padding: 0.35rem 0.85rem 0.55rem;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.kb-filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+/* Soft fade at the end edge while more chips remain (class toggled in discoveryHover.js). */
+.kb-filter-chips.has-more-end::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 1.5rem;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, var(--surface, #fffcfa));
+}
+
+[dir="rtl"] .kb-filter-chips.has-more-end::before {
+  background: linear-gradient(270deg, transparent, var(--surface, #fffcfa));
 }
 
 .kb-filter-chips--desktop {
@@ -237,6 +264,7 @@
   align-items: center;
   gap: 0.35rem;
   flex: 0 0 auto;
+  scroll-snap-align: start;
   min-height: 2.25rem;
   padding: 0.35rem 0.75rem;
   border: 1px solid var(--border);

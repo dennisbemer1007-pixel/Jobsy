@@ -5,6 +5,7 @@ window.jobsyDiscovery = (function () {
     var hoverBound = false;
     var observer = null;
     var currentEl = null;
+    var chipFadeBound = typeof WeakSet === "function" ? new WeakSet() : null;
 
     function listIsVisible(el) {
         if (!el) return false;
@@ -49,6 +50,40 @@ window.jobsyDiscovery = (function () {
         var related = e.relatedTarget;
         if (related && card.contains(related)) return;
         highlight(null);
+    }
+
+    function updateChipFade(el) {
+        if (!el) return;
+        var maxScroll = el.scrollWidth - el.clientWidth - 1;
+        var more = maxScroll > 0 && el.scrollLeft < maxScroll - 2;
+        if (document.documentElement && document.documentElement.getAttribute("dir") === "rtl") {
+            // In RTL, scrollLeft can be 0 at the start or negative depending on the engine.
+            more = maxScroll > 0 && Math.abs(el.scrollLeft) < maxScroll - 2;
+        }
+        el.classList.toggle("has-more-end", more);
+    }
+
+    function bindOneChipRow(el) {
+        if (!el) return;
+        if (chipFadeBound) {
+            if (chipFadeBound.has(el)) return;
+            chipFadeBound.add(el);
+        } else if (el.dataset && el.dataset.chipFadeBound === "1") {
+            return;
+        } else if (el.dataset) {
+            el.dataset.chipFadeBound = "1";
+        }
+        var onScroll = function () { updateChipFade(el); };
+        el.addEventListener("scroll", onScroll, { passive: true });
+        if (typeof ResizeObserver === "function") {
+            var ro = new ResizeObserver(onScroll);
+            ro.observe(el);
+        }
+        window.addEventListener("resize", onScroll);
+        // Content can change after Blazor render; refresh a few times.
+        updateChipFade(el);
+        setTimeout(onScroll, 50);
+        setTimeout(onScroll, 250);
     }
 
     return {
@@ -102,6 +137,20 @@ window.jobsyDiscovery = (function () {
                 observer = null;
             }
             currentEl = null;
+        },
+
+        /**
+         * Toggle .has-more-end on .kb-filter-chips while horizontal overflow remains,
+         * so the end-edge fade only shows when more chips can be scrolled into view.
+         */
+        bindFilterChipFade: function (root) {
+            var scope = root || document;
+            var rows = scope.querySelectorAll
+                ? scope.querySelectorAll(".kb-filter-chips:not(.kb-filter-chips--desktop)")
+                : [];
+            for (var i = 0; i < rows.length; i++) {
+                bindOneChipRow(rows[i]);
+            }
         }
     };
 })();

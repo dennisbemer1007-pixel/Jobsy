@@ -68,7 +68,7 @@
         min-height: 44px;
         padding: 0.4rem 0.9rem;
         width: max-content;
-        max-width: calc(100% - 96px);
+        max-width: calc(100% - 24px);
         border: 1px solid var(--border);
         border-radius: 999px;
         background: var(--surface);

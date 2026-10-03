@@ -3277,6 +3277,26 @@ window.jobMap = (function () {
             restoreOverlays();
         }
         window.addEventListener("resize", invalidate);
+        // Pane width can change without a window resize (e.g. after the mobile
+        // grid overflow fix shrinks .map-pane from ~662px to 390px). Keep the
+        // MapLibre canvas in sync with the visible pane.
+        if (typeof ResizeObserver === "function" && el) {
+            try {
+                if (map._resizeObserver) {
+                    try { map._resizeObserver.disconnect(); } catch (e0) { /* ignore */ }
+                }
+                map._resizeObserver = new ResizeObserver(function () {
+                    invalidate();
+                });
+                map._resizeObserver.observe(el);
+            } catch (eRo) { /* ignore */ }
+        }
+        // First layout pass after Blazor attach may still be mid-reflow.
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () { invalidate(); });
+        } else {
+            setTimeout(invalidate, 0);
+        }
     }
 
     /**
@@ -3910,6 +3930,10 @@ window.jobMap = (function () {
         originMarker = null;
         clearRenderedMarkers();
         if (map) {
+            if (map._resizeObserver) {
+                try { map._resizeObserver.disconnect(); } catch (eRoDispose) { /* ignore */ }
+                map._resizeObserver = null;
+            }
             unbindOutsideClickCloser();
             map.remove();
             map = null;
