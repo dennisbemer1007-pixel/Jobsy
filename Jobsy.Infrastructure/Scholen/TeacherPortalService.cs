@@ -303,9 +303,28 @@ public sealed class TeacherPortalService : ITeacherPortalService
             ? PupilCodeFormat.Display(raw)
             : "******";
 
+        var answersCount = 0;
+        if (!string.IsNullOrWhiteSpace(code.Progress?.AnswersJson))
+        {
+            try
+            {
+                answersCount = System.Text.Json.JsonSerializer
+                    .Deserialize<Dictionary<string, int>>(code.Progress.AnswersJson)?.Count ?? 0;
+            }
+            catch
+            {
+                answersCount = 0;
+            }
+        }
+
+        var resultPending = code.Result is null
+                            && (code.Status == PupilCodeStatus.Completed
+                                || answersCount >= ProgressTotalQuestions);
+
         var progressCurrent = code.Status switch
         {
             PupilCodeStatus.Completed => ProgressTotalQuestions,
+            PupilCodeStatus.InProgress when resultPending => ProgressTotalQuestions,
             PupilCodeStatus.InProgress => Math.Clamp(code.Progress?.CurrentIndex ?? 0, 0, ProgressTotalQuestions),
             _ => 0
         };
@@ -354,7 +373,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             DislikeOtherWord: dislikeOther,
             ConversationStarterKeys: starters,
             DreamJob: dream,
-            PdfAvailable: true);
+            PdfAvailable: code.Result is not null,
+            ResultPending: resultPending);
     }
 
     public async Task<(byte[]? Bytes, string? FileName, string? Error)> BuildPupilReportPdfAsync(
