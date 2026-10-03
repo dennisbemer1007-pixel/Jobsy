@@ -251,6 +251,9 @@ public static class CareerCompassBuilder
         new("Medewerker verkoop binnendienst", W(CareerTestCatalog.Enterprising, 70), W(CareerTestCatalog.Conventional, 40)),
         new("Administratief medewerker", W(CareerTestCatalog.Conventional, 100)),
         new("Planningsmedewerker", W(CareerTestCatalog.Conventional, 80), W(CareerTestCatalog.Enterprising, 30)),
+        new("Planner", W(CareerTestCatalog.Conventional, 80), W(CareerTestCatalog.Enterprising, 30), W(CareerTestCatalog.Realistic, 20)),
+        new("Teamleider logistiek", W(CareerTestCatalog.Conventional, 50), W(CareerTestCatalog.Realistic, 40), W(CareerTestCatalog.Enterprising, 40), W(CareerTestCatalog.Social, 30)),
+        new("Voorman", W(CareerTestCatalog.Realistic, 50), W(CareerTestCatalog.Conventional, 40), W(CareerTestCatalog.Enterprising, 30), W(CareerTestCatalog.Social, 20)),
         new("Kassamedewerker", W(CareerTestCatalog.Conventional, 70), W(CareerTestCatalog.Social, 40)),
         new("Orderadministrator", W(CareerTestCatalog.Conventional, 90), W(CareerTestCatalog.Realistic, 20)),
         new("Verpleegkundige / zorgmedewerker", W(CareerTestCatalog.Social, 100)),
@@ -292,11 +295,11 @@ public sealed record CareerCompassSnapshot(
     bool FromDeepAnalysis,
     bool FromOpenAi = false)
 {
+    /// <summary>UI key for the incomplete-test prompt. The sentence lives in localization.</summary>
+    public const string EmptyNoteKey = "Tests.CareerCompass.Empty";
+
     public static CareerCompassSnapshot Empty(bool fromDeepAnalysis = false)
-        => new([], [], [], [],
-        [
-            "Rond de beroepentest af. Daarna laten we in gewone taal zien welk werk bij je past, en hoe je dat op de banenkaart gebruikt."
-        ], fromDeepAnalysis);
+        => new([], [], [], [], [], fromDeepAnalysis);
 
     public bool HasOccupations =>
         SuperMatches.Count > 0 || StrongChoices.Count > 0 || Broadening.Count > 0;

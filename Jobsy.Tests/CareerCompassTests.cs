@@ -65,7 +65,28 @@ public class CareerCompassTests
     {
         var compass = CareerCompassBuilder.Build(null);
         Assert.False(compass.HasOccupations);
-        Assert.NotEmpty(compass.PracticalNotes);
+        Assert.Empty(compass.PracticalNotes);
+        Assert.Equal("Tests.CareerCompass.Empty", CareerCompassSnapshot.EmptyNoteKey);
+        var nl = UiStrings.Get(CareerCompassSnapshot.EmptyNoteKey, "nl");
+        Assert.NotEqual(CareerCompassSnapshot.EmptyNoteKey, nl);
+        Assert.Contains("beroepentest", nl, StringComparison.OrdinalIgnoreCase);
+        AssertNoJargon(nl);
+        foreach (var code in new[] { "R", "I", "A", "S", "E", "C" })
+        {
+            var lead = UiStrings.Get($"Tests.CareerResultLead.{code}", "nl");
+            Assert.NotEqual($"Tests.CareerResultLead.{code}", lead);
+            AssertNoJargon(lead);
+        }
+    }
+
+    [Fact]
+    public void Organising_hands_on_scores_suggest_logistics_leadership()
+    {
+        var compass = CareerCompassBuilder.Build(new RiasecScores(90, 38, 31, 88, 81, 100));
+        Assert.True(compass.HasOccupations);
+        Assert.Contains(compass.AllOccupations, m => m.Title == "Teamleider logistiek");
+        Assert.Contains(compass.AllOccupations, m => m.Title == "Planner");
+        Assert.Contains(compass.AllOccupations, m => m.Title == "Voorman");
         AssertNoJargon(compass);
     }
 
