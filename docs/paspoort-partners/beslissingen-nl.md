@@ -1,6 +1,6 @@
 # DNA-paspoort als CV-bijlage + partners: beslissingen (akkoord Dennis 03-10-2026)
 
-*Status: Dennis gaf op 03-10-2026 "akkoord" op alle 19 voorstellen, precies zoals voorgesteld. Mockups staan in `docs/mockups/paspoort-partners/`.*
+*Status: Dennis gaf op 03-10-2026 "akkoord" op alle 19 voorstellen, precies zoals voorgesteld. Later die dag keurde hij twee aanvullende besluiten goed (20 en 21, onderaan). Besluit 21 scherpt besluit 4 aan. Mockups staan in `docs/mockups/paspoort-partners/`.*
 *Bron: branch `acceptatie` (commit 7aacb6c8). Alle voorbeelddata is fictief.*
 
 ## Kort: wat er nu is
@@ -33,6 +33,7 @@ Voorstel: ja, als **positieve keuzes die de kandidaat zelf deelt**. Die staan lo
 Voorstel: geen geboortedatum/leeftijd, foto, nationaliteit, BSN, gezondheid, werkvergunning of religie. Let op: de huidige Lobsy-CV toont geboortedatum + leeftijd. Ik stel voor dat het nieuwe paspoort dat niet doet (risico op leeftijdsdiscriminatie) en hooguit "18+" toont waar dat wettelijk nodig is.
 
 **4. Hoe brengen we sectoren en sterke punten zonder dat het een score wordt?**
+*Aangescherpt door besluit 21: sterke punten en het blok "Zo haal je het beste uit…" vervallen op het partnerpaspoort. Alleen de sectorkeuze van de kandidaat blijft, met redenen die de kandidaat zelf heeft bevestigd.*
 Voorstel:
 - Op het paspoort en in het partnerportaal komen geen percentages, balken of "match"-labels.
 - Lobsy stelt sectoren voor; de kandidaat **kiest en ordent ze zelf**, met bij elke sector "waarom het bij mij past".
@@ -112,3 +113,36 @@ Voorstel: eerst als **upsell voor gemeenten die al Lobsy-klant zijn**, voor hun 
 
 **19. Mag een medewerker zijn eigen paspoort in een loopbaangesprek gebruiken?**
 Voorstel: alleen als hij dat zelf deelt, via hetzelfde mechanisme als "Delen & toegang". De werkgever kan het nooit zelf opvragen.
+
+## F. Aanvullende besluiten (akkoord Dennis 03-10-2026)
+
+**20. Werkgeversdeel standaard uit tot fase 2**
+Op `acceptatie` staat de flag `EmployersEnabled` standaard aan (gevonden op commit `7aacb6c8`). Daardoor zien werkgevers:
+- matchpercentages met breakdown
+- een talentpool met persoonlijkheidsscores (bijv. "Stressbestendigheid")
+- het AI-verhaal "Wie ben ik"
+
+Besluit: akkoord. Er komt een losse hotfix (stap 01b):
+- `EmployersEnabled` staat standaard **uit**, in alle configuraties en code-defaults
+- alle data blijft bewaard
+- toegangen en routes voor werkgevers zijn verborgen als de flag uit staat (404 of een vriendelijke "binnenkort"-pagina)
+- de flows voor kandidaten blijven werken
+- tests worden bijgewerkt, met 0 warnings
+
+De werkgeversweergave voor fase 2 wordt later opnieuw ontworpen, zonder percentages of persoonlijkheidsscores. Matching gaat dan uit van de kandidaat, en werkgevers zien alleen sollicitanten, in chronologische volgorde. Dat valt buiten deze stack.
+
+**21. Het partnerpaspoort bevat geen AI-output**
+Geen AI-verhaal "Wie ben ik", geen RoleFit-banden ("Past goed"), geen matches, scores, percentages of AI-gegenereerde tips. Er staan alleen feiten op die de kandidaat zelf heeft ingevoerd of bevestigd:
+- werkvoorkeuren, regio, contractvoorkeur, eigen auto
+- sectoren die de kandidaat zelf heeft gekozen
+- geverifieerde gegevens
+- tests als afgerond/niet afgerond
+- bewijsstukken
+
+Twee uitzonderingen op het AI-verbod:
+- AI-ondersteunde cv-extractie mag, maar alleen als de kandidaat elk veld bevestigt.
+- Vertalingen keurt de kandidaat goed, zoals al gespecificeerd.
+
+Dit geldt voor de PDF, de live weergave en het partnerportaal. In de partnervoorwaarden komt contractueel te staan dat de partner kandidaten niet scoort of rangschikt.
+
+Onderbouwing: `ai-act-beoordeling.md` (in deze map), §4.2 variant B en §4.4.

@@ -61,6 +61,11 @@ Three states:
 2. **Live view:**
    - **When:** `?s={token}` matches an active, non-expired link of this document's candidate, **or** the signed-in user passes `IPassportPartnerService.CanPartnerViewAsync` for this candidate.
    - **What:** a web version of p1 (+ p2 if allowed) built from the same `PassportDocumentModel` (current data, not the snapshot), with the share link's Show* toggles applied.
+   - **No AI output (decision 21; the no-AI rule in 04).** The live view is a partner view, so it shows only facts the candidate entered or confirmed:
+     - no WhoAmI story or keywords, RoleFit bands, matches, test outcomes, tips or percentages
+     - unconfirmed CV-extracted fields are dropped
+     - tests show done/not done only
+     - The live view must not include or link to any passport tab component (`PassportDnaTab`, `PassportFitTab`, …). Build it only from the model.
    - Partner views get the "Gedeeld met {partner}" ribbon.
 3. **Private:**
    - Shown otherwise: "Dit paspoort is privé" + an access-request form (name, organisation, e-mail, message, checkbox "Ik vraag dit aan voor een vacature/werk").
@@ -109,7 +114,7 @@ Sections:
   - revoke-all
   - `CanView` matrix: share token / partner / none / expired / revoked / suspended partner
 - **Integration/API:** ownership (candidate A can't revoke B's link); unknown id → 404 with the same body for unknown and other states.
-- **bUnit:** sharing screen sections; 30 days default; revoke-all confirm.
+- **bUnit:** sharing screen sections; 30 days default; revoke-all confirm. The live-view component renders no WhoAmI/RoleFit/test-outcome text for a fixture that has all of them (AI marker strings from 04).
 - **Playwright 390 + 1440** (soft-skip):
   - create link → open in an anonymous context → live view
   - revoke → private view
@@ -120,7 +125,7 @@ Sections:
 - **i18n parity** for new keys.
 
 ## Success criteria
-- `/v/{id}` never leaks personal data without a valid token or partner consent.
+- `/v/{id}` never leaks personal data without a valid token or partner consent, and never shows AI output (decision 21).
 - Share links default to 30 days, can be revoked, are logged, and expire automatically.
 - Candidates see and control every link, partner and request on one screen. "Alles intrekken" works instantly.
 - Release build with 0 warnings, tests green.

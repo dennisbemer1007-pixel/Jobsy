@@ -21,6 +21,17 @@ Decisions 14–16: agencies and employers that became a passport partner get a s
 
 No search in the Lobsy pool. No scores, rankings, filters on traits or automatic selection (AI Act). 2FA is required.
 
+**No AI output anywhere in the portal (decision 21; the no-AI rule in 04; rationale `ai-act-beoordeling.md` §4.4):**
+- **Never shown:** WhoAmI story or keywords, RoleFit bands ("Past goed"), matches, test outcomes, tips, percentages or unconfirmed CV-extracted fields.
+- The table and the passport view show only candidate-entered or confirmed facts, and the test **status** (done/not done).
+- The portal is a chronological list of who shared (newest first), per `ai-act-beoordeling.md` §4.4 point 5.
+
+**Independent of `EmployersEnabled`.** After hotfix 01b the employer part is OFF by default. The portal must work with Employers OFF:
+- Portal pages/controllers carry only `RequiresFeature(PassportPartners)`, **never** `RequiresFeature(Employers)`.
+- `FeatureRoutes.HomeFor` sends an employer-side user who is a member of an active passport partner to `/partnerportaal` (when `PassportPartnersEnabled`) instead of `/access-denied?reason=employers-off`.
+- The portal nav entry is shown via `FeatureVisible(PassportPartners)`, not inside the Employers-gated employer nav.
+- Logo upload and terms go through `api/partner-portal/*`, never through the Employers-gated `CompaniesController`.
+
 ## Facts
 - Roles: `UserRole.BranchManager/RegionalManager/EnterpriseManager/Intermediary`.
 - Membership via `UserCompany` (`User.CompanyMemberships`) + `Company.ParentCompanyId` tree.
@@ -46,7 +57,7 @@ No search in the Lobsy pool. No scores, rankings, filters on traits or automatic
 - **Every** candidate read goes through `CanPartnerViewAsync` + scope. Every passport view/PDF writes `PassportAccessLog` (`PartnerPortalView` / `PartnerPdfDownload`).
 - Partner terms (03): the first visit requires accepting the current `PassportPartnerTerms` version (root manager only). Until then, only the terms page is shown.
 
-### Pages (Blazor, new layout section "Partnerportaal" in the employer nav)
+### Pages (Blazor, own layout section "Partnerportaal"; visible with Employers OFF)
 1. **Overzicht:**
    - consented candidates (exact)
    - new consents this month (exact)
@@ -71,7 +82,7 @@ No search in the Lobsy pool. No scores, rankings, filters on traits or automatic
    - **Sort:** shared date (default, newest first) or available-from. **Filter:** status (all/share-ready/verified/paused) and branch.
    - **No** free-text search, no filtering on sectors, languages, traits or tests, no CSV/Excel export, no bulk actions. Paging 25.
 3. **Kandidaat → paspoort:**
-   - the HTML passport view (same component as the `/v` live view from 05, partner variant with ribbon)
+   - the HTML passport view (same component as the `/v` live view from 05, partner variant with ribbon; no AI output)
    - "Download PDF": 04 renderer with `PassportPartnerId`. The partner picks nl/en as primary; the candidate language becomes secondary when different. Contact is shown only if `ContactConsentAtUtc`.
    - The download writes a `PassportDocument` row.
    - Notice: "Gespreksinput, geen beoordeling. Jij beslist, Lobsy rangschikt niet." plus own-controller notice for downloaded PDFs.
@@ -99,7 +110,7 @@ No search in the Lobsy pool. No scores, rankings, filters on traits or automatic
 
 Candidates are addressed by `linkId` (never by user id) in all routes.
 
-**DTO guard (reflection test):** no property on any `PartnerPortal*` DTO may be named or contain `Score`, `Percent`, `Fit`, `Rank`, `Match`, `Riasec`, `Holland`, `DateOfBirth`, `Age`, `Nationality`, `Address`, `Postcode`, or be numeric except counts/ids/page fields on whitelisted members.
+**DTO guard (reflection test):** no property on any `PartnerPortal*` DTO may be named or contain `Score`, `Percent`, `Fit`, `Rank`, `Match`, `Riasec`, `Holland`, `WhoAmI`, `Story`, `Tip`, `Strength`, `Culture`, `Competenc`, `Personality`, `DateOfBirth`, `Age`, `Nationality`, `Address`, `Postcode`, or be numeric except counts/ids/page fields on whitelisted members.
 
 ## Tests
 - **Unit:**
@@ -117,6 +128,8 @@ Candidates are addressed by `linkId` (never by user id) in all routes.
   - PDF includes the co-brand ribbon and no contact block when there is no contact consent
   - access log rows written
 - **DTO reflection guard.**
+- **Employers OFF:** with `EmployersEnabled = false` and `PassportPartnersEnabled = true`, a partner user lands on `/partnerportaal`, all portal API calls succeed, and employer routes still show the 01b behaviour.
+- **No-AI check:** the candidate fixture with AI marker strings (04) shows no marker in the portal table, passport view or PDF.
 - **bUnit:** overview cards; table has no search input / export button; status filter only.
 - **Playwright 390 + 1440** (soft-skip, seeded partner from 09):
   - login with partner test account → overview → candidates → open passport → download PDF
@@ -127,6 +140,7 @@ Candidates are addressed by `linkId` (never by user id) in all routes.
 ## Success criteria
 - A partner user with 2FA sees only consented candidates in their scope, only their passport.
 - No scores, rankings or trait filters. Counts that include non-consenting candidates respect the threshold, with no subtraction leak.
+- No AI output (only candidate-entered/confirmed facts). The portal works with `EmployersEnabled` OFF.
 - Codes, QR, flyers, logo and branches work. Every view/download is logged.
 - Release build with 0 warnings, tests green.
 

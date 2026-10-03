@@ -40,6 +40,11 @@ Prove end to end, at 390×844 and 1440×900, that the whole stack works and keep
   - EnterpriseManager of Testkweker
 - Candidates:
   - **A:** consented to Testbureau via branch 1, share-ready, 4/4 tests, e-mail verified → Lobsy-geverifieerd
+    - Also seed **AI output that must never reach partners** (decision 21), written directly to the DB with no LLM call:
+      - a WhoAmI story + keywords containing `ZZ-AI-MARKER-WHOAMI`, with `IncludeOnCv = true`
+      - a RoleFit result with band "Past goed" for a role whose title contains `ZZ-AI-MARKER-ROLEFIT`
+      - competence/culture/values outcomes
+      - a CV upload whose `FilledFieldsJson` contains `certificaten`, with one **unconfirmed** certificate named `ZZ-AI-MARKER-CV`
   - **B:** consented, concept (not share-ready)
   - **C:** link without consent ("Nu niet")
   - **D:** consented, `ReconfirmDueAtUtc` in the past → suspended
@@ -93,9 +98,33 @@ Prove end to end, at 390×844 and 1440×900, that the whole stack works and keep
    - the token is removed from the URL after load
    - with the flag OFF (only if `JOBSY_E2E_ALLOW_FEATURE_TOGGLE`): `/p`, `/partnerportaal`, `/voor-partners` → 404
 10. **MFA (`JOBSY_E2E_MFA_*` pattern):** a non-test partner user without MFA is redirected to login with `mfa-required` when opening `/partnerportaal`. Skip when the vars are absent.
+11. **`PartnerViewNoAiOutputPlaywrightTests`** (decision 21; rationale `ai-act-beoordeling.md` §4.4). Covered partner views, for candidate A:
+    - the share-link live view `/v/{id}?s=`
+    - the partner portal table + passport view
+    - the co-branded PDF from the portal
+    - the candidate's own PDF v2 download (PDF text via PdfPig)
+
+    In all of them, assert:
+    - **no** marker `ZZ-AI-MARKER-*`
+    - none of the texts "Past goed", "Past redelijk", "Wie ben ik", "Stressbestendigheid", "Holland", "%", "match", "score"
+    - no element whose class or `data-testid` contains `dna-`, `rolefit`, `whoami`, `tips`, `strength`
+    - the test block shows only done/not done
+
+    Then have candidate A confirm the certificate in the Data tab. `ZZ-AI-MARKER-CV` then **does** appear in the live view and PDF, which proves the confirmation path works. Reset the seed at the end.
+12. **Employers OFF (hotfix 01b):** the whole run happens with `EmployersEnabled` = false (the acceptatie default after 01b). Assert once that:
+    - `GET api/settings/feature-flags` reports `employersEnabled: false`
+    - the partner flows above still pass
+    - the partner EnterpriseManager lands on `/partnerportaal`, not on `employers-off`
+
 
 ### Unit/integration guards (collect and complete; add any missing)
 - **Privacy guard:** `PassportDocumentModel` whitelist + "never" list (04); portal DTO reflection guard (07); share-link live model respects Show* (05).
+- **No-AI guard (decision 21):** a source scan fails if the passport model factory, the PDF renderer, the `/v` live-view components or the portal components/controllers reference any of these:
+  - `IWhoAmIService`, `CandidateWhoAmIProfile`, `WhoAmISnapshot`
+  - `RoleFit*`, `CultureFit*`, `ProfileVacancyMatchCalculator`
+  - `ITranslationService` (allowed **only** in the translation-approval service)
+  - outcome properties of the four test entities (only `CompletedAtUtc` is allowed)
+  - CV-extracted fields without the confirmation filter
 - **AI-Act guard:** a source scan fails if files under `Jobsy.Web/Components/PartnerPortal/**`, the portal API controllers and partner DTOs contain `OrderBy` on anything other than shared/available dates or the identifiers `Score|Percent|Fit|Rank|Match`. Allow-list comments are not allowed.
 - **Threshold guard:** a single `PassportPartnerCounts.Disclose(int)` helper is the only way the portal renders not-shared counts (source scan).
 - **i18n:** `LocalizationParityReportTests` green for all new keys in nl/en/pl/ro/ar; `PassportPdfStrings` parity.

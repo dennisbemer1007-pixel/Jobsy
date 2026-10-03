@@ -90,6 +90,8 @@ Backend foundation for decisions 7–13:
   - only the passport, never test answers or raw scores
   - **Lobsy provides no score, ranking or automatic selection; the passport is conversation input and a human decides**
   - the partner is an independent controller for PDFs it downloads
+  - **contractual (decision 21, `ai-act-beoordeling.md` §4.4 point 6):** the partner does **not** score or rank candidates, automatically or otherwise; does not feed passport data into its own AI/matching tools; no white-label use (cf. AI Act art. 25 and art. 5(1)(f))
+  - the passport contains no AI output; Lobsy shows only facts the candidate entered or confirmed
   - 2FA required
 
 ### Service `IPassportPartnerService` (Infrastructure): the single authorization point
