@@ -426,7 +426,7 @@ public static class CareerPlanViewBuilder
             ? s.CourseStatuses.Select(c => new CareerPathCourseStatus { Name = c.Name, OnProfile = c.OnProfile }).ToList()
             : (s.Courses ?? []).Select(c => new CareerPathCourseStatus { Name = c, OnProfile = false }).ToList();
 
-var legacyHref = s.ActionHref;
+        var legacyHref = s.ActionHref;
 
         return new CareerPathDashboardStep
         {
