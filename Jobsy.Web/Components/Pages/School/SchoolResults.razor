@@ -29,8 +29,24 @@ else if (_loading)
 }
 else
 {
+    @if (_hasBothSets)
+    {
+        <div class="sch-tabs" role="tablist" aria-label="@Culture["School.Results.TestSwitch"]">
+            <button type="button"
+                    class="sch-tabs__item @(_filterSet == PupilQuestionSet.Groep78 ? "is-active" : null)"
+                    @onclick="() => SelectSet(PupilQuestionSet.Groep78)">@Culture["School.QuestionSet.Groep78"]</button>
+            <button type="button"
+                    class="sch-tabs__item @(_filterSet == PupilQuestionSet.Vo ? "is-active" : null)"
+                    @onclick="() => SelectSet(PupilQuestionSet.Vo)">@Culture["School.QuestionSet.Vo"]</button>
+        </div>
+    }
+    else if (_filterSet is { } onlySet)
+    {
+        <p class="muted">@Culture[onlySet == PupilQuestionSet.Groep78 ? "School.QuestionSet.Groep78" : "School.QuestionSet.Vo"]</p>
+    }
+
     <div class="sch-tabs">
-        @foreach (var c in _classes)
+        @foreach (var c in VisibleClasses)
         {
             <button type="button"
                     class="sch-tabs__item @(c.Id == _selected ? "is-active" : null)"
@@ -47,6 +63,7 @@ else
         <div class="sch-results-layout">
             <div>
                 <section class="sch-card">
+                    <p class="muted">@Culture[_results.QuestionSet == PupilQuestionSet.Groep78 ? "School.QuestionSet.Groep78" : "School.QuestionSet.Vo"]</p>
                     <h2>@Culture["School.Results.Totals"]</h2>
                     @if (!_results.Totals.TotalsVisible)
                     {
@@ -135,6 +152,13 @@ else
     private Guid? _selected;
     private List<SchoolPortalClassListItemDto> _classes = [];
     private SchoolPortalResultsDto? _results;
+    private PupilQuestionSet? _filterSet;
+    private bool _hasBothSets;
+
+    private IEnumerable<SchoolPortalClassListItemDto> VisibleClasses
+        => _filterSet is null
+            ? _classes
+            : _classes.Where(c => c.QuestionSet == _filterSet);
 
     protected override async Task OnInitializedAsync()
     {
@@ -147,13 +171,43 @@ else
         }
 
         _classes = (await Api.GetSchoolClassesAsync()).ToList();
-        var pick = Klas ?? _classes.FirstOrDefault()?.Id;
-        if (pick is Guid id)
+        var sets = _classes.Select(c => c.QuestionSet).Distinct().ToList();
+        _hasBothSets = sets.Count > 1;
+        _filterSet = sets
+            .OrderByDescending(s => _classes.Count(c => c.QuestionSet == s))
+            .FirstOrDefault();
+        if (sets.Count == 0)
+        {
+            _filterSet = null;
+        }
+
+        var pick = Klas;
+        if (pick is Guid requested
+            && _classes.FirstOrDefault(c => c.Id == requested) is { } requestedClass)
+        {
+            _filterSet = requestedClass.QuestionSet;
+            await SelectClass(requested);
+        }
+        else if (VisibleClasses.FirstOrDefault()?.Id is Guid id)
         {
             await SelectClass(id);
         }
 
         _loading = false;
+    }
+
+    private async Task SelectSet(PupilQuestionSet set)
+    {
+        _filterSet = set;
+        if (VisibleClasses.FirstOrDefault()?.Id is Guid id)
+        {
+            await SelectClass(id);
+        }
+        else
+        {
+            _selected = null;
+            _results = null;
+        }
     }
 
     private async Task SelectClass(Guid id)

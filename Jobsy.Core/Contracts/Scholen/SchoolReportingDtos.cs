@@ -6,7 +6,9 @@ public sealed record SchoolReportFilterDto(
     int SchoolYearStart,
     Guid? SchoolId,
     SchoolLevel? Level,
-    int? Year);
+    int? Year,
+    /// <summary>Required — admin rapportage is always one test at a time.</summary>
+    PupilQuestionSet QuestionSet);
 
 public sealed record SchoolReportNamedCountDto(string Key, string Display, int? Count, bool Masked);
 
@@ -26,6 +28,7 @@ public sealed record SchoolReportViewDto(
     string? SchoolName,
     SchoolLevel? Level,
     int? Year,
+    PupilQuestionSet QuestionSet,
     int? ActiveSchools,
     int? ClassCount,
     int? StartedCount,

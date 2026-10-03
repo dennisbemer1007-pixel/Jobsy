@@ -92,6 +92,13 @@
                     </select>
                 </label>
                 <label>
+                    @Culture["AdminScholen.Report.Filter.QuestionSet"]
+                    <select class="input" @bind="_questionSetText" @bind:after="ReloadReportAsync">
+                        <option value="@PupilQuestionSet.Vo">@Culture["School.QuestionSet.Vo"]</option>
+                        <option value="@PupilQuestionSet.Groep78">@Culture["School.QuestionSet.Groep78"]</option>
+                    </select>
+                </label>
+                <label>
                     @Culture["AdminScholen.Report.Filter.School"]
                     <select class="input" @bind="_schoolIdText" @bind:after="ReloadReportAsync">
                         <option value="">@Culture["AdminScholen.Report.Filter.AllSchools"]</option>
@@ -246,6 +253,7 @@
     private string? _error;
     private string? _message;
     private int _year;
+    private string _questionSetText = nameof(PupilQuestionSet.Vo);
     private string _schoolIdText = "";
     private string _levelText = "";
     private string _leerjaarText = "";
@@ -283,8 +291,12 @@
         {
             Guid? schoolId = Guid.TryParse(_schoolIdText, out var sid) ? sid : null;
             SchoolLevel? level = Enum.TryParse<SchoolLevel>(_levelText, out var lv) ? lv : null;
-            int? year = int.TryParse(_leerjaarText, out var y) && y is >= 1 and <= 6 ? y : null;
-            _report = await Api.GetAdminSchoolReportAsync(_year == 0 ? null : _year, schoolId, level, year);
+            int? year = int.TryParse(_leerjaarText, out var y) && y is >= 1 and <= 8 ? y : null;
+            var questionSet = Enum.TryParse<PupilQuestionSet>(_questionSetText, out var qs)
+                ? qs
+                : PupilQuestionSet.Vo;
+            _report = await Api.GetAdminSchoolReportAsync(
+                _year == 0 ? null : _year, schoolId, level, year, questionSet);
         }
         catch (Exception ex)
         {
@@ -323,8 +335,12 @@
         {
             Guid? schoolId = Guid.TryParse(_schoolIdText, out var sid) ? sid : null;
             SchoolLevel? level = Enum.TryParse<SchoolLevel>(_levelText, out var lv) ? lv : null;
-            int? year = int.TryParse(_leerjaarText, out var y) && y is >= 1 and <= 6 ? y : null;
-            var url = Api.BuildAdminSchoolReportCsvUrl(_year == 0 ? null : _year, schoolId, level, year);
+            int? year = int.TryParse(_leerjaarText, out var y) && y is >= 1 and <= 8 ? y : null;
+            var questionSet = Enum.TryParse<PupilQuestionSet>(_questionSetText, out var qs)
+                ? qs
+                : PupilQuestionSet.Vo;
+            var url = Api.BuildAdminSchoolReportCsvUrl(
+                _year == 0 ? null : _year, schoolId, level, year, questionSet);
             // Absolute API path via navigation (cookie auth on same origin).
             await Js.InvokeVoidAsync("open", Nav.ToAbsoluteUri(url).ToString(), "_blank");
         }

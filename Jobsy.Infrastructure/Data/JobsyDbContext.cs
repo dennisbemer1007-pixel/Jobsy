@@ -2538,7 +2538,8 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.ClassLabel).HasMaxLength(12).IsRequired();
             entity.Property(e => e.Level).HasConversion<int>();
-            entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart });
+            entity.Property(e => e.QuestionSet).HasConversion<int>();
+            entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart, e.QuestionSet });
             entity.HasOne<School>()
                 .WithMany()
                 .HasForeignKey(e => e.SchoolId)
@@ -2549,7 +2550,8 @@ public class JobsyDbContext : DbContext
         {
             entity.ToTable("SchoolYearAggregates");
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart });
+            entity.Property(e => e.QuestionSet).HasConversion<int>();
+            entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart, e.QuestionSet });
             entity.HasOne<School>()
                 .WithMany()
                 .HasForeignKey(e => e.SchoolId)

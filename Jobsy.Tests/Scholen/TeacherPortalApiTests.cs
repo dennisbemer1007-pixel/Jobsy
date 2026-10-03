@@ -438,7 +438,7 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
                 RiasecScoresJson = """{"S":3,"A":2,"E":1}""",
                 ValuesScoresJson = "{}",
                 CultureScoresJson = "{}",
-                ScoringVersion = "t",
+                ScoringVersion = "1",
                 StoryTemplateVersion = "t",
                 StoryKeysJson = "[]"
             });
