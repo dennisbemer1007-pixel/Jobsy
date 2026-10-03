@@ -1428,11 +1428,13 @@ public sealed class CandidateProfileEditor : IDisposable
             EvaluationDraft = null;
             EvaluationMessage = _culture["DiplomaEval.Saved"];
         }
+        catch (ApiErrorException api) when (DiplomaEvaluationRules.IsErrorCode(api.Code))
+        {
+            EvaluationMessage = _culture["DiplomaEval.Error." + api.Code];
+        }
         catch (Exception ex)
         {
-            EvaluationMessage = DiplomaEvaluationRules.IsErrorCode(ex.Message)
-                ? _culture["DiplomaEval.Error." + ex.Message]
-                : Describe(ex);
+            EvaluationMessage = Describe(ex);
         }
         finally
         {
@@ -1457,11 +1459,13 @@ public sealed class CandidateProfileEditor : IDisposable
 
             EvaluationMessage = _culture["DiplomaEval.Removed"];
         }
+        catch (ApiErrorException api) when (DiplomaEvaluationRules.IsErrorCode(api.Code))
+        {
+            EvaluationMessage = _culture["DiplomaEval.Error." + api.Code];
+        }
         catch (Exception ex)
         {
-            EvaluationMessage = DiplomaEvaluationRules.IsErrorCode(ex.Message)
-                ? _culture["DiplomaEval.Error." + ex.Message]
-                : Describe(ex);
+            EvaluationMessage = Describe(ex);
         }
         finally
         {

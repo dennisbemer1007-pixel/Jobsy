@@ -121,7 +121,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractDiplomaErrorCode(body) ?? ExtractMessage(body) ?? "diploma_eval_failed");
+            throw DiplomaEvaluationFailed(body, (int)response.StatusCode);
         }
     }
 
@@ -133,11 +133,17 @@ public sealed partial class JobsyApiClient
         var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            throw new InvalidOperationException(ExtractDiplomaErrorCode(body) ?? ExtractMessage(body) ?? "diploma_eval_failed");
+            throw DiplomaEvaluationFailed(body, (int)response.StatusCode);
         }
 
         return JsonSerializer.Deserialize<DiplomaEvaluationItem>(body, DiplomaJson)
                ?? throw new InvalidOperationException("diploma_eval_failed");
+    }
+
+    private static ApiErrorException DiplomaEvaluationFailed(string body, int statusCode)
+    {
+        var code = ExtractDiplomaErrorCode(body);
+        return new ApiErrorException(code ?? ApiErrorException.Unknown, statusCode);
     }
 
     private static string? ExtractDiplomaErrorCode(string body)
