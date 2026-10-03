@@ -6,38 +6,38 @@ namespace Jobsy.Web.Services;
 public sealed partial class JobsyApiClient
 {
     public async Task<IReadOnlyList<PupilSchoolOptionDto>> GetPupilSchoolsAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<PupilSchoolOptionDto>>("api/pupil/schools", ct) ?? [];
+        => await GetApiJsonAsync<List<PupilSchoolOptionDto>>("api/pupil/schools", ct) ?? [];
 
     public async Task<IReadOnlyList<PupilClassOptionDto>?> GetPupilClassesAsync(
         Guid schoolId,
         CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<PupilClassOptionDto>>(
+        => await GetApiJsonAsync<List<PupilClassOptionDto>>(
             $"api/pupil/schools/{schoolId:D}/classes", ct);
 
     public async Task<PupilProgressStateDto?> GetPupilProgressAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", ct);
+        => await GetApiJsonAsync<PupilProgressStateDto>("api/pupil/progress", ct);
 
     public async Task<PupilAnswerResponse?> SavePupilAnswerAsync(
         string itemId,
         int value,
         CancellationToken ct = default)
     {
-        using var response = await _http.PutAsJsonAsync(
+        using var response = await PutApiJsonAsync(
             $"api/pupil/progress/answers/{Uri.EscapeDataString(itemId)}",
             new PupilAnswerRequest(value),
             ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<PupilAnswerResponse>(cancellationToken: ct);
+        return await ReadApiJsonAsync<PupilAnswerResponse>(response.Content, ct);
     }
 
     public async Task<PupilChipsResponse?> SavePupilChipsAsync(
         PupilChipsRequest request,
         CancellationToken ct = default)
     {
-        using var response = await _http.PutAsJsonAsync("api/pupil/progress/chips", request, ct);
+        using var response = await PutApiJsonAsync("api/pupil/progress/chips", request, ct);
         if (response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadFromJsonAsync<PupilChipsResponse>(cancellationToken: ct);
+            return await ReadApiJsonAsync<PupilChipsResponse>(response.Content, ct);
         }
 
         var body = await response.Content.ReadAsStringAsync(ct);
@@ -45,7 +45,7 @@ public sealed partial class JobsyApiClient
     }
 
     public async Task<PupilResultPageDto?> GetPupilResultAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<PupilResultPageDto>("api/pupil/result", ct);
+        => await GetApiJsonAsync<PupilResultPageDto>("api/pupil/result", ct);
 
     /// <summary>Raw result response so callers can handle 409 <c>not_completed</c> / result-pending.</summary>
     public Task<HttpResponseMessage> GetPupilResultResponseAsync(CancellationToken ct = default)
@@ -53,13 +53,13 @@ public sealed partial class JobsyApiClient
 
     public async Task<PupilDreamJobResponse?> SavePupilDreamJobAsync(string key, CancellationToken ct = default)
     {
-        using var response = await _http.PutAsJsonAsync("api/pupil/dreamjob", new PupilDreamJobRequest(key), ct);
+        using var response = await PutApiJsonAsync("api/pupil/dreamjob", new PupilDreamJobRequest(key), ct);
         if (!response.IsSuccessStatusCode)
         {
             return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<PupilDreamJobResponse>(cancellationToken: ct);
+        return await ReadApiJsonAsync<PupilDreamJobResponse>(response.Content, ct);
     }
 
     public async Task ClearTeacherLoginPauseAsync(Guid classId, CancellationToken ct = default)

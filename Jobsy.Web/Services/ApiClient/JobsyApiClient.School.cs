@@ -7,20 +7,20 @@ namespace Jobsy.Web.Services;
 public sealed partial class JobsyApiClient
 {
     public async Task<SchoolDashboardDto?> GetSchoolDashboardAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SchoolDashboardDto>("api/school/dashboard", ct);
+        => await GetApiJsonAsync<SchoolDashboardDto>("api/school/dashboard", ct);
 
     public async Task<IReadOnlyList<SchoolTodoItemDto>> GetSchoolTodosAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<SchoolTodoItemDto>>("api/school/todos", ct) ?? [];
+        => await GetApiJsonAsync<List<SchoolTodoItemDto>>("api/school/todos", ct) ?? [];
 
     public async Task<SchoolProfileDto?> GetSchoolProfileAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SchoolProfileDto>("api/school/profile", ct);
+        => await GetApiJsonAsync<SchoolProfileDto>("api/school/profile", ct);
 
     public async Task<SchoolPrivacyDto?> GetSchoolPrivacyAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SchoolPrivacyDto>("api/school/privacy", ct);
+        => await GetApiJsonAsync<SchoolPrivacyDto>("api/school/privacy", ct);
 
     public async Task DeleteSchoolYearDataAsync(string confirmPhrase, CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync(
+        var response = await PostApiJsonAsync(
             "api/school/privacy/delete-year",
             new DeleteSchoolYearRequest(confirmPhrase),
             ct);
@@ -38,24 +38,24 @@ public sealed partial class JobsyApiClient
         var url = schoolYearStart is int y
             ? $"api/school/classes?schoolYearStart={y}"
             : "api/school/classes";
-        return await _http.GetFromJsonAsync<List<SchoolPortalClassListItemDto>>(url, ct) ?? [];
+        return await GetApiJsonAsync<List<SchoolPortalClassListItemDto>>(url, ct) ?? [];
     }
 
     public async Task<SchoolPortalClassDetailDto?> GetSchoolClassAsync(Guid classId, CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SchoolPortalClassDetailDto>($"api/school/classes/{classId}", ct);
+        => await GetApiJsonAsync<SchoolPortalClassDetailDto>($"api/school/classes/{classId}", ct);
 
     public async Task<SchoolPortalClassDetailDto?> CreateSchoolClassAsync(
         CreateSchoolClassRequest request,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync("api/school/classes", request, ct);
+        var response = await PostApiJsonAsync("api/school/classes", request, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(cancellationToken: ct);
+        return await ReadApiJsonAsync<SchoolPortalClassDetailDto>(response.Content, ct);
     }
 
     public async Task<SchoolPortalClassDetailDto?> UpdateSchoolClassAsync(
@@ -63,14 +63,14 @@ public sealed partial class JobsyApiClient
         UpdateSchoolClassRequest request,
         CancellationToken ct = default)
     {
-        var response = await _http.PutAsJsonAsync($"api/school/classes/{classId}", request, ct);
+        var response = await PutApiJsonAsync($"api/school/classes/{classId}", request, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(cancellationToken: ct);
+        return await ReadApiJsonAsync<SchoolPortalClassDetailDto>(response.Content, ct);
     }
 
     public async Task DeleteSchoolClassAsync(Guid classId, string confirmName, CancellationToken ct = default)
@@ -89,7 +89,7 @@ public sealed partial class JobsyApiClient
         int count,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync(
+        var response = await PostApiJsonAsync(
             $"api/school/classes/{classId}/codes", new AddCodesRequest(count), ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -97,7 +97,7 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(cancellationToken: ct);
+        return await ReadApiJsonAsync<SchoolPortalClassDetailDto>(response.Content, ct);
     }
 
     public async Task<SchoolPortalCodeRowDto?> ReplaceSchoolCodeAsync(
@@ -113,7 +113,7 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<SchoolPortalCodeRowDto>(cancellationToken: ct);
+        return await ReadApiJsonAsync<SchoolPortalCodeRowDto>(response.Content, ct);
     }
 
     public async Task DeleteSchoolCodeAsync(Guid classId, Guid codeId, CancellationToken ct = default)
@@ -148,7 +148,7 @@ public sealed partial class JobsyApiClient
         bool confirmed,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync(
+        var response = await PostApiJsonAsync(
             $"api/school/classes/{classId}/parental-confirmation",
             new ParentalConfirmationRequest(confirmed),
             ct);
@@ -158,7 +158,7 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(cancellationToken: ct);
+        return await ReadApiJsonAsync<SchoolPortalClassDetailDto>(response.Content, ct);
     }
 
     public async Task<SchoolPortalClassDetailDto?> SetSchoolTestWindowAsync(
@@ -167,7 +167,7 @@ public sealed partial class JobsyApiClient
         DateOnly? closesOn = null,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync(
+        var response = await PostApiJsonAsync(
             $"api/school/classes/{classId}/test-window",
             new TestWindowRequest(action, closesOn),
             ct);
@@ -177,13 +177,13 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(cancellationToken: ct);
+        return await ReadApiJsonAsync<SchoolPortalClassDetailDto>(response.Content, ct);
     }
 
     public async Task<SchoolPortalResultsDto?> GetSchoolClassResultsAsync(
         Guid classId,
         CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SchoolPortalResultsDto>($"api/school/classes/{classId}/results", ct);
+        => await GetApiJsonAsync<SchoolPortalResultsDto>($"api/school/classes/{classId}/results", ct);
 
     public async Task<IReadOnlyList<SchoolPortalTeacherListItemDto>> GetSchoolTeachersAsync(
         Guid? classId = null,
@@ -192,21 +192,21 @@ public sealed partial class JobsyApiClient
         var url = classId is Guid id
             ? $"api/school/teachers?classId={id}"
             : "api/school/teachers";
-        return await _http.GetFromJsonAsync<List<SchoolPortalTeacherListItemDto>>(url, ct) ?? [];
+        return await GetApiJsonAsync<List<SchoolPortalTeacherListItemDto>>(url, ct) ?? [];
     }
 
     public async Task<SchoolStaffInviteResultDto?> InviteSchoolTeacherAsync(
         InviteTeacherRequest request,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync("api/school/teachers", request, ct);
+        var response = await PostApiJsonAsync("api/school/teachers", request, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<SchoolStaffInviteResultDto>(cancellationToken: ct);
+        return await ReadApiJsonAsync<SchoolStaffInviteResultDto>(response.Content, ct);
     }
 
     public async Task AssignSchoolTeacherClassesAsync(
@@ -214,7 +214,7 @@ public sealed partial class JobsyApiClient
         IReadOnlyList<Guid> classIds,
         CancellationToken ct = default)
     {
-        var response = await _http.PutAsJsonAsync(
+        var response = await PutApiJsonAsync(
             $"api/school/teachers/{teacherUserId}/classes",
             new AssignTeacherClassesRequest(classIds),
             ct);
