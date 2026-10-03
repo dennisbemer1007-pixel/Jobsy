@@ -170,6 +170,23 @@ public class TestAccountsCommandTests
     }
 
     [Fact]
+    public void Failure_report_names_step_and_type_without_secrets()
+    {
+        const string password = "super-secret-password";
+        var ex = new InvalidOperationException(
+            $"Host=db.internal;Username=lobsy;Password={password};Database=lobsy",
+            new ArgumentException($"inner postgres://lobsy:{password}@db.internal:5432/lobsy"));
+        var text = Jobsy.Api.Ops.TestAccountFailureReport.Format(ex, "school", "Teacher");
+
+        Assert.Contains("Failed: step=school account=Teacher", text, StringComparison.Ordinal);
+        Assert.Contains("InvalidOperationException:", text, StringComparison.Ordinal);
+        Assert.Contains("inner: ArgumentException:", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(password, text, StringComparison.Ordinal);
+        Assert.DoesNotContain("db.internal", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("   at ", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Guard_refusal_codes_do_not_leak_fake_password()
     {
         var input = new TestAccountGuardInput

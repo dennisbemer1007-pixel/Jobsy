@@ -7,6 +7,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
@@ -24,7 +25,14 @@ public static class TestAccountsCommand
     public const int ExitPartial = 3;
     public const int ExitFailed = 4;
 
-    public static async Task<int> RunAsync(string[] args, TextWriter? output = null)
+    public static Task<int> RunAsync(string[] args, TextWriter? output = null)
+        => RunAsync(args, output, hostEnvironmentName: null, configurationOverrides: null);
+
+    internal static async Task<int> RunAsync(
+        string[] args,
+        TextWriter? output,
+        string? hostEnvironmentName,
+        IReadOnlyDictionary<string, string?>? configurationOverrides)
     {
         output ??= Console.Out;
         if (args.Length == 0 || IsHelp(args[0]))
@@ -36,7 +44,7 @@ public static class TestAccountsCommand
         var verb = args[0].ToLowerInvariant();
         var options = args.Skip(1).ToArray();
 
-        using var host = BuildCliHost();
+        using var host = BuildCliHost(hostEnvironmentName, configurationOverrides);
         await host.StartAsync();
         try
         {
@@ -69,9 +77,22 @@ public static class TestAccountsCommand
         }
     }
 
-    internal static IHost BuildCliHost()
+    internal static IHost BuildCliHost(
+        string? hostEnvironmentName = null,
+        IReadOnlyDictionary<string, string?>? configurationOverrides = null)
     {
-        var builder = Host.CreateApplicationBuilder();
+        var settings = new HostApplicationBuilderSettings();
+        if (!string.IsNullOrWhiteSpace(hostEnvironmentName))
+        {
+            settings.EnvironmentName = hostEnvironmentName;
+        }
+
+        var builder = Host.CreateApplicationBuilder(settings);
+        if (configurationOverrides is { Count: > 0 })
+        {
+            builder.Configuration.AddInMemoryCollection(configurationOverrides);
+        }
+
         builder.Logging.ClearProviders();
         builder.Logging.AddConsole();
         builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
@@ -85,20 +106,28 @@ public static class TestAccountsCommand
         TextWriter output,
         CancellationToken ct)
     {
-        await output.WriteLineAsync($"Guard: allowed ({guard.CodesSummary()})");
-        var users = await db.Users.AsNoTracking()
-            .Where(u => u.IsTestAccount)
-            .OrderBy(u => u.Email)
-            .Select(u => new { u.Email, Role = u.Role.ToString(), u.LastLoginAtUtc })
-            .ToListAsync(ct);
-        await output.WriteLineAsync($"Test accounts: {users.Count}");
-        foreach (var u in users)
+        try
         {
-            var last = u.LastLoginAtUtc?.ToString("u") ?? "-";
-            await output.WriteLineAsync($"  {u.Email,-40} {u.Role,-20} lastLogin={last}");
-        }
+            await output.WriteLineAsync($"Guard: allowed ({guard.CodesSummary()})");
+            var users = await db.Users.AsNoTracking()
+                .Where(u => u.IsTestAccount)
+                .OrderBy(u => u.Email)
+                .Select(u => new { u.Email, Role = u.Role.ToString(), u.LastLoginAtUtc })
+                .ToListAsync(ct);
+            await output.WriteLineAsync($"Test accounts: {users.Count}");
+            foreach (var u in users)
+            {
+                var last = u.LastLoginAtUtc?.ToString("u") ?? "-";
+                await output.WriteLineAsync($"  {u.Email,-40} {u.Role,-20} lastLogin={last}");
+            }
 
-        return ExitOk;
+            return ExitOk;
+        }
+        catch (Exception ex)
+        {
+            await output.WriteLineAsync(TestAccountFailureReport.Format(ex, step: "status"));
+            return ExitFailed;
+        }
     }
 
     private static async Task<int> RunSeedAsync(
@@ -121,19 +150,43 @@ public static class TestAccountsCommand
             }
         }
 
-        if (await db.Database.GetPendingMigrationsAsync(ct) is { } pending && pending.Any())
+        try
         {
-            await output.WriteLineAsync("Run the API once so migrations apply.");
+            if (await db.Database.GetPendingMigrationsAsync(ct) is { } pending && pending.Any())
+            {
+                await output.WriteLineAsync("Run the API once so migrations apply.");
+                return ExitFailed;
+            }
+        }
+        catch (Exception ex)
+        {
+            await output.WriteLineAsync(TestAccountFailureReport.Format(ex, step: "migrations"));
             return ExitFailed;
         }
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
-        using var scope = TestAccountScope.Enter();
+        var progress = new TestAccountSeedProgress { Step = "transaction" };
+        IDbContextTransaction? tx = null;
         try
         {
-            var pupilCodes = sp.GetService<IPupilCodeService>();
+            tx = await db.Database.BeginTransactionAsync(ct);
+            using var scope = TestAccountScope.Enter();
+            progress.Step = "pupil-codes";
+            IPupilCodeService? pupilCodes = null;
+            try
+            {
+                pupilCodes = sp.GetService<IPupilCodeService>();
+            }
+            catch (InvalidOperationException ex) when (IsMissingPupilCodeKey(ex))
+            {
+                // Acceptatie runs as Production and often has no Scholen:CodeHmacKey.
+                // Accounts and classes still seed; codes are filled in once the key exists.
+                await output.WriteLineAsync(
+                    "Pupil codes skipped: Scholen:CodeHmacKey is not configured.");
+            }
+
+            progress.Step = "seed";
             var seeder = new TestAccountsSeedService(db, sp.GetRequiredService<IConfiguration>(), pupilCodes);
-            var result = await seeder.SeedAsync(dryRun, only, ct);
+            var result = await seeder.SeedAsync(dryRun, only, progress, ct);
 
             if (result.AdminRealAccountConflict)
             {
@@ -181,9 +234,20 @@ public static class TestAccountsCommand
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync(ct);
-            await output.WriteLineAsync($"Failed: {ex.GetType().Name}");
+            if (tx is not null)
+            {
+                await TryRollbackAsync(tx, ct);
+            }
+
+            await output.WriteLineAsync(TestAccountFailureReport.Format(ex, progress.Step, progress.AccountKey));
             return ExitFailed;
+        }
+        finally
+        {
+            if (tx is not null)
+            {
+                await tx.DisposeAsync();
+            }
         }
     }
 
@@ -206,14 +270,32 @@ public static class TestAccountsCommand
             }
         }
 
-        if (await db.Database.GetPendingMigrationsAsync(ct) is { } pending && pending.Any())
+        try
         {
-            await output.WriteLineAsync("Run the API once so migrations apply.");
+            if (await db.Database.GetPendingMigrationsAsync(ct) is { } pending && pending.Any())
+            {
+                await output.WriteLineAsync("Run the API once so migrations apply.");
+                return ExitFailed;
+            }
+        }
+        catch (Exception ex)
+        {
+            await output.WriteLineAsync(TestAccountFailureReport.Format(ex, step: "cleanup"));
             return ExitFailed;
         }
 
         var cleanup = new TestAccountsCleanupService(db);
-        var plan = await cleanup.PlanAsync(ct);
+        TestAccountsCleanupPlan plan;
+        try
+        {
+            plan = await cleanup.PlanAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            await output.WriteLineAsync(TestAccountFailureReport.Format(ex, step: "cleanup"));
+            return ExitFailed;
+        }
+
         await output.WriteLineAsync($"Test users: {plan.TestUserCount}");
         foreach (var (email, role) in plan.Users)
         {
@@ -278,10 +360,37 @@ public static class TestAccountsCommand
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync(ct);
-            await output.WriteLineAsync($"Failed: {ex.GetType().Name}");
+            await TryRollbackAsync(tx, ct);
+            await output.WriteLineAsync(TestAccountFailureReport.Format(ex, step: "cleanup"));
             return ExitFailed;
         }
+    }
+
+    private static async Task TryRollbackAsync(IDbContextTransaction tx, CancellationToken ct)
+    {
+        try
+        {
+            await tx.RollbackAsync(ct);
+        }
+        catch
+        {
+            // Keep the original exception. A failed rollback must not replace it.
+        }
+    }
+
+    private static bool IsMissingPupilCodeKey(Exception ex)
+    {
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            if (current is InvalidOperationException
+                && current.Message.Contains("Scholen:CodeHmacKey", StringComparison.Ordinal)
+                && current.Message.Contains("ontbreekt", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void PrintTable(TextWriter output, TestAccountsSeedResult result)

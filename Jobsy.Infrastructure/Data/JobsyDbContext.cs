@@ -2561,7 +2561,10 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Level).HasConversion<int>();
             entity.Property(e => e.QuestionSet)
                 .HasConversion<int>()
-                .HasDefaultValue(PupilQuestionSet.Vo);
+                .HasDefaultValue(PupilQuestionSet.Vo)
+                // 0 is not a named question set. Without an explicit sentinel, EF Core warns
+                // (20601) and would substitute the database default whenever the value is 0.
+                .HasSentinel((PupilQuestionSet)0);
             entity.Property(e => e.TestWindow).HasConversion<int>();
             entity.Property(e => e.ParentalInfoTextVersion).HasMaxLength(64);
             entity.HasIndex(e => new { e.SchoolId, e.SchoolYearStart, e.Name }).IsUnique();
