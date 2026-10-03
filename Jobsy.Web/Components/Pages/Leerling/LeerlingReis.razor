@@ -29,6 +29,15 @@ else if (_state is null)
 {
     <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
 }
+else if (_resultPending)
+{
+    <section class="ll-card">
+        <p class="ll-error" role="alert">@Culture["Leerling.Reis.ResultPending"]</p>
+        <button type="button" class="btn-primary" disabled="@_busy" @onclick="RetryPending">
+            @Culture["Leerling.Reis.Retry"]
+        </button>
+    </section>
+}
 else if (_state.Completed)
 {
     <section class="ll-card">
@@ -141,6 +150,7 @@ else
     private bool _windowClosed;
     private bool _infoOpen;
     private bool _saved;
+    private bool _resultPending;
     private string? _saveError;
     private int? _selected;
     private bool _busy;
@@ -169,12 +179,26 @@ else
                 return;
             }
 
+            if (_state.Completed)
+            {
+                _resultPending = false;
+                return;
+            }
+
             if (_state.NeedsIsland)
             {
                 Nav.NavigateTo("/leerling/eiland");
                 return;
             }
 
+            // All answers saved but result not ready yet (builder pending/retry).
+            if (_state.AnsweredCount >= _state.TotalItems && _state.TotalItems > 0)
+            {
+                _resultPending = true;
+                return;
+            }
+
+            _resultPending = false;
             _current = _state.CurrentItemId is null ? null : Bank.GetById(_state.CurrentItemId);
             if (_current is not null && _state.Answers.TryGetValue(_current.Id, out var v))
             {
@@ -194,6 +218,28 @@ else
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task RetryPending()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Reload();
+            if (_state?.Completed == true)
+            {
+                Nav.NavigateTo("/leerling/dit-ben-jij");
+            }
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 
@@ -222,6 +268,13 @@ else
             if (result.Completed)
             {
                 Nav.NavigateTo("/leerling/dit-ben-jij");
+                return;
+            }
+
+            if (result.ResultPending)
+            {
+                _resultPending = true;
+                _saveError = Culture["Leerling.Reis.ResultPending"];
                 return;
             }
 

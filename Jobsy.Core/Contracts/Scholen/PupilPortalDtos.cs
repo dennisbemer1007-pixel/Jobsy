@@ -57,7 +57,8 @@ public sealed record PupilAnswerResponse(
     bool Completed,
     string? NextItemId,
     string? NextWorldKey,
-    bool NeedsIsland);
+    bool NeedsIsland,
+    bool ResultPending = false);
 
 public sealed record PupilChipsRequest(
     IReadOnlyList<string>? Likes,
