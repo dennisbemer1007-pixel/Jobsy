@@ -1,0 +1,201 @@
+@namespace Jobsy.Web.Components.School
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@inject CultureState Culture
+
+<label>
+    @Culture["School.Class.Field.Name"]
+    <InputText class="input" @bind-Value="ClassName" @bind-Value:after="OnClassNameAfter" />
+</label>
+
+@if (LevelLocked)
+{
+    <p class="sch-level-locked" role="note">@Culture["School.Class.LevelLocked"]</p>
+}
+
+<fieldset class="sch-kind" disabled="@LevelLocked">
+    <legend>@Culture["School.Class.Field.Kind"]</legend>
+    <div class="sch-kind-cards" role="radiogroup" aria-label="@Culture["School.Class.Field.Kind"]">
+        <label class="sch-kind-card @(_isPrimary ? "is-on" : null)">
+            <input type="radio"
+                   name="@_kindGroup"
+                   value="primary"
+                   checked="@_isPrimary"
+                   disabled="@LevelLocked"
+                   @onchange="() => SetKind(primary: true)" />
+            <span class="sch-kind-card__title">@Culture["School.Class.Kind.Primary"]</span>
+            <span class="sch-kind-card__hint">@Culture["School.Class.Kind.PrimaryHint"]</span>
+        </label>
+        <label class="sch-kind-card @(!_isPrimary ? "is-on" : null)">
+            <input type="radio"
+                   name="@_kindGroup"
+                   value="secondary"
+                   checked="@(!_isPrimary)"
+                   disabled="@LevelLocked"
+                   @onchange="() => SetKind(primary: false)" />
+            <span class="sch-kind-card__title">@Culture["School.Class.Kind.Secondary"]</span>
+            <span class="sch-kind-card__hint">@Culture["School.Class.Kind.SecondaryHint"]</span>
+        </label>
+    </div>
+</fieldset>
+
+@if (_isPrimary)
+{
+    <fieldset class="sch-seg-fieldset">
+        <legend>@Culture["School.Class.Field.Group"]</legend>
+        <div class="sch-seg" role="radiogroup" aria-label="@Culture["School.Class.Field.Group"]">
+            <label class="sch-seg__opt @(Year == 7 ? "is-on" : null)">
+                <input type="radio" name="@_groupGroup" value="7" checked="@(Year == 7)"
+                       @onchange="() => SetYear(7)" />
+                @Culture["School.Class.Group.7"]
+            </label>
+            <label class="sch-seg__opt @(Year == 8 ? "is-on" : null)">
+                <input type="radio" name="@_groupGroup" value="8" checked="@(Year == 8)"
+                       @onchange="() => SetYear(8)" />
+                @Culture["School.Class.Group.8"]
+            </label>
+        </div>
+    </fieldset>
+}
+else
+{
+    <label>
+        @Culture["School.Class.Field.Level"]
+        <InputSelect class="input" @bind-Value="Level" @bind-Value:after="OnVoLevelBound">
+            @foreach (var level in SchoolLevelRules.VoLevels)
+            {
+                <option value="@level">@Culture[SchoolLevelRules.LabelKey(level)]</option>
+            }
+        </InputSelect>
+    </label>
+    <fieldset class="sch-seg-fieldset">
+        <legend>@Culture["School.Class.Field.Year"]</legend>
+        <div class="sch-seg" role="radiogroup" aria-label="@Culture["School.Class.Field.Year"]">
+            @for (var y = 1; y <= 6; y++)
+            {
+                var year = y;
+                <label class="sch-seg__opt @(Year == year ? "is-on" : null)">
+                    <input type="radio" name="@_yearGroup" value="@year" checked="@(Year == year)"
+                           @onchange="() => SetYear(year)" />
+                    @year
+                </label>
+            }
+        </div>
+    </fieldset>
+}
+
+<div class="sch-set-note" role="status">
+    <strong>@(_isPrimary ? Culture["School.Class.SetNote.G78.Title"] : Culture["School.Class.SetNote.Vo.Title"])</strong>
+    <p>@(_isPrimary ? Culture["School.Class.SetNote.G78.Body"] : Culture["School.Class.SetNote.Vo.Body"])</p>
+</div>
+
+@if (ShowPupilCount)
+{
+    <label>
+        @Culture["School.Class.Field.Count"]
+        <InputNumber class="input" @bind-Value="PupilCount" @bind-Value:after="OnPupilCountAfter" />
+    </label>
+    <p class="muted">@Culture["School.Class.CodesNote"]</p>
+}
+
+@if (Teachers is { Count: > 0 })
+{
+    <fieldset class="sch-check-list">
+        <legend>@Culture["School.Class.Field.Teachers"]</legend>
+        @foreach (var t in Teachers)
+        {
+            <label class="filter-check">
+                <input type="checkbox"
+                       checked="@SelectedTeacherIds.Contains(t.UserId)"
+                       @onchange="e => ToggleTeacher(t.UserId, (bool)(e.Value ?? false))" />
+                @t.DisplayName
+            </label>
+        }
+    </fieldset>
+}
+
+@code {
+    private readonly string _kindGroup = $"kind-{Guid.NewGuid():N}";
+    private readonly string _groupGroup = $"group-{Guid.NewGuid():N}";
+    private readonly string _yearGroup = $"year-{Guid.NewGuid():N}";
+    private bool _isPrimary;
+
+    [Parameter] public string ClassName { get; set; } = "";
+    [Parameter] public EventCallback<string> ClassNameChanged { get; set; }
+    [Parameter] public SchoolLevel Level { get; set; } = SchoolLevel.Havo;
+    [Parameter] public EventCallback<SchoolLevel> LevelChanged { get; set; }
+    [Parameter] public int Year { get; set; } = 2;
+    [Parameter] public EventCallback<int> YearChanged { get; set; }
+    [Parameter] public int PupilCount { get; set; } = 28;
+    [Parameter] public EventCallback<int> PupilCountChanged { get; set; }
+    [Parameter] public bool ShowPupilCount { get; set; }
+    [Parameter] public bool LevelLocked { get; set; }
+    [Parameter] public IReadOnlyList<TeacherOption>? Teachers { get; set; }
+    [Parameter] public HashSet<Guid> SelectedTeacherIds { get; set; } = [];
+    [Parameter] public EventCallback StateChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _isPrimary = SchoolLevelRules.IsPrimary(Level);
+    }
+
+    private async Task OnClassNameAfter()
+    {
+        await ClassNameChanged.InvokeAsync(ClassName);
+        await NotifyChanged();
+    }
+
+    private async Task OnPupilCountAfter()
+    {
+        await PupilCountChanged.InvokeAsync(PupilCount);
+        await NotifyChanged();
+    }
+
+    private async Task SetKind(bool primary)
+    {
+        if (LevelLocked || _isPrimary == primary)
+        {
+            return;
+        }
+
+        _isPrimary = primary;
+        if (primary)
+        {
+            Level = SchoolLevel.Groep78;
+            Year = 7;
+        }
+        else
+        {
+            Level = SchoolLevel.Havo;
+            Year = 1;
+        }
+
+        await LevelChanged.InvokeAsync(Level);
+        await YearChanged.InvokeAsync(Year);
+        await NotifyChanged();
+    }
+
+    private async Task SetYear(int year)
+    {
+        Year = year;
+        await YearChanged.InvokeAsync(Year);
+        await NotifyChanged();
+    }
+
+    private async Task OnVoLevelBound()
+    {
+        await LevelChanged.InvokeAsync(Level);
+        await NotifyChanged();
+    }
+
+    private async Task ToggleTeacher(Guid id, bool on)
+    {
+        if (on) SelectedTeacherIds.Add(id);
+        else SelectedTeacherIds.Remove(id);
+        await NotifyChanged();
+    }
+
+    private Task NotifyChanged() => StateChanged.HasDelegate ? StateChanged.InvokeAsync() : Task.CompletedTask;
+
+    public sealed record TeacherOption(Guid UserId, string DisplayName);
+}

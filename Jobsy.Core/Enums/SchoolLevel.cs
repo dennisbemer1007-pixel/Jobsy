@@ -9,5 +9,7 @@ public enum SchoolLevel
     Havo = 4,
     Vwo = 5,
     Mix = 6,
-    Anders = 7
+    Anders = 7,
+    /// <summary>Basisschool, groep 7 of 8 (Year = 7 or 8).</summary>
+    Groep78 = 8
 }

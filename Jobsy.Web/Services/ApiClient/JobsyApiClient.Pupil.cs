@@ -47,6 +47,10 @@ public sealed partial class JobsyApiClient
     public async Task<PupilResultPageDto?> GetPupilResultAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PupilResultPageDto>("api/pupil/result", ct);
 
+    /// <summary>Raw result response so callers can handle 409 <c>not_completed</c> / result-pending.</summary>
+    public Task<HttpResponseMessage> GetPupilResultResponseAsync(CancellationToken ct = default)
+        => _http.GetAsync("api/pupil/result", ct);
+
     public async Task<PupilDreamJobResponse?> SavePupilDreamJobAsync(string key, CancellationToken ct = default)
     {
         using var response = await _http.PutAsJsonAsync("api/pupil/dreamjob", new PupilDreamJobRequest(key), ct);
