@@ -2,10 +2,15 @@
 @layout LeerlingLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Services
 @inject CultureState Culture
 @inject NavigationManager Nav
+@inject JobsyApiClient Api
+@inject IPupilQuestionSetRegistry Registry
 
 <PageTitle>@Culture["Leerling.Start.Title"] · Lobsy</PageTitle>
 
@@ -15,8 +20,14 @@
         <h1>@Culture["Leerling.Start.Title"]</h1>
         <p class="muted">@Culture["Leerling.Start.Lead"]</p>
         <ol class="ll-worlds">
-            @foreach (var w in PupilWorldCatalog.Worlds.Where(x => x.IsTestWorld))
+            @foreach (var plan in (_def?.Worlds ?? Array.Empty<PupilWorldPlan>()))
             {
+                var w = PupilWorldCatalog.Find(plan.WorldKey);
+                if (w is null)
+                {
+                    continue;
+                }
+
                 var n = PupilWorldCatalog.TestWorldNumber(w.Key);
                 <li>
                     <span class="ll-worlds__n">@n</span>
@@ -28,7 +39,7 @@
             }
         </ol>
         <ul class="ll-start__notes">
-            <li>@Culture["Leerling.Start.NoteTime"]</li>
+            <li>@Culture[_def?.StartTimeKey ?? "Leerling.Start.NoteTime"]</li>
             <li>@Culture["Leerling.Start.NoteNoWrong"]</li>
             <li>@Culture["Leerling.Start.NotePause"]</li>
         </ul>
@@ -37,5 +48,24 @@
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync() => await Culture.SetLanguageAsync("nl");
+    private PupilQuestionSetDef? _def;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Culture.SetLanguageAsync("nl");
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            if (progress is not null)
+            {
+                _def = Registry.Get(progress.QuestionSet);
+            }
+        }
+        catch
+        {
+            _def = null;
+        }
+
+        _def ??= Registry.Get(Jobsy.Core.Enums.PupilQuestionSet.Vo);
+    }
 }

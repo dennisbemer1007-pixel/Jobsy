@@ -5,12 +5,14 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IJSRuntime Js
+@inject IPupilQuestionSetRegistry Registry
 
 <PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
 
@@ -25,7 +27,7 @@ else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
-else if (_state is null)
+else if (_state is null || _def is null)
 {
     <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
 }
@@ -50,22 +52,28 @@ else
 {
     var item = _current;
     var worldKey = item?.WorldKey ?? _state.CurrentWorldKey ?? "koraalrif";
-    var world = PupilWorldCatalog.Worlds.FirstOrDefault(w => w.Key == worldKey);
+    var world = PupilWorldCatalog.Find(worldKey);
     var worldNum = PupilWorldCatalog.TestWorldNumber(worldKey);
     var qLabel = item is null ? "" : Culture[item.TextKey];
     var imagine = item is null ? "" : Culture[item.ImagineKey];
-    var depth = PupilWorldCatalog.SceneDepth(_state.AnsweredCount);
+    var depth = _def.SceneDepth(_state.AnsweredCount);
     var plates = _state.PlatesShed;
     var infoId = "ll-imagine-" + (item?.Id ?? "x");
-    var cheerKey = "LeerlingQ.Cheer." + (((_state.AnsweredCount / 6) % 12) + 1);
+    var cheerKey = _def.CheerKey(_state.AnsweredCount);
 
     <div class="ll-reis" @onkeydown="OnKey" tabindex="0">
         <aside class="ll-rail" aria-label="@Culture["Leerling.Reis.Journey"]">
             <p class="ll-rail__title">@Culture["Leerling.Reis.Journey"]</p>
             <p class="ll-rail__meta">@string.Format(Culture["Leerling.Reis.WorldOf"], worldNum, 4)</p>
             <ol class="ll-rail__list">
-                @foreach (var w in PupilWorldCatalog.Worlds)
+                @foreach (var railKey in _def.RailWorldKeys())
                 {
+                    var w = PupilWorldCatalog.Find(railKey);
+                    if (w is null)
+                    {
+                        continue;
+                    }
+
                     var done = IsWorldDone(w.Key);
                     var current = string.Equals(w.Key, worldKey, StringComparison.OrdinalIgnoreCase);
                     <li class="@(done ? "is-done" : null) @(current ? "is-now" : null)">
@@ -75,7 +83,7 @@ else
                 }
             </ol>
             <div class="ll-plates" aria-hidden="true">
-                @for (var i = 0; i < 10; i++)
+                @for (var i = 0; i < _def.PlateCount; i++)
                 {
                     <span class="ll-plates__seg @(i < plates ? "is-gone" : null)"></span>
                 }
@@ -105,7 +113,7 @@ else
             </div>
 
             <div class="ll-answers" role="radiogroup" aria-label="@Culture["Leerling.Reis.Answers"]">
-                @foreach (var (value, key) in PupilWorldCatalog.AnswerLabels)
+                @foreach (var (value, key) in _def.AnswerLabels)
                 {
                     var selected = _selected == value;
                     <button type="button"
@@ -145,6 +153,7 @@ else
 
 @code {
     private PupilProgressStateDto? _state;
+    private PupilQuestionSetDef? _def;
     private PupilQuestionItem? _current;
     private bool _loading = true;
     private bool _windowClosed;
@@ -154,7 +163,6 @@ else
     private string? _saveError;
     private int? _selected;
     private bool _busy;
-    private readonly IPupilQuestionBank Bank = new PupilQuestionBank();
 
     protected override async Task OnInitializedAsync()
     {
@@ -170,8 +178,11 @@ else
             _state = await Api.GetPupilProgressAsync();
             if (_state is null)
             {
+                _def = null;
                 return;
             }
+
+            _def = Registry.Get(_state.QuestionSet);
 
             if (!_state.WindowOpen && !_state.Completed)
             {
@@ -179,15 +190,22 @@ else
                 return;
             }
 
-            if (_state.Completed)
+            if (_state.Completed || string.Equals(_state.NextStep, "done", StringComparison.OrdinalIgnoreCase))
             {
                 _resultPending = false;
                 return;
             }
 
-            if (_state.NeedsIsland)
+            if (_state.NeedsIsland || string.Equals(_state.NextStep, "island", StringComparison.OrdinalIgnoreCase))
             {
                 Nav.NavigateTo("/leerling/eiland");
+                return;
+            }
+
+            if (string.Equals(_state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(_state.NextPuzzleKey))
+            {
+                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(_state.NextPuzzleKey)}");
                 return;
             }
 
@@ -199,7 +217,7 @@ else
             }
 
             _resultPending = false;
-            _current = _state.CurrentItemId is null ? null : Bank.GetById(_state.CurrentItemId);
+            _current = _state.CurrentItemId is null ? null : _def.Bank.GetById(_state.CurrentItemId);
             if (_current is not null && _state.Answers.TryGetValue(_current.Id, out var v))
             {
                 _selected = v;
@@ -214,6 +232,7 @@ else
         catch
         {
             _state = null;
+            _def = null;
         }
         finally
         {
@@ -265,7 +284,7 @@ else
             }
 
             _saved = true;
-            if (result.Completed)
+            if (result.Completed || string.Equals(result.NextStep, "done", StringComparison.OrdinalIgnoreCase))
             {
                 Nav.NavigateTo("/leerling/dit-ben-jij");
                 return;
@@ -278,9 +297,16 @@ else
                 return;
             }
 
-            if (result.NeedsIsland)
+            if (result.NeedsIsland || string.Equals(result.NextStep, "island", StringComparison.OrdinalIgnoreCase))
             {
                 Nav.NavigateTo("/leerling/eiland");
+                return;
+            }
+
+            if (string.Equals(result.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(result.NextPuzzleKey))
+            {
+                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(result.NextPuzzleKey)}");
                 return;
             }
 
@@ -302,12 +328,12 @@ else
 
     private async Task GoPrev()
     {
-        if (_state is null || _state.CurrentIndex <= 0)
+        if (_state is null || _def is null || _state.CurrentIndex <= 0)
         {
             return;
         }
 
-        var prev = Bank.GetByGlobalIndex(_state.CurrentIndex - 1);
+        var prev = _def.Bank.GetByGlobalIndex(_state.CurrentIndex - 1);
         if (prev is null)
         {
             return;
@@ -331,7 +357,7 @@ else
 
     private bool IsWorldDone(string worldKey)
     {
-        if (_state is null)
+        if (_state is null || _def is null)
         {
             return false;
         }
@@ -341,7 +367,7 @@ else
             return _state.IslandDone;
         }
 
-        var items = Bank.AllItems.Where(i => i.WorldKey == worldKey).ToList();
+        var items = _def.Bank.AllItems.Where(i => i.WorldKey == worldKey).ToList();
         return items.Count > 0 && items.All(i => _state.Answers.ContainsKey(i.Id));
     }
 }

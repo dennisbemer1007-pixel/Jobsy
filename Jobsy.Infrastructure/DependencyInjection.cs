@@ -6,6 +6,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
@@ -402,6 +403,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolReportingService, SchoolReportingService>();
         services.AddSingleton<IPupilStoryRenderer, PupilStoryRenderer>();
         services.AddSingleton<IPupilQuestionBank, PupilQuestionBank>();
+        services.AddSingleton<IPupilQuestionSetRegistry, PupilQuestionSetRegistry>();
         services.AddScoped<IPupilResultBuilder, PupilResultBuilder>();
         services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
         services.AddScoped<IPupilPortalService, PupilPortalService>();

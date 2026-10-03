@@ -293,6 +293,52 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Save_item_31_before_island_returns_409_step_pending()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync();
+        using var client = await LoginPupilAsync(seed);
+        var bank = new PupilQuestionBank();
+
+        for (var i = 0; i < 30; i++)
+        {
+            var r = await client.PutAsJsonAsync(
+                $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
+                new PupilAnswerRequest(4));
+            Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+        }
+
+        var blocked = await client.PutAsJsonAsync(
+            $"api/pupil/progress/answers/{bank.AllItems[30].Id}",
+            new PupilAnswerRequest(3));
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+        var body = await blocked.Content.ReadAsStringAsync();
+        Assert.Contains("step_pending", body, StringComparison.Ordinal);
+        Assert.Contains("island", body, StringComparison.OrdinalIgnoreCase);
+
+        // Changing an earlier answer while the island is due stays allowed.
+        var change = await client.PutAsJsonAsync(
+            $"api/pupil/progress/answers/{bank.AllItems[5].Id}",
+            new PupilAnswerRequest(2));
+        Assert.Equal(HttpStatusCode.OK, change.StatusCode);
+    }
+
+    [Fact]
+    public async Task Answer_id_9101_is_404_in_03a()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync();
+        using var client = await LoginPupilAsync(seed);
+        var missing = await client.PutAsJsonAsync(
+            "api/pupil/progress/answers/9101",
+            new PupilAnswerRequest(3));
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        var body = await missing.Content.ReadAsStringAsync();
+        Assert.Contains("not_found", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("wrong_set", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Chips_reject_digits_at_and_first_names_and_enforce_exclusivity()
     {
         await EnableSchoolsAsync(true);

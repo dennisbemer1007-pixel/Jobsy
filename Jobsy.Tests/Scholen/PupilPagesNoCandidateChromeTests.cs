@@ -1,5 +1,6 @@
 using Bunit;
-using Jobsy.Core.Scholen;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Web.Components.Leerling.Scene;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Localization;
@@ -38,9 +39,10 @@ public class PupilPagesNoCandidateChromeTests : BunitContext
     [Fact]
     public void Answer_labels_are_five_likert_values()
     {
-        Assert.Equal(5, PupilWorldCatalog.AnswerLabels.Count);
-        Assert.Equal(1, PupilWorldCatalog.AnswerLabels[0].Value);
-        Assert.Equal(5, PupilWorldCatalog.AnswerLabels[4].Value);
+        var labels = new PupilQuestionSetRegistry().Get(PupilQuestionSet.Groep78).AnswerLabels;
+        Assert.Equal(5, labels.Count);
+        Assert.Equal(1, labels[0].Value);
+        Assert.Equal(5, labels[4].Value);
     }
 
     [Fact]

@@ -5,11 +5,13 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
+@inject IPupilQuestionSetRegistry Registry
 
 <PageTitle>@Culture["Leerling.Island.Title"] · Lobsy</PageTitle>
 
@@ -130,12 +132,13 @@ else
         <div class="ll-lob-zone ll-lob-zone--mobile">
             <LeerlingLobster PlatesShed="@_state.PlatesShed" NewShell="@_state.NewShell" Mobile="true" Size="72" />
         </div>
-        <LeerlingScene Depth="@PupilWorldCatalog.SceneDepth(_state.AnsweredCount)" IsMobile="false" />
+        <LeerlingScene Depth="@(_def?.SceneDepth(_state.AnsweredCount) ?? 0)" IsMobile="false" />
     </div>
 }
 
 @code {
     private PupilProgressStateDto? _state;
+    private PupilQuestionSetDef? _def;
     private bool _loading = true;
     private bool _windowClosed;
     private bool _busy;
@@ -161,8 +164,11 @@ else
             _state = await Api.GetPupilProgressAsync();
             if (_state is null)
             {
+                _def = null;
                 return;
             }
+
+            _def = Registry.Get(_state.QuestionSet);
 
             if (_state.Completed)
             {
@@ -176,13 +182,9 @@ else
                 return;
             }
 
-            if (_state.AnsweredCount < 30)
-            {
-                Nav.NavigateTo("/leerling/reis");
-                return;
-            }
-
-            if (_state.IslandDone && !_state.NeedsIsland)
+            var atIsland = _state.NeedsIsland
+                           || string.Equals(_state.NextStep, "island", StringComparison.OrdinalIgnoreCase);
+            if (!atIsland)
             {
                 Nav.NavigateTo("/leerling/reis");
                 return;
