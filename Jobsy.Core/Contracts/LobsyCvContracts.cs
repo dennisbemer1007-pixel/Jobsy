@@ -27,7 +27,9 @@ public sealed record LobsyCvModel(
     int? MatchPercent,
     string? VacancyTitle,
     string? CompanyName,
+    /// <summary>Not rendered on the PDF (AVG/age discrimination; beslissing 3).</summary>
     DateOnly? DateOfBirth,
+    /// <summary>Not rendered on the PDF (AVG/age discrimination; beslissing 3).</summary>
     int? AgeYears,
     DateTime GeneratedAtUtc,
     string ConsentVersion,
@@ -43,7 +45,9 @@ public sealed record LobsyCvModel(
     double? DistanceKm = null,
     /// <summary>When true, the PDF banner states that the candidate also uploaded their own CV.</summary>
     bool HasUploadedOwnCv = false,
-    /// <summary>Optional "Wie ben ik?" bijlage when the candidate opted in.</summary>
+    /// <summary>
+    /// Not rendered. Callers may still carry the opt-in payload; the PDF never prints AI output (decision 22).
+    /// </summary>
     LobsyCvWhoAmI? WhoAmI = null);
 
 public sealed record LobsyCvWhoAmI(

@@ -1,26 +1,26 @@
 using System.Net;
+using System.Text.Json;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
-using Jobsy.Core.ValueObjects;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
@@ -39,7 +39,6 @@ public class ApplicationsController : ControllerBase
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
-    private readonly IWhoAmIService _whoAmI;
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly ISupportAccessService _supportAccess;
     private readonly IApplicationStatusRecorder _statusRecorder;
@@ -55,7 +54,6 @@ public class ApplicationsController : ControllerBase
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
         IVacancyDiscoveryIndex discoveryIndex,
-        IWhoAmIService whoAmI,
         IPersonalDataAccessLogger accessLog,
         ISupportAccessService supportAccess,
         IApplicationStatusRecorder statusRecorder)
@@ -70,7 +68,6 @@ public class ApplicationsController : ControllerBase
         _notifications = notifications;
         _actionTokens = actionTokens;
         _discoveryIndex = discoveryIndex;
-        _whoAmI = whoAmI;
         _accessLog = accessLog;
         _supportAccess = supportAccess;
         _statusRecorder = statusRecorder;
@@ -922,8 +919,8 @@ public class ApplicationsController : ControllerBase
         application.MatchBreakdownJson = Truncate(matchJson, 4000);
         application.ViaSafetyNet = GuldenMiddenwegRules.RequiresSafetyNetConfirmation(match)
                                    && request.ConfirmLowMatchSafetyNet;
-        var whoAmI = await _whoAmI.GetCvAttachmentAsync(candidate.Id, cancellationToken);
-        application.SnapshotWhoAmIJson = WhoAmISnapshot.Serialize(whoAmI);
+        // New applications do not snapshot the AI "Wie ben ik" story (decision 22). Existing rows stay.
+        application.SnapshotWhoAmIJson = null;
 
         if (vacancy.Kind == VacancyKind.Internship
             && vacancy.ExclusivitySetting is { } excl

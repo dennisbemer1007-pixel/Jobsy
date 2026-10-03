@@ -653,6 +653,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             && a.CandidateUserId == _factory.CandidateId);
         Assert.True(app.ViaSafetyNet);
         Assert.Equal("Ik wil dit toch graag proberen ondanks de afstand.", app.Motivation);
+        Assert.Null(app.SnapshotWhoAmIJson);
         Assert.NotNull(app.MatchPercent);
         Assert.False(string.IsNullOrWhiteSpace(app.EmailVerificationCode));
         Assert.Null(app.EmailVerifiedAt);

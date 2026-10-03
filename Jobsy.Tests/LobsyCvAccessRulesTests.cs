@@ -69,12 +69,15 @@ public class LobsyCvAccessRulesTests
             Vacancy = new Vacancy
             {
                 Title = "Magazijnmedewerker",
-                Company = new Company { Name = "Demo BV", Address = "Industrieweg 1",
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+                Company = new Company
+                {
+                    Name = "Demo BV",
+                    Address = "Industrieweg 1",
+                    VerificationStatus = CompanyVerificationStatus.Verified,
+                    VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                    VerifiedAtUtc = DateTime.UtcNow,
+                    VerificationUpdatedAtUtc = DateTime.UtcNow
+                },
                 Location = new GeoPoint(51.99, 4.21)
             }
         };
@@ -101,6 +104,13 @@ public class LobsyCvAccessRulesTests
         Assert.True(hired.IncludeContactDetails);
         Assert.True(hired.WhatsAppContactAllowed);
         Assert.Equal(new DateOnly(1998, 4, 12), hired.DateOfBirth);
+
+        application.SnapshotWhoAmIJson = """{"story":"ZZ-AI-MARKER-WHOAMI"}""";
+        var ignored = LobsyCvModelFactory.FromApplicationForDownload(
+            application,
+            includePii: true,
+            includeDirectContact: true);
+        Assert.Null(ignored.WhoAmI);
     }
 
     [Fact]
