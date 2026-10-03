@@ -15,7 +15,7 @@ public interface IPupilQuestionSetRegistry
     /// <summary>Throws for unknown values; never falls back to the other test.</summary>
     PupilQuestionSetDef Get(PupilQuestionSet set);
 
-    /// <summary>True for Vo while it still serves the interim LegacyVo bank (until 04).</summary>
+    /// <summary>Always false from 04: LegacyVo is gone. Kept so callers do not need a second cut-over.</summary>
     bool IsLegacy(PupilQuestionSet set);
 
     /// <summary>Returns the def when <paramref name="itemId"/> belongs to that test; otherwise null.</summary>

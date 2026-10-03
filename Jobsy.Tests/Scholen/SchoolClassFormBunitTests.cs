@@ -41,7 +41,8 @@ public class SchoolClassFormBunitTests : BunitContext
 
         Assert.Contains("Middelbare school", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Vragenlijst: Middelbare school", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("100 vragen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("100 vragen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Pauze-eiland", cut.Markup, StringComparison.Ordinal);
 
         var primary = cut.Find("input[value='primary']");
         await primary.ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = "primary" });
