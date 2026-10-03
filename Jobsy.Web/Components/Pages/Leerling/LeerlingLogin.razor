@@ -8,8 +8,6 @@
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IHttpContextAccessor HttpContextAccessor
@@ -100,18 +98,16 @@
     protected override async Task OnInitializedAsync()
     {
         var http = HttpContextAccessor.HttpContext;
-        if (http is not null)
+        // Staff principal is already on HttpContext.User from UseAuthentication.
+        // Signing the cookie in here would run after the circuit response has started.
+        if (http?.User.Identity?.IsAuthenticated == true)
         {
-            var staff = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            if (staff.Succeeded && staff.Principal?.Identity?.IsAuthenticated == true)
-            {
-                var role = staff.Principal.FindFirst(ClaimTypes.Role)?.Value ?? "gebruiker";
-                _staffBlock = string.Format(
-                    System.Globalization.CultureInfo.CurrentCulture,
-                    Culture["Leerling.Login.StaffBusy"],
-                    role);
-                return;
-            }
+            var role = http.User.FindFirst(ClaimTypes.Role)?.Value ?? "gebruiker";
+            _staffBlock = string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                Culture["Leerling.Login.StaffBusy"],
+                role);
+            return;
         }
 
         try { _schools = (await Api.GetPupilSchoolsAsync()).ToList(); }
