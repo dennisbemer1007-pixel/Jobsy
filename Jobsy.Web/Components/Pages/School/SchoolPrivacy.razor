@@ -3,6 +3,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SchoolAdmin")]
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Ui.Enterprise
@@ -68,7 +69,11 @@ else if (_privacy is not null)
 
     <section class="sch-card" id="ouderbrief">
         <h2>@Culture["School.Privacy.Ouderbrief"]</h2>
-        <pre class="sch-ouderbrief">@_privacy.OuderbriefText</pre>
+        @foreach (var letter in _privacy.Ouderbrieven)
+        {
+            <h3>@Culture[letter.QuestionSet == PupilQuestionSet.Groep78 ? "School.QuestionSet.Groep78" : "School.QuestionSet.Vo"]</h3>
+            <pre class="sch-ouderbrief">@letter.Text</pre>
+        }
         <div class="sch-admin-toolbar">
             <button type="button" class="btn-compact" @onclick="CopyLetter">@Culture["School.Privacy.Copy"]</button>
         </div>
@@ -120,7 +125,8 @@ else if (_privacy is not null)
         if (_privacy is null) return;
         try
         {
-            await Js.InvokeVoidAsync("navigator.clipboard.writeText", _privacy.OuderbriefText);
+            var text = string.Join("\n\n", _privacy.Ouderbrieven.Select(l => l.Text));
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", text);
         }
         catch
         {

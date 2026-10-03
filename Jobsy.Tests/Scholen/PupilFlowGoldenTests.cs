@@ -33,15 +33,6 @@ public class PupilFlowGoldenTests : IClassFixture<RoleFunctionalWebAppFactory>
     public PupilFlowGoldenTests(RoleFunctionalWebAppFactory factory) => _factory = factory;
 
     [Fact]
-    public async Task Vo_legacy_flow_matches_pre_refactor_golden_snapshot()
-    {
-        await EnableSchoolsAsync();
-        var seed = await SeedOpenClassAsync(SchoolLevel.Havo, 2, PupilQuestionSet.Vo);
-        var snapshot = await RunFlowAsync(seed);
-        AssertMatchesBaseline(snapshot, "vo-legacy");
-    }
-
-    [Fact]
     public async Task Groep78_flow_matches_pre_refactor_golden_snapshot()
     {
         await EnableSchoolsAsync();
@@ -49,6 +40,8 @@ public class PupilFlowGoldenTests : IClassFixture<RoleFunctionalWebAppFactory>
         var snapshot = await RunFlowAsync(seed);
         AssertMatchesBaseline(snapshot, "groep78");
     }
+
+    // VO no longer shares the 60-item golden; island-at-50 is covered by PupilFlowTests / API tests.
 
     private void AssertMatchesBaseline(GoldenFlowSnapshot snapshot, string label)
     {

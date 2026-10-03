@@ -5,25 +5,31 @@ namespace Jobsy.Core.Scholen.QuestionSets;
 
 /// <summary>
 /// Core registry of pupil tests. No DI dependencies — safe as a singleton in Api and Web.
-/// In 03a Vo maps to the interim <c>LegacyVo</c> def (same 60 items as today).
+/// Groep78 (60 items) and VO (100 items) are fully separate; there is no LegacyVo fallback.
 /// </summary>
 public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
 {
     private readonly Dictionary<PupilQuestionSet, PupilQuestionSetDef> _bySet;
-    private readonly HashSet<PupilQuestionSet> _legacy;
 
     public PupilQuestionSetRegistry()
     {
         var g78Bank = new PupilQuestionBank();
-        var legacyVoBank = new PupilQuestionBank();
-        var worlds = new PupilWorldPlan[]
+        var voBank = new PupilQuestionBankVo();
+        var g78Worlds = new PupilWorldPlan[]
         {
             new("koraalrif", 15),
             new("schatgrot", 15),
             new("vuurtoren", 15),
             new("lagune", 15),
         };
-        var labels = new (int Value, string Key)[]
+        var voWorlds = new PupilWorldPlan[]
+        {
+            new("koraalrif", 25),
+            new("schatgrot", 25),
+            new("vuurtoren", 25),
+            new("lagune", 25),
+        };
+        var g78Labels = new (int Value, string Key)[]
         {
             (1, "Leerling.Answer.No"),
             (2, "Leerling.Answer.NotReally"),
@@ -31,16 +37,24 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             (4, "Leerling.Answer.Quite"),
             (5, "Leerling.Answer.Yes"),
         };
+        var voLabels = new (int Value, string Key)[]
+        {
+            (1, "Leerling.Vo.Answer.1"),
+            (2, "Leerling.Vo.Answer.2"),
+            (3, "Leerling.Vo.Answer.3"),
+            (4, "Leerling.Vo.Answer.4"),
+            (5, "Leerling.Vo.Answer.5"),
+        };
 
         var g78 = new PupilQuestionSetDef(
             Set: PupilQuestionSet.Groep78,
             Key: "g78",
             ScoringVersion: "g78-1",
             Bank: g78Bank,
-            Worlds: worlds,
+            Worlds: g78Worlds,
             IslandAfter: 30,
             PuzzleSlots: [],
-            AnswerLabels: labels,
+            AnswerLabels: g78Labels,
             ItemsPerPlate: 6,
             PlateCount: 10,
             CheerKeyPrefix: "LeerlingQ.Cheer.",
@@ -49,30 +63,28 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             StartTimeKey: "Leerling.Start.NoteTime",
             LabelKey: "School.QuestionSet.Groep78");
 
-        // Interim until 04: existing VO classes keep today's 60-item behaviour.
-        var legacyVo = new PupilQuestionSetDef(
+        var vo = new PupilQuestionSetDef(
             Set: PupilQuestionSet.Vo,
-            Key: "legacy-vo",
-            ScoringVersion: "1",
-            Bank: legacyVoBank,
-            Worlds: worlds,
-            IslandAfter: 30,
+            Key: "vo",
+            ScoringVersion: "vo-1",
+            Bank: voBank,
+            Worlds: voWorlds,
+            IslandAfter: 50,
             PuzzleSlots: [],
-            AnswerLabels: labels,
-            ItemsPerPlate: 6,
+            AnswerLabels: voLabels,
+            ItemsPerPlate: 10,
             PlateCount: 10,
-            CheerKeyPrefix: "LeerlingQ.Cheer.",
+            CheerKeyPrefix: "LeerlingQ.Vo.Cheer.",
             CheerCount: 12,
-            PartBreakAfterIsland: false,
-            StartTimeKey: "Leerling.Start.NoteTime",
+            PartBreakAfterIsland: true,
+            StartTimeKey: "Leerling.Vo.Start.NoteTime",
             LabelKey: "School.QuestionSet.Vo");
 
         _bySet = new Dictionary<PupilQuestionSet, PupilQuestionSetDef>
         {
             [PupilQuestionSet.Groep78] = g78,
-            [PupilQuestionSet.Vo] = legacyVo,
+            [PupilQuestionSet.Vo] = vo,
         };
-        _legacy = [PupilQuestionSet.Vo];
         All = _bySet.Values.ToList();
     }
 
@@ -95,7 +107,11 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             "Unknown pupil question set — no fallback to another test.");
     }
 
-    public bool IsLegacy(PupilQuestionSet set) => _legacy.Contains(set);
+    public bool IsLegacy(PupilQuestionSet set)
+    {
+        _ = set;
+        return false;
+    }
 
     public PupilQuestionSetDef? FindByItemId(PupilQuestionSet set, string itemId)
     {

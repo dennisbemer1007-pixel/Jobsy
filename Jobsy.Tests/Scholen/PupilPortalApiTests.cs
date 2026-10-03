@@ -49,6 +49,8 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
         var badBody = await bad.Content.ReadAsStringAsync();
         Assert.Contains("Die code klopt niet", badBody, StringComparison.Ordinal);
+        Assert.Contains("docent", badBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("leraar", badBody, StringComparison.Ordinal);
         Assert.DoesNotContain(seed.PlainCode, badBody, StringComparison.OrdinalIgnoreCase);
 
         var first = await client.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
@@ -63,7 +65,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.NotNull(progress);
         Assert.Equal(0, progress!.CurrentIndex);
 
-        var bank = new PupilQuestionBank();
+        var bank = new PupilQuestionBankVo();
         var item0 = bank.AllItems[0];
         var save = await client.PutAsJsonAsync(
             $"api/pupil/progress/answers/{item0.Id}",
@@ -104,7 +106,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             await db.SaveChangesAsync();
         }
 
-        var bank = new PupilQuestionBank();
+        var bank = new PupilQuestionBankVo();
         var save = await client.PutAsJsonAsync(
             $"api/pupil/progress/answers/{bank.AllItems[0].Id}",
             new PupilAnswerRequest(3));
@@ -221,22 +223,22 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
-    public async Task Completing_60_items_with_island_writes_result_and_redirect_path()
+    public async Task Completing_100_vo_items_with_island_writes_result_and_redirect_path()
     {
         await EnableSchoolsAsync(true);
         var seed = await SeedOpenClassAsync();
         using var client = await LoginPupilAsync(seed);
-        var bank = new PupilQuestionBank();
+        var bank = new PupilQuestionBankVo();
 
-        // First 30 → needs island
-        for (var i = 0; i < 30; i++)
+        // First 50 → needs island
+        for (var i = 0; i < 50; i++)
         {
             var item = bank.AllItems[i];
             var r = await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{item.Id}",
                 new PupilAnswerRequest(5));
             Assert.Equal(HttpStatusCode.OK, r.StatusCode);
-            if (i == 29)
+            if (i == 49)
             {
                 var body = await r.Content.ReadFromJsonAsync<PupilAnswerResponse>(Json);
                 Assert.True(body!.NeedsIsland);
@@ -254,8 +256,8 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             null));
         Assert.Equal(HttpStatusCode.OK, chips.StatusCode);
 
-        // Remaining 30
-        for (var i = 30; i < 60; i++)
+        // Remaining 50
+        for (var i = 50; i < 100; i++)
         {
             var item = bank.AllItems[i];
             var r = await client.PutAsJsonAsync(
@@ -272,7 +274,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
             var result = await db.PupilResults.AsNoTracking().FirstOrDefaultAsync(r => r.PupilCodeId == seed.CodeId);
             Assert.NotNull(result);
-            Assert.Equal("1", result!.ScoringVersion);
+            Assert.Equal("vo-1", result!.ScoringVersion);
             Assert.False(string.IsNullOrWhiteSpace(result.CompetenceScoresJson));
             Assert.False(string.IsNullOrWhiteSpace(result.HollandCode));
             Assert.False(string.IsNullOrWhiteSpace(result.TopValue));
@@ -293,14 +295,14 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
-    public async Task Save_item_31_before_island_returns_409_step_pending()
+    public async Task Save_item_51_before_island_returns_409_step_pending()
     {
         await EnableSchoolsAsync(true);
         var seed = await SeedOpenClassAsync();
         using var client = await LoginPupilAsync(seed);
-        var bank = new PupilQuestionBank();
+        var bank = new PupilQuestionBankVo();
 
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < 50; i++)
         {
             var r = await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
@@ -309,7 +311,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         }
 
         var blocked = await client.PutAsJsonAsync(
-            $"api/pupil/progress/answers/{bank.AllItems[30].Id}",
+            $"api/pupil/progress/answers/{bank.AllItems[50].Id}",
             new PupilAnswerRequest(3));
         Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
         var body = await blocked.Content.ReadAsStringAsync();
@@ -324,18 +326,48 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
-    public async Task Answer_id_9101_is_404_in_03a()
+    public async Task Answer_id_9101_succeeds_on_vo_and_9001_is_wrong_set()
     {
         await EnableSchoolsAsync(true);
         var seed = await SeedOpenClassAsync();
         using var client = await LoginPupilAsync(seed);
-        var missing = await client.PutAsJsonAsync(
+        var ok = await client.PutAsJsonAsync(
             "api/pupil/progress/answers/9101",
             new PupilAnswerRequest(3));
-        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
-        var body = await missing.Content.ReadAsStringAsync();
-        Assert.Contains("not_found", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("wrong_set", body, StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+
+        var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
+        Assert.Equal(100, progress!.TotalItems);
+
+        var foreign = await client.PutAsJsonAsync(
+            "api/pupil/progress/answers/9001",
+            new PupilAnswerRequest(3));
+        Assert.Equal(HttpStatusCode.BadRequest, foreign.StatusCode);
+        var body = await foreign.Content.ReadAsStringAsync();
+        Assert.Contains("wrong_set", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Groep78_class_rejects_9101_as_wrong_set_and_has_60_items()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync(
+            level: SchoolLevel.Groep78, year: 8, questionSet: PupilQuestionSet.Groep78);
+        using var client = await LoginPupilAsync(seed);
+        var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
+        Assert.Equal(60, progress!.TotalItems);
+
+        var g78 = await client.PutAsJsonAsync(
+            "api/pupil/progress/answers/9001",
+            new PupilAnswerRequest(3));
+        Assert.Equal(HttpStatusCode.OK, g78.StatusCode);
+
+        var foreign = await client.PutAsJsonAsync(
+            "api/pupil/progress/answers/9101",
+            new PupilAnswerRequest(3));
+        Assert.Equal(HttpStatusCode.BadRequest, foreign.StatusCode);
+        var body = await foreign.Content.ReadAsStringAsync();
+        Assert.Contains("wrong_set", body, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -344,8 +376,8 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         await EnableSchoolsAsync(true);
         var seed = await SeedOpenClassAsync();
         using var client = await LoginPupilAsync(seed);
-        var bank = new PupilQuestionBank();
-        for (var i = 0; i < 30; i++)
+        var bank = new PupilQuestionBankVo();
+        for (var i = 0; i < 50; i++)
         {
             var r = await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
@@ -369,7 +401,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         var ok = await client.PutAsJsonAsync("api/pupil/progress/chips", new PupilChipsRequest(
             ["sport", "gamen"],
-            ["sport", "lang-stilzitten"], // sport overlap → dropped from dislikes
+            ["sport", "lang-stilzitten"],
             "paardrijden",
             null));
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
@@ -425,7 +457,11 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         await db.SaveChangesAsync();
     }
 
-    private async Task<SeedInfo> SeedOpenClassAsync(bool withTeacher = false)
+    private async Task<SeedInfo> SeedOpenClassAsync(
+        bool withTeacher = false,
+        SchoolLevel level = SchoolLevel.Havo,
+        int year = 2,
+        PupilQuestionSet questionSet = PupilQuestionSet.Vo)
     {
         await using var scope = _factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
@@ -449,9 +485,10 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         {
             Id = Guid.NewGuid(),
             SchoolId = school.Id,
-            Name = "2B",
-            Level = SchoolLevel.Havo,
-            Year = 2,
+            Name = questionSet == PupilQuestionSet.Groep78 ? "8A" : "2B",
+            Level = level,
+            Year = year,
+            QuestionSet = questionSet,
             SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
             PupilCount = 3,
             TestWindow = TestWindowState.Open,

@@ -4,6 +4,8 @@
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Authentication
@@ -61,7 +63,7 @@
                         <option value="">@Culture["Leerling.Login.ClassPlaceholder"]</option>
                         @foreach (var c in _classes)
                         {
-                            <option value="@c.Id">@c.Label</option>
+                            <option value="@c.Id" selected="@(c.Id == ClassId)">@c.Label</option>
                         }
                     </select>
                 </label>
@@ -87,6 +89,8 @@
 @code {
     [SupplyParameterFromQuery(Name = "error")] public string? ErrorQuery { get; set; }
     [SupplyParameterFromQuery(Name = "schoolId")] public Guid? SchoolId { get; set; }
+    [SupplyParameterFromQuery(Name = "classId")] public Guid? ClassId { get; set; }
+    [SupplyParameterFromQuery(Name = "questionSet")] public string? QuestionSetQuery { get; set; }
 
     private List<PupilSchoolOptionDto> _schools = [];
     private List<PupilClassOptionDto> _classes = [];
@@ -112,16 +116,6 @@
             }
         }
 
-        _error = ErrorQuery switch
-        {
-            "invalid" => Culture["Leerling.Login.Error.Invalid"],
-            "cooldown" => Culture["Leerling.Login.Error.Cooldown"],
-            "window" => Culture["Leerling.Login.Error.Window"],
-            "staff" => Culture["Leerling.Login.Error.Staff"],
-            "retry" => Culture["Leerling.Login.Error.Retry"],
-            _ => null
-        };
-
         try { _schools = (await Api.GetPupilSchoolsAsync()).ToList(); }
         catch { _schools = []; }
 
@@ -130,5 +124,36 @@
             try { _classes = (await Api.GetPupilClassesAsync(sid) ?? []).ToList(); }
             catch { _classes = []; }
         }
+
+        var errorSet = ResolveErrorSet();
+        _error = ErrorQuery switch
+        {
+            "invalid" => Culture[PupilCopy.Key(errorSet, "Leerling.Login.Error.Invalid")],
+            "cooldown" => Culture[PupilCopy.Key(errorSet, "Leerling.Login.Error.Cooldown")],
+            "window" => Culture[PupilCopy.Key(errorSet, "Leerling.Login.Error.Window")],
+            "staff" => Culture["Leerling.Login.Error.Staff"],
+            "retry" => Culture["Leerling.Login.Error.Retry"],
+            _ => null
+        };
+    }
+
+    private PupilQuestionSet ResolveErrorSet()
+    {
+        if (string.Equals(QuestionSetQuery, "Vo", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(QuestionSetQuery, "2", StringComparison.Ordinal))
+        {
+            return PupilQuestionSet.Vo;
+        }
+
+        if (ClassId is Guid cid)
+        {
+            var match = _classes.FirstOrDefault(c => c.Id == cid);
+            if (match is not null)
+            {
+                return match.QuestionSet;
+            }
+        }
+
+        return PupilQuestionSet.Groep78;
     }
 }

@@ -10,7 +10,8 @@ public sealed record PupilClassOptionDto(
     string ClassName,
     SchoolLevel Level,
     int Year,
-    bool ReadOnly);
+    bool ReadOnly,
+    PupilQuestionSet QuestionSet = PupilQuestionSet.Vo);
 
 public sealed record PupilLoginRequest(Guid SchoolId, Guid ClassId, string Code);
 
@@ -83,7 +84,8 @@ public sealed record PupilErrorDto(
     string Error,
     string Message,
     string? NextStep = null,
-    string? NextPuzzleKey = null);
+    string? NextPuzzleKey = null,
+    PupilQuestionSet? QuestionSet = null);
 
 public sealed record PupilResultPageDto(
     string ClassLabel,
@@ -93,7 +95,9 @@ public sealed record PupilResultPageDto(
     IReadOnlyList<string> Likes,
     IReadOnlyList<string> Dislikes,
     DreamJobRouteStubDto? DreamJob,
-    string? DreamJobKey);
+    string? DreamJobKey,
+    int TotalItems = 60,
+    PupilQuestionSet QuestionSet = PupilQuestionSet.Vo);
 
 public sealed record PupilDreamJobRequest(string? Key);
 

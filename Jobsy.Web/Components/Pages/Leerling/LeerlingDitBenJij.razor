@@ -45,7 +45,7 @@ else
 
         <section class="ll-card">
             <p class="ll-question__meta">
-                <span class="ll-pill">@Culture["LeerlingStory.DonePill"]</span>
+                <span class="ll-pill">@string.Format(Culture["LeerlingStory.DonePill"], _result.TotalItems)</span>
             </p>
             <h1>@Culture["LeerlingStory.Title"]</h1>
             <p class="ll-result__story">@_result.Story.Body</p>

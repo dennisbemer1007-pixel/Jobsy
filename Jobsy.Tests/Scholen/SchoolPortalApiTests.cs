@@ -367,6 +367,45 @@ public class SchoolPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Equal(TestWindowState.Closed, detail!.TestWindow);
     }
 
+    [Fact]
+    public async Task Privacy_ouderbrief_matches_tests_the_school_has()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminVo, _, _) = await SeedSchoolStaffAsync(withClass: true);
+        using var voClient = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminVo);
+        var voPrivacy = await voClient.GetFromJsonAsync<SchoolPrivacyDto>("api/school/privacy", Json);
+        Assert.NotNull(voPrivacy);
+        Assert.Single(voPrivacy!.Ouderbrieven);
+        Assert.Equal(PupilQuestionSet.Vo, voPrivacy.Ouderbrieven[0].QuestionSet);
+        Assert.Contains("100 korte vragen", voPrivacy.Ouderbrieven[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("60 kindvriendelijke", voPrivacy.Ouderbrieven[0].Text, StringComparison.Ordinal);
+
+        var (adminMix, schoolMix, _) = await SeedSchoolStaffAsync(withClass: true, name: "Mix College", domain: "mixcollege.nl");
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            db.SchoolClasses.Add(new SchoolClass
+            {
+                Id = Guid.NewGuid(),
+                SchoolId = schoolMix,
+                Name = "8A",
+                Level = SchoolLevel.Groep78,
+                QuestionSet = PupilQuestionSet.Groep78,
+                Year = 8,
+                SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+                PupilCount = 5,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+
+        using var mixClient = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminMix);
+        var mix = await mixClient.GetFromJsonAsync<SchoolPrivacyDto>("api/school/privacy", Json);
+        Assert.Equal(2, mix!.Ouderbrieven.Count);
+        Assert.Contains(mix.Ouderbrieven, l => l.QuestionSet == PupilQuestionSet.Groep78 && l.Text.Contains("60 korte vragen", StringComparison.Ordinal));
+        Assert.Contains(mix.Ouderbrieven, l => l.QuestionSet == PupilQuestionSet.Vo && l.Text.Contains("100 korte vragen", StringComparison.Ordinal));
+    }
+
     private async Task EnableSchoolsAsync(bool enabled, bool perCode)
     {
         await using var scope = _factory.Services.CreateAsyncScope();
