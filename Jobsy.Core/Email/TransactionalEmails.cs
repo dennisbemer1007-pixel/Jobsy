@@ -215,6 +215,8 @@ public static partial class TransactionalEmails
             "reportdecided" => ReportDecided(
                 ctx.PublicWebBaseUrl, ctx.VacancyTitle, "Weggehaald", "De tekst vraagt om gegevens die niet mogen.",
                 new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),
+            "partnerconsentreconfirmreminder" => PartnerConsentReconfirmReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "contentremoved" => ContentRemoved(
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.VacancyTitle, "Weggehaald",
                 "De tekst vraagt om gegevens die niet mogen.", new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),

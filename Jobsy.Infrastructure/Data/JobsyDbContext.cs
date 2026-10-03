@@ -100,6 +100,10 @@ public class JobsyDbContext : DbContext
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
     public DbSet<PhoneVerificationChallenge> PhoneVerificationChallenges => Set<PhoneVerificationChallenge>();
+    public DbSet<PassportPartner> PassportPartners => Set<PassportPartner>();
+    public DbSet<PassportPartnerCode> PassportPartnerCodes => Set<PassportPartnerCode>();
+    public DbSet<PassportPartnerCandidateLink> PassportPartnerCandidateLinks => Set<PassportPartnerCandidateLink>();
+    public DbSet<PassportAccessLog> PassportAccessLogs => Set<PassportAccessLog>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
 #pragma warning disable CS0618 // Table kept until the public-pages 08 cleanup migration drops it.
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
@@ -1583,6 +1587,78 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PassportPartnersEnabled).HasDefaultValue(false);
             entity.Property(e => e.PassportPdfV2Enabled).HasDefaultValue(false);
             entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
+        });
+
+        modelBuilder.Entity<PassportPartner>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DisplayName).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.LogoContentType).HasMaxLength(32);
+            entity.Property(e => e.TermsVersion).HasMaxLength(32);
+            entity.Property(e => e.MaxBranches).HasDefaultValue(1);
+            entity.HasIndex(e => e.CompanyId).IsUnique();
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.TermsAcceptedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PassportPartnerCode>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CodeLookupHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CodeDisplay).HasMaxLength(7).IsRequired();
+            entity.HasIndex(e => e.CodeLookupHash).IsUnique();
+            entity.HasOne(e => e.PassportPartner)
+                .WithMany()
+                .HasForeignKey(e => e.PassportPartnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.BranchCompany)
+                .WithMany()
+                .HasForeignKey(e => e.BranchCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PassportPartnerCandidateLink>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.HasIndex(e => new { e.CandidateUserId, e.PassportPartnerId }).IsUnique();
+            entity.HasOne(e => e.Candidate)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.PassportPartner)
+                .WithMany()
+                .HasForeignKey(e => e.PassportPartnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.PartnerCode)
+                .WithMany()
+                .HasForeignKey(e => e.PartnerCodeId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PassportAccessLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.OccurredAtUtc);
+            entity.HasIndex(e => e.CandidateUserId);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.ViewerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<PassportPartner>()
+                .WithMany()
+                .HasForeignKey(e => e.PassportPartnerId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<PlatformCompanySettings>(entity =>

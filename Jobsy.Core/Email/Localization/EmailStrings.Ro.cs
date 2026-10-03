@@ -504,6 +504,12 @@ internal static class EmailStringsRo
         ["Email.ContentRemoved.Appeal"] = "Vrei să faci contestație? Scrie la {0} în 6 luni.",
         ["Email.ContentRemoved.Rules"] = "Citește regulile din condițiile de utilizare pe Lobsy.",
         ["Email.ContentRemoved.Cta"] = "Către joburile voastre",
+        ["Email.PartnerConsentReconfirmReminder.Subject"] = "Confirmă din nou că {0} îți poate vedea pașaportul",
+        ["Email.PartnerConsentReconfirmReminder.Preheader"] = "Acordul tău expiră în două săptămâni",
+        ["Email.PartnerConsentReconfirmReminder.Heading"] = "Această agenție poate vedea în continuare pașaportul?",
+        ["Email.PartnerConsentReconfirmReminder.P1"] = "{0} îți vede pașaportul acum. Peste două săptămâni se oprește, dacă nu confirmi din nou.",
+        ["Email.PartnerConsentReconfirmReminder.Cta"] = "Vezi acordul",
+        ["Email.Reason.PassportShare"] = "Primești acest e-mail pentru că ai lăsat o agenție să-ți vadă pașaportul.",
 
     };
 }

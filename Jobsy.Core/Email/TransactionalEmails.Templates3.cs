@@ -264,6 +264,24 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
+    public static ComposedEmail PartnerConsentReconfirmReminder(
+        string? baseUrl,
+        string recipientName,
+        string partnerName,
+        EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var href = EmailLayout.Absolute(baseUrl, "/candidate/paspoort/delen");
+        return Finish(Doc("PartnerConsentReconfirmReminder",
+            Sf(c, "Email.PartnerConsentReconfirmReminder.Subject", partnerName),
+            S(c, "Email.PartnerConsentReconfirmReminder.Preheader"),
+            S(c, "Email.PartnerConsentReconfirmReminder.Heading"),
+            [P(Sf(c, "Email.PartnerConsentReconfirmReminder.P1", partnerName))],
+            Button(S(c, "Email.PartnerConsentReconfirmReminder.Cta"), href),
+            greeting: GreetOther(c, recipientName),
+            culture: c), baseUrl);
+    }
+
     public static ComposedEmail EmailSignUpCode(string? baseUrl, string code, string? culture)
     {
         var c = EmailCulture.ForLanguage(culture);

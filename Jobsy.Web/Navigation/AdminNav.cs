@@ -52,6 +52,8 @@ public static class AdminNav
                 [], IsAvailable: true, CountKey: "org-requests"),
             new("scholen", "Nav.Scholen", "/admin/scholen", NavIcons.Companies,
                 ["/admin/scholen/rapportage"], IsAvailable: true),
+            new("passport-partners", "AdminNav.PassportPartners", "/admin/paspoortpartners", NavIcons.Shared,
+                [], IsAvailable: true),
             new("wa-verify", "Nav.WerkgeverVerificatie", "/admin/werkgeververificatie", NavIcons.Companies,
                 [], IsAvailable: true),
         ]),

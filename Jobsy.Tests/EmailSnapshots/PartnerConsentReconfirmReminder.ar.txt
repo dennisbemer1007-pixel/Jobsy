@@ -1,0 +1,29 @@
+KEY: PartnerConsentReconfirmReminder
+SUBJECT: أكد مجدداً أن Bakkerij De Gouden Korrel يمكنه رؤية جوازك
+PREHEADER: تنتهي موافقتك خلال أسبوعين
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+هل تبقى هذه الوكالة قادرة على رؤية جوازك؟
+
+Bakkerij De Gouden Korrel يرى جوازك الآن. يتوقف ذلك بعد أسبوعين ما لم تؤكد
+من جديد.
+
+راجع الموافقة: https://lobsy.nl/candidate/paspoort/delen
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك سمحت لوكالة برؤية جوازك.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: هل تبقى هذه الوكالة قادرة على رؤية جوازك؟
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: راجع الموافقة -> https://lobsy.nl/candidate/paspoort/delen
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

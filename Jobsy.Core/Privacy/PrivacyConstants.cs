@@ -10,6 +10,9 @@ public static class PrivacyConstants
     /// <summary>Version of the separate optional test/AI and talent-pool consents.</summary>
     public const string CandidateProfilingConsentVersion = "2026-09-26";
 
+    /// <summary>Version of the candidate's consent to share a passport with one partner.</summary>
+    public const string PartnerShareConsentVersion = "2026-10-03";
+
     public const int PlatformLogRetentionDays = 90;
 
     /// <summary>

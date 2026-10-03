@@ -1,0 +1,30 @@
+KEY: PartnerConsentReconfirmReminder
+SUBJECT: Bevestig opnieuw dat Bakkerij De Gouden Korrel je paspoort mag zien
+PREHEADER: Je toestemming loopt over twee weken af
+KIND: Essential
+--- TEXT ---
+Hallo Alex,
+
+Mag dit bureau je paspoort blijven zien?
+========================================
+
+Bakkerij De Gouden Korrel mag je paspoort nu zien. Over twee weken stopt
+dat, tenzij je het opnieuw bevestigt.
+
+Toestemming bekijken: https://lobsy.nl/candidate/paspoort/delen
+
+Team Lobsy
+
+Je krijgt deze mail omdat je een bureau toestemming gaf om je paspoort te zien.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Mag dit bureau je paspoort blijven zien?
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Toestemming bekijken -> https://lobsy.nl/candidate/paspoort/delen
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -346,6 +346,10 @@ public static class DependencyInjection
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
         services.AddSingleton<ISmsSender, SmsSenderStub>();
         services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
+        services.AddScoped<PassportPartnerService>();
+        services.AddScoped<IPassportPartnerService>(sp => sp.GetRequiredService<PassportPartnerService>());
+        services.AddScoped<PassportPartnerConsentJob>();
+        services.AddHostedService<PassportPartnerConsentHostedService>();
         services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Infrastructure.Features.FeatureFlags>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<ILegalIdentity, LegalIdentityService>();

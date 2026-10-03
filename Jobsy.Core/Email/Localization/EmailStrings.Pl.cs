@@ -504,6 +504,12 @@ internal static class EmailStringsPl
         ["Email.ContentRemoved.Appeal"] = "Chcesz złożyć sprzeciw? Napisz na {0} w ciągu 6 miesięcy.",
         ["Email.ContentRemoved.Rules"] = "Zasady znajdziesz w warunkach korzystania na Lobsy.",
         ["Email.ContentRemoved.Cta"] = "Do Waszych ofert",
+        ["Email.PartnerConsentReconfirmReminder.Subject"] = "Potwierdź ponownie, że {0} może widzieć Twój paszport",
+        ["Email.PartnerConsentReconfirmReminder.Preheader"] = "Twoja zgoda wygasa za dwa tygodnie",
+        ["Email.PartnerConsentReconfirmReminder.Heading"] = "Czy ta agencja może nadal widzieć Twój paszport?",
+        ["Email.PartnerConsentReconfirmReminder.P1"] = "{0} widzi teraz Twój paszport. Za dwa tygodnie to się skończy, chyba że potwierdzisz ponownie.",
+        ["Email.PartnerConsentReconfirmReminder.Cta"] = "Sprawdź zgodę",
+        ["Email.Reason.PassportShare"] = "Dostajesz tę wiadomość, bo pozwoliłeś agencji zobaczyć swój paszport.",
 
     };
 }

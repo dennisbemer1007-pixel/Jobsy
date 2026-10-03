@@ -417,6 +417,64 @@ public sealed class PrivacyDataService : IPrivacyDataService
         });
         await _db.SaveChangesAsync(cancellationToken);
 
+        var passportPartnerLinks = await _db.PassportPartnerCandidateLinks.AsNoTracking()
+            .Where(l => l.CandidateUserId == user.Id)
+            .Select(l => new
+            {
+                PartnerName = l.PassportPartner!.DisplayName,
+                Type = l.PassportPartner.Company == null
+                    ? null
+                    : l.PassportPartner.Company.Type == CompanyType.Intermediary ? "Uitzendbureau" : "Werkgever",
+                l.StartedAtUtc,
+                l.ConsentGivenAtUtc,
+                l.ContactConsentAtUtc,
+                l.ReconfirmDueAtUtc,
+                l.SuspendedAtUtc,
+                l.RevokedAtUtc,
+                l.RevokedReason
+            })
+            .ToListAsync(cancellationToken);
+        var passportPartnerLinkExport = passportPartnerLinks.Select(l => new
+        {
+            l.PartnerName,
+            l.Type,
+            l.StartedAtUtc,
+            l.ConsentGivenAtUtc,
+            l.ContactConsentAtUtc,
+            l.ReconfirmDueAtUtc,
+            l.SuspendedAtUtc,
+            l.RevokedAtUtc,
+            l.RevokedReason,
+            Status = l.RevokedAtUtc is not null
+                ? "revoked"
+                : l.SuspendedAtUtc is not null
+                    ? "suspended"
+                    : l.ConsentGivenAtUtc is not null
+                        ? "active"
+                        : "pending"
+        }).ToList();
+
+        var accessRows = await _db.PassportAccessLogs.AsNoTracking()
+            .Where(l => l.CandidateUserId == user.Id)
+            .OrderBy(l => l.OccurredAtUtc)
+            .Select(l => new { l.PassportPartnerId, l.Kind, l.OccurredAtUtc })
+            .ToListAsync(cancellationToken);
+        var accessPartnerIds = accessRows
+            .Where(l => l.PassportPartnerId != null)
+            .Select(l => l.PassportPartnerId!.Value)
+            .Distinct()
+            .ToList();
+        var accessPartnerNames = await _db.PassportPartners.AsNoTracking()
+            .Where(p => accessPartnerIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.DisplayName })
+            .ToListAsync(cancellationToken);
+        var passportAccessLog = accessRows.Select(l => new
+        {
+            PartnerName = accessPartnerNames.FirstOrDefault(p => p.Id == l.PassportPartnerId)?.DisplayName,
+            Kind = l.Kind.ToString(),
+            l.OccurredAtUtc
+        }).ToList();
+
         return new
         {
             ExportedAtUtc = DateTime.UtcNow,
@@ -725,7 +783,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 Sollicitaties = applications
                     .Where(a => !string.IsNullOrWhiteSpace(a.SnapshotWhoAmIJson))
                     .Select(a => new { a.Id, a.VacancyId, a.SnapshotWhoAmIJson })
-            }
+            },
+            PassportPartnerLinks = passportPartnerLinkExport,
+            PassportAccessLog = passportAccessLog
         };
     }
 
@@ -1215,6 +1275,38 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (phoneChallenges.Count > 0)
         {
             _db.PhoneVerificationChallenges.RemoveRange(phoneChallenges);
+        }
+
+        var partnerLinks = await _db.PassportPartnerCandidateLinks
+            .Where(l => l.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (partnerLinks.Count > 0)
+        {
+            _db.PassportPartnerCandidateLinks.RemoveRange(partnerLinks);
+        }
+
+        var partnerLogs = await _db.PassportAccessLogs
+            .Where(l => l.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (partnerLogs.Count > 0)
+        {
+            _db.PassportAccessLogs.RemoveRange(partnerLogs);
+        }
+
+        var viewedLogs = await _db.PassportAccessLogs
+            .Where(l => l.ViewerUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var row in viewedLogs)
+        {
+            row.ViewerUserId = null;
+        }
+
+        var termsAccepted = await _db.PassportPartners
+            .Where(p => p.TermsAcceptedByUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var partner in termsAccepted)
+        {
+            partner.TermsAcceptedByUserId = null;
         }
 
         var feedbackRows = await _db.PlatformFeedbacks

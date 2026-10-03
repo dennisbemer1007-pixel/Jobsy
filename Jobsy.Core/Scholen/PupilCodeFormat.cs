@@ -1,72 +1,20 @@
-using System.Text;
-
 namespace Jobsy.Core.Scholen;
 
-/// <summary>Pupil code alphabet and format helpers (D5).</summary>
+/// <summary>Pupil code alphabet and format helpers (D5). Same behaviour as <see cref="Jobsy.Core.Rules.ShortCodeFormat"/>.</summary>
 public static class PupilCodeFormat
 {
     /// <summary>30 characters; no I, L, O, 0, 1.</summary>
-    public const string Alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    public const string Alphabet = Jobsy.Core.Rules.ShortCodeFormat.Alphabet;
 
-    public const int Length = 6;
+    public const int Length = Jobsy.Core.Rules.ShortCodeFormat.Length;
 
-    public static string Normalize(string input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            throw new ArgumentException("Code is verplicht.", nameof(input));
-        }
-
-        var sb = new StringBuilder(Length);
-        foreach (var ch in input)
-        {
-            if (ch is ' ' or '-' or '\t')
-            {
-                continue;
-            }
-
-            var upper = char.ToUpperInvariant(ch);
-            if (Alphabet.IndexOf(upper) < 0)
-            {
-                throw new ArgumentException("Code bevat ongeldige tekens.", nameof(input));
-            }
-
-            sb.Append(upper);
-        }
-
-        if (sb.Length != Length)
-        {
-            throw new ArgumentException($"Code moet {Length} tekens zijn.", nameof(input));
-        }
-
-        return sb.ToString();
-    }
+    public static string Normalize(string input) => Jobsy.Core.Rules.ShortCodeFormat.Normalize(input);
 
     public static bool TryNormalize(string? input, out string normalized)
-    {
-        normalized = string.Empty;
-        try
-        {
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                return false;
-            }
+        => Jobsy.Core.Rules.ShortCodeFormat.TryNormalize(input, out normalized);
 
-            normalized = Normalize(input);
-            return true;
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-    }
-
-    public static bool IsWellFormed(string? input) => TryNormalize(input, out _);
+    public static bool IsWellFormed(string? input) => Jobsy.Core.Rules.ShortCodeFormat.IsWellFormed(input);
 
     /// <summary>Display form <c>K7Q-M2P</c>.</summary>
-    public static string Display(string code)
-    {
-        var n = Normalize(code);
-        return $"{n[..3]}-{n[3..]}";
-    }
+    public static string Display(string code) => Jobsy.Core.Rules.ShortCodeFormat.Display(code);
 }

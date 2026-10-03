@@ -1,0 +1,137 @@
+@page "/admin/paspoortpartners"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using System.Net.Http.Json
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["AdminNav.PassportPartners"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.PassportPartners"]" Lead="@Culture["Admin.PassportPartners.Lead"]">
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+
+    <section class="detail-card">
+        <h2>@Culture["Admin.PassportPartners.Create"]</h2>
+        <label class="field-label" for="partner-company">@Culture["Admin.PassportPartners.Company"]</label>
+        <input id="partner-company" class="text-input" @bind="_companyId" />
+        <label class="field-label" for="partner-name">@Culture["Admin.PassportPartners.Name"]</label>
+        <input id="partner-name" class="text-input" @bind="_displayName" maxlength="80" />
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="CreateAsync">@Culture["Admin.PassportPartners.Create"]</button>
+    </section>
+
+    @if (_partners.Count == 0)
+    {
+        <p class="muted">@Culture["Admin.PassportPartners.Empty"]</p>
+    }
+    else
+    {
+        <AdminDataTable>
+            <Header>
+                <th scope="col">@Culture["Admin.PassportPartners.Name"]</th>
+                <th scope="col">@Culture["Admin.PassportPartners.Type"]</th>
+                <th scope="col">@Culture["Admin.PassportPartners.Active"]</th>
+                <th scope="col">@Culture["Admin.PassportPartners.Codes"]</th>
+            </Header>
+            <Rows>
+                @foreach (var partner in _partners)
+                {
+                    <tr>
+                        <td>@partner.DisplayName</td>
+                        <td>@partner.Type</td>
+                        <td>
+                            <button type="button" class="btn-compact" @onclick="() => ToggleAsync(partner)">
+                                @(partner.IsActive ? Culture["Passport.Shared.Yes"] : Culture["Passport.Shared.No"])
+                            </button>
+                        </td>
+                        <td>
+                            <a href="@($"api/admin/passport-partners/{partner.Id}/codes.pdf")">PDF</a>
+                        </td>
+                    </tr>
+                }
+            </Rows>
+        </AdminDataTable>
+    }
+
+    <PassportPartnerLogoField Accepted="UploadLogoAsync" />
+</AdminPageShell>
+
+@code {
+    private readonly List<PassportPartnerAdminItem> _partners = [];
+    private string? _error;
+    private string _companyId = "";
+    private string _displayName = "";
+    private Guid? _logoTargetId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var rows = await Api.GetAdminPassportPartnersAsync();
+            _partners.AddRange(rows);
+            _logoTargetId = _partners.FirstOrDefault()?.Id;
+        }
+        catch (Exception)
+        {
+            _error = Culture["Admin.PassportPartners.Failed"];
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (!Guid.TryParse(_companyId, out var companyId))
+        {
+            _error = Culture["Admin.PassportPartners.Company"];
+            return;
+        }
+
+        try
+        {
+            await Api.CreateAdminPassportPartnerAsync(companyId, _displayName, null);
+            _partners.Clear();
+            _partners.AddRange(await Api.GetAdminPassportPartnersAsync());
+            _error = null;
+        }
+        catch (Exception)
+        {
+            _error = Culture["Admin.PassportPartners.Failed"];
+        }
+    }
+
+    private async Task ToggleAsync(PassportPartnerAdminItem partner)
+    {
+        try
+        {
+            await Api.SetAdminPassportPartnerActiveAsync(partner.Id, !partner.IsActive);
+            partner.IsActive = !partner.IsActive;
+        }
+        catch (Exception)
+        {
+            _error = Culture["Admin.PassportPartners.Failed"];
+        }
+    }
+
+    private async Task UploadLogoAsync(IBrowserFile file)
+    {
+        if (_logoTargetId is not Guid id)
+        {
+            return;
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream(PassportPartnerLogoRules.MaxBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            await Api.UploadAdminPassportPartnerLogoAsync(id, file.Name, file.ContentType, buffer.ToArray());
+        }
+        catch (Exception)
+        {
+            _error = Culture["Admin.PassportPartners.Failed"];
+        }
+    }
+}

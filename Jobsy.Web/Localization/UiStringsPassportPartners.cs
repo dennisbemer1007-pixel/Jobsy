@@ -73,5 +73,84 @@ public static class UiStringsPassportPartners
         Add("Contract.seizoen", "Seizoen", "Seasonal", "Sezonowy", "Sezonier", "موسمي");
         Add("Contract.oproep", "Oproep", "On-call", "Na wezwanie", "La chemare", "عند الطلب");
         Add("Contract.geen-voorkeur", "Geen voorkeur", "No preference", "Bez preferencji", "Fără preferință", "بدون تفضيل");
+
+        Add("Admin.PassportPartners.Lead",
+            "Bureaus en werkgevers die een paspoort mogen zien na toestemming.",
+            "Agencies and employers who may see a passport after consent.",
+            "Agencje i pracodawcy, którzy mogą zobaczyć paszport po zgodzie.",
+            "Agenții și angajatori care pot vedea un pașaport după acord.",
+            "وكالات وأصحاب عمل يمكنهم رؤية الجواز بعد الموافقة.");
+        Add("Admin.PassportPartners.Empty",
+            "Nog geen paspoortpartners.",
+            "No passport partners yet.",
+            "Nie ma jeszcze partnerów paszportu.",
+            "Nu există încă parteneri de pașaport.",
+            "لا يوجد شركاء جواز بعد.");
+        Add("Admin.PassportPartners.Create",
+            "Partner maken",
+            "Create partner",
+            "Utwórz partnera",
+            "Creează partener",
+            "أنشئ شريكاً");
+        Add("Admin.PassportPartners.Company",
+            "Bedrijfs-id",
+            "Company id",
+            "Id firmy",
+            "Id companie",
+            "معرّف الشركة");
+        Add("Admin.PassportPartners.Type",
+            "Soort partner",
+            "Partner kind",
+            "Rodzaj partnera",
+            "Tip de partener",
+            "نوع الشريك");
+        Add("Admin.PassportPartners.Name",
+            "Weergavenaam",
+            "Display name",
+            "Nazwa wyświetlana",
+            "Nume afișat",
+            "الاسم المعروض");
+        Add("Admin.PassportPartners.Active",
+            "Actief",
+            "Active",
+            "Aktywny",
+            "Activ",
+            "نشط");
+        Add("Admin.PassportPartners.Logo",
+            "Logo (PNG of JPEG, minstens 200 px, maximaal 512 KB)",
+            "Logo (PNG or JPEG, at least 200 px, at most 512 KB)",
+            "Logo (PNG lub JPEG, co najmniej 200 px, maksymalnie 512 KB)",
+            "Logo (PNG sau JPEG, cel puțin 200 px, maximum 512 KB)",
+            "الشعار (PNG أو JPEG، 200 بكسل على الأقل، 512 كيلوبايت كحد أقصى)");
+        Add("Admin.PassportPartners.LogoSvg",
+            "SVG mag niet. Gebruik PNG of JPEG.",
+            "SVG is not allowed. Use PNG or JPEG.",
+            "SVG jest niedozwolone. Użyj PNG lub JPEG.",
+            "SVG nu este permis. Folosește PNG sau JPEG.",
+            "SVG غير مسموح. استخدم PNG أو JPEG.");
+        Add("Admin.PassportPartners.LogoLarge",
+            "Het bestand is groter dan 512 KB.",
+            "The file is larger than 512 KB.",
+            "Plik jest większy niż 512 KB.",
+            "Fișierul este mai mare de 512 KB.",
+            "الملف أكبر من 512 كيلوبايت.");
+        Add("Admin.PassportPartners.LogoType",
+            "Alleen PNG of JPEG.",
+            "PNG or JPEG only.",
+            "Tylko PNG lub JPEG.",
+            "Doar PNG sau JPEG.",
+            "PNG أو JPEG فقط.");
+        Add("Admin.PassportPartners.Failed",
+            "Opslaan lukte niet. Probeer het opnieuw.",
+            "Saving did not work. Try again.",
+            "Zapis się nie udał. Spróbuj ponownie.",
+            "Salvarea nu a reușit. Încearcă din nou.",
+            "تعذر الحفظ. حاول مرة أخرى.");
+        Add("Admin.PassportPartners.Codes",
+            "Partnercode",
+            "Partner code",
+            "Kod partnera",
+            "Cod de partener",
+            "رمز الشريك");
     }
 }
