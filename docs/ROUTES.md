@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (232 routes)
+## Table (233 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -227,6 +227,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/salesmanager/payout-checkout` | `Pages/Sales/LegacyPayoutRedirect.razor` | SalesManager |
 | `/salesmanager/referrals` | `Pages/Sales/LegacyReferralsRedirect.razor` | SalesManager |
 | `/salesmanager/toolkit` | `Pages/Sales/LegacyToolkitRedirect.razor` | SalesManager |
+| `/scholen` | `Pages/ScholenPublic.razor` | anonymous |
 | `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
 | `/school/gegevens` | `Pages/School/SchoolDetails.razor` | SchoolAdmin |
 | `/school/klassen` | `Pages/School/SchoolClasses.razor` | SchoolAdmin |

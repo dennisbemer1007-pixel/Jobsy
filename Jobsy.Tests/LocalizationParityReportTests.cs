@@ -213,7 +213,7 @@ internal static class LocalizationParityAllowList
         "Lobsy", "OK", "Match", "match", "Admin", "Sales", "Coach", "Bug", "Tip", "Status",
         "Email", "E-mail", "Model", "Tests", "Trends", "Open", "Later", "Nu", "Doel", "Basis", "min",
         "KVK", "SBI", "Arts", "Kok", "Meer", "Eens", "Samen", "Adres", "E-bike", "CV", "PDF",
-        "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI", "2FA",
+        "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI", "2FA", "PushBom",
         "Filters", "Urgent", "Dashboard", "Team",
         "Cookies", "Contact", "Privacy", "Tokens",
         // public-pages 09: a dash placeholder and the loanword "Flyer" are language-neutral.

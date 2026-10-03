@@ -202,7 +202,7 @@ public static class UiStringsAdmin
         Add("AdminUsers.ColUser", "Gebruiker", "User", "Użytkownik", "Utilizator", "المستخدم");
         Add("AdminUsers.ColRole", "Rol", "Role", "Rola", "Rolul", "الدور");
         Add("AdminUsers.Col.Name", "Naam", "Name", "Nazwa", "Nume", "الاسم");
-        Add("AdminUsers.Col.Email", "E-mail", "Email", "E-mail", "E-mail", "البريد");
+        Add("AdminUsers.Col.Email", "E-mail", "Email", "Adres e-mail", "Adresă de e-mail", "البريد");
         Add("AdminUsers.Col.Role", "Rol", "Role", "Rola", "Rolul", "الدور");
         Add("AdminUsers.ColOrg", "Organisatie", "Organisation", "Organizacja", "Organizație", "المنظمة");
         Add("AdminUsers.ColMfa", "2FA", "2FA", "2FA", "2FA", "2FA");
@@ -582,7 +582,7 @@ public static class UiStringsAdmin
         Add("AdminFinance.WhatDrives.Drives", "Bepaalt", "Drives", "Determinuje", "Determină", "يحدد");
         Add("AdminFinance.WhatDrives.TokenPacks", "Tokenpakketten", "Token packs", "Pakiety tokenów", "Pachete de tokenuri", "باقات الرموز");
         Add("AdminFinance.WhatDrives.TokenPacksDesc", "Wat werkgevers betalen voor tokens (euro per pack op de Tokens-pagina).", "What employers pay for tokens (euro per pack on the Tokens page).", "Ile pracodawcy płacą za tokeny (euro za pakiet).", "Cât plătesc angajatorii pentru tokenuri (euro pe pachet).", "ما يدفعه أصحاب العمل مقابل الرموز (يورو لكل باقة).");
-        Add("AdminFinance.WhatDrives.TokenSpendCost", "Kosten per actie", "Cost per action", "Koszt akcji", "Cost pe acțiune", "التكلفة لكل إجراء");
+        Add("AdminFinance.WhatDrives.TokenSpendCost", "Kosten per actie (TokenSpendCost)", "Cost per action (TokenSpendCost)", "Koszt akcji (TokenSpendCost)", "Cost pe acțiune (TokenSpendCost)", "التكلفة لكل إجراء (TokenSpendCost)");
         Add("AdminFinance.WhatDrives.TokenSpendCostDesc", "Tokens per publicatie/uitlichten/PushBom/ContactUnlock als fallback wanneer geen specifiekere override geldt.", "Tokens per publish/highlight/PushBom/ContactUnlock as fallback when no more specific override applies.", "Tokeny na publikację/wyróżnienie/PushBom/ContactUnlock jako fallback.", "Tokenuri pe publicare/evidențiere/PushBom/ContactUnlock ca fallback.", "رموز لكل نشر/إبراز/PushBom/ContactUnlock كاحتياطي.");
         Add("AdminFinance.WhatDrives.VacancyType", "Token-kosten per vacaturetype (VacancyTypeTokenCost)", "Token cost per vacancy type (VacancyTypeTokenCost)", "Koszt tokenów per typ oferty (VacancyTypeTokenCost)", "Cost token pe tip job (VacancyTypeTokenCost)", "تكلفة الرمز حسب نوع الوظيفة (VacancyTypeTokenCost)");
         Add("AdminFinance.WhatDrives.VacancyTypeDesc", "Catalogustarieven per soort vacature (regulier, stage, …). Regulier volgt de tokenprijs voor publiceren.", "Catalog rates per vacancy kind (regular, internship, …). Regular follows the publish token price.", "Stawki katalogowe per rodzaj oferty. Oferta zwykła podąża za ceną tokenów publikacji.", "Tarife catalog pe tipul jobului. Regular urmează prețul în tokenuri pentru publicare.", "أسعار الكتالوج حسب نوع الوظيفة. العادي يتبع سعر الرمز للنشر.");

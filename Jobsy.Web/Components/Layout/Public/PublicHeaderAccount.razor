@@ -1,14 +1,30 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
-<AuthorizeView>
-    <Authorized>
-        <AuthHeader />
-    </Authorized>
-    <NotAuthorized>
-        <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-    </NotAuthorized>
-</AuthorizeView>
+@if (_signedIn)
+{
+    <AuthHeader />
+}
+else
+{
+    <a class="pub-header__login" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+}
 
 @code {
     [Inject] private CultureState Culture { get; set; } = default!;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    private bool _signedIn;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AuthenticationState is null)
+        {
+            _signedIn = false;
+            return;
+        }
+
+        var state = await AuthenticationState;
+        _signedIn = state.User.Identity?.IsAuthenticated == true;
+    }
 }
