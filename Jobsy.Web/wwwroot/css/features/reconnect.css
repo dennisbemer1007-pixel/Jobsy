@@ -1,0 +1,83 @@
+/*
+  Blazor reconnect toast. Linked from App.razor on every document, including
+  [NoBlazorRuntime] pages. The #components-reconnect-modal markup is part of the
+  static shell; if this file is skipped, all three state messages render as
+  ordinary paragraphs under the footer.
+
+  .NET 10 sets one state class on #components-reconnect-modal:
+  show, retrying, failed, rejected, paused, hide.
+*/
+
+.reconnect-toast {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 10001;
+    width: min(22rem, calc(100vw - 1.5rem));
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0s linear 0.5s;
+}
+
+/* Brief blips (<1.5s) stay invisible; failed/rejected/paused stay immediate. */
+.reconnect-toast.components-reconnect-show,
+.reconnect-toast.components-reconnect-retrying {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
+}
+
+.reconnect-toast.components-reconnect-failed,
+.reconnect-toast.components-reconnect-rejected,
+.reconnect-toast.components-reconnect-paused {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+.reconnect-toast.components-reconnect-hide {
+    display: none;
+}
+
+.reconnect-toast__panel {
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #ddd5cc);
+    background: var(--surface, #fffcfa);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+    color: var(--text, #122033);
+    font-size: 0.9rem;
+    font-weight: 650;
+    text-align: center;
+}
+
+.reconnect-toast__msg {
+    display: none;
+    margin: 0;
+}
+
+.reconnect-toast.components-reconnect-show .reconnect-toast__msg--show,
+.reconnect-toast.components-reconnect-retrying .reconnect-toast__msg--show,
+.reconnect-toast.components-reconnect-failed .reconnect-toast__msg--failed,
+.reconnect-toast.components-reconnect-paused .reconnect-toast__msg--failed,
+.reconnect-toast.components-reconnect-rejected .reconnect-toast__msg--rejected {
+    display: block;
+}
+
+.reconnect-toast__action {
+    margin-left: 0.35rem;
+    border: none;
+    background: transparent;
+    color: var(--brand, #0f2d5c);
+    font: inherit;
+    font-weight: 800;
+    text-decoration: underline;
+    cursor: pointer;
+}
