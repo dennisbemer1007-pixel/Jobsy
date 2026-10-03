@@ -1132,6 +1132,13 @@ public sealed class SchoolPortalService : ISchoolPortalService
             .Where(u => confirmerIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
 
+        var letters = classes
+            .Select(c => c.QuestionSet)
+            .Distinct()
+            .OrderBy(s => (int)s)
+            .Select(s => new SchoolOuderbriefDto(s, OuderbriefTemplate.For(s)))
+            .ToList();
+
         return new SchoolPrivacyDto(
             school.ProcessorAgreementSignedOn,
             school.ProcessorAgreementVersion,
@@ -1145,7 +1152,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
                 c.ParentalInfoConfirmedByUserId is Guid id
                     ? names.GetValueOrDefault(id)
                     : null)).ToList(),
-            OuderbriefTemplate.DutchText);
+            letters);
     }
 
     public async Task<(SchoolEarlyDeleteResult? Result, string? Error)> DeleteCurrentSchoolYearDataAsync(
@@ -1465,14 +1472,11 @@ public sealed class SchoolPortalService : ISchoolPortalService
     }
 }
 
-/// <summary>Static Dutch ouderbrief template (copy + PDF on privacy page).</summary>
+/// <summary>Static Dutch ouderbrief templates — one letter per test, no comparison text.</summary>
 public static class OuderbriefTemplate
 {
-    public const string DutchText =
+    public const string SharedBodyAfterCount =
         """
-        Beste ouder(s)/verzorger(s),
-
-        Op school gaan we met Lobsy werken: een digitale ontdekkingstocht waarmee leerlingen hun interesses, drijfveren en een mogelijke droombaan verkennen. De test bestaat uit 60 kindvriendelijke vragen en past in één lesuur.
 
         Belangrijk:
         • Lobsy bewaart geen namen. Iedere leerling krijgt een code van school. Alleen school houdt de koppeling tussen code en naam.
@@ -1486,4 +1490,23 @@ public static class OuderbriefTemplate
         Met vriendelijke groet,
         Schoolleiding
         """;
+
+    public const string Groep78CountLine =
+        "De vragenlijst bestaat uit 60 korte vragen en duurt ongeveer een half uur.";
+
+    public const string VoCountLine =
+        "De vragenlijst bestaat uit 100 korte vragen en wordt in twee lesdelen gemaakt.";
+
+    public static string For(PupilQuestionSet set)
+        => """
+        Beste ouder(s)/verzorger(s),
+
+        Op school gaan we met Lobsy werken: een digitale ontdekkingstocht waarmee leerlingen hun interesses, drijfveren en een mogelijke droombaan verkennen. 
+        """.TrimEnd()
+        + " "
+        + (set == PupilQuestionSet.Groep78 ? Groep78CountLine : VoCountLine)
+        + SharedBodyAfterCount;
+
+    /// <summary>Legacy alias — VO letter. Prefer <see cref="For"/>.</summary>
+    public static string DutchText => For(PupilQuestionSet.Vo);
 }
