@@ -140,6 +140,30 @@ public static class UiStringsPassportPartners
             "Tylko PNG lub JPEG.",
             "Doar PNG sau JPEG.",
             "PNG أو JPEG فقط.");
+        Add("Admin.PassportPartners.CompanyRequired",
+            "Vul een geldig bedrijfs-id in.",
+            "Enter a valid company id.",
+            "Wpisz prawidłowy identyfikator firmy.",
+            "Introdu un id de companie valid.",
+            "أدخل معرّف شركة صالحاً.");
+        Add("Admin.PassportPartners.NameRequired",
+            "Vul een weergavenaam in.",
+            "Enter a display name.",
+            "Wpisz nazwę wyświetlaną.",
+            "Introdu un nume afișat.",
+            "أدخل الاسم المعروض.");
+        Add("Admin.PassportPartners.CompanyNotFound",
+            "Dit bedrijf bestaat niet. Controleer het bedrijfs-id.",
+            "This company does not exist. Check the company id.",
+            "Ta firma nie istnieje. Sprawdź identyfikator firmy.",
+            "Această companie nu există. Verifică id-ul companiei.",
+            "هذه الشركة غير موجودة. تحقق من معرّف الشركة.");
+        Add("Admin.PassportPartners.AlreadyExists",
+            "Dit bedrijf is al een paspoortpartner.",
+            "This company is already a passport partner.",
+            "Ta firma jest już partnerem paszportu.",
+            "Această companie este deja partener de pașaport.",
+            "هذه الشركة شريك جواز بالفعل.");
         Add("Admin.PassportPartners.Failed",
             "Opslaan lukte niet. Probeer het opnieuw.",
             "Saving did not work. Try again.",

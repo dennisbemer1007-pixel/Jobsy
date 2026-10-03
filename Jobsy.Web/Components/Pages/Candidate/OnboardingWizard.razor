@@ -621,12 +621,10 @@
             await Task.Delay(350, cancellationToken);
             var postcode = NormalizePostcode(Draft.Postcode);
             if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
-            var result = (await Geocoder.SuggestAsync(postcode, cancellationToken))
-                .FirstOrDefault(item => item.Label.Replace(" ", "")
-                    .StartsWith(postcode.Replace(" ", ""), StringComparison.OrdinalIgnoreCase));
+            var result = PostcodeMatch.Pick(await Geocoder.SuggestAsync(postcode, cancellationToken), postcode);
             if (result is null)
             {
-                Draft.PostcodeMissing = true;
+                MarkPostcodeMiss();
                 await InvokeAsync(StateHasChanged);
                 return;
             }
@@ -637,16 +635,40 @@
         }
         catch
         {
-            Draft.PostcodeMissing = true;
+            MarkPostcodeMiss();
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void MarkPostcodeMiss()
+    {
+        Draft.PostcodeMissing = true;
+        Draft.ShowCity = true;
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
         Draft.HomeLat = item.Latitude;
         Draft.HomeLng = item.Longitude;
-        SplitAddress(item.Label);
-        Draft.Postcode = NormalizePostcode(Draft.Postcode);
+        var postcode = NormalizePostcode(Draft.Postcode);
+        if (PostcodeMatch.IsNlPostcode(postcode))
+        {
+            Draft.Postcode = postcode;
+            var city = PostcodeMatch.CityFromLabel(item.Label, postcode);
+            if (!string.IsNullOrWhiteSpace(city))
+            {
+                Draft.City = city;
+            }
+            else
+            {
+                Draft.ShowCity = true;
+            }
+        }
+        else
+        {
+            SplitAddress(item.Label);
+            Draft.Postcode = NormalizePostcode(Draft.Postcode);
+        }
         Draft.PostcodeResolved = true;
         Draft.PostcodeMissing = false;
         ScheduleProfileSave();
@@ -975,12 +997,32 @@
 
     private string QuestionText(OnboardingMiniTest.MiniQuestion question) => Culture[question.TextKey];
 
-    private async Task AnswerAsync(int id, int value)
+    private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        if (_autosave is not null) await _autosave.SetAnswerAsync(id, value);
         _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
         FlashSaved();
+        if (_autosave is not null)
+        {
+            _ = SaveMiniQuietAsync(id, value);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task SaveMiniQuietAsync(int id, int value)
+    {
+        try
+        {
+            if (_autosave is not null)
+            {
+                await _autosave.SetAnswerAsync(id, value);
+            }
+        }
+        catch
+        {
+            // The answer is already on screen; leaving the step still flushes.
+        }
     }
 
     private void ExpandQuestion(int index) => _currentQuestion = index;

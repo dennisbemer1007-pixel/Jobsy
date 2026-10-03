@@ -1,5 +1,5 @@
 @page "/carriere"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Features
 @using Jobsy.Web.Components.Candidate
@@ -189,6 +189,7 @@
     private string? _dialogError;
     private string _announcement = "";
     private bool _bootstrapping = true;
+    private bool _planLoadStarted;
     private bool _busy;
     private bool _dialogOpen;
     private bool _showCarriedOver;
@@ -244,8 +245,16 @@
 
     private int DoneVacancyCount => _employersOn && _stepFit.ShowsCount ? _stepFit.GoodCount : 0;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Prerender paints the skeleton. Load only after the interactive circuit
+        // so the first HTML is not blank while the API responds.
+        if (!firstRender || _planLoadStarted || !RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        _planLoadStarted = true;
         try
         {
             var flags = await FeatureFlags.GetAsync();
@@ -273,6 +282,9 @@
         {
             _bootstrapping = false;
         }
+
+        await SyncStepAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnParametersSetAsync()

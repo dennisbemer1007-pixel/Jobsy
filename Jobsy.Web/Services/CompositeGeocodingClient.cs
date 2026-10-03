@@ -38,15 +38,26 @@ public sealed class CompositeGeocodingClient(
             results = [];
         }
 
-        if (results.Count == 0)
+        var normalized = PostcodeMatch.Normalize(query);
+        var postcodeQuery = PostcodeMatch.IsNlPostcode(normalized);
+        // PDOK can return street hits that do not identify the postcode. Nominatim
+        // is the fallback when PDOK is empty or none of its labels match the code.
+        if (results.Count == 0 || (postcodeQuery && !PostcodeMatch.HasLeadingMatch(results, normalized)))
         {
             try
             {
-                results = await nominatim.SuggestAsync(query, cancellationToken);
+                var fallback = await nominatim.SuggestAsync(query, cancellationToken);
+                if (fallback.Count > 0)
+                {
+                    results = fallback;
+                }
             }
             catch
             {
-                results = [];
+                if (results.Count == 0)
+                {
+                    results = [];
+                }
             }
         }
 

@@ -263,11 +263,13 @@
     private List<CandidateDnaViewBuilder.DnaHighlight> _highlights = [];
     private PassportShellRules.ShellProgress _shells = new([], 0, 0, 0);
     private int _applicationCount;
+    private PersistingComponentStateSubscription _persistSubscription;
 
     protected override void OnInitialized()
     {
         Navigation.LocationChanged += OnLocationChanged;
         _listening = true;
+        _persistSubscription = Persist.RegisterOnPersisting(PersistPassportState);
         if (Persist.TryTakeFromJson<CandidateDnaSummary>(DnaPersistKey, out var dna) && dna is not null)
         {
             _dna = dna;
@@ -311,16 +313,6 @@
                 }
             }
 
-            if (_kompas is not null)
-            {
-                Persist.PersistAsJson(KompasPersistKey, _kompas);
-            }
-
-            if (_dna is not null)
-            {
-                Persist.PersistAsJson(DnaPersistKey, _dna);
-            }
-
             ApplyModel();
             try
             {
@@ -344,8 +336,24 @@
         }
     }
 
+    private Task PersistPassportState()
+    {
+        if (_kompas is not null)
+        {
+            Persist.PersistAsJson(KompasPersistKey, _kompas);
+        }
+
+        if (_dna is not null)
+        {
+            Persist.PersistAsJson(DnaPersistKey, _dna);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public void Dispose()
     {
+        _persistSubscription.Dispose();
         if (_listening)
         {
             Navigation.LocationChanged -= OnLocationChanged;

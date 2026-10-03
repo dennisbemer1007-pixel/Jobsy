@@ -1,5 +1,6 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -30,7 +31,6 @@ public class PassportPartnersAdminController : ControllerBase
     public async Task<ActionResult> List(CancellationToken cancellationToken)
     {
         var rows = await _db.PassportPartners.AsNoTracking()
-            .Include(p => p.Company)
             .OrderBy(p => p.DisplayName)
             .Select(p => new
             {
@@ -39,12 +39,22 @@ public class PassportPartnersAdminController : ControllerBase
                 p.DisplayName,
                 p.IsActive,
                 p.MaxBranches,
-                Type = p.Company == null ? null : PassportPartner.TypeFromCompany(p.Company.Type).ToString(),
+                CompanyType = p.Company == null ? (CompanyType?)null : p.Company.Type,
                 p.TermsVersion,
                 HasLogo = p.LogoPng != null
             })
             .ToListAsync(cancellationToken);
-        return Ok(rows);
+        return Ok(rows.Select(p => new
+        {
+            p.Id,
+            p.CompanyId,
+            p.DisplayName,
+            p.IsActive,
+            p.MaxBranches,
+            Type = p.CompanyType is null ? null : PassportPartner.TypeFromCompany(p.CompanyType.Value).ToString(),
+            p.TermsVersion,
+            p.HasLogo
+        }));
     }
 
     [HttpPost]

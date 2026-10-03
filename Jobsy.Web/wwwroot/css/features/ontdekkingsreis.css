@@ -51,6 +51,7 @@
     height: 170px;
   }
   .journey-only-mobile { display: flex; }
+  .journey-mlob { display: flex; }
   .journey-mprog.journey-only-mobile { display: block; }
   .journey-only-desktop { display: none !important; }
   .journey-stage {
@@ -490,7 +491,6 @@
 .journey-lob__fall { animation: journey-drop 1.2s ease-out 1 both; }
 
 .journey-mlob {
-  display: flex;
   align-items: flex-end;
   gap: 8px;
   padding: 12px 4px;

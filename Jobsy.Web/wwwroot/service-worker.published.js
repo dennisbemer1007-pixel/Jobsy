@@ -1,6 +1,6 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-published-v20260926-device-sessions";
+var CACHE_VERSION = "lobsy-shell-published-v20261003-circuit";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 var OFFLINE_URL = "/offline.html";
@@ -59,8 +59,7 @@ function isStaticAsset(pathname) {
         || pathname.indexOf("/lib/") === 0
         || pathname === "/manifest.webmanifest"
         || pathname === "/favicon.ico"
-        || pathname === "/favicon.png"
-        || pathname.indexOf("/_framework/") === 0;
+        || pathname === "/favicon.png";
 }
 
 self.addEventListener("fetch", function (event) {
@@ -75,6 +74,7 @@ self.addEventListener("fetch", function (event) {
     if (url.pathname.indexOf("/api/") === 0
         || url.pathname.indexOf("/account/") === 0
         || url.pathname.indexOf("/_blazor") === 0
+        || url.pathname.indexOf("/_framework/") === 0
         || url.search.indexOf("_blazor") >= 0) {
         return;
     }

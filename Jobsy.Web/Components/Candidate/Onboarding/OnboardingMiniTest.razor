@@ -58,6 +58,7 @@ else
     [Parameter] public bool ShowHint { get; set; }
     [Parameter] public bool ShowQuestionCounter { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
+    [Parameter] public EventCallback OnFinished { get; set; }
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
 
@@ -85,5 +86,5 @@ else
         => Answer.InvokeAsync(pair);
 
     private Task OnFlowFinished()
-        => Task.CompletedTask;
+        => OnFinished.InvokeAsync();
 }

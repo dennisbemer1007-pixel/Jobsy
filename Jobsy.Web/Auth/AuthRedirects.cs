@@ -194,6 +194,7 @@ public static partial class AuthRedirects
         if (path is "/" or "/banen" or "/login" or "/ontdek"
             || path.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/account/logout", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/logout", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase))
         {
             return "/home";

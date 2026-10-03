@@ -664,3 +664,5 @@ html:not(.cookie-consent-known) .pub-theme .gd-questions--warm{
   .pub-theme .gd-cta,
   .pub-theme .gd-signup__btn{transition:none}
 }
+
+.gd-cta:disabled,.gd-cta[disabled]{opacity:.45;cursor:not-allowed}

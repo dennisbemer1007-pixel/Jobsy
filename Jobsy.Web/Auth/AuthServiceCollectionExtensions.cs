@@ -932,7 +932,7 @@ public static class AuthServiceCollectionExtensions
             return Results.Challenge(props, [scheme]);
         });
 
-        app.MapMethods("/account/logout", ["GET", "POST"], async (HttpContext http) =>
+        async Task<IResult> SignOut(HttpContext http)
         {
             // POST from the header form / switch-account form uses antiforgery; GET covers
             // refresh / Cookie LogoutPath / bookmarks. Stale antiforgery must not block logout
@@ -998,7 +998,10 @@ public static class AuthServiceCollectionExtensions
             }
 
             return Results.Redirect("/");
-        });
+        }
+
+        app.MapMethods("/account/logout", ["GET", "POST"], (Delegate)SignOut);
+        app.MapMethods("/logout", ["GET", "POST"], (Delegate)SignOut);
 
         // After employer registration OTP: mint cookie from local session token (no second password).
         app.MapGet("/account/register-signin", async (HttpContext http, IConfiguration configuration, string? token, string? returnUrl) =>

@@ -118,6 +118,7 @@ public sealed class DeviceSessionRefreshMiddleware
                || string.Equals(path, "/offline.html", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/manifest.webmanifest", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/logout", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(path, "/logout", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/login", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/demo-login", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/complete-login", StringComparison.OrdinalIgnoreCase)

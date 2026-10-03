@@ -1122,8 +1122,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20260928-perf"
-            : "/service-worker.js?v=20260928-perf";
+            ? "/service-worker.published.js?v=20261003-circuit"
+            : "/service-worker.js?v=20261003-circuit";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
