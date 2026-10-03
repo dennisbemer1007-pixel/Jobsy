@@ -317,7 +317,7 @@ public class PartnerGateTests
 
         Assert.Equal(PlatformFeature.Employers, attribute.Feature);
         Assert.True(attribute.WhenEnabled);
-        Assert.Equal("/", attribute.FallbackPath);
+        Assert.Equal("/werkgevers/binnenkort", attribute.FallbackPath);
     }
 
     [Fact]
@@ -352,7 +352,7 @@ public class PartnerGateTests
 
         Assert.Equal("/partner/flyer.pdf", Jobsy.Web.Hosting.PartnerFlyerEndpoints.Path);
         Assert.Contains("IEmployersSwitch", source, StringComparison.Ordinal);
-        Assert.Contains("Results.Redirect(\"/\")", source, StringComparison.Ordinal);
+        Assert.Contains("FeatureRoutes.EmployersComingSoonPath", source, StringComparison.Ordinal);
         Assert.Contains("RequireRateLimiting(\"partner-flyer\")", source, StringComparison.Ordinal);
     }
 }

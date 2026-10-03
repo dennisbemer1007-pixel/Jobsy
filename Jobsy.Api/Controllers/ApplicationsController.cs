@@ -309,7 +309,7 @@ public class ApplicationsController : ControllerBase
                     CvPdfAvailable: revealed,
                     CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
                     WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
-                    CandidateAgeYears: a.CandidateAgeYears,
+                    YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
                     AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                         availability.Slots,
                         availability.FlexibleTimes),
@@ -393,7 +393,7 @@ public class ApplicationsController : ControllerBase
                 CvPdfAvailable: unmask,
                 CandidatePhone: phone,
                 WhatsAppContactAllowed: unmask && a.SnapshotWhatsAppAllowed,
-                CandidateAgeYears: unmask ? a.CandidateAgeYears : null,
+                YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
                 AvailabilitySummary: unmask
                     ? LobsyCvModelFactory.FormatAvailability(
                         LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).Slots,
@@ -1677,7 +1677,7 @@ public class ApplicationsController : ControllerBase
             CvPdfAvailable: revealed,
             CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
             WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
-            CandidateAgeYears: a.CandidateAgeYears,
+            YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
             AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                 availability.Slots,
                 availability.FlexibleTimes),

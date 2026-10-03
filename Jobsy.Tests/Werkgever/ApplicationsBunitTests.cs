@@ -1,4 +1,5 @@
 using Bunit;
+using Jobsy.Web.Components.Werkgever;
 using Jobsy.Web.Components.Werkgever.Applications;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
@@ -21,6 +22,20 @@ public class ApplicationsBunitTests : BunitContext
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton(new EmployerScopeState());
+    }
+
+    [Fact]
+    public void Youth_wage_chip_shows_the_label_and_never_a_number()
+    {
+        var on = Render<YouthWageChip>(p => p.Add(c => c.Applies, true));
+        Assert.Contains("Jeugdloon van toepassing", on.Markup, StringComparison.Ordinal);
+        Assert.DoesNotMatch(@"\d", on.Markup);
+
+        var off = Render<YouthWageChip>(p => p.Add(c => c.Applies, false));
+        Assert.DoesNotContain("Jeugdloon", off.Markup, StringComparison.Ordinal);
+
+        var unknown = Render<YouthWageChip>(p => p.Add(c => c.Applies, (bool?)null));
+        Assert.DoesNotContain("Jeugdloon", unknown.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

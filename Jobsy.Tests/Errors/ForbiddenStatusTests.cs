@@ -12,7 +12,7 @@ public class ForbiddenStatusTests
     [Fact]
     public async Task Candidate_gets_a_real_403_on_an_admin_page_without_redirect()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(JobsyRoles.Candidate);
 
         var response = await client.GetAsync("/admin");
@@ -28,7 +28,7 @@ public class ForbiddenStatusTests
     [Fact]
     public async Task Candidate_sees_the_masked_account_and_role_from_claims()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(
             JobsyRoles.Candidate,
             email: "kim.kandidaat@example.nl",
@@ -45,7 +45,7 @@ public class ForbiddenStatusTests
     [Fact]
     public async Task Anonymous_visitor_still_gets_302_to_login_unchanged()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
 
         var response = await client.GetAsync("/admin");
@@ -57,7 +57,7 @@ public class ForbiddenStatusTests
     [Fact]
     public async Task AccessDenied_endpoint_answers_403_and_reads_ReturnUrl()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(JobsyRoles.Candidate);
 
         var response = await client.GetAsync("/access-denied?ReturnUrl=%2Fadmin%2Fusers");
@@ -71,7 +71,7 @@ public class ForbiddenStatusTests
     [Fact]
     public async Task AccessDenied_endpoint_accepts_lowercase_returnUrl_too()
     {
-        await using var factory = new ForbiddenWebFactory();
+        await using var factory = new ForbiddenWebFactory { EmployersEnabled = true };
         using var client = factory.CreateSignedInClient(JobsyRoles.Candidate);
 
         var html = await (await client.GetAsync("/access-denied?returnUrl=%2Fadmin%2Fusers"))

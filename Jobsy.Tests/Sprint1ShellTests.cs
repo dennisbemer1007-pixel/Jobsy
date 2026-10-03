@@ -109,7 +109,8 @@ public class RoleNavCatalogTests
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
         var user = new ClaimsPrincipal(identity);
-        var items = RoleNavCatalog.ForUser(user);
+        var on = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        var items = RoleNavCatalog.ForUser(user, on);
         Assert.Equal(5, items.Count);
         Assert.Equal(
             new[]

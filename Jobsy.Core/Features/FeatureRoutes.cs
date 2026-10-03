@@ -13,6 +13,8 @@ public static class FeatureRoutes
     public const string CandidateDiscoveryPath = "/candidate/ontdekkingsreis";
     public const string AdminHomePath = "/home";
     public const string EmployersOffAccessDeniedPath = "/access-denied?reason=employers-off";
+    /// <summary>Friendly page for anonymous visitors on employer routes while employers are OFF.</summary>
+    public const string EmployersComingSoonPath = "/werkgevers/binnenkort";
 
     /// <summary>
     /// Role home. For candidates with the paspoort flag ON,
@@ -44,10 +46,10 @@ public static class FeatureRoutes
             return AdminHomePath;
         }
 
-        // Employers OFF
+        // Employers OFF. Anonymous home is the landing page (canonical "/"), not /ontdek.
         if (user?.Identity?.IsAuthenticated != true)
         {
-            return OntdekPath;
+            return "/";
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
@@ -102,5 +104,55 @@ public static class FeatureRoutes
         return RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles)
                || RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
                || RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur);
+    }
+
+    /// <summary>
+    /// Where to send someone when an Employers-gated page is OFF.
+    /// Employer-side users go to the access-denied page. Signed-in candidates and admins
+    /// go to their own home. Anonymous visitors on candidate vacancy pages go home ("/").
+    /// Other anonymous visitors go to the binnenkort page, unless the page set an explicit fallback.
+    /// </summary>
+    public static string EmployersOffRedirect(
+        ClaimsPrincipal? user,
+        FeatureFlagSnapshot flags,
+        bool passportReady,
+        bool candidateVacancySurface,
+        string? explicitFallback)
+    {
+        if (IsEmployerSideOnly(user))
+        {
+            return EmployersOffAccessDeniedPath;
+        }
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            return HomeFor(user, flags, passportReady);
+        }
+
+        if (candidateVacancySurface)
+        {
+            return HomeFor(null, flags, passportReady);
+        }
+
+        if (!string.IsNullOrWhiteSpace(explicitFallback))
+        {
+            return explicitFallback;
+        }
+
+        return EmployersComingSoonPath;
+    }
+
+    /// <summary>
+    /// Candidate vacancy surfaces keep the candidate home redirect and are not sent to the werkgevers page.
+    /// </summary>
+    public static bool IsCandidateVacancySurface(Type pageType)
+    {
+        var name = pageType.FullName ?? pageType.Name;
+        if (name.Contains(".Pages.Candidate.", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return pageType.Name == "VacancyDetail";
     }
 }

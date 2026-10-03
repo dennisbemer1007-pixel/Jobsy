@@ -47,12 +47,23 @@ public sealed class FeatureRouteGate : ComponentBase
             var ok = attr.WhenEnabled ? enabled : !enabled;
             if (!ok)
             {
-                var fallback = string.IsNullOrWhiteSpace(attr.FallbackPath)
-                    ? FeatureRoutes.HomeFor(
+                var passportReady = AuthRedirects.PassportReadyFromClaims(state.User);
+                string fallback;
+                if (attr.Feature == PlatformFeature.Employers && attr.WhenEnabled)
+                {
+                    fallback = FeatureRoutes.EmployersOffRedirect(
                         state.User,
                         snap,
-                        passportReady: AuthRedirects.PassportReadyFromClaims(state.User))
-                    : attr.FallbackPath!;
+                        passportReady,
+                        FeatureRoutes.IsCandidateVacancySurface(RouteData.PageType),
+                        attr.FallbackPath);
+                }
+                else
+                {
+                    fallback = string.IsNullOrWhiteSpace(attr.FallbackPath)
+                        ? FeatureRoutes.HomeFor(state.User, snap, passportReady)
+                        : attr.FallbackPath!;
+                }
 
                 // Passport OFF: keep ?tab= mapped to classic Kompas tabs.
                 if (attr.Feature == PlatformFeature.CandidatePassport

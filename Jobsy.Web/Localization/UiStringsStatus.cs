@@ -231,17 +231,17 @@ public static class UiStringsStatus
             "Spre pagina principală",
             "إلى الصفحة الرئيسية");
         Add("Status.Forbidden.EmployersOffTitle",
-            "Even alleen voor kandidaten",
-            "Candidates only for now",
-            "Na razie tylko dla kandydatów",
-            "Deocamdată doar pentru candidați",
-            "للمرشحين فقط مؤقتاً");
+            "Voor werkgevers: binnenkort",
+            "For employers: coming soon",
+            "Dla pracodawców: wkrótce",
+            "Pentru angajatori: în curând",
+            "لأصحاب العمل: قريباً");
         Add("Status.Forbidden.EmployersOffLead",
-            "Werkgevers kunnen Lobsy nu even niet gebruiken. We laten het je weten als het weer kan.",
-            "Employers cannot use Lobsy right now. We will let you know when they can again.",
-            "Pracodawcy nie mogą teraz korzystać z Lobsy. Dam y znać, gdy to się zmieni.",
-            "Angajatorii nu pot folosi Lobsy chiar acum. Te vom anunța când va fi din nou posibil.",
-            "لا يمكن لأصحاب العمل استخدام لوبسي الآن. سنُعلمك عندما يصبح ذلك ممكناً مجدداً.");
+            "Lobsy is nu eerst voor kandidaten. De omgeving voor werkgevers komt terug in een volgende fase.",
+            "Lobsy is for candidates first right now. The employer area returns in a later phase.",
+            "Lobsy jest teraz najpierw dla kandydatów. Strefa pracodawców wróci w kolejnej fazie.",
+            "Lobsy este acum mai întâi pentru candidați. Zona angajatorilor revine într-o fază următoare.",
+            "لوبسي الآن أولاً للمرشحين. ستعود بيئة أصحاب العمل في مرحلة لاحقة.");
         Add("Status.Forbidden.Role.Candidate",
             "Kandidaat",
             "Candidate",

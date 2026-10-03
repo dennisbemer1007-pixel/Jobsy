@@ -3,6 +3,7 @@ using System;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Jobsy.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(JobsyDbContext))]
-    partial class JobsyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261003063416_SetEmployersDefaultOff")]
+    partial class SetEmployersDefaultOff
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -5670,9 +5673,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("PupilCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuestionSet")
-                        .HasColumnType("integer");
-
                     b.Property<string>("RiasecTop3CountsJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -5702,7 +5702,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolId", "SchoolYearStart", "QuestionSet");
+                    b.HasIndex("SchoolId", "SchoolYearStart");
 
                     b.ToTable("SchoolClassAggregates", (string)null);
                 });
@@ -5824,9 +5824,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("PupilCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuestionSet")
-                        .HasColumnType("integer");
-
                     b.Property<string>("RiasecTop3CountsJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -5853,7 +5850,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchoolId", "SchoolYearStart", "QuestionSet");
+                    b.HasIndex("SchoolId", "SchoolYearStart");
 
                     b.ToTable("SchoolYearAggregates", (string)null);
                 });

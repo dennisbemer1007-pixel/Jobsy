@@ -21,6 +21,8 @@ public class BewaardMobilePlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         await using var browser = await LaunchAsync();
         await using var context = await browser.NewContextAsync(new()
         {
@@ -116,6 +118,8 @@ public class BewaardMobilePlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         await using var browser = await LaunchAsync();
         await using var context = await browser.NewContextAsync(new()
         {
@@ -175,6 +179,8 @@ public class BewaardMobilePlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         await using var browser = await LaunchAsync();
         await using var context = await browser.NewContextAsync(new()
         {
@@ -227,6 +233,8 @@ public class BewaardMobilePlaywrightTests
         {
             return;
         }
+
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
 
         await using var browser = await LaunchAsync();
         await using var context = await browser.NewContextAsync(new()

@@ -34,6 +34,8 @@ public class BanenkaartClusterCardPlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
@@ -161,6 +163,8 @@ public class BanenkaartClusterCardPlaywrightTests
         {
             return;
         }
+
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();

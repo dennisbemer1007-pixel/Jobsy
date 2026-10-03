@@ -30,7 +30,7 @@ public sealed record PlatformFeatureSnapshot(
     int SchoolRetentionCutoffDay = 31,
     /// <summary>Default false — Ambassadeur role parked.</summary>
     bool AmbassadorsEnabled = false,
-    bool EmployersEnabled = true,
+    bool EmployersEnabled = false,
     bool CandidatePassportEnabled = true,
     /// <summary>Maintenance switch (errors 05). Everyone except admins sees the 503 page.</summary>
     bool MaintenanceEnabled = false,

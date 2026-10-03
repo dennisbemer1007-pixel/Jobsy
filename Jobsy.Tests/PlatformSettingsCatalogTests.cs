@@ -209,6 +209,31 @@ public class PlatformSettingsEditorBunitTests : BunitContext
     }
 
     [Fact]
+    public void Switching_employers_on_asks_for_confirmation()
+    {
+        _handler.Features = new PlatformFeatureItem
+        {
+            EmployersEnabled = false,
+            CandidatePassportEnabled = true,
+            VacancyContentModerationEnabled = true,
+            PublicWebBaseUrl = "http://localhost:5201"
+        };
+
+        var cut = Render<PlatformSettingsEditor>(p => p
+            .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
+        cut.WaitForElement(".admin-settings-group");
+
+        var button = cut.FindAll("button.admin-switch")
+            .First(b => b.GetAttribute("aria-label") == "Werkgevers actief");
+        button.Click();
+
+        Assert.Contains(
+            "Fase 2 wordt opnieuw ontworpen. Als je dit aanzet, zien werkgevers weer matchpercentages, persoonlijkheidsscores in de talentpool en het AI-verhaal. Weet je het zeker?",
+            cut.Markup,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Cancel_restores_draft()
     {
         _handler.Features = new PlatformFeatureItem

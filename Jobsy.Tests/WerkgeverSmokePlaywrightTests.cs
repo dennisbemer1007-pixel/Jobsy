@@ -52,6 +52,8 @@ public class WerkgeverSmokePlaywrightTests
             return;
         }
 
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+
         var email = (Environment.GetEnvironmentVariable($"JOBSY_E2E_{role.ToUpperInvariant()}_EMAIL")
                      ?? Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_EMAIL")
                      ?? "").Trim();
