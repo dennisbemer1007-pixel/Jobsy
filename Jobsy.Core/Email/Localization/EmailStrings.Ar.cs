@@ -504,6 +504,12 @@ internal static class EmailStringsAr
         ["Email.ContentRemoved.Appeal"] = "تريد الاعتراض؟ راسل {0} خلال 6 أشهر.",
         ["Email.ContentRemoved.Rules"] = "اقرأ القواعد في شروط الاستخدام على Lobsy.",
         ["Email.ContentRemoved.Cta"] = "إلى وظائفكم",
+        ["Email.PartnerConsentReconfirmReminder.Subject"] = "أكد مجدداً أن {0} يمكنه رؤية جوازك",
+        ["Email.PartnerConsentReconfirmReminder.Preheader"] = "تنتهي موافقتك خلال أسبوعين",
+        ["Email.PartnerConsentReconfirmReminder.Heading"] = "هل تبقى هذه الوكالة قادرة على رؤية جوازك؟",
+        ["Email.PartnerConsentReconfirmReminder.P1"] = "{0} يرى جوازك الآن. يتوقف ذلك بعد أسبوعين ما لم تؤكد من جديد.",
+        ["Email.PartnerConsentReconfirmReminder.Cta"] = "راجع الموافقة",
+        ["Email.Reason.PassportShare"] = "تصلك هذه الرسالة لأنك سمحت لوكالة برؤية جوازك.",
 
     };
 }

@@ -149,6 +149,8 @@ public static class EmailTemplateRegistry
             "Besluit over je melding", "Wat we met de melding deden, in B1 en zonder werkgeversgegevens."),
         Def("ContentRemoved", "ContentRemoved", "Werkgever", EmailKind.Essential, "ManagesVacancies", false,
             "Inhoud beperkt of weggehaald", "Motivering voor de werkgever na een moderatiebesluit, met bezwaarroute."),
+        Def("PartnerConsentReconfirmReminder", "PartnerConsentReconfirmReminder", "Kandidaat", EmailKind.Essential, "PassportShare", false,
+            "Toestemming opnieuw bevestigen", "14 dagen voor de partnertoestemming verloopt."),
     ];
 
     private static readonly HashSet<string> GoodNewsKeys = new(

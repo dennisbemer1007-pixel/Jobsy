@@ -1,0 +1,30 @@
+KEY: PartnerConsentReconfirmReminder
+SUBJECT: Confirm again that Bakkerij De Gouden Korrel may see your passport
+PREHEADER: Your permission ends in two weeks
+KIND: Essential
+--- TEXT ---
+Hello Alex,
+
+May this agency keep seeing your passport?
+==========================================
+
+Bakkerij De Gouden Korrel can see your passport now. That stops in two weeks
+unless you confirm it again.
+
+Review permission: https://lobsy.nl/candidate/paspoort/delen
+
+Team Lobsy
+
+You get this email because you let an agency see your passport.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: May this agency keep seeing your passport?
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Review permission -> https://lobsy.nl/candidate/paspoort/delen
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -504,6 +504,12 @@ internal static class EmailStringsEn
         ["Email.ContentRemoved.Appeal"] = "Want to appeal? Email {0} within 6 months.",
         ["Email.ContentRemoved.Rules"] = "Read the rules in the terms of use on Lobsy.",
         ["Email.ContentRemoved.Cta"] = "To your vacancies",
+        ["Email.PartnerConsentReconfirmReminder.Subject"] = "Confirm again that {0} may see your passport",
+        ["Email.PartnerConsentReconfirmReminder.Preheader"] = "Your permission ends in two weeks",
+        ["Email.PartnerConsentReconfirmReminder.Heading"] = "May this agency keep seeing your passport?",
+        ["Email.PartnerConsentReconfirmReminder.P1"] = "{0} can see your passport now. That stops in two weeks unless you confirm it again.",
+        ["Email.PartnerConsentReconfirmReminder.Cta"] = "Review permission",
+        ["Email.Reason.PassportShare"] = "You get this email because you let an agency see your passport.",
 
     };
 }

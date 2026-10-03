@@ -504,6 +504,12 @@ internal static class EmailStringsNl
         ["Email.ContentRemoved.Appeal"] = "Wil je bezwaar maken? Mail {0} binnen 6 maanden.",
         ["Email.ContentRemoved.Rules"] = "Lees de regels in de gebruiksvoorwaarden op Lobsy.",
         ["Email.ContentRemoved.Cta"] = "Naar je vacatures",
+        ["Email.PartnerConsentReconfirmReminder.Subject"] = "Bevestig opnieuw dat {0} je paspoort mag zien",
+        ["Email.PartnerConsentReconfirmReminder.Preheader"] = "Je toestemming loopt over twee weken af",
+        ["Email.PartnerConsentReconfirmReminder.Heading"] = "Mag dit bureau je paspoort blijven zien?",
+        ["Email.PartnerConsentReconfirmReminder.P1"] = "{0} mag je paspoort nu zien. Over twee weken stopt dat, tenzij je het opnieuw bevestigt.",
+        ["Email.PartnerConsentReconfirmReminder.Cta"] = "Toestemming bekijken",
+        ["Email.Reason.PassportShare"] = "Je krijgt deze mail omdat je een bureau toestemming gaf om je paspoort te zien.",
 
     };
 }

@@ -36,6 +36,7 @@ public static class UiStringsAdmin
         Add("AdminNav.Roles", "Rollen & rechten", "Roles & permissions", "Role i uprawnienia", "Roluri și drepturi", "الأدوار والصلاحيات");
         Add("AdminNav.SalesAmbassadors", "Sales & ambassadeurs", "Sales & ambassadors", "Sprzedaż i ambasadorzy", "Sales și ambasadori", "المبيعات والسفراء");
         Add("AdminNav.Companies", "Bedrijven & vestigingen", "Companies & branches", "Firmy i oddziały", "Companii și filiale", "الشركات والفروع");
+        Add("AdminNav.PassportPartners", "Paspoortpartners", "Passport partners", "Partnerzy paszportu", "Parteneri de pașaport", "شركاء الجواز");
         Add("AdminNav.Regions", "Regio's & domeinen", "Regions & domains", "Regiony i domeny", "Regiuni și domenii", "المناطق والنطاقات");
         Add("AdminNav.Requests", "Aanvragen", "Requests", "Wnioski", "Cereri", "الطلبات");
         Add("AdminNav.Candidates", "Kandidaten", "Candidates", "Kandydaci", "Candidați", "المرشحون");

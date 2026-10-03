@@ -1,0 +1,40 @@
+@using Jobsy.Core.Rules
+@inject CultureState Culture
+
+<div class="passport-partner-logo">
+    <label class="field-label" for="passport-partner-logo">@Culture["Admin.PassportPartners.Logo"]</label>
+    <InputFile id="passport-partner-logo" OnChange="OnChange" accept="image/png,image/jpeg" />
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <p class="state-message error" role="alert">@Error</p>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<IBrowserFile> Accepted { get; set; }
+
+    public string? Error { get; private set; }
+
+    public void ApplySelection(string? fileName, string? contentType, long size)
+    {
+        var reason = PassportPartnerLogoRules.RejectReason(fileName, contentType, size);
+        Error = reason switch
+        {
+            null => null,
+            "logo_svg" => Culture["Admin.PassportPartners.LogoSvg"],
+            "logo_too_large" => Culture["Admin.PassportPartners.LogoLarge"],
+            _ => Culture["Admin.PassportPartners.LogoType"]
+        };
+        StateHasChanged();
+    }
+
+    private async Task OnChange(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        ApplySelection(file.Name, file.ContentType, file.Size);
+        if (Error is null)
+        {
+            await Accepted.InvokeAsync(file);
+        }
+    }
+}
