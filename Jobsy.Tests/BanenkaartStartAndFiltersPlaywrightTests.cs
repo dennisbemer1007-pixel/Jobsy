@@ -185,6 +185,132 @@ public class BanenkaartStartAndFiltersPlaywrightTests
         Assert.Equal(0, font404);
     }
 
+    [Fact]
+    public async Task Mobile_390_filter_sheet_sticky_no_overflow_and_controls_tall_enough()
+    {
+        var baseUrl = BaseUrl();
+        if (baseUrl is null || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        await using var browser = await LaunchAsync();
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.WaitForSelectorAsync(".kb-filters-button, #job-map", new() { Timeout = 60_000 });
+
+        var later = page.Locator(".kb-start-prompt__later");
+        if (await later.CountAsync() > 0)
+        {
+            await later.ClickAsync();
+        }
+
+        await page.Locator("[data-testid='kb-filters-button']").First.ClickAsync();
+        var sheet = page.Locator("#discovery-filters.filter-sheet, [data-testid='kb-filter-sheet']").First;
+        await sheet.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+
+        var layout = await page.EvaluateAsync<bool>("""
+            () => {
+              const sheet = document.querySelector('#discovery-filters');
+              if (!sheet) return false;
+              const overflow = document.documentElement.scrollWidth > window.innerWidth + 1;
+              const header = sheet.querySelector('.filter-sheet__header');
+              const footer = sheet.querySelector('.filter-sheet__footer');
+              if (!header || !footer) return false;
+              const hs = getComputedStyle(header);
+              const fs = getComputedStyle(footer);
+              const stickyOk = (hs.position === 'sticky' || hs.position === 'fixed')
+                && (fs.position === 'sticky' || fs.position === 'fixed');
+              const controls = sheet.querySelectorAll(
+                'button, select, input[type=search], input[type=number], .filter-sheet__seg-btn, .filter-sheet__mode, .branch-multiselect__trigger');
+              for (const el of controls) {
+                const r = el.getBoundingClientRect();
+                if (r.height > 0 && r.height < 43.5) return false;
+              }
+              return !overflow && stickyOk;
+            }
+            """);
+        Assert.True(layout, "Filter sheet must be sticky, without horizontal overflow, controls ≥ 44px.");
+
+        // Scroll to Volgorde and change sort, then apply.
+        var sort = page.Locator("[data-testid='kb-sheet-sort']");
+        await sort.ScrollIntoViewIfNeededAsync();
+        var options = await sort.Locator("option").AllAsync();
+        if (options.Count > 1)
+        {
+            var value = await options[Math.Min(1, options.Count - 1)].GetAttributeAsync("value");
+            if (!string.IsNullOrEmpty(value))
+            {
+                await sort.SelectOptionAsync(value);
+            }
+        }
+
+        await page.Locator("[data-testid='kb-filter-apply']").ClickAsync();
+        await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 10_000 });
+    }
+
+    [Fact]
+    public async Task Mobile_390_hours_and_category_bump_filters_badge()
+    {
+        var baseUrl = BaseUrl();
+        if (baseUrl is null || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        await using var browser = await LaunchAsync();
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        if (!await TryLoginAsync(page, baseUrl))
+        {
+            return;
+        }
+
+        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.Locator("[data-testid='kb-filters-button']").First.WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator("[data-testid='kb-filters-button']").First.ClickAsync();
+        var sheet = page.Locator("[data-testid='kb-filter-sheet']");
+        await sheet.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+
+        // Prefer a category chip when present (Soort werk).
+        var cat = page.Locator(".filter-sheet__chip--category").First;
+        if (await cat.CountAsync() > 0)
+        {
+            await cat.ClickAsync();
+        }
+
+        // Nudge hours range via range inputs when present.
+        var hours = page.Locator(".hours-range--sheet input[type=range]");
+        if (await hours.CountAsync() >= 2)
+        {
+            await hours.Nth(0).FillAsync("16");
+            await hours.Nth(1).FillAsync("32");
+        }
+
+        await page.Locator("[data-testid='kb-filter-apply']").ClickAsync();
+        await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 10_000 });
+
+        var badge = page.Locator("[data-testid='kb-filters-badge']").First;
+        if (await badge.CountAsync() > 0)
+        {
+            var text = (await badge.InnerTextAsync()).Trim();
+            Assert.True(int.TryParse(text, out var n) && n >= 1, $"Expected Filters badge ≥ 1, got '{text}'");
+        }
+    }
+
     private static string? BaseUrl()
     {
         var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');

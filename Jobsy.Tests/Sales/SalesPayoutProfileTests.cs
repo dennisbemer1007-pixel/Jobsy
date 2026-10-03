@@ -175,7 +175,9 @@ public class SalesPayoutProfileServiceTests
         Assert.NotNull(dto.IbanPayoutHoldUntilUtc);
         Assert.True(dto.IbanPayoutHoldUntilUtc > DateTime.UtcNow);
         Assert.Contains(email.Sent, m => m.Category == "SalesMail.IbanChanged");
-        Assert.DoesNotContain("BE68", System.Text.Json.JsonSerializer.Serialize(dto), StringComparison.OrdinalIgnoreCase);
+        // Masked profile must not echo the full IBAN (avoid matching random "be68" substrings in ids/emails).
+        Assert.DoesNotContain("BE68539007547034", System.Text.Json.JsonSerializer.Serialize(dto), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("539007547034", dto.MaskedIban ?? "", StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

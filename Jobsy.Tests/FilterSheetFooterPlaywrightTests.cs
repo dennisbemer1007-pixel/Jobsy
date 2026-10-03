@@ -4,7 +4,7 @@ using Microsoft.Playwright;
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Filter sheet Toepassen must be hittable above the bottom nav on mobile.
+/// Filter sheet "Toon n banen" must be hittable above the bottom nav on mobile.
 /// Soft-skips without <c>JOBSY_E2E_BASE_URL</c>.
 /// </summary>
 [Collection("PlaywrightSmoke")]
@@ -71,7 +71,7 @@ public class FilterSheetFooterPlaywrightTests
               return !!(el === btn || (el.closest && el.closest('.filter-sheet__apply')));
             }
             """);
-        Assert.True(hitIsApply, "elementFromPoint at Toepassen centre must be the apply button, not .bottom-nav.");
+        Assert.True(hitIsApply, "elementFromPoint at Toon-banen centre must be the apply button, not .bottom-nav.");
 
         var urlBefore = page.Url;
         await apply.ClickAsync();
