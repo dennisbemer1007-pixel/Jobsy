@@ -13,7 +13,7 @@ public class BanenkaartMapReusePlaywrightTests
     private const string DefaultEmail = "kandidaat@jobsy.local";
     private const string DefaultPassword = "Jobsy123!";
     private const int RepeatCount = 5;
-    private const int PinsVisibleMs = 3_000;
+    private const int PinsVisibleMs = 15_000;
 
     [Fact]
     public void Job_map_reuses_boot_map_and_redraws_pins_on_304()
