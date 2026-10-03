@@ -108,9 +108,9 @@ public class CareerDesignGuardTests
     }
 
     /// <summary>
-    /// 06 §5: the career stylesheet is one extra request on every candidate page, so it has a
-    /// page-weight budget. The soft target from the stack plan is 25 kB unminified; the ceiling
-    /// here leaves a little room above today's ~27 kB without letting the file creep further.
+    /// 06 §5 / 07: the career stylesheet is one extra request on every candidate page, so it has a
+    /// page-weight budget. Soft target ~25 kB; 07's one-screen mobile overview raised the ceiling
+    /// to 32 kB (compact stepper, Meer panel, hero bubble) without a second stylesheet.
     /// </summary>
     [Fact]
     public void Career_stylesheet_stays_within_its_page_weight_budget()
@@ -120,8 +120,23 @@ public class CareerDesignGuardTests
 
         Assert.True(css.Exists, $"Missing {css.FullName}");
         Assert.True(
-            css.Length <= 28_000,
-            $"carriere.css grew to {css.Length} bytes; split a feature out instead of passing 28 kB.");
+            css.Length <= 32_000,
+            $"carriere.css grew to {css.Length} bytes; split a feature out instead of passing 32 kB.");
+    }
+
+    [Fact]
+    public void Career_mobile_overview_has_no_floating_bar_and_clamps_scene_labels()
+    {
+        var css = File.ReadAllText(Path.Combine(
+            Repo(), "Jobsy.Web", "wwwroot", "css", "features", "carriere.css"));
+        Assert.DoesNotContain("career-mobile-bar", css, StringComparison.Ordinal);
+        Assert.True(
+            css.Contains("clamp(", StringComparison.Ordinal)
+            || css.Contains("translateX(-50%)", StringComparison.Ordinal),
+            "scene label rule must centre or clamp marks on the stone (07).");
+
+        var dashboard = File.ReadAllText(PagePath());
+        Assert.DoesNotContain("career-mobile-bar", dashboard, StringComparison.Ordinal);
     }
 
     private static string PagePath()

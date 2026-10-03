@@ -151,19 +151,6 @@
                                     OnRegenerateLanguage="RegenerateForLanguageAsync" />
 
                 <CareerArchivedPlans Plans="@_archived" Busy="@_busy" OnRestore="RestoreAsync" />
-
-                <div class="career-mobile-bar career-only-mobile">
-                    <button type="button"
-                            class="career-btn career-btn--icon"
-                            aria-label="@Culture["Career.EditDream"]"
-                            disabled="@_busy"
-                            @onclick="OpenDreamDialog">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                        </svg>
-                    </button>
-                </div>
             </ChildContent>
         </CareerStage>
 
@@ -218,9 +205,9 @@
             {
                 return
                 [
-                    new ClimbStone(Culture["Career.Rail.Now"], ClimbStoneState.Now),
-                    new ClimbStone("", ClimbStoneState.Todo),
-                    new ClimbStone("", ClimbStoneState.Todo),
+                    new ClimbStone(Culture["Career.Rail.Now"], ClimbStoneState.Now, ShortMark: Culture["Career.Mark.Now"]),
+                    new ClimbStone("", ClimbStoneState.Todo, ShortMark: "1"),
+                    new ClimbStone("", ClimbStoneState.Todo, ShortMark: "2"),
                     new ClimbStone("", ClimbStoneState.Dream)
                 ];
             }
@@ -231,7 +218,10 @@
                         ? Culture["Career.Rail.NowUnknown"]
                         : s.Label,
                     s.State,
-                    s.StateTextKey is null ? s.Number?.ToString() : Culture[s.StateTextKey]))
+                    s.StateTextKey is null ? s.Number?.ToString() : Culture[s.StateTextKey],
+                    ShortMark: s.State == ClimbStoneState.Dream
+                        ? null
+                        : s.Number?.ToString() ?? Culture["Career.Mark.Now"]))
                 .ToList();
         }
     }

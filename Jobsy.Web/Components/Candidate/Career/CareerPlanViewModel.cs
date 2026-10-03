@@ -73,7 +73,8 @@ public sealed record CareerPlanStepView(
     int GapCount,
     string? BandLabelKey,
     int CourseCount,
-    string Summary);
+    string Summary,
+    IReadOnlyList<string> GapNames);
 
 /// <summary>One gap or requirement line on the step detail (03 §2).</summary>
 public sealed record CareerStepGapLine(string Text, bool Met);

@@ -150,13 +150,14 @@ public class CareerPageBunitTests : BunitContext
     }
 
     [Fact]
-    public void Overview_hides_the_course_fact_without_free_courses()
+    public void Overview_shows_plain_course_fact_without_free_courses()
     {
         var plan = Build(PlanJson());
         var cut = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, plan)
             .Add(x => x.FreeCourseCount, 0));
 
+        Assert.Contains("opleidingen", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("opleidingen ·", cut.Markup, StringComparison.Ordinal);
 
         cut.Render(p => p.Add(x => x.FreeCourseCount, 1));
@@ -232,13 +233,50 @@ public class CareerPageBunitTests : BunitContext
         var cut2 = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, withProof)
             .Add(x => x.PassportOn, true));
-        Assert.Contains("career-have", cut2.Markup, StringComparison.Ordinal);
+        // Desktop still has the separate block; on mobile it lives under Meer (07).
+        Assert.Contains("career-have career-only-desktop", cut2.Markup, StringComparison.Ordinal);
         Assert.Contains("In je paspoort", cut2.Markup, StringComparison.Ordinal);
 
         var cut3 = Render<CareerOverviewCard>(p => p
             .Add(x => x.Plan, withProof)
             .Add(x => x.PassportOn, false));
         Assert.Contains("In je profiel", cut3.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Overview_mobile_meer_is_collapsed_by_default_and_expands_have()
+    {
+        var plan = Build(PlanJson(onProfileCourse: true));
+        var cut = Render<CareerOverviewCard>(p => p
+            .Add(x => x.Plan, plan)
+            .Add(x => x.PassportOn, true));
+
+        var more = cut.Find(".career-now__more");
+        Assert.Equal("false", more.GetAttribute("aria-expanded"));
+        Assert.Contains("Nog 2 klauwen · 1 opleidingen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("career-card__source", cut.Markup, StringComparison.Ordinal);
+        Assert.True(cut.Find("#career-now-meer").HasAttribute("hidden"));
+
+        more.Click();
+        Assert.Equal("true", cut.Find(".career-now__more").GetAttribute("aria-expanded"));
+        Assert.False(cut.Find("#career-now-meer").HasAttribute("hidden"));
+        Assert.Contains("Wat je al hebt:", cut.Find("#career-now-meer").TextContent, StringComparison.Ordinal);
+        Assert.Contains("career-card__source", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Overview_pencil_is_reachable_on_mobile_without_a_floating_bar()
+    {
+        var plan = Build(PlanJson());
+        var cut = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, plan));
+
+        Assert.Contains("career-card__edit--icon", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("aria-label=\"Droombaan wijzigen\"", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("career-mobile-bar", cut.Markup, StringComparison.Ordinal);
+
+        var dashboard = File.ReadAllText(Path.Combine(
+            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor"));
+        Assert.DoesNotContain("career-mobile-bar", dashboard, StringComparison.Ordinal);
     }
 
     // ---------- stepper + rail ----------
@@ -254,6 +292,23 @@ public class CareerPageBunitTests : BunitContext
         Assert.Contains("aria-current=\"step\"", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(1, Occurrences(cut.Markup, "aria-current=\"step\""));
         Assert.DoesNotContain("Basis<", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Mobile_stepper_uses_equal_column_captions_nu_stap_doel()
+    {
+        var plan = Build(PlanJson());
+        var cut = Render<GrowingShellsStepper>(p => p
+            .Add(x => x.Stones, plan.Stones)
+            .Add(x => x.Mobile, true));
+
+        Assert.Contains("career-stepper--mobile", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(">Nu<", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Stap 1", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Stap 2", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(">Doel<", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Basisdiploma", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("--step-count:5", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

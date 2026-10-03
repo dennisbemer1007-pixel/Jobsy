@@ -11,7 +11,7 @@ public static class CareerClimbGeometry
     public const double DesktopWidth = 404;
     public const double DesktopHeight = 748;
     public const double MobileWidth = 390;
-    public const double MobileHeight = 150;
+    public const double MobileHeight = 180;
 
     /// <summary>Minimum distance between two stone centres on the desktop zone.</summary>
     public const double DesktopMinDistance = 60;
@@ -34,11 +34,11 @@ public static class CareerClimbGeometry
 
     private static readonly Point[] MobileAnchors =
     [
-        new(30, 126),
-        new(108, 103),
-        new(190, 80),
-        new(272, 57),
-        new(356, 28)
+        new(30, 151),
+        new(108, 124),
+        new(190, 96),
+        new(272, 68),
+        new(356, 34)
     ];
 
     /// <summary>

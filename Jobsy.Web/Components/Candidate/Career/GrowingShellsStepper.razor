@@ -3,7 +3,9 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<nav class="career-stepper @(Mobile ? "career-stepper--compact" : null)" aria-label="@Culture["Career.Stepper.Aria"]">
+<nav class="career-stepper @(Mobile ? "career-stepper--mobile" : null)"
+     aria-label="@Culture["Career.Stepper.Aria"]"
+     style="@(Mobile ? $"--step-count:{Stones.Count}" : null)">
     <ol class="career-stepper__list">
         @for (var i = 0; i < Stones.Count; i++)
         {
@@ -30,7 +32,7 @@
                         <span class="career-stepper__num">@n</span>
                     }
                 </span>
-                <span class="career-stepper__caption">@Label(stone)</span>
+                <span class="career-stepper__caption">@Label(stone, i)</span>
             </li>
         }
     </ol>
@@ -40,8 +42,29 @@
     [Parameter] public IReadOnlyList<CareerStoneModel> Stones { get; set; } = [];
     [Parameter] public bool Mobile { get; set; }
 
-    private string Label(CareerStoneModel stone)
+    private string Label(CareerStoneModel stone, int index)
     {
+        if (Mobile)
+        {
+            if (stone.State == ClimbStoneState.Dream)
+            {
+                return Culture["Career.Stepper.Goal"];
+            }
+
+            if (index == 0 || stone.Number is null)
+            {
+                return Culture["Career.Stepper.Now"];
+            }
+
+            // With more than 6 stones, shorten captions to numbers only (07 §5).
+            if (Stones.Count > 6)
+            {
+                return stone.Number.Value.ToString();
+            }
+
+            return Culture.Format("Career.Stepper.Step", stone.Number.Value);
+        }
+
         var text = stone.State switch
         {
             ClimbStoneState.Done when stone.Number is null =>
@@ -51,20 +74,19 @@
             _ => stone.Label
         };
 
-        if (!Mobile || string.IsNullOrWhiteSpace(text))
-        {
-            return text;
-        }
-
-        var space = text.IndexOf(' ');
-        return space > 2 ? text[..space] : text;
+        return text;
     }
 
-    /// <summary>30 px at "Nu" growing to 48 px at the goal (paspoort 04.2); mobile is 4 px smaller.</summary>
+    /// <summary>30 px at "Nu" growing to 48 px at the goal (paspoort 04.2); mobile is a fixed 36 px.</summary>
     private int ShellSize(int index)
     {
+        if (Mobile)
+        {
+            return 36;
+        }
+
         var last = Math.Max(1, Stones.Count - 1);
-        return 30 + (48 - 30) * index / last - (Mobile ? 4 : 0);
+        return 30 + (48 - 30) * index / last;
     }
 
     private static string StateClass(ClimbStoneState state) => state switch
