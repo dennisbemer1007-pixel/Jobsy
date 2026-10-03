@@ -191,6 +191,7 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
             SchoolYearStart = 2026,
             ClassLabel = "2B",
             Level = SchoolLevel.Havo,
+            QuestionSet = PupilQuestionSet.Vo,
             Year = 2,
             PupilCount = 10,
             StartedCount = 8,
@@ -207,6 +208,7 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
             Id = Guid.NewGuid(),
             SchoolId = schoolId,
             SchoolYearStart = 2026,
+            QuestionSet = PupilQuestionSet.Vo,
             PupilCount = 10,
             StartedCount = 8,
             CompletedCount = 6,
@@ -221,16 +223,21 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
         await db.SaveChangesAsync();
 
         var reporting = new SchoolReportingService(db, new StubFeatures(7, 31));
-        var view = await reporting.GetReportAsync(new SchoolReportFilterDto(2026, schoolId, null, null));
+        var view = await reporting.GetReportAsync(
+            new SchoolReportFilterDto(2026, schoolId, null, null, PupilQuestionSet.Vo));
         Assert.Equal(6, view.CompletedCount);
         Assert.DoesNotContain(view.RiasecTop3, r => r.Masked);
 
-        var masked = await reporting.GetReportAsync(new SchoolReportFilterDto(2026, schoolId, SchoolLevel.Vwo, 6));
+        var masked = await reporting.GetReportAsync(
+            new SchoolReportFilterDto(2026, schoolId, SchoolLevel.Vwo, 6, PupilQuestionSet.Vo));
         Assert.Null(masked.CompletedCount);
 
-        var (bytes, _) = await reporting.ExportCsvAsync(new SchoolReportFilterDto(2026, schoolId, null, null));
+        var (bytes, fileName) = await reporting.ExportCsvAsync(
+            new SchoolReportFilterDto(2026, schoolId, null, null, PupilQuestionSet.Vo));
         var text = System.Text.Encoding.UTF8.GetString(bytes);
         Assert.Contains(SchoolReportingService.CsvHeader, text, StringComparison.Ordinal);
+        Assert.Contains(";vo;", text, StringComparison.Ordinal);
+        Assert.EndsWith("-vo.csv", fileName, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -277,7 +284,10 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
         Assert.Equal(HttpStatusCode.Forbidden, (await schoolClient.GetAsync("api/admin/schools/retention")).StatusCode);
 
         using var admin = JobsyTestAuth.CreateAuthenticatedClient(_factory, _factory.AdminId);
-        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/admin/schools/rapportage")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await admin.GetAsync("api/admin/schools/rapportage")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK,
+            (await admin.GetAsync("api/admin/schools/rapportage?questionSet=Vo")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await admin.PostAsync("api/admin/schools/retention/dry-run", null)).StatusCode);
     }
 
@@ -335,6 +345,7 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
         Name = name,
         Level = SchoolLevel.Havo,
         Year = 2,
+        QuestionSet = PupilQuestionSet.Vo,
         SchoolYearStart = yearStart,
         PupilCount = pupilCount,
         CreatedAtUtc = DateTime.UtcNow
@@ -378,7 +389,7 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
                     RiasecScoresJson = """{"S":3,"A":2,"E":1}""",
                     ValuesScoresJson = "{}",
                     CultureScoresJson = "{}",
-                    ScoringVersion = "t",
+                    ScoringVersion = "1",
                     StoryTemplateVersion = "t",
                     StoryKeysJson = "[]"
                 });
@@ -495,7 +506,7 @@ public class SchoolRetentionAndAggregatesTests : IClassFixture<RoleFunctionalWeb
                 RiasecScoresJson = """{"S":3}""",
                 ValuesScoresJson = "{}",
                 CultureScoresJson = "{}",
-                ScoringVersion = "t",
+                ScoringVersion = "1",
                 StoryTemplateVersion = "t",
                 StoryKeysJson = "[]"
             });

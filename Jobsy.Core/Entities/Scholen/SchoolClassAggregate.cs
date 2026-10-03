@@ -12,6 +12,8 @@ public class SchoolClassAggregate
     public int SchoolYearStart { get; set; }
     public string ClassLabel { get; set; } = string.Empty;
     public SchoolLevel Level { get; set; }
+    /// <summary>Which pupil test this class aggregate belongs to (never mixed).</summary>
+    public PupilQuestionSet QuestionSet { get; set; }
     public int Year { get; set; }
     public int PupilCount { get; set; }
     public int StartedCount { get; set; }

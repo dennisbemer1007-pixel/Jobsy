@@ -76,7 +76,8 @@ public sealed record SchoolPortalResultsDto(
     string ClassName,
     bool PerCodeEnabled,
     ClassResultsAggregate Totals,
-    IReadOnlyList<SchoolPortalPerCodeResultDto>? PerCode);
+    IReadOnlyList<SchoolPortalPerCodeResultDto>? PerCode,
+    PupilQuestionSet QuestionSet);
 
 public sealed record SchoolPortalPerCodeResultDto(
     Guid CodeId,

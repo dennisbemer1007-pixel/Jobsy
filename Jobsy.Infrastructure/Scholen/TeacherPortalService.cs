@@ -194,7 +194,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         var results = await _db.PupilResults.AsNoTracking()
             .Where(r => r.SchoolClassId == classId)
             .ToListAsync(cancellationToken);
-        var group = MapGroupInsights(results);
+        var group = MapGroupInsights(results, schoolClass.QuestionSet);
 
         var preview = codes.Take(CodesPreviewLimit).Select(c => MapCodeRow(c, schoolClass)).ToList();
         var snap = await _features.GetAsync(cancellationToken);
@@ -262,10 +262,17 @@ public sealed class TeacherPortalService : ITeacherPortalService
             return null;
         }
 
+        var schoolClass = await _db.SchoolClasses.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (schoolClass is null)
+        {
+            return null;
+        }
+
         var results = await _db.PupilResults.AsNoTracking()
             .Where(r => r.SchoolClassId == classId)
             .ToListAsync(cancellationToken);
-        return MapGroupInsights(results);
+        return MapGroupInsights(results, schoolClass.QuestionSet);
     }
 
     public async Task<TeacherDreamJobsDto?> GetDreamJobsAsync(
@@ -278,10 +285,17 @@ public sealed class TeacherPortalService : ITeacherPortalService
             return null;
         }
 
+        var schoolClass = await _db.SchoolClasses.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (schoolClass is null)
+        {
+            return null;
+        }
+
         var results = await _db.PupilResults.AsNoTracking()
             .Where(r => r.SchoolClassId == classId)
             .ToListAsync(cancellationToken);
-        var agg = ClassResultsAggregator.AggregateTeacherGroup(results);
+        var agg = ClassResultsAggregator.AggregateTeacherGroup(results, schoolClass.QuestionSet);
         return new TeacherDreamJobsDto(
             Visible: agg.Visible,
             CompletedCount: agg.CompletedCount,
@@ -669,9 +683,11 @@ public sealed class TeacherPortalService : ITeacherPortalService
         return (dto, null, null);
     }
 
-    private TeacherGroupInsightsDto MapGroupInsights(IReadOnlyList<PupilResult> results)
+    private TeacherGroupInsightsDto MapGroupInsights(
+        IReadOnlyList<PupilResult> results,
+        PupilQuestionSet questionSet)
     {
-        var agg = ClassResultsAggregator.AggregateTeacherGroup(results);
+        var agg = ClassResultsAggregator.AggregateTeacherGroup(results, questionSet);
         string? l1 = null;
         string? l2 = null;
         if (agg.Visible && agg.RiasecBars.Count > 0)
@@ -694,7 +710,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             DreamJobs: agg.DreamJobs.Select(d => new NamedCountDto(d.Key, d.Count)).ToList(),
             TopCultures: agg.TopCultures.Select(c => new NamedCountDto(c.Key, c.Count)).ToList(),
             CompetenceBands: agg.CompetenceBands.Select(c => new NamedCountDto(c.Key, c.Count)).ToList(),
-            DiscussionPromptKeys: prompts);
+            DiscussionPromptKeys: prompts,
+            QuestionSet: questionSet);
     }
 
     private TeacherCodeRowDto MapCodeRow(PupilCode code, SchoolClass schoolClass)

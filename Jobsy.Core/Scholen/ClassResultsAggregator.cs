@@ -1,22 +1,59 @@
 using System.Text.Json;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Scholen;
 
 /// <summary>
 /// Pure aggregator for class-level results. Applies k-anonymity (k ≥ 5)
 /// and dream-job "Overig" for counts &lt; 2. Reused by school (02), teacher (03) and admin (07).
+/// Callers must pass results from a single <see cref="PupilQuestionSet"/> only.
 /// </summary>
 public static class ClassResultsAggregator
 {
     private static readonly string[] RiasecOrder = ["R", "I", "A", "S", "E", "C"];
     public const string UndecidedDreamJobKey = "weet-ik-nog-niet";
 
-    public static ClassResultsAggregate Aggregate(
-        IReadOnlyList<PupilResult> results,
-        int totalCodes)
+    /// <summary>
+    /// Throws when any result's scoring version does not belong to <paramref name="questionSet"/>.
+    /// G78 accepts <c>g78-*</c>; VO accepts <c>vo-*</c> or legacy <c>1</c>.
+    /// </summary>
+    public static void EnsureResultsBelongToSet(
+        PupilQuestionSet questionSet,
+        IReadOnlyList<PupilResult> results)
     {
         ArgumentNullException.ThrowIfNull(results);
+        foreach (var result in results)
+        {
+            if (!ScoringVersionBelongsTo(questionSet, result.ScoringVersion))
+            {
+                throw new InvalidOperationException(
+                    $"Result scoring version '{result.ScoringVersion}' does not belong to question set '{questionSet}'.");
+            }
+        }
+    }
+
+    public static bool ScoringVersionBelongsTo(PupilQuestionSet questionSet, string? scoringVersion)
+    {
+        var v = (scoringVersion ?? string.Empty).Trim();
+        return questionSet switch
+        {
+            PupilQuestionSet.Groep78 =>
+                v.StartsWith("g78-", StringComparison.OrdinalIgnoreCase),
+            PupilQuestionSet.Vo =>
+                v.StartsWith("vo-", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(v, "1", StringComparison.Ordinal),
+            _ => false
+        };
+    }
+
+    public static ClassResultsAggregate Aggregate(
+        IReadOnlyList<PupilResult> results,
+        int totalCodes,
+        PupilQuestionSet questionSet)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+        EnsureResultsBelongToSet(questionSet, results);
         var completed = results.Count;
         var completionPct = totalCodes <= 0 ? 0d : Math.Round(100d * completed / totalCodes, 1);
 
@@ -64,9 +101,12 @@ public static class ClassResultsAggregator
     /// Teacher group/overview insights: full RIASEC bars, cultures, competence bands.
     /// Empty lists when completed &lt; k.
     /// </summary>
-    public static TeacherGroupAggregate AggregateTeacherGroup(IReadOnlyList<PupilResult> results)
+    public static TeacherGroupAggregate AggregateTeacherGroup(
+        IReadOnlyList<PupilResult> results,
+        PupilQuestionSet questionSet)
     {
         ArgumentNullException.ThrowIfNull(results);
+        EnsureResultsBelongToSet(questionSet, results);
         var completed = results.Count;
         if (completed < SchoolAnonymity.MinGroupSize)
         {
@@ -120,9 +160,12 @@ public static class ClassResultsAggregator
             UndecidedDreamJobCount: undecided);
     }
 
-    /// <summary>School-wide RIASEC top-3 over completed results (same k gate).</summary>
-    public static IReadOnlyList<NamedCount> SchoolRiasecTop3(IReadOnlyList<PupilResult> results)
+    /// <summary>School-wide RIASEC top-3 over completed results of one test (same k gate).</summary>
+    public static IReadOnlyList<NamedCount> SchoolRiasecTop3(
+        IReadOnlyList<PupilResult> results,
+        PupilQuestionSet questionSet)
     {
+        EnsureResultsBelongToSet(questionSet, results);
         if (results.Count < SchoolAnonymity.MinGroupSize)
         {
             return [];

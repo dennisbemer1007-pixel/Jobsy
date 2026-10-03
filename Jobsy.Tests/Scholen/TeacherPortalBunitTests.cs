@@ -69,7 +69,7 @@ public class TeacherPortalBunitTests : BunitContext
             RiasecScoresJson = """{"realistic":80,"investigative":70,"artistic":30,"social":60,"enterprising":40,"conventional":40}""",
             ValuesScoresJson = """{"autonomy":40,"connection":80,"achievement":50,"stability":45,"impact":60}""",
             CultureScoresJson = """{"autonomy":40,"informal":40,"collaboration":50,"flexibility":40,"innovation":40,"peopleFirst":80}""",
-            ScoringVersion = "t",
+            ScoringVersion = "1",
             StoryTemplateVersion = "1",
             StoryKeysJson = "[]"
         };

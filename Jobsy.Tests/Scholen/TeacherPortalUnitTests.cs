@@ -1,5 +1,6 @@
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Localization;
@@ -13,12 +14,12 @@ public class TeacherPortalUnitTests
     public void Teacher_group_aggregate_hides_below_k_and_shows_bars_at_five()
     {
         var four = Enumerable.Range(0, 4).Select(_ => MakeResult("SAE", "Helpen", "Klein", "arts")).ToList();
-        var hidden = ClassResultsAggregator.AggregateTeacherGroup(four);
+        var hidden = ClassResultsAggregator.AggregateTeacherGroup(four, PupilQuestionSet.Vo);
         Assert.False(hidden.Visible);
         Assert.Empty(hidden.RiasecBars);
 
         four.Add(MakeResult("RIC", "Vrijheid", "Druk", "kok"));
-        var shown = ClassResultsAggregator.AggregateTeacherGroup(four);
+        var shown = ClassResultsAggregator.AggregateTeacherGroup(four, PupilQuestionSet.Vo);
         Assert.True(shown.Visible);
         Assert.Equal(6, shown.RiasecBars.Count);
         Assert.True(shown.TopValues.Count is >= 1 and <= 3);
@@ -104,7 +105,7 @@ public class TeacherPortalUnitTests
         RiasecScoresJson = """{"realistic":70,"investigative":40,"artistic":30,"social":80,"enterprising":40,"conventional":40}""",
         ValuesScoresJson = """{"autonomy":40,"connection":80,"achievement":50,"stability":45,"impact":60}""",
         CultureScoresJson = """{"autonomy":40,"informal":40,"collaboration":50,"flexibility":40,"innovation":40,"peopleFirst":80}""",
-        ScoringVersion = "t",
+        ScoringVersion = "1",
         StoryTemplateVersion = "1",
         StoryKeysJson = "[]"
     };
