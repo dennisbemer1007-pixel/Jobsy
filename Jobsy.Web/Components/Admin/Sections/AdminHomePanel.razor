@@ -7,7 +7,7 @@
     @if (!HideToolbar)
     {
         <div class="admin-dashboard__toolbar">
-            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+            <DashboardRefreshButton Period="@_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode">
             @foreach (var p in Periods)
             {
@@ -26,7 +26,7 @@
     else
     {
         <div class="admin-dashboard__toolbar admin-dashboard__toolbar--end">
-            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+            <DashboardRefreshButton Period="@_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
         </div>
     }
 
@@ -38,7 +38,7 @@
     {
         <MetricsCategoryBoard Metrics="_metrics"
                               Loading="@(_loading && _metrics.Count == 0)"
-                              SelectedKey="_selectedKey"
+                              SelectedKey="@_selectedKey"
                               ValueFormatter="FormatValue"
                               ShowVacancyPerformance="true"
                               VacancyPerformance="_vacancyBoard"

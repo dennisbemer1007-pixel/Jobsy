@@ -457,9 +457,9 @@
                                       DisplayName="@($"{Draft.FirstName} {Draft.LastName}".Trim())"
                                       Initials="@EndInitials"
                                       MemberNumber="@_memberNumber"
-                                      StrengthFact="_endStrength"
-                                      WorkFact="_endWork"
-                                      ValueFact="_endValue"
+                                      StrengthFact="@_endStrength"
+                                      WorkFact="@_endWork"
+                                      ValueFact="@_endValue"
                                       Deepen="GoToOverviewAsync"
                                       ViewPassport="GoToPassportAsync" />
                 }
