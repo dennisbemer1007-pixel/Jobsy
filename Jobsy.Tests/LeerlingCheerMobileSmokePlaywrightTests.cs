@@ -33,8 +33,9 @@ public class LeerlingCheerMobileSmokePlaywrightTests
         await page.SetContentAsync(
             FixtureHtml(baseUrl),
             new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        // "0px" is truthy, so wait until scholen.css has actually applied.
         await page.WaitForFunctionAsync(
-            "() => !!getComputedStyle(document.querySelector('.ll-answer')).minHeight",
+            "() => parseFloat(getComputedStyle(document.querySelector('.ll-answer')).minHeight) >= 40",
             null,
             new() { Timeout = 15_000 });
 

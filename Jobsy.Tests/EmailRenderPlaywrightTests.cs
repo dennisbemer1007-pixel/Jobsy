@@ -107,8 +107,16 @@ public class EmailRenderPlaywrightTests : IClassFixture<EmailRenderPlaywrightTes
         var dir = Path.Combine(FindRepoRoot(), "artifacts", "playwright-email");
         Directory.CreateDirectory(dir);
         var shot = Path.Combine(dir, $"{Sanitize(key)}-{lang}-{width}-{theme}.png");
-        await page.ScreenshotAsync(new() { Path = shot, FullPage = true });
-        _output.WriteLine($"SHOT {Path.GetFileName(shot)}");
+        try
+        {
+            await page.ScreenshotAsync(new() { Path = shot, FullPage = true });
+            _output.WriteLine($"SHOT {Path.GetFileName(shot)}");
+        }
+        catch (PlaywrightException)
+        {
+            // Artifact only. A closed browser target must not fail checks that already passed.
+            _output.WriteLine("SHOT skipped");
+        }
     }
 
     private static string Sanitize(string key)
