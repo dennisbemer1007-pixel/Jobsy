@@ -216,7 +216,9 @@
                                       TitleKey="Discovery.Step4.DreamTitle"
                                       AsSubsection="true"
                                       ShowLead="false"
+                                      Young="@IsYoungCandidate"
                                       ChooseDream="ChooseDream"
+                                      ChooseTitle="ChooseDreamTitle"
                                       ChooseOwnDream="ChooseOwnDream"
                                       DreamKeyDown="DreamKeyDown" />
                         <section>
@@ -1743,10 +1745,9 @@
 
     private void SplitAddress(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return;
-        var index = value.Trim().IndexOf(' ');
-        Draft.Postcode = index > 0 ? value[..index].Trim() : value.Trim();
-        Draft.City = index > 0 ? value[(index + 1)..].Trim() : "";
+        var (postcode, city) = PostcodeMatch.SplitHomeAddress(value);
+        Draft.Postcode = postcode;
+        Draft.City = city;
     }
 
     private string HomeAddress() => $"{NormalizePostcode(Draft.Postcode)} {Draft.City.Trim()}".Trim();
@@ -1951,9 +1952,15 @@
         ScheduleProfileSave();
     }
 
-    private void ChooseDream(DreamJob job)
+    private bool IsYoungCandidate => CandidateAge.IsYoung(Draft.BirthDate, DateOnly.FromDateTime(DateTime.Today));
+
+    private void ChooseDream(DreamJob job) => ChooseDreamTitle(job.TitleNl);
+
+    private void ChooseDreamTitle(string title)
     {
-        Draft.Dream = job.TitleNl;
+        var dream = (title ?? "").Trim();
+        if (dream.Length == 0) return;
+        Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
         ScheduleDreamSave();
     }

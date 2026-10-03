@@ -85,6 +85,7 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
                 UserId = userId,
                 DreamTitle = dream,
                 DreamKey = CareerStepKey.NormalizeDreamKey(dream),
+                DreamCatalogKey = CatalogKeyFor(dream),
                 PlanJson = "[]",
                 MatchPercent = 0,
                 MatchSummary = "",
@@ -99,12 +100,20 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
         {
             existing.DreamTitle = string.IsNullOrWhiteSpace(dream) ? existing.DreamTitle : dream;
             existing.DreamKey = CareerStepKey.NormalizeDreamKey(existing.DreamTitle);
+            existing.DreamCatalogKey = CatalogKeyFor(existing.DreamTitle);
             existing.UpdatedAtUtc = now;
             // Keep existing steps; wizard save must not regenerate.
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (!string.IsNullOrWhiteSpace(dream))
+        {
+            _insightsQueue.TryEnqueue(userId);
+        }
     }
+
+    private static string? CatalogKeyFor(string dream)
+        => CareerDreamCatalog.FindByTitleOrAlias(dream)?.Key;
 
     public async Task<string?> GetDreamTitleAsync(Guid userId, CancellationToken cancellationToken = default)
     {

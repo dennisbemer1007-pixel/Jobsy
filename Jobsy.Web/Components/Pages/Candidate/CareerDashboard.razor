@@ -1,6 +1,7 @@
 @page "/carriere"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Careers
 @using Jobsy.Core.Features
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Career
@@ -631,6 +632,14 @@
     {
         _planApi = plan;
         _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel);
+        if (!_plan.HasPlan && !string.IsNullOrWhiteSpace(_plan.DreamTitle))
+        {
+            var entry = CareerDreamCatalog.FindByTitleOrAlias(_plan.DreamTitle);
+            _choice = new CareerDreamChoice(
+                entry?.Key,
+                entry is null ? _plan.DreamTitle : null,
+                _plan.DreamTitle);
+        }
     }
 
     private string FailureMessage(Exception ex)

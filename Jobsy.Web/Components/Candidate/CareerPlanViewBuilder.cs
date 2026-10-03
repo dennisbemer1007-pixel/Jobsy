@@ -53,9 +53,20 @@ public static class CareerPlanViewBuilder
         string uiLanguage,
         string nowLabel = "")
     {
-        if (plan is null || plan.Steps.Count == 0)
+        if (plan is null || (plan.Steps.Count == 0 && string.IsNullOrWhiteSpace(plan.DreamTitle)))
         {
             return CareerPlanViewModel.Empty;
+        }
+
+        if (plan.Steps.Count == 0)
+        {
+            var saved = CareerDreamCatalog.FindByTitleOrAlias(plan.DreamTitle);
+            return new CareerPlanViewModel
+            {
+                HasPlan = false,
+                DreamTitle = plan.DreamTitle.Trim(),
+                DreamLevel = saved?.Level ?? ""
+            };
         }
 
         var steps = plan.Steps

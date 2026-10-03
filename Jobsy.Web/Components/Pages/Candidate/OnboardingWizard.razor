@@ -229,7 +229,9 @@
 
                         case 6:
                             <DreamJobStep Draft="Draft"
+                                          Young="@IsYoungCandidate"
                                           ChooseDream="ChooseDream"
+                                          ChooseTitle="ChooseDreamTitle"
                                           ChooseOwnDream="ChooseOwnDream"
                                           DreamKeyDown="DreamKeyDown" />
                             break;
@@ -812,9 +814,15 @@
         ScheduleProfileSave();
     }
 
-    private void ChooseDream(DreamJob job)
+    private bool IsYoungCandidate => CandidateAge.IsYoung(Draft.BirthDate, DateOnly.FromDateTime(DateTime.Today));
+
+    private void ChooseDream(DreamJob job) => ChooseDreamTitle(job.TitleNl);
+
+    private void ChooseDreamTitle(string title)
     {
-        Draft.Dream = job.TitleNl;
+        var dream = (title ?? "").Trim();
+        if (dream.Length == 0) return;
+        Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
         ScheduleDreamSave();
     }
