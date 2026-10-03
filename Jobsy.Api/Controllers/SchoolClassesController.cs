@@ -61,15 +61,20 @@ public sealed class SchoolClassesController : ControllerBase
         [FromBody] UpdateSchoolClassRequest request,
         CancellationToken cancellationToken)
     {
-        var (detail, error) = await _portal.UpdateClassAsync(User, classId, request, cancellationToken);
-        if (error == "not_found" || detail is null && error == "not_found")
+        var (detail, error, code) = await _portal.UpdateClassAsync(User, classId, request, cancellationToken);
+        if (code == "not_found" || error == "not_found")
         {
             return NotFound();
         }
 
+        if (code == "level_locked")
+        {
+            return Conflict(new { error = "level_locked", message = error });
+        }
+
         if (detail is null)
         {
-            return BadRequest(new { error = "validation", message = error });
+            return BadRequest(new { error = code ?? "validation", message = error });
         }
 
         return Ok(detail);

@@ -9,7 +9,8 @@ public sealed record TeacherAssignedClassDto(
     SchoolLevel Level,
     int Year,
     int SchoolYearStart,
-    string SchoolYearLabel);
+    string SchoolYearLabel,
+    PupilQuestionSet QuestionSet);
 
 public sealed record TeacherClassOverviewDto(
     Guid ClassId,
@@ -30,6 +31,7 @@ public sealed record TeacherClassOverviewDto(
     DateTime? LoginPausedUntilUtc,
     IReadOnlyList<TeacherCodeRowDto> CodesPreview,
     TeacherGroupInsightsDto GroupInsights,
+    PupilQuestionSet QuestionSet,
     string? RetentionBanner = null);
 
 public sealed record TeacherCodeRowDto(

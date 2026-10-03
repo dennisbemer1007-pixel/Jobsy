@@ -38,7 +38,13 @@ else
     }
     <header class="sch-page-header">
         <h1>Klas @_overview.ClassName</h1>
-        <p class="muted">@_overview.Level · @_overview.Year · @_overview.SchoolYearLabel · @_overview.CodeCount @Culture["Leraar.Kpi.Codes"]</p>
+        <p class="muted">
+            @Culture[SchoolLevelRules.LabelKey(_overview.Level)]
+            · @SchoolLevelRules.YearLabel(_overview.Level, _overview.Year)
+            · <span class="sch-pill @(_overview.QuestionSet == PupilQuestionSet.Groep78 ? "sch-pill--ok" : "sch-pill--muted")">@SchoolLevelRules.QuestionSetPillLabel(_overview.QuestionSet)</span>
+            · @_overview.SchoolYearLabel
+            · @_overview.CodeCount @Culture["Leraar.Kpi.Codes"]
+        </p>
         @if (_overview.TestWindow == TestWindowState.Open && _overview.TestWindowClosesOn is DateOnly until)
         {
             <p class="sch-pill sch-pill--ok">@Culture["School.TestWindow.StatusOpen"] · @Culture["School.TestWindow.Until"] @until.ToString("dd-MM-yyyy")</p>

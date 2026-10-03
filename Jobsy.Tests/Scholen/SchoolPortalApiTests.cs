@@ -207,6 +207,142 @@ public class SchoolPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Create_groep78_year_8_sets_question_set()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, _) = await SeedSchoolStaffAsync();
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var create = await client.PostAsJsonAsync("api/school/classes", new CreateSchoolClassRequest(
+            "8A", SchoolLevel.Groep78, 8, 5, null, null));
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+        var detail = await create.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(Json);
+        Assert.NotNull(detail);
+        Assert.Equal(PupilQuestionSet.Groep78, detail!.QuestionSet);
+        Assert.Equal(SchoolLevel.Groep78, detail.Level);
+        Assert.Equal(8, detail.Year);
+        Assert.False(detail.LevelLocked);
+    }
+
+    [Fact]
+    public async Task Create_groep78_year_3_returns_400()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, _) = await SeedSchoolStaffAsync();
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var create = await client.PostAsJsonAsync("api/school/classes", new CreateSchoolClassRequest(
+            "X3", SchoolLevel.Groep78, 3, 5, null, null));
+        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+        var body = await create.Content.ReadAsStringAsync();
+        Assert.Contains("Kies groep 7 of groep 8", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Create_havo_sets_vo_question_set()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, _) = await SeedSchoolStaffAsync();
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var create = await client.PostAsJsonAsync("api/school/classes", new CreateSchoolClassRequest(
+            "2H", SchoolLevel.Havo, 2, 5, null, null));
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+        var detail = await create.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(Json);
+        Assert.Equal(PupilQuestionSet.Vo, detail!.QuestionSet);
+    }
+
+    [Fact]
+    public async Task Update_havo_to_vwo_with_started_codes_succeeds()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, classId) = await SeedSchoolStaffAsync(withClass: true, codeCount: 3);
+        await MarkFirstCodeInProgressAsync(classId);
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var update = await client.PutAsJsonAsync($"api/school/classes/{classId}", new UpdateSchoolClassRequest(
+            "2B", SchoolLevel.Vwo, 2, null));
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var detail = await update.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(Json);
+        Assert.Equal(SchoolLevel.Vwo, detail!.Level);
+        Assert.Equal(PupilQuestionSet.Vo, detail.QuestionSet);
+        Assert.True(detail.LevelLocked);
+    }
+
+    [Fact]
+    public async Task Update_havo_to_groep78_with_started_code_returns_409_level_locked()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, classId) = await SeedSchoolStaffAsync(withClass: true, codeCount: 3);
+        await MarkFirstCodeInProgressAsync(classId);
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var update = await client.PutAsJsonAsync($"api/school/classes/{classId}", new UpdateSchoolClassRequest(
+            "2B", SchoolLevel.Groep78, 7, null));
+        Assert.Equal(HttpStatusCode.Conflict, update.StatusCode);
+        var body = await update.Content.ReadAsStringAsync();
+        Assert.Contains("level_locked", body, StringComparison.Ordinal);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var entity = await db.SchoolClasses.AsNoTracking().SingleAsync(c => c.Id == classId);
+        Assert.Equal(SchoolLevel.Havo, entity.Level);
+        Assert.Equal(PupilQuestionSet.Vo, entity.QuestionSet);
+    }
+
+    [Fact]
+    public async Task Update_havo_to_groep78_with_only_not_started_codes_succeeds()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, classId) = await SeedSchoolStaffAsync(withClass: true, codeCount: 3);
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var update = await client.PutAsJsonAsync($"api/school/classes/{classId}", new UpdateSchoolClassRequest(
+            "7B", SchoolLevel.Groep78, 7, null));
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var detail = await update.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(Json);
+        Assert.Equal(SchoolLevel.Groep78, detail!.Level);
+        Assert.Equal(PupilQuestionSet.Groep78, detail.QuestionSet);
+        Assert.False(detail.LevelLocked);
+    }
+
+    [Fact]
+    public async Task Update_groep78_year_7_to_8_with_started_codes_succeeds()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, _) = await SeedSchoolStaffAsync();
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+        var create = await client.PostAsJsonAsync("api/school/classes", new CreateSchoolClassRequest(
+            "7C", SchoolLevel.Groep78, 7, 3, null, null));
+        var detail = await create.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(Json);
+        Assert.NotNull(detail);
+        await MarkFirstCodeInProgressAsync(detail!.Id);
+
+        var update = await client.PutAsJsonAsync($"api/school/classes/{detail.Id}", new UpdateSchoolClassRequest(
+            "7C", SchoolLevel.Groep78, 8, null));
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var updated = await update.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(Json);
+        Assert.Equal(8, updated!.Year);
+        Assert.Equal(PupilQuestionSet.Groep78, updated.QuestionSet);
+    }
+
+    [Fact]
+    public async Task Teacher_cannot_create_or_update_class()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (_, schoolId, classId) = await SeedSchoolStaffAsync(withClass: true, codeCount: 2);
+        var teacherId = await SeedTeacherAsync(schoolId);
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, teacherId);
+
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PostAsJsonAsync("api/school/classes", new CreateSchoolClassRequest(
+                "9Z", SchoolLevel.Havo, 1, 5, null, null))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PutAsJsonAsync($"api/school/classes/{classId}", new UpdateSchoolClassRequest(
+                "2B", SchoolLevel.Vwo, 2, null))).StatusCode);
+    }
+
+    [Fact]
     public async Task Test_window_auto_close_on_read()
     {
         await EnableSchoolsAsync(true, perCode: true);
@@ -293,6 +429,7 @@ public class SchoolPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
                 SchoolId = schoolId,
                 Name = "2B",
                 Level = SchoolLevel.Havo,
+                QuestionSet = PupilQuestionSet.Vo,
                 Year = 2,
                 SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
                 PupilCount = codeCount,
@@ -365,5 +502,14 @@ public class SchoolPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var school = await db.Schools.AsNoTracking().FirstAsync(s => s.Id == schoolId);
         return JsonSerializer.Deserialize<List<string>>(school.AllowedEmailDomains)!.First();
+    }
+
+    private async Task MarkFirstCodeInProgressAsync(Guid classId)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var code = await db.PupilCodes.FirstAsync(c => c.SchoolClassId == classId);
+        code.Status = PupilCodeStatus.InProgress;
+        await db.SaveChangesAsync();
     }
 }
