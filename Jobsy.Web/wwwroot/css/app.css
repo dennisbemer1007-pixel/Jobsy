@@ -19793,8 +19793,15 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 @media (max-width: 639px) {
     .lobsy-coach-dock {
+        flex-direction: row;
+        align-items: flex-end;
+        max-width: min(220px, calc(100vw - 24px));
         right: max(12px, env(safe-area-inset-right, 0px));
         bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .lobsy-coach-dock__tip {
+        max-width: 9.5rem;
     }
 
     .lobsy-coach-dock__btn {

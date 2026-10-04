@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "da66b8edcd8942402d73b5ebd9d6f23bfb34d31992f97a407e457d0a2b049a5b",
-    "v": "20261004-run6"
+    "sha256": "c8be460066c7709a2f903784347a7ee169569b67aa5376f8e3edd25e7907b63b",
+    "v": "20261004-run6b"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -64,8 +64,8 @@
     "v": "20261002-ci-mtp"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "c8582c97b5ba1bf56c8a577206ab2187d47145e98cfaa7e4f4325895b6193b13",
-    "v": "20261004-run6"
+    "sha256": "9207c4d70a4441f724fc0b1ee849d22dd982084ca7873e6c91166b74a119156c",
+    "v": "20261004-run6b"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "84fb39a03d0383501fa34facfb1328c0b50bbf5529996a1e5b9c30ffec9805a8",
+    "sha256": "e6452cfb8ff0618a47de54d1883256be68900d7bf228ed3621da47b0c9bdaa62",
     "v": "20261004-run6b"
   },
   "service-worker.published.js": {
-    "sha256": "a3a16d7198494a7e3a1e99c2f0a79274a6123e08cba2cdd4cfc13e781cbd74df",
+    "sha256": "b33215d1ca33bef09fee014e1536dd81734bd134959469254e689d5682a046ad",
     "v": "20261004-run6b"
   }
 }

@@ -8,7 +8,7 @@ var PRECACHE = [
     "/",
     "/manifest.webmanifest?v=20260925-coral",
     "/css/critical.css?v=20261004-csp",
-    "/css/app.min.css?v=20261004-run6",
+    "/css/app.min.css?v=20261004-run6b",
     "/js/app-core.js?v=20261004-run6b",
     "/icons/icon-192.png?v=20260925-coral",
     "/icons/icon-512.png?v=20260925-coral",

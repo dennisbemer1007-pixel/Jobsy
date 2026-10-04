@@ -475,6 +475,26 @@
     mask-image: linear-gradient(to left, transparent, #000 12px, #000 calc(100% - 12px), transparent);
 }
 
+/* Phone: keep the overview above the bottom-right coach. */
+@media (max-width: 639px) {
+    .passport-layout {
+        gap: 0.45rem;
+    }
+
+    .passport-overview {
+        padding: 0.5rem 0.65rem;
+        gap: 0.45rem;
+    }
+
+    .passport-card__banner {
+        padding: 0.45rem 0.85rem;
+    }
+
+    .passport-card__identity {
+        padding: 0.5rem 0.85rem;
+    }
+}
+
 @media (max-width: 1023px) {
     .passport-tabs {
         box-shadow: inset -2.25rem 0 1.25rem -1.4rem var(--bg);
