@@ -32,6 +32,7 @@ public sealed class AmbassadeurFlyerPdfService : IAmbassadeurFlyerPdfService
     private readonly ISalesCommercialService _sales;
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly IPlatformFeatureService _features;
+    private readonly ILegalIdentity _legal;
 
     static AmbassadeurFlyerPdfService()
     {
@@ -42,12 +43,14 @@ public sealed class AmbassadeurFlyerPdfService : IAmbassadeurFlyerPdfService
         JobsyDbContext db,
         ISalesCommercialService sales,
         IPlatformCompanySettingsService companySettings,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        ILegalIdentity legal)
     {
         _db = db;
         _sales = sales;
         _companySettings = companySettings;
         _features = features;
+        _legal = legal;
     }
 
     public async Task<byte[]> RenderAsync(
@@ -69,10 +72,10 @@ public sealed class AmbassadeurFlyerPdfService : IAmbassadeurFlyerPdfService
             throw new InvalidOperationException("Trackingcode is onbekend of onboarding is niet afgerond.");
         }
 
-        var platform = await _companySettings.GetAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
         var logo = _companySettings.GetBrandLogoPng();
-        var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
+        var legal = await _legal.GetAsync(cancellationToken);
+        var brand = string.IsNullOrWhiteSpace(legal.TradeName) ? legal.DisplayName : legal.TradeName.Trim();
         var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
 
         return kind == AmbassadeurFlyerKind.Candidate

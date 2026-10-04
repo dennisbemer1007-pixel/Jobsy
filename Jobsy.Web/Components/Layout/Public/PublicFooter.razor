@@ -52,17 +52,7 @@
     {
         // Legal identity line (public-pages 02.6): name · address · KvK, empty parts omitted.
         var legal = await LegalIdentity.GetAsync();
-        var parts = new List<string> { legal.DisplayName };
-        if (!string.IsNullOrWhiteSpace(legal.AddressLine))
-        {
-            parts.Add(legal.AddressLine);
-        }
-
-        if (!string.IsNullOrWhiteSpace(legal.KvkNumber))
-        {
-            parts.Add($"KvK {legal.KvkNumber.Trim()}");
-        }
-
-        _legalLine = parts.Count > 1 ? string.Join(" · ", parts) : null;
+        var line = legal.FooterLine;
+        _legalLine = line.Contains('·', StringComparison.Ordinal) ? line : null;
     }
 }

@@ -18,7 +18,11 @@ public sealed record LegalIdentitySnapshot(
     string? VatNumber,
     string? PrivacyEmail,
     string? SupportEmail,
-    string? SchoolsEmail)
+    string? SchoolsEmail,
+    string? Phone = null,
+    string? PostalStreet = null,
+    string? PostalPostalCode = null,
+    string? PostalCity = null)
 {
     public string DisplayName
         => !string.IsNullOrWhiteSpace(Name) ? Name.Trim()
@@ -32,6 +36,28 @@ public sealed record LegalIdentitySnapshot(
             var street = Street?.Trim();
             var postal = PostalCode?.Trim();
             var city = City?.Trim();
+            var cityPart = string.Join(" ", new[] { postal, city }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            if (string.IsNullOrWhiteSpace(street) && string.IsNullOrWhiteSpace(cityPart))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(street))
+            {
+                return cityPart;
+            }
+
+            return string.IsNullOrWhiteSpace(cityPart) ? street : $"{street}, {cityPart}";
+        }
+    }
+
+    public string? PostalAddressLine
+    {
+        get
+        {
+            var street = PostalStreet?.Trim();
+            var postal = PostalPostalCode?.Trim();
+            var city = PostalCity?.Trim();
             var cityPart = string.Join(" ", new[] { postal, city }.Where(s => !string.IsNullOrWhiteSpace(s)));
             if (string.IsNullOrWhiteSpace(street) && string.IsNullOrWhiteSpace(cityPart))
             {

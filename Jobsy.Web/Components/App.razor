@@ -1,11 +1,16 @@
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
 <!DOCTYPE html>
 <html lang="@HtmlLang" dir="@HtmlDir">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lobsy — vacatures op reistijd</title>
+    <title>Lobsy — een loopbaangids in je eigen taal</title>
+    @if (NoIndex)
+    {
+        <meta name="robots" content="noindex, nofollow" />
+    }
     <meta name="theme-color" content="#0f2d5c" />
     <meta name="application-name" content="Lobsy" />
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
@@ -243,6 +248,8 @@
         Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
         ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
         ?? "local";
+
+    private bool NoIndex => Configuration.GetValue<bool>("Seo:NoIndex");
 
     private string Nonce => CspNonce.Get(HttpContextAccessor.HttpContext);
 

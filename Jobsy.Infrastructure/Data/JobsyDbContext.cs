@@ -1687,15 +1687,22 @@ public class JobsyDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.LegalName).HasMaxLength(200);
+            entity.Property(e => e.TradeName).HasMaxLength(200);
             entity.Property(e => e.Slogan).HasMaxLength(240);
             entity.Property(e => e.Address).HasMaxLength(240);
             entity.Property(e => e.PostalCode).HasMaxLength(20);
             entity.Property(e => e.City).HasMaxLength(120);
             entity.Property(e => e.Country).HasMaxLength(80);
+            entity.Property(e => e.PostalStreet).HasMaxLength(240);
+            entity.Property(e => e.PostalPostalCode).HasMaxLength(20);
+            entity.Property(e => e.PostalCity).HasMaxLength(120);
             entity.Property(e => e.KvkNumber).HasMaxLength(32);
             entity.Property(e => e.VatNumber).HasMaxLength(32);
             entity.Property(e => e.Phone).HasMaxLength(40);
             entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.SupportEmail).HasMaxLength(200);
+            entity.Property(e => e.PrivacyEmail).HasMaxLength(200);
             entity.Property(e => e.VatBufferIban).HasMaxLength(34);
         });
 

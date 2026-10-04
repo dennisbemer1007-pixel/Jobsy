@@ -68,7 +68,7 @@ public class GratisDnaPlaywrightTests
             await AssertNoHorizontalOverflowAsync(page);
 
             await age16.First.CheckAsync();
-            // Age 16+ is the only gate. The 7-day device notice is text, not a second checkbox.
+            // The 16+ checkbox starts the test. Ages 13–15 go to the account flow for parental consent. The 7-day device notice is text, not a second checkbox.
             var start = page.GetByTestId("gd-start-cta");
             await page.WaitForFunctionAsync(
                 "() => { const b = document.querySelector('[data-testid=gd-start-cta]'); return b && !b.disabled; }",

@@ -147,12 +147,27 @@ public static class ErrorPagesExtensions
             }
         }
 
-        if (HasFileExtension(path))
+        if (HasFileExtension(path) && IsStaticAssetPath(path))
         {
             return false;
         }
 
         return AcceptsHtml(request.Headers.Accept.ToString());
+    }
+
+    private static bool IsStaticAssetPath(string path)
+    {
+        string[] prefixes = ["/css", "/js", "/img", "/lib", "/fonts", "/icons", "/images", "/_framework", "/_content"];
+        foreach (var prefix in prefixes)
+        {
+            if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                && (path.Length == prefix.Length || path[prefix.Length] == '/'))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool HasFileExtension(string path)

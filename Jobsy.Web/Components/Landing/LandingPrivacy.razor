@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Landing
+@using Jobsy.Core.Privacy
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 
@@ -25,7 +26,11 @@
             <div class="pub-landing__tg">
                 <PubEmoji Glyph="🛡️" />
                 <h3>@LandingText.For("Landing.Privacy.C4Title", Variant)</h3>
-                <p>@LandingText.For("Landing.Privacy.C4Body", Variant)</p>
+                <p>@string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    LandingText.For("Landing.Privacy.C4Body", Variant),
+                    CandidateConsentRules.MinimumCandidateAge,
+                    CandidateConsentRules.ParentalConsentAge)</p>
             </div>
         </div>
     </div>

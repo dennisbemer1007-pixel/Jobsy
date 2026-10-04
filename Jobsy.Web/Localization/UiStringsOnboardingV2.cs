@@ -16,6 +16,17 @@ internal static class UiStringsOnboardingV2
         Add(ro, "ro", "Completează-ți profilul de start", "Mai sunt {0} pași, apoi Busola ta este gata.", "Continuă de unde ai rămas");
         Add(ar, "ar", "أكمل ملفك التعريفي", "تبقّى {0} خطوات ثم تصبح بوصلتك جاهزة.", "تابع من حيث توقفت");
 
+        nl["Onboarding.Age.TooYoung"] = "Je moet minstens {0} jaar zijn om Lobsy te gebruiken.";
+        en["Onboarding.Age.TooYoung"] = "You must be at least {0} to use Lobsy.";
+        pl["Onboarding.Age.TooYoung"] = "Musisz mieć co najmniej {0} lat, aby korzystać z Lobsy.";
+        ro["Onboarding.Age.TooYoung"] = "Trebuie să ai cel puțin {0} ani ca să folosești Lobsy.";
+        ar["Onboarding.Age.TooYoung"] = "يجب أن يكون عمرك {0} سنة على الأقل لاستخدام لوبسي.";
+        nl["Onboarding.Age.Parent"] = "Vanaf {0} jaar mag je meedoen. Jonger dan {1}? Dan vragen we eerst je ouder of voogd. Tot die toestemming blijven tests en AI dicht.";
+        en["Onboarding.Age.Parent"] = "From age {0} you can join. Under {1}? Then we ask your parent or guardian first. Until that consent, tests and AI stay closed.";
+        pl["Onboarding.Age.Parent"] = "Od {0} lat możesz dołączyć. Mniej niż {1}? Najpierw pytamy rodzica lub opiekuna. Do tej zgody testy i AI są zamknięte.";
+        ro["Onboarding.Age.Parent"] = "De la {0} ani poți participa. Sub {1}? Întâi întrebăm părintele sau tutorele. Până la acord, testele și AI rămân închise.";
+        ar["Onboarding.Age.Parent"] = "من عمر {0} يمكنك المشاركة. أقل من {1}؟ نسأل والدك أو وليّك أولاً. حتى الموافقة تبقى الاختبارات والذكاء الاصطناعي مغلقة.";
+
         nl[OnboardingImpressionLibrary.ResultLabelKey] = OnboardingImpressionLibrary.ResultLabel;
         en[OnboardingImpressionLibrary.ResultLabelKey] = "First impression · based on 20 questions";
         pl[OnboardingImpressionLibrary.ResultLabelKey] = "Pierwsze wrażenie · na podstawie 20 pytań";

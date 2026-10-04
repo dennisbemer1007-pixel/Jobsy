@@ -637,11 +637,11 @@ public static class UiStringsPublicInfo
             "Nu. Pașaportul tău este suficient. Poți adăuga un CV, dar nu este obligatoriu.",
             "لا. جوازك يكفي. إضافة سيرة ذاتية مسموحة لكنها غير مطلوبة.");
         Add("HowLobsy.Faq.AgeQ",
-            "Ik ben jonger dan 16. Kan ik meedoen?",
-            "I am younger than 16. Can I join?",
-            "Mam mniej niż 16 lat. Czy mogę?",
-            "Am mai puțin de 16 ani. Pot participa?",
-            "عمري أقل من 16. هل أستطيع المشاركة؟");
+            "Ik ben jonger dan 16, maar ouder dan 13. Kan ik meedoen?",
+            "I am under 16, but older than 13. Can I join?",
+            "Mam mniej niż 16 lat, ale więcej niż 13. Czy mogę?",
+            "Am sub 16 ani, dar peste 13. Pot participa?",
+            "عمري أقل من 16 وأكثر من 13. هل أستطيع المشاركة؟");
 
         Add("HowLobsy.You.SignedInTitle",
             "Je bent ingelogd",
@@ -801,11 +801,11 @@ public static class UiStringsPublicInfo
             "Salut! Noi suntem Lobsy.",
             "مرحباً! نحن Lobsy.");
         Add("About.Lead",
-            "Een klein team uit het Westland. We helpen mensen werk vinden dat past, dichtbij huis.",
-            "A small team from the Westland. We help people find work that fits, close to home.",
-            "Mały zespół z Westland. Pomagamy ludziom znaleźć pasującą pracę blisko domu.",
-            "O echipă mică din Westland. Ajutăm oamenii să găsească muncă potrivită, aproape de casă.",
-            "فريق صغير من منطقة ويستلاند. نساعد الناس على إيجاد عمل يناسبهم قريباً من بيوتهم.");
+            "Lobsy is gemaakt door Dennis Bemer, een ontwikkelaar uit het Westland.",
+            "Lobsy is made by Dennis Bemer, a developer from the Westland.",
+            "Lobsy zrobił Dennis Bemer, programista z Westland.",
+            "Lobsy este făcut de Dennis Bemer, un dezvoltator din Westland.",
+            "صنع لوبسي دينيس بيمر، مطوّر من ويستلاند.");
         Add("About.Stories.Label",
             "Ons verhaal",
             "Our story",
@@ -819,11 +819,11 @@ public static class UiStringsPublicInfo
             "De ce un homar?",
             "لماذا سرطان البحر؟");
         Add("About.Story.Lobster.Body",
-            "Een kreeft groeit door zijn oude schild af te werpen. Zo zien wij werk zoeken ook: je groeit, stap voor stap.",
-            "A lobster grows by shedding its old shell. That is how we see job hunting: you grow, step by step.",
-            "Homar rośnie, zrzucając starą skorupę. Tak samo widzimy szukanie pracy: rośniesz krok po kroku.",
-            "Homarul crește lepădând carapacea veche. Așa vedem și căutarea unui job: crești pas cu pas.",
-            "ينمو سرطان البحر بخلع قشرته القديمة. هكذا نرى البحث عن عمل: تنمو خطوة بخطوة.");
+            "Een kreeft groeit door zijn oude schild af te werpen. Zo zie ik werk zoeken ook: je groeit, stap voor stap.",
+            "A lobster grows by shedding its old shell. That is how I see looking for work: you grow, step by step.",
+            "Homar rośnie, zrzucając starą skorupę. Tak samo widzę szukanie pracy: rośniesz krok po kroku.",
+            "Homarul crește lepădând carapacea veche. Așa văd și căutarea unui job: crești pas cu pas.",
+            "ينمو سرطان البحر بخلع قشرته القديمة. هكذا أرى البحث عن عمل: تنمو خطوة بخطوة.");
         Add("About.Story.Westland.Title",
             "Begonnen in het Westland",
             "Started in the Westland",
@@ -831,11 +831,11 @@ public static class UiStringsPublicInfo
             "A început în Westland",
             "بدأنا في ويستلاند");
         Add("About.Story.Westland.Body",
-            "Lobsy begon met één vraag: hoe vinden mensen dichtbij werk dat echt past? Van daaruit bouwen we verder.",
-            "Lobsy started with one question: how do people nearby find work that really fits? From there we keep building.",
-            "Lobsy zaczęło się od jednego pytania: jak ludzie w okolicy znajdują pracę, która naprawdę pasuje? Od tego budujemy dalej.",
-            "Lobsy a început cu o întrebare: cum găsesc oamenii din apropiere muncă ce li se potrivește? De acolo construim mai departe.",
-            "بدأ Lobsy بسؤال واحد: كيف يجد الناس القريبون عملاً يناسبهم فعلاً؟ ومن هناك نكمل البناء.");
+            "Lobsy begon met één vraag: hoe vinden mensen dichtbij werk dat echt past? Van daaruit bouw ik verder.",
+            "Lobsy started with one question: how do people nearby find work that really fits? From there I keep building.",
+            "Lobsy zaczęło się od jednego pytania: jak ludzie w okolicy znajdują pracę, która naprawdę pasuje? Od tego buduję dalej.",
+            "Lobsy a început cu o întrebare: cum găsesc oamenii din apropiere muncă ce li se potrivește? De acolo construiesc mai departe.",
+            "بدأ لوبسي بسؤال واحد: كيف يجد الناس القريبون عملاً يناسبهم فعلاً؟ ومن هناك أواصل البناء.");
         Add("About.Story.BothSides.Title",
             "Voor twee kanten",
             "For both sides",
@@ -843,11 +843,11 @@ public static class UiStringsPublicInfo
             "Pentru ambele părți",
             "للطرفين");
         Add("About.Story.BothSides.Body",
-            "Voor werkzoekenden: eerlijk en duidelijk. Voor werkgevers: snel en zonder gedoe.",
-            "For job seekers: honest and clear. For employers: fast and without hassle.",
-            "Dla szukających pracy: szczerze i jasno. Dla pracodawców: szybko i bez kłopotów.",
-            "Pentru cei care caută muncă: cinstit și clar. Pentru angajatori: rapid și fără bătăi de cap.",
-            "للباحثين عن عمل: بصدق ووضوح. ولأصحاب العمل: بسرعة ودون تعقيد.");
+            "Voor jou: eerlijk en duidelijk. Het deel voor werkgevers komt later.",
+            "For you: honest and clear. The part for employers comes later.",
+            "Dla ciebie: szczerze i jasno. Część dla pracodawców przyjdzie później.",
+            "Pentru tine: cinstit și clar. Partea pentru angajatori vine mai târziu.",
+            "لك: بصدق ووضوح. الجزء الخاص بأصحاب العمل يأتي لاحقاً.");
         Add("About.Founder.Name",
             "Dennis, oprichter",
             "Dennis, founder",
@@ -873,17 +873,125 @@ public static class UiStringsPublicInfo
             "Contact și date de firmă",
             "الاتصال وبيانات الشركة");
         Add("About.Contact.Lead",
-            "Vraag of idee? Mail ons, we reageren binnen 2 werkdagen.",
-            "A question or an idea? Mail us, we answer within 2 working days.",
-            "Pytanie albo pomysł? Napisz do nas, odpowiadamy w 2 dni robocze.",
-            "O întrebare sau o idee? Scrie-ne, răspundem în 2 zile lucrătoare.",
-            "سؤال أو فكرة؟ راسلنا، ونرد خلال يومي عمل.");
+            "Vraag of idee? Stuur een mail. Je krijgt binnen 2 werkdagen antwoord.",
+            "A question or an idea? Send an e-mail. You get an answer within 2 working days.",
+            "Pytanie albo pomysł? Wyślij e-mail. Odpowiedź przychodzi w 2 dni robocze.",
+            "O întrebare sau o idee? Trimite un e-mail. Primești răspuns în 2 zile lucrătoare.",
+            "سؤال أو فكرة؟ أرسل بريداً. يصلك الرد خلال يومي عمل.");
         Add("About.Contact.MailCta",
-            "Mail ons",
-            "Mail us",
-            "Napisz do nas",
-            "Scrie-ne",
-            "راسلنا");
+            "Stuur een mail",
+            "Send an e-mail",
+            "Wyślij e-mail",
+            "Trimite un e-mail",
+            "أرسل بريداً");
+        Add("A11y.Seo.Title",
+            "Toegankelijkheid",
+            "Accessibility",
+            "Dostępność",
+            "Accesibilitate",
+            "إمكانية الوصول");
+        Add("A11y.Seo.Description",
+            "Hoe toegankelijk Lobsy nu is: gedeeltelijk, met wat we al checkten en wat nog open is.",
+            "How accessible Lobsy is now: partial, with what we already checked and what is still open.",
+            "Jak dostępny jest teraz Lobsy: częściowo, z tym co już sprawdziliśmy i co jest jeszcze otwarte.",
+            "Cât de accesibil este Lobsy acum: parțial, cu ce am verificat deja și ce este încă deschis.",
+            "مدى سهولة استخدام لوبسي الآن: جزئياً، مع ما فحصناه وما يزال مفتوحاً.");
+        Add("A11y.Eyebrow",
+            "Toegankelijkheid",
+            "Accessibility",
+            "Dostępność",
+            "Accesibilitate",
+            "إمكانية الوصول");
+        Add("A11y.Title",
+            "Toegankelijkheidsverklaring",
+            "Accessibility statement",
+            "Oświadczenie o dostępności",
+            "Declarație de accesibilitate",
+            "بيان إمكانية الوصول");
+        Add("A11y.Lead",
+            "Lobsy voldoet gedeeltelijk. Deze pagina zegt eerlijk wat al goed is en wat nog niet.",
+            "Lobsy partially conforms. This page says honestly what is already good and what is not yet.",
+            "Lobsy spełnia wymagania częściowo. Ta strona mówi szczerze, co już jest dobre, a co jeszcze nie.",
+            "Lobsy respectă parțial. Pagina spune sincer ce este deja bine și ce încă nu.",
+            "يلبّي لوبسي المتطلبات جزئياً. تقول هذه الصفحة بصدق ما هو جيد وما ليس كذلك بعد.");
+        Add("A11y.StatusTitle",
+            "Status",
+            "Status",
+            "Status",
+            "Stare",
+            "الحالة");
+        Add("A11y.StatusBody",
+            "Gedeeltelijk voldoet. We hebben nog geen handmatige controle volgens WCAG gedaan.",
+            "Partially conforms. We have not done a manual WCAG check yet.",
+            "Spełnia częściowo. Nie zrobiliśmy jeszcze ręcznej kontroli WCAG.",
+            "Conformitate parțială. Nu am făcut încă o verificare manuală WCAG.",
+            "مطابقة جزئية. لم نقم بعد بفحص يدوي وفق WCAG.");
+        Add("A11y.CheckTitle",
+            "Wat een automatische check zag",
+            "What an automatic check saw",
+            "Co zobaczył automatyczny test",
+            "Ce a văzut o verificare automată",
+            "ما رآه فحص آلي");
+        Add("A11y.CheckBody",
+            "Een axe-core check vond 0 fouten op de home, op scholen en op de privacypagina. Op /ontdek en /login waren 1 tot 2 fouten in contrast.",
+            "An axe-core check found 0 errors on the home page, on schools and on the privacy page. On /ontdek and /login there were 1 to 2 contrast errors.",
+            "Test axe-core znalazł 0 błędów na stronie głównej, na szkołach i na stronie prywatności. Na /ontdek i /login były 1 do 2 błędy kontrastu.",
+            "O verificare axe-core a găsit 0 erori pe pagina de start, la școli și pe pagina de confidențialitate. Pe /ontdek și /login au fost 1 până la 2 erori de contrast.",
+            "وجد فحص axe-core صفر أخطاء في الصفحة الرئيسية والمدارس وصفحة الخصوصية. في /ontdek و/login كان هناك خطأ أو خطآن في التباين.");
+        Add("A11y.GapsTitle",
+            "Wat nog open is",
+            "What is still open",
+            "Co jest jeszcze otwarte",
+            "Ce este încă deschis",
+            "ما يزال مفتوحاً");
+        Add("A11y.Gap1",
+            "Nog geen handmatige WCAG-controle.",
+            "No manual WCAG check yet.",
+            "Jeszcze nie ma ręcznej kontroli WCAG.",
+            "Încă nu există o verificare manuală WCAG.",
+            "لا يوجد بعد فحص WCAG يدوي.");
+        Add("A11y.Gap2",
+            "Sommige vertalingen zijn nog niet nagekeken door een moedertaalspreker.",
+            "Some translations have not been checked by a native speaker yet.",
+            "Niektóre tłumaczenia nie są jeszcze sprawdzone przez osobę, dla której to język ojczysty.",
+            "Unele traduceri nu sunt încă verificate de un vorbitor nativ.",
+            "بعض الترجمات لم يراجعها بعد متحدث أصلي.");
+        Add("A11y.Gap3",
+            "Het contrast is op /ontdek en /login nog niet overal sterk genoeg.",
+            "Contrast on /ontdek and /login is not strong enough everywhere yet.",
+            "Kontrast na /ontdek i /login nie jest jeszcze wszędzie wystarczająco mocny.",
+            "Contrastul pe /ontdek și /login nu este încă suficient de puternic peste tot.",
+            "التباين في /ontdek و/login ليس قوياً بما يكفي في كل مكان بعد.");
+        Add("A11y.DateTitle",
+            "Datum",
+            "Date",
+            "Data",
+            "Data",
+            "التاريخ");
+        Add("A11y.DateBody",
+            "4 oktober 2026",
+            "4 October 2026",
+            "4 października 2026",
+            "4 octombrie 2026",
+            "4 أكتوبر 2026");
+        Add("A11y.ContactTitle",
+            "Contact",
+            "Contact",
+            "Kontakt",
+            "Contact",
+            "جهة الاتصال");
+        Add("A11y.ContactBody",
+            "Zie je een probleem? Mail het adres hieronder. Staat er geen adres, gebruik dan de contactpagina.",
+            "Do you see a problem? Mail the address below. If there is no address, use the contact page.",
+            "Widzisz problem? Napisz na adres poniżej. Jeśli adresu nie ma, użyj strony kontaktu.",
+            "Vezi o problemă? Scrie la adresa de mai jos. Dacă nu este adresă, folosește pagina de contact.",
+            "هل ترى مشكلة؟ راسل العنوان أدناه. إذا لم يوجد عنوان، استخدم صفحة الاتصال.");
+        Add("A11y.ContactLink",
+            "Naar contact",
+            "To contact",
+            "Do kontaktu",
+            "La contact",
+            "إلى الاتصال");
         Add("About.Contact.PrivacyNote",
             "Gaat je vraag over je privacy of je gegevens? Lees eerst het privacybeleid.",
             "Is your question about your privacy or your data? Read the privacy statement first.",

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using Bunit;
 using Jobsy.Core.Legal;
@@ -179,7 +180,12 @@ public class LegalDocumentRenderTests : BunitContext
         var version = cut.Find(".pp-doc__version").TextContent;
 
         Assert.Contains("oktober 2026", version, StringComparison.Ordinal);
-        Assert.Contains("1 oktober 2026", version, StringComparison.Ordinal);
+        Assert.Contains(
+            LegalDocumentVersions.FormatDate(
+                LegalDocumentVersions.Privacy.EffectiveFrom,
+                CultureInfo.GetCultureInfo("nl-NL")),
+            version,
+            StringComparison.Ordinal);
 
         var markup = cut.Markup;
         Assert.DoesNotContain("26 september 2026", markup, StringComparison.Ordinal);

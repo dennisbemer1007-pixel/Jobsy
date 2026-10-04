@@ -202,11 +202,15 @@ public class SalesPriceQuoteAndMaterialsTests
     }
 
     private static SalesMaterialsPdfService CreateMaterials(JobsyDbContext db)
-        => new(
+    {
+        var company = new PlatformCompanySettingsService(db);
+        return new(
             new SalesPriceQuoteService(db),
             new SalesCommercialService(db, new TokenLedgerService(db)),
-            new PlatformCompanySettingsService(db),
-            new FakeFeatures());
+            company,
+            new FakeFeatures(),
+            new Jobsy.Tests.CompanyBackedLegalIdentity(company));
+    }
 
     private static SalesLinkToolkitService CreateLinkToolkit(JobsyDbContext db)
         => new(
