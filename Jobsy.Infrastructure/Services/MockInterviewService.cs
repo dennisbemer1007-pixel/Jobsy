@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
@@ -104,6 +105,11 @@ public sealed class MockInterviewService : IMockInterviewService
         var labels = Jobsy.Core.Localization.MockInterviewLabels.For(lang);
         var sanitized = SanitizeHistory(history);
         var endpoint = await _openAi.ResolveAsync(OpenAiFeature.MockInterview, cancellationToken);
+        if (endpoint.Unavailable)
+        {
+            return new MockInterviewTurnResult(AiUnavailableCopy.For(lang), UsedAi: false);
+        }
+
         var apiKey = endpoint.ApiKey;
         if (!string.IsNullOrWhiteSpace(apiKey))
         {

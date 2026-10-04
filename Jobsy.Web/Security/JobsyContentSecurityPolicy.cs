@@ -12,8 +12,6 @@ namespace Jobsy.Web.Security;
 public static class JobsyContentSecurityPolicy
 {
     public const string OpenFreeMap = "https://tiles.openfreemap.org";
-    /// <summary>YouTube hqdefault thumbnails for click-to-load video posters only.</summary>
-    public const string YouTubeThumbnail = "https://i.ytimg.com";
 
     /// <param name="allowUnsafeEval">
     /// CI/Playwright only: <c>WaitForFunctionAsync</c> evaluates predicates via <c>eval</c>.
@@ -32,7 +30,7 @@ public static class JobsyContentSecurityPolicy
             "frame-ancestors 'none';",
             "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com;",
             "object-src 'none';",
-            $"img-src 'self' data: blob: {OpenFreeMap} {YouTubeThumbnail};",
+            $"img-src 'self' data: blob: {OpenFreeMap};",
             $"font-src 'self' data: {OpenFreeMap};",
             $"style-src-elem 'self' {n};",
             "style-src-attr 'unsafe-inline';",

@@ -252,20 +252,19 @@ builder.Services.AddHttpClient(Jobsy.Web.Branding.PlatformBrandingState.HttpClie
 builder.Services.AddSingleton<MaintenanceState>();
 builder.Services.AddHostedService<MaintenancePoller>();
 
+builder.Services.AddSingleton<Jobsy.Core.Geo.NominatimPace>();
+builder.Services.AddSingleton<Jobsy.Core.Geo.GeoLookupCache>();
+var nominatimAgent = Jobsy.Core.Options.GeoOptions.UserAgent(builder.Configuration["Geo:ContactEmail"]);
 builder.Services.AddHttpClient<NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
-    client.DefaultRequestHeaders.TryAddWithoutValidation(
-        "User-Agent",
-        "Lobsy/1.0 (demo; contact@jobsy.local)");
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", nominatimAgent);
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
 });
 builder.Services.AddHttpClient<PdokGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
-    client.DefaultRequestHeaders.TryAddWithoutValidation(
-        "User-Agent",
-        "Lobsy/1.0 (demo; contact@jobsy.local)");
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", nominatimAgent);
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
 });
 builder.Services.AddScoped<IGeocodingClient, CompositeGeocodingClient>();

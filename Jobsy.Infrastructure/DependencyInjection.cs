@@ -1,3 +1,4 @@
+using Jobsy.Core.Geo;
 using Jobsy.Core.Admin;
 using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Email;
@@ -450,10 +451,13 @@ public static class DependencyInjection
         services.AddScoped<IEmployerOnboardingStatusService, EmployerOnboardingStatusService>();
         services.AddScoped<ICompanyVerificationAdminService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationAdminService>();
         services.AddScoped<IRegistrationReferralResolver, DefaultRegistrationReferralResolver>();
+        services.AddSingleton<NominatimPace>();
+        services.AddSingleton<GeoLookupCache>();
+        var nominatimAgent = GeoOptions.UserAgent(configuration["Geo:ContactEmail"]);
         services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(8);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("LobsyRegistration/1.0 (werkgever-aanmelding)");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", nominatimAgent);
         });
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();

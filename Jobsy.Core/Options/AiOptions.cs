@@ -8,6 +8,6 @@ public sealed class AiOptions
 {
     public const string SectionName = "Ai";
 
-    /// <summary><c>OpenAI</c> or <c>Mistral</c>. Anything else stays on OpenAI.</summary>
+    /// <summary><c>OpenAI</c> or <c>Mistral</c>. An unknown name does not call OpenAI.</summary>
     public string Provider { get; set; } = "OpenAI";
 }

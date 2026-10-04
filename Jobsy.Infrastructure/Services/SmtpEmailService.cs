@@ -105,10 +105,22 @@ public sealed class SmtpEmailService : IEmailService
         var choice = MailProviderChoice.Choose(
             _mailOptions.Value.Provider,
             !string.IsNullOrWhiteSpace(lettermintKey));
-        if (choice.WarnMissingLettermintKey && MailProviderFallbackLog.ShouldLogLettermintFallback())
+        if (choice.Kind == MailProviderKind.NotConfigured)
         {
-            _logger.LogWarning(
-                "Mail provider is Lettermint but Lettermint:ApiKey is empty. Falling back to Resend.");
+            if (choice.WarnMissingLettermintKey && MailProviderFallbackLog.ShouldLogLettermintFallback())
+            {
+                const string missing =
+                    "Mail: niet ingesteld. Mail:Provider is Lettermint, maar de Lettermint-sleutel ontbreekt. Resend wordt niet gebruikt.";
+                _logger.LogError(missing);
+                await WritePlatformLogAsync(
+                    PlatformLogLevel.Error,
+                    "Mail",
+                    missing,
+                    new { Provider = "Lettermint", Configured = false },
+                    cancellationToken);
+            }
+
+            return EmailDeliveryResult.Stub;
         }
 
         if (choice.Kind == MailProviderKind.Lettermint)

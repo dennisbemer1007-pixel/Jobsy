@@ -1242,6 +1242,9 @@ public sealed partial class JobsyApiClient
     public async Task<AiProviderStatusItem?> GetAiProviderAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<AiProviderStatusItem>("api/settings/ai-provider", ct);
 
+    public async Task<MailProviderStatusItem?> GetMailProviderAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<MailProviderStatusItem>("api/settings/mail-provider", ct);
+
     public async Task<IntegrationCredentialItem?> SaveIntegrationCredentialAsync(
         string key,
         IntegrationCredentialSaveForm form,

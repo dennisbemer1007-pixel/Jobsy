@@ -31,7 +31,7 @@ public class VacancyImageUrlsTests
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var photo = VacancyImageUrls.Placeholder(id, WorkType.Horeca);
-        Assert.Equal(photo, VacancyImageUrls.Resolve(VacancyImageUrls.PicsumUrl(id), id, "Horeca"));
+        Assert.Equal(photo, VacancyImageUrls.Resolve(LegacyPicsumUrl(id), id, "Horeca"));
         Assert.Equal(photo, VacancyImageUrls.Resolve("https://images.unsplash.com/photo-legacy-404", id, "Horeca"));
         Assert.Equal(photo, VacancyImageUrls.Resolve(photo, id, "Horeca"));
     }
@@ -86,7 +86,7 @@ public class VacancyImageUrlsTests
         Assert.Equal(
             "/images/logos/westland.svg",
             VacancyImageUrls.AlternateSrc(
-                VacancyImageUrls.PicsumUrl(id),
+                LegacyPicsumUrl(id),
                 "/images/logos/westland.svg",
                 photo));
         Assert.Null(VacancyImageUrls.AlternateSrc(
@@ -128,7 +128,7 @@ public class VacancyImageUrlsTests
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var photo = VacancyImageUrls.Placeholder(id, "Horeca");
-        Assert.Equal(photo, VacancyImageUrls.ForDisplay(VacancyImageUrls.PicsumUrl(id), 400, cloudflareResizing: false, id, "Horeca"));
+        Assert.Equal(photo, VacancyImageUrls.ForDisplay(LegacyPicsumUrl(id), 400, cloudflareResizing: false, id, "Horeca"));
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public class VacancyImageUrlsTests
         Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(null));
         Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.Placeholder(id, WorkType.Winkel)));
         Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("https://images.unsplash.com/photo-x"));
-        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.PicsumUrl(id)));
+        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(LegacyPicsumUrl(id)));
         Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("/images/vacancies/horeca-0.svg"));
         Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("/images/uploads/x.jpg"));
     }
@@ -186,7 +186,7 @@ public class VacancyImageUrlsTests
         Assert.Equal(placeholder, VacancyImageUrls.ForPublicList("data:image/png;base64,abc", id, "Horeca"));
         Assert.DoesNotContain("data:image", VacancyImageUrls.ForPublicList("data:image/jpeg;base64,/9j/", id, "Zorg"));
 
-        Assert.Equal(placeholder, VacancyImageUrls.ForPublicList(VacancyImageUrls.PicsumUrl(id), id, "Horeca"));
+        Assert.Equal(placeholder, VacancyImageUrls.ForPublicList(LegacyPicsumUrl(id), id, "Horeca"));
         Assert.Equal("/images/logos/westland.svg", VacancyImageUrls.ForPublicList("/images/logos/westland.svg", id));
     }
 
@@ -232,10 +232,10 @@ public class VacancyImageUrlsTests
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         Assert.Equal(
             "/images/logos/westland.svg",
-            VacancyImageUrls.ForCard(VacancyImageUrls.PicsumUrl(id), "/images/logos/westland.svg", id, "Horeca"));
+            VacancyImageUrls.ForCard(LegacyPicsumUrl(id), "/images/logos/westland.svg", id, "Horeca"));
         Assert.Equal(
             VacancyImageUrls.Placeholder(id, "Horeca"),
-            VacancyImageUrls.ForCard(VacancyImageUrls.PicsumUrl(id), null, id, "Horeca"));
+            VacancyImageUrls.ForCard(LegacyPicsumUrl(id), null, id, "Horeca"));
     }
 
     [Fact]
@@ -302,6 +302,10 @@ public class VacancyImageUrlsTests
         Assert.True(bytes.Length > 8);
         Assert.False(VacancyImageUrls.TryDecodeInlineImage("https://picsum.photos/seed/x/400/267", out _, out _));
     }
+
+    /// <summary>Old stored picsum links. The generator is gone; the sanitizer still rewrites them.</summary>
+    private static string LegacyPicsumUrl(Guid id)
+        => $"https://picsum.photos/seed/jobsy-{id:N}/960/640";
 
     private static string FindRepoRoot()
     {

@@ -1,33 +1,63 @@
+using Jobsy.Core.Ai;
+using Jobsy.Core.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
 
-/// <summary>One warning per process when Mistral was asked for but cannot run.</summary>
+/// <summary>One error per process when the chosen AI provider cannot run.</summary>
 internal static class AiProviderFallbackLog
 {
     private static int _missingKey;
     private static int _unknownProvider;
 
-    public static void MissingMistralKey(ILogger? logger)
+    public static async Task ReportUnavailableAsync(
+        ILogger? logger,
+        IPlatformErrorLog? platformLog,
+        AiProviderDecision decision,
+        string? provider,
+        CancellationToken cancellationToken = default)
     {
-        if (logger is null || Interlocked.Exchange(ref _missingKey, 1) != 0)
+        if (decision.RequestedMistralWithoutKey)
         {
+            if (Interlocked.Exchange(ref _missingKey, 1) != 0)
+            {
+                return;
+            }
+
+            const string message =
+                "AI staat uit. Ai:Provider is Mistral, maar de Mistral-sleutel ontbreekt of is ongeldig. OpenAI wordt niet gebruikt.";
+            logger?.LogError(message);
+            if (platformLog is not null)
+            {
+                await platformLog.WriteAsync("AI", message, supportCode: null, detail: null, cancellationToken);
+            }
+
             return;
         }
 
-        logger.LogWarning(
-            "Ai:Provider is Mistral but Mistral:ApiKey is empty. AI calls stay on OpenAI.");
+        if (decision.UnknownProvider)
+        {
+            if (Interlocked.Exchange(ref _unknownProvider, 1) != 0)
+            {
+                return;
+            }
+
+            var shown = string.IsNullOrWhiteSpace(provider) ? "(leeg)" : provider.Trim();
+            logger?.LogError(
+                "AI staat uit. Ai:Provider '{Provider}' is niet OpenAI of Mistral. OpenAI wordt niet gebruikt.",
+                shown);
+            var message =
+                $"AI staat uit. Ai:Provider '{shown}' is niet OpenAI of Mistral. OpenAI wordt niet gebruikt.";
+            if (platformLog is not null)
+            {
+                await platformLog.WriteAsync("AI", message, supportCode: null, detail: null, cancellationToken);
+            }
+        }
     }
 
-    public static void UnknownProvider(ILogger? logger, string? provider)
+    internal static void ResetForTests()
     {
-        if (logger is null || Interlocked.Exchange(ref _unknownProvider, 1) != 0)
-        {
-            return;
-        }
-
-        logger.LogWarning(
-            "Ai:Provider {Provider} is not OpenAI or Mistral. AI calls stay on OpenAI.",
-            provider);
+        Interlocked.Exchange(ref _missingKey, 0);
+        Interlocked.Exchange(ref _unknownProvider, 0);
     }
 }
