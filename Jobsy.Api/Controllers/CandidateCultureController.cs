@@ -81,7 +81,7 @@ public sealed class CandidateCultureController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return TestSaveErrors.FromException(ex);
+            return await TestSaveErrors.LogAsync(this, ex, TestSaveErrors.FromException(ex), "TestSave", cancellationToken);
         }
         catch (AssessmentAdjustmentLimitException ex)
         {

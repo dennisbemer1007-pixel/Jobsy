@@ -408,7 +408,7 @@ else
         var url = $"{Navigation.BaseUri.TrimEnd('/')}/p/{_dash.TrackingCode}";
         try
         {
-            await Js.InvokeVoidAsync("jobsyShareUrl", url);
+            await Js.InvokeVoidAsync("jobsyDom.shareOrCopy", url);
         }
         catch
         {

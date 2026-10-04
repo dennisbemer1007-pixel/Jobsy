@@ -2,13 +2,16 @@
 @inject CultureState Culture
 
 <div class="admin-filter-bar filter-bar">
-    <label class="admin-filter-bar__search filter-bar__search">
-        <span class="visually-hidden">@Culture["AdminUi.FilterSearch"]</span>
-        <input type="search"
-               value="@Query"
-               placeholder="@(Placeholder ?? Culture["AdminUi.FilterSearch"])"
-               @oninput="OnQuery" />
-    </label>
+    @if (QueryChanged.HasDelegate)
+    {
+        <label class="admin-filter-bar__search filter-bar__search">
+            <span class="visually-hidden">@Culture["AdminUi.FilterSearch"]</span>
+            <input type="search"
+                   value="@Query"
+                   placeholder="@(Placeholder ?? Culture["AdminUi.FilterSearch"])"
+                   @oninput="OnQuery" />
+        </label>
+    }
     @if (Chips is not null)
     {
         <div class="admin-filter-bar__chips">@Chips</div>

@@ -6,11 +6,13 @@
 @using System.Security.Claims
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject CultureState Culture
+@inject UserFacingError Errors
 @inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
@@ -31,7 +33,7 @@ else if (_page is not null)
 
     @if (!HideRoleTabs)
     {
-        <AdminTabs BasePath="@BasePath" ActiveKey="@_tab" Tabs="_tabs" />
+        <AdminTabs BasePath="@BasePath" @bind-ActiveKey="_tab" @bind-ActiveKey:after="OnTabChangedAsync" Tabs="_tabs" />
     }
 
     <AdminFilterBar Query="@_query" QueryChanged="OnQueryChanged" Placeholder="@Culture["AdminUsers.SearchPlaceholder"]">
@@ -117,7 +119,7 @@ else if (_page is not null)
                                @onchange="e => ToggleSelect(u.Id, e)"
                                aria-label="@u.FullName" />
                     </td>
-                    <td>
+                    <td data-label="@Culture["AdminUsers.ColUser"]">
                         <div class="admin-user-cell">
                             <span class="admin-avatar" aria-hidden="true">@Initials(u.FullName)</span>
                             <span class="admin-user-cell__text">
@@ -130,16 +132,16 @@ else if (_page is not null)
                             </span>
                         </div>
                     </td>
-                    <td>@RoleLabel(u.Role)</td>
-                    <td class="admin-col-desktop">@(u.CompanyName ?? "—")</td>
-                    <td>
+                    <td data-label="@Culture["AdminUsers.ColRole"]">@RoleLabel(u.Role)</td>
+                    <td class="admin-col-desktop" data-label="@Culture["AdminUsers.ColOrg"]">@(u.CompanyName ?? "—")</td>
+                    <td data-label="@Culture["AdminUsers.ColMfa"]">
                         <span class="status-pill @(u.MfaStatus == "enrolled" ? "status-pill--accepted" : "status-pill--warn")">
                             <span aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
                             @MfaStatusLabel(u.MfaStatus)
                         </span>
                     </td>
-                    <td class="admin-col-desktop">@FormatLastActive(u.LastActiveAtUtc)</td>
-                    <td>
+                    <td class="admin-col-desktop" data-label="@Culture["AdminUsers.ColLastActive"]">@FormatLastActive(u.LastActiveAtUtc)</td>
+                    <td data-label="@Culture["AdminUsers.ColStatus"]">
                         <span class="admin-status-dot @(u.IsActive ? "is-active" : "is-blocked")">
                             @(u.IsActive ? Culture["AdminUsers.StatusActive"] : Culture["AdminUsers.StatusBlocked"])
                         </span>
@@ -464,7 +466,7 @@ else if (_page is not null)
     private string _bulkTitle = "";
     private string _bulkReason = "";
     private string? _bulkError;
-    private System.Threading.Timer? _searchDebounce;
+    private readonly DebouncedAction _searchDebounce = new();
 
     protected override void OnInitialized()
     {
@@ -488,7 +490,7 @@ else if (_page is not null)
     public void Dispose()
     {
         Culture.Changed -= OnCultureChanged;
-        _searchDebounce?.Dispose();
+        _searchDebounce.Dispose();
     }
 
     private void BuildTabs()
@@ -626,16 +628,26 @@ else if (_page is not null)
     private Task OnQueryChanged(string q)
     {
         _query = q;
-        _searchDebounce?.Dispose();
-        _searchDebounce = new System.Threading.Timer(async _ =>
+        return _searchDebounce.RunAsync(300, async ct =>
         {
             await InvokeAsync(async () =>
             {
+                if (ct.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 _pageNumber = 1;
-                await ReloadAsync();
+                await ReloadAsync(ct);
+                StateHasChanged();
             });
-        }, null, 300, Timeout.Infinite);
-        return Task.CompletedTask;
+        });
+    }
+
+    private Task OnTabChangedAsync()
+    {
+        _pageNumber = 1;
+        return ReloadAsync();
     }
 
     private async Task OnCompanyFilterAsync()
@@ -663,8 +675,11 @@ else if (_page is not null)
         await ReloadAsync();
     }
 
-    private async Task ReloadAsync()
+    private int _reloadGen;
+
+    private async Task ReloadAsync(CancellationToken ct = default)
     {
+        var gen = Interlocked.Increment(ref _reloadGen);
         _loading = true;
         _error = null;
         try
@@ -685,7 +700,7 @@ else if (_page is not null)
             }
 
             var apiTab = _tab is "alle" or "" ? null : _tab;
-            _page = await Api.GetAdminUsersPageAsync(
+            var page = await Api.GetAdminUsersPageAsync(
                 page: _pageNumber,
                 pageSize: _pageSize,
                 q: _query,
@@ -693,17 +708,36 @@ else if (_page is not null)
                 companyId: _companyIdFilter,
                 mfa: string.IsNullOrWhiteSpace(_mfaFilter) ? null : _mfaFilter,
                 active: string.IsNullOrWhiteSpace(_activeFilter) ? null : _activeFilter,
-                tab: apiTab);
+                tab: apiTab,
+                ct: ct);
+            if (gen != Volatile.Read(ref _reloadGen))
+            {
+                return;
+            }
+
+            _page = page;
             BuildTabs();
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            if (gen != Volatile.Read(ref _reloadGen))
+            {
+                return;
+            }
+
+            _error = Errors.Describe(ex);
             _page = null;
         }
         finally
         {
-            _loading = false;
+            if (gen == Volatile.Read(ref _reloadGen))
+            {
+                _loading = false;
+            }
         }
     }
 

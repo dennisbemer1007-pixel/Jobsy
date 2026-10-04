@@ -128,7 +128,7 @@ else
             using var response = await Api.GetPupilResultResponseAsync();
             if (response.IsSuccessStatusCode)
             {
-                _result = await response.Content.ReadFromJsonAsync<PupilResultPageDto>();
+                _result = await response.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
                 _resultPending = false;
                 return;
             }
@@ -147,7 +147,7 @@ else
                         using var retry = await Api.GetPupilResultResponseAsync();
                         if (retry.IsSuccessStatusCode)
                         {
-                            _result = await retry.Content.ReadFromJsonAsync<PupilResultPageDto>();
+                            _result = await retry.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
                             _resultPending = false;
                             return;
                         }

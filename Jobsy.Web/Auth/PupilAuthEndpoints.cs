@@ -9,13 +9,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json;
+using Jobsy.Web.Services;
 
 namespace Jobsy.Web.Auth;
 
 /// <summary>SSR pupil login + stop endpoints (cookie lives on the Web host).</summary>
 public static class PupilAuthEndpoints
 {
-    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
     public static void MapPupilAuthEndpoints(this WebApplication app)
     {
         app.MapPost("/leerling/login", async (
@@ -72,7 +72,7 @@ public static class PupilAuthEndpoints
                     $"/leerling?error={err}&schoolId={schoolId:D}&classId={classId:D}{qs}");
             }
 
-            var login = JsonSerializer.Deserialize<PupilLoginResponse>(body, WebJson);
+            var login = JsonSerializer.Deserialize<PupilLoginResponse>(body, JobsyApiClient.ApiJson);
             if (login is null)
             {
                 return Results.Redirect("/leerling?error=invalid");

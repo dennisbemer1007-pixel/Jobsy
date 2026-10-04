@@ -234,7 +234,7 @@ public class PlatformSettingsEditorBunitTests : BunitContext
         Assert.Equal(1, cut.Instance.DirtyCount);
         Assert.DoesNotContain("role=\"dialog\"", cut.Markup, StringComparison.Ordinal);
 
-        cut.Find(".admin-save-bar input").Change("portaal uit voor test");
+        cut.Find(".admin-save-bar input").Input("portaal uit voor test");
         await cut.InvokeAsync(() =>
             cut.FindAll("button").First(b => b.TextContent.Contains("Opslaan en loggen", StringComparison.Ordinal)).Click());
 

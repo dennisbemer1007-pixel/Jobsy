@@ -1,4 +1,7 @@
 @namespace Jobsy.Web.Components.Admin.Ui
+@using Microsoft.AspNetCore.WebUtilities
+@implements IDisposable
+@inject NavigationManager Navigation
 
 <div class="admin-tabs" role="tablist">
     @foreach (var tab in Tabs)
@@ -6,8 +9,10 @@
         var active = string.Equals(ActiveKey, tab.Key, StringComparison.OrdinalIgnoreCase);
         <a class="admin-tabs__tab @(active ? "is-active" : null)"
            role="tab"
-           aria-selected="@active"
-           href="@HrefFor(tab.Key)">@tab.Label</a>
+           aria-selected="@(active ? "true" : "false")"
+           href="@HrefFor(tab.Key)"
+           @onclick="() => SelectAsync(tab.Key)"
+           @onclick:preventDefault>@tab.Label</a>
     }
 </div>
 
@@ -16,18 +21,101 @@
 
     [Parameter, EditorRequired] public IReadOnlyList<Tab> Tabs { get; set; } = [];
     [Parameter] public string ActiveKey { get; set; } = "";
+    [Parameter] public EventCallback<string> ActiveKeyChanged { get; set; }
     [Parameter] public string BasePath { get; set; } = "";
     [Parameter] public string QueryParam { get; set; } = "tab";
 
-    private string HrefFor(string key)
+    /// <summary>Legacy query values that should open a real tab key (for example kpi → kpis).</summary>
+    [Parameter] public IReadOnlyDictionary<string, string>? Aliases { get; set; }
+
+    private bool _selecting;
+
+    protected override void OnInitialized()
+        => Navigation.LocationChanged += OnLocationChanged;
+
+    public void Dispose()
+        => Navigation.LocationChanged -= OnLocationChanged;
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        var sep = BasePath.Contains('?', StringComparison.Ordinal) ? "&" : "?";
-        // Default (first) tab omits the query param for a clean URL.
-        if (Tabs.Count > 0 && string.Equals(Tabs[0].Key, key, StringComparison.OrdinalIgnoreCase))
+        if (_selecting)
         {
-            return BasePath.Split('?', 2)[0];
+            return;
         }
 
-        return $"{BasePath.Split('?', 2)[0]}{sep}{QueryParam}={Uri.EscapeDataString(key)}";
+        var next = KeyFromUri();
+        if (next is null || string.Equals(next, ActiveKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        try
+        {
+            await InvokeAsync(() => ActiveKeyChanged.InvokeAsync(next));
+        }
+        catch (ObjectDisposedException)
+        {
+            // The page navigated away while the callback was queued.
+        }
+    }
+
+    private async Task SelectAsync(string key)
+    {
+        _selecting = true;
+        try
+        {
+            var href = HrefFor(key);
+            var target = Navigation.ToAbsoluteUri(href).PathAndQuery;
+            var current = Navigation.ToAbsoluteUri(Navigation.Uri).PathAndQuery;
+            if (!string.Equals(target, current, StringComparison.OrdinalIgnoreCase))
+            {
+                Navigation.NavigateTo(href);
+            }
+
+            if (!string.Equals(key, ActiveKey, StringComparison.OrdinalIgnoreCase))
+            {
+                await ActiveKeyChanged.InvokeAsync(key);
+            }
+        }
+        finally
+        {
+            _selecting = false;
+        }
+    }
+
+    private string? KeyFromUri()
+    {
+        if (Tabs.Count == 0)
+        {
+            return null;
+        }
+
+        var query = QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        if (!query.TryGetValue(QueryParam, out var raw) || string.IsNullOrWhiteSpace(raw))
+        {
+            return Tabs[0].Key;
+        }
+
+        var key = raw.ToString();
+        if (Aliases is not null
+            && Aliases.TryGetValue(key, out var mapped)
+            && Tabs.Any(t => string.Equals(t.Key, mapped, StringComparison.OrdinalIgnoreCase)))
+        {
+            key = mapped;
+        }
+
+        var match = Tabs.FirstOrDefault(t => string.Equals(t.Key, key, StringComparison.OrdinalIgnoreCase));
+        return match?.Key ?? Tabs[0].Key;
+    }
+
+    private string HrefFor(string key)
+    {
+        var path = BasePath.Split('?', 2)[0];
+        if (Tabs.Count > 0 && string.Equals(Tabs[0].Key, key, StringComparison.OrdinalIgnoreCase))
+        {
+            return path;
+        }
+
+        return $"{path}?{QueryParam}={Uri.EscapeDataString(key)}";
     }
 }

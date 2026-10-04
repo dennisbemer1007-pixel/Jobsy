@@ -773,7 +773,7 @@ public sealed partial class JobsyApiClient
         var response = await _http.PostAsJsonAsync("api/vacancy-categories", form, ct);
         if (!response.IsSuccessStatusCode)
         {
-            return null;
+            throw await ApiErrorException.FromResponseAsync(response, ct);
         }
 
         return await response.Content.ReadFromJsonAsync<VacancyCategoryItem>(cancellationToken: ct);
@@ -784,7 +784,7 @@ public sealed partial class JobsyApiClient
         var response = await _http.PutAsJsonAsync($"api/vacancy-categories/{id}", form, ct);
         if (!response.IsSuccessStatusCode)
         {
-            return null;
+            throw await ApiErrorException.FromResponseAsync(response, ct);
         }
 
         return await response.Content.ReadFromJsonAsync<VacancyCategoryItem>(cancellationToken: ct);

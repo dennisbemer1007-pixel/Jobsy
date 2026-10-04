@@ -10,7 +10,7 @@
 <PageTitle>@Culture["AdminNav.Integrations"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["AdminNav.Integrations"]" Wide="true">
-    <AdminTabs BasePath="/admin/instellingen/integraties" ActiveKey="@_tab" Tabs="_tabs" />
+    <AdminTabs BasePath="/admin/instellingen/integraties" @bind-ActiveKey="_tab" Tabs="_tabs" />
     @if (_tab == "api")
     {
         <ApiKeysSection />

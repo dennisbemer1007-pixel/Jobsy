@@ -13,7 +13,7 @@
 <PageTitle>@Culture["AdminNav.Regions"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["AdminNav.Regions"]" Lead="@Culture["AdminOrgs.RegionsLead"]" Wide="true">
-    <AdminTabs BasePath="/admin/organisaties/regios" ActiveKey="@_tab" Tabs="_tabs" />
+    <AdminTabs BasePath="/admin/organisaties/regios" @bind-ActiveKey="_tab" @bind-ActiveKey:after="OnTabChangedAsync" Tabs="_tabs" />
 
     @if (_tab == "regios")
     {
@@ -79,6 +79,14 @@
             _tab = "regios";
         }
 
+        if (_tab == "regios")
+        {
+            await LoadRegionsAsync();
+        }
+    }
+
+    private async Task OnTabChangedAsync()
+    {
         if (_tab == "regios")
         {
             await LoadRegionsAsync();

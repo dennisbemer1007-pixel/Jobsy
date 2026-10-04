@@ -186,6 +186,31 @@ public class PassportPartnersAdminController : ControllerBase
         return Ok(new { code.Id, code.IsActive });
     }
 
+    [HttpGet("{id:guid}/codes")]
+    [RequiresFeature(PlatformFeature.PassportPartners)]
+    public async Task<ActionResult> ListCodes(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await _db.PassportPartners.AnyAsync(p => p.Id == id, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var rows = await _db.PassportPartnerCodes.AsNoTracking()
+            .Where(c => c.PassportPartnerId == id)
+            .OrderByDescending(c => c.IsActive)
+            .ThenBy(c => c.CodeDisplay)
+            .Join(_db.Companies.AsNoTracking(), c => c.BranchCompanyId, company => company.Id, (c, company) => new
+            {
+                c.Id,
+                c.CodeDisplay,
+                c.IsActive,
+                c.BranchCompanyId,
+                BranchName = company.Name
+            })
+            .ToListAsync(cancellationToken);
+        return Ok(rows);
+    }
+
     [HttpGet("{id:guid}/codes.pdf")]
     [RequiresFeature(PlatformFeature.PassportPartners)]
     public async Task<ActionResult> CodesPdf(Guid id, CancellationToken cancellationToken)

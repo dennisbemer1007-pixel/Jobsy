@@ -37,7 +37,7 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+            throw new InvalidOperationException(ActionError(body));
         }
 
         return await ReadApiJsonAsync<SchoolPortalCodeRowDto>(response.Content, ct);
@@ -56,28 +56,17 @@ public sealed partial class JobsyApiClient
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+            throw new InvalidOperationException(ActionError(body));
         }
 
         return await ReadApiJsonAsync<SchoolPortalClassDetailDto>(response.Content, ct);
     }
 
-    public async Task DownloadTeacherCodeListPdfAsync(IJSRuntime js, Guid classId, CancellationToken ct = default)
-    {
-        var response = await _http.GetAsync($"api/teacher/classes/{classId}/codelist.pdf", ct);
-        response.EnsureSuccessStatusCode();
-        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        await SendBrowserDownloadAsync(js, $"codelijst-{classId:N}.pdf", Convert.ToBase64String(bytes), "application/pdf");
-    }
+    public Task DownloadTeacherCodeListPdfAsync(IJSRuntime js, Guid classId, CancellationToken ct = default)
+        => DownloadNamedFileAsync($"api/teacher/classes/{classId}/codelist.pdf", js, "codelijst.pdf", ct);
 
-    public async Task DownloadTeacherCodeListCsvAsync(IJSRuntime js, Guid classId, CancellationToken ct = default)
-    {
-        var response = await _http.GetAsync($"api/teacher/classes/{classId}/codelist.csv", ct);
-        response.EnsureSuccessStatusCode();
-        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        await SendBrowserDownloadAsync(
-            js, $"codelijst-{classId:N}.csv", Convert.ToBase64String(bytes), "text/csv;charset=utf-8");
-    }
+    public Task DownloadTeacherCodeListCsvAsync(IJSRuntime js, Guid classId, CancellationToken ct = default)
+        => DownloadNamedFileAsync($"api/teacher/classes/{classId}/codelist.csv", js, "codelijst.csv", ct);
 
     public async Task DownloadTeacherPupilReportPdfAsync(
         IJSRuntime js,
@@ -90,7 +79,10 @@ public sealed partial class JobsyApiClient
             $"api/teacher/classes/{classId}/codes/{codeId}/report.pdf", ct);
         response.EnsureSuccessStatusCode();
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        var safe = new string((className ?? "klas").Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
+        var safe = new string((className ?? "klas")
+            .Select(c => c is ' ' or '/' or '.' or '+' ? '-' : c)
+            .Where(c => char.IsLetterOrDigit(c) || c is '-' or '_')
+            .ToArray()).Trim('-');
         if (string.IsNullOrWhiteSpace(safe))
         {
             safe = "klas";

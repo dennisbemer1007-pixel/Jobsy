@@ -12,8 +12,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "b415429cc2bc52220920f949f372d812b8dfe0c8e9f7e7b41edf6070d86ed985",
-    "v": "20261003-portal"
+    "sha256": "0bbcfe08d466ee490b6039753d474fb206dc4aa686cb136a1ff8afaf3ab7d343",
+    "v": "20261004-admin"
   },
   "css/features/applications.css": {
     "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
@@ -100,8 +100,8 @@
     "v": "20260930-sales9"
   },
   "css/features/scholen.css": {
-    "sha256": "ab9abef0b748bb8ac231cb94aee88fac0b0d19654237932316e6a7efe2c314be",
-    "v": "20261003-portal"
+    "sha256": "bdce25eff8bce55a621deb0636210592537f2d363ba537021ceb48a749dc7f1d",
+    "v": "20261004-school2"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "6384d442888cbaba0ca0441231511565df294381cd28d8bc8e60010d04a06d1a",
-    "v": "20261004-enter"
+    "sha256": "3b018e4e2903c994993efac0e120557ef4588d6a257db92a27e7362fa55ec756",
+    "v": "20261004-admin"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -183,9 +183,13 @@
     "sha256": "3961460d0850572a978b38e192f9a901b03f33eaf704f664a038c09d3cbcaf9a",
     "v": "20260930-landing-5"
   },
+  "js/leerling-login.js": {
+    "sha256": "634d21f17f0420a473ac640840045c74fc1d0c5fe6900ea9a0114c9259278d74",
+    "v": "20261004-school2"
+  },
   "js/lobsyPush.js": {
-    "sha256": "2732df36be55877191316b2e01644c8a701d6ca8cbab41f141d3e3581ad3e495",
-    "v": "20261004-enter"
+    "sha256": "46fd5ce19285ec201c74a2d79fdda13932678f7f8562d66cc96fec139119d6c0",
+    "v": "20261004-admin"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -204,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "52ba3fed35df19a7e95e45399fd639fc557e2792996371b2ce30d4ae2331cdcf",
-    "v": "20261004-enter"
+    "sha256": "8fbb0d6face34f82bb866fbcd1eafc30f981ded8535209e9c98f107163f092f8",
+    "v": "20261004-admin"
   },
   "service-worker.published.js": {
-    "sha256": "8c4f474e7479b55af506ee6c0dcd88bfb87238637d90e4e9908ca76fa08926f2",
-    "v": "20261004-enter"
+    "sha256": "c9b7bd1d8d5cf2a1bfb9a562d8ff9056d467d0cb4b69dcdeb15684b3702c98b1",
+    "v": "20261004-admin"
   }
 }

@@ -5,7 +5,10 @@ namespace Jobsy.Web.Components.Pages.Werkgever;
 internal static class CandidateInsightsMapInterop
 {
     public static Task EnsureLoadedAsync(IJSRuntime js)
-        => js.InvokeVoidAsync("jobsyEnsureInsightsMap").AsTask();
+        => js.InvokeVoidAsync(
+            "jobsyDom.ensureScript",
+            "js/features/kandidaatinzichten-map.js?v=20260928-insights",
+            "JobsyCandidateInsightsMap").AsTask();
 
     public static Task MountAsync(IJSRuntime js, string elementId, object options)
         => js.InvokeVoidAsync("JobsyCandidateInsightsMap.mount", elementId, options).AsTask();

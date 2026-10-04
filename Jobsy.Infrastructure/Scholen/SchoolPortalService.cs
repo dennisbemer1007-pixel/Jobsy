@@ -135,7 +135,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
 {
     public const int MaxCodesPerClass = 40;
     private static readonly Regex ClassNameRegex = new(
-        @"^[\p{L}\d\- ]+$",
+        @"^[\p{L}\d][\p{L}\d\-+./ ]*$",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static readonly TimeZoneInfo Amsterdam = ResolveAmsterdam();
@@ -943,6 +943,21 @@ public sealed class SchoolPortalService : ISchoolPortalService
 
         var schoolId = _scope.GetSchoolIdOrThrow(user);
         var actorId = GetUserId(user) ?? Guid.Empty;
+        if (string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return (null, "Vul een naam in.", "name_required");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return (null, "Vul een school-e-mail in.", "email_required");
+        }
+
+        if (!LooksLikeEmail(request.Email))
+        {
+            return (null, "Dit e-mailadres klopt niet.", "email_invalid");
+        }
+
         var classIds = (request.ClassIds ?? []).Distinct().ToList();
         if (classIds.Count > 0)
         {
@@ -972,7 +987,13 @@ public sealed class SchoolPortalService : ISchoolPortalService
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("email_domain_not_allowed", StringComparison.Ordinal))
         {
-            return (null, ex.Message, "email_domain_not_allowed");
+            return (null, "Gebruik een e-mailadres van de school.", "email_domain_not_allowed");
+        }
+        catch (ArgumentException ex)
+        {
+            return (null, string.IsNullOrWhiteSpace(ex.Message)
+                ? "Dat lukte niet. Probeer het opnieuw."
+                : ex.Message, "validation");
         }
         catch (InvalidOperationException ex)
         {
@@ -1418,7 +1439,7 @@ public sealed class SchoolPortalService : ISchoolPortalService
 
         if (!ClassNameRegex.IsMatch(trimmed))
         {
-            return "Klasnaam mag alleen letters, cijfers, spaties en streepjes bevatten.";
+            return "Klasnaam mag alleen letters, cijfers, spaties, streepjes, punten, plussen en schuine strepen bevatten.";
         }
 
         return null;
@@ -1436,10 +1457,37 @@ public sealed class SchoolPortalService : ISchoolPortalService
         }
     }
 
-    private static string SanitizeFile(string name)
+    internal static string SanitizeFile(string name)
     {
-        var chars = name.Where(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_').ToArray();
-        return chars.Length == 0 ? "klas" : new string(chars);
+        var mapped = name.Select(ch => ch is ' ' or '/' or '.' or '+' ? '-' : ch);
+        var chars = mapped.Where(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_').ToArray();
+        var text = new string(chars).Trim('-');
+        while (text.Contains("--", StringComparison.Ordinal))
+        {
+            text = text.Replace("--", "-", StringComparison.Ordinal);
+        }
+
+        return text.Length == 0 ? "klas" : text;
+    }
+
+    private static bool LooksLikeEmail(string email)
+    {
+        var trimmed = email.Trim();
+        if (trimmed.Any(char.IsWhiteSpace))
+        {
+            return false;
+        }
+
+        var at = trimmed.IndexOf('@');
+        if (at <= 0 || at != trimmed.LastIndexOf('@') || at >= trimmed.Length - 3)
+        {
+            return false;
+        }
+
+        var domain = trimmed[(at + 1)..];
+        return domain.Contains('.', StringComparison.Ordinal)
+               && !domain.StartsWith('.')
+               && !domain.EndsWith('.');
     }
 
     private static Guid? GetUserId(ClaimsPrincipal user)
@@ -1492,10 +1540,10 @@ public static class OuderbriefTemplate
         """;
 
     public const string Groep78CountLine =
-        "De vragenlijst bestaat uit 60 korte vragen en duurt ongeveer een half uur.";
+        "De vragenlijst bestaat uit 60 korte vragen en duurt " + PupilSessionDuration.Groep78 + ".";
 
     public const string VoCountLine =
-        "De vragenlijst bestaat uit 100 korte vragen en wordt in twee lesdelen gemaakt.";
+        "De vragenlijst bestaat uit 100 korte vragen en wordt in " + PupilSessionDuration.VoLetter + " gemaakt.";
 
     public static string For(PupilQuestionSet set)
         => """

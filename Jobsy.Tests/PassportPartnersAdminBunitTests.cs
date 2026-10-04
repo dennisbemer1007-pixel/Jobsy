@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Bunit;
 using Bunit.TestDoubles;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Admin;
 using Jobsy.Web.Components.Pages.Admin;
@@ -27,6 +28,7 @@ public class PassportPartnersAdminBunitTests : BunitContext
         this.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");
         Services.AddSingleton<IHostEnvironment>(new FakeHostEnv());
         Services.AddSingleton(new JobsyApiClient(new HttpClient { BaseAddress = new Uri("http://127.0.0.1:9") }));
+        Services.AddSingleton<IFeatureFlags>(new PartnersOnFlags());
     }
 
     [Fact]
@@ -70,6 +72,22 @@ public class PassportPartnersAdminBunitTests : BunitContext
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
             => Task.FromResult(new AuthenticationState(user));
+    }
+
+    private sealed class PartnersOnFlags : IFeatureFlags
+    {
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(new FeatureFlagSnapshot(
+                EmployersEnabled: true,
+                CandidatePassportEnabled: true,
+                PassportPartnersEnabled: true));
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(feature == PlatformFeature.PassportPartners);
+
+        public void Invalidate()
+        {
+        }
     }
 
     private sealed class FakeHostEnv : IHostEnvironment

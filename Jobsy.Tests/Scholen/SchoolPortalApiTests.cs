@@ -225,6 +225,52 @@ public class SchoolPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Create_class_named_7_slash_8_is_allowed()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, _) = await SeedSchoolStaffAsync();
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var create = await client.PostAsJsonAsync("api/school/classes", new CreateSchoolClassRequest(
+            "7/8", SchoolLevel.Groep78, 7, 2, null, null));
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+        var detail = await create.Content.ReadFromJsonAsync<SchoolPortalClassDetailDto>(Json);
+        Assert.Equal("7/8", detail!.ClassName);
+
+        var csv = await client.GetAsync($"api/school/classes/{detail.Id}/codelist.csv");
+        Assert.Equal(HttpStatusCode.OK, csv.StatusCode);
+        var fileName = csv.Content.Headers.ContentDisposition?.FileNameStar
+                       ?? csv.Content.Headers.ContentDisposition?.FileName?.Trim('"');
+        Assert.Contains("7-8", fileName, StringComparison.Ordinal);
+
+        var bad = await client.PostAsJsonAsync("api/school/classes", new CreateSchoolClassRequest(
+            "///", SchoolLevel.Groep78, 7, 2, null, null));
+        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+    }
+
+    [Fact]
+    public async Task Teacher_invite_empty_or_invalid_email_is_400_not_500()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, classId) = await SeedSchoolStaffAsync(withClass: true, codeCount: 1);
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+
+        var empty = await client.PostAsJsonAsync("api/school/teachers", new InviteTeacherRequest(
+            "T. Test", "  ", [classId]));
+        Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
+        var emptyBody = await empty.Content.ReadAsStringAsync();
+        Assert.Contains("Vul een school-e-mail in.", emptyBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("supportCode", emptyBody, StringComparison.Ordinal);
+
+        var bad = await client.PostAsJsonAsync("api/school/teachers", new InviteTeacherRequest(
+            "T. Test", "geen-adres", [classId]));
+        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+        var badBody = await bad.Content.ReadAsStringAsync();
+        Assert.Contains("Dit e-mailadres klopt niet.", badBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("Interne serverfout", badBody, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Create_groep78_year_3_returns_400()
     {
         await EnableSchoolsAsync(true, perCode: true);

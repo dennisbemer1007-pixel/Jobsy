@@ -46,7 +46,7 @@
 
     <div class="admin-finance-layout">
         <div class="admin-finance-layout__main">
-            <AdminTabs BasePath="/admin/financien" ActiveKey="@_tab" Tabs="_tabs" />
+            <AdminTabs BasePath="/admin/financien" @bind-ActiveKey="_tab" @bind-ActiveKey:after="OnTabChangedAsync" Aliases="_tabAliases" Tabs="_tabs" />
 
             @if (_tab == "tokenlog")
             {
@@ -57,7 +57,7 @@
                                @onkeydown="OnFilterKeyDown" />
                     </label>
                     <button class="btn-compact" type="button" disabled="@_logLoading" @onclick="LoadLogsAsync">@Culture["AdminFinance.Refresh"]</button>
-                    <span class="muted">@_filteredLogs.Count @Culture["AdminFinance.Rows"]</span>
+                    <span class="muted">@RowCount(_filteredLogs.Count)</span>
                 </div>
 
                 @if (_logLoading)
@@ -301,6 +301,9 @@
 </AdminPageShell>
 
 @code {
+    private string RowCount(int count)
+        => count == 1 ? Culture["AdminFinance.RowOne"] : Culture.Format("AdminFinance.RowMany", count);
+
     private static readonly HashSet<string> FinanceKeys = new(StringComparer.OrdinalIgnoreCase)
     {
         "tokens_balance", "tokens_purchased", "tokens_spent", "pushboms", "extensions"
@@ -310,6 +313,11 @@
     [
         ("day", "Dag"), ("week", "Week"), ("month", "Maand"), ("quarter", "Kwartaal"), ("year", "Jaar")
     ];
+
+    private static readonly Dictionary<string, string> _tabAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["kpi"] = "kpis"
+    };
 
     private string _tab = "transacties";
     private string _periodKey = "month";
@@ -367,6 +375,18 @@
     {
         await LoadSummaryAndTransactionsAsync();
         await LoadVatAsideAsync();
+        if (_tab == "tokenlog")
+        {
+            await LoadLogsAsync();
+        }
+        else if (_tab == "kpis")
+        {
+            await LoadMetricsAsync();
+        }
+    }
+
+    private async Task OnTabChangedAsync()
+    {
         if (_tab == "tokenlog")
         {
             await LoadLogsAsync();

@@ -582,7 +582,8 @@ else
 
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
         var b64 = Convert.ToBase64String(bytes);
-        await Js.InvokeVoidAsync("jobsySaveFile", "lobsy-dashboard.csv", b64, "text/csv");
+        await Js.InvokeVoidAsync("jobsyExtras.ensure");
+        await Js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-dashboard.csv", b64, "text/csv;charset=utf-8");
     }
 
     private static string Escape(string? value)

@@ -146,9 +146,9 @@ else
             }
             _windowOpen = false;
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _windowError = ex.Message;
+            _windowError = PortalActionError.From(error.Message);
         }
         finally
         {
@@ -165,9 +165,9 @@ else
             await Api.ClearTeacherLoginPauseAsync(ClassId);
             await Reload();
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _pauseError = ex.Message;
+            _pauseError = PortalActionError.From(error.Message);
         }
         finally
         {

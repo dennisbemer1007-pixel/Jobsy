@@ -52,7 +52,7 @@ public sealed class CandidateWhoAmIController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return await TestSaveErrors.LogAsync(this, ex, BadRequest(new { message = ex.Message }), "CandidateJourney", cancellationToken);
         }
     }
 }

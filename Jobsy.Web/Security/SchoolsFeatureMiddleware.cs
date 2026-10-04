@@ -34,6 +34,7 @@ public sealed class SchoolsFeatureMiddleware
                     return;
                 }
 
+                context.Response.Headers.CacheControl = "no-store";
                 context.Response.Redirect(FeatureRoutes.SchoolsOffAccessDeniedPath);
                 return;
             }

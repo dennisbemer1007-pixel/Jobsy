@@ -41,7 +41,11 @@ public sealed class OpenPayoutsSource : IAdminTodoSource
                 Key: Key,
                 Severity: AdminTodoSeverity.Warn,
                 TitleKey: "AdminTodo.OpenPayouts.Title",
-                Subtitle: string.Format(culture, "{0} facturen · {1}", open.Count, sumText),
+                Subtitle: string.Format(
+                    culture,
+                    open.Count == 1 ? "1 factuur · {0}" : "{0} facturen · {1}",
+                    open.Count == 1 ? sumText : open.Count,
+                    sumText),
                 Area: "Financiën",
                 SinceUtc: since,
                 ActionLabelKey: "AdminTodo.OpenPayouts.Action",

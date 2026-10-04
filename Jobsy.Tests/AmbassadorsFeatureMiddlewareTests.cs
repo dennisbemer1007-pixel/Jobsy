@@ -13,15 +13,20 @@ public class AmbassadorsFeatureMiddlewareTests
         var blocked = new AmbassadorsFeatureMiddleware(_ => throw new InvalidOperationException("opened"));
 
         var off = await Invoke(blocked, new FixedFlags(false), "/admin/gebruikers/sales");
-        Assert.Equal(StatusCodes.Status404NotFound, off.StatusCode);
-        Assert.Contains("feature_disabled", off.Body, StringComparison.Ordinal);
+        Assert.Equal(StatusCodes.Status302Found, off.StatusCode);
+        Assert.Equal(FeatureRoutes.AmbassadorsOffAccessDeniedPath, off.Location);
 
         var tab = await Invoke(blocked, new FixedFlags(false), "/admin/gebruikers/sales?tab=ambassadeurs");
-        Assert.Equal(StatusCodes.Status404NotFound, tab.StatusCode);
+        Assert.Equal(StatusCodes.Status302Found, tab.StatusCode);
+        Assert.Equal(FeatureRoutes.AmbassadorsOffAccessDeniedPath, tab.Location);
 
         var missing = await Invoke(blocked, flags: null, "/ambassadeur");
-        Assert.Equal(StatusCodes.Status404NotFound, missing.StatusCode);
-        Assert.Contains("feature_disabled", missing.Body, StringComparison.Ordinal);
+        Assert.Equal(StatusCodes.Status302Found, missing.StatusCode);
+        Assert.Equal(FeatureRoutes.AmbassadorsOffAccessDeniedPath, missing.Location);
+
+        var api = await Invoke(blocked, new FixedFlags(false), "/api/ambassadeurs");
+        Assert.Equal(StatusCodes.Status404NotFound, api.StatusCode);
+        Assert.Contains("feature_disabled", api.Body, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -38,7 +43,7 @@ public class AmbassadorsFeatureMiddlewareTests
         Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
     }
 
-    private static async Task<(int StatusCode, string Body)> Invoke(
+    private static async Task<(int StatusCode, string Body, string? Location)> Invoke(
         AmbassadorsFeatureMiddleware middleware,
         IFeatureFlags? flags,
         string path)
@@ -60,7 +65,7 @@ public class AmbassadorsFeatureMiddlewareTests
         await middleware.InvokeAsync(http);
         http.Response.Body.Position = 0;
         var body = await new StreamReader(http.Response.Body).ReadToEndAsync();
-        return (http.Response.StatusCode, body);
+        return (http.Response.StatusCode, body, http.Response.Headers.Location.ToString());
     }
 
     private sealed class FixedFlags(bool ambassadors) : IFeatureFlags

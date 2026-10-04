@@ -75,7 +75,12 @@ public sealed class ApiErrorException : Exception
                 var root = doc.RootElement;
                 if (root.ValueKind == JsonValueKind.Object)
                 {
-                    code = ReadString(root, "code");
+                    code = ReadString(root, "code") ?? ReadString(root, "error");
+                    if (string.Equals(ReadString(root, "type"), "feature_disabled", StringComparison.Ordinal))
+                    {
+                        code = "feature_disabled";
+                    }
+
                     supportCode = ReadString(root, "supportCode");
                     if (retryAfter is null
                         && root.TryGetProperty("retryAfterSeconds", out var seconds)
@@ -86,9 +91,11 @@ public sealed class ApiErrorException : Exception
 
                     if (status == 400
                         && root.TryGetProperty("userMessage", out var flag)
-                        && flag.ValueKind == JsonValueKind.True)
+                        && (flag.ValueKind == JsonValueKind.True
+                            || (flag.ValueKind == JsonValueKind.String
+                                && string.Equals(flag.GetString(), "true", StringComparison.OrdinalIgnoreCase))))
                     {
-                        userMessage = ReadString(root, "detail");
+                        userMessage = ReadString(root, "detail") ?? ReadString(root, "message");
                     }
                 }
             }

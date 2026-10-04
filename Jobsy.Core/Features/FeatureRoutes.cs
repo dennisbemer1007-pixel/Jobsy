@@ -14,6 +14,7 @@ public static class FeatureRoutes
     public const string AdminHomePath = "/home";
     public const string EmployersOffAccessDeniedPath = "/access-denied?reason=employers-off";
     public const string SchoolsOffAccessDeniedPath = "/access-denied?reason=schools-off";
+    public const string AmbassadorsOffAccessDeniedPath = "/access-denied?reason=ambassadors-off";
     public const string SchoolPortalPath = "/school";
     public const string TeacherPortalPath = "/leraar";
     /// <summary>Friendly page for anonymous visitors on employer routes while employers are OFF.</summary>

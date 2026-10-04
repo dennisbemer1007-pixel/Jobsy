@@ -39,7 +39,7 @@
             <input type="search" @bind="_orgFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]" />
         </label>
         <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["AdminFinance.Refresh"]</button>
-        <span class="muted">@_filtered.Count @Culture["AdminFinance.Rows"]</span>
+        <span class="muted">@RowCount(_filtered.Count)</span>
     </div>
 
     @if (_loading)
@@ -79,6 +79,9 @@
 </section>
 
 @code {
+    private string RowCount(int count)
+        => count == 1 ? Culture["AdminFinance.RowOne"] : Culture.Format("AdminFinance.RowMany", count);
+
     private static readonly int[] Years =
         Enumerable.Range(DateTime.UtcNow.Year - 2, 4).Reverse().ToArray();
 

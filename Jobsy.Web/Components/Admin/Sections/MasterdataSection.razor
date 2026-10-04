@@ -67,7 +67,7 @@
                         </div>
                         <div class="inline-actions">
                             <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">@Culture["Common.Save"]</button>
-                            <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Item verwijderen" disabled="@(_busyId == item.Id)" @onclick="() => DeleteAsync(item)">
+                            <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="@Culture["AdminContent.DeleteItem"]" disabled="@(_busyId == item.Id)" @onclick="() => AskDelete(item)">
                                 @((MarkupString)ActionIcons.Trash)
                             </button>
                         </div>
@@ -96,12 +96,25 @@
             <p class="state-message">@_message</p>
         }
     }
+
+    <LobsyFriendlyDialog IsOpen="_confirmOpen"
+                         Title="@Culture["AdminContent.DeleteItem"]"
+                         OnClose="CancelDelete">
+        <p>@string.Format(Culture["AdminContent.DeleteItemBody"], _pendingLabel)</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" data-jobsy-dialog-close @onclick="CancelDelete">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="ConfirmDeleteAsync">@Culture["AdminContent.DeleteItem"]</button>
+        </div>
+    </LobsyFriendlyDialog>
 @code {
     private List<MasterdataOptionItem> _items = [];
     private string _activeCategory = MasterdataCategories.Branch;
     private bool _loading = true;
     private Guid? _busyId;
     private bool _creating;
+    private bool _confirmOpen;
+    private MasterdataOptionItem? _pendingDelete;
+    private string _pendingLabel = "";
     private string? _message;
     private string _newValue = "";
     private string _newLabel = "";
@@ -113,7 +126,7 @@
 
     private string CategoryHint => _activeCategory switch
     {
-        MasterdataCategories.Branch => "Zichtbaar bij interesedomeinen (kandidaat) en branche (vacature).",
+        MasterdataCategories.Branch => "Zichtbaar bij interessedomeinen (kandidaat) en branche (vacature).",
         MasterdataCategories.DrivingLicense => "Zichtbaar bij rijbewijzen op profiel en vacature-eisen.",
         MasterdataCategories.EducationLevel => "Zichtbaar bij opleidingsniveau. “Geen” alleen voor kandidaten.",
         MasterdataCategories.MinEmployers => "Keuzes voor minimaal aantal werkgevers op vacatures.",
@@ -189,6 +202,30 @@
         finally
         {
             _busyId = null;
+        }
+    }
+
+    private void AskDelete(MasterdataOptionItem item)
+    {
+        _pendingDelete = item;
+        _pendingLabel = string.IsNullOrWhiteSpace(item.Label) ? item.Value : item.Label;
+        _confirmOpen = true;
+    }
+
+    private void CancelDelete()
+    {
+        _confirmOpen = false;
+        _pendingDelete = null;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        var item = _pendingDelete;
+        _confirmOpen = false;
+        _pendingDelete = null;
+        if (item is not null)
+        {
+            await DeleteAsync(item);
         }
     }
 

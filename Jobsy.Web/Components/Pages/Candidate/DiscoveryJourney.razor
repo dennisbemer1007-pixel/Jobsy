@@ -811,7 +811,7 @@
         if (!firstRender) return;
         try
         {
-            _preferReducedMotion = await Js.InvokeAsync<bool>("jobsyMedia.matches", "(prefers-reduced-motion: reduce)");
+            _preferReducedMotion = await Js.InvokeAsync<bool>("jobsyDom.matchesMedia", "(prefers-reduced-motion: reduce)");
         }
         catch { /* optional */ }
     }
