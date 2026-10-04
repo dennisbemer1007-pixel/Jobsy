@@ -71,10 +71,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
         var seed = await SeedOpenClassAsync();
-        _web?.Dispose();
-        _web = new PupilKestrelFactory(_api.Server.CreateHandler());
-        _ = _web.CreateClient();
-        var baseUrl = _web.ServerAddress.TrimEnd('/');
+        var baseUrl = EnsureWeb();
         Assert.StartsWith("http://127.0.0.1:", baseUrl, StringComparison.Ordinal);
 
         var page = await _browser!.NewPageAsync();
@@ -156,10 +153,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
-        _web?.Dispose();
-        _web = new PupilKestrelFactory(_api.Server.CreateHandler());
-        _ = _web.CreateClient();
-        var baseUrl = _web.ServerAddress.TrimEnd('/');
+        var baseUrl = EnsureWeb();
         foreach (var (width, height) in new[] { (1366, 900), (390, 844) })
         {
             var pupil = await SeedOpenClassAsync();
@@ -223,10 +217,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
         var seed = await SeedFiveFinishedGroep78Async();
-        _web?.Dispose();
-        _web = new PupilKestrelFactory(_api.Server.CreateHandler());
-        _ = _web.CreateClient();
-        var baseUrl = _web.ServerAddress.TrimEnd('/');
+        var baseUrl = EnsureWeb();
         var page = await _browser!.NewPageAsync();
         page.SetDefaultTimeout(90_000);
         page.SetDefaultNavigationTimeout(90_000);
@@ -238,6 +229,36 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Interesses in de klas" })).ToBeVisibleAsync();
         await Assertions.Expect(page.GetByText("De klasgegevens konden niet geladen worden")).ToHaveCountAsync(0);
         await page.CloseAsync();
+    }
+
+    private string EnsureWeb()
+    {
+        if (_web is not null)
+        {
+            return _web.ServerAddress.TrimEnd('/');
+        }
+
+        // Disposing a Kestrel host mid-suite can stop the next host
+        // (background-service cancellation). One host for the class avoids that.
+        InvalidOperationException? last = null;
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            try
+            {
+                _web?.Dispose();
+                _web = new PupilKestrelFactory(_api.Server.CreateHandler());
+                _ = _web.CreateClient();
+                return _web.ServerAddress.TrimEnd('/');
+            }
+            catch (InvalidOperationException ex)
+            {
+                last = ex;
+                _web?.Dispose();
+                _web = null;
+            }
+        }
+
+        throw last ?? new InvalidOperationException("Pupil web host did not start.");
     }
 
     private static readonly PageWaitForURLOptions DomReady = new()
