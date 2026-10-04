@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "026dbf02c06ae7405f05e999edc7da36f2c36e2ffaf37fd1046c56e51decc678",
-    "v": "20261004-run5"
+    "sha256": "087537c4b31242b50b38d72ff55d1869cee878a157bc9e358b33e47ac30dc360",
+    "v": "20261004-readaloud"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -199,6 +199,10 @@
     "sha256": "e5f1baab87e03d1ea0c7ccb09aa7851d5691ac44d0e38394a85f97d1796cd8a1",
     "v": "20261001-pp07"
   },
+  "js/read-aloud.js": {
+    "sha256": "9fc0acd33abf2876fab3e1662413ed32aed17719a901e5a747507427803ba6d0",
+    "v": "20261004-readaloud"
+  },
   "js/vacancyDetailMap.min.js": {
     "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",
     "v": "20261002-ch01"
@@ -208,11 +212,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "5f7bd8a17fb12a80c8daf7b8adfe72a8de7f6c7d4b956505902bf0e08313e56a",
+    "sha256": "3747beaaad96ada2eb0ee3bcbe758b613fc2dae80704fde460c133b4c47cff26",
     "v": "20261004-run5"
   },
   "service-worker.published.js": {
-    "sha256": "7f5d7395f1e815527d4f4af05c39025e9e80980cbfaa6570fdf7b84e492de5ee",
+    "sha256": "64f339b35df0db1a996e1f764f0041ff39f1261119cd8bfeaaccfa4c68e1c1d0",
     "v": "20261004-run5"
   }
 }

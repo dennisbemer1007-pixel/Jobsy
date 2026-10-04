@@ -43,8 +43,9 @@
                     </header>
 
                     <div class="lobsy-assistant__chat">
-                        @foreach (var msg in _messages)
+                        @for (var i = 0; i < _messages.Count; i++)
                         {
+                            var msg = _messages[i];
                             <div class="lobsy-assistant__bubble lobsy-assistant__bubble--@msg.Role">
                                 @if (msg.Role == "assistant")
                                 {
@@ -58,6 +59,10 @@
                                     <span class="lobsy-assistant__bubble-role">@Culture["Assistant.You"]</span>
                                 }
                                 <p>@msg.Content</p>
+                                @if (msg.Role == "assistant")
+                                {
+                                    <ReadAloudButton Text="@msg.Content" SpeechKey="@($"assistant-{i}")" />
+                                }
                             </div>
                         }
                         @if (_busy)
