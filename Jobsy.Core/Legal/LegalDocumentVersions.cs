@@ -36,7 +36,7 @@ public static class LegalDocumentVersions
     /// Append a row when <see cref="LegalProcessors"/> changes. Do not edit an older fingerprint.
     /// The 2026-10-04 hash is the catalog from before company headquarters and data regions were stored.
     /// The 2026-10-05 hash is that catalog before the Mistral row was merged in.
-    /// 2026-10-06 shipped the Mistral row as free text and has no fingerprint.
+    /// 2026-10-06 and 2026-10-07 shipped the Mistral row as free text and have no fingerprint.
     /// </summary>
     public static readonly IReadOnlyList<PrivacyCatalogSnapshot> PrivacyCatalogSnapshots =
     [
@@ -51,6 +51,7 @@ public static class LegalDocumentVersions
     public static readonly IReadOnlyList<LegalVersionEntry> PrivacyHistory =
     [
         new("2026-10-08", new DateOnly(2026, 10, 8), "Legal.Change.Privacy.2026-10-08"),
+        new("2026-10-07", new DateOnly(2026, 10, 7), "Legal.Change.Privacy.2026-10-07"),
         new("2026-10-06", new DateOnly(2026, 10, 6), "Legal.Change.Privacy.2026-10-06"),
         new("2026-10-05", new DateOnly(2026, 10, 5), "Legal.Change.Privacy.2026-10-05"),
         new("2026-10-04", new DateOnly(2026, 10, 4), "Legal.Change.Privacy.2026-10-04"),

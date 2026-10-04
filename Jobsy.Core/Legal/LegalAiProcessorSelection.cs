@@ -6,6 +6,8 @@ namespace Jobsy.Core.Legal;
 /// The privacy page lists the AI company that actually receives calls.
 /// OpenAI and Mistral share one slot. The id <c>mistral</c> is the token a host watch
 /// uses for <c>api.mistral.ai</c> and <c>api.eu.mistral.ai</c>.
+/// The Mistral row's place follows the base URL host: only <c>api.eu.mistral.ai</c>
+/// says the inference runs in the EU.
 /// Mail rows are not filtered here; <see cref="LegalProcessorSelection"/> applies both slots.
 /// </summary>
 public static class LegalAiProcessorSelection

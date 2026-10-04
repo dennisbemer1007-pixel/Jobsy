@@ -66,6 +66,8 @@ public static class LegalProcessors
     public const string DataPrivacyFramework = "Legal.Transfer.Dpf";
     public const string StandardClauses = "Legal.Transfer.Scc";
     public const string AdequacyDecision = "Legal.Transfer.Adequacy";
+
+    /// <summary>Mistral's global host does not name a place for inference.</summary>
     public const string NoStatedPlace = "Legal.Transfer.NoPlace";
 
     public static readonly IReadOnlyList<LegalProcessor> All =

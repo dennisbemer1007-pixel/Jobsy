@@ -317,7 +317,7 @@ Als KVK IP-whitelisting aan heeft staan in het Developer Portal, voeg de uitgaan
 | `Ai__Provider` | Acceptatie API **and** web | `Mistral` or leave unset (`OpenAI`). `sync: false` in the blueprint. |
 | `Mistral__ApiKey` | Acceptatie API **and** web | API sends it. Web only checks that it is set, so `/privacy` matches the calls. Alias: `MISTRAL_API_KEY`. |
 
-Create the Mistral workspace with the **EU** option (Paris). The privacy page treats Mistral as in the EU only when the host of `Mistral__BaseUrl` is `api.eu.mistral.ai` (for example `https://api.eu.mistral.ai/v1/`). Any other host, including `api.mistral.ai`, is data outside the EU. The page reads that host from config. Default model is `mistral-small-latest`. Without a key, calls stay on OpenAI and the privacy page keeps the OpenAI row.
+Do not set `Mistral__BaseUrl`. The default is the EU endpoint `https://api.eu.mistral.ai/v1/` (inference in the EU/EFTA, about 1.1× list price). The privacy page treats Mistral as in the EU only when the host of `Mistral__BaseUrl` is `api.eu.mistral.ai`. Any other host, including `https://api.mistral.ai`, does not promise where inference runs, and the privacy page then drops the EU claim. The page reads that host from config. Default model is `mistral-small-latest`. Without a key, calls stay on OpenAI and the privacy page keeps the OpenAI row. Account, billing and API-key metadata at Mistral can still be handled outside the EU.
 
 Production (`jobsy-api` / `jobsy-web`) does not list these keys. Do not set `Ai__Provider=Mistral` there until you choose to switch live.
 
