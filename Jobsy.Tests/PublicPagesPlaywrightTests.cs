@@ -109,7 +109,7 @@ public class PublicPagesPlaywrightTests
 
                     if (path == "/privacy")
                     {
-                        await AssertPrivacyProcessorsAsync(page);
+                        await AssertPrivacyProcessorsAsync(page, lang);
                     }
 
                     if (path == "/partner")
@@ -386,14 +386,34 @@ public class PublicPagesPlaywrightTests
         }
     }
 
-    private static async Task AssertPrivacyProcessorsAsync(IPage page)
+    private static async Task AssertPrivacyProcessorsAsync(IPage page, string lang)
     {
         var text = await page.Locator("body").InnerTextAsync();
         Assert.Contains("Pingen", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("OpenStreetMap", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("push", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Frankfurt", text, StringComparison.OrdinalIgnoreCase);
+
+        var where = page.Locator("#buiten-de-eu");
+        await Assertions.Expect(where).ToBeVisibleAsync();
+        Assert.Equal(lang, await where.GetAttributeAsync("lang"));
+        var sentence = await where.InnerTextAsync();
+        var (title, american) = DataLocationPhrases[lang];
+        Assert.Contains(title, sentence, StringComparison.Ordinal);
+        Assert.Contains(american, sentence, StringComparison.Ordinal);
+        Assert.Contains("Resend", sentence, StringComparison.Ordinal);
+        Assert.DoesNotContain("Lettermint", sentence, StringComparison.Ordinal);
+        Assert.DoesNotContain("Al je gegevens blijven in de EU", sentence, StringComparison.Ordinal);
     }
+
+    private static readonly Dictionary<string, (string Title, string American)> DataLocationPhrases = new()
+    {
+        ["nl"] = ("Waar staan je gegevens?", "Amerikaanse bedrijven"),
+        ["en"] = ("Where is your data?", "American companies"),
+        ["pl"] = ("Gdzie są twoje dane?", "amerykańskich firm"),
+        ["ro"] = ("Unde sunt datele tale?", "companii americane"),
+        ["ar"] = ("أين توجد بياناتك؟", "شركات أمريكية")
+    };
 
     private static async Task AssertPartnerPricesAsync(IPage page)
     {

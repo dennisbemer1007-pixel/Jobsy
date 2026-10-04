@@ -65,7 +65,7 @@ Acceptatie in het dashboard is alleen een lege map totdat de Blueprint de drie `
    - Login via **e-mail + wachtwoord** (Acceptatie seedt lokale demo-accounts; `POST /account/demo-login` is 404 omdat `ASPNETCORE_ENVIRONMENT=Production`)
 6. Optioneel: Acceptatie → **•••** → **Block cross-environment connections** (acc kan dan niet via het private netwerk bij Production).
 
-Mail op Acceptatie blijft leeg tot je `Mail__ResendApiKey` / `Mail__FromAddress` in het Dashboard zet. Laat dat zo als je geen echte mails vanuit acc wilt.
+Mail op Acceptatie blijft leeg tot je `Lettermint__ApiKey` (of als terugval `Mail__ResendApiKey`) en `Mail__FromAddress` in het Dashboard zet. Het patroon `Mail__AllowedRecipientPattern` staat al in de blueprint: alleen `test-*@lobsy.nl` krijgt mail, plus het extra adres dat je zelf zet. Laat de sleutels leeg als je geen echte mails vanuit acc wilt.
 
 ## Security (production)
 
@@ -230,42 +230,55 @@ Render **Basic Postgres** (`jobsy-db`) maakt dagelijkse automatische backups (zi
 3. Voor strengere RPO: upgrade naar een plan met Point-in-Time Recovery (PITR) en/of periodieke `pg_dump` naar offsite storage.
 4. Documenteer RPO/RTO en wie restore mag uitvoeren in jullie ops-runbook.
 
-## Transactionele e-mail (Resend) + SPF/DKIM
+## Transactionele e-mail (Lettermint of Resend) + SPF/DKIM
 
 See also [email-deliverability.md](email-deliverability.md) for the Dennis checklist (DNS, DMARC, tracking off, support inbox, legal footer).
 
-Lobsy stuurt alle platformmails via **Resend** (`POST https://api.resend.com/emails`). SMTP is alleen fallback.
+`Mail__Provider` kiest de verzender.
+
+- **Lettermint** (`POST https://api.lettermint.co/v1/send`, header `x-lettermint-token`) is een Nederlands bedrijf. De mail blijft in de EU. Dit pad is actief alleen als `Mail__Provider=Lettermint` én `Lettermint__ApiKey` gezet is.
+- Zonder die sleutel valt Lobsy terug op **Resend** (`POST https://api.resend.com/emails`) en logt één waarschuwing.
+- SMTP is alleen fallback. Open- en klikmeting sturen we niet mee.
+
+Acceptatie zet `Mail__AllowedRecipientPattern` op `^test-[^@]+@lobsy\.nl$`. Andere adressen worden overgeslagen. Het log toont alleen een afgeschermd adres. `Mail__AllowedRecipientAddresses__0` is het extra adres van de beheerder. Productie laat het patroon leeg: daar gaat elke mail eruit.
+
+Zet `Mail__Provider` en `Lettermint__ApiKey` ook op de **web**-service. De privacyzin leest dezelfde config. De web-service verstuurt geen mail; hij kijkt alleen of de sleutel er is.
 
 ### Configureren (kies één)
 
 **A. Render / omgeving (aanbevolen voor productie)**
 
-Zet op `jobsy-api`:
+Zet op `jobsy-api` (en provider + Lettermint-sleutel ook op `jobsy-web`):
 
 | Env var | Voorbeeld |
 |---------|-----------|
+| `Mail__Provider` | `Resend` of `Lettermint` |
+| `Lettermint__ApiKey` | project-token (of `LETTERMINT_API_KEY`). Niet in git. |
+| `Lettermint__BaseUrl` | leeg laten, of `https://api.lettermint.co/v1/` |
 | `Mail__ResendApiKey` | `re_…` (of `RESEND_API_KEY`) |
 | `Mail__FromAddress` | `Lobsy <hallo@mail.lobsy.nl>` (or `RESEND_FROM`) |
 | `Mail__ReplyTo` | `support@lobsy.nl` |
 | `Mail__SupportAddress` | `support@lobsy.nl` |
 | `Mail__LegalName` / `Mail__LegalAddress` / `Mail__KvkNumber` | Footer legal line (address + KvK still pending from Dennis) |
+| `Mail__AllowedRecipientPattern` | leeg in productie. Acceptatie: `^test-[^@]+@lobsy\.nl$` |
+| `Mail__AllowedRecipientAddresses__0` | leeg, of het eigen adres van de beheerder |
 
 **B. Admin UI**
 
-Admin → Integraties → **Mail (Resend)** → plak API-key + From → Opslaan → **Stuur testmail**.
+Admin → Integraties → **Mail (Resend)** → plak de Resend API-key + From → Opslaan → **Stuur testmail**.
 
-DB-credentials hebben voorrang; env vult lege velden.
+De Lettermint-sleutel staat niet in dit scherm. Die zet je alleen als env var. DB-credentials voor Resend hebben voorrang; env vult lege velden.
 
 **Secrets wissen (Admin):** wist DB-keys én schakelt env-fill uit, zodat mail echt stopt (ook als Render-env nog gezet is). Herstel met nieuwe Admin-keys, of knop **Omgeving opnieuw gebruiken**. Alleen env wissen op Render zonder die knop laat mail uitgeschakeld tot je env opnieuw activeert of keys plakt.
 
-Resend is pas operationeel als **API-key én From** beide gezet zijn (DB of env).
+Resend is pas operationeel als **API-key én From** beide gezet zijn (DB of env). Lettermint is operationeel als provider én sleutel gezet zijn.
 
 ### DNS
 
-1. Voeg het verzenddomein toe in Resend (bijv. `lobsy.nl`) en verifieer DNS.
-2. Zet de door Resend aangeleverde **SPF** en **DKIM** records; start **DMARC** met `p=none` en verhoog later.
-3. Gebruik From op het geverifieerde domein (niet langdurig `onboarding@resend.dev`).
-4. Mislukte sends landen in PlatformLogs (e-mail geredacteerd).
+1. Voeg het verzenddomein toe bij de actieve verzender (Lettermint of Resend) en verifieer DNS.
+2. Zet de **SPF**, **DKIM** en **DMARC** records die de verzender toont. Start DMARC met `p=none` en verhoog later.
+3. Gebruik From op het geverifieerde domein (bij Resend niet langdurig `onboarding@resend.dev`).
+4. Mislukte sends landen in PlatformLogs (e-mail afgeschermd). Er is geen Resend-webhook in deze code, dus ook geen Lettermint-bounce-webhook.
 
 ## KVK Handelsregister
 

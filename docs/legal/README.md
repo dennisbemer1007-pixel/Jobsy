@@ -37,6 +37,8 @@ HTML) and `PublicPagesPlaywrightTests` (same check in five languages).
 1. Change the text in the `*Nl.razor` document.
 2. Bump `LegalDocumentVersions.Privacy` or `.Terms` (version `"YYYY-MM"` + `EffectiveFrom`).
    Both terms documents share one version on purpose.
+   If the processor catalog changed, also append `PrivacyCatalogSnapshots` with the new hash
+   (`LegalProcessorCatalogTests` prints the mismatch).
 3. Add an entry at the top of `PrivacyHistory` / `TermsHistory` with a new
    `Legal.Change.<Doc>.<version>` key; the page shows the last three ("Wat is er veranderd?", D16).
 4. Add the summary key in **nl, en, pl, ro and ar** (`UiStringsLegal.cs`) — `LocalizationParityReportTests`
@@ -57,9 +59,18 @@ Resource values never contain HTML — links are composed in the markup.
 
 ## Processor and retention catalogs
 
-- A new processor is a row in `LegalProcessors` with purpose, data, location and transfer basis, plus
+- A new processor is a row in `LegalProcessors` with purpose, data, company headquarters, data region and transfer basis, plus
   `Status = Planned` (and a `PlannedNoteKey`) while the integration is not live yet — that is how
   Pingen was listed before letter verification shipped (Dependency G). `PrivacyStatementTests` keeps
   the rendered table and the catalog in sync.
+- The sentence "Waar staan je gegevens?" is built from that list (`DataLocationSentence`), in nl, en, pl, ro and ar.
+  No American company in the active list → the sentence says all data stays in the EU with European companies.
+  Otherwise it names the American companies. Resend and Lettermint share one slot (`WhenMailProvider`);
+  the row follows `Mail:Provider` and whether `Lettermint:ApiKey` is set.
+- Changing the catalog changes `LegalProcessorFingerprint`. Append a row to
+  `LegalDocumentVersions.PrivacyCatalogSnapshots` and bump `Privacy` (version, date, changelog).
+  `LegalProcessorCatalogTests` fails if the hash and the version drift apart.
+- A new third-party host or NuGet package (Resend, Lettermint, OpenAI, Sentry, Mollie, Cloudflare, Scaleway, Mistral)
+  must have a processor id. `ThirdPartyProcessorGuardTests` scans package references and `https://` base URLs.
 - A retention period is **never typed** in the privacy text: add the constant to `PrivacyConstants`
   and a row to `LegalRetention`. `LegalRetentionCatalogTests` checks that every constant has a row.

@@ -38,6 +38,7 @@ public sealed class SmtpEmailService : IEmailService
     private readonly IHostEnvironment _environment;
     private readonly IFeatureFlags _featureFlags;
     private readonly IOptions<MailOptions> _mailOptions;
+    private readonly IOptions<LettermintOptions> _lettermintOptions;
     private readonly ILogger<SmtpEmailService> _logger;
 
     public SmtpEmailService(
@@ -48,6 +49,7 @@ public sealed class SmtpEmailService : IEmailService
         IHostEnvironment environment,
         IFeatureFlags featureFlags,
         IOptions<MailOptions> mailOptions,
+        IOptions<LettermintOptions> lettermintOptions,
         ILogger<SmtpEmailService> logger)
     {
         _credentials = credentials;
@@ -57,6 +59,7 @@ public sealed class SmtpEmailService : IEmailService
         _environment = environment;
         _featureFlags = featureFlags;
         _mailOptions = mailOptions;
+        _lettermintOptions = lettermintOptions;
         _logger = logger;
     }
 
@@ -70,7 +73,60 @@ public sealed class SmtpEmailService : IEmailService
             return EmailDeliveryResult.Stub;
         }
 
+        var allow = MailRecipientAllowList.Evaluate(message.To, _mailOptions.Value);
+        if (allow.PatternInvalid && MailRecipientAllowList.ConsumeInvalidPatternWarning())
+        {
+            _logger.LogWarning(
+                "Mail:AllowedRecipientPattern is not a valid pattern. Recipients outside the extra address list are skipped.");
+        }
+
+        if (allow.Blocked)
+        {
+            _logger.LogInformation(
+                "Mail skipped by allowlist. category={Category} to={To}",
+                message.Category ?? "(none)",
+                allow.MaskedAddress);
+            await WritePlatformLogAsync(
+                PlatformLogLevel.Info,
+                message.Category ?? "Email",
+                $"Mail skipped by allowlist to {allow.MaskedAddress}",
+                new
+                {
+                    To = allow.MaskedAddress,
+                    Category = message.Category,
+                    Skipped = true
+                },
+                cancellationToken);
+            return EmailDeliveryResult.Stub;
+        }
+
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
+        var lettermintKey = _lettermintOptions.Value.ApiKey;
+        var choice = MailProviderChoice.Choose(
+            _mailOptions.Value.Provider,
+            !string.IsNullOrWhiteSpace(lettermintKey));
+        if (choice.WarnMissingLettermintKey && MailProviderFallbackLog.ShouldLogLettermintFallback())
+        {
+            _logger.LogWarning(
+                "Mail provider is Lettermint but Lettermint:ApiKey is empty. Falling back to Resend.");
+        }
+
+        if (choice.Kind == MailProviderKind.Lettermint)
+        {
+            try
+            {
+                var from = ResolveFromAddress(secrets?.FromAddress, _mailOptions.Value);
+                await SendViaLettermintAsync(message, lettermintKey!.Trim(), from, cancellationToken);
+                return EmailDeliveryResult.Provider;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "Lettermint failed; trying SMTP or stub fallback.");
+            }
+
+            return await DeliverSmtpOrStubAsync(message, secrets, cancellationToken);
+        }
+
         if (TryResolveResend(secrets, out var resend, _mailOptions.Value))
         {
             try
@@ -84,6 +140,14 @@ public sealed class SmtpEmailService : IEmailService
             }
         }
 
+        return await DeliverSmtpOrStubAsync(message, secrets, cancellationToken);
+    }
+
+    private async Task<EmailDeliveryResult> DeliverSmtpOrStubAsync(
+        EmailMessage message,
+        IntegrationCredentialSecrets? secrets,
+        CancellationToken cancellationToken)
+    {
         if (TryResolveSmtp(secrets, out var settings, _mailOptions.Value))
         {
             try
@@ -104,7 +168,60 @@ public sealed class SmtpEmailService : IEmailService
         }
 
         throw new InvalidOperationException(
-            "E-mail is niet geconfigureerd. Stel Resend (API-key + From) of SMTP in onder Integraties, anders ontvangt niemand bevestigingsmails.");
+            "E-mail is niet geconfigureerd. Stel Lettermint (Lettermint:ApiKey), Resend (API-key + From) of SMTP in, anders ontvangt niemand bevestigingsmails.");
+    }
+
+    private async Task SendViaLettermintAsync(
+        EmailMessage message,
+        string apiKey,
+        string fromAddress,
+        CancellationToken cancellationToken)
+    {
+        var redactedTo = EmailServiceStub.RedactEmail(message.To);
+        try
+        {
+            var client = _httpClientFactory.CreateClient(LettermintEmailSender.HttpClientName);
+            await LettermintEmailSender.SendAsync(client, message, apiKey, fromAddress, cancellationToken);
+            _logger.LogInformation(
+                "Lettermint mail sent → {To}: {Subject}",
+                redactedTo, message.Subject);
+            await WritePlatformLogAsync(
+                PlatformLogLevel.Info,
+                message.Category ?? "Email",
+                $"Lettermint mail to {redactedTo}: {message.Subject}",
+                new
+                {
+                    To = redactedTo,
+                    message.Subject,
+                    Category = message.Category,
+                    BodyLength = message.BodyHtml?.Length ?? 0,
+                    Provider = "Lettermint",
+                    Sent = true
+                },
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            var friendly = ex is InvalidOperationException ioe
+                ? ioe.Message
+                : $"Lettermint-fout: {Truncate(ex.Message, 220)}";
+            _logger.LogError(ex, "Lettermint mail failed → {To}: {Subject}", redactedTo, message.Subject);
+            await WritePlatformLogAsync(
+                PlatformLogLevel.Error,
+                message.Category ?? "Email",
+                $"Lettermint mail failed to {redactedTo}: {message.Subject} — {friendly}",
+                new
+                {
+                    To = redactedTo,
+                    message.Subject,
+                    Category = message.Category,
+                    Provider = "Lettermint",
+                    Sent = false,
+                    Error = friendly
+                },
+                cancellationToken);
+            throw new InvalidOperationException(friendly, ex);
+        }
     }
 
     private async Task SendViaResendAsync(

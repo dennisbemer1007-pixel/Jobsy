@@ -366,6 +366,12 @@ public static class UiStringsLegal
             "الحساب والاختبارات والنتائج");
 
         // —— Change log (D16) ——
+        Add("Legal.Change.Privacy.2026-10-05",
+            "De lijst met bedrijven die voor ons werken zegt nu waar het bedrijf zit en waar de gegevens staan. De zin over waar je gegevens staan komt uit die lijst. E-mail kan via Lettermint in Nederland, in de EU.",
+            "The list of companies that work for us now says where the company is based and where the data sits. The sentence about where your data is comes from that list. E-mail can go through Lettermint in the Netherlands, in the EU.",
+            "Lista firm, które dla nas pracują, podaje teraz gdzie jest firma i gdzie są dane. Zdanie o tym, gdzie są twoje dane, pochodzi z tej listy. E-mail może iść przez Lettermint w Holandii, w UE.",
+            "Lista firmelor care lucrează pentru noi spune acum unde este firma și unde stau datele. Fraza despre unde sunt datele tale vine din acea listă. E-mailul poate merge prin Lettermint în Olanda, în UE.",
+            "قائمة الشركات التي تعمل لصالحنا تذكر الآن أين تقع الشركة وأين توجد البيانات. الجملة عن مكان بياناتك تأتي من هذه القائمة. يمكن أن يمر البريد عبر Lettermint في هولندا، داخل الاتحاد الأوروبي.");
         Add("Legal.Change.Privacy.2026-10-04",
             "Eerlijke tekst over waar gegevens staan: de app en database in Frankfurt, en diensten van Amerikaanse bedrijven in de lijst met verwerkers. Nieuw stuk: AI en jouw gegevens. Geen scores voor werkgevers, geen AI op leerlinggegevens, AI-antwoorden zijn gelabeld en je kunt een mens om uitleg vragen.",
             "Honest text about where data sits: the app and database in Frankfurt, and services of American companies in the processor list. New part: AI and your data. No scores for employers, no AI on pupil data, AI answers are labelled and you can ask a person to explain.",
@@ -443,6 +449,48 @@ public static class UiStringsLegal
             "Twój e-mail, imię i treść wiadomości",
             "Adresa de e-mail, numele și conținutul mesajului",
             "بريدك الإلكتروني واسمك ومحتوى الرسالة");
+        Add("Legal.Processor.lettermint.Purpose",
+            "E-mail versturen",
+            "Sending e-mail",
+            "Wysyłanie e-maili",
+            "Trimiterea de e-mailuri",
+            "إرسال البريد الإلكتروني");
+        Add("Legal.Processor.lettermint.Data",
+            "Je e-mailadres, je naam en de inhoud van de mail",
+            "Your e-mail address, your name and the content of the mail",
+            "Twój e-mail, imię i treść wiadomości",
+            "Adresa de e-mail, numele și conținutul mesajului",
+            "بريدك الإلكتروني واسمك ومحتوى الرسالة");
+        Add("Privacy.Where.Title",
+            "Waar staan je gegevens?",
+            "Where is your data?",
+            "Gdzie są twoje dane?",
+            "Unde sunt datele tale?",
+            "أين توجد بياناتك؟");
+        Add("Privacy.Where.Hosting",
+            "Onze app en database staan in Frankfurt, in de EU.",
+            "Our app and database are in Frankfurt, in the EU.",
+            "Nasza aplikacja i baza danych są we Frankfurcie, w UE.",
+            "Aplicația și baza noastră de date sunt la Frankfurt, în UE.",
+            "تطبيقنا وقاعدة البيانات في فرانكفورت، داخل الاتحاد الأوروبي.");
+        Add("Privacy.Where.American",
+            "Deze diensten zijn van Amerikaanse bedrijven: {0}.",
+            "These services are from American companies: {0}.",
+            "Te usługi są od amerykańskich firm: {0}.",
+            "Aceste servicii sunt ale unor companii americane: {0}.",
+            "هذه الخدمات من شركات أمريكية: {0}.");
+        Add("Privacy.Where.AllEu",
+            "Al je gegevens blijven in de EU, bij Europese bedrijven.",
+            "All your data stays in the EU, with European companies.",
+            "Wszystkie twoje dane zostają w UE, u europejskich firm.",
+            "Toate datele tale rămân în UE, la companii europene.",
+            "كل بياناتك تبقى في الاتحاد الأوروبي، لدى شركات أوروبية.");
+        Add("Privacy.Where.Swiss",
+            "{0} zit in Zwitserland. De EU vindt de bescherming daar even goed.",
+            "{0} is in Switzerland. The EU treats the protection there as just as good.",
+            "{0} jest w Szwajcarii. UE uznaje ochronę tam za tak samo dobrą.",
+            "{0} este în Elveția. UE consideră protecția de acolo la fel de bună.",
+            "{0} في سويسرا. يرى الاتحاد الأوروبي أن الحماية هناك جيدة بنفس القدر.");
         Add("Legal.Processor.sentry.Purpose",
             "Foutmeldingen zodat we storingen kunnen oplossen",
             "Error reports so we can fix outages",

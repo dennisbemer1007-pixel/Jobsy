@@ -36,6 +36,10 @@ dotnet run --project Jobsy.Web --launch-profile http   # http://localhost:5201
 
 Default connection string: `Host=localhost;Port=5432;Database=JobsyDb;Username=postgres;Password=postgres` (see `Jobsy.Api/appsettings.json`).
 
+### Transactional mail
+
+`Mail__Provider` is `Resend` or `Lettermint`. Lettermint (https://lettermint.co, Dutch company, mail stays in the EU) sends only when `Lettermint__ApiKey` is set; otherwise Lobsy uses Resend and logs a warning once. Acceptatie sets `Mail__AllowedRecipientPattern` to `^test-[^@]+@lobsy\.nl$` and can add the admin address as `Mail__AllowedRecipientAddresses__0`. Production leaves the pattern empty, so every recipient is mailed. Full list: [`docs/deploy-render.md`](docs/deploy-render.md) and [`docs/email-deliverability.md`](docs/email-deliverability.md). No secret values belong in git.
+
 ### Demo users
 
 Seeded only in Development / when `Seed:Enabled` is on. Accounts live in [`Jobsy.Infrastructure/Data/DemoUsersSeeder.cs`](Jobsy.Infrastructure/Data/DemoUsersSeeder.cs) (`@jobsy.local` emails). The shared public demo password is the constant `DemoUsersSeeder.DemoPassword` (`Jobsy123!`). Not available on Production Render (`AllowDevelopmentAuth=false`).

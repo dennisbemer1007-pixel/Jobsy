@@ -6,6 +6,12 @@ They may ship to `acceptatie`; a lawyer reviews them before they go to `main` / 
 Every PR that changes a legal text adds its sections here: document · section id · version ·
 what changed · open question.
 
+## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-05
+
+| Section | Id | What changed | Open question for the lawyer |
+|---|---|---|---|
+| 4 | `delen` / `buiten-de-eu` | The sentence "Waar staan je gegevens?" is no longer typed by hand. It is built from `LegalProcessors` in five languages. Each row now has a company headquarters and a data region. If no company in the active list is American, the sentence says all data stays in the EU with European companies. If any company is American, the sentence names those services. Lettermint (Netherlands, data in the EU) replaces Resend in the list when `Mail:Provider` is Lettermint and the API key is set. Pingen in Switzerland is still named. | Is "American company" the right line (headquarters), even when the servers are in Frankfurt (Render)? When every American company is gone, is the plain EU sentence enough, with the Swiss sentence for Pingen still next to it? |
+
 ## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-04
 
 | Section | Id | What changed | Open question for the lawyer |

@@ -4,6 +4,7 @@
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject LegalIdentityProvider LegalIdentity
+@inject IConfiguration Configuration
 
 @* Official Dutch privacy statement (D3). B1 Dutch, "je"; every number comes from a constant. *@
 <LegalDocument DocumentId="@LegalDocumentIds.Privacy"
@@ -20,6 +21,11 @@
     private static int TalentPoolAge => CandidateConsentRules.TalentPoolMinimumAge;
 
     private static int ParentalConsentAge => CandidateConsentRules.ParentalConsentAge;
+
+    private IReadOnlyList<LegalProcessor> ActiveProcessors =>
+        LegalProcessorSelection.Resolve(
+            Configuration["Mail:Provider"],
+            !string.IsNullOrWhiteSpace(Configuration["Lettermint:ApiKey"]));
 
     protected override async Task OnInitializedAsync()
     {
@@ -149,16 +155,8 @@
                     Sommige bedrijven doen een stukje van het werk voor ons. Ze mogen jouw gegevens alleen
                     gebruiken voor dat stukje. Dat staat in een contract (een verwerkersovereenkomst).
                 </p>
-                <ProcessorTable />
-                <p id="buiten-de-eu"><strong>Buiten de EU</strong></p>
-                <p>
-                    Onze app en database staan in Frankfurt (EU). Een paar diensten zijn van Amerikaanse bedrijven.
-                    Render, het bedrijf achter die hosting, is zelf een Amerikaans bedrijf.
-                    Die diensten staan in onze lijst met verwerkers, met waar ze werken en welke afspraak we hebben.
-                    Sommige partijen zitten (ook) in de Verenigde Staten. Dan gebruiken we het
-                    EU-VS Data Privacy Framework of de standaardcontractbepalingen van de EU.
-                    Pingen zit in Zwitserland; de EU vindt de bescherming daar gelijkwaardig.
-                </p>
+                <ProcessorTable Rows="@ActiveProcessors" />
+                <DataLocationSentence Rows="@ActiveProcessors" />
                 <p>We verkopen je gegevens niet. Nooit.</p>
                 <p>
                     Bel je of WhatsApp je met een werkgever nadat je sollicitatie is geaccepteerd?

@@ -38,7 +38,11 @@ Never commit secret values. Set them in **Render Dashboard** (per environment) o
 | `JobsyAuth__Jwt__Issuer` / `Audience` | both | `jobsy-web` / `jobsy-api` |
 | `CLOUDFLARE_ORIGIN_SECRET` | API (+ CF rule) | Origin header gate |
 | `Sentry__Dsn` | API + Web | Error reporting |
-| `Mail__ResendApiKey` / `Mail__FromAddress` | API | Transactional mail |
+| `Mail__Provider` | API + Web | `Resend` or `Lettermint`. Web needs the same value so the privacy page matches the sender. |
+| `Mail__ResendApiKey` / `Mail__FromAddress` | API | Resend mail. Also `RESEND_API_KEY`. |
+| `Lettermint__ApiKey` | API + Web | Lettermint project token (`LETTERMINT_API_KEY`). Empty key falls back to Resend. Web only checks that the key is present. |
+| `Mail__AllowedRecipientPattern` | API | Acceptatie only, e.g. `^test-[^@]+@lobsy\.nl$`. Empty on production. |
+| `Mail__AllowedRecipientAddresses__0` | API | Optional extra address (the admin) when the pattern is set. |
 | `WebPush__Subject` / `PublicKey` / `PrivateKey` | API | VAPID |
 | `VerificationCodes__Pepper` | API | OTP hashing |
 | `Training__TrackingSecret` | API | Training links |
