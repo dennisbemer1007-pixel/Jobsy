@@ -269,40 +269,66 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
     private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
     {
-        await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         var classValue = classId.ToString("D");
-        // Option elements stay "hidden" until the dropdown opens, so wait on the select.
-        // Blazor then swaps the prerendered form. Setting the fields and submitting in
-        // one turn keeps the class selection from being wiped before the POST.
-        await page.Locator("select[name=classId]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
-        await page.EvaluateAsync(
-            """
-            ([id, code]) => {
-              const select = document.querySelector('select[name=classId]');
-              const input = document.querySelector('input[name=code]');
-              if (!select || !input) throw new Error('login form missing');
-              select.value = id;
-              input.value = code;
-              const form = input.closest('form');
-              if (typeof form.requestSubmit === 'function') form.requestSubmit();
-              else form.submit();
+        TimeoutException? last = null;
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            // The class list comes from the API. Under suite load that call can fail
+            // once and leave only the placeholder, which posts as an unknown class.
+            try
+            {
+                await page.WaitForFunctionAsync(
+                    """
+                    id => {
+                      const select = document.querySelector('select[name=classId]');
+                      return !!select && [...select.options].some(o => o.value === id);
+                    }
+                    """,
+                    classValue,
+                    new() { Timeout = 20_000 });
             }
-            """,
-            new[] { classValue, code });
-        try
-        {
-            await page.WaitForURLAsync(
-                url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
-                    || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
-                    || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
-                DomReady);
+            catch (TimeoutException ex) when (attempt == 0)
+            {
+                last = ex;
+                continue;
+            }
+
+            // One turn: Blazor must not swap the form between selecting the class and POST.
+            await page.EvaluateAsync(
+                """
+                ([id, code]) => {
+                  const select = document.querySelector('select[name=classId]');
+                  const input = document.querySelector('input[name=code]');
+                  if (!select || !input) throw new Error('login form missing');
+                  const option = [...select.options].find(o => o.value === id);
+                  if (!option) throw new Error('class option missing');
+                  option.selected = true;
+                  input.value = code;
+                  const form = input.closest('form');
+                  if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                  else form.submit();
+                }
+                """,
+                new[] { classValue, code });
+            try
+            {
+                await page.WaitForURLAsync(
+                    url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 45_000 });
+                return;
+            }
+            catch (TimeoutException ex) when (attempt == 0)
+            {
+                last = ex;
+            }
         }
-        catch (TimeoutException)
-        {
-            var body = await page.Locator("body").InnerTextAsync(new() { Timeout = 5_000 });
-            var snippet = body.Length <= 600 ? body : body[..600];
-            throw new TimeoutException($"Login stayed on {page.Url}. Body: {snippet}");
-        }
+
+        var body = await page.Locator("body").InnerTextAsync(new() { Timeout = 5_000 });
+        var snippet = body.Length <= 600 ? body : body[..600];
+        throw new TimeoutException($"Login stayed on {page.Url}. Body: {snippet}", last);
     }
 
     private static async Task AnswerOneAsync(IPage page)
