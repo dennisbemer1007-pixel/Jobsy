@@ -450,6 +450,8 @@ public class MobileSaasUxTests
         Assert.Contains("ChatHost.ToggleRequested", assistant);
         Assert.Contains("UseMascot=\"true\"", assistant);
         Assert.Contains("aria-expanded=\"@(_open ? \"true\" : \"false\")\"", assistant);
+        Assert.Contains("jobsyComposeEnter", assistant);
+        Assert.Contains("OnDraftKeyDown", assistant);
         Assert.DoesNotContain("aria-expanded=\"@_open\"", assistant);
 
         var nav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/BottomNav.razor"));

@@ -1041,6 +1041,18 @@ window.jobsyShareUrl = function (url) {
     if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(url);
 };
 
+window.jobsyComposeEnter = function (id) {
+    var el = typeof id === "string" ? document.getElementById(id) : id;
+    if (!el || el.dataset.enterBound) return;
+    el.dataset.enterBound = "1";
+    el.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" || e.shiftKey) return;
+        e.preventDefault();
+        var form = el.closest("form");
+        if (form && typeof form.requestSubmit === "function") form.requestSubmit();
+    });
+};
+
 window.jobsyEnsureInsightsMap = function () {
     window.__jobsyInsightsMapReady = window.__jobsyInsightsMapReady || new Promise(function (resolve, reject) {
         if (window.JobsyCandidateInsightsMap) { resolve(); return; }
@@ -1190,8 +1202,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-noeval"
-            : "/service-worker.js?v=20261004-noeval";
+            ? "/service-worker.published.js?v=20261004-enter"
+            : "/service-worker.js?v=20261004-enter";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
