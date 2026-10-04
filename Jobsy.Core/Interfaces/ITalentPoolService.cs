@@ -65,20 +65,19 @@ public sealed record TalentPoolSearchQuery(
     string? DrivingLicense = null,
     int Take = 50);
 
-/// <summary>Anonymous talent card — no name, email, phone, or date of birth.</summary>
+/// <summary>
+/// Anonymous talent card — no name, email, phone, date of birth, scores,
+/// match percentages, rankings, or AI output (AI Act).
+/// </summary>
 public sealed record AnonymousTalentCardDto(
     Guid CandidateUserId,
     IReadOnlyList<string> MatchTags,
     IReadOnlyList<string> RiasecTags,
-    CompetencyScores? CompetencyScores,
-    RiasecScores? CareerScores,
     string? HollandCode,
     string? AvailabilitySummary,
     IReadOnlyList<string> DrivingLicenses,
     int? TravelMinutes,
-    string? RegionLabel,
-    bool CompetenceDeepCompleted,
-    bool CareerDeepCompleted);
+    string? RegionLabel);
 
 public sealed record TalentContactRequestDto(
     Guid Id,

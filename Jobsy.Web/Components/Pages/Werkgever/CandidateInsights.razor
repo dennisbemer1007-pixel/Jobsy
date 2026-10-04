@@ -29,7 +29,7 @@
 
         <div class="insights-story-viewer" role="region" aria-roledescription="carousel" aria-label="@Culture["Insights.Tab.Insights"]">
             <div class="insights-story-viewer__progress" aria-hidden="true">
-                @for (var i = 0; i < 10; i++)
+                @for (var i = 0; i < 9; i++)
                 {
                     <span class="insights-story-viewer__seg @(i < _storyIndex ? "is-done" : i == _storyIndex ? "is-active" : null)"></span>
                 }
@@ -64,22 +64,19 @@
                 <InsightsStoryCard Index="5" Current="_storyIndex" Title="@Culture["Insights.Story.Card6"]" Locked="@locked" TokensHref="@_tokensHref" TestId="insights-story-card-6">
                     <InsightsVacanciesList Data="_data" />
                 </InsightsStoryCard>
-                <InsightsStoryCard Index="6" Current="_storyIndex" Title="@Culture["Insights.Story.Card7"]" Locked="@locked" TokensHref="@_tokensHref">
-                    <InsightsDistributionBars Dist="_data?.DnaRiasec" />
-                </InsightsStoryCard>
-                <InsightsStoryCard Index="7" Current="_storyIndex" Title="@Culture["Insights.Story.Card8"]" Locked="@locked" TokensHref="@_tokensHref">
+                <InsightsStoryCard Index="6" Current="_storyIndex" Title="@Culture["Insights.Story.Card8"]" Locked="@locked" TokensHref="@_tokensHref">
                     <InsightsDistributionBars Dist="_data?.WorkFields" />
                 </InsightsStoryCard>
-                <InsightsStoryCard Index="8" Current="_storyIndex" Title="@Culture["Insights.Story.Card9"]" Locked="@locked" TokensHref="@_tokensHref">
+                <InsightsStoryCard Index="7" Current="_storyIndex" Title="@Culture["Insights.Story.Card9"]" Locked="@locked" TokensHref="@_tokensHref">
                     <div class="insights-trend-placeholder">@Culture["Insights.Trend.Placeholder"]</div>
                 </InsightsStoryCard>
-                <InsightsStoryCard Index="9" Current="_storyIndex" Title="@Culture["Insights.Story.Card10"]" Locked="@locked" TokensHref="@_tokensHref" TestId="insights-story-card-10" ShowCta="true">
+                <InsightsStoryCard Index="8" Current="_storyIndex" Title="@Culture["Insights.Story.Card10"]" Locked="@locked" TokensHref="@_tokensHref" TestId="insights-story-card-10" ShowCta="true">
                     <p>@Culture["Insights.Story.Card10.Lead"]</p>
                 </InsightsStoryCard>
             </div>
             <div class="insights-story-nav">
                 <button type="button" class="btn-compact provider-btn" disabled="@(_storyIndex == 0)" @onclick="PrevStory">@Culture["Insights.Story.Prev"]</button>
-                <button type="button" class="btn-compact login-submit" disabled="@(_storyIndex == 9)" @onclick="NextStory">@Culture["Insights.Story.Next"]</button>
+                <button type="button" class="btn-compact login-submit" disabled="@(_storyIndex == 8)" @onclick="NextStory">@Culture["Insights.Story.Next"]</button>
             </div>
         </div>
     }
@@ -210,7 +207,6 @@
                     }
                     else
                     {
-                        <MetricTile Label="@Culture["Insights.Kpi.Matching"]" FormattedValue="@CountText(d.Kpis.MatchingYourVacancies)" />
                         <MetricTile Label="@Culture["Insights.Kpi.Hours32"]" FormattedValue="@CountText(d.Kpis.Candidates32PlusHours)" />
                     }
                 </div>
@@ -254,11 +250,8 @@
                     <div class="insights-span-12">
                         <WgLockedCard Title="@Culture["Insights.Section.Priorities"]" TestId="insights-locked-priorities" />
                     </div>
-                    <div class="insights-span-6">
+                    <div class="insights-span-12">
                         <WgLockedCard Title="@Culture["Insights.Section.DreamJobs"]" TestId="insights-locked-dreams" />
-                    </div>
-                    <div class="insights-span-6">
-                        <WgLockedCard Title="@Culture["Insights.Section.Dna"]" TestId="insights-locked-dna" />
                     </div>
                 }
                 else
@@ -270,11 +263,6 @@
                     <section class="insights-panel insights-span-7">
                         <h2 class="insights-panel__title">@Culture["Insights.Section.DreamJobs"]</h2>
                         <InsightsRankedList Items="d.DreamJobsTop" />
-                    </section>
-                    <section class="insights-panel insights-span-7">
-                        <h2 class="insights-panel__title">@Culture["Insights.Section.Competences"]</h2>
-                        <InsightsDistributionBars Dist="d.Competences" />
-                        <InsightsDistributionBars Dist="d.DnaRiasec" />
                     </section>
                     <section class="insights-panel insights-span-5">
                         <h2 class="insights-panel__title">@Culture["Insights.Section.Priorities"]</h2>
@@ -517,7 +505,7 @@
         }
     }
 
-    private void NextStory() => _storyIndex = Math.Min(9, _storyIndex + 1);
+    private void NextStory() => _storyIndex = Math.Min(8, _storyIndex + 1);
     private void PrevStory() => _storyIndex = Math.Max(0, _storyIndex - 1);
 
     private string BranchLabel()

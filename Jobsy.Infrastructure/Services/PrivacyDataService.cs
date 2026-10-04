@@ -476,8 +476,102 @@ public sealed class PrivacyDataService : IPrivacyDataService
             l.OccurredAtUtc
         }).ToList();
 
+        var applicationIds = applications.Select(a => a.Id).ToList();
+        var statusHistoryRows = applicationIds.Count == 0
+            ? []
+            : await _db.ApplicationStatusHistories.AsNoTracking()
+                .Where(h => applicationIds.Contains(h.ApplicationId))
+                .OrderBy(h => h.OccurredAtUtc)
+                .ToListAsync(cancellationToken);
+        var statusHistory = statusHistoryRows.Select(h => new
+        {
+            h.ApplicationId,
+            Kind = h.Kind.ToString(),
+            FromStatus = h.FromStatus?.ToString(),
+            ToStatus = h.ToStatus?.ToString(),
+            h.OccurredAtUtc,
+            ActorKind = h.ActorKind.ToString()
+        }).ToList();
+
+        var uploadedCvRow = await _db.CandidateUploadedCvs.AsNoTracking()
+            .Where(c => c.UserId == user.Id)
+            .Select(c => new
+            {
+                c.FileName,
+                c.ContentType,
+                c.SizeBytes,
+                c.UploadedAtUtc,
+                c.ExtractedAtUtc,
+                c.FilledFieldsJson,
+                c.Content
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var applicationCvRows = applicationIds.Count == 0
+            ? []
+            : await _db.ApplicationUploadedCvs.AsNoTracking()
+                .Where(c => applicationIds.Contains(c.ApplicationId))
+                .Select(c => new
+                {
+                    c.ApplicationId,
+                    c.FileName,
+                    c.ContentType,
+                    c.SizeBytes,
+                    c.Content
+                })
+                .ToListAsync(cancellationToken);
+
+        var onboarding = await _db.CandidateOnboardings.AsNoTracking()
+            .Where(o => o.UserId == user.Id)
+            .Select(o => new
+            {
+                o.CurrentStep,
+                o.WizardVersion,
+                o.FinishReached,
+                o.StartedAtUtc,
+                o.CompletedAtUtc,
+                o.Source,
+                o.StepsJson,
+                o.UpdatedAtUtc
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var accessLog = await _db.PersonalDataAccessLogs.AsNoTracking()
+            .Where(l => l.SubjectUserId == user.Id)
+            .OrderBy(l => l.OccurredAt)
+            .Select(l => new
+            {
+                l.OccurredAt,
+                l.ActorRole,
+                l.Resource,
+                l.Action,
+                l.Reason
+            })
+            .ToListAsync(cancellationToken);
+
+        var ambassadeur = await _db.AmbassadeurProfiles.AsNoTracking()
+            .Where(p => p.UserId == user.Id)
+            .Select(p => new
+            {
+                p.CompanyName,
+                p.KvkNumber,
+                p.VatNumber,
+                p.Address,
+                p.PostalCode,
+                p.City,
+                p.Country,
+                p.Iban,
+                p.TrackingCode,
+                p.AgreementSignedAt,
+                p.AgreementVersion,
+                p.CreatedAt,
+                p.UpdatedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
         return new
         {
+            Toelichting = "Dit bestand is voor jou. Het bevat de gegevens die Lobsy van je bewaart: je account, je tests, je sollicitaties en je bestanden. Bewaar het op een veilige plek. Wachtwoorden en beveiligingscodes staan er niet in.",
             ExportedAtUtc = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             User = new
@@ -485,10 +579,21 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 user.Id,
                 user.Email,
                 user.FullName,
+                user.FirstName,
+                user.LastName,
+                user.PhoneNumber,
+                user.EmailVerifiedAtUtc,
+                user.PhoneVerifiedAtUtc,
+                user.WhatsAppContactAllowed,
                 Role = user.Role.ToString(),
                 user.CompanyId,
+                user.SchoolId,
                 user.DateOfBirth,
                 user.OpenForWork,
+                user.AvailableFromDate,
+                user.CandidateHowToCompletedAt,
+                user.LastLoginAtUtc,
+                user.IsEarlyAdapter,
                 HomeLocation = user.HomeLocation is null
                     ? null
                     : new { user.HomeLocation.Latitude, user.HomeLocation.Longitude },
@@ -504,17 +609,20 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 user.IsActive
             },
             DiplomaEvaluations = await ExportDiplomaEvaluationsAsync(user.Id, cancellationToken),
-            UploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
-                .Where(c => c.UserId == user.Id)
-                .Select(c => new
+            UploadedCv = uploadedCvRow is null
+                ? null
+                : new
                 {
-                    c.FileName,
-                    c.ContentType,
-                    c.SizeBytes,
-                    c.UploadedAtUtc,
-                    c.ExtractedAtUtc
-                })
-                .FirstOrDefaultAsync(cancellationToken),
+                    uploadedCvRow.FileName,
+                    uploadedCvRow.ContentType,
+                    uploadedCvRow.SizeBytes,
+                    uploadedCvRow.UploadedAtUtc,
+                    uploadedCvRow.ExtractedAtUtc,
+                    uploadedCvRow.FilledFieldsJson,
+                    BestandBase64 = uploadedCvRow.Content.Length == 0
+                        ? null
+                        : Convert.ToBase64String(uploadedCvRow.Content)
+                },
             References = await _db.CandidateReferences.AsNoTracking()
                 .Where(r => r.UserId == user.Id)
                 .OrderBy(r => r.SortOrder)
@@ -743,6 +851,18 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 .ToListAsync(cancellationToken),
             CompanyMemberships = memberships,
             Applications = applications,
+            SollicitatieVerloop = statusHistory,
+            SollicitatieCvBestanden = applicationCvRows.Select(c => new
+            {
+                c.ApplicationId,
+                c.FileName,
+                c.ContentType,
+                c.SizeBytes,
+                BestandBase64 = c.Content.Length == 0 ? null : Convert.ToBase64String(c.Content)
+            }),
+            StartHulp = onboarding,
+            InzageLog = accessLog,
+            AmbassadeurProfiel = ambassadeur,
             Likes = likes,
             VacancyShares = shares,
             VacancyClicks = clicks,

@@ -519,6 +519,23 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
             // TODO(D8): reminder e-mail when unlock expires within RenewWindowDays
         }
 
+        // AI Act: employers, partners and agencies never receive scores, match
+        // percentages, rankings of people, or AI-derived distributions.
+        dna = null;
+        competences = null;
+        personality = null;
+        matchingKpi = null;
+        if (vacancyReach.Count > 0)
+        {
+            vacancyReach = vacancyReach
+                .Select(v => v with
+                {
+                    MatchingCandidates = new SuppressedCount(CandidateInsightsPrivacy.StatusInsufficient, null)
+                })
+                .OrderBy(v => v.Title, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         var kpis = new InsightsKpis(
             new SuppressedCount(candStatus, candValue),
             avgHours,
@@ -558,12 +575,12 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
                 insuff,
                 scope.IsFullAccess ? insuff : null,
                 scope.IsFullAccess ? insuff : null,
-                scope.IsFullAccess ? insuff : null),
+                null),
             [],
             scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
-            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
-            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
-            scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
+            null,
+            null,
+            null,
             scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
             scope.IsFullAccess ? new InsightsDistribution(CandidateInsightsPrivacy.StatusInsufficient, []) : null,
             [],

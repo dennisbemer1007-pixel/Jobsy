@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (237 routes)
+## Table (238 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
