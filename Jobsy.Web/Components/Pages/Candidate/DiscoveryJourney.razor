@@ -11,6 +11,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
+@using Microsoft.Extensions.Logging
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
@@ -19,6 +20,7 @@
 @inject GratisDnaMergeService GratisDnaMerge
 @inject IJSRuntime Js
 @inject UserFacingError UserFacing
+@inject ILogger<DiscoveryJourney> JourneyLog
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
@@ -845,6 +847,15 @@
             {
                 await PrepareShedAsync();
             }
+            else if (_screen == "klaar")
+            {
+                // A finished journey used to treat klaar as step 10 and bounce back to the shed.
+                ApplyEndFacts();
+            }
+            else if (_screen == "overview")
+            {
+                await BuildOverviewAsync();
+            }
             else if (_screen != "start")
             {
                 await MarkStartedAsync();
@@ -1267,8 +1278,9 @@
                 return;
             }
 
-            // Persist completion flag for full depth; partial stays incomplete.
-            await FlushTestSaveAsync(completed: _answeredCount >= OnboardingWizardCatalog.FullLevelCount(kind));
+            // Never re-post a finished test, and never post an empty body from a refreshed shed.
+            // Both used to 400 and blocked "Naar het licht" / "Verder".
+            await FlushShedTestSaveAsync(kind);
             _state = await Api.SaveMyOnboardingProgressAsync(_shedStep, stepCompleted: true);
             if (_shedStep >= 10)
             {
@@ -1280,13 +1292,36 @@
         }
         catch (Exception ex)
         {
-            _error = UserFacing.Describe(ex);
-            _saveStatus = "error";
+            NoteSaveFailure(ex);
         }
         finally
         {
             _busy = false;
         }
+    }
+
+    private async Task FlushShedTestSaveAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        if (_shedFullyDone || (_serverAnswers.Count == 0 && _miniAnswers.Count == 0))
+        {
+            return;
+        }
+
+        var full = OnboardingWizardCatalog.FullLevelCount(kind);
+        var loaded = _serverAnswers.Count + _miniAnswers.Count;
+        var completed = _answeredCount >= full && loaded >= full;
+        await FlushTestSaveAsync(completed);
+    }
+
+    private void NoteSaveFailure(Exception ex)
+    {
+        if (ex is TestSaveClientException save)
+        {
+            JourneyLog.LogWarning(ex, "Journey test save failed with API code {Code}", save.Code);
+        }
+
+        _error = UserFacing.Describe(ex);
+        _saveStatus = "error";
     }
 
     private async Task ShowEndAsync(bool partial)
@@ -1296,14 +1331,28 @@
         _depth = 11;
         _countedStep = partial ? 6 : 10;
         NavigateStep("klaar");
-        _state = await Api.SaveMyOnboardingProgressAsync(partial ? 6 : 10, stepCompleted: true, finishReached: true);
-        _state = await Api.CompleteMyOnboardingAsync();
-        await RefreshImpressionAsync();
+        try
+        {
+            _state = await Api.SaveMyOnboardingProgressAsync(partial ? 6 : 10, stepCompleted: true, finishReached: true);
+            _state = await Api.CompleteMyOnboardingAsync();
+            await RefreshImpressionAsync();
+        }
+        catch (Exception ex)
+        {
+            // Already-complete onboarding must still open the end screen.
+            NoteSaveFailure(ex);
+        }
+
+        ApplyEndFacts();
+        StateHasChanged();
+    }
+
+    private void ApplyEndFacts()
+    {
         var facts = JourneyTestFlow.EndFacts(_state?.Impression);
         _endStrength = facts.Strength;
         _endWork = facts.Work;
         _endValue = facts.Value;
-        StateHasChanged();
     }
 
     private async Task DeclineConsentAndFinishAsync()

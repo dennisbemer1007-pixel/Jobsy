@@ -43,14 +43,21 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         bool complete,
         CancellationToken cancellationToken = default)
     {
+        var row = await _db.CandidateCompetencies
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (answers.Count == 0 && row is not null && CandidateCompetencyStatuses.IsCompleted(row.Status))
+        {
+            // Journey "Naar het licht" can re-post with no answers loaded. Keep the result.
+            var kept = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
+            return ToDto(row, kept);
+        }
+
         var error = CompetencyTestCatalog.ValidateAnswers(answers, complete);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
         }
 
-        var row = await _db.CandidateCompetencies
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (answers.Count == 0)
         {
             if (row is not null)

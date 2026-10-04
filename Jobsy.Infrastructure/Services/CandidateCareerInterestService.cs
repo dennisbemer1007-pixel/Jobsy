@@ -45,14 +45,19 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         bool complete,
         CancellationToken cancellationToken = default)
     {
+        var row = await _db.CandidateCareerInterests
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (answers.Count == 0 && row is not null && CandidateCompetencyStatuses.IsCompleted(row.Status))
+        {
+            return await ComposeDtoAsync(userId, row, includeMatches: true, cancellationToken);
+        }
+
         var error = CareerTestCatalog.ValidateAnswers(answers, complete);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
         }
 
-        var row = await _db.CandidateCareerInterests
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (answers.Count == 0)
         {
             if (row is not null)

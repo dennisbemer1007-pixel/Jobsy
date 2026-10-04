@@ -46,14 +46,20 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         bool complete,
         CancellationToken cancellationToken = default)
     {
+        var row = await _db.CandidateCulturePersonalityProfiles
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (answers.Count == 0 && row is not null && CandidateCompetencyStatuses.IsCompleted(row.Status))
+        {
+            var kept = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
+            return ToDto(row, kept);
+        }
+
         var error = CulturePersonalityCatalog.ValidateAnswers(answers, complete);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
         }
 
-        var row = await _db.CandidateCulturePersonalityProfiles
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (answers.Count == 0)
         {
             if (row is not null)
