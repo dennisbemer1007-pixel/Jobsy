@@ -332,9 +332,10 @@ public class AdminRun4PlaywrightTests
 
         await GotoInteractiveAsync(page, root + "/admin/beveiliging/gegevensinzage");
         await page.Locator(".admin-access-log thead").WaitForAsync(new() { Timeout = 30_000 });
-        var headers = await page.Locator(".admin-access-log thead th").AllInnerTextsAsync();
-        Assert.Contains(headers, h => h.Trim() == "Wie");
-        Assert.Contains(headers, h => h.Trim() == "Over wie");
+        // innerText follows the shared table uppercase style ("WIE"). The copy itself is "Wie".
+        var headers = await page.Locator(".admin-access-log thead th").AllTextContentsAsync();
+        Assert.Contains(headers, h => string.Equals(h.Trim(), "Wie", StringComparison.Ordinal));
+        Assert.Contains(headers, h => string.Equals(h.Trim(), "Over wie", StringComparison.Ordinal));
         Assert.DoesNotContain(headers, h => h.Contains("naam of e-mail", StringComparison.OrdinalIgnoreCase));
         var placeholder = await page.Locator(".admin-user-picker input").First.GetAttributeAsync("placeholder");
         Assert.Contains("naam of e-mail", placeholder ?? "", StringComparison.Ordinal);
