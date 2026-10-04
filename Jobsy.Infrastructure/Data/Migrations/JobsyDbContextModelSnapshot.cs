@@ -5173,6 +5173,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("HandledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("HandledByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Message")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");

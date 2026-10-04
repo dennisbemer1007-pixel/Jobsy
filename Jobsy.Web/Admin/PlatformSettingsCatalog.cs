@@ -22,6 +22,15 @@ public enum PlatformSettingImpactLevel
     Danger
 }
 
+/// <summary>When a bool switch must be confirmed before it lands in the draft.</summary>
+public enum PlatformSettingConfirmWhen
+{
+    None,
+    On,
+    Off,
+    Both
+}
+
 public enum PlatformSettingEnvironmentLock
 {
     None,
@@ -47,7 +56,8 @@ public sealed record PlatformSettingDescriptor(
     int? Min = null,
     int? Max = null,
     string? UnitKey = null,
-    string? BadgeKey = null);
+    string? BadgeKey = null,
+    PlatformSettingConfirmWhen ConfirmWhen = PlatformSettingConfirmWhen.None);
 
 public static class PlatformSettingsCatalog
 {
@@ -140,7 +150,8 @@ public static class PlatformSettingsCatalog
                 ImpactKey: "AdminSettings.Employers.Enabled.ImpactOff",
                 ImpactLevel: PlatformSettingImpactLevel.Warn,
                 ShowOnDashboard: true,
-                ConfirmOnChange: true));
+                ConfirmOnChange: true,
+                ConfirmWhen: PlatformSettingConfirmWhen.Both));
         }
 
         if (FieldExists("CandidatePassportEnabled"))
@@ -208,6 +219,7 @@ public static class PlatformSettingsCatalog
                 ImpactKey: "AdminSettings.WhatsAppReminders.Enabled.Impact",
                 ImpactLevel: PlatformSettingImpactLevel.Warn,
                 ConfirmOnChange: true,
+                ConfirmWhen: PlatformSettingConfirmWhen.On,
                 ShowOnDashboard: true));
         }
 
@@ -280,7 +292,8 @@ public static class PlatformSettingsCatalog
             ImpactKey: "AdminSettings.Schools.Enabled.ImpactOff",
             ImpactLevel: PlatformSettingImpactLevel.Warn,
             ConfirmOnChange: true,
-            ShowOnDashboard: true));
+            ShowOnDashboard: true,
+            ConfirmWhen: PlatformSettingConfirmWhen.Both));
 
         list.Add(new PlatformSettingDescriptor(
             Key: "SchoolPerCodeResultsEnabled",

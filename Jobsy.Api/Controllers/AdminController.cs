@@ -600,8 +600,14 @@ public class AdminController : ControllerBase
 
         var items = raw.Select(l =>
         {
+            var subjectRole = l.SubjectUserId is Guid subjectRoleId ? RoleOf(subjectRoleId) : null;
             string? subjectCompany = l.SubjectUserId is Guid sid ? CompanyOf(sid) : null;
-            if (string.IsNullOrWhiteSpace(subjectCompany)
+            // A candidate has no employer. SubjectCompanyId is the company that was opened, not the person.
+            if (string.Equals(subjectRole, "Candidate", StringComparison.OrdinalIgnoreCase))
+            {
+                subjectCompany = null;
+            }
+            else if (string.IsNullOrWhiteSpace(subjectCompany)
                 && l.SubjectCompanyId is Guid cid
                 && companyNames.TryGetValue(cid, out var named))
             {
@@ -625,7 +631,7 @@ public class AdminController : ControllerBase
                 CompanyOf(l.ActorUserId),
                 l.SubjectUserId is Guid subjectId ? MaskedName(subjectId) : null,
                 l.SubjectUserId is Guid subjectMail ? MaskedEmail(subjectMail) : null,
-                l.SubjectUserId is Guid subjectRole ? RoleOf(subjectRole) : null,
+                subjectRole,
                 subjectCompany);
         }).ToList();
 
@@ -1255,6 +1261,17 @@ public class AdminController : ControllerBase
         return Ok(new AdminBulkUsersResponseDto(succeeded, skipped, results));
     }
 
+    private static string? ClipDescription(string? description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            return null;
+        }
+
+        var text = description.Trim();
+        return text.Length <= 400 ? text : text[..400];
+    }
+
     private static string ResolveMfaStatus(bool authenticatorEnabled, bool hasExternalLogin)
     {
         if (authenticatorEnabled)
@@ -1332,7 +1349,9 @@ public class AdminController : ControllerBase
                 v.EndDate,
                 CreatedVia = v.CreatedVia.ToString(),
                 v.ContentModerationPassed,
-                v.ClosedAtUtc
+                v.ClosedAtUtc,
+                v.Description,
+                Kind = v.Kind.ToString()
             })
             .ToListAsync(cancellationToken);
 
@@ -1382,7 +1401,9 @@ public class AdminController : ControllerBase
             v.ExtensionCount > 0,
             v.CreatedVia,
             v.ContentModerationPassed,
-            v.ClosedAtUtc)).ToList();
+            v.ClosedAtUtc,
+            ClipDescription(v.Description),
+            v.Kind)).ToList();
 
         if (page is null)
         {

@@ -9,4 +9,6 @@ public class ReferenceMisuseReport
     public Guid ReferenceConfirmationId { get; set; }
     public string? Message { get; set; }
     public DateTime CreatedAtUtc { get; set; }
+    public DateTime? HandledAtUtc { get; set; }
+    public Guid? HandledByUserId { get; set; }
 }

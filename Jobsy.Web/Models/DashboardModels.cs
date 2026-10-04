@@ -853,6 +853,8 @@ public class AdminVacancyItem
     public string CreatedVia { get; set; } = "Manual";
     public bool ContentModerationPassed { get; set; } = true;
     public DateTime? ClosedAtUtc { get; set; }
+    public string? DescriptionExcerpt { get; set; }
+    public string Kind { get; set; } = "Regular";
 }
 
 public sealed record AdminVacancyPage(

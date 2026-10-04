@@ -36,6 +36,7 @@ public class SettingsController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly AiOptions _ai;
     private readonly MistralOptions _mistral;
+    private readonly WhatsAppReminderOptions _whatsApp;
 
     public SettingsController(
         JobsyDbContext db,
@@ -49,7 +50,8 @@ public class SettingsController : ControllerBase
         IAdminAuditContext auditContext,
         IUserLookupService users,
         IOptions<AiOptions>? aiOptions = null,
-        IOptions<MistralOptions>? mistralOptions = null)
+        IOptions<MistralOptions>? mistralOptions = null,
+        IOptions<WhatsAppReminderOptions>? whatsAppOptions = null)
     {
         _db = db;
         _credentials = credentials;
@@ -63,6 +65,7 @@ public class SettingsController : ControllerBase
         _users = users;
         _ai = aiOptions?.Value ?? new AiOptions();
         _mistral = mistralOptions?.Value ?? new MistralOptions();
+        _whatsApp = whatsAppOptions?.Value ?? new WhatsAppReminderOptions();
     }
 
     /// <summary>The AI company that actually receives calls. Read-only: switch with Ai__Provider.</summary>
@@ -497,6 +500,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("SchoolRetentionCutoffMonth", before.SchoolRetentionCutoffMonth.ToString(), after.SchoolRetentionCutoffMonth.ToString());
         Add("SchoolRetentionCutoffDay", before.SchoolRetentionCutoffDay.ToString(), after.SchoolRetentionCutoffDay.ToString());
         Add("AmbassadorsEnabled", before.AmbassadorsEnabled.ToString(), after.AmbassadorsEnabled.ToString());
+        Add("EmployersEnabled", before.EmployersEnabled.ToString(), after.EmployersEnabled.ToString());
+        Add("CandidatePassportEnabled", before.CandidatePassportEnabled.ToString(), after.CandidatePassportEnabled.ToString());
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
@@ -799,7 +804,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         }
     }
 
-    private static PlatformFeatureDto ToFeatureDto(PlatformFeatureSnapshot snap) =>
+    private PlatformFeatureDto ToFeatureDto(PlatformFeatureSnapshot snap) =>
         new(
             snap.VacancyContentModerationEnabled,
             snap.AuthenticatorEnabled,
@@ -810,7 +815,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.FreePublishUntil,
             snap.SupportAccessNotifyAdmins,
             snap.SupportAccessNotifySubject,
-snap.CandidateInsightsEnabled,
+            snap.CandidateInsightsEnabled,
             snap.CandidateInsightsUnlockDays,
             snap.CandidateInsightsUnlockPerBranch,
             snap.SchoolsEnabled,
@@ -823,7 +828,8 @@ snap.CandidateInsightsEnabled,
             snap.PassportPartnersEnabled,
             snap.PassportPdfV2Enabled,
             snap.PhoneVerificationEnabled,
-            snap.WhatsAppRemindersEnabled);
+            snap.WhatsAppRemindersEnabled,
+            _whatsApp.IsConfigured);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

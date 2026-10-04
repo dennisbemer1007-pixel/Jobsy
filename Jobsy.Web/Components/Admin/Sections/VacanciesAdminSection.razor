@@ -102,7 +102,7 @@ else
                         <div class="table-row">
                             <div>
                                 <strong>@item.Title</strong>
-                                <span class="muted">@item.Subtitle</span>
+                                <span class="muted">@DrillSubtitle(item.Subtitle)</span>
                             </div>
                             <span class="muted">@AmsterdamTime.ToLocal(item.CreatedAt).ToString("dd-MM HH:mm")</span>
                         </div>
@@ -212,6 +212,20 @@ else
         {
             <p>@open.CompanyName <span class="muted">@CompanyTypeLabel(open.CompanyType)</span></p>
             <p>@StatusLabel(open.Status)</p>
+            <p>@Culture["Vacancy.PlacementDate"]: @open.StartDate.ToString("dd-MM-yyyy")</p>
+            <p>@Culture["Vacancy.Deadline"]: @open.EndDate.ToString("dd-MM-yyyy")</p>
+            <ul class="admin-vacancy-drawer__counts">
+                <li>@Culture["AdminVacancy.Col.Shown"]: @open.ImpressionCount</li>
+                <li>@Culture["AdminVacancy.Col.Clicks"]: @open.ClickCount</li>
+                <li>@Culture["AdminVacancy.Col.Shared"]: @open.ShareCount</li>
+                <li>@Culture["AdminVacancy.Col.Applied"]: @open.ApplicationCount</li>
+                <li>@Culture["AdminVacancy.Col.Extended"]: @open.ExtensionCount</li>
+                <li>@Culture["AdminVacancy.Col.Liked"]: @open.LikeCount</li>
+            </ul>
+            @if (!string.IsNullOrWhiteSpace(open.DescriptionExcerpt))
+            {
+                <p>@open.DescriptionExcerpt</p>
+            }
             <p class="admin-muted">@Culture["AdminVacancy.OpenInAdmin"]</p>
         }
     </AdminDrawer>
@@ -539,6 +553,26 @@ else
         }
     }
 
+    private string DrillSubtitle(string? subtitle)
+    {
+        if (string.IsNullOrWhiteSpace(subtitle))
+        {
+            return "";
+        }
+
+        const string sep = " · ";
+        var cut = subtitle.LastIndexOf(sep, StringComparison.Ordinal);
+        if (cut < 0)
+        {
+            return subtitle;
+        }
+
+        var head = subtitle[..cut];
+        var tail = subtitle[(cut + sep.Length)..];
+        var mapped = UiLabels.ApplicationStatus(Culture, tail);
+        return string.Equals(mapped, tail, StringComparison.Ordinal) ? subtitle : $"{head} · {mapped}";
+    }
+
     private async Task DrillVacancy(AdminVacancyItem vacancy, string key)
     {
         _drillVacancyTitle = vacancy.Title;
@@ -547,7 +581,7 @@ else
         _drillLoading = true;
         try
         {
-            _drilldown = (await Api.GetAdminVacancyMetricDrilldownAsync(vacancy.Id, key, "week")).ToList();
+            _drilldown = (await Api.GetAdminVacancyMetricDrilldownAsync(vacancy.Id, key, "all")).ToList();
         }
         catch
         {

@@ -45,6 +45,7 @@ public static class AdminAuditKeys
     public const string PrivacyAccountDeleted = "privacy.account.deleted";
     public const string AuthAdminLoginFailed = "auth.admin.login-failed";
     public const string EmailTestSend = "email.test-send";
+    public const string ReferenceMisuseHandled = "reference.misuse.handled";
 
     public const string VacancyCategoryCreate = "vacancy-category.create";
     public const string VacancyCategoryUpdate = "vacancy-category.update";
