@@ -116,12 +116,13 @@ public sealed class TokenFinanceController : ControllerBase
     public async Task<IActionResult> ExportPurchases(
         [FromQuery] int? year = null,
         [FromQuery] int? quarter = null,
+        [FromQuery] int? month = null,
         CancellationToken cancellationToken = default)
     {
-        var csv = await _finance.ExportPurchasesCsvAsync(year, quarter, cancellationToken);
+        var csv = await _finance.ExportPurchasesCsvAsync(year, quarter, month, cancellationToken);
         await LogFinanceExportAsync("finance.purchases.export", year, quarter, cancellationToken);
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
-        var name = $"token-aankopen-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
+        var name = TokenExportFileNames.Purchases(year, quarter, month);
         return File(bytes, "text/csv; charset=utf-8", name);
     }
 

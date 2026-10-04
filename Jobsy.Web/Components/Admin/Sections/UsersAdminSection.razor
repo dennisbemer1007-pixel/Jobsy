@@ -4,6 +4,7 @@
 *@
 @namespace Jobsy.Web.Components.Admin.Sections
 @using System.Security.Claims
+@using Jobsy.Core.Time
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Ui
 @using Jobsy.Web.Admin
@@ -26,6 +27,11 @@ else if (!string.IsNullOrEmpty(_error) && _page is null)
 }
 else if (_page is not null)
 {
+    @if (_openMissing)
+    {
+        <p class="state-message" role="status">@Culture["AdminUsers.OpenMissing"]</p>
+    }
+
     @if (!string.IsNullOrEmpty(_toast))
     {
         <p class="state-message" role="status">@_toast</p>
@@ -38,16 +44,19 @@ else if (_page is not null)
 
     <AdminFilterBar Query="@_query" QueryChanged="OnQueryChanged" Placeholder="@Culture["AdminUsers.SearchPlaceholder"]">
         <Chips>
-            <label class="admin-filter-chip">
-                <span>@Culture["AdminUsers.FilterRole"]</span>
-                <select @bind="_roleFilter" @bind:after="ReloadFromStartAsync">
-                    <option value="">@Culture["AdminUi.All"]</option>
-                    @foreach (var role in (_page.Aggregates.ByRole.Keys.OrderBy(r => r)))
-                    {
-                        <option value="@role">@RoleLabel(role)</option>
-                    }
-                </select>
-            </label>
+            @if (string.IsNullOrWhiteSpace(PresetTab))
+            {
+                <label class="admin-filter-chip">
+                    <span>@Culture["AdminUsers.FilterRole"]</span>
+                    <select @bind="_roleFilter" @bind:after="ReloadFromStartAsync">
+                        <option value="">@Culture["AdminUi.All"]</option>
+                        @foreach (var role in (_page.Aggregates.ByRole.Keys.OrderBy(r => r)))
+                        {
+                            <option value="@role">@RoleLabel(role)</option>
+                        }
+                    </select>
+                </label>
+            }
             <label class="admin-filter-chip">
                 <span>@Culture["AdminUsers.FilterMfa"]</span>
                 <select @bind="_mfaFilter" @bind:after="ReloadFromStartAsync">
@@ -98,11 +107,12 @@ else if (_page is not null)
                     AllSelectedChanged="OnToggleAll"
                     ShowRowActions="true">
         <Header>
-            <th scope="col">@Culture["AdminUsers.ColUser"]</th>
-            <th scope="col">@Culture["AdminUsers.ColRole"]</th>
+            <th scope="col"><button type="button" class="data-table__sort" aria-sort="@SortAria("name")" @onclick='() => ToggleSortAsync("name")'>@Culture["AdminUsers.ColUser"]</button></th>
+            <th scope="col"><button type="button" class="data-table__sort" aria-sort="@SortAria("role")" @onclick='() => ToggleSortAsync("role")'>@Culture["AdminUsers.ColRole"]</button></th>
             <th scope="col" class="admin-col-desktop">@Culture["AdminUsers.ColOrg"]</th>
             <th scope="col">@Culture["AdminUsers.ColMfa"]</th>
-            <th scope="col" class="admin-col-desktop">@Culture["AdminUsers.ColLastActive"]</th>
+            <th scope="col" class="admin-col-desktop"><button type="button" class="data-table__sort" aria-sort="@SortAria("created")" @onclick='() => ToggleSortAsync("created")'>@Culture["AdminUsers.ColCreated"]</button></th>
+            <th scope="col" class="admin-col-desktop"><button type="button" class="data-table__sort" aria-sort="@SortAria("lastlogin")" @onclick='() => ToggleSortAsync("lastlogin")'>@Culture["AdminUsers.ColLastActive"]</button></th>
             <th scope="col">@Culture["AdminUsers.ColStatus"]</th>
         </Header>
         <Rows>
@@ -113,7 +123,7 @@ else if (_page is not null)
                     tabindex="0"
                     @onclick="() => OpenDrawer(u)"
                     @onkeydown="e => OnRowKey(e, u)">
-                    <td class="admin-data-table__check admin-col-desktop" @onclick:stopPropagation="true">
+                    <td class="admin-data-table__check admin-col-desktop" data-label="@Culture["AdminUsers.ColSelect"]" @onclick:stopPropagation="true">
                         <input type="checkbox"
                                checked="@selected"
                                @onchange="e => ToggleSelect(u.Id, e)"
@@ -140,13 +150,14 @@ else if (_page is not null)
                             @MfaStatusLabel(u.MfaStatus)
                         </span>
                     </td>
+                    <td class="admin-col-desktop" data-label="@Culture["AdminUsers.ColCreated"]">@FormatDate(u.TermsAcceptedAt)</td>
                     <td class="admin-col-desktop" data-label="@Culture["AdminUsers.ColLastActive"]">@FormatLastActive(u.LastActiveAtUtc)</td>
                     <td data-label="@Culture["AdminUsers.ColStatus"]">
                         <span class="admin-status-dot @(u.IsActive ? "is-active" : "is-blocked")">
                             @(u.IsActive ? Culture["AdminUsers.StatusActive"] : Culture["AdminUsers.StatusBlocked"])
                         </span>
                     </td>
-                    <td class="data-table__col--actions" @onclick:stopPropagation="true">
+                    <td class="data-table__col--actions" data-label="@Culture["Common.Actions"]" @onclick:stopPropagation="true">
                         <RowActionsMenu>
                             <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenSupport(u)">
                                 @Culture["Admin.WhySeeThis"]
@@ -430,6 +441,8 @@ else if (_page is not null)
     private AdminUsersPage? _page;
     private string _query = "";
     private string _roleFilter = "";
+    private string _sort = "name";
+    private string _sortDir = "asc";
     private string _mfaFilter = "";
     private string _activeFilter = "";
     private string _companyFilter = "";
@@ -452,6 +465,7 @@ else if (_page is not null)
     private readonly HashSet<Guid> _selected = [];
     private List<AdminTabs.Tab> _tabs = [];
     private bool _drawerOpen;
+    private bool _openMissing;
     private bool _drawerSheet;
     private AdminUserItem? _drawerUser;
     private string _drawerTab = "overzicht";
@@ -550,20 +564,20 @@ else if (_page is not null)
         if (openId is Guid open)
         {
             var match = _page?.Items.FirstOrDefault(u => u.Id == open);
-            if (match is not null)
+            if (match is null)
             {
-                await OpenDrawer(match);
-            }
-            else
-            {
-                // Deep-link: fetch page filtered by id via q
                 _query = open.ToString("D");
                 await ReloadAsync();
                 match = _page?.Items.FirstOrDefault(u => u.Id == open);
-                if (match is not null)
-                {
-                    await OpenDrawer(match);
-                }
+            }
+
+            if (match is not null)
+            {
+                await OpenDrawer(match, updateUrl: false);
+            }
+            else
+            {
+                _openMissing = true;
             }
         }
     }
@@ -613,22 +627,23 @@ else if (_page is not null)
     private string FormatLastActive(DateTime? utc)
     {
         if (utc is null) return "—";
-        var local = utc.Value.ToLocalTime();
-        var age = DateTime.Now - local;
+        var local = AmsterdamTime.ToLocal(utc.Value);
+        var age = AmsterdamTime.ToLocal(DateTime.UtcNow) - local;
         if (age.TotalMinutes < 5) return Culture["AdminUsers.ActiveNow"];
         return local.ToString("dd-MM-yyyy HH:mm");
     }
 
     private static string FormatDate(DateTime? utc)
-        => utc is null ? "—" : utc.Value.ToLocalTime().ToString("dd-MM-yyyy");
+        => utc is null ? "—" : AmsterdamTime.ToLocal(utc.Value).ToString("dd-MM-yyyy");
 
     private static int RemainingMinutes(DateTime expiresAt)
         => Math.Max(0, (int)Math.Ceiling((expiresAt - DateTime.UtcNow).TotalMinutes));
 
-    private Task OnQueryChanged(string q)
+    private void OnQueryChanged(string q)
     {
         _query = q;
-        return _searchDebounce.RunAsync(300, async ct =>
+        // Fire and return. Awaiting the debounce from oninput lets Blazor write a stale value back.
+        _ = _searchDebounce.RunAsync(300, async ct =>
         {
             await InvokeAsync(async () =>
             {
@@ -655,6 +670,27 @@ else if (_page is not null)
         _companyIdFilter = Guid.TryParse(_companyFilter, out var id) ? id : null;
         await ReloadFromStartAsync();
     }
+
+    private async Task ToggleSortAsync(string column)
+    {
+        if (string.Equals(_sort, column, StringComparison.Ordinal))
+        {
+            _sortDir = _sortDir == "asc" ? "desc" : "asc";
+        }
+        else
+        {
+            _sort = column;
+            _sortDir = column is "created" or "lastlogin" ? "desc" : "asc";
+        }
+
+        _pageNumber = 1;
+        await ReloadAsync();
+    }
+
+    private string SortAria(string column)
+        => string.Equals(_sort, column, StringComparison.Ordinal)
+            ? (_sortDir == "asc" ? "ascending" : "descending")
+            : "none";
 
     private async Task ReloadFromStartAsync()
     {
@@ -709,6 +745,8 @@ else if (_page is not null)
                 mfa: string.IsNullOrWhiteSpace(_mfaFilter) ? null : _mfaFilter,
                 active: string.IsNullOrWhiteSpace(_activeFilter) ? null : _activeFilter,
                 tab: apiTab,
+                sort: _sort,
+                dir: _sortDir,
                 ct: ct);
             if (gen != Volatile.Read(ref _reloadGen))
             {
@@ -771,18 +809,29 @@ else if (_page is not null)
         }
     }
 
-    private async Task OpenDrawer(AdminUserItem user)
+    private async Task OpenDrawer(AdminUserItem user, bool updateUrl = true)
     {
+        _openMissing = false;
         _drawerUser = user;
         _drawerTab = "overzicht";
         _drawerOpen = true;
         _drawerSheet = false; // CSS handles <900 sheet; flag available for tests
         await LoadSessionsIfNeededAsync();
         await RefreshDrawerGrantAsync();
-        // Deep-link URL without full navigation reload
+        if (!updateUrl)
+        {
+            return;
+        }
+
         var path = BasePath.Split('?', 2)[0];
         var tabQs = string.IsNullOrWhiteSpace(PresetTab) && _tab != "alle" ? $"&tab={Uri.EscapeDataString(_tab)}" : "";
-        Nav.NavigateTo($"{path}?open={user.Id:D}{tabQs}", forceLoad: false);
+        var target = $"{path}?open={user.Id:D}{tabQs}";
+        if (!AdminOpenLink.ShouldNavigate(Nav.Uri, target, RendererInfo.IsInteractive))
+        {
+            return;
+        }
+
+        Nav.NavigateTo(target, forceLoad: false, replace: true);
     }
 
     private Task CloseDrawer()
@@ -851,10 +900,10 @@ else if (_page is not null)
                 subjectUserId: _drawerUser.Id);
 
             _activity = audit.Items
-                .Select(e => new ActivityRow(e.OccurredAtUtc, e.Action, e.ActorDisplayName))
+                .Select(e => new ActivityRow(e.OccurredAtUtc, AdminActionLabels.Label(e.Action, key => Culture[key]), e.ActorDisplayName))
                 .Concat(access.Items.Select(l => new ActivityRow(
                     l.OccurredAt,
-                    string.Format(Culture["AdminUsers.ActivityViewed"], l.Resource),
+                    string.Format(Culture["AdminUsers.ActivityViewed"], AdminActionLabels.Resource(l.Resource, key => Culture[key])),
                     ShortActor(l.ActorUserId))))
                 .OrderByDescending(a => a.OccurredAtUtc)
                 .Take(40)

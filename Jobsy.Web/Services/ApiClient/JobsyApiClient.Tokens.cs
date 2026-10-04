@@ -172,13 +172,14 @@ public sealed partial class JobsyApiClient
         Microsoft.JSInterop.IJSRuntime js,
         int? year = null,
         int? quarter = null,
+        int? month = null,
         CancellationToken ct = default)
     {
-        var url = BuildTokenFinanceUrl("api/tokens/finance/purchases/export", year, quarter);
+        var url = BuildTokenFinanceUrl("api/tokens/finance/purchases/export", year, quarter, month);
         var response = await _http.GetAsync(url, ct);
         response.EnsureSuccessStatusCode();
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        var fileName = $"token-aankopen-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
+        var fileName = Jobsy.Core.Rules.TokenExportFileNames.Purchases(year, quarter, month);
         var base64 = Convert.ToBase64String(bytes);
         await SendBrowserDownloadAsync(js, fileName, base64, "text/csv;charset=utf-8");
     }
@@ -254,7 +255,7 @@ public sealed partial class JobsyApiClient
         await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
-    private static string BuildTokenFinanceUrl(string path, int? year, int? quarter)
+    private static string BuildTokenFinanceUrl(string path, int? year, int? quarter, int? month = null)
     {
         var qs = new List<string>();
         if (year is int y)
@@ -265,6 +266,11 @@ public sealed partial class JobsyApiClient
         if (quarter is int q)
         {
             qs.Add($"quarter={q}");
+        }
+
+        if (month is int m)
+        {
+            qs.Add($"month={m}");
         }
 
         return qs.Count == 0 ? path : $"{path}?{string.Join('&', qs)}";

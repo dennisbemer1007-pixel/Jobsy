@@ -3,7 +3,7 @@
 
 <div class="passport-partner-logo">
     <label class="field-label" for="passport-partner-logo">@Culture["Admin.PassportPartners.Logo"]</label>
-    <InputFile id="passport-partner-logo" OnChange="OnChange" accept="image/png,image/jpeg" />
+    <InputFile id="passport-partner-logo" OnChange="OnChange" accept="image/png,image/jpeg" disabled="@(Disabled ? "disabled" : null)" />
     @if (!string.IsNullOrWhiteSpace(Error))
     {
         <p class="state-message error" role="alert">@Error</p>
@@ -12,6 +12,7 @@
 
 @code {
     [Parameter] public EventCallback<IBrowserFile> Accepted { get; set; }
+    [Parameter] public bool Disabled { get; set; }
 
     public string? Error { get; private set; }
 

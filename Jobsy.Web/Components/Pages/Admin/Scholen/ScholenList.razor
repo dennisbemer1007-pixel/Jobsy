@@ -40,10 +40,10 @@
                 @foreach (var row in _rows)
                 {
                     <tr class="ent-data-table__row">
-                        <td><a href="@($"/admin/scholen/{row.Id}")">@row.Name</a></td>
-                        <td>@row.City</td>
-                        <td>@(row.BrinCode ?? "—")</td>
-                        <td>
+                        <td data-label="@Culture["AdminScholen.Col.Name"]"><a href="@($"/admin/scholen/{row.Id}")">@row.Name</a></td>
+                        <td data-label="@Culture["AdminScholen.Col.City"]">@row.City</td>
+                        <td data-label="@Culture["AdminScholen.Col.Brin"]">@(row.BrinCode ?? "—")</td>
+                        <td data-label="@Culture["AdminScholen.Col.Status"]">
                             @if (row.IsActive)
                             {
                                 <span class="sch-pill sch-pill--ok">@Culture["AdminScholen.Status.Active"]</span>
@@ -53,7 +53,7 @@
                                 <span class="sch-pill sch-pill--muted">@Culture["AdminScholen.Status.Inactive"]</span>
                             }
                         </td>
-                        <td>
+                        <td data-label="@Culture["AdminScholen.Col.Agreement"]">
                             @if (row.ProcessorAgreementSignedOn is DateOnly d)
                             {
                                 <span class="sch-pill sch-pill--ok">@d.ToString("dd-MM-yyyy")</span>
@@ -63,8 +63,8 @@
                                 <span class="sch-pill sch-pill--warn">@Culture["AdminScholen.Agreement.Missing"]</span>
                             }
                         </td>
-                        <td class="tabular">@row.ClassCount</td>
-                        <td class="tabular">@row.TeacherCount</td>
+                        <td class="tabular" data-label="@Culture["AdminScholen.Col.Classes"]">@row.ClassCount</td>
+                        <td class="tabular" data-label="@Culture["AdminScholen.Col.Teachers"]">@row.TeacherCount</td>
                     </tr>
                 }
             </Rows>

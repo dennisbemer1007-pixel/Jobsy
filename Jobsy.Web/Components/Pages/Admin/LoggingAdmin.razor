@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -16,12 +17,12 @@
 <AdminPageShell Title="@Culture["AdminNav.SystemLogs"]" Lead="@Culture["Admin.LoggingLead"]">
     <BeveiligingTabs ActiveKey="logs" />
 
-    <AdminFilterBar>
+    <AdminFilterBar Query="@_q" QueryChanged="OnQueryChanged" Placeholder="@Culture["AdminLogs.SearchPlaceholder"]">
         <select class="admin-filter-select" @bind="_level" @bind:after="ReloadAsync">
             <option value="">@Culture["AdminAudit.Filter.ResultAll"]</option>
-            <option value="Info">Info</option>
-            <option value="Warning">Warning</option>
-            <option value="Error">Error</option>
+            <option value="Info">@Culture["AdminLogs.Level.Info"]</option>
+            <option value="Warning">@Culture["AdminLogs.Level.Warning"]</option>
+            <option value="Error">@Culture["AdminLogs.Level.Error"]</option>
         </select>
         <input type="search" class="admin-filter-input" @bind="_category" @bind:event="oninput"
                placeholder="@Culture["AdminLogs.CategoryPlaceholder"]" />
@@ -40,15 +41,18 @@
             <th scope="col">@Culture["AdminLogs.Col.Date"]</th>
             <th scope="col">@Culture["AdminLogs.Col.Level"]</th>
             <th scope="col">@Culture["AdminLogs.Col.Category"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Code"]</th>
             <th scope="col">@Culture["AdminLogs.Col.Message"]</th>
         </Header>
         <Rows>
             @foreach (var log in _filtered)
             {
+                var code = SupportCodeDisplay.Find(log.Message);
                 <tr>
                     <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(log.CreatedAt).ToString("dd-MM-yyyy HH:mm")</td>
                     <td data-label="@Culture["AdminLogs.Col.Level"]">@LevelLabel(log.Level)</td>
                     <td data-label="@Culture["AdminLogs.Col.Category"]">@CategoryLabel(log.Category)</td>
+                    <td class="admin-mono" data-label="@Culture["AdminLogs.Col.Code"]">@(code ?? "—")</td>
                     <td data-label="@Culture["AdminLogs.Col.Message"]">@log.Message</td>
                 </tr>
             }
@@ -65,6 +69,7 @@
     private List<PlatformLogItem> _logs = [];
     private string _level = "";
     private string _category = "";
+    private string _q = "";
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private bool _loading = true;
@@ -103,7 +108,11 @@
 
     protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
-    public void Dispose() => Culture.Changed -= OnCultureChanged;
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _searchDebounce.Dispose();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -115,6 +124,26 @@
         }
 
         await ReloadAsync();
+    }
+
+    private readonly DebouncedAction _searchDebounce = new();
+
+    private void OnQueryChanged(string value)
+    {
+        _q = value;
+        _ = _searchDebounce.RunAsync(300, async ct =>
+        {
+            await InvokeAsync(async () =>
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                _pageNum = 1;
+                await ReloadAsync();
+            });
+        });
     }
 
     private async Task FilterAsync()
@@ -141,7 +170,8 @@
                 from: _fromDate?.ToUniversalTime(),
                 to: _toDate?.ToUniversalTime(),
                 page: _pageNum,
-                pageSize: _pageSize);
+                pageSize: _pageSize,
+                q: string.IsNullOrWhiteSpace(_q) ? null : _q);
             _logs = page.Items.ToList();
             _total = page.Total;
         }

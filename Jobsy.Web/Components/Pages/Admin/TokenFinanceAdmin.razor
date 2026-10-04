@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Privacy
+@using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -106,15 +108,15 @@
                         @foreach (var row in _smCosts)
                         {
                             <tr>
-                                <td>@(row.PaidAt?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</td>
-                                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
-                                <td>@PersonalDataMasker.MaskName(row.SalesManagerCompanyName)</td>
-                                <td>€ @row.SubtotalExVat.ToString("0.00")</td>
-                                <td>€ @row.VatAmount.ToString("0.00")</td>
-                                <td>€ @row.TotalInclVat.ToString("0.00")</td>
-                                <td>@FormatVatTreatment(row.VatTreatment)</td>
-                                <td>@row.Status</td>
-                                <td class="muted">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
+                                <td data-label="@Culture["AdminFinance.Col.Paid"]">@(row.PaidAt is DateTime paid ? AmsterdamTime.ToLocal(paid).ToString("dd-MM-yyyy HH:mm") : "—")</td>
+                                <td data-label="@Culture["AdminFinance.Col.Invoice"]"><code class="admin-mono">@row.InvoiceNumber</code></td>
+                                <td data-label="@Culture["AdminFinance.Col.Payee"]">@PersonalDataMasker.MaskName(row.SalesManagerCompanyName)</td>
+                                <td data-label="Ex-BTW">€ @row.SubtotalExVat.ToString("0.00")</td>
+                                <td data-label="BTW">€ @row.VatAmount.ToString("0.00")</td>
+                                <td data-label="Totaal">€ @row.TotalInclVat.ToString("0.00")</td>
+                                <td data-label="BTW-behandeling">@FormatVatTreatment(row.VatTreatment)</td>
+                                <td data-label="@Culture["AdminFinance.Col.Status"]">@AdminActionLabels.VatStatus(row.Status, key => Culture[key])</td>
+                                <td class="muted" data-label="Aangifte-status">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
                             </tr>
                         }
                     </tbody>
@@ -150,12 +152,12 @@
                         @foreach (var row in _vatTransfers)
                         {
                             <tr>
-                                <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
-                                <td>@row.DestinationIbanMasked</td>
-                                <td>€ @row.AmountEuro.ToString("0.00")</td>
-                                <td>@row.Status</td>
-                                <td class="muted">@row.Note</td>
+                                <td data-label="@Culture["AdminFinance.Col.Date"]">@AmsterdamTime.ToLocal(row.CreatedAt).ToString("dd-MM-yyyy HH:mm")</td>
+                                <td data-label="@Culture["AdminFinance.Col.Invoice"]"><code class="admin-mono">@row.InvoiceNumber</code></td>
+                                <td data-label="IBAN">@row.DestinationIbanMasked</td>
+                                <td data-label="BTW-bedrag">€ @row.AmountEuro.ToString("0.00")</td>
+                                <td data-label="@Culture["AdminFinance.Col.Status"]">@AdminActionLabels.VatStatus(row.Status, key => Culture[key])</td>
+                                <td class="muted" data-label="Notitie">@row.Note</td>
                             </tr>
                         }
                     </tbody>
@@ -191,12 +193,12 @@
                         @foreach (var row in _consumerPurchases)
                         {
                             <tr>
-                                <td>@row.IssuedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
-                                <td>@row.TestName</td>
-                                <td>€ @row.TotalAmountEuro.ToString("0.00")</td>
-                                <td>@(row.IsStub ? "TEST" : (row.PaymentMethod ?? "—"))</td>
-                                <td class="muted">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
+                                <td data-label="@Culture["AdminFinance.Col.Date"]">@AmsterdamTime.ToLocal(row.IssuedAt).ToString("dd-MM-yyyy HH:mm")</td>
+                                <td data-label="@Culture["AdminFinance.Col.Invoice"]"><code class="admin-mono">@row.InvoiceNumber</code></td>
+                                <td data-label="Test">@row.TestName</td>
+                                <td data-label="Totaal">€ @row.TotalAmountEuro.ToString("0.00")</td>
+                                <td data-label="Methode">@(row.IsStub ? "TEST" : (row.PaymentMethod ?? "—"))</td>
+                                <td class="muted" data-label="Aangifte-status">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
                             </tr>
                         }
                     </tbody>
@@ -230,24 +232,24 @@
                         @foreach (var row in _declarations)
                         {
                             <tr>
-                                <td><strong>@row.PeriodLabel</strong></td>
-                                <td>
-                                    @row.GeneratedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                <td data-label="Periode"><strong>@row.PeriodLabel</strong></td>
+                                <td data-label="Gegenereerd">
+                                    @AmsterdamTime.ToLocal(row.GeneratedAt).ToString("dd-MM-yyyy HH:mm")
                                     <span class="muted">@(row.GeneratedByName is null ? "" : $" · {row.GeneratedByName}")</span>
                                 </td>
-                                <td>@row.PlatformCompanyName</td>
-                                <td>€ @CentsToEuro(row.Rubriek1VatCents)</td>
-                                <td>€ @CentsToEuro(row.Rubriek5VoorbelastingCents)</td>
-                                <td>
+                                <td data-label="Bedrijf">@row.PlatformCompanyName</td>
+                                <td data-label="Rubriek 1 BTW">€ @CentsToEuro(row.Rubriek1VatCents)</td>
+                                <td data-label="Rubriek 5 voorbelasting">€ @CentsToEuro(row.Rubriek5VoorbelastingCents)</td>
+                                <td data-label="Te betalen / ontvangen">
                                     @(row.AmountDueCents >= 0 ? "Te betalen" : "Terug")
                                     € @CentsToEuro(Math.Abs(row.AmountDueCents))
                                 </td>
-                                <td class="muted">
+                                <td class="muted" data-label="Transacties">
                                     @row.TokenInvoiceCount verkopen ·
                                     @row.SalesManagerInvoiceCount SM ·
                                     @row.GoodwillCount goodwill
                                 </td>
-                                <td>
+                                <td data-label="@Culture["Common.Actions"]">
                                     <button class="btn-compact" type="button" disabled="@(_exportBusy || !row.HasPdf)"
                                             @onclick="() => DownloadDeclarationPdfAsync(row)">PDF</button>
                                 </td>

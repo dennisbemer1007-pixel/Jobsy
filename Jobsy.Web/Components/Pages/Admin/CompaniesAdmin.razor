@@ -103,7 +103,7 @@
                             tabindex="0"
                             @onclick="() => SelectRow(row)"
                             @onkeydown="e => OnRowKey(e, row)">
-                            <td class="data-table__col--wrap">
+                            <td class="data-table__col--wrap" data-label="@Culture["AdminOrgs.ColOrganisation"]">
                                 <div class="admin-org-cell @(isChild ? "admin-org-cell--child" : null)">
                                     @if (!isChild && _treeMode && row.BranchCount > 0)
                                     {
@@ -126,12 +126,12 @@
                                     </span>
                                 </div>
                             </td>
-                            <td>@row.KvkNumber</td>
-                            <td class="admin-col-desktop">@(row.RegionName ?? "—")</td>
-                            <td class="admin-col-desktop">@row.UserCount</td>
-                            <td class="admin-col-desktop">@row.ActiveVacancyCount</td>
-                            <td class="admin-col-desktop">@row.TokenBalance.ToString("0.##")</td>
-                            <td>
+                            <td data-label="@Culture["AdminOrgs.KvkNumber"]">@row.KvkNumber</td>
+                            <td class="admin-col-desktop" data-label="@Culture["AdminOrgs.ColRegion"]">@(row.RegionName ?? "—")</td>
+                            <td class="admin-col-desktop" data-label="@Culture["AdminOrgs.ColUsers"]">@row.UserCount</td>
+                            <td class="admin-col-desktop" data-label="@Culture["AdminOrgs.ColVacancies"]">@row.ActiveVacancyCount</td>
+                            <td class="admin-col-desktop" data-label="@Culture["AdminOrgs.ColTokens"]">@row.TokenBalance.ToString("0.##")</td>
+                            <td data-label="@Culture["AdminOrgs.ColStatus"]">
                                 <span class="admin-status-dot @StatusClass(row.Status)">@StatusLabel(row)</span>
                             </td>
                         </tr>
@@ -221,7 +221,24 @@
         if (qs.TryGetValue("status", out var status)) _statusFilter = status.ToString();
         if (qs.TryGetValue("q", out var q)) _query = q.ToString();
         if (qs.TryGetValue("region", out var region)) _regionFilter = region.ToString();
+        Guid? openId = qs.TryGetValue("open", out var openRaw) && Guid.TryParse(openRaw, out var oid) ? oid : null;
         await ReloadAsync();
+        if (openId is Guid open)
+        {
+            var match = _all.FirstOrDefault(c => c.Id == open);
+            if (match is null)
+            {
+                _query = open.ToString("D");
+                _page = 1;
+                await ReloadAsync();
+                match = _all.FirstOrDefault(c => c.Id == open);
+            }
+
+            if (match is not null)
+            {
+                SelectRow(match);
+            }
+        }
         try
         {
             var todo = await Api.GetAdminTodoAsync();
@@ -319,7 +336,7 @@
         _rows = rows;
     }
 
-    private async Task OnQueryChanged(string value)
+    private void OnQueryChanged(string value)
     {
         _query = value;
         _page = 1;
@@ -327,10 +344,15 @@
         _searchCts?.Dispose();
         _searchCts = new CancellationTokenSource();
         var token = _searchCts.Token;
+        _ = DebouncedReloadAsync(token);
+    }
+
+    private async Task DebouncedReloadAsync(CancellationToken token)
+    {
         try
         {
             await Task.Delay(280, token);
-            await ReloadAsync();
+            await InvokeAsync(ReloadAsync);
         }
         catch (OperationCanceledException) { }
     }

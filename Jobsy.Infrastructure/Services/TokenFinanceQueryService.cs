@@ -3,6 +3,7 @@ using System.Text;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Time;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,12 +91,29 @@ public sealed class TokenFinanceQueryService : ITokenFinanceQueryService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<string> ExportPurchasesCsvAsync(
+    public Task<string> ExportPurchasesCsvAsync(
         int? year = null,
         int? quarter = null,
         CancellationToken cancellationToken = default)
+        => ExportPurchasesCsvAsync(year, quarter, null, cancellationToken);
+
+    public async Task<string> ExportPurchasesCsvAsync(
+        int? year,
+        int? quarter,
+        int? month,
+        CancellationToken cancellationToken = default)
     {
         var rows = await GetPurchasesAsync(year, quarter, cancellationToken);
+        if (month is int m and >= 1 and <= 12)
+        {
+            var y = year ?? DateTime.UtcNow.Year;
+            rows = rows.Where(r =>
+            {
+                var local = AmsterdamTime.ToLocal(r.IssuedAt);
+                return local.Year == y && local.Month == m;
+            }).ToList();
+        }
+
         var sb = new StringBuilder();
         sb.AppendLine("FactuurId;Factuurnummer;MolliePaymentId;Bedrijf;Tokens;ExBtw;Btw;Totaal;Datum");
         var culture = CultureInfo.GetCultureInfo("nl-NL");

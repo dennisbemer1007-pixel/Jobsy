@@ -1,3 +1,4 @@
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -33,7 +34,7 @@
                     <div class="table-row">
                         <div>
                             <strong>@c.Name</strong>
-                            <span class="muted">@c.Type · KVK @c.KvkNumber · @c.TokenBalance.ToString("0.##") tokens</span>
+                            <span class="muted">@AdminActionLabels.CompanyType(c.Type, key => Culture[key]) · KVK @c.KvkNumber · @c.TokenBalance.ToString("0.##") tokens</span>
                             @if (!string.IsNullOrWhiteSpace(c.Address))
                             {
                                 <span class="muted">@c.Address</span>

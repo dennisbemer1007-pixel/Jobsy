@@ -405,11 +405,11 @@ public static class UiStringsAdmin
         Add("AdminSettings.Employers.Enabled.Desc", "Kandidaten zien banen, de banenkaart en sollicitaties. Werkgevers kunnen vacatures plaatsen.", "Candidates see jobs, the job map and applications. Employers can post vacancies.", "Kandydaci widzą oferty, mapę i aplikacje. Pracodawcy mogą publikować oferty.", "Candidații văd joburi, harta și candidaturile. Angajatorii pot publica joburi.", "يرى المرشحون الوظائف وخريطة الوظائف والطلبات. يمكن لأصحاب العمل نشر الوظائف.");
         Add("AdminSettings.Employers.Enabled.ImpactOff", "Uit: kandidaten zien geen banen meer. Werkgevers kunnen niet plaatsen.", "Off: candidates no longer see jobs. Employers cannot post.", "Wył: kandydaci nie widzą ofert. Pracodawcy nie publikują.", "Oprit: candidații nu mai văd joburi. Angajatorii nu pot publica.", "إيقاف: لم يعد المرشحون يرون وظائف. لا يمكن لأصحاب العمل النشر.");
         Add("AdminSettings.Employers.EnableConfirm",
-            "Fase 2 wordt opnieuw ontworpen. Als je dit aanzet, zien werkgevers weer matchpercentages, persoonlijkheidsscores in de talentpool en het AI-verhaal. Weet je het zeker?",
-            "Phase 2 is being redesigned. If you turn this on, employers will again see match percentages, personality scores in the talent pool and the AI story. Are you sure?",
-            "Faza 2 jest projektowana od nowa. Po włączeniu pracodawcy znów zobaczą procenty dopasowania, wyniki osobowości w puli talentów i historię AI. Na pewno?",
-            "Faza 2 este reproiectată. Dacă activezi, angajatorii văd din nou procente de potrivire, scoruri de personalitate în talent pool și povestea AI. Ești sigur?",
-            "المرحلة 2 تُعاد تصميمها. إذا فعّلت هذا، سيرى أصحاب العمل مجدداً نسب التطابق ودرجات الشخصية في مجموعة المواهب وقصة الذكاء الاصطناعي. هل أنت متأكد؟");
+            "Aan: kandidaten zien banen, de banenkaart en sollicitaties, en werkgevers kunnen vacatures plaatsen. Werkgevers zien dan ook matchpercentages, persoonlijkheidsscores en het AI-verhaal. Weet je het zeker?",
+            "On: candidates see jobs, the job map and applications, and employers can post vacancies. Employers then also see match percentages, personality scores and the AI story. Are you sure?",
+            "Wł: kandydaci widzą oferty, mapę i aplikacje, a pracodawcy mogą publikować oferty. Pracodawcy zobaczą też procenty dopasowania, wyniki osobowości i historię AI. Na pewno?",
+            "Pornit: candidații văd joburi, harta și candidaturile, iar angajatorii pot publica joburi. Angajatorii văd și procente de potrivire, scoruri de personalitate și povestea AI. Ești sigur?",
+            "تشغيل: يرى المرشحون الوظائف والخريطة والطلبات، ويمكن لأصحاب العمل نشر الوظائف. سيرون أيضاً نسب التطابق ودرجات الشخصية وقصة الذكاء الاصطناعي. هل أنت متأكد؟");
         Add("AdminSettings.Passport.Enabled.Title", "Mijn Paspoort en Ontdekkingsreis", "My Passport and Discovery journey", "Mój Paszport i Podróż odkryć", "Pașaportul meu și Călătoria de descoperire", "جواز سفري ورحلة الاكتشاف");
         Add("AdminSettings.Passport.Enabled.Desc", "Nieuwe navigatie voor kandidaten: Ontdekkingsreis, Mijn Paspoort, Zoeken, Sollicitaties, Carrière. Bewaard wordt een tab onder Sollicitaties. Staat standaard aan.", "New candidate navigation: Discovery, My Passport, Search, Applications, Career. Saved becomes a tab under Applications. On by default.", "Nowa nawigacja kandydata: Odkrywanie, Mój Paszport, Szukaj, Aplikacje, Kariera. Zapisane to zakładka pod Aplikacjami. Domyślnie włączone.", "Navigație nouă pentru candidați: Descoperire, Pașaportul meu, Căutare, Candidaturi, Carieră. Salvate e tab sub Candidaturi. Pornit implicit.", "تنقل جديد للمرشحين: الاكتشاف وجواز سفري والبحث والطلبات والمسار المهني. المحفوظات تبويب تحت الطلبات. مفعّل افتراضياً.");
         Add("AdminSettings.Group.Vacancies", "Vacatures", "Vacancies", "Oferty", "Joburi", "الوظائف");
@@ -565,6 +565,7 @@ public static class UiStringsAdmin
         Add("AdminFinance.HistoryLead", "Administratieve waarde € 0,00 — geen BTW-verplichting of omzet. Token-saldo van de ondernemer loopt wel op.", "Administrative value € 0.00 — no VAT obligation or revenue. The employer token balance still increases.", "Wartość administracyjna 0,00 € — bez VAT i przychodu. Saldo tokenów przedsiębiorcy rośnie.", "Valoare administrativă 0,00 € — fără obligație TVA sau venit. Soldul de tokenuri crește totuși.", "قيمة إدارية 0,00 € — بلا التزام ضريبي أو إيراد. رصيد رموز صاحب العمل يرتفع.");
         Add("AdminFinance.SalesCrossLink", "Salesmanagers en ambassadeurs beheer je bij", "Manage sales managers and ambassadors under", "Sales managerów i ambasadorów zarządzasz w", "Sales managerii și ambasadorii se gestionează la", "تُدار مدراء المبيعات والسفراء في");
         Add("AdminFinance.MarkPaid", "Markeer als betaald", "Mark as paid", "Oznacz jako opłacone", "Marchează ca plătit", "علّم كمدفوع");
+        Add("AdminFinance.StatusIssued", "Uitgegeven", "Issued", "Wystawiona", "Emisă", "صادرة");
         Add("AdminFinance.BulkMarkPaid", "Markeer {0} als betaald", "Mark {0} as paid", "Oznacz {0} jako opłacone", "Marchează {0} ca plătite", "علّم {0} كمدفوعة");
         Add("AdminFinance.BulkMarkPaidTitle", "Bulk markeren als betaald", "Bulk mark as paid", "Masowe oznaczenie jako opłacone", "Marcare în masă ca plătite", "تعليم جماعي كمدفوع");
         Add("AdminFinance.BulkMarkPaidLead", "Je markeert {0} openstaande self-billing facturen als betaald. Dit gebruikt het bestaande mark-paid endpoint per factuur.", "You will mark {0} open self-billing invoices as paid. This calls the existing mark-paid endpoint per invoice.", "Oznaczysz {0} otwarte faktury self-billing jako opłacone.", "Vei marca {0} facturi self-billing deschise ca plătite.", "ستعلّم {0} فواتير مفتوحة كمدفوعة.");
@@ -582,9 +583,9 @@ public static class UiStringsAdmin
         Add("AdminFinance.WhatDrives.Drives", "Bepaalt", "Drives", "Determinuje", "Determină", "يحدد");
         Add("AdminFinance.WhatDrives.TokenPacks", "Tokenpakketten", "Token packs", "Pakiety tokenów", "Pachete de tokenuri", "باقات الرموز");
         Add("AdminFinance.WhatDrives.TokenPacksDesc", "Wat werkgevers betalen voor tokens (euro per pack op de Tokens-pagina).", "What employers pay for tokens (euro per pack on the Tokens page).", "Ile pracodawcy płacą za tokeny (euro za pakiet).", "Cât plătesc angajatorii pentru tokenuri (euro pe pachet).", "ما يدفعه أصحاب العمل مقابل الرموز (يورو لكل باقة).");
-        Add("AdminFinance.WhatDrives.TokenSpendCost", "Kosten per actie (TokenSpendCost)", "Cost per action (TokenSpendCost)", "Koszt akcji (TokenSpendCost)", "Cost pe acțiune (TokenSpendCost)", "التكلفة لكل إجراء (TokenSpendCost)");
+        Add("AdminFinance.WhatDrives.TokenSpendCost", "Kosten per actie", "Cost per action", "Koszt akcji", "Cost pe acțiune", "التكلفة لكل إجراء");
         Add("AdminFinance.WhatDrives.TokenSpendCostDesc", "Tokens per publicatie/uitlichten/PushBom/ContactUnlock als fallback wanneer geen specifiekere override geldt.", "Tokens per publish/highlight/PushBom/ContactUnlock as fallback when no more specific override applies.", "Tokeny na publikację/wyróżnienie/PushBom/ContactUnlock jako fallback.", "Tokenuri pe publicare/evidențiere/PushBom/ContactUnlock ca fallback.", "رموز لكل نشر/إبراز/PushBom/ContactUnlock كاحتياطي.");
-        Add("AdminFinance.WhatDrives.VacancyType", "Token-kosten per vacaturetype (VacancyTypeTokenCost)", "Token cost per vacancy type (VacancyTypeTokenCost)", "Koszt tokenów per typ oferty (VacancyTypeTokenCost)", "Cost token pe tip job (VacancyTypeTokenCost)", "تكلفة الرمز حسب نوع الوظيفة (VacancyTypeTokenCost)");
+        Add("AdminFinance.WhatDrives.VacancyType", "Token-kosten per vacaturetype", "Token cost per vacancy type", "Koszt tokenów według typu oferty", "Cost token pe tip de job", "تكلفة الرمز حسب نوع الوظيفة");
         Add("AdminFinance.WhatDrives.VacancyTypeDesc", "Catalogustarieven per soort vacature (regulier, stage, …). Regulier volgt de tokenprijs voor publiceren.", "Catalog rates per vacancy kind (regular, internship, …). Regular follows the publish token price.", "Stawki katalogowe per rodzaj oferty. Oferta zwykła podąża za ceną tokenów publikacji.", "Tarife catalog pe tipul jobului. Regular urmează prețul în tokenuri pentru publicare.", "أسعار الكتالوج حسب نوع الوظيفة. العادي يتبع سعر الرمز للنشر.");
         Add("AdminFinance.WhatDrives.VacancyCategory", "Vacaturecategorie", "Vacancy category", "Kategoria oferty", "Categorie job", "فئة الوظيفة");
         Add("AdminFinance.WhatDrives.VacancyCategoryDesc", "Wat VacancyProductService écht aftrekt bij publiceren/highlight — wint op de live spend-path.", "What VacancyProductService actually deducts on publish/highlight — wins on the live spend path.", "To, co VacancyProductService realnie potrąca przy publikacji — wygrywa na live spend.", "Ce deduce VacancyProductService la publicare — câștigă pe calea live de spend.", "ما يخصمه VacancyProductService فعليًا عند النشر — يفوز في مسار الصرف الحي.");
@@ -789,5 +790,56 @@ public static class UiStringsAdmin
         Add("Admin.Maintenance.ConfirmLead", "Bezoekers zien vanaf nu de onderhoudspagina. Jij blijft erin.", "Visitors will see the maintenance page from now on. You stay in.");
         Add("Admin.Maintenance.Saved", "Opgeslagen.", "Saved.");
         Add("Admin.Maintenance.UnknownAdmin", "een beheerder", "an admin");
+
+        Add("AdminUsers.OpenMissing", "Deze gebruiker is niet gevonden.", "This user was not found.", "Nie znaleziono tego użytkownika.", "Acest utilizator nu a fost găsit.", "لم يُعثر على هذا المستخدم.");
+        Add("AdminUsers.ColCreated", "Aangemaakt", "Created", "Utworzono", "Creat", "أُنشئ");
+        Add("AdminUsers.ColSelect", "Selectie", "Selection", "Wybór", "Selecție", "تحديد");
+        Add("AdminOrgs.KvkHint", "Vul 8 cijfers in.", "Enter 8 digits.", "Wpisz 8 cyfr.", "Introdu 8 cifre.", "أدخل 8 أرقام.");
+        Add("AdminLogs.Col.Code", "Supportcode", "Support code", "Kod wsparcia", "Cod suport", "رمز الدعم");
+        Add("AdminLogs.SearchPlaceholder", "Zoek op LB-code of bericht", "Search by LB code or message", "Szukaj kodu LB lub treści", "Caută cod LB sau mesaj", "ابحث برمز LB أو الرسالة");
+        Add("AdminAudit.Action.Flyer", "Flyer bijgewerkt", "Flyer updated", "Ulotka zaktualizowana", "Flyer actualizat", "تم تحديث النشرة");
+        Add("AdminAudit.Action.CategoryCreated", "Vacaturecategorie aangemaakt", "Vacancy category created", "Utworzono kategorię oferty", "Categorie job creată", "أُنشئت فئة وظيفة");
+        Add("AdminAudit.Action.CategoryUpdated", "Vacaturecategorie gewijzigd", "Vacancy category updated", "Zmieniono kategorię oferty", "Categorie job modificată", "عُدّلت فئة وظيفة");
+        Add("AdminAudit.Action.CategoryDeleted", "Vacaturecategorie verwijderd", "Vacancy category deleted", "Usunięto kategorię oferty", "Categorie job ștearsă", "حُذفت فئة وظيفة");
+        Add("AdminAudit.Action.MasterdataCreated", "Stamgegeven aangemaakt", "Master data created", "Utworzono dane podstawowe", "Dată de bază creată", "أُنشئ بيان أساسي");
+        Add("AdminAudit.Action.MasterdataUpdated", "Stamgegeven gewijzigd", "Master data updated", "Zmieniono dane podstawowe", "Dată de bază modificată", "عُدّل بيان أساسي");
+        Add("AdminAudit.Action.MasterdataDeleted", "Stamgegeven verwijderd", "Master data deleted", "Usunięto dane podstawowe", "Dată de bază ștearsă", "حُذف بيان أساسي");
+        Add("AdminAudit.Action.Sessions", "Sessies", "Sessions", "Sesje", "Sesiuni", "الجلسات");
+        Add("AdminAction.Resource.Users", "Gebruikerslijst", "User list", "Lista użytkowników", "Lista utilizatorilor", "قائمة المستخدمين");
+        Add("AdminAction.Resource.UserSessions", "Gebruikerssessies", "User sessions", "Sesje użytkownika", "Sesiuni utilizator", "جلسات المستخدم");
+        Add("AdminAction.Resource.PlatformLogs", "Platformlogs", "Platform logs", "Logi platformy", "Jurnale platformă", "سجلات المنصة");
+        Add("AdminAction.Resource.Audit", "Auditlog", "Audit log", "Dziennik audytu", "Jurnal de audit", "سجل التدقيق");
+        Add("AdminAction.Resource.AccessLog", "Gegevensinzage", "Data access", "Wgląd w dane", "Acces la date", "الاطلاع على البيانات");
+        Add("AdminFinance.Col.Old", "Oud saldo", "Old balance", "Stare saldo", "Sold vechi", "الرصيد السابق");
+        Add("AdminFinance.Col.New", "Nieuw saldo", "New balance", "Nowe saldo", "Sold nou", "الرصيد الجديد");
+        Add("AdminFinance.Col.Note", "Notitie", "Note", "Notatka", "Notă", "ملاحظة");
+        Add("AdminFinance.SkippedNoIban", "Overgeslagen: geen IBAN", "Skipped: no IBAN", "Pominięto: brak IBAN", "Omis: fără IBAN", "تم التخطي: لا يوجد IBAN");
+        Add("AdminVacancy.Col.Shown", "Getoond", "Shown", "Wyświetlenia", "Afișări", "مرات العرض");
+        Add("AdminVacancy.Col.Clicks", "Kliks", "Clicks", "Kliknięcia", "Clicuri", "النقرات");
+        Add("AdminVacancy.Col.Shared", "Gedeeld", "Shared", "Udostępnienia", "Distribuiri", "المشاركات");
+        Add("AdminVacancy.Col.Applied", "Gesolliciteerd", "Applied", "Aplikacje", "Candidaturi", "الطلبات");
+        Add("AdminVacancy.Col.Extended", "Verlengd", "Extended", "Przedłużenia", "Prelungiri", "التمديدات");
+        Add("AdminVacancy.Col.Liked", "Bewaard", "Saved", "Zapisane", "Salvate", "المحفوظات");
+        Add("AdminVacancy.Col.Source", "Bron", "Source", "Źródło", "Sursă", "المصدر");
+        Add("AdminVacancy.Status.Active", "Actief", "Active", "Aktywne", "Activ", "نشط");
+        Add("AdminVacancy.Status.Draft", "Concept", "Draft", "Szkic", "Ciornă", "مسودة");
+        Add("AdminVacancy.Status.Archived", "Gearchiveerd", "Archived", "Zarchiwizowane", "Arhivat", "مؤرشف");
+        Add("AdminVacancy.Status.Pending", "In afwachting", "Pending", "Oczekujące", "În așteptare", "قيد الانتظار");
+        Add("AdminVacancy.Status.Inactive", "Inactief", "Inactive", "Nieaktywne", "Inactiv", "غير نشط");
+        Add("AdminVacancy.Drilldown", "Uitsplitsing: {0}", "Breakdown: {0}", "Rozbicie: {0}", "Detaliere: {0}", "التفصيل: {0}");
+        Add("AdminVacancy.DrilldownEmpty", "Geen items.", "No items.", "Brak pozycji.", "Niciun element.", "لا عناصر.");
+        Add("AdminMfa.Role.Privileged", "Bevoorrecht", "Privileged", "Uprzywilejowany", "Privilegiat", "مميّز");
+        Add("AdminTraining.RegionalPartner", "Regionale partner", "Regional partner", "Partner regionalny", "Partener regional", "شريك إقليمي");
+        Add("AdminTraining.NationalAffiliate", "Landelijk aangesloten", "National affiliate", "Partner krajowy", "Afiliat național", "شريك وطني");
+        Add("AdminTraining.CandidateHash", "Kandidaat-hash", "Candidate hash", "Hash kandydata", "Hash candidat", "تجزئة المرشح");
+        Add("AdminTraining.Unit", "Eenheid", "Unit", "Jednostka", "Unitate", "الوحدة");
+        Add("AdminTraining.Hours", "uren", "hours", "godziny", "ore", "ساعات");
+        Add("AdminTraining.Days", "dagen", "days", "dni", "zile", "أيام");
+        Add("AdminTraining.Weeks", "weken", "weeks", "tygodnie", "săptămâni", "أسابيع");
+        Add("AdminTraining.Months", "maanden", "months", "miesiące", "luni", "أشهر");
+        Add("AdminTraining.Years", "jaren", "years", "lata", "ani", "سنوات");
+        Add("AdminTraining.Deeplink", "Deeplink", "Deep link", "Link bezpośredni", "Link direct", "رابط مباشر");
+        Add("AdminTraining.Active", "Actief", "Active", "Aktywne", "Activ", "نشط");
+        Add("AdminTraining.OnSite", "Op locatie", "On site", "Na miejscu", "La fața locului", "في الموقع");
     }
 }
