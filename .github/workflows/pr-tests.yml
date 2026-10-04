@@ -103,6 +103,7 @@ jobs:
             --filter-class '*AdminOrganisationsPlaywrightTests' \
             --filter-class '*AdminShellPlaywrightTests' \
             --filter-class '*AdminUsersPlaywrightTests' \
+            --filter-class '*AdminRun4PlaywrightTests' \
             --filter-class '*CandidateTestsPlaywrightTests' \
             --filter-class '*AssistantTabPlaywrightTests'
 

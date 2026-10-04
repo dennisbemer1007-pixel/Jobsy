@@ -23,7 +23,8 @@ public static class AtsListingValidation
     private static readonly string[] NavigationTitleHints =
     [
         "veelgestelde vragen", "faq", "locaties waar", "aanmelden", "contact",
-        "privacy", "cookie", "inloggen", "over ons", "nieuwsbrief", "sitemap"
+        "privacy", "cookie", "inloggen", "over ons", "nieuwsbrief", "sitemap",
+        "dit zijn onze zorgverleners", "waar bent u naar op zoek"
     ];
 
     private static readonly string[] JobSignals =

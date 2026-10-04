@@ -71,4 +71,53 @@ public static class AdminOpenLink
             .Select(p => Uri.EscapeDataString(p.Key) + "=" + Uri.EscapeDataString(p.Value));
         return path + "?" + string.Join("&", pairs);
     }
+
+    /// <summary>Drop <c>open</c> so closing a drawer does not reopen it on refresh.</summary>
+    public static string WithoutOpen(string? currentUri)
+    {
+        var text = currentUri?.Trim() ?? "";
+        if (Uri.TryCreate(text, UriKind.Absolute, out var absolute)
+            && (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps))
+        {
+            text = absolute.PathAndQuery;
+        }
+
+        var hash = text.IndexOf('#');
+        if (hash >= 0)
+        {
+            text = text[..hash];
+        }
+
+        if (text.Length == 0)
+        {
+            return "/";
+        }
+
+        if (!text.StartsWith('/'))
+        {
+            text = "/" + text;
+        }
+
+        var q = text.IndexOf('?');
+        var path = (q >= 0 ? text[..q] : text).TrimEnd('/');
+        if (path.Length == 0)
+        {
+            path = "/";
+        }
+
+        if (q < 0)
+        {
+            return path;
+        }
+
+        var kept = text[(q + 1)..]
+            .Split('&', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(pair =>
+            {
+                var key = pair.Split('=', 2)[0];
+                return !string.Equals(Uri.UnescapeDataString(key), "open", StringComparison.OrdinalIgnoreCase);
+            })
+            .ToArray();
+        return kept.Length == 0 ? path : path + "?" + string.Join("&", kept);
+    }
 }

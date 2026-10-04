@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "440db1db6d6d06db1d78d7b0578d0f0032d4d1ab11a4647f0b1bc55c1d17d41b",
-    "v": "20261004-run5c"
+    "sha256": "9f40100565cab3b80dba7927946736baac08c2caf714ad983af437017f128855",
+    "v": "20261004-run4"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -12,8 +12,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "83b1d9ed81d2a1c404e53b99ddb47b58042757e26b5eac33114e8f2339870e91",
-    "v": "20261004-run3"
+    "sha256": "d620b803496f9504969a1ad72ae7204e98e3b638faf1e804c563c916cffb6638",
+    "v": "20261004-run4"
   },
   "css/features/applications.css": {
     "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
@@ -100,8 +100,8 @@
     "v": "20260930-sales9"
   },
   "css/features/scholen.css": {
-    "sha256": "71fa05558f4de708b6bb1e34f33c01d8069bd2c02f8a060215a6492f0596dc38",
-    "v": "20261004-pupil3"
+    "sha256": "3d8989ca0ceb570038cec7b1bfd703b8fb59a9b6b58063b5f32715d0ade34db7",
+    "v": "20261004-run4"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "55a75a8eccdecd88b3b608e46767e204d315cd7b0df42c2b64f875be69ad5042",
-    "v": "20261004-run5c"
+    "sha256": "f0d5cb57768680bab78d5196f8f9f2ced85728bf6eba0fa51938d2892861167d",
+    "v": "20261004-run4"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "da09a3c1d82ba860399acfda0beaca4a03bbbe5d3d4479fdf3433cdd385f438a",
-    "v": "20261004-run5c"
+    "sha256": "fc02cae8bfe40e76f8420d63b193ebe76da4ce5354ee20c50f68bba102598df8",
+    "v": "20261004-run4"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "d9b731f5e3f389dd1ff8f227a7ba0785d46def8649ce59db2d51fcc082f71560",
-    "v": "20261004-run5c"
+    "sha256": "88f0fdd8c921a0667a99515c97c94bd430cdab6bd67edf386550fb84c0dab448",
+    "v": "20261004-run4"
   },
   "service-worker.published.js": {
-    "sha256": "e36ea88f0c12b32721068f30eee9bda61b29d4707ed4813b0a94a0babb64c0f6",
-    "v": "20261004-run5c"
+    "sha256": "d5d63a5ceb9b76e30e06bb6a381fd1aca990e58ba29cc81b98dfc475598b8b9b",
+    "v": "20261004-run4"
   }
 }

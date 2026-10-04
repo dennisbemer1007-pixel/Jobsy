@@ -1385,9 +1385,13 @@
     text-align: center;
 }
 
-/* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome reports that as :focus-visible,
-   so the browser draws a heavy black outline. Use the same ring as other controls. */
+/* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome reports that as :focus-visible.
+   The ring is for keyboard focus only (html[data-lobsy-keyboard]). */
 h1[tabindex="-1"]:focus {
+    outline: none;
+}
+
+html[data-lobsy-keyboard] h1[tabindex="-1"]:focus-visible {
     outline: 3px solid var(--brand);
     outline-offset: 2px;
 }

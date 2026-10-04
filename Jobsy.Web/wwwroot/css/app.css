@@ -19444,9 +19444,12 @@ body {
 
 /* ==== mobile-candidate-a11y-polish ==== */
 /* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome treats that script focus as
-   :focus-visible, so :focus:not(:focus-visible){outline:none} left the browser's
-   black outline. Use the same brand ring as other controls. */
+   :focus-visible. Show the ring only after a real keyboard press. */
 h1[tabindex="-1"]:focus {
+    outline: none;
+}
+
+html[data-lobsy-keyboard] h1[tabindex="-1"]:focus-visible {
     outline: 3px solid var(--brand);
     outline-offset: 2px;
 }

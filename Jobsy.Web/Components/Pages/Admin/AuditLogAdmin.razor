@@ -72,7 +72,7 @@
                                 <td data-label="@Culture["AdminAudit.Col.Actor"]">@row.ActorDisplayName</td>
                                 <td data-label="@Culture["AdminAudit.Col.Action"]"><span class="status-pill @ActionPillClass(row.Action)">@ActionLabel(row.Action)</span></td>
                                 <td class="admin-audit-object" data-label="@Culture["AdminAudit.Col.Object"]" title="@ObjectTitle(row)">
-                                    <span>@row.TargetLabel</span>
+                                    <span>@TargetLabel(row.TargetLabel)</span>
                                     @if (!string.IsNullOrWhiteSpace(row.Reason))
                                     {
                                         <span class="muted"> · @row.Reason</span>
@@ -181,7 +181,7 @@
             <div><dt>@Culture["AdminAudit.Col.Time"]</dt><dd class="admin-mono">@FormatAmsterdam(_selected.OccurredAtUtc)</dd></div>
             <div><dt>@Culture["AdminAudit.Col.Actor"]</dt><dd>@_selected.ActorDisplayName (@_selected.ActorRole)</dd></div>
             <div><dt>@Culture["AdminAudit.Col.Action"]</dt><dd><span class="status-pill @ActionPillClass(_selected.Action)">@ActionLabel(_selected.Action)</span></dd></div>
-            <div><dt>@Culture["AdminAudit.Col.Object"]</dt><dd>@_selected.TargetLabel</dd></div>
+            <div><dt>@Culture["AdminAudit.Col.Object"]</dt><dd>@TargetLabel(_selected.TargetLabel)</dd></div>
             <div><dt>@Culture["AdminAudit.Col.Result"]</dt><dd>@ResultLabel(_selected.Result)</dd></div>
             <div><dt>@Culture["AdminAudit.Reason"]</dt><dd>@(_selected.Reason ?? "—")</dd></div>
             <div><dt>@Culture["AdminAudit.Col.Correlation"]</dt><dd class="admin-mono">@_selected.CorrelationId</dd></div>
@@ -413,8 +413,13 @@
         return $"Nog {mins} min";
     }
 
+    private string TargetLabel(string? label) => AdminActionLabels.Target(label, key => Culture[key]);
+
     private string ObjectTitle(AdminAuditItem row)
-        => string.IsNullOrWhiteSpace(row.Reason) ? row.TargetLabel : $"{row.TargetLabel} — {row.Reason}";
+    {
+        var label = TargetLabel(row.TargetLabel);
+        return string.IsNullOrWhiteSpace(row.Reason) ? label : $"{label} — {row.Reason}";
+    }
 
     private string ActionLabel(string action) => AdminActionLabels.Label(action, key => Culture[key]);
 

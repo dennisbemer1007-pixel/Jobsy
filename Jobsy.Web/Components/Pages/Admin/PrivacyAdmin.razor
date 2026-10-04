@@ -81,7 +81,7 @@
                     {
                         <tr>
                             <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM HH:mm")</td>
-                            <td data-label="@Culture["AdminAudit.Col.Object"]">@e.TargetLabel</td>
+                            <td data-label="@Culture["AdminAudit.Col.Object"]">@AdminActionLabels.Target(e.TargetLabel, key => Culture[key])</td>
                             <td data-label="@Culture["AdminAudit.Col.Result"]">@e.Result</td>
                         </tr>
                     }

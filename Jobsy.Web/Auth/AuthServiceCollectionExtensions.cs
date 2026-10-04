@@ -1288,7 +1288,10 @@ public static class AuthServiceCollectionExtensions
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Role, role),
             new("auth_method", "password"),
-            new(JobsyClaimTypes.SessionVersion, "0")
+            new(JobsyClaimTypes.SessionVersion, "0"),
+            // Demo login is Development-only (never Production). The claim lets the
+            // CI admin smoke stay on /admin; real accounts still enroll at /account/mfa.
+            new(JobsyClaimTypes.MfaVerified, "1")
         };
 
         if (!string.IsNullOrWhiteSpace(user.CompanyId))
