@@ -24,6 +24,7 @@ Bekijk je sollicitatie: https://lobsy.nl/candidate/applications
 Team Lobsy
 
 Je krijgt deze mail omdat je via Lobsy hebt gesolliciteerd.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

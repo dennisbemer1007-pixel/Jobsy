@@ -15,6 +15,7 @@ View your recovery codes: https://lobsy.nl/account/mfa/herstelcodes
 Team Lobsy
 
 You get this email to protect your account.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

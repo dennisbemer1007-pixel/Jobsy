@@ -25,7 +25,7 @@ Improve vacancy: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1
 فريق Lobsy
 
 You get this email because you manage vacancies for ⁨Bakkerij De Gouden Korrel⁩ on Lobsy.
-إلغاء الاشتراك من هذه الرسائل: https://lobsy.nl/mail/afmelden
+لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك: https://lobsy.nl/mail/afmelden
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 إعدادات البريد: https://lobsy.nl/account/mail-instellingen
@@ -37,7 +37,7 @@ marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Improve vacancy -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
-a: إلغاء الاشتراك من هذه الرسائل -> https://lobsy.nl/mail/afmelden
+a: لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك -> https://lobsy.nl/mail/afmelden
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen

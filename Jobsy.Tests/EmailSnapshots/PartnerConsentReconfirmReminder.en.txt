@@ -16,6 +16,7 @@ Review permission: https://lobsy.nl/candidate/paspoort/delen
 Team Lobsy
 
 You get this email because you let an agency see your passport.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

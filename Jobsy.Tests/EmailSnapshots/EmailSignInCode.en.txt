@@ -16,6 +16,7 @@ The code is valid for 10 minutes.
 Team Lobsy
 
 You get this email because you requested this in Lobsy.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

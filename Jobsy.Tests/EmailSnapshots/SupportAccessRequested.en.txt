@@ -17,6 +17,7 @@ View the access: https://lobsy.nl/admin/personal-data-access-log
 Team Lobsy
 
 You get this email because you are a Lobsy administrator.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

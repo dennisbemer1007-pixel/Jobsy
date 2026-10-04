@@ -16,7 +16,7 @@ Go to your tests: https://lobsy.nl/profiel/tests
 Team Lobsy
 
 You asked for this reminder yourself.
-Unsubscribe from these emails: https://lobsy.nl/mail/afmelden
+No more reminder emails? Unsubscribe: https://lobsy.nl/mail/afmelden
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail settings: https://lobsy.nl/account/mail-instellingen
@@ -27,7 +27,7 @@ marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Go to your tests -> https://lobsy.nl/profiel/tests
-a: Unsubscribe from these emails -> https://lobsy.nl/mail/afmelden
+a: No more reminder emails? Unsubscribe -> https://lobsy.nl/mail/afmelden
 a: Help -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 a: Mail settings -> https://lobsy.nl/account/mail-instellingen

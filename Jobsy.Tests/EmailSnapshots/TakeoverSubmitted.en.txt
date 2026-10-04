@@ -16,6 +16,7 @@ How does Lobsy work?: https://lobsy.nl/hoe-werkt-lobsy
 Team Lobsy
 
 You get this email because you asked for access to Bakkerij De Gouden Korrel.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
