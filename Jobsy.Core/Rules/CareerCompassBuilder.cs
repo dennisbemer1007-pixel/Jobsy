@@ -64,6 +64,31 @@ public static class CareerCompassBuilder
         _ => "Richting om te bekijken"
     };
 
+    /// <summary>
+    /// Drops lines that point at vacancies or the job map. The RIASEC list itself stays unchanged.
+    /// </summary>
+    public static IReadOnlyList<string> NotesForCandidate(IReadOnlyList<string> notes, bool employersOn)
+    {
+        if (employersOn)
+        {
+            return notes;
+        }
+
+        return notes.Where(note => !MentionsEmployerSurface(note)).ToList();
+    }
+
+    public static bool MentionsEmployerSurface(string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note))
+        {
+            return false;
+        }
+
+        return note.Contains("vacature", StringComparison.OrdinalIgnoreCase)
+               || note.Contains("banenkaart", StringComparison.OrdinalIgnoreCase)
+               || note.Contains("job map", StringComparison.OrdinalIgnoreCase);
+    }
+
     public static string Band(int percent)
     {
         if (percent >= SuperMatchMin)

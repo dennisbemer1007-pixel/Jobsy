@@ -2,6 +2,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 @if (Compass is null)
 {
@@ -58,17 +59,19 @@
 @if (!Compass.HasOccupations)
 {
     <div class="kompas-practical">
-        <h4>@Culture["Kompas.PracticalTitle"]</h4>
         <p>@Culture[CareerCompassSnapshot.EmptyNoteKey]</p>
     </div>
 }
-else if (Compass.PracticalNotes.Count > 0)
+else if (VisibleNotes.Count > 0 || !_employersOn)
 {
     <div class="kompas-practical">
-        <h4>@Culture["Kompas.PracticalTitle"]</h4>
-        @foreach (var note in Compass.PracticalNotes)
+        @foreach (var note in VisibleNotes)
         {
             <p>@note</p>
+        }
+        @if (!_employersOn)
+        {
+            <p>@Culture["Kompas.PracticalEmployersOff"]</p>
         }
     </div>
 }
@@ -76,6 +79,23 @@ else if (Compass.PracticalNotes.Count > 0)
 @code {
     [Parameter] public CareerCompassModel? Compass { get; set; }
     [Parameter] public CompetencyScoreSet? Competencies { get; set; }
+
+    private bool _employersOn = true;
+
+    private IReadOnlyList<string> VisibleNotes =>
+        CareerCompassBuilder.NotesForCandidate(Compass?.PracticalNotes ?? [], _employersOn);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+    }
 
     private RenderFragment OccupationAccordion(CareerOccupationMatchModel item) => __builder =>
     {

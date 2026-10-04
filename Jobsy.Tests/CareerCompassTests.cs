@@ -61,6 +61,16 @@ public class CareerCompassTests
     }
 
     [Fact]
+    public void Employers_off_hides_vacancy_and_job_map_notes()
+    {
+        var compass = CareerCompassBuilder.Build(HandsOnScores(), fromDeepAnalysis: false);
+        var notes = CareerCompassBuilder.NotesForCandidate(compass.PracticalNotes, employersOn: false);
+        Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(notes, n => CareerCompassBuilder.MentionsEmployerSurface(n));
+        Assert.Equal(compass.PracticalNotes, CareerCompassBuilder.NotesForCandidate(compass.PracticalNotes, employersOn: true));
+    }
+
+    [Fact]
     public void Incomplete_scores_yield_empty_occupations_and_a_plain_prompt()
     {
         var compass = CareerCompassBuilder.Build(null);
@@ -249,7 +259,8 @@ public class CareerCompassTests
         var root = RepoRoot.Find();
         var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor"));
         Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
-        Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
+        Assert.Contains("Kompas.PracticalEmployersOff", panel, StringComparison.Ordinal);
+        Assert.DoesNotContain("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
         Assert.Contains("kompas-occupation__details", panel, StringComparison.Ordinal);
         Assert.Contains("CareerOccupationDetail", panel, StringComparison.Ordinal);
@@ -279,7 +290,7 @@ public class CareerCompassTests
         Assert.Contains("kompas-panel-tests", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-dna", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-fit", home, StringComparison.Ordinal);
-        Assert.Contains("Kompas.PracticalTitle", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
+        Assert.Contains("Kompas.PracticalEmployersOff", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
         Assert.DoesNotContain("kompas-grid", home, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
