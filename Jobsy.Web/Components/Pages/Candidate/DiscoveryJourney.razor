@@ -138,7 +138,7 @@
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
                     <AvailabilityStep Draft="Draft"
-                                      Presets="PresetItems"
+                                      Presets="VisiblePresets"
                                       TogglePreset="TogglePreset"
                                       ToggleFineTune="ToggleFineTune"
                                       SetMinHours="SetMinHoursAsync"
@@ -544,6 +544,12 @@
         new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
         new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
     ];
+
+    /// <summary>School and holiday presets are for younger candidates. Adults keep the work-shaped ones.</summary>
+    private IReadOnlyList<AvailabilityStep.Preset> VisiblePresets =>
+        IsYoungCandidate
+            ? PresetItems
+            : PresetItems.Where(p => p.Code is not ("school" or "holiday")).ToArray();
     private static readonly TestConsentStep.TestTab[] ConsentTabs =
     [
         new(7, "Onboarding.Test.Competency", "Onboarding.Test.Competency.Lead"),
@@ -975,10 +981,17 @@
         }
 
         Draft.HasConsent = profile.TestAiConsentAt is not null;
+        Draft.ConsentRequested = Draft.HasConsent;
         Draft.HomeLat = profile.HomeLatitude;
         Draft.HomeLng = profile.HomeLongitude;
         var preferences = profile.Preferences ?? new();
         SplitAddress(preferences.HomeAddress);
+        if (PostcodeMatch.IsNlPostcode(NormalizePostcode(Draft.Postcode))
+            && !string.IsNullOrWhiteSpace(Draft.City))
+        {
+            Draft.Postcode = NormalizePostcode(Draft.Postcode);
+            Draft.PostcodeResolved = true;
+        }
         Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
         Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
         Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
@@ -1445,18 +1458,13 @@
         foreach (var step in JourneyCatalog.Steps.Take(6))
         {
             var ev = _state?.Steps.FirstOrDefault(s => s.Step == step.Number);
-            var isNew = step.Number is >= 3 and <= 6 && ev?.CompletedAtUtc is null && ev?.SkippedAtUtc is null
-                        && (_state?.WizardVersion ?? 3) < OnboardingWizardCatalog.WizardVersionV3;
-            // Completed v2 users: steps 3–6 not filled in v3 terms → Nieuw
-            if (_state?.IsComplete == true && step.Number is >= 3 and <= 6)
-            {
-                var filled = ev?.CompletedAtUtc is not null || ev?.SkippedAtUtc is not null;
-                // Heuristic: if wizard was completed on v2, treat empty discovery fields as Nieuw
-                if (!filled || (_state.WizardVersion < OnboardingWizardCatalog.WizardVersionV3 && !filled))
-                {
-                    isNew = !filled;
-                }
-            }
+            var filled = ev?.CompletedAtUtc is not null || ev?.SkippedAtUtc is not null;
+            // Only a finished v2 journey left steps 3–6 empty. A finished v3 journey is done.
+            var isNew = DiscoveryOverviewRules.StepLooksNew(
+                _state?.IsComplete == true,
+                _state?.WizardVersion ?? OnboardingWizardCatalog.WizardVersionV3,
+                step.Number,
+                filled);
 
             string status;
             string cls;
