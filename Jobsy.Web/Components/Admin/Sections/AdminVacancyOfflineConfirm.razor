@@ -1,0 +1,30 @@
+@namespace Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Item is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["AdminVacancy.Confirm.OfflineAction"]"
+                         TitleId="admin-vac-offline"
+                         OnClose="OnCancel">
+        <p data-testid="admin-vacancy-offline-confirm">@Culture["AdminVacancy.Confirm.Offline"]</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" data-testid="admin-vacancy-offline-cancel" disabled="@Busy" @onclick="OnCancel">@Culture["Common.Cancel"]</button>
+            <button type="button"
+                    class="btn-compact btn-compact--primary"
+                    data-testid="admin-vacancy-offline-confirm-btn"
+                    disabled="@Busy"
+                    @onclick="OnConfirm">
+                @Culture["AdminVacancy.Confirm.OfflineAction"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    [Parameter] public AdminVacancyItem? Item { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+}

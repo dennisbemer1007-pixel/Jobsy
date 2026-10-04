@@ -9,11 +9,12 @@
 @inject JobsyApiClient Api
 @inject BottomNavRefreshService NavRefresh
 @inject IFeatureFlags FeatureFlags
+@inject IJSRuntime Js
 @implements IDisposable
 
 @if (_items.Count > 0)
 {
-    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
+    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]" @ref="_nav">
         @foreach (var item in _items)
         {
             var title = Culture[item.TitleKey];
@@ -38,6 +39,26 @@
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
+    private ElementReference _nav;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            if (_items.Count > 0)
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.bind", _nav, "--bottom-nav-h");
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--bottom-nav-h");
+            }
+        }
+        catch
+        {
+            // bUnit / prerender
+        }
+    }
     private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;

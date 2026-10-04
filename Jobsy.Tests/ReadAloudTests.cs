@@ -1,7 +1,9 @@
 using Bunit;
+using Jobsy.Web.Components;
 using Jobsy.Web.Components.Shared;
 using Jobsy.Web.Components.Shared.Questionnaire;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Navigation;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -84,11 +86,34 @@ public sealed class ReadAloudBunitTests : BunitContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new ReadAloudFakeAuth());
+        Services.AddSingleton<CoachTipBus>();
+        Services.AddSingleton<AssistantChatHost>();
         Services.AddSingleton(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton(_coordinator);
+    }
+
+    [Fact]
+    public void Coach_tip_has_a_speaker_beside_the_sentence()
+    {
+        JSInterop.Setup<ReadAloudProbe>("lobsyReadAloud.whenReady", _ => true)
+            .SetResult(new ReadAloudProbe { Supported = true, Enabled = true });
+
+        var cut = Render<LobsyCoach>();
+        var nav = Services.GetRequiredService<NavigationManager>();
+        Services.GetRequiredService<CoachTipBus>().Publish(nav.Uri, "Kijk nog eens naar je test.");
+
+        cut.WaitForAssertion(() =>
+        {
+            var tip = cut.Find(".lobsy-coach-dock__tip");
+            Assert.Contains("Kijk nog eens naar je test.", tip.TextContent, StringComparison.Ordinal);
+            var speaker = tip.QuerySelector("[data-read-aloud]");
+            Assert.NotNull(speaker);
+            Assert.Equal("play", speaker!.GetAttribute("data-read-aloud-state"));
+            Assert.Empty(cut.Find("#lobsy-coach-btn").QuerySelectorAll("[data-read-aloud]"));
+        });
     }
 
     [Fact]

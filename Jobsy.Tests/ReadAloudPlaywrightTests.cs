@@ -33,14 +33,14 @@ public class ReadAloudPlaywrightTests
         await page.GotoAsync(baseUrl + "/candidate/career" + query,
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
-        var bubble = page.Locator(".test-dive-scene__bubble [data-read-aloud]");
+        var bubble = page.Locator(".lobsy-coach-dock__tip [data-read-aloud], .journey-bubble [data-read-aloud], .test-dive-scene__bubble [data-read-aloud]");
         var sawBubble = await bubble.CountAsync() > 0 && await bubble.First.IsVisibleAsync();
         if (sawBubble)
         {
             await bubble.First.ClickAsync();
             await page.Locator("[data-read-aloud-state='stop']").First.WaitForAsync(new() { Timeout = 8_000 });
             await page.Locator("[data-read-aloud-state='stop']").First.ClickAsync();
-            await page.Locator(".test-dive-scene__bubble [data-read-aloud-state='play']").First.WaitForAsync(new() { Timeout = 8_000 });
+            await page.Locator("[data-read-aloud-state='play']").First.WaitForAsync(new() { Timeout = 8_000 });
         }
         else
         {

@@ -12,6 +12,7 @@
 @using Jobsy.Web.Components.Werkgever.Shell
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Components.Werkgever
 @using Jobsy.Web.Werkgever
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
@@ -181,7 +182,7 @@
                             <tr class="@(pending ? "wg-vac__row--hl" : null) @(selected ? "wg-vac__row--sel" : null)">
                                 @if (CanWrite)
                                 {
-                                    <td class="ent-data-table__check">
+                                    <td class="ent-data-table__check" data-label="@Culture["WgVac.Col.Select"]">
                                         <input type="checkbox" checked="@selected" @onchange="e => ToggleRow(v.Id, e)"
                                                aria-label="@v.Title" />
                                     </td>
@@ -217,15 +218,15 @@
                                 </td>
                                 @if (_colViews)
                                 {
-                                    <td class="tabular">@v.ImpressionCount.ToString("N0", CultureInfo.GetCultureInfo("nl-NL"))</td>
+                                    <td class="tabular" data-label="@Culture["WgVac.Col.Views"]">@v.ImpressionCount.ToString("N0", CultureInfo.GetCultureInfo("nl-NL"))</td>
                                 }
                                 @if (_colOnline)
                                 {
-                                    <td class="tabular">@OnlineUntilLabel(v)</td>
+                                    <td class="tabular" data-label="@Culture["WgVac.Col.OnlineUntil"]">@OnlineUntilLabel(v)</td>
                                 }
                                 @if (_colVisibility)
                                 {
-                                    <td>
+                                    <td data-label="@Culture["WgVac.Col.Visibility"]">
                                         <div class="wg-vac__vis">
                                             @if (v.IsHighlighted)
                                             {
@@ -244,7 +245,7 @@
                                         </div>
                                     </td>
                                 }
-                                <td class="wg-vac__actions">
+                                <td class="wg-vac__actions" data-label="@Culture["Common.Actions"]">
                                     @PrimaryAction(v)
                                     @if (CanWrite)
                                     {
@@ -303,9 +304,10 @@
             }
             else if (!_confirmInsufficient)
             {
-                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="ConfirmProceedAsync">
-                    @(_busy ? Culture["Common.Busy"] : Culture["VacancyAction.Approve"])
-                </button>
+                <VacancyConfirmProceedButton DeleteMode="_deleteMode"
+                                             Busy="_busy"
+                                             Disabled="_busy"
+                                             OnClick="ConfirmProceedAsync" />
             }
             <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseConfirm">@Culture["Common.Cancel"]</button>
         </div>
@@ -759,7 +761,7 @@
         if (string.Equals(v.Status, "Archived", StringComparison.OrdinalIgnoreCase)
             || string.Equals(v.Status, "Fulfilled", StringComparison.OrdinalIgnoreCase))
         {
-            return string.Format(Culture["WgVac.ClosedOn"], v.EndDate.ToString("dd-MM"));
+            return string.Format(Culture["WgVac.ClosedOn"], v.EndDate.ToString("dd-MM-yyyy"));
         }
 
         if (string.Equals(v.Status, "Draft", StringComparison.OrdinalIgnoreCase)
@@ -1083,6 +1085,16 @@
         return Task.CompletedTask;
     }
 
+    private string TokenPhrase(decimal amount)
+    {
+        var text = amount == decimal.Truncate(amount)
+            ? decimal.Truncate(amount).ToString("0", CultureInfo.InvariantCulture)
+            : amount.ToString("0.##", CultureInfo.InvariantCulture);
+        return amount == 1m
+            ? Culture["Count.Token.One"]
+            : string.Format(Culture["Count.Token.Many"], text);
+    }
+
     private void OpenReopen(VacancyListItem vacancy)
     {
         var cost = _costs.GetValueOrDefault("Extend", 1m);
@@ -1092,7 +1104,11 @@
         _confirmKind = BulkKind.Extend;
         _confirmVacancyId = vacancy.Id;
         _confirmTitle = Culture["VacancyAction.Reactivate"];
-        _confirmBody = string.Format(Culture["WgVac.Confirm.Reopen"], cost.ToString("0.##"), _tokenBalance.ToString("0.##"), after.ToString("0.##"));
+        var costLabel = TokenPhrase(cost);
+        var balanceLabel = TokenPhrase(_tokenBalance);
+        _confirmBody = after < 0
+            ? string.Format(Culture["WgVac.Confirm.ReopenLow"], costLabel, balanceLabel)
+            : string.Format(Culture["WgVac.Confirm.Reopen"], costLabel, balanceLabel, after.ToString("0.##"));
         _confirmInsufficient = after < 0;
         _confirmOpen = true;
     }

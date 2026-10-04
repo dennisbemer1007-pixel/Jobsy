@@ -358,7 +358,7 @@
   margin: 6px 0 0;
 }
 
-.journey--mobile .journey-step h1 { font-size: var(--text-xl); }
+.journey--mobile .journey-step h1 { font-size: 1.5rem; }
 
 .journey-step__lead {
   font-size: var(--text-md);

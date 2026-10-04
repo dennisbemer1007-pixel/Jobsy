@@ -98,7 +98,7 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
             throw new InvalidOperationException(ConsentRequiredCode);
         }
 
-        if (!waiverAccepted)
+        if (!waiverAccepted && !user.IsTestAccount)
         {
             throw new InvalidOperationException(WaiverRequiredCode);
         }

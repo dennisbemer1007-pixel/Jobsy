@@ -101,7 +101,7 @@ public class CareerStepBunitTests : BunitContext
         var step = Step(2, extraGaps: 6);
         var cut = Render<CareerStepDetailCard>(p => p.Add(x => x.Step, step));
 
-        Assert.Contains("Welke klauwen je al hebt", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Welke stappen je al hebt gezet", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(6, cut.FindAll(".career-step__gap").Count);
         Assert.Contains("Toon alles (10)", cut.Markup, StringComparison.Ordinal);
 
@@ -274,7 +274,7 @@ public class CareerStepBunitTests : BunitContext
         Assert.Contains("Keukenervaring opdoen is gehaald.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Oude schaal", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Stap 3: Zelfstandig koken", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Nog 2 klauwen · 1 opleidingen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Nog 2 stappen · 1 opleidingen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Op naar stap 3", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("tabindex=\"-1\"", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("LobsyToast", cut.Markup, StringComparison.Ordinal);
@@ -304,7 +304,7 @@ public class CareerStepBunitTests : BunitContext
             .Add(x => x.VacancyCount, 14));
 
         Assert.Contains("Veilig werken staat in je paspoort", full.Markup, StringComparison.Ordinal);
-        Assert.Contains("Je klauw ‘Snijtechniek’ is gegroeid", full.Markup, StringComparison.Ordinal);
+        Assert.Contains("Je stap ‘Snijtechniek’ is gegroeid", full.Markup, StringComparison.Ordinal);
         Assert.Contains("Nieuw: 14 vacatures als helpende passen bij je", full.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("staat als gehaald in je plan", full.Markup, StringComparison.Ordinal);
         Assert.Equal(3, full.FindAll(".career-done__gained li").Count);

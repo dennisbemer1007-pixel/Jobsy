@@ -1324,8 +1324,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-run5"
-            : "/service-worker.js?v=20261004-run5";
+            ? "/service-worker.published.js?v=20261004-readaloud2"
+            : "/service-worker.js?v=20261004-readaloud2";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1481,3 +1481,48 @@ window.lobsyPwaInstall = (function () {
     document.documentElement.classList.remove("using-keyboard");
   }, true);
 })();
+
+(function () {
+  if (window.__jobsyInputMode) return;
+  window.__jobsyInputMode = true;
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Tab") document.documentElement.setAttribute("data-input", "keyboard");
+  }, true);
+  document.addEventListener("pointerdown", function () {
+    document.documentElement.setAttribute("data-input", "pointer");
+  }, true);
+})();
+
+window.jobsyCoachDock = window.jobsyCoachDock || {
+  bind: function (el, cssVar) {
+    if (!el || !cssVar) return;
+    var root = document.documentElement;
+    var apply = function () {
+      var h = 0;
+      if (el && el.isConnected) {
+        var style = window.getComputedStyle(el);
+        var hidden = style.display === "none" || style.visibility === "hidden";
+        h = hidden ? 0 : Math.ceil(el.getBoundingClientRect().height);
+      }
+      root.style.setProperty(cssVar, h + "px");
+    };
+    apply();
+    if (typeof ResizeObserver === "function") {
+      var ro = new ResizeObserver(apply);
+      ro.observe(el);
+    }
+  },
+  clear: function (cssVar) {
+    document.documentElement.style.setProperty(cssVar, "0px");
+  },
+  focus: function (id) {
+    var el = document.getElementById(id);
+    if (el && el.focus) el.focus();
+  },
+  tipDismissed: function (key) {
+    try { return localStorage.getItem("lobsy-coach-tip:" + key) === "1"; } catch (e) { return false; }
+  },
+  dismissTip: function (key) {
+    try { localStorage.setItem("lobsy-coach-tip:" + key, "1"); } catch (e) { }
+  }
+};

@@ -10,7 +10,7 @@
         <div class="test-result-locked__head">
             <div>
                 <h2 id="@_titleId">
-                    <span aria-hidden="true">🔒</span>
+                    <span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
                     @Culture["TestResult.Locked.Title"]
                 </h2>
                 <p class="test-result-locked__lead">
@@ -18,7 +18,7 @@
                 </p>
             </div>
             <span class="test-result-sample-pill">
-                <span aria-hidden="true">👁</span>
+                <span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Eye)</span>
                 @Culture["TestResult.Locked.SamplePill"]
             </span>
         </div>
@@ -33,7 +33,7 @@
                             <small>@Culture[card.SubtitleKey]</small>
                         </div>
                         <span class="test-result-lock-chip">
-                            <span aria-hidden="true">🔒</span>
+                            <span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
                             @Culture["TestResult.Locked.Chip"]
                         </span>
                     </div>

@@ -270,7 +270,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
     {
         var classValue = classId.ToString("D");
-        TimeoutException? last = null;
+        Exception? last = null;
         for (var attempt = 0; attempt < 2; attempt++)
         {
             await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
@@ -295,22 +295,33 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             }
 
             // One turn: Blazor must not swap the form between selecting the class and POST.
-            await page.EvaluateAsync(
-                """
-                ([id, code]) => {
-                  const select = document.querySelector('select[name=classId]');
-                  const input = document.querySelector('input[name=code]');
-                  if (!select || !input) throw new Error('login form missing');
-                  const option = [...select.options].find(o => o.value === id);
-                  if (!option) throw new Error('class option missing');
-                  option.selected = true;
-                  input.value = code;
-                  const form = input.closest('form');
-                  if (typeof form.requestSubmit === 'function') form.requestSubmit();
-                  else form.submit();
-                }
-                """,
-                new[] { classValue, code });
+            // Under suite load the option can vanish in that gap. Retry the whole login once.
+            try
+            {
+                await page.EvaluateAsync(
+                    """
+                    ([id, code]) => {
+                      const select = document.querySelector('select[name=classId]');
+                      const input = document.querySelector('input[name=code]');
+                      if (!select || !input) throw new Error('login form missing');
+                      const option = [...select.options].find(o => o.value === id);
+                      if (!option) throw new Error('class option missing');
+                      option.selected = true;
+                      input.value = code;
+                      const form = input.closest('form');
+                      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                      else form.submit();
+                    }
+                    """,
+                    new[] { classValue, code });
+            }
+            catch (PlaywrightException ex) when (attempt == 0
+                && (ex.Message.Contains("class option missing", StringComparison.Ordinal)
+                    || ex.Message.Contains("login form missing", StringComparison.Ordinal)))
+            {
+                last = ex;
+                continue;
+            }
             try
             {
                 await page.WaitForURLAsync(

@@ -186,11 +186,11 @@ else
                                         <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => ExtendAsync(v)">
                                             @Culture["VacancyAction.Extend"]
                                         </button>
-                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => DeactivateAsync(v)">
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => AskDeactivate(v)">
                                             @Culture["VacancyAction.Deactivate"]
                                         </button>
                                     }
-                                    <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => DeleteAsync(v)">
+                                    <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => AskDelete(v)">
                                         @Culture["WgVac.Delete"]
                                     </button>
                                 </RowActionsMenu>
@@ -204,7 +204,10 @@ else
                     TotalPages="@VacancyPageCount()" PageChanged="GoPageAsync" />
     }
 
-    <AdminDrawer Open="@(_openItem is not null)" OpenChanged="OnOpenChanged" Title="@(_openItem?.Title ?? "")">
+    <AdminVacancyPurgeConfirm Item="_purgeTarget" Busy="_busy" OnCancel="CancelDelete" OnConfirm="ConfirmDeleteAsync" />
+    <AdminVacancyOfflineConfirm Item="_offlineTarget" Busy="_busy" OnCancel="CancelDeactivate" OnConfirm="ConfirmDeactivateAsync" />
+
+<AdminDrawer Open="@(_openItem is not null)" OpenChanged="OnOpenChanged" Title="@(_openItem?.Title ?? "")">
         @if (_openItem is AdminVacancyItem open)
         {
             <p>@open.CompanyName <span class="muted">@CompanyTypeLabel(open.CompanyType)</span></p>
@@ -557,6 +560,39 @@ else
         {
             _busy = false;
         }
+    }
+
+    private AdminVacancyItem? _purgeTarget;
+    private AdminVacancyItem? _offlineTarget;
+
+    private void AskDelete(AdminVacancyItem v) => _purgeTarget = v;
+
+    private void AskDeactivate(AdminVacancyItem v) => _offlineTarget = v;
+
+    private void CancelDeactivate() => _offlineTarget = null;
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (_offlineTarget is not AdminVacancyItem v)
+        {
+            return;
+        }
+
+        _offlineTarget = null;
+        await DeactivateAsync(v);
+    }
+
+    private void CancelDelete() => _purgeTarget = null;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_purgeTarget is not AdminVacancyItem v)
+        {
+            return;
+        }
+
+        _purgeTarget = null;
+        await DeleteAsync(v);
     }
 
     private async Task DeleteAsync(AdminVacancyItem v)

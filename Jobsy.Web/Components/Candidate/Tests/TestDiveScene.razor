@@ -1,33 +1,26 @@
 @namespace Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
-@using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Components.Candidate.Passport
 
 <div class="test-dive-scene @(Mobile ? "test-dive-scene--mobile" : "test-dive-scene--desktop") @(Deep ? "test-dive-scene--deep" : null) @(Celebrate ? "test-dive-scene--celebrate" : null)"
-     style="@GeometryStyle">
-    <div class="test-dive-scene__art" aria-hidden="true">
-        <div class="test-dive-scene__bg journey-scene journey-scene--depth-@SceneDepth"></div>
-        <div class="test-dive-scene__ruler">
-            @foreach (var band in RulerBands)
-            {
-                var pct = band.Count <= 0 ? 0 : Math.Min(100, band.Count * 100.0 / Math.Max(Target, 1));
-                <span class="test-dive-scene__tick" style="--y:@pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
-            }
-        </div>
-        <div class="test-dive-scene__lobster" style="--y:@LobsterY.ToString(System.Globalization.CultureInfo.InvariantCulture)%">
-            <JourneyLobster PlatesShed="PlatesShed" NewShell="NewShell" Mobile="Mobile" Size="@(Mobile ? 72 : 96)" />
-        </div>
-        @if (FallingShard)
+     style="@GeometryStyle"
+     aria-hidden="true">
+    <div class="test-dive-scene__bg journey-scene journey-scene--depth-@SceneDepth"></div>
+    <div class="test-dive-scene__ruler">
+        @foreach (var band in RulerBands)
         {
-            <div class="test-dive-scene__shard @(Celebrate ? "is-falling" : "is-resting")"></div>
+            var pct = band.Count <= 0 ? 0 : Math.Min(100, band.Count * 100.0 / Math.Max(Target, 1));
+            <span class="test-dive-scene__tick" style="--y:@pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
         }
     </div>
+    @if (FallingShard)
+    {
+        <div class="test-dive-scene__shard @(Celebrate ? "is-falling" : "is-resting")"></div>
+    }
     @if (!string.IsNullOrWhiteSpace(BubbleText))
     {
-        <div class="test-dive-scene__bubble">
-            <LobsyBubble Text="@BubbleText" Variant="@LobsyBubble.BubbleVariant.Scene" />
-        </div>
+        <LobsyBubble Text="@BubbleText" Variant="LobsyBubble.BubbleVariant.Scene" />
     }
 </div>
 

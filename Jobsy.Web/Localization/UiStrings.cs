@@ -420,7 +420,7 @@ public static class UiStrings
             ["Assistant.You"] = "Jij",
             ["Assistant.Typing"] = "Even denken…",
             ["Assistant.InputLabel"] = "Jouw vraag",
-            ["Assistant.Placeholder"] = "Stel hier uw vraag",
+            ["Assistant.Placeholder"] = "Stel hier je vraag",
             ["Assistant.Send"] = "Verstuur",
             ["Assistant.Greeting"] = "Hoi! Ik ben Lobsy. Stel me een gerichte vraag binnen jouw rol over vacatures, sollicitaties of je account.",
             ["Assistant.Disclaimer"] = "AI-assistent — geen persoonlijk advies. Deel geen BSN, bankgegevens of wachtwoorden.",

@@ -57,21 +57,28 @@ else if (_state == "paid")
                    Mode="TestPageShell.ShellMode.Checkout"
                    Deep="true"
                    Eyebrow="@Culture["DeepPay.Title"]"
-                   H1="@Culture["DeepPay.PaidTitle"]"
+                   H1="@(_isTestUnlock ? Culture["DeepPay.OpenedTitle"] : Culture["DeepPay.PaidTitle"])"
                    Lead="@Culture.Format("Deep.Checkout.PaidLead", _testName)"
                    TestName="@_testName"
                    Answered="0"
                    TargetCount="qCount"
                    BubbleText="@Culture["Deep.Checkout.Bubble.Paid"]">
         <RailContent>
-            <p class="test-rail__zone">@Culture["Deep.Rail.PaidReady"]</p>
+            <p class="test-rail__zone">@(_isTestUnlock ? Culture["Deep.Rail.OpenedReady"] : Culture["Deep.Rail.PaidReady"])</p>
         </RailContent>
         <ChildContent>
             <div class="deep-checkout deep-checkout--paid">
                 <span class="deep-checkout__check" aria-hidden="true">✓</span>
                 <dl class="deep-pay-receipt">
                     <div><dt>@Culture["DeepPay.Fact.What"]</dt><dd>@Culture.Format("DeepPay.What", _testName)</dd></div>
-                    <div><dt>@Culture["DeepPay.Fact.Amount"]</dt><dd>@(_isTestUnlock ? Culture["DeepPay.TestAccountFree"] : $"€ {_amountLabel}")</dd></div>
+                    @if (_isTestUnlock)
+                    {
+                        <div><dt class="visually-hidden">@Culture["DeepPay.Fact.Amount"]</dt><dd>@Culture["DeepPay.PriceFree"]</dd></div>
+                    }
+                    else
+                    {
+                        <div><dt>@Culture["DeepPay.Fact.Amount"]</dt><dd>€ @_amountLabel</dd></div>
+                    }
                     <div><dt>@Culture["DeepPay.Fact.Date"]</dt><dd>@_paidLocal</dd></div>
                     @if (!string.IsNullOrWhiteSpace(_invoiceNumber))
                     {

@@ -138,11 +138,10 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
             .Add(p => p.Target, 25)
             .Add(p => p.BubbleText, "Hallo"));
 
-        var art = cut.Find(".test-dive-scene__art");
-        Assert.Equal("true", art.GetAttribute("aria-hidden"));
-        var bubble = cut.Find(".test-dive-scene__bubble");
-        Assert.Null(bubble.GetAttribute("aria-hidden"));
-        Assert.Contains("Hallo", bubble.TextContent);
+        var scene = cut.Find(".test-dive-scene");
+        Assert.Equal("true", scene.GetAttribute("aria-hidden"));
+        Assert.Contains("Hallo", scene.TextContent);
+        Assert.DoesNotContain("test-dive-scene__lobster", cut.Markup, StringComparison.Ordinal);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

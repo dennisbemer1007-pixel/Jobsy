@@ -223,7 +223,7 @@ public static class CareerCompassBuilder
         };
 
         var platform = fromDeepAnalysis
-            ? "Zo zet je dit in op Lobsy: open de banenkaart. Vacatures die bij jouw richting horen scoren hoger. Filter op hoge match en bewaar wat voelt als ‘dit is het’. Werkgevers zien geen ruwe antwoorden — alleen dat je past."
+            ? "Zo zet je dit in op Lobsy: open de banenkaart. Vacatures die bij jouw richting horen scoren hoger. Filter op hoge match en bewaar wat voelt als ‘dit is het’. Werkgevers zien geen ruwe antwoorden, alleen dat je past."
             : "Zo zet je dit in op Lobsy: vul daarna de uitgebreide beroepentest (200 vragen) in voor een scherper rapport. Tot die tijd weegt de banenkaart al mee wat je hier hebt aangegeven.";
 
         var lines = new List<string>

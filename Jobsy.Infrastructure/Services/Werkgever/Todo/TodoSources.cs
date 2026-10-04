@@ -233,11 +233,12 @@ public sealed class LowTokensTodoSource : ITodoSource
         var metaKey = role == WerkgeverDashboardRole.Vestigingsmanager
             ? "WgTodo.LowTokens.MetaVm"
             : "WgTodo.LowTokens.Meta";
+        var oneToken = first.Balance == 1m;
         return TodoDtoFactory.Create(
             Kind,
             WerkgeverTodoSeverity.Warning,
-            "WgTodo.LowTokens.Title",
-            [first.Name, first.Balance.ToString("0")],
+            oneToken ? "WgTodo.LowTokens.TitleOne" : "WgTodo.LowTokens.Title",
+            oneToken ? [first.Name] : [first.Name, first.Balance.ToString("0")],
             metaKey,
             null,
             action,
@@ -297,12 +298,15 @@ public sealed class NoManagerTodoSource : ITodoSource
         var action = role == WerkgeverDashboardRole.Bedrijfsmanager
             ? WerkgeverTodoActionKind.IemandUitnodigen
             : WerkgeverTodoActionKind.None;
+        var metaKey = role == WerkgeverDashboardRole.Regiomanager
+            ? "WgTodo.NoManager.MetaRm"
+            : "WgTodo.NoManager.Meta";
         return TodoDtoFactory.Create(
             Kind,
             WerkgeverTodoSeverity.Info,
             "WgTodo.NoManager.Title",
             [first.Name],
-            "WgTodo.NoManager.Meta",
+            metaKey,
             null,
             action,
             $"/werkgever/organisatie/team?invite=vestiging:{first.Id:D}",

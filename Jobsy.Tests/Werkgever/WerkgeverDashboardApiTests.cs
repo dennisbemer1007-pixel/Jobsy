@@ -65,6 +65,25 @@ public class WerkgeverDashboardApiTests : IClassFixture<WerkgeverDashboardApiFac
     }
 
     [Fact]
+    public async Task Empty_token_ledger_returns_zero_instead_of_500()
+    {
+        using var client = Authed(_factory.EnterpriseAId);
+        var mine = await client.GetAsync("api/companies/mine");
+        Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
+        using (var mineDoc = System.Text.Json.JsonDocument.Parse(await mine.Content.ReadAsStringAsync()))
+        {
+            Assert.Contains(mineDoc.RootElement.EnumerateArray(), e => e.GetProperty("tokenBalance").GetDecimal() == 0m);
+        }
+
+        var balance = await client.GetAsync("api/tokens/balance");
+        Assert.Equal(HttpStatusCode.OK, balance.StatusCode);
+        using (var balanceDoc = System.Text.Json.JsonDocument.Parse(await balance.Content.ReadAsStringAsync()))
+        {
+            Assert.Contains(balanceDoc.RootElement.EnumerateArray(), e => e.GetProperty("balance").GetDecimal() == 0m);
+        }
+    }
+
+    [Fact]
     public async Task Own_scope_ok()
     {
         using var bm = Authed(_factory.EnterpriseAId);
