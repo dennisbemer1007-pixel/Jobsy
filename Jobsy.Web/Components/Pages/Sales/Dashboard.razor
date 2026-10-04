@@ -408,8 +408,7 @@ else
         var url = $"{Navigation.BaseUri.TrimEnd('/')}/p/{_dash.TrackingCode}";
         try
         {
-            await Js.InvokeVoidAsync("eval",
-                $"navigator.share ? navigator.share({{url:'{url}'}}) : navigator.clipboard.writeText('{url}')");
+            await Js.InvokeVoidAsync("jobsyShareUrl", url);
         }
         catch
         {

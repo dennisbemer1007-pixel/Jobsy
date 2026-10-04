@@ -69,9 +69,7 @@
         try
         {
             await _input.FocusAsync();
-            await Js.InvokeVoidAsync(
-                "eval",
-                "document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){e.preventDefault();var el=document.querySelector('.sp-search__field input');if(el)el.focus();}});");
+            await Js.InvokeVoidAsync("jobsyBindSearchShortcut");
         }
         catch
         {

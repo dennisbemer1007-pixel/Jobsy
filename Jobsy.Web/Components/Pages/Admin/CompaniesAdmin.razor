@@ -238,7 +238,7 @@
         if (!firstRender) return;
         try
         {
-            _useDrawer = await Js.InvokeAsync<bool>("eval", "window.matchMedia('(max-width: 1023px)').matches");
+            _useDrawer = await Js.InvokeAsync<bool>("jobsyMedia.matches", "(max-width: 1023px)");
             await InvokeAsync(StateHasChanged);
         }
         catch

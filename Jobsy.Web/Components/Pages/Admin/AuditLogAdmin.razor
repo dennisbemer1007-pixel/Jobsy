@@ -291,8 +291,7 @@
             var (from, to) = PeriodRange(_period);
             var bytes = await Api.ExportAdminAuditCsvAsync(from, to, NullIfEmpty(_action), NullIfEmpty(_result), NullIfEmpty(_q));
             var b64 = Convert.ToBase64String(bytes);
-            await Js.InvokeVoidAsync("eval",
-                $"(() => {{ const a=document.createElement('a'); a.href='data:text/csv;base64,{b64}'; a.download='lobsy-audit.csv'; a.click(); }})()");
+            await Js.InvokeVoidAsync("jobsySaveFile", "lobsy-audit.csv", b64, "text/csv");
         }
         finally
         {

@@ -1019,8 +1019,7 @@
 
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
         var b64 = Convert.ToBase64String(bytes);
-        await Js.InvokeVoidAsync("eval",
-            $"(()=>{{const a=document.createElement('a');a.href='data:text/csv;base64,{b64}';a.download='vacatures.csv';a.click();}})()");
+        await Js.InvokeVoidAsync("jobsySaveFile", "vacatures.csv", b64, "text/csv");
     }
 
     private static string Escape(string s)

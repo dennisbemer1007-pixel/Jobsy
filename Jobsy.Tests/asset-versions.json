@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "6e85733609b22becd4ea0070d746ba91567f72abd2b79bcaac0e17ec994fc633",
-    "v": "20261004-core"
+    "sha256": "80c2f4a03703555d9db8c1ec1407a376f29c2cfd8de32c03d0dedbfb38797bcf",
+    "v": "20261004-noeval"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -184,8 +184,8 @@
     "v": "20260930-landing-5"
   },
   "js/lobsyPush.js": {
-    "sha256": "d983337c9107b477e74b38a086a8a344e292fa21d1a681cf175e04defdf03e5b",
-    "v": "20261004-merge"
+    "sha256": "5e3b702fcc50a7c252a681c2c682ae76df4a0201a50eec1273868db840962929",
+    "v": "20261004-noeval"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -204,11 +204,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "ad483205f293dbc50bca607d53be37ce726e9e4669a1ecde8e878b328282a7ab",
-    "v": "20261004-merge"
+    "sha256": "0573e950ed441753a1c4bbf47a6c80c4a0a41b10524210cbe4279e1a794f3efd",
+    "v": "20261004-noeval"
   },
   "service-worker.published.js": {
-    "sha256": "295a391b2caf6cfbe1cd5adc3d7da2f05af4feb026c874941b572302e479f7f6",
-    "v": "20261004-merge"
+    "sha256": "a2def854a1fc1c06fb310c56f320b9596cc0afccfb7f2208a6b641af24df2490",
+    "v": "20261004-noeval"
   }
 }

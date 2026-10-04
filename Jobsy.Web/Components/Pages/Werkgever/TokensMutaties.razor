@@ -144,8 +144,7 @@
 
         var bytes = System.Text.Encoding.UTF8.GetBytes(string.Join('\n', lines));
         var b64 = Convert.ToBase64String(bytes);
-        await Js.InvokeVoidAsync("eval",
-            $"{{const a=document.createElement('a');a.href='data:text/csv;base64,{b64}';a.download='token-mutaties.csv';a.click();}}");
+        await Js.InvokeVoidAsync("jobsySaveFile", "token-mutaties.csv", b64, "text/csv");
     }
 
     private static string Csv(string s) => "\"" + s.Replace("\"", "\"\"") + "\"";
