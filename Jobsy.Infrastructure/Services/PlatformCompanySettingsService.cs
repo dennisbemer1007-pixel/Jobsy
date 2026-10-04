@@ -1,6 +1,7 @@
 using System.Reflection;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -14,6 +15,8 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
 {
     public static readonly Guid SingletonId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff");
     public const string DefaultCompanyName = "Lobsy";
+    public const string DefaultLegalName = "Dennis Bemer h.o.d.n. Lobsy";
+    public const string DefaultTradeName = "Lobsy";
     public const string DefaultSlogan = "Dichtbij genoeg om het pantser te laten vallen";
 
     private static readonly Lazy<byte[]> LogoBytes = new(LoadEmbeddedLogo);
@@ -51,18 +54,32 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
             _db.PlatformCompanySettings.Add(row);
         }
 
-        row.CompanyName = string.IsNullOrWhiteSpace(update.CompanyName)
-            ? DefaultCompanyName
-            : update.CompanyName.Trim();
+        var legalName = NormalizeOptional(update.LegalName);
+        var tradeName = NormalizeOptional(update.TradeName);
+        var supportEmail = NormalizeOptional(update.SupportEmail) ?? NormalizeOptional(update.Email);
+        var privacyEmail = NormalizeOptional(update.PrivacyEmail);
+        var kvk = DigitsOrNull(update.KvkNumber);
+        var vat = NormalizeVat(update.VatNumber);
+        PlatformCompanyFieldRules.EnsureValid(kvk, vat, supportEmail, privacyEmail);
+
+        row.LegalName = legalName;
+        row.TradeName = tradeName;
+        row.CompanyName = tradeName
+            ?? (string.IsNullOrWhiteSpace(update.CompanyName) ? DefaultCompanyName : update.CompanyName.Trim());
         row.Slogan = NormalizeOptional(update.Slogan);
         row.Address = NormalizeOptional(update.Address);
         row.PostalCode = NormalizeOptional(update.PostalCode);
         row.City = NormalizeOptional(update.City);
         row.Country = NormalizeOptional(update.Country) ?? "NL";
-        row.KvkNumber = NormalizeOptional(update.KvkNumber);
-        row.VatNumber = NormalizeOptional(update.VatNumber);
+        row.PostalStreet = NormalizeOptional(update.PostalStreet);
+        row.PostalPostalCode = NormalizeOptional(update.PostalPostalCode);
+        row.PostalCity = NormalizeOptional(update.PostalCity);
+        row.KvkNumber = kvk;
+        row.VatNumber = vat;
         row.Phone = NormalizeOptional(update.Phone);
-        row.Email = NormalizeOptional(update.Email);
+        row.SupportEmail = supportEmail;
+        row.PrivacyEmail = privacyEmail;
+        row.Email = supportEmail;
         row.VatBufferIban = NormalizeIban(update.VatBufferIban);
         row.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -83,15 +100,45 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
             NormalizeOptional(row?.PostalCode),
             NormalizeOptional(row?.City),
             NormalizeOptional(row?.Country) ?? "NL",
-            NormalizeOptional(row?.KvkNumber),
-            NormalizeOptional(row?.VatNumber),
+            DigitsOrNull(row?.KvkNumber),
+            NormalizeVat(row?.VatNumber),
             NormalizeOptional(row?.Phone),
             NormalizeOptional(row?.Email),
             NormalizeIban(row?.VatBufferIban),
-            row?.UpdatedAtUtc);
+            row?.UpdatedAtUtc,
+            NormalizeOptional(row?.LegalName),
+            NormalizeOptional(row?.TradeName),
+            NormalizeOptional(row?.PostalStreet),
+            NormalizeOptional(row?.PostalPostalCode),
+            NormalizeOptional(row?.PostalCity),
+            NormalizeOptional(row?.SupportEmail) ?? NormalizeOptional(row?.Email),
+            NormalizeOptional(row?.PrivacyEmail));
 
     private static string? NormalizeOptional(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string? DigitsOrNull(string? value)
+    {
+        var trimmed = NormalizeOptional(value);
+        if (trimmed is null)
+        {
+            return null;
+        }
+
+        var digits = new string(trimmed.Where(char.IsDigit).ToArray());
+        return digits.Length == 0 ? null : digits;
+    }
+
+    private static string? NormalizeVat(string? value)
+    {
+        var trimmed = NormalizeOptional(value);
+        if (trimmed is null)
+        {
+            return null;
+        }
+
+        return new string(trimmed.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+    }
 
     /// <summary>Normalizes IBAN to uppercase without spaces; returns null when empty.</summary>
     internal static string? NormalizeIban(string? value)

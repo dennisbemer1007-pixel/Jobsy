@@ -142,7 +142,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public bool Suggesting { get; private set; }
 
     public bool IsUnder16 => DobInput is DateOnly dob
-        && dob > DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-16));
+        && Jobsy.Core.Privacy.CandidateConsentRules.AgeYears(dob) is int age
+        && age < Jobsy.Core.Privacy.CandidateConsentRules.ParentalConsentAge;
 
     public string? AvailabilityKind =>
         CandidateAvailabilityPresets.Detect(MinHours, MaxHours, FlexibleTimes);

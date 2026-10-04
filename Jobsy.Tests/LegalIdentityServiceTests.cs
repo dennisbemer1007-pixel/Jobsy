@@ -14,12 +14,14 @@ namespace Jobsy.Tests;
 public class LegalIdentityServiceTests
 {
     [Fact]
-    public async Task Config_wins_over_bedrijfsgegevens()
+    public async Task Database_wins_over_config_and_config_fills_empty_fields()
     {
         await using var db = CreateDb();
         var company = new PlatformCompanySettingsService(db, new MemoryCache(new MemoryCacheOptions()));
         await company.UpdateAsync(new PlatformCompanyUpdate(
-            "Admin BV", null, "Straat 1", "1234 AB", "Delft", "NL", "11112222", "NL001", null, null));
+            "Lobsy", null, "Straat 1", "1234 AB", "Delft", "NL", "11112222", "NL123456782B01", null, null,
+            LegalName: "Admin BV",
+            PrivacyEmail: null));
 
         var sut = CreateSut(company, new LegalOptions
         {
@@ -28,16 +30,18 @@ public class LegalIdentityServiceTests
             PostalCode = "9999 ZZ",
             City = "Den Haag",
             KvkNumber = "87654321",
-            VatNumber = "NL999",
-            SupportEmail = "support@lobsy.nl"
+            VatNumber = "NL999999999B01",
+            SupportEmail = "support@config.test",
+            PrivacyEmail = "privacy@config.test"
         });
 
         var snap = await sut.GetAsync();
-        Assert.Equal("Config BV", snap.Name);
-        Assert.Equal("Configstraat 2", snap.Street);
-        Assert.Equal("87654321", snap.KvkNumber);
-        Assert.Contains("Config BV", snap.FooterLine, StringComparison.Ordinal);
-        Assert.Contains("KvK 87654321", snap.FooterLine, StringComparison.Ordinal);
+        Assert.Equal("Admin BV", snap.Name);
+        Assert.Equal("Straat 1", snap.Street);
+        Assert.Equal("11112222", snap.KvkNumber);
+        Assert.Equal("privacy@config.test", snap.PrivacyEmail);
+        Assert.Contains("Admin BV", snap.FooterLine, StringComparison.Ordinal);
+        Assert.Contains("KvK 11112222", snap.FooterLine, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -46,7 +50,7 @@ public class LegalIdentityServiceTests
         await using var db = CreateDb();
         var company = new PlatformCompanySettingsService(db, new MemoryCache(new MemoryCacheOptions()));
         await company.UpdateAsync(new PlatformCompanyUpdate(
-            "Fallback BV", null, "Kaai 3", "2671 AB", "Naaldwijk", "NL", "11223344", "NL112", null, null));
+            "Fallback BV", null, "Kaai 3", "2671 AB", "Naaldwijk", "NL", "11223344", null, null, null));
 
         var sut = CreateSut(company, new LegalOptions());
         var snap = await sut.GetAsync();
@@ -73,7 +77,7 @@ public class LegalIdentityServiceTests
         await using var db = CreateDb();
         var company = new PlatformCompanySettingsService(db, new MemoryCache(new MemoryCacheOptions()));
         await company.UpdateAsync(new PlatformCompanyUpdate(
-            "Admin BV", null, "Adminstraat 1", "1111 AA", "Delft", "NL", "11112222", "NL001", null, null));
+            "Admin BV", null, "Adminstraat 1", "1111 AA", "Delft", "NL", "11112222", null, null, null));
 
         var logger = new CollectingLogger();
         var cache = new MemoryCache(new MemoryCacheOptions());

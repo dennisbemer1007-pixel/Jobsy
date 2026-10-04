@@ -61,10 +61,10 @@ public class StatusPageBunitTests : BunitContext
         var actions = cut.FindAll(".err-actions a").ToList();
 
         Assert.Equal(3, actions.Count);
-        Assert.Equal("/banenkaart", actions[0].GetAttribute("href"));
+        Assert.Equal("/", actions[0].GetAttribute("href"));
         Assert.Equal("/ontdek", actions[1].GetAttribute("href"));
-        Assert.Equal("/hoe-werkt-lobsy", actions[2].GetAttribute("href"));
-        Assert.Contains("Banenkaart", actions[0].TextContent, StringComparison.Ordinal);
+        Assert.Equal("/melden", actions[2].GetAttribute("href"));
+        Assert.Contains("Naar home", actions[0].TextContent, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -76,8 +76,10 @@ public class StatusPageBunitTests : BunitContext
         var actions = cut.FindAll(".err-actions a").ToList();
 
         Assert.Equal(3, actions.Count);
-        Assert.Equal("/ontdek", actions[0].GetAttribute("href"));
-        Assert.Contains("Mijn Paspoort", actions[0].TextContent, StringComparison.Ordinal);
+        Assert.Equal("/", actions[0].GetAttribute("href"));
+        Assert.Equal("/ontdek", actions[1].GetAttribute("href"));
+        Assert.Equal("/melden", actions[2].GetAttribute("href"));
+        Assert.Contains("Naar home", actions[0].TextContent, StringComparison.Ordinal);
     }
 
     [Fact]

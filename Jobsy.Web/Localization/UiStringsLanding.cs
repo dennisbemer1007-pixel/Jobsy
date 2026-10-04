@@ -62,6 +62,7 @@ public static class UiStringsLanding
         Add("PublicFooter.Terms", "Algemene voorwaarden", "Terms and conditions", "Regulamin", "Termeni și condiții", "الشروط العامة");
         Add("PublicFooter.UsageTerms", "Gebruiksvoorwaarden", "Terms of use", "Warunki użytkowania", "Condiții de utilizare", "شروط الاستخدام");
         Add("PublicFooter.About", "Wie zijn wij", "About us", "O nas", "Despre noi", "من نحن");
+        Add("PublicFooter.Accessibility", "Toegankelijkheid", "Accessibility", "Dostępność", "Accesibilitate", "إمكانية الوصول");
         Add("PublicFooter.MadeWith", "gemaakt met", "made with", "stworzone z", "realizat cu", "صُنع بـ");
         Add("PublicFooter.Copyright",
             "© {0} Lobsy · {1} 🧡",
@@ -83,11 +84,11 @@ public static class UiStringsLanding
             "Lobsy — descoperă cine ești și ce muncă ți se potrivește",
             "لوبسي — اكتشف من أنت وأي عمل يناسبك");
         Add("Landing.Seo.Description",
-            "Gratis test van 20 vragen. Banenkaart op reistijd. Jij kiest wat een werkgever ziet.",
-            "Free 20-question test. Job map by travel time. You choose what an employer sees.",
-            "Darmowy test 20 pytań. Mapa ofert według czasu dojazdu. Ty decydujesz, co widzi pracodawca.",
-            "Test gratuit cu 20 de întrebări. Hartă de joburi după timpul de drum. Tu alegi ce vede angajatorul.",
-            "اختبار مجاني من 20 سؤالًا. خريطة وظائف حسب وقت الرحلة. أنت تختار ما يراه صاحب العمل.");
+            "Gratis test van 20 vragen. Een loopbaangids in je eigen taal. Jij kiest wat een werkgever ziet.",
+            "Free 20-question test. A career guide in your own language. You choose what an employer sees.",
+            "Darmowy test 20 pytań. Przewodnik po karierze w twoim języku. Ty decydujesz, co widzi pracodawca.",
+            "Test gratuit cu 20 de întrebări. Un ghid de carieră în limba ta. Tu alegi ce vede angajatorul.",
+            "اختبار مجاني من 20 سؤالًا. دليل مهني بلغتك. أنت تختار ما يراه صاحب العمل.");
 
         // —— Hero ——
         Add("Landing.Hero.Eyebrow", "👋 Hoi! Gratis en zonder account", "👋 Hi! Free, no account needed", "👋 Cześć! Za darmo, bez konta", "👋 Salut! Gratuit, fără cont", "👋 مرحبًا! مجاني وبدون حساب");
@@ -269,7 +270,12 @@ public static class UiStringsLanding
         Add("Landing.Privacy.C3Title", "Wissen kan altijd", "You can always erase", "Zawsze możesz usunąć", "Poți șterge oricând", "يمكنك المسح دائمًا");
         Add("Landing.Privacy.C4Title", "Veilig en eerlijk", "Safe and fair", "Bezpiecznie i uczciwie", "Sigur și corect", "آمن وعادل");
         Add("Landing.Privacy.C3Body", "Met één knop wis je je antwoorden. Je account verwijderen kan ook, zelf.", "One button clears your answers. You can also delete your account yourself.", "Jednym przyciskiem kasujesz odpowiedzi. Konto też usuwasz sam.", "Cu un buton ștergi răspunsurile. Poți șterge și contul singur.", "بزر واحد تمسح إجاباتك. ويمكنك حذف حسابك بنفسك.");
-        Add("Landing.Privacy.C4Body", "Vanaf 16 jaar. Privacyregels in gewone taal. Geen verborgen kosten.", "From age 16. Privacy rules in plain language. No hidden costs.", "Od 16 lat. Zasady prywatności prostym językiem. Bez ukrytych kosztów.", "De la 16 ani. Reguli de confidențialitate în limbaj clar. Fără costuri ascunse.", "من سن ١٦. قواعد خصوصية بلغة بسيطة. بلا تكاليف مخفية.");
+        Add("Landing.Privacy.C4Body",
+            "Vanaf {0} jaar. Jonger dan {1}? Dan vraagt je ouder of voogd eerst toestemming. Privacyregels in gewone taal. Geen verborgen kosten.",
+            "From age {0}. Under {1}? Then your parent or guardian gives consent first. Privacy rules in plain language. No hidden costs.",
+            "Od {0} lat. Mniej niż {1}? Najpierw zgodę daje rodzic lub opiekun. Zasady prywatności prostym językiem. Bez ukrytych kosztów.",
+            "De la {0} ani. Sub {1}? Atunci părintele sau tutorele dă întâi acordul. Reguli de confidențialitate în limbaj clar. Fără costuri ascunse.",
+            "من عمر {0}. أقل من {1}؟ يوافق والدك أو وليّك أولاً. قواعد خصوصية بلغة بسيطة. بلا تكاليف مخفية.");
     }
 
     private static void MergeFaq(Action<string, string, string, string?, string?, string?> Add)

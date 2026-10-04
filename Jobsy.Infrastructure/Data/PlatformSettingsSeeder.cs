@@ -145,11 +145,32 @@ internal static class PlatformSettingsSeeder
             {
                 Id = PlatformCompanySettingsService.SingletonId,
                 CompanyName = PlatformCompanySettingsService.DefaultCompanyName,
+                LegalName = PlatformCompanySettingsService.DefaultLegalName,
+                TradeName = PlatformCompanySettingsService.DefaultTradeName,
                 Slogan = PlatformCompanySettingsService.DefaultSlogan,
                 Country = "NL",
                 UpdatedAtUtc = DateTime.UtcNow
             });
             logger.LogInformation("Seeded default PlatformCompanySettings (Lobsy).");
+        }
+        else
+        {
+            var company = await db.PlatformCompanySettings.FirstAsync();
+            var stillDefaultName = string.Equals(
+                company.CompanyName?.Trim(),
+                PlatformCompanySettingsService.DefaultCompanyName,
+                StringComparison.OrdinalIgnoreCase);
+            if (stillDefaultName && string.IsNullOrWhiteSpace(company.LegalName))
+            {
+                company.LegalName = PlatformCompanySettingsService.DefaultLegalName;
+                company.UpdatedAtUtc = DateTime.UtcNow;
+                logger.LogInformation("Seeded statutory name on the default PlatformCompanySettings row.");
+            }
+
+            if (stillDefaultName && string.IsNullOrWhiteSpace(company.TradeName))
+            {
+                company.TradeName = PlatformCompanySettingsService.DefaultTradeName;
+            }
         }
 
         if (!await db.MarketingFlyerSettings.AnyAsync())

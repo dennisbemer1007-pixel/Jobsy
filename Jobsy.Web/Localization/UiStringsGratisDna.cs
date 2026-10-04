@@ -206,17 +206,17 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.Step3"] = en["GratisDna.Landing.Step3"];
         ar["GratisDna.Landing.Step3"] = en["GratisDna.Landing.Step3"];
 
-        nl["GratisDna.Landing.Age16"] = "Ik ben 16 jaar of ouder.";
-        en["GratisDna.Landing.Age16"] = "I am 16 or older.";
-        pl["GratisDna.Landing.Age16"] = en["GratisDna.Landing.Age16"];
-        ro["GratisDna.Landing.Age16"] = en["GratisDna.Landing.Age16"];
-        ar["GratisDna.Landing.Age16"] = en["GratisDna.Landing.Age16"];
+        nl["GratisDna.Landing.Age16"] = "Ik ben 16 jaar of ouder en mag zelf starten. Vanaf 13 jaar kan het ook, met toestemming van je ouder of voogd.";
+        en["GratisDna.Landing.Age16"] = "I am 16 or older and can start myself. From age 13 it is also possible, with consent from your parent or guardian.";
+        pl["GratisDna.Landing.Age16"] = "Mam 16 lat lub więcej i mogę zacząć sam. Od 13 lat też można, za zgodą rodzica lub opiekuna.";
+        ro["GratisDna.Landing.Age16"] = "Am 16 ani sau mai mult și pot începe singur. De la 13 ani se poate și cu acordul părintelui sau tutorelui.";
+        ar["GratisDna.Landing.Age16"] = "عمري 16 سنة أو أكثر ويمكنني البدء بنفسي. من عمر 13 يمكن أيضاً بموافقة والدك أو وليّك.";
 
-        nl["GratisDna.Landing.AgeUnder16"] = "Jonger dan 16?";
-        en["GratisDna.Landing.AgeUnder16"] = "Younger than 16?";
-        pl["GratisDna.Landing.AgeUnder16"] = en["GratisDna.Landing.AgeUnder16"];
-        ro["GratisDna.Landing.AgeUnder16"] = en["GratisDna.Landing.AgeUnder16"];
-        ar["GratisDna.Landing.AgeUnder16"] = en["GratisDna.Landing.AgeUnder16"];
+        nl["GratisDna.Landing.AgeUnder16"] = "Ik ben 13, 14 of 15 jaar";
+        en["GratisDna.Landing.AgeUnder16"] = "I am 13, 14 or 15";
+        pl["GratisDna.Landing.AgeUnder16"] = "Mam 13, 14 lub 15 lat";
+        ro["GratisDna.Landing.AgeUnder16"] = "Am 13, 14 sau 15 ani";
+        ar["GratisDna.Landing.AgeUnder16"] = "عمري 13 أو 14 أو 15 سنة";
 
         nl["GratisDna.Landing.Consent"] = "Ik snap dat mijn antwoorden 7 dagen op dit apparaat blijven. Werkgevers zien ze nooit.";
         en["GratisDna.Landing.Consent"] = "I understand my answers stay on this device for 7 days. Employers never see them.";
@@ -262,15 +262,15 @@ public static class UiStringsGratisDna
 
         nl["GratisDna.Under16.Title"] = "Leuk dat je mee wilt doen!";
         en["GratisDna.Under16.Title"] = "Great that you want to join!";
-        pl["GratisDna.Under16.Title"] = en["GratisDna.Under16.Title"];
-        ro["GratisDna.Under16.Title"] = en["GratisDna.Under16.Title"];
-        ar["GratisDna.Under16.Title"] = en["GratisDna.Under16.Title"];
+        pl["GratisDna.Under16.Title"] = "Super, że chcesz dołączyć!";
+        ro["GratisDna.Under16.Title"] = "Ce bine că vrei să participi!";
+        ar["GratisDna.Under16.Title"] = "جميل أنك تريد المشاركة!";
 
-        nl["GratisDna.Under16.Lead"] = "Onder de 16 heb je toestemming van je ouder of voogd nodig. Maak een account, dan vragen we die toestemming. Daarna kun je de test doen.";
-        en["GratisDna.Under16.Lead"] = "Under 16 you need permission from your parent or guardian. Create an account and we will ask for that consent. Then you can take the test.";
-        pl["GratisDna.Under16.Lead"] = en["GratisDna.Under16.Lead"];
-        ro["GratisDna.Under16.Lead"] = en["GratisDna.Under16.Lead"];
-        ar["GratisDna.Under16.Lead"] = en["GratisDna.Under16.Lead"];
+        nl["GratisDna.Under16.Lead"] = "Vanaf 13 jaar mag je meedoen. Onder de 16 heb je toestemming van je ouder of voogd nodig. Onder de 13 kan het niet. Maak een account, dan vragen we die toestemming. Daarna kun je de test doen.";
+        en["GratisDna.Under16.Lead"] = "From age 13 you can join. Under 16 you need permission from your parent or guardian. Under 13 is not possible. Create an account and we will ask for that consent. Then you can take the test.";
+        pl["GratisDna.Under16.Lead"] = "Od 13 lat możesz dołączyć. Poniżej 16 lat potrzebujesz zgody rodzica lub opiekuna. Poniżej 13 lat nie można. Załóż konto, a poprosimy o tę zgodę. Potem zrobisz test.";
+        ro["GratisDna.Under16.Lead"] = "De la 13 ani poți participa. Sub 16 ani ai nevoie de acordul părintelui sau tutorelui. Sub 13 ani nu se poate. Creează un cont și cerem acordul. Apoi poți face testul.";
+        ar["GratisDna.Under16.Lead"] = "من عمر 13 يمكنك المشاركة. تحت 16 تحتاج موافقة والدك أو وليّك. تحت 13 لا يمكن. أنشئ حساباً وسنطلب الموافقة. بعدها يمكنك إجراء الاختبار.";
 
         nl["GratisDna.Under16.Cta"] = "Account maken";
         en["GratisDna.Under16.Cta"] = "Create account";

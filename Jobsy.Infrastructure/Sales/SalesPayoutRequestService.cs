@@ -18,21 +18,21 @@ public sealed class SalesPayoutRequestService : ISalesPayoutRequestService
     private readonly JobsyDbContext _db;
     private readonly ISalesWalletReadService _wallet;
     private readonly ITransactionalMailer _mailer;
-    private readonly IPlatformCompanySettingsService _companySettings;
     private readonly IPlatformFeatureService _features;
+    private readonly ILegalIdentity _legal;
 
     public SalesPayoutRequestService(
         JobsyDbContext db,
         ISalesWalletReadService wallet,
         ITransactionalMailer mailer,
-        IPlatformCompanySettingsService companySettings,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        ILegalIdentity legal)
     {
         _db = db;
         _wallet = wallet;
         _mailer = mailer;
-        _companySettings = companySettings;
         _features = features;
+        _legal = legal;
     }
 
     public async Task<SalesPayoutPreviewDto> PreviewAsync(
@@ -53,7 +53,7 @@ public sealed class SalesPayoutRequestService : ISalesPayoutRequestService
         SalesInvoicePreviewDto? invoice = null;
         if (amount > 0 && ctx.Profile is not null)
         {
-            var platform = await _companySettings.GetAsync(cancellationToken);
+            var legal = await _legal.GetAsync(cancellationToken);
             invoice = new SalesInvoicePreviewDto
             {
                 InvoiceNumberPlaceholder = "wordt toegekend bij goedkeuring",
@@ -61,7 +61,7 @@ public sealed class SalesPayoutRequestService : ISalesPayoutRequestService
                 SupplierKvk = ctx.Profile.KvkNumber ?? "",
                 SupplierVat = string.IsNullOrWhiteSpace(ctx.Profile.VatNumber) ? null : ctx.Profile.VatNumber,
                 SupplierAddress = FormatAddress(ctx.Profile),
-                CustomerName = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy B.V." : platform.CompanyName,
+                CustomerName = legal.DisplayName,
                 ConsentDate = ctx.ConsentAt is DateTime c
                     ? DateOnly.FromDateTime(SalesClock.ToLocal(c).DateTime)
                     : null,
