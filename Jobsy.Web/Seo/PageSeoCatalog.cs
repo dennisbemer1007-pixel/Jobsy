@@ -285,6 +285,7 @@ public static partial class PageSeoCatalog
 
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =
     [
+        ("/referentie", Private("Referee.Seo.Title", "Referee.Seo.Description")),
         ("/status/", Private("Status.NotFound.Title", "Seo.PrivateDescription")),
         ("/vacancies/", Public("Vacancy.Title", "Seo.VacancyFallbackDescription", "article")),
         ("/partner/", Public("Partner.Title", "Seo.PartnerDescription", index: false, CanonicalPath: "/partner")),

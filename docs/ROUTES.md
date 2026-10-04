@@ -204,6 +204,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
 | `/profiel/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/profiel/tests/{TestKey}` | `Pages/Candidate/TestDetail.razor` | Candidate |
+| `/referentie/{Token}` | `Pages/Public/ReferenceConfirmationPage.razor` | anonymous |
 | `/regional` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/regional/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/regional/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |

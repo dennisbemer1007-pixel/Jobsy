@@ -151,6 +151,8 @@ public static class EmailTemplateRegistry
             "Inhoud beperkt of weggehaald", "Motivering voor de werkgever na een moderatiebesluit, met bezwaarroute."),
         Def("PartnerConsentReconfirmReminder", "PartnerConsentReconfirmReminder", "Kandidaat", EmailKind.Essential, "PassportShare", false,
             "Toestemming opnieuw bevestigen", "14 dagen voor de partnertoestemming verloopt."),
+        Def("ReferenceConfirmation", "ReferenceConfirmation", "Referent", EmailKind.Essential, "ReferenceAsked", false,
+            "Bevestiging van een referent", "Mail met een eenmalige link naar 5 korte vragen."),
     ];
 
     private static readonly HashSet<string> GoodNewsKeys = new(

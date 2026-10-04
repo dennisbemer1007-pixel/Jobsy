@@ -440,4 +440,30 @@ public static partial class TransactionalEmails
             culture: c,
             reasonText: Sf(c, "Email.Reason.ManagesCompany", EmailBidi.Isolate(c, companyName))), baseUrl);
     }
+
+    public static ComposedEmail ReferenceConfirmationRequest(
+        string? baseUrl,
+        string refereeName,
+        string candidateName,
+        string roleTitle,
+        string confirmUrl,
+        EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var who = EmailBidi.Isolate(c, candidateName);
+        return Finish(Doc(
+            "ReferenceConfirmation",
+            Sf(c, "Email.ReferenceAsk.Subject", who),
+            S(c, "Email.ReferenceAsk.Preheader"),
+            S(c, "Email.ReferenceAsk.Heading"),
+            [
+                P(T(c, "Email.ReferenceAsk.P1", EmailArg.Bold(candidateName), EmailArg.Bold(roleTitle), EmailArg.Plain(ReferenceConfirmationRules.TokenDays.ToString(), isolate: false))),
+                P(S(c, "Email.ReferenceAsk.Privacy")),
+                N(S(c, "Email.ReferenceAsk.Note"))
+            ],
+            Button(S(c, "Email.ReferenceAsk.Cta"), confirmUrl),
+            greeting: GreetOther(c, refereeName),
+            eyebrow: new EmailEyebrow(S(c, "Email.ReferenceAsk.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
+    }
 }

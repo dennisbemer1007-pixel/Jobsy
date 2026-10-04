@@ -62,6 +62,9 @@ public sealed class EmailLinks
     public string ParentalConsent(string token)
         => Absolute($"/toestemming?t={Uri.EscapeDataString(token)}");
 
+    public string ReferenceConfirmation(string token)
+        => Absolute("/referentie/" + Uri.EscapeDataString(token));
+
     // Dependencies B — WerkgeverNav targets
     public string EmployerHome => Absolute("/werkgever");
     public string EmployerApplications(Guid? applicationId = null)
