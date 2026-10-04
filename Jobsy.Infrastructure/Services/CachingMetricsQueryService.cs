@@ -60,6 +60,13 @@ public sealed class CachingMetricsQueryService : IMetricsQueryService
         CancellationToken cancellationToken = default)
         => _inner.GetDrilldownAsync(key, includePlatformOnly, companyIds, period, cancellationToken);
 
+    public Task<IReadOnlyList<MetricDrilldownItemDto>> GetVacancyDrilldownAsync(
+        string key,
+        Guid vacancyId,
+        string period,
+        CancellationToken cancellationToken = default)
+        => _inner.GetVacancyDrilldownAsync(key, vacancyId, period, cancellationToken);
+
     public async Task<VacancyPerformanceBoardDto> GetVacancyPerformanceAsync(
         IReadOnlyCollection<Guid>? companyIds,
         string period,

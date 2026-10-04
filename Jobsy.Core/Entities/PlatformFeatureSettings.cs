@@ -99,6 +99,12 @@ public class PlatformFeatureSettings
     public bool PhoneVerificationEnabled { get; set; }
 
     /// <summary>
+    /// When false (default), come-back reminders are not sent on WhatsApp and the
+    /// candidate does not see that choice.
+    /// </summary>
+    public bool WhatsAppRemindersEnabled { get; set; }
+
+    /// <summary>
     /// When true, everyone except admins gets the 503 maintenance page (errors 05). Default false.
     /// </summary>
     public bool MaintenanceEnabled { get; set; }

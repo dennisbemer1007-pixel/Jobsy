@@ -106,6 +106,7 @@ builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Featu
 builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.Services.ReadAloudCoordinator>();
 // E7: the only place that turns an exception into text a visitor may read.
 builder.Services.AddScoped<Jobsy.Web.Services.UserFacingError>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();

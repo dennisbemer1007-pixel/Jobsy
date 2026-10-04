@@ -10,7 +10,9 @@ using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Core.Reminders;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Reminders;
 using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
@@ -327,6 +329,21 @@ public static class DependencyInjection
         services.Configure<Jobsy.Core.Options.WebPushOptions>(configuration.GetSection(Jobsy.Core.Options.WebPushOptions.SectionName));
         services.AddScoped<IWebPushSubscriptionService, WebPushSubscriptionService>();
         services.AddScoped<IPushNotificationService, WebPushNotificationService>();
+        services.AddOptions<WhatsAppReminderOptions>()
+            .Bind(configuration.GetSection(WhatsAppReminderOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                options.PhoneNumberId ??= Environment.GetEnvironmentVariable("WHATSAPP_PHONE_NUMBER_ID");
+                options.AccessToken ??= Environment.GetEnvironmentVariable("WHATSAPP_ACCESS_TOKEN");
+            });
+        services.AddHttpClient(WhatsAppReminderChannel.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+        services.AddScoped<IReminderChannel, EmailReminderChannel>();
+        services.AddScoped<IReminderChannel, WebPushReminderChannel>();
+        services.AddScoped<IReminderChannel, WhatsAppReminderChannel>();
+        services.AddScoped<ComebackReminderService>();
         services.AddScoped<IDeviceSessionService, DeviceSessionService>();
         services.AddScoped<IMfaTrustedDeviceService, MfaTrustedDeviceService>();
         services.AddScoped<PushNotificationServiceStub>();
@@ -598,6 +615,7 @@ public static class DependencyInjection
         services.AddHostedService<CareerPlanArchiveCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
+        services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();
         services.AddHostedService<DeepTestCheckoutReconcileHostedService>();

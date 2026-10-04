@@ -207,30 +207,13 @@ public static class AdminNav
     }
 
     /// <summary>
-    /// Dashboard is only the exact <c>/admin</c> path. Every other item may match its own subtree.
+    /// Only the item <see cref="Resolve"/> picks is active, so a parent and its child
+    /// are never highlighted together. Dashboard stays the exact <c>/admin</c> path.
     /// </summary>
     public static bool Matches(string path, AdminNavItem item)
     {
-        path = Normalize(path);
-        if (string.Equals(path, Normalize(item.Href), StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        foreach (var alias in item.Aliases)
-        {
-            if (string.Equals(path, Normalize(alias), StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        var href = Normalize(item.Href);
-        if (href is "/" or "/admin")
-        {
-            return false;
-        }
-
-        return path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+        var resolved = Resolve(path);
+        return resolved is not null
+               && string.Equals(resolved.Value.Item.Key, item.Key, StringComparison.Ordinal);
     }
 }

@@ -1,0 +1,32 @@
+KEY: ComebackReminder
+SUBJECT: ألقِ نظرة أخرى. هل هناك شيء جديد؟
+PREHEADER: تذكير من لوبسي
+KIND: Optional
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+قد يكون هناك شيء جديد لك
+
+لم تدخل إلى لوبسي منذ 4 أسابيع. انظر إن كان هناك شيء جديد لك.
+
+افتح لوبسي: https://lobsy.nl/profiel
+
+فريق Lobsy
+
+أنت طلبت هذا التذكير بنفسك.
+إلغاء الاشتراك من هذه الرسائل: https://lobsy.nl/mail/afmelden
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+إعدادات البريد: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: قد يكون هناك شيء جديد لك
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: افتح لوبسي -> https://lobsy.nl/profiel
+a: إلغاء الاشتراك من هذه الرسائل -> https://lobsy.nl/mail/afmelden
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

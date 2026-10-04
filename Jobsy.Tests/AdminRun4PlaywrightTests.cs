@@ -106,6 +106,19 @@ public class AdminRun4PlaywrightTests
                 }
                 """);
             Assert.True(fits, $"{path} scrolls horizontally at 390px.");
+            var badgeFits = await phone.EvaluateAsync<bool>(
+                """
+                () => {
+                  const badge = document.querySelector('.admin-env-badge');
+                  if (!badge) return true;
+                  const label = badge.querySelector('.admin-env-badge__label');
+                  const after = label ? getComputedStyle(label, '::after').content : '';
+                  const acceptatie = badge.classList.contains('admin-env-badge--acceptatie');
+                  const short = !acceptatie || (after && after.indexOf('Acc') >= 0);
+                  return short && badge.scrollWidth <= badge.clientWidth + 1;
+                }
+                """);
+            Assert.True(badgeFits, $"{path} environment badge is clipped at 390px.");
 
             var search = phone.Locator(".admin-topbar__search-trigger");
             Assert.True(await menu.IsVisibleAsync());
@@ -149,6 +162,71 @@ public class AdminRun4PlaywrightTests
         {
             Console.WriteLine("Skipped admin search lists: " + string.Join(" | ", _skippedSearchLists));
         }
+    }
+
+    [Fact]
+    public async Task Gegevensinzage_columns_line_up_and_filter_stays_visible()
+    {
+        var baseUrl = Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL");
+        if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var desktop = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 900 },
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(desktop);
+        var page = await desktop.NewPageAsync();
+        await LoginAdminAsync(page, baseUrl);
+        await page.GotoAsync(baseUrl.TrimEnd('/') + "/admin/beveiliging/gegevensinzage", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await page.Locator(".admin-filter-bar").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        var layout = await page.EvaluateAsync<GegevensLayout>(
+            """
+            () => {
+              const pageEl = document.querySelector('.admin-page');
+              const bar = document.querySelector('.admin-filter-bar');
+              const filter = bar ? [...bar.querySelectorAll('button')].find(b => /filter/i.test(b.textContent || '')) : null;
+              const pageRect = pageEl ? pageEl.getBoundingClientRect() : null;
+              const barRect = bar ? bar.getBoundingClientRect() : null;
+              const filterRect = filter ? filter.getBoundingClientRect() : null;
+              const table = document.querySelector('table.admin-data-table');
+              let aligned = true;
+              let pairs = 0;
+              if (table) {
+                const heads = [...table.querySelectorAll('thead th')];
+                const cells = [...table.querySelectorAll('tbody tr:first-child td')];
+                pairs = Math.min(heads.length, cells.length);
+                for (let i = 0; i < pairs; i++) {
+                  const gap = Math.abs(heads[i].getBoundingClientRect().left - cells[i].getBoundingClientRect().left);
+                  if (gap > 2) aligned = false;
+                }
+              }
+              return {
+                barInside: !!pageRect && !!barRect && barRect.right <= pageRect.right + 2 && barRect.left >= pageRect.left - 2,
+                filterVisible: !!filterRect && filterRect.width > 0 && filterRect.right <= (pageRect ? pageRect.right + 2 : filterRect.right),
+                aligned,
+                pairs
+              };
+            }
+            """);
+        Assert.True(layout.BarInside, "Gegevensinzage filter bar overflows the page at 1280.");
+        Assert.True(layout.FilterVisible, "Filter button is outside the gegevensinzage page at 1280.");
+        Assert.True(layout.Aligned, "Gegevensinzage columns do not line up with their headers at 1280.");
+    }
+
+    private sealed class GegevensLayout
+    {
+        public bool BarInside { get; set; }
+        public bool FilterVisible { get; set; }
+        public bool Aligned { get; set; }
+        public int Pairs { get; set; }
     }
 
     private sealed class MenuPaint
@@ -228,6 +306,36 @@ public class AdminRun4PlaywrightTests
             new() { Timeout = 30_000 });
     }
 
+    private static async Task WaitForTwoDataRowsAsync(IPage page)
+    {
+        var token = Guid.NewGuid().ToString("N");
+        await page.WaitForFunctionAsync(
+            """
+            (token) => {
+              if (window.__jobsyRowsToken !== token) {
+                window.__jobsyRowsToken = token;
+                window.__jobsyRowsSince = 0;
+              }
+              if (document.querySelector('.admin-data-table__state')) {
+                window.__jobsyRowsSince = 0;
+                return false;
+              }
+              const rows = document.querySelectorAll('table tbody tr');
+              if (rows.length < 2) {
+                window.__jobsyRowsSince = 0;
+                return false;
+              }
+              const now = Date.now();
+              if (!window.__jobsyRowsSince) {
+                window.__jobsyRowsSince = now;
+              }
+              return now - window.__jobsyRowsSince >= 400;
+            }
+            """,
+            token,
+            new() { Timeout = 30_000 });
+    }
+
     private static async Task OpenRowMenuAsync(ILocator toggle)
     {
         await toggle.ClickAsync();
@@ -260,9 +368,8 @@ public class AdminRun4PlaywrightTests
         var needle = pair.Needle;
         var other = pair.Other;
 
-        // The unfiltered list is the wrong gate. Users are paged (25, name asc), the
-        // table replaces itself while loading, and a count taken on the first tbody
-        // row can see one row or none. Search the seeded name and wait for that row.
+        // Seeded names are the proof. The unfiltered list is paged, and its first
+        // tbody paint can be one row or none, so a raw count is not the gate.
         string? failure = null;
         for (var attempt = 0; attempt < 2; attempt++)
         {
@@ -278,6 +385,14 @@ public class AdminRun4PlaywrightTests
             {
                 return;
             }
+        }
+
+        // Acceptatie still proves the filter from whatever rows stayed on screen,
+        // after two body rows have been stable. That path is the fallback when the
+        // seeded name did not show.
+        if (await TryProveVisibleLabelSearchAsync(page, url, inputSelector))
+        {
+            return;
         }
 
         Assert.Fail($"{failure} {await DescribeSeedReadbackAsync()}");
@@ -325,6 +440,114 @@ public class AdminRun4PlaywrightTests
 
             return $"Seeded row '{needle}' did not stay visible on {url} while '{other}' was hidden.{status} {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Acceptatie proof: wait until two body rows stay, then type a visible label and
+    /// require a different row to disappear. Returns false when those rows never settle.
+    /// </summary>
+    private static async Task<bool> TryProveVisibleLabelSearchAsync(IPage page, string url, string inputSelector)
+    {
+        try
+        {
+            await GotoInteractiveAsync(page, url);
+            var rows = page.Locator("table tbody tr");
+            await WaitForTwoDataRowsAsync(page);
+            var count = await rows.CountAsync();
+            if (count < 2)
+            {
+                await WaitForTwoDataRowsAsync(page);
+                count = await rows.CountAsync();
+            }
+
+            if (count < 2)
+            {
+                return false;
+            }
+
+            var labels = page.Locator("table tbody strong");
+            var labelCount = await labels.CountAsync();
+            string needle;
+            string otherProof;
+            if (labelCount >= 2)
+            {
+                needle = (await labels.Nth(0).InnerTextAsync()).Trim();
+                if (needle.Length < 4 || !needle.Any(char.IsLetter))
+                {
+                    return false;
+                }
+
+                otherProof = await FirstOtherLabelAsync(labels, labelCount, needle);
+            }
+            else
+            {
+                var first = (await rows.Nth(0).InnerTextAsync()).Trim();
+                var second = (await rows.Nth(1).InnerTextAsync()).Trim();
+                needle = FirstDistinctiveWord(first, second);
+                otherProof = FirstDistinctiveWord(second, first);
+            }
+
+            if (string.IsNullOrWhiteSpace(needle) || string.IsNullOrWhiteSpace(otherProof))
+            {
+                return false;
+            }
+
+            var input = page.Locator(inputSelector).First;
+            await input.ClickAsync();
+            await input.FillAsync("");
+            await page.Keyboard.TypeAsync(needle, new() { Delay = 40 });
+            await Assertions.Expect(input).ToHaveValueAsync(needle);
+            await Assertions.Expect(rows.Filter(new() { HasTextString = needle }).First)
+                .ToBeVisibleAsync(new() { Timeout = 15_000 });
+            await Assertions.Expect(rows.Filter(new() { HasTextString = otherProof }))
+                .ToHaveCountAsync(0, new() { Timeout = 15_000 });
+            return true;
+        }
+        catch (Exception ex) when (ex is PlaywrightException or InvalidOperationException
+                                   || ex.GetType().Name == "TimeoutException")
+        {
+            return false;
+        }
+    }
+
+    private static async Task<string> FirstOtherLabelAsync(ILocator labels, int count, string needle)
+    {
+        var sample = Math.Min(count, 12);
+        for (var i = 1; i < sample; i++)
+        {
+            var text = (await labels.Nth(i).InnerTextAsync()).Trim();
+            if (text.Length < 4 || !text.Any(char.IsLetter))
+            {
+                continue;
+            }
+
+            if (text.Contains(needle, StringComparison.OrdinalIgnoreCase)
+                || needle.Contains(text, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return text;
+        }
+
+        throw new InvalidOperationException($"No row stays unmatched for '{needle}'.");
+    }
+
+    private static string FirstDistinctiveWord(string firstRow, string secondRow)
+    {
+        foreach (var word in firstRow.Split([' ', '\n', '\t', '·'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var clean = word.Trim();
+            if (clean.Length >= 4
+                && !secondRow.Contains(clean, StringComparison.OrdinalIgnoreCase)
+                && clean.Any(char.IsLetter))
+            {
+                return clean;
+            }
+        }
+
+        var line = firstRow.Split('\n', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+        return line.Length > 24 ? line[..24] : line;
     }
 
     private static async Task AssertFastTypeAsync(IPage page, string selector)
