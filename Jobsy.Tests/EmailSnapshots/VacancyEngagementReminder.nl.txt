@@ -26,7 +26,7 @@ Vacature verbeteren: https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-11
 Team Lobsy
 
 Je krijgt deze mail omdat je vacatures beheert voor Bakkerij De Gouden Korrel op Lobsy.
-Afmelden voor deze mails: https://lobsy.nl/mail/afmelden
+Geen herinneringen meer ontvangen? Afmelden: https://lobsy.nl/mail/afmelden
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail-instellingen: https://lobsy.nl/account/mail-instellingen
@@ -38,7 +38,7 @@ marker: table data-lobsy-block=facts
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Vacature verbeteren -> https://lobsy.nl/werkgever/vacatures/nieuw?edit=11111111-1111-1111-1111-111111111111
-a: Afmelden voor deze mails -> https://lobsy.nl/mail/afmelden
+a: Geen herinneringen meer ontvangen? Afmelden -> https://lobsy.nl/mail/afmelden
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen

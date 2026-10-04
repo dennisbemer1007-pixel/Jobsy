@@ -17,6 +17,7 @@ Request again: https://lobsy.nl/register/toegang
 Team Lobsy
 
 You receive this email because of an action on Lobsy.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

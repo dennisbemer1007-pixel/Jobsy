@@ -46,31 +46,12 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
         ArgumentException.ThrowIfNullOrWhiteSpace(category);
-        var hash = EmailAddressHasher.Hash(email);
-        var key = category.Trim();
-        var src = string.IsNullOrWhiteSpace(source) ? "Page" : source.Trim();
-        if (src.Length > 32)
+        var added = await OptOutCoreAsync(email, category, source, cancellationToken);
+        if (added)
         {
-            src = src[..32];
+            await AddAuditForAddressAsync(email, "opt-out", source, category, cancellationToken);
         }
 
-        var existing = await _db.EmailOptOuts
-            .FirstOrDefaultAsync(o => o.EmailHash == hash && o.Category == key, cancellationToken);
-        if (existing is not null)
-        {
-            existing.Source = src;
-            await _db.SaveChangesAsync(cancellationToken);
-            return;
-        }
-
-        _db.EmailOptOuts.Add(new EmailOptOut
-        {
-            Id = Guid.NewGuid(),
-            EmailHash = hash,
-            Category = key.Length > 64 ? key[..64] : key,
-            CreatedAtUtc = DateTime.UtcNow,
-            Source = src
-        });
         try
         {
             await _db.SaveChangesAsync(cancellationToken);
@@ -151,10 +132,19 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
         }
 
         var hash = EmailAddressHasher.Hash(email);
+        var hadOptOut = await _db.EmailOptOuts.AsNoTracking()
+            .AnyAsync(o => o.EmailHash == hash && o.Category == category.Trim(), cancellationToken);
         await OptInByHashAsync(hash, category, cancellationToken);
+        var comebackTurnedOn = false;
         if (string.Equals(category.Trim(), EmailOptionalCategories.ComebackReminder, StringComparison.OrdinalIgnoreCase))
         {
-            await MarkComebackEmailOptInAsync(email, cancellationToken);
+            comebackTurnedOn = await MarkComebackEmailOptInAsync(email, cancellationToken);
+        }
+
+        if (hadOptOut || comebackTurnedOn)
+        {
+            await AddAuditForAddressAsync(email, "opt-in", "Settings", category, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
         }
     }
 
@@ -191,7 +181,210 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
             .ToList();
     }
 
-    private async Task MarkComebackEmailOptInAsync(string email, CancellationToken cancellationToken)
+    public async Task<bool> AreReminderEmailsEnabledAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var enabled = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => (bool?)u.ReminderEmailsEnabled)
+            .FirstOrDefaultAsync(cancellationToken);
+        return enabled ?? true;
+    }
+
+    public async Task<bool> IsReminderEmailDisabledForAddressAsync(string email, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return false;
+        }
+
+        var normalized = EmailAddressHasher.Normalize(email);
+        var enabled = await _db.Users.AsNoTracking()
+            .Where(u => u.Email.ToLower() == normalized)
+            .Select(u => (bool?)u.ReminderEmailsEnabled)
+            .FirstOrDefaultAsync(cancellationToken);
+        return enabled == false;
+    }
+
+    public async Task DisableReminderEmailsAsync(Guid userId, string source, CancellationToken cancellationToken = default)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user is null || string.IsNullOrWhiteSpace(user.Email))
+        {
+            return;
+        }
+
+        var changed = user.ReminderEmailsEnabled;
+        user.ReminderEmailsEnabled = false;
+        foreach (var category in EmailOptionalCategories.All)
+        {
+            await OptOutCoreAsync(user.Email, category, source, cancellationToken);
+        }
+
+        if (changed)
+        {
+            AddAudit(user.Id, "opt-out", source, category: null);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task EnableReminderEmailsAsync(Guid userId, string source, CancellationToken cancellationToken = default)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user is null || user.ReminderEmailsEnabled)
+        {
+            return;
+        }
+
+        user.ReminderEmailsEnabled = true;
+        user.MailUnsubscribeEpoch++;
+        AddAudit(user.Id, "opt-in", source, category: null);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RestoreOptionalCategoryAsync(
+        Guid userId,
+        string category,
+        string source,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user is null || string.IsNullOrWhiteSpace(user.Email) || string.IsNullOrWhiteSpace(category))
+        {
+            return;
+        }
+
+        var hash = EmailAddressHasher.Hash(user.Email);
+        var key = category.Trim();
+        var rows = await _db.EmailOptOuts
+            .Where(o => o.EmailHash == hash && o.Category == key)
+            .ToListAsync(cancellationToken);
+        var changed = rows.Count > 0;
+        if (rows.Count > 0)
+        {
+            _db.EmailOptOuts.RemoveRange(rows);
+        }
+
+        if (string.Equals(key, EmailOptionalCategories.ComebackReminder, StringComparison.OrdinalIgnoreCase))
+        {
+            var row = await _db.CandidateReminderPreferences
+                .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+            if (row is null)
+            {
+                row = new CandidateReminderPreference { UserId = user.Id };
+                _db.CandidateReminderPreferences.Add(row);
+            }
+
+            if (row.EmailOptedInAtUtc is null)
+            {
+                row.EmailOptedInAtUtc = DateTime.UtcNow;
+                changed = true;
+            }
+
+            row.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        if (!user.ReminderEmailsEnabled)
+        {
+            user.ReminderEmailsEnabled = true;
+            user.MailUnsubscribeEpoch++;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            AddAudit(user.Id, "opt-in", source, key);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task<bool> UnsubscribeEpochAllowsAsync(Guid userId, int epoch, CancellationToken cancellationToken = default)
+    {
+        var current = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => (int?)u.MailUnsubscribeEpoch)
+            .FirstOrDefaultAsync(cancellationToken);
+        return current is null || current.Value == epoch;
+    }
+
+    private async Task<bool> OptOutCoreAsync(
+        string email,
+        string category,
+        string source,
+        CancellationToken cancellationToken)
+    {
+        var hash = EmailAddressHasher.Hash(email);
+        var key = category.Trim();
+        if (key.Length > 64)
+        {
+            key = key[..64];
+        }
+
+        var src = string.IsNullOrWhiteSpace(source) ? "Page" : source.Trim();
+        if (src.Length > 32)
+        {
+            src = src[..32];
+        }
+
+        var existing = await _db.EmailOptOuts
+            .FirstOrDefaultAsync(o => o.EmailHash == hash && o.Category == key, cancellationToken);
+        if (existing is not null)
+        {
+            existing.Source = src;
+            return false;
+        }
+
+        _db.EmailOptOuts.Add(new EmailOptOut
+        {
+            Id = Guid.NewGuid(),
+            EmailHash = hash,
+            Category = key,
+            CreatedAtUtc = DateTime.UtcNow,
+            Source = src
+        });
+        return true;
+    }
+
+    private async Task AddAuditForAddressAsync(
+        string email,
+        string verb,
+        string source,
+        string? category,
+        CancellationToken cancellationToken)
+    {
+        var normalized = EmailAddressHasher.Normalize(email);
+        var userId = await _db.Users.AsNoTracking()
+            .Where(u => u.Email.ToLower() == normalized)
+            .Select(u => (Guid?)u.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (userId is Guid id)
+        {
+            AddAudit(id, verb, source, category);
+        }
+    }
+
+    private void AddAudit(Guid userId, string verb, string source, string? category)
+    {
+        var src = string.IsNullOrWhiteSpace(source) ? "Settings" : source.Trim();
+        if (src.Length > 32)
+        {
+            src = src[..32];
+        }
+
+        var message = string.IsNullOrWhiteSpace(category)
+            ? $"reminder-emails {verb} userId={userId:D} source={src}"
+            : $"reminder-emails {verb} userId={userId:D} source={src} category={category.Trim()}";
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "email.reminder",
+            Message = message,
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
+    private async Task<bool> MarkComebackEmailOptInAsync(string email, CancellationToken cancellationToken)
     {
         var normalized = email.Trim().ToLowerInvariant();
         var user = await _db.Users.FirstOrDefaultAsync(
@@ -199,7 +392,7 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
             cancellationToken);
         if (user is null)
         {
-            return;
+            return false;
         }
 
         var row = await _db.CandidateReminderPreferences
@@ -210,9 +403,11 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
             _db.CandidateReminderPreferences.Add(row);
         }
 
+        var turnedOn = row.EmailOptedInAtUtc is null;
         row.EmailOptedInAtUtc ??= DateTime.UtcNow;
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        return turnedOn;
     }
 
     public static bool IsOptionalCategory(string? key)

@@ -174,7 +174,8 @@ public sealed class ComebackReminderService(
                     u.FullName,
                     u.TermsAcceptedAt,
                     u.EmailVerifiedAtUtc,
-                    u.LastLoginAtUtc))
+                    u.LastLoginAtUtc,
+                    u.ReminderEmailsEnabled))
                 .ToListAsync(cancellationToken);
             if (users.Count == 0)
             {
@@ -266,7 +267,8 @@ public sealed class ComebackReminderService(
                 continue;
             }
 
-            var emailOn = pref?.EmailOptedInAtUtc is not null
+            var emailOn = user.ReminderEmailsEnabled
+                          && pref?.EmailOptedInAtUtc is not null
                           && !await preferences.IsOptedOutAsync(user.Email, EmailOptionalCategories.ComebackReminder, cancellationToken);
             var pushOn = pushSet.Contains(user.Id);
             var whatsApp = whatsAppOn
@@ -332,7 +334,8 @@ public sealed class ComebackReminderService(
         string FullName,
         DateTime? TermsAcceptedAt,
         DateTime? EmailVerifiedAtUtc,
-        DateTime? LastLoginAtUtc);
+        DateTime? LastLoginAtUtc,
+        bool ReminderEmailsEnabled);
 }
 
 public sealed record ComebackReminderStats(int Sent, int ReturnedWithin7Days, int ReturnedWithin30Days);

@@ -39,6 +39,9 @@ public static class MailSettingsEndpoints
                 label = k,
                 enabled = form.ContainsKey("pref_" + k)
             }).ToList();
+            bool? reminderEmailsEnabled = form.ContainsKey("reminder_emails_shown")
+                ? form.ContainsKey("reminder_emails")
+                : null;
 
             var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
                 configuration["ApiBaseUrl"] ?? configuration["JobsyApi:BaseUrl"],
@@ -51,7 +54,7 @@ public static class MailSettingsEndpoints
             using var request = new HttpRequestMessage(HttpMethod.Put, "api/me/email-preferences")
             {
                 Content = new StringContent(
-                    JsonSerializer.Serialize(new { items }),
+                    JsonSerializer.Serialize(new { items, reminderEmailsEnabled }),
                     Encoding.UTF8,
                     "application/json")
             };
@@ -90,7 +93,7 @@ public static class MailSettingsEndpoints
             }
 
             return Results.Redirect("/account/mail-instellingen?saved=1");
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithOrder(-1000);
 
         return app;
     }

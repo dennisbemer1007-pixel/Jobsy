@@ -21,6 +21,7 @@ View the application: https://lobsy.nl/werkgever/sollicitaties?id=22222222-2222-
 Team Lobsy
 
 You get this email because you manage vacancies for Bakkerij De Gouden Korrel on Lobsy.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

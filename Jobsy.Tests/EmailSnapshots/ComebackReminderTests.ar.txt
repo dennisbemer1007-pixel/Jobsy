@@ -15,7 +15,7 @@ KIND: Optional
 فريق Lobsy
 
 أنت طلبت هذا التذكير بنفسك.
-إلغاء الاشتراك من هذه الرسائل: https://lobsy.nl/mail/afmelden
+لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك: https://lobsy.nl/mail/afmelden
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 إعدادات البريد: https://lobsy.nl/account/mail-instellingen
@@ -26,7 +26,7 @@ marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: إلى اختباراتك -> https://lobsy.nl/profiel/tests
-a: إلغاء الاشتراك من هذه الرسائل -> https://lobsy.nl/mail/afmelden
+a: لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك -> https://lobsy.nl/mail/afmelden
 a: المساعدة -> mailto:support@lobsy.nl
 a: الخصوصية -> https://lobsy.nl/privacy
 a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen

@@ -113,13 +113,15 @@ public static class MailUnsubscribeEndpoints
 
             // RFC 8058 / mailbox providers: 200 plain HTML
             return Results.Content(
-                "<!DOCTYPE html><body><p>Je krijgt deze mails niet meer.</p></body>",
+                "<!DOCTYPE html><body><p>Je krijgt geen herinneringen meer per e-mail. Je kunt dit weer aanzetten in je instellingen.</p></body>",
                 "text/html; charset=utf-8",
                 statusCode: StatusCodes.Status200OK);
         })
         .AllowAnonymous()
         .DisableAntiforgery()
-        .RequireRateLimiting("mail-unsubscribe");
+        .RequireRateLimiting("mail-unsubscribe")
+        // The Blazor page lives on the same path. This POST must win for the form and for RFC 8058.
+        .WithOrder(-1000);
 
         return app;
     }

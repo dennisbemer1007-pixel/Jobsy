@@ -13,6 +13,7 @@ Go to emails: https://lobsy.nl/admin/content/emails
 فريق Lobsy
 
 You get this email because you are a Lobsy administrator.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
 المساعدة: mailto:support@lobsy.nl
 الخصوصية: https://lobsy.nl/privacy
 Lobsy

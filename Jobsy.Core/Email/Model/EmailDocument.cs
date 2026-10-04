@@ -16,7 +16,9 @@ public sealed record EmailDocument(
     EmailCta? Cta = null,
     bool ShowMascot = false,
     /// <summary>Tokenized one-click unsubscribe URL for kind O (filled at send time when missing).</summary>
-    string? UnsubscribeUrl = null);
+    string? UnsubscribeUrl = null,
+    /// <summary>Why an account holder gets an essential mail. Omitted for readers without an account.</summary>
+    string? AccountBecause = null);
 
 public abstract record EmailBlock;
 
