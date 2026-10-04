@@ -203,7 +203,15 @@ public sealed class WhoAmIService : IWhoAmIService
                                     stored.FromOpenAi,
                                     stored.StoryGeneratedAtUtc,
                                     DateTime.UtcNow);
-            if (!fingerprintMatch || retryFallback || story is null)
+            if (story is null)
+            {
+                story = WhoAmIStoryBuilder.Build(cScores, rScores, cultureScores, profileHighlights, values);
+                keywords = WhoAmIKeywords.FromScores(cScores, rScores, cultureScores, values);
+                generatedAt = await PersistLocalStoryAsync(
+                    userId, story, keywords, fingerprint, cancellationToken);
+                fromOpenAi = false;
+            }
+            else if (!fingerprintMatch || retryFallback)
             {
                 insightsStatus = InsightsStatuses.Updating;
                 _queue.TryEnqueue(userId);
@@ -245,6 +253,32 @@ public sealed class WhoAmIService : IWhoAmIService
             CulturePersonalityCatalog.CategoryCodes
                 .Select(code => new LobsyCvScoreBar(CulturePersonalityCatalog.EverydayLabel(code), culture.Get(code)))
                 .ToList());
+
+    private async Task<DateTime> PersistLocalStoryAsync(
+        Guid userId,
+        string story,
+        IReadOnlyList<string> keywords,
+        string fingerprint,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var row = await _db.CandidateWhoAmIProfiles
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (row is null)
+        {
+            row = NewRow(userId);
+            _db.CandidateWhoAmIProfiles.Add(row);
+        }
+
+        row.StoryText = story;
+        row.KeywordsJson = JsonSerializer.Serialize(keywords, Json);
+        row.InputFingerprint = fingerprint;
+        row.FromOpenAi = false;
+        row.StoryGeneratedAtUtc = now;
+        row.UpdatedAtUtc = now;
+        await _db.SaveChangesAsync(cancellationToken);
+        return now;
+    }
 
     private static CandidateWhoAmIProfile NewRow(Guid userId)
         => new()

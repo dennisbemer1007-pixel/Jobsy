@@ -116,6 +116,9 @@ public sealed record CareerStepDetailView
     /// <summary>Years of experience the step asks for; 0 means the line is never rendered (B8).</summary>
     public int Years { get; init; }
 
+    /// <summary>The profile already covers the years this step asks for.</summary>
+    public bool YearsMet { get; init; }
+
     /// <summary><c>CareerFit.*</c> key; null for Unknown (no pill, D4).</summary>
     public string? BandLabelKey { get; init; }
 

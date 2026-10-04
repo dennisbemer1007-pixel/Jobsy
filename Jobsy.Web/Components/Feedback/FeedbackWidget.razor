@@ -146,6 +146,7 @@
         }
 
         _capturing = true;
+        _open = true;
         _sent = false;
         _error = null;
         _description = "";
@@ -154,7 +155,6 @@
         _meta = null;
         _roleLabel = await ResolveRoleAsync();
         await InvokeAsync(StateHasChanged);
-        await Task.Delay(40);
 
         try
         {

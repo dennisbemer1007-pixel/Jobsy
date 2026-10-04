@@ -690,28 +690,7 @@
     }
 
     private static string? CityFromAddress(string? address)
-    {
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            return null;
-        }
-
-        var parts = address.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (parts.Length == 0)
-        {
-            return null;
-        }
-
-        var last = parts[^1];
-        // Strip leading postal code "1234 AB "
-        var tokens = last.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length >= 2 && tokens[0].Any(char.IsDigit))
-        {
-            return string.Join(' ', tokens.Skip(1));
-        }
-
-        return last;
-    }
+        => HomeAddressCity.From(address);
 
     private string? FormatLanguages(CandidatePreferences? prefs)
     {

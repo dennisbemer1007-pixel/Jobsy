@@ -46,14 +46,20 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         bool complete,
         CancellationToken cancellationToken = default)
     {
+        var row = await _db.CandidateCulturePersonalityProfiles
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (answers.Count == 0 && row is not null && CandidateCompetencyStatuses.IsCompleted(row.Status))
+        {
+            var kept = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
+            return ToDto(row, kept);
+        }
+
         var error = CulturePersonalityCatalog.ValidateAnswers(answers, complete);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
         }
 
-        var row = await _db.CandidateCulturePersonalityProfiles
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (answers.Count == 0)
         {
             if (row is not null)
@@ -79,7 +85,9 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
             _db.CandidateCulturePersonalityProfiles.Add(row);
         }
 
-        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status);
+        var storedAnswers = CulturePersonalityCatalog.ParseAnswers(row.AnswersJson);
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
+            && CulturePersonalityCatalog.IsComplete(storedAnswers);
         var answersJson = CulturePersonalityCatalog.SerializeAnswers(answers);
         var baselineAnswersJson = row.AnswersJson;
         if (wasCompleted && !complete)
@@ -90,7 +98,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         {
             var noOp = await _saveGuard.CommitCompleteAsync(
                 userId, AssessmentKind.Culture, AssessmentVariant.Quick, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
-            if (noOp)
+            if (noOp && ScoresMatch(row, CulturePersonalityCatalog.Score(answers)))
             {
                 var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
                 return ToDto(row, priceNoOp);
@@ -144,6 +152,20 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 cancellationToken);
         return row is null ? null : FromRow(row);
     }
+
+    private static bool ScoresMatch(CandidateCulturePersonalityProfile row, CulturePersonalityScores? preview)
+        => preview is { IsComplete: true }
+           && row.AutonomyPercent == preview.Autonomy
+           && row.InformalPercent == preview.Informal
+           && row.CollaborationPercent == preview.Collaboration
+           && row.FlexibilityPercent == preview.Flexibility
+           && row.InnovationPercent == preview.Innovation
+           && row.PeopleFirstPercent == preview.PeopleFirst
+           && row.OpennessPercent == preview.Openness
+           && row.ConscientiousnessPercent == preview.Conscientiousness
+           && row.ExtraversionPercent == preview.Extraversion
+           && row.AgreeablenessPercent == preview.Agreeableness
+           && row.EmotionalStabilityPercent == preview.EmotionalStability;
 
     private static void ApplyScores(CandidateCulturePersonalityProfile row, CulturePersonalityScores s)
     {

@@ -127,6 +127,30 @@ public static class JourneyTestFlow
     /// <summary>URL token for the shed after step <paramref name="step"/> (7–10).</summary>
     public static string ShedQuery(int step) => $"shed-{Math.Clamp(step, 7, 10)}";
 
+    /// <summary>Query value for <c>?diepte=</c>. Only the free-test bands are accepted.</summary>
+    public static bool TryParseDepth(string? raw, out int level)
+    {
+        level = 0;
+        if (!int.TryParse(raw, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+        {
+            return false;
+        }
+
+        if (parsed is not (OnboardingWizardCatalog.MiniLevelCount
+            or OnboardingWizardCatalog.DeeperLevelCount
+            or 18
+            or 25))
+        {
+            return false;
+        }
+
+        level = parsed;
+        return true;
+    }
+
+    public static string DepthQueryValue(int level)
+        => level.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     /// <summary>
     /// Restores the shed step from <c>?stap=</c>. Bare <c>shed</c> stays on step 7;
     /// <c>shed-8</c> restores step 8 so a refresh does not rewind to the first test.

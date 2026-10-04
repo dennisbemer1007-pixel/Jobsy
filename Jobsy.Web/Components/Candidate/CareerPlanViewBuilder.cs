@@ -41,7 +41,10 @@ public static class CareerPlanViewBuilder
         string? StepBandLabelKey,
         int StepMatchPercent,
         string VacanciesHref,
-        bool GoalReached);
+        bool GoalReached)
+    {
+        public IReadOnlyList<string> CourseNames { get; init; } = [];
+    }
 
     /// <summary>
     /// Everything <c>/carriere</c> (02) renders. <paramref name="nowLabel"/> is the candidate's
@@ -51,7 +54,8 @@ public static class CareerPlanViewBuilder
     public static CareerPlanViewModel BuildPage(
         CareerPathPlanApiModel? plan,
         string uiLanguage,
-        string nowLabel = "")
+        string nowLabel = "",
+        string evidence = "")
     {
         if (plan is null || (plan.Steps.Count == 0 && string.IsNullOrWhiteSpace(plan.DreamTitle)))
         {
@@ -69,20 +73,20 @@ public static class CareerPlanViewBuilder
             };
         }
 
-        var steps = plan.Steps
-            .OrderBy(s => s.Order)
-            .Select(MapStep)
+        var mapped = plan.Steps.OrderBy(s => s.Order).Select(MapStep).ToList();
+        OverlayEvidence(mapped, evidence);
+        var steps = mapped
             .Select(s => new CareerPlanStepView(
                 s.Id,
                 s.Order,
                 s.Title,
                 ShortTitle(s.Title),
                 s.Status,
-                s.SkillsGap.Count + s.MinRequirements.Count,
+                UnmetGapCount(s, evidence),
                 StepBandLabelKey(s),
                 s.Courses.Count,
                 s.Summary,
-                GapNames(s)))
+                UnmetGapNames(s, evidence)))
             .ToList();
 
         var completed = steps.Count(s => s.Status == CareerStepStatus.Completed);
@@ -119,10 +123,11 @@ public static class CareerPlanViewBuilder
 
         var have = BuildAlreadyHave(plan, steps);
 
+        var evidenceGoal = steps.Count > 0 && steps.All(s => s.Status == CareerStepStatus.Completed);
         return new CareerPlanViewModel
         {
             HasPlan = true,
-            GoalReached = plan.GoalReached,
+            GoalReached = plan.GoalReached || evidenceGoal,
             DreamTitle = plan.DreamTitle,
             DreamLevel = entry?.Level ?? "",
             DreamBandLabelKey = FitBandLabelKey(plan.DreamFitBand),
@@ -135,9 +140,9 @@ public static class CareerPlanViewBuilder
             Steps = steps,
             CurrentStep = current,
             CompletedSteps = completed,
-            CurrentStepNumber = plan.GoalReached ? 0 : current?.Order ?? 0,
+            CurrentStepNumber = plan.GoalReached || evidenceGoal ? 0 : current?.Order ?? 0,
             Stones = stones,
-            CurrentStoneIndex = plan.GoalReached ? steps.Count + 1 : completed,
+            CurrentStoneIndex = plan.GoalReached || evidenceGoal ? steps.Count + 1 : completed,
             PlatesShed = Math.Min(10, 4 + 2 * completed),
             LobsterSizeDesktop = Math.Min(190, 118 + 14 * completed),
             LobsterSizeMobile = Math.Min(100, 62 + 8 * completed),
@@ -153,7 +158,11 @@ public static class CareerPlanViewBuilder
     /// One step, fully explained (03 §1–§4). Returns null for an unknown order so the
     /// page falls back to the overview. <paramref name="order"/> is the 1-based step order.
     /// </summary>
-    public static CareerStepDetailView? BuildStep(CareerPathPlanApiModel? plan, int order, string evidence = "")
+    public static CareerStepDetailView? BuildStep(
+        CareerPathPlanApiModel? plan,
+        int order,
+        string evidence = "",
+        int experienceYears = 0)
     {
         if (plan is null || plan.Steps.Count == 0)
         {
@@ -161,6 +170,7 @@ public static class CareerPlanViewBuilder
         }
 
         var ordered = plan.Steps.OrderBy(s => s.Order).Select(MapStep).ToList();
+        OverlayEvidence(ordered, evidence);
         var index = ordered.FindIndex(s => s.Order == order);
         if (index < 0)
         {
@@ -191,11 +201,14 @@ public static class CareerPlanViewBuilder
             Level = LevelFromTitle(step.Title),
             Lead = LeadSentences(step.Summary),
             Status = step.Status,
-            CurrentStepNumber = plan.GoalReached ? 0 : current?.Order ?? 0,
+            CurrentStepNumber = plan.GoalReached || ordered.All(s => s.Status == CareerStepStatus.Completed)
+                ? 0
+                : current?.Order ?? 0,
             CanUndo = step.Status == CareerStepStatus.Completed && step.Order == lastCompletedOrder,
             Missing = missing,
             Present = present,
             Years = Math.Max(0, step.YearsExperienceNeeded),
+            YearsMet = step.YearsExperienceNeeded > 0 && experienceYears >= step.YearsExperienceNeeded,
             BandLabelKey = StepBandLabelKey(step),
             Band = NormalizeBand(step.StepFitBand),
             FirstGap = missing.Count > 0 ? missing[0].Text : "",
@@ -466,7 +479,7 @@ public static class CareerPlanViewBuilder
     /// Builds the passport Carrière compact view from a dashboard model.
     /// Completing steps stays on <c>/carriere</c>.
     /// </summary>
-    public static PassportCareerView BuildPassport(CareerDashboardModel? model)
+    public static PassportCareerView BuildPassport(CareerDashboardModel? model, string evidence = "")
     {
         if (model is null || !model.HasPlan || model.Steps.Count == 0)
         {
@@ -483,12 +496,15 @@ public static class CareerPlanViewBuilder
                 GoalReached: false);
         }
 
-        var active = model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Active)
-                     ?? model.Steps.FirstOrDefault(s => s.Status == CareerStepStatus.Open)
-                     ?? (model.Steps.Count > 0 ? model.Steps[^1] : null);
+        var editable = model.Steps.ToList();
+        OverlayEvidence(editable, evidence);
+        var goalReached = model.GoalReached || (editable.Count > 0 && editable.All(s => s.Status == CareerStepStatus.Completed));
+        var active = editable.FirstOrDefault(s => s.Status == CareerStepStatus.Active)
+                     ?? editable.FirstOrDefault(s => s.Status == CareerStepStatus.Open)
+                     ?? (editable.Count > 0 ? editable[^1] : null);
 
-        var shells = new List<ShellStep>(model.Steps.Count + 1);
-        foreach (var step in model.Steps)
+        var shells = new List<ShellStep>(editable.Count + 1);
+        foreach (var step in editable)
         {
             var kind = step.Status switch
             {
@@ -501,13 +517,13 @@ public static class CareerPlanViewBuilder
 
         shells.Add(new ShellStep(
             "goal",
-            model.Steps.Count + 1,
+            editable.Count + 1,
             model.DreamRoleTitle,
-            model.GoalReached ? ShellKind.Done : ShellKind.Goal,
-            model.GoalReached ? CareerStepStatus.Completed : CareerStepStatus.Open,
+            goalReached ? ShellKind.Done : ShellKind.Goal,
+            goalReached ? CareerStepStatus.Completed : CareerStepStatus.Open,
             IsGoal: true));
 
-        var gaps = BuildGaps(active);
+        var gaps = BuildGaps(active, evidence);
         var courseKeys = BuildCourseKeys(active);
 #pragma warning disable CS0618
         var pct = active?.StepMatchPercent ?? model.MatchPercent;
@@ -525,7 +541,14 @@ public static class CareerPlanViewBuilder
             StepBandLabelKey: bandKey,
             StepMatchPercent: pct,
             VacanciesHref: href,
-            GoalReached: model.GoalReached);
+            GoalReached: goalReached)
+        {
+            CourseNames = (active?.Courses ?? [])
+                .Where(c => !c.OnProfile && !string.IsNullOrWhiteSpace(c.Name))
+                .Select(c => c.Name.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList()
+        };
     }
 
     public static string? StepBandLabelKey(CareerPathDashboardStep? step)
@@ -636,6 +659,152 @@ public static class CareerPlanViewBuilder
         return !folded.Equals("Geen specifieke vereisten", StringComparison.OrdinalIgnoreCase)
                && !folded.Equals("Geen specifieke eisen", StringComparison.OrdinalIgnoreCase)
                && !folded.Equals("No specific requirements", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Marks a prefix of steps completed when every real gap is already in the profile.
+    /// Later stamps stay open until the prefix reaches them (same rule as certificates).
+    /// </summary>
+    public static void OverlayEvidence(IList<CareerPathDashboardStep> steps, string evidence)
+    {
+        if (steps.Count == 0 || string.IsNullOrWhiteSpace(evidence))
+        {
+            return;
+        }
+
+        var ordered = steps.OrderBy(s => s.Order).ToList();
+        var qualifies = new bool[ordered.Count];
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            qualifies[i] = ordered[i].Status == CareerStepStatus.Completed
+                           || GapsAllMet(ordered[i], evidence);
+        }
+
+        var prefix = true;
+        var assignedActive = false;
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            if (prefix && qualifies[i])
+            {
+                ordered[i].Status = CareerStepStatus.Completed;
+                continue;
+            }
+
+            prefix = false;
+            if (!assignedActive)
+            {
+                ordered[i].Status = CareerStepStatus.Active;
+                assignedActive = true;
+            }
+            else if (ordered[i].Status == CareerStepStatus.Completed)
+            {
+                ordered[i].Status = CareerStepStatus.Open;
+                ordered[i].HeldBack = true;
+            }
+            else
+            {
+                ordered[i].Status = CareerStepStatus.Open;
+            }
+        }
+    }
+
+    public static string EvidenceFrom(CandidatePreferences? prefs)
+    {
+        if (prefs is null)
+        {
+            return "";
+        }
+
+        var bits = new List<string>();
+        bits.AddRange(prefs.Employers.Select(e => $"{e.Role} {e.EmployerName}"));
+        bits.AddRange(prefs.Roles);
+        bits.AddRange(prefs.Educations);
+        if (!string.IsNullOrWhiteSpace(prefs.EducationDirection))
+        {
+            bits.Add(prefs.EducationDirection);
+        }
+
+        bits.AddRange(prefs.Certificates.Select(c => c.Name));
+        return string.Join(' ', bits.Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
+
+    public static int ExperienceYears(IEnumerable<CandidateEmployerHistory>? employers)
+    {
+        var total = 0;
+        foreach (var job in employers ?? [])
+        {
+            if (job.Years is int years && years > 0)
+            {
+                total += years;
+                continue;
+            }
+
+            if (MonthsBetween(job.StartMonth, job.EndMonth) is int months && months > 0)
+            {
+                total += Math.Max(1, months / 12);
+            }
+        }
+
+        return total;
+    }
+
+    private static int UnmetGapCount(CareerPathDashboardStep step, string evidence)
+        => UnmetGapNames(step, evidence).Count;
+
+    private static IReadOnlyList<string> UnmetGapNames(CareerPathDashboardStep step, string evidence)
+    {
+        var names = new List<string>();
+        foreach (var gap in step.SkillsGap.Concat(step.MinRequirements))
+        {
+            if (!IsRealGap(gap) || GapMatchesEvidence(gap, evidence))
+            {
+                continue;
+            }
+
+            names.Add(gap.Trim());
+        }
+
+        return names;
+    }
+
+    private static bool GapsAllMet(CareerPathDashboardStep step, string evidence)
+    {
+        var real = step.SkillsGap.Concat(step.MinRequirements).Where(IsRealGap).ToList();
+        return real.Count > 0 && real.All(line => GapMatchesEvidence(line, evidence));
+    }
+
+    private static int? MonthsBetween(string? start, string? end)
+    {
+        if (!TryMonth(start, out var from))
+        {
+            return null;
+        }
+
+        var until = TryMonth(end, out var to) ? to : DateOnly.FromDateTime(DateTime.UtcNow);
+        var months = (until.Year - from.Year) * 12 + until.Month - from.Month;
+        return Math.Max(0, months);
+    }
+
+    private static bool TryMonth(string? value, out DateOnly month)
+    {
+        month = default;
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 7)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(value[..4], out var year) || !int.TryParse(value[5..7], out var m))
+        {
+            return false;
+        }
+
+        if (year < 1970 || m is < 1 or > 12)
+        {
+            return false;
+        }
+
+        month = new DateOnly(year, m, 1);
+        return true;
     }
 
     /// <summary>A gap is already met when a meaningful word also appears in the profile evidence.</summary>

@@ -6,7 +6,8 @@
     <div class="@BackdropCss"
          aria-hidden="true"
          @onclick="OnBackdropClick"></div>
-    <div class="@DialogCss"
+    <div @ref="_dialog"
+         class="@DialogCss"
          role="dialog"
          aria-modal="true"
          aria-labelledby="@TitleId"
@@ -92,6 +93,33 @@
     [Parameter] public string? CloseAriaLabel { get; set; }
     [Parameter] public string? MascotAlt { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+
+    private ElementReference _dialog;
+    private bool _focused;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!IsOpen)
+        {
+            _focused = false;
+            return;
+        }
+
+        if (_focused)
+        {
+            return;
+        }
+
+        _focused = true;
+        try
+        {
+            await _dialog.FocusAsync();
+        }
+        catch (Exception)
+        {
+            _focused = false;
+        }
+    }
 
     private string MascotAltResolved =>
         string.IsNullOrWhiteSpace(MascotAlt) ? "De vrolijke kreeft van Lobsy" : MascotAlt;

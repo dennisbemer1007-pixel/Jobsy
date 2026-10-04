@@ -86,6 +86,37 @@ public class CultureValuesPreviewScoresTests
         Assert.Equal(3, dto.Answers.Count);
     }
 
+    [Fact]
+    public async Task Completed_values_save_with_empty_answers_keeps_the_result()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var answers = Enumerable.Range(1, 25).ToDictionary(id => id, _ => 4);
+        db.CandidateValuesProfiles.Add(new CandidateValuesProfile
+        {
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            AnswersJson = SchwartzValuesCatalog.SerializeAnswers(answers),
+            AutonomyPercent = 70,
+            ConnectionPercent = 80,
+            AchievementPercent = 60,
+            StabilityPercent = 55,
+            ImpactPercent = 50,
+            CompletedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new CandidateValuesService(
+            db, new StubCommercial(), new StubQueue(), new StubMatchSnapshots(),
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
+        var dto = await sut.SaveAsync(userId, new Dictionary<int, int>(), complete: true);
+
+        Assert.Equal(CandidateCompetencyStatuses.Completed, dto.Status);
+        Assert.Equal(25, dto.Answers.Count);
+        Assert.Equal(80, dto.Scores?.Connection);
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

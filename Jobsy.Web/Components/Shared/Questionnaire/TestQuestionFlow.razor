@@ -185,14 +185,13 @@
         {
             try
             {
-                var reduce = await Js.InvokeAsync<bool>("eval",
-                    "window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches");
+                var reduce = await MatchesMediaAsync("(prefers-reduced-motion: reduce)");
                 if (reduce)
                 {
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
                 }
 
-                var narrow = await Js.InvokeAsync<bool>("eval", "window.matchMedia && window.matchMedia('(max-width: 639px)').matches");
+                var narrow = await MatchesMediaAsync("(max-width: 639px)");
                 _recentLimit = narrow ? 5 : 8;
                 _exampleOpen = !narrow;
             }
@@ -230,9 +229,28 @@
         }
     }
 
+    private async Task<bool> MatchesMediaAsync(string query)
+    {
+        try
+        {
+            return await Js.InvokeAsync<bool>("jobsyMedia.matches", query);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task OnAnswerAsync(int value)
     {
-        var question = Ordered[_index];
+        // Capture the question before any await. Volgende can run while those awaits
+        // are in flight; a later _index++ would skip the question the click already left.
+        var answeredIndex = _index;
+        if (answeredIndex < 0 || answeredIndex >= Ordered.Count) return;
+        CancelPendingAdvance();
+        var generation = _advanceGeneration;
+
+        var question = Ordered[answeredIndex];
         if (Autosave is not null)
         {
             await Autosave.SetAnswerAsync(question.Id, value);
@@ -244,8 +262,9 @@
 
         await OnChanged.InvokeAsync();
         await FireLevelsAsync();
+        if (generation != _advanceGeneration || _index != answeredIndex) return;
 
-        if (_index >= TargetCount - 1)
+        if (answeredIndex >= TargetCount - 1)
         {
             // Never auto-advance past the target.
             _focusRequest = true;
@@ -253,27 +272,19 @@
             return;
         }
 
-        if (ShouldPauseAfterIndex?.Invoke(_index) == true)
+        if (ShouldPauseAfterIndex?.Invoke(answeredIndex) == true)
         {
-            await OnPauseAfter.InvokeAsync(_index);
+            await OnPauseAfter.InvokeAsync(answeredIndex);
             _focusRequest = true;
             await InvokeAsync(StateHasChanged);
             return;
         }
 
-        CancelPendingAdvance();
-        var generation = _advanceGeneration;
+        var delayMs = await MatchesMediaAsync("(prefers-reduced-motion: reduce)") ? 0 : 250;
+        if (generation != _advanceGeneration || _index != answeredIndex) return;
+
         _advanceCts = new CancellationTokenSource();
         var token = _advanceCts.Token;
-        var delayMs = 250;
-        try
-        {
-            var reduce = await Js.InvokeAsync<bool>("eval",
-                "window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches");
-            if (reduce) delayMs = 0;
-        }
-        catch { /* ignore */ }
-
         try
         {
             if (delayMs > 0) await Task.Delay(delayMs, token);
@@ -283,9 +294,9 @@
             return;
         }
 
-        if (token.IsCancellationRequested || generation != _advanceGeneration) return;
+        if (token.IsCancellationRequested || generation != _advanceGeneration || _index != answeredIndex) return;
         if (_index >= TargetCount - 1) return;
-        _index++;
+        _index = answeredIndex + 1;
         _focusRequest = true;
         await InvokeAsync(StateHasChanged);
     }

@@ -12,6 +12,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Core.Options
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.TestResult
 @using Jobsy.Web.Components.Pages.Candidate.DeepReport
 @using Jobsy.Web.Components.Candidate.Tests
@@ -162,7 +163,10 @@
             <section class="test-detail__compass" aria-label="@Culture["Kompas.Career"]">
                 <CareerCompassPanel Compass="_careerCompass"
                                     Competencies="_competencyScores"
-                                    CareerDirection="_riasecScores" />
+                                    CareerDirection="_riasecScores"
+                                    DreamTitle="@_dreamTitle"
+                                    GoalEvidence="@_goalEvidence"
+                                    EducationLabel="@_educationLabel" />
                 <p class="career-dash-link-row">
                     <a class="engagement-btn" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
                 </p>
@@ -360,6 +364,9 @@
     private readonly List<ScoreBar> _personalityBars = [];
     private CareerCompassModel? _careerCompass;
     private RiasecScoreSet? _riasecScores;
+    private string? _dreamTitle;
+    private string? _goalEvidence;
+    private string? _educationLabel;
     private CompetencyScoreSet? _competencyScores;
     private DeepAnalysisState? _deepState;
     private CompetenceDeepReport? _competenceReport;
@@ -573,6 +580,24 @@
         catch
         {
             // Optional for RoleFit insight inside CareerCompassPanel.
+        }
+
+        try
+        {
+            var plan = await Api.GetCareerPathAsync();
+            _dreamTitle = plan?.DreamTitle;
+            var profile = await Api.GetMyProfileAsync();
+            var prefs = profile?.Preferences;
+            _goalEvidence = CareerPlanViewBuilder.EvidenceFrom(prefs);
+            _educationLabel = string.Join(
+                " ",
+                (prefs?.Educations ?? []).Append(prefs?.EducationDirection ?? "").Where(s => !string.IsNullOrWhiteSpace(s)));
+        }
+        catch
+        {
+            _dreamTitle = null;
+            _goalEvidence = null;
+            _educationLabel = null;
         }
 
         var scores = state?.Scores;

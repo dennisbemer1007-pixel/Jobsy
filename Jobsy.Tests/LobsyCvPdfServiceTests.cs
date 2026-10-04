@@ -109,6 +109,27 @@ public class LobsyCvPdfServiceTests
     }
 
     [Fact]
+    public void File_name_and_header_use_the_amsterdam_date()
+    {
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+        var prefs = new CandidatePreferencesDto(Roles: [], MaxTravelMinutes: 20, PreferredTransport: "Fiets");
+        var utc = new DateTime(2026, 10, 3, 23, 30, 0, DateTimeKind.Utc);
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Ada Candidate", null, null, false, prefs, null, null, utc);
+        var name = service.BuildFileName(model);
+        Assert.Contains("20261004", name, StringComparison.Ordinal);
+        Assert.DoesNotContain("20261003", name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Education_line_does_not_repeat_the_direction()
+    {
+        Assert.Equal("MBO 2 – Logistiek", LobsyCvPdfService.FormatEducation(["MBO 2 – Logistiek"], "Logistiek"));
+        Assert.Equal("MBO 2 · Logistiek", LobsyCvPdfService.FormatEducation(["MBO 2"], "Logistiek"));
+        Assert.Equal("Logistiek", LobsyCvPdfService.FormatEducation([], "Logistiek"));
+    }
+
+    [Fact]
     public async Task Render_does_not_add_whoami_page_when_model_carries_story()
     {
         var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());

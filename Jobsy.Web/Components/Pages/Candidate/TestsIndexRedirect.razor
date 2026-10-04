@@ -1,0 +1,9 @@
+@page "/candidate/tests"
+@page "/profiel/tests"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+        => Nav.NavigateTo("/candidate/paspoort?tab=tests", replace: true);
+}

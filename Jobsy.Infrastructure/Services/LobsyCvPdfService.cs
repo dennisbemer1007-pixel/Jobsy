@@ -3,6 +3,7 @@ using System.Text;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Time;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -40,10 +41,36 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         _mapImages = mapImages;
     }
 
+    /// <summary>
+    /// Joins the level and the direction. Skips the direction when the level line already contains it
+    /// ("MBO 2 – Logistiek" plus "Logistiek").
+    /// </summary>
+    public static string FormatEducation(IReadOnlyList<string> educations, string? direction)
+    {
+        var education = string.Join(", ", educations.Where(e => !string.IsNullOrWhiteSpace(e)).Select(e => e.Trim()));
+        if (string.IsNullOrWhiteSpace(direction))
+        {
+            return education;
+        }
+
+        var trimmed = direction.Trim();
+        if (string.IsNullOrWhiteSpace(education))
+        {
+            return trimmed;
+        }
+
+        if (education.Contains(trimmed, StringComparison.OrdinalIgnoreCase))
+        {
+            return education;
+        }
+
+        return $"{education} · {trimmed}";
+    }
+
     public string BuildFileName(LobsyCvModel model)
     {
         var initials = Initials(model.FullName);
-        var date = model.GeneratedAtUtc.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        var date = AmsterdamTime.ToLocal(model.GeneratedAtUtc).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
         return $"Lobsy-CV-{initials}-{date}.pdf";
     }
 
@@ -55,7 +82,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
         var logo = _companySettings.GetBrandLogoPng();
         var culture = CultureInfo.GetCultureInfo("nl-NL");
-        var generatedLocal = DateTime.SpecifyKind(model.GeneratedAtUtc, DateTimeKind.Utc);
+        var generatedLocal = AmsterdamTime.ToLocal(model.GeneratedAtUtc);
 
         byte[]? mapPng = null;
         if (model.WorkplaceLatitude is double wLat && model.WorkplaceLongitude is double wLng)
@@ -315,13 +342,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
                     if (model.Educations.Count > 0 || !string.IsNullOrWhiteSpace(model.EducationDirection))
                     {
-                        var education = string.Join(", ", model.Educations);
-                        if (!string.IsNullOrWhiteSpace(model.EducationDirection))
-                        {
-                            education = string.IsNullOrWhiteSpace(education)
-                                ? model.EducationDirection!
-                                : $"{education} · {model.EducationDirection}";
-                        }
+                        var education = FormatEducation(model.Educations, model.EducationDirection);
 
                         Section(body, "Opleiding", education);
                     }

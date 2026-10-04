@@ -56,6 +56,54 @@ public class CompletedTestAutosaveTests
     }
 
     [Fact]
+    public async Task Values_full_save_rescores_a_short_completed_row()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        db.CandidateValuesProfiles.Add(new CandidateValuesProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            AnswersJson = """{"1":4,"2":3,"3":5}""",
+            AutonomyPercent = 60,
+            ConnectionPercent = 70,
+            AchievementPercent = 55,
+            StabilityPercent = 50,
+            ImpactPercent = 65,
+            MatchTagsJson = "[]",
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+            CompletedAtUtc = DateTime.UtcNow.AddDays(-1)
+        });
+        await db.SaveChangesAsync();
+
+        var answers = Enumerable.Range(1, SchwartzValuesCatalog.QuestionCount)
+            .ToDictionary(i => i, i => ((i - 1) % 5) + 1);
+        var expected = SchwartzValuesCatalog.Score(answers)!;
+        var sut = new CandidateValuesService(
+            db,
+            new StubCommercial(),
+            new StubQueue(),
+            new StubMatchSnapshots(),
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
+
+        // Autosave writes the full answers onto the completed row and leaves the old percents.
+        await sut.SaveAsync(userId, answers, complete: false);
+        var stale = await db.CandidateValuesProfiles.SingleAsync();
+        Assert.Equal(70, stale.ConnectionPercent);
+        await sut.SaveAsync(userId, answers, complete: true);
+
+        var row = await db.CandidateValuesProfiles.SingleAsync();
+        Assert.Equal(expected.Autonomy, row.AutonomyPercent);
+        Assert.Equal(expected.Connection, row.ConnectionPercent);
+        Assert.Equal(expected.Achievement, row.AchievementPercent);
+        Assert.Equal(expected.Stability, row.StabilityPercent);
+        Assert.Equal(expected.Impact, row.ImpactPercent);
+        Assert.Equal(SchwartzValuesCatalog.QuestionCount, SchwartzValuesCatalog.ParseAnswers(row.AnswersJson).Count);
+    }
+
+    [Fact]
     public async Task Career_autosave_keeps_completed_scores()
     {
         await using var db = CreateDb();

@@ -2,6 +2,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 @if (Compass is null)
 {
@@ -16,6 +17,22 @@
 @if (Compass.HasOccupations)
 {
     <div class="kompas-occupations" aria-label="@Culture["Kompas.Career"]">
+        @if (GoalHits.Count > 0)
+        {
+            <section class="kompas-band kompas-band--goal">
+                <h4>@Culture["Kompas.GoalRow"]</h4>
+                <ul class="kompas-occupation-list">
+                    @foreach (var hit in GoalHits)
+                    {
+                        <li>@hit.Title</li>
+                    }
+                </ul>
+                @if (EducationFlags.Count > 0)
+                {
+                    <p class="muted">@Culture["Kompas.EducationAbove"]: @string.Join(", ", EducationFlags.Take(4))</p>
+                }
+            </section>
+        }
         @if (Compass.SuperMatches.Count > 0)
         {
             <section class="kompas-band kompas-band--super">
@@ -58,17 +75,19 @@
 @if (!Compass.HasOccupations)
 {
     <div class="kompas-practical">
-        <h4>@Culture["Kompas.PracticalTitle"]</h4>
         <p>@Culture[CareerCompassSnapshot.EmptyNoteKey]</p>
     </div>
 }
-else if (Compass.PracticalNotes.Count > 0)
+else if (VisibleNotes.Count > 0 || !_employersOn)
 {
     <div class="kompas-practical">
-        <h4>@Culture["Kompas.PracticalTitle"]</h4>
-        @foreach (var note in Compass.PracticalNotes)
+        @foreach (var note in VisibleNotes)
         {
             <p>@note</p>
+        }
+        @if (!_employersOn)
+        {
+            <p>@Culture["Kompas.PracticalEmployersOff"]</p>
         }
     </div>
 }
@@ -76,6 +95,38 @@ else if (Compass.PracticalNotes.Count > 0)
 @code {
     [Parameter] public CareerCompassModel? Compass { get; set; }
     [Parameter] public CompetencyScoreSet? Competencies { get; set; }
+    [Parameter] public string? DreamTitle { get; set; }
+    [Parameter] public string? GoalEvidence { get; set; }
+    [Parameter] public string? EducationLabel { get; set; }
+
+    private IReadOnlyList<string> OccupationTitles =>
+        (Compass?.SuperMatches ?? []).Select(m => m.Title)
+            .Concat((Compass?.StrongChoices ?? []).Select(m => m.Title))
+            .Concat((Compass?.Broadening ?? []).Select(m => m.Title))
+            .ToList();
+
+    private IReadOnlyList<CareerGoalFit.Hit> GoalHits =>
+        CareerGoalFit.Pick(OccupationTitles, DreamTitle, GoalEvidence, EducationLabel);
+
+    private IReadOnlyList<string> EducationFlags =>
+        CareerGoalFit.AboveEducation(OccupationTitles, EducationLabel);
+
+    private bool _employersOn = true;
+
+    private IReadOnlyList<string> VisibleNotes =>
+        CareerCompassBuilder.NotesForCandidate(Compass?.PracticalNotes ?? [], _employersOn);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+    }
 
     private RenderFragment OccupationAccordion(CareerOccupationMatchModel item) => __builder =>
     {
