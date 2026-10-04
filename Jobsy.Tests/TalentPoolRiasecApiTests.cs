@@ -59,6 +59,32 @@ public class TalentPoolRiasecApiTests
             Assert.Null(card.HollandCode);
             Assert.Contains("Samenwerken", card.MatchTags);
         }
+
+        AssertScoresAbsent(await social.Content.ReadAsStringAsync());
+        AssertScoresAbsent(await competency.Content.ReadAsStringAsync());
+    }
+
+    private static void AssertScoresAbsent(string json)
+    {
+        foreach (var key in new[]
+        {
+            "careerScores",
+            "competencyScores",
+            "competenceDeepCompleted",
+            "careerDeepCompleted",
+            "matchPercent",
+            "matchScore",
+            "matchBreakdown",
+            "storyText",
+            "fromOpenAi",
+            "rank"
+        })
+        {
+            Assert.DoesNotContain(key, json, StringComparison.OrdinalIgnoreCase);
+        }
+
+        Assert.DoesNotContain("88", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("81", json, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -208,8 +234,18 @@ public sealed class TalentPoolRiasecApiFactory : WebApplicationFactory<Jobsy.Api
             UserId = CandidateId,
             Status = CandidateCompetencyStatuses.Completed,
             HollandCode = "S",
+            SocialPercent = 81,
             RiasecTagsJson = CareerTestCatalog.SerializeTags([CareerTestCatalog.Social]),
             MatchTagsJson = CareerTestCatalog.SerializeTags(["Samenwerken"]),
+            CompletedAtUtc = DateTime.UtcNow
+        });
+        db.CandidateCompetencies.Add(new CandidateCompetency
+        {
+            Id = Guid.NewGuid(),
+            UserId = CandidateId,
+            Status = CandidateCompetencyStatuses.Completed,
+            SamenwerkenPercent = 88,
+            MatchTagsJson = CompetencyTestCatalog.SerializeTags(["Samenwerken"]),
             CompletedAtUtc = DateTime.UtcNow
         });
         db.SaveChanges();

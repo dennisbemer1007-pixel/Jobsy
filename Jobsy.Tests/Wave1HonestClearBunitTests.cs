@@ -109,6 +109,9 @@ public class Wave1HonestClearBunitTests : BunitContext
         Assert.Contains("Social", shown.Markup, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"talent-holland\"", shown.Markup, StringComparison.Ordinal);
         Assert.Contains("Holland-code: S", shown.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Scores:", shown.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", shown.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("diepte-analyse", shown.Markup, StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]

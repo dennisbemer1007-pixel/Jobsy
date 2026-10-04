@@ -8,19 +8,8 @@
     {
         <p data-testid="talent-holland">Holland-code: @Card.HollandCode</p>
     }
-    @if (Card.CompetencyScores is not null)
-    {
-        <p>Scores: S @Card.CompetencyScores.Samenwerken% · R @Card.CompetencyScores.Resultaatgerichtheid% · St @Card.CompetencyScores.Stressbestendigheid% · I @Card.CompetencyScores.Innovatie%</p>
-    }
     <p>@(Card.AvailabilitySummary ?? "Beschikbaarheid onbekend")</p>
     <p>Rijbewijs: @(Card.DrivingLicenses.Count == 0 ? "—" : string.Join(", ", Card.DrivingLicenses))</p>
-    @if (Card.CompetenceDeepCompleted || Card.CareerDeepCompleted)
-    {
-        <p class="profile-address__hint">
-            @(Card.CompetenceDeepCompleted ? "Competentie-diepte-analyse voltooid" : "")
-            @(Card.CareerDeepCompleted ? " Beroepen-diepte-analyse voltooid" : "")
-        </p>
-    }
     @if (CanMutate)
     {
         <button class="login-submit" type="button" @onclick="() => OnUnlock.InvokeAsync(Card.CandidateUserId)">

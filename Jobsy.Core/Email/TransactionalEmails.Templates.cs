@@ -225,10 +225,8 @@ public static partial class TransactionalEmails
             facts.Add((S(c, "Email.Common.Fact.ReceivedOn"), EmailFormat.DateTimeWithoutZone(received, c)));
         }
 
-        if (matchPercent is int match)
-        {
-            facts.Add((S(c, "Email.Common.Fact.Match"), Sf(c, "Email.Common.MatchPercent", match)));
-        }
+        // AI Act: a match percentage never goes to an employer, even if a caller still passes one.
+        _ = matchPercent;
 
         var reason = string.IsNullOrWhiteSpace(companyName)
             ? null

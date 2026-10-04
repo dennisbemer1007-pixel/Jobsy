@@ -31,7 +31,8 @@ public class Wave1HonestClearPlaywrightTests
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
             ViewportSize = new ViewportSize { Width = width, Height = height },
-            IgnoreHTTPSErrors = true
+            IgnoreHTTPSErrors = true,
+            AcceptDownloads = true
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
@@ -57,7 +58,16 @@ public class Wave1HonestClearPlaywrightTests
         await page.WaitForURLAsync(
             url => url.Contains("/privacy/data", StringComparison.OrdinalIgnoreCase),
             new PageWaitForURLOptions { Timeout = 30_000 });
-        Assert.True(await page.Locator("a[href='/privacy/data/export']").IsVisibleAsync());
+        var exportLink = page.Locator("a[href='/privacy/data/export']");
+        Assert.True(await exportLink.IsVisibleAsync());
+        var exportFile = await page.RunAndWaitForDownloadAsync(async () =>
+        {
+            await exportLink.ClickAsync();
+        });
+        Assert.Matches(@"^lobsy-mijn-gegevens-\d{4}-\d{2}-\d{2}\.json$", exportFile.SuggestedFilename);
+        var body = await page.Locator("body").InnerTextAsync();
+        Assert.DoesNotContain("\"toelichting\"", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("{\"", body, StringComparison.Ordinal);
     }
 
     [Fact]

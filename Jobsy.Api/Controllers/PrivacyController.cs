@@ -1,3 +1,5 @@
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -5,8 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
-using Jobsy.Api.Admin;
-using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -32,8 +32,9 @@ public sealed class PrivacyController : ControllerBase
         _users = users;
     }
 
-    /// <summary>AVG Art. 15 / 20 — export personal data as JSON.</summary>
+    /// <summary>AVG Art. 15 / 20 — export personal data as JSON. Own account only.</summary>
     [HttpGet("export")]
+    [EnableRateLimiting("export")]
     public async Task<IActionResult> Export(CancellationToken cancellationToken)
     {
         try
