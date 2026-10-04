@@ -79,7 +79,9 @@ else
 
     @if (!string.IsNullOrEmpty(_message))
     {
-        <p class="state-message">@_message</p>
+        <p class="state-message @(_messageIsError ? "error" : null)"
+           role="@(_messageIsError ? "alert" : "status")"
+           data-testid="admin-vacancy-message">@_message</p>
     }
 
     @if (_drillKey is not null)
@@ -249,6 +251,7 @@ else
     private bool _drillLoading;
     private string? _error;
     private string? _message;
+    private bool _messageIsError;
     private string? _drillKey;
     private string? _drillVacancyTitle;
     private List<MetricDrilldownItem> _drilldown = [];
@@ -617,6 +620,7 @@ else
     {
         _busy = true;
         _message = null;
+        _messageIsError = false;
         try
         {
             await Api.AdminExtendVacancyAsync(v.Id);
@@ -626,6 +630,7 @@ else
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {
@@ -670,6 +675,7 @@ else
     {
         _busy = true;
         _message = null;
+        _messageIsError = false;
         try
         {
             var purge = v.ApplicationCount > 0
@@ -681,6 +687,7 @@ else
         catch (Exception ex)
         {
             _message = UserFacing.Describe(ex);
+            _messageIsError = true;
         }
         finally
         {
@@ -692,6 +699,7 @@ else
     {
         _busy = true;
         _message = null;
+        _messageIsError = false;
         try
         {
             await Api.AdminDeactivateVacancyAsync(v.Id);
@@ -701,6 +709,7 @@ else
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {

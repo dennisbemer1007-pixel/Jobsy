@@ -64,6 +64,15 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyCoachDock.syncClearance", _dock);
+        }
+        catch
+        {
+            // Map controls keep the CSS fallback clearance when JS is blocked.
+        }
+
         if (Compact || !_showTip)
         {
             return;

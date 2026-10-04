@@ -23,7 +23,8 @@ public static partial class AdminActionLabels
             "settings.platform.update" or "maintenance.on" or "maintenance.off" => "AdminAudit.Action.Setting",
             "settings.flyer.update" => "AdminAudit.Action.Flyer",
             "export.create" or "audit-csv" => "AdminAudit.Action.Export",
-            "user.block" or "user.unblock" => "AdminAudit.Action.Block",
+            "user.block" => "AdminAudit.Action.Block",
+            "user.unblock" => "AdminAudit.Action.Unblock",
             "tokens.goodwill.grant" => "AdminAudit.Action.Tokens",
             "privacy.account.deleted" => "AdminAudit.Action.Deleted",
             "privacy.retention.run" or "Data retention" => "AdminAudit.Action.Retention",
@@ -38,6 +39,20 @@ public static partial class AdminActionLabels
                 => "AdminAudit.Action.Sessions",
             "user.test-unlock.reset" => "AdminAudit.Action.TestUnlockReset",
             "reference.misuse.handled" => "AdminAudit.Action.MisuseHandled",
+            "settings.pricing.update" => "AdminAudit.Action.PricingUpdated",
+            "settings.pricing.delete" => "AdminAudit.Action.PricingDeleted",
+            "settings.company.update" => "AdminAudit.Action.CompanyUpdated",
+            "settings.about.update" => "AdminAudit.Action.AboutUpdated",
+            "settings.integration.update" => "AdminAudit.Action.IntegrationUpdated",
+            "user.role.change" => "AdminAudit.Action.RoleChanged",
+            "takeover.approve" => "AdminAudit.Action.TakeoverApproved",
+            "takeover.reject" => "AdminAudit.Action.TakeoverRejected",
+            "invoice.mark-paid" => "AdminAudit.Action.InvoicePaid",
+            "vacancy.extend" => "AdminAudit.Action.VacancyExtended",
+            "vacancy.inactive" => "AdminAudit.Action.VacancyInactive",
+            "apikey.deactivate" => "AdminAudit.Action.ApiKeyOff",
+            "report.decided" => "AdminAudit.Action.ReportDecided",
+            "email.test-send" => "AdminAudit.Action.EmailTest",
             _ => null
         };
 
@@ -336,6 +351,9 @@ public static partial class AdminActionLabels
         yield return ("download", "AdminDataAccess.Action.Download");
         yield return ("user.test-unlock.reset", "AdminAudit.Action.TestUnlockReset");
         yield return ("reference.misuse.handled", "AdminAudit.Action.MisuseHandled");
+        yield return ("vacancy.inactive", "AdminAudit.Action.VacancyInactive");
+        yield return ("vacancy.extend", "AdminAudit.Action.VacancyExtended");
+        yield return ("user.unblock", "AdminAudit.Action.Unblock");
 
         foreach (var entry in PlatformSettingsCatalog.Entries)
         {

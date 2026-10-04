@@ -282,6 +282,8 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
+    container-type: inline-size;
+    container-name: passport-overview;
 }
 
 .passport-overview__ring-block {
@@ -334,8 +336,10 @@
 
 .passport-overview__stats {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
     gap: var(--space-3);
+    flex: 1 1 22rem;
+    min-inline-size: min(100%, 22rem);
 }
 
 .passport-stat {
@@ -397,12 +401,17 @@
 
 @media (min-width: 1024px) {
     .passport-overview {
-        flex-direction: row;
-        align-items: stretch;
+        flex-flow: row wrap;
+        align-items: flex-start;
+    }
+
+    .passport-overview > .profile-address__hint {
+        flex: 1 0 100%;
+        min-inline-size: 0;
     }
 
     .passport-overview__ring-block {
-        flex: 0 0 auto;
+        flex: 0 1 18rem;
         max-inline-size: 280px;
     }
 
@@ -411,13 +420,22 @@
     }
 
     .passport-overview__stats {
-        flex: 1;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        flex: 1 1 22rem;
+        min-inline-size: min(100%, 22rem);
     }
 
     .passport-stat__icon {
         display: inline-flex;
         margin-block-end: var(--space-1);
+    }
+}
+
+/* The card beside the passport sidebar is often under 720px at 1366.
+   Then the four stats sit under the ring, two per row, each at least 7.5rem. */
+@container passport-overview (max-width: 720px) {
+    .passport-overview__stats {
+        flex-basis: 100%;
+        grid-template-columns: repeat(2, minmax(7.5rem, 1fr));
     }
 }
 
@@ -1727,6 +1745,20 @@
 .passport-proof__note {
     margin: 0;
     font-size: var(--text-sm);
+}
+
+.passport-proof__sheet .share-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    inline-size: 44px;
+    block-size: 44px;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding: 0;
+    font-size: 1.35rem;
+    line-height: 1;
 }
 
 .passport-proof__sheet .filter-sheet__body {

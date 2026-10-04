@@ -637,3 +637,16 @@
 .map-iso-label__icon {
     margin-inline-end: 0.2rem;
 }
+
+/* The shared coach dock sits bottom-inline-end. On a phone it covers zoom and 3D.
+   --lobsy-coach-clear-inline is set by jobsyCoachDock.syncClearance; 80px matches
+   the 56px lobster plus its 12px inset and a 12px gap before JS runs. */
+@media (max-width: 639px) {
+    .app-shell:has([data-lobsy-coach]) .job-map .maplibregl-ctrl-bottom-right,
+    .app-shell:has([data-lobsy-coach]) .job-map .maplibregl-ctrl-top-right,
+    .app-shell:has([data-lobsy-coach]) .job-map .job-map-style-switch,
+    .app-shell:has([data-lobsy-coach]) .job-map .job-map-locate {
+        right: calc(var(--lobsy-coach-clear-inline, 80px));
+        margin-right: 0;
+    }
+}

@@ -24,8 +24,8 @@
     "v": "20261004-10"
   },
   "css/features/banenkaart.css": {
-    "sha256": "caa42b9fe039b27a83623ed386f30454fd49d4d4bfa446ad8d0f7a5f6c86d390",
-    "v": "20261004-10"
+    "sha256": "c27d34994dca00364c2d943fbb292a830892ef055effdad2782392c59da2df68",
+    "v": "20261004-11"
   },
   "css/features/carriere.css": {
     "sha256": "466e79f258c0daebf11acbc23d1c79e99c58574358ba21f24b825df508bb6ffd",
@@ -64,8 +64,8 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "9673ef65c64c7cce059c2ba89594b7bed109079bfb3229c2cdedbc65fc7407b2",
-    "v": "20261004-10"
+    "sha256": "acc50013bb7284c83006d250ac6e658a6441dacbc3b46021c037916da08b8f8f",
+    "v": "20261004-11"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
@@ -116,8 +116,8 @@
     "v": "20261004-10"
   },
   "css/features/werkgever.css": {
-    "sha256": "4144ac6801630c2e98576cfa5c9537acaa878b0f447dbca5f6a038008b46c269",
-    "v": "20261004-10"
+    "sha256": "de13b610da7c872f907d7475622d941800bc46133ec5e00b63de3e251df9657c",
+    "v": "20261004-11"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "6d9483e8c2a6e0f890c58b7d1e13899b7da005f348cfbeb43ad1878ef76aed88",
-    "v": "20261004-10"
+    "sha256": "3b8ce81b8543c2507c91db47b6c44116121da8afadea967692fe11e8963e3abb",
+    "v": "20261004-11"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "5149572eea1b938f4abc370196281642c1a8976c2a3da9393d5d32f4792b03c7",
-    "v": "20261004-10"
+    "sha256": "93880ad22de793e792ff33ebcc7a2aeb30a26e958d15cbda4e4b2a9d2eda6db1",
+    "v": "20261004-11"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -212,11 +212,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "bb249691411cc49864150edbb8d811c4d229f716eb7748b8d00beb1e8d28f2d8",
-    "v": "20261004-10"
+    "sha256": "8ad1b17d66eaf2f53117187638b86b010ded22fab1bea69157f2b6085606838a",
+    "v": "20261004-11"
   },
   "service-worker.published.js": {
-    "sha256": "aae8dd2c9129ec5ac5c507641af106a6baa2b24010cc9832bdce406808fdeaf5",
-    "v": "20261004-10"
+    "sha256": "352bcc4ba3c25d9a173e5d40435fa8c52580021ebed21bab833ed85f50e25be5",
+    "v": "20261004-11"
   }
 }

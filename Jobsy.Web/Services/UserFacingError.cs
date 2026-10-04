@@ -74,6 +74,7 @@ public sealed class UserFacingError
         // errors 05 §05.2: the maintenance wording lives with the 503 page.
         ApiErrorException.Maintenance => "Status.Maintenance.Short",
         "open_for_work_required" => "Kb.OpenForWork.Required",
+        "vacancy_delete_not_allowed" => "AdminVacancy.DeleteOffline",
         _ => "Common.Error.TryAgain"
     };
 

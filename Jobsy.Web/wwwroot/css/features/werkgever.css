@@ -1947,3 +1947,12 @@
         height: 44px;
     }
 }
+
+/* The fixed Assistent tab sits on the right edge and covers "Later" on the
+   add-to-home banner. Pull the banner in so the button stays tappable. */
+@media (max-width: 639px) {
+    .wg-shell:has(.lobsy-assistant-tab) .pwa-install-banner {
+        margin-inline-end: calc(0.75rem + 2.75rem);
+        max-width: calc(100% - 3.5rem);
+    }
+}
