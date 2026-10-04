@@ -419,6 +419,34 @@ public class LobsyCvPdfServiceTests
     }
 
     [Fact]
+    public async Task Employer_cv_pdf_does_not_print_a_match_percent()
+    {
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+        var prefs = new CandidatePreferencesDto(
+            Roles: ["horeca"],
+            MaxTravelMinutes: 30,
+            PreferredTransport: "Fiets");
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Ada Candidate",
+            "ada@test.local",
+            null,
+            false,
+            prefs,
+            null,
+            null,
+            DateTime.UtcNow,
+            vacancyTitle: "Kas medewerker",
+            companyName: "Tuinbouw Test",
+            matchPercent: 77);
+        var pdf = await service.RenderAsync(model);
+        using var doc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        var text = string.Join('\n', doc.GetPages().Select(p => p.Text));
+        Assert.Contains("Kas medewerker", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("% match", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("77%", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Format_employer_period_supports_range_and_legacy_years()
     {
         Assert.Equal("jan 2020 – dec 2021", LobsyCvModelFactory.FormatEmployerPeriod("2020-01", "2021-12"));

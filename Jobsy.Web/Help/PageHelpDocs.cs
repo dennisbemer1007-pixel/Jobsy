@@ -399,7 +399,7 @@ public static class PageHelpDocs
         ["/werkgever/sollicitaties"] = new(
             "Sollicitanten",
             "Binnenkomende sollicitaties op jouw vacatures.",
-            "Filter en open kandidaten, bekijk matchscore/status en vervolgstappen. Naam en cv na acceptatie; e-mail en telefoon pas na aanname.",
+            "Filter en open kandidaten, bekijk de status en de vervolgstappen. Geen matchpercentage. Naam en cv na acceptatie; e-mail en telefoon pas na aanname.",
             "Selectie en opvolging van sollicitaties door managers."),
 
         ["/werkgever/sollicitaties/{ApplicationId:guid}"] = new(

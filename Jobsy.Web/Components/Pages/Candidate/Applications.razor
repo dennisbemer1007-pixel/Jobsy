@@ -173,7 +173,6 @@
     private List<ApplicationItem> _filtered = [];
     private bool _loading = true;
     private bool _disposed;
-    private bool _restored;
     private bool _readOnly;
     private string? _filter = "all";
     private string? _givenName;
@@ -376,7 +375,6 @@
             RefreshCounts();
             ApplyFilter();
             _loading = false;
-            _restored = true;
         }
     }
 
@@ -392,7 +390,6 @@
         _readOnly = !RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate);
         _givenName = state.User.FindFirst(ClaimTypes.GivenName)?.Value
                      ?? state.User.FindFirst("given_name")?.Value;
-        if (_restored) return;
         try
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();
@@ -476,7 +473,8 @@
     private static bool IsRejected(string status)
         => status is "Rejected" or "FilledElsewhere";
 
-    private static bool CanWithdraw(string status) => status == "Pending";
+    private static bool CanWithdraw(string status)
+        => status is "Pending" or "Accepted" or "EmployerContacting";
 
     private static string CompanyLine(ApplicationItem a)
         => string.IsNullOrWhiteSpace(a.LocationLabel) ? a.CompanyName : $"{a.CompanyName} · {a.LocationLabel}";

@@ -48,6 +48,11 @@ public sealed class WerkgeverDashboardService : IWerkgeverDashboardService
             .Where(c => ids.Contains(c.Id))
             .Select(c => new { c.Id, c.Name, c.ParentCompanyId, c.TokensManagedByEnterprise })
             .ToListAsync(cancellationToken);
+        // The parent company is not a branch. Count and list only vestigingen when children exist.
+        if (companies.Any(c => c.ParentCompanyId is not null))
+        {
+            companies = companies.Where(c => c.ParentCompanyId is not null).ToList();
+        }
 
         var regionRows = await _db.RegionCompanies.AsNoTracking()
             .Where(rc => ids.Contains(rc.CompanyId))

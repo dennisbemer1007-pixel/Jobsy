@@ -132,6 +132,7 @@ public class ApplyResultItem
     public int? MatchPercent { get; set; }
     public string? MatchBreakdownJson { get; set; }
     public string? SafetyNetMessage { get; set; }
+    public bool ConfirmationLoggedToStub { get; set; }
 }
 
 public class EmployerDirectContactItem
@@ -209,8 +210,6 @@ public class EmployerApplicationItem
     public string? SnapshotEducations { get; set; }
     public string? SnapshotAboutMe { get; set; }
     public int CandidateEmployerCount { get; set; }
-    public int? MatchPercent { get; set; }
-    public string? MatchBreakdownJson { get; set; }
     public bool ViaSafetyNet { get; set; }
     public string? Motivation { get; set; }
     public bool LegalEligible { get; set; } = true;

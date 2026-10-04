@@ -742,12 +742,15 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var apps = await client.GetAsync("api/applications");
         Assert.Equal(HttpStatusCode.OK, apps.StatusCode);
-        var list = await apps.Content.ReadFromJsonAsync<List<EmployerApplicationDto>>(JsonOpts);
+        var json = await apps.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("matchPercent", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("matchBreakdown", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("matchScore", json, StringComparison.OrdinalIgnoreCase);
+        var list = System.Text.Json.JsonSerializer.Deserialize<List<EmployerApplicationDto>>(json, JsonOpts);
         Assert.NotNull(list);
 
         var pending = Assert.Single(list!, a => a.Id == _factory.PendingApplicationId);
         Assert.Equal(_factory.VacancyId, pending.VacancyId);
-        Assert.NotNull(pending.MatchPercent);
         Assert.False(pending.PiiRevealed);
         Assert.False(pending.CvPdfAvailable);
         Assert.False(pending.UploadedCvAvailable);
@@ -774,10 +777,43 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal("Kandidaat Test", accepted.CandidateName);
         Assert.Null(accepted.CandidateEmail);
         Assert.Null(accepted.CandidatePhone);
-        Assert.Null(accepted.MatchBreakdownJson);
         Assert.NotNull(accepted.CandidateCity);
         Assert.True(accepted.WorkPermitConfirmed);
-        Assert.True(accepted.MatchPercent >= 50);
+    }
+
+    [Fact]
+    public async Task OpenForWork_off_hides_fit_percent_and_blocks_apply()
+    {
+        var client = CandidateClient();
+        var off = await client.PutAsJsonAsync("api/me/profile", new { openForWork = false });
+        Assert.True(off.IsSuccessStatusCode, await off.Content.ReadAsStringAsync());
+        try
+        {
+            var vacancy = await client.GetAsync($"api/vacancies/{_factory.VacancyId}");
+            var body = await vacancy.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, vacancy.StatusCode);
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            Assert.True(BoolProp(doc.RootElement, "openForWorkRequired"), body);
+            Assert.True(MissingOrNull(doc.RootElement, "fitPercent"), body);
+            Assert.True(MissingOrNull(doc.RootElement, "matchPercent"), body);
+
+            var apply = await client.PostAsJsonAsync("api/applications", new
+            {
+                vacancyId = _factory.VacancyId,
+                preferredTransport = "Fiets",
+                estimatedTravelMinutes = 15,
+                acceptedTerms = true,
+                workPermitConfirmed = true
+            });
+            var applyBody = await apply.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.BadRequest, apply.StatusCode);
+            Assert.Contains("open_for_work_required", applyBody, StringComparison.Ordinal);
+        }
+        finally
+        {
+            var back = await client.PutAsJsonAsync("api/me/profile", new { openForWork = true });
+            Assert.True(back.IsSuccessStatusCode);
+        }
     }
 
     [Fact]
@@ -1589,6 +1625,38 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     // ─── helpers ────────────────────────────────────────────────────────────
 
     private HttpClient CandidateClient() => Authed(_factory.CandidateId);
+
+    private static System.Text.Json.JsonElement Prop(System.Text.Json.JsonElement root, string name)
+    {
+        foreach (var prop in root.EnumerateObject())
+        {
+            if (prop.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return prop.Value;
+            }
+        }
+
+        throw new KeyNotFoundException(name);
+    }
+
+    private static bool BoolProp(System.Text.Json.JsonElement root, string name)
+        => Prop(root, name).ValueKind == System.Text.Json.JsonValueKind.True;
+
+    private static bool MissingOrNull(System.Text.Json.JsonElement root, string name)
+    {
+        foreach (var prop in root.EnumerateObject())
+        {
+            if (!prop.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return prop.Value.ValueKind is System.Text.Json.JsonValueKind.Null
+                or System.Text.Json.JsonValueKind.Undefined;
+        }
+
+        return true;
+    }
     private HttpClient EmployerClient() => Authed(_factory.EmployerId);
     private HttpClient AdminClient() => Authed(_factory.AdminId);
 

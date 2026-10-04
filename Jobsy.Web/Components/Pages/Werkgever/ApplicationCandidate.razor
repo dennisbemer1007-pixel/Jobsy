@@ -71,10 +71,6 @@ else
                         <p class="wg-app-cand__late">@string.Format(Culture["WgApp.Mobile.NoResponse"], Math.Max(age, 2))</p>
                     }
                 </div>
-                @if (a.MatchPercent is int pct)
-                {
-                    <span class="wg-app-cand__match">@string.Format(Culture["WgApp.MatchPill"], pct)</span>
-                }
             </div>
 
             <dl class="wg-app-cand__grid">

@@ -247,7 +247,7 @@ public static class LobsyCvModelFactory
             application.SnapshotEducations,
             application.SnapshotCertificatesJson,
             application.CandidateEmployerCount,
-            application.MatchPercent,
+            matchPercent: null,
             vacancy.Title,
             display.DisplayName,
             application.ConsentVersion,

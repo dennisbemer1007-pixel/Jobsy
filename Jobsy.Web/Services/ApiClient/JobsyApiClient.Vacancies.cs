@@ -465,6 +465,18 @@ public sealed partial class JobsyApiClient
     public async Task<VacancyProductActionResult?> DeactivateVacancyAsync(Guid vacancyId, CancellationToken ct = default)
         => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/inactive", ct);
 
+    public async Task DeleteVacancyAsync(Guid vacancyId, bool purgeApplications = false, CancellationToken ct = default)
+    {
+        var url = purgeApplications
+            ? $"api/vacancies/{vacancyId}?purgeApplications=true"
+            : $"api/vacancies/{vacancyId}";
+        var response = await _http.DeleteAsync(url, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+    }
+
     private async Task<VacancyProductActionResult?> PostVacancyProductAsync(string url, CancellationToken ct)
     {
         var response = await _http.PostAsync(url, null, ct);

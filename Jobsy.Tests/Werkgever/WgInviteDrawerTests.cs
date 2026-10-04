@@ -39,7 +39,9 @@ public class WgInviteDrawerTests : BunitContext
         Assert.Contains("Regiomanager", cut.Markup);
         Assert.Contains("Alleen lezen", cut.Markup);
         Assert.Contains("Vestigingsmanager", cut.Markup);
-        Assert.Contains("alleen voor de eigen vestiging", cut.Markup);
+        Assert.Contains("Voor de eigen vestiging", cut.Markup);
+        Assert.Contains("alleen het saldo", cut.Markup);
+        Assert.Contains("geen CV met naam", cut.Markup);
         Assert.Contains("Kandidaatgegevens volgen de privacyregels", cut.Markup);
     }
 

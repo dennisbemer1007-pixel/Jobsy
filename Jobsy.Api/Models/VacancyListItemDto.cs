@@ -125,7 +125,11 @@ public record VacancyListItemDto(
     IReadOnlyList<string>? FitWhyKinds = null,
     CandidateFitDimensionsDto? FitDimensions = null,
     /// <summary>Candidate-own-only dislike reason key (e.g. Kb.Dislike.night-shifts). Never on shared/public.</summary>
-    string? RankLowerReason = null);
+    string? RankLowerReason = null,
+    /// <summary>
+    /// Candidate has not ticked "Beschikbaar voor werk". No match percent is calculated.
+    /// </summary>
+    bool OpenForWorkRequired = false);
 
 public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
 
@@ -185,7 +189,9 @@ public sealed record VacancyCardDto(
     decimal? MaxHoursPerWeek = null,
     /// <summary>Crow-flies km from the requested origin (closed-vacancy "similar" list fallback
     /// when the visitor has no geolocation origin yet). Null when an origin wasn't supplied.</summary>
-    double? DistanceKm = null);
+    double? DistanceKm = null,
+    /// <summary>Candidate must tick "Beschikbaar voor werk" before a fit percent is shown.</summary>
+    bool OpenForWorkRequired = false);
 
 /// <summary>Exact origin→vacancy travel for the selected transport. No PII.</summary>
 public sealed record VacancyTravelDto(int? TravelMinutes, double? DistanceKm);

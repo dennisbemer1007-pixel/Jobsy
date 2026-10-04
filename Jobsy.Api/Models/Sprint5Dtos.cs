@@ -166,8 +166,6 @@ public record EmployerApplicationDto(
     string? SnapshotEducations,
     string? SnapshotAboutMe,
     int CandidateEmployerCount,
-    int? MatchPercent = null,
-    string? MatchBreakdownJson = null,
     bool ViaSafetyNet = false,
     string? Motivation = null,
     bool LegalEligible = true,

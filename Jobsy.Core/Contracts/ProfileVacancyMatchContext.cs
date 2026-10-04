@@ -20,4 +20,10 @@ public sealed class ProfileVacancyMatchContext
 
     /// <summary>True when any assessment score came from wizard/draft answers rather than a completed test.</summary>
     public bool IsProvisional { get; init; }
+
+    /// <summary>
+    /// Candidate ticked "Beschikbaar voor werk". Matching and applying stay off until this is true.
+    /// Defaults to true so hand-built test contexts still score.
+    /// </summary>
+    public bool OpenForWork { get; init; } = true;
 }

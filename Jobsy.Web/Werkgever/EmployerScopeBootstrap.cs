@@ -101,7 +101,7 @@ public sealed class EmployerScopeBootstrap : IDisposable
                     EmployerScopeKind.Organisation,
                     null,
                     orgLabel,
-                    $"{vestigingen.Count} vestigingen");
+                    vestigingen.Count == 1 ? "1 vestiging" : $"{vestigingen.Count} vestigingen");
                 options.Add(org);
                 map[org.Key] = allIds.Count > 0 ? allIds : vestigingen.Select(v => v.Id).ToList();
 

@@ -208,7 +208,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             IsProvisional = competencyResolved.IsProvisional
                             || careerResolved.IsProvisional
                             || cultureResolved.IsProvisional
-                            || valuesResolved.IsProvisional
+                            || valuesResolved.IsProvisional,
+            OpenForWork = user.OpenForWork
         };
     }
 

@@ -91,7 +91,7 @@
                                     <th scope="col" class="client-perf-table__num">Clicks</th>
                                     <th scope="col" class="client-perf-table__num">Sollicitaties</th>
                                     <th scope="col" class="client-perf-table__num">Conversie</th>
-                                    <th scope="col">Match</th>
+                                    <th scope="col">Reistijd</th>
                                     <th scope="col" class="client-perf-table__num">Tokens</th>
                                     <th scope="col" class="client-perf-table__num">Verloopt</th>
                                     <th scope="col">Acties</th>
@@ -121,7 +121,7 @@
                                         <td data-label="Clicks" class="client-perf-table__num">@row.Clicks</td>
                                         <td data-label="Sollicitaties" class="client-perf-table__num">@row.Applications</td>
                                         <td data-label="Conversie" class="client-perf-table__num">@row.ConversionRate.ToString("0.#")%</td>
-                                        <td data-label="Match" class="client-perf-table__match">
+                                        <td data-label="Reistijd" class="client-perf-table__match">
                                             @if (row.AvgTravelMinutes > 0 || !string.IsNullOrWhiteSpace(row.TopTransportMode))
                                             {
                                                 <span>@row.AvgTravelMinutes.ToString("0.#") min</span>

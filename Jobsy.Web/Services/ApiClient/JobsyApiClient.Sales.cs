@@ -827,7 +827,7 @@ public sealed partial class JobsyApiClient
             return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerPageDto>(cancellationToken: ct);
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerPageDto>(ApiJson, ct);
     }
 
     public async Task<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto?> GetSalesPartnerEmployerAsync(
@@ -841,7 +841,7 @@ public sealed partial class JobsyApiClient
         }
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto>(cancellationToken: ct);
+        return await response.Content.ReadFromJsonAsync<Jobsy.Core.Contracts.Sales.SalesEmployerDetailDto>(ApiJson, ct);
     }
 
     public async Task<Jobsy.Core.Sales.SalesLinkToolkitDto?> GetSalesLinkToolkitAsync(CancellationToken ct = default)

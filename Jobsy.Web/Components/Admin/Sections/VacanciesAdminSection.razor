@@ -6,6 +6,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 @implements IDisposable
 
 @if (_loading)
@@ -189,6 +190,9 @@ else
                                             @Culture["VacancyAction.Deactivate"]
                                         </button>
                                     }
+                                    <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => DeleteAsync(v)">
+                                        @Culture["WgVac.Delete"]
+                                    </button>
                                 </RowActionsMenu>
                             </td>
                         </tr>
@@ -502,6 +506,28 @@ else
         catch (Exception ex)
         {
             _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteAsync(AdminVacancyItem v)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var purge = v.ApplicationCount > 0
+                        || (v.Status is not ("Draft" or "Archived"));
+            await Api.DeleteVacancyAsync(v.Id, purgeApplications: purge);
+            _message = Culture["WgVac.Deleted"];
+            await LoadPageAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
