@@ -301,6 +301,7 @@ public class StatusPagesPlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
         await using var adminContext = await NewContextAsync(browser, baseUrl, "nl", 1440, 900);
+        await PlaywrightCookieConsent.AcceptAsync(adminContext);
         var adminPage = await adminContext.NewPageAsync();
 
         if (!await TryLoginAsync(adminPage, baseUrl, AdminEmail(), Password()))
@@ -534,7 +535,11 @@ public class StatusPagesPlaywrightTests
         await toggle.ClickAsync();
         if (on)
         {
-            var confirm = toggle.Page.Locator("[role=dialog] button.btn-compact--primary");
+            // The cookie banner is also role=dialog with a primary button. Confirm only the
+            // maintenance dialog ("Onderhoudsmodus aanzetten" / Bevestigen).
+            var confirm = toggle.Page
+                .GetByRole(AriaRole.Dialog, new() { Name = "Onderhoudsmodus aanzetten" })
+                .GetByRole(AriaRole.Button, new() { Name = "Bevestigen" });
             await Assertions.Expect(confirm).ToBeVisibleAsync(new() { Timeout = 10_000 });
             await confirm.ClickAsync();
         }

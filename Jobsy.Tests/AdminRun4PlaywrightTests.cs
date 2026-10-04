@@ -46,17 +46,20 @@ public class AdminRun4PlaywrightTests
         await page.GotoAsync(baseUrl.TrimEnd('/') + "/admin/organisaties", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
         await AssertFastTypeAsync(page, ".admin-filter-bar__search input");
 
+        var storage = await desktop.StorageStateAsync();
         await using var mobile = await browser.NewContextAsync(new()
         {
             ViewportSize = new() { Width = 390, Height = 844 },
-            IgnoreHTTPSErrors = true
+            IgnoreHTTPSErrors = true,
+            StorageState = storage
         });
         await PlaywrightCookieConsent.AcceptAsync(mobile);
         var phone = await mobile.NewPageAsync();
         foreach (var path in new[] { "/admin", "/admin/organisaties", "/admin/vacatures", "/admin/gebruikers", "/admin/beveiliging/systeemlogs" })
         {
             await phone.GotoAsync(baseUrl.TrimEnd('/') + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-            await phone.WaitForSelectorAsync(".admin-topbar__menu", new() { Timeout = 30_000 });
+            var menu = phone.Locator(".admin-topbar__menu");
+            await Assertions.Expect(menu).ToBeVisibleAsync(new() { Timeout = 30_000 });
             var fits = await phone.EvaluateAsync<bool>(
                 """
                 () => {
@@ -67,7 +70,6 @@ public class AdminRun4PlaywrightTests
                 """);
             Assert.True(fits, $"{path} scrolls horizontally at 390px.");
 
-            var menu = phone.Locator(".admin-topbar__menu");
             var search = phone.Locator(".admin-topbar__search-trigger");
             Assert.True(await menu.IsVisibleAsync());
             Assert.True(await search.IsVisibleAsync());
