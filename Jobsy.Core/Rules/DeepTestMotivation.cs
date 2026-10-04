@@ -119,7 +119,7 @@ public static class DeepTestMotivation
 
         if (labels.Count is 1 or 2)
         {
-            return $"Deel {part.Index}: {string.Join(" en ", labels)}";
+            return $"Deel {part.Index}: {string.Join(" · ", labels)}";
         }
 
         return $"Deel {part.Index} van 5";

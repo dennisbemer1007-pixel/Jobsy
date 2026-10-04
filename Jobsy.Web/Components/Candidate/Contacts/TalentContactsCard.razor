@@ -1,7 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Contacts
 @using System.Globalization
 @using Jobsy.Core.Localization
-@using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -30,7 +29,7 @@
     {
         <div class="talent-empty">
             <div class="talent-empty__lob" aria-hidden="true">
-                <JourneyLobster PlatesShed="2" Size="72" Label="" />
+                <img class="lobsy-coach-art" src="/images/brand/mascot-coach.webp" alt="" width="72" height="72" />
             </div>
             <p class="talent-empty__text">@Culture.Format("TalentC.Empty.Text", Word)</p>
             <p class="career-card__discovery">

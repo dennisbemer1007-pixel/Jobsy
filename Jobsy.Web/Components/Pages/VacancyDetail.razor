@@ -470,17 +470,22 @@
                 </Authorized>
             </AuthorizeView>
 
-            <AuthorizeView Roles="Candidate">
-                <Authorized>
-                    <p class="login-lead">
-                        <a class="engagement-btn" href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
-                    </p>
-                </Authorized>
-            </AuthorizeView>
+            @if (_vacancy?.OpenForWorkRequired != true)
+            {
+                <AuthorizeView Roles="Candidate">
+                    <Authorized>
+                        <p class="login-lead">
+                            <a class="engagement-btn" href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
+                        </p>
+                    </Authorized>
+                </AuthorizeView>
+            }
 
             <div id="apply" class="apply-flow">
                 <AuthorizeView Roles="Candidate">
                     <Authorized>
+                        @if (_vacancy is not null && !_vacancy.OpenForWorkRequired)
+                        {
                         <header class="apply-flow__header">
                             <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
                             <p class="apply-flow__lead">@ApplyFlowLead</p>
@@ -714,6 +719,7 @@
                         @if (!string.IsNullOrEmpty(_message))
                         {
                             <p class="apply-flow__message @(_applied ? "is-success" : null)" role="status">@_message</p>
+                        }
                         }
                     </Authorized>
                     <NotAuthorized>
@@ -2217,7 +2223,7 @@
                 _enteredVerifyThisSession = false;
                 _message = result?.ConfirmationLoggedToStub == true
                     ? (_useAuthenticator ? Culture["Apply.CodeSentAuthenticator"] : Culture["Apply.SentStub"])
-                    : Culture["Apply.SentBody"];
+                    : null;
                 OpenDirectContactIfAvailable(result?.DirectContact);
             }
         }

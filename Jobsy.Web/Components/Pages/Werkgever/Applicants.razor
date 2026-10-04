@@ -91,11 +91,6 @@
 
                 @if (_view == ApplicationPipelineRules.ViewPipeline)
                 {
-                    @if (!Guid.TryParse(_vacancyId, out _))
-                    {
-                        <p class="state-message">@Culture["WgApp.EmptyVacancy"]</p>
-                    }
-                    else
                     {
                         var pipelineItems = PipelineItems.ToList();
                         <div class="wg-app__pipeline" data-testid="wg-app-pipeline">
@@ -417,27 +412,13 @@
     }
 
     private IEnumerable<EmployerApplicationItem> PipelineItems
-    {
-        get
-        {
-            if (!Guid.TryParse(_vacancyId, out var vid))
-            {
-                return [];
-            }
-
-            return ScopedItems.Where(a => a.VacancyId == vid);
-        }
-    }
+        => ApplicationPipelineRules.ItemsForVacancy(ScopedItems, _vacancyId);
 
     private IReadOnlyList<EmployerApplicationItem> ListFiltered
     {
         get
         {
-            IEnumerable<EmployerApplicationItem> q = ScopedItems;
-            if (Guid.TryParse(_vacancyId, out var vid))
-            {
-                q = q.Where(a => a.VacancyId == vid);
-            }
+            IEnumerable<EmployerApplicationItem> q = ApplicationPipelineRules.ItemsForVacancy(ScopedItems, _vacancyId);
 
             q = _listStatusFilter switch
             {
@@ -591,17 +572,12 @@
             _overdueOnly = true;
         }
 
-        if (q.TryGetValue("vacature", out var vac) && Guid.TryParse(vac, out var vacId))
+        var vacancyFromQuery = ApplicationPipelineRules.ResolveVacancyQuery(
+            q.TryGetValue("vacancyId", out var vacancyId) ? vacancyId.ToString() : null,
+            q.TryGetValue("vacature", out var vac) ? vac.ToString() : null);
+        if (!string.IsNullOrEmpty(vacancyFromQuery))
         {
-            _vacancyId = vacId.ToString("D");
-        }
-        else if (string.IsNullOrEmpty(_vacancyId))
-        {
-            var def = ApplicationPipelineRules.DefaultVacancyId(ScopedItems, null);
-            if (def is Guid d)
-            {
-                _vacancyId = d.ToString("D");
-            }
+            _vacancyId = vacancyFromQuery;
         }
 
         if (q.TryGetValue("kandidaat", out var kid) && Guid.TryParse(kid, out var appId))
@@ -615,15 +591,6 @@
         Guid[]? branches = Guid.TryParse(_branchId, out var b) ? [b] : null;
         int? overdue = _overdueOnly ? ApplicationPipelineRules.OverdueHours : null;
         _items = (await Api.GetApplicationsAsync(overdueHours: overdue, branchIds: branches)).ToList();
-
-        if (string.IsNullOrEmpty(_vacancyId))
-        {
-            var def = ApplicationPipelineRules.DefaultVacancyId(_items, null);
-            if (def is Guid d)
-            {
-                _vacancyId = d.ToString("D");
-            }
-        }
 
         if (_selected is not null)
         {
@@ -696,7 +663,7 @@
 
         if (Guid.TryParse(_vacancyId, out var vid))
         {
-            parts.Add($"vacature={vid:D}");
+            parts.Add($"vacancyId={vid:D}");
         }
 
         if (_selected is not null && _drawerOpen)

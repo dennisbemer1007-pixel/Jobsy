@@ -18,7 +18,7 @@ public static class UiStringsTests
         }
 
         Add("DeepPay.Title", "Uitgebreide test", "Extended test", "Rozszerzony test", "Test extins", "اختبار موسّع");
-        Add("DeepPay.What", "Uitgebreide test {0}", "Extended test {0}", "Rozszerzony test {0}", "Extins test {0}", "موسّع test {0}");
+        Add("DeepPay.What", "Uitgebreide {0}", "Extended {0}", "Rozszerzony {0}", "Extins {0}", "موسّع {0}");
         Add("DeepPay.Questions", "{0} vragen", "{0} questions", "{0} pytania", "{0} întrebări", "{0} أسئلة");
         Add("DeepPay.Get.1", "Uitgebreide uitslag met alle onderdelen", "Extended results for every part", "Rozszerzony results for every part", "Extins results for every part", "موسّع results for every part");
         Add("DeepPay.Get.2", "PDF-rapport om te bewaren", "PDF report to keep", "PDF raport to keep", "PDF raport to keep", "PDF تقرير to keep");
@@ -47,6 +47,11 @@ public static class UiStringsTests
         Add("DeepPay.CheckingLong", "Duurt het langer dan een minuut? Je mag deze pagina sluiten. We sturen je een mail als het klaar is.", "Taking longer than a minute? You can close this page. We’ll email you when it’s ready.", "Taking longer than a minuta? You can close this page. We’ll email ty when it’s ready.", "Taking longer than a minute? You can close this page. We’ll email you when it’s ready.", "‏Taking longer than a minute? You can close this page. We’ll email you when it’s ready.");
         Add("DeepPay.BackToTest", "Terug naar de test", "Back to the test", "Wstecz to the test", "Înapoi to the test", "رجوع to the test");
         Add("DeepPay.PaidTitle", "Betaald. Je kunt beginnen", "Paid. You can start", "Opłacone. Możesz zacząć", "Plătit. Poți începe", "تم الدفع. يمكنك البدء");
+        Add("DeepPay.OpenedTitle", "Klaar om te beginnen", "Ready to start", "Możesz zaczynać", "Gata de început", "جاهز للبدء");
+        Add("DeepPay.PriceFree", "Prijs: gratis (testaccount)", "Price: free (test account)", "Cena: za darmo (konto testowe)", "Preț: gratuit (cont de test)", "السعر: مجاناً (حساب تجريبي)");
+        Add("Coach.Ask", "Lobsy, je coach: stel een vraag", "Lobsy, your coach: ask a question", "Lobsy, twój coach: zadaj pytanie", "Lobsy, antrenorul tău: pune o întrebare", "لوبسي، مدربك: اطرح سؤالاً");
+        Add("Coach.CloseTip", "Tip sluiten", "Close tip", "Zamknij podpowiedź", "Închide sfatul", "إغلاق النصيحة");
+        Add("Coach.Feedback", "Feedback geven", "Give feedback", "Przekaż opinię", "Trimite feedback", "أرسل ملاحظات");
         Add("DeepPay.PaidMail", "Je krijgt de factuur ook per e-mail.", "You’ll also get the invoice by email.", "You’ll also get the faktura by email.", "You’ll also get the factură by email.", "You’ll also get the فاتورة by email.");
         Add("DeepPay.StartQ1", "Begin met vraag 1", "Start with question 1", "Zacznij od pytania 1", "Începe cu întrebarea 1", "ابدأ بالسؤال 1");
         Add("DeepPay.Later", "Later beginnen", "Start later", "Zacznij później", "Începe mai târziu", "ابدأ لاحقًا");
@@ -178,13 +183,17 @@ public static class UiStringsTests
         Add("Deep.Rail.FreeDone", "Heel diep · {0} vragen · gedaan", "Very deep · {0} questions · done", "Very deep · {0} pytania · done", "Very deep · {0} întrebări · done", "Very deep · {0} أسئلة · done");
         Add("Deep.Rail.BottomZone", "De bodem · uitgebreid", "The bottom · extended", "The dno · extended", "The fund · extended", "The القاع · extended");
         Add("Deep.Rail.PaidReady", "Betaald · klaar om te duiken", "Paid · ready to dive", "Paid · ready to dive ·", "Paid · ready to dive", "‏Paid · ready to dive");
+        Add("Deep.Rail.OpenedReady", "Geopend · klaar om te duiken", "Opened · ready to dive", "Otwarte · gotowe do nurkowania", "Deschis · gata de scufundare", "مفتوح · جاهز للغوص");
+        Add("Deep.Chrome", "Uitgebreide test · deel {0} van {1} · vraag {2} van {3}", "Extended test · part {0} of {1} · question {2} of {3}", "Test rozszerzony · część {0} z {1} · pytanie {2} z {3}", "Test extins · partea {0} din {1} · întrebarea {2} din {3}", "الاختبار الموسّع · الجزء {0} من {1} · السؤال {2} من {3}");
+        Add("Tests.ResumeHint", "Je bent bij vraag {0} van {1} · Ga verder", "You are at question {0} of {1} · Continue", "Jesteś przy pytaniu {0} z {1} · Dalej", "Ești la întrebarea {0} din {1} · Continuă", "أنت عند السؤال {0} من {1} · تابع");
+        Add("Tests.StartExtendedFree", "Start uitgebreide test: gratis (testaccount)", "Start the extended test: free (test account)", "Zacznij test rozszerzony: za darmo (konto testowe)", "Începe testul extins: gratuit (cont de test)", "ابدأ الاختبار الموسّع: مجاناً (حساب تجريبي)");
         Add("Deep.Rail.PartProgress", "Vraag {0} van {1}", "Question {0} of {1}", "Question {0} of {1} ·", "Question {0} of {1}", "‏Question {0} of {1}");
         Add("Deep.Rail.Footer", "{0} van {1} vragen · ± {2} min nog", "{0} of {1} questions · ± {2} min left", "{0} of {1} pytania · ± {2} min left", "{0} of {1} întrebări · ± {2} min left", "{0} of {1} أسئلة · ± {2} min left");
         Add("Deep.Checkout.Bubble.Checking", "Even geduld. We kijken of de betaling gelukt is.", "One moment. We’re checking the payment.", "One moment. We’re checking the płatność.", "One moment. We’re checking the plată.", "One moment. We’re checking the دفع.");
         Add("Deep.Checkout.Bubble.Paid", "Gelukt! Zullen we samen naar de bodem duiken?", "Done! Shall we dive to the bottom together?", "Done! Shall we dive to the dno together?", "Done! Shall we dive to the fund together?", "Done! Shall we dive to the القاع together?");
         Add("Deep.Checkout.Bubble.Failed", "Geen zorgen. Er is niets afgeschreven.", "No worries. Nothing was charged.", "No worries. Nothing was charged. ·", "No worries. Nothing was charged.", "لا worries. لاthing was charged.");
         Add("Deep.Checkout.NoDouble", "Je betaalt nooit twee keer voor dezelfde test.", "You never pay twice for the same test.", "You never pay twice for the same test. ·", "You never pay twice for the same test.", "‏You never pay twice for the same test.");
-        Add("Deep.Checkout.PaidLead", "Fijn! De uitgebreide {0}test staat voor je klaar.", "Nice! The extended {0} test is ready for you.", "Nice! The extended {0} test is ready for ty.", "Nice! The extended {0} test is ready for you.", "‏Nice! The extended {0} test is ready for you.");
+        Add("Deep.Checkout.PaidLead", "Fijn! Je {0} staat voor je klaar.", "Nice! Your {0} is ready.", "Super! Twój {0} jest gotowy.", "Gata! {0} te așteaptă.", "‏رائع! {0} جاهز لك.");
         Add("Deep.Checkout.FailedLead", "Er is niets afgeschreven. Dat kan gebeuren, bijvoorbeeld als je het scherm van je bank sloot.", "Nothing was charged. That can happen if you closed your bank screen.", "Nothing was charged. That can happen if ty closed tyr bank screen.", "Nothing was charged. That can happen if you closed your bank screen.", "لاthing was charged. That can happen if you closed your bank screen.");
         Add("Deep.Checkout.TipRetry", "Je kunt het opnieuw proberen.", "You can try again.", "You can try again. ·", "You can try again.", "‏You can try again.");
         Add("Deep.Checkout.TipKept", "Je eerdere antwoorden blijven bewaard.", "Your earlier answers stay saved.", "Twój earlier answers stay saved.", "Your earlier answers stay saved.", "‏Your earlier answers stay saved.");

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Reports;
 using Jobsy.Core.Reports.Career;
@@ -40,6 +41,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly ICareerCompassGenerationService _careerCompass;
     private readonly IMemoryCache _cache;
+    private readonly IFeatureFlags _features;
 
     static AssessmentReportPdfService()
     {
@@ -50,12 +52,34 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         JobsyDbContext db,
         IPlatformCompanySettingsService companySettings,
         ICareerCompassGenerationService careerCompass,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        IFeatureFlags features)
     {
         _db = db;
         _companySettings = companySettings;
         _careerCompass = careerCompass;
         _cache = cache;
+        _features = features;
+    }
+
+    private static DateTime ToAmsterdam(DateTime utc)
+    {
+        var instant = utc.Kind == DateTimeKind.Utc ? utc : DateTime.SpecifyKind(utc, DateTimeKind.Utc);
+        foreach (var id in new[] { "Europe/Amsterdam", "W. Europe Standard Time" })
+        {
+            try
+            {
+                return TimeZoneInfo.ConvertTimeFromUtc(instant, TimeZoneInfo.FindSystemTimeZoneById(id));
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return instant;
     }
 
     public Task<AssessmentReportPdf?> TryRenderAsync(
@@ -93,8 +117,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         var culture = ReportLanguage.IsEnglish(reportLang)
             ? CultureInfo.GetCultureInfo("en-GB")
             : CultureInfo.GetCultureInfo("nl-NL");
-        var generated = (deep.ReportGeneratedAtUtc ?? deep.CompletedAtUtc ?? DateTime.UtcNow)
-            .ToLocalTime()
+        var generated = ToAmsterdam(deep.ReportGeneratedAtUtc ?? deep.CompletedAtUtc ?? DateTime.UtcNow)
             .ToString("d MMMM yyyy", culture);
 
         var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson, kind);
@@ -123,6 +146,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 if (compass is not { HasOccupations: true })
                 {
                     compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                }
+
+                var employersOn = await _features.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+                if (!employersOn)
+                {
+                    compass = compass with
+                    {
+                        PracticalNotes = CareerCompassBuilder.NotesForCandidate(compass.PracticalNotes, false)
+                    };
                 }
 
                 bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
@@ -298,6 +330,11 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                         box.Item().Text("Wat betekent dit voor jou?").FontSize(13).Bold().FontColor(BrandNavy);
                         foreach (var note in compass.PracticalNotes)
                         {
+                            if (note.Contains("Wat betekent dit voor jou", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
                             box.Item().Text(note);
                         }
                     });
@@ -775,6 +812,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 d.NormMean)).ToList(),
             Extra: col =>
             {
+                col.Item().PageBreak();
                 col.Item().Text(DeepReportCatalog.Get("holland.title", lang)).FontSize(13).Bold().FontColor(BrandNavy);
                 col.Item().Text(DeepReportCatalog.Format(
                     "holland.body",
@@ -783,11 +821,18 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     string.Join(", ", report.Domains.OrderByDescending(d => d.Score).Take(3)
                         .Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang))),
                     string.Join(", ", report.Occupations.Take(3).Select(o => o.Title(lang)))));
-                if (report.Occupations.Count > 0)
+
+                col.Item().PageBreak();
+                col.Item().Text(ReportLanguage.IsEnglish(lang) ? "Occupations that fit you" : "Beroepen die bij je passen")
+                    .FontSize(13).Bold().FontColor(BrandNavy);
+                if (report.Occupations.Count == 0)
                 {
-                    col.Item().PaddingTop(6)
-                        .Text(ReportLanguage.IsEnglish(lang) ? "Occupations that fit you" : "Beroepen die bij je passen")
-                        .FontSize(13).Bold().FontColor(BrandNavy);
+                    col.Item().Text(ReportLanguage.IsEnglish(lang)
+                        ? "Your answers do not point to one job yet. Use the directions above as a starting point."
+                        : "Je antwoorden wijzen nog niet naar één beroep. Gebruik de richtingen hierboven als start.").FontColor(Muted);
+                }
+                else
+                {
                     foreach (var o in report.Occupations.Take(8))
                     {
                         col.Item().Text($"{o.Title(lang)} — {o.MatchPercent}%").SemiBold();
@@ -796,6 +841,20 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 }
 
                 WriteActionAndStrengths(col, report.ActionPlan, report.StrengthKeys, report.PitfallKeys, lang, label: "riasec");
+
+                col.Item().PageBreak();
+                col.Item().Text(ReportLanguage.IsEnglish(lang) ? "How to read your scores" : "Zo lees je je scores")
+                    .FontSize(13).Bold().FontColor(BrandNavy);
+                col.Item().Text(ReportLanguage.IsEnglish(lang)
+                    ? "A higher percent means that direction showed up more often in your answers. It is a starting point, not a grade."
+                    : "Een hoger percentage betekent dat die richting vaker in je antwoorden zat. Het is een startpunt, geen cijfer.").FontColor(Muted);
+
+                col.Item().PageBreak();
+                col.Item().Text(ReportLanguage.IsEnglish(lang) ? "What you can do next" : "Wat je hiermee kunt doen")
+                    .FontSize(13).Bold().FontColor(BrandNavy);
+                col.Item().Text(ReportLanguage.IsEnglish(lang)
+                    ? "Use this to discover what fits you. Pick tasks that match your strengths. Your answers stay yours."
+                    : "Gebruik dit om te ontdekken wat bij je past. Kies taken die bij je sterke kanten horen. Je antwoorden blijven van jou.").FontColor(Muted);
             });
 
     internal static byte[] RenderCultureDeep(
@@ -933,6 +992,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string lang,
         string label)
     {
+        col.Item().PageBreak();
         col.Item().PaddingTop(8).Text(DeepReportCatalog.Get("pdf.actionPlan", lang)).FontSize(13).Bold().FontColor(BrandNavy);
         col.Item().Text(DeepReportCatalog.Get("action.lead", lang)).FontColor(Muted).Italic();
         foreach (var step in plan.Take(3))
@@ -941,6 +1001,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             col.Item().Text(step.Body.Resolve(lang)).FontSize(9).FontColor(Muted);
         }
 
+        col.Item().PageBreak();
         col.Item().PaddingTop(8).Text(DeepReportCatalog.Get("pdf.strengths", lang)).FontSize(13).Bold().FontColor(BrandNavy);
         col.Item().Text(DeepReportCatalog.Get("strength.lead", lang)).FontColor(Muted).Italic();
         foreach (var key in strengths.Take(3))

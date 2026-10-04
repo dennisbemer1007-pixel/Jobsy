@@ -7,7 +7,7 @@
 
 @if (_visible)
 {
-    <div class="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" aria-live="polite">
+    <div class="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" aria-live="polite" @ref="_bar">
         <div class="cookie-consent__inner">
             <div class="cookie-consent__copy">
                 <h2 id="cookie-consent-title" class="cookie-consent__title">Cookies &amp; privacy</h2>
@@ -56,9 +56,26 @@
     private bool _visible = true;
     private bool _busy;
     private bool _checked;
+    private ElementReference _bar;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        try
+        {
+            if (_visible)
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.bind", _bar, "--cookie-bar-h");
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--cookie-bar-h");
+            }
+        }
+        catch
+        {
+            // prerender
+        }
+
         if (Mode == CookieConsentMode.Static || !firstRender || _checked)
         {
             return;

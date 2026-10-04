@@ -3,6 +3,7 @@
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 @if (!Active)
@@ -161,7 +162,7 @@
                         </section>
                     }
                     <ol class="role-fit-funnel__actions">
-                        @foreach (var line in result.ActionSteps)
+                        @foreach (var line in ActionLines(result.ActionSteps))
                         {
                             <li>@line</li>
                         }
@@ -238,11 +239,28 @@
 
     private readonly RoleFitCheckSession _session = new();
     private bool _wasActive;
+    private bool _employersOn = true;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _session.ActiveVacancyId = VacancyId;
         Culture.Changed += OnCultureChanged;
+        _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+    }
+
+    private IEnumerable<string> ActionLines(IReadOnlyList<string> steps)
+    {
+        if (_employersOn)
+        {
+            return steps;
+        }
+
+        return steps.Select(line =>
+            line.Contains("banenkaart", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("vacature", StringComparison.OrdinalIgnoreCase)
+            || line.Contains("sollicit", StringComparison.OrdinalIgnoreCase)
+                ? Culture["CareerStep.Band.EyebrowOff"]
+                : line);
     }
 
     protected override async Task OnParametersSetAsync()

@@ -58,7 +58,7 @@ public class CompaniesController : ControllerBase
                 c.Name,
                 c.Address,
                 c.KvkNumber,
-                c.TokenTransactions.Sum(t => t.Amount),
+                c.TokenTransactions.Sum(t => (decimal?)t.Amount) ?? 0m,
                 c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
                 c.ParentCompanyId,
                 c.TokensManagedByEnterprise,

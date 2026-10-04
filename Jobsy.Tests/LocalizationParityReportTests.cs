@@ -216,6 +216,8 @@ internal static class LocalizationParityAllowList
         "WhatsApp", "IBAN", "BTW", "ID", "URL", "API", "OTP", "SMS", "GPS", "AI", "2FA", "PushBom",
         "Filters", "Urgent", "Dashboard", "Team",
         "Cookies", "Contact", "Privacy", "Tokens",
+        // Token is the product word in Dutch and English.
+        "1 token", "{0} tokens",
         // public-pages 09: a dash placeholder and the loanword "Flyer" are language-neutral.
         "—", "Flyer (pdf)"
     };

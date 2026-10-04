@@ -50,11 +50,7 @@
                 var why = KbFitMapping.WhyLine(Vacancy, Culture);
                 var rankLower = KbFitMapping.RankLowerLabel(Vacancy, Culture);
             }
-            @if (Vacancy.OpenForWorkRequired)
-            {
-                <p class="job-card__match" data-testid="open-for-work-prompt">@Culture["Kb.OpenForWork.Required"]</p>
-            }
-            else if (fit is not null)
+            @if (!Vacancy.OpenForWorkRequired && fit is not null)
             {
                 <div class="job-card__match kb-card-fit">
                     <KbFitPill Fit="fit" />

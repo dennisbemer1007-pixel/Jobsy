@@ -300,7 +300,7 @@
                 {
                     <div class="insights-span-12">
                         <WgInsightsPremium ScopeLabel="@ScopeKindLabel()"
-                                           PriceLabel="@($"{d.Offer.PriceTokens:0} tokens")"
+                                           PriceLabel="@TokenPhrase(d.Offer.PriceTokens)"
                                            MetaLabel="@($"{d.Offer.DurationDays} {Culture["Insights.Premium.Days"]} · {ScopeKindLabel()}")"
                                            IsRegionalManager="_isRegional"
                                            ShowRequestButton="@(_isBranchManager && string.Equals(d.Offer.ScopeKind, "company", StringComparison.OrdinalIgnoreCase))"
@@ -339,6 +339,16 @@
 }
 
 @code {
+    private string TokenPhrase(decimal amount)
+    {
+        var text = amount == decimal.Truncate(amount)
+            ? decimal.Truncate(amount).ToString("0", System.Globalization.CultureInfo.InvariantCulture)
+            : amount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        return amount == 1m
+            ? Culture["Count.Token.One"]
+            : string.Format(Culture["Count.Token.Many"], text);
+    }
+
     [SupplyParameterFromQuery(Name = "weergave")] public string? Weergave { get; set; }
     [SupplyParameterFromQuery(Name = "request")] public Guid? RequestId { get; set; }
 

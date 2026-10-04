@@ -73,7 +73,7 @@ public class CareerPlanEvidenceTests
         Assert.NotNull(detail);
         Assert.DoesNotContain(detail!.Present, line => line.Text.Contains("Basiskennis", StringComparison.OrdinalIgnoreCase));
 
-        Assert.Equal("Nog 1 klauw laten groeien", Jobsy.Web.Localization.UiStrings.Get("Career.Fact.ClawOne", "nl"));
+        Assert.Equal("Nog 1 stap laten groeien", Jobsy.Web.Localization.UiStrings.Get("Career.Fact.ClawOne", "nl"));
     }
 
     [Fact]

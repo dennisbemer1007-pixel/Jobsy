@@ -472,7 +472,7 @@
                 }
                 else if (_screen == "shed")
                 {
-                    <JourneyShedMoment Step="_shedStep"
+                    <JourneyShedMoment Step="@(JourneyFinished ? 10 : _shedStep)"
                                        TestName="@ShedTestName"
                                        ImpressionLines="_shedLines"
                                        TestTabs="ShedTabs"
@@ -619,8 +619,8 @@
 
     private bool JourneyFinished => _state?.IsComplete == true || _state?.FinishReached == true;
 
-    /// <summary>Finished journeys keep the 10/10 rail, including when consent is reopened.</summary>
-    private bool ShowFinishedChrome => IsLightScreen || (_screen == "toestemming" && JourneyFinished);
+    /// <summary>Finished journeys keep the 10/10 rail, including a revisited shed or consent screen.</summary>
+    private bool ShowFinishedChrome => IsLightScreen || (JourneyFinished && _screen is "toestemming" or "shed");
 
     private int _platesShed => ShowFinishedChrome
         ? 10
@@ -631,6 +631,7 @@
     {
         "toestemming" when JourneyFinished => 11,
         "toestemming" => 6,
+        "shed" when JourneyFinished => 11,
         "shed" => _shedStep + 1,
         "klaar" or "overview" => 11,
         _ => _countedStep

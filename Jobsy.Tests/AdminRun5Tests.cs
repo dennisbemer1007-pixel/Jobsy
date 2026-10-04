@@ -48,9 +48,10 @@ public class AdminRun5Tests
             out _));
 
         var app = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("js/app-core.js?v=20261004-run5d", app, StringComparison.Ordinal);
+        Assert.Contains("js/app-core.js?v=20261004-run6c", app, StringComparison.Ordinal);
         Assert.Contains("css/features/admin.css?v=20261004-run5d", app, StringComparison.Ordinal);
-        Assert.True(string.CompareOrdinal("20261004-run5d", "20261004-run5c") > 0);
+        Assert.Contains("css/app.min.css?v=20261004-run6c", app, StringComparison.Ordinal);
+        Assert.True(string.CompareOrdinal("20261004-run6c", "20261004-run5d") > 0);
         Assert.True(string.CompareOrdinal("20261004-run5d", "20261004-run4b") > 0);
     }
 

@@ -41,7 +41,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
         var employerVacancies = await vacancyQuery.CountAsync(
             v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Employer, cancellationToken);
         var intermediaryVacancies = await vacancyQuery.CountAsync(
-            v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Intermediary, cancellationToken);
+            v => v.Status == VacancyStatus.Active
+                 && (v.Company.Type == CompanyType.Intermediary || v.IntermediaryCompanyId != null),
+            cancellationToken);
         var activeAtsVacancies = await vacancyQuery.CountAsync(
             v => v.Status == VacancyStatus.Active && v.CreatedVia == VacancySource.Ats, cancellationToken);
         var activeRegularVacancies = await vacancyQuery.CountAsync(
@@ -586,7 +588,8 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 await MatchTravelDrilldownAsync(vacancyIds, from, to, cancellationToken),
             "active_vacancies" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: null, cancellationToken),
             "active_vacancies_employers" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Employer, atsFilter: null, cancellationToken),
-            "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Intermediary, atsFilter: null, cancellationToken),
+            "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(
+                companyIds, CompanyType.Intermediary, atsFilter: null, includeIntermediaryPlacements: true, cancellationToken),
             "active_vacancies_ats" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: true, cancellationToken),
             "active_vacancies_regular" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: false, cancellationToken),
             "users_open_for_work" => await UsersOpenForWorkDrilldownAsync(cancellationToken),
@@ -1122,14 +1125,28 @@ public sealed class MetricsQueryService : IMetricsQueryService
         CompanyType? type,
         bool? atsFilter,
         CancellationToken ct)
+        => await ActiveVacanciesDrilldownAsync(companyIds, type, atsFilter, includeIntermediaryPlacements: false, ct);
+
+    private async Task<List<MetricDrilldownItemDto>> ActiveVacanciesDrilldownAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        CompanyType? type,
+        bool? atsFilter,
+        bool includeIntermediaryPlacements,
+        CancellationToken ct)
     {
         var query = _db.Vacancies.AsNoTracking().Where(v => v.Status == VacancyStatus.Active);
         if (companyIds is not null)
         {
-            query = query.Where(v => companyIds.Contains(v.CompanyId));
+            query = query.Where(v =>
+                companyIds.Contains(v.CompanyId)
+                || (v.IntermediaryCompanyId != null && companyIds.Contains(v.IntermediaryCompanyId.Value)));
         }
 
-        if (type is not null)
+        if (includeIntermediaryPlacements)
+        {
+            query = query.Where(v => v.Company.Type == CompanyType.Intermediary || v.IntermediaryCompanyId != null);
+        }
+        else if (type is not null)
         {
             query = query.Where(v => v.Company.Type == type);
         }

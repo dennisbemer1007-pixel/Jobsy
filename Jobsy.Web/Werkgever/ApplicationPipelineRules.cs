@@ -177,6 +177,37 @@ public static class ApplicationPipelineRules
             list.Count(a => StatusOf(a) == ApplicationStatus.Withdrawn));
     }
 
+    /// <summary>
+    /// Preselect from <c>?vacancyId=</c> or the older <c>?vacature=</c>. Empty means all vacancies.
+    /// </summary>
+    public static string ResolveVacancyQuery(string? vacancyId, string? vacature)
+    {
+        if (Guid.TryParse(vacancyId, out var fromVacancyId))
+        {
+            return fromVacancyId.ToString("D");
+        }
+
+        if (Guid.TryParse(vacature, out var fromVacature))
+        {
+            return fromVacature.ToString("D");
+        }
+
+        return "";
+    }
+
+    /// <summary>All applications the user can see, including inactive vacancies, unless one vacancy is selected.</summary>
+    public static IEnumerable<EmployerApplicationItem> ItemsForVacancy(
+        IEnumerable<EmployerApplicationItem> items,
+        string? vacancyId)
+    {
+        if (!Guid.TryParse(vacancyId, out var vid))
+        {
+            return items;
+        }
+
+        return items.Where(a => a.VacancyId == vid);
+    }
+
     public static Guid? DefaultVacancyId(IEnumerable<EmployerApplicationItem> items, Guid? queryVacancy)
     {
         if (queryVacancy is Guid q && items.Any(a => a.VacancyId == q))

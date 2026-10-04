@@ -67,12 +67,21 @@
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
+    @if (RendererInfo.IsInteractive && !_isMatchPage && _isCandidate)
+    {
+        <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
+        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+        <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+    }
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    {
+        <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
+        <FeedbackWidget HasBottomNav="_hasBottomNav" />
+    }
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
     {
         <GratisDnaMerge />
         <PushPermissionBanner />
-        <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
-        <FeedbackWidget HasBottomNav="_hasBottomNav" />
         <ConsentReacceptDialog />
     }
     else if (RendererInfo.IsInteractive)
@@ -88,6 +97,7 @@
     private bool _hasBottomNav;
     private bool _isMatchPage;
     private bool _isQuestionnairePage;
+    private bool _isCandidate;
     private bool _suppressInstallBanner;
 
     private bool ShowInstallBanner =>
@@ -114,8 +124,9 @@
         {
             var auth = await AuthState.GetAuthenticationStateAsync();
             var user = auth.User;
-            if (user.Identity?.IsAuthenticated != true
-                || !RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+            _isCandidate = user.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+            if (!_isCandidate)
             {
                 _homeHref = "/";
                 return;

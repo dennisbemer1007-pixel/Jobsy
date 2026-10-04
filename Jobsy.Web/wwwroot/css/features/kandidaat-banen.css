@@ -1554,7 +1554,7 @@
 }
 
 .kb-timeline--horizontal {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(7.5rem, 1fr));
 }
 
 .kb-timeline--vertical {
@@ -1597,7 +1597,9 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text);
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
   line-height: 1.3;
 }
 

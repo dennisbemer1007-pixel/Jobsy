@@ -19,6 +19,29 @@ public static class CareerGoalFit
         ["teamleider logistiek", "planner", "planningsmedewerker", "voorman", "logistiek supervisor"]
     ];
 
+    /// <summary>
+    /// Dream title plus catalog titles in the same role family, so the goal row
+    /// stays visible after an uitgebreid compass replaces the free occupation list.
+    /// </summary>
+    public static IEnumerable<string> DreamTitles(string? dream)
+    {
+        var dreamFold = CareerOccupationKeys.Fold(dream ?? "");
+        if (dreamFold.Length == 0 || string.IsNullOrWhiteSpace(dream))
+        {
+            yield break;
+        }
+
+        yield return dream.Trim();
+        foreach (var entry in CareerDreamCatalog.All)
+        {
+            var fold = CareerOccupationKeys.Fold(entry.Title);
+            if (RankAgainstDream(fold, dreamFold) >= 0)
+            {
+                yield return entry.Title;
+            }
+        }
+    }
+
     public static IReadOnlyList<Hit> Pick(
         IEnumerable<string> titles,
         string? dream,
