@@ -266,6 +266,7 @@ public class AdminAuditRedesignTests : IClassFixture<RoleFunctionalWebAppFactory
     [InlineData(AdminAuditKeys.SettingsPricingDelete)]
     [InlineData(AdminAuditKeys.UserRoleChange)]
     [InlineData(AdminAuditKeys.UserMfaReset)]
+    [InlineData(AdminAuditKeys.UserTestUnlockReset)]
     [InlineData(AdminAuditKeys.PrivacyRetentionRun)]
     public void Action_key_is_stable(string key)
         => Assert.False(string.IsNullOrWhiteSpace(key));

@@ -6,7 +6,7 @@
 @inject AssistantChatHost ChatHost
 @inject IJSRuntime Js
 
-<div class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null)" data-lobsy-coach>
+<div @ref="_dock" class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null)" data-lobsy-coach>
     @if (_showTip && !string.IsNullOrWhiteSpace(_tip))
     {
         <div class="lobsy-coach-dock__tip" role="status">
@@ -39,6 +39,7 @@
     private string? _tip;
     private bool _showTip;
     private string _routeKey = "";
+    private ElementReference _dock;
 
     protected override void OnInitialized()
     {
@@ -58,6 +59,23 @@
         }
 
         await RefreshDismissedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Compact || !_showTip)
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyCoachDock.placeTip", _dock);
+        }
+        catch
+        {
+            // Layout still keeps the tip above the lobster when JS is blocked.
+        }
     }
 
     public void Dispose()

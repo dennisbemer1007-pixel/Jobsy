@@ -29,9 +29,7 @@ else
     [Parameter] public bool AssistantOn { get; set; } = true;
 
     private string AssistantText
-        => Culture.Format(
-            Culture.IsRightToLeft ? "HowC.Safe.AssistantRtl" : "HowC.Safe.Assistant",
-            Culture["Nav.Assistant"]);
+        => Culture[Culture.IsRightToLeft ? "HowC.Safe.AssistantRtl" : "HowC.Safe.Assistant"];
 
     private RenderFragment Lines => @<ul class="how-safe__list">
         @if (EmployersOn)
@@ -62,6 +60,7 @@ else
             </span>
             <span class="how-safe__langs">
                 @Culture["HowC.Safe.Languages"]
+                <text> </text>
                 @foreach (var (language, last) in Languages)
                 {
                     <span lang="@language.Code" dir="@(language.IsRightToLeft ? "rtl" : null)">@language.NativeName</span>

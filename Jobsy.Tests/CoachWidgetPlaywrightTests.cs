@@ -109,10 +109,117 @@ public class CoachWidgetPlaywrightTests
             }
         }
 
+        await AssertNoControlOverlapAsync(page);
         await coaches.First.ClickAsync();
         var panel = page.Locator("#lobsy-assistant-panel");
         await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
         Assert.True(await panel.IsVisibleAsync());
+    }
+
+    [Theory]
+    [InlineData(1366, 900, true, false)]
+    [InlineData(390, 844, true, false)]
+    [InlineData(390, 844, false, false)]
+    [InlineData(390, 844, true, true)]
+    public async Task Coach_and_tip_do_not_cover_controls(int width, int height, bool acceptCookies, bool rtl)
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            IgnoreHTTPSErrors = true
+        });
+        if (acceptCookies)
+        {
+            await PlaywrightCookieConsent.AcceptAsync(context);
+        }
+
+        var page = await context.NewPageAsync();
+        if (!await LoginAsync(page, baseUrl, email, password))
+        {
+            return;
+        }
+
+        if (rtl)
+        {
+            await page.GotoAsync(baseUrl + "/taal/ar", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        }
+
+        foreach (var path in new[]
+        {
+            "/candidate/paspoort?tab=tests",
+            "/candidate/paspoort?tab=proof",
+            "/candidate/paspoort?tab=data",
+            "/candidate/ontdekkingsreis",
+            "/candidate/career?stap=intro",
+            "/candidate/hoe-werkt-lobsy",
+            "/account/mail-instellingen"
+        })
+        {
+            await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+            try
+            {
+                await page.WaitForSelectorAsync("#lobsy-coach-btn", new() { Timeout = 12_000 });
+            }
+            catch (TimeoutException)
+            {
+                continue;
+            }
+
+            Assert.Equal(1, await page.Locator("#lobsy-coach-btn").CountAsync());
+            var box = await page.Locator("#lobsy-coach-btn").BoundingBoxAsync();
+            Assert.NotNull(box);
+            if (rtl)
+            {
+                Assert.True(box!.X < width * 0.45, $"RTL coach should sit at the inline end (x={box.X}).");
+            }
+            else
+            {
+                Assert.True(box!.X >= width * 0.55, $"Coach is not on the right (x={box.X}).");
+            }
+
+            await AssertNoControlOverlapAsync(page);
+        }
+    }
+
+    private static async Task AssertNoControlOverlapAsync(IPage page)
+    {
+        var overlaps = await page.EvaluateAsync<int>(
+            """
+            () => {
+              const dock = document.querySelector('[data-lobsy-coach], .lobsy-coach-dock');
+              if (!dock) return 0;
+              const tip = dock.querySelector('.lobsy-coach-dock__tip');
+              const boxes = [dock.getBoundingClientRect()];
+              if (tip && !tip.hidden) boxes.push(tip.getBoundingClientRect());
+              const nodes = document.querySelectorAll('a, button, input, textarea, select, summary, [role="button"]');
+              let hits = 0;
+              for (const node of nodes) {
+                if (dock.contains(node)) continue;
+                const style = getComputedStyle(node);
+                if (style.visibility === 'hidden' || style.display === 'none') continue;
+                const r = node.getBoundingClientRect();
+                if (r.width < 8 || r.height < 8) continue;
+                if (r.bottom < 0 || r.top > innerHeight) continue;
+                for (const b of boxes) {
+                  const hit = b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top;
+                  if (hit) hits++;
+                }
+              }
+              return hits;
+            }
+            """);
+        Assert.Equal(0, overlaps);
     }
 
     private static bool Overlaps(Microsoft.Playwright.LocatorBoundingBoxResult a, Microsoft.Playwright.LocatorBoundingBoxResult b)

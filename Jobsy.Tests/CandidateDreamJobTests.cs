@@ -52,6 +52,6 @@ public class CandidateDreamJobTests
         Assert.Contains(gaps, g => g.Text == "Basiskennis Logistiek" && g.Met);
         Assert.Contains(gaps, g => g.Text == "Ervaring in Logistiek" && g.Met);
         Assert.Contains(gaps, g => g.Text == "Projectmanagement" && !g.Met);
-        Assert.Equal("Leidinggevende Vaardigheden", CareerPlanViewBuilder.ShortTitle("Leidinggevende Vaardigheden"));
+        Assert.Equal("Leidinggevende vaardigheden", CareerPlanViewBuilder.ShortTitle("Leidinggevende Vaardigheden"));
     }
 }

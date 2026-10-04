@@ -175,7 +175,7 @@
 
         <details class="test-detail__accordion">
             <summary>@Culture["Tests.WhatItMeans"]</summary>
-            <p class="login-lead">@Culture[_def.ScienceNoteKey]</p>
+            <p class="login-lead">@ScienceNote</p>
             <p class="whoami-model muted">
                 @Culture["Tests.ModelLabel"]: @_def.ModelName.
                 <a href="@_def.ModelUrl" target="_blank" rel="noopener noreferrer">@Culture["Tests.MoreAboutModel"]</a>
@@ -194,7 +194,12 @@
             }
             else if (_def.Kind == AssessmentKind.Career && _careerReport is not null)
             {
-                <CareerDeepReportView Report="_careerReport" Busy="_busy" OnDownloadPdf="DownloadPdfAsync" />
+                <CareerDeepReportView Report="_careerReport"
+                                     DreamTitle="@_dreamTitle"
+                                     GoalEvidence="@_goalEvidence"
+                                     EducationLabel="@_educationLabel"
+                                     Busy="_busy"
+                                     OnDownloadPdf="DownloadPdfAsync" />
             }
             else if (_def.Kind == AssessmentKind.Culture && _cultureReport is not null)
             {
@@ -303,7 +308,7 @@
         </section>
         <section class="test-detail__section">
             <h2>@Culture["Tests.WhyThis"]</h2>
-            <p>@Culture[_def.ScienceNoteKey]</p>
+            <p>@ScienceNote</p>
         </section>
         <section class="test-detail__section">
             <h2>@Culture["Tests.ScienceModel"]</h2>
@@ -583,7 +588,8 @@
         AddBar("Resultaatgerichtheid", scores.Resultaatgerichtheid);
         AddBar("Stressbestendigheid", scores.Stressbestendigheid);
         AddBar("Innovatie", scores.Innovatie);
-        AddBar("Extraversie", scores.Extraversie);
+        AddBar(Culture["Competency.Bar.PeopleEnergy"], scores.Extraversie);
+        _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
 
@@ -643,12 +649,12 @@
                 scores.Social, scores.Enterprising, scores.Conventional)
                 .FirstOrDefault().Code;
         _headlineLead = Culture[CareerResultLeadKey(leadCode)];
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social), scores.Social);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional), scores.Conventional);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising), scores.Enterprising);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic), scores.Realistic);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative), scores.Investigative);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic), scores.Artistic);
+        AddBar(RiasecLabel(CareerTestCatalog.Social), scores.Social);
+        AddBar(RiasecLabel(CareerTestCatalog.Conventional), scores.Conventional);
+        AddBar(RiasecLabel(CareerTestCatalog.Enterprising), scores.Enterprising);
+        AddBar(RiasecLabel(CareerTestCatalog.Realistic), scores.Realistic);
+        AddBar(RiasecLabel(CareerTestCatalog.Investigative), scores.Investigative);
+        AddBar(RiasecLabel(CareerTestCatalog.Artistic), scores.Artistic);
         _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
@@ -750,8 +756,23 @@
         _ => null
     };
 
+    private string ScienceNote
+        => _paymentMode == DeepTestFinanceRules.TestUnlockMethod
+            ? TestAccountCopy.StripPrice(Culture[_def?.ScienceNoteKey ?? ""])
+            : Culture[_def?.ScienceNoteKey ?? ""];
+
+    private string RiasecLabel(string code)
+        => Culture[$"Career.Riasec.{code}"];
+
     private string FormatCompleted(DateTime? completedAtUtc, bool deep)
     {
+        if (deep)
+        {
+            completedAtUtc = _deepState?.ReportGeneratedAtUtc
+                ?? _deepState?.CompletedAtUtc
+                ?? completedAtUtc;
+        }
+
         var date = completedAtUtc is DateTime dt
             ? Jobsy.Web.Services.LobsyTime.ToAmsterdam(dt).ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
             : null;

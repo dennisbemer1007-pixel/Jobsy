@@ -1,6 +1,6 @@
 @page "/account/mail-instellingen"
 @attribute [Authorize]
-@attribute [ExcludeFromInteractiveRouting]
+@rendermode InteractiveServer
 @layout MainLayout
 @using Microsoft.AspNetCore.Antiforgery
 @using Jobsy.Web.Localization
@@ -10,10 +10,12 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IAntiforgery Antiforgery
 @inject IFeatureFlags FeatureFlags
+@inject PersistentComponentState Persist
+@implements IDisposable
 
 <PageTitle>@Culture["MailSettings.Title"] · Lobsy</PageTitle>
 
-<section class="page-section mail-settings card" aria-labelledby="mail-settings-title">
+<section class="page-section panel-page mail-settings card" dir="@(Culture.IsRightToLeft ? "rtl" : "ltr")" aria-labelledby="mail-settings-title">
     <h1 id="mail-settings-title" tabindex="-1">@Culture["MailSettings.Title"]</h1>
 
     @if (_loadError)
@@ -47,12 +49,12 @@
 
             <h2 style="font-size:1.05rem;margin:2rem 0 0.75rem">@Culture["MailSettings.AlwaysHeading"]</h2>
             <ul>
-                @foreach (var line in _always)
+                @foreach (var key in _alwaysKeys)
                 {
-                    <li>@line</li>
+                    <li>@Culture[key]</li>
                 }
             </ul>
-            <p class="muted">@Culture["MailSettings.AlwaysHint"]</p>
+            <p class="muted">@Culture[_employersOn ? "MailSettings.AlwaysHint" : "MailSettings.AlwaysHintOff"]</p>
         </form>
 
         @if (_saved)
@@ -64,7 +66,8 @@
 
 @code {
     private readonly List<JobsyApiClient.EmailPreferenceItemDto> _optional = [];
-    private readonly List<string> _always = [];
+    private readonly List<string> _alwaysKeys = [];
+    private bool _employersOn = true;
     private bool _loadError;
     private bool _saved;
     private string _antiforgeryFieldName = "";
@@ -73,15 +76,33 @@
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
+    private PersistingComponentStateSubscription _persistSub;
+
     protected override async Task OnInitializedAsync()
     {
-        var http = HttpContext ?? HttpContextAccessor.HttpContext;
-        if (http is not null)
+        _persistSub = Persist.RegisterOnPersisting(() =>
         {
-            var tokens = Antiforgery.GetAndStoreTokens(http);
-            _antiforgeryFieldName = tokens.FormFieldName;
-            _antiforgeryToken = tokens.RequestToken ?? "";
-            _saved = string.Equals(http.Request.Query["saved"], "1", StringComparison.Ordinal);
+            Persist.PersistAsJson("MailAfName", _antiforgeryFieldName);
+            Persist.PersistAsJson("MailAfToken", _antiforgeryToken);
+            return Task.CompletedTask;
+        });
+
+        if (Persist.TryTakeFromJson<string>("MailAfName", out var name)
+            && Persist.TryTakeFromJson<string>("MailAfToken", out var token))
+        {
+            _antiforgeryFieldName = name ?? "";
+            _antiforgeryToken = token ?? "";
+        }
+        else
+        {
+            var http = HttpContext ?? HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                var tokens = Antiforgery.GetAndStoreTokens(http);
+                _antiforgeryFieldName = tokens.FormFieldName;
+                _antiforgeryToken = tokens.RequestToken ?? "";
+                _saved = string.Equals(http.Request.Query["saved"], "1", StringComparison.Ordinal);
+            }
         }
 
         try
@@ -93,23 +114,21 @@
                 return;
             }
 
-            var employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
             _optional.Clear();
             _optional.AddRange(dto.Optional ?? []);
-            _always.Clear();
-            _always.AddRange(dto.Always ?? []);
-            if (!employersOn)
+            _alwaysKeys.Clear();
+            _alwaysKeys.Add("MailSettings.Always.Codes");
+            if (_employersOn)
+            {
+                _alwaysKeys.Add("MailSettings.Always.Applications");
+            }
+            else
             {
                 _optional.RemoveAll(item => item.Key is "PushBom");
-                for (var i = 0; i < _always.Count; i++)
-                {
-                    if (_always[i].Contains("Sollicitatie", StringComparison.OrdinalIgnoreCase)
-                        || _always[i].Contains("Application", StringComparison.OrdinalIgnoreCase))
-                    {
-                        _always[i] = Culture["CareerStep.Band.EyebrowOff"];
-                    }
-                }
             }
+
+            _alwaysKeys.Add("MailSettings.Always.Security");
         }
         catch
         {
@@ -132,4 +151,6 @@
         "CompanyReEngagement" => Culture["MailSettings.CompanyReEngagement.Hint"],
         _ => ""
     };
+
+    public void Dispose() => _persistSub.Dispose();
 }

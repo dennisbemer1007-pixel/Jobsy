@@ -619,8 +619,8 @@
 
     private bool JourneyFinished => _state?.IsComplete == true || _state?.FinishReached == true;
 
-    /// <summary>Finished journeys keep the 10/10 rail, including a revisited shed or consent screen.</summary>
-    private bool ShowFinishedChrome => IsLightScreen || (JourneyFinished && _screen is "toestemming" or "shed");
+    /// <summary>A finished journey keeps 10/10 on every revisited step, not only the end screens.</summary>
+    private bool ShowFinishedChrome => JourneyChrome.ShowFinished(JourneyFinished, IsLightScreen);
 
     private int _platesShed => ShowFinishedChrome
         ? 10
@@ -1470,7 +1470,7 @@
 
     private Task GoToPassportAsync()
     {
-        Navigation.NavigateTo("/candidate/paspoort?tab=dna");
+        Navigation.NavigateTo("/candidate/paspoort?tab=dna&laag=1");
         return Task.CompletedTask;
     }
 

@@ -796,6 +796,68 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("users/{userId:guid}/sessions/{sessionId:guid}/revoke")]
+    [HttpPost("users/{userId:guid}/test-unlock/reset")]
+    [AdminAudit(AdminAuditKeys.UserTestUnlockReset, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
+    public async Task<IActionResult> ResetTestUnlocks(
+        Guid userId,
+        [FromBody] AdminTestUnlockResetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        _auditContext.Reason = reason;
+        _auditContext.TargetId = userId.ToString("D");
+        _auditContext.TargetLabel = PersonalDataMasker.MaskName(target.FullName);
+        if (!target.IsTestAccount)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Alleen een testaccount kan zo worden gereset." });
+        }
+
+        var analyses = await _db.CandidateDeepAnalyses
+            .Where(a => a.UserId == userId)
+            .ToListAsync(cancellationToken);
+        foreach (var row in analyses)
+        {
+            row.Status = CandidateDeepAnalysisStatuses.Locked;
+            row.AnswersJson = "{}";
+            row.TagsJson = "[]";
+            row.ReportJson = "";
+            row.ReportVersion = 0;
+            row.UnlockedAtUtc = null;
+            row.CompletedAtUtc = null;
+            row.ReportGeneratedAtUtc = null;
+            row.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        var checkouts = await _db.DeepAnalysisCheckouts
+            .Where(c => c.UserId == userId
+                && (c.Status == DeepAnalysisCheckoutStatus.Paid || c.Status == DeepAnalysisCheckoutStatus.Pending))
+            .ToListAsync(cancellationToken);
+        foreach (var checkout in checkouts)
+        {
+            checkout.Status = DeepAnalysisCheckoutStatus.Cancelled;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     [AdminAudit(AdminAuditKeys.UserSessionsRevoke, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> RevokeUserSession(
         Guid userId,

@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
     "sha256": "e29fe645988aacbc95823a2c515c00c72f3d943d508713fa28dad468d41878ff",
-    "v": "20261004-run6c"
+    "v": "20261004-run7"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -137,7 +137,7 @@
   },
   "js/app-core.js": {
     "sha256": "d730a1806aa915fa283cff8abc49bc86040cada479e3a34543b681d83164d729",
-    "v": "20261004-run6c"
+    "v": "20261004-run7"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -189,7 +189,7 @@
   },
   "js/lobsyPush.js": {
     "sha256": "1dd040163a72e35b3d57947889edf8713ae2c390aa1a64bb92867e3ab3c80cd6",
-    "v": "20261004-run6c"
+    "v": "20261004-run7"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -209,10 +209,10 @@
   },
   "service-worker.js": {
     "sha256": "9d67dd19ae842ff680fa9d5ebd3eea4f95b9fcf736a31371b6509fbf851524bc",
-    "v": "20261004-run6c"
+    "v": "20261004-run7"
   },
   "service-worker.published.js": {
     "sha256": "58030bd0a06beca0dd6a6210ba24ca42915238db639554f77cbae653cf18a029",
-    "v": "20261004-run6c"
+    "v": "20261004-run7"
   }
 }

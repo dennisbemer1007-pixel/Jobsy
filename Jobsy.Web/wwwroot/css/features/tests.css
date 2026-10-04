@@ -332,8 +332,15 @@
 }
 @media (min-width: 1024px) {
   .test-shell__layout {
-    grid-template-columns: 272px minmax(0, 640px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 40rem) minmax(0, 1fr);
     align-items: start;
+  }
+  .test-shell__rail,
+  .test-shell__card {
+    grid-column: 2;
+  }
+  .test-shell__scene {
+    grid-column: 3;
   }
 }
 .test-shell__rail { display: none; }
@@ -354,14 +361,15 @@
 .test-shell__eyebrow { margin: 0; color: var(--muted); font-weight: 600; }
 .test-shell__lead { margin: 0; color: var(--muted); }
 .test-shell__footer { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
-.test-depth-pick { border: 0; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+.test-depth-pick { position: relative; border: 0; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
 .test-depth-pick__card {
+  position: relative;
   display: grid; gap: 0.25rem; padding: 0.85rem 1rem;
   border: 2px solid var(--pearl); border-radius: var(--radius-md, 8px); cursor: pointer;
 }
 .test-depth-pick__card.is-on { border-color: var(--brand); background: var(--accent-soft); }
 .test-depth-pick__card.is-done { opacity: 0.55; cursor: default; }
-.test-depth-pick__card input { position: absolute; opacity: 0; }
+.test-depth-pick__card input { position: absolute; inset: 0; opacity: 0; margin: 0; }
 .test-done__gains { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; color: var(--ink); }
 .test-done__shard {
   width: 48px; height: 36px;
@@ -480,8 +488,8 @@
   flex-direction: row-reverse;
 }
 @media (min-width: 1024px) {
-  [dir="rtl"] .test-shell__layout {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 640px) 272px;
+  [dir="rtl"] .test-shell__scene {
+    grid-column: 1;
   }
 }
 

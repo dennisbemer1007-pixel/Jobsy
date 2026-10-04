@@ -184,17 +184,17 @@ public static class UiStringsHowLobsyCandidate
             "Lobsy în limba ta:",
             "لوبسي بلغتك:");
         Add("HowC.Safe.Assistant",
-            "Vragen? Tik op {0}, rechts op het scherm.",
-            "Questions? Tap {0}, on the right of the screen.",
-            "Pytania? Dotknij {0}, po prawej stronie ekranu.",
-            "Întrebări? Atinge {0}, în dreapta ecranului.",
-            "أسئلة؟ اضغط على {0}، على يمين الشاشة.");
+            "Vragen? Tik op Lobsy, rechtsonder.",
+            "Questions? Tap Lobsy, at the bottom right.",
+            "Pytania? Dotknij Lobsy, na dole po prawej.",
+            "Întrebări? Atinge Lobsy, jos în dreapta.",
+            "أسئلة؟ اضغط على Lobsy، أسفل اليمين.");
         Add("HowC.Safe.AssistantRtl",
-            "Vragen? Tik op {0}, links op het scherm.",
-            "Questions? Tap {0}, on the left of the screen.",
-            "Pytania? Dotknij {0}, po lewej stronie ekranu.",
-            "Întrebări? Atinge {0}, în stânga ecranului.",
-            "أسئلة؟ اضغط على {0}، على يسار الشاشة.");
+            "Vragen? Tik op Lobsy, linksonder.",
+            "Questions? Tap Lobsy, at the bottom left.",
+            "Pytania? Dotknij Lobsy, na dole po lewej.",
+            "Întrebări? Atinge Lobsy, jos în stânga.",
+            "أسئلة؟ اضغط على Lobsy، أسفل اليسار.");
 
         Add("HowC.Say",
             "Kijk: {0} stenen heb je al. Nu kies je waar je naartoe groeit.",

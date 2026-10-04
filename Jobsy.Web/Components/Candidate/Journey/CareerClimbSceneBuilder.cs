@@ -144,9 +144,6 @@ public static class CareerClimbSceneBuilder
             {
                 svg.Append(CultureInfo.InvariantCulture,
                     $"<path class=\"career-scene__stone-rim\" d=\"{StonePath(p.X, p.Y, sx, sy)}\"/>");
-                var shellY = p.Y - sy * 2.6;
-                svg.Append(CultureInfo.InvariantCulture,
-                    $"<path class=\"career-scene__gold-shell\" d=\"M{N(p.X - sx * 0.5)} {N(shellY)}C{N(p.X - sx * 0.5)} {N(shellY - sy * 1.6)} {N(p.X + sx * 0.5)} {N(shellY - sy * 1.6)} {N(p.X + sx * 0.5)} {N(shellY)}Z\"/>");
             }
 
             if (state == ClimbStoneState.Done)

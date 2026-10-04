@@ -18624,7 +18624,7 @@ body {
     min-height: 3rem;
     padding: 0.75rem 1rem;
     border: 1px solid var(--gold-deep);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius);
     background: linear-gradient(135deg, var(--gold-light), var(--gold));
     color: var(--brand);
     font-weight: 700;
@@ -19737,11 +19737,16 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 }
 
-/* Candidate coach: one lobster, bottom-right, above nav / cookie / sticky footer. */
+/* Candidate coach: one lobster, bottom inline-end, above nav / cookie / sticky footer. */
+.app-shell:has([data-lobsy-coach]) .app-main {
+    padding-bottom: calc(64px + 24px + 16px);
+}
+
 .lobsy-coach-dock {
     position: fixed;
     z-index: 45;
-    right: 24px;
+    inset-inline-end: 24px;
+    inset-inline-start: auto;
     bottom: 24px;
     display: flex;
     flex-direction: column;
@@ -19749,6 +19754,11 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     gap: 8px;
     pointer-events: none;
     max-width: min(280px, calc(100vw - 32px));
+}
+
+.lobsy-coach-dock--tip-above {
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .lobsy-coach-dock__btn,
@@ -19795,16 +19805,14 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 .lobsy-coach-dock__tip p {
     margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    overflow: visible;
+    white-space: normal;
 }
 
 .lobsy-coach-dock__close {
     position: absolute;
     top: 0.2rem;
-    right: 0.35rem;
+    inset-inline-end: 0.35rem;
     border: 0;
     background: transparent;
     color: var(--text);
@@ -19814,7 +19822,8 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 .lobsy-assistant--coach {
-    right: 24px;
+    inset-inline-end: 24px;
+    inset-inline-start: auto;
     bottom: calc(24px + 76px);
     z-index: 46;
 }
@@ -19825,16 +19834,25 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 @media (max-width: 639px) {
+    .app-shell:has([data-lobsy-coach]) .app-main {
+        padding-bottom: calc(56px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
+    }
+
     .lobsy-coach-dock {
         flex-direction: row;
         align-items: flex-end;
-        max-width: min(220px, calc(100vw - 24px));
-        right: max(12px, env(safe-area-inset-right, 0px));
+        max-width: min(18rem, calc(100vw - 24px));
+        inset-inline-end: max(12px, env(safe-area-inset-inline-end, 0px));
         bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
     }
 
+    .lobsy-coach-dock--tip-above {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
     .lobsy-coach-dock__tip {
-        max-width: 9.5rem;
+        max-width: min(16rem, calc(100vw - 88px));
     }
 
     .lobsy-coach-dock__btn {
@@ -19848,11 +19866,13 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 
     .lobsy-coach-dock__tip p {
-        -webkit-line-clamp: 2;
+        display: block;
+        overflow: visible;
     }
 
     .lobsy-assistant--coach {
-        right: max(12px, env(safe-area-inset-right, 0px));
+        inset-inline-end: max(12px, env(safe-area-inset-inline-end, 0px));
+        inset-inline-start: auto;
         bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 12px + env(safe-area-inset-bottom, 0px) + 68px);
     }
 
@@ -19985,6 +20005,15 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     background: var(--gold);
     border-color: var(--gold-deep);
     color: var(--gold-ink);
+    border-radius: 12px;
+}
+
+.app-shell .btn-compact,
+.app-shell .career-btn,
+.app-shell .engagement-btn,
+.app-shell .passport-card__fill-link,
+.app-shell .test-detail__back-link {
+    border-radius: 12px;
 }
 
 .app-shell .engagement-btn--danger {

@@ -435,6 +435,21 @@ public sealed partial class JobsyApiClient
         throw new InvalidOperationException(ExtractApiMessage(body) ?? response.ReasonPhrase ?? "MFA reset mislukt.");
     }
 
+    public async Task ResetTestUnlocksAsync(Guid userId, string reason, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/{userId:D}/test-unlock/reset",
+            new { reason },
+            ct);
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        throw new InvalidOperationException(ExtractApiMessage(body) ?? response.ReasonPhrase ?? "Reset mislukt.");
+    }
+
     public async Task<IReadOnlyList<AdminUserSessionItem>> GetAdminUserSessionsAsync(
         Guid userId,
         CancellationToken ct = default)
