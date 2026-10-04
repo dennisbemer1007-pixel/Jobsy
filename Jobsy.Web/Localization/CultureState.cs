@@ -81,15 +81,28 @@ public sealed class CultureState
 
         _initialized = true;
 
-        string? preferred = null;
+        string? cookie = null;
+        try
+        {
+            cookie = await _js.InvokeAsync<string?>("jobsyCulture.get");
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        string? profileLanguage = null;
+        JobsyApiClient? api = null;
         try
         {
             var state = await _authState.GetAuthenticationStateAsync();
             if (state.User.Identity?.IsAuthenticated == true)
             {
-                var api = _services.GetRequiredService<JobsyApiClient>();
+                api = _services.GetRequiredService<JobsyApiClient>();
                 var profile = await api.GetMyProfileAsync();
-                preferred = profile?.Preferences?.Language;
+                profileLanguage = profile?.Preferences?.Language;
             }
         }
         catch
@@ -97,23 +110,26 @@ public sealed class CultureState
             // Profile may be unavailable during early circuit start; fall back to cookie.
         }
 
-        if (string.IsNullOrWhiteSpace(preferred))
+        // An explicit language cookie wins over a stale profile, so the picker matches the page.
+        var chosen = !string.IsNullOrWhiteSpace(cookie)
+            ? JobsyLanguages.Normalize(cookie)
+            : JobsyLanguages.Normalize(profileLanguage);
+        Apply(chosen);
+
+        if (api is not null
+            && !string.IsNullOrWhiteSpace(cookie)
+            && !string.IsNullOrWhiteSpace(profileLanguage)
+            && !JobsyLanguages.AreSame(chosen, profileLanguage))
         {
             try
             {
-                preferred = await _js.InvokeAsync<string?>("jobsyCulture.get");
+                await api.UpdateMyLanguageAsync(chosen);
             }
-            catch (JSException)
+            catch
             {
-                preferred = null;
-            }
-            catch (InvalidOperationException)
-            {
-                preferred = null;
+                // Cookie still holds the choice.
             }
         }
-
-        Apply(JobsyLanguages.Normalize(preferred));
     }
 
     public async Task SetLanguageAsync(string language)

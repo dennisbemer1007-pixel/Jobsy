@@ -18,6 +18,7 @@ public static class AdminAuditKeys
     public const string MaintenanceOff = "maintenance.off";
 
     public const string UserMfaReset = "user.mfa.reset";
+    public const string UserTestUnlockReset = "user.test-unlock.reset";
     public const string UserRoleChange = "user.role.change";
     public const string UserSessionsRevoke = "user.sessions.revoke";
     public const string UserSessionsRevokeAll = "user.sessions.revoke-all";

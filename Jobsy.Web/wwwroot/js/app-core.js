@@ -1338,8 +1338,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-readaloud3"
-            : "/service-worker.js?v=20261004-readaloud3";
+            ? "/service-worker.published.js?v=20261004-run7m"
+            : "/service-worker.js?v=20261004-run7m";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1538,5 +1538,37 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
   },
   dismissTip: function (key) {
     try { localStorage.setItem("lobsy-coach-tip:" + key, "1"); } catch (e) { }
+  },
+  placeTip: function (dock) {
+    if (!dock) return;
+    var tip = dock.querySelector(".lobsy-coach-dock__tip");
+    dock.classList.remove("lobsy-coach-dock--tip-above");
+    if (tip) tip.hidden = false;
+    if (!tip) return;
+
+    function overlaps() {
+      var tipBox = tip.getBoundingClientRect();
+      if (tipBox.width < 2 || tipBox.height < 2) return false;
+      var nodes = document.querySelectorAll("a, button, input, textarea, select, summary, [role='button']");
+      for (var i = 0; i < nodes.length; i++) {
+        var el = nodes[i];
+        if (!el || dock.contains(el)) continue;
+        var style = window.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        var box = el.getBoundingClientRect();
+        if (box.width < 8 || box.height < 8) continue;
+        var visible = box.bottom > 0 && box.right > 0 && box.top < window.innerHeight && box.left < window.innerWidth;
+        if (!visible) continue;
+        if (tipBox.left < box.right - 1 && tipBox.right > box.left + 1 && tipBox.top < box.bottom - 1 && tipBox.bottom > box.top + 1) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (overlaps()) {
+      dock.classList.add("lobsy-coach-dock--tip-above");
+      if (overlaps()) tip.hidden = true;
+    }
   }
 };

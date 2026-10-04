@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Pages.Candidate.DeepReport
 @using Jobsy.Core.Reports
 @using Jobsy.Core.Reports.Career
+@using Jobsy.Core.Rules
 @inject CultureState Culture
 
 @if (Report is not null)
@@ -28,9 +29,26 @@
             <h2 class="test-detail__section-title">@DeepReportCatalog.Get("holland.title", lang)</h2>
             <p><strong>@Report.HollandCode</strong></p>
             <p class="muted">@DeepReportCatalog.Format("holland.body", lang, Report.HollandCode,
-                string.Join(", ", Report.Domains.OrderByDescending(d => d.Score).Take(3).Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang))),
+                string.Join(", ", Report.Domains.OrderByDescending(d => d.Score).Take(3).Select(d => RiasecUi(d.Domain))),
                 string.Join(", ", Report.Occupations.Take(3).Select(o => o.Title(lang))))</p>
         </section>
+
+        @if (GoalHits.Count > 0)
+        {
+            <section class="competence-report__section" aria-label="@Culture["Kompas.GoalRow"]">
+                <h2 class="test-detail__section-title">@Culture["Kompas.GoalRow"]</h2>
+                <ul class="competence-norm-bars">
+                    @foreach (var hit in GoalHits)
+                    {
+                        <li class="competence-norm-bar">
+                            <div class="competence-norm-bar__row">
+                                <span>@hit.Title</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
 
         @if (Report.Occupations.Count > 0)
         {
@@ -60,7 +78,7 @@
                     {
                         <li class="competence-norm-bar">
                             <div class="competence-norm-bar__row">
-                                <span>@DeepReportCatalog.RiasecLabel(d.Domain, lang)</span>
+                                <span>@RiasecUi(d.Domain)</span>
                                 <strong>@d.Score%</strong>
                             </div>
                             @if (d.NormMean is double n)
@@ -87,7 +105,7 @@
             <ul>
                 @foreach (var key in Report.StrengthKeys)
                 {
-                    <li>@DeepReportCatalog.RiasecLabel(key.Split('.').Last(), lang)</li>
+                    <li>@StrengthLine(key, lang)</li>
                 }
             </ul>
             <ul>
@@ -106,8 +124,28 @@
 
 @code {
     [Parameter] public CareerDeepReport? Report { get; set; }
+    [Parameter] public string? DreamTitle { get; set; }
+    [Parameter] public string? GoalEvidence { get; set; }
+    [Parameter] public string? EducationLabel { get; set; }
     [Parameter] public bool Busy { get; set; }
     [Parameter] public EventCallback OnDownloadPdf { get; set; }
+
+    private IReadOnlyList<CareerGoalFit.Hit> GoalHits
+    {
+        get
+        {
+            if (Report is null)
+            {
+                return [];
+            }
+
+            var lang = ReportLanguage.FromUi(Culture.Language);
+            var titles = Report.Occupations.Select(o => o.Title(lang))
+                .Concat(CareerGoalFit.DreamTitles(DreamTitle))
+                .ToList();
+            return CareerGoalFit.Pick(titles, DreamTitle, GoalEvidence, EducationLabel);
+        }
+    }
 
     private string[] _labels = [];
     private int[] _scores = [];
@@ -121,10 +159,24 @@
         }
 
         var lang = ReportLanguage.FromUi(Culture.Language);
-        _labels = Report.Domains.Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang)).ToArray();
+        _labels = Report.Domains.Select(d => RiasecUi(d.Domain)).ToArray();
         _scores = Report.Domains.Select(d => d.Score).ToArray();
         _norms = Report.ComparisonAvailable
             ? Report.Domains.Select(d => (int)Math.Round(d.NormMean ?? 0)).ToArray()
             : null;
+    }
+
+    private string RiasecUi(string domain)
+        => Culture[$"Career.Riasec.{domain}"];
+
+    private static string StrengthLine(string key, string lang)
+    {
+        var text = DeepReportCatalog.Get(key, lang);
+        if (!string.Equals(text, key, StringComparison.Ordinal))
+        {
+            return text;
+        }
+
+        return DeepReportCatalog.RiasecLabel(key.Split('.').Last(), lang);
     }
 }

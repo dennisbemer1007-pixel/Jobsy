@@ -109,6 +109,51 @@ public static class DeepReportCatalog
         ["values.choose"] = (
             "Bij het kiezen van werk: let op organisaties waar dit zichtbaar is in het dagelijks werk.",
             "When choosing work: look for organisations where this shows up in day-to-day work."),
+        ["values.choose.Autonomy"] = (
+            "Kies werk waar jij zelf mag bepalen hoe je het doet.",
+            "Choose work where you decide how to do it."),
+        ["values.choose.Connection"] = (
+            "Kies werk waar je met mensen samenwerkt en je gezien voelt.",
+            "Choose work where you work with people and feel seen."),
+        ["values.choose.Achievement"] = (
+            "Kies werk waar je resultaat ziet en mag groeien.",
+            "Choose work where you see results and can grow."),
+        ["values.choose.Stability"] = (
+            "Kies werk met duidelijke afspraken en een vast ritme.",
+            "Choose work with clear agreements and a steady rhythm."),
+        ["values.choose.Impact"] = (
+            "Kies werk waar jouw inzet iets betekent voor anderen.",
+            "Choose work where your effort matters to other people."),
+        ["v.strength.Autonomy"] = (
+            "Je pakt werk zelf op en zoekt je eigen weg.",
+            "You pick up work yourself and find your own way."),
+        ["v.strength.Connection"] = (
+            "Je bouwt vertrouwen en houdt het team bij elkaar.",
+            "You build trust and keep the team together."),
+        ["v.strength.Achievement"] = (
+            "Je wilt resultaat zien en maakt dingen af.",
+            "You want to see results and you finish things."),
+        ["v.strength.Stability"] = (
+            "Je houdt het rustig en betrouwbaar, ook als het druk is.",
+            "You keep things calm and reliable, even when it is busy."),
+        ["v.strength.Impact"] = (
+            "Je wilt dat je werk ertoe doet voor anderen.",
+            "You want your work to matter for other people."),
+        ["v.pitfall.Autonomy"] = (
+            "Je kunt te snel alleen doorwerken en hulp overslaan.",
+            "You can rush ahead alone and skip asking for help."),
+        ["v.pitfall.Connection"] = (
+            "Je kunt te veel meebuigen om de sfeer goed te houden.",
+            "You can bend too much just to keep the mood good."),
+        ["v.pitfall.Achievement"] = (
+            "Je kunt te hard doorgaan en rust overslaan.",
+            "You can push too hard and skip rest."),
+        ["v.pitfall.Stability"] = (
+            "Je kunt verandering uitstellen tot het te laat voelt.",
+            "You can put off change until it feels too late."),
+        ["v.pitfall.Impact"] = (
+            "Je kunt jezelf vergeten omdat het werk voor anderen gaat.",
+            "You can forget yourself because the work is for other people."),
 
         // Action / strengths templates
         ["action.lead"] = (

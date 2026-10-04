@@ -225,6 +225,7 @@
     private const string KompasPersistKey = "passport-kompas";
 
     private string _tab = PassportTabs.Dna;
+    private bool _freshLayer;
     private readonly HashSet<string> _visited = new(StringComparer.OrdinalIgnoreCase);
     private bool _loading = true;
     private bool _listening;
@@ -373,11 +374,14 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var tab = PassportTabs.Dna;
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var values))
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("tab", out var values))
         {
             tab = PassportTabs.Normalize(values.FirstOrDefault());
         }
 
+        _freshLayer = query.TryGetValue("laag", out var laag)
+            && string.Equals(laag.FirstOrDefault(), "1", StringComparison.Ordinal);
         _tab = tab;
         _visited.Add(_tab);
     }
@@ -622,7 +626,7 @@
             PassportTabs.Career => "Passport.Bubble.Career",
             PassportTabs.Proof => "Passport.Bubble.Proof",
             PassportTabs.Data => "Passport.Bubble.Data",
-            _ => "Passport.Bubble.Dna"
+            _ => _freshLayer ? "Passport.Bubble.Dna" : "Passport.Bubble.DnaSteady"
         }];
     }
 

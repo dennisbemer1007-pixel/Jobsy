@@ -75,8 +75,8 @@ public static class ValuesDeepReportBuilder
             {
                 Title = LocalizedReportText.FromPair($"Kies werk dat {nl} voelbaar maakt", $"Choose work that makes {en} tangible"),
                 Body = LocalizedReportText.FromPair(
-                    DeepReportCatalog.Get("values.choose", "nl"),
-                    DeepReportCatalog.Get("values.choose", "en"))
+                    ChooseBody(d.Domain, "nl"),
+                    ChooseBody(d.Domain, "en"))
             };
         }).ToList();
 
@@ -89,5 +89,12 @@ public static class ValuesDeepReportBuilder
         });
 
         return steps.Take(3).ToList();
+    }
+
+    private static string ChooseBody(string domain, string lang)
+    {
+        var specific = $"values.choose.{domain}";
+        var text = DeepReportCatalog.Get(specific, lang);
+        return text == specific ? DeepReportCatalog.Get("values.choose", lang) : text;
     }
 }

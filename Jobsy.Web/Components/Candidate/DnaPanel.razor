@@ -9,6 +9,7 @@
 @using Jobsy.Web.Components.Candidate.Dna
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 <div class="dna-panel">
     @if (_loading)
@@ -315,8 +316,19 @@
     private int _activeSlide;
     private ElementReference _carouselTrack;
 
+    private bool _employersOn = true;
+
     protected override async Task OnParametersSetAsync()
     {
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
         if (!Active)
         {
             return;
@@ -400,7 +412,9 @@
 
     private void ApplyStory(WhoAmIStorySummary? who)
     {
-        _story = string.IsNullOrWhiteSpace(who?.Story) ? null : who!.Story;
+        _story = string.IsNullOrWhiteSpace(who?.Story)
+            ? null
+            : WhoAmIStoryBuilder.ForDisplay(who!.Story, _employersOn);
         _storyGeneratedAt = who?.GeneratedAtUtc;
         _storyUpdating = string.Equals(who?.Status, WhoAmIStoryStatuses.Updating, StringComparison.OrdinalIgnoreCase);
         _keywords.Clear();

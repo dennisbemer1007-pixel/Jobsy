@@ -73,7 +73,7 @@
 
         <section class="career-step__block career-step__block--band" aria-labelledby="career-band-title">
             <h2 id="career-band-title" class="career-card__block-title">@Culture[EmployersOn ? "CareerStep.Band.Title" : "CareerStep.Band.TitleOff"]</h2>
-            <p class="career-step__sub">@Culture[EmployersOn ? "CareerStep.Band.Eyebrow" : "CareerStep.Band.EyebrowOff"]</p>
+            <p class="career-step__sub">@Culture[EmployersOn ? "CareerStep.Band.Eyebrow" : "CareerStep.Band.FitBodyOff"]</p>
 
             @if (Step.BandLabelKey is { } bandKey)
             {
@@ -193,7 +193,7 @@
     {
         "Good" => Culture["CareerStep.Band.Good"],
         "Fair" => Culture.Format(
-            "CareerStep.Band.Fair",
+            EmployersOn ? "CareerStep.Band.Fair" : "CareerStep.Band.FairOff",
             string.IsNullOrWhiteSpace(Step.FirstGap) ? Step.ShortTitle : Step.FirstGap),
         "NotYet" => Culture["CareerStep.Band.NotYet"],
         _ => Culture["CareerStep.Band.Unknown"]

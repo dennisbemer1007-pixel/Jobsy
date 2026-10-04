@@ -27,7 +27,7 @@ else
             <p class="test-result-premium__lead">@Culture["TestResult.Gold.Lead"]</p>
             <ul class="test-result-premium__checks">
                 <li><span class="ok" aria-hidden="true">✓</span> @Culture.Format("TestResult.Gold.Check.Pages", caps.PdfPageCount)</li>
-                <li><span class="ok" aria-hidden="true">✓</span> @(EmployersEnabled ? Culture["TestResult.Gold.Check.Applications"] : Culture["CareerStep.Band.EyebrowOff"])</li>
+                <li><span class="ok" aria-hidden="true">✓</span> @(EmployersEnabled ? Culture["TestResult.Gold.Check.Applications"] : Culture["TestResult.Upsell.Self"])</li>
                 <li><span class="ok" aria-hidden="true">✓</span> @(EmployersEnabled ? Culture["TestResult.Gold.Check.Matches"] : Culture["TestResult.Upsell.Self"])</li>
             </ul>
         </div>

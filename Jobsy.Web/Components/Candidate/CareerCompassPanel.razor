@@ -14,25 +14,26 @@
     <p class="login-lead">@Culture["Kompas.CareerStrengths"]: @string.Join(" · ", Compass.Strengths)</p>
 }
 
+@if (GoalHits.Count > 0)
+{
+    <section class="kompas-band kompas-band--goal" aria-label="@Culture["Kompas.GoalRow"]">
+        <h4>@Culture["Kompas.GoalRow"]</h4>
+        <ul class="kompas-occupation-list">
+            @foreach (var hit in GoalHits)
+            {
+                <li>@hit.Title</li>
+            }
+        </ul>
+        @if (EducationFlags.Count > 0)
+        {
+            <p class="muted">@Culture["Kompas.EducationAbove"]: @string.Join(", ", EducationFlags.Take(4))</p>
+        }
+    </section>
+}
+
 @if (Compass.HasOccupations)
 {
     <div class="kompas-occupations" aria-label="@Culture["Kompas.Career"]">
-        @if (GoalHits.Count > 0)
-        {
-            <section class="kompas-band kompas-band--goal">
-                <h4>@Culture["Kompas.GoalRow"]</h4>
-                <ul class="kompas-occupation-list">
-                    @foreach (var hit in GoalHits)
-                    {
-                        <li>@hit.Title</li>
-                    }
-                </ul>
-                @if (EducationFlags.Count > 0)
-                {
-                    <p class="muted">@Culture["Kompas.EducationAbove"]: @string.Join(", ", EducationFlags.Take(4))</p>
-                }
-            </section>
-        }
         @if (SuperForCandidate.Count > 0)
         {
             <section class="kompas-band kompas-band--super">
