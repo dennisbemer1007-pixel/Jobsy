@@ -152,7 +152,9 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         }
 
         var story = WhoAmIStoryBuilder.Sanitize(dto?.Story);
-        if (story is null || !story.Contains("ik", StringComparison.OrdinalIgnoreCase))
+        if (story is null
+            || !story.Contains("ik", StringComparison.OrdinalIgnoreCase)
+            || !WhoAmIStoryBuilder.Accepts(story, profile, competency, culture))
         {
             return null;
         }

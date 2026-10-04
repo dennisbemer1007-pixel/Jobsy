@@ -37,7 +37,10 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         CancellationToken cancellationToken = default)
     {
         var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
-        var local = CareerCompassBuilder.Build(DeepAnalysisCatalog.ToRiasecScores(scores), fromDeepAnalysis: true);
+        var riasec = DeepAnalysisCatalog.ToRiasecScores(scores);
+        var local = CareerCompassSanitize.EnsureDepth(
+            CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true),
+            riasec);
         var endpoint = await _openAi.ResolveAsync(OpenAiFeature.CareerCompass, cancellationToken);
         var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -50,6 +53,11 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
             var model = endpoint.Model;
             var baseUrl = endpoint.BaseUrl;
             var generated = await GenerateWithOpenAiAsync(scores, answers, apiKey, model, baseUrl, cancellationToken);
+            if (generated is not null)
+            {
+                generated = CareerCompassSanitize.EnsureDepth(generated, riasec);
+            }
+
             if (generated is { HasOccupations: true })
             {
                 if (generated.Strengths.Count < 3)
@@ -85,7 +93,7 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         request.Content = JsonContent.Create(new
         {
             model,
-            temperature = 0.2,
+            temperature = 0.1,
             response_format = new { type = "json_object" },
             messages = new object[]
             {

@@ -66,10 +66,7 @@ public static class MailUnsubscribeEndpoints
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                return Results.Content(
-                    "<!DOCTYPE html><body><p>De link is ongeldig of verlopen.</p></body>",
-                    "text/html; charset=utf-8",
-                    statusCode: StatusCodes.Status400BadRequest);
+                return HtmlError(http);
             }
 
             var apiBase = (configuration["ApiBaseUrl"] ?? configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
@@ -94,15 +91,7 @@ public static class MailUnsubscribeEndpoints
 
             if (!response.IsSuccessStatusCode)
             {
-                if (isBrowserForm)
-                {
-                    return Results.Redirect("/mail/afmelden?error=1&t=" + Uri.EscapeDataString(token));
-                }
-
-                return Results.Content(
-                    "<!DOCTYPE html><body><p>De link is ongeldig of verlopen.</p></body>",
-                    "text/html; charset=utf-8",
-                    statusCode: StatusCodes.Status400BadRequest);
+                return HtmlError(http, token);
             }
 
             if (isBrowserForm)
@@ -124,5 +113,24 @@ public static class MailUnsubscribeEndpoints
         .WithOrder(-1000);
 
         return app;
+    }
+
+    private static IResult HtmlError(HttpContext http, string? token = null)
+    {
+        var oneClick = string.Equals(http.Request.Headers["List-Unsubscribe"], "One-Click", StringComparison.OrdinalIgnoreCase);
+        var acceptsHtml = http.Request.Headers.Accept.Any(a =>
+            a is not null && a.Contains("text/html", StringComparison.OrdinalIgnoreCase));
+        if (!oneClick && (http.Request.HasFormContentType || acceptsHtml || http.Request.Headers.Accept.Count == 0))
+        {
+            var target = "/mail/afmelden?error=1";
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                target += "&t=" + Uri.EscapeDataString(token);
+            }
+
+            return Results.Redirect(target);
+        }
+
+        return Results.Text("De link is ongeldig of verlopen.", "text/plain", statusCode: StatusCodes.Status400BadRequest);
     }
 }

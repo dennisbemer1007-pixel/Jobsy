@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities;
 using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
@@ -75,6 +76,114 @@ public class MistralCareerReportTests
         Assert.DoesNotContain("»", text, StringComparison.Ordinal);
         Assert.DoesNotContain("**", text, StringComparison.Ordinal);
         Assert.Contains("beroepsletters", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Invented_mistral_titles_are_filled_out_to_at_least_eight_catalogue_jobs()
+    {
+        var json = """
+            {
+              "strengths": ["Aanpakken", "Helpen", "Ordenen"],
+              "superMatches": [
+                {"title":"Elektrotechnicus","percent":89,"why":"Jij pakt technische klussen aan.","keys":["elektro"]}
+              ],
+              "strongChoices": [
+                {"title":"Allround technisch talent","percent":91,"why":"Verzonnen titel.","keys":[]},
+                {"title":"Bouwplaats alleskunner","percent":88,"why":"Verzonnen titel.","keys":[]}
+              ],
+              "broadening": [
+                {"title":"Zorgheld op de afdeling","percent":80,"why":"Verzonnen titel.","keys":[]}
+              ],
+              "practicalNotes": ["Kijk welke taken bij je passen."]
+            }
+            """;
+
+        var thin = CareerCompassJson.TryDeserialize(json);
+        Assert.NotNull(thin);
+        Assert.Contains(thin!.AllOccupations, m => m.Title == "Elektrotechnicus" && m.Percent == 89);
+        Assert.True(thin.AllOccupations.Count() < CareerCompassSanitize.MinCatalogueJobs);
+        Assert.DoesNotContain(thin.AllOccupations, m => m.Title.Contains("alleskunner", StringComparison.OrdinalIgnoreCase));
+
+        var scores = new RiasecScores(66, 38, 37, 64, 43, 62);
+        var compass = CareerCompassSanitize.EnsureDepth(thin, scores);
+        var jobs = compass.AllOccupations.ToList();
+        Assert.InRange(jobs.Count, CareerCompassSanitize.MinCatalogueJobs, CareerCompassSanitize.MaxCatalogueJobs);
+        Assert.Contains(jobs, m => m.Title == "Elektrotechnicus" && m.Percent == 89);
+        Assert.Contains(jobs, m => !CareerGoalFit.IsClearlyHigherEducation(m.Title));
+
+        var domains = new List<DeepAnalysisDomainScore>
+        {
+            new("Realistic", 66, 8),
+            new("Investigative", 38, 8),
+            new("Artistic", 37, 8),
+            new("Social", 64, 8),
+            new("Enterprising", 43, 8),
+            new("Conventional", 62, 8)
+        };
+        var report = CareerDeepReportBuilder.Build(
+            domains,
+            compass,
+            null,
+            new DateTime(2026, 10, 4, 12, 0, 0, DateTimeKind.Utc));
+        var titles = report.Occupations.Select(o => o.TitleNl).ToList();
+        Assert.True(titles.Count >= CareerCompassSanitize.MinCatalogueJobs);
+        foreach (var step in report.ActionPlan)
+        {
+            var body = step.Body.Resolve("nl");
+            Assert.Contains(titles, title => body.Contains(title, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var pdf = AssessmentReportPdfService.RenderCareerDeep(
+            "Lobsy", [], "Test Kandidaat", "4 okt 2026", report, "nl");
+        using var doc = PdfDocument.Open(pdf);
+        var pages = doc.GetPages().ToList();
+        Assert.True(pages.Count >= 6, $"Expected at least 6 PDF pages, got {pages.Count}.");
+        var text = string.Join('\n', pages.Select(p => p.Text));
+        Assert.DoesNotContain("als je taken vergelijkt. Het is geen cijfer.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(text, "Allround technisch talent", StringComparison.OrdinalIgnoreCase);
+        var cover = pages[0].Text;
+        Assert.DoesNotContain("Overzicht", cover, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Deep_reset_drops_the_deep_compass_and_restores_scores_from_the_basic_answers()
+    {
+        var answers = Enumerable.Range(1, CareerTestCatalog.QuestionCount).ToDictionary(id => id, _ => 4);
+        var basic = CareerTestCatalog.Score(answers);
+        Assert.NotNull(basic);
+        var deep = CareerCompassBuilder.Build(new RiasecScores(66, 38, 37, 64, 43, 62), fromDeepAnalysis: true);
+        if (!deep.HasOccupations)
+        {
+            deep = deep with
+            {
+                StrongChoices =
+                [
+                    new CareerOccupationMatch("Elektrotechnicus", 89, CareerCompassBuilder.BandStrong, "Technische klus.", ["elektro"])
+                ]
+            };
+        }
+
+        var row = new CandidateCareerInterest
+        {
+            Status = CandidateCompetencyStatuses.Completed,
+            AnswersJson = CareerTestCatalog.SerializeAnswers(answers),
+            CompassJson = CareerCompassJson.Serialize(deep with { FromDeepAnalysis = true }),
+            RealisticPercent = 66,
+            InvestigativePercent = 38,
+            ArtisticPercent = 37,
+            SocialPercent = 64,
+            EnterprisingPercent = 43,
+            ConventionalPercent = 62
+        };
+
+        Assert.True(CareerInterestDeepReset.ClearDeepCompass(row, new DateTime(2026, 10, 4, 0, 0, 0, DateTimeKind.Utc)));
+        var stored = CareerCompassJson.TryDeserialize(row.CompassJson);
+        Assert.True(stored is null || (!stored.FromDeepAnalysis && !stored.HasOccupations));
+        Assert.DoesNotContain("Elektrotechnicus", row.CompassJson, StringComparison.Ordinal);
+        Assert.Equal(basic!.Realistic, row.RealisticPercent);
+        Assert.Equal(basic.Social, row.SocialPercent);
+        Assert.Equal(CareerTestCatalog.HollandCode(basic), row.HollandCode);
+        Assert.False(CareerInterestDeepReset.ClearDeepCompass(row, DateTime.UtcNow));
     }
 
     [Fact]

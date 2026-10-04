@@ -61,6 +61,10 @@ public sealed class ReminderEmailOptOutPlaywrightTests : IAsyncLifetime
             Timeout = 60_000
         });
 
+        var confirm = page.Locator("#mail-unsub-once button[type=submit]");
+        await confirm.WaitForAsync();
+        Assert.DoesNotContain("requestSubmit", await page.ContentAsync(), StringComparison.Ordinal);
+        await confirm.ClickAsync();
         await page.Locator("[data-mail-unsub='done']").WaitForAsync();
         var text = await page.Locator("[data-mail-unsub='done']").InnerTextAsync();
         Assert.Contains("Je krijgt geen herinneringen meer per e-mail", text, StringComparison.Ordinal);

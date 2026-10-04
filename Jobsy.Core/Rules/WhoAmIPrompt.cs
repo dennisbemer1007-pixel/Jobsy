@@ -12,8 +12,9 @@ public static class WhoAmIPrompt
         Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid, DISC.
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen.
         Vertel wie ik ben, wat mij drijft (kernwaarden zoals zelf kiezen, verbinding, prestatie, zekerheid of impact — zonder Schwartz of wetenschappelijke jargon), hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht), welke talenten uit de competenties naar voren komen, en verweef kort mijn werkervaring (alleen rollen, geen bedrijfsnamen) plus opleidingen/cursussen als die er zijn.
-        Spreek de scores niet tegen. Als een score 60% of hoger is, zeg niet dat ik daar niet goed in ben. Een hoge score voor samenwerken betekent dat samenwerken bij mij past.
-        Geen opsomming met bullets. 2 tot 4 alinea's, warm en concreet, gericht op werk in Den Haag / het Westland.
+        Noem alleen werkervaring, opleidingen en certificaten die in de feiten staan. Verzin niets. Staat er werkervaring: geen, dan noem je geen sector, geen jaren en geen rol.
+        Spreek de scores niet tegen. Als een score 60% of hoger is, zeg niet dat ik daar niet goed in ben. Een hoge score voor samenwerken betekent dat samenwerken bij mij past. Zeg alleen dat ik liever alleen werk als de cultuurfeiten dat zeggen, en spreek samenwerken dan niet tegen.
+        Herhaal dezelfde gedachte niet. Geen opsomming met bullets. 2 tot 4 alinea's, warm en concreet, gericht op werk in Den Haag / het Westland.
         Antwoord ALLEEN als JSON-object: { "story": "lopende tekst in ik-vorm", "keywords": ["kort kernwoord","..."] }
         keywords: 4 tot 8 korte Nederlandse kernwoorden of sterke punten, zonder vaktermen.
         """;
@@ -55,24 +56,15 @@ public static class WhoAmIPrompt
         }
 
         profile ??= WhoAmIProfileHighlights.Empty;
-        if (profile.HasAny)
-        {
-            sb.AppendLine("Profiel (rollen zonder bedrijfsnaam, opleidingen, cursussen):");
-            foreach (var role in profile.Roles)
-            {
-                sb.Append("- Rol: ").AppendLine(role);
-            }
-
-            foreach (var edu in profile.Educations)
-            {
-                sb.Append("- Opleiding: ").AppendLine(edu);
-            }
-
-            foreach (var cert in profile.Certificates)
-            {
-                sb.Append("- Cursus/certificaat: ").AppendLine(cert);
-            }
-        }
+        sb.AppendLine(profile.Roles.Count == 0
+            ? "werkervaring: geen"
+            : "werkervaring: " + string.Join(", ", profile.Roles));
+        sb.AppendLine(profile.Educations.Count == 0
+            ? "opleidingen: geen"
+            : "opleidingen: " + string.Join(", ", profile.Educations));
+        sb.AppendLine(profile.Certificates.Count == 0
+            ? "certificaten: geen"
+            : "certificaten: " + string.Join(", ", profile.Certificates));
 
         return sb.ToString();
     }

@@ -9,6 +9,7 @@ public static class CareerCompassPrompt
         Je bent de loopbaanadviseur van Lobsy. Je schrijft een inspirerend, treffend loopbaanrapport in warme, positieve Jip-en-Janneke-taal (Nederlands). Alsof je het aan een vriend uitlegt.
         Verboden vaktermen (niet in titels, toelichting of notities): RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid.
         Doel: analyseer de 200 unieke antwoorden en de scores per richting. Stel ALGEMENE beroepen en functiegroepen voor van de Nederlandse arbeidsmarkt die naadloos bij dit profiel passen.
+        Kies elke title alleen uit de lijst Toegestane beroepen in het gebruikersbericht. Gebruik die titels letterlijk. Verzin geen andere functienaam.
         Niet beperken tot vacatures die nu op Lobsy staan. Geen bedrijfsnamen, geen woonplaats vragen, geen naam of e-mail.
         Hiërarchie is verplicht en moet logisch zijn: de top-matches zijn de best denkbare fit voor DEZE kandidaat. Percentages zijn de aansluiting van dat beroep bij de testuitslag, niet een willekeurig cijfer.
         - superMatches (kernfit): percent 95-100. De ideale banen die direct resoneren met de hoogste richtingen. Nooit geforceerd te laag (geen 80% voor de beste fit). 3 tot 6 beroepen, aflopend in percent.
@@ -72,6 +73,17 @@ public static class CareerCompassPrompt
                 .Append(" → ")
                 .Append(value)
                 .AppendLine();
+        }
+
+        var riasec = DeepAnalysisCatalog.ToRiasecScores(scores);
+        if (riasec.IsComplete)
+        {
+            sb.AppendLine();
+            sb.AppendLine("Toegestane beroepen (kies ALLEEN uit deze lijst, exact deze titels):");
+            foreach (var job in CareerCompassBuilder.Ranked(riasec).Take(40))
+            {
+                sb.Append("- ").AppendLine(job.Title);
+            }
         }
 
         return sb.ToString();

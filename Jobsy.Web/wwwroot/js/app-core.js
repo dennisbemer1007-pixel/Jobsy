@@ -1339,8 +1339,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-16"
-            : "/service-worker.js?v=20261004-16";
+            ? "/service-worker.published.js?v=20261004-17"
+            : "/service-worker.js?v=20261004-17";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1568,9 +1568,27 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
       return false;
     }
 
+    if (window.innerWidth <= 480) {
+      dock.classList.remove("lobsy-coach-dock--tip-aside");
+      return;
+    }
+
     if (overlapsControls()) {
       dock.classList.add("lobsy-coach-dock--tip-aside");
     }
+  },
+  bindScrollDismiss: function (dock) {
+    if (!dock || dock.dataset.scrollDismiss === "1") return;
+    dock.dataset.scrollDismiss = "1";
+    var last = window.scrollY || 0;
+    window.addEventListener("scroll", function () {
+      if (window.innerWidth > 480) return;
+      var y = window.scrollY || 0;
+      if (Math.abs(y - last) < 24) return;
+      last = y;
+      var close = dock.querySelector(".lobsy-coach-dock__close");
+      if (close) close.click();
+    }, { passive: true });
   },
   syncClearance: function (dock) {
     if (!dock || !dock.getBoundingClientRect) return;

@@ -77,11 +77,11 @@ internal static class UiStringsMailSettings
             "E-mailuri de reamintire",
             "تذكيرات بالبريد");
         Add("MailSettings.Reminders.Hint",
-            "Dit staat aan. Zet het uit als je geen herinneringen per e-mail wilt. Een seintje op je telefoon en WhatsApp blijven apart.",
-            "This is on. Turn it off if you do not want reminder emails. A phone alert and WhatsApp stay separate.",
-            "To jest włączone. Wyłącz, jeśli nie chcesz przypomnień e-mailem. Alert w telefonie i WhatsApp zostają osobno.",
-            "Este pornit. Oprește-l dacă nu vrei e-mailuri de reamintire. O alertă pe telefon și WhatsApp rămân separat.",
-            "هذا مفعّل. أوقفه إذا كنت لا تريد تذكيرات بالبريد. تنبيه الهاتف وواتساب يبقيان منفصلين.");
+            "Zet dit uit als je geen herinneringen per e-mail wilt. Een seintje op je telefoon en WhatsApp blijven apart",
+            "Turn this off if you do not want reminder emails. A phone alert and WhatsApp stay separate",
+            "Wyłącz to, jeśli nie chcesz przypomnień e-mailem. Alert w telefonie i WhatsApp zostają osobno",
+            "Oprește asta dacă nu vrei e-mailuri de reamintire. O alertă pe telefon și WhatsApp rămân separat",
+            "أوقف هذا إذا كنت لا تريد تذكيرات بالبريد. تنبيه الهاتف وواتساب يبقيان منفصلين");
         Add("MailSettings.OptionalHeading", "Optionele mails", "Optional emails", "Opcjonalne e-maile", "E-mailuri opționale", "رسائل اختيارية");
         Add("MailSettings.AlwaysHeading", "Deze mails krijg je altijd", "You always get these emails", "Te e-maile dostajesz zawsze", "Primești întotdeauna aceste e-mailuri", "تصلك هذه الرسائل دائمًا");
         Add("MailSettings.AlwaysHint",

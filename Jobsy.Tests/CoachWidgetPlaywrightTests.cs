@@ -1,3 +1,4 @@
+using Jobsy.Tests.Uat;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -10,6 +11,19 @@ public class CoachWidgetPlaywrightTests
 {
     private const string DefaultEmail = "kandidaat@jobsy.local";
     private const string DefaultPassword = "Jobsy123!";
+
+    [Fact]
+    public void Narrow_tip_is_a_full_width_bar_that_closes_on_scroll()
+    {
+        var root = RepoRoot.Find();
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains("@media (max-width: 480px)", css, StringComparison.Ordinal);
+        Assert.Contains("inset-inline: 0", css, StringComparison.Ordinal);
+        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js"));
+        Assert.Contains("bindScrollDismiss", js, StringComparison.Ordinal);
+        var coach = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/LobsyCoach.razor"));
+        Assert.Contains("bindScrollDismiss", coach, StringComparison.Ordinal);
+    }
 
     [Theory]
     [InlineData(1366, 900, true)]

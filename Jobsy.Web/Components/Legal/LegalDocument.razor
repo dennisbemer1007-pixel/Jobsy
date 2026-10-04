@@ -105,7 +105,7 @@
                     @foreach (var entry in History)
                     {
                         <li class="pp-changes__item">
-                            <span class="pp-changes__version">@LegalDocumentVersions.FormatVersionLabel(entry.Version, DisplayCulture)</span>
+                            <span class="pp-changes__version">@LegalDocumentVersions.FormatDate(entry.EffectiveFrom, DisplayCulture)</span>
                             <span class="pp-changes__text">@Culture[entry.SummaryKey]</span>
                         </li>
                     }

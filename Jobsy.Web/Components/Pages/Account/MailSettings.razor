@@ -35,8 +35,8 @@
                 <label class="checkbox-row">
                     <input type="checkbox" name="reminder_emails" value="1" checked="@_reminderEmails" data-reminder-emails="1" />
                     <span>
-                        <strong>@Culture["MailSettings.Reminders.Label"]</strong>
-                        <span class="muted" style="display:block">@Culture["MailSettings.Reminders.Hint"]</span>
+                        <strong class="mail-settings__label">@Culture["MailSettings.Reminders.Label"]</strong>
+                        <span class="muted mail-settings__hint" style="display:block">@Culture["MailSettings.Reminders.Hint"]</span>
                     </span>
                 </label>
                 <h2 style="font-size:1.05rem;margin:1.5rem 0 0.75rem">@Culture["MailSettings.OptionalHeading"]</h2>
@@ -114,7 +114,9 @@
                 parts.Add(Culture["MailSettings.Comeback.Label"]);
             }
 
-            return string.Join(". ", parts.Where(s => !string.IsNullOrWhiteSpace(s)));
+            return string.Join(
+                ". ",
+                parts.Select(s => s.Trim().TrimEnd('.', '،', '。')).Where(s => s.Length > 0));
         }
     }
 

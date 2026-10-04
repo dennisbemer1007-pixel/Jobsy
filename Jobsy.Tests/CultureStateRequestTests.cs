@@ -18,6 +18,9 @@ public class CultureStateRequestTests
 
         var empty = new DefaultHttpContext();
         Assert.Equal("nl", CultureRequest.ResolveLanguage(empty));
+        Assert.False(CultureRequest.HasExplicitChoice(empty));
+        Assert.False(CultureRequest.HasExplicitChoice(null));
+        Assert.True(CultureRequest.HasExplicitChoice(http));
     }
 
     [Fact]

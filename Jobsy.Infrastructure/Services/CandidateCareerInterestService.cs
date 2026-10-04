@@ -286,11 +286,6 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         bool fromDeepAnalysis)
     {
         var stored = CareerCompassJson.TryDeserialize(row?.CompassJson);
-        if (stored is { HasOccupations: true })
-        {
-            return (stored, false);
-        }
-
         var completed = CareerTestCatalog.CompletedScoresOrNull(
             row?.Status,
             row?.RealisticPercent,
@@ -299,6 +294,16 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             row?.SocialPercent,
             row?.EnterprisingPercent,
             row?.ConventionalPercent);
+        if (stored is { HasOccupations: true })
+        {
+            if (stored.FromDeepAnalysis)
+            {
+                return (CareerCompassSanitize.EnsureDepth(stored, completed), false);
+            }
+
+            return (stored, false);
+        }
+
         if (completed is { IsComplete: true })
         {
             var built = CareerCompassBuilder.Build(completed, fromDeepAnalysis);

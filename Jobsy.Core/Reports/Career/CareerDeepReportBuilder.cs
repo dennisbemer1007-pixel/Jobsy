@@ -30,9 +30,12 @@ public static class CareerDeepReportBuilder
         var top3 = ranked.Take(3).Select(d => d.Domain).ToList();
         var bottom2 = ranked.TakeLast(2).Select(d => d.Domain).ToList();
 
-        var occupations = (compass?.AllOccupations ?? [])
+        var deepened = CareerCompassSanitize.EnsureDepth(
+            compass ?? CareerCompassSnapshot.Empty(fromDeepAnalysis: true),
+            riasec);
+        var occupations = deepened.AllOccupations
             .OrderByDescending(m => m.Percent)
-            .Take(10)
+            .Take(CareerCompassSanitize.MaxCatalogueJobs)
             .Select(m => new DeepOccupationFit
             {
                 TitleNl = m.Title,
@@ -144,10 +147,30 @@ public static class CareerDeepReportBuilder
             return title;
         }
 
-        var (nl, en) = FallbackJob(code);
-        var fallback = ReportLanguage.IsEnglish(lang) ? en : nl;
-        used.Add(fallback);
-        return fallback;
+        foreach (var job in occupations)
+        {
+            var title = job.Title(lang);
+            if (string.IsNullOrWhiteSpace(title) || !used.Add(title))
+            {
+                continue;
+            }
+
+            return title;
+        }
+
+        return ReportLanguage.IsEnglish(lang) ? "a job from your list" : "een beroep uit je lijst";
+    }
+
+    public static string TypicalPlaces(CareerDeepReport report, string lang)
+    {
+        if (report.Occupations.Count >= 3)
+        {
+            return string.Join(", ", report.Occupations.Take(3).Select(o => o.Title(lang)));
+        }
+
+        return CareerCompassBuilder.TypicalEnvironments(
+            report.Domains.OrderByDescending(d => d.Score).Select(d => d.Domain),
+            lang);
     }
 
     private static bool PrimaryCodeIs(string titleNl, string code)
@@ -162,16 +185,6 @@ public static class CareerDeepReportBuilder
         var top = job.Weights.OrderByDescending(w => w.Weight).First();
         return string.Equals(top.Code, code, StringComparison.OrdinalIgnoreCase);
     }
-
-    private static (string Nl, string En) FallbackJob(string code) => code switch
-    {
-        CareerTestCatalog.Realistic => ("medewerker tuinbouw / kas", "greenhouse worker"),
-        CareerTestCatalog.Investigative => ("lab- of meetassistent", "lab assistant"),
-        CareerTestCatalog.Artistic => ("winkelstylist", "shop stylist"),
-        CareerTestCatalog.Social => ("helpende zorg", "care assistant"),
-        CareerTestCatalog.Enterprising => ("verkoopmedewerker", "shop sales assistant"),
-        _ => ("administratief medewerker", "office administrator")
-    };
 
     private static string EnglishOccupation(string nl) => nl switch
     {

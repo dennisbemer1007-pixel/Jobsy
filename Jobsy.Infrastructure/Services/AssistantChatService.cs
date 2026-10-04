@@ -106,12 +106,18 @@ public sealed class AssistantChatService : IAssistantChatService
         {
             try
             {
+                using var aiCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                aiCts.CancelAfter(TimeSpan.FromSeconds(25));
                 var ai = await CompleteWithOpenAiAsync(
-                    context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, cancellationToken);
+                    context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, aiCts.Token);
                 if (!string.IsNullOrWhiteSpace(ai))
                 {
                     return new AssistantChatResult(StripMarkup(ai), UsedAi: true, []);
                 }
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Assistant reply timed out; local fallback is used.");
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -1148,7 +1154,8 @@ Verbetervoorstellen:
         }
 
         var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
-        return completion?.Choices?.FirstOrDefault()?.Message?.Content;
+        var reply = completion?.Choices?.FirstOrDefault()?.Message?.Content;
+        return AssistantReplyGuard.Accepts(reply, facts) ? reply : null;
     }
 
     private async Task<string> BuildScopedFactsAsync(AssistantChatContext context, CancellationToken cancellationToken)
@@ -1182,7 +1189,7 @@ Verbetervoorstellen:
                 }
 
                 AppendPreferenceFacts(sb, prefs, dream);
-                await AppendTestFactsAsync(sb, context.UserId, cancellationToken);
+                await AppendTestFactsAsync(sb, context.UserId, context.Language, cancellationToken);
                 sb.Append("month metrics: ");
                 sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
                 return sb.ToString();
@@ -1228,20 +1235,24 @@ Verbetervoorstellen:
         return "No extra facts.";
     }
 
-    private async Task AppendTestFactsAsync(StringBuilder sb, Guid userId, CancellationToken cancellationToken)
+    private async Task AppendTestFactsAsync(StringBuilder sb, Guid userId, string? language, CancellationToken cancellationToken)
     {
+        var lang = JobsyLanguages.Normalize(language);
+        var completed = new List<string>();
         var competency = await _db.CandidateCompetencies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
         {
+            completed.Add(TestName(lang, "work"));
             var top = new (string Label, int Score)[]
                 {
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Samenwerken), competency.SamenwerkenPercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Resultaatgerichtheid), competency.ResultaatgerichtheidPercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Stressbestendigheid), competency.StressbestendigheidPercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Innovatie), competency.InnovatiePercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Extraversie), competency.ExtraversiePercent ?? 0)
+                    (DimensionLabels.For(CompetencyTestCatalog.Samenwerken, lang), competency.SamenwerkenPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Resultaatgerichtheid, lang), competency.ResultaatgerichtheidPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Stressbestendigheid, lang), competency.StressbestendigheidPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Innovatie, lang), competency.InnovatiePercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Extraversie, lang), competency.ExtraversiePercent ?? 0)
                 }
+                .Where(x => x.Label.Length > 0)
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .Take(3);
@@ -1262,12 +1273,13 @@ Verbetervoorstellen:
             career?.ConventionalPercent);
         if (riasec is { IsComplete: true })
         {
+            completed.Add(TestName(lang, "career"));
             var top = CareerTestCatalog.RiasecCodes
-                .Select(code => (Label: CareerCompassBuilder.TypeLabel(code), Score: riasec.Get(code)))
+                .Select(code => (Label: DimensionLabels.For(code, lang), Score: riasec.Get(code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .Take(3);
-            sb.Append("riasecTop3=")
+            sb.Append("directionsTop3=")
                 .Append(string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%")))
                 .Append("; ");
         }
@@ -1276,8 +1288,9 @@ Verbetervoorstellen:
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
         {
+            completed.Add(TestName(lang, "culture"));
             var topCulture = CulturePersonalityCatalog.CultureDimensionCodes
-                .Select(code => (Label: CulturePersonalityCatalog.EverydayLabel(code), Score: ReadCultureScore(culture, code)))
+                .Select(code => (Label: DimensionLabels.For(code, lang), Score: ReadCultureScore(culture, code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .First();
@@ -1288,8 +1301,9 @@ Verbetervoorstellen:
             .FirstOrDefaultAsync(v => v.UserId == userId, cancellationToken);
         if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
         {
+            completed.Add(TestName(lang, "values"));
             var topValue = SchwartzValuesCatalog.CategoryCodes
-                .Select(code => (Label: SchwartzValuesCatalog.EverydayLabel(code), Score: ReadValueScore(values, code)))
+                .Select(code => (Label: DimensionLabels.For(code, lang), Score: ReadValueScore(values, code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .First();
@@ -1300,9 +1314,12 @@ Verbetervoorstellen:
             .Where(d => d.UserId == userId && d.Status == CandidateDeepAnalysisStatuses.Completed)
             .Select(d => d.Kind)
             .ToListAsync(cancellationToken);
+        sb.Append("completedTests=")
+            .Append(completed.Count == 0 ? "none" : string.Join(", ", completed))
+            .Append("; ");
         sb.Append(deep.Count == 0
-            ? "deepTests=none; "
-            : "deepTests=" + string.Join(",", deep) + "; ");
+            ? "deepTests=none (no extra long test; this does not mean completedTests is empty); "
+            : "deepTests=" + string.Join(",", deep.Select(kind => DeepTestName(lang, kind))) + "; ");
 
         var compass = CareerCompassJson.TryDeserialize(career?.CompassJson);
         if (compass is { HasOccupations: true })
@@ -1315,6 +1332,50 @@ Verbetervoorstellen:
                 .Append(string.Join(", ", occupations.Select(m => $"{m.Title} {m.Percent}%")))
                 .Append("; ");
         }
+    }
+
+    private static string TestName(string lang, string key) => (lang, key) switch
+    {
+        ("en", "work") => "How you work",
+        ("en", "career") => "Job test",
+        ("en", "culture") => "Culture and personality",
+        ("en", "values") => "Values at work",
+        ("pl", "work") => "Jak pracujesz",
+        ("pl", "career") => "Test zawodów",
+        ("pl", "culture") => "Kultura i osobowość",
+        ("pl", "values") => "Wartości w pracy",
+        ("ro", "work") => "Cum lucrezi",
+        ("ro", "career") => "Testul de meserii",
+        ("ro", "culture") => "Cultură și personalitate",
+        ("ro", "values") => "Valori la muncă",
+        ("ar", "work") => "كيف تعمل",
+        ("ar", "career") => "اختبار المهن",
+        ("ar", "culture") => "الثقافة والشخصية",
+        ("ar", "values") => "قيم في العمل",
+        (_, "work") => "Test: hoe je werkt",
+        (_, "career") => "Beroepentest",
+        (_, "culture") => "Cultuur en persoonlijkheid",
+        _ => "Waarden op werk"
+    };
+
+    private static string DeepTestName(string lang, AssessmentKind kind)
+    {
+        var extra = lang switch
+        {
+            "en" => "long",
+            "pl" => "długi",
+            "ro" => "lung",
+            "ar" => "مطوّل",
+            _ => "uitgebreid"
+        };
+        var name = kind switch
+        {
+            AssessmentKind.Career => TestName(lang, "career"),
+            AssessmentKind.Culture => TestName(lang, "culture"),
+            AssessmentKind.Values => TestName(lang, "values"),
+            _ => TestName(lang, "work")
+        };
+        return extra + " " + name;
     }
 
     private static int ReadCultureScore(CandidateCulturePersonalityProfile row, string code)
@@ -1429,6 +1490,8 @@ Verbetervoorstellen:
             $"{scope} " +
             "Answer using ONLY the scoped facts below and general Lobsy product knowledge. " +
             "Never say tests are missing when the facts list completed tests, scores or occupations. " +
+            "completedTests is the list of finished tests. deepTests=none means there is no extra long test, not that the person did nothing. " +
+            "Never use the words Riasec, RIASEC, Career-test, Holland or werksterkte. Use only labels that appear in the facts. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
             $"Scoped facts:\n{facts}";
     }

@@ -827,7 +827,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         var en = ReportLanguage.IsEnglish(lang);
         var top = string.Join(", ", report.Domains.OrderByDescending(d => d.Score).Take(3)
             .Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang)));
-        var places = string.Join(", ", report.Occupations.Take(3).Select(o => o.Title(lang)));
+        var places = CareerDeepReportBuilder.TypicalPlaces(report, lang);
         var cover = report.Summary.Resolve(lang);
         if (!string.IsNullOrWhiteSpace(top))
         {
@@ -846,8 +846,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         return RenderExplicitPages(
             brand, logo, fullName, generated, lang, title, cover,
             [
-                col => WriteScorePage(col, lang, report.Domains.Select(d => (
-                    DeepReportCatalog.RiasecLabel(d.Domain, lang), d.Score, d.NormMean))),
+                col => WriteCareerScorePage(col, lang, report),
                 col =>
                 {
                     Heading(col, DeepReportCatalog.Get("holland.title", lang));
@@ -871,7 +870,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     }
                     else
                     {
-                        foreach (var o in report.Occupations.Take(8))
+                        foreach (var o in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
                         {
                             col.Item().Text($"{o.Title(lang)} — {o.MatchPercent}%").SemiBold();
                             col.Item().Text(o.Reason(lang)).FontSize(9).FontColor(Muted);
@@ -890,29 +889,28 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     {
                         var label = DeepReportCatalog.RiasecLabel(domain.Domain, lang);
                         col.Item().PaddingTop(6).Text($"{label}: {domain.Score}%").SemiBold();
-                        col.Item().Text(en
-                            ? $"Use {label.ToLowerInvariant()} when you compare tasks, not as a mark."
-                            : $"Gebruik {label.ToLowerInvariant()} als je taken vergelijkt. Het is geen cijfer.").FontSize(9).FontColor(Muted);
+                        col.Item().Text(CareerScoreSense(domain.Domain, en)).FontSize(9).FontColor(Muted);
                     }
                 },
                 col =>
                 {
                     Heading(col, en ? "What you can do next" : "Wat je hiermee kunt doen");
                     col.Item().Text(en
-                        ? "Pick one step from your action plan this week. Your answers stay yours."
-                        : "Kies deze week één stap uit je actieplan. Je antwoorden blijven van jou.").FontColor(Muted);
-                    foreach (var step in report.ActionPlan.Take(3))
-                    {
-                        col.Item().PaddingTop(8).Text(step.Title.Resolve(lang)).SemiBold();
-                        col.Item().Text(step.Body.Resolve(lang)).FontSize(9).FontColor(Muted);
-                    }
-
+                        ? "This week, talk to one person who does a job from your list. Ask what a normal Tuesday looks like, and which task they would skip if they could."
+                        : "Praat deze week met één persoon die een beroep uit jouw lijst doet. Vraag hoe een gewone dinsdag eruitziet, en welke taak die persoon zou overslaan als dat mocht.").FontColor(Muted);
+                    col.Item().PaddingTop(8).Text(en
+                        ? "Write down three tasks that gave you energy. Put them next to the jobs on the page before this one. Keep the job whose day looks most like those tasks."
+                        : "Schrijf drie taken op die je energie gaven. Leg ze naast de beroepen op de vorige pagina. Houd het beroep waarvan de dag het meest op die taken lijkt.").FontColor(Muted);
                     if (!string.IsNullOrWhiteSpace(places))
                     {
                         col.Item().PaddingTop(8).Text(en
-                            ? $"Jobs to start with: {places}."
-                            : $"Beroepen om mee te beginnen: {places}.").FontColor(Muted);
+                            ? $"Places and jobs to start with: {places}."
+                            : $"Plekken en beroepen om mee te beginnen: {places}.").FontColor(Muted);
                     }
+
+                    col.Item().PaddingTop(8).Text(en
+                        ? "Your answers stay yours. A workplace only sees that a direction fits, not your raw scores."
+                        : "Je antwoorden blijven van jou. Een werkplek ziet alleen dat een richting past, niet je ruwe scores.").FontColor(Muted);
                 }
             ]);
     }
@@ -1079,8 +1077,6 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     col.Item().Text(summary).FontSize(12);
                     col.Item().PaddingTop(12).Text(DeepReportCatalog.Get("pdf.disclaimer", lang))
                         .FontColor(Muted).Italic().FontSize(9);
-                    col.Item().PaddingTop(8).Text(DeepReportCatalog.Get("pdf.overview", lang))
-                        .FontSize(11).FontColor(BrandNavy);
                 });
                 BrandFooter(page, brand);
             });
@@ -1107,6 +1103,53 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
 
     private static void Heading(ColumnDescriptor col, string text)
         => col.Item().Text(text).FontSize(14).Bold().FontColor(BrandNavy);
+
+    private static void WriteCareerScorePage(ColumnDescriptor col, string lang, CareerDeepReport report)
+    {
+        var en = ReportLanguage.IsEnglish(lang);
+        Heading(col, DeepReportCatalog.Get("pdf.overview", lang));
+        col.Item().Text(en
+            ? "Each line is how often that kind of work showed up in your 200 answers. A higher percent is a direction to explore, not a grade and not a promise of a job."
+            : "Elke regel laat zien hoe vaak dat soort werk in je 200 antwoorden zat. Een hoger percentage is een richting om te verkennen, geen cijfer en geen belofte van een baan.").FontColor(Muted);
+        foreach (var domain in report.Domains.OrderByDescending(d => d.Score))
+        {
+            var label = DeepReportCatalog.RiasecLabel(domain.Domain, lang);
+            var line = domain.NormMean is double n
+                ? $"{label}: {domain.Score}% (Ø {Math.Round(n)}%)"
+                : $"{label}: {domain.Score}%";
+            col.Item().PaddingTop(8).Text(line).SemiBold();
+            col.Item().Text(CareerScoreSense(domain.Domain, en));
+        }
+    }
+
+    private static string CareerScoreSense(string domain, bool en)
+    {
+        var key = domain.Trim().ToUpperInvariant();
+        return key switch
+        {
+            "R" or "REALISTIC" => en
+                ? "This is work you can point at when the day is over: making, fixing, moving or being outside."
+                : "Dit is werk waar je aan het eind van de dag iets kunt aanwijzen: maken, repareren, verplaatsen of buiten zijn.",
+            "I" or "INVESTIGATIVE" => en
+                ? "This is work where you check, measure or find out why something happens before you change it."
+                : "Dit is werk waarbij je eerst nakijkt, meet of uitzoekt waarom iets gebeurt, en daarna pas iets verandert.",
+            "A" or "ARTISTIC" => en
+                ? "This is work where how something looks, sounds or is told may be your own."
+                : "Dit is werk waarbij hoe iets eruitziet, klinkt of verteld wordt van jou mag zijn.",
+            "S" or "SOCIAL" => en
+                ? "This is work with people: explaining, guiding or helping someone take the next step."
+                : "Dit is werk met mensen: uitleggen, begeleiden of iemand helpen met de volgende stap.",
+            "E" or "ENTERPRISING" => en
+                ? "This is work with a goal in sight: convincing someone, starting something or keeping a team moving."
+                : "Dit is werk met een doel in zicht: iemand overtuigen, iets starten of een team in beweging houden.",
+            "C" or "CONVENTIONAL" => en
+                ? "This is work with a clear order: lists, appointments, numbers and things in the right place."
+                : "Dit is werk met een duidelijke volgorde: lijsten, afspraken, cijfers en spullen op de juiste plek.",
+            _ => en
+                ? "Use this direction when you compare tasks. It is not a mark."
+                : "Gebruik deze richting als je taken vergelijkt. Het is geen cijfer."
+        };
+    }
 
     private static void WriteScorePage(
         ColumnDescriptor col,

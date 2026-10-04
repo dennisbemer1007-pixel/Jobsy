@@ -545,14 +545,37 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
         }
 
         var suggestions = new List<CareerDreamOptionView>();
-        var compassJson = await _db.CandidateCareerInterests.AsNoTracking()
+        var interest = await _db.CandidateCareerInterests.AsNoTracking()
             .Where(c => c.UserId == userId)
-            .Select(c => c.CompassJson)
+            .Select(c => new
+            {
+                c.CompassJson,
+                c.Status,
+                c.RealisticPercent,
+                c.InvestigativePercent,
+                c.ArtisticPercent,
+                c.SocialPercent,
+                c.EnterprisingPercent,
+                c.ConventionalPercent
+            })
             .FirstOrDefaultAsync(cancellationToken);
-        var compass = CareerCompassJson.TryDeserialize(compassJson);
+        var compass = CareerCompassJson.TryDeserialize(interest?.CompassJson);
+        if (compass is { FromDeepAnalysis: true })
+        {
+            var scores = CareerTestCatalog.CompletedScoresOrNull(
+                interest!.Status,
+                interest.RealisticPercent,
+                interest.InvestigativePercent,
+                interest.ArtisticPercent,
+                interest.SocialPercent,
+                interest.EnterprisingPercent,
+                interest.ConventionalPercent);
+            compass = CareerCompassSanitize.EnsureDepth(compass, scores);
+        }
+
         if (compass is not null)
         {
-            foreach (var match in compass.SuperMatches.Concat(compass.StrongChoices))
+            foreach (var match in compass.AllOccupations.OrderByDescending(m => m.Percent))
             {
                 if (suggestions.Count >= 3)
                 {
