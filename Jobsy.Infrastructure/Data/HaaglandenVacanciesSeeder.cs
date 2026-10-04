@@ -304,8 +304,7 @@ internal static class HaaglandenVacanciesSeeder
             $"Bekijk ook de vacaturevideo voor een indruk van het werk en de sfeer.\n\n" +
             $"Wie zoeken wij?\n{role.Profile} {soft} {licenseLine} " +
             $"Bereikbaarheid: {area.TravelHint}. " +
-            $"Solliciteer via Jobsy — we reageren doorgaans binnen één werkdag. " +
-            $"(Haaglanden banenkaart testdata #{city.Region}-{index + 1}.)";
+            $"Je kunt direct solliciteren. We reageren doorgaans binnen één werkdag.";
     }
 
     private static string? PickLicense(RoleSpec role, int index, int region)

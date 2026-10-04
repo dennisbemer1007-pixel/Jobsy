@@ -402,6 +402,7 @@ public partial class MeController : ControllerBase
                 a.EstimatedTravelMinutes,
                 a.CreatedAt,
                 Status = a.Status,
+                VacancyStatus = a.Vacancy.Status,
                 a.RespondedAt
             })
             .ToListAsync(cancellationToken);
@@ -457,7 +458,8 @@ public partial class MeController : ControllerBase
                 pictureKind,
                 timelineDto,
                 ApplicationTimelineBuilder.NextStepKey(row.Status),
-                timeline.LegacyNoHistory);
+                timeline.LegacyNoHistory,
+                row.VacancyStatus != VacancyStatus.Active);
         }).ToList();
 
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);

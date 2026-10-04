@@ -110,6 +110,7 @@ public class ApplicationItem
     public List<ApplicationTimelineStepItem>? Timeline { get; set; }
     public string? NextStepKey { get; set; }
     public bool LegacyNoHistory { get; set; }
+    public bool VacancyClosed { get; set; }
 }
 
 public class ApplicationTimelineStepItem

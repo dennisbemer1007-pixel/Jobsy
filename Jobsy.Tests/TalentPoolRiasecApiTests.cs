@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
@@ -38,11 +37,13 @@ public class TalentPoolRiasecApiTests
 
         var social = await client.GetAsync($"{route}?tags={Uri.EscapeDataString(CareerTestCatalog.Social)}");
         Assert.Equal(HttpStatusCode.OK, social.StatusCode);
-        var socialCards = await ReadCardsAsync(social);
+        var socialJson = await social.Content.ReadAsStringAsync();
+        var socialCards = ReadCards(socialJson);
 
         var competency = await client.GetAsync($"{route}?tags=Samenwerken");
         Assert.Equal(HttpStatusCode.OK, competency.StatusCode);
-        var competencyCards = await ReadCardsAsync(competency);
+        var competencyJson = await competency.Content.ReadAsStringAsync();
+        var competencyCards = ReadCards(competencyJson);
 
         if (showRiasec)
         {
@@ -58,10 +59,12 @@ public class TalentPoolRiasecApiTests
             Assert.Empty(card.RiasecTags);
             Assert.Null(card.HollandCode);
             Assert.Contains("Samenwerken", card.MatchTags);
+            AssertHollandCodeNullOrAbsent(socialJson);
+            AssertHollandCodeNullOrAbsent(competencyJson);
         }
 
-        AssertScoresAbsent(await social.Content.ReadAsStringAsync());
-        AssertScoresAbsent(await competency.Content.ReadAsStringAsync());
+        AssertScoresAbsent(socialJson);
+        AssertScoresAbsent(competencyJson);
     }
 
     private static void AssertScoresAbsent(string json)
@@ -87,6 +90,20 @@ public class TalentPoolRiasecApiTests
         Assert.DoesNotContain("81", json, StringComparison.Ordinal);
     }
 
+    private static void AssertHollandCodeNullOrAbsent(string json)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        foreach (var card in doc.RootElement.EnumerateArray())
+        {
+            if (!card.TryGetProperty("hollandCode", out var holland))
+            {
+                continue;
+            }
+
+            Assert.Equal(System.Text.Json.JsonValueKind.Null, holland.ValueKind);
+        }
+    }
+
     [Fact]
     public void Both_route_templates_are_on_the_search_action()
     {
@@ -99,11 +116,10 @@ public class TalentPoolRiasecApiTests
         Assert.Contains("ShowRiasecTagFilter", File.ReadAllText(Path.Combine(root, "Jobsy.Web/appsettings.json")), StringComparison.Ordinal);
     }
 
-    private static async Task<List<TalentCardJson>> ReadCardsAsync(HttpResponseMessage response)
-    {
-        var cards = await response.Content.ReadFromJsonAsync<List<TalentCardJson>>();
-        return cards ?? [];
-    }
+    private static List<TalentCardJson> ReadCards(string json)
+        => System.Text.Json.JsonSerializer.Deserialize<List<TalentCardJson>>(
+            json,
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
 
     private static string FindRepoRoot()
     {
