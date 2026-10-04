@@ -3,10 +3,14 @@
 @using Microsoft.Extensions.DependencyInjection
 @implements IDisposable
 @inject IServiceProvider Services
+@inject CultureState Culture
 
 @if (_hints?.ShouldShow(Text) == true)
 {
-    <p class="ll-coach-inline" role="status">@Text</p>
+    <div class="ll-coach-inline" role="status">
+        <p>@Text</p>
+        <ReadAloudButton Text="@Text" SpeechKey="ll-coach-inline" PlayAria="@Culture["ReadAloud.Play"]" />
+    </div>
 }
 
 @code {

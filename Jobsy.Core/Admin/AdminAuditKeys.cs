@@ -36,6 +36,9 @@ public static class AdminAuditKeys
 
     public const string VacancyExtend = "vacancy.extend";
     public const string VacancyInactive = "vacancy.inactive";
+
+    /// <summary>Admin purge: vacancy and its applications are deleted for good.</summary>
+    public const string VacancyPurged = "vacancy.purged";
     public const string ApiKeyDeactivate = "apikey.deactivate";
 
     /// <summary>DSA notice and action: an admin decided on the reports of one target (06).</summary>

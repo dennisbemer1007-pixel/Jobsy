@@ -61,6 +61,9 @@ public class TokenLogPresentationTests
         Assert.Equal("Publiceren · Betaling", text);
         Assert.DoesNotContain("Spend", text);
         Assert.DoesNotContain("tr_", text);
+        Assert.Equal("Gekocht", TokenLogPresentation.Headline("Purchase", ""));
+        Assert.Equal("Toegekend", TokenLogPresentation.Headline("Grant", ""));
+        Assert.Equal("Verdeeld", TokenLogPresentation.Headline("Allocation", ""));
     }
 
     [Fact]

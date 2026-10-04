@@ -65,10 +65,10 @@ public static class TokenLogPresentation
 
         return kind switch
         {
-            "Purchase" => "Aankoop",
-            "Grant" => "Toekenning",
-            "Allocation" => "Toegewezen",
-            "Goodwill" => "Goodwill",
+            "Purchase" => "Gekocht",
+            "Grant" => "Toegekend",
+            "Allocation" => "Verdeeld",
+            "Goodwill" => "Coulance",
             _ => string.IsNullOrWhiteSpace(kind) ? "Tokentransactie" : kind
         };
     }

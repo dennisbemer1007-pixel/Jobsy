@@ -178,9 +178,12 @@ public sealed class TalentPoolService : ITalentPoolService
                 continue;
             }
 
-            var availability = LobsyCvModelFactory.FormatAvailability(
+            var availability = LobsyCvModelFactory.FormatTalentPoolAvailability(
                 prefs.Availability,
-                prefs.FlexibleTimes == true);
+                prefs.FlexibleTimes == true,
+                prefs.MinHoursPerWeek,
+                prefs.MaxHoursPerWeek,
+                prefs.AvailabilityPresets);
 
             results.Add(new AnonymousTalentCardDto(
                 user.Id,

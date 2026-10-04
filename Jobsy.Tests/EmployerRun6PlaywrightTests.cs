@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -46,6 +47,52 @@ public class EmployerRun6PlaywrightTests
             }
             """);
         Assert.Empty(covered);
+    }
+
+    [Fact]
+    public async Task Map_controls_do_not_cover_each_other_at_390()
+    {
+        await using var page = await OpenAsync(390, 844, MapHtml());
+        var report = await page.EvaluateAsync<JsonElement>(
+            """
+            () => {
+              const sel = '.maplibregl-ctrl-zoom-in, .maplibregl-ctrl-zoom-out, .job-map-style-switch__btn, .job-map-locate__btn, .maplibregl-ctrl-attrib-button';
+              const coach = document.querySelector('#lobsy-coach-btn').getBoundingClientRect();
+              const nodes = [...document.querySelectorAll(sel)].map(node => {
+                const r = node.getBoundingClientRect();
+                return {
+                  name: node.getAttribute('aria-label') || node.className,
+                  x: r.x, y: r.y, w: r.width, h: r.height,
+                  right: r.right, bottom: r.bottom
+                };
+              }).filter(r => r.w >= 8 && r.h >= 8);
+              const hits = [];
+              for (let i = 0; i < nodes.length; i++) {
+                const a = nodes[i];
+                if (coach.left < a.right && coach.right > a.x && coach.top < a.bottom && coach.bottom > a.y) {
+                  hits.push('coach ' + a.name);
+                }
+                for (let j = i + 1; j < nodes.length; j++) {
+                  const b = nodes[j];
+                  if (a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y) {
+                    hits.push(a.name + ' x ' + b.name);
+                  }
+                }
+              }
+              const zoom = nodes.find(r => r.name === 'Zoom in');
+              const style = nodes.find(r => r.name === '3D-kaart');
+              const attrib = nodes.find(r => r.name === 'Bronvermelding');
+              return {
+                hits,
+                align: zoom && style ? Math.abs(zoom.x - style.x) : 999,
+                attribX: attrib ? attrib.x : -1
+              };
+            }
+            """);
+        var hits = report.GetProperty("hits").EnumerateArray().Select(h => h.GetString()).ToArray();
+        Assert.Empty(hits);
+        Assert.True(report.GetProperty("align").GetDouble() <= 1, "3D is not in line with zoom.");
+        Assert.True(report.GetProperty("attribX").GetDouble() < 40, "Attribution is still on the zoom stack.");
     }
 
     [Fact]
@@ -118,6 +165,9 @@ public class EmployerRun6PlaywrightTests
                + "<div class=\"app-shell has-bottom-nav\" style=\"--bottom-nav-h:64px\">"
                + "<div class=\"job-map maplibregl-map\" style=\"position:fixed;inset:0;\">"
                + "<div class=\"maplibregl-control-container\"><div class=\"maplibregl-ctrl-bottom-right\">"
+               + "<div class=\"maplibregl-ctrl maplibregl-ctrl-attrib maplibregl-compact\">"
+               + "<button type=\"button\" class=\"maplibregl-ctrl-attrib-button\" aria-label=\"Bronvermelding\"></button>"
+               + "</div>"
                + "<div class=\"maplibregl-ctrl maplibregl-ctrl-group\">"
                + "<button type=\"button\" class=\"maplibregl-ctrl-zoom-in\" aria-label=\"Zoom in\"></button>"
                + "<button type=\"button\" class=\"maplibregl-ctrl-zoom-out\" aria-label=\"Zoom uit\"></button>"

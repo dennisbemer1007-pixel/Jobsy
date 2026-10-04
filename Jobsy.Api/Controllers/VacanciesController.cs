@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
@@ -44,6 +46,7 @@ public class VacanciesController : ControllerBase
     private readonly IProfileVacancyMatchService _profileMatch;
     private readonly ICandidateVacancyCultureFitService _cultureFit;
     private readonly IKbDislikeSource _dislikeSource;
+    private readonly IAdminAuditLog _audit;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -60,7 +63,8 @@ public class VacanciesController : ControllerBase
         IVacancyDiscoveryIndex discoveryIndex,
         IProfileVacancyMatchService profileMatch,
         ICandidateVacancyCultureFitService cultureFit,
-        IKbDislikeSource dislikeSource)
+        IKbDislikeSource dislikeSource,
+        IAdminAuditLog audit)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -77,6 +81,7 @@ public class VacanciesController : ControllerBase
         _profileMatch = profileMatch;
         _cultureFit = cultureFit;
         _dislikeSource = dislikeSource;
+        _audit = audit;
     }
 
     /// <summary>
@@ -1792,9 +1797,15 @@ public class VacanciesController : ControllerBase
                 await _db.SaveChangesAsync(cancellationToken);
             }
 
+            // Audit before either delete. ExecuteDelete removes the vacancy and the applications,
+            // so the row has to exist first.
+            await WriteVacancyPurgedAuditAsync(vacancy, id, applicationCount, cancellationToken);
+
             if (applicationCount > 0)
             {
-                await _db.Applications.Where(a => a.VacancyId == id).ExecuteDeleteAsync(cancellationToken);
+                await DeleteMatchingAsync(
+                    _db.Applications.Where(a => a.VacancyId == id),
+                    cancellationToken);
             }
         }
         else if (!VacancyDeletionRules.EmployerMayDelete(vacancy.Status, applicationCount))
@@ -1806,9 +1817,34 @@ public class VacanciesController : ControllerBase
             return Conflict(new { code, message, userMessage = true });
         }
 
-        await _db.Vacancies.Where(v => v.Id == id).ExecuteDeleteAsync(cancellationToken);
+        await DeleteMatchingAsync(_db.Vacancies.Where(v => v.Id == id), cancellationToken);
         _discoveryIndex.Invalidate();
         return NoContent();
+    }
+
+    /// <summary>
+    /// Relational hosts use <c>ExecuteDelete</c>. The in-memory test provider cannot,
+    /// so those hosts remove the tracked rows instead.
+    /// </summary>
+    private async Task DeleteMatchingAsync<TEntity>(
+        IQueryable<TEntity> query,
+        CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        if (_db.Database.IsRelational())
+        {
+            await query.ExecuteDeleteAsync(cancellationToken);
+            return;
+        }
+
+        var rows = await query.ToListAsync(cancellationToken);
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        _db.Set<TEntity>().RemoveRange(rows);
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>
@@ -2161,6 +2197,33 @@ public class VacanciesController : ControllerBase
         }
 
         return row.VerificationStatus;
+    }
+
+    private async Task WriteVacancyPurgedAuditAsync(
+        Vacancy vacancy,
+        Guid id,
+        int applicationCount,
+        CancellationToken cancellationToken)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var companyName = vacancy.Company?.Name?.Trim();
+        var label = string.IsNullOrWhiteSpace(companyName)
+            ? vacancy.Title
+            : $"{vacancy.Title} · {companyName}";
+
+        await _audit.WriteAsync(
+            new AdminAuditEntry(
+                Action: AdminAuditKeys.VacancyPurged,
+                TargetType: AdminAuditKeys.TargetTypes.Vacancy,
+                TargetId: id.ToString("D"),
+                TargetLabel: label,
+                DetailsJson: JsonSerializer.Serialize(new { applicationCount }),
+                ActorUserId: actor?.Id,
+                ActorRole: actor?.Role.ToString() ?? JobsyRoles.Admin,
+                ActorKind: AdminAuditKeys.ActorKinds.Admin,
+                CorrelationId: HttpContext.TraceIdentifier,
+                IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString()),
+            cancellationToken);
     }
 
     private async Task<Core.Entities.Vacancy?> LoadManagedVacancyAsync(Guid id, CancellationToken cancellationToken)

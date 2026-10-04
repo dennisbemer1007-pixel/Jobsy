@@ -159,6 +159,55 @@ public class AssetVersionGuardTests
     }
 
     [Fact]
+    public void Manifest_and_service_worker_lists_use_the_same_sortable_versions()
+    {
+        var root = FindRepoRoot();
+        var wwwroot = Path.Combine(root, "Jobsy.Web", "wwwroot");
+        var manifestJson = File.ReadAllText(Path.Combine(wwwroot, "manifest.webmanifest"));
+        var version = new Regex(@"\?v=(?<tag>[^""'\s]+)", RegexOptions.CultureInvariant);
+        var manifestTags = version.Matches(manifestJson).Select(m => m.Groups["tag"].Value).ToList();
+        Assert.NotEmpty(manifestTags);
+        Assert.All(manifestTags, tag => Assert.True(SortableVersion.IsMatch(tag), $"manifest ?v={tag}"));
+
+        var iconSrc = new Regex(
+            @"""src"":\s*""/(?<path>icons/[^""?]+)\?v=(?<tag>[^""]+)""",
+            RegexOptions.CultureInvariant);
+        var manifestIcons = iconSrc.Matches(manifestJson)
+            .Select(m => (Path: m.Groups["path"].Value, Tag: m.Groups["tag"].Value))
+            .ToList();
+        Assert.Contains(manifestIcons, icon => icon.Path == "icons/icon-192.png");
+        Assert.Contains(manifestIcons, icon => icon.Path == "icons/icon-512.png");
+
+        var manifestPath = Path.Combine(root, "Jobsy.Tests", "asset-versions.json");
+        var catalog = JsonSerializer.Deserialize<Dictionary<string, AssetVersionEntry>>(
+            File.ReadAllText(manifestPath), JsonOptions)
+            ?? throw new InvalidOperationException("asset-versions.json deserialized to null.");
+
+        foreach (var name in new[] { "service-worker.js", "service-worker.published.js" })
+        {
+            var js = File.ReadAllText(Path.Combine(wwwroot, name));
+            var precache = Regex.Matches(js, @"""/(?<path>[^""?]+)\?v=(?<tag>[^""]+)""");
+            Assert.NotEmpty(precache);
+            foreach (Match item in precache)
+            {
+                var path = item.Groups["path"].Value;
+                var tag = item.Groups["tag"].Value;
+                Assert.True(SortableVersion.IsMatch(tag), $"{name} precache {path}?v={tag}");
+                if (catalog.TryGetValue(path, out var entry))
+                {
+                    Assert.Equal(entry.V, tag);
+                }
+
+                var fromManifest = manifestIcons.FirstOrDefault(icon => icon.Path == path);
+                if (fromManifest.Path is not null)
+                {
+                    Assert.Equal(fromManifest.Tag, tag);
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void JobMap_text_font_uses_single_OpenFreeMap_Noto_faces_only()
     {
         var root = FindRepoRoot();

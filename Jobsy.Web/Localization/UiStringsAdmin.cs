@@ -878,6 +878,7 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.InvoicePaid", "Factuur op betaald gezet", "Invoice marked paid", "Faktura oznaczona jako opłacona", "Factură marcată ca plătită", "وُضعت الفاتورة على مدفوعة");
         Add("AdminAudit.Action.VacancyExtended", "Vacature verlengd", "Vacancy extended", "Oferta przedłużona", "Job prelungit", "تم تمديد الوظيفة");
         Add("AdminAudit.Action.VacancyInactive", "Vacature offline gehaald", "Vacancy taken offline", "Oferta wyłączona", "Job scos offline", "أُوقفت الوظيفة");
+        Add("AdminAudit.Action.VacancyPurged", "Vacature definitief verwijderd", "Vacancy permanently deleted", "Oferta trwale usunięta", "Job șters definitiv", "حُذفت الوظيفة نهائياً");
         Add("AdminAudit.Action.ApiKeyOff", "API-sleutel uitgezet", "API key turned off", "Klucz API wyłączony", "Cheie API oprită", "أُوقف مفتاح API");
         Add("AdminAudit.Action.ReportDecided", "Melding beoordeeld", "Report reviewed", "Zgłoszenie rozpatrzone", "Raport evaluat", "تم تقييم البلاغ");
         Add("AdminAudit.Action.EmailTest", "Testmail verstuurd", "Test email sent", "Wiadomość testowa wysłana", "E-mail de test trimis", "أُرسل بريد تجريبي");

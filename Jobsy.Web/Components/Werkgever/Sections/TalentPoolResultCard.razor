@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components.Werkgever.Sections
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Models
+@using Microsoft.Extensions.DependencyInjection
+@inject IServiceProvider Services
 
 <div class="detail-card" data-testid="talent-card">
     <p><strong>@Card.RegionLabel</strong> · @(Card.TravelMinutes is int m ? $"{m} min" : "reistijd onbekend")</p>
@@ -9,7 +11,7 @@
     {
         <p data-testid="talent-holland">Holland-code: @Card.HollandCode</p>
     }
-    <p>@(Card.AvailabilitySummary ?? "Beschikbaarheid onbekend")</p>
+    <p data-testid="talent-availability">@(Card.AvailabilitySummary ?? UnknownAvailability)</p>
     <p>Rijbewijs: @(Card.DrivingLicenses.Count == 0 ? "—" : string.Join(", ", Card.DrivingLicenses))</p>
     @if (CanMutate)
     {
@@ -25,6 +27,10 @@
     [Parameter] public bool CanMutate { get; set; }
     [Parameter] public string UnlockLabel { get; set; } = "";
     [Parameter] public EventCallback<Guid> OnUnlock { get; set; }
+
+    private string UnknownAvailability
+        => Services.GetService<CultureState>()?["Talent.AvailabilityUnknown"]
+           ?? "Beschikbaarheid onbekend";
 
     private IEnumerable<string> DisplayTags
     {

@@ -89,7 +89,9 @@ public class PupilStoryAndDreamJobTests
         var prompts = _renderer.ClassDiscussionPromptKeys("A", "I");
         var swapped = _renderer.ClassDiscussionPromptKeys("I", "A");
         Assert.NotEqual(prompts[0], swapped[0]);
-        Assert.Equal(prompts.Skip(1), swapped.Skip(1));
+        Assert.NotEqual(prompts[1], swapped[1]);
+        Assert.NotEqual(prompts[2], swapped[2]);
+        Assert.Equal("Welk vak voelt als uitzoeken én bedenken?", swapped[1]);
         Assert.Contains("nieuw", prompts[0], StringComparison.OrdinalIgnoreCase);
         Assert.Contains("werkt", prompts[0], StringComparison.OrdinalIgnoreCase);
         Assert.StartsWith("Wie wil weten", swapped[0], StringComparison.Ordinal);
@@ -100,9 +102,14 @@ public class PupilStoryAndDreamJobTests
     {
         var prompts = _renderer.ClassDiscussionPromptKeys("S", "A");
         Assert.Equal("Wie helpt graag een ander en bedenkt graag iets nieuws?", prompts[0]);
+        Assert.Equal("Welk vak voelt helpend én creatief?", prompts[1]);
+        Assert.Equal("Deel hoe je iemand hielp met een idee.", prompts[2]);
         Assert.Equal(
             "Wie bedenkt graag iets nieuws en helpt graag een ander?",
             _renderer.ClassDiscussionPromptKeys("A", "S")[0]);
+        Assert.Equal(
+            "Welk vak voelt creatief én helpend?",
+            _renderer.ClassDiscussionPromptKeys("A", "S")[1]);
     }
 
     [Fact]
@@ -285,7 +292,14 @@ public class PupilStoryAndDreamJobTests
                         var a = PupilVerhaalCopy.Get($"LeerlingStory.Class.{suffix}.{n}");
                         var b = PupilVerhaalCopy.Get($"LeerlingStory.Class.{swapped}.{n}");
                         AssertResolved(a, suffix);
-                        Assert.Equal(a, b);
+                        AssertResolved(b, swapped);
+                        Assert.NotEqual(a, b);
+                        Assert.True(
+                            PupilVerhaalCopy.All.ContainsKey($"LeerlingStory.Class.{suffix}.{n}"),
+                            suffix + "." + n);
+                        Assert.True(
+                            PupilVerhaalCopy.All.ContainsKey($"LeerlingStory.Class.{swapped}.{n}"),
+                            swapped + "." + n);
                     }
                 }
 
@@ -299,7 +313,8 @@ public class PupilStoryAndDreamJobTests
                 if (i != j)
                 {
                     var other = _renderer.ClassDiscussionPromptKeys(letters[j].ToString(), letters[i].ToString());
-                    Assert.Equal(prompts.Skip(1), other.Skip(1));
+                    Assert.NotEqual(prompts[1], other[1]);
+                    Assert.NotEqual(prompts[2], other[2]);
                     AssertResolved(other[0], string.Concat(letters[j], letters[i]));
                 }
             }

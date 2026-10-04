@@ -572,6 +572,12 @@ public static class UiStringsWerkgever
         Add("WgTok.Col.Mutation", "Mutatie", "Mutation", "Mutacja", "Mutare", "الحركة");
         Add("WgTok.Col.BalanceAfter", "Saldo na", "Balance after", "Saldo po", "Sold după", "الرصيد بعده");
         Add("WgTok.Col.By", "Door", "By", "Przez", "De", "بواسطة");
+        Add("WgTok.Filter.Kind", "Type", "Transaction type", "Typ", "Tip", "النوع");
+        Add("WgTok.Kind.Spend", "Besteed", "Spent", "Wydane", "Cheltuit", "مُنفَق");
+        Add("WgTok.Kind.Purchase", "Gekocht", "Bought", "Kupione", "Cumpărat", "مُشترى");
+        Add("WgTok.Kind.Allocation", "Verdeeld", "Shared out", "Rozdzielone", "Împărțit", "مُوزَّع");
+        Add("WgTok.Kind.Grant", "Toegekend", "Granted", "Przyznane", "Acordat", "مَمنوح");
+        Add("WgTok.Kind.Goodwill", "Coulance", "Goodwill", "Dobra wola", "Bunăvoință", "حسن نية");
         Add("WgTok.InvoicePack", "{0} tokens", "{0}-token pack", "{0} tokenów", "{0} tokenuri", "{0} رموز");
         Add("WgTok.Download", "Download", "Download PDF", "Pobierz", "Descarcă", "تنزيل");
         Add("WgTok.BillingPrefs", "Factuurgegevens", "Billing details", "Dane fakturowe", "Date facturare", "بيانات الفوترة");
