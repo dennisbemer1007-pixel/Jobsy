@@ -81,13 +81,13 @@ else
                             <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
                         }
                         <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => AskReplace(row.Id)">@Culture["School.Codes.Replace"]</button>
-                        <span class="muted sch-hint">@Culture["Leraar.Codes.DeleteHint"]</span>
                     </td>
                 </tr>
             }
         </Rows>
     </EntDataTable>
     </div>
+    <p class="muted sch-hint sch-hint--below">@Culture["Leraar.Codes.DeleteHint"]</p>
 }
 
 <LobsyFriendlyDialog IsOpen="_replaceOpen"

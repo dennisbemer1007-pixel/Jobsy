@@ -611,6 +611,12 @@
     max-width: 12rem;
 }
 
+.sch-hint--below {
+    max-width: none;
+    margin: var(--space-3) 0 0;
+    white-space: normal;
+}
+
 .sch-pill--info {
     background: color-mix(in srgb, var(--brand) 14%, transparent);
     color: var(--brand-deep, var(--brand));
@@ -793,7 +799,23 @@
     margin: 0;
 }
 .ll-login__submit { min-height: 48px; width: 100%; }
+.ll-login__choose { min-height: 44px; width: 100%; margin-top: var(--space-2); }
 .ll-form--cascade .btn-primary { width: 100%; margin-top: var(--space-2); }
+.ll-login .btn-secondary,
+.ll-form--cascade .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+}
 .ll-login .btn-primary {
     display: inline-flex;
     align-items: center;
@@ -1363,7 +1385,20 @@
     text-align: center;
 }
 
+/* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome reports that as :focus-visible,
+   so the browser draws a heavy black outline. Use the same ring as other controls. */
+h1[tabindex="-1"]:focus {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+}
+
 @media (max-width: 639px) {
+    /* The name pill collapses to an empty border next to the role label. Hide it.
+       The role stays in the account slot. A class switcher (enabled button) stays. */
+    .sch-topbar__scope:has(.ent-scope-chip__btn:disabled) {
+        display: none;
+    }
+
     .sch-shell .ent-data-table thead {
         position: absolute;
         width: 1px;

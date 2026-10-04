@@ -123,6 +123,7 @@ public static class AuthServiceCollectionExtensions
                     {
                         context.RejectPrincipal();
                         await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                        PupilApiSessionCookie.Clear(context.HttpContext);
                         return;
                     }
 
@@ -131,6 +132,7 @@ public static class AuthServiceCollectionExtensions
                     {
                         context.RejectPrincipal();
                         await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                        PupilApiSessionCookie.Clear(context.HttpContext);
                     }
                 };
             });
