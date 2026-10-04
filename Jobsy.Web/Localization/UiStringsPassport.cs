@@ -41,7 +41,7 @@ public static class UiStringsPassport
         Add("Passport.StartedStamp",
             "GESTART {0}", "STARTED {0}", "START {0}", "ÎNCEPUT {0}", "بدأ {0}");
         Add("Passport.Layers",
-            "{0} van {1} lagen", "{0} of {1} layers", "{0} z {1} warstw", "{0} din {1} straturi", "{0} من {1} طبقات");
+            "Profiel · {0} van {1}", "Profile · {0} of {1}", "Profil · {0} z {1}", "Profil · {0} din {1}", "الملف · {0} من {1}");
         Add("Passport.LayersAria",
             "Profiel {0} procent compleet", "Profile {0} percent complete", "Profil kompletny w {0} procent", "Profil complet în proporție de {0} la sută", "الملف مكتمل بنسبة {0} بالمئة");
         Add("Passport.Fill",
@@ -164,6 +164,12 @@ public static class UiStringsPassport
 
         Add("Passport.Shells.Title",
             "Mijn schalen", "My shells", "Moje skorupy", "Cochiliile mele", "صدفاتي");
+        Add("Passport.Shells.Hint",
+            "Stempels voor test, rapport en CV. De reis telt apart.",
+            "Stamps for a test, a report and a CV. The journey counts separately.",
+            "Pieczątki za test, raport i CV. Podróż liczy się osobno.",
+            "Ștampile pentru test, raport și CV. Călătoria se numără separat.",
+            "أختام للاختبار والتقرير والسيرة. الرحلة تُحسب وحدها.");
         Add("Passport.Shells.Sub",
             "Hier werp je je oude schaal af · {0} van {1}",
             "Here you shed your old shell · {0} of {1}",

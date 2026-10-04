@@ -1,7 +1,13 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Jobsy.Tests.Uat;
 using Jobsy.Web.Navigation;
+using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Tests;
 
@@ -133,5 +139,83 @@ public class WhoAmITests
         Assert.True(matchesIdx >= 0 && paintIdx > matchesIdx);
         Assert.True(geoIdx < 0 || geoIdx > paintIdx);
         Assert.Contains("_matchesLoading = false", profile, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Unlocked_profile_gets_a_local_story_instead_of_staying_pending()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "sanne@test.nl",
+            FullName = "Sanne Test",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            PreferencesJson = """{"maxTravelMinutes":30,"preferredTransport":"Fiets","aboutMe":"Ik werk graag in het magazijn."}"""
+        });
+        db.CandidateCompetencies.Add(new CandidateCompetency
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            SamenwerkenPercent = 70,
+            ResultaatgerichtheidPercent = 80,
+            StressbestendigheidPercent = 60,
+            InnovatiePercent = 55
+        });
+        db.CandidateCareerInterests.Add(new CandidateCareerInterest
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            RealisticPercent = 40,
+            InvestigativePercent = 30,
+            ArtisticPercent = 20,
+            SocialPercent = 55,
+            EnterprisingPercent = 81,
+            ConventionalPercent = 70
+        });
+        db.CandidateCulturePersonalityProfiles.Add(new CandidateCulturePersonalityProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            AutonomyPercent = 50,
+            InformalPercent = 60,
+            CollaborationPercent = 70,
+            FlexibilityPercent = 55,
+            InnovationPercent = 40,
+            PeopleFirstPercent = 65,
+            OpennessPercent = 50,
+            ConscientiousnessPercent = 72,
+            ExtraversionPercent = 48,
+            AgreeablenessPercent = 66,
+            EmotionalStabilityPercent = 58
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new WhoAmIService(db, new NoopInsightsQueue());
+        var state = await sut.GetAsync(userId);
+
+        Assert.False(string.IsNullOrWhiteSpace(state.Story));
+        Assert.Equal(InsightsStatuses.Ready, state.InsightsStatus);
+        Assert.Contains("Ik", state.Story, StringComparison.Ordinal);
+    }
+
+    private sealed class NoopInsightsQueue : ICandidateInsightsQueue
+    {
+        public bool TryEnqueue(Guid userId) => true;
+
+        public ValueTask<Guid> DequeueAsync(CancellationToken cancellationToken)
+            => ValueTask.FromResult(Guid.Empty);
+
+        public void MarkCompleted(Guid userId)
+        {
+        }
     }
 }
