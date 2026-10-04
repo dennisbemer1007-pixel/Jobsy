@@ -50,7 +50,7 @@
                         }
                     </select>
                 </label>
-                <button type="submit" class="btn-primary ll-login__submit">@Culture["Leerling.Login.ChooseSchool"]</button>
+                <button type="submit" class="btn-secondary ll-login__choose">@Culture["Leerling.Login.ChooseSchool"]</button>
                 @if (_schools.Count == 0)
                 {
                     <p class="muted">@Culture["Leerling.Login.NoOpenSchool"]</p>
@@ -131,6 +131,7 @@
             "window" => Culture[PupilCopy.Key(errorSet, "Leerling.Login.Error.Window")],
             "staff" => Culture["Leerling.Login.Error.Staff"],
             "retry" => Culture["Leerling.Login.Error.Retry"],
+            "expired" => Culture["Leerling.Login.Error.Expired"],
             _ => null
         };
     }

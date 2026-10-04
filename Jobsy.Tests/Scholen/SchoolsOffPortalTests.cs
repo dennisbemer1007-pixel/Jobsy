@@ -1,9 +1,14 @@
+using System.Net;
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Security;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobsy.Tests.Scholen;
@@ -76,6 +81,47 @@ public class SchoolsOffPortalTests
     public void Schools_paused_login_is_its_own_state()
     {
         Assert.Equal(LoginState.SchoolsPaused, LoginStateMapping.FromQuery("schools-paused", false));
+    }
+
+    [Fact]
+    public async Task School_and_teacher_login_redirects_are_not_stored()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options => options.LoginPath = "/login");
+        builder.Services.AddAuthorization();
+        builder.Services.AddSingleton<IFeatureFlags>(new FixedFlags(schools: true));
+
+        var app = builder.Build();
+        app.UseAuthentication();
+        app.UseMiddleware<SchoolsFeatureMiddleware>();
+        app.UseAuthorization();
+        app.MapGet("/school", () => Results.Text("school")).RequireAuthorization();
+        app.MapGet("/leraar", () => Results.Text("leraar")).RequireAuthorization();
+        app.MapGet("/scholen", () => Results.Text("public"));
+        await app.StartAsync();
+        try
+        {
+            var client = app.GetTestClient();
+            var school = await client.GetAsync("/school");
+            Assert.Equal(HttpStatusCode.Redirect, school.StatusCode);
+            Assert.Contains("/login", school.Headers.Location?.OriginalString ?? "", StringComparison.Ordinal);
+            Assert.Equal("no-store", school.Headers.CacheControl?.ToString());
+
+            var teacher = await client.GetAsync("/leraar");
+            Assert.Equal(HttpStatusCode.Redirect, teacher.StatusCode);
+            Assert.Equal("no-store", teacher.Headers.CacheControl?.ToString());
+
+            var marketing = await client.GetAsync("/scholen");
+            Assert.Equal(HttpStatusCode.OK, marketing.StatusCode);
+            Assert.Null(marketing.Headers.CacheControl);
+        }
+        finally
+        {
+            await app.StopAsync();
+            await app.DisposeAsync();
+        }
     }
 
     private sealed class FixedFlags(bool schools) : IFeatureFlags
