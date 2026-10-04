@@ -155,7 +155,7 @@ public class CoachWidgetPlaywrightTests
             await page.GotoAsync(baseUrl + "/taal/ar", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
         }
 
-        foreach (var path in new[]
+        var paths = new List<string>
         {
             "/candidate/paspoort?tab=tests",
             "/candidate/paspoort?tab=proof",
@@ -164,7 +164,13 @@ public class CoachWidgetPlaywrightTests
             "/candidate/career?stap=intro",
             "/candidate/hoe-werkt-lobsy",
             "/account/mail-instellingen"
-        })
+        };
+        if (width == 390)
+        {
+            paths.Add("/banenkaart");
+        }
+
+        foreach (var path in paths)
         {
             await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
             try
@@ -189,6 +195,10 @@ public class CoachWidgetPlaywrightTests
             }
 
             await AssertNoControlOverlapAsync(page);
+            if (path.Contains("/banenkaart", StringComparison.Ordinal))
+            {
+                await AssertNoControlCentreUnderCoachAsync(page);
+            }
         }
     }
 
@@ -345,6 +355,34 @@ public class CoachWidgetPlaywrightTests
             }
             """);
         Assert.Equal(0, overlaps);
+    }
+
+    private static async Task AssertNoControlCentreUnderCoachAsync(IPage page)
+    {
+        var covered = await page.EvaluateAsync<string[]>(
+            """
+            () => {
+              const coach = document.querySelector('#lobsy-coach-btn');
+              if (!coach) return [];
+              const c = coach.getBoundingClientRect();
+              const nodes = document.querySelectorAll('.maplibregl-ctrl button, .job-map-style-switch__btn, .job-map-locate__btn, .maplibregl-ctrl-group button');
+              const hits = [];
+              for (const node of nodes) {
+                const style = getComputedStyle(node);
+                if (style.visibility === 'hidden' || style.display === 'none') continue;
+                const r = node.getBoundingClientRect();
+                if (r.width < 8 || r.height < 8) continue;
+                if (r.bottom < 0 || r.top > innerHeight) continue;
+                const cx = r.left + r.width / 2;
+                const cy = r.top + r.height / 2;
+                if (cx >= c.left && cx <= c.right && cy >= c.top && cy <= c.bottom) {
+                  hits.push((node.getAttribute('aria-label') || node.className || 'control') + '');
+                }
+              }
+              return hits;
+            }
+            """);
+        Assert.Empty(covered);
     }
 
     private static bool Overlaps(Microsoft.Playwright.LocatorBoundingBoxResult a, Microsoft.Playwright.LocatorBoundingBoxResult b)

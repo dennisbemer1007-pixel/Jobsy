@@ -165,7 +165,7 @@ window.jobsyGratisDna = (function () {
             img.crossOrigin = "anonymous";
             img.onload = () => resolve(img);
             img.onerror = () => resolve(null);
-            img.src = "/images/brand/lobsy-128.png?v=20260828-pin";
+            img.src = "/images/brand/lobsy-128.png?v=20261004-13";
         });
     }
 

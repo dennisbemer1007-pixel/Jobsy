@@ -79,7 +79,9 @@ else
 
     @if (!string.IsNullOrEmpty(_message))
     {
-        <p class="state-message">@_message</p>
+        <p class="state-message @(_messageIsError ? "error" : null)"
+           role="@(_messageIsError ? "alert" : "status")"
+           data-testid="admin-vacancy-message">@_message</p>
     }
 
     @if (_drillKey is not null)
@@ -138,7 +140,7 @@ else
                                     class="data-table__sort"
                                     aria-sort="@SortAria("end")"
                                     @onclick='() => ToggleSort("end")'>
-                                @Culture["Vacancy.Deadline"]
+                                @Culture["AdminVacancy.Col.Closes"]
                             </button>
                         </th>
                         <th>Bron</th>
@@ -163,7 +165,7 @@ else
                             <td class="data-table__col--wrap" data-label="@Culture["Admin.Company"]">@v.CompanyName <span class="muted">@CompanyTypeLabel(v.CompanyType)</span></td>
                             <td data-label="@Culture["Admin.Status"]">@StatusLabel(v.Status)</td>
                             <td data-label="@Culture["Vacancy.PlacementDate"]">@v.StartDate.ToString("dd-MM-yyyy")</td>
-                            <td data-label="@Culture["Vacancy.Deadline"]">@DeadlineLabel(v)</td>
+                            <td data-label="@Culture["AdminVacancy.Col.Closes"]">@DeadlineLabel(v)</td>
                             <td data-label="@Culture["AdminVacancy.Col.Source"]">
                                 <span class="source-badge source-badge--@VacancySourceDisplay.ChannelCssModifier(v.CreatedVia)"
                                       title="@VacancySourceDisplay.Label(v.CreatedVia)">
@@ -213,7 +215,7 @@ else
             <p>@open.CompanyName <span class="muted">@CompanyTypeLabel(open.CompanyType)</span></p>
             <p>@StatusLabel(open.Status)</p>
             <p>@Culture["Vacancy.PlacementDate"]: @open.StartDate.ToString("dd-MM-yyyy")</p>
-            <p>@Culture["Vacancy.Deadline"]: @open.EndDate.ToString("dd-MM-yyyy")</p>
+            <p>@Culture["AdminVacancy.Col.Closes"]: @open.EndDate.ToString("dd-MM-yyyy")</p>
             <ul class="admin-vacancy-drawer__counts">
                 <li>@Culture["AdminVacancy.Col.Shown"]: @open.ImpressionCount</li>
                 <li>@Culture["AdminVacancy.Col.Clicks"]: @open.ClickCount</li>
@@ -249,6 +251,7 @@ else
     private bool _drillLoading;
     private string? _error;
     private string? _message;
+    private bool _messageIsError;
     private string? _drillKey;
     private string? _drillVacancyTitle;
     private List<MetricDrilldownItem> _drilldown = [];
@@ -617,6 +620,7 @@ else
     {
         _busy = true;
         _message = null;
+        _messageIsError = false;
         try
         {
             await Api.AdminExtendVacancyAsync(v.Id);
@@ -626,6 +630,7 @@ else
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {
@@ -670,6 +675,7 @@ else
     {
         _busy = true;
         _message = null;
+        _messageIsError = false;
         try
         {
             var purge = v.ApplicationCount > 0
@@ -681,6 +687,7 @@ else
         catch (Exception ex)
         {
             _message = UserFacing.Describe(ex);
+            _messageIsError = true;
         }
         finally
         {
@@ -692,6 +699,7 @@ else
     {
         _busy = true;
         _message = null;
+        _messageIsError = false;
         try
         {
             await Api.AdminDeactivateVacancyAsync(v.Id);
@@ -701,6 +709,7 @@ else
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {

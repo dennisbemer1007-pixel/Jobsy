@@ -866,6 +866,21 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.Sessions", "Sessies", "Sessions", "Sesje", "Sesiuni", "الجلسات");
         Add("AdminAudit.Action.TestUnlockReset", "Tests van testaccount gereset", "Test account tests reset", "Zresetowano testy konta testowego", "Testele contului de test au fost resetate", "أُعيد ضبط اختبارات حساب الاختبار");
         Add("AdminAudit.Action.MisuseHandled", "Melding referent afgehandeld", "Referee report handled", "Zgłoszenie referenta załatwione", "Raportul referentului a fost rezolvat", "تمت معالجة بلاغ المرجع");
+        Add("AdminAudit.Action.Unblock", "Blokkade opgeheven", "Block lifted", "Blokada zdjęta", "Blocarea a fost ridicată", "رُفع الإيقاف");
+        Add("AdminAudit.Action.PricingUpdated", "Prijzen gewijzigd", "Prices changed", "Ceny zmienione", "Prețuri modificate", "تم تغيير الأسعار");
+        Add("AdminAudit.Action.PricingDeleted", "Prijs verwijderd", "Price removed", "Cena usunięta", "Preț șters", "تم حذف السعر");
+        Add("AdminAudit.Action.CompanyUpdated", "Bedrijfsgegevens gewijzigd", "Company details changed", "Dane firmy zmienione", "Date firmă modificate", "تم تغيير بيانات الشركة");
+        Add("AdminAudit.Action.AboutUpdated", "Over ons bijgewerkt", "About us updated", "O nas zaktualizowane", "Despre noi actualizat", "تم تحديث من نحن");
+        Add("AdminAudit.Action.IntegrationUpdated", "Koppeling gewijzigd", "Connection changed", "Połączenie zmienione", "Conexiune modificată", "تم تغيير الربط");
+        Add("AdminAudit.Action.RoleChanged", "Rol gewijzigd", "Role changed", "Rola zmieniona", "Rol schimbat", "تم تغيير الدور");
+        Add("AdminAudit.Action.TakeoverApproved", "Overname goedgekeurd", "Takeover approved", "Przejęcie zatwierdzone", "Preluare aprobată", "تمت الموافقة على الاستلام");
+        Add("AdminAudit.Action.TakeoverRejected", "Overname afgewezen", "Takeover rejected", "Przejęcie odrzucone", "Preluare respinsă", "رُفض الاستلام");
+        Add("AdminAudit.Action.InvoicePaid", "Factuur op betaald gezet", "Invoice marked paid", "Faktura oznaczona jako opłacona", "Factură marcată ca plătită", "وُضعت الفاتورة على مدفوعة");
+        Add("AdminAudit.Action.VacancyExtended", "Vacature verlengd", "Vacancy extended", "Oferta przedłużona", "Job prelungit", "تم تمديد الوظيفة");
+        Add("AdminAudit.Action.VacancyInactive", "Vacature offline gehaald", "Vacancy taken offline", "Oferta wyłączona", "Job scos offline", "أُوقفت الوظيفة");
+        Add("AdminAudit.Action.ApiKeyOff", "API-sleutel uitgezet", "API key turned off", "Klucz API wyłączony", "Cheie API oprită", "أُوقف مفتاح API");
+        Add("AdminAudit.Action.ReportDecided", "Melding beoordeeld", "Report reviewed", "Zgłoszenie rozpatrzone", "Raport evaluat", "تم تقييم البلاغ");
+        Add("AdminAudit.Action.EmailTest", "Testmail verstuurd", "Test email sent", "Wiadomość testowa wysłana", "E-mail de test trimis", "أُرسل بريد تجريبي");
         Add("AdminAction.Resource.Users", "Gebruikerslijst", "User list", "Lista użytkowników", "Lista utilizatorilor", "قائمة المستخدمين");
         Add("AdminAction.Resource.UserSessions", "Gebruikerssessies", "User sessions", "Sesje użytkownika", "Sesiuni utilizator", "جلسات المستخدم");
         Add("AdminAction.Resource.PlatformLogs", "Platformlogs", "Platform logs", "Logi platformy", "Jurnale platformă", "سجلات المنصة");
@@ -916,7 +931,20 @@ public static class UiStringsAdmin
         Add("AdminFinance.Col.Note", "Notitie", "Note", "Notatka", "Notă", "ملاحظة");
         Add("AdminFinance.SkippedNoIban", "Overgeslagen: geen IBAN", "Skipped: no IBAN", "Pominięto: brak IBAN", "Omis: fără IBAN", "تم التخطي: لا يوجد IBAN");
         Add("AdminVacancy.Col.Shown", "Getoond", "Shown", "Wyświetlenia", "Afișări", "مرات العرض");
-        Add("AdminVacancy.Col.Clicks", "Kliks", "Clicks", "Kliknięcia", "Clicuri", "النقرات");
+        Add("AdminVacancy.Col.Clicks", "Klikken", "Clicks", "Kliknięcia", "Clicuri", "النقرات");
+        Add("AdminVacancy.Col.Closes", "Sluitdatum", "Closing date", "Data zakończenia", "Data închiderii", "تاريخ الإغلاق");
+        Add("AdminUsers.ResetTestsReasonInvalid",
+            "Geef een reden van 5 tot 500 tekens.",
+            "Give a reason of 5 to 500 characters.",
+            "Podaj powód od 5 do 500 znaków.",
+            "Dă un motiv de 5 până la 500 de caractere.",
+            "اكتب سبباً من 5 إلى 500 حرفاً.");
+        Add("AdminUsers.ResetTestsNotTest",
+            "Alleen een testaccount kan zo worden gereset.",
+            "Only a test account can be reset this way.",
+            "Tylko konto testowe można tak zresetować.",
+            "Doar un cont de test poate fi resetat așa.",
+            "يمكن إعادة الضبط بهذه الطريقة لحساب اختبار فقط.");
         Add("AdminVacancy.Col.Shared", "Gedeeld", "Shared", "Udostępnienia", "Distribuiri", "المشاركات");
         Add("AdminVacancy.Col.Applied", "Gesolliciteerd", "Applied", "Aplikacje", "Candidaturi", "الطلبات");
         Add("AdminVacancy.Col.Extended", "Verlengd", "Extended", "Przedłużenia", "Prelungiri", "التمديدات");
@@ -926,6 +954,7 @@ public static class UiStringsAdmin
         Add("AdminVacancy.Status.Draft", "Concept", "Draft", "Szkic", "Ciornă", "مسودة");
         Add("AdminVacancy.Status.Archived", "Inactief", "Inactive", "Nieaktywna", "Inactivă", "غير نشط");
         Add("AdminVacancy.Confirm.Purge", "Vacature en {0} definitief verwijderen? Dit kun je niet ongedaan maken.", "Delete this vacancy and {0} for good? You cannot undo this.", "Usunąć ofertę i {0} na stałe? Tego nie cofniesz.", "Ștergi postul și {0} definitiv? Nu poți anula.", "حذف الوظيفة و{0} نهائياً؟ لا يمكن التراجع.");
+        Add("AdminVacancy.DeleteOffline", "Haal de vacature eerst offline.", "Take the vacancy offline first.", "Najpierw wyłącz ofertę.", "Scoate mai întâi jobul offline.", "أوقف الوظيفة أولاً.");
         Add("AdminVacancy.Confirm.Offline", "Vacature offline halen? Kandidaten zien hem dan niet meer.", "Take this vacancy offline? Candidates will no longer see it.", "Zdjąć tę ofertę? Kandydaci jej wtedy nie zobaczą.", "Scoți anunțul de pe site? Candidații nu îl mai văd.", "إيقاف الوظيفة؟ لن يراها المرشحون بعد ذلك.");
         Add("AdminVacancy.Confirm.OfflineAction", "Offline halen", "Take offline", "Wyłącz publikację", "Oprește publicarea", "إيقاف النشر");
         Add("AdminVacancy.Status.Pending", "In afwachting", "Pending", "Oczekujące", "În așteptare", "قيد الانتظار");

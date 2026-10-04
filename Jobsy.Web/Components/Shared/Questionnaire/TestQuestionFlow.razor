@@ -163,6 +163,7 @@
     [Parameter] public int? ExternalIndex { get; set; }
 
     private int _index;
+    private int? _appliedExternalIndex;
     private bool _focusRequest;
     private bool _exampleOpen = true;
     private int _recentLimit = 8;
@@ -363,8 +364,12 @@
 
     protected override void OnParametersSet()
     {
-        if (ExternalIndex is int ei)
+        // Apply an external jump only when it changes. Re-applying the same index
+        // on every render put the candidate back on the last question after Next
+        // had moved them to the first unanswered one.
+        if (ExternalIndex is int ei && _appliedExternalIndex != ei)
         {
+            _appliedExternalIndex = ei;
             _index = Math.Clamp(ei, 0, Math.Max(0, TargetCount - 1));
         }
     }

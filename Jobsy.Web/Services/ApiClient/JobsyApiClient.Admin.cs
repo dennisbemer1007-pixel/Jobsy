@@ -446,8 +446,7 @@ public sealed partial class JobsyApiClient
             return;
         }
 
-        var body = await response.Content.ReadAsStringAsync(ct);
-        throw new InvalidOperationException(ExtractApiMessage(body) ?? response.ReasonPhrase ?? "Reset mislukt.");
+        throw await ApiErrorException.FromResponseAsync(response, ct);
     }
 
     public async Task<IReadOnlyList<AdminUserSessionItem>> GetAdminUserSessionsAsync(

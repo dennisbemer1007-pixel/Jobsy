@@ -623,7 +623,7 @@ window.jobsyMaps = (function () {
         "/js/jobMap.min.js?v=20261002-kp04"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.min.js?v=20261002-ch01"
+        "/js/vacancyDetailMap.min.js?v=20261004-13"
     ];
 
     function pathOnly(url) {
@@ -1339,8 +1339,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-11"
-            : "/service-worker.js?v=20261004-11";
+            ? "/service-worker.published.js?v=20261004-13"
+            : "/service-worker.js?v=20261004-13";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1571,5 +1571,15 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
       dock.classList.add("lobsy-coach-dock--tip-above");
       if (overlaps()) tip.hidden = true;
     }
+  },
+  syncClearance: function (dock) {
+    if (!dock || !dock.getBoundingClientRect) return;
+    var btn = dock.querySelector("#lobsy-coach-btn") || dock;
+    var box = btn.getBoundingClientRect();
+    if (!box || box.width < 8) return;
+    var gap = 12;
+    var clear = Math.ceil(window.innerWidth - box.left + gap);
+    if (clear < 72) clear = 72;
+    document.documentElement.style.setProperty("--lobsy-coach-clear-inline", clear + "px");
   }
 };

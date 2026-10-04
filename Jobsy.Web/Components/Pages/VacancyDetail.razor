@@ -1100,8 +1100,33 @@
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
 
-    private string ProfileReturnHref =>
-        $"/candidate/profile?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}#apply")}";
+    private string ProfileReturnHref => ApplyProfileLink.Href(Id, ProfileGaps());
+
+    private IReadOnlyList<ApplyProfileLink.Gap> ProfileGaps()
+    {
+        var gaps = new List<ApplyProfileLink.Gap>
+        {
+            new("availability", !_profileHasAvailability)
+        };
+        if (_requiresDrivingLicense)
+        {
+            gaps.Add(new("license", !_profileHasLicense));
+        }
+
+        gaps.Add(new(ApplyProfileLink.Experience, !_profileHasEmployers));
+        if (_requiresEducation)
+        {
+            gaps.Add(new(ApplyProfileLink.Education, !_profileHasEducation));
+        }
+
+        gaps.Add(new("about", !_profileHasAboutMe));
+        if (_vacancy?.MinimumReferences is > 0)
+        {
+            gaps.Add(new(ApplyProfileLink.References, !_profileHasReferences));
+        }
+
+        return gaps;
+    }
 
     private bool RequiresEmailCode => _vacancy?.RequireEmailVerification == true;
 

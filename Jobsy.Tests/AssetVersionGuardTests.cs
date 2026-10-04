@@ -113,7 +113,49 @@ public class AssetVersionGuardTests
             var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", name));
             var match = Regex.Match(js, @"CACHE_VERSION = ""lobsy-shell(?:-published)?-v(?<tag>\d{8}-\d{2})""");
             Assert.True(match.Success, $"{name} cache name is not yyyymmdd-NN.");
+            foreach (Match precache in Regex.Matches(js, @"\?v=(?<tag>[^""'\s]+)"))
+            {
+                Assert.True(
+                    SortableVersion.IsMatch(precache.Groups["tag"].Value),
+                    $"{name} precache uses ?v={precache.Groups["tag"].Value}; expected yyyymmdd-NN.");
+            }
         }
+    }
+
+    [Fact]
+    public void App_razor_and_layouts_use_sortable_asset_versions()
+    {
+        var root = FindRepoRoot();
+        var files = new List<string>
+        {
+            Path.Combine(root, "Jobsy.Web", "Components", "App.razor"),
+        };
+        var layoutDir = Path.Combine(root, "Jobsy.Web", "Components", "Layout");
+        files.AddRange(Directory.EnumerateFiles(layoutDir, "*.razor", SearchOption.AllDirectories));
+
+        var version = new Regex(@"\?v=(?<tag>[^""'\s&#]+)", RegexOptions.CultureInvariant);
+        var problems = new List<string>();
+        foreach (var file in files)
+        {
+            var text = File.ReadAllText(file);
+            foreach (Match match in version.Matches(text))
+            {
+                var start = Math.Max(0, match.Index - 80);
+                var window = text[start..match.Index];
+                if (window.Contains("_framework/blazor.web.js", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var tag = match.Groups["tag"].Value;
+                if (!SortableVersion.IsMatch(tag))
+                {
+                    problems.Add($"{Path.GetRelativePath(root, file)}: ?v={tag}");
+                }
+            }
+        }
+
+        Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
     }
 
     [Fact]

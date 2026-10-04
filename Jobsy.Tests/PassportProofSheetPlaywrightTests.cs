@@ -120,6 +120,42 @@ public class PassportProofSheetPlaywrightTests : BunitContext
             }
             """);
         Assert.True(saveHits, $"Opslaan must be tappable at {width}x{height}, not under .bottom-nav.");
+
+        if (width <= 390)
+        {
+            var close = await page.Locator("[data-jobsy-dialog-close]").BoundingBoxAsync();
+            Assert.NotNull(close);
+            Assert.True(close!.Width >= 44 && close.Height >= 44, $"Sluiten is {close.Width}x{close.Height}, need at least 44x44.");
+            Assert.Equal("Sluiten", await page.Locator("[data-jobsy-dialog-close]").GetAttributeAsync("aria-label"));
+        }
+    }
+
+    [Theory]
+    [InlineData("button[data-jobsy-dialog-close]")]
+    [InlineData("button.filter-sheet__cancel")]
+    public void Closing_the_bewijzen_editor_returns_focus_to_the_opener(string closer)
+    {
+        var cut = Render<PassportProofTab>(p => p.Add(x => x.Active, true));
+        cut.WaitForAssertion(() => Assert.Contains("Werkgever toevoegen", cut.Markup, StringComparison.Ordinal));
+        OpenEditor(cut);
+        cut.Find(closer).Click();
+        cut.WaitForAssertion(() => Assert.DoesNotContain("passport-proof-sheet", cut.Markup, StringComparison.Ordinal));
+        Assert.Contains(
+            JSInterop.Invocations,
+            call => call.Identifier.Contains("focus", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Escape_returns_focus_to_the_opener()
+    {
+        var cut = Render<PassportProofTab>(p => p.Add(x => x.Active, true));
+        cut.WaitForAssertion(() => Assert.Contains("Werkgever toevoegen", cut.Markup, StringComparison.Ordinal));
+        OpenEditor(cut);
+        cut.Find("[data-testid=passport-proof-sheet]").KeyDown(new KeyboardEventArgs { Key = "Escape" });
+        cut.WaitForAssertion(() => Assert.DoesNotContain("passport-proof-sheet", cut.Markup, StringComparison.Ordinal));
+        Assert.Contains(
+            JSInterop.Invocations,
+            call => call.Identifier.Contains("focus", StringComparison.OrdinalIgnoreCase));
     }
 
     private static void OpenEditor(IRenderedComponent<PassportProofTab> cut)

@@ -75,7 +75,11 @@
                         }
                     </ul>
                 }
-                <button type="button" class="btn btn-ghost" @onclick='() => OpenEditor("experience")'>
+                <button @ref="_openerExperience"
+                        type="button"
+                        class="btn btn-ghost"
+                        data-testid="passport-proof-add-employer"
+                        @onclick='() => OpenEditor("experience")'>
                     @Culture["Passport.Proof.AddEmployer"]
                 </button>
             </article>
@@ -135,7 +139,11 @@
                         }
                     </ul>
                 }
-                <button type="button" class="btn btn-ghost" @onclick='() => OpenEditor("certificates")'>
+                <button @ref="_openerCertificates"
+                        type="button"
+                        class="btn btn-ghost"
+                        data-testid="passport-proof-add-certificate"
+                        @onclick='() => OpenEditor("certificates")'>
                     @Culture["Passport.Proof.AddCertificate"]
                 </button>
                 @if (Editor.LearningGoals.Count > 0)
@@ -171,8 +179,10 @@
                         }
                     </ul>
                 }
-                <button type="button"
+                <button @ref="_openerReferences"
+                        type="button"
                         class="btn btn-ghost"
+                        data-testid="passport-proof-add-reference"
                         disabled="@(Editor.References.Count >= CandidateProfileEditor.MaxReferences)"
                         @onclick='() => OpenEditor("references")'>
                     @Culture["Passport.Proof.AddReference"]
@@ -184,7 +194,12 @@
                     {
                         <p class="passport-proof__cv-file">@Editor.UploadedCv.FileName</p>
                         <div class="passport-proof__cv-actions">
-                            <button type="button" class="btn btn-secondary" disabled="@Editor.CvBusy" @onclick='() => OpenEditor("cv")'>
+                            <button @ref="_openerCvReplace"
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    data-testid="passport-proof-replace-cv"
+                                    disabled="@Editor.CvBusy"
+                                    @onclick='() => OpenEditor("cv")'>
                                 @Culture["Passport.Proof.ReplaceCv"]
                             </button>
                             <button type="button" class="btn btn-secondary" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
@@ -194,7 +209,11 @@
                     }
                     else
                     {
-                        <button type="button" class="btn btn-ghost" @onclick='() => OpenEditor("cv")'>
+                        <button @ref="_openerCvUpload"
+                                type="button"
+                                class="btn btn-ghost"
+                                data-testid="passport-proof-upload-cv"
+                                @onclick='() => OpenEditor("cv")'>
                             @Culture["Profile.UploadCv"]
                         </button>
                     }
@@ -259,6 +278,9 @@
 @code {
     [Parameter] public bool Active { get; set; }
 
+    /// <summary>Opens the matching editor once, for example <c>experience</c> from a vacancy link.</summary>
+    [Parameter] public string? InitialItem { get; set; }
+
     private bool _loading = true;
     private bool _loadFailed;
     private bool _loaded;
@@ -270,6 +292,14 @@
     private List<JobsyApiClient.ReferenceConfirmationItem> _confirmations = [];
     private string _sheetKind = "";
     private string _sheetTitle = "";
+    private string? _consumedItem;
+    private string _openerKind = "";
+    private bool _pendingFocusReturn;
+    private ElementReference _openerExperience;
+    private ElementReference _openerCertificates;
+    private ElementReference _openerReferences;
+    private ElementReference _openerCvReplace;
+    private ElementReference _openerCvUpload;
 
     protected override void OnInitialized()
         => Editor.Changed += OnEditorChanged;
@@ -279,6 +309,10 @@
         if (Active && !_loaded)
         {
             await LoadAsync();
+        }
+        else if (Active)
+        {
+            TryOpenInitial();
         }
     }
 
@@ -299,7 +333,7 @@
             _trapped = true;
             try
             {
-                await _sheet.FocusAsync();
+                // Trap records the opener. Focusing the sheet first made release land on the header.
                 await Js.InvokeVoidAsync("jobsyDialog.trap", _sheet);
             }
             catch (Exception)
@@ -311,6 +345,12 @@
         {
             _trapped = false;
             await ReleaseTrapAsync();
+        }
+
+        if (!_sheetOpen && _pendingFocusReturn)
+        {
+            _pendingFocusReturn = false;
+            await FocusOpenerAsync();
         }
     }
 
@@ -340,6 +380,7 @@
             await LoadConfirmationsAsync();
             _loaded = true;
             RefreshStrength();
+            TryOpenInitial();
         }
         catch
         {
@@ -398,8 +439,37 @@
                string.Equals(c.Email, item.Email, StringComparison.OrdinalIgnoreCase)
                && string.Equals(c.EmployerName, item.EmployerName, StringComparison.OrdinalIgnoreCase));
 
+    private void TryOpenInitial()
+    {
+        if (!Active || _sheetOpen || string.IsNullOrWhiteSpace(InitialItem))
+        {
+            return;
+        }
+
+        if (string.Equals(_consumedItem, InitialItem, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var kind = InitialItem.Trim().ToLowerInvariant() switch
+        {
+            "experience" or "werkervaring" => "experience",
+            "education" or "certificates" or "opleiding" => "certificates",
+            "references" or "referenties" => "references",
+            _ => null
+        };
+        if (kind is null)
+        {
+            return;
+        }
+
+        _consumedItem = InitialItem;
+        OpenEditor(kind);
+    }
+
     private void OpenEditor(string kind)
     {
+        _openerKind = kind;
         _sheetKind = kind;
         _sheetTitle = kind switch
         {
@@ -411,7 +481,11 @@
         _sheetOpen = true;
     }
 
-    private void CloseEditor() => _sheetOpen = false;
+    private void CloseEditor()
+    {
+        _sheetOpen = false;
+        _pendingFocusReturn = true;
+    }
 
     private void OnSheetKeyDown(KeyboardEventArgs e)
     {
@@ -438,7 +512,28 @@
         await Editor.SaveAsync();
         await LoadConfirmationsAsync();
         RefreshStrength();
-        _sheetOpen = false;
+        CloseEditor();
+    }
+
+    private async Task FocusOpenerAsync()
+    {
+        var opener = _openerKind switch
+        {
+            "experience" => _openerExperience,
+            "certificates" => _openerCertificates,
+            "references" => _openerReferences,
+            "cv" => Editor.UploadedCv is not null ? _openerCvReplace : _openerCvUpload,
+            _ => default
+        };
+
+        try
+        {
+            await opener.FocusAsync();
+        }
+        catch (Exception)
+        {
+            // The opener is gone, or JS is blocked. The dialog is still closed.
+        }
     }
 
     private static string FormatRange(string? start, string? end)

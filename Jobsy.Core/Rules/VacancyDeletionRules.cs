@@ -19,4 +19,12 @@ public static class VacancyDeletionRules
     /// <summary>Admin cleanup of a vacancy that already has applications.</summary>
     public static bool AdminMayPurgeWithApplications(int applicationCount)
         => applicationCount > 0;
+
+    /// <summary>
+    /// Admin cleanup with purgeApplications. A live vacancy (including Active with
+    /// zero applications) is archived first, then removed. Employers still cannot
+    /// delete an active vacancy.
+    /// </summary>
+    public static bool AdminMayPurge(VacancyStatus status, int applicationCount)
+        => applicationCount >= 0 && Enum.IsDefined(status);
 }

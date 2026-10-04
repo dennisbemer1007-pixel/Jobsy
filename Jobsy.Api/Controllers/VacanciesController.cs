@@ -1733,7 +1733,8 @@ public class VacanciesController : ControllerBase
 
     /// <summary>
     /// Delete a draft or archived vacancy that has no applications.
-    /// Admin may pass purgeApplications to archive a test vacancy and remove its applications first.
+    /// Admin may pass purgeApplications to archive a live vacancy first (also when it
+    /// has no applications) and to remove applications before the delete.
     /// </summary>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
@@ -1769,13 +1770,12 @@ public class VacanciesController : ControllerBase
                 });
             }
 
-            if (!VacancyDeletionRules.AdminMayPurgeWithApplications(applicationCount)
-                && !VacancyDeletionRules.AdminMayDeleteWithoutApplications(vacancy.Status, applicationCount))
+            if (!VacancyDeletionRules.AdminMayPurge(vacancy.Status, applicationCount))
             {
                 return BadRequest(new
                 {
                     code = "vacancy_delete_not_allowed",
-                    message = "Deze vacature kun je niet verwijderen.",
+                    message = "Haal de vacature eerst offline.",
                     userMessage = true
                 });
             }
