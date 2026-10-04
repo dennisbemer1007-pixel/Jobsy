@@ -21,14 +21,23 @@ public sealed class MailUnsubscribeTokenService : IMailUnsubscribeTokenService
     }
 
     public string CreateToken(string email, string category, DateTime? issuedUtc = null)
+        => CreateToken(email, category, userId: null, epoch: 0, issuedUtc);
+
+    public string CreateToken(string email, string category, Guid? userId, int epoch, DateTime? issuedUtc = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
         ArgumentException.ThrowIfNullOrWhiteSpace(category);
+        ArgumentOutOfRangeException.ThrowIfNegative(epoch);
+
         var issued = issuedUtc ?? DateTime.UtcNow;
-        var payload = JsonSerializer.Serialize(new Payload(
-            EmailAddressHasher.Hash(email),
-            category.Trim(),
-            issued.ToUniversalTime().ToString("O")));
+        var payload = JsonSerializer.Serialize(new Payload
+        {
+            EmailHash = EmailAddressHasher.Hash(email),
+            Category = category.Trim(),
+            IssuedUtc = issued.ToUniversalTime().ToString("O"),
+            UserId = userId,
+            Epoch = epoch
+        });
         var bytes = Encoding.UTF8.GetBytes(payload);
         var protectedBytes = _protector.Protect(bytes);
         return Base64UrlEncode(protectedBytes);
@@ -36,9 +45,23 @@ public sealed class MailUnsubscribeTokenService : IMailUnsubscribeTokenService
 
     public bool TryValidate(string? token, out string emailHash, out string category, out DateTime issuedUtc)
     {
-        emailHash = "";
-        category = "";
-        issuedUtc = default;
+        if (!TryRead(token, out var claims) || claims is null)
+        {
+            emailHash = "";
+            category = "";
+            issuedUtc = default;
+            return false;
+        }
+
+        emailHash = claims.EmailHash;
+        category = claims.Category;
+        issuedUtc = claims.IssuedUtc;
+        return true;
+    }
+
+    public bool TryRead(string? token, out MailUnsubscribeClaims? claims)
+    {
+        claims = null;
         if (string.IsNullOrWhiteSpace(token))
         {
             return false;
@@ -68,9 +91,17 @@ public sealed class MailUnsubscribeTokenService : IMailUnsubscribeTokenService
                 return false;
             }
 
-            emailHash = payload.EmailHash;
-            category = payload.Category;
-            issuedUtc = issued;
+            if (payload.Epoch < 0)
+            {
+                return false;
+            }
+
+            claims = new MailUnsubscribeClaims(
+                payload.EmailHash,
+                payload.Category,
+                issued,
+                payload.UserId,
+                payload.Epoch);
             return true;
         }
         catch (CryptographicException)
@@ -88,9 +119,12 @@ public sealed class MailUnsubscribeTokenService : IMailUnsubscribeTokenService
     }
 
     public string BuildUnsubscribeUrl(string publicWebBaseUrl, string email, string category)
+        => BuildUnsubscribeUrl(publicWebBaseUrl, email, category, userId: null, epoch: 0);
+
+    public string BuildUnsubscribeUrl(string publicWebBaseUrl, string email, string category, Guid? userId, int epoch)
     {
         var origin = JobsyPublicUrl.NormalizeOrigin(publicWebBaseUrl).TrimEnd('/');
-        var token = CreateToken(email, category);
+        var token = CreateToken(email, category, userId, epoch);
         return $"{origin}/mail/afmelden?t={Uri.EscapeDataString(token)}";
     }
 
@@ -109,5 +143,12 @@ public sealed class MailUnsubscribeTokenService : IMailUnsubscribeTokenService
         return Convert.FromBase64String(s);
     }
 
-    private sealed record Payload(string EmailHash, string Category, string IssuedUtc);
+    private sealed class Payload
+    {
+        public string EmailHash { get; set; } = "";
+        public string Category { get; set; } = "";
+        public string IssuedUtc { get; set; } = "";
+        public Guid? UserId { get; set; }
+        public int Epoch { get; set; }
+    }
 }

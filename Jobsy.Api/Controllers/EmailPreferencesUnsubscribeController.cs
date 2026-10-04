@@ -30,15 +30,17 @@ public sealed class EmailPreferencesUnsubscribeController : ControllerBase
     [AllowAnonymous]
     [HttpGet("unsubscribe/preview")]
     [EnableRateLimiting("public-read")]
-    public ActionResult<UnsubscribePreviewResponse> Preview([FromQuery] string? token)
+    public async Task<ActionResult<UnsubscribePreviewResponse>> Preview(
+        [FromQuery] string? token,
+        CancellationToken cancellationToken)
     {
-        if (!_tokens.TryValidate(token, out _, out var category, out _)
-            || !EmailOptionalCategories.IsOptional(category))
+        if (!await TokenAllowsAsync(token, cancellationToken))
         {
             return Ok(new UnsubscribePreviewResponse(Valid: false));
         }
 
-        return Ok(new UnsubscribePreviewResponse(Valid: true, Category: category));
+        _tokens.TryRead(token, out var claims);
+        return Ok(new UnsubscribePreviewResponse(Valid: true, Category: claims!.Category));
     }
 
     /// <summary>
@@ -52,12 +54,9 @@ public sealed class EmailPreferencesUnsubscribeController : ControllerBase
         [FromBody] UnsubscribeRequest request,
         CancellationToken cancellationToken)
     {
-        if (!_tokens.TryValidate(request.Token, out var emailHash, out var category, out _))
-        {
-            return BadRequest(new UnsubscribeResponse(false, Message: "invalid_or_expired"));
-        }
-
-        if (!EmailOptionalCategories.IsOptional(category))
+        if (!await TokenAllowsAsync(request.Token, cancellationToken)
+            || !_tokens.TryRead(request.Token, out var claims)
+            || claims is null)
         {
             return BadRequest(new UnsubscribeResponse(false, Message: "invalid_or_expired"));
         }
@@ -65,13 +64,43 @@ public sealed class EmailPreferencesUnsubscribeController : ControllerBase
         var optIn = string.Equals(request.Action, "opt-in", StringComparison.OrdinalIgnoreCase);
         if (optIn)
         {
-            await _preferences.OptInByHashAsync(emailHash, category, cancellationToken);
+            if (claims.UserId is Guid userId)
+            {
+                await _preferences.RestoreOptionalCategoryAsync(userId, claims.Category, "OneClick", cancellationToken);
+            }
+            else
+            {
+                await _preferences.OptInByHashAsync(claims.EmailHash, claims.Category, cancellationToken);
+            }
+        }
+        else if (claims.UserId is Guid optOutUserId)
+        {
+            await _preferences.DisableReminderEmailsAsync(optOutUserId, "OneClick", cancellationToken);
+            await _preferences.OptOutByHashAsync(claims.EmailHash, claims.Category, "OneClick", cancellationToken);
         }
         else
         {
-            await _preferences.OptOutByHashAsync(emailHash, category, "OneClick", cancellationToken);
+            await _preferences.OptOutByHashAsync(claims.EmailHash, claims.Category, "OneClick", cancellationToken);
         }
 
-        return Ok(new UnsubscribeResponse(true, category));
+        return Ok(new UnsubscribeResponse(true, claims.Category));
+    }
+
+    private async Task<bool> TokenAllowsAsync(string? token, CancellationToken cancellationToken)
+    {
+        if (!_tokens.TryRead(token, out var claims)
+            || claims is null
+            || !EmailOptionalCategories.IsOptional(claims.Category))
+        {
+            return false;
+        }
+
+        if (claims.UserId is Guid userId
+            && !await _preferences.UnsubscribeEpochAllowsAsync(userId, claims.Epoch, cancellationToken))
+        {
+            return false;
+        }
+
+        return true;
     }
 }

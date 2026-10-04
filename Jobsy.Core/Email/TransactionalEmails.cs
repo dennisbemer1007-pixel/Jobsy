@@ -100,7 +100,27 @@ public static partial class TransactionalEmails
             Eyebrow: eyebrow,
             Greeting: greeting,
             Cta: def.Kind == EmailKind.Security ? null : cta,
-            ShowMascot: showMascot && def.GoodNews);
+            ShowMascot: showMascot && def.GoodNews,
+            AccountBecause: AccountBecauseLine(c, def));
+    }
+
+    /// <summary>
+    /// Account holders get one plain line on essential mail. Parents, referees and
+    /// people who only asked for a code do not have an account, so they keep their own reason.
+    /// </summary>
+    private static string? AccountBecauseLine(EmailCulture culture, EmailTemplateDefinition def)
+    {
+        if (def.Kind == EmailKind.Optional)
+        {
+            return null;
+        }
+
+        if (def.ReasonKey is "ParentAsked" or "ReferenceAsked" or "ApplyCode" or "Reported")
+        {
+            return null;
+        }
+
+        return EmailStrings.Get(culture, "Email.Common.AccountBecause");
     }
 
     private static string S(EmailCulture c, string key) => EmailStrings.Get(c, key);
@@ -260,7 +280,10 @@ public static partial class TransactionalEmails
             SignOff: signOff ?? EmailStrings.Get(c, "Email.Common.SignOff"),
             Greeting: greeting,
             Cta: kind == EmailKind.Security ? null : cta,
-            ShowMascot: false);
+            ShowMascot: false,
+            AccountBecause: kind == EmailKind.Optional
+                ? null
+                : EmailStrings.Get(c, "Email.Common.AccountBecause"));
         return ComposedEmail.Render(doc, Brand(baseUrl), category);
     }
 

@@ -31,6 +31,14 @@
 
             @if (_optional.Count > 0)
             {
+                <input type="hidden" name="reminder_emails_shown" value="1" />
+                <label class="checkbox-row">
+                    <input type="checkbox" name="reminder_emails" value="1" checked="@_reminderEmails" data-reminder-emails="1" />
+                    <span>
+                        <strong>@Culture["MailSettings.Reminders.Label"]</strong>
+                        <span class="muted" style="display:block">@Culture["MailSettings.Reminders.Hint"]</span>
+                    </span>
+                </label>
                 <h2 style="font-size:1.05rem;margin:1.5rem 0 0.75rem">@Culture["MailSettings.OptionalHeading"]</h2>
                 @foreach (var item in _optional)
                 {
@@ -73,6 +81,7 @@
     private bool _employersOn = true;
     private bool _loadError;
     private bool _saved;
+    private bool _reminderEmails = true;
     private bool _whatsAppAvailable;
     private bool _whatsAppOptedIn;
     private string? _whatsAppPhone;
@@ -83,7 +92,7 @@
         => string.Join(". ", new[]
         {
             Culture["MailSettings.Title"],
-            Culture["MailSettings.OptionalHeading"],
+            Culture["MailSettings.Reminders.Label"],
             Culture["MailSettings.Comeback.Label"]
         }.Where(s => !string.IsNullOrWhiteSpace(s)));
 
@@ -129,6 +138,7 @@
             }
 
             _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+            _reminderEmails = dto.ReminderEmailsEnabled;
             _optional.Clear();
             _optional.AddRange(dto.Optional ?? []);
             _alwaysKeys.Clear();

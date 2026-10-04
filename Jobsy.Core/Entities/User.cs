@@ -93,6 +93,17 @@ public class User
     /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
     public DateTime? LastLoginAtUtc { get; set; }
 
+    /// <summary>
+    /// Reminder e-mails (come-back, vacancy tips, employer nudges). On until the user turns them off.
+    /// Push and WhatsApp stay separate.
+    /// </summary>
+    public bool ReminderEmailsEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Bumped when the user turns reminder e-mail back on, so older unsubscribe links stop working.
+    /// </summary>
+    public int MailUnsubscribeEpoch { get; set; }
+
     /// <summary>Data-protection encrypted TOTP seed. Never expose this value through an API.</summary>
     public string? AuthenticatorSecret { get; set; }
 

@@ -10,6 +10,7 @@
 @inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
 @inject IConfiguration Configuration
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@Culture["MailUnsub.Title"] · Lobsy</PageTitle>
 
@@ -27,21 +28,29 @@
         }
         else if (_done)
         {
-            <h1 id="mail-unsub-title">@Culture["MailUnsub.Done"]</h1>
+            <h1 id="mail-unsub-title">@Culture["MailUnsub.Title"]</h1>
+            <p data-mail-unsub="done">@Culture["MailUnsub.Done"]</p>
+            <p><a href="/account/mail-instellingen">@Culture["MailUnsub.SettingsLink"]</a></p>
             <form method="post" action="/mail/afmelden" class="login-form" data-enhance="false">
                 <input type="hidden" name="t" value="@_token" />
                 <input type="hidden" name="action" value="opt-in" />
                 <button type="submit" class="login-submit">@Culture["MailUnsub.OptIn"]</button>
             </form>
-            <p style="margin-top:1rem"><a href="/account/mail-instellingen">@Culture["MailUnsub.SettingsLink"]</a></p>
         }
         else if (_valid)
         {
             <h1 id="mail-unsub-title">@_heading</h1>
-            <form method="post" action="/mail/afmelden" class="login-form" data-enhance="false">
+            <form id="mail-unsub-once" method="post" action="/mail/afmelden" class="login-form" data-enhance="false">
                 <input type="hidden" name="t" value="@_token" />
                 <button type="submit" class="login-submit">@Culture["MailUnsub.Submit"]</button>
             </form>
+            <script nonce="@_nonce">
+                var form = document.getElementById('mail-unsub-once');
+                if (form) {
+                    if (form.requestSubmit) form.requestSubmit();
+                    else form.submit();
+                }
+            </script>
         }
         else
         {
@@ -59,9 +68,11 @@
     private bool _error;
     private string _heading = "";
     private string _category = "";
+    private string _nonce = "";
 
     protected override async Task OnInitializedAsync()
     {
+        _nonce = Jobsy.Web.Security.CspNonce.Get(HttpContextAccessor.HttpContext);
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
         _token = query.TryGetValue("t", out var t) ? t.FirstOrDefault() ?? "" : "";

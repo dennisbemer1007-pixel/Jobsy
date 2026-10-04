@@ -200,6 +200,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.UnsubscribeReasonCode).HasMaxLength(64);
             entity.Property(e => e.UnsubscribeReasonOther).HasMaxLength(1000);
             entity.Property(e => e.ReferredByAmbassadeurTrackingCode).HasMaxLength(32);
+            entity.Property(e => e.ReminderEmailsEnabled).HasDefaultValue(true);
             entity.Property(e => e.HomeLocation)
                 .HasConversion(new NullableGeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)")

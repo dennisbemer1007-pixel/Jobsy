@@ -29,7 +29,7 @@ public class UnsubscribeFlowTests
         var sut = new EmailPreferencesUnsubscribeController(tokens, prefs);
 
         var token = tokens.CreateToken("alex@example.com", "PushBom");
-        var preview = sut.Preview(token);
+        var preview = await sut.Preview(token, CancellationToken.None);
         var previewBody = Assert.IsType<OkObjectResult>(preview.Result).Value as EmailPreferencesUnsubscribeController.UnsubscribePreviewResponse;
         Assert.True(previewBody!.Valid);
         Assert.False(await prefs.IsOptedOutAsync("alex@example.com", "PushBom"));
@@ -69,7 +69,7 @@ public class UnsubscribeFlowTests
         Assert.True(restored.Sent);
         Assert.Single(email.Sent);
         Assert.Contains("List-Unsubscribe", email.Sent[0].Headers!.Keys);
-        Assert.Contains("Afmelden voor deze mails", email.Sent[0].BodyHtml, StringComparison.Ordinal);
+        Assert.Contains("Geen herinneringen meer ontvangen? Afmelden", email.Sent[0].BodyHtml, StringComparison.Ordinal);
         Assert.Equal("support@lobsy.nl", email.Sent[0].ReplyTo);
 
         email.Sent.Clear();
@@ -79,6 +79,78 @@ public class UnsubscribeFlowTests
         var still = await mailer.SendAsync(essential, "alex@example.com");
         Assert.True(still.Sent);
         Assert.DoesNotContain(email.Sent[0].Headers!.Keys, k => k.Contains("List-Unsubscribe", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains("Je krijgt deze e-mail omdat je een account hebt bij Lobsy.", email.Sent[0].BodyHtml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Token_roundtrip_rejects_tamper_and_keeps_user_binding()
+    {
+        var tokens = CreateTokens();
+        var userId = Guid.NewGuid();
+        var token = tokens.CreateToken("alex@example.com", "ComebackReminder", userId, epoch: 2);
+        Assert.True(tokens.TryRead(token, out var claims));
+        Assert.Equal(userId, claims!.UserId);
+        Assert.Equal(2, claims.Epoch);
+        Assert.Equal(EmailAddressHasher.Hash("alex@example.com"), claims.EmailHash);
+        Assert.DoesNotContain("alex@example.com", token, StringComparison.OrdinalIgnoreCase);
+
+        var chars = token.ToCharArray();
+        chars[Math.Min(8, chars.Length - 1)] = chars[Math.Min(8, chars.Length - 1)] == 'a' ? 'b' : 'a';
+        Assert.False(tokens.TryRead(new string(chars), out _));
+        Assert.False(tokens.TryValidate(token + "x", out _, out _, out _));
+    }
+
+    [Fact]
+    public async Task Revoked_epoch_rejects_unsubscribe_and_off_switch_suppresses_mail()
+    {
+        await using var db = CreateDb();
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "alex@example.com",
+            FullName = "Alex",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            ReminderEmailsEnabled = true,
+            MailUnsubscribeEpoch = 0
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var tokens = CreateTokens();
+        var prefs = new EmailPreferenceService(db);
+        var sut = new EmailPreferencesUnsubscribeController(tokens, prefs);
+        var token = tokens.CreateToken(user.Email, "PushBom", user.Id, user.MailUnsubscribeEpoch);
+
+        user.MailUnsubscribeEpoch = 1;
+        await db.SaveChangesAsync();
+        var revoked = await sut.Unsubscribe(new EmailPreferencesUnsubscribeController.UnsubscribeRequest(token), CancellationToken.None);
+        Assert.IsType<BadRequestObjectResult>(revoked.Result);
+        Assert.True(user.ReminderEmailsEnabled);
+
+        user.MailUnsubscribeEpoch = 0;
+        await db.SaveChangesAsync();
+        var ok = await sut.Unsubscribe(new EmailPreferencesUnsubscribeController.UnsubscribeRequest(token), CancellationToken.None);
+        Assert.IsType<OkObjectResult>(ok.Result);
+        Assert.False(await db.Users.Where(u => u.Id == user.Id).Select(u => u.ReminderEmailsEnabled).SingleAsync());
+        var audit = Assert.Single(db.PlatformLogs, l => l.Category == "email.reminder");
+        Assert.Contains(user.Id.ToString("D"), audit.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("alex@example.com", audit.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(user.FullName, audit.Message, StringComparison.Ordinal);
+
+        var email = new RecordingEmail();
+        var mailer = CreateMailer(db, email, prefs, tokens);
+        var push = TransactionalEmails.PushBom(
+            "https://lobsy.nl", "Alex", "Bakker", "Bedrijf", Guid.NewGuid(), "Delft", 2.4, 12, 14.5m, "Uurloon",
+            "https://lobsy.nl/candidate/actions/set-unavailable");
+        var suppressed = await mailer.SendAsync(push, user.Email);
+        Assert.True(suppressed.Suppressed);
+        Assert.Empty(email.Sent);
+
+        var parent = TransactionalEmails.ParentalConsent(
+            "https://lobsy.nl", "Sanne", "https://lobsy.nl/toestemming/voorbeeld", DateTime.UtcNow.AddDays(7));
+        Assert.DoesNotContain("data-lobsy-unsub", parent.Html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("omdat je een account hebt bij Lobsy", parent.Html, StringComparison.Ordinal);
     }
 
     private static MailUnsubscribeTokenService CreateTokens()

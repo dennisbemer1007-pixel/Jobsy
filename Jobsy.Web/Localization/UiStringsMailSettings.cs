@@ -37,11 +37,11 @@ internal static class UiStringsMailSettings
             "Vrei să nu mai primești {0}?",
             "هل تريد التوقف عن استلام {0}؟");
         Add("MailUnsub.Done",
-            "Je krijgt deze mails niet meer.",
-            "You will no longer receive these emails.",
-            "Nie będziesz już otrzymywać tych e-maili.",
-            "Nu vei mai primi aceste e-mailuri.",
-            "لن تصلك هذه الرسائل بعد الآن.");
+            "Je krijgt geen herinneringen meer per e-mail. Je kunt dit weer aanzetten in je instellingen.",
+            "You will not get reminder emails anymore. You can turn this on again in your settings.",
+            "Nie dostaniesz już przypomnień e-mailem. Możesz to włączyć znowu w ustawieniach.",
+            "Nu mai primești e-mailuri de reamintire. Poți porni asta din nou în setări.",
+            "لن تصلك تذكيرات بالبريد بعد الآن. يمكنك تشغيلها مرة أخرى من الإعدادات.");
         Add("MailUnsub.OptIn",
             "Toch weer aanzetten",
             "Turn back on",
@@ -70,6 +70,18 @@ internal static class UiStringsMailSettings
         Add("MailUnsub.Seo.Description", "Bevestig of je optionele Lobsy-mails wilt stopzetten.", "Confirm stopping optional Lobsy emails.", "Potwierdź wypisanie z opcjonalnych e-maili Lobsy.", "Confirmă oprirea e-mailurilor opționale Lobsy.", "أكد إيقاف رسائل Lobsy الاختيارية.");
 
         Add("MailSettings.Title", "Mail-instellingen", "Mail settings", "Ustawienia e-mail", "Setări e-mail", "إعدادات البريد");
+        Add("MailSettings.Reminders.Label",
+            "Herinneringen per e-mail",
+            "Reminder emails",
+            "Przypomnienia e-mailem",
+            "E-mailuri de reamintire",
+            "تذكيرات بالبريد");
+        Add("MailSettings.Reminders.Hint",
+            "Dit staat aan. Zet het uit als je geen herinneringen per e-mail wilt. Een seintje op je telefoon en WhatsApp blijven apart.",
+            "This is on. Turn it off if you do not want reminder emails. A phone alert and WhatsApp stay separate.",
+            "To jest włączone. Wyłącz, jeśli nie chcesz przypomnień e-mailem. Alert w telefonie i WhatsApp zostają osobno.",
+            "Este pornit. Oprește-l dacă nu vrei e-mailuri de reamintire. O alertă pe telefon și WhatsApp rămân separat.",
+            "هذا مفعّل. أوقفه إذا كنت لا تريد تذكيرات بالبريد. تنبيه الهاتف وواتساب يبقيان منفصلين.");
         Add("MailSettings.OptionalHeading", "Optionele mails", "Optional emails", "Opcjonalne e-maile", "E-mailuri opționale", "رسائل اختيارية");
         Add("MailSettings.AlwaysHeading", "Deze mails krijg je altijd", "You always get these emails", "Te e-maile dostajesz zawsze", "Primești întotdeauna aceste e-mailuri", "تصلك هذه الرسائل دائمًا");
         Add("MailSettings.AlwaysHint",

@@ -623,6 +623,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 user.TestAiConsentVersion,
                 user.ParentalConsentAt,
                 user.ParentalConsentEmail,
+                user.ReminderEmailsEnabled,
                 user.IsActive
             },
             DiplomaEvaluations = await ExportDiplomaEvaluationsAsync(user.Id, cancellationToken),

@@ -616,5 +616,6 @@ public sealed partial class JobsyApiClient
 
     public sealed record EmailPreferencesDto(
         IReadOnlyList<EmailPreferenceItemDto>? Optional,
-        IReadOnlyList<string>? Always);
+        IReadOnlyList<string>? Always,
+        bool ReminderEmailsEnabled = true);
 }

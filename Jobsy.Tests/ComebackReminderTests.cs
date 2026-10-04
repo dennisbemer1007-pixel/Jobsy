@@ -127,6 +127,19 @@ public class ComebackReminderTests
     }
 
     [Fact]
+    public async Task Reminder_switch_off_skips_email_and_keeps_the_row()
+    {
+        await using var db = CreateDb();
+        var user = await SeedCandidate(db, InsideWindow.AddDays(-8), emailOptIn: true);
+        user.ReminderEmailsEnabled = false;
+        await db.SaveChangesAsync();
+        var mail = new RecordingMailer();
+        Assert.Equal(0, (await CreateSut(db, mail, whatsApp: false).RunAsync(InsideWindow)).Sent);
+        Assert.Empty(mail.Sent);
+        Assert.False(user.ReminderEmailsEnabled);
+    }
+
+    [Fact]
     public async Task Opt_out_stops_the_mail_even_after_an_earlier_opt_in()
     {
         await using var db = CreateDb();
