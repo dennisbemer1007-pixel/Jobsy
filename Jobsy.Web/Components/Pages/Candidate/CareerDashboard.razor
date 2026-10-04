@@ -188,6 +188,7 @@
     private CareerDreamChoice? _choice;
     private string _nowLabel = "";
     private string _evidence = "";
+    private int _experienceYears;
     private bool _journeyComplete;
     private string? _error;
     private string? _dialogError;
@@ -327,7 +328,7 @@
             return;
         }
 
-        var next = CareerPlanViewBuilder.BuildStep(_planApi, order, _evidence);
+        var next = CareerPlanViewBuilder.BuildStep(_planApi, order, _evidence, _experienceYears);
         if (next is null)
         {
             ClearStep();
@@ -431,7 +432,7 @@
             ApplyPlan(plan);
             _done = null;
             _doneGained = new CareerStepDoneView();
-            _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order, _evidence);
+            _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order, _evidence, _experienceYears);
             _announcement = Culture.Format("Career.Undo.Announce", target.Order);
         }
         catch (Exception ex)
@@ -648,23 +649,14 @@
         var current = prefs.Employers.FirstOrDefault(e => string.IsNullOrWhiteSpace(e.EndMonth))
                       ?? prefs.Employers.FirstOrDefault();
         _nowLabel = current?.Role?.Trim() ?? "";
-        var bits = new List<string>();
-        bits.AddRange(prefs.Employers.Select(e => $"{e.Role} {e.EmployerName}"));
-        bits.AddRange(prefs.Roles);
-        bits.AddRange(prefs.Educations);
-        if (!string.IsNullOrWhiteSpace(prefs.EducationDirection))
-        {
-            bits.Add(prefs.EducationDirection);
-        }
-
-        bits.AddRange(prefs.Certificates.Select(c => c.Name));
-        _evidence = string.Join(' ', bits.Where(s => !string.IsNullOrWhiteSpace(s)));
+        _evidence = CareerPlanViewBuilder.EvidenceFrom(prefs);
+        _experienceYears = CareerPlanViewBuilder.ExperienceYears(prefs.Employers);
     }
 
     private void ApplyPlan(CareerPathPlanApiModel? plan)
     {
         _planApi = plan;
-        _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel);
+        _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel, _evidence);
         if (!_plan.HasPlan && !string.IsNullOrWhiteSpace(_plan.DreamTitle))
         {
             var entry = CareerDreamCatalog.FindByTitleOrAlias(_plan.DreamTitle);
