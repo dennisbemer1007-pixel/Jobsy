@@ -1,13 +1,16 @@
 @page "/leerling/stop"
 @layout LeerlingLayout
 @attribute [AllowAnonymous]
+@using Jobsy.Web.Components.Leerling
 @inject CultureState Culture
 <PageTitle>@(Paused ? Culture["Leerling.Stop.Title"] : Culture["Leerling.Stop.AskTitle"]) · Lobsy</PageTitle>
 
+<LeerlingCoachCue Text="@Culture["Leerling.Coach.Stop"]" />
 <section class="ll-card ll-stop">
     @if (Paused)
     {
         <h1>@Culture["Leerling.Stop.Title"]</h1>
+        <LeerlingSpeak Text="@Spoken" SpeechKey="ll-stop" />
         <p>@(string.Equals(Done, "deel1", StringComparison.Ordinal)
             ? Culture["Leerling.Vo.Stop.Part1Body"]
             : Culture["Leerling.Stop.Body"])</p>
@@ -16,6 +19,7 @@
     else
     {
         <h1>@Culture["Leerling.Stop.AskTitle"]</h1>
+        <LeerlingSpeak Text="@Spoken" SpeechKey="ll-stop-ask" />
         <p>@Culture["Leerling.Stop.AskBody"]</p>
         <form method="post" action="/leerling/pauze">
             <AntiforgeryToken />
@@ -29,4 +33,10 @@
 
     private bool Paused => string.Equals(Done, "1", StringComparison.Ordinal)
         || string.Equals(Done, "deel1", StringComparison.Ordinal);
+
+    private string Spoken => Paused
+        ? string.Equals(Done, "deel1", StringComparison.Ordinal)
+            ? $"{Culture["Leerling.Stop.Title"]} {Culture["Leerling.Vo.Stop.Part1Body"]}"
+            : $"{Culture["Leerling.Stop.Title"]} {Culture["Leerling.Stop.Body"]}"
+        : $"{Culture["Leerling.Stop.AskTitle"]} {Culture["Leerling.Stop.AskBody"]}";
 }

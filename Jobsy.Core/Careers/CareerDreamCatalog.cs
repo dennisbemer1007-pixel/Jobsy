@@ -486,7 +486,7 @@ public static class CareerDreamCatalog
         E("politieagent", "Politieagent", "Mbo4", "veiligheid",
             ["agent", "wijkagent"],
             ["politie", "agent", "veiligheid", "opsporing"]),
-        E("brandweerman", "Brandweerman / -vrouw", "Mbo3", "veiligheid",
+        E("brandweerman", "Brandweerman/-vrouw", "Mbo3", "veiligheid",
             ["brandweer", "brandweervrouw"],
             ["brandweer", "blussen", "hulpverlening", "veiligheid"]),
         E("ambulanceverpleegkundige", "Ambulanceverpleegkundige", "Mbo4", "zorg",

@@ -723,6 +723,18 @@ public static class UiStringsPublicInfo
             "Tak działa Lobsy dla szkół.",
             "Așa funcționează Lobsy pentru școli.",
             "هكذا يعمل Lobsy للمدارس.");
+        Add("Seo.SchoolsTitle",
+            "Zo werkt Lobsy voor scholen · Lobsy",
+            "How Lobsy works for schools · Lobsy",
+            "Tak działa Lobsy dla szkół · Lobsy",
+            "Așa funcționează Lobsy pentru școli · Lobsy",
+            "هكذا يعمل Lobsy للمدارس · Lobsy");
+        Add("Seo.AboutTitle",
+            "Wie wij zijn",
+            "Who we are",
+            "Kim jesteśmy",
+            "Cine suntem",
+            "من نكون");
         Add("HowLobsy.Schools.Lead",
             "Leerlingen ontdekken wat bij ze past. Jij ziet alleen groepsbeelden, geen antwoorden.",
             "Pupils discover what fits them. You only see group pictures, never answers.",

@@ -6,7 +6,6 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
-@using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -16,6 +15,8 @@
 @inject IPupilQuestionSetRegistry Registry
 
 <PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
+
+<LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
 
 @if (_windowClosed)
 {
@@ -61,7 +62,6 @@ else
     var worldNum = PupilWorldCatalog.TestWorldNumber(worldKey);
     var qLabel = item is null ? "" : Culture[item.TextKey];
     var imagine = item is null ? "" : Culture[item.ImagineKey];
-    var depth = _def.SceneDepth(_state.AnsweredCount);
     var plates = _state.PlatesShed;
     var infoId = "ll-imagine-" + (item?.Id ?? "x");
     var cheerKey = _def.CheerKey(_state.AnsweredCount);
@@ -108,14 +108,17 @@ else
             <h1 id="ll-q-title"
                 class="ll-question__text"
                 aria-describedby="@(_infoOpen ? infoId : null)">@qLabel</h1>
+            <LeerlingSpeak Text="@qLabel" SpeechKey="@($"ll-q-{item?.Id}")" />
             <button type="button"
                     class="ll-info-btn"
-                    aria-expanded="@_infoOpen"
+                    aria-label="@Culture["Leerling.Reis.More"]"
+                    aria-expanded="@(_infoOpen ? "true" : "false")"
                     aria-controls="@infoId"
                     title="@Culture["Leerling.Reis.Imagine"]"
                     @onclick="ToggleInfo">i</button>
             <div id="@infoId" class="ll-info @(_infoOpen ? "is-open" : null)" hidden="@(!_infoOpen)">
                 <p><strong>@Culture["Leerling.Reis.Imagine"]</strong></p>
+                <LeerlingSpeak Text="@imagine" SpeechKey="@($"ll-imagine-{item?.Id}")" />
                 <p>@imagine</p>
                 <button type="button" class="ll-info__close" @onclick="() => _infoOpen = false" aria-label="Sluiten">×</button>
             </div>
@@ -148,14 +151,6 @@ else
             </div>
         </section>
 
-        <div class="ll-lob-zone" data-testid="ll-cheer-desktop">
-            <p class="ll-bubble">@Culture[cheerKey]</p>
-            <LeerlingLobster PlatesShed="@plates" NewShell="@_state.NewShell" Mobile="false" />
-        </div>
-        <div class="ll-lob-zone ll-lob-zone--mobile">
-            <LeerlingLobster PlatesShed="@plates" NewShell="@_state.NewShell" Mobile="true" Size="72" />
-        </div>
-        <LeerlingScene Depth="@depth" />
     </div>
 }
 

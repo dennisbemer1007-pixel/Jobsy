@@ -7,7 +7,6 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
-@using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -44,22 +43,21 @@ else if (_result is null)
 else
 {
     <div class="ll-reis ll-result" data-testid="leerling-dit-ben-jij">
-        <div class="ll-result__mascot">
-            <LeerlingLobster PlatesShed="10" Size="96" />
-            <p class="ll-bubble">@Culture["LeerlingStory.Lobster"]</p>
-        </div>
+        <LeerlingCoachCue Text="@Culture["Leerling.Coach.Story"]" />
 
         <section class="ll-card">
             <p class="ll-question__meta">
                 <span class="ll-pill">@string.Format(Culture["LeerlingStory.DonePill"], _result.TotalItems)</span>
             </p>
             <h1>@Culture["LeerlingStory.Title"]</h1>
+            <LeerlingSpeak Text="@_result.Story.Body" SpeechKey="ll-story" />
             <p class="ll-result__story">@_result.Story.Body</p>
 
             <div class="ll-tile-grid">
                 @foreach (var tile in _result.Story.Tiles)
                 {
                     <div class="ll-tile">
+                        <LeerlingSpeak Text="@($"{tile.KidLabel}. {tile.Explanation}")" SpeechKey="@($"ll-tile-{tile.ModelKey}")" />
                         <p class="ll-tile__label">@tile.KidLabel</p>
                         <p class="ll-tile__value">@tile.Explanation</p>
                     </div>
@@ -78,6 +76,7 @@ else
             }
 
             <h2 class="ll-result__sub">@Culture["LeerlingStory.JobsTitle"]</h2>
+            <LeerlingSpeak Text="@string.Join(". ", _result.Story.JobIdeas)" SpeechKey="ll-jobs" />
             <div class="ll-chips__row">
                 @foreach (var job in _result.Story.JobIdeas)
                 {

@@ -62,14 +62,18 @@ public class LeerlingCheerToastTests : BunitContext
     }
 
     [Fact]
-    public void Reis_wires_mobile_toast_and_desktop_bubble()
+    public void Reis_wires_mobile_toast_and_the_fixed_coach()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling", "LeerlingReis.razor"));
+        var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "LeerlingLayout.razor"));
         Assert.Contains("<LeerlingCheerToast", reis, StringComparison.Ordinal);
-        Assert.Contains("data-testid=\"ll-cheer-desktop\"", reis, StringComparison.Ordinal);
+        Assert.Contains("<LeerlingCoachCue", reis, StringComparison.Ordinal);
+        Assert.Contains("<LeerlingCoach", layout, StringComparison.Ordinal);
+        Assert.DoesNotContain("ll-lob-zone", reis, StringComparison.Ordinal);
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "scholen.css"));
         Assert.Contains(".ll-cheer-toast", css, StringComparison.Ordinal);
+        Assert.Contains(".ll-coach", css, StringComparison.Ordinal);
         Assert.Contains("@media (max-width: 899px)", css, StringComparison.Ordinal);
         Assert.Contains("@media (prefers-reduced-motion: reduce)", css, StringComparison.Ordinal);
         Assert.Contains(".ll-cheer-toast { animation: none; }", css, StringComparison.Ordinal);

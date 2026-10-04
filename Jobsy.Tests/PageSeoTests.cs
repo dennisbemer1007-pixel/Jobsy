@@ -106,7 +106,7 @@ public class PageSeoCatalogTests
     [Theory]
     [InlineData("/privacy", "Legal.Privacy")]
     [InlineData("/toegankelijkheid", "A11y.Seo.Title")]
-    [InlineData("/scholen", "HowLobsy.Schools.Title")]
+    [InlineData("/scholen", "Seo.SchoolsTitle")]
     public void Static_public_pages_have_their_own_catalog_titles(string path, string titleKey)
     {
         var entry = PageSeoCatalog.Resolve(path);

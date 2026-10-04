@@ -1,0 +1,66 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@implements IDisposable
+@inject IServiceProvider Services
+@inject CultureState Culture
+
+<div class="ll-coach" data-ll-coach>
+    @if (_open && !string.IsNullOrWhiteSpace(_hint))
+    {
+        <div class="ll-coach__bubble" role="status">
+            <p>@_hint</p>
+            <ReadAloudButton Text="@_hint" SpeechKey="ll-coach-hint" PlayAria="@Culture["ReadAloud.Play"]" />
+            <button type="button" class="ll-coach__close" @onclick="Dismiss" aria-label="@Culture["Leerling.Coach.Close"]">×</button>
+        </div>
+    }
+    <div class="ll-coach__figure" aria-hidden="true">
+        <img src="/images/brand/mascot-coach.webp"
+             alt=""
+             width="72"
+             height="72"
+             decoding="async" />
+    </div>
+</div>
+
+@code {
+    private LeerlingCoachHint? _hints;
+    private string? _hint;
+    private bool _open = true;
+
+    protected override void OnInitialized()
+    {
+        _hints = Services.GetService<LeerlingCoachHint>();
+        if (_hints is null)
+        {
+            return;
+        }
+
+        _hint = _hints.Hint;
+        _open = !string.IsNullOrWhiteSpace(_hint);
+        _hints.Changed += OnChanged;
+    }
+
+    private void OnChanged()
+        => _ = InvokeAsync(() =>
+        {
+            var next = _hints?.Hint;
+            if (!string.Equals(_hint, next, StringComparison.Ordinal))
+            {
+                _hint = next;
+                _open = !string.IsNullOrWhiteSpace(next);
+            }
+
+            StateHasChanged();
+        });
+
+    private void Dismiss() => _open = false;
+
+    public void Dispose()
+    {
+        if (_hints is not null)
+        {
+            _hints.Changed -= OnChanged;
+        }
+    }
+}

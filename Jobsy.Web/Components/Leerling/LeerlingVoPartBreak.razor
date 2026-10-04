@@ -1,8 +1,10 @@
 @namespace Jobsy.Web.Components.Leerling
 @inject CultureState Culture
 
+<LeerlingCoachCue Text="@Culture["Leerling.Coach.Part"]" />
 <section class="ll-card" role="status">
     <h1 @ref="_heading" tabindex="-1">@Culture["Leerling.Vo.PartBreak.Title"]</h1>
+    <LeerlingSpeak Text="@Spoken" SpeechKey="ll-part-break" />
     <p>@Culture["Leerling.Vo.PartBreak.Body"]</p>
     <div class="ll-question__nav">
         <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Vo.PartBreak.Continue"]</a>
@@ -16,6 +18,9 @@
 
 @code {
     private ElementReference _heading;
+
+    private string Spoken =>
+        $"{Culture["Leerling.Vo.PartBreak.Title"]} {Culture["Leerling.Vo.PartBreak.Body"]}";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

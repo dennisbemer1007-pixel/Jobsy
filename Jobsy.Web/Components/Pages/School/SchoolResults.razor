@@ -99,7 +99,7 @@ else
                         <ul class="sch-riasec">
                             @foreach (var n in _results.Totals.DreamJobs)
                             {
-                                <li><span>@n.Key</span> <strong class="tabular">@n.Count</strong></li>
+                                <li><span>@PupilDreamJobText.Label(Culture, n.Key)</span> <strong class="tabular">@n.Count</strong></li>
                             }
                         </ul>
                         <p class="muted">@Culture["Leraar.DreamJobs.Undecided"]: @_results.Totals.UndecidedDreamJobCount</p>
@@ -126,7 +126,7 @@ else
                                         <td data-label="@Culture["School.Col.Status"]">@StatusLabel(row.Status)</td>
                                         <td data-label="@Culture["School.Results.Interest"]">@(row.InterestCode ?? "—")</td>
                                         <td data-label="@Culture["School.Results.TopValue"]">@PupilDimensionText.Value(Culture, row.TopValue)</td>
-                                        <td data-label="@Culture["School.Results.DreamJob"]">@(row.DreamJobKey ?? "—")</td>
+                                        <td data-label="@Culture["School.Results.DreamJob"]">@PupilDreamJobText.Label(Culture, row.DreamJobKey)</td>
                                     </tr>
                                 }
                             </Rows>

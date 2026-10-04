@@ -1,0 +1,20 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@inject IServiceProvider Services
+
+@code {
+    private LeerlingCoachHint? _hints;
+
+    [Parameter] public string? Text { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _hints = Services.GetService<LeerlingCoachHint>();
+    }
+
+    protected override void OnParametersSet()
+    {
+        _hints?.Set(Text);
+    }
+}

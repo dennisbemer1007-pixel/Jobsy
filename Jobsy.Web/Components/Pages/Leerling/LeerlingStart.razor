@@ -5,7 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
-@using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject NavigationManager Nav
@@ -15,9 +15,10 @@
 <PageTitle>@Culture["Leerling.Start.Title"] · Lobsy</PageTitle>
 
 <div class="ll-start">
-    <LeerlingScene Depth="0" />
+    <LeerlingCoachCue Text="@Culture["Leerling.Coach.Start"]" />
     <section class="ll-card">
         <h1>@Culture["Leerling.Start.Title"]</h1>
+        <LeerlingSpeak Text="@Spoken" SpeechKey="ll-start" />
         <p class="muted">@Culture["Leerling.Start.Lead"]</p>
         <ol class="ll-worlds">
             @foreach (var plan in (_def?.Worlds ?? Array.Empty<PupilWorldPlan>()))
@@ -49,6 +50,13 @@
 
 @code {
     private PupilQuestionSetDef? _def;
+
+    private string Spoken => string.Join(' ',
+        Culture["Leerling.Start.Title"],
+        Culture["Leerling.Start.Lead"],
+        Culture[_def?.StartTimeKey ?? "Leerling.Start.NoteTime"],
+        Culture["Leerling.Start.NoteNoWrong"],
+        Culture["Leerling.Start.NotePause"]);
 
     protected override async Task OnInitializedAsync()
     {

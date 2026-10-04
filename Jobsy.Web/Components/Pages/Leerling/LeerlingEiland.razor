@@ -5,7 +5,6 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
-@using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
@@ -49,6 +48,8 @@ else
             </p>
             <p class="ll-question__world">@Culture["Leerling.World.Island.Title"]</p>
             <h1 class="ll-question__text">@Culture["Leerling.Island.Lead"]</h1>
+            <LeerlingCoachCue Text="@Culture["Leerling.Coach.Island"]" />
+            <LeerlingSpeak Text="@Culture["Leerling.Island.Lead"]" SpeechKey="ll-island" />
 
             <fieldset class="ll-chips">
                 <legend>@Culture["Leerling.Island.Likes"]</legend>
@@ -141,14 +142,6 @@ else
             </div>
         </section>
 
-        <div class="ll-lob-zone">
-            <p class="ll-bubble">@Culture["Leerling.Island.Bubble"]</p>
-            <LeerlingLobster PlatesShed="@_state.PlatesShed" NewShell="@_state.NewShell" Mobile="false" />
-        </div>
-        <div class="ll-lob-zone ll-lob-zone--mobile">
-            <LeerlingLobster PlatesShed="@_state.PlatesShed" NewShell="@_state.NewShell" Mobile="true" Size="72" />
-        </div>
-        <LeerlingScene Depth="@(_def?.SceneDepth(_state.AnsweredCount) ?? 0)" />
     </div>
 }
 

@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Layout
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Security
 @using Jobsy.Web.Services
 @inherits LayoutComponentBase
@@ -35,6 +36,7 @@
         <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
         <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
     </footer>
+    <LeerlingCoach />
 </div>
 
 @code {
