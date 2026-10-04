@@ -123,6 +123,7 @@
             }
         }
     }).then(function () {
+        document.documentElement.setAttribute("data-lobsy-circuit", "ready");
         document.addEventListener("visibilitychange", function () {
             if (document.visibilityState !== "visible") return;
             onRejectedAutoReload();

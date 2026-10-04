@@ -232,7 +232,7 @@ public static class CareerPlanViewBuilder
             FirstGap = missing.Count > 0 ? missing[0].Text : "",
             CourseNames = step.Courses
                 .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-                .Select(c => c.Name.Trim())
+                .Select(c => PlainWording(c.Name.Trim()))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList(),
             CourseSearchKeys = BuildCourseKeys(step),
@@ -533,7 +533,7 @@ public static class CareerPlanViewBuilder
                 CareerStepStatus.Active => ShellKind.Current,
                 _ => ShellKind.Future
             };
-            shells.Add(new ShellStep(step.Id, step.Order, ShortTitle(step.Title), kind, step.Status, IsGoal: false));
+            shells.Add(new ShellStep(step.Id, step.Order, PlainWording(ShortTitle(step.Title)), kind, step.Status, IsGoal: false));
         }
 
         shells.Add(new ShellStep(
@@ -566,7 +566,7 @@ public static class CareerPlanViewBuilder
         {
             CourseNames = (active?.Courses ?? [])
                 .Where(c => !c.OnProfile && !string.IsNullOrWhiteSpace(c.Name))
-                .Select(c => c.Name.Trim())
+                .Select(c => PlainWording(c.Name.Trim()))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList()
         };
@@ -701,7 +701,8 @@ public static class CareerPlanViewBuilder
         for (var i = 0; i < ordered.Count; i++)
         {
             qualifies[i] = ordered[i].Status == CareerStepStatus.Completed
-                           || GapsAllMet(ordered[i], evidence, experienceYears);
+                           || GapsAllMet(ordered[i], evidence, experienceYears)
+                           || (experienceYears >= 5 && IsBeginnerOrInternship(ordered[i]));
         }
 
         var assignedActive = false;
@@ -798,6 +799,38 @@ public static class CareerPlanViewBuilder
         }
 
         return real.All(line => GapMatchesEvidence(line, evidence, experienceYears));
+    }
+
+    private static bool IsBeginnerOrInternship(CareerPathDashboardStep step)
+    {
+        var blob = string.Join(
+            ' ',
+            new[] { step.Title }
+                .Concat(step.SkillsGap)
+                .Concat(step.MinRequirements)
+                .Concat(step.Courses.Select(c => c.Name)));
+        if (IsInternshipText(blob))
+        {
+            return true;
+        }
+
+        var fold = CareerOccupationKeys.Fold(blob);
+        return fold.Contains("beginner", StringComparison.Ordinal)
+               || fold.Contains("basiskennis", StringComparison.Ordinal);
+    }
+
+    public static string PlainWording(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return text ?? "";
+        }
+
+        return text
+            .Replace("Supply chain management", "Leren plannen en organiseren", StringComparison.OrdinalIgnoreCase)
+            .Replace("supply chain management", "leren plannen en organiseren", StringComparison.OrdinalIgnoreCase)
+            .Replace("klauwen", "stappen", StringComparison.OrdinalIgnoreCase)
+            .Replace("klauw", "stap", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsInternshipText(string text)

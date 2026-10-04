@@ -822,7 +822,8 @@ public sealed class TestAccountsSeedService
         var map = new Dictionary<int, int>(count);
         for (var i = 1; i <= count; i++)
         {
-            map[i] = ((i - 1) % 5) + 1;
+            // Prime stride so domain blocks do not all average to the same likert.
+            map[i] = ((i * 3 + (i / 7)) % 5) + 1;
         }
 
         return map;

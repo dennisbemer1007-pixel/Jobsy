@@ -103,6 +103,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         (Compass?.SuperMatches ?? []).Select(m => m.Title)
             .Concat((Compass?.StrongChoices ?? []).Select(m => m.Title))
             .Concat((Compass?.Broadening ?? []).Select(m => m.Title))
+            .Concat(CareerGoalFit.DreamTitles(DreamTitle))
             .ToList();
 
     private IReadOnlyList<CareerGoalFit.Hit> GoalHits =>

@@ -1,0 +1,17 @@
+@page "/candidate/binnenkort"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Authorize(Roles = "Candidate")]
+
+<PageTitle>@Culture["WgSoon.CandidateTitle"] · Lobsy</PageTitle>
+
+<section class="page-section card binnenkort-card" aria-labelledby="binnenkort-title">
+    <h1 id="binnenkort-title" tabindex="-1">@Culture["WgSoon.CandidateTitle"]</h1>
+    <p>@Culture["WgSoon.CandidateLead"]</p>
+    <p class="inline-actions">
+        <a class="btn btn-primary" href="@OnboardingRoutes.ClassicStartPath">@Culture["WgSoon.CtaCandidate"]</a>
+    </p>
+</section>
+
+@code {
+    [Inject] public CultureState Culture { get; set; } = default!;
+}

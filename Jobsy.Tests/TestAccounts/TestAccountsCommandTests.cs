@@ -78,14 +78,14 @@ public class TestAccountsCommandTests
         user.PreferencesJson = preferences;
 
         var competency = await db.CandidateCompetencies.SingleAsync(c => c.UserId == user.Id);
-        competency.SamenwerkenPercent = 70;
+        competency.SamenwerkenPercent = 1;
         competency.ResultaatgerichtheidPercent = 65;
         competency.StressbestendigheidPercent = 60;
         competency.InnovatiePercent = 55;
         competency.ExtraversiePercent = 50;
 
         var values = await db.CandidateValuesProfiles.SingleAsync(c => c.UserId == user.Id);
-        values.AutonomyPercent = 70;
+        values.AutonomyPercent = 1;
         values.ConnectionPercent = 65;
         values.AchievementPercent = 60;
         values.StabilityPercent = 55;
@@ -116,7 +116,7 @@ public class TestAccountsCommandTests
             Id = Guid.NewGuid(),
             UserId = nieuwId,
             Status = CandidateCompetencyStatuses.Completed,
-            SamenwerkenPercent = 70,
+            SamenwerkenPercent = 13,
             ResultaatgerichtheidPercent = 65,
             StressbestendigheidPercent = 60,
             InnovatiePercent = 55,
@@ -130,7 +130,7 @@ public class TestAccountsCommandTests
         await db.SaveChangesAsync();
 
         var expectedCompetency = CompetencyTestCatalog.Score(FullLikert(CompetencyTestCatalog.QuestionCount))!;
-        Assert.NotEqual(70, expectedCompetency.Samenwerken);
+        Assert.NotEqual(1, expectedCompetency.Samenwerken);
         competency = await db.CandidateCompetencies.SingleAsync(c => c.UserId == user.Id);
         Assert.Equal(expectedCompetency.Samenwerken, competency.SamenwerkenPercent);
         Assert.Equal(expectedCompetency.Extraversie, competency.ExtraversiePercent);
@@ -139,7 +139,7 @@ public class TestAccountsCommandTests
         var expectedValues = SchwartzValuesCatalog.Score(FullLikert(SchwartzValuesCatalog.QuestionCount))!;
         values = await db.CandidateValuesProfiles.SingleAsync(c => c.UserId == user.Id);
         Assert.Equal(expectedValues.Autonomy, values.AutonomyPercent);
-        Assert.NotEqual(70, values.AutonomyPercent);
+        Assert.NotEqual(1, values.AutonomyPercent);
 
         career = await db.CandidateCareerInterests.SingleAsync(c => c.UserId == user.Id);
         Assert.NotNull(career.RealisticPercent);
@@ -147,7 +147,7 @@ public class TestAccountsCommandTests
 
         Assert.Equal(preferences, (await db.Users.SingleAsync(u => u.Id == user.Id)).PreferencesJson);
         var nieuw = await db.CandidateCompetencies.SingleAsync(c => c.UserId == nieuwId);
-        Assert.Equal(70, nieuw.SamenwerkenPercent);
+        Assert.Equal(13, nieuw.SamenwerkenPercent);
     }
 
     private static Dictionary<int, int> FullLikert(int count)
@@ -155,7 +155,7 @@ public class TestAccountsCommandTests
         var map = new Dictionary<int, int>(count);
         for (var i = 1; i <= count; i++)
         {
-            map[i] = ((i - 1) % 5) + 1;
+            map[i] = ((i * 3 + (i / 7)) % 5) + 1;
         }
 
         return map;

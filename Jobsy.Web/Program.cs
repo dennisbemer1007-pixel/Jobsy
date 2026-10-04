@@ -156,6 +156,7 @@ builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
 builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
+builder.Services.AddScoped<Jobsy.Web.Navigation.CoachTipBus>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.FeedbackHost>();
 builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminSidebarState>();
 builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminTodoCountsStore>();

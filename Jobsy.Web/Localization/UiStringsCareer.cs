@@ -287,17 +287,17 @@ public static class UiStringsCareer
             "Mai puțin",
             "أقل");
         Add("Career.Overview.Summary",
-            "Nog {0} klauwen · {1} opleidingen",
-            "{0} claws left · {1} courses",
-            "Jeszcze {0} szczypce · {1} szkoleń",
-            "Mai ai {0} clești · {1} cursuri",
-            "بقي {0} مخالب · {1} دورات");
+            "Nog {0} stappen · {1} opleidingen",
+            "{0} steps left · {1} courses",
+            "Jeszcze {0} kroków · {1} szkoleń",
+            "Mai ai {0} pași · {1} cursuri",
+            "بقي {0} خطوات · {1} دورات");
         Add("Career.Overview.SummaryClaws",
-            "Nog {0} klauwen",
-            "{0} claws left",
-            "Jeszcze {0} szczypce",
-            "Mai ai {0} clești",
-            "بقي {0} مخالب");
+            "Nog {0} stappen",
+            "{0} steps left",
+            "Jeszcze {0} kroków",
+            "Mai ai {0} pași",
+            "بقي {0} خطوات");
         Add("Career.Overview.SummaryCourses",
             "{0} opleidingen",
             "{0} courses",
@@ -317,17 +317,17 @@ public static class UiStringsCareer
             "Începe cu lecția online gratuită",
             "ابدأ بالدرس المجاني عبر الإنترنت");
         Add("Career.Fact.Claws",
-            "Nog {0} klauwen laten groeien",
-            "{0} claws still to grow",
-            "Jeszcze {0} szczypce do wyhodowania",
-            "Mai ai {0} clești de crescut",
-            "بقي {0} من المخالب لتنمو");
+            "Nog {0} stappen laten groeien",
+            "{0} steps still to grow",
+            "Jeszcze {0} kroków do zrobienia",
+            "Mai ai {0} pași de făcut",
+            "بقي {0} خطوات لتنمو");
         Add("Career.Fact.ClawOne",
-            "Nog 1 klauw laten groeien",
-            "1 claw still to grow",
-            "Jeszcze 1 szczypce do wyhodowania",
-            "Mai ai 1 clește de crescut",
-            "بقي مخلب واحد لينمو");
+            "Nog 1 stap laten groeien",
+            "1 step still to grow",
+            "Jeszcze 1 krok do zrobienia",
+            "Mai ai 1 pas de făcut",
+            "بقيت خطوة واحدة لتنمو");
         Add("Career.Fact.Courses",
             "{0} opleidingen · {1} is gratis",
             "{0} courses · {1} is free",
@@ -814,11 +814,11 @@ public static class UiStringsCareer
             "Ce îți lipsește încă",
             "ما ينقصك بعد");
         Add("CareerStep.Gaps.Sub",
-            "Welke klauwen je al hebt, en welke je nog laat groeien.",
-            "Which claws you already have, and which ones you are still growing.",
-            "Które szczypce już masz, a które jeszcze hodujesz.",
-            "Ce clești ai deja și pe care îi mai crești.",
-            "أي المخالب لديك بالفعل، وأيها ما زلت تنميه.");
+            "Welke stappen je al hebt gezet, en welke je nog laat groeien.",
+            "Which steps you already took, and which ones you are still growing.",
+            "Które kroki już masz, a które jeszcze robisz.",
+            "Ce pași ai deja și pe care îi mai crești.",
+            "أي الخطوات لديك بالفعل، وأيها ما زلت تنميه.");
         Add("CareerStep.Gaps.Have",
             "heb je al",
             "you already have",
@@ -849,6 +849,18 @@ public static class UiStringsCareer
             "Dopasowanie do tego kroku",
             "Potrivirea pe acest pas",
             "التوافق مع هذه الخطوة");
+        Add("CareerStep.Band.TitleOff",
+            "Wat bij je past",
+            "What fits you",
+            "Co do ciebie pasuje",
+            "Ce ți se potrivește",
+            "ما يناسبك");
+        Add("CareerStep.Band.EyebrowOff",
+            "Gebruik dit om te ontdekken wat bij je past.",
+            "Use this to discover what fits you.",
+            "Użyj tego, aby odkryć, co do ciebie pasuje.",
+            "Folosește asta ca să descoperi ce ți se potrivește.",
+            "استخدم هذا لتكتشف ما يناسبك.");
         Add("CareerStep.Band.Eyebrow",
             "Groei eerst. Match daarna.",
             "Grow first. Match after.",
@@ -904,11 +916,11 @@ public static class UiStringsCareer
             "Un curs care ți se potrivește",
             "دورة تناسبك");
         Add("CareerStep.Courses.Eyebrow",
-            "Laat je klauw groeien",
-            "Grow your claw",
-            "Wyhoduj swoje szczypce",
-            "Crește-ți cleștele",
-            "أنمِ مخلبك");
+            "Laat je stap groeien",
+            "Grow your step",
+            "Rozwijaj swój krok",
+            "Crește-ți pasul",
+            "أنمِ خطوتك");
         Add("CareerStep.Courses.Disclosure",
             "Gratis staat altijd bovenaan. Partnerlink: Lobsy kan een vergoeding krijgen.",
             "Free is always on top. Partner link: Lobsy may receive a fee.",
@@ -992,11 +1004,11 @@ public static class UiStringsCareer
             "{0} este în profilul tău",
             "{0} موجودة في ملفك");
         Add("Career.Done.GainClaw",
-            "Je klauw ‘{0}’ is gegroeid",
-            "Your claw “{0}” has grown",
-            "Twoje szczypce „{0}” urosły",
-            "Cleștele tău „{0}” a crescut",
-            "مخلبك «{0}» قد نما");
+            "Je stap ‘{0}’ is gegroeid",
+            "Your step “{0}” has grown",
+            "Twój krok „{0}” urósł",
+            "Pasul tău „{0}” a crescut",
+            "خطوتك «{0}» قد نمت");
         Add("Career.Done.GainVacancies",
             "Nieuw: {0} vacatures als {1} passen bij je",
             "New: {0} jobs as {1} fit you",
@@ -1022,17 +1034,17 @@ public static class UiStringsCareer
             "Pasul {0}: {1}",
             "الخطوة {0}: {1}");
         Add("Career.Done.NextFacts",
-            "Nog {0} klauwen · {1} opleidingen",
-            "{0} claws still · {1} courses",
-            "Jeszcze {0} szczypce · {1} szkoleń",
-            "Încă {0} clești · {1} cursuri",
-            "بقي {0} مخالب · {1} دورات");
+            "Nog {0} stappen · {1} opleidingen",
+            "{0} steps still · {1} courses",
+            "Jeszcze {0} kroków · {1} szkoleń",
+            "Încă {0} pași · {1} cursuri",
+            "بقي {0} خطوات · {1} دورات");
         Add("Career.Done.NextFactsGapsOnly",
-            "Nog {0} klauwen",
-            "{0} claws still",
-            "Jeszcze {0} szczypce",
-            "Încă {0} clești",
-            "بقي {0} مخالب");
+            "Nog {0} stappen",
+            "{0} steps still",
+            "Jeszcze {0} kroków",
+            "Încă {0} pași",
+            "بقي {0} خطوات");
         Add("Career.Done.Next",
             "Op naar stap {0}",
             "On to step {0}",

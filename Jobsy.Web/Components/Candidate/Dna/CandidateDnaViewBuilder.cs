@@ -376,7 +376,7 @@ public static class CandidateDnaViewBuilder
                 top = CareerCompassBuilder.TypeLabel(ranked[0].Code);
                 summary = format(
                     "Dna.TileSummaryTop",
-                    string.Join(" · ", ranked.Take(3).Select(r => r.Code[..1])));
+                    string.Join(" · ", ranked.Take(3).Select(r => CareerCompassBuilder.TypeLabel(r.Code))));
             }
         }
 

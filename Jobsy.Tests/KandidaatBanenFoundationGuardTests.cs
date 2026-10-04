@@ -23,6 +23,11 @@ public class KandidaatBanenFoundationGuardTests
     public void Focus_css_uses_the_brand_ring_on_programmatic_h1()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
+        Assert.Contains("h1[tabindex=\"-1\"]:focus {\n    outline: none;", css, StringComparison.Ordinal);
+        Assert.Contains("html[data-input=\"keyboard\"] h1[tabindex=\"-1\"]:focus", css, StringComparison.Ordinal);
+        Assert.Contains("outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent)", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("h1[tabindex=\"-1\"]:focus:not(:focus-visible)", css, StringComparison.Ordinal);
+
         var marker = "h1[tabindex=\"-1\"]:focus";
         var at = css.IndexOf(marker, StringComparison.Ordinal);
         Assert.True(at >= 0, "Expected a programmatic h1 focus rule.");

@@ -42,7 +42,7 @@ public static class WhoAmIStoryBuilder
         {
             sb.Append("Wat mij drijft is ");
             sb.Append(JoinDutch(valuesTop));
-            sb.AppendLine(" — dat zoek ik terug in cultuur en beloftes van een werkgever.");
+            sb.AppendLine(". Dat zoek ik terug in cultuur en beloftes van een werkgever.");
             sb.AppendLine();
         }
 
@@ -72,7 +72,7 @@ public static class WhoAmIStoryBuilder
 
         sb.Append("Op de werkvloer is mijn kracht ");
         sb.Append(JoinDutch(compTop));
-        sb.Append(". Ik zoek geen droge lijst van tests, maar werk waarin ik dat elke dag kan laten zien — dichtbij huis, in Den Haag of het Westland, bij een ploeg die op elkaar kan bouwen.");
+        sb.Append(". Ik zoek geen droge lijst van tests, maar werk waarin ik dat elke dag kan laten zien, dichtbij huis, in Den Haag of het Westland, bij een ploeg die op elkaar kan bouwen.");
         sb.AppendLine();
         sb.AppendLine();
         if (keywords.Count > 0)
@@ -117,7 +117,7 @@ public static class WhoAmIStoryBuilder
     }
 
     private const string Fallback =
-        "Ik ben klaar voor werk dichterbij dan je denkt. Ik zoek een ploeg waar ik mijn inzet, ritme en aandacht voor mensen kwijt kan — in gewone taal, zonder poespas.";
+        "Ik ben klaar voor werk dichterbij dan je denkt. Ik zoek een ploeg waar ik mijn inzet, ritme en aandacht voor mensen kwijt kan, in gewone taal, zonder poespas.";
 
     private static List<string> TopLabels(IEnumerable<(string Label, int Percent)> items, int take)
         => items
@@ -129,6 +129,11 @@ public static class WhoAmIStoryBuilder
             .Take(take)
             .ToList();
 
+    private static string LowerInside(string value)
+        => string.IsNullOrWhiteSpace(value)
+            ? value
+            : char.ToLowerInvariant(value[0]) + value[1..];
+
     private static string JoinDutch(IReadOnlyList<string> items)
     {
         if (items.Count == 0)
@@ -138,9 +143,9 @@ public static class WhoAmIStoryBuilder
 
         if (items.Count == 1)
         {
-            return items[0];
+            return LowerInside(items[0]);
         }
 
-        return string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1];
+        return string.Join(", ", items.Take(items.Count - 1).Select(LowerInside)) + " en " + LowerInside(items[^1]);
     }
 }
