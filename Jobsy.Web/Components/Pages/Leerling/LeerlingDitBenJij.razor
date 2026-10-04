@@ -6,7 +6,9 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -27,13 +29,17 @@ else if (_resultPending)
         </button>
     </section>
 }
-else if (_result is null)
+else if (_sessionLost)
 {
     <section class="ll-card">
         <h1>@Culture["Leerling.Result.Title"]</h1>
         <p class="muted">@Culture["Leerling.Session.Lost"]</p>
         <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Reis.Title"]</a>
     </section>
+}
+else if (_result is null)
+{
+    <LeerlingOfflineRetry Busy="@_retryBusy" OnRetry="RetryOffline" />
 }
 else
 {
@@ -94,6 +100,7 @@ else
     private bool _resultPending;
     private bool _retryBusy;
     private bool _retried;
+    private bool _sessionLost;
     private PupilResultPageDto? _result;
 
     protected override async Task OnInitializedAsync()
@@ -119,50 +126,59 @@ else
         }
     }
 
+    private Task RetryOffline() => LoadAsync(allowRetry: true);
+
     private async Task LoadAsync(bool allowRetry)
     {
         _loading = true;
+        _sessionLost = false;
+        _resultPending = false;
         try
         {
-            using var response = await Api.GetPupilResultResponseAsync();
-            if (response.IsSuccessStatusCode)
+            for (var attempt = 0; attempt < PupilLoadRetry.AttemptDelaysMs.Length; attempt++)
             {
-                _result = await response.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
-                _resultPending = false;
-                return;
-            }
-
-            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
-            {
-                var progress = await Api.GetPupilProgressAsync();
-                if (progress is not null
-                    && progress.AnsweredCount >= progress.TotalItems
-                    && progress.TotalItems > 0)
+                if (PupilLoadRetry.AttemptDelaysMs[attempt] > 0)
                 {
-                    if (allowRetry && !_retried)
+                    await Task.Delay(PupilLoadRetry.AttemptDelaysMs[attempt]);
+                }
+
+                try
+                {
+                    using var response = await Api.GetPupilResultResponseAsync();
+                    if (PupilLoadRetry.IsSessionLost(response.StatusCode))
                     {
-                        _retried = true;
-                        // Progress self-heals; try the result once more.
-                        using var retry = await Api.GetPupilResultResponseAsync();
-                        if (retry.IsSuccessStatusCode)
-                        {
-                            _result = await retry.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
-                            _resultPending = false;
-                            return;
-                        }
+                        _sessionLost = true;
+                        _result = null;
+                        _resultPending = false;
+                        return;
                     }
 
-                    _resultPending = true;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        _result = await response.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
+                        _resultPending = false;
+                        return;
+                    }
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                    {
+                        await HandleConflictAsync(allowRetry);
+                        return;
+                    }
+                }
+                catch (Exception ex) when (PupilLoadRetry.IsSessionLost(ex))
+                {
+                    _sessionLost = true;
                     _result = null;
+                    _resultPending = false;
                     return;
+                }
+                catch
+                {
+                    // Transient. Try the next delay.
                 }
             }
 
-            _result = null;
-            _resultPending = false;
-        }
-        catch
-        {
             _result = null;
             _resultPending = false;
         }
@@ -170,5 +186,33 @@ else
         {
             _loading = false;
         }
+    }
+
+    private async Task HandleConflictAsync(bool allowRetry)
+    {
+        var progress = await Api.GetPupilProgressAsync();
+        if (progress is not null
+            && progress.AnsweredCount >= progress.TotalItems
+            && progress.TotalItems > 0)
+        {
+            if (allowRetry && !_retried)
+            {
+                _retried = true;
+                using var retry = await Api.GetPupilResultResponseAsync();
+                if (retry.IsSuccessStatusCode)
+                {
+                    _result = await retry.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
+                    _resultPending = false;
+                    return;
+                }
+            }
+
+            _resultPending = true;
+            _result = null;
+            return;
+        }
+
+        _result = null;
+        _resultPending = false;
     }
 }

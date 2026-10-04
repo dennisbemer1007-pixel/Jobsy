@@ -824,7 +824,9 @@
     font-weight: 600;
     cursor: pointer;
 }
-.ll-login .btn-primary {
+.ll-login .btn-primary,
+.ll-start .btn-primary,
+.ll-card .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -836,6 +838,22 @@
     color: #fff;
     font-weight: 600;
     cursor: pointer;
+    text-decoration: none;
+}
+.ll-card .btn-secondary,
+.ll-start .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
 }
 .ll-error { color: var(--danger, #b00); }
 .ll-saved { color: var(--success); font-size: var(--text-sm); }
@@ -1063,6 +1081,22 @@
         grid-template-columns: 240px 1fr 200px;
         align-items: start;
         max-width: 1200px;
+    }
+    /* The island has no rail. The card takes the question column (~728px), the mascot stays beside it. */
+    .ll-reis.ll-island {
+        grid-template-columns: minmax(0, 728px) 200px;
+        justify-content: center;
+        max-width: 960px;
+    }
+    .ll-reis.ll-island > .ll-island-card {
+        grid-column: 1;
+        grid-row: 1;
+        width: 100%;
+        max-width: 728px;
+    }
+    .ll-reis.ll-island > .ll-lob-zone:not(.ll-lob-zone--mobile) {
+        grid-column: 2;
+        grid-row: 1;
     }
     .ll-rail { display: block; background: var(--surface); border-radius: 16px; padding: var(--space-4); }
     .ll-rail__list { list-style: none; padding: 0; margin: var(--space-3) 0; }

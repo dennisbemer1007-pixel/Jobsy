@@ -7,6 +7,7 @@
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -30,9 +31,13 @@ else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
-else if (_state is null)
+else if (_sessionLost)
 {
     <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_state is null)
+{
+    <LeerlingOfflineRetry OnRetry="Reload" />
 }
 else
 {
@@ -155,6 +160,7 @@ else
     private bool _busy;
     private bool _partBreak;
     private bool _offline;
+    private bool _sessionLost;
     private string? _error;
     private readonly HashSet<string> _likes = new(StringComparer.Ordinal);
     private readonly HashSet<string> _dislikes = new(StringComparer.Ordinal);
@@ -173,18 +179,21 @@ else
         var previous = _state;
         _loading = previous is null;
         _offline = false;
-        PupilProgressStateDto? next = null;
-        for (var attempt = 0; attempt < 2 && next is null; attempt++)
+        _sessionLost = false;
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync());
+        if (outcome.SessionLost)
         {
-            next = await FetchProgressAsync();
+            _sessionLost = true;
+            _state = null;
+            _def = null;
         }
-
-        if (next is null)
+        else if (outcome.Value is null)
         {
             if (previous is null)
             {
                 _state = null;
                 _def = null;
+                _offline = true;
             }
             else
             {
@@ -194,22 +203,10 @@ else
         }
         else
         {
-            ApplyLoaded(next);
+            ApplyLoaded(outcome.Value);
         }
 
         _loading = false;
-    }
-
-    private async Task<PupilProgressStateDto?> FetchProgressAsync()
-    {
-        try
-        {
-            return await Api.GetPupilProgressAsync();
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     private void ApplyLoaded(PupilProgressStateDto state)
