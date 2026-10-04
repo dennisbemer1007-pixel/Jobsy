@@ -83,7 +83,9 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             _db.CandidateCareerInterests.Add(row);
         }
 
-        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status);
+        var storedAnswers = CareerTestCatalog.ParseAnswersJson(row.AnswersJson);
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
+            && CareerTestCatalog.IsComplete(storedAnswers);
         var answersJson = CareerTestCatalog.SerializeAnswers(answers);
         var baselineAnswersJson = row.AnswersJson;
         if (wasCompleted && !complete)
@@ -95,9 +97,8 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             var noOp = await _saveGuard.CommitCompleteAsync(
                 userId, AssessmentKind.Career, AssessmentVariant.Quick, answersJson, null,
                 previousSnapshotJson: baselineAnswersJson, completedAnswersJson: baselineAnswersJson, cancellationToken);
-            if (noOp)
+            if (noOp && ScoresMatch(row, CareerTestCatalog.Score(answers)))
             {
-                // identical complete — leave row untouched
                 return await ComposeDtoAsync(userId, row, includeMatches: true, cancellationToken);
             }
         }
@@ -228,6 +229,15 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             : InsightsStatuses.Ready;
         return ToDto(row, price, matches, compass, insights);
     }
+
+    private static bool ScoresMatch(CandidateCareerInterest row, RiasecScores? preview)
+        => preview is { IsComplete: true }
+           && row.RealisticPercent == preview.Realistic
+           && row.InvestigativePercent == preview.Investigative
+           && row.ArtisticPercent == preview.Artistic
+           && row.SocialPercent == preview.Social
+           && row.EnterprisingPercent == preview.Enterprising
+           && row.ConventionalPercent == preview.Conventional;
 
     private static CandidateCareerInterestStateDto ToDto(
         CandidateCareerInterest? row,

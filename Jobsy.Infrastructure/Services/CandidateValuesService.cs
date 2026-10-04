@@ -84,7 +84,12 @@ public sealed class CandidateValuesService : ICandidateValuesService
             _db.CandidateValuesProfiles.Add(row);
         }
 
-        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status);
+        var storedAnswers = SchwartzValuesCatalog.ParseAnswers(row.AnswersJson);
+        // A "completed" row with a short answer set (seed or a partial save) is not a real
+        // result yet. Treat the first full save as the original completion so scores update
+        // and it does not spend an adjustment.
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
+            && SchwartzValuesCatalog.IsComplete(storedAnswers);
         var answersJson = SchwartzValuesCatalog.SerializeAnswers(answers);
         var baselineAnswersJson = row.AnswersJson;
         if (wasCompleted && !complete)
@@ -95,7 +100,7 @@ public sealed class CandidateValuesService : ICandidateValuesService
         {
             var noOp = await _saveGuard.CommitCompleteAsync(
                 userId, AssessmentKind.Values, AssessmentVariant.Quick, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
-            if (noOp)
+            if (noOp && ScoresMatch(row, SchwartzValuesCatalog.Score(answers)))
             {
                 var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Values);
                 return ToDto(row, priceNoOp);
@@ -150,6 +155,14 @@ public sealed class CandidateValuesService : ICandidateValuesService
                 cancellationToken);
         return row is null ? null : FromRow(row);
     }
+
+    private static bool ScoresMatch(CandidateValuesProfile row, SchwartzValuesScores? preview)
+        => preview is { IsComplete: true }
+           && row.AutonomyPercent == preview.Autonomy
+           && row.ConnectionPercent == preview.Connection
+           && row.AchievementPercent == preview.Achievement
+           && row.StabilityPercent == preview.Stability
+           && row.ImpactPercent == preview.Impact;
 
     private static void ApplyScores(CandidateValuesProfile row, SchwartzValuesScores s)
     {
