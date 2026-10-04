@@ -152,6 +152,7 @@ public sealed class AiProviderStatusItem
     public string DisplayName { get; set; } = "OpenAI";
     public bool ReadOnly { get; set; } = true;
     public bool FellBackToOpenAi { get; set; }
+    public bool InferenceInEu { get; set; }
 }
 
 public sealed class IntegrationCredentialItem

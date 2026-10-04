@@ -511,6 +511,11 @@ else if (_snapshot is not null)
             return Culture["AdminSettings.WhatsAppReminders.EnableConfirm"];
         }
 
+        if (entry.Key == "SchoolsEnabled" && next is true)
+        {
+            return Culture["AdminSettings.Schools.Enabled.EnableConfirm"];
+        }
+
         return entry.ImpactKey is null ? null : Culture[entry.ImpactKey];
     }
 

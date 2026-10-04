@@ -315,6 +315,31 @@ public class PlatformSettingsEditorBunitTests : BunitContext
     }
 
     [Fact]
+    public void Switching_schools_on_asks_for_confirmation()
+    {
+        _handler.Features = new PlatformFeatureItem
+        {
+            SchoolsEnabled = false,
+            VacancyContentModerationEnabled = true,
+            PublicWebBaseUrl = "http://localhost:5201"
+        };
+
+        var cut = Render<PlatformSettingsEditor>(p => p
+            .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
+        cut.WaitForElement(".admin-settings-group");
+
+        cut.FindAll("button.admin-switch")
+            .First(b => b.GetAttribute("aria-label") == "Scholen-portalen actief")
+            .Click();
+
+        Assert.Contains(
+            "Aan: scholen, leraren en leerlingen kunnen inloggen. Weet je het zeker?",
+            cut.Markup,
+            StringComparison.Ordinal);
+        Assert.Equal(0, cut.Instance.DirtyCount);
+    }
+
+    [Fact]
     public void Cancel_restores_draft()
     {
         _handler.Features = new PlatformFeatureItem

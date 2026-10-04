@@ -201,6 +201,31 @@ public class OpenAiEndpointResolverTests
     }
 
     [Fact]
+    public async Task Mistral_keeps_a_global_host_and_rejects_a_private_host()
+    {
+        var global = CreateSut(
+            ai: new AiOptions { Provider = "Mistral" },
+            mistral: new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                BaseUrl = "https://api.mistral.ai/v1"
+            });
+        var globalResolved = await global.ResolveAsync(OpenAiFeature.CvExtraction);
+        Assert.Equal("https://api.mistral.ai/v1/", globalResolved.BaseUrl);
+        Assert.False(MistralEndpoint.InferenceStaysInEu(globalResolved.BaseUrl));
+
+        var blocked = CreateSut(
+            ai: new AiOptions { Provider = "Mistral" },
+            mistral: new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                BaseUrl = "http://127.0.0.1/v1/"
+            });
+        var blockedResolved = await blocked.ResolveAsync(OpenAiFeature.CvExtraction);
+        Assert.Equal(MistralOptions.DefaultBaseUrl, blockedResolved.BaseUrl);
+    }
+
+    [Fact]
     public void Feature_table_covers_all_enum_values()
     {
         foreach (var feature in Enum.GetValues<OpenAiFeature>())

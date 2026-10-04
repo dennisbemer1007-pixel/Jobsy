@@ -226,7 +226,8 @@ public sealed record AiProviderStatusDto(
     string Provider,
     string DisplayName,
     bool ReadOnly,
-    bool FellBackToOpenAi);
+    bool FellBackToOpenAi,
+    bool InferenceInEu = false);
 
 public record IntegrationCredentialDto(
     string Key,

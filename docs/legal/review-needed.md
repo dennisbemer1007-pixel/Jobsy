@@ -6,12 +6,19 @@ They may ship to `acceptatie`; a lawyer reviews them before they go to `main` / 
 Every PR that changes a legal text adds its sections here: document · section id · version ·
 what changed · open question.
 
+## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-07
+
+| Section | Id | What changed | Open question for the lawyer |
+|---|---|---|---|
+| 4 | `delen` | The Mistral row keeps id `mistral`. Place, data line and transfer basis follow the base URL host. `api.eu.mistral.ai`: “verwerking in de EU” and basis “Binnen de EU”. Any other host, including the global host `api.mistral.ai`: “Mistral belooft geen plek voor de verwerking” and basis “Mistral noemt geen plek voor deze verwerking”. The region line also says that Mistral account and billing data can be handled outside the EU, in the same style as the Render caveat. | Is “Binnen de EU” still the right basis when inference is on the EU endpoint but Mistral account, API-key and billing data may be handled outside the EU? Is it clear that this is Mistral’s own account, not the candidate’s? |
+| 7 | `ai` | The official Dutch CV sentences and the CV upload hint in nl, en, pl, ro and ar follow the same host rule. | Same question for a CV that can contain a name, address and phone number. |
+
 ## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-06
 
 | Section | Id | What changed | Open question for the lawyer |
 |---|---|---|---|
-| 4 | `delen` | The AI row follows `Ai:Provider`. Default stays OpenAI (United States, DPF). When the provider is Mistral and the API key is set, the table lists Mistral AI (Paris, data in the EU, no transfer basis outside the EEA) and drops OpenAI. A missing Mistral key keeps the OpenAI row, because calls stay on OpenAI. Other American companies in the table are unchanged, so the “Buiten de EU” paragraph stays. | Is “Frankrijk (Parijs); gegevens in de EU” enough, or must the statement name Mistral’s EU contractual option (La Plateforme, EU workspace) as a condition? |
-| 7 | `ai` | The CV sentences name Mistral AI and the EU when that provider is active, and OpenAI when it is not. The CV upload hint in nl, en, pl, ro and ar does the same. | When Mistral is on, is “gegevens blijven in de EU” accurate for a CV that may contain a name and phone number, given Mistral only keeps data in the EU if the workspace was created with the EU option? |
+| 4 | `delen` | The AI row follows `Ai:Provider`. Default stays OpenAI (United States, DPF). When the provider is Mistral and the API key is set, the table lists Mistral AI (Paris, data in the EU, no transfer basis outside the EEA) and drops OpenAI. A missing Mistral key keeps the OpenAI row, because calls stay on OpenAI. Other American companies in the table are unchanged, so the “Buiten de EU” paragraph stays. | Superseded by version 2026-10-07. The EU sentence now depends on the endpoint host. |
+| 7 | `ai` | The CV sentences name Mistral AI and the EU when that provider is active, and OpenAI when it is not. The CV upload hint in nl, en, pl, ro and ar does the same. | Superseded by version 2026-10-07. The EU sentence now depends on the endpoint host. |
 
 ## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-04
 

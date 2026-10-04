@@ -698,6 +698,22 @@
 }
 .ll-topbar__pause-form { margin: 0; }
 .ll-main { flex: 1; position: relative; z-index: 1; padding: var(--space-4); }
+.ll-legal,
+.sch-legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+}
+.ll-legal a,
+.sch-legal a {
+    color: var(--muted);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
 
 .ll-scene {
     position: fixed;

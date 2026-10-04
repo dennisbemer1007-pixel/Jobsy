@@ -121,6 +121,186 @@ public class PupilStoryAndDreamJobTests
     }
 
     [Fact]
+    public void Every_pair_keyed_family_resolves_for_all_fifteen_pairs()
+    {
+        const string letters = "RIASEC";
+        var canonical = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < letters.Length; i++)
+        {
+            for (var j = 0; j < letters.Length; j++)
+            {
+                var suffix = i == j
+                    ? letters[i].ToString()
+                    : string.Concat(letters[i], letters[j]);
+                if (i != j)
+                {
+                    canonical.Add(PupilStoryTemplates.CanonicalRiasecPair(letters[i], letters[j]));
+                    var swapped = string.Concat(letters[j], letters[i]);
+                    AssertPairFamily("LeerlingStory.Riasec.", suffix, swapped, explain: false);
+                    AssertPairFamily("LeerlingStory.Tile.Riasec.", suffix, swapped, explain: true);
+                    for (var n = 1; n <= 3; n++)
+                    {
+                        var a = PupilVerhaalCopy.Get($"LeerlingStory.Class.{suffix}.{n}");
+                        var b = PupilVerhaalCopy.Get($"LeerlingStory.Class.{swapped}.{n}");
+                        AssertResolved(a, suffix);
+                        Assert.Equal(a, b);
+                    }
+                }
+
+                var prompts = _renderer.ClassDiscussionPromptKeys(letters[i].ToString(), letters[j].ToString());
+                Assert.Equal(3, prompts.Count);
+                foreach (var line in prompts)
+                {
+                    AssertResolved(line, suffix);
+                }
+
+                if (i != j)
+                {
+                    Assert.Equal(
+                        prompts,
+                        _renderer.ClassDiscussionPromptKeys(letters[j].ToString(), letters[i].ToString()));
+                }
+            }
+        }
+
+        Assert.Equal(15, canonical.Count);
+        foreach (var pair in canonical)
+        {
+            Assert.True(PupilVerhaalCopy.All.ContainsKey("LeerlingStory.Riasec." + pair), pair);
+            Assert.True(PupilVerhaalCopy.All.ContainsKey("LeerlingStory.Tile.Riasec." + pair), pair);
+            for (var n = 1; n <= 3; n++)
+            {
+                Assert.True(PupilVerhaalCopy.All.ContainsKey($"LeerlingStory.Class.{pair}.{n}"), $"{pair}.{n}");
+            }
+        }
+
+        Assert.Equal(
+            PupilVerhaalCopy.Get("LeerlingStory.Class.C.1"),
+            PupilVerhaalCopy.Get("LeerlingStory.Class.CX.1"));
+        Assert.Equal(
+            PupilVerhaalCopy.Get("LeerlingStory.Tile.Riasec.R"),
+            PupilVerhaalCopy.Get("LeerlingStory.Tile.Riasec.RX"));
+    }
+
+    [Fact]
+    public void Every_template_key_resolves_to_text()
+    {
+        const string letters = "RIASEC";
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < letters.Length; i++)
+        {
+            for (var j = 0; j < letters.Length; j++)
+            {
+                var code = i == j
+                    ? letters[i].ToString()
+                    : string.Concat(letters[i], letters[j]);
+                foreach (var value in SchwartzValuesCatalog.CategoryCodes)
+                {
+                    foreach (var culture in CulturePersonalityCatalog.CultureDimensionCodes)
+                    {
+                        var result = FixtureResult();
+                        result.HollandCode = code;
+                        result.TopValue = value;
+                        result.TopCulture = culture;
+                        var keys = PupilStoryTemplates.SelectKeys(result, ["sport"]);
+                        Collect(seen, keys.BigFiveKey, keys.RiasecKey, keys.SchwartzKey, keys.CultureKey);
+                        Collect(seen, keys.TileCompetenceKey, keys.TileRiasecKey, keys.TileValueKey, keys.TileCultureKey);
+                        Collect(seen, keys.TileCompetenceKey + ".Explain", keys.TileRiasecKey + ".Explain");
+                        Collect(seen, keys.TileValueKey + ".Explain", keys.TileCultureKey + ".Explain");
+                        foreach (var job in keys.JobIdeaKeys)
+                        {
+                            seen.Add(job);
+                        }
+                    }
+                }
+
+                var talk = FixtureResult();
+                talk.HollandCode = letters[i].ToString();
+                talk.TopValue = SchwartzValuesCatalog.CategoryCodes[j % SchwartzValuesCatalog.CategoryCodes.Length];
+                foreach (var line in PupilStoryTemplates.ConversationStarterKeys(talk))
+                {
+                    seen.Add(line);
+                }
+
+                foreach (var line in PupilStoryTemplates.ClassDiscussionPromptKeys(
+                             letters[i].ToString(),
+                             letters[j].ToString()))
+                {
+                    seen.Add(line);
+                }
+            }
+        }
+
+        Assert.NotEmpty(seen);
+        foreach (var key in seen)
+        {
+            if (!key.StartsWith("LeerlingStory.", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            AssertResolved(PupilVerhaalCopy.Get(key), key);
+        }
+    }
+
+    [Fact]
+    public void Value_labels_match_between_tile_sentence_and_school()
+    {
+        Assert.Equal("Samen met anderen", PupilVerhaalCopy.Get("LeerlingStory.Tile.Val.Connection"));
+        Assert.Equal("Iets goed afmaken", PupilVerhaalCopy.Get("LeerlingStory.Tile.Val.Achievement"));
+        Assert.Equal(
+            PupilVerhaalCopy.Get("LeerlingStory.Tile.Val.Connection"),
+            UiStrings.Get("School.Dim.Val.Connection", "nl"));
+        Assert.Equal(
+            PupilVerhaalCopy.Get("LeerlingStory.Tile.Val.Achievement"),
+            UiStrings.Get("School.Dim.Val.Achievement", "nl"));
+        Assert.Contains(
+            "samen met anderen",
+            PupilVerhaalCopy.Get("LeerlingStory.Val.Connection"),
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(
+            "iets goed afmaken",
+            PupilVerhaalCopy.Get("LeerlingStory.Val.Achievement"),
+            StringComparison.OrdinalIgnoreCase);
+        foreach (var lang in new[] { "en", "pl", "ro", "ar" })
+        {
+            var text = UiStrings.Get("School.Dim.Val.Connection", lang);
+            Assert.NotEqual("Samen met anderen", text);
+            Assert.False(string.IsNullOrWhiteSpace(text));
+        }
+    }
+
+    private static void AssertPairFamily(string prefix, string forward, string backward, bool explain)
+    {
+        var a = PupilVerhaalCopy.Get(prefix + forward);
+        var b = PupilVerhaalCopy.Get(prefix + backward);
+        AssertResolved(a, prefix + forward);
+        Assert.Equal(a, b);
+        if (!explain)
+        {
+            return;
+        }
+
+        var explainA = PupilVerhaalCopy.Get(prefix + forward + ".Explain");
+        var explainB = PupilVerhaalCopy.Get(prefix + backward + ".Explain");
+        AssertResolved(explainA, prefix + forward + ".Explain");
+        Assert.Equal(explainA, explainB);
+    }
+
+    private static void AssertResolved(string text, string label)
+        => Assert.False(
+            text.StartsWith("LeerlingStory.", StringComparison.Ordinal),
+            label + " stayed raw: " + text);
+
+    private static void Collect(HashSet<string> seen, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            seen.Add(key);
+        }
+    }
+
+    [Fact]
     public void Dream_routes_cover_the_catalog_with_five_needs_and_no_urls()
     {
         Assert.Equal(DreamJobCatalog.All.Count, PupilDreamJobRoutes.All.Count);

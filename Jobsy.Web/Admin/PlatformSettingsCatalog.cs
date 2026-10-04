@@ -292,7 +292,8 @@ public static class PlatformSettingsCatalog
             ImpactKey: "AdminSettings.Schools.Enabled.ImpactOff",
             ImpactLevel: PlatformSettingImpactLevel.Warn,
             ConfirmOnChange: true,
-            ShowOnDashboard: true));
+            ShowOnDashboard: true,
+            ConfirmWhen: PlatformSettingConfirmWhen.Both));
 
         list.Add(new PlatformSettingDescriptor(
             Key: "SchoolPerCodeResultsEnabled",

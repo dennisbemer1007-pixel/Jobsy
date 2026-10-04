@@ -72,6 +72,7 @@ public class PageSeoCatalogTests
         Assert.Contains("HtmlLang", app);
         Assert.Contains("theme-color", app);
         Assert.Contains("Lobsy — een loopbaangids in je eigen taal", app);
+        Assert.Contains("<title>@DocumentTitle</title>", app);
         Assert.Contains("HeadOutlet", app);
 
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
@@ -100,6 +101,25 @@ public class PageSeoCatalogTests
         var company = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "CompanyPublicPage.razor"));
         Assert.Contains("prerender: true", company);
         Assert.DoesNotContain("prerender: false", company);
+    }
+
+    [Theory]
+    [InlineData("/privacy", "Legal.Privacy")]
+    [InlineData("/toegankelijkheid", "A11y.Seo.Title")]
+    [InlineData("/scholen", "HowLobsy.Schools.Title")]
+    public void Static_public_pages_have_their_own_catalog_titles(string path, string titleKey)
+    {
+        var entry = PageSeoCatalog.Resolve(path);
+        Assert.Equal(titleKey, entry.TitleKey);
+        Assert.NotEqual(PageSeoCatalog.Fallback.TitleKey, entry.TitleKey);
+        Assert.Contains(path, PageSeoCatalog.StaticIndexablePaths);
+        foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
+        {
+            var text = UiStrings.Get(entry.TitleKey, lang);
+            Assert.NotEqual(entry.TitleKey, text);
+            var branded = PageSeoResolver.WithBrand(text);
+            Assert.DoesNotContain("een loopbaangids in je eigen taal", branded, StringComparison.Ordinal);
+        }
     }
 
     private static string SamplePath(string template)
