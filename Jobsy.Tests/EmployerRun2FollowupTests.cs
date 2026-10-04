@@ -62,6 +62,17 @@ public class EmployerRun2FollowupTests
 
         Assert.Equal("1 werkgever via jouw link of code · {0} actief", UiStrings.Get("Sales.Employers.LeadOne", "nl"));
         Assert.Equal("Gesloten {0}", UiStrings.Get("WgVac.ClosedOn", "nl"));
+        Assert.Equal(
+            "Vacature offline halen? Kandidaten zien hem dan niet meer.",
+            UiStrings.Get("AdminVacancy.Confirm.Offline", "nl"));
+        Assert.Equal("Offline halen", UiStrings.Get("AdminVacancy.Confirm.OfflineAction", "nl"));
+        foreach (var lang in new[] { "en", "pl", "ro", "ar" })
+        {
+            Assert.NotEqual(
+                UiStrings.Get("AdminVacancy.Confirm.Offline", "nl"),
+                UiStrings.Get("AdminVacancy.Confirm.Offline", lang));
+            Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("AdminVacancy.Confirm.OfflineAction", lang)));
+        }
     }
 
     [Fact]

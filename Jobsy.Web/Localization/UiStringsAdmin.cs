@@ -847,6 +847,8 @@ public static class UiStringsAdmin
         Add("AdminVacancy.Status.Draft", "Concept", "Draft", "Szkic", "Ciornă", "مسودة");
         Add("AdminVacancy.Status.Archived", "Inactief", "Inactive", "Nieaktywna", "Inactivă", "غير نشط");
         Add("AdminVacancy.Confirm.Purge", "Vacature en {0} sollicitaties definitief verwijderen? Dit kun je niet ongedaan maken.", "Delete this vacancy and {0} applications for good? You cannot undo this.", "Usunąć ofertę i {0} aplikacji na stałe? Tego nie cofniesz.", "Ștergi postul și {0} candidaturi definitiv? Nu poți anula.", "حذف الوظيفة و{0} طلبات نهائياً؟ لا يمكن التراجع.");
+        Add("AdminVacancy.Confirm.Offline", "Vacature offline halen? Kandidaten zien hem dan niet meer.", "Take this vacancy offline? Candidates will no longer see it.", "Zdjąć tę ofertę? Kandydaci jej wtedy nie zobaczą.", "Scoți anunțul de pe site? Candidații nu îl mai văd.", "إيقاف الوظيفة؟ لن يراها المرشحون بعد ذلك.");
+        Add("AdminVacancy.Confirm.OfflineAction", "Offline halen", "Take offline", "Wyłącz publikację", "Oprește publicarea", "إيقاف النشر");
         Add("AdminVacancy.Status.Pending", "In afwachting", "Pending", "Oczekujące", "În așteptare", "قيد الانتظار");
         Add("AdminVacancy.Status.Inactive", "Inactief", "Inactive", "Nieaktywne", "Inactiv", "غير نشط");
         Add("AdminVacancy.Drilldown", "Uitsplitsing: {0}", "Breakdown: {0}", "Rozbicie: {0}", "Detaliere: {0}", "التفصيل: {0}");

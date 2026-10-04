@@ -73,8 +73,67 @@ public class EmployerRun2FollowupPlaywrightTests : BunitContext
         await Assertions.Expect(page.GetByRole(AriaRole.Button)).ToBeVisibleAsync();
     }
 
+    [Fact]
+    public async Task Cancel_on_delete_confirm_does_not_delete_and_offline_asks_first()
+    {
+        var deleted = 0;
+        var cancelled = 0;
+        var purge = Render<AdminVacancyPurgeConfirm>(p => p
+            .Add(x => x.Item, new AdminVacancyItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "Kas",
+                ApplicationCount = 2
+            })
+            .Add(x => x.OnConfirm, () => deleted++)
+            .Add(x => x.OnCancel, () => cancelled++));
+
+        purge.Find("[data-testid=admin-vacancy-delete-cancel]").Click();
+        Assert.Equal(0, deleted);
+        Assert.Equal(1, cancelled);
+
+        var offline = Render<AdminVacancyOfflineConfirm>(p => p
+            .Add(x => x.Item, new AdminVacancyItem
+            {
+                Id = Guid.NewGuid(),
+                Title = "Kas",
+                Status = "Active"
+            }));
+
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        var page = await browser.NewPageAsync();
+
+        await page.SetContentAsync(WrapWithClickProbe(purge.Markup));
+        await page.GetByTestId("admin-vacancy-delete-cancel").ClickAsync();
+        Assert.False(await page.EvaluateAsync<bool>("() => window.__purgeClicked === true"));
+        Assert.True(await page.EvaluateAsync<bool>("() => window.__cancelClicked === true"));
+        await Assertions.Expect(page.GetByTestId("admin-vacancy-delete-confirm")).ToBeVisibleAsync();
+
+        await page.SetContentAsync(Wrap(offline.Markup));
+        var note = page.GetByTestId("admin-vacancy-offline-confirm");
+        await Assertions.Expect(note).ToHaveTextAsync("Vacature offline halen? Kandidaten zien hem dan niet meer.");
+        await Assertions.Expect(page.GetByTestId("admin-vacancy-offline-cancel")).ToHaveTextAsync("Annuleren");
+        await Assertions.Expect(page.GetByTestId("admin-vacancy-offline-confirm-btn")).ToHaveTextAsync("Offline halen");
+    }
+
     private static string Wrap(string body)
         => "<!DOCTYPE html><html lang=\"nl\"><body>" + body + "</body></html>";
+
+    private static string WrapWithClickProbe(string body)
+        => "<!DOCTYPE html><html lang=\"nl\"><body>" + body + """
+            <script>
+            window.__purgeClicked = false;
+            window.__cancelClicked = false;
+            document.addEventListener('click', function (e) {
+              var btn = e.target && e.target.closest ? e.target.closest('button') : null;
+              if (!btn) return;
+              if (btn.getAttribute('data-testid') === 'admin-vacancy-delete-confirm-btn') window.__purgeClicked = true;
+              if (btn.getAttribute('data-testid') === 'admin-vacancy-delete-cancel') window.__cancelClicked = true;
+            });
+            </script>
+            </body></html>
+            """;
 
     private sealed class Run2Auth : AuthenticationStateProvider
     {

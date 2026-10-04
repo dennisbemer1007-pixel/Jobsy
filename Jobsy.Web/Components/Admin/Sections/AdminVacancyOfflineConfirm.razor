@@ -5,18 +5,18 @@
 @if (Item is not null)
 {
     <LobsyFriendlyDialog IsOpen="true"
-                         Title="@Culture["WgVac.Delete"]"
-                         TitleId="admin-vac-purge"
+                         Title="@Culture["AdminVacancy.Confirm.OfflineAction"]"
+                         TitleId="admin-vac-offline"
                          OnClose="OnCancel">
-        <p data-testid="admin-vacancy-delete-confirm">@string.Format(Culture["AdminVacancy.Confirm.Purge"], Item.ApplicationCount)</p>
+        <p data-testid="admin-vacancy-offline-confirm">@Culture["AdminVacancy.Confirm.Offline"]</p>
         <div class="inline-actions">
-            <button type="button" class="btn-compact" data-testid="admin-vacancy-delete-cancel" disabled="@Busy" @onclick="OnCancel">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact" data-testid="admin-vacancy-offline-cancel" disabled="@Busy" @onclick="OnCancel">@Culture["Common.Cancel"]</button>
             <button type="button"
-                    class="btn-compact btn-compact--danger"
-                    data-testid="admin-vacancy-delete-confirm-btn"
+                    class="btn-compact btn-compact--primary"
+                    data-testid="admin-vacancy-offline-confirm-btn"
                     disabled="@Busy"
                     @onclick="OnConfirm">
-                @Culture["WgVac.Delete"]
+                @Culture["AdminVacancy.Confirm.OfflineAction"]
             </button>
         </div>
     </LobsyFriendlyDialog>
