@@ -31,20 +31,23 @@
     <div class="au-blob au-blob--a" aria-hidden="true"></div>
     <div class="au-col">
         <div class="au-card">
-            <p class="au-eyebrow">@Culture["Mfa.StepOfContext"]</p>
-            @if (!string.IsNullOrEmpty(_maskedEmail))
+            @if (!_signedIn)
             {
-                <p class="au-who">
-                    <span dir="ltr">@_maskedEmail</span>
-                    <form method="post" action="/account/mfa/cancel" data-enhance="false" class="au-inline-form">
-                        <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
-                        <button type="submit" class="au-link-btn">@Culture["Mfa.OtherAccount"]</button>
-                    </form>
-                </p>
-            }
+                <p class="au-eyebrow">@Culture["Mfa.StepOfContext"]</p>
+                @if (!string.IsNullOrEmpty(_maskedEmail))
+                {
+                    <p class="au-who">
+                        <span dir="ltr">@_maskedEmail</span>
+                        <form method="post" action="/account/mfa/cancel" data-enhance="false" class="au-inline-form">
+                            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                            <button type="submit" class="au-link-btn">@Culture["Mfa.OtherAccount"]</button>
+                        </form>
+                    </p>
+                }
 
-            <h1 class="au-title">@Culture["Mfa.PromptTitle"]</h1>
-            <p class="au-lead">@Culture["Mfa.PromptLead"]</p>
+                <h1 class="au-title">@Culture["Mfa.PromptTitle"]</h1>
+                <p class="au-lead">@Culture["Mfa.PromptLead"]</p>
+            }
 
             <LoginStatusBlock State="_loginState" UntilLocalHhMm="_untilLocal" />
 

@@ -20,6 +20,10 @@ public class CandidateJourneyPolishTests
         Assert.True(AssessmentKindLabels.TryParse("competentie", out var kind));
         Assert.Equal(AssessmentKind.Competence, kind);
         Assert.Equal("competence", AssessmentKindLabels.ToSlug(kind));
+        Assert.True(AssessmentKindLabels.TryParse("competencies", out var plural));
+        Assert.Equal(AssessmentKind.Competence, plural);
+        Assert.True(AssessmentKindLabels.TryParse("competenties", out var dutchPlural));
+        Assert.Equal(AssessmentKind.Competence, dutchPlural);
     }
 
     [Fact]
@@ -28,6 +32,7 @@ public class CandidateJourneyPolishTests
         var root = TestRepo.FindRoot();
         var dialog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyFriendlyDialog.razor"));
         Assert.Contains("e.Key == \"Escape\"", dialog, StringComparison.Ordinal);
+        Assert.Contains("FocusAsync", dialog, StringComparison.Ordinal);
 
         var history = File.ReadAllText(Path.Combine(
             root, "Jobsy.Web", "Components", "Candidate", "Onboarding", "WorkHistoryStep.razor"));
@@ -37,6 +42,9 @@ public class CandidateJourneyPolishTests
         var mfa = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Account", "MfaPrompt.razor"));
         Assert.Contains("Mfa.AlreadySignedIn", mfa, StringComparison.Ordinal);
         Assert.Contains("IsAuthenticated", mfa, StringComparison.Ordinal);
+        Assert.Contains("@if (!_signedIn)", mfa, StringComparison.Ordinal);
+        Assert.Contains("@page \"/profiel/tests\"", File.ReadAllText(Path.Combine(
+            root, "Jobsy.Web", "Components", "Pages", "Candidate", "TestsIndexRedirect.razor")), StringComparison.Ordinal);
     }
 
     [Fact]
