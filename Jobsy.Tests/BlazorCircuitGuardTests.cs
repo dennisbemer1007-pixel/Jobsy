@@ -88,9 +88,10 @@ public class BlazorCircuitGuardTests
         var appHead = app[..app.IndexOf("@if (LoadBlazorRuntime)", StringComparison.Ordinal)];
         Assert.Contains("css/features/reconnect.css?v=", appHead, StringComparison.Ordinal);
         Assert.Contains("data-reconnect-css", appHead, StringComparison.Ordinal);
+        var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
         Assert.Contains(
             "#components-reconnect-modal:not(.components-reconnect-show)",
-            app,
+            critical,
             StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "reconnect.css"));

@@ -58,7 +58,9 @@ public class SchoolClassFormBunitTests : BunitContext
         Assert.Equal(SchoolLevel.Groep78, level);
         Assert.Equal(7, year);
         Assert.Contains("Vragenlijst: Groep 7/8", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("3 puzzelpauzes", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("60 vragen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("3 puzzelpauzes", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("ongeveer 30 minuten", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("role=\"radiogroup\"", cut.Markup, StringComparison.Ordinal);
     }
 

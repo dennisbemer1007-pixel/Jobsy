@@ -54,11 +54,7 @@ public class BanenkaartPagePerformanceGuardTests
     [Fact]
     public void First_paint_reserves_homepage_layout_to_avoid_cls()
     {
-        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
-        var criticalStart = app.IndexOf("<style", StringComparison.Ordinal);
-        var criticalEnd = app.IndexOf("</style>", StringComparison.Ordinal);
-        Assert.True(criticalStart >= 0 && criticalEnd > criticalStart);
-        var critical = app[criticalStart..criticalEnd];
+        var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
         Assert.Contains(".visually-hidden", critical);
         Assert.Contains(".cookie-consent { position: fixed", critical);
         Assert.Contains(".cookie-consent a { color: #fff; text-decoration: underline", critical);

@@ -105,8 +105,8 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("auth-icon-btn", header);
         Assert.DoesNotContain("NavIcons.Logout", header);
 
-        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        Assert.Contains("max-width: 100%; overflow-x: clip;", app);
+        var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/critical.css"));
+        Assert.Contains("max-width: 100%; overflow-x: clip;", critical);
     }
 
     [Fact]
