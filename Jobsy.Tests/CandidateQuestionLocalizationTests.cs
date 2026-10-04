@@ -22,11 +22,30 @@ public class CandidateQuestionLocalizationTests
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     [Fact]
-    public void Values_q14_uses_overtreft()
+    public void Values_q14_uses_overtref()
     {
         var nl = UiStrings.Get("ValuesScan.Q14", "nl");
-        Assert.Contains("overtreft", nl, StringComparison.Ordinal);
-        Assert.DoesNotContain("overtreff.", nl, StringComparison.Ordinal);
+        Assert.Contains("overtref", nl, StringComparison.Ordinal);
+        Assert.DoesNotContain("overtreft", nl, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Test_flow_continue_lines_are_not_half_english()
+    {
+        foreach (var language in new[] { "pl", "ro" })
+        {
+            var cont = UiStrings.Get("TestFlow.ContinueAt", language);
+            var bubble = UiStrings.Get("TestFlow.Bubble.IntroContinue", language);
+            Assert.DoesNotContain(" at ", cont, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("question", cont, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("You've", bubble, StringComparison.Ordinal);
+            Assert.DoesNotContain("already", bubble, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("five", bubble, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var ar = UiStrings.Get("TestFlow.ContinueAt", "ar");
+        Assert.DoesNotContain("Continue", ar, StringComparison.Ordinal);
+        Assert.Contains("{0}", ar, StringComparison.Ordinal);
     }
 
     [Fact]

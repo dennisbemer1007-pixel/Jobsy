@@ -53,9 +53,17 @@ else
                         </fieldset>
                         <footer class="test-shell__footer">
                             <a href="/profiel/tests/values">@Culture["TestFlow.ToMyTests"]</a>
-                            <button type="button" class="engagement-btn" @onclick="StartQuestions">
-                                @(_answered == 0 ? Culture["TestFlow.Begin"] : Culture.Format("TestFlow.ContinueAt", _answered + 1))
-                            </button>
+                            @if (_answered >= _fullCount)
+                            {
+                                <a class="engagement-btn" href="/profiel/tests/values">@Culture["TestDone.ViewResult"]</a>
+                                <button type="button" class="test-flow__later" @onclick="StartQuestions">@Culture["TestFlow.Again"]</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="engagement-btn" @onclick="StartQuestions">
+                                    @(_answered == 0 ? Culture["TestFlow.Begin"] : Culture.Format("TestFlow.ContinueAt", _answered + 1))
+                                </button>
+                            }
                         </footer>
                     </ChildContent>
                 </TestPageShell>
@@ -133,9 +141,12 @@ else
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
     private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Values, _target);
-    private string IntroBubble => _answered >= 5
-        ? Culture["TestFlow.Bubble.IntroContinue"]
-        : Culture["TestFlow.Bubble.IntroStart"];
+    private int _fullCount => TestDepthRules.CountFor(AssessmentKind.Values, TestDepthLevel.Full);
+    private string IntroBubble => _answered >= _fullCount
+        ? Culture["TestFlow.Bubble.IntroDone"]
+        : _answered > 0
+            ? Culture.Format("TestFlow.Bubble.IntroContinue", _answered)
+            : Culture["TestFlow.Bubble.IntroStart"];
     private string DoneLead => (_reachedLevel ?? _target) == TestDepthLevel.Full
         ? Culture.Format("TestDone.LeadFull", Culture["ValuesScan.Title"])
         : Culture.Format("TestDone.LeadLevel", Culture["ValuesScan.Title"], Culture[TestDepthRules.NameKey(_reachedLevel ?? _target)]);
@@ -250,7 +261,7 @@ else
                 if (complete) await Api.SaveMyValuesAsync(_autosave.Answers, complete: true);
             }
             _answered = _autosave?.AnsweredCount ?? _answered;
-            _gainLines = [Culture["TestDone.Gain.Strength"], Culture["TestDone.Gain.Strength2"], Culture["TestDone.Gain.Less"]];
+            _gainLines = [Culture["TestDone.Gain.Values1"], Culture["TestDone.Gain.Values2"], Culture["TestDone.Gain.Values3"]];
             _mode = TestPageShell.ShellMode.Done;
             Navigation.NavigateTo("/candidate/values?stap=klaar", replace: true);
         }
