@@ -40,8 +40,8 @@
     "v": "20261001-errors-5"
   },
   "css/features/gratis-dna.css": {
-    "sha256": "553f33aa2c745b397a9f9d9fcdc868f4329b79365617d5e8699f5323e0ce070f",
-    "v": "20261003-gd-start"
+    "sha256": "2a7d8f1c132b3556c62fc1cbfbbb8300b579f73ca684b4760bc9275a2fdeada5",
+    "v": "20261004-teaser"
   },
   "css/features/kandidaat-banen.css": {
     "sha256": "474f33a517f76c9b1290a3bee730b63fd8bbf7314c013f3d6a84d00aee3f1551",
@@ -64,8 +64,8 @@
     "v": "20261002-ci-mtp"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "bee1df3b4b60b437e7eacf088b3bd79d608647b58ad7b2d0e6e465b713ca8a3c",
-    "v": "20261003-diploma"
+    "sha256": "bae79b2b0d69d4b8e513bed25e695586cd0a98b3a6fa850d072cccd3b768a875",
+    "v": "20261004-tabs"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
@@ -108,8 +108,8 @@
     "v": "20260929-testresultaten-b2"
   },
   "css/features/tests.css": {
-    "sha256": "5fbe58656dbb980f4fcac11bf95469519868d0b3dc93d70a32e8aaf3cb663e3e",
-    "v": "20260930-tests-6"
+    "sha256": "0bac83244c674b7f4011ea85891941827ec3fcfed58109d9a003deee8537b855",
+    "v": "20261004-flow"
   },
   "css/features/werkgever-aanmelding.css": {
     "sha256": "61ab5ba72e934f78dde05395a0af29eb0cf55ab4d3d3dfae4c1c19091d799a09",
