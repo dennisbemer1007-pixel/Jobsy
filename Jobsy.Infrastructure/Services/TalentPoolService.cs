@@ -114,7 +114,7 @@ public sealed class TalentPoolService : ITalentPoolService
                 : competency is not null
                     ? CompetencyTestCatalog.ParseTagsJson(competency.RiasecTagsJson)
                     : [];
-            if (showRiasec && career is not null)
+            if (career is not null)
             {
                 foreach (var tag in CareerTestCatalog.ParseTagsJson(career.MatchTagsJson))
                 {
@@ -124,7 +124,8 @@ public sealed class TalentPoolService : ITalentPoolService
                     }
                 }
             }
-            else if (!showRiasec)
+
+            if (!showRiasec)
             {
                 matchTags = matchTags
                     .Where(t => !TalentPoolRiasecVisibility.IsCareerTestOutput(t))
