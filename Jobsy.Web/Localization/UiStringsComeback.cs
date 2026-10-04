@@ -66,6 +66,18 @@ internal static class UiStringsComeback
             "Wył. = nie ma WhatsApp. Kandydaci nie widzą wyboru. Domyślnie wyłączone.",
             "Oprit = nu pleacă WhatsApp. Candidații nu văd opțiunea. Oprit implicit.",
             "إيقاف = لا يُرسل واتساب. المرشحون لا يرون الخيار. متوقف افتراضياً.");
+        Add("AdminSettings.WhatsAppReminders.EnableConfirm",
+            "WhatsApp aanzetten? Alleen kandidaten die zelf ja zeggen krijgen een bericht.",
+            "Turn WhatsApp on? Only candidates who say yes themselves get a message.",
+            "Włączyć WhatsApp? Wiadomość dostają tylko kandydaci, którzy sami się zgodzą.",
+            "Pornești WhatsApp? Doar candidații care spun da primesc un mesaj.",
+            "تشغيل واتساب؟ فقط من يوافق بنفسه يصله رسالة.");
+        Add("AdminSettings.WhatsAppReminders.NotConfigured",
+            "WhatsApp is niet ingesteld op de server",
+            "WhatsApp is not set up on the server",
+            "WhatsApp nie jest ustawiony na serwerze",
+            "WhatsApp nu este configurat pe server",
+            "واتساب غير مُعد على الخادم");
         Add("AdminSettings.WhatsAppReminders.Enabled.Impact",
             "Aan = alleen kandidaten die zelf ja zeggen en een nummer invullen kunnen een WhatsApp krijgen.",
             "On = only candidates who say yes and enter a number can get a WhatsApp.",

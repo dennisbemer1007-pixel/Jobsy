@@ -68,7 +68,11 @@
                 </h2>
                 <a class="admin-dash__more" href="/admin/te-doen">@Culture["AdminDash.Todo.ViewAll"]</a>
             </div>
-            @if (_todo.Count == 0)
+            @if (!_ready)
+            {
+                <p class="admin-dash__empty">@Culture["Common.Loading"]</p>
+            }
+            else if (_todo.Count == 0)
             {
                 <p class="admin-dash__empty">@Culture["AdminDash.Todo.Empty"]</p>
                 <p class="muted">@Culture["AdminDash.Todo.EmptyHint"]</p>
@@ -129,6 +133,28 @@
                     }
                 </ul>
             </section>
+
+            <section class="detail-card admin-dash__comeback" aria-labelledby="admin-comeback-heading">
+                <div class="admin-dash__card-head">
+                    <h2 id="admin-comeback-heading">@Culture["AdminDash.Comeback.Title"]</h2>
+                </div>
+                @if (!_ready)
+                {
+                    <p class="muted">@Culture["Common.Loading"]</p>
+                }
+                else if (_comeback is null)
+                {
+                    <p class="muted">@Culture["AdminDash.Comeback.Unavailable"]</p>
+                }
+                else
+                {
+                    <ul class="admin-status-list">
+                        <li class="admin-status-list__row"><span>@Culture["AdminDash.Comeback.Sent"]</span><span>@_comeback.Sent</span></li>
+                        <li class="admin-status-list__row"><span>@Culture["AdminDash.Comeback.Back7"]</span><span>@_comeback.ReturnedWithin7Days</span></li>
+                        <li class="admin-status-list__row"><span>@Culture["AdminDash.Comeback.Back30"]</span><span>@_comeback.ReturnedWithin30Days</span></li>
+                    </ul>
+                }
+            </section>
         </div>
     </div>
 
@@ -138,7 +164,11 @@
             <h2 id="admin-audit-heading">@Culture["AdminDash.RecentAudit"]</h2>
             <a class="admin-dash__more" href="/admin/beveiliging">@Culture["AdminDash.AuditLink"]</a>
         </div>
-        @if (_recentAudit.Count == 0)
+        @if (!_ready)
+        {
+            <p class="admin-dash__empty">@Culture["Common.Loading"]</p>
+        }
+        else if (_recentAudit.Count == 0)
         {
             <p class="admin-dash__empty">@Culture["AdminDash.RecentAuditEmpty"]</p>
         }
@@ -177,7 +207,9 @@
     private string _firstName = "";
     private string _lead = "";
     private bool _loading = true;
+    private bool _ready;
     private bool _loadStarted;
+    private ComebackReminderStatsItem? _comeback;
     private int _todoTotal;
     private List<AdminTodoItemView> _todo = [];
     private List<KpiVm> _kpis = [];
@@ -277,12 +309,21 @@
 
             try
             {
-                var audit = await Api.GetAdminAuditAsync(page: 1, pageSize: 4);
-                _recentAudit = audit.Items;
+                var audit = await Api.GetAdminAuditAsync(page: 1, pageSize: 20);
+                _recentAudit = audit.Items.Where(e => !IsSystemRetention(e)).Take(4).ToList();
             }
             catch
             {
                 _recentAudit = [];
+            }
+
+            try
+            {
+                _comeback = await Api.GetComebackReminderStatsAsync();
+            }
+            catch
+            {
+                _comeback = null;
             }
         }
         catch
@@ -292,8 +333,14 @@
         finally
         {
             _loading = false;
+            _ready = true;
         }
     }
+
+    private static bool IsSystemRetention(AdminAuditItem e)
+        => string.Equals(e.ActorKind, "system", StringComparison.OrdinalIgnoreCase)
+           && (string.Equals(e.Action, "privacy.retention.run", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(e.TargetLabel, "Data retention", StringComparison.OrdinalIgnoreCase));
 
     private List<KpiVm> BuildKpis(List<MetricCount> metrics, AdminFinanceSummaryItem? finance)
     {

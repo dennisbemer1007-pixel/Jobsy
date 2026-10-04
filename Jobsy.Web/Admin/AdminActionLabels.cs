@@ -66,6 +66,8 @@ public static class AdminActionLabels
             "adminAudit" or "adminAuditEvents" => "AdminAction.Resource.Audit",
             "personalDataAccessLogs" or "admin.personal_data_access_log.list" => "AdminAction.Resource.AccessLog",
             "admin.search" => "AdminAction.Resource.AdminSearch",
+            "school.pupil-code" => "AdminAction.Resource.PupilCode",
+            "application.cv.download" => "AdminAction.Resource.ApplicationCv",
             _ => null
         };
 
@@ -181,7 +183,46 @@ public static class AdminActionLabels
             return text("AdminLogs.Message.SchoolRetention") + trimmed[schoolRetention.Length..];
         }
 
-        return trimmed;
+        var sourceFailed = FormatSourceFailed(trimmed, text);
+        return sourceFailed ?? trimmed;
+    }
+
+    /// <summary>ATS scrape failures: "Source failed {host} (HTTP 404)" or "(DNS)".</summary>
+    public static string? FormatSourceFailed(string message, Func<string, string> text)
+    {
+        const string prefix = "Source failed ";
+        if (!message.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var rest = message[prefix.Length..].Trim();
+        var open = rest.LastIndexOf('(');
+        var close = rest.EndsWith(')') ? rest.Length - 1 : -1;
+        if (open <= 0 || close <= open)
+        {
+            return null;
+        }
+
+        var host = rest[..open].Trim();
+        if (host.Length == 0)
+        {
+            return null;
+        }
+
+        var detail = rest[(open + 1)..close].Trim();
+        if (detail.Equals("DNS", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Format(text("AdminLogs.Message.SourceFailedDns"), host);
+        }
+
+        if (detail.StartsWith("HTTP ", StringComparison.OrdinalIgnoreCase))
+        {
+            var code = detail["HTTP ".Length..].Trim();
+            return string.Format(text("AdminLogs.Message.SourceFailedHttp"), host, code);
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -228,6 +269,11 @@ public static class AdminActionLabels
         yield return ("platformLogs", "AdminAction.Resource.PlatformLogs");
         yield return ("adminAudit", "AdminAction.Resource.Audit");
         yield return ("personalDataAccessLogs", "AdminAction.Resource.AccessLog");
+        yield return ("school.pupil-code", "AdminAction.Resource.PupilCode");
+        yield return ("application.cv.download", "AdminAction.Resource.ApplicationCv");
+        yield return ("view", "AdminDataAccess.Action.View");
+        yield return ("pdf", "AdminDataAccess.Action.Pdf");
+        yield return ("download", "AdminDataAccess.Action.Download");
 
         foreach (var entry in PlatformSettingsCatalog.Entries)
         {
@@ -248,6 +294,21 @@ public static class AdminActionLabels
         if (act.Equals("list", StringComparison.OrdinalIgnoreCase))
         {
             return text("AdminDataAccess.Action.List");
+        }
+
+        if (act.Equals("view", StringComparison.OrdinalIgnoreCase))
+        {
+            return text("AdminDataAccess.Action.View");
+        }
+
+        if (act.Equals("pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return text("AdminDataAccess.Action.Pdf");
+        }
+
+        if (act.Equals("download", StringComparison.OrdinalIgnoreCase))
+        {
+            return text("AdminDataAccess.Action.Download");
         }
 
         return Label(act, text);

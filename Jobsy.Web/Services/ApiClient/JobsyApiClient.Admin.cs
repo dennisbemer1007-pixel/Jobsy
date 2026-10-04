@@ -702,6 +702,18 @@ public sealed partial class JobsyApiClient
             $"api/admin/vacancies/{vacancyId:D}/metrics/{Uri.EscapeDataString(key)}?period={Uri.EscapeDataString(period)}",
             ct) ?? [];
 
+    public async Task<ComebackReminderStatsItem?> GetComebackReminderStatsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<ComebackReminderStatsItem>("api/admin/comeback-reminders/stats", ct);
+
+    public async Task<IReadOnlyList<ReferenceMisuseItem>> GetReferenceMisuseAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<ReferenceMisuseItem>>("api/admin/reference-misuse", ct) ?? [];
+
+    public async Task MarkReferenceMisuseHandledAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await _http.PostAsync($"api/admin/reference-misuse/{id:D}/handled", content: null, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<IReadOnlyList<AtsListingItem>> GetAtsListingsAsync(
         string? status = null,
         string? q = null,

@@ -152,7 +152,9 @@ public static class EmailTemplateRegistry
         Def("PartnerConsentReconfirmReminder", "PartnerConsentReconfirmReminder", "Kandidaat", EmailKind.Essential, "PassportShare", false,
             "Toestemming opnieuw bevestigen", "14 dagen voor de partnertoestemming verloopt."),
         Def("ComebackReminder", "ComebackReminder", "Kandidaat", EmailKind.Optional, "ComebackReminder", false,
-            "Kom terug", "Herinnering als de 4 korte tests openstaan, of na 4 weken stilte."),
+            "Kom terug — 4 weken", "Herinnering na 4 weken stilte."),
+        Def("ComebackReminderTests", "ComebackReminder", "Kandidaat", EmailKind.Optional, "ComebackReminder", false,
+            "Kom terug — 4 korte tests", "Herinnering als de 4 korte tests nog openstaan."),
         Def("ReferenceConfirmation", "ReferenceConfirmation", "Referent", EmailKind.Essential, "ReferenceAsked", false,
             "Bevestiging van een referent", "Mail met een eenmalige link naar 5 korte vragen."),
     ];

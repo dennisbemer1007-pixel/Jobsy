@@ -159,10 +159,12 @@ public sealed class ReferenceConfirmationService(
         var baseUrl = string.IsNullOrWhiteSpace(snap.PublicWebBaseUrl) ? "https://lobsy.nl" : snap.PublicWebBaseUrl;
         var link = EmailLinks.For(baseUrl).ReferenceConfirmation(plaintext);
         var candidateName = NameParts.FirstName(user.FirstName) ?? NameParts.FirstName(user.FullName) ?? "iemand";
+        var workplace = string.IsNullOrWhiteSpace(reference.EmployerName) ? "een werkplek" : reference.EmployerName.Trim();
         var mail = TransactionalEmails.ReferenceConfirmationRequest(
             baseUrl,
             reference.ContactName,
             candidateName,
+            workplace,
             role,
             link);
         var sent = await mailer.SendAsync(

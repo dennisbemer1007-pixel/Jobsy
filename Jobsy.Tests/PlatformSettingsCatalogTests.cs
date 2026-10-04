@@ -248,6 +248,48 @@ public class PlatformSettingsEditorBunitTests : BunitContext
     }
 
     [Fact]
+    public void WhatsApp_confirms_when_turning_on_and_shows_when_the_server_is_not_configured()
+    {
+        _handler.Features = new PlatformFeatureItem
+        {
+            WhatsAppRemindersEnabled = false,
+            WhatsAppRemindersConfigured = false,
+            PublicWebBaseUrl = "http://localhost:5201",
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+
+        var cut = Render<PlatformSettingsEditor>(p => p
+            .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
+        cut.WaitForElement(".admin-settings-group");
+        Assert.Contains("WhatsApp is niet ingesteld op de server", cut.Markup, StringComparison.Ordinal);
+
+        cut.FindAll("button.admin-switch")
+            .First(b => b.GetAttribute("aria-label") == "WhatsApp-herinneringen")
+            .Click();
+        Assert.Contains("role=\"dialog\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("WhatsApp aanzetten?", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(0, cut.Instance.DirtyCount);
+        cut.FindAll("button").First(b => b.TextContent.Contains("Annuleren", StringComparison.Ordinal)).Click();
+
+        _handler.Features = new PlatformFeatureItem
+        {
+            WhatsAppRemindersEnabled = true,
+            WhatsAppRemindersConfigured = true,
+            PublicWebBaseUrl = "http://localhost:5201",
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+        var off = Render<PlatformSettingsEditor>(p => p
+            .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
+        off.WaitForElement(".admin-settings-group");
+        Assert.DoesNotContain("WhatsApp is niet ingesteld op de server", off.Markup, StringComparison.Ordinal);
+        off.FindAll("button.admin-switch")
+            .First(b => b.GetAttribute("aria-label") == "WhatsApp-herinneringen")
+            .Click();
+        Assert.DoesNotContain("role=\"dialog\"", off.Markup, StringComparison.Ordinal);
+        Assert.Equal(1, off.Instance.DirtyCount);
+    }
+
+    [Fact]
     public void Switching_employers_on_asks_for_confirmation()
     {
         _handler.Features = new PlatformFeatureItem

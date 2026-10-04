@@ -1920,12 +1920,14 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
 
 .admin-user-picker {
     position: relative;
-    min-width: min(100%, 14rem);
+    min-width: 0;
 }
 
-.admin-user-picker__list--inline {
-    position: static;
-    margin-block: 0 0.75rem;
+.admin-user-picker > .admin-filter-input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .admin-user-picker__list {

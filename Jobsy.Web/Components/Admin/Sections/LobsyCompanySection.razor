@@ -1,3 +1,5 @@
+@using Jobsy.Core.Privacy
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -21,7 +23,6 @@ else
                 @Culture["Common.Save"]
             </button>
         </div>
-        <p class="muted admin-settings-group__desc">@Culture["AdminShell.CompanyLead"]</p>
         <p class="muted">@Culture["AdminSettings.LobsyCompany.Hint"]</p>
 
         @if (!string.IsNullOrEmpty(_message))
@@ -60,7 +61,7 @@ else
             </div>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Country"]
-                <input @bind="_form.Country" />
+                <input data-testid="company-country" @bind="_form.Country" />
             </label>
             <p class="muted">@Culture["AdminSettings.LobsyCompany.Postal"]</p>
             <p class="muted">@Culture["AdminSettings.LobsyCompany.PostalHint"]</p>
@@ -88,8 +89,9 @@ else
             </label>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Iban"]
-                <input @bind="_form.VatBufferIban"
-                       placeholder="NL00KNAB0123456789"
+                <input data-testid="company-iban"
+                       @bind="_form.VatBufferIban"
+                       placeholder="@_ibanPlaceholder"
                        autocomplete="off"
                        spellcheck="false" />
             </label>
@@ -113,6 +115,7 @@ else
 
 @code {
     private PlatformCompanyItem _form = new();
+    private string _ibanPlaceholder = CompanyFormFields.IbanExample;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -134,6 +137,8 @@ else
             {
                 _form.SupportEmail = _form.Email;
             }
+
+            PrepareDisplay();
         }
         catch (Exception ex)
         {
@@ -154,7 +159,10 @@ else
         {
             _form.Email = _form.SupportEmail;
             _form.CompanyName = string.IsNullOrWhiteSpace(_form.TradeName) ? _form.CompanyName : _form.TradeName;
+            _form.Country = CompanyFormFields.CountryToStore(_form.Country);
+            _form.VatBufferIban = CompanyFormFields.IbanToSave(_form.VatBufferIban);
             _form = await Api.SavePlatformCompanyAsync(_form) ?? _form;
+            PrepareDisplay();
             await Branding.RefreshAsync();
             _message = Culture["AdminSettings.LobsyCompany.Saved"];
         }
@@ -166,5 +174,16 @@ else
         {
             _busy = false;
         }
+    }
+
+    private void PrepareDisplay()
+    {
+        _ibanPlaceholder = CompanyFormFields.IbanPlaceholder(_form.VatBufferIban);
+        if (!IbanMasking.IsFullIbanInput(_form.VatBufferIban))
+        {
+            _form.VatBufferIban = "";
+        }
+
+        _form.Country = CompanyFormFields.DisplayCountry(_form.Country);
     }
 }

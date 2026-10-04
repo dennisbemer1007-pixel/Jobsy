@@ -225,6 +225,8 @@ public sealed class PlatformFeatureItem
     public bool PassportPdfV2Enabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
     public bool WhatsAppRemindersEnabled { get; set; }
+    /// <summary>Server has WhatsApp credentials. Never a secret.</summary>
+    public bool WhatsAppRemindersConfigured { get; set; }
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>
@@ -430,4 +432,20 @@ public sealed class AdminContentReportItem
     public string? DecisionReason { get; set; }
     public DateTime? DecidedAtUtc { get; set; }
     public int TargetReportCount { get; set; }
+}
+
+public sealed class ComebackReminderStatsItem
+{
+    public int Sent { get; set; }
+    public int ReturnedWithin7Days { get; set; }
+    public int ReturnedWithin30Days { get; set; }
+}
+
+public sealed class ReferenceMisuseItem
+{
+    public Guid Id { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public string CandidateMasked { get; set; } = "";
+    public string? Message { get; set; }
+    public string Status { get; set; } = "open";
 }

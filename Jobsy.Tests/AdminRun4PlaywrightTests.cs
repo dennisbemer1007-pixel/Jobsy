@@ -208,17 +208,75 @@ public class AdminRun4PlaywrightTests
                   if (gap > 2) aligned = false;
                 }
               }
+              const inputs = bar ? [...bar.querySelectorAll('input, select')] : [];
+              let overlap = false;
+              for (let i = 0; i < inputs.length; i++) {
+                const a = inputs[i].getBoundingClientRect();
+                if (a.width < 2 || a.height < 2) continue;
+                for (let j = i + 1; j < inputs.length; j++) {
+                  const b = inputs[j].getBoundingClientRect();
+                  if (b.width < 2 || b.height < 2) continue;
+                  const separated = a.right <= b.left + 1 || b.right <= a.left + 1 || a.bottom <= b.top + 1 || b.bottom <= a.top + 1;
+                  if (!separated) overlap = true;
+                }
+              }
+              const lists = [...document.querySelectorAll('.admin-user-picker__list')];
+              let listsAnchored = true;
+              let listsInside = true;
+              for (const list of lists) {
+                const picker = list.closest('.admin-user-picker');
+                const input = picker ? picker.querySelector('input') : null;
+                if (!input || !pageRect) { listsAnchored = false; continue; }
+                const inputRect = input.getBoundingClientRect();
+                const listRect = list.getBoundingClientRect();
+                if (Math.abs(listRect.top - inputRect.bottom) > 4) listsAnchored = false;
+                if (listRect.left < pageRect.left - 2 || listRect.right > pageRect.right + 2) listsInside = false;
+              }
               return {
                 barInside: !!pageRect && !!barRect && barRect.right <= pageRect.right + 2 && barRect.left >= pageRect.left - 2,
                 filterVisible: !!filterRect && filterRect.width > 0 && filterRect.right <= (pageRect ? pageRect.right + 2 : filterRect.right),
                 aligned,
-                pairs
+                pairs,
+                overlap,
+                listsAnchored,
+                listsInside,
+                listCount: lists.length
               };
             }
             """);
         Assert.True(layout.BarInside, "Gegevensinzage filter bar overflows the page at 1280.");
         Assert.True(layout.FilterVisible, "Filter button is outside the gegevensinzage page at 1280.");
         Assert.True(layout.Aligned, "Gegevensinzage columns do not line up with their headers at 1280.");
+        Assert.False(layout.Overlap, "Gegevensinzage filter inputs overlap at 1280.");
+
+        await page.Locator(".admin-user-picker input").First.FillAsync("aa");
+        await page.Locator(".admin-user-picker input").Nth(1).FillAsync("aa");
+        await page.WaitForTimeoutAsync(600);
+        var anchored = await page.EvaluateAsync<GegevensLayout>(
+            """
+            () => {
+              const pageEl = document.querySelector('.admin-page');
+              const pageRect = pageEl ? pageEl.getBoundingClientRect() : null;
+              const lists = [...document.querySelectorAll('.admin-user-picker__list')];
+              let listsAnchored = lists.length > 0;
+              let listsInside = true;
+              for (const list of lists) {
+                const picker = list.closest('.admin-user-picker');
+                const input = picker ? picker.querySelector('input') : null;
+                if (!input || !pageRect) { listsAnchored = false; continue; }
+                const inputRect = input.getBoundingClientRect();
+                const listRect = list.getBoundingClientRect();
+                if (Math.abs(listRect.top - inputRect.bottom) > 4) listsAnchored = false;
+                if (listRect.left < pageRect.left - 2 || listRect.right > pageRect.right + 2) listsInside = false;
+              }
+              return { listsAnchored, listsInside, listCount: lists.length, barInside: true, filterVisible: true, aligned: true, pairs: 0, overlap: false };
+            }
+            """);
+        if (anchored.ListCount > 0)
+        {
+            Assert.True(anchored.ListsAnchored, "A suggestion list is not anchored under its input.");
+            Assert.True(anchored.ListsInside, "A suggestion list leaves the admin page.");
+        }
     }
 
     private sealed class GegevensLayout
@@ -227,6 +285,10 @@ public class AdminRun4PlaywrightTests
         public bool FilterVisible { get; set; }
         public bool Aligned { get; set; }
         public int Pairs { get; set; }
+        public bool Overlap { get; set; }
+        public bool ListsAnchored { get; set; }
+        public bool ListsInside { get; set; }
+        public int ListCount { get; set; }
     }
 
     private sealed class MenuPaint

@@ -11,6 +11,7 @@ public static class MetricsPeriodParser
             "month" => MetricsPeriod.Month,
             "quarter" => MetricsPeriod.Quarter,
             "year" => MetricsPeriod.Year,
+            "all" => MetricsPeriod.All,
             _ => MetricsPeriod.Day
         };
 
@@ -24,6 +25,7 @@ public static class MetricsPeriodParser
             MetricsPeriod.Month => now.Date.AddDays(-30),
             MetricsPeriod.Quarter => now.Date.AddDays(-90),
             MetricsPeriod.Year => now.Date.AddDays(-365),
+            MetricsPeriod.All => DateTime.MinValue,
             _ => now.Date
         };
         return (from, to);

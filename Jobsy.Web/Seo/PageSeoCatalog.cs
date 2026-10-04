@@ -253,6 +253,7 @@ public static partial class PageSeoCatalog
             ["/admin/beveiliging/2fa"] = Private("AdminNav.MfaSessions", "Seo.PrivateDescription"),
             ["/admin/beveiliging/privacy"] = Private("AdminNav.Privacy", "Seo.PrivateDescription"),
             ["/admin/beveiliging/gegevensinzage"] = Private("AdminNav.DataAccess", "Seo.PrivateDescription"),
+            ["/admin/beveiliging/referent-misbruik"] = Private("AdminMisuse.Title", "Seo.PrivateDescription"),
             ["/admin/content/emails"] = Private("AdminNav.Emails", "Seo.PrivateDescription"),
             ["/admin/content/stamgegevens"] = Private("AdminNav.Masterdata", "Seo.PrivateDescription"),
             ["/admin/financien/prijzen"] = Private("AdminNav.Pricing", "Seo.PrivateDescription"),
