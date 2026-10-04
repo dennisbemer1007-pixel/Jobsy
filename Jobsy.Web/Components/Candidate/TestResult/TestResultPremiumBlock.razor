@@ -28,7 +28,7 @@ else
             <ul class="test-result-premium__checks">
                 <li><span class="ok" aria-hidden="true">✓</span> @Culture.Format("TestResult.Gold.Check.Pages", caps.PdfPageCount)</li>
                 <li><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Gold.Check.Applications"]</li>
-                <li><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Gold.Check.Matches"]</li>
+                <li><span class="ok" aria-hidden="true">✓</span> @(EmployersEnabled ? Culture["TestResult.Gold.Check.Matches"] : Culture["TestResult.Upsell.Self"])</li>
             </ul>
         </div>
         <div class="test-result-premium__cta">
@@ -60,6 +60,7 @@ else
 
 @code {
     [Parameter, EditorRequired] public AssessmentKind Kind { get; set; }
+    [Parameter] public bool EmployersEnabled { get; set; } = true;
     [Parameter] public string TestTitle { get; set; } = "";
     [Parameter] public decimal PriceEuro { get; set; } = 2.99m;
     [Parameter] public int QuestionCount { get; set; } = 150;
