@@ -163,7 +163,7 @@
                             {
                                 <LobsyBubble Text="@BubbleFor(PassportTabs.Fit)" />
                                 <PanelErrorBoundary Name="passport-fit">
-                                    <PassportFitTab Active="@(_tab == PassportTabs.Fit)" Snapshot="_kompas" />
+                                    <PassportFitTab Active="@(_tab == PassportTabs.Fit)" Snapshot="_kompas" OpenForWork="@(_profile?.OpenForWork ?? true)" />
                                 </PanelErrorBoundary>
                             }
                             else

@@ -62,13 +62,34 @@ internal static class Sprint8MetricsSeeder
 
     private static async Task EnsureIntermediaryVacancyAsync(JobsyDbContext db, DateOnly today)
     {
-        if (await db.Vacancies.AnyAsync(v =>
-                v.CompanyId == IntermediaryCompanyId && v.Status == VacancyStatus.Active))
+        if (!await db.Companies.AnyAsync(c => c.Id == IntermediaryCompanyId))
         {
             return;
         }
 
-        if (!await db.Companies.AnyAsync(c => c.Id == IntermediaryCompanyId))
+        var clientId = await db.Companies.AnyAsync(c => c.Id == WestlandId)
+            ? WestlandId
+            : IntermediaryCompanyId;
+
+        if (clientId != IntermediaryCompanyId)
+        {
+            var selfPosted = await db.Vacancies
+                .Where(v => v.CompanyId == IntermediaryCompanyId && v.IntermediaryCompanyId == null)
+                .ToListAsync();
+            foreach (var row in selfPosted)
+            {
+                row.CompanyId = clientId;
+                row.IntermediaryCompanyId = IntermediaryCompanyId;
+            }
+        }
+
+        if (await db.Vacancies.AnyAsync(v =>
+                v.IntermediaryCompanyId == IntermediaryCompanyId && v.Status == VacancyStatus.Active))
+        {
+            return;
+        }
+
+        if (await db.Vacancies.AnyAsync(v => v.Id == IntermediaryVacancyId))
         {
             return;
         }
@@ -79,8 +100,8 @@ internal static class Sprint8MetricsSeeder
             Title = "Flex medewerker retail (pool)",
             Description = MockVacancyMedia.BuildRichDescription(
                 "Flex medewerker retail (pool)",
-                "Intermediair-vacature voor meerdere retailopdrachtgevers in Den Haag.",
-                "Demo Intermediair Flex BV",
+                "Intermediair-vacature voor een retailopdrachtgever in Den Haag.",
+                "Westland Fresh Logistics",
                 WorkType.Winkel,
                 14.00m,
                 10),
@@ -88,7 +109,8 @@ internal static class Sprint8MetricsSeeder
             StartDate = today,
             EndDate = today.AddMonths(2),
             Status = VacancyStatus.Active,
-            CompanyId = IntermediaryCompanyId,
+            CompanyId = clientId,
+            IntermediaryCompanyId = clientId == IntermediaryCompanyId ? null : IntermediaryCompanyId,
             Location = new GeoPoint(52.0680, 4.3350),
             RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
             WorkTypes = WorkType.Winkel,
@@ -258,7 +280,8 @@ internal static class Sprint8MetricsSeeder
         if (await db.Companies.AnyAsync(c => c.Id == IntermediaryCompanyId))
         {
             var intermediaryVacancyId = await db.Vacancies
-                .Where(v => v.CompanyId == IntermediaryCompanyId && v.Status == VacancyStatus.Active)
+                .Where(v => (v.IntermediaryCompanyId == IntermediaryCompanyId || v.CompanyId == IntermediaryCompanyId)
+                            && v.Status == VacancyStatus.Active)
                 .Select(v => (Guid?)v.Id)
                 .FirstOrDefaultAsync();
 
@@ -433,7 +456,7 @@ internal static class Sprint8MetricsSeeder
                 Status = ApplicationStatus.Accepted,
                 PreferencesSummary = candidate.PreferencesJson,
                 CreatedAt = now.AddDays(-4),
-                    EmailVerifiedAt = DateTime.UtcNow,
+                EmailVerifiedAt = DateTime.UtcNow,
                 RespondedAt = now.AddDays(-3)
             });
         }
@@ -456,7 +479,7 @@ internal static class Sprint8MetricsSeeder
                 Status = ApplicationStatus.Rejected,
                 PreferencesSummary = candidate.PreferencesJson,
                 CreatedAt = now.AddDays(-9),
-                    EmailVerifiedAt = DateTime.UtcNow,
+                EmailVerifiedAt = DateTime.UtcNow,
                 RespondedAt = now.AddDays(-8)
             });
         }

@@ -63,12 +63,18 @@ public sealed class TalentPoolService : ITalentPoolService
             .ToListAsync(cancellationToken);
 
         var userIds = users.Select(u => u.Id).ToList();
-        var competencies = await _db.CandidateCompetencies.AsNoTracking()
+        var competencyRows = await _db.CandidateCompetencies.AsNoTracking()
             .Where(c => userIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToDictionaryAsync(c => c.UserId, cancellationToken);
-        var careers = await _db.CandidateCareerInterests.AsNoTracking()
+            .ToListAsync(cancellationToken);
+        var competencies = competencyRows
+            .GroupBy(c => c.UserId)
+            .ToDictionary(g => g.Key, g => g.First());
+        var careerRows = await _db.CandidateCareerInterests.AsNoTracking()
             .Where(c => userIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToDictionaryAsync(c => c.UserId, cancellationToken);
+            .ToListAsync(cancellationToken);
+        var careers = careerRows
+            .GroupBy(c => c.UserId)
+            .ToDictionary(g => g.Key, g => g.First());
         var deepCompleted = await _db.CandidateDeepAnalyses.AsNoTracking()
             .Where(d => d.Status == CandidateDeepAnalysisStatuses.Completed && userIds.Contains(d.UserId))
             .Select(d => new { d.UserId, d.Kind })

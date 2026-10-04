@@ -113,8 +113,7 @@ else
                     }
                     @if (ApplicationPipelineRules.IsPiiStage(a) && a.CandidateEmployerCount > 0)
                     {
-                        <p><strong>@Culture["WgApp.Fact.Experience"]</strong></p>
-                        <p class="muted">@a.CandidateEmployerCount</p>
+                        <p><strong>@EmployerHistory(a.CandidateEmployerCount)</strong></p>
                     }
                 </div>
             </section>
@@ -189,6 +188,11 @@ else
     private bool _rejectOpen;
     private bool _hireOpen;
     private string? _message;
+
+    private string EmployerHistory(int count)
+        => count == 1
+            ? Culture["WgApp.Fact.EmployersOne"]
+            : string.Format(Culture["WgApp.Fact.EmployersMany"], count);
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool CanWrite => ApplicationPipelineRules.CanAct(Role);

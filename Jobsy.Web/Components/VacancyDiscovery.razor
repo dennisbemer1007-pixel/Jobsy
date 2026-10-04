@@ -131,12 +131,15 @@
                     }
                 </div>
 
-                <a class="kb-match-button jobsy-action--match"
-                   data-testid="kb-match-button"
-                   href="@MatchButtonHref">
-                    <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
-                    <span>@Culture["Nav.Match"]</span>
-                </a>
+                @if (!_isCandidate || _openForWork)
+                {
+                    <a class="kb-match-button jobsy-action--match"
+                       data-testid="kb-match-button"
+                       href="@MatchButtonHref">
+                        <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                        <span>@Culture["Nav.Match"]</span>
+                    </a>
+                }
 
                 <span class="kb-filter-bar__spacer" aria-hidden="true"></span>
 
@@ -256,12 +259,15 @@
                     </button>
                 }
 
-                <a class="kb-match-button jobsy-action--match"
-                   data-testid="kb-match-button"
-                   href="@MatchButtonHref">
-                    <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
-                    <span>@Culture["Nav.Match"]</span>
-                </a>
+                @if (!_isCandidate || _openForWork)
+                {
+                    <a class="kb-match-button jobsy-action--match"
+                       data-testid="kb-match-button"
+                       href="@MatchButtonHref">
+                        <span class="kb-match-button__icon" aria-hidden="true">@((MarkupString)NavIcons.Match)</span>
+                        <span>@Culture["Nav.Match"]</span>
+                    </a>
+                }
 
                 <div class="kb-view-toggle"
                      role="radiogroup"
@@ -558,6 +564,10 @@
                     </select>
                 </label>
             </div>
+            @if (_isCandidate && !_openForWork)
+            {
+                <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
+            }
             @if (ShouldRenderVacancyCards)
             {
                 @if (!_useListRows)
@@ -1243,8 +1253,10 @@
     private CancellationTokenSource? _pendingCountCts;
 
     /// <summary>D2: hide min-match chip and "Past het best" when the fit gate is closed.</summary>
+    private bool _openForWork = true;
+
     private bool ShowFitFilters =>
-        _isCandidate && _vacancies.Any(v =>
+        _isCandidate && _openForWork && _vacancies.Any(v =>
             string.Equals(v.FitGate, "open", StringComparison.OrdinalIgnoreCase)
             || (v.FitPercent is not null)
             || (v.MatchPercent is not null && !string.Equals(v.FitGate, "closed", StringComparison.OrdinalIgnoreCase)));
@@ -1623,6 +1635,12 @@
                 HasOrigin: _origin is not null),
             _filterDefaults);
 
+    private async Task ReloadAfterOpenForWork()
+    {
+        _openForWork = true;
+        await LoadVacanciesAsync();
+    }
+
     private string MatchButtonHref => _isAuthenticated
         ? "/candidate/match"
         : MatchLoginHref;
@@ -1718,6 +1736,7 @@
                 var profile = await Api.GetMyProfileAsync();
                 if (profile is not null)
                 {
+                    _openForWork = profile.OpenForWork;
                     _candidatePrefs = profile.Preferences;
                     var beforeAge = _ageYears;
                     var beforeMinHours = _minHoursPerWeek;

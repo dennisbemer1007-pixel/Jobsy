@@ -1,0 +1,30 @@
+@namespace Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Item is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["WgVac.Delete"]"
+                         TitleId="admin-vac-purge"
+                         OnClose="OnCancel">
+        <p data-testid="admin-vacancy-delete-confirm">@string.Format(Culture["AdminVacancy.Confirm.Purge"], Item.ApplicationCount)</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" disabled="@Busy" @onclick="OnCancel">@Culture["Common.Cancel"]</button>
+            <button type="button"
+                    class="btn-compact btn-compact--danger"
+                    data-testid="admin-vacancy-delete-confirm-btn"
+                    disabled="@Busy"
+                    @onclick="OnConfirm">
+                @Culture["WgVac.Delete"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    [Parameter] public AdminVacancyItem? Item { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+}

@@ -65,8 +65,8 @@ public static class UiStringsCandidateInsights
             "Premium", "Premium",
             "Premium", "Complet", "مميز");
         Add("Insights.Kpi.MatchingQ",
-            "Hoeveel passen bij je {0} vacatures?", "How many match your {0} vacancies?",
-            "Ilu pasuje do Twoich {0} ofert?", "Câți se potrivesc cu {0} posturi?", "كم يتوافق مع {0} وظائف؟");
+            "Hoeveel zijn beschikbaar voor je {0} vacatures?", "How many are available for your {0} vacancies?",
+            "Ilu jest dostępnych dla Twoich {0} ofert?", "Câți sunt disponibili pentru {0} posturi?", "كم متاح لوظائفك ({0})؟");
         Add("Insights.Kpi.Hours32Q",
             "Hoeveel willen 32+ uur werken?", "How many want 32+ hours?",
             "Ilu chce pracować 32+ godzin?", "Câți vor 32+ ore?", "كم يريدون العمل 32+ ساعة؟");
@@ -231,8 +231,8 @@ public static class UiStringsCandidateInsights
             "Actief laatste 30 dagen", "Active last 30 days",
             "Aktywni w ostatnich 30 dniach", "Activi în ultimele 30 de zile", "نشطون آخر 30 يوماً");
         Add("Insights.Kpi.Matching",
-            "Match met jouw vacatures", "Match with your vacancies",
-            "Dopasowanie do Twoich ofert", "Potrivire cu posturile tale", "تطابق مع وظائفك");
+            "Beschikbaar voor jouw vacatures", "Available for your vacancies",
+            "Dostępni dla Twoich ofert", "Disponibili pentru posturile tale", "متاحون لوظائفك");
 
         Add("Insights.Section.DreamJobs",
             "Droombanen", "Dream jobs",
