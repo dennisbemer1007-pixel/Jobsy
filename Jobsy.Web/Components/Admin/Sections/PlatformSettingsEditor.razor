@@ -204,6 +204,7 @@ else if (_snapshot is not null)
     private bool _confirmOpen;
     private PlatformSettingDescriptor? _confirmEntry;
     private object? _confirmValue;
+    private readonly Dictionary<string, object?> _confirmedValues = new(StringComparer.Ordinal);
     private string _reason = "";
     private List<AdminAuditItem> _recentChanges = [];
     private Dictionary<string, AdminAuditItem> _lastByField = new(StringComparer.Ordinal);
@@ -263,6 +264,7 @@ else if (_snapshot is not null)
         _snapshot = snap;
         _baseline.Clear();
         _draft.Clear();
+        _confirmedValues.Clear();
         foreach (var entry in _entries)
         {
             _baseline[entry.Key] = entry.Read(snap);
@@ -310,6 +312,7 @@ else if (_snapshot is not null)
         if (_confirmEntry is not null)
         {
             SetDraft(_confirmEntry, _confirmValue);
+            _confirmedValues[_confirmEntry.Key] = _confirmValue;
         }
 
         _confirmOpen = false;
@@ -355,16 +358,24 @@ else if (_snapshot is not null)
         if (ValuesEqual(baseline, value))
         {
             _draft.Remove(entry.Key);
+            _confirmedValues.Remove(entry.Key);
         }
         else
         {
             _draft[entry.Key] = value;
+            if (_confirmedValues.TryGetValue(entry.Key, out var confirmed) && !ValuesEqual(confirmed, value))
+            {
+                _confirmedValues.Remove(entry.Key);
+            }
         }
     }
 
     private void Cancel()
     {
         _draft.Clear();
+        _confirmedValues.Clear();
+        _confirmOpen = false;
+        _confirmEntry = null;
         _reason = "";
         _message = null;
     }
@@ -393,19 +404,22 @@ else if (_snapshot is not null)
             return;
         }
 
-        // ConfirmOnChange entries that flip to off without prior dialog
+        // ConfirmOnChange entries that flip without a completed confirm dialog.
+        // A finished confirm is remembered in _confirmedValues; closing the dialog
+        // must not make the next "Opslaan en loggen" open it again.
         foreach (var (key, value) in _draft.ToList())
         {
             var entry = _entries.First(e => e.Key == key);
-            if (NeedsConfirm(entry, value) && !_confirmOpen)
+            if (NeedsConfirm(entry, value) && !AlreadyConfirmed(entry, value))
             {
                 _confirmEntry = entry;
                 _confirmValue = value;
                 _confirmOpen = true;
-                // Defer actual save until confirm; user re-clicks Opslaan after confirm sets draft.
                 return;
             }
         }
+
+        _confirmOpen = false;
 
         _busy = true;
         _message = null;
@@ -485,6 +499,9 @@ else if (_snapshot is not null)
     private static bool NeedsConfirm(PlatformSettingDescriptor entry, object? next)
         => (entry.Key == "EmployersEnabled" && next is true)
            || (entry.ConfirmOnChange && next is false);
+
+    private bool AlreadyConfirmed(PlatformSettingDescriptor entry, object? value)
+        => _confirmedValues.TryGetValue(entry.Key, out var confirmed) && ValuesEqual(confirmed, value);
 
     public void CancelForTests() => Cancel();
 

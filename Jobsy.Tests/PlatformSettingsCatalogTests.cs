@@ -209,6 +209,45 @@ public class PlatformSettingsEditorBunitTests : BunitContext
     }
 
     [Fact]
+    public async Task Toggle_off_confirm_then_save_sends_one_patch()
+    {
+        _handler.Features = new PlatformFeatureItem
+        {
+            SchoolsEnabled = true,
+            VacancyContentModerationEnabled = true,
+            PublicWebBaseUrl = "http://localhost:5201",
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+
+        var cut = Render<PlatformSettingsEditor>(p => p
+            .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
+        cut.WaitForElement(".admin-settings-group");
+
+        cut.FindAll("button.admin-switch")
+            .First(b => b.GetAttribute("aria-label") == "Scholen-portalen actief")
+            .Click();
+
+        Assert.Contains("role=\"dialog\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(0, cut.Instance.DirtyCount);
+
+        cut.FindAll("button").First(b => b.TextContent.Contains("Bevestigen", StringComparison.Ordinal)).Click();
+        Assert.Equal(1, cut.Instance.DirtyCount);
+        Assert.DoesNotContain("role=\"dialog\"", cut.Markup, StringComparison.Ordinal);
+
+        cut.Find(".admin-save-bar input").Change("portaal uit voor test");
+        await cut.InvokeAsync(() =>
+            cut.FindAll("button").First(b => b.TextContent.Contains("Opslaan en loggen", StringComparison.Ordinal)).Click());
+
+        Assert.Equal(1, _handler.PutCount);
+        Assert.NotNull(_handler.LastPatch);
+        Assert.False(_handler.LastPatch!.SchoolsEnabled);
+        Assert.Equal(0, cut.Instance.DirtyCount);
+
+        await cut.InvokeAsync(() => cut.Instance.SaveForTestsAsync());
+        Assert.Equal(1, _handler.PutCount);
+    }
+
+    [Fact]
     public void Switching_employers_on_asks_for_confirmation()
     {
         _handler.Features = new PlatformFeatureItem
@@ -364,6 +403,11 @@ public class PlatformSettingsEditorBunitTests : BunitContext
                 if (LastPatch?.AuthenticatorEnabled is bool a)
                 {
                     Features.AuthenticatorEnabled = a;
+                }
+
+                if (LastPatch?.SchoolsEnabled is bool schools)
+                {
+                    Features.SchoolsEnabled = schools;
                 }
 
                 Features.UpdatedAtUtc = DateTime.UtcNow;
