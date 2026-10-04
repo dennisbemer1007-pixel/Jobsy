@@ -101,6 +101,8 @@ public class TestResultatenPartBTests
             Assert.NotEmpty(b);
             Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(b.AsSpan(0, 4)));
         });
+        var pages = PdfPageCounter.Count(r);
+        Assert.Equal(DeepReportCapabilities.For(AssessmentKind.Career).PdfPageCount, pages);
     }
 
     [Fact]

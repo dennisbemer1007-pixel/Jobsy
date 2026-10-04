@@ -6,12 +6,13 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject AssistantChatHost ChatHost
+@inject FeedbackHost FeedbackHost
 @inject IFeatureFlags FeatureFlags
 @inject IJSRuntime Js
 
 <AuthorizeView>
     <Authorized>
-        @if (_visible)
+        @if (_visible && !HideEdgeTab)
         {
             <div class="lobsy-assistant-tab lobsy-assistant-tab--edge @(_hasBottomNav ? "has-bottom-nav" : null) @(_open ? "is-open" : null)">
                 <button type="button"
@@ -29,7 +30,7 @@
         }
         @if (_visible && _open)
         {
-            <div class="lobsy-assistant is-open @(_hasBottomNav ? "has-bottom-nav" : null)">
+            <div class="lobsy-assistant is-open @(HideEdgeTab ? "lobsy-assistant--coach" : null) @(_hasBottomNav ? "has-bottom-nav" : null)">
                 <div id="lobsy-assistant-panel" class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
                     <header class="lobsy-assistant__header">
                         <div class="lobsy-assistant__brand">
@@ -108,6 +109,12 @@
                         @Culture["Assistant.Disclaimer"]
                         <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Assistant.DisclaimerLink"]</a>
                     </p>
+                    @if (HideEdgeTab)
+                    {
+                        <p class="lobsy-assistant__feedback">
+                            <button type="button" class="btn btn-ghost" @onclick="OpenFeedback">@Culture["Coach.Feedback"]</button>
+                        </p>
+                    }
                 </div>
             </div>
         }
@@ -116,6 +123,9 @@
 
 @code {
     [Parameter] public bool HasBottomNav { get; set; }
+    [Parameter] public bool HideEdgeTab { get; set; }
+
+    private bool _focusInput;
 
     private bool _visible;
     private bool _open;
@@ -191,23 +201,45 @@
 
         _open = !_open;
         ChatHost.NotifyOpen(_open);
-        if (_open && !_started)
+        if (_open)
         {
-            await StartAsync();
+            _focusInput = true;
+            if (!_started)
+            {
+                await StartAsync();
+            }
         }
     }
 
-    private void Close()
+    private async Task Close()
     {
         _open = false;
         ChatHost.NotifyOpen(false);
+        if (HideEdgeTab)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.focus", "lobsy-coach-btn");
+            }
+            catch
+            {
+                // Circuit gone or no coach button.
+            }
+        }
     }
 
-    private void OnKeyDown(KeyboardEventArgs e)
+    private void OpenFeedback()
+    {
+        _open = false;
+        ChatHost.NotifyOpen(false);
+        FeedbackHost.RequestOpen();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
     {
         if (e.Key is "Escape" or "Esc")
         {
-            Close();
+            await Close();
         }
     }
 
@@ -231,6 +263,11 @@
         try
         {
             await Js.InvokeVoidAsync("jobsyComposeEnter", "lobsy-assistant-input");
+            if (_focusInput)
+            {
+                _focusInput = false;
+                await Js.InvokeVoidAsync("jobsyCoachDock.focus", "lobsy-assistant-input");
+            }
         }
         catch
         {

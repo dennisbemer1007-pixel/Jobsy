@@ -143,7 +143,7 @@ public class CareerPageBunitTests : BunitContext
         Assert.Equal(1, Occurrences(cut.Markup, "<h1"));
         Assert.Contains("Op weg naar Kok", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Een kreeft groeit alleen", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Nog 2 klauwen laten groeien", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Nog 2 stappen laten groeien", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("past goed bij jou", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("past al past", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("0 jaar", cut.Markup, StringComparison.Ordinal);
@@ -254,7 +254,7 @@ public class CareerPageBunitTests : BunitContext
 
         var more = cut.Find(".career-now__more");
         Assert.Equal("false", more.GetAttribute("aria-expanded"));
-        Assert.Contains("Nog 2 klauwen · 1 opleidingen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Nog 2 stappen · 1 opleidingen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("career-card__source", cut.Markup, StringComparison.Ordinal);
         Assert.True(cut.Find("#career-now-meer").HasAttribute("hidden"));
 

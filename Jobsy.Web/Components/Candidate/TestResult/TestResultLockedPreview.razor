@@ -51,6 +51,7 @@
                                 ProgressTotal="ProgressTotal"
                                 ShowSamplePdf="ShowSamplePdf"
                                 EmployersEnabled="_employersEnabled"
+                                FreeForTestAccount="FreeForTestAccount"
                                 OnStart="OnStart"
                                 OnSamplePdf="OnSamplePdf" />
     }
@@ -71,6 +72,7 @@
     [Parameter] public bool AllExtendedDone { get; set; }
     [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public IReadOnlyList<ReportLink> ReportLinks { get; set; } = [];
+    [Parameter] public bool FreeForTestAccount { get; set; }
     [Parameter] public EventCallback OnStart { get; set; }
     [Parameter] public EventCallback OnSamplePdf { get; set; }
 

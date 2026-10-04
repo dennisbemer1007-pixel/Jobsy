@@ -12,6 +12,7 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject IFeatureFlags FeatureFlags
 @implements IAsyncDisposable
 
 <PageTitle>@(_kindOk ? Culture[_titleKey] : Culture["Deep.UnknownTitle"]) · Lobsy</PageTitle>
@@ -58,7 +59,7 @@ else
                             <ul class="deep-offer__get">
                                 <li>✓ @Culture["DeepPay.Get.1"]</li>
                                 <li>✓ @Culture["DeepPay.Get.2"]</li>
-                                <li>✓ @Culture["DeepPay.Get.3"]</li>
+                                <li>✓ @(_employersOn ? Culture["DeepPay.Get.3"] : Culture["CareerStep.Band.EyebrowOff"])</li>
                                 <li>✓ @Culture["DeepPay.Get.4"]</li>
                             </ul>
                             <p>
@@ -102,13 +103,16 @@ else
                                     <p class="muted">@Culture["DeepPay.StubHint"]</p>
                                 }
                             }
-                            <label class="deep-pay-waiver">
-                                <input type="checkbox" @bind="_waiverAccepted" />
-                                @Culture["Terms.Waiver.Checkbox"]
-                            </label>
-                            <p class="muted deep-pay-waiver__link">
-                                <a href="/gebruiksvoorwaarden#bedenktijd">@Culture["DeepPay.WaiverReadMore"]</a>
-                            </p>
+                            @if (_paymentMode != DeepTestFinanceRules.TestUnlockMethod)
+                            {
+                                <label class="deep-pay-waiver">
+                                    <input type="checkbox" @bind="_waiverAccepted" />
+                                    @Culture["Terms.Waiver.Checkbox"]
+                                </label>
+                                <p class="muted deep-pay-waiver__link">
+                                    <a href="/gebruiksvoorwaarden#bedenktijd">@Culture["DeepPay.WaiverReadMore"]</a>
+                                </p>
+                            }
                             @if (!string.IsNullOrWhiteSpace(_orderErrorKey))
                             {
                                 <p class="state-message error" role="alert">@Culture[_orderErrorKey]</p>
@@ -117,7 +121,7 @@ else
                                 <a href="@($"/profiel/tests/{_slug}")">@Culture["DeepPay.NotNow"]</a>
                                 <button type="button"
                                         class="engagement-btn"
-                                        disabled="@(!_waiverAccepted || _saving || _paymentMode == "unavailable")"
+                                        disabled="@((NeedsWaiver && !_waiverAccepted) || _saving || _paymentMode == "unavailable")"
                                         @onclick="ConfirmOrderAsync">
                                     @(_paymentMode == DeepTestFinanceRules.TestUnlockMethod
                                         ? Culture["DeepPay.TestAccountCta"]
@@ -191,7 +195,7 @@ else
                 <TestPageShell Kind="_kind"
                                Mode="TestPageShell.ShellMode.Question"
                                Deep="true"
-                               Eyebrow="@Culture.Format("Deep.Eyebrow.Part", Culture[_titleKey], part?.Index ?? 1)"
+                               Eyebrow="@ChromeEyebrow(part)"
                                H1="@partName"
                                Lead="@Culture["TestFlow.QuestionLead"]"
                                TestName="@Culture[_titleKey]"
@@ -249,6 +253,7 @@ else
     private bool _gateOpen;
     private bool _saving;
     private bool _waiverAccepted;
+    private bool _employersOn = true;
     private string? _orderErrorKey;
     private string _paymentMode = "unavailable";
     private string _slug = "competence";
@@ -268,6 +273,16 @@ else
     private int _resumeIndex;
     private readonly HashSet<string> _shownCues = [];
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
+
+    private bool NeedsWaiver => _paymentMode != DeepTestFinanceRules.TestUnlockMethod;
+
+    private string ChromeEyebrow(TestDepthPart? part)
+    {
+        var index = part?.Index ?? 1;
+        var size = part?.Size ?? 1;
+        var inPart = part is null ? 1 : Math.Clamp(PartAnswered(part) + 1, 1, size);
+        return Culture.Format("Deep.Chrome", index, Math.Max(1, _parts.Count), inPart, size);
+    }
 
     private TestDepthPart? CurrentPart
     {
@@ -319,6 +334,15 @@ else
 
         try
         {
+            try
+            {
+                _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+            }
+            catch
+            {
+                _employersOn = true;
+            }
+
             _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
             _state = await Api.GetDeepAnalysisAsync(_slug);
             _priceEuro = _state?.PriceEuro > 0 ? _state.PriceEuro : _priceEuro;
@@ -558,9 +582,12 @@ else
     {
         var freeFull = TestDepthRules.FullCount(_kind);
         <div class="test-rail">
-            <p class="test-rail__free">
-                @Culture.Format("Deep.Rail.FreeDone", freeFull)
-            </p>
+            @if (offer)
+            {
+                <p class="test-rail__free">
+                    @Culture.Format("Deep.Rail.FreeDone", freeFull)
+                </p>
+            }
             <p class="test-rail__zone">@Culture["Deep.Rail.BottomZone"]</p>
             <ol class="test-rail__parts">
                 @foreach (var p in _parts)
@@ -571,7 +598,7 @@ else
                         <span>@DeepTestMotivation.PartDisplayName(_kind, p)</span>
                         @if (status == "now")
                         {
-                            <small>@Culture.Format("Deep.Rail.PartProgress", done + 1, p.Size)</small>
+                                <small> · @Culture.Format("Deep.Rail.PartProgress", done + 1, p.Size)</small>
                         }
                     </li>
                 }

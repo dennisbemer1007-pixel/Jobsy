@@ -14,7 +14,7 @@ public sealed class BedenktijdUiTests
     {
         var page = ReadDeepAnalysisRazor();
         Assert.Contains(
-            "disabled=\"@(!_waiverAccepted || _saving || _paymentMode == \"unavailable\")\"",
+            "disabled=\"@((NeedsWaiver && !_waiverAccepted) || _saving || _paymentMode == \"unavailable\")\"",
             page,
             StringComparison.Ordinal);
     }

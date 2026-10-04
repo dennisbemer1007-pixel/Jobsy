@@ -422,7 +422,7 @@
 }
 
 /* —— Tabs —— */
-.passport-tabs.admin-sublinks {
+.passport-tabs {
     position: sticky;
     inset-block-start: var(--app-header-height, 4.25rem);
     z-index: var(--z-sticky);
@@ -438,7 +438,7 @@
     mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
 }
 
-.passport-tabs .admin-sublink {
+.passport-tabs .passport-tab {
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
@@ -471,23 +471,23 @@
     font-weight: 600;
 }
 
-[dir="rtl"] .passport-tabs.admin-sublinks {
+[dir="rtl"] .passport-tabs {
     mask-image: linear-gradient(to left, transparent, #000 12px, #000 calc(100% - 12px), transparent);
 }
 
 @media (max-width: 1023px) {
-    .passport-tabs.admin-sublinks {
+    .passport-tabs {
         box-shadow: inset -2.25rem 0 1.25rem -1.4rem var(--bg);
     }
 
-    [dir="rtl"] .passport-tabs.admin-sublinks {
+    [dir="rtl"] .passport-tabs {
         box-shadow: inset 2.25rem 0 1.25rem -1.4rem var(--bg);
     }
 }
 
 @media (min-width: 1024px) {
-    .passport-tabs.admin-sublinks,
-    [dir="rtl"] .passport-tabs.admin-sublinks {
+    .passport-tabs,
+    [dir="rtl"] .passport-tabs {
         flex-wrap: wrap;
         overflow: visible;
         mask-image: none;

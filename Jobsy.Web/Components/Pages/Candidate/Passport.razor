@@ -88,7 +88,7 @@
                                   ImportantStatus="@_importantStatus"
                                   OnGoTests="() => SetTab(PassportTabs.Tests)" />
 
-                <div class="passport-tabs admin-sublinks"
+                <div class="passport-tabs"
                      role="tablist"
                      aria-label="@Culture["Passport.Title"]"
                      @onkeydown="OnTabListKeyDown">
@@ -98,7 +98,7 @@
                         var selected = _tab == tab;
                         <button type="button"
                                 id="@id"
-                                class="admin-sublink @(selected ? "admin-sublink--active" : null)"
+                                class="passport-tab @(selected ? "passport-tab--active" : null)"
                                 role="tab"
                                 aria-selected="@(selected ? "true" : "false")"
                                 aria-controls="@($"passport-panel-{tab}")"

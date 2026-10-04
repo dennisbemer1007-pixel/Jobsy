@@ -18,7 +18,7 @@
     var blocks = targetCount > 50 ? 25 : targetCount;
 }
 
-<div class="test-flow @(Compact ? "test-flow--compact" : null)" data-test-flow="@Kind">
+<div class="test-flow @(Compact ? "test-flow--compact" : null) @(Target == TestDepthLevel.Bottom ? "test-flow--deep" : null)" data-test-flow="@Kind">
     @if (question is not null)
     {
         <p class="test-flow__counter" id="@($"tf-counter-{Kind}")">
@@ -44,7 +44,7 @@
                 }
             }
         </div>
-        @if (!Compact)
+        @if (!Compact && Target != TestDepthLevel.Bottom)
         {
             <p class="test-flow__level">
                 @if (reached is TestDepthLevel r)
@@ -106,7 +106,7 @@
             }
         }
 
-        <footer class="test-flow__footer">
+        <footer class="test-flow__footer" @ref="_footer">
             <button type="button"
                     class="test-flow__back"
                     disabled="@(index <= 0 && !OnLeave.HasDelegate)"
@@ -202,7 +202,24 @@
         }
 
         _focusRequest = false;
+        try
+        {
+            if (Target == TestDepthLevel.Bottom)
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.bind", _footer, "--sticky-footer-h");
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--sticky-footer-h");
+            }
+        }
+        catch
+        {
+            // bUnit
+        }
     }
+
+    private ElementReference _footer;
 
     private static int CountForLevel(TestDepthLevel? level)
         => level is null ? 0 : level switch
@@ -266,9 +283,20 @@
 
         if (answeredIndex >= TargetCount - 1)
         {
-            // Never auto-advance past the target.
-            _focusRequest = true;
-            await InvokeAsync(StateHasChanged);
+            if (FirstGapIndex() is int lastGap)
+            {
+                _index = lastGap;
+                _focusRequest = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (Autosave is not null)
+            {
+                await Autosave.FlushAsync();
+            }
+
+            await OnFinished.InvokeAsync();
             return;
         }
 

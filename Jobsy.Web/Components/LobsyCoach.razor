@@ -1,0 +1,139 @@
+@namespace Jobsy.Web.Components
+@using Jobsy.Web.Navigation
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject CoachTipBus Tips
+@inject AssistantChatHost ChatHost
+@inject IJSRuntime Js
+
+<div class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null)" data-lobsy-coach>
+    @if (_showTip && !string.IsNullOrWhiteSpace(_tip))
+    {
+        <div class="lobsy-coach-dock__tip" role="status">
+            <p>@_tip</p>
+            <button type="button" class="lobsy-coach-dock__close" @onclick="DismissTipAsync" aria-label="@CloseLabel">×</button>
+        </div>
+    }
+    <button type="button"
+            id="lobsy-coach-btn"
+            class="lobsy-coach-dock__btn"
+            @onclick="OpenChat"
+            aria-haspopup="dialog"
+            aria-expanded="@(ChatHost.IsOpen ? "true" : "false")"
+            aria-controls="lobsy-assistant-panel">
+        <img src="/images/brand/mascot-coach.webp"
+             srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
+             alt=""
+             width="128"
+             height="128"
+             decoding="async" />
+        <span class="visually-hidden">@AskLabel</span>
+    </button>
+</div>
+
+@code {
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public string AskLabel { get; set; } = "Lobsy, je coach: stel een vraag";
+    [Parameter] public string CloseLabel { get; set; } = "Tip sluiten";
+
+    private string? _tip;
+    private bool _showTip;
+    private string _routeKey = "";
+
+    protected override void OnInitialized()
+    {
+        Tips.Changed += OnTipChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        ApplyTip();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ApplyTip();
+        if (Compact)
+        {
+            _showTip = false;
+            return;
+        }
+
+        await RefreshDismissedAsync();
+    }
+
+    public void Dispose()
+    {
+        Tips.Changed -= OnTipChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    private void OnTipChanged() => _ = InvokeAsync(async () =>
+    {
+        ApplyTip();
+        await RefreshDismissedAsync();
+        StateHasChanged();
+    });
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => _ = InvokeAsync(async () =>
+    {
+        ApplyTip();
+        await RefreshDismissedAsync();
+        StateHasChanged();
+    });
+
+    private void ApplyTip()
+    {
+        var here = Navigation.Uri;
+        _routeKey = RouteKey(here);
+        _tip = Tips.Route is not null && SameRoute(Tips.Route, here) ? Tips.Tip : null;
+        if (Compact || string.IsNullOrWhiteSpace(_tip))
+        {
+            _showTip = false;
+        }
+    }
+
+    private async Task RefreshDismissedAsync()
+    {
+        if (Compact || string.IsNullOrWhiteSpace(_tip))
+        {
+            _showTip = false;
+            return;
+        }
+
+        try
+        {
+            var dismissed = await Js.InvokeAsync<bool>("jobsyCoachDock.tipDismissed", _routeKey);
+            _showTip = !dismissed;
+        }
+        catch
+        {
+            _showTip = true;
+        }
+    }
+
+    private async Task DismissTipAsync()
+    {
+        _showTip = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyCoachDock.dismissTip", _routeKey);
+        }
+        catch
+        {
+            // Remembered for this circuit only when storage is blocked.
+        }
+    }
+
+    private void OpenChat() => ChatHost.RequestToggle();
+
+    private static string RouteKey(string uri)
+    {
+        if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed))
+        {
+            return uri;
+        }
+
+        return parsed.AbsolutePath.TrimEnd('/').ToLowerInvariant();
+    }
+
+    private static bool SameRoute(string published, string current)
+        => string.Equals(RouteKey(published), RouteKey(current), StringComparison.Ordinal);
+}

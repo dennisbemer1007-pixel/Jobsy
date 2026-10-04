@@ -1,21 +1,19 @@
-using System.Net;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
 
 /// <summary>
-/// The assistant edge tab stays inside the viewport. Soft-skips without a running site.
+/// Test-account uitgebreide analyse stays free in the browser. Soft-skips without a site
+/// or when the logged-in user is not a test account.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class AssistantTabPlaywrightTests
+public class FreeUnlockCopyPlaywrightTests
 {
-    private const string DefaultEmail = "kandidaat@jobsy.local";
+    private const string DefaultEmail = "test-kandidaat@lobsy.nl";
     private const string DefaultPassword = "Jobsy123!";
 
-    [Theory]
-    [InlineData(1366, 900)]
-    [InlineData(390, 844)]
-    public async Task Assistant_tab_is_inside_the_viewport(int width, int height)
+    [Fact]
+    public async Task Test_account_checkout_has_no_paid_mollie_or_waiver()
     {
         var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
         if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
@@ -23,15 +21,15 @@ public class AssistantTabPlaywrightTests
             return;
         }
 
-        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
-        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_TEST_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_TEST_CANDIDATE_PASSWORD") ?? DefaultPassword;
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
         await using var context = await browser.NewContextAsync(new()
         {
-            ViewportSize = new() { Width = width, Height = height },
+            ViewportSize = new() { Width = 1366, Height = 900 },
             IgnoreHTTPSErrors = true
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
@@ -55,31 +53,22 @@ public class AssistantTabPlaywrightTests
             return;
         }
 
-        await page.GotoAsync(baseUrl + "/candidate/paspoort", new()
+        await page.GotoAsync(baseUrl + "/profiel/tests/career", new()
         {
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 60_000
         });
-
-        var tab = page.Locator("#lobsy-coach-btn");
-        try
-        {
-            await tab.WaitForAsync(new() { Timeout = 20_000 });
-        }
-        catch (TimeoutException)
+        var html = await page.ContentAsync();
+        if (!html.Contains("gratis (testaccount)", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
-        var box = await tab.BoundingBoxAsync();
-        Assert.NotNull(box);
-        Assert.True(box!.Y >= 0, $"Assistant tab starts above the viewport (y={box.Y}).");
-        Assert.True(box.Y + box.Height <= height + 1, $"Assistant tab ends below the viewport (y={box.Y}, h={box.Height}).");
-
-        await tab.ClickAsync();
-        var panel = page.Locator("#lobsy-assistant-panel");
-        await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
-        Assert.True(await panel.IsVisibleAsync());
+        Assert.DoesNotContain("Beroepentesttest", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("€ 2,99", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("via Mollie", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("14 dagen", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Betaald · klaar", html, StringComparison.Ordinal);
     }
 
     private static async Task<bool> IsReachableAsync(string baseUrl)
