@@ -19444,14 +19444,11 @@ body {
 
 /* ==== mobile-candidate-a11y-polish ==== */
 /* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome treats that script focus as
-   :focus-visible. Show the ring only after a real keyboard press. */
+   :focus-visible, so :focus:not(:focus-visible){outline:none} left the browser's
+   black outline. A thin offset brand line stays visible without a heavy box. */
 h1[tabindex="-1"]:focus {
-    outline: none;
-}
-
-html[data-lobsy-keyboard] h1[tabindex="-1"]:focus-visible {
-    outline: 3px solid var(--brand);
-    outline-offset: 2px;
+    outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
+    outline-offset: 6px;
 }
 
 .page-help__btn,

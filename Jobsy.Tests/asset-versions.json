@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "9f40100565cab3b80dba7927946736baac08c2caf714ad983af437017f128855",
-    "v": "20261004-run4"
+    "sha256": "6a66974f6be81a1bb9c1cb884ba17f5447999fe57954d64da29b2e7886da31c9",
+    "v": "20261004-circuit"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -100,8 +100,8 @@
     "v": "20260930-sales9"
   },
   "css/features/scholen.css": {
-    "sha256": "3d8989ca0ceb570038cec7b1bfd703b8fb59a9b6b58063b5f32715d0ade34db7",
-    "v": "20261004-run4"
+    "sha256": "a59e819292d032020bbe319307fc0117b7521db11b69b4b1d4476871a0dc9a7f",
+    "v": "20261004-h1ring"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "f0d5cb57768680bab78d5196f8f9f2ced85728bf6eba0fa51938d2892861167d",
-    "v": "20261004-run4"
+    "sha256": "2b50b3b7efb48e1933a0510d1d962dc74ac07bc0fd5646e2dd533194589fb078",
+    "v": "20261004-run4b"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "fc02cae8bfe40e76f8420d63b193ebe76da4ce5354ee20c50f68bba102598df8",
-    "v": "20261004-run4"
+    "sha256": "b8d1ccd8aed73aa194b3047c7823c0080f5bb0ef55108b52ba30be9f65c6a93f",
+    "v": "20261004-run4b"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "88f0fdd8c921a0667a99515c97c94bd430cdab6bd67edf386550fb84c0dab448",
-    "v": "20261004-run4"
+    "sha256": "1fc94a87fa57bba501d95dd0b96f9a1bef09a4e1a02978853d6bb82ccf911695",
+    "v": "20261004-run4b"
   },
   "service-worker.published.js": {
-    "sha256": "d5d63a5ceb9b76e30e06bb6a381fd1aca990e58ba29cc81b98dfc475598b8b9b",
-    "v": "20261004-run4"
+    "sha256": "4c62ce12ac9d241066ace50743a37b2fb2ad2781266c3729e0db5a2f5079b514",
+    "v": "20261004-run4b"
   }
 }
