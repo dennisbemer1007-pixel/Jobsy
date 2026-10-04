@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Ai;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
@@ -49,6 +50,7 @@ public sealed class AssistantChatService : IAssistantChatService
     private readonly IOpenAiEndpointResolver _openAi;
     private readonly IFeatureFlags _featureFlags;
     private readonly ILogger<AssistantChatService> _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public AssistantChatService(
         JobsyDbContext db,
@@ -58,7 +60,8 @@ public sealed class AssistantChatService : IAssistantChatService
         ISalesManagerDashboardService salesDashboard,
         IOpenAiEndpointResolver openAi,
         IFeatureFlags featureFlags,
-        ILogger<AssistantChatService> logger)
+        ILogger<AssistantChatService> logger,
+        IPlatformErrorLog? platformLog = null)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
@@ -68,6 +71,7 @@ public sealed class AssistantChatService : IAssistantChatService
         _openAi = openAi;
         _featureFlags = featureFlags;
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<AssistantChatResult> ChatAsync(
@@ -106,12 +110,23 @@ public sealed class AssistantChatService : IAssistantChatService
         {
             try
             {
-                var ai = await CompleteWithOpenAiAsync(
-                    context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, cancellationToken);
+                using var aiCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                aiCts.CancelAfter(TimeSpan.FromSeconds(25));
+                var (ai, rejectedFacts) = await CompleteWithOpenAiAsync(
+                    context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, aiCts.Token);
                 if (!string.IsNullOrWhiteSpace(ai))
                 {
                     return new AssistantChatResult(StripMarkup(ai), UsedAi: true, []);
                 }
+
+                if (rejectedFacts && string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
+                {
+                    return new AssistantChatResult(UnknownFactReply(context), UsedAi: false, []);
+                }
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Assistant reply timed out; local fallback is used.");
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -1112,7 +1127,7 @@ Verbetervoorstellen:
             ]);
     }
 
-    private async Task<string?> CompleteWithOpenAiAsync(
+    private async Task<(string? Reply, bool RejectedFacts)> CompleteWithOpenAiAsync(
         AssistantChatContext context,
         IReadOnlyList<AssistantChatMessage> history,
         string apiKey,
@@ -1121,13 +1136,65 @@ Verbetervoorstellen:
         CancellationToken cancellationToken)
     {
         var lang = MockInterviewLabels.For(context.Language);
-        var facts = await BuildScopedFactsAsync(context, cancellationToken);
+        var (facts, sheet) = await BuildScopedFactsAsync(context, cancellationToken);
         var system = BuildSystemPrompt(context, lang.LanguageName, facts);
+        var prompts = sheet is null
+            ? new[] { system }
+            : new[] { system, system + "\n" + CandidateFactGuard.StrictAddendum };
+        string? rejected = null;
+        for (var attempt = 1; attempt <= prompts.Length; attempt++)
+        {
+            var reply = await RequestAssistantReplyAsync(
+                history,
+                prompts[attempt - 1],
+                apiKey,
+                model,
+                baseUrl,
+                cancellationToken);
+            if (string.IsNullOrWhiteSpace(reply))
+            {
+                continue;
+            }
+
+            if (!AssistantReplyGuard.Accepts(reply, facts))
+            {
+                rejected = "coach-rules";
+            }
+            else if (sheet is not null && CandidateFactGuard.RejectionReason(reply, sheet) is string reason)
+            {
+                rejected = reason;
+            }
+            else
+            {
+                return (reply, false);
+            }
+
+            await AiFactRejectionLog.WriteAsync(
+                _platformLog,
+                _logger,
+                "coach",
+                rejected,
+                attempt,
+                cancellationToken);
+        }
+
+        return (null, rejected is not null);
+    }
+
+    private async Task<string?> RequestAssistantReplyAsync(
+        IReadOnlyList<AssistantChatMessage> history,
+        string system,
+        string apiKey,
+        string model,
+        string baseUrl,
+        CancellationToken cancellationToken)
+    {
         var messages = new List<object> { new { role = "system", content = system } };
         foreach (var turn in history.TakeLast(MaxHistoryMessages))
         {
             messages.Add(new { role = turn.Role, content = turn.Content });
         }
+
         var client = _httpClientFactory.CreateClient("IntegrationProbe");
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
@@ -1151,7 +1218,9 @@ Verbetervoorstellen:
         return completion?.Choices?.FirstOrDefault()?.Message?.Content;
     }
 
-    private async Task<string> BuildScopedFactsAsync(AssistantChatContext context, CancellationToken cancellationToken)
+    private async Task<(string Facts, CandidateFactSheet? Sheet)> BuildScopedFactsAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -1181,11 +1250,42 @@ Verbetervoorstellen:
                     sb.Append($"total applications={apps}; ");
                 }
 
+                var scoreLines = new List<string>();
+                var jobs = new List<string>();
                 AppendPreferenceFacts(sb, prefs, dream);
-                await AppendTestFactsAsync(sb, context.UserId, cancellationToken);
+                await AppendTestFactsAsync(sb, context.UserId, context.Language, scoreLines, jobs, cancellationToken);
                 sb.Append("month metrics: ");
                 sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
-                return sb.ToString();
+                var work = WorkEntries(prefs);
+                var education = (prefs?.Educations ?? [])
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Select(item => item.Trim())
+                    .ToList();
+                if (!string.IsNullOrWhiteSpace(prefs?.EducationDirection))
+                {
+                    education.Add(prefs.EducationDirection.Trim());
+                }
+
+                var certificates = (prefs?.Certificates ?? [])
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+                    .Select(CandidateFactSheet.FormatCertificate)
+                    .ToList();
+                var confirmed = new List<string>();
+                if (!string.IsNullOrWhiteSpace(dream))
+                {
+                    confirmed.Add(dream.Trim());
+                    jobs.Add(dream.Trim());
+                }
+
+                if (!string.IsNullOrWhiteSpace(prefs?.PreferredTransport))
+                {
+                    confirmed.Add(prefs.PreferredTransport.Trim());
+                }
+
+                var sheet = CandidateFactSheet.Personal(work, education, certificates, jobs, scoreLines, confirmed);
+                sb.AppendLine();
+                sb.Append(sheet.ToPrompt());
+                return (sb.ToString(), sheet);
             }
 
             if (string.Equals(context.Role, JobsyRoles.SalesManager, StringComparison.Ordinal))
@@ -1193,10 +1293,10 @@ Verbetervoorstellen:
                 var dash = await _salesDashboard.GetDashboardAsync(context.UserId, cancellationToken);
                 if (dash is null)
                 {
-                    return "Salesmanager facts: onboarding incomplete / no dashboard.";
+                    return ("Salesmanager facts: onboarding incomplete / no dashboard.", null);
                 }
 
-                return $"Salesmanager facts (own account only): tracking={dash.TrackingCode}; uninvoicedExVat={dash.UninvoicedExVat}; outstandingIssuedExVat={dash.OutstandingIssuedExVat}; suppliers={dash.Suppliers.Count}";
+                return ($"Salesmanager facts (own account only): tracking={dash.TrackingCode}; uninvoicedExVat={dash.UninvoicedExVat}; outstandingIssuedExVat={dash.OutstandingIssuedExVat}; suppliers={dash.Suppliers.Count}", null);
             }
 
             if (string.Equals(context.Role, JobsyRoles.Admin, StringComparison.Ordinal)
@@ -1217,7 +1317,7 @@ Verbetervoorstellen:
                     }
                 }
 
-                return sb.ToString();
+                return (sb.ToString(), null);
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -1225,29 +1325,48 @@ Verbetervoorstellen:
             _logger.LogDebug(ex, "Failed to build assistant scoped facts.");
         }
 
-        return "No extra facts.";
+        return ("No extra facts.", null);
     }
 
-    private async Task AppendTestFactsAsync(StringBuilder sb, Guid userId, CancellationToken cancellationToken)
+    private static List<string> WorkEntries(CandidatePreferencesDto? prefs)
+        => (prefs?.Employers ?? [])
+            .Select(CandidateFactSheet.FormatWorkEntry)
+            .Where(role => !string.IsNullOrWhiteSpace(role))
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(4)
+            .ToList();
+
+    private async Task AppendTestFactsAsync(
+        StringBuilder sb,
+        Guid userId,
+        string? language,
+        List<string> scoreLines,
+        List<string> jobs,
+        CancellationToken cancellationToken)
     {
+        var lang = JobsyLanguages.Normalize(language);
+        var completed = new List<string>();
         var competency = await _db.CandidateCompetencies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
         {
+            completed.Add(TestName(lang, "work"));
             var top = new (string Label, int Score)[]
                 {
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Samenwerken), competency.SamenwerkenPercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Resultaatgerichtheid), competency.ResultaatgerichtheidPercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Stressbestendigheid), competency.StressbestendigheidPercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Innovatie), competency.InnovatiePercent ?? 0),
-                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Extraversie), competency.ExtraversiePercent ?? 0)
+                    (DimensionLabels.For(CompetencyTestCatalog.Samenwerken, lang), competency.SamenwerkenPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Resultaatgerichtheid, lang), competency.ResultaatgerichtheidPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Stressbestendigheid, lang), competency.StressbestendigheidPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Innovatie, lang), competency.InnovatiePercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Extraversie, lang), competency.ExtraversiePercent ?? 0)
                 }
+                .Where(x => x.Label.Length > 0)
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .Take(3);
-            sb.Append("competenceTop3=")
-                .Append(string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%")))
-                .Append("; ");
+            var line = string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%"));
+            sb.Append("competenceTop3=").Append(line).Append("; ");
+            scoreLines.Add("competenceTop3=" + line);
         }
 
         var career = await _db.CandidateCareerInterests.AsNoTracking()
@@ -1262,47 +1381,57 @@ Verbetervoorstellen:
             career?.ConventionalPercent);
         if (riasec is { IsComplete: true })
         {
+            completed.Add(TestName(lang, "career"));
             var top = CareerTestCatalog.RiasecCodes
-                .Select(code => (Label: CareerCompassBuilder.TypeLabel(code), Score: riasec.Get(code)))
+                .Select(code => (Label: DimensionLabels.For(code, lang), Score: riasec.Get(code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .Take(3);
-            sb.Append("riasecTop3=")
-                .Append(string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%")))
-                .Append("; ");
+            var line = string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%"));
+            sb.Append("directionsTop3=").Append(line).Append("; ");
+            scoreLines.Add("directionsTop3=" + line);
         }
 
         var culture = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
         {
+            completed.Add(TestName(lang, "culture"));
             var topCulture = CulturePersonalityCatalog.CultureDimensionCodes
-                .Select(code => (Label: CulturePersonalityCatalog.EverydayLabel(code), Score: ReadCultureScore(culture, code)))
+                .Select(code => (Label: DimensionLabels.For(code, lang), Score: ReadCultureScore(culture, code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .First();
             sb.Append($"cultureTop={topCulture.Label} {topCulture.Score}%; ");
+            scoreLines.Add($"cultureTop={topCulture.Label} {topCulture.Score}%");
         }
 
         var values = await _db.CandidateValuesProfiles.AsNoTracking()
             .FirstOrDefaultAsync(v => v.UserId == userId, cancellationToken);
         if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
         {
+            completed.Add(TestName(lang, "values"));
             var topValue = SchwartzValuesCatalog.CategoryCodes
-                .Select(code => (Label: SchwartzValuesCatalog.EverydayLabel(code), Score: ReadValueScore(values, code)))
+                .Select(code => (Label: DimensionLabels.For(code, lang), Score: ReadValueScore(values, code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .First();
             sb.Append($"valuesTop={topValue.Label} {topValue.Score}%; ");
+            scoreLines.Add($"valuesTop={topValue.Label} {topValue.Score}%");
         }
 
         var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
             .Where(d => d.UserId == userId && d.Status == CandidateDeepAnalysisStatuses.Completed)
             .Select(d => d.Kind)
             .ToListAsync(cancellationToken);
-        sb.Append(deep.Count == 0
-            ? "deepTests=none; "
-            : "deepTests=" + string.Join(",", deep) + "; ");
+        var completedLine = completed.Count == 0 ? "none" : string.Join(", ", completed);
+        sb.Append("completedTests=").Append(completedLine).Append("; ");
+        scoreLines.Add("completedTests=" + completedLine);
+        var deepLine = deep.Count == 0
+            ? "deepTests=none (no extra long test; this does not mean completedTests is empty)"
+            : "deepTests=" + string.Join(",", deep.Select(kind => DeepTestName(lang, kind)));
+        sb.Append(deepLine).Append("; ");
+        scoreLines.Add(deepLine);
 
         var compass = CareerCompassJson.TryDeserialize(career?.CompassJson);
         if (compass is { HasOccupations: true })
@@ -1310,11 +1439,57 @@ Verbetervoorstellen:
             var occupations = compass.AllOccupations
                 .OrderByDescending(m => m.Percent)
                 .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
-                .Take(5);
+                .Take(CareerCompassSanitize.MaxCatalogueJobs);
+            var listed = occupations.ToList();
             sb.Append("topOccupations=")
-                .Append(string.Join(", ", occupations.Select(m => $"{m.Title} {m.Percent}%")))
+                .Append(string.Join(", ", listed.Select(m => $"{m.Title} {m.Percent}%")))
                 .Append("; ");
+            jobs.AddRange(listed.Select(m => m.Title));
         }
+    }
+
+    private static string TestName(string lang, string key) => (lang, key) switch
+    {
+        ("en", "work") => "How you work",
+        ("en", "career") => "Job test",
+        ("en", "culture") => "Culture and personality",
+        ("en", "values") => "Values at work",
+        ("pl", "work") => "Jak pracujesz",
+        ("pl", "career") => "Test zawodów",
+        ("pl", "culture") => "Kultura i osobowość",
+        ("pl", "values") => "Wartości w pracy",
+        ("ro", "work") => "Cum lucrezi",
+        ("ro", "career") => "Testul de meserii",
+        ("ro", "culture") => "Cultură și personalitate",
+        ("ro", "values") => "Valori la muncă",
+        ("ar", "work") => "كيف تعمل",
+        ("ar", "career") => "اختبار المهن",
+        ("ar", "culture") => "الثقافة والشخصية",
+        ("ar", "values") => "قيم في العمل",
+        (_, "work") => "Test: hoe je werkt",
+        (_, "career") => "Beroepentest",
+        (_, "culture") => "Cultuur en persoonlijkheid",
+        _ => "Waarden op werk"
+    };
+
+    private static string DeepTestName(string lang, AssessmentKind kind)
+    {
+        var extra = lang switch
+        {
+            "en" => "long",
+            "pl" => "długi",
+            "ro" => "lung",
+            "ar" => "مطوّل",
+            _ => "uitgebreid"
+        };
+        var name = kind switch
+        {
+            AssessmentKind.Career => TestName(lang, "career"),
+            AssessmentKind.Culture => TestName(lang, "culture"),
+            AssessmentKind.Values => TestName(lang, "values"),
+            _ => TestName(lang, "work")
+        };
+        return extra + " " + name;
     }
 
     private static int ReadCultureScore(CandidateCulturePersonalityProfile row, string code)
@@ -1379,13 +1554,25 @@ Verbetervoorstellen:
         }
 
         var roles = (prefs.Employers ?? [])
-            .Select(e => e.Role)
+            .Select(CandidateFactSheet.FormatWorkEntry)
             .Where(r => !string.IsNullOrWhiteSpace(r))
-            .Select(r => r!.Trim());
+            .Cast<string>();
         var experience = string.Join(", ", roles);
-        if (experience.Length > 0)
+        sb.Append(experience.Length > 0 ? $"experience={experience}; " : "experience=none; ");
+        if (prefs.Certificates is { Count: > 0 })
         {
-            sb.Append($"experience={experience}; ");
+            var names = prefs.Certificates
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .Select(CandidateFactSheet.FormatCertificate);
+            var listed = string.Join(", ", names);
+            if (listed.Length > 0)
+            {
+                sb.Append($"certificates={listed}; ");
+            }
+        }
+        else
+        {
+            sb.Append("certificates=none; ");
         }
     }
 
@@ -1428,7 +1615,13 @@ Verbetervoorstellen:
             "Plain text only: no markdown, no **, no __, no # headings, and no lines that start with a dash. Maximum 5 short sentences. " +
             $"{scope} " +
             "Answer using ONLY the scoped facts below and general Lobsy product knowledge. " +
+            "The Feitenlijst is the only source for this person's tests, work, education and certificates. " +
+            "Never mention an employer, sector, year, diploma or work experience that is not on that list. " +
+            "If it says werkervaring: geen or experience=none, say nothing about past work. " +
+            "If a personal fact is missing, say you do not know. Do not guess. " +
             "Never say tests are missing when the facts list completed tests, scores or occupations. " +
+            "completedTests is the list of finished tests. deepTests=none means there is no extra long test, not that the person did nothing. " +
+            "Never use the words Riasec, RIASEC, Career-test, Holland or werksterkte. Use only labels that appear in the facts. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
             $"Scoped facts:\n{facts}";
     }
@@ -1454,6 +1647,17 @@ Verbetervoorstellen:
                 ? "Hi! Ask me about your KPIs, vacancies in your companies, clicks, or tips to improve traction. I only use data in your profile scope."
                 : "Hoi! Vraag me naar je KPI’s, vacatures in jouw bedrijven, clicks, of tips bij weinig tractie. Ik kijk alleen binnen jouw bereik."
         };
+    }
+
+    private static string UnknownFactReply(AssistantChatContext context)
+    {
+        var lang = JobsyLanguages.Normalize(context.Language);
+        return InLang(lang,
+            "Dat staat niet in je gegevens. Ik weet het niet en vul het niet in.",
+            "That is not in your details. I do not know and I will not guess.",
+            "Tego nie ma w twoich danych. Nie wiem i nie zgaduję.",
+            "Asta nu este în datele tale. Nu știu și nu ghicesc.",
+            "هذا ليس في بياناتك. لا أعرف ولن أخمن.");
     }
 
     private static string FallbackHelp(AssistantChatContext context, bool employersOn = true)

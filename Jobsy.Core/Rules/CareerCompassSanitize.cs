@@ -49,6 +49,78 @@ public static class CareerCompassSanitize
             fromOpenAi || dto.FromOpenAi);
     }
 
+    public const int MinCatalogueJobs = 8;
+    public const int MaxCatalogueJobs = 12;
+
+    /// <summary>
+    /// Keeps provider jobs and, when fewer than 8 catalogue titles survived,
+    /// fills from the local ranking for the same scores. AI "why" text stays.
+    /// </summary>
+    public static CareerCompassSnapshot EnsureDepth(CareerCompassSnapshot snapshot, RiasecScores? scores)
+    {
+        if (scores is not { IsComplete: true })
+        {
+            return snapshot;
+        }
+
+        var jobs = snapshot.AllOccupations.ToList();
+        if (jobs.Count >= MinCatalogueJobs && !IsLoneHigherEducation(jobs))
+        {
+            return snapshot;
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var job in jobs)
+        {
+            seen.Add(MatchKey(job.Title));
+        }
+
+        var ranked = CareerCompassBuilder.Ranked(scores);
+        var floor = jobs.Count == 0 ? 84 : Math.Min(84, jobs.Min(j => j.Percent) - 1);
+        if (floor < CareerCompassBuilder.BroadenMin)
+        {
+            floor = 84;
+        }
+
+        foreach (var local in ranked)
+        {
+            if (jobs.Count >= MaxCatalogueJobs)
+            {
+                break;
+            }
+
+            if (jobs.Count >= MinCatalogueJobs && !IsLoneHigherEducation(jobs))
+            {
+                break;
+            }
+
+            var title = CanonicalTitle(local.Title) ?? local.Title;
+            if (!seen.Add(MatchKey(title)))
+            {
+                continue;
+            }
+
+            var percent = local.Percent >= CareerCompassBuilder.BroadenMin
+                ? local.Percent
+                : floor;
+            percent = Math.Clamp(percent, CareerCompassBuilder.BroadenMin, 100);
+            floor = Math.Max(CareerCompassBuilder.BroadenMin, percent - 2);
+            jobs.Add(new CareerOccupationMatch(title, percent, CareerCompassBuilder.Band(percent), local.Why, local.SearchKeys));
+        }
+
+        if (IsLoneHigherEducation(jobs))
+        {
+            jobs.Clear();
+        }
+
+        return CareerCompassHierarchy.FromOccupations(
+            snapshot.Strengths,
+            jobs,
+            snapshot.PracticalNotes,
+            snapshot.FromDeepAnalysis,
+            snapshot.FromOpenAi);
+    }
+
     /// <summary>Catalogue title, or null when the provider invented a name we do not know.</summary>
     internal static string? CanonicalTitle(string? raw)
     {
@@ -57,7 +129,28 @@ public static class CareerCompassSanitize
             return null;
         }
 
-        var dream = CareerDreamCatalog.FindByTitleOrAlias(raw.Trim());
+        var trimmed = raw.Trim();
+        var exact = ExactTitle(trimmed);
+        if (exact is not null)
+        {
+            return exact;
+        }
+
+        foreach (var variant in TitleVariants(trimmed))
+        {
+            exact = ExactTitle(variant);
+            if (exact is not null)
+            {
+                return exact;
+            }
+        }
+
+        return FuzzyTitle(trimmed);
+    }
+
+    private static string? ExactTitle(string raw)
+    {
+        var dream = CareerDreamCatalog.FindByTitleOrAlias(raw);
         if (dream is not null)
         {
             return dream.Title;
@@ -65,19 +158,124 @@ public static class CareerCompassSanitize
 
         foreach (var occ in CareerCompassBuilder.Occupations)
         {
-            if (string.Equals(occ.Title, raw.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(occ.Title, raw, StringComparison.OrdinalIgnoreCase))
             {
                 return occ.Title;
             }
 
             var head = occ.Title.Split('/')[0].Trim();
-            if (head.Length > 0 && string.Equals(head, raw.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (head.Length > 0 && string.Equals(head, raw, StringComparison.OrdinalIgnoreCase))
             {
                 return occ.Title;
             }
         }
 
         return null;
+    }
+
+    private static IEnumerable<string> TitleVariants(string raw)
+    {
+        var fold = CareerOccupationKeys.Fold(raw);
+        var tokens = fold.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var stripped = tokens.Where(t => !IsRoleFiller(t)).ToArray();
+        if (stripped.Length > 0 && stripped.Length < tokens.Length)
+        {
+            yield return string.Join(' ', stripped);
+        }
+
+        foreach (var suffix in new[] { "medewerkers", "medewerksters", "medewerker", "medewerkster" })
+        {
+            if (fold.EndsWith(suffix, StringComparison.Ordinal) && fold.Length > suffix.Length + 3)
+            {
+                yield return fold[..^suffix.Length].Trim();
+            }
+        }
+
+        foreach (var part in raw.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!string.Equals(part, raw, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return part;
+            }
+        }
+
+        if (fold.EndsWith('s') && fold.Length > 5)
+        {
+            yield return fold[..^1];
+        }
+
+        if (fold.EndsWith("en", StringComparison.Ordinal) && fold.Length > 6)
+        {
+            yield return fold[..^2];
+        }
+    }
+
+    private static bool IsRoleFiller(string token)
+        => token is "medewerker" or "medewerkers" or "medewerkster" or "medewerksters" or "werknemer";
+
+    private static string? FuzzyTitle(string raw)
+    {
+        var query = Compact(raw);
+        if (query.Length < 6)
+        {
+            return null;
+        }
+
+        string? bestTitle = null;
+        var bestLen = 0;
+        foreach (var (phrase, canonical) in CataloguePhrases())
+        {
+            var compact = Compact(phrase);
+            if (compact.Length < 8)
+            {
+                continue;
+            }
+
+            var hit = query.Contains(compact, StringComparison.Ordinal)
+                      || compact.Contains(query, StringComparison.Ordinal);
+            if (!hit || compact.Length <= bestLen)
+            {
+                continue;
+            }
+
+            bestTitle = canonical;
+            bestLen = compact.Length;
+        }
+
+        return bestTitle;
+    }
+
+    private static string Compact(string value)
+        => CareerOccupationKeys.Fold(value).Replace(" ", "", StringComparison.Ordinal);
+
+    private static string MatchKey(string title)
+        => Compact(CanonicalTitle(title) ?? title);
+
+    private static bool IsLoneHigherEducation(IReadOnlyList<CareerOccupationMatch> jobs)
+        => jobs.Count == 1 && CareerGoalFit.IsClearlyHigherEducation(jobs[0].Title);
+
+    private static IEnumerable<(string Phrase, string Canonical)> CataloguePhrases()
+    {
+        foreach (var entry in CareerDreamCatalog.All)
+        {
+            var canonical = ExactTitle(entry.Title) ?? entry.Title;
+            yield return (entry.Title, canonical);
+            foreach (var alias in entry.Aliases)
+            {
+                yield return (alias, canonical);
+            }
+        }
+
+        foreach (var occ in CareerCompassBuilder.Occupations)
+        {
+            var canonical = ExactTitle(occ.Title) ?? occ.Title;
+            yield return (occ.Title, canonical);
+            var head = occ.Title.Split('/')[0].Trim();
+            if (head.Length > 0)
+            {
+                yield return (head, canonical);
+            }
+        }
     }
 
     internal static bool ContainsEnglishLeak(string? text)
@@ -110,9 +308,17 @@ public static class CareerCompassSanitize
                 }
 
                 var why = CleanText(item.Why);
+                var safeWhy = $"Dit beroep sluit aan bij hoe jij scoort ({percent}%).";
                 if (why is null || ContainsEnglishLeak(why))
                 {
-                    why = $"Dit beroep sluit aan bij hoe jij scoort ({percent}%).";
+                    why = safeWhy;
+                }
+                else
+                {
+                    why = CandidateFactGuard.WithoutInventedHistory(
+                        why,
+                        CandidateFactSheet.ForCareerProse(),
+                        safeWhy);
                 }
 
                 var keys = CareerOccupationKeys.Merge(title, item.Keys);
@@ -169,6 +375,11 @@ public static class CareerCompassSanitize
                 continue;
             }
 
+            if (CandidateFactGuard.RejectionReason(text, CandidateFactSheet.ForCareerProse()) is not null)
+            {
+                continue;
+            }
+
             var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (words.Length is < 1 or > MaxStrengthWords)
             {
@@ -197,10 +408,12 @@ public static class CareerCompassSanitize
             return [];
         }
 
+        var prose = CandidateFactSheet.ForCareerProse();
         return items
             .Select(CleanText)
             .Where(t => !string.IsNullOrWhiteSpace(t) && !ContainsEnglishLeak(t))
             .Cast<string>()
+            .Where(t => CandidateFactGuard.RejectionReason(t, prose) is null)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(take)
             .ToList();

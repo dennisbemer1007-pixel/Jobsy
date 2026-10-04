@@ -77,6 +77,30 @@ public class WhoAmITests
         Assert.DoesNotContain("ada", user, StringComparison.OrdinalIgnoreCase);
         Assert.True(CareerCompassBuilder.ContainsForbiddenJargon(WhoAmIPrompt.System));
         Assert.Contains("ik-vorm", WhoAmIPrompt.System, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("werkervaring: geen", user, StringComparison.Ordinal);
+        Assert.Contains("Verzin niets", WhoAmIPrompt.System, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Empty_experience_rejects_invented_sectors_and_a_score_contradiction()
+    {
+        var competency = new CompetencyScores(80, 70, 65, 90);
+        var culture = new CulturePersonalityScores(
+            Autonomy: 40, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
+            Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70);
+        const string invented = """
+            Ik heb jarenlang in de bouw gewerkt. Ook heb ik in de zorg gestaan.
+
+            Samenwerken doe ik liever niet te veel. Helpen, helpen en nog eens helpen vind ik netjes, netjes en netjes.
+            """;
+        Assert.False(WhoAmIStoryBuilder.Accepts(invented, WhoAmIProfileHighlights.Empty, competency, culture));
+
+        const string ok = """
+            Ik pak taken aan en maak ze af. Samenwerken past bij mij.
+
+            Ik houd van een duidelijke dag. In Den Haag of het Westland voel ik me op mijn plek.
+            """;
+        Assert.True(WhoAmIStoryBuilder.Accepts(ok, WhoAmIProfileHighlights.Empty, competency, culture));
     }
 
     [Fact]

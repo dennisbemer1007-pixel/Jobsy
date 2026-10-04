@@ -223,6 +223,74 @@ public class OpenAiEndpointResolverTests
     }
 
     [Fact]
+    public async Task Mistral_feature_model_overrides_only_that_feature()
+    {
+        var sut = CreateSut(
+            ai: new AiOptions { Provider = "Mistral" },
+            mistral: new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                Model = "mistral-small-latest",
+                Models = new MistralFeatureModels
+                {
+                    Story = "mistral-medium-latest",
+                    CareerReport = "  ",
+                    Compass = "mistral-medium-latest",
+                    Chat = null
+                }
+            });
+
+        var story = await sut.ResolveAsync(OpenAiFeature.WhoAmI);
+        var chat = await sut.ResolveAsync(OpenAiFeature.AssistantChat);
+        var compass = await sut.ResolveAsync(OpenAiFeature.CareerCompass);
+        var translation = await sut.ResolveAsync(OpenAiFeature.Translation);
+
+        Assert.Equal("mistral-medium-latest", story.Model);
+        Assert.Equal("mistral-small-latest", chat.Model);
+        Assert.Equal("mistral-medium-latest", compass.Model);
+        Assert.Equal("mistral-small-latest", translation.Model);
+    }
+
+    [Fact]
+    public async Task Mistral_career_report_model_is_used_when_compass_slot_is_empty()
+    {
+        var sut = CreateSut(
+            ai: new AiOptions { Provider = "Mistral" },
+            mistral: new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                Model = "mistral-small-latest",
+                Models = new MistralFeatureModels { CareerReport = "mistral-medium-latest" }
+            });
+
+        var compass = await sut.ResolveAsync(OpenAiFeature.CareerCompass);
+        var story = await sut.ResolveAsync(OpenAiFeature.WhoAmI);
+
+        Assert.Equal("mistral-medium-latest", compass.Model);
+        Assert.Equal(MistralOptions.DefaultModel, story.Model);
+    }
+
+    [Fact]
+    public async Task Mistral_compass_model_wins_over_the_career_report_model()
+    {
+        var sut = CreateSut(
+            ai: new AiOptions { Provider = "Mistral" },
+            mistral: new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                Models = new MistralFeatureModels
+                {
+                    Compass = "mistral-small-latest",
+                    CareerReport = "mistral-medium-latest"
+                }
+            });
+
+        var compass = await sut.ResolveAsync(OpenAiFeature.CareerCompass);
+
+        Assert.Equal("mistral-small-latest", compass.Model);
+    }
+
+    [Fact]
     public async Task Mistral_keeps_a_global_host_and_rejects_a_private_host()
     {
         var global = CreateSut(

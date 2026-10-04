@@ -19999,6 +19999,42 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 }
 
+@media (max-width: 480px) {
+    .lobsy-coach-dock__tip {
+        position: fixed;
+        inset-inline: 0;
+        bottom: calc(var(--bottom-nav-h, 64px) + env(safe-area-inset-bottom, 0px));
+        width: 100%;
+        max-width: none;
+        border-radius: 0;
+        z-index: 1;
+        box-sizing: border-box;
+        padding-inline: 2.25rem 4.75rem;
+    }
+
+    .lobsy-coach-dock__btn,
+    .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
+        position: relative;
+        z-index: 2;
+    }
+
+    .lobsy-coach-dock__close {
+        inset-inline-end: auto;
+        inset-inline-start: 0.35rem;
+    }
+
+    .lobsy-coach-dock__tip .read-aloud {
+        width: auto;
+        max-width: 100%;
+    }
+
+    .passport-tests__aside,
+    .test-result-card,
+    .test-page .test-result-card a {
+        padding-inline-end: 4.5rem;
+    }
+}
+
 .app-shell main h1 {
     font-size: 1.75rem;
     line-height: 1.2;
@@ -20173,8 +20209,15 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 }
 
+.checkbox-row .mail-settings__label,
 .mail-settings__label {
     font-size: 1rem;
+    line-height: 1.4;
+}
+
+.checkbox-row .mail-settings__hint,
+.mail-settings__hint {
+    font-size: 0.95rem;
     line-height: 1.4;
 }
 

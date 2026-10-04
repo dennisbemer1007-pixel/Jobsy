@@ -81,6 +81,7 @@
         try
         {
             await Js.InvokeVoidAsync("jobsyCoachDock.placeTip", _dock);
+            await Js.InvokeVoidAsync("jobsyCoachDock.bindScrollDismiss", _dock);
         }
         catch
         {

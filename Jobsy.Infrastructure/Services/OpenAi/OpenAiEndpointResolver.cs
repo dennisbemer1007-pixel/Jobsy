@@ -108,7 +108,7 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
         {
             return new OpenAiEndpointResolution(
                 _mistral.ApiKey!.Trim(),
-                ResolveMistralModel(),
+                ResolveMistralModel(feature),
                 ResolveMistralBaseUrl());
         }
 
@@ -118,10 +118,8 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
         return new OpenAiEndpointResolution(apiKey, model, baseUrl);
     }
 
-    private string ResolveMistralModel()
-        => string.IsNullOrWhiteSpace(_mistral.Model)
-            ? MistralOptions.DefaultModel
-            : _mistral.Model.Trim();
+    private string ResolveMistralModel(OpenAiFeature feature)
+        => _mistral.ModelFor(feature);
 
     private string ResolveMistralBaseUrl()
         => MistralEndpoint.EffectiveBaseUrl(_mistral.BaseUrl);

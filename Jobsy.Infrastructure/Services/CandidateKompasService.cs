@@ -169,7 +169,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             competencies.Scores,
             career.Scores,
             culture.Scores,
-            values.Scores);
+            values.Scores,
+            WhoAmIProfileHighlights.FromPreferences(prefs));
 
         return new CandidateKompasDto(
             profile,
@@ -386,7 +387,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             competencyResolved.Scores,
             careerResolved.Scores,
             cultureResolved.Scores,
-            valuesResolved.Scores);
+            valuesResolved.Scores,
+            WhoAmIProfileHighlights.FromPreferences(prefs));
 
         bool IsDeepCompleted(AssessmentKind kind)
         {
@@ -459,7 +461,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
         CompetencyScores? competency,
         RiasecScores? career,
         CulturePersonalityScores? culture,
-        SchwartzValuesScores? values)
+        SchwartzValuesScores? values,
+        WhoAmIProfileHighlights? highlights = null)
     {
         var keywords = ParseKeywords(keywordsJson);
         var story = string.IsNullOrWhiteSpace(storyText) ? null : storyText.Trim();
@@ -472,7 +475,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
         // story used to stay "wordt geschreven" forever. Compose the same local story.
         if (story is null && scoresReady)
         {
-            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, WhoAmIProfileHighlights.Empty, values);
+            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values);
             keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values);
             return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc ?? DateTime.UtcNow, WhoAmIStoryStatuses.Ready);
         }
@@ -490,7 +493,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, WhoAmIStoryStatuses.Ready);
         }
 
-        var highlights = WhoAmIProfileHighlights.Empty;
+        highlights ??= WhoAmIProfileHighlights.Empty;
         var expected = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values);
         var stale = !string.Equals(storedFingerprint, expected, StringComparison.Ordinal);
         var retryFallback = CandidateInsightsFingerprint.ShouldRetryFallback(

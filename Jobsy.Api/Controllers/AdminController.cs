@@ -43,6 +43,7 @@ public class AdminController : ControllerBase
     private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
     private readonly IMetricsQueryService _metrics;
+    private readonly ICandidateInsightsQueue _insightsQueue;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
@@ -61,6 +62,7 @@ public class AdminController : ControllerBase
         IAdminAuditLog audit,
         IAdminAuditContext auditContext,
         IMetricsQueryService metrics,
+        ICandidateInsightsQueue insightsQueue,
         ILogger<AdminController> logger)
     {
         _db = db;
@@ -78,6 +80,7 @@ public class AdminController : ControllerBase
         _audit = audit;
         _auditContext = auditContext;
         _metrics = metrics;
+        _insightsQueue = insightsQueue;
         _logger = logger;
     }
 
@@ -944,7 +947,15 @@ public class AdminController : ControllerBase
             checkout.Status = DeepAnalysisCheckoutStatus.Cancelled;
         }
 
+        var career = await _db.CandidateCareerInterests
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (career is not null)
+        {
+            CareerInterestDeepReset.ClearDeepCompass(career, DateTime.UtcNow);
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
+        _insightsQueue.TryEnqueue(userId);
         return NoContent();
     }
 

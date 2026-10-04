@@ -147,6 +147,93 @@ public static class WhoAmIStoryBuilder
         return ShortenLongSentences(trimmed);
     }
 
+    /// <summary>
+    /// Rejects a model story that invents work, contradicts a high samenwerken score,
+    /// repeats the same idea, or is not 2–4 paragraphs. The caller then uses the local story.
+    /// </summary>
+    public static bool Accepts(
+        string? story,
+        WhoAmIProfileHighlights? profile,
+        CompetencyScores? competency,
+        CulturePersonalityScores? culture)
+    {
+        if (string.IsNullOrWhiteSpace(story))
+        {
+            return false;
+        }
+
+        var paragraphs = story
+            .Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (paragraphs.Length is < 2 or > 4)
+        {
+            return false;
+        }
+
+        profile ??= WhoAmIProfileHighlights.Empty;
+        var sheet = CandidateFactSheet.Personal(profile.Roles, profile.Educations, profile.Certificates);
+        if (CandidateFactGuard.RejectionReason(story, sheet) is not null)
+        {
+            return false;
+        }
+
+        if (RepeatsIdea(story))
+        {
+            return false;
+        }
+
+        if (ContradictsSamenwerken(story, competency, culture))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool RepeatsIdea(string story)
+    {
+        foreach (var stem in new[] { "helpen", "help", "netjes" })
+        {
+            var count = Regex.Matches(
+                story,
+                $@"\b{stem}\w*",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant).Count;
+            if (count >= 3)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContradictsSamenwerken(
+        string story,
+        CompetencyScores? competency,
+        CulturePersonalityScores? culture)
+    {
+        var samenHigh = competency?.Samenwerken is >= 60;
+        var prefersAlone = culture?.Autonomy is >= 60 && culture.Collaboration is < 50;
+        var negatesTogether = Regex.IsMatch(
+            story,
+            @"samen\w{0,12}.{0,40}niet te veel|niet te veel.{0,40}samen|liever niet.{0,40}samen|samenwerken doe ik liever niet",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Singleline);
+        if (samenHigh && negatesTogether)
+        {
+            return true;
+        }
+
+        var saysAlone = Regex.IsMatch(
+            story,
+            @"liever alleen|het liefst alleen|alleen werken|liever niet te veel samen",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (saysAlone && (samenHigh || !prefersAlone))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>B1: drop abstract nouns and split any sentence longer than 20 words.</summary>
     internal static string ShortenLongSentences(string text)
     {

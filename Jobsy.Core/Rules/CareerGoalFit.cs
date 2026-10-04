@@ -147,6 +147,10 @@ public static class CareerGoalFit
         return 0;
     }
 
+    /// <summary>Mbo4, hbo or wo, even when the candidate's own education is unknown.</summary>
+    public static bool IsClearlyHigherEducation(string title)
+        => RequiredRank(title) >= 4;
+
     public static bool RequiresHigherEducation(string title, string? education)
     {
         var have = EducationRank(education);

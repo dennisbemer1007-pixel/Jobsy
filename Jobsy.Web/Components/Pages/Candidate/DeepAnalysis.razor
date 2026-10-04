@@ -615,16 +615,17 @@ else
                 </p>
             }
             <p class="test-rail__zone">@Culture["Deep.Rail.BottomZone"]</p>
-            <ol class="test-rail__parts">
-                @foreach (var p in _parts)
-                {
-                    var done = PartAnswered(p);
-                    var status = offer ? "todo" : done >= p.Size ? "done" : (p.Index == CurrentPart?.Index ? "now" : "todo");
-                    <li class="test-rail__part test-rail__part--@status">
-                        <span>@DeepTestMotivation.PartDisplayName(_kind, p)</span>
-                    </li>
-                }
-            </ol>
+            @if (offer)
+            {
+                <ol class="test-rail__parts">
+                    @foreach (var p in _parts)
+                    {
+                        <li class="test-rail__part test-rail__part--todo">
+                            <span>@DeepTestMotivation.PartDisplayName(_kind, p)</span>
+                        </li>
+                    }
+                </ol>
+            }
         </div>
     };
 

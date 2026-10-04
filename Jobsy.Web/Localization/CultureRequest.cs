@@ -28,6 +28,24 @@ public static class CultureRequest
         return JobsyLanguages.Default;
     }
 
+    /// <summary>True when the request itself chose a language via <c>?lang=</c> or the culture cookie.</summary>
+    public static bool HasExplicitChoice(HttpContext? http)
+    {
+        if (http is null)
+        {
+            return false;
+        }
+
+        if (http.Request.Query.TryGetValue("lang", out var langValues)
+            && TrySupportedCode(langValues.ToString(), out _))
+        {
+            return true;
+        }
+
+        return http.Request.Cookies.TryGetValue(CultureState.CookieName, out var cookie)
+               && TrySupportedCode(cookie, out _);
+    }
+
     /// <summary>
     /// True only for an explicitly supported code (does not treat unknowns as nl).
     /// <see cref="JobsyLanguages.IsSupported"/> maps unknowns to nl via Normalize — avoid it here.

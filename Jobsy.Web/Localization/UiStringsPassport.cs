@@ -116,7 +116,7 @@ public static class UiStringsPassport
             "Doe de test", "Take the test", "Zrób test", "Fă testul", "ابدأ الاختبار");
 
         Add("Passport.Tab.Dna",
-            "Mijn DNA", "My DNA", "Moje DNA", "ADN-ul meu", "حمضي النووي");
+            "Wie ik ben", "Who I am", "Kim jestem", "Cine sunt", "من أنا");
         Add("Passport.Tab.Tests",
             "Mijn tests", "My tests", "Moje testy", "Testele mele", "اختباراتي");
         Add("Passport.Tab.Fit",
@@ -215,7 +215,7 @@ public static class UiStringsPassport
         Add("Passport.Shells.Item.ThreeTests",
             "3 tests gedaan", "3 tests done", "3 testy zrobione", "3 teste făcute", "أُنجزت 3 اختبارات");
         Add("Passport.Shells.Item.DnaComplete",
-            "DNA compleet", "DNA complete", "DNA kompletne", "ADN complet", "الحمض مكتمل");
+            "Wie ik ben, klaar", "Who I am, done", "Kim jestem, gotowe", "Cine sunt, gata", "من أنا، اكتمل");
         Add("Passport.Shells.Item.FirstJob",
             "Eerste baan", "First application", "Pierwsza aplikacja", "Prima candidatură", "أول طلب");
 
@@ -594,12 +594,24 @@ public static class UiStringsPassport
             "{0} dowodów · coraz mocniej",
             "{0} dovezi · tot mai solide",
             "{0} إثباتات · تزداد صلابة");
+        Add("Passport.Proof.CountLabelOne",
+            "1 bewijs · steeds steviger",
+            "1 proof · getting stronger",
+            "1 dowód · coraz mocniej",
+            "1 dovadă · tot mai solidă",
+            "إثبات واحد · يزداد صلابة");
         Add("Passport.Proof.ScaleAria",
             "{0} van {1} bewijzen",
             "{0} of {1} proofs",
             "{0} z {1} dowodów",
             "{0} din {1} dovezi",
             "{0} من {1} إثباتات");
+        Add("Passport.Proof.ScaleAriaOne",
+            "1 van {0} bewijzen",
+            "1 of {0} proofs",
+            "1 z {0} dowodów",
+            "1 din {0} dovezi",
+            "1 من {0} إثباتات");
         Add("Passport.Proof.Soft",
             "Zacht", "Soft", "Miękka", "Moale", "طرية");
         Add("Passport.Proof.Hard",

@@ -32,6 +32,19 @@
                 }
                 <span>@Culture["Admin.AiProvider.ReadOnly"]</span>
             </p>
+            @if (ShowMistralModels)
+            {
+                <ul class="muted" data-testid="ai-feature-models">
+                    @foreach (var row in _aiProvider!.FeatureModels)
+                    {
+                        <li data-feature="@row.Feature">
+                            <strong>@FeatureLabel(row.Feature):</strong>
+                            @(string.IsNullOrWhiteSpace(row.Model) ? "—" : row.Model)
+                        </li>
+                    }
+                </ul>
+                <p class="muted">@Culture["Admin.AiProvider.ModelsHint"]</p>
+            }
         }
         @if (_mailProvider is not null)
         {
@@ -116,10 +129,27 @@
         }
     }
 
+    private bool ShowMistralModels
+        => _aiProvider is { Available: true, FeatureModels.Count: > 0 }
+           && string.Equals(_aiProvider.Provider, "Mistral", StringComparison.OrdinalIgnoreCase);
+
     private string AiName
         => string.Equals(_aiProvider?.Provider, "Mistral", StringComparison.OrdinalIgnoreCase)
             ? "Mistral"
             : "AI";
+
+    private string FeatureLabel(string feature)
+    {
+        var key = feature switch
+        {
+            "Story" => "Admin.AiProvider.Feature.Story",
+            "CareerReport" => "Admin.AiProvider.Feature.CareerReport",
+            "Compass" => "Admin.AiProvider.Feature.Compass",
+            "Chat" => "Admin.AiProvider.Feature.Chat",
+            _ => null
+        };
+        return key is null ? feature : Culture[key];
+    }
 
     private static string RegionKey(string? code) => code switch
     {

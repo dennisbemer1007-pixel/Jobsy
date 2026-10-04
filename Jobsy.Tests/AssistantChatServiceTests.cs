@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
@@ -660,26 +661,104 @@ public class AssistantChatServiceTests
         Assert.DoesNotContain("vacature", help.Reply, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Candidate_reply_that_invents_work_is_replaced_with_i_do_not_know()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "leeg@test.nl",
+            FullName = "Test Kandidaat",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            PreferencesJson = """{"maxTravelMinutes":30,"preferredTransport":"Fiets"}"""
+        });
+        await db.SaveChangesAsync();
+
+        var invented = JsonSerializer.Serialize(new
+        {
+            choices = new[]
+            {
+                new
+                {
+                    message = new
+                    {
+                        content = "Ik heb jarenlang in de bouw gewerkt. Ook heb ik in de zorg gestaan."
+                    }
+                }
+            }
+        });
+        var handler = new RecordingChatHandler(invented);
+        var log = new PlatformErrorLog(db);
+        var sut = CreateSut(db, handler: handler, apiKey: "sk-test", platformLog: log);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(userId, JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "Controleer dit even voor me alsjeblieft.")],
+            CancellationToken.None);
+
+        Assert.Equal(2, handler.Calls);
+        Assert.Contains("werkervaring: geen", handler.Bodies[0], StringComparison.Ordinal);
+        Assert.Contains("weet het niet", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.False(result.UsedAi);
+        Assert.DoesNotContain("jarenlang", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("bouw", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("zorg", result.Reply, StringComparison.OrdinalIgnoreCase);
+        var logs = await db.PlatformLogs.ToListAsync();
+        Assert.Equal(2, logs.Count);
+        Assert.All(logs, logged =>
+        {
+            Assert.Equal("ai.facts", logged.Category);
+            Assert.Contains("surface=coach", logged.Message, StringComparison.Ordinal);
+            Assert.Contains("reason=invented-work", logged.Message, StringComparison.Ordinal);
+            Assert.DoesNotContain("jarenlang", logged.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("@", logged.Message, StringComparison.Ordinal);
+            Assert.DoesNotContain("leeg@test.nl", logged.Message, StringComparison.OrdinalIgnoreCase);
+        });
+    }
+
     private static AssistantChatService CreateSut(
         JobsyDbContext db,
         StubMetrics? metrics = null,
         StubSalesDashboard? sales = null,
-        IFeatureFlags? flags = null)
+        IFeatureFlags? flags = null,
+        HttpMessageHandler? handler = null,
+        string? apiKey = null,
+        Jobsy.Core.Diagnostics.IPlatformErrorLog? platformLog = null)
         => new(
             db,
-            new StubHttpClientFactory(),
+            new StubHttpClientFactory(handler),
             metrics ?? new StubMetrics(),
             new StubCandidateMetrics(),
             sales ?? new StubSalesDashboard(),
             new OpenAiEndpointResolver(
                 new StubIntegrationCredentials(),
-                Options.Create(new OpenAiOptions())),
+                Options.Create(new OpenAiOptions { ApiKey = apiKey, Model = "gpt-4o-mini" })),
             flags ?? new AlwaysOnFeatureFlags(),
-            NullLogger<AssistantChatService>.Instance);
+            NullLogger<AssistantChatService>.Instance,
+            platformLog);
 
-    private sealed class StubHttpClientFactory : IHttpClientFactory
+    private sealed class RecordingChatHandler(string responseJson) : HttpMessageHandler
     {
-        public HttpClient CreateClient(string name) => new();
+        public List<string> Bodies { get; } = [];
+        public int Calls { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Bodies.Add(request.Content is null ? "" : await request.Content.ReadAsStringAsync(cancellationToken));
+            Calls++;
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseJson, System.Text.Encoding.UTF8, "application/json")
+            };
+        }
+    }
+
+    private sealed class StubHttpClientFactory(HttpMessageHandler? handler = null) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name)
+            => handler is null ? new HttpClient() : new HttpClient(handler, disposeHandler: false);
     }
 
     private sealed class StubIntegrationCredentials : IIntegrationCredentialService

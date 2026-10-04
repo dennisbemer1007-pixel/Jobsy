@@ -21,11 +21,8 @@ public static class CareerCompassBuilder
             return CareerCompassSnapshot.Empty(fromDeepAnalysis);
         }
 
-        var ranked = Occupations
-            .Select(job => Score(job, scores))
+        var ranked = Ranked(scores)
             .Where(m => m.Percent >= BroadenMin)
-            .OrderByDescending(m => m.Percent)
-            .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         var strengths = CareerTestCatalog.RiasecCodes
@@ -87,6 +84,67 @@ public static class CareerCompassBuilder
         return note.Contains("vacature", StringComparison.OrdinalIgnoreCase)
                || note.Contains("banenkaart", StringComparison.OrdinalIgnoreCase)
                || note.Contains("job map", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Every catalogue occupation, scored and ordered. No 75% cutoff.</summary>
+    public static IReadOnlyList<CareerOccupationMatch> Ranked(RiasecScores scores)
+        => Occupations
+            .Select(job => Score(job, scores))
+            .OrderByDescending(m => m.Percent)
+            .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>Short workplace phrases for the top directions, used when fewer than three jobs survived.</summary>
+    public static string TypicalEnvironments(IEnumerable<string> domainCodes, string? lang)
+    {
+        var en = string.Equals(lang, "en", StringComparison.OrdinalIgnoreCase);
+        var phrases = new List<string>();
+        foreach (var code in domainCodes)
+        {
+            if (phrases.Count == 3)
+            {
+                break;
+            }
+
+            var phrase = EnvironmentPhrase(code, en);
+            if (phrase.Length == 0 || phrases.Contains(phrase, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            phrases.Add(phrase);
+        }
+
+        return string.Join(", ", phrases);
+    }
+
+    private static string EnvironmentPhrase(string code, bool en)
+    {
+        var key = code.Trim();
+        if (key.Length == 1)
+        {
+            key = key.ToUpperInvariant() switch
+            {
+                "R" => CareerTestCatalog.Realistic,
+                "I" => CareerTestCatalog.Investigative,
+                "A" => CareerTestCatalog.Artistic,
+                "S" => CareerTestCatalog.Social,
+                "E" => CareerTestCatalog.Enterprising,
+                "C" => CareerTestCatalog.Conventional,
+                _ => key
+            };
+        }
+
+        return key.ToUpperInvariant() switch
+        {
+            "REALISTIC" => en ? "a workplace, warehouse, kitchen or outdoors" : "werkplaats, magazijn, keuken of buiten",
+            "INVESTIGATIVE" => en ? "measuring, quality checks or figuring something out" : "meten, kwaliteit of uitzoeken",
+            "ARTISTIC" => en ? "a shop floor, styling or presentation" : "winkel, styling of presentatie",
+            "SOCIAL" => en ? "care, hospitality or a shop floor with people" : "zorg, horeca of een winkelvloer",
+            "ENTERPRISING" => en ? "sales or a team that is on the move" : "verkoop of een ploeg in beweging",
+            "CONVENTIONAL" => en ? "planning, a till or administration" : "planning, kassa of administratie",
+            _ => ""
+        };
     }
 
     public static string Band(int percent)

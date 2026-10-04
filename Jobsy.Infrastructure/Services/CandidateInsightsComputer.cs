@@ -228,13 +228,31 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
 
         // Keep a stored compass that already has occupations. Replacing it with a
         // second local score list made the same job show two different percents.
+        // A deep compass that collapsed to a handful of titles is topped up in place.
         var stored = CareerCompassJson.TryDeserialize(careerRow.CompassJson);
         if (stored is { HasOccupations: true })
         {
+            if (!stored.FromDeepAnalysis)
+            {
+                return;
+            }
+
+            var repaired = CareerCompassSanitize.EnsureDepth(stored, career);
+            if (SameOccupations(stored, repaired))
+            {
+                return;
+            }
+
+            careerRow.CompassJson = CareerCompassJson.Serialize(repaired);
+            careerRow.UpdatedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
             return;
         }
 
-        var compass = CareerCompassBuilder.Build(career, deepDone);
+        var built = CareerCompassBuilder.Build(career, deepDone);
+        var compass = deepDone
+            ? CareerCompassSanitize.EnsureDepth(built, career)
+            : built;
         var json = CareerCompassJson.Serialize(compass);
         if (string.Equals(careerRow.CompassJson, json, StringComparison.Ordinal))
         {
@@ -244,6 +262,13 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         careerRow.CompassJson = json;
         careerRow.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static bool SameOccupations(CareerCompassSnapshot left, CareerCompassSnapshot right)
+    {
+        var a = left.AllOccupations.Select(j => j.Title + ":" + j.Percent).OrderBy(x => x, StringComparer.Ordinal);
+        var b = right.AllOccupations.Select(j => j.Title + ":" + j.Percent).OrderBy(x => x, StringComparer.Ordinal);
+        return a.SequenceEqual(b, StringComparer.Ordinal);
     }
 
     private async Task RefreshWhoAmIAsync(

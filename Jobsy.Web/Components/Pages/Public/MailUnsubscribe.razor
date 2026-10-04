@@ -10,7 +10,6 @@
 @inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
 @inject IConfiguration Configuration
-@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>@Culture["MailUnsub.Title"] · Lobsy</PageTitle>
 
@@ -44,13 +43,6 @@
                 <input type="hidden" name="t" value="@_token" />
                 <button type="submit" class="login-submit">@Culture["MailUnsub.Submit"]</button>
             </form>
-            <script nonce="@_nonce">
-                var form = document.getElementById('mail-unsub-once');
-                if (form) {
-                    if (form.requestSubmit) form.requestSubmit();
-                    else form.submit();
-                }
-            </script>
         }
         else
         {
@@ -68,11 +60,9 @@
     private bool _error;
     private string _heading = "";
     private string _category = "";
-    private string _nonce = "";
 
     protected override async Task OnInitializedAsync()
     {
-        _nonce = Jobsy.Web.Security.CspNonce.Get(HttpContextAccessor.HttpContext);
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
         _token = query.TryGetValue("t", out var t) ? t.FirstOrDefault() ?? "" : "";

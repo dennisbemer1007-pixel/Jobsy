@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Jobsy.Core.Rules;
 
 /// <summary>OpenAI prompt for a first-person "Wie ben ik?" story. No name, e-mail, or test jargon.</summary>
@@ -12,8 +10,9 @@ public static class WhoAmIPrompt
         Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid, DISC.
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen.
         Vertel wie ik ben, wat mij drijft (kernwaarden zoals zelf kiezen, verbinding, prestatie, zekerheid of impact — zonder Schwartz of wetenschappelijke jargon), hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht), welke talenten uit de competenties naar voren komen, en verweef kort mijn werkervaring (alleen rollen, geen bedrijfsnamen) plus opleidingen/cursussen als die er zijn.
-        Spreek de scores niet tegen. Als een score 60% of hoger is, zeg niet dat ik daar niet goed in ben. Een hoge score voor samenwerken betekent dat samenwerken bij mij past.
-        Geen opsomming met bullets. 2 tot 4 alinea's, warm en concreet, gericht op werk in Den Haag / het Westland.
+        De feitenlijst is de enige bron. Noem alleen werkervaring, opleidingen en certificaten die in de feiten staan. Verzin niets. Staat er werkervaring: geen, dan noem je geen sector, geen jaren en geen rol. Noem geen werkgever.
+        Spreek de scores niet tegen. Als een score 60% of hoger is, zeg niet dat ik daar niet goed in ben. Een hoge score voor samenwerken betekent dat samenwerken bij mij past. Zeg alleen dat ik liever alleen werk als de cultuurfeiten dat zeggen, en spreek samenwerken dan niet tegen.
+        Herhaal dezelfde gedachte niet. Geen opsomming met bullets. 2 tot 4 alinea's, warm en concreet, gericht op werk in Den Haag / het Westland.
         Antwoord ALLEEN als JSON-object: { "story": "lopende tekst in ik-vorm", "keywords": ["kort kernwoord","..."] }
         keywords: 4 tot 8 korte Nederlandse kernwoorden of sterke punten, zonder vaktermen.
         """;
@@ -25,55 +24,6 @@ public static class WhoAmIPrompt
         WhoAmIProfileHighlights? profile = null,
         SchwartzValuesScores? values = null)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("Scores 0-100. Geen naam of e-mail. Schrijf het verhaal alsof ik het zelf vertel.");
-        sb.AppendLine("Competenties:");
-        foreach (var code in CompetencyTestCatalog.CategoryCodes)
-        {
-            sb.Append("- ").Append(WhoAmIKeywords.EverydayCompetency(code)).Append(": ").Append(competency.Get(code)).AppendLine("%");
-        }
-
-        sb.AppendLine("Hoe ik graag werk (cultuur & persoonlijkheid):");
-        foreach (var code in CulturePersonalityCatalog.CategoryCodes)
-        {
-            sb.Append("- ").Append(CulturePersonalityCatalog.EverydayLabel(code)).Append(": ").Append(culture.Get(code)).AppendLine("%");
-        }
-
-        if (values is { IsComplete: true })
-        {
-            sb.AppendLine("Wat mij drijft (waarden op werk):");
-            foreach (var code in SchwartzValuesCatalog.CategoryCodes)
-            {
-                sb.Append("- ").Append(SchwartzValuesCatalog.EverydayLabel(code)).Append(": ").Append(values.Get(code)).AppendLine("%");
-            }
-        }
-
-        sb.AppendLine("Wat mij trekt in werk:");
-        foreach (var code in CareerTestCatalog.RiasecCodes)
-        {
-            sb.Append("- ").Append(CareerCompassBuilder.TypeLabel(code)).Append(": ").Append(career.Get(code)).AppendLine("%");
-        }
-
-        profile ??= WhoAmIProfileHighlights.Empty;
-        if (profile.HasAny)
-        {
-            sb.AppendLine("Profiel (rollen zonder bedrijfsnaam, opleidingen, cursussen):");
-            foreach (var role in profile.Roles)
-            {
-                sb.Append("- Rol: ").AppendLine(role);
-            }
-
-            foreach (var edu in profile.Educations)
-            {
-                sb.Append("- Opleiding: ").AppendLine(edu);
-            }
-
-            foreach (var cert in profile.Certificates)
-            {
-                sb.Append("- Cursus/certificaat: ").AppendLine(cert);
-            }
-        }
-
-        return sb.ToString();
+        return CandidateFactSheet.ForWhoAmI(competency, career, culture, profile, values).ToPrompt();
     }
 }

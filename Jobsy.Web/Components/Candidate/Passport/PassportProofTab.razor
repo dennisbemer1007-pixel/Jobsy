@@ -30,9 +30,9 @@
         <section class="passport-proof__scale" aria-labelledby="passport-proof-scale-title">
             <div class="passport-proof__scale-head">
                 <h3 id="passport-proof-scale-title" class="passport-proof__h">@Culture["Passport.Proof.ScaleTitle"]</h3>
-                <p class="passport-proof__count">@Culture.Format("Passport.Proof.CountLabel", _strength.Filled)</p>
+                <p class="passport-proof__count">@(_strength.Filled == 1 ? Culture["Passport.Proof.CountLabelOne"] : Culture.Format("Passport.Proof.CountLabel", _strength.Filled))</p>
             </div>
-            <div class="passport-proof__track" role="img" aria-label="@Culture.Format("Passport.Proof.ScaleAria", _strength.Filled, _strength.Max)">
+            <div class="passport-proof__track" role="img" aria-label="@(_strength.Filled == 1 ? Culture.Format("Passport.Proof.ScaleAriaOne", _strength.Max) : Culture.Format("Passport.Proof.ScaleAria", _strength.Filled, _strength.Max))">
                 <span class="passport-proof__soft">@Culture["Passport.Proof.Soft"]</span>
                 <div class="passport-proof__segs" aria-hidden="true">
                     @for (var i = 0; i < _strength.Max; i++)
