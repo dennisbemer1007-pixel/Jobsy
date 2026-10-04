@@ -331,12 +331,16 @@ public class AdminRun4PlaywrightTests
         await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Bronnen controleren" })).ToBeVisibleAsync();
 
         await GotoInteractiveAsync(page, root + "/admin/beveiliging/gegevensinzage");
-        await page.Locator(".admin-access-log thead").WaitForAsync(new() { Timeout = 30_000 });
-        // innerText follows the shared table uppercase style ("WIE"). The copy itself is "Wie".
-        var headers = await page.Locator(".admin-access-log thead th").AllTextContentsAsync();
-        Assert.Contains(headers, h => string.Equals(h.Trim(), "Wie", StringComparison.Ordinal));
-        Assert.Contains(headers, h => string.Equals(h.Trim(), "Over wie", StringComparison.Ordinal));
-        Assert.DoesNotContain(headers, h => h.Contains("naam of e-mail", StringComparison.OrdinalIgnoreCase));
+        // The table appears only after the log loads. A one-shot read can land in the gap
+        // where the header row is not in the DOM yet.
+        await Assertions.Expect(page.GetByRole(AriaRole.Columnheader, new() { Name = "Wie", Exact = true }))
+            .ToBeVisibleAsync(new() { Timeout = 30_000 });
+        await Assertions.Expect(page.GetByRole(AriaRole.Columnheader, new() { Name = "Over wie", Exact = true }))
+            .ToBeVisibleAsync();
+        var headerText = await page.Locator(".admin-access-log thead th").AllTextContentsAsync();
+        Assert.Contains(headerText, h => string.Equals(h.Trim(), "Wie", StringComparison.Ordinal));
+        Assert.Contains(headerText, h => string.Equals(h.Trim(), "Over wie", StringComparison.Ordinal));
+        Assert.DoesNotContain(headerText, h => h.Contains("naam of e-mail", StringComparison.OrdinalIgnoreCase));
         var placeholder = await page.Locator(".admin-user-picker input").First.GetAttributeAsync("placeholder");
         Assert.Contains("naam of e-mail", placeholder ?? "", StringComparison.Ordinal);
         var fits = await page.EvaluateAsync<bool>(

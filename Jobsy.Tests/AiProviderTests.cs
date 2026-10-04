@@ -37,21 +37,38 @@ public class AiProviderChoiceTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Mistral_without_a_key_falls_back_to_openai(string? key)
+    public void Mistral_without_a_key_stays_off(string? key)
     {
         var decision = AiProviderChoice.Decide("Mistral", key);
 
-        Assert.Equal(AiProviderKind.OpenAI, decision.Kind);
+        Assert.Equal(AiProviderKind.Unavailable, decision.Kind);
+        Assert.False(decision.Available);
         Assert.True(decision.RequestedMistralWithoutKey);
+        Assert.NotEqual(AiProviderKind.OpenAI, decision.Kind);
     }
 
     [Fact]
-    public void Unknown_provider_stays_on_openai()
+    public void Unknown_provider_does_not_use_openai()
     {
         var decision = AiProviderChoice.Decide("Anthropic", "key");
 
-        Assert.Equal(AiProviderKind.OpenAI, decision.Kind);
+        Assert.Equal(AiProviderKind.Unavailable, decision.Kind);
         Assert.True(decision.UnknownProvider);
+        Assert.NotEqual(AiProviderNames.OpenAI, decision.Name);
+    }
+
+    [Theory]
+    [InlineData("nl")]
+    [InlineData("en")]
+    [InlineData("pl")]
+    [InlineData("ro")]
+    [InlineData("ar")]
+    public void Unavailable_copy_is_plain_in_every_language(string language)
+    {
+        var text = AiUnavailableCopy.For(language);
+        Assert.False(string.IsNullOrWhiteSpace(text));
+        Assert.DoesNotContain("OpenAI", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Mistral", text, StringComparison.OrdinalIgnoreCase);
     }
 }
 
@@ -161,11 +178,11 @@ public class LegalAiProcessorSelectionTests
     }
 
     [Fact]
-    public void Mistral_without_a_key_keeps_the_openai_row()
+    public void Mistral_without_a_key_lists_neither_ai_company()
     {
         var rows = LegalAiProcessorSelection.Resolve("Mistral", null);
 
-        Assert.Contains(rows, row => row.Id == "openai");
+        Assert.DoesNotContain(rows, row => row.Id == "openai");
         Assert.DoesNotContain(rows, row => row.Id == "mistral");
     }
 
@@ -189,6 +206,10 @@ public class LegalAiProcessorSelectionTests
         Assert.Contains(regionWord, data, StringComparison.Ordinal);
         var globalData = UiStrings.Get("Legal.Processor.mistral.Data.Global", language);
         Assert.DoesNotContain(regionWord, globalData, StringComparison.Ordinal);
+        var latest = UiStrings.Get("Legal.Change.Privacy.2026-10-09", language);
+        Assert.NotEqual("Legal.Change.Privacy.2026-10-09", latest);
+        Assert.Contains("PDOK", latest, StringComparison.Ordinal);
+        Assert.Contains("Nominatim", latest, StringComparison.Ordinal);
         var change = UiStrings.Get("Legal.Change.Privacy.2026-10-08", language);
         Assert.NotEqual("Legal.Change.Privacy.2026-10-08", change);
         var earlier = UiStrings.Get("Legal.Change.Privacy.2026-10-07", language);

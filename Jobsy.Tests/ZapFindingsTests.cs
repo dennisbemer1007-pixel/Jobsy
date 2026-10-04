@@ -69,7 +69,7 @@ public class ZapFindingsTests
         Assert.DoesNotContain("connect-src 'self' wss: ws: https:", csp);
         Assert.Contains("https://tiles.openfreemap.org", csp);
         Assert.DoesNotContain("https://picsum.photos", csp);
-        Assert.Contains("https://i.ytimg.com", csp);
+        Assert.DoesNotContain("https://i.ytimg.com", csp);
         Assert.DoesNotContain("'unsafe-eval'", csp);
     }
 

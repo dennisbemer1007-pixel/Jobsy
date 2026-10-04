@@ -16,7 +16,7 @@ Open Lobsy: https://lobsy.nl/profiel
 Team Lobsy
 
 Je vroeg zelf om deze herinnering.
-Afmelden voor deze mails: https://lobsy.nl/mail/afmelden
+Geen herinneringen meer ontvangen? Afmelden: https://lobsy.nl/mail/afmelden
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail-instellingen: https://lobsy.nl/account/mail-instellingen
@@ -27,7 +27,7 @@ marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Open Lobsy -> https://lobsy.nl/profiel
-a: Afmelden voor deze mails -> https://lobsy.nl/mail/afmelden
+a: Geen herinneringen meer ontvangen? Afmelden -> https://lobsy.nl/mail/afmelden
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen

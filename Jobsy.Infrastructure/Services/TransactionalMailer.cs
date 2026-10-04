@@ -7,7 +7,9 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -103,11 +105,15 @@ public sealed class TransactionalMailer : ITransactionalMailer
                 return new EmailSendOutcome(false, true, "parked");
             }
 
-            if (def.Kind == EmailKind.Optional
-                && await _preferences.IsOptedOutAsync(to, def.Key, cancellationToken))
+            if (def.Kind == EmailKind.Optional)
             {
-                await LogSuppressedAsync(mail, to, "opted-out", cancellationToken);
-                return new EmailSendOutcome(false, true, "opted-out");
+                var recipient = await FindRecipientAsync(to, cancellationToken);
+                if (recipient.RemindersDisabled
+                    || await _preferences.IsOptedOutAsync(to, def.Key, cancellationToken))
+                {
+                    await LogSuppressedAsync(mail, to, "opted-out", cancellationToken);
+                    return new EmailSendOutcome(false, true, "opted-out");
+                }
             }
         }
 
@@ -128,7 +134,13 @@ public sealed class TransactionalMailer : ITransactionalMailer
         }
         else if (def.Kind == EmailKind.Optional)
         {
-            var unsubUrl = _unsubscribe.BuildUnsubscribeUrl(features.PublicWebBaseUrl, to, def.Key);
+            var recipient = await FindRecipientAsync(to, cancellationToken);
+            var unsubUrl = _unsubscribe.BuildUnsubscribeUrl(
+                features.PublicWebBaseUrl,
+                to,
+                def.Key,
+                recipient.UserId,
+                recipient.Epoch);
             html = ApplyUnsubscribeUrlHtml(html, unsubUrl);
             text = ApplyUnsubscribeUrlText(text, unsubUrl);
             headers["List-Unsubscribe"] = $"<{unsubUrl}>";
@@ -198,6 +210,25 @@ public sealed class TransactionalMailer : ITransactionalMailer
 
         return text;
     }
+
+    private async Task<RecipientMailState> FindRecipientAsync(string email, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return new RecipientMailState(null, 0, false);
+        }
+
+        var normalized = EmailAddressHasher.Normalize(email);
+        var row = await _db.Users.AsNoTracking()
+            .Where(u => u.Email.ToLower() == normalized)
+            .Select(u => new { u.Id, u.MailUnsubscribeEpoch, u.ReminderEmailsEnabled })
+            .FirstOrDefaultAsync(cancellationToken);
+        return row is null
+            ? new RecipientMailState(null, 0, false)
+            : new RecipientMailState(row.Id, row.MailUnsubscribeEpoch, !row.ReminderEmailsEnabled);
+    }
+
+    private readonly record struct RecipientMailState(Guid? UserId, int Epoch, bool RemindersDisabled);
 
     private static string KindTag(EmailKind kind) => kind switch
     {

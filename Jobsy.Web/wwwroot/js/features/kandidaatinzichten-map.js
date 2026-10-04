@@ -88,7 +88,7 @@
     var compact = !(window.matchMedia && window.matchMedia("(min-width: 1025px)").matches);
     var map = new maplibregl.Map({
       container: el,
-      style: options.styleUrl || "https://demotiles.maplibre.org/style.json",
+      style: options.styleUrl || "https://tiles.openfreemap.org/styles/liberty",
       center: center,
       zoom: options.zoom || 9,
       interactive: false,
@@ -199,7 +199,7 @@
       if (this._loading) return this._loading;
       this._loading = new Promise(function (resolve, reject) {
         var s = document.createElement("script");
-        s.src = "js/features/kandidaatinzichten-map.js?v=20261002-ch01";
+        s.src = "js/features/kandidaatinzichten-map.js?v=20261004-14";
         s.onload = function () { resolve(); };
         s.onerror = reject;
         document.head.appendChild(s);

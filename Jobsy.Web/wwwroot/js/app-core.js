@@ -1132,7 +1132,7 @@ window.jobsyEnsureInsightsMap = function () {
     window.__jobsyInsightsMapReady = window.__jobsyInsightsMapReady || new Promise(function (resolve, reject) {
         if (window.JobsyCandidateInsightsMap) { resolve(); return; }
         var s = document.createElement("script");
-        s.src = "js/features/kandidaatinzichten-map.js?v=20260928-insights";
+        s.src = "js/features/kandidaatinzichten-map.js?v=20261004-14";
         s.onload = function () { resolve(); };
         s.onerror = reject;
         document.head.appendChild(s);
@@ -1339,8 +1339,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-14"
-            : "/service-worker.js?v=20261004-14";
+            ? "/service-worker.published.js?v=20261004-15"
+            : "/service-worker.js?v=20261004-15";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();

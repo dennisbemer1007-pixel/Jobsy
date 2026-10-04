@@ -7404,6 +7404,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<long?>("LastTotpTimeStep")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("MailUnsubscribeEpoch")
+                        .HasColumnType("integer");
+
                     b.Property<int>("MfaFailedCount")
                         .HasColumnType("integer");
 
@@ -7452,6 +7455,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<Guid?>("ReferredByAmbassadeurUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("ReminderEmailsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");

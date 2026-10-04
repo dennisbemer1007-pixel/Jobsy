@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Geo;
 
 namespace Jobsy.Web.Services;
 
@@ -15,10 +16,22 @@ public interface IGeocodingClient
 /// <summary>
 /// OpenStreetMap Nominatim geocoding (NL-focused). Server-side to satisfy Nominatim User-Agent policy.
 /// </summary>
-public sealed class NominatimGeocodingClient(HttpClient http) : IGeocodingClient
+public sealed class NominatimGeocodingClient : IGeocodingClient
 {
     private static readonly Uri SuggestBase = new("https://nominatim.openstreetmap.org/search");
     private static readonly Uri ReverseBase = new("https://nominatim.openstreetmap.org/reverse");
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
+
+    private readonly HttpClient _http;
+    private readonly NominatimPace _pace;
+    private readonly GeoLookupCache _cache;
+
+    public NominatimGeocodingClient(HttpClient http, NominatimPace? pace = null, GeoLookupCache? cache = null)
+    {
+        _http = http;
+        _pace = pace ?? new NominatimPace();
+        _cache = cache ?? new GeoLookupCache();
+    }
 
     public async Task<IReadOnlyList<AddressSuggestion>> SuggestAsync(
         string query,
@@ -30,6 +43,14 @@ public sealed class NominatimGeocodingClient(HttpClient http) : IGeocodingClient
             return [];
         }
 
+        var cacheKey = "web-suggest:" + q;
+        if (_cache.TryGet(cacheKey, out IReadOnlyList<AddressSuggestion>? cached) && cached is not null)
+        {
+            return cached;
+        }
+
+        await _pace.WaitAsync(cancellationToken);
+
         // Address layer first (file 03): prefer BAG-style addresses over POIs.
         var url = $"{SuggestBase}?q={Uri.EscapeDataString(q)}"
             + "&format=json"
@@ -39,10 +60,10 @@ public sealed class NominatimGeocodingClient(HttpClient http) : IGeocodingClient
             + "&limit=8"
             + "&accept-language=nl";
 
-        var results = await http.GetFromJsonAsync<List<NominatimPlace>>(url, cancellationToken)
+        var results = await _http.GetFromJsonAsync<List<NominatimPlace>>(url, cancellationToken)
             ?? [];
 
-        return results
+        IReadOnlyList<AddressSuggestion> mapped = results
             .Where(r => !string.IsNullOrWhiteSpace(r.DisplayName)
                         && double.TryParse(r.Lat, NumberStyles.Float, CultureInfo.InvariantCulture, out _)
                         && double.TryParse(r.Lon, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
@@ -55,6 +76,8 @@ public sealed class NominatimGeocodingClient(HttpClient http) : IGeocodingClient
             .Select(g => g.First())
             .Take(6)
             .ToList();
+        _cache.Set(cacheKey, mapped, CacheTtl);
+        return mapped;
     }
 
     private static bool HasHouseNumber(NominatimPlace place) =>
@@ -92,14 +115,30 @@ public sealed class NominatimGeocodingClient(HttpClient http) : IGeocodingClient
             + "&addressdetails=1"
             + "&accept-language=nl";
 
-        using var response = await http.GetAsync(url, cancellationToken);
+        var cacheKey = "web-reverse:"
+            + latitude.ToString("0.00000", CultureInfo.InvariantCulture)
+            + ","
+            + longitude.ToString("0.00000", CultureInfo.InvariantCulture);
+        if (_cache.TryGet(cacheKey, out string? cached))
+        {
+            return cached;
+        }
+
+        await _pace.WaitAsync(cancellationToken);
+        using var response = await _http.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             return null;
         }
 
         var place = await response.Content.ReadFromJsonAsync<NominatimPlace>(cancellationToken: cancellationToken);
-        return FormatLabel(place);
+        var label = FormatLabel(place);
+        if (!string.IsNullOrWhiteSpace(label))
+        {
+            _cache.Set(cacheKey, label, CacheTtl);
+        }
+
+        return label;
     }
 
     private static bool LooksLikeSwappedNetherlands(double latitude, double longitude) =>

@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -43,6 +44,11 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         profile ??= WhoAmIProfileHighlights.Empty;
         var local = Local(competency, career, culture, profile, values);
         var endpoint = await _openAi.ResolveAsync(OpenAiFeature.WhoAmI, cancellationToken);
+        if (endpoint.Unavailable)
+        {
+            return new WhoAmIGeneratedStory(AiUnavailableCopy.Dutch, [], FromOpenAi: false);
+        }
+
         var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {

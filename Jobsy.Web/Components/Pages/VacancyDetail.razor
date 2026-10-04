@@ -281,18 +281,12 @@
                                         class="detail-card__video-poster"
                                         aria-label="@Culture["Vacancy.Video"]"
                                         @onclick="() => _videoActivated = true">
-                                    @if (VideoThumbnailUrl is { } thumb)
-                                    {
-                                        <img src="@thumb" alt="" width="640" height="360" loading="lazy" />
-                                    }
-                                    else
-                                    {
-                                        <span class="detail-card__video-poster-label">@Culture["Kb.Video.Loading"]</span>
-                                    }
+                                    <span class="detail-card__video-poster-label">@Culture["Vacancy.Video"]</span>
                                     <span class="detail-card__video-play" aria-hidden="true"></span>
                                 </button>
                             }
                         </div>
+                        <p class="detail-card__video-notice">@Culture["Kb.Video.ExternalNotice"]</p>
                     }
                     else if (SafeVideoWatchUrl is not null)
                     {
@@ -1186,9 +1180,6 @@
 
     private string? VideoEmbedUrl =>
         _vacancy is null ? null : VideoEmbed.TryGetEmbedUrl(_vacancy.VideoUrl);
-
-    private string? VideoThumbnailUrl =>
-        _vacancy is null ? null : VideoEmbed.TryGetThumbnailUrl(_vacancy.VideoUrl);
 
     private string? SafeVideoWatchUrl =>
         VideoEmbedUrl is not null

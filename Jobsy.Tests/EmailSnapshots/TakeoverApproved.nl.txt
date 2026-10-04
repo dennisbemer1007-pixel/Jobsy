@@ -20,6 +20,7 @@ Kies je wachtwoord: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
 Team Lobsy
 
 Je krijgt deze mail omdat je toegang hebt gevraagd tot Bakkerij De Gouden Korrel.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy

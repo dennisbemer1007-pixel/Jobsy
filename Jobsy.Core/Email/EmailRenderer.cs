@@ -142,6 +142,11 @@ public static class EmailRenderer
         sb.Append("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
         sb.Append($"<td class=\"ft m\" align=\"{align}\" style=\"padding:20px 8px 0 8px;font-size:13px;line-height:20px;color:{muted};text-align:{align};font-family:{font};\">");
         sb.Append($"<p class=\"m\" style=\"margin:0 0 8px 0;\">{Escape(doc.ReasonText)}</p>");
+        if (!string.IsNullOrWhiteSpace(doc.AccountBecause))
+        {
+            sb.Append($"<p class=\"m\" style=\"margin:0 0 8px 0;\">{Escape(doc.AccountBecause)}</p>");
+        }
+
         if (doc.Kind == EmailKind.Optional)
         {
             var unsubHref = string.IsNullOrWhiteSpace(doc.UnsubscribeUrl)
@@ -553,6 +558,11 @@ public static class EmailRenderer
         lines.Add(doc.SignOff);
         lines.Add("");
         lines.Add(doc.ReasonText);
+        if (!string.IsNullOrWhiteSpace(doc.AccountBecause))
+        {
+            lines.Add(doc.AccountBecause);
+        }
+
         if (doc.Kind == EmailKind.Optional)
         {
             var unsubHref = string.IsNullOrWhiteSpace(doc.UnsubscribeUrl)

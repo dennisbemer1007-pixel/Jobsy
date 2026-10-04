@@ -1,4 +1,5 @@
 using Jobsy.Core.Ai;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
@@ -64,19 +65,22 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
     private readonly AiOptions _ai;
     private readonly MistralOptions _mistral;
     private readonly ILogger<OpenAiEndpointResolver>? _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public OpenAiEndpointResolver(
         IIntegrationCredentialService credentials,
         IOptions<OpenAiOptions> options,
         IOptions<AiOptions>? ai = null,
         IOptions<MistralOptions>? mistral = null,
-        ILogger<OpenAiEndpointResolver>? logger = null)
+        ILogger<OpenAiEndpointResolver>? logger = null,
+        IPlatformErrorLog? platformLog = null)
     {
         _credentials = credentials;
         _options = options.Value;
         _ai = ai?.Value ?? new AiOptions();
         _mistral = mistral?.Value ?? new MistralOptions();
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<OpenAiEndpointResolution> ResolveAsync(
@@ -89,14 +93,15 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
         }
 
         var decision = AiProviderChoice.Decide(_ai.Provider, _mistral.ApiKey);
-        if (decision.UnknownProvider)
+        if (!decision.Available)
         {
-            AiProviderFallbackLog.UnknownProvider(_logger, _ai.Provider);
-        }
-
-        if (decision.RequestedMistralWithoutKey)
-        {
-            AiProviderFallbackLog.MissingMistralKey(_logger);
+            await AiProviderFallbackLog.ReportUnavailableAsync(
+                _logger,
+                _platformLog,
+                decision,
+                _ai.Provider,
+                cancellationToken);
+            return new OpenAiEndpointResolution(null, string.Empty, string.Empty, Unavailable: true);
         }
 
         if (decision.Kind == AiProviderKind.Mistral)

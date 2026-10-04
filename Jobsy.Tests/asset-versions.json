@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "0fdc9f48952b1b5b3bdb590e4b2b7945cbdc5d0e6a127885dc784eb162369a94",
-    "v": "20261004-12"
+    "sha256": "e7a4846f0603fa3f4ac88cce1e8843ebc22e444f3229aaf73a62ae7ba6394735",
+    "v": "20261004-15"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -136,8 +136,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "f50ecde237929c9c0d8872d600f316bcab31c63cd8fcd5504182e688b9e8991d",
-    "v": "20261004-14"
+    "sha256": "2a2b9c82bb4ceb30fbfc17178689e1e3f2ba0ab0b69769be3c149d3838bc5bf7",
+    "v": "20261004-15"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -160,7 +160,7 @@
     "v": "20261004-13"
   },
   "js/features/kandidaatinzichten-map.js": {
-    "sha256": "36ee5ff66bc8f24a9cdf06340b627eb386d61063f8cfeed87ed216b585bb788e",
+    "sha256": "bd853bbe861ea0034a2a1b52a0b73d3747d6b319ec1a6f7d9329795084f06a40",
     "v": "20260928-insights"
   },
   "js/feedback.js": {
@@ -188,8 +188,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "1d16f7728a84faa86161518d988f72f963c7d7f28d9d92bc5adb458e7cf9f668",
-    "v": "20261004-14"
+    "sha256": "c48d9cf19a8b5ef4ec050050a6e6d86a464c6d3233c59d2f826eeaa0f32ea3f4",
+    "v": "20261004-15"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -200,8 +200,8 @@
     "v": "20261004-13"
   },
   "js/read-aloud.js": {
-    "sha256": "93592bf8b9f71bdca53921dceb8c18c76c8479c4eb9f081e8c23f9c5790a8de8",
-    "v": "20261004-11"
+    "sha256": "2304ed48414b99aeb7e9a61bfab786adef61fcc39f3010d714d27c730bb149db",
+    "v": "20261004-14"
   },
   "js/vacancyDetailMap.min.js": {
     "sha256": "a4cf52ee4b1ecf0658692206cb15d175c77075253cef7bc6afab2a174edf24ef",
@@ -212,11 +212,11 @@
     "v": "20261004-13"
   },
   "service-worker.js": {
-    "sha256": "3c0a7a800031a85b212bd535faa9a5bb51473262152088b8fbd0003c312e8f8f",
-    "v": "20261004-14"
+    "sha256": "903b8e3637fb6e642a6d26ea3c0ee05eadafe952c92328ee0fbee256de17210d",
+    "v": "20261004-15"
   },
   "service-worker.published.js": {
-    "sha256": "32fd25c23c9daaa4846fba3fc878ab51208aff0f74ac22fbc6e6053c72222ce6",
-    "v": "20261004-14"
+    "sha256": "439118896304c6ef2a8424d87bdba74e09f7c88e9a421c8ce755662b0628c281",
+    "v": "20261004-15"
   }
 }

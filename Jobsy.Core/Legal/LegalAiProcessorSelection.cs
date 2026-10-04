@@ -14,15 +14,19 @@ public static class LegalAiProcessorSelection
 {
     public static IReadOnlyList<LegalProcessor> Resolve(AiProviderKind effective, string? mistralBaseUrl = null)
     {
-        var name = effective == AiProviderKind.Mistral
-            ? AiProviderNames.Mistral
-            : AiProviderNames.OpenAI;
+        string? name = effective switch
+        {
+            AiProviderKind.Mistral => AiProviderNames.Mistral,
+            AiProviderKind.OpenAI => AiProviderNames.OpenAI,
+            _ => null
+        };
         var mistralInEu = effective == AiProviderKind.Mistral
             && MistralEndpoint.InferenceStaysInEu(mistralBaseUrl);
 
         return LegalProcessors.All
             .Where(processor => processor.WhenAiProvider is null
-                || string.Equals(processor.WhenAiProvider, name, StringComparison.OrdinalIgnoreCase))
+                || (name is not null
+                    && string.Equals(processor.WhenAiProvider, name, StringComparison.OrdinalIgnoreCase)))
             .Select(processor => LegalProcessorSelection.ApplyMistralHost(processor, mistralInEu))
             .ToList();
     }

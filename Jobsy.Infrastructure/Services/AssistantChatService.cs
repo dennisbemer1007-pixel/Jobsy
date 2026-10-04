@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Contracts;
@@ -95,6 +96,11 @@ public sealed class AssistantChatService : IAssistantChatService
         }
 
         var endpoint = await _openAi.ResolveAsync(OpenAiFeature.AssistantChat, cancellationToken);
+        if (endpoint.Unavailable)
+        {
+            return new AssistantChatResult(AiUnavailableCopy.For(context.Language), UsedAi: false, []);
+        }
+
         var apiKey = endpoint.ApiKey;
         if (!string.IsNullOrWhiteSpace(apiKey))
         {

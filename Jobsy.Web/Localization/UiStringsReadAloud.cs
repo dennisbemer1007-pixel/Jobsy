@@ -76,10 +76,10 @@ internal static class UiStringsReadAloud
             "القراءة متوقفة");
         Add(
             "ReadAloud.Unsupported",
-            "Voorlezen werkt niet in deze taal op dit apparaat.",
-            "Read aloud does not work for this language on this device.",
-            "Czytanie na głos nie działa w tym języku na tym urządzeniu.",
-            "Citirea cu voce tare nu merge în această limbă pe acest dispozitiv.",
-            "القراءة بصوت عالٍ لا تعمل بهذه اللغة على هذا الجهاز.");
+            "Voorlezen werkt hier niet. Er is geen stem op dit apparaat voor deze taal.",
+            "Read aloud does not work here. This device has no voice for this language.",
+            "Czytanie na głos tu nie działa. To urządzenie nie ma głosu dla tego języka.",
+            "Citirea cu voce tare nu merge aici. Acest dispozitiv nu are o voce pentru această limbă.",
+            "القراءة بصوت عالٍ لا تعمل هنا. لا توجد على هذا الجهاز صوت لهذه اللغة.");
     }
 }

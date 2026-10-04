@@ -28,16 +28,6 @@ public static class VacancyImageUrls
         "uploads/", "logos/", "vacancies/", "brand/", "media/", "teaser/"
     ];
 
-    public static string PicsumUrl(Guid vacancyId)
-        => PicsumUrl(vacancyId, IntrinsicWidth, IntrinsicHeight);
-
-    public static string PicsumUrl(Guid vacancyId, int width, int height)
-    {
-        width = Math.Clamp(width, 80, IntrinsicWidth);
-        height = Math.Clamp(height, 54, IntrinsicHeight);
-        return $"https://picsum.photos/seed/jobsy-{vacancyId:N}/{width}/{height}";
-    }
-
     public static string Placeholder(Guid vacancyId, WorkType workTypes = WorkType.None)
         => Placeholder(vacancyId, FirstSlug(workTypes));
 

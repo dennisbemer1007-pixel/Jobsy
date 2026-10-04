@@ -25,7 +25,7 @@ Bekijk de vacature: https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111
 Team Lobsy
 
 Je krijgt deze mail omdat je vacatures in de buurt wilt ontvangen.
-Afmelden voor deze mails: https://lobsy.nl/mail/afmelden
+Geen herinneringen meer ontvangen? Afmelden: https://lobsy.nl/mail/afmelden
 Hulp: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Mail-instellingen: https://lobsy.nl/account/mail-instellingen
@@ -39,7 +39,7 @@ marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
 a: Zet je status op Niet beschikbaar -> https://lobsy.nl/candidate/actions/set-unavailable
 a: Bekijk de vacature -> https://lobsy.nl/vacancies/11111111-1111-1111-1111-111111111111
-a: Afmelden voor deze mails -> https://lobsy.nl/mail/afmelden
+a: Geen herinneringen meer ontvangen? Afmelden -> https://lobsy.nl/mail/afmelden
 a: Hulp -> mailto:support@lobsy.nl
 a: Privacy -> https://lobsy.nl/privacy
 a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen

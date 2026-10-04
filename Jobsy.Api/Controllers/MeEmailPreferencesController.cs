@@ -23,9 +23,14 @@ public sealed class MeEmailPreferencesController : ControllerBase
 
     public sealed record PreferenceDto(string Key, string Label, bool Enabled);
 
-    public sealed record PreferencesResponse(IReadOnlyList<PreferenceDto> Optional, IReadOnlyList<string> Always);
+    public sealed record PreferencesResponse(
+        IReadOnlyList<PreferenceDto> Optional,
+        IReadOnlyList<string> Always,
+        bool ReminderEmailsEnabled = true);
 
-    public sealed record UpdatePreferencesRequest(IReadOnlyList<PreferenceDto>? Items);
+    public sealed record UpdatePreferencesRequest(
+        IReadOnlyList<PreferenceDto>? Items,
+        bool? ReminderEmailsEnabled = null);
 
     [HttpGet]
     [EnableRateLimiting("public-read")]
@@ -38,9 +43,11 @@ public sealed class MeEmailPreferencesController : ControllerBase
         }
 
         var items = await _preferences.GetForUserAsync(user.Id, cancellationToken);
+        var reminders = await _preferences.AreReminderEmailsEnabledAsync(user.Id, cancellationToken);
         return Ok(new PreferencesResponse(
             items.Select(i => new PreferenceDto(i.Key, i.Label, i.Enabled)).ToList(),
-            AlwaysSentLabels(user.Role)));
+            AlwaysSentLabels(user.Role),
+            reminders));
     }
 
     [HttpPut]
@@ -55,31 +62,45 @@ public sealed class MeEmailPreferencesController : ControllerBase
             return Unauthorized();
         }
 
-        var allowed = (await _preferences.GetForUserAsync(user.Id, cancellationToken))
-            .Select(i => i.Key)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var item in request.Items ?? Array.Empty<PreferenceDto>())
+        if (request.ReminderEmailsEnabled == false)
         {
-            if (string.IsNullOrWhiteSpace(item.Key) || !allowed.Contains(item.Key))
+            await _preferences.DisableReminderEmailsAsync(user.Id, "Settings", cancellationToken);
+        }
+        else
+        {
+            if (request.ReminderEmailsEnabled == true)
             {
-                continue;
+                await _preferences.EnableReminderEmailsAsync(user.Id, "Settings", cancellationToken);
             }
 
-            if (item.Enabled)
+            var allowed = (await _preferences.GetForUserAsync(user.Id, cancellationToken))
+                .Select(i => i.Key)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var item in request.Items ?? Array.Empty<PreferenceDto>())
             {
-                await _preferences.OptInAsync(user.Email, item.Key, cancellationToken);
-            }
-            else
-            {
-                await _preferences.OptOutAsync(user.Email, item.Key, "Settings", cancellationToken);
+                if (string.IsNullOrWhiteSpace(item.Key) || !allowed.Contains(item.Key))
+                {
+                    continue;
+                }
+
+                if (item.Enabled)
+                {
+                    await _preferences.OptInAsync(user.Email, item.Key, cancellationToken);
+                }
+                else
+                {
+                    await _preferences.OptOutAsync(user.Email, item.Key, "Settings", cancellationToken);
+                }
             }
         }
 
         var refreshed = await _preferences.GetForUserAsync(user.Id, cancellationToken);
+        var reminders = await _preferences.AreReminderEmailsEnabledAsync(user.Id, cancellationToken);
         return Ok(new PreferencesResponse(
             refreshed.Select(i => new PreferenceDto(i.Key, i.Label, i.Enabled)).ToList(),
-            AlwaysSentLabels(user.Role)));
+            AlwaysSentLabels(user.Role),
+            reminders));
     }
 
     private static IReadOnlyList<string> AlwaysSentLabels(UserRole role) => role switch

@@ -19,6 +19,7 @@ View request: https://lobsy.nl/werkgever/tokens
 Team Lobsy
 
 You get this email because you manage Bakkerij De Gouden Korrel on Lobsy.
+You get this email because you have a Lobsy account.
 Help: mailto:support@lobsy.nl
 Privacy: https://lobsy.nl/privacy
 Lobsy
