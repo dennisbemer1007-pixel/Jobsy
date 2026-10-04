@@ -16,11 +16,11 @@
                 </p>
                 @if (Editor.TestAiConsentAt is null)
                 {
-                    <button class="engagement-btn" type="button" disabled="@Editor.ConsentBusy" @onclick="Editor.AcceptTestConsentAsync">@Culture["Profile.Consent.Accept"]</button>
+                    <button class="btn btn-primary" type="button" disabled="@Editor.ConsentBusy" @onclick="Editor.AcceptTestConsentAsync">@Culture["Profile.Consent.Accept"]</button>
                 }
                 else
                 {
-                    <button class="engagement-btn" type="button" disabled="@Editor.ConsentBusy" @onclick="() => Editor.WithdrawTestConsentAsync(false)">@Culture["Profile.Consent.Withdraw"]</button>
+                    <button class="btn btn-primary" type="button" disabled="@Editor.ConsentBusy" @onclick="() => Editor.WithdrawTestConsentAsync(false)">@Culture["Profile.Consent.Withdraw"]</button>
                     <button class="provider-btn provider-btn--danger" type="button" disabled="@Editor.ConsentBusy" @onclick="() => Editor.WithdrawTestConsentAsync(true)">@Culture["Profile.Consent.WithdrawDelete"]</button>
                 }
 
@@ -32,7 +32,7 @@
                 </p>
                 @if (Editor.TalentPoolConsentAt is null)
                 {
-                    <button class="engagement-btn" type="button" disabled="@Editor.ConsentBusy" @onclick="Editor.AcceptTalentPoolConsentAsync">@Culture["Profile.Consent.TalentAccept"]</button>
+                    <button class="btn btn-primary" type="button" disabled="@Editor.ConsentBusy" @onclick="Editor.AcceptTalentPoolConsentAsync">@Culture["Profile.Consent.TalentAccept"]</button>
                 }
                 else
                 {
@@ -47,7 +47,7 @@
                         @Culture["Profile.Consent.ParentalEmail"]
                         <input type="email" @bind="Editor.ParentalConsentEmail" autocomplete="email" />
                     </label>
-                    <button class="engagement-btn" type="button" disabled="@Editor.ConsentBusy" @onclick="Editor.RequestParentalConsentAsync">@Culture["Profile.Consent.ParentalSend"]</button>
+                    <button class="btn btn-primary" type="button" disabled="@Editor.ConsentBusy" @onclick="Editor.RequestParentalConsentAsync">@Culture["Profile.Consent.ParentalSend"]</button>
                 }
                 @if (!string.IsNullOrWhiteSpace(Editor.ConsentMessage))
                 {

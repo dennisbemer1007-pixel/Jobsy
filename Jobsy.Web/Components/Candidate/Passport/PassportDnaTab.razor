@@ -20,7 +20,7 @@
             @if (Highlights.Count == 0)
             {
                 <p class="login-lead">@Culture[EmptyStoryKey]</p>
-                <button type="button" class="btn-compact btn-compact--primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                <button type="button" class="btn btn-primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
             }
             else
             {
@@ -40,21 +40,27 @@
         </section>
 
         <section class="detail-card passport-dna__card" aria-labelledby="passport-dna-story-title">
-            <h3 id="passport-dna-story-title" class="passport-dna__h">@Culture["Dna.StoryTitle"]</h3>
+            <div class="passport-dna__story-head">
+                <h3 id="passport-dna-story-title" class="passport-dna__h">@Culture["Dna.StoryTitle"]</h3>
+                @if (!string.IsNullOrWhiteSpace(Story))
+                {
+                    <ReadAloudButton Text="@Story" SpeechKey="passport-dna-story" />
+                }
+            </div>
             @if (string.IsNullOrWhiteSpace(Story))
             {
                 <p class="login-lead">@Culture[EmptyStoryKey]</p>
-                <button type="button" class="btn-compact btn-compact--primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                <button type="button" class="btn btn-primary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
             }
             else
             {
-                <div class="passport-dna__story @(_storyExpanded ? "is-expanded" : "is-clamped")">
+                <div class="passport-dna__story @(_storyExpanded ?"is-expanded" : "is-clamped")">
                     @foreach (var para in StoryParagraphs(Story))
                     {
                         <p>@para</p>
                     }
                 </div>
-                <button type="button" class="passport-card__fill-link" @onclick="ToggleStory">
+                <button type="button" class="btn btn-ghost" @onclick="ToggleStory">
                     @(_storyExpanded ? Culture["Dna.StoryLess"] : Culture["Dna.StoryMore"])
                 </button>
                 @if (Keywords.Count > 0)
@@ -94,7 +100,7 @@
             @if (CultureDetail is null || CultureDetail.IsGhost)
             {
                 <p class="login-lead">@Culture["Dna.TeaserCulture"]</p>
-                <button type="button" class="btn-compact" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                <button type="button" class="btn btn-secondary" @onclick="OnGoTests">@Culture["Dna.StoryEmptyCta"]</button>
             }
             else
             {
@@ -134,7 +140,7 @@
         <ul class="passport-shells__row">
             @foreach (var shell in Shells.Shells)
             {
-                <li class="passport-shell @(shell.Earned ? "passport-shell--earned" : "passport-shell--locked")">
+                <li class="passport-shell @(shell.Earned ?"passport-shell--earned" : "passport-shell--locked")">
                     <span class="passport-shell__ring" aria-hidden="true">@((MarkupString)NavIcons.Shell)</span>
                     <span class="passport-shell__label">@Culture[shell.TitleKey]</span>
                 </li>

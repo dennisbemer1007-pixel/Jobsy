@@ -3,7 +3,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Passport
 
-<div class="test-dive-scene @(Mobile ? "test-dive-scene--mobile" : "test-dive-scene--desktop") @(Deep ? "test-dive-scene--deep" : null) @(Celebrate ? "test-dive-scene--celebrate" : null)"
+<div class="test-dive-scene @(Mobile ?"test-dive-scene--mobile" : "test-dive-scene--desktop") @(Deep ? "test-dive-scene--deep" : null) @(Celebrate ? "test-dive-scene--celebrate" : null)"
      style="@GeometryStyle"
      aria-hidden="true">
     <div class="test-dive-scene__bg journey-scene journey-scene--depth-@SceneDepth"></div>
@@ -16,7 +16,7 @@
     </div>
     @if (FallingShard)
     {
-        <div class="test-dive-scene__shard @(Celebrate ? "is-falling" : "is-resting")"></div>
+        <div class="test-dive-scene__shard @(Celebrate ?"is-falling" : "is-resting")"></div>
     }
     @if (!string.IsNullOrWhiteSpace(BubbleText))
     {

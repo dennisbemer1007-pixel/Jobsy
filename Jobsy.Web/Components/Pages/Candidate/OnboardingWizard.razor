@@ -35,11 +35,11 @@
                 }
                 else if (_installCanPrompt)
                 {
-                    <button type="button" class="btn-compact btn-compact--primary" @onclick="InstallAsync">
+                    <button type="button" class="btn btn-primary" @onclick="InstallAsync">
                         @Culture["Onboarding.Install.AddApp"]
                     </button>
                 }
-                <button type="button" class="btn-compact btn-compact--primary" @onclick="EnablePushAsync">
+                <button type="button" class="btn btn-primary" @onclick="EnablePushAsync">
                     @Culture["Onboarding.Install.EnablePush"]
                 </button>
                 @if (!string.IsNullOrEmpty(_installMessage))
@@ -91,7 +91,7 @@
                     </p>
                 }
             }
-            <button type="button" class="btn-compact btn-compact--primary ob-wizard__cta" @onclick="CompleteAsync">
+            <button type="button" class="btn btn-primary ob-wizard__cta" @onclick="CompleteAsync">
                 @Culture["Onboarding.Finish.Cta"]
             </button>
             <a class="ob-wizard__ghost" href="/home?tab=tests">@Culture["Onboarding.Finish.FullTests"]</a>
@@ -119,7 +119,7 @@
                 }
             </div>
             <p class="ob-wizard__hint">@Culture["Onboarding.Welcome.Hint"]</p>
-            <button type="button" class="btn-compact btn-compact--primary ob-wizard__cta" @onclick="BeginAsync">
+            <button type="button" class="btn btn-primary ob-wizard__cta" @onclick="BeginAsync">
                 @Culture["Onboarding.Welcome.Cta"]
             </button>
         </section>
@@ -136,7 +136,7 @@
                 {
                     var isCurrent = item.First <= _step && _step <= item.Last;
                     var isDone = _step > item.Last;
-                    <div class="ob-wizard__side-item @(isCurrent ? "is-current" : null) @(isDone ? "is-done" : null)">
+                    <div class="ob-wizard__side-item @(isCurrent ?"is-current" : null) @(isDone ? "is-done" : null)">
                         <span>@(isDone ? "✓" : item.Number)</span>
                         <div>
                             <strong>@Culture[item.Title]</strong>
@@ -176,7 +176,7 @@
                             <strong>@Culture[currentPhase.NameKey]</strong> ·
                             @Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
                         </span>
-                        <span aria-live="polite" class="@(_saveError ? "is-error" : null)">@SaveText</span>
+                        <span aria-live="polite" class="@(_saveError ?"is-error" : null)">@SaveText</span>
                     </div>
                 </header>
 
@@ -256,7 +256,7 @@
 
                 <footer class="ob-wizard__footer">
                     <button type="button"
-                            class="btn-compact btn-compact--primary ob-wizard__cta"
+                            class="btn btn-primary ob-wizard__cta"
                             disabled="@(!CanNext || _busy)"
                             @onclick="NextAsync">@NextLabel</button>
                     @if (_step is 4 or 5)

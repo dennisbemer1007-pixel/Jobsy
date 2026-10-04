@@ -33,7 +33,7 @@
             }
 
             <li class="career-rail__zone" aria-hidden="true">@Culture["Career.Rail.Zone.Light"]</li>
-            <li class="career-rail__step career-rail__step--goal @(Plan.GoalReached ? "is-done" : "is-end")">
+            <li class="career-rail__step career-rail__step--goal @(Plan.GoalReached ?"is-done" : "is-end")">
                 <span class="career-rail__dot career-rail__dot--goal" aria-hidden="true"></span>
                 <div>
                     <b>@Plan.DreamTitle</b>

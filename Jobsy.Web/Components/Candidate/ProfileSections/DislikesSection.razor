@@ -14,7 +14,7 @@
     {
         var selected = Editor.Dislikes.Contains(code);
         <button type="button"
-                class="kompas-chip @(selected ? "is-selected" : null)"
+                class="kompas-chip @(selected ?"is-selected" : null)"
                 aria-pressed="@(selected ? "true" : "false")"
                 @onclick="() => Editor.ToggleDislike(code, !selected)">
             @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
@@ -32,12 +32,12 @@
                    value="@Editor.CustomDislikes[index]"
                    placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
                    @oninput="e => OnCustomInput(index, e.Value?.ToString())" />
-            <button type="button" class="btn-compact" @onclick="() => RemoveCustom(index)">×</button>
+            <button type="button" class="btn btn-secondary" @onclick="() => RemoveCustom(index)">×</button>
         </div>
     }
     @if (Editor.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
     {
-        <button type="button" class="passport-card__fill-link" @onclick="AddCustom">
+        <button type="button" class="btn btn-ghost" @onclick="AddCustom">
             + @Culture["Discovery.Dislike.SomethingElse"]
         </button>
     }

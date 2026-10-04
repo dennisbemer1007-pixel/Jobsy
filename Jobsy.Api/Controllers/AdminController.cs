@@ -889,21 +889,23 @@ public class AdminController : ControllerBase
             return Unauthorized();
         }
 
-        var reason = (request.Reason ?? string.Empty).Trim();
-        if (reason.Length < 5 || reason.Length > 500)
-        {
-            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
-        }
-
         var target = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (target is null)
         {
             return NotFound();
         }
 
-        _auditContext.Reason = reason;
+        // Name the person before the reason check, so a too-short reason still shows who was targeted.
         _auditContext.TargetId = userId.ToString("D");
         _auditContext.TargetLabel = PersonalDataMasker.MaskName(target.FullName);
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+        }
+
+        _auditContext.Reason = reason;
         if (!target.IsTestAccount)
         {
             return StatusCode(StatusCodes.Status403Forbidden, new { message = "Alleen een testaccount kan zo worden gereset." });

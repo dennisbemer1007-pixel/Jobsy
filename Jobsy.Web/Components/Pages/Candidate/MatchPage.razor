@@ -19,7 +19,7 @@
 
 <PageTitle>@Culture["Match.DialogTitle"] · Lobsy</PageTitle>
 
-<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null : "match-page--locked")"
+<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null :"match-page--locked")"
      data-testid="match-page">
     <header class="match-page__top">
         <div class="match-page__brand">
@@ -65,7 +65,7 @@
         </div>
     }
 
-    <section class="match-page__body @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? "match-page__panel--swipe" : "match-page__panel--gate")"
+    <section class="match-page__body @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ?"match-page__panel--swipe" : "match-page__panel--gate")"
              aria-label="@Culture["Match.DialogTitle"]">
         @if (_loading)
         {

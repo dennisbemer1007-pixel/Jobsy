@@ -300,18 +300,30 @@ public class PlatformRobustnessTests
         var b = Guid.NewGuid();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Companies.AddRange(
-            new Company { Id = a, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(52, 4),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
-            new Company { Id = b, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52, 4),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+            new Company
+            {
+                Id = a,
+                Name = "A",
+                KvkNumber = "1",
+                Address = "x",
+                Location = new GeoPoint(52, 4),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
+            new Company
+            {
+                Id = b,
+                Name = "B",
+                KvkNumber = "2",
+                Address = "y",
+                Location = new GeoPoint(52, 4),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
         db.Vacancies.AddRange(
             new Vacancy
             {

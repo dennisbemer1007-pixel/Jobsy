@@ -40,7 +40,7 @@
                 <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmAsync">
                     Ja, zet op Niet beschikbaar
                 </button>
-                <a class="btn-compact" href="/candidate/profile">Annuleren</a>
+                <a class="btn btn-secondary" href="/candidate/profile">Annuleren</a>
             </div>
         </div>
     }
@@ -55,7 +55,7 @@
             </p>
             <div class="inline-actions candidate-action-page__actions">
                 <a class="login-submit" href="/candidate/profile">Naar je profiel</a>
-                <a class="btn-compact" href="/">Naar home</a>
+                <a class="btn btn-secondary" href="/">Naar home</a>
             </div>
         </div>
     }
@@ -64,11 +64,11 @@
         <div class="candidate-action-page__card">
             <p class="candidate-action-page__eyebrow">Link niet geldig</p>
             <h1>Deze actie lukt niet meer</h1>
-            <p class="@(_error ? "state-message error" : "muted")">@_message</p>
+            <p class="@(_error ?"state-message error" : "muted")">@_message</p>
             <p class="muted">Geen zorgen — je kunt je status altijd handmatig aanpassen in je profiel.</p>
             <div class="inline-actions candidate-action-page__actions">
                 <a class="login-submit" href="/candidate/profile">Naar je profiel</a>
-                <a class="btn-compact" href="/">Naar home</a>
+                <a class="btn btn-secondary" href="/">Naar home</a>
             </div>
         </div>
     }

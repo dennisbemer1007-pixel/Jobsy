@@ -10,7 +10,7 @@
     {
         var isCurrent = tab.Step == Step;
         var isDone = tab.Step < Step;
-        <span class="@(isCurrent ? "is-current" : isDone ? "is-done" : null)">
+        <span class="@(isCurrent ?"is-current" : isDone ? "is-done" : null)">
             @if (isDone)
             {
                 <span aria-hidden="true">✓ </span>

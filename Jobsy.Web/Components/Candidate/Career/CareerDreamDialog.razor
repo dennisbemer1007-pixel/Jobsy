@@ -37,12 +37,12 @@
     </section>
 
     <div class="career-dialog__actions">
-        <button type="button" class="career-btn career-btn--secondary" disabled="@Busy" @onclick="OnCancel">
+        <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="OnCancel">
             <span class="career-only-desktop">@Culture.Format("CareerDream.Stay", CurrentDream)</span>
             <span class="career-only-mobile">@Culture["CareerDream.StayShort"]</span>
         </button>
         <button type="button"
-                class="career-btn career-btn--primary"
+                class="btn btn-primary"
                 disabled="@(Busy || !HasChoice)"
                 aria-busy="@(Busy ? "true" : "false")"
                 @onclick="OnConfirm">

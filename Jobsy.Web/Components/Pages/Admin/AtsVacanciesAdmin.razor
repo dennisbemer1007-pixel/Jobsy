@@ -32,9 +32,9 @@
         </label>
         <div class="ats-toolbar__actions">
             <button class="btn-primary" type="button" disabled="@_busy" @onclick="ScrapeAsync">
-                Start Scrape Handmatig
+                @Culture["AdminAts.FetchNow"]
             </button>
-            <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">Health-check</button>
+            <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">@Culture["AdminAts.CheckSources"]</button>
             <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
         </div>
         <span class="ats-toolbar__count muted">@(_filtered.Count == 1 ? "1 resultaat" : $"{_filtered.Count} resultaten")</span>
@@ -553,7 +553,7 @@
         try
         {
             var n = await Api.RunAtsHealthAsync();
-            _message = $"Health-check klaar: {n} wijziging(en).";
+            _message = string.Format(Culture["AdminAts.CheckSourcesDone"], n);
             await ReloadAsync();
         }
         catch (Exception ex)

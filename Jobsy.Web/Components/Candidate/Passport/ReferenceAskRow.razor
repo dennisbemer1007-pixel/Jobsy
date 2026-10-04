@@ -41,7 +41,7 @@
             <label class="referee-form__choice"><input type="checkbox" @bind="_shareWell" /> @Culture["Referee.ShareWell"]</label>
             <label class="referee-form__choice"><input type="checkbox" @bind="_shareAgain" /> @Culture["Referee.ShareAgain"]</label>
             <label class="referee-form__choice"><input type="checkbox" @bind="_shareExtra" /> @Culture["Referee.ShareExtra"]</label>
-            <button type="button" class="btn-compact" disabled="@_busy" @onclick="SaveShareAsync">@Culture["Referee.ShareSave"]</button>
+            <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="SaveShareAsync">@Culture["Referee.ShareSave"]</button>
         </fieldset>
     }
     else if (_row?.Status == "declined")
@@ -54,7 +54,7 @@
         {
             <p class="muted">@Culture["Referee.Pending"]</p>
         }
-        <button type="button" class="btn-compact" @onclick="Toggle">@Culture["Referee.Ask"]</button>
+        <button type="button" class="btn btn-secondary" @onclick="Toggle">@Culture["Referee.Ask"]</button>
         @if (_open)
         {
             <div class="passport-proof__ask-form">
@@ -65,7 +65,7 @@
                     <input type="checkbox" @bind="_consent" />
                     <span>@Culture["Referee.Consent"]</span>
                 </label>
-                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SendAsync">@Culture["Referee.Send"]</button>
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="SendAsync">@Culture["Referee.Send"]</button>
                 @if (!string.IsNullOrWhiteSpace(_message))
                 {
                     <p role="status">@_message</p>

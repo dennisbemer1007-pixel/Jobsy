@@ -42,7 +42,7 @@
                 <ul class="career-step__gaps">
                     @foreach (var line in VisibleLines)
                     {
-                        <li class="career-step__gap @(line.Met ? "is-met" : "is-missing")">
+                        <li class="career-step__gap @(line.Met ?"is-met" : "is-missing")">
                             @if (line.Met)
                             {
                                 <span class="career-step__gap-icon" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
@@ -60,7 +60,7 @@
 
             @if (!_showAll && AllLines.Count > MaxLines)
             {
-                <button type="button" class="career-btn career-btn--text" @onclick="() => _showAll = true">
+                <button type="button" class="btn btn-ghost" @onclick="() => _showAll = true">
                     @Culture.Format("CareerStep.Gaps.ShowAll", AllLines.Count)
                 </button>
             }
@@ -83,7 +83,7 @@
             else
             {
                 <p class="career-step__band-text">@Culture["CareerStep.Band.Unknown"]</p>
-                <a class="career-btn career-btn--text" href="@TestHref">@Culture["CareerStep.Band.TestLink"]</a>
+                <a class="btn btn-ghost" href="@TestHref">@Culture["CareerStep.Band.TestLink"]</a>
             }
 
             @if (EmployersOn)
@@ -109,23 +109,23 @@
     @if (Step.Status == CareerStepStatus.Active)
     {
         <div class="career-card__actions career-only-desktop">
-            <a class="career-btn career-btn--text" href="@ProofHref">
+            <a class="btn btn-ghost" href="@ProofHref">
                 <span class="career-step__proof-icon" aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
                 <span>@Culture["CareerStep.Proof"]</span>
             </a>
-            <button type="button" class="career-btn career-btn--primary" disabled="@Busy" @onclick="OnComplete">
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnComplete">
                 <span class="career-step__check" aria-hidden="true">@((MarkupString)NavIcons.Check)</span>
                 <span>@Culture["CareerStep.Complete"]</span>
             </button>
         </div>
 
         <div class="career-card__actions career-card__actions--sticky career-only-mobile">
-            <a class="career-btn career-btn--icon"
+            <a class="btn btn-ghost"
                href="@ProofHref"
                aria-label="@Culture["CareerStep.ProofShort"]">
                 <span aria-hidden="true">@((MarkupString)ActionIcons.Document)</span>
             </a>
-            <button type="button" class="career-btn career-btn--primary" disabled="@Busy" @onclick="OnComplete">
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnComplete">
                 @Culture["CareerStep.Complete"]
             </button>
         </div>
@@ -135,7 +135,7 @@
         @if (Step.CanUndo)
         {
             <div class="career-card__actions">
-                <button type="button" class="career-btn career-btn--secondary" disabled="@Busy" @onclick="OnUndo">
+                <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="OnUndo">
                     @Culture["CareerStep.Undo"]
                 </button>
             </div>

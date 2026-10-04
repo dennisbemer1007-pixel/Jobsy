@@ -1,3 +1,8 @@
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Jobsy.Core.Reports;
 
 /// <summary>
@@ -42,6 +47,43 @@ public static class DeepReportCatalog
         ["riasec.S"] = ("Mensen helpen", "Helping people"),
         ["riasec.E"] = ("Aanjagen en verkopen", "Driving and selling ideas"),
         ["riasec.C"] = ("Netjes organiseren", "Organising and order"),
+
+        ["strength.Realistic"] = (
+            "Je pakt werk aan met je handen en maakt het af.",
+            "You get things done with your hands."),
+        ["strength.Investigative"] = (
+            "Je zoekt eerst uit hoe iets zit. Daarna begin je.",
+            "You find out how something works. Then you start."),
+        ["strength.Artistic"] = (
+            "Je maakt iets dat er mooi of nieuw uitziet.",
+            "You make something that looks new or beautiful."),
+        ["strength.Social"] = (
+            "Je helpt mensen en houdt het team bij elkaar.",
+            "You help people and keep the team together."),
+        ["strength.Enterprising"] = (
+            "Je brengt anderen in beweging en pakt kansen.",
+            "You get others moving and you take chances."),
+        ["strength.Conventional"] = (
+            "Je houdt lijsten, planning en afspraken netjes.",
+            "You keep lists, plans and agreements tidy."),
+        ["pitfall.Realistic"] = (
+            "Je kunt te snel doen en te weinig overleggen.",
+            "You can act too fast and skip talking it through."),
+        ["pitfall.Investigative"] = (
+            "Je kunt te lang zoeken en te laat starten.",
+            "You can search too long and start too late."),
+        ["pitfall.Artistic"] = (
+            "Je kunt te veel willen veranderen als het al goed is.",
+            "You can want to change things that already work."),
+        ["pitfall.Social"] = (
+            "Je kunt te vaak ja zeggen om anderen te helpen.",
+            "You can say yes too often just to help."),
+        ["pitfall.Enterprising"] = (
+            "Je kunt te hard duwen en anderen voorbijlopen.",
+            "You can push too hard and leave others behind."),
+        ["pitfall.Conventional"] = (
+            "Je kunt vasthouden aan de oude manier als iets nieuws beter is.",
+            "You can stick to the old way when a new way is better."),
 
         // Values domains
         ["value.Autonomy"] = ("Zelf richting geven", "Setting your own direction"),
@@ -164,14 +206,92 @@ public static class DeepReportCatalog
             "Strengths to lean on, and pitfalls to watch."),
     };
 
+    /// <summary>Optional host logger. Missing keys are warned once and never returned raw.</summary>
+    public static ILogger Logger { get; set; } = NullLogger.Instance;
+
+    private static readonly ConcurrentDictionary<string, byte> MissingKeysLogged = new(StringComparer.Ordinal);
+
     public static string Get(string key, string? lang)
     {
-        if (!Map.TryGetValue(key, out var pair))
+        if (TryGet(key, lang, out var value))
         {
-            return key;
+            return value;
         }
 
-        return ReportLanguage.IsEnglish(lang) ? pair.En : pair.Nl;
+        if (MissingKeysLogged.TryAdd(key, 0))
+        {
+            Logger.LogWarning(
+                "Deep report catalog has no text for key {CatalogKey}. Showing a plain label instead.",
+                key);
+        }
+
+        return Humanize(key);
+    }
+
+    public static bool TryGet(string key, string? lang, out string value)
+    {
+        if (TryResolve(key, out var pair))
+        {
+            value = ReportLanguage.IsEnglish(lang) ? pair.En : pair.Nl;
+            return true;
+        }
+
+        value = "";
+        return false;
+    }
+
+    private static bool TryResolve(string key, out (string Nl, string En) pair)
+    {
+        if (Map.TryGetValue(key, out pair))
+        {
+            return true;
+        }
+
+        var alias = Alias(key);
+        if (alias is not null && Map.TryGetValue(alias, out pair))
+        {
+            return true;
+        }
+
+        pair = default;
+        return false;
+    }
+
+    private static string? Alias(string key)
+    {
+        const string prefix = "riasec.";
+        if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var letter = ToRiasecLetter(key[prefix.Length..]);
+        return letter is null ? null : prefix + letter;
+    }
+
+    /// <summary>Last segment, without dots, so a missing key never paints as <c>riasec.REALISTIC</c>.</summary>
+    public static string Humanize(string key)
+    {
+        var last = key;
+        var dot = key.LastIndexOf('.');
+        if (dot >= 0 && dot < key.Length - 1)
+        {
+            last = key[(dot + 1)..];
+        }
+
+        if (string.IsNullOrWhiteSpace(last))
+        {
+            return "—";
+        }
+
+        var spaced = Regex.Replace(last.Replace('_', ' '), "([a-z])([A-Z])", "$1 $2");
+        if (spaced.Length == 1)
+        {
+            return spaced.ToUpperInvariant();
+        }
+
+        var lower = spaced.ToLowerInvariant();
+        return char.ToUpperInvariant(lower[0]) + lower[1..];
     }
 
     public static string Format(string key, string? lang, params object[] args)
@@ -181,7 +301,39 @@ public static class DeepReportCatalog
         => scorePercent < 40 ? "level.low" : scorePercent < 70 ? "level.mid" : "level.high";
 
     public static string RiasecLabel(string code, string? lang)
-        => Get($"riasec.{code.Trim().ToUpperInvariant()}", lang);
+    {
+        var letter = ToRiasecLetter(code);
+        return letter is null
+            ? Get($"riasec.{code.Trim()}", lang)
+            : Get($"riasec.{letter}", lang);
+    }
+
+    /// <summary>Accepts R–C and the full Holland names (Realistic, REALISTIC, …).</summary>
+    public static string? ToRiasecLetter(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return null;
+        }
+
+        var trimmed = code.Trim();
+        if (trimmed.Length == 1)
+        {
+            var letter = char.ToUpperInvariant(trimmed[0]);
+            return "RIASEC".Contains(letter) ? letter.ToString() : null;
+        }
+
+        return trimmed.ToUpperInvariant() switch
+        {
+            "REALISTIC" => "R",
+            "INVESTIGATIVE" => "I",
+            "ARTISTIC" => "A",
+            "SOCIAL" => "S",
+            "ENTERPRISING" => "E",
+            "CONVENTIONAL" => "C",
+            _ => null
+        };
+    }
 
     public static string ValueLabel(string code, string? lang)
         => Get($"value.{code}", lang);

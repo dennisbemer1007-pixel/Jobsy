@@ -565,6 +565,17 @@
     block-size: 16px;
 }
 
+.passport-dna__story-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.passport-dna__story-head .passport-dna__h {
+    margin: 0;
+}
+
 .passport-dna__h {
     margin: 0 0 var(--space-3);
     font-size: var(--text-md);

@@ -53,21 +53,21 @@
 
     <div class="kb-apps__filters application-counters" role="group" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button"
-                class="application-counters__btn @(_filter == "all" || string.IsNullOrEmpty(_filter) ? "is-selected" : null)"
+                class="application-counters__btn @(_filter =="all" || string.IsNullOrEmpty(_filter) ? "is-selected" : null)"
                 aria-pressed="@((_filter == "all" || string.IsNullOrEmpty(_filter)) ? "true" : "false")"
                 @onclick='() => SetFilter("all")'>
             <span class="application-counters__n">@_items.Count</span>
             <span class="application-counters__label">@Culture["Kb.Apps.FilterAll"]</span>
         </button>
         <button type="button"
-                class="application-counters__btn application-counters__btn--running @(_filter == "running" ? "is-selected" : null)"
+                class="application-counters__btn application-counters__btn--running @(_filter =="running" ? "is-selected" : null)"
                 aria-pressed="@(_filter == "running" ? "true" : "false")"
                 @onclick='() => SetFilter("running")'>
             <span class="application-counters__n">@_countRunning</span>
             <span class="application-counters__label">@Culture["Kb.Apps.FilterRunning"]</span>
         </button>
         <button type="button"
-                class="application-counters__btn @(_filter == "done" ? "is-selected" : null)"
+                class="application-counters__btn @(_filter =="done" ? "is-selected" : null)"
                 aria-pressed="@(_filter == "done" ? "true" : "false")"
                 @onclick='() => SetFilter("done")'>
             <span class="application-counters__n">@_countDone</span>
@@ -155,11 +155,11 @@
                      Lead="@Culture["Apps.WithdrawConfirmLead"]"
                      OnClose="CancelWithdraw">
     <div class="application-withdraw-actions">
-        <button type="button" class="btn-compact" disabled="@(_busyId is not null)" @onclick="CancelWithdraw">
+        <button type="button" class="btn btn-secondary" disabled="@(_busyId is not null)" @onclick="CancelWithdraw">
             @Culture["Common.Cancel"]
         </button>
         <button type="button"
-                class="btn-compact application-withdraw-actions__danger"
+                class="btn btn-secondary application-withdraw-actions__danger"
                 disabled="@(_busyId is not null)"
                 @onclick="ConfirmWithdrawAsync">
             @(_busyId == _withdrawTarget?.Id ? "…" : Culture["Apps.Withdraw"])
@@ -217,7 +217,7 @@
             ? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex")
             : a.PictureUrl!;
         var steps = a.Timeline ?? [];
-        <article class="application-card kb-apps__card @(hired ? "application-card--hired" : "") @(rejected ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
+        <article class="application-card kb-apps__card @(hired ?"application-card--hired" : "") @(rejected ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
             <div class="kb-apps__card-top">
                 <a class="application-card__img-link" href="@vacancyHref" tabindex="-1" aria-hidden="true">
                     <img class="application-card__img" src="@pictureUrl" alt="" width="84" height="84" loading="lazy" decoding="async" />
@@ -234,7 +234,7 @@
                 </div>
                 @RenderMenu(a, vacancyHref)
             </div>
-            <ol class="kb-timeline @(forceVertical ? "kb-timeline--vertical" : "kb-timeline--horizontal")">
+            <ol class="kb-timeline @(forceVertical ?"kb-timeline--vertical" : "kb-timeline--horizontal")">
                 @foreach (var step in steps)
                 {
                     <li class="kb-timeline__step kb-timeline__step--@step.State.ToLowerInvariant()">
@@ -270,7 +270,7 @@
                      ?? a.RespondedAt
                      ?? a.CreatedAt;
         var finished = IsFinished(a.Status);
-        <article class="kb-apps__compact application-card @(IsRejected(a.Status) ? "application-card--closed" : "") @(string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase) ? "application-card--hired" : "")">
+        <article class="kb-apps__compact application-card @(IsRejected(a.Status) ?"application-card--closed" : "") @(string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase) ? "application-card--hired" : "")">
             <div class="kb-apps__compact-row">
                 <button type="button" class="kb-apps__compact-btn" @onclick="() => OpenExpanded(a.Id)">
                     <img class="application-card__img" src="@(a.PictureUrl ?? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex"))" alt="" width="56" height="56" loading="lazy" />
@@ -283,7 +283,7 @@
                         <span class="application-card__progress" aria-hidden="true">
                             @for (var i = 0; i < 4; i++)
                             {
-                                <span class="application-card__seg @(i < doneCount ? "is-done" : null) @(i == doneCount - 1 && !finished ? "is-current" : null)"></span>
+                                <span class="application-card__seg @(i < doneCount ?"is-done" : null) @(i == doneCount - 1 && !finished ? "is-current" : null)"></span>
                             }
                         </span>
                         <p class="kb-apps__compact-hint">
@@ -310,7 +310,7 @@
             <p class="kb-next__text">@Culture[a.NextStepKey]</p>
             @if (string.Equals(a.Status, "EmployerContacting", StringComparison.OrdinalIgnoreCase) && !_readOnly)
             {
-                <button type="button" class="btn-compact kb-next__action" @onclick="() => OpenMockInterview(a.VacancyId)">
+                <button type="button" class="btn btn-secondary kb-next__action" @onclick="() => OpenMockInterview(a.VacancyId)">
                     @Culture["Kb.Next.Practice"]
                 </button>
             }
@@ -335,7 +335,7 @@
         <div class="application-card__menu">
             @if (bindToggleRef)
             {
-                <button type="button" class="icon-btn application-card__menu-toggle @(menuOpen ? "is-open" : null)"
+                <button type="button" class="icon-btn application-card__menu-toggle @(menuOpen ?"is-open" : null)"
                         aria-haspopup="menu" aria-expanded="@(menuOpen ? "true" : "false")"
                         aria-label="@string.Format(Culture["Apps.ActionsFor"], a.VacancyTitle)"
                         @ref="_menuToggleRef" @onclick="() => ToggleMenu(a.Id)" @onclick:stopPropagation="true">

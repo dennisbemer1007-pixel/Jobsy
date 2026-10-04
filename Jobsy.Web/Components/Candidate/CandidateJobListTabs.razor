@@ -9,12 +9,12 @@
 @if (_show)
 {
     <nav class="candidate-job-list-tabs admin-sublinks" aria-label="@Culture["Nav.Applications"]">
-        <a class="admin-sublink @(IsApplications ? "admin-sublink--active" : null)"
+        <a class="admin-sublink @(IsApplications ?"admin-sublink--active" : null)"
            href="/candidate/applications"
            aria-current="@(IsApplications ? "page" : null)">
             @Culture["Nav.ApplicationsTab"]
         </a>
-        <a class="admin-sublink @(IsSaved ? "admin-sublink--active" : null)"
+        <a class="admin-sublink @(IsSaved ?"admin-sublink--active" : null)"
            href="/candidate/liked"
            aria-current="@(IsSaved ? "page" : null)">
             @Culture["Nav.SavedTab"]

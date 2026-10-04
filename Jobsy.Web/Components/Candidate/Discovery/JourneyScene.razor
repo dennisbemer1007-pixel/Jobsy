@@ -1,6 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Discovery
 
-<div class="journey-scene journey-scene--depth-@Depth @(IsMobile ? "journey-scene--mobile" : "journey-scene--desktop")"
+<div class="journey-scene journey-scene--depth-@Depth @(IsMobile ?"journey-scene--mobile" : "journey-scene--desktop")"
      style="@GradientStyle"
      aria-hidden="true">
     @((MarkupString)_svg)

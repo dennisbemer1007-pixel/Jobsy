@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @inject CultureState Culture
+@inject JobsyApiClient Api
 
 <nav class="admin-tabs" role="tablist" aria-label="@Culture["AdminNav.Group.Security"]">
     @foreach (var tab in VisibleTabs)
@@ -9,7 +11,13 @@
         <a class="admin-tabs__tab @(active ? "is-active" : null)"
            role="tab"
            aria-selected="@active"
-           href="@tab.Href">@Culture[tab.LabelKey]</a>
+           href="@tab.Href">
+            @Culture[tab.LabelKey]
+            @if (tab.Key == "misuse" && _openMisuse > 0)
+            {
+                <span class="admin-tabs__count">@_openMisuse</span>
+            }
+        </a>
     }
 </nav>
 
@@ -18,6 +26,8 @@
 
     [Parameter] public string ActiveKey { get; set; } = "audit";
 
+    private int _openMisuse;
+
     private static readonly SecurityTab[] AllTabs =
     [
         new("audit", "AdminNav.AuditLog", "/admin/beveiliging"),
@@ -25,9 +35,23 @@
         new("mfa", "AdminNav.MfaSessions", "/admin/beveiliging/2fa"),
         new("privacy", "AdminNav.Privacy", "/admin/beveiliging/privacy"),
         new("logs", "AdminNav.SystemLogs", "/admin/beveiliging/systeemlogs"),
+        new("misuse", "AdminNav.ReferenceMisuse", "/admin/beveiliging/referent-misbruik"),
     ];
 
     private IEnumerable<SecurityTab> VisibleTabs =>
         AllTabs.Where(t => AdminNav.AvailableItems().Any(i =>
             string.Equals(i.Href, t.Href, StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var rows = await Api.GetReferenceMisuseAsync();
+            _openMisuse = rows.Count(r => string.Equals(r.Status, "open", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            _openMisuse = 0;
+        }
+    }
 }

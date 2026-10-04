@@ -14,7 +14,7 @@
     @foreach (var level in OnboardingWizardCatalog.EducationRadioLevels)
     {
         var isSelected = EducationSelected(level);
-        <label class="ob-wizard__radio @(isSelected ? "is-selected" : null)">
+        <label class="ob-wizard__radio @(isSelected ?"is-selected" : null)">
             <input type="radio" name="education" checked="@isSelected"
                    @onchange="() => SelectEducation.InvokeAsync(level)" />
             @EducationLabel(level)

@@ -425,7 +425,8 @@ window.jobsyGeo = (function () {
 window.jobsyCulture = {
   cookieName: "Jobsy.Culture",
   get: function () {
-    var match = document.cookie.match(new RegExp("(?:^|; )" + this.cookieName + "=([^;]*)"));
+    var name = String(this.cookieName).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
     return match ? decodeURIComponent(match[1]) : null;
   },
   set: function (code) {
@@ -1338,8 +1339,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-run7m"
-            : "/service-worker.js?v=20261004-run7m";
+            ? "/service-worker.published.js?v=20261004-11"
+            : "/service-worker.js?v=20261004-11";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1549,7 +1550,7 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
     function overlaps() {
       var tipBox = tip.getBoundingClientRect();
       if (tipBox.width < 2 || tipBox.height < 2) return false;
-      var nodes = document.querySelectorAll("a, button, input, textarea, select, summary, [role='button']");
+      var nodes = document.querySelectorAll("main a, main button, main input, main textarea, main select, main summary, main [role='button'], main p, main h1, main h2, main h3, main li");
       for (var i = 0; i < nodes.length; i++) {
         var el = nodes[i];
         if (!el || dock.contains(el)) continue;

@@ -52,14 +52,14 @@ internal static class MasterdataSeeder
         int sortOrder,
         bool showCandidate,
         bool showVacancy) => new()
-    {
-        Id = Guid.NewGuid(),
-        Category = category,
-        Value = value,
-        Label = label,
-        SortOrder = sortOrder,
-        IsActive = true,
-        ShowOnCandidate = showCandidate,
-        ShowOnVacancy = showVacancy
-    };
+        {
+            Id = Guid.NewGuid(),
+            Category = category,
+            Value = value,
+            Label = label,
+            SortOrder = sortOrder,
+            IsActive = true,
+            ShowOnCandidate = showCandidate,
+            ShowOnVacancy = showVacancy
+        };
 }

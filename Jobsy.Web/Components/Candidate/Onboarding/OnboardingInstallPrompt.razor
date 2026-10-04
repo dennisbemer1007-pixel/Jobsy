@@ -16,11 +16,11 @@
         <div class="journey-install__actions">
             @if (_canPrompt)
             {
-                <button type="button" class="btn-compact btn-compact--primary" @onclick="InstallAsync">
+                <button type="button" class="btn btn-primary" @onclick="InstallAsync">
                     @Culture["Onboarding.Install.AddApp"]
                 </button>
             }
-            <button type="button" class="btn-compact" @onclick="EnablePushAsync">
+            <button type="button" class="btn btn-secondary" @onclick="EnablePushAsync">
                 @Culture["Onboarding.Install.EnablePush"]
             </button>
             <button type="button" class="journey-later" @onclick="DismissAsync">
