@@ -85,7 +85,7 @@ public sealed class ConsumerInvoiceService : IConsumerInvoiceService
         int? quarter = null,
         CancellationToken cancellationToken = default)
     {
-        var q = _db.ConsumerPurchaseInvoices.AsNoTracking().AsQueryable();
+        var q = _db.ConsumerPurchaseInvoices.AsNoTracking().ExcludingTestUnlocks();
         if (year is int y)
         {
             var start = new DateTime(y, 1, 1, 0, 0, 0, DateTimeKind.Utc);

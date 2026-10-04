@@ -120,6 +120,140 @@ public class DeepTestStubGuardTests
         Assert.False(result.Unlocked);
     }
 
+    [Fact]
+    public async Task Flagged_test_account_unlocks_for_free_without_mollie()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var user = Consented(userId);
+        user.Email = "sanne@example.com";
+        user.IsTestAccount = true;
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var mollie = new RecordingMollie();
+        var sut = CreatePayments(db, isDevelopment: false, allowStub: false, mollie: mollie);
+        var created = await sut.CreateCheckoutAsync(userId, AssessmentKind.Competence, true, "nl");
+
+        Assert.Equal(0, mollie.Creates);
+        Assert.Equal(0, created.TotalCents);
+        Assert.StartsWith("/candidate/deep-analysis/checkout?checkoutId=", created.CheckoutUrl, StringComparison.Ordinal);
+
+        var checkout = await db.DeepAnalysisCheckouts.SingleAsync();
+        Assert.Equal(DeepAnalysisCheckoutStatus.Paid, checkout.Status);
+        Assert.Equal(0, checkout.AmountEuro);
+        Assert.Equal(0, checkout.AmountExVatCents);
+        Assert.Equal(0, checkout.VatAmountCents);
+        Assert.Equal(0, checkout.TotalAmountCents);
+        Assert.Equal(DeepTestFinanceRules.TestUnlockMethod, checkout.PaymentMethod);
+        Assert.StartsWith("test_deep_", checkout.PaymentId, StringComparison.Ordinal);
+        Assert.True(CandidateDeepAnalysisStatuses.IsUnlocked(
+            (await db.CandidateDeepAnalyses.SingleAsync()).Status));
+        Assert.Empty(db.ConsumerPurchaseInvoices);
+
+        var replay = await sut.TryFulfillAsync(checkout.Id, DeepTestFulfillSource.Webhook);
+        Assert.True(replay.Unlocked);
+        Assert.Empty(db.ConsumerPurchaseInvoices);
+    }
+
+    [Fact]
+    public async Task Unflagged_test_email_still_starts_a_mollie_payment()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var user = Consented(userId);
+        user.Email = "test-kandidaat@lobsy.nl";
+        user.IsTestAccount = false;
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var mollie = new RecordingMollie();
+        var sut = CreatePayments(db, isDevelopment: false, allowStub: false, mollie: mollie);
+        var created = await sut.CreateCheckoutAsync(userId, AssessmentKind.Career, true, "nl");
+
+        Assert.Equal(1, mollie.Creates);
+        Assert.Equal(299, created.TotalCents);
+        Assert.StartsWith("https://pay.mollie.test/", created.CheckoutUrl, StringComparison.Ordinal);
+        var checkout = await db.DeepAnalysisCheckouts.SingleAsync();
+        Assert.Equal(DeepAnalysisCheckoutStatus.Pending, checkout.Status);
+        Assert.False(DeepTestFinanceRules.IsTestUnlock(checkout.PaymentMethod));
+        Assert.Empty(db.CandidateDeepAnalyses);
+    }
+
+    [Fact]
+    public async Task Test_unlock_does_not_change_vat_or_revenue_totals()
+    {
+        await using var db = CreateDb();
+        var issued = new DateTime(2026, 5, 15, 10, 0, 0, DateTimeKind.Utc);
+        var (ex, vat, total) = TokenVatPricing.SplitInclVatEuros(2.99m);
+        var buyerId = Guid.NewGuid();
+        db.Users.Add(Consented(buyerId));
+        var realCheckout = Guid.NewGuid();
+        var testCheckout = Guid.NewGuid();
+        db.DeepAnalysisCheckouts.Add(PaidCheckout(realCheckout, buyerId, "tr_real", ex, vat, total, "ideal", issued));
+        db.DeepAnalysisCheckouts.Add(PaidCheckout(testCheckout, buyerId, "test_deep_x", 0, 0, 0, DeepTestFinanceRules.TestUnlockMethod, issued));
+        db.ConsumerPurchaseInvoices.Add(Invoice(realCheckout, buyerId, "LOB-KT-2026-0001", ex, vat, total, "ideal", issued));
+        db.ConsumerPurchaseInvoices.Add(Invoice(testCheckout, buyerId, "LOB-KT-2026-0002", 0, 0, 0, DeepTestFinanceRules.TestUnlockMethod, issued));
+        await db.SaveChangesAsync();
+
+        var preview = await new VatDeclarationService(db, new PlatformCompanySettingsService(db))
+            .PreviewAsync(2026, 2);
+        Assert.Equal(1, preview.ConsumerInvoiceCount);
+        Assert.Equal(ex, preview.ConsumerOmzetExVatCents);
+        Assert.Equal(vat, preview.ConsumerVatCents);
+
+        var listed = await new ConsumerInvoiceService(db, new PlatformCompanySettingsService(db)).ListAsync(2026, 2);
+        var only = Assert.Single(listed);
+        Assert.Equal(total, only.TotalAmountCents);
+
+        var summary = await new AdminFinanceSummaryService(db).GetAsync("year");
+        Assert.Equal(0, summary.RevenueInclVatCents);
+        Assert.Equal(0, summary.RevenueExVatCents);
+    }
+
+    private static DeepAnalysisCheckout PaidCheckout(
+        Guid id, Guid userId, string paymentId, int ex, int vat, int total, string method, DateTime issued)
+        => new()
+        {
+            Id = id,
+            UserId = userId,
+            Kind = AssessmentKind.Competence,
+            PaymentId = paymentId,
+            AmountEuro = total / 100m,
+            AmountExVatCents = ex,
+            VatAmountCents = vat,
+            TotalAmountCents = total,
+            PaymentMethod = method,
+            IsStub = method == DeepTestFinanceRules.TestUnlockMethod,
+            Status = DeepAnalysisCheckoutStatus.Paid,
+            PaidAtUtc = issued,
+            CreatedAtUtc = issued,
+            WaiverAcceptedAtUtc = issued,
+            WaiverTextVersion = "2026-09"
+        };
+
+    private static ConsumerPurchaseInvoice Invoice(
+        Guid checkoutId, Guid userId, string number, int ex, int vat, int total, string method, DateTime issued)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            InvoiceNumber = number,
+            DeepAnalysisCheckoutId = checkoutId,
+            UserId = userId,
+            CustomerName = "K",
+            CustomerEmail = "k@example.com",
+            Description = "Uitgebreide test",
+            Kind = AssessmentKind.Competence,
+            AmountExVatCents = ex,
+            VatAmountCents = vat,
+            TotalAmountCents = total,
+            PaymentMethod = method,
+            MolliePaymentId = method == DeepTestFinanceRules.TestUnlockMethod ? "test_deep_x" : "tr_real",
+            IsStub = method == DeepTestFinanceRules.TestUnlockMethod,
+            IssuedAt = issued,
+            CreatedAt = issued
+        };
+
     private static User Consented(Guid id) => new()
     {
         Id = id,
@@ -169,6 +303,29 @@ public class DeepTestStubGuardTests
             env,
             config,
             NullLogger<DeepTestPaymentService>.Instance);
+    }
+
+    private sealed class RecordingMollie : IMollieApiClient
+    {
+        public int Creates { get; private set; }
+
+        public Task<bool> TryGetApiKeyAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
+
+        public string? ResolveWebhookUrl() => "https://lobsy.test/hook";
+
+        public string? ResolvePublicWebBaseUrl(string? configuredPublicWebBaseUrl) => configuredPublicWebBaseUrl;
+
+        public Task<MolliePaymentSnapshot> FetchPaymentAsync(string paymentId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new MolliePaymentSnapshot(paymentId, "open", null, "2.99", null, null, null, new Dictionary<string, string>()));
+
+        public Task<MolliePaymentSnapshot> CreatePaymentAsync(MollieCreatePaymentRequest request, CancellationToken cancellationToken = default)
+        {
+            Creates++;
+            return Task.FromResult(new MolliePaymentSnapshot(
+                "tr_real", "open", null, request.AmountValue, null, null, "https://pay.mollie.test/x", new Dictionary<string, string>()));
+        }
+
+        public Task TryCancelPaymentAsync(string paymentId, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class NoKeyMollie : IMollieApiClient

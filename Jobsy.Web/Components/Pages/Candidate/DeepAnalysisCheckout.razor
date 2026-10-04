@@ -71,14 +71,21 @@ else if (_state == "paid")
                 <span class="deep-checkout__check" aria-hidden="true">✓</span>
                 <dl class="deep-pay-receipt">
                     <div><dt>@Culture["DeepPay.Fact.What"]</dt><dd>@Culture.Format("DeepPay.What", _testName)</dd></div>
-                    <div><dt>@Culture["DeepPay.Fact.Amount"]</dt><dd>€ @_amountLabel</dd></div>
+                    <div><dt>@Culture["DeepPay.Fact.Amount"]</dt><dd>@(_isTestUnlock ? Culture["DeepPay.TestAccountFree"] : $"€ {_amountLabel}")</dd></div>
                     <div><dt>@Culture["DeepPay.Fact.Date"]</dt><dd>@_paidLocal</dd></div>
                     @if (!string.IsNullOrWhiteSpace(_invoiceNumber))
                     {
                         <div><dt>@Culture["DeepPay.Fact.Invoice"]</dt><dd>@_invoiceNumber</dd></div>
                     }
                 </dl>
-                <p>@Culture["DeepPay.PaidMail"]</p>
+                @if (_isTestUnlock)
+                {
+                    <p>@Culture["DeepPay.TestAccountNote"]</p>
+                }
+                else
+                {
+                    <p>@Culture["DeepPay.PaidMail"]</p>
+                }
                 <div class="deep-offer__tiles">
                     <div>
                         <strong>@Culture.Format("Deep.Checkout.TileQs", qCount, mins)</strong>
@@ -150,6 +157,7 @@ else
     private string? _invoiceNumber;
     private string _paidLocal = "";
     private bool _isStub;
+    private bool _isTestUnlock;
     private bool _busy;
     private bool _timedOut;
     private Guid? _checkoutId;
@@ -245,6 +253,7 @@ else
         _amountLabel = (status.TotalCents / 100m).ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
         _invoiceNumber = status.InvoiceNumber;
         _isStub = status.IsStub;
+        _isTestUnlock = DeepTestFinanceRules.IsTestUnlock(status.PaymentMethod);
         if (status.PaidAtUtc is DateTime paid)
         {
             var amsterdam = TimeZoneInfo.FindSystemTimeZoneById(

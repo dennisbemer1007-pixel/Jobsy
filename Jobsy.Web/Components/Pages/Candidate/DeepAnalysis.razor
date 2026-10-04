@@ -76,21 +76,31 @@ else
                                     <span>@Culture.Format("Deep.Offer.TileFreeKeepLead", TestDepthRules.FullCount(_kind))</span>
                                 </div>
                             </div>
-                            <div class="deep-offer__price">
-                                <strong>€ @_priceLabel</strong>
-                                <span>@Culture["DeepPay.PriceOnce"]</span>
-                            </div>
-                            <p class="muted">
-                                @Culture["DeepPay.Methods"]:
-                                @string.Join(" · ", MolliePaymentMethods.PrimaryMethods.Select(MolliePaymentMethods.DisplayName))
-                            </p>
-                            @if (_paymentMode == "mollie")
+                            @if (_paymentMode == DeepTestFinanceRules.TestUnlockMethod)
                             {
-                                <p class="muted">@Culture["DeepPay.SecureMollie"]</p>
+                                <p class="deep-offer__price">
+                                    <strong>@Culture["DeepPay.TestAccountFree"]</strong>
+                                </p>
+                                <p class="muted">@Culture["DeepPay.TestAccountNote"]</p>
                             }
-                            else if (_paymentMode == "stub")
+                            else
                             {
-                                <p class="muted">@Culture["DeepPay.StubHint"]</p>
+                                <div class="deep-offer__price">
+                                    <strong>€ @_priceLabel</strong>
+                                    <span>@Culture["DeepPay.PriceOnce"]</span>
+                                </div>
+                                <p class="muted">
+                                    @Culture["DeepPay.Methods"]:
+                                    @string.Join(" · ", MolliePaymentMethods.PrimaryMethods.Select(MolliePaymentMethods.DisplayName))
+                                </p>
+                                @if (_paymentMode == "mollie")
+                                {
+                                    <p class="muted">@Culture["DeepPay.SecureMollie"]</p>
+                                }
+                                else if (_paymentMode == "stub")
+                                {
+                                    <p class="muted">@Culture["DeepPay.StubHint"]</p>
+                                }
                             }
                             <label class="deep-pay-waiver">
                                 <input type="checkbox" @bind="_waiverAccepted" />
@@ -109,7 +119,9 @@ else
                                         class="engagement-btn"
                                         disabled="@(!_waiverAccepted || _saving || _paymentMode == "unavailable")"
                                         @onclick="ConfirmOrderAsync">
-                                    @Culture.Format("DeepPay.PayCta", _priceLabel)
+                                    @(_paymentMode == DeepTestFinanceRules.TestUnlockMethod
+                                        ? Culture["DeepPay.TestAccountCta"]
+                                        : Culture.Format("DeepPay.PayCta", _priceLabel))
                                 </button>
                             </footer>
                         </section>
