@@ -75,12 +75,39 @@ public class AdminRun4PlaywrightTests
             Assert.True(await search.IsVisibleAsync());
             Assert.True(await menu.Locator("svg").IsVisibleAsync());
             Assert.True(await search.Locator("svg").IsVisibleAsync());
-            var background = await menu.EvaluateAsync<string>("el => getComputedStyle(el).backgroundColor");
+            // Locator.EvaluateAsync<string> came back null in CI, so the colour never
+            // matched "rgba(0, 0, 0, 0)". Compare in the page against a transparent probe;
+            // that stays valid whatever serialisation Chrome uses for a clear colour.
+            var paint = await phone.EvaluateAsync<MenuPaint>(
+                """
+                () => {
+                  const el = document.querySelector('.admin-topbar__menu');
+                  const probe = document.createElement('span');
+                  probe.style.background = 'transparent';
+                  (document.body || document.documentElement).append(probe);
+                  const expected = getComputedStyle(probe).backgroundColor || '';
+                  probe.remove();
+                  const style = el ? getComputedStyle(el) : null;
+                  const actual = style ? (style.backgroundColor || '') : '';
+                  const image = style ? (style.backgroundImage || '') : '';
+                  const clear = !!el && actual.length > 0 && actual === expected
+                    && (image === 'none' || image === '');
+                  return { clear, actual, expected, image };
+                }
+                """);
             Assert.True(
-                background is "rgba(0, 0, 0, 0)" or "transparent",
-                $"Menu button background is {background}.");
+                paint.Clear,
+                $"{path} menu background is '{paint.Actual}' (transparent probe '{paint.Expected}', image '{paint.Image}').");
             Assert.False(await phone.Locator(".admin-topbar__search-label").IsVisibleAsync());
         }
+    }
+
+    private sealed class MenuPaint
+    {
+        public bool Clear { get; set; }
+        public string Actual { get; set; } = "";
+        public string Expected { get; set; } = "";
+        public string Image { get; set; } = "";
     }
 
     private static async Task AssertMenuStaysOpenAsync(IPage page, string url)
