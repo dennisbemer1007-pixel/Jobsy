@@ -36,24 +36,24 @@
                     var bucket = (pct / 10) * 10;
                     var warn = row.Remaining <= 5;
                     <tr>
-                        <td>
+                        <td data-label="@Culture["WgTok.Col.Branch"]">
                             <strong>@row.Name</strong>
                             @if (!string.IsNullOrWhiteSpace(row.RegionName))
                             {
                                 <span class="muted"> · @row.RegionName</span>
                             }
                         </td>
-                        <td class="ent-data-table__num">@row.Allocated.ToString("0.##")</td>
-                        <td class="ent-data-table__num">@row.Used.ToString("0.##")</td>
-                        <td class="ent-data-table__num">@row.Remaining.ToString("0.##")</td>
-                        <td>
+                        <td class="ent-data-table__num" data-label="@Culture["WgTok.Col.Allocated"]">@row.Allocated.ToString("0.##")</td>
+                        <td class="ent-data-table__num" data-label="@Culture["WgTok.Col.Used"]">@row.Used.ToString("0.##")</td>
+                        <td class="ent-data-table__num" data-label="@Culture["WgTok.Col.Remaining"]">@row.Remaining.ToString("0.##")</td>
+                        <td data-label="%">
                             <div class="wg-tok-bar @(warn ? "is-warn" : null) wg-tok-bar--p@(bucket)" role="presentation">
                                 <span></span>
                             </div>
                         </td>
                         @if (CanAllocate)
                         {
-                            <td>
+                            <td data-label="@Culture["EntUi.Actions"]">
                                 <button type="button" class="btn-compact" @onclick="() => OnAllocate.InvokeAsync(row)">
                                     @Culture["WgTok.Allocate"]
                                 </button>

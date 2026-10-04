@@ -127,6 +127,7 @@ public class VacancyListItem
 
     /// <summary>Candidate must tick "Beschikbaar voor werk" before a fit percent is shown.</summary>
     public bool OpenForWorkRequired { get; set; }
+    public DateTime? ClosedAtUtc { get; set; }
 }
 
 public sealed class VacancyEngagementBadge

@@ -39,7 +39,7 @@
             else
             {
                 <p class="pushbom-preview__cost">
-                    @string.Format(Culture["WgVac.Cost.Push"], _preview.CostTokens.ToString("0.##"))
+                    @string.Format(Culture["WgVac.Cost.Push"], CountPhrase.Tokens(Culture, _preview.CostTokens))
                 </p>
                 <p class="muted">Huidig saldo: @_preview.TokenBalance.ToString("0.##") tokens</p>
                 @if (!_preview.CanAfford)

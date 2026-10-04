@@ -20,7 +20,7 @@
         @foreach (var u in Rows)
         {
             <tr>
-                <td>
+                <td data-label="@Culture["WgTeam.Col.Name"]">
                     <div class="wg-team-user">
                         <span class="wg-team-user__avatar" aria-hidden="true">@Initials(u.FullName)</span>
                         <span class="wg-team-user__meta">
@@ -29,18 +29,18 @@
                         </span>
                     </div>
                 </td>
-                <td>
+                <td data-label="@Culture["WgTeam.Col.Role"]">
                     <span class="status-pill @TeamRoleCopy.RolePillClass(u.Role)">
                         @Culture[TeamRoleCopy.RoleLabelKey(u.Role)]
                     </span>
                 </td>
-                <td>@ScopeFor(u)</td>
-                <td>
+                <td data-label="@Culture["WgTeam.Col.Scope"]">@ScopeFor(u)</td>
+                <td data-label="@Culture["WgTeam.Col.Status"]">
                     <span class="status-pill @(u.IsActive ? "status-pill--ok" : "status-pill--neutral")">
                         @(u.IsActive ? Culture["WgTeam.Status.Active"] : Culture["WgTeam.Status.Inactive"])
                     </span>
                 </td>
-                <td class="tabular">@FormatLastActive(u.LastLoginAtUtc)</td>
+                <td class="tabular" data-label="@Culture["WgTeam.Col.Active"]">@FormatLastActive(u.LastLoginAtUtc)</td>
                 @if (CanManage)
                 {
                     <td>

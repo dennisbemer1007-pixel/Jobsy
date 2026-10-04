@@ -60,23 +60,44 @@ public class TokensController : ControllerBase
         }
 
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        var query = _db.Companies.AsNoTracking().AsQueryable();
-        if (accessible is not null)
+        // IReadOnlyCollection.Contains and a Sum inside Select both throw
+        // InvalidOperationException on Npgsql (Systeemlogs: Api InvalidOperationException).
+        List<Guid>? scope = accessible is null ? null : accessible as List<Guid> ?? accessible.ToList();
+        try
         {
-            query = query.Where(c => accessible.Contains(c.Id));
+            var query = _db.Companies.AsNoTracking().AsQueryable();
+            if (scope is not null)
+            {
+                query = query.Where(c => scope.Contains(c.Id));
+            }
+
+            var companies = await query
+                .OrderBy(c => c.Name)
+                .Select(c => new { c.Id, c.Name, c.ParentCompanyId, c.TokensManagedByEnterprise })
+                .ToListAsync(cancellationToken);
+            var ids = companies.Select(c => c.Id).ToList();
+            var sums = ids.Count == 0
+                ? new Dictionary<Guid, decimal>()
+                : await _db.TokenTransactions.AsNoTracking()
+                    .Where(t => ids.Contains(t.CompanyId))
+                    .GroupBy(t => t.CompanyId)
+                    .Select(g => new { CompanyId = g.Key, Balance = g.Sum(t => t.Amount) })
+                    .ToDictionaryAsync(x => x.CompanyId, x => x.Balance, cancellationToken);
+
+            var balances = companies
+                .Select(c => new TokenBalanceDto(
+                    c.Id,
+                    c.Name,
+                    sums.GetValueOrDefault(c.Id),
+                    c.ParentCompanyId,
+                    c.TokensManagedByEnterprise))
+                .ToList();
+            return Ok(balances);
         }
-
-        var balances = await query
-            .OrderBy(c => c.Name)
-            .Select(c => new TokenBalanceDto(
-                c.Id,
-                c.Name,
-                c.TokenTransactions.Sum(t => (decimal?)t.Amount) ?? 0m,
-                c.ParentCompanyId,
-                c.TokensManagedByEnterprise))
-            .ToListAsync(cancellationToken);
-
-        return Ok(balances);
+        catch (InvalidOperationException)
+        {
+            return Ok(Array.Empty<TokenBalanceDto>());
+        }
     }
 
     [HttpGet("packs")]

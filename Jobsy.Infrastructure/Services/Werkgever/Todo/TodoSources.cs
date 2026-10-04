@@ -283,8 +283,8 @@ public sealed class NoManagerTodoSource : ITodoSource
             .Where(u => u.IsActive
                         && u.Role == UserRole.BranchManager
                         && u.CompanyId != null
-                        && ids.Contains(u.CompanyId.Value))
-            .Select(u => u.CompanyId!.Value)
+                        && ids.Contains(u.CompanyId ?? Guid.Empty))
+            .Select(u => u.CompanyId ?? Guid.Empty)
             .Distinct()
             .ToListAsync(cancellationToken);
         var managed = withManager.ToHashSet();
