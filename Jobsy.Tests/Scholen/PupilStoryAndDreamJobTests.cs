@@ -58,6 +58,7 @@ public class PupilStoryAndDreamJobTests
         Assert.Equal(4, a.Tiles.Count);
         Assert.Equal(4, a.JobIdeas.Count);
         Assert.DoesNotContain("geheim", a.Body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("LeerlingStory.", a.Body, StringComparison.Ordinal);
 
         foreach (var sentence in a.Body.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
@@ -69,6 +70,54 @@ public class PupilStoryAndDreamJobTests
                 Assert.DoesNotContain(bad, hay, StringComparison.Ordinal);
             }
         }
+    }
+
+    [Fact]
+    public void Every_ordered_riasec_pair_renders_a_sentence()
+    {
+        const string letters = "RIASEC";
+        var canonical = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < letters.Length; i++)
+        {
+            for (var j = 0; j < letters.Length; j++)
+            {
+                var suffix = i == j
+                    ? letters[i].ToString()
+                    : string.Concat(letters[i], letters[j]);
+                var text = PupilVerhaalCopy.Get("LeerlingStory.Riasec." + suffix);
+                Assert.False(
+                    text.StartsWith("LeerlingStory.", StringComparison.Ordinal),
+                    suffix + " stayed raw: " + text);
+                if (i != j)
+                {
+                    var swapped = PupilVerhaalCopy.Get(
+                        "LeerlingStory.Riasec." + letters[j] + letters[i]);
+                    Assert.Equal(text, swapped);
+                    canonical.Add(PupilStoryTemplates.CanonicalRiasecPair(letters[i], letters[j]));
+                }
+
+                var result = FixtureResult();
+                result.HollandCode = suffix;
+                result.StoryKeysJson = "[]";
+                var view = _renderer.Render(result, null);
+                Assert.DoesNotContain("LeerlingStory.", view.Body, StringComparison.Ordinal);
+            }
+        }
+
+        Assert.Equal(15, canonical.Count);
+        foreach (var pair in canonical)
+        {
+            Assert.True(
+                PupilVerhaalCopy.All.ContainsKey("LeerlingStory.Riasec." + pair),
+                pair);
+        }
+
+        Assert.Equal(
+            PupilVerhaalCopy.Get("LeerlingStory.Riasec.R"),
+            PupilVerhaalCopy.Get("LeerlingStory.Riasec.RX"));
+        Assert.Equal(
+            "LeerlingStory.Riasec.CS",
+            PupilStoryTemplates.NormalizeRiasecSentenceKey("LeerlingStory.Riasec.SC"));
     }
 
     [Fact]

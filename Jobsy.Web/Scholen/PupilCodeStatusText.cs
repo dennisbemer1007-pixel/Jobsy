@@ -12,16 +12,12 @@ public static class PupilCodeStatusText
     public static string Label(
         CultureState culture,
         PupilCodeStatus status,
-        int progressCurrent,
-        int progressTotal,
         DateTime? lastSeenAtUtc)
         => status switch
         {
             PupilCodeStatus.Completed => culture["School.Status.Completed"],
-            PupilCodeStatus.InProgress => string.Format(
-                culture["School.Status.InProgress"],
-                progressCurrent,
-                progressTotal),
+            // The fraction already sits in the Voortgang column.
+            PupilCodeStatus.InProgress => culture["School.Status.InProgress"],
             PupilCodeStatus.NotStarted when lastSeenAtUtc is not null => culture["School.Status.LoggedIn"],
             _ => culture["School.Status.NotStarted"]
         };

@@ -94,7 +94,8 @@ public static class ClassResultsAggregator
             TotalsVisible: true,
             RiasecTop3: riasecTop3,
             TopValues: topValues,
-            DreamJobs: dreamJobs);
+            DreamJobs: dreamJobs,
+            UndecidedDreamJobCount: counts.UndecidedDreamJobs);
     }
 
     /// <summary>
@@ -467,7 +468,8 @@ public sealed record ClassResultsAggregate(
     bool TotalsVisible,
     IReadOnlyList<NamedCount> RiasecTop3,
     IReadOnlyList<NamedCount> TopValues,
-    IReadOnlyList<NamedCount> DreamJobs);
+    IReadOnlyList<NamedCount> DreamJobs,
+    int UndecidedDreamJobCount = 0);
 
 public sealed record TeacherGroupAggregate(
     bool Visible,

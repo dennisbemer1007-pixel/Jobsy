@@ -396,7 +396,7 @@ else
     }
 
     private string StatusLabel(SchoolPortalCodeRowDto code)
-        => PupilCodeStatusText.Label(Culture, code.Status, code.ProgressCurrent, code.ProgressTotal, code.LastSeenAtUtc);
+        => PupilCodeStatusText.Label(Culture, code.Status, code.LastSeenAtUtc);
 
     private static string StatusPill(PupilCodeStatus s) => s switch
     {

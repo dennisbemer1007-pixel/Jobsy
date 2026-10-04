@@ -28,9 +28,13 @@ else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
-else if (_state is null || _def is null)
+else if (_sessionLost)
 {
     <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_state is null || _def is null)
+{
+    <LeerlingOfflineRetry OnRetry="Reload" />
 }
 else if (_resultPending)
 {
@@ -165,6 +169,7 @@ else
     private bool _saved;
     private bool _resultPending;
     private bool _offline;
+    private bool _sessionLost;
     private bool _leaving;
     private int? _queuedAnswer;
     private string? _saveError;
@@ -183,18 +188,21 @@ else
         var previous = _state;
         _loading = previous is null;
         _offline = false;
-        PupilProgressStateDto? next = null;
-        for (var attempt = 0; attempt < 2 && next is null; attempt++)
+        _sessionLost = false;
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync());
+        if (outcome.SessionLost)
         {
-            next = await FetchProgressAsync();
+            _sessionLost = true;
+            _state = null;
+            _def = null;
         }
-
-        if (next is null)
+        else if (outcome.Value is null)
         {
             if (previous is null)
             {
                 _state = null;
                 _def = null;
+                _offline = true;
             }
             else
             {
@@ -204,22 +212,10 @@ else
         }
         else
         {
-            ApplyLoaded(next);
+            ApplyLoaded(outcome.Value);
         }
 
         _loading = false;
-    }
-
-    private async Task<PupilProgressStateDto?> FetchProgressAsync()
-    {
-        try
-        {
-            return await Api.GetPupilProgressAsync();
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     private void ApplyLoaded(PupilProgressStateDto state)
