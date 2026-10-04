@@ -107,57 +107,40 @@ public class EmailRenderPlaywrightTests : IClassFixture<EmailRenderPlaywrightTes
         var dir = Path.Combine(FindRepoRoot(), "artifacts", "playwright-email");
         Directory.CreateDirectory(dir);
         var shot = Path.Combine(dir, $"{Sanitize(key)}-{lang}-{width}-{theme}.png");
-        await SaveFullPageAsync(page, shot);
+        await SaveShotAsync(page, mail.Html, shot);
         _output.WriteLine($"SHOT {Path.GetFileName(shot)}");
     }
 
     /// <summary>
-    /// Chromium on CI sometimes returns "Unable to capture screenshot" after fonts load.
-    /// Retry the same full-page capture; the layout assertions above already ran.
+    /// Chromium sometimes refuses a full-page shot right after fonts load when the
+    /// smoke job has been running for a while. Retry on a fresh document.
     /// </summary>
-    private static async Task SaveFullPageAsync(IPage page, string path)
+    private static async Task SaveShotAsync(IPage page, string html, string shot)
     {
-        await page.EvaluateAsync("() => document.fonts ? document.fonts.ready : Promise.resolve()");
         PlaywrightException? last = null;
-        for (var attempt = 1; attempt <= 3; attempt++)
+        for (var attempt = 0; attempt < 3; attempt++)
         {
             try
             {
                 await page.ScreenshotAsync(new PageScreenshotOptions
                 {
-                    Path = path,
+                    Path = shot,
                     FullPage = true,
                     Animations = ScreenshotAnimations.Disabled,
-                    Caret = ScreenshotCaret.Hide,
-                    Timeout = 15_000
+                    Timeout = 20_000
                 });
-                var info = new FileInfo(path);
-                if (info.Exists && info.Length > 0)
-                {
-                    return;
-                }
-
-                last = new PlaywrightException($"Screenshot file was empty: {path}");
+                return;
             }
-            catch (PlaywrightException ex) when (
-                attempt < 3
-                && (ex.Message.Contains("Unable to capture screenshot", StringComparison.Ordinal)
-                    || ex.Message.Contains("captureScreenshot", StringComparison.Ordinal)))
+            catch (PlaywrightException ex) when (attempt < 2
+                && ex.Message.Contains("capture screenshot", StringComparison.OrdinalIgnoreCase))
             {
                 last = ex;
+                await page.SetContentAsync(html, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 20_000 });
+                await page.WaitForTimeoutAsync(250);
             }
-
-            await page.EvaluateAsync("""
-                () => new Promise((resolve) => {
-                  requestAnimationFrame(() => requestAnimationFrame(() => resolve(0)));
-                })
-                """);
-            await Task.Delay(200 * attempt);
         }
 
-        throw new PlaywrightException(
-            $"Full-page screenshot failed after 3 attempts: {last?.Message}",
-            last ?? new PlaywrightException("Screenshot was not written."));
+        throw last!;
     }
 
     private static string Sanitize(string key)

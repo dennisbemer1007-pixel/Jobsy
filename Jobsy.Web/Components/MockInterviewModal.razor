@@ -33,8 +33,9 @@
             {
                 <p class="mock-interview-chat__empty">@Culture["MockInterview.Empty"]</p>
             }
-            @foreach (var msg in _messages)
+            @for (var i = 0; i < _messages.Count; i++)
             {
+                var msg = _messages[i];
                 <div class="mock-interview-bubble mock-interview-bubble--@msg.Role">
                     @if (msg.Role == "assistant")
                     {
@@ -52,6 +53,7 @@
                                 <p>@block.Text</p>
                             </div>
                         }
+                        <ReadAloudButton Text="@SpeakableCoachText(msg.Content)" SpeechKey="@($"coach-{i}")" />
                     }
                     else
                     {
@@ -260,6 +262,21 @@
         {
             _busy = false;
         }
+    }
+
+    private string SpeakableCoachText(string content)
+    {
+        var blocks = ParseCoachBlocks(content);
+        if (blocks.Count == 0)
+        {
+            return content;
+        }
+
+        return string.Join(
+            " ",
+            blocks.Select(block => string.IsNullOrWhiteSpace(block.Label)
+                ? block.Text
+                : $"{block.Label}. {block.Text}"));
     }
 
     private IReadOnlyList<CoachBlock> ParseCoachBlocks(string content)

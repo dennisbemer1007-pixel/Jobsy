@@ -30,12 +30,19 @@
 
     private bool _open;
     private bool _trapped;
+    private TaskCompletionSource _trapReady = CompletedTrap();
     private ElementReference _root;
     private ElementReference _toggle;
     private ElementReference _panel;
 
     private void Toggle()
-        => _open = !_open;
+    {
+        _open = !_open;
+        if (_open)
+        {
+            _trapReady = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+    }
 
     private void Close()
         => _open = false;
@@ -59,6 +66,10 @@
             }
             catch (Exception)
             {
+            }
+            finally
+            {
+                _trapReady.TrySetResult();
             }
         }
         else if (!_open && _trapped)
@@ -90,8 +101,17 @@
         }
 
         // jobsyDialog.trap moves focus into the panel and that focusout bubbles.
-        // Close only when focus has actually left the menu.
-        await Task.Delay(150);
+        // Wait until the trap has landed, then close only if focus really left.
+        var trapReady = _trapReady.Task;
+        try
+        {
+            await trapReady.WaitAsync(TimeSpan.FromSeconds(2));
+        }
+        catch (TimeoutException)
+        {
+        }
+
+        await Task.Delay(50);
         if (!_open)
         {
             return;
@@ -114,5 +134,12 @@
 
         _open = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private static TaskCompletionSource CompletedTrap()
+    {
+        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        ready.TrySetResult();
+        return ready;
     }
 }

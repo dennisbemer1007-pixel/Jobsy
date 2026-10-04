@@ -11,6 +11,7 @@
     {
         <div class="lobsy-coach-dock__tip" role="status">
             <p>@_tip</p>
+            <ReadAloudButton Text="@_tip" SpeechKey="@($"coach-tip-{_routeKey}")" />
             <button type="button" class="lobsy-coach-dock__close" @onclick="DismissTipAsync" aria-label="@CloseLabel">×</button>
         </div>
     }

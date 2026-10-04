@@ -41,7 +41,10 @@ else
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint)
 {
-    <p class="journey-deeper-hint">@Culture[HintKey]</p>
+    <div class="read-aloud-block">
+        <p class="journey-deeper-hint">@Culture[HintKey]</p>
+        <ReadAloudButton Text="@Culture[HintKey]" SpeechKey="@($"hint-{Step}")" />
+    </div>
 }
 
 @code {
