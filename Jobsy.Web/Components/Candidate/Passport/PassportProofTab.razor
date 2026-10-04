@@ -8,6 +8,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject CandidateProfileEditor Editor
+@inject IJSRuntime Js
 @implements IDisposable
 
 <div class="passport-proof">
@@ -210,11 +211,22 @@
 
 @if (_sheetOpen)
 {
-    <div class="filter-sheet-backdrop" @onclick="CloseEditor"></div>
-    <div class="filter-sheet passport-proof__sheet" role="dialog" aria-modal="true" aria-labelledby="passport-proof-sheet-title">
+    <div class="passport-proof__backdrop" @onclick="CloseEditor"></div>
+    <div @ref="_sheet"
+         class="passport-proof__sheet"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="passport-proof-sheet-title"
+         tabindex="-1"
+         data-testid="passport-proof-sheet"
+         @onkeydown="OnSheetKeyDown">
         <div class="filter-sheet__header">
             <h2 id="passport-proof-sheet-title">@_sheetTitle</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseEditor" aria-label="@Culture["Common.Close"]">×</button>
+            <button type="button"
+                    class="share-modal__close"
+                    data-jobsy-dialog-close
+                    @onclick="CloseEditor"
+                    aria-label="@Culture["Common.Close"]">×</button>
         </div>
         <div class="filter-sheet__body">
             <CascadingValue Value="Editor">
@@ -239,7 +251,7 @@
         </div>
         <div class="filter-sheet__footer">
             <button type="button" class="filter-sheet__cancel" @onclick="CloseEditor">@Culture["Common.Cancel"]</button>
-            <button type="button" class="filter-sheet__apply" disabled="@Editor.Saving" @onclick="SaveSheetAsync">@Culture["Common.Save"]</button>
+            <button type="button" class="filter-sheet__apply" data-testid="passport-proof-save" disabled="@Editor.Saving" @onclick="SaveSheetAsync">@Culture["Common.Save"]</button>
         </div>
     </div>
 }
@@ -253,6 +265,8 @@
     private ProofStrengthRules.StrengthView? _strength;
     private string? _hintText;
     private bool _sheetOpen;
+    private bool _trapped;
+    private ElementReference _sheet;
     private List<JobsyApiClient.ReferenceConfirmationItem> _confirmations = [];
     private string _sheetKind = "";
     private string _sheetTitle = "";
@@ -268,7 +282,37 @@
         }
     }
 
-    public void Dispose() => Editor.Changed -= OnEditorChanged;
+    public void Dispose()
+    {
+        Editor.Changed -= OnEditorChanged;
+        if (_trapped)
+        {
+            _trapped = false;
+            _ = ReleaseTrapAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_sheetOpen && !_trapped)
+        {
+            _trapped = true;
+            try
+            {
+                await _sheet.FocusAsync();
+                await Js.InvokeVoidAsync("jobsyDialog.trap", _sheet);
+            }
+            catch (Exception)
+            {
+                // JS is optional in tests; Escape still closes via OnSheetKeyDown.
+            }
+        }
+        else if (!_sheetOpen && _trapped)
+        {
+            _trapped = false;
+            await ReleaseTrapAsync();
+        }
+    }
 
     private void OnEditorChanged()
     {
@@ -368,6 +412,26 @@
     }
 
     private void CloseEditor() => _sheetOpen = false;
+
+    private void OnSheetKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            CloseEditor();
+        }
+    }
+
+    private async Task ReleaseTrapAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyDialog.release");
+        }
+        catch (Exception)
+        {
+            // JS is optional in tests.
+        }
+    }
 
     private async Task SaveSheetAsync()
     {

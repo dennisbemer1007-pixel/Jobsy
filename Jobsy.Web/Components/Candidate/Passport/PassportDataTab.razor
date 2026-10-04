@@ -170,17 +170,13 @@
                 }
                 else
                 {
-                    <ProfileSaveBar />
+                    <ProfileSaveBar ShowMessage="false" />
                 }
             }
 
-            @if (!string.IsNullOrWhiteSpace(Editor.ConsentMessage))
+            @if (StatusText is not null)
             {
-                <p class="state-message" aria-live="polite">@Editor.ConsentMessage</p>
-            }
-            else if (!string.IsNullOrWhiteSpace(Editor.Message))
-            {
-                <p class="state-message" aria-live="polite">@Editor.Message</p>
+                <p class="state-message" role="status" aria-live="polite">@StatusText</p>
             }
         </CascadingValue>
     }
@@ -218,6 +214,11 @@
 
     private IEnumerable<DataSection> VisibleSections
         => _pdfV2 ? Sections : Sections.Where(s => s.Id != "shared");
+
+    private string? StatusText =>
+        !string.IsNullOrWhiteSpace(Editor.ConsentMessage) ? Editor.ConsentMessage
+        : !string.IsNullOrWhiteSpace(Editor.Message) ? Editor.Message
+        : null;
 
     private string TestAiSubtext => Editor.TestAiConsentAt is DateTime at
         ? Culture.Format("Passport.Data.ConsentSince", at.ToLocalTime().ToString("dd-MM-yyyy"))

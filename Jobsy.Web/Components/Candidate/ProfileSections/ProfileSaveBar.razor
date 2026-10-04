@@ -8,7 +8,7 @@
                     <button class="login-submit" type="button" disabled="@Editor.Saving" @onclick="Editor.SaveAsync">
                         @Culture["Common.Save"]
                     </button>
-                    @if (!string.IsNullOrEmpty(Editor.Message))
+                    @if (ShowMessage && !string.IsNullOrEmpty(Editor.Message))
                     {
                         <p class="state-message profile-save-bar__message">@Editor.Message</p>
                     }
@@ -16,4 +16,9 @@
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    /// <summary>
+    /// The passport data tab has one status region. Hide this copy so "Profiel opgeslagen." is not shown twice.
+    /// </summary>
+    [Parameter] public bool ShowMessage { get; set; } = true;
 }
