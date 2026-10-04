@@ -18,10 +18,13 @@
 
 <div class="ll-login">
     <LeerlingScene Depth="0" />
-    <div class="ll-login__intro">
-        <LeerlingLobster PlatesShed="0" Mobile="true" Size="88" Label="Lobsy" />
-        <p class="ll-bubble">@Culture["Leerling.Login.Bubble"]</p>
-    </div>
+    @if (!_pupilSession)
+    {
+        <div class="ll-login__intro">
+            <LeerlingLobster PlatesShed="0" Mobile="true" Size="88" Label="Lobsy" />
+            <p class="ll-bubble">@Culture["Leerling.Login.Bubble"]</p>
+        </div>
+    }
 
     @if (!string.IsNullOrEmpty(_staffBlock))
     {

@@ -211,28 +211,22 @@ public static class PupilStoryTemplates
             .ToList();
     }
 
-    /// <summary>Sorted pair so CA and AC share <c>LeerlingStory.Tile.Riasec.AC</c>.</summary>
-    public static string TileRiasecKey(IReadOnlyList<char> top2)
+    /// <summary>Alphabetical pair so CS and SC share one key.</summary>
+    public static string CanonicalRiasecPair(char first, char second)
     {
-        if (top2.Count == 0)
-        {
-            return "LeerlingStory.Tile.Riasec.S";
-        }
-
-        if (top2.Count == 1)
-        {
-            return $"LeerlingStory.Tile.Riasec.{top2[0]}";
-        }
-
-        var a = top2[0];
-        var b = top2[1];
+        var a = char.ToUpperInvariant(first);
+        var b = char.ToUpperInvariant(second);
         if (a > b)
         {
             (a, b) = (b, a);
         }
 
-        return $"LeerlingStory.Tile.Riasec.{a}{b}";
+        return string.Concat(a, b);
     }
+
+    /// <summary>Sorted pair so CA and AC share <c>LeerlingStory.Tile.Riasec.AC</c>.</summary>
+    public static string TileRiasecKey(IReadOnlyList<char> top2)
+        => "LeerlingStory.Tile.Riasec." + PairSuffix(top2);
 
     /// <summary>Repairs a stored unsorted pair such as <c>LeerlingStory.Tile.Riasec.CA</c>.</summary>
     public static string NormalizeTileRiasecKey(string key)
@@ -244,34 +238,48 @@ public static class PupilStoryTemplates
         }
 
         var rest = key[prefix.Length..];
-        if (rest.Length == 2 && rest[0] > rest[1])
+        if (rest.Length == 2)
         {
-            return prefix + rest[1] + rest[0];
+            return prefix + CanonicalRiasecPair(rest[0], rest[1]);
+        }
+
+        return key;
+    }
+
+    /// <summary>Same letter order as <see cref="TileRiasecKey"/>.</summary>
+    public static string NormalizeRiasecSentenceKey(string key)
+    {
+        const string prefix = "LeerlingStory.Riasec.";
+        if (string.IsNullOrWhiteSpace(key) || !key.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return key;
+        }
+
+        var rest = key[prefix.Length..];
+        if (rest.Length == 2)
+        {
+            return prefix + CanonicalRiasecPair(rest[0], rest[1]);
         }
 
         return key;
     }
 
     private static string RiasecSentenceKey(IReadOnlyList<char> top2)
+        => "LeerlingStory.Riasec." + PairSuffix(top2);
+
+    private static string PairSuffix(IReadOnlyList<char> top2)
     {
         if (top2.Count == 0)
         {
-            return "LeerlingStory.Riasec.S";
+            return "S";
         }
 
         if (top2.Count == 1)
         {
-            return $"LeerlingStory.Riasec.{top2[0]}";
+            return top2[0].ToString();
         }
 
-        var a = top2[0];
-        var b = top2[1];
-        if (a > b)
-        {
-            (a, b) = (b, a);
-        }
-
-        return $"LeerlingStory.Riasec.{a}{b}";
+        return CanonicalRiasecPair(top2[0], top2[1]);
     }
 
     private static string TopByOrder(IReadOnlyList<string> order, Func<string, int> getter)

@@ -138,6 +138,20 @@ public class TeacherPortalUnitTests
     }
 
     [Fact]
+    public void Vo_job_ideas_use_likes_before_the_letter_pool()
+    {
+        var ideas = PupilRiasecJobIdeas.ForLetters(['R'], PupilQuestionSet.Vo, ["dieren", "natuur"]);
+        Assert.Equal(4, ideas.Count);
+        Assert.Equal("dierenverzorger", ideas[0]);
+        Assert.Contains("dierenarts", ideas);
+        Assert.Contains("bioloog", ideas);
+        Assert.Contains("hovenier", ideas);
+        Assert.DoesNotContain("timmerman", ideas);
+        Assert.DoesNotContain("automonteur", ideas);
+        Assert.DoesNotContain("elektricien", ideas);
+    }
+
+    [Fact]
     public void Last_active_uses_today_and_never_a_zero_minute_stamp()
     {
         var now = SchoolActivityTime.Format(DateTime.UtcNow);

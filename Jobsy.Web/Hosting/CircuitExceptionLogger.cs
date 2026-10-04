@@ -86,7 +86,7 @@ public sealed class CircuitExceptionLogger(
                     category = "Blazor",
                     message = ex.GetType().Name,
                     supportCode,
-                    detail = circuitId
+                    detail = PlatformErrorDetail.Format(ex, circuitId)
                 })
             };
             request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.InternalSecretHeader, secret.Trim());
