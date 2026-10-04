@@ -17,12 +17,25 @@ public static partial class EmailStrings
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> All { get; } =
         new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["nl"] = EmailStringsNl.Map,
-            ["en"] = EmailStringsEn.Map,
-            ["pl"] = EmailStringsPl.Map,
-            ["ro"] = EmailStringsRo.Map,
-            ["ar"] = EmailStringsAr.Map
+            ["nl"] = Merge(EmailStringsNl.Map, EmailStringsComeback.For("nl")),
+            ["en"] = Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")),
+            ["pl"] = Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")),
+            ["ro"] = Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")),
+            ["ar"] = Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar"))
         };
+
+    private static IReadOnlyDictionary<string, string> Merge(
+        IReadOnlyDictionary<string, string> baseMap,
+        IReadOnlyDictionary<string, string> extra)
+    {
+        var copy = new Dictionary<string, string>(baseMap, StringComparer.Ordinal);
+        foreach (var pair in extra)
+        {
+            copy[pair.Key] = pair.Value;
+        }
+
+        return copy;
+    }
 
     public static IReadOnlyCollection<string> Languages { get; } = ["nl", "en", "pl", "ro", "ar"];
 

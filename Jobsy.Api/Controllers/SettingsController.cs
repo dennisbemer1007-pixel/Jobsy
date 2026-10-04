@@ -405,7 +405,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CandidatePassportEnabled: request.CandidatePassportEnabled,
                     PassportPartnersEnabled: request.PassportPartnersEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
-                    PhoneVerificationEnabled: request.PhoneVerificationEnabled),
+                    PhoneVerificationEnabled: request.PhoneVerificationEnabled,
+                    WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -476,6 +477,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
+        Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         return list;
     }
 
@@ -495,7 +497,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             passportPdfV2Enabled = snap.PassportPdfV2Enabled,
             phoneVerificationEnabled = snap.PhoneVerificationEnabled,
             schoolsEnabled = snap.SchoolsEnabled,
-            ambassadorsEnabled = snap.AmbassadorsEnabled
+            ambassadorsEnabled = snap.AmbassadorsEnabled,
+            whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled
         });
     }
 
@@ -706,7 +709,8 @@ snap.CandidateInsightsEnabled,
             snap.CandidatePassportEnabled,
             snap.PassportPartnersEnabled,
             snap.PassportPdfV2Enabled,
-            snap.PhoneVerificationEnabled);
+            snap.PhoneVerificationEnabled,
+            snap.WhatsAppRemindersEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

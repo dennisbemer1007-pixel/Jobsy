@@ -515,6 +515,25 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<EmailPreferencesDto>(cancellationToken: ct);
     }
 
+    public async Task<WhatsAppReminderPreferenceDto?> GetReminderWhatsAppAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await GetApiJsonAsync<WhatsAppReminderPreferenceDto>("api/me/reminder-whatsapp", ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public sealed class WhatsAppReminderPreferenceDto
+    {
+        public bool Available { get; set; }
+        public bool OptedIn { get; set; }
+        public string? Phone { get; set; }
+    }
+
     public sealed record EmailPreferenceItemDto(string Key, string Label, bool Enabled);
 
     public sealed record EmailPreferencesDto(

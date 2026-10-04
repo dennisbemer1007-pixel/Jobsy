@@ -2,6 +2,7 @@ using System.Threading;
 using Jobsy.Core.Email.Localization;
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Reminders;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Email;
@@ -220,6 +221,8 @@ public static partial class TransactionalEmails
             "contentremoved" => ContentRemoved(
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.VacancyTitle, "Weggehaald",
                 "De tekst vraagt om gegevens die niet mogen.", new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),
+            "comebackreminder" => ComebackReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ComebackReminderKinds.LookAgain, c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

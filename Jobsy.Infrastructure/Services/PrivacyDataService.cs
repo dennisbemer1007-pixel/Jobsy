@@ -476,10 +476,27 @@ public sealed class PrivacyDataService : IPrivacyDataService
             l.OccurredAtUtc
         }).ToList();
 
+        var reminderPreferenceExport = await _db.CandidateReminderPreferences.AsNoTracking()
+            .Where(p => p.UserId == user.Id)
+            .Select(p => new { p.EmailOptedInAtUtc, p.WhatsAppOptedInAtUtc, p.WhatsAppPhone })
+            .FirstOrDefaultAsync(cancellationToken);
+        var reminderSends = await _db.ComebackReminderLogs.AsNoTracking()
+            .Where(l => l.UserId == user.Id)
+            .OrderBy(l => l.SentAtUtc)
+            .Select(l => new { l.Kind, l.SentAtUtc, l.Channels })
+            .ToListAsync(cancellationToken);
+
         return new
         {
             ExportedAtUtc = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
+            ComebackReminders = new
+            {
+                reminderPreferenceExport?.EmailOptedInAtUtc,
+                reminderPreferenceExport?.WhatsAppOptedInAtUtc,
+                reminderPreferenceExport?.WhatsAppPhone,
+                Sends = reminderSends
+            },
             User = new
             {
                 user.Id,
@@ -1338,6 +1355,20 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.PhoneVerifiedE164 = null;
         user.EmailVerifiedAtUtc = null;
         user.WhatsAppContactAllowed = false;
+        var reminderPreference = await _db.CandidateReminderPreferences
+            .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        if (reminderPreference is not null)
+        {
+            _db.CandidateReminderPreferences.Remove(reminderPreference);
+        }
+
+        var reminderLogs = await _db.ComebackReminderLogs
+            .Where(l => l.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var reminderLog in reminderLogs)
+        {
+            reminderLog.UserId = null;
+        }
         user.DateOfBirth = null;
         user.HomeLocation = null;
         user.PreferencesJson = null;

@@ -215,6 +215,7 @@ public sealed class PlatformFeatureItem
     public bool PassportPartnersEnabled { get; set; }
     public bool PassportPdfV2Enabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
+    public bool WhatsAppRemindersEnabled { get; set; }
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>
@@ -242,6 +243,7 @@ public sealed class PlatformFeaturePatch
     public bool? PassportPartnersEnabled { get; set; }
     public bool? PassportPdfV2Enabled { get; set; }
     public bool? PhoneVerificationEnabled { get; set; }
+    public bool? WhatsAppRemindersEnabled { get; set; }
     public string? Reason { get; set; }
 }
 

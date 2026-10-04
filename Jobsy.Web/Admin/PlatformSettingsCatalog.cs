@@ -195,6 +195,22 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("WhatsAppRemindersEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "WhatsAppRemindersEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.WhatsAppReminders.Enabled.Title",
+                DescriptionKey: "AdminSettings.WhatsAppReminders.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.WhatsAppRemindersEnabled,
+                Write: v => new PlatformFeatureUpdate(WhatsAppRemindersEnabled: ToBool(v)),
+                ImpactKey: "AdminSettings.WhatsAppReminders.Enabled.Impact",
+                ImpactLevel: PlatformSettingImpactLevel.Warn,
+                ConfirmOnChange: true,
+                ShowOnDashboard: true));
+        }
+
         // --- Vacatures ---
         list.Add(new PlatformSettingDescriptor(
             Key: "VacancyContentModerationEnabled",
@@ -432,6 +448,7 @@ public static class PlatformSettingsCatalog
         bool? passportPartnersEnabled = null;
         bool? passportPdfV2Enabled = null;
         bool? phoneVerificationEnabled = null;
+        bool? whatsAppRemindersEnabled = null;
 
         foreach (var p in parts)
         {
@@ -466,6 +483,7 @@ public static class PlatformSettingsCatalog
             if (p.PassportPartnersEnabled is not null) passportPartnersEnabled = p.PassportPartnersEnabled;
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
+            if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -490,6 +508,7 @@ public static class PlatformSettingsCatalog
             CandidatePassportEnabled: candidatePassportEnabled,
             PassportPartnersEnabled: passportPartnersEnabled,
             PassportPdfV2Enabled: passportPdfV2Enabled,
-            PhoneVerificationEnabled: phoneVerificationEnabled);
+            PhoneVerificationEnabled: phoneVerificationEnabled,
+            WhatsAppRemindersEnabled: whatsAppRemindersEnabled);
     }
 }
