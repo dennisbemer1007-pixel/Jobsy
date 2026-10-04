@@ -315,8 +315,7 @@ public class JobsyDbContext : DbContext
             entity.HasQueryFilter(v =>
                 EnforceCompanyScopeIds == null
                 || EnforceCompanyScopeIds.Contains(v.CompanyId)
-                || (v.IntermediaryCompanyId != null
-                    && EnforceCompanyScopeIds.Contains(v.IntermediaryCompanyId.Value)));
+                || EnforceCompanyScopeIds.Contains(v.IntermediaryCompanyId ?? Guid.Empty));
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();

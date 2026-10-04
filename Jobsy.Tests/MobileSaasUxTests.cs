@@ -28,7 +28,7 @@ public class MobileSaasUxTests
         Assert.Contains("href=\"/algemene-voorwaarden\"", footer);
         Assert.Contains("href=\"/gebruiksvoorwaarden\"", footer);
         Assert.Contains("href=\"/wie-zijn-wij\"", footer);
-        Assert.Contains("href=\"/westland\"", footer);
+        Assert.DoesNotContain("href=\"/westland\"", footer);
 
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
         Assert.Contains("account-menu", header);

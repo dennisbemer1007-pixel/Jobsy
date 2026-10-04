@@ -129,7 +129,9 @@ public record VacancyListItemDto(
     /// <summary>
     /// Candidate has not ticked "Beschikbaar voor werk". No match percent is calculated.
     /// </summary>
-    bool OpenForWorkRequired = false);
+    bool OpenForWorkRequired = false,
+    /// <summary>When the vacancy was taken offline. Null on older rows; do not substitute EndDate.</summary>
+    DateTime? ClosedAtUtc = null);
 
 public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
 

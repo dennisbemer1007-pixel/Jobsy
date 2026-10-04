@@ -136,15 +136,15 @@
                 {
                     <EntBulkBar SelectedCount="_selected.Count" OnClear="ClearSelection">
                         <button type="button" class="btn-compact" @onclick="() => ConfirmBulkAsync(BulkKind.Extend)">
-                            @string.Format(Culture["WgVac.Bulk.Extend"], BulkExtendCost.ToString("0.##"))
+                            @string.Format(Culture["WgVac.Bulk.Extend"], CountPhrase.Tokens(Culture, BulkExtendCost))
                         </button>
                         <button type="button" class="btn-compact" @onclick="() => ConfirmBulkAsync(BulkKind.Highlight)">
-                            @string.Format(Culture["WgVac.Bulk.Highlight"], BulkHighlightCost.ToString("0.##"))
+                            @string.Format(Culture["WgVac.Bulk.Highlight"], CountPhrase.Tokens(Culture, BulkHighlightCost))
                         </button>
                         <button type="button" class="btn-compact" @onclick="() => RunBulkAsync(BulkKind.Duplicate)">
                             @Culture["WgVac.Bulk.Duplicate"]
                         </button>
-                        <button type="button" class="btn-compact" @onclick="() => RunBulkAsync(BulkKind.Deactivate)">
+                        <button type="button" class="btn-compact" @onclick="OpenOfflineBulk">
                             @Culture["WgVac.Bulk.Deactivate"]
                         </button>
                     </EntBulkBar>
@@ -260,7 +260,7 @@
                 </EntDataTable>
 
                 <div class="wg-vac__footer">
-                    <span class="muted">@string.Format(Culture["WgVac.Pager"], Paged.Count, Filtered.Count)</span>
+                    <span class="muted">@string.Format(Culture["WgVac.Pager"], Paged.Count, CountPhrase.Vacancies(Culture, Filtered.Count))</span>
                     <EntPager Page="_page" TotalPages="@TotalPages" PageChanged="OnPageChanged" />
                 </div>
             </div>
@@ -286,6 +286,11 @@
 
 <TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
 
+<EmployerVacancyOfflineConfirm IsOpen="_offlineOpen"
+                               Busy="_busy"
+                               OnCancel="CloseOffline"
+                               OnConfirm="ConfirmOfflineAsync" />
+
 @if (_confirmOpen)
 {
     <LobsyFriendlyDialog IsOpen="true"
@@ -298,6 +303,7 @@
             <p class="state-message error">@Culture["WgVac.Confirm.AskTokens"]</p>
         }
         <div class="inline-actions">
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseConfirm">@Culture["Common.Cancel"]</button>
             @if (_confirmInsufficient && Role == EmployerRole.Bedrijfsmanager)
             {
                 <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenTopUpFromConfirm">Tokens kopen</button>
@@ -309,7 +315,6 @@
                                              Disabled="_busy"
                                              OnClick="ConfirmProceedAsync" />
             }
-            <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseConfirm">@Culture["Common.Cancel"]</button>
         </div>
     </LobsyFriendlyDialog>
 }
@@ -390,6 +395,9 @@
     private bool _contactWhatsApp;
 
     private bool _confirmOpen;
+    private bool _offlineOpen;
+    private bool _offlineBulk;
+    private Guid? _offlineVacancyId;
     private string _confirmTitle = "";
     private string _confirmBody = "";
     private bool _confirmInsufficient;
@@ -736,7 +744,7 @@
     {
         if (string.Equals(v.Status, "PendingApproval", StringComparison.OrdinalIgnoreCase))
         {
-            var tokens = VacancyManageRules.EstimatePendingTokens(v, _costs).ToString("0.##");
+            var tokens = CountPhrase.Tokens(Culture, VacancyManageRules.EstimatePendingTokens(v, _costs));
             return string.IsNullOrWhiteSpace(v.RequesterDisplayName)
                 ? string.Format(Culture["WgVac.RequestLineAnon"], tokens)
                 : string.Format(Culture["WgVac.RequestLine"], v.RequesterDisplayName, tokens);
@@ -761,7 +769,9 @@
         if (string.Equals(v.Status, "Archived", StringComparison.OrdinalIgnoreCase)
             || string.Equals(v.Status, "Fulfilled", StringComparison.OrdinalIgnoreCase))
         {
-            return string.Format(Culture["WgVac.ClosedOn"], v.EndDate.ToString("dd-MM-yyyy"));
+            return v.ClosedAtUtc is DateTime closed
+                ? string.Format(Culture["WgVac.ClosedOn"], FormatClosedDate(closed))
+                : Culture["WgVac.Closed"];
         }
 
         if (string.Equals(v.Status, "Draft", StringComparison.OrdinalIgnoreCase)
@@ -846,7 +856,7 @@
             <a class="row-actions-menu__item" role="menuitem" href="@($"/werkgever/vacatures/nieuw?from={v.Id}")">
                 @Culture["VacancyAction.Duplicate"]
             </a>
-            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => DeactivateAsync(v.Id)">
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenOffline(v.Id)">
                 @Culture["VacancyAction.Deactivate"]
             </button>
         }
@@ -1056,7 +1066,9 @@
         _confirmVacancyId = v.Id;
         _confirmTitle = Culture["WgVac.Confirm.ApproveTitle"];
         _confirmBody = string.Format(Culture["WgVac.Confirm.ApproveBody"],
-            cost.ToString("0.##"), _tokenBalance.ToString("0.##"), after.ToString("0.##"));
+            CountPhrase.Tokens(Culture, cost),
+            CountPhrase.Tokens(Culture, _tokenBalance),
+            CountPhrase.Tokens(Culture, after));
         _confirmInsufficient = after < 0;
         _confirmOpen = true;
     }
@@ -1074,7 +1086,9 @@
         _confirmVacancyId = null;
         _confirmTitle = Culture["WgVac.Confirm.BulkTitle"];
         _confirmBody = string.Format(Culture["WgVac.Confirm.BulkBody"],
-            cost.ToString("0.##"), _tokenBalance.ToString("0.##"), after.ToString("0.##"));
+            CountPhrase.Tokens(Culture, cost),
+            CountPhrase.Tokens(Culture, _tokenBalance),
+            CountPhrase.Tokens(Culture, after));
         _confirmInsufficient = cost > 0 && after < 0;
         _confirmOpen = true;
     }
@@ -1085,14 +1099,22 @@
         return Task.CompletedTask;
     }
 
-    private string TokenPhrase(decimal amount)
+    private string TokenPhrase(decimal amount) => CountPhrase.Tokens(Culture, amount);
+
+    private static string FormatClosedDate(DateTime utc)
     {
-        var text = amount == decimal.Truncate(amount)
-            ? decimal.Truncate(amount).ToString("0", CultureInfo.InvariantCulture)
-            : amount.ToString("0.##", CultureInfo.InvariantCulture);
-        return amount == 1m
-            ? Culture["Count.Token.One"]
-            : string.Format(Culture["Count.Token.Many"], text);
+        var stamp = utc.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(utc, DateTimeKind.Utc)
+            : utc.ToUniversalTime();
+        try
+        {
+            var zone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam");
+            return TimeZoneInfo.ConvertTimeFromUtc(stamp, zone).ToString("dd-MM-yyyy");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return stamp.ToString("dd-MM-yyyy");
+        }
     }
 
     private void OpenReopen(VacancyListItem vacancy)
@@ -1108,7 +1130,7 @@
         var balanceLabel = TokenPhrase(_tokenBalance);
         _confirmBody = after < 0
             ? string.Format(Culture["WgVac.Confirm.ReopenLow"], costLabel, balanceLabel)
-            : string.Format(Culture["WgVac.Confirm.Reopen"], costLabel, balanceLabel, after.ToString("0.##"));
+            : string.Format(Culture["WgVac.Confirm.Reopen"], costLabel, balanceLabel, CountPhrase.Tokens(Culture, after));
         _confirmInsufficient = after < 0;
         _confirmOpen = true;
     }
@@ -1389,6 +1411,44 @@
         catch (Exception ex)
         {
             _message = UserFacing.Describe(ex);
+        }
+    }
+
+    private void OpenOffline(Guid id)
+    {
+        _offlineBulk = false;
+        _offlineVacancyId = id;
+        _offlineOpen = true;
+    }
+
+    private void OpenOfflineBulk()
+    {
+        _offlineBulk = true;
+        _offlineVacancyId = null;
+        _offlineOpen = true;
+    }
+
+    private void CloseOffline()
+    {
+        _offlineOpen = false;
+        _offlineBulk = false;
+        _offlineVacancyId = null;
+    }
+
+    private async Task ConfirmOfflineAsync()
+    {
+        var bulk = _offlineBulk;
+        var id = _offlineVacancyId;
+        CloseOffline();
+        if (bulk)
+        {
+            await RunBulkAsync(BulkKind.Deactivate);
+            return;
+        }
+
+        if (id is Guid vacancyId)
+        {
+            await DeactivateAsync(vacancyId);
         }
     }
 

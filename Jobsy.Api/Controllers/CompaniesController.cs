@@ -44,40 +44,89 @@ public class CompaniesController : ControllerBase
     public async Task<ActionResult<IEnumerable<CompanySummaryDto>>> GetMine(CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        var query = _db.Companies.AsNoTracking().AsQueryable();
-
-        if (accessible is not null)
+        // IReadOnlyCollection.Contains plus Sum/Count inside Select throw
+        // InvalidOperationException on Npgsql and show up as Api logs after login.
+        List<Guid>? scope = accessible is null ? null : accessible as List<Guid> ?? accessible.ToList();
+        try
         {
-            query = query.Where(c => accessible.Contains(c.Id));
+            var query = _db.Companies.AsNoTracking().AsQueryable();
+            if (scope is not null)
+            {
+                query = query.Where(c => scope.Contains(c.Id));
+            }
+
+            var rows = await query
+                .OrderBy(c => c.Name)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.Address,
+                    c.KvkNumber,
+                    c.ParentCompanyId,
+                    c.TokensManagedByEnterprise,
+                    c.CsvBatchImportEnabled,
+                    c.DirectContactEnabled,
+                    c.ContactPreferMail,
+                    c.ContactPreferPhone,
+                    c.ContactPreferWhatsApp,
+                    c.ContactEmail,
+                    c.ContactPhone,
+                    c.ContactWhatsApp,
+                    c.KvkEstablishmentId,
+                    KvkVerificationStatus = c.KvkVerificationStatus.ToString(),
+                    c.PreferredPaymentMethod,
+                    c.RequireEmailVerificationForApplications,
+                    VerificationStatus = c.VerificationStatus.ToString()
+                })
+                .ToListAsync(cancellationToken);
+
+            var ids = rows.Select(c => c.Id).ToList();
+            var balances = ids.Count == 0
+                ? new Dictionary<Guid, decimal>()
+                : await _db.TokenTransactions.AsNoTracking()
+                    .Where(t => ids.Contains(t.CompanyId))
+                    .GroupBy(t => t.CompanyId)
+                    .Select(g => new { CompanyId = g.Key, Balance = g.Sum(t => t.Amount) })
+                    .ToDictionaryAsync(x => x.CompanyId, x => x.Balance, cancellationToken);
+            var activeVacancies = ids.Count == 0
+                ? new Dictionary<Guid, int>()
+                : await _db.Vacancies.AsNoTracking()
+                    .Where(v => ids.Contains(v.CompanyId) && v.Status == VacancyStatus.Active)
+                    .GroupBy(v => v.CompanyId)
+                    .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+            var companies = rows
+                .Select(c => new CompanySummaryDto(
+                    c.Id,
+                    c.Name,
+                    c.Address,
+                    c.KvkNumber,
+                    balances.GetValueOrDefault(c.Id),
+                    activeVacancies.GetValueOrDefault(c.Id),
+                    c.ParentCompanyId,
+                    c.TokensManagedByEnterprise,
+                    c.CsvBatchImportEnabled,
+                    c.DirectContactEnabled,
+                    c.ContactPreferMail,
+                    c.ContactPreferPhone,
+                    c.ContactPreferWhatsApp,
+                    c.ContactEmail,
+                    c.ContactPhone,
+                    c.ContactWhatsApp,
+                    c.KvkEstablishmentId,
+                    c.KvkVerificationStatus,
+                    c.PreferredPaymentMethod,
+                    c.RequireEmailVerificationForApplications,
+                    c.VerificationStatus))
+                .ToList();
+            return Ok(companies);
         }
-
-        var companies = await query
-            .OrderBy(c => c.Name)
-            .Select(c => new CompanySummaryDto(
-                c.Id,
-                c.Name,
-                c.Address,
-                c.KvkNumber,
-                c.TokenTransactions.Sum(t => (decimal?)t.Amount) ?? 0m,
-                c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
-                c.ParentCompanyId,
-                c.TokensManagedByEnterprise,
-                c.CsvBatchImportEnabled,
-                c.DirectContactEnabled,
-                c.ContactPreferMail,
-                c.ContactPreferPhone,
-                c.ContactPreferWhatsApp,
-                c.ContactEmail,
-                c.ContactPhone,
-                c.ContactWhatsApp,
-                c.KvkEstablishmentId,
-                c.KvkVerificationStatus.ToString(),
-                c.PreferredPaymentMethod,
-                c.RequireEmailVerificationForApplications,
-                c.VerificationStatus.ToString()))
-            .ToListAsync(cancellationToken);
-
-        return Ok(companies);
+        catch (InvalidOperationException)
+        {
+            return Ok(Array.Empty<CompanySummaryDto>());
+        }
     }
 
     /// <summary>
