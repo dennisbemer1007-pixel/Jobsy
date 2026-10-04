@@ -280,7 +280,7 @@ public static class PageHelpDocs
 
         ["/werkgever/talentpool"] = new(
             "Anonieme talentpool",
-            "Zoek kandidaten op competenties, RIASEC, reistijd, beschikbaarheid en rijbewijs — zonder leeftijdsfilter.",
+            "Zoek kandidaten op reistijd, beschikbaarheid en rijbewijs — zonder leeftijdsfilter.",
             "Profielen blijven anoniem tot je 1 token inzet. Reageert de kandidaat niet binnen 48 uur, dan kun je intrekken en het token terugkrijgen.",
             "Omgekeerd werven: gericht zoeken in de talentenpool."),
 
