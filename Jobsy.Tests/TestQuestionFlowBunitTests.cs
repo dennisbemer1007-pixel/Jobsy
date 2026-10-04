@@ -112,21 +112,21 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
             .Select(i => new TestQuestionFlow.FlowQuestion(i, $"{i}. Statement {i}"))
             .ToList();
         var answers = new Dictionary<int, int>();
-        var cut = Render<TestQuestionFlow>(parameters => parameters
+        IRenderedComponent<TestQuestionFlow>? rendered = null;
+        rendered = Render<TestQuestionFlow>(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Competence)
             .Add(p => p.Questions, questions)
             .Add(p => p.Answers, answers)
             .Add(p => p.Target, TestDepthLevel.First)
-            .Add(p => p.OnAnswer, (Action<(int Id, int Value)>)(pair => answers[pair.Id] = pair.Value)));
+            .Add(p => p.OnAnswer, (Action<(int Id, int Value)>)(pair => answers[pair.Id] = pair.Value))
+            .Add(p => p.OnChanged, () => rendered!.Find("button.test-flow__next").Click()));
 
-        cut.Find("input[type=radio][value='4']").Change(new ChangeEventArgs { Value = "4" });
-        cut.WaitForAssertion(() =>
-            Assert.False(cut.Find("button.test-flow__next").HasAttribute("disabled")));
-        cut.Find("button.test-flow__next").Click();
+        rendered.Find("input[type=radio][value='4']").Change(new ChangeEventArgs { Value = "4" });
         await Task.Delay(400);
 
-        Assert.Contains("Vraag 2 van 5", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Vraag 3 van 5", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Vraag 2 van 5", rendered.Markup, StringComparison.Ordinal);
+        Assert.Contains("Statement 2", rendered.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vraag 3 van 5", rendered.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

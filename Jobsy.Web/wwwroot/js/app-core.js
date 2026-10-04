@@ -985,6 +985,16 @@ window.jobsyPageVisible = function () {
     return typeof document === "undefined" || document.visibilityState !== "hidden";
 };
 
+window.jobsyMedia = {
+    matches: function (query) {
+        try {
+            return !!(query && window.matchMedia && window.matchMedia(query).matches);
+        } catch (e) {
+            return false;
+        }
+    }
+};
+
 window.jobsyQuestionnaire = {
     scrollToQuestion: function (id, smooth) {
         if (!id) {

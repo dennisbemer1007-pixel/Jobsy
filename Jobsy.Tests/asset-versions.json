@@ -132,8 +132,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "59b367cf52956b99cab18641e841f1aff157d1d6a39db28adb34895e112600ea",
-    "v": "20261003-shell"
+    "sha256": "65bc999a69af460e4d7917e41b3ed84ead68c5528ef9912bbbce3f079041ccf5",
+    "v": "20261004-media"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -200,11 +200,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "59f4b2415c43556c0527217e8b44ca701e82fdfd7be11ad54f260b5c9fcee3f3",
+    "sha256": "e47c8369d4617009ba9e5dc0e24b604e8444b9f725706e0edd03ab7e3f15e76e",
     "v": "20261003-shell"
   },
   "service-worker.published.js": {
-    "sha256": "1be3faccf3fcf8f840d143de0668573265237e75ad90b4863925ce7197738242",
+    "sha256": "5f494add63c2fe788574cfe87d951b2bd2e2bf4565267d47d43b9c3f1d9cdfbc",
     "v": "20261003-shell"
   }
 }
