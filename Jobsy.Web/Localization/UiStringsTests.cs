@@ -35,6 +35,9 @@ public static class UiStringsTests
         Add("DeepPay.Terms", "Voorwaarden", "Terms", "Warunki", "Condiții", "الشروط");
         Add("DeepPay.SecureMollie", "Veilig betalen via Mollie", "Secure payment via Mollie", "Bezpieczna płatność przez Mollie", "Plată sigură prin Mollie", "دفع آمن عبر Mollie");
         Add("DeepPay.StubHint", "Testbetaling: er wordt niets afgeschreven.", "Test payment: nothing will be charged.", "Test płatność: nothing will be charged.", "Test plată: nothing will be charged.", "Test دفع: nothing will be charged.");
+        Add("DeepPay.TestAccountFree", "Testaccount: gratis", "Test account: free", "Konto testowe: za darmo", "Cont de test: gratuit", "حساب تجريبي: مجاناً");
+        Add("DeepPay.TestAccountNote", "Dit testaccount opent de uitgebreide analyse zonder betaling.", "This test account opens the extended analysis without payment.", "To konto testowe otwiera rozszerzoną analizę bez płatności.", "Acest cont de test deschide analiza extinsă fără plată.", "هذا الحساب التجريبي يفتح التحليل الموسّع بدون دفع.");
+        Add("DeepPay.TestAccountCta", "Gratis openen", "Open for free", "Otwórz za darmo", "Deschide gratuit", "افتح مجاناً");
         Add("DeepPay.Err.waiver_required", "Zet eerst het vinkje.", "Tick the box first.", "Tick the box first. ·", "Tick the box first.", "‏Tick the box first.");
         Add("DeepPay.Err.already_unlocked", "Je hebt deze test al. Begin meteen.", "You already have this test. Start now.", "You already have this test. Start now. ·", "You already have this test. Începe now.", "You already have this test. ابدأ now.");
         Add("DeepPay.Err.payments_unavailable", "Betalen lukt nu even niet. Probeer het later nog eens.", "Payment is unavailable right now. Try again later.", "Payment is unavailable right now. Spróbuj ponownie later.", "Payment is unavailable right now. Încearcă din nou later.", "Payment is unavailable right now. حاول مرة أخرى later.");

@@ -320,7 +320,10 @@
                         disabled="@_busy"
                         @onclick="GoToOfferAsync">
                     <span>@Culture["Tests.ExtendedLabel"]</span>
-                    <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
+                    <span class="btn-gold__meta">@(
+                        _paymentMode == DeepTestFinanceRules.TestUnlockMethod
+                            ? Culture["DeepPay.TestAccountFree"]
+                            : Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro)))</span>
                 </button>
             }
         </div>
@@ -334,6 +337,10 @@
         else if (_paymentMode == "stub")
         {
             <p class="test-detail__secure muted">@Culture["DeepPay.StubHint"]</p>
+        }
+        else if (_paymentMode == DeepTestFinanceRules.TestUnlockMethod)
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.TestAccountNote"]</p>
         }
         else if (_paymentMode == "unavailable")
         {
