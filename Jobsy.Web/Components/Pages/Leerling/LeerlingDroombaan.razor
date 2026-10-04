@@ -6,7 +6,9 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -17,11 +19,15 @@
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
-else if (_result is null)
+else if (_sessionLost)
 {
     <section class="ll-card">
         <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
     </section>
+}
+else if (_result is null)
+{
+    <LeerlingOfflineRetry OnRetry="LoadAsync" />
 }
 else
 {
@@ -139,6 +145,7 @@ else
 
 @code {
     private bool _loading = true;
+    private bool _sessionLost;
     private PupilResultPageDto? _result;
     private DreamJobRouteStubDto? _dream;
     private string _search = "";
@@ -150,13 +157,33 @@ else
             ? $"{_dream.JobTitle}? Wauw!"
             : Culture["LeerlingDroom.Lobster.Generic"];
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
+        _loading = true;
+        _sessionLost = false;
         try
         {
-            _result = await Api.GetPupilResultAsync();
-            _dream = _result?.DreamJob;
-            if (!string.IsNullOrWhiteSpace(_result?.DreamJobKey)
+            var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilResultAsync());
+            if (outcome.SessionLost)
+            {
+                _sessionLost = true;
+                _result = null;
+                _dream = null;
+                return;
+            }
+
+            if (outcome.Value is null)
+            {
+                _result = null;
+                _dream = null;
+                return;
+            }
+
+            _result = outcome.Value;
+            _dream = _result.DreamJob;
+            if (!string.IsNullOrWhiteSpace(_result.DreamJobKey)
                 && !string.Equals(_result.DreamJobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
             {
                 var job = DreamJobCatalog.All.FirstOrDefault(j =>
@@ -166,10 +193,6 @@ else
                     _search = job.TitleNl;
                 }
             }
-        }
-        catch
-        {
-            _result = null;
         }
         finally
         {

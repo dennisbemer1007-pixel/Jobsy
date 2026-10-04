@@ -1,0 +1,15 @@
+@namespace Jobsy.Web.Components.Leerling
+@inject CultureState Culture
+
+<section class="ll-card" data-testid="leerling-offline">
+    <p class="ll-error" role="alert">@Culture["Leerling.Reis.Offline"]</p>
+    <button type="button" class="btn-secondary" disabled="@Busy" @onclick="OnRetry">
+        @Culture["Leerling.Reis.Retry"]
+    </button>
+</section>
+
+@code {
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public EventCallback OnRetry { get; set; }
+}

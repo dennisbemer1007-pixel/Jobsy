@@ -114,7 +114,7 @@ public static class UiStringsScholen
 
         nl["School.Status.NotStarted"] = "Nog niet gestart";
         nl["School.Status.LoggedIn"] = "Ingelogd";
-        nl["School.Status.InProgress"] = "Bezig {0}/{1}";
+        nl["School.Status.InProgress"] = "Bezig";
         nl["School.Status.Completed"] = "Afgerond";
 
         nl["School.Parents.Title"] = "Ouders informeren";
@@ -588,6 +588,36 @@ public static class UiStringsScholen
         nl["AdminScholen.Delete.Help"] = "Maakt anonieme totalen, verwijdert alle klassen/codes/resultaten en staff-accounts, en deactiveert de school. Typ de schoolnaam ter bevestiging.";
         nl["AdminScholen.Delete.Confirm"] = "Schoolnaam";
         nl["AdminScholen.Delete.Action"] = "School verwijderen";
+    }
+
+    /// <summary>Pupil-tile words for value and culture codes, in every language.</summary>
+    public static void MergeDimensions(
+        Dictionary<string, string> nl,
+        Dictionary<string, string> en,
+        Dictionary<string, string> pl,
+        Dictionary<string, string> ro,
+        Dictionary<string, string> ar)
+    {
+        void Add(string key, string nlText, string enText, string plText, string roText, string arText)
+        {
+            nl[key] = nlText;
+            en[key] = enText;
+            pl[key] = plText;
+            ro[key] = roText;
+            ar[key] = arText;
+        }
+
+        Add("School.Dim.Val.Autonomy", "Zelf kiezen", "Choose for yourself", "Sam wybierasz", "Alegi singur", "تختار بنفسك");
+        Add("School.Dim.Val.Connection", "Anderen helpen", "Help others", "Pomagasz innym", "Ajuți pe alții", "تساعد الآخرين");
+        Add("School.Dim.Val.Achievement", "Iets goed afmaken", "Finish something well", "Dobrze coś kończysz", "Termini ceva bine", "تنهي شيئاً جيداً");
+        Add("School.Dim.Val.Stability", "Rust en duidelijkheid", "Calm and clear", "Spokój i jasność", "Liniște și claritate", "هدوء ووضوح");
+        Add("School.Dim.Val.Impact", "Verschil maken", "Make a difference", "Robisz różnicę", "Faci o diferență", "تصنع فرقاً");
+        Add("School.Dim.Cult.Autonomy", "Zelfstandig en vrij", "Free to choose", "Sam i swobodnie", "Liber să alegi", "حر في الاختيار");
+        Add("School.Dim.Cult.Informal", "Informeel en open", "Informal and open", "Swobodnie i otwarcie", "Liber și deschis", "غير رسمي ومنفتح");
+        Add("School.Dim.Cult.Collaboration", "Samen in een team", "Together in a team", "Razem w zespole", "Împreună în echipă", "معاً في فريق");
+        Add("School.Dim.Cult.Flexibility", "Flexibel en soepel", "Plans can change", "Elastycznie", "Planuri se pot schimba", "خطط يمكن أن تتغير");
+        Add("School.Dim.Cult.Innovation", "Ruimte voor ideeën", "Room for new ideas", "Miejsce na pomysły", "Loc pentru idei", "مساحة للأفكار");
+        Add("School.Dim.Cult.PeopleFirst", "Klein groepje, rustig", "Small group, calm", "Mała grupa, spokojnie", "Grup mic, liniștit", "مجموعة صغيرة وهادئة");
     }
 
     /// <summary>True when the key belongs to the Dutch-only Scholen modules (D12).</summary>

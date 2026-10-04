@@ -216,6 +216,10 @@ public class PlatformErrorLogOn5xxTests
         Assert.StartsWith("LB-", entry.SupportCode, StringComparison.Ordinal);
         Assert.Contains("secret boom", entry.Detail, StringComparison.Ordinal);
         Assert.Contains("/api/boom", entry.Detail, StringComparison.Ordinal);
+        var lines = entry.Detail!.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        Assert.Contains(lines, line => line.Contains("secret boom", StringComparison.Ordinal));
+        Assert.Contains(lines, line => line.StartsWith("at ", StringComparison.Ordinal));
+        Assert.Contains(lines, line => line.Contains("/api/boom", StringComparison.Ordinal));
         context.Response.Body.Position = 0;
         using var doc = await JsonDocument.ParseAsync(context.Response.Body);
         Assert.Equal(entry.SupportCode, doc.RootElement.GetProperty("supportCode").GetString());
