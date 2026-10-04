@@ -75,7 +75,7 @@ internal static class UiStringsValues
         ["ProfileHub.ValuesScience"] = "Gebaseerd op het Schwartz Value Model",
 
         ["Deep.ValuesTitle"] = "Waarden & drijfveren (diepteanalyse)",
-        ["Deep.ValuesLead"] = "Honderdvijftig stellingen over competenties, interesses, cultuurfit en drijfveren. Pauzeren mag — je hervat later waar je was.",
+        ["Deep.ValuesLead"] = "Honderdvijftig stellingen over hoe je werkt, wat je leuk vindt, de sfeer op het werk en wat jou drijft. Pauzeren mag — je hervat later waar je was.",
 
         ["Kompas.TabValues"] = "Waarden",
         ["Kompas.ValuesLead"] = "Wat jij belangrijk vindt op werk: eigen regie, verbinding, prestatie, zekerheid en impact.",

@@ -76,9 +76,53 @@ public class CandidateInsightsLockedJsonTests : IClassFixture<CandidateInsightsU
             $"api/employer/candidate-insights?branchId={_factory.BranchId}&radiusKm=20&period=90");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
-        Assert.True(doc.RootElement.GetProperty("scope").GetProperty("isFullAccess").GetBoolean());
-        Assert.Empty(doc.RootElement.GetProperty("lockedSections").EnumerateArray());
-        Assert.NotEqual(JsonValueKind.Null, doc.RootElement.GetProperty("kpis").GetProperty("matchingYourVacancies").ValueKind);
+        var root = doc.RootElement;
+        Assert.True(root.GetProperty("scope").GetProperty("isFullAccess").GetBoolean());
+        Assert.Empty(root.GetProperty("lockedSections").EnumerateArray());
+        AssertScoreFieldsAbsent(root);
+    }
+
+    [Fact]
+    public async Task Unlocked_json_omits_scores_ranks_and_ai_fields()
+    {
+        await _factory.SeedCompanyUnlockAsync();
+        using var client = Authed(_factory.EnterpriseUserId);
+        using var response = await client.GetAsync(
+            $"api/employer/candidate-insights?branchId={_factory.BranchId}&radiusKm=20&period=90");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        AssertScoreFieldsAbsent(doc.RootElement);
+
+        using var csv = await client.GetAsync(
+            $"api/employer/candidate-insights/export.csv?branchId={_factory.BranchId}&radiusKm=20&period=90");
+        Assert.Equal(HttpStatusCode.OK, csv.StatusCode);
+        var csvBody = await csv.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("dna,", csvBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("competences,", csvBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("personality,", csvBody, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AssertScoreFieldsAbsent(JsonElement root)
+    {
+        Assert.False(root.TryGetProperty("dnaRiasec", out _));
+        Assert.False(root.TryGetProperty("competences", out _));
+        Assert.False(root.TryGetProperty("personality", out _));
+        Assert.False(root.GetProperty("kpis").TryGetProperty("matchingYourVacancies", out _));
+        if (!root.TryGetProperty("vacancies", out var vacancies))
+        {
+            return;
+        }
+
+        foreach (var vacancy in vacancies.EnumerateArray())
+        {
+            if (!vacancy.TryGetProperty("matchingCandidates", out var match))
+            {
+                continue;
+            }
+
+            Assert.False(match.TryGetProperty("value", out var value) && value.ValueKind == JsonValueKind.Number);
+        }
     }
 
     private HttpClient Authed(Guid userId)

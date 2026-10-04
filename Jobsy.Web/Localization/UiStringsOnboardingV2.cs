@@ -97,7 +97,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Consent.Private"] = english ? "Employers cannot see your answers." : "Werkgevers zien je antwoorden niet.";
         map["Onboarding.Consent.Cta"] = english ? "Start the first test" : "Start de eerste test"; map["Onboarding.Consent.Failed"] = english ? "Consent could not be saved. Please try again." : "Toestemming opslaan lukt niet. Probeer het opnieuw.";
         map["Onboarding.Test.Lead"] = english ? "How well does each sentence fit you?" : "Hoe goed past elke zin bij jou?";
-        map["Onboarding.Test.Competency"] = english ? "How you work" : "Hoe je werkt"; map["Onboarding.Test.Competency.Lead"] = english ? "Competencies such as collaborating" : "Competenties, zoals samenwerken";
+        map["Onboarding.Test.Competency"] = english ? "How you work" : "Hoe je werkt"; map["Onboarding.Test.Competency.Lead"] = english ? "Competencies such as collaborating" : "Bijvoorbeeld samenwerken";
         map["Onboarding.Test.Career"] = english ? "Fun" : "Leuk"; map["Onboarding.Test.Career.Lead"] = english ? "Careers that fit you" : "Beroepen die bij je passen";
         map["Onboarding.Test.Culture"] = english ? "Atmosphere" : "Sfeer"; map["Onboarding.Test.Culture.Lead"] = english ? "Work culture" : "Waar je je thuis voelt";
         map["Onboarding.Test.Values"] = english ? "Values" : "Waarden"; map["Onboarding.Test.Values.Lead"] = english ? "What matters to you" : "Wat je belangrijk vindt";

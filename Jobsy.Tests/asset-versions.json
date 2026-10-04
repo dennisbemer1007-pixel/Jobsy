@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "3bac1d06ee9aa93098349a58bd7e5b133ce27d25c2e93659d3c6b626697c2f10",
-    "v": "20261004-readaloud2"
+    "sha256": "7371e05c95a662edb1fdf2f850a42b861804683f5f129df2504c6451d19ac7a5",
+    "v": "20261004-readaloud3"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "5929e4a3aea0905c8fbee87c2ab9fdbc4d25ac34f6d6b3f3310cf5c19cdcfe1b",
-    "v": "20261004-readaloud2"
+    "sha256": "3540c8cf234c2cc214307c75cad9e0e5abfb84493dbc293ebc2166a9b308003e",
+    "v": "20261004-readaloud3"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -212,11 +212,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "7010123f10f9c3cff5cb7c3ceacd0cd92eec28dbd8eb1e08868287c7ae8cdc8c",
-    "v": "20261004-readaloud2"
+    "sha256": "5ef6350307c0fa3709edfc4ac6014391a3ac05cbdde0db1f4c0f3ee3422f46c3",
+    "v": "20261004-readaloud3"
   },
   "service-worker.published.js": {
-    "sha256": "fe4d9a864e430bd53fd6824c76072397882ae0c0c8265eaa04218101aa1c921a",
-    "v": "20261004-readaloud2"
+    "sha256": "2ab003cd73fbf1e6cd8ec8fec67692fc8d12347c35fb77ddec39b223659a616c",
+    "v": "20261004-readaloud3"
   }
 }

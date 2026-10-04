@@ -3482,6 +3482,8 @@ public static class UiStrings
         UiStringsPublicInfo.MergeAll(nl, en, pl, ro, ar);
         UiStringsReadAloud.MergeAll(nl, en, pl, ro, ar);
         UiStringsReferee.MergeAll(nl, en, pl, ro, ar);
+        // Wave 1: last merge wins, so pl/ro/ar overlays replace English copies.
+        UiStringsGolf1.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
