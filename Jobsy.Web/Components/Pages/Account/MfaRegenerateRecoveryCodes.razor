@@ -23,7 +23,7 @@
             <h1 class="au-title">@Culture["Mfa.RegenerateTitle"]</h1>
             <p class="au-lead">@Culture["Mfa.RegenerateLead"]</p>
 
-            <LoginStatusBlock State="_loginState" UntilLocalHhMm="_untilLocal" />
+            <LoginStatusBlock State="_loginState" UntilLocalHhMm="@_untilLocal" />
 
             <form method="post" action="/account/mfa/herstelcodes-vernieuwen" class="au-form" data-enhance="false" novalidate>
                 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />

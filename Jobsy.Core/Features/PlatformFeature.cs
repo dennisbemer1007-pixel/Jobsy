@@ -16,5 +16,8 @@ public enum PlatformFeature
     PassportPdfV2,
 
     /// <summary>School, teacher and pupil surfaces. Default false until enabled in platform settings.</summary>
-    Schools
+    Schools,
+
+    /// <summary>Ambassador programme. Default false. Sales-manager admin stays a separate surface.</summary>
+    Ambassadors
 }

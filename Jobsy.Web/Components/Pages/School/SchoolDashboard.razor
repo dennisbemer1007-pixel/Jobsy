@@ -10,6 +10,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IFeatureFlags Features
+@inject ILogger<SchoolDashboard> Log
 
 <PageTitle>@Culture["School.DashboardTitle"] · Lobsy</PageTitle>
 
@@ -154,7 +155,8 @@ else if (_dash is not null)
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            Log.LogWarning(ex, "School dashboard failed to load");
+            _error = Culture["School.LoadFailed"];
         }
         finally
         {

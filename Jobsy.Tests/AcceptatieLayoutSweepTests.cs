@@ -171,19 +171,41 @@ public class LeraarDashboardBunitTests : BunitContext
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
         Services.AddAuthorizationCore();
         this.AddAuthorization().SetAuthorized("leraar").SetRoles("Teacher");
-        Services.AddSingleton(new JobsyApiClient(new HttpClient
-        {
-            BaseAddress = new Uri("http://127.0.0.1:9"),
-            Timeout = TimeSpan.FromSeconds(2)
-        }));
     }
 
     [Fact]
     public void Schools_on_renders_the_empty_class_state()
     {
+        Services.AddSingleton(new JobsyApiClient(new HttpClient(new EmptyClassesHandler())
+        {
+            BaseAddress = new Uri("http://jobsy.test/")
+        }));
         var cut = Render<LeraarDashboard>();
         cut.WaitForAssertion(() =>
             Assert.Contains("Je hebt nog geen klas", cut.Markup, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Schools_on_shows_a_load_error_when_the_class_list_fails()
+    {
+        Services.AddSingleton(new JobsyApiClient(new HttpClient
+        {
+            BaseAddress = new Uri("http://127.0.0.1:9"),
+            Timeout = TimeSpan.FromSeconds(2)
+        }));
+        var cut = Render<LeraarDashboard>();
+        cut.WaitForAssertion(() =>
+            Assert.Contains("De klasgegevens konden niet geladen worden", cut.Markup, StringComparison.Ordinal));
+    }
+
+    private sealed class EmptyClassesHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", System.Text.Encoding.UTF8, "application/json")
+            });
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

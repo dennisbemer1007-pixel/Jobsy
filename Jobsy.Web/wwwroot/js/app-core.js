@@ -1132,8 +1132,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261003-shell"
-            : "/service-worker.js?v=20261003-shell";
+            ? "/service-worker.published.js?v=20261004-merge"
+            : "/service-worker.js?v=20261004-merge";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1255,6 +1255,19 @@ window.lobsyPwaInstall = (function () {
     if (event.key !== "Escape") return;
     if (!document.documentElement.hasAttribute("data-header-menu")) return;
     setOpen(null);
+  });
+
+  document.addEventListener("click", function (event) {
+    document.querySelectorAll("details.pub-lang[open], details.pub-menu[open]").forEach(function (el) {
+      if (!el.contains(event.target)) el.removeAttribute("open");
+    });
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll("details.pub-lang[open], details.pub-menu[open]").forEach(function (el) {
+      el.removeAttribute("open");
+    });
   });
 
   document.addEventListener("focusout", function (event) {

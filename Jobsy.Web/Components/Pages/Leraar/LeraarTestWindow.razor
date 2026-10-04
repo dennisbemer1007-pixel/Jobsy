@@ -10,6 +10,8 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IFeatureFlags Features
+@inject ILogger<LeraarTestWindow> Log
+@using Jobsy.Web.Scholen
 
 <PageTitle>@Culture["School.TestWindow.Title"] · Lobsy</PageTitle>
 
@@ -20,6 +22,10 @@
 else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_loadError))
+{
+    <p class="state-message error">@_loadError</p>
 }
 else if (_overview is null)
 {
@@ -65,7 +71,7 @@ else
                   State="@(_overview?.TestWindow ?? TestWindowState.NotOpen)"
                   ClosesOn="_overview?.TestWindowClosesOn"
                   Busy="_busy"
-                  Error="_windowError"
+                  Error="@_windowError"
                   OnAction="OnWindowAction" />
 
 @code {
@@ -73,6 +79,7 @@ else
 
     private bool _disabled;
     private bool _loading = true;
+    private string? _loadError;
     private bool _busy;
     private bool _windowOpen;
     private string? _windowError;
@@ -109,8 +116,16 @@ else
     private async Task Reload()
     {
         _loading = true;
-        try { _overview = await Api.GetTeacherOverviewAsync(ClassId); }
-        catch { _overview = null; }
+        try { _overview = await Api.GetTeacherOverviewAsync(ClassId); _loadError = null; }
+        catch (Exception ex)
+        {
+            _overview = null;
+            _loadError = PortalLoad.IsNotFound(ex) ? null : Culture["Leraar.LoadFailed"];
+            if (_loadError is not null)
+            {
+                Log.LogWarning(ex, "Teacher test window failed for {ClassId}", ClassId);
+            }
+        }
         finally { _loading = false; }
     }
 

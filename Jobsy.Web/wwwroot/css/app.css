@@ -19680,3 +19680,17 @@ html[data-header-menu="language"] .language-selector > .language-selector__menu,
 html[data-header-menu="account"] .account-menu > .account-menu__panel {
     display: block;
 }
+
+/* Desktop keeps the header nav. The fixed bottom bar is for narrow viewports. */
+@media (min-width: 1024px) {
+    .bottom-nav {
+        display: none;
+    }
+
+    .app-shell.has-bottom-nav .app-main,
+    .app-shell:has(.bottom-nav) .app-main,
+    .app-shell.has-bottom-nav .app-footer,
+    .app-shell:has(.bottom-nav) .app-footer {
+        padding-bottom: 0;
+    }
+}

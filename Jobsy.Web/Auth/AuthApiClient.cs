@@ -137,6 +137,12 @@ public sealed class AuthApiClient
             return LocalLoginOutcome.Fail(LocalLoginFailureKind.AmbassadorsPaused);
         }
 
+        if (response.StatusCode == HttpStatusCode.Unauthorized
+            && string.Equals(code, "schools_paused", StringComparison.OrdinalIgnoreCase))
+        {
+            return LocalLoginOutcome.Fail(LocalLoginFailureKind.SchoolsPaused);
+        }
+
         if ((int)response.StatusCode >= 500 || response.StatusCode == HttpStatusCode.Unauthorized)
         {
             // Unknown 401 shape or 5xx → unavailable (never map lockout/429 as invalid).
@@ -255,7 +261,8 @@ public enum LocalLoginFailureKind
     Locked,
     TooMany,
     Unavailable,
-    AmbassadorsPaused
+    AmbassadorsPaused,
+    SchoolsPaused
 }
 
 public sealed class LocalLoginOutcome

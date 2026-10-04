@@ -8,12 +8,18 @@
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
 @inject IFeatureFlags Features
+@inject ILogger<LeraarMaterials> Log
+@using Jobsy.Web.Scholen
 
 <PageTitle>@Culture["Leraar.Material.Title"] · Lobsy</PageTitle>
 
 @if (_disabled)
 {
     <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
+}
+else if (!string.IsNullOrEmpty(_loadError))
+{
+    <p class="state-message error">@_loadError</p>
 }
 else if (_notFound)
 {
@@ -59,6 +65,7 @@ else
 
     private bool _disabled;
     private bool _notFound;
+    private string? _loadError;
     private bool _busy;
     private string? _error;
 
@@ -76,9 +83,17 @@ else
             var overview = await Api.GetTeacherOverviewAsync(ClassId);
             _notFound = overview is null;
         }
-        catch
+        catch (Exception ex)
         {
-            _notFound = true;
+            if (PortalLoad.IsNotFound(ex))
+            {
+                _notFound = true;
+            }
+            else
+            {
+                _loadError = Culture["Leraar.LoadFailed"];
+                Log.LogWarning(ex, "Teacher materials failed for {ClassId}", ClassId);
+            }
         }
     }
 

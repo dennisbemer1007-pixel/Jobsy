@@ -120,7 +120,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     private static void ApplyPupilCookie(HttpRequestMessage request, HttpContext? httpContext)
     {
         var path = request.RequestUri?.AbsolutePath ?? "";
-        if (!path.Contains("/api/pupil", StringComparison.OrdinalIgnoreCase))
+        if (!ForwardsPupilCookie(path))
         {
             return;
         }
@@ -143,6 +143,15 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             request.Headers.TryAddWithoutValidation("Cookie", $"{PupilAuthDefaults.CookieName}={cookie}");
         }
     }
+
+    /// <summary>
+    /// Pupil progress lives under <c>/api/pupil</c>. The story PDF is
+    /// <c>GET /leerling/pdf</c> on the API (not under <c>/api/pupil</c>), so the
+    /// web proxy must forward the pupil cookie there too.
+    /// </summary>
+    internal static bool ForwardsPupilCookie(string absolutePath)
+        => absolutePath.Contains("/api/pupil", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/leerling/", StringComparison.OrdinalIgnoreCase);
 
     private void ApplyAccessToken(HttpRequestMessage request, ClaimsPrincipal user, HttpContext? httpContext)
     {

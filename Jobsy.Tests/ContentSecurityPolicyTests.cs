@@ -82,7 +82,7 @@ public class ContentSecurityPolicyTests
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("css/critical.css?v=", app);
-        Assert.DoesNotContain("<style", app);
+        Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("<script nonce=\"@Nonce\">", app);
         Assert.Contains("nonce=\"@Nonce\" defer", app);
         Assert.Contains("data-app-css", app);

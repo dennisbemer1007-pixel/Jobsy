@@ -72,6 +72,7 @@ De Blueprint zet `JobsyAuth__AllowDevelopmentAuth=false` op **alle** services (P
 - OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret`.
 - Production custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
 - Acceptatie gebruikt `acceptatie.lobsy.nl` / het `onrender.com`-subdomein (geen apex `lobsy.nl` in CORS).
+- De admin-badge (Lokaal / Acceptatie / Productie) leest op de **web**-service `Lobsy__DeploymentEnvironment` (`Acceptatie` of `Production`). `PublicWebBaseUrl` staat op de API; zonder die web-variabele viel de badge terug op Lokaal. Optioneel blijft `Deployment__Label` een override.
 
 - `JobsyAuth__DevelopmentAuthSecret` wordt per environment gegenereerd op de API en gedeeld met de web-service van **diezelfde** environment.
 - `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens.

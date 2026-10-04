@@ -38,7 +38,7 @@
     {
         <MetricsCategoryBoard Metrics="_metrics"
                               Loading="@(_loading && _metrics.Count == 0)"
-                              SelectedKey="_selectedKey"
+                              SelectedKey="@_selectedKey"
                               ValueFormatter="FormatValue"
                               ShowVacancyPerformance="true"
                               VacancyPerformance="_vacancyBoard"

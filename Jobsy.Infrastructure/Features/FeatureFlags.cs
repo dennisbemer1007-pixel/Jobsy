@@ -46,7 +46,9 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.CandidatePassportEnabled,
                 snap.PassportPartnersEnabled,
                 snap.PassportPdfV2Enabled,
-                snap.PhoneVerificationEnabled);
+                snap.PhoneVerificationEnabled,
+                snap.SchoolsEnabled,
+                snap.AmbassadorsEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

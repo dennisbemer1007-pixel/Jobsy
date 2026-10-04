@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "656bf6644af3669bd92209cc45172d66800293c796c6c2b15e7485f900f684d1",
-    "v": "20261004-assistant"
+    "sha256": "38dfb754da54abe203f45adfaab3e2f733ce8ac7aecefe1ab36b64d3d775c529",
+    "v": "20261004-merge"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -12,8 +12,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "7a3203e1f3f4ccc548787e4ba51059ab76aace6ce98e4430fdeadb1a566d0e72",
-    "v": "20261003-adminfit"
+    "sha256": "b415429cc2bc52220920f949f372d812b8dfe0c8e9f7e7b41edf6070d86ed985",
+    "v": "20261003-portal"
   },
   "css/features/applications.css": {
     "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
@@ -100,8 +100,8 @@
     "v": "20260930-sales9"
   },
   "css/features/scholen.css": {
-    "sha256": "ec71002e1ebc7964c5fc79cbac48b741e2192b96abebe9dc186f0efff777a1c5",
-    "v": "20261003-vragensets5b"
+    "sha256": "ab9abef0b748bb8ac231cb94aee88fac0b0d19654237932316e6a7efe2c314be",
+    "v": "20261003-portal"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "65bc999a69af460e4d7917e41b3ed84ead68c5528ef9912bbbce3f079041ccf5",
-    "v": "20261004-media"
+    "sha256": "6e85733609b22becd4ea0070d746ba91567f72abd2b79bcaac0e17ec994fc633",
+    "v": "20261004-core"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -184,8 +184,8 @@
     "v": "20260930-landing-5"
   },
   "js/lobsyPush.js": {
-    "sha256": "2fa7a7d1804d9d4f227bba333866625e21779938530fa34f65cacd60d76a2d3e",
-    "v": "20261003-shell"
+    "sha256": "d983337c9107b477e74b38a086a8a344e292fa21d1a681cf175e04defdf03e5b",
+    "v": "20261004-merge"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -204,11 +204,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "5d33ca7ca057247e2b5f7180761a77970b68580bff61edc13042f074070725dc",
-    "v": "20261003-shell"
+    "sha256": "ad483205f293dbc50bca607d53be37ce726e9e4669a1ecde8e878b328282a7ab",
+    "v": "20261004-merge"
   },
   "service-worker.published.js": {
-    "sha256": "da6e99ab85c9fe1c94a5cb14f7248c2d07aa27ad644ae1914655af5b5cd1f651",
-    "v": "20261003-shell"
+    "sha256": "295a391b2caf6cfbe1cd5adc3d7da2f05af4feb026c874941b572302e479f7f6",
+    "v": "20261004-merge"
   }
 }

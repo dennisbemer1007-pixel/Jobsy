@@ -25,12 +25,31 @@ public sealed partial class JobsyApiClient : IAsyncDisposable
 
     private static readonly JsonSerializerOptions EnumJson = CreateEnumJson();
 
+    /// <summary>
+    /// One serializer for every API JSON call on this client. The API writes enums as
+    /// strings (<c>JsonStringEnumConverter</c>); reading them with the framework default
+    /// options throws and takes the school, teacher and pupil portals down.
+    /// </summary>
+    internal static JsonSerializerOptions ApiJson => EnumJson;
+
     private static JsonSerializerOptions CreateEnumJson()
     {
         var options = new JsonSerializerOptions(CaseInsensitiveJson);
         options.Converters.Add(new JsonStringEnumConverter());
         return options;
     }
+
+    private Task<T?> GetApiJsonAsync<T>(string requestUri, CancellationToken ct)
+        => _http.GetFromJsonAsync<T>(requestUri, ApiJson, ct);
+
+    private Task<HttpResponseMessage> PostApiJsonAsync<TValue>(string requestUri, TValue value, CancellationToken ct)
+        => _http.PostAsJsonAsync(requestUri, value, ApiJson, ct);
+
+    private Task<HttpResponseMessage> PutApiJsonAsync<TValue>(string requestUri, TValue value, CancellationToken ct)
+        => _http.PutAsJsonAsync(requestUri, value, ApiJson, ct);
+
+    private static Task<T?> ReadApiJsonAsync<T>(HttpContent content, CancellationToken ct)
+        => content.ReadFromJsonAsync<T>(ApiJson, ct);
 
     private readonly HttpClient _http;
     private readonly MeGetCache? _meCache;

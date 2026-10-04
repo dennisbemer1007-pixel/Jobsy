@@ -43,7 +43,7 @@
         {
             <WgOrgTree @ref="_tree"
                        Roots="_roots"
-                       SelectedKey="_selectedKey"
+                       SelectedKey="@_selectedKey"
                        SelectedKeyChanged="OnNodeSelected"
                        CanManage="CanManage"
                        ShowAddRegion="ShowAddRegion"
@@ -114,7 +114,7 @@
                     OpenChanged="OnInviteOpenChanged"
                     Companies="_companies"
                     Regions="_regions"
-                    PrefillInvite="_invitePrefill"
+                    PrefillInvite="@_invitePrefill"
                     OnInvited="OnInvited" />
 }
 

@@ -28,7 +28,7 @@
         }
         else
         {
-            <EntFilterBar Query="_search" QueryChanged="OnSearch" Placeholder="@Culture["WgTeam.Search"]">
+            <EntFilterBar Query="@_search" QueryChanged="OnSearch" Placeholder="@Culture["WgTeam.Search"]">
                 <Chips>
                     <label class="ent-filter-bar__select">
                         <span class="visually-hidden">@Culture["WgTeam.Col.Role"]</span>
@@ -94,7 +94,7 @@
                 OpenChanged="OnInviteOpenChanged"
                 Companies="_companies"
                 Regions="_regions"
-                PrefillInvite="_invitePrefill"
+                PrefillInvite="@_invitePrefill"
                 OnInvited="OnInvited" />
 
 @if (_editing is not null)

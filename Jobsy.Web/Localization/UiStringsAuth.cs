@@ -167,6 +167,12 @@ public static class UiStringsAuth
             "Zbyt wiele prób z tego urządzenia. Spróbuj ponownie o {0}.",
             "Prea multe încercări de pe acest dispozitiv. Încearcă din nou la {0}.",
             "محاولات كثيرة من هذا الجهاز. حاول مجددًا الساعة {0}.");
+        Add("Login.ErrorTooManyFallback",
+            "Te veel pogingen vanaf dit apparaat. Probeer het over een kwartier opnieuw.",
+            "Too many attempts from this device. Please try again in about fifteen minutes.",
+            "Zbyt wiele prób z tego urządzenia. Spróbuj ponownie za około kwadrans.",
+            "Prea multe încercări de pe acest dispozitiv. Încearcă din nou peste aproximativ cincisprezece minute.",
+            "محاولات كثيرة من هذا الجهاز. حاول مرة أخرى بعد حوالي ربع ساعة.");
         Add("Login.RememberDeviceHint",
             "Niet aanvinken op een gedeelde computer.",
             "Do not tick this on a shared computer.",

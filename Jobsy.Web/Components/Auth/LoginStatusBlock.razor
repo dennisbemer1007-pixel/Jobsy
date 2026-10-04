@@ -39,10 +39,10 @@
                 "danger", "alert", "Login.ErrorInvalidTitle", Culture["Login.ErrorInvalid"], "⚠️"),
             LoginState.Locked => (
                 "sun", "status", "Login.PauseTitle",
-                FormatPause(Culture["Login.ErrorLocked"]), "⏸️"),
+                FormatPause(Culture["Login.ErrorLocked"], Culture["Login.ErrorLockedFallback"]), "⏸️"),
             LoginState.TooMany => (
                 "sun", "status", null,
-                FormatPause(Culture["Login.ErrorTooMany"]), "⏳"),
+                FormatPause(Culture["Login.ErrorTooMany"], Culture["Login.ErrorTooManyFallback"]), "⏳"),
             LoginState.Unavailable => (
                 "sky", "status", null, Culture["Login.ErrorUnavailable"], "ℹ️"),
             LoginState.SessionExpired => (
@@ -67,11 +67,13 @@
                 "sky", "status", null, Culture["Login.ErrorProvider"], "ℹ️"),
             LoginState.AmbassadorsPaused => (
                 "sun", "status", null, Culture["Sales.Ambassadors.ParkedLogin"], "ℹ️"),
+            LoginState.SchoolsPaused => (
+                "sun", "status", null, Culture["Login.SchoolsPaused"], "ℹ️"),
             _ => (
                 "sky", "status", null, Culture["Login.ErrorGeneric"], "ℹ️")
         };
 
-    private string FormatPause(string template)
+    private string FormatPause(string template, string fallback)
     {
         if (!string.IsNullOrWhiteSpace(UntilLocalHhMm))
         {
@@ -81,6 +83,6 @@
                 UntilLocalHhMm);
         }
 
-        return Culture["Login.ErrorLockedFallback"];
+        return fallback;
     }
 }

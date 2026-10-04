@@ -53,7 +53,7 @@
             <h1 class="au-title">@Culture["Mfa.SetupTitle"]</h1>
             <p class="au-lead">@Culture["Mfa.SetupLead"]</p>
 
-            <LoginStatusBlock State="_loginState" UntilLocalHhMm="_untilLocal" />
+            <LoginStatusBlock State="_loginState" UntilLocalHhMm="@_untilLocal" />
 
             @if (!string.IsNullOrWhiteSpace(_qrSvgDataUri) && !string.IsNullOrWhiteSpace(_provisioningUri))
             {

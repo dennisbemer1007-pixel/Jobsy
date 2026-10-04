@@ -6,7 +6,9 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IFeatureFlags Features
+@inject ILogger<LeraarDashboard> Log
 @using Jobsy.Core.Scholen
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 
 <PageTitle>@Culture["Leraar.DashboardTitle"] · Lobsy</PageTitle>
@@ -18,6 +20,10 @@
 else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_loadFailed)
+{
+    <p class="state-message error">@Culture["Leraar.LoadFailed"]</p>
 }
 else if (_empty)
 {
@@ -33,6 +39,7 @@ else if (_empty)
     private bool _disabled;
     private bool _loading = true;
     private bool _empty;
+    private bool _loadFailed;
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,10 +63,12 @@ else if (_empty)
 
             Nav.NavigateTo($"/leraar/klas/{classes[0].Id:D}", replace: true);
         }
-        catch
+        catch (Exception ex)
         {
-            _empty = true;
+            _loadFailed = true;
+            _empty = false;
             _loading = false;
+            Log.LogWarning(ex, "Teacher class list failed to load");
         }
     }
 }
