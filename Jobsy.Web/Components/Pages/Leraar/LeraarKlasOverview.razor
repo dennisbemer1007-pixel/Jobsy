@@ -8,6 +8,7 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.School
 @using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -15,7 +16,6 @@
 @inject IJSRuntime Js
 @inject IFeatureFlags Features
 @inject ILogger<LeraarKlasOverview> Log
-@using Jobsy.Web.Scholen
 
 <PageTitle>@( _overview is null ? Culture["Leraar.Overview.Title"] : $"Klas {_overview.ClassName}") · Lobsy</PageTitle>
 
@@ -320,12 +320,8 @@ else
         }
     }
 
-    private string StatusLabel(TeacherCodeRowDto row) => row.Status switch
-    {
-        PupilCodeStatus.Completed => Culture["School.Status.Completed"],
-        PupilCodeStatus.InProgress => string.Format(Culture["School.Status.InProgress"], row.ProgressCurrent, row.ProgressTotal),
-        _ => Culture["School.Status.NotStarted"]
-    };
+    private string StatusLabel(TeacherCodeRowDto row)
+        => PupilCodeStatusText.Label(Culture, row.Status, row.ProgressCurrent, row.ProgressTotal, row.LastSeenAtUtc);
 
     private static string StatusPill(PupilCodeStatus s) => s switch
     {

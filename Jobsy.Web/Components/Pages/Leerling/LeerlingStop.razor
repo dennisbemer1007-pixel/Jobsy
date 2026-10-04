@@ -2,16 +2,31 @@
 @layout LeerlingLayout
 @attribute [AllowAnonymous]
 @inject CultureState Culture
-<PageTitle>@Culture["Leerling.Stop.Title"] · Lobsy</PageTitle>
+<PageTitle>@(Paused ? Culture["Leerling.Stop.Title"] : Culture["Leerling.Stop.AskTitle"]) · Lobsy</PageTitle>
 
 <section class="ll-card ll-stop">
-    <h1>@Culture["Leerling.Stop.Title"]</h1>
-    <p>@(string.Equals(Done, "deel1", StringComparison.Ordinal)
-        ? Culture["Leerling.Vo.Stop.Part1Body"]
-        : Culture["Leerling.Stop.Body"])</p>
-    <a class="btn-primary" href="/leerling">@Culture["Leerling.Stop.Again"]</a>
+    @if (Paused)
+    {
+        <h1>@Culture["Leerling.Stop.Title"]</h1>
+        <p>@(string.Equals(Done, "deel1", StringComparison.Ordinal)
+            ? Culture["Leerling.Vo.Stop.Part1Body"]
+            : Culture["Leerling.Stop.Body"])</p>
+        <a class="btn-primary" href="/leerling">@Culture["Leerling.Stop.Again"]</a>
+    }
+    else
+    {
+        <h1>@Culture["Leerling.Stop.AskTitle"]</h1>
+        <p>@Culture["Leerling.Stop.AskBody"]</p>
+        <form method="post" action="/leerling/pauze">
+            <AntiforgeryToken />
+            <button type="submit" class="btn-primary">@Culture["Leerling.Pause"]</button>
+        </form>
+    }
 </section>
 
 @code {
     [SupplyParameterFromQuery(Name = "done")] public string? Done { get; set; }
+
+    private bool Paused => string.Equals(Done, "1", StringComparison.Ordinal)
+        || string.Equals(Done, "deel1", StringComparison.Ordinal);
 }

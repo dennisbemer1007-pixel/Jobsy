@@ -2,10 +2,12 @@
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Security
+@using Jobsy.Web.Services
 @inherits LayoutComponentBase
 @inject CultureState Culture
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
 <div class="ll-shell" lang="nl">
@@ -36,17 +38,25 @@
     private bool _showPause;
     private IDisposable? _displayLanguage;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         // Dutch UI only. Do not persist: viewing /leerling must not rewrite a signed-in user's language.
         _displayLanguage ??= Culture.PushDisplayLanguage("nl");
         _chip = "";
         _showPause = false;
-        // Principal was captured in LeerlingNoStoreMiddleware on the HTTP request.
-        // The circuit renders after the response has started, so this must not sign the cookie in.
-        var http = HttpContextAccessor.HttpContext;
-        if (http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is not ClaimsPrincipal pupil
-            || pupil.Identity?.IsAuthenticated != true)
+        // Prerender: the middleware stored the principal. The circuit has no request
+        // items; AuthenticationState is the pupil from /_blazor. Do not AuthenticateAsync.
+        var pupil = PupilFromRequest();
+        if (pupil is null)
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (JobsyApiAuthHandler.IsPupilPrincipal(state.User))
+            {
+                pupil = state.User;
+            }
+        }
+
+        if (pupil is null)
         {
             return;
         }
@@ -62,6 +72,19 @@
         _showPause = !path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
                      && !path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase)
                      && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private ClaimsPrincipal? PupilFromRequest()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is ClaimsPrincipal pupil
+            && pupil.Identity?.IsAuthenticated == true
+            && JobsyApiAuthHandler.IsPupilPrincipal(pupil))
+        {
+            return pupil;
+        }
+
+        return null;
     }
 
     public void Dispose() => _displayLanguage?.Dispose();

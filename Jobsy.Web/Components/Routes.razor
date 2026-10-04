@@ -7,7 +7,11 @@
         <FeatureRouteGate RouteData="routeData">
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
                 <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated != true)
+                    @if (LeerlingCircuitNavigation.IsPupilPath(Navigation.Uri))
+                    {
+                        <RedirectToLeerlingLogin />
+                    }
+                    else if (context.User.Identity?.IsAuthenticated != true)
                     {
                         <RedirectToLogin />
                     }

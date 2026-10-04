@@ -136,6 +136,43 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Pupil_cookie_challenge_with_a_leftover_api_ticket_shows_expired()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        using var web = new PupilWebFactory(_api.Server.CreateHandler());
+        using var client = web.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = false
+        });
+        client.DefaultRequestHeaders.Accept.ParseAdd("text/html");
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name);
+        Assert.False(string.IsNullOrWhiteSpace(apiTicket));
+
+        var stale = new HttpRequestMessage(HttpMethod.Get, "/leerling/start");
+        stale.Headers.TryAddWithoutValidation("Cookie", PupilApiSessionCookie.Name + "=" + apiTicket);
+        stale.Headers.Accept.ParseAdd("text/html");
+        var expired = await client.SendAsync(stale);
+        Assert.Equal(HttpStatusCode.Redirect, expired.StatusCode);
+        Assert.Contains("error=expired", expired.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        Assert.Equal("no-store", expired.Headers.CacheControl?.ToString());
+        Assert.True(expired.Headers.TryGetValues("Set-Cookie", out var cleared));
+        Assert.Contains(cleared!, c => c.StartsWith(PupilApiSessionCookie.Name + "=", StringComparison.Ordinal));
+
+        var first = new HttpRequestMessage(HttpMethod.Get, "/leerling/start");
+        first.Headers.Accept.ParseAdd("text/html");
+        var fresh = await client.SendAsync(first);
+        var location = fresh.Headers.Location?.ToString() ?? "";
+        Assert.Equal(HttpStatusCode.Redirect, fresh.StatusCode);
+        Assert.Contains("/leerling", location, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("error=expired", location, StringComparison.Ordinal);
+        Assert.DoesNotContain("/login", location, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Logged_in_pupil_downloads_the_story_pdf()
     {
         await EnableSchoolsAsync();

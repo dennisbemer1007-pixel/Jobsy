@@ -1386,10 +1386,10 @@
 }
 
 /* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome reports that as :focus-visible,
-   so the browser draws a heavy black outline. Use the same ring as other controls. */
+   so the browser draws a heavy black outline. A thin offset brand line stays visible. */
 h1[tabindex="-1"]:focus {
-    outline: 3px solid var(--brand);
-    outline-offset: 2px;
+    outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
+    outline-offset: 6px;
 }
 
 @media (max-width: 639px) {
