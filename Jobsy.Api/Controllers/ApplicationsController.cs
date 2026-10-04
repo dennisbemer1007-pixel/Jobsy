@@ -192,9 +192,8 @@ public class ApplicationsController : ControllerBase
         }
 
         query = query
-            .OrderByDescending(a => a.MatchPercent ?? -1)
-            .ThenBy(a => a.EstimatedTravelMinutes)
-            .ThenByDescending(a => a.CreatedAt);
+            .OrderByDescending(a => a.CreatedAt)
+            .ThenBy(a => a.EstimatedTravelMinutes);
 
         if (isAdmin)
         {
@@ -230,8 +229,6 @@ public class ApplicationsController : ControllerBase
                 a.SnapshotEducations,
                 a.SnapshotAboutMe,
                 a.CandidateEmployerCount,
-                a.MatchPercent,
-                a.MatchBreakdownJson,
                 a.ViaSafetyNet,
                 a.Motivation,
                 a.StudentNumber,
@@ -296,8 +293,6 @@ public class ApplicationsController : ControllerBase
                     revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
                     revealed ? a.SnapshotAboutMe : null,
                     revealed ? a.CandidateEmployerCount : 0,
-                    a.MatchPercent,
-                    MatchBreakdownJson: null,
                     a.ViaSafetyNet,
                     a.Motivation,
                     LegalEligible: true,
@@ -380,8 +375,6 @@ public class ApplicationsController : ControllerBase
                 unmask ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
                 unmask ? a.SnapshotAboutMe : null,
                 unmask ? a.CandidateEmployerCount : 0,
-                a.MatchPercent,
-                MatchBreakdownJson: null,
                 a.ViaSafetyNet,
                 unmask ? a.Motivation : null,
                 LegalEligible: true,
@@ -472,6 +465,15 @@ public class ApplicationsController : ControllerBase
         if (!_companyAuth.IsEmployer(User) && !_companyAuth.IsAdmin(User))
         {
             return Forbid();
+        }
+
+        if (caller.Role == UserRole.RegionalManager)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "cv_read_only",
+                message = "Als regiomanager kun je geen CV met naam downloaden."
+            });
         }
 
         if (!await CanAccessApplicationEmployerAsync(application, cancellationToken))
@@ -577,6 +579,15 @@ public class ApplicationsController : ControllerBase
             if (!_companyAuth.IsEmployer(User) && !_companyAuth.IsAdmin(User))
             {
                 return Forbid();
+            }
+
+            if (caller.Role == UserRole.RegionalManager)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "cv_read_only",
+                    message = "Als regiomanager kun je geen CV met naam downloaden."
+                });
             }
 
             if (!await CanAccessApplicationEmployerAsync(application, cancellationToken))
@@ -733,6 +744,16 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
         }
 
+        if (!candidate.OpenForWork)
+        {
+            return BadRequest(new
+            {
+                code = "open_for_work_required",
+                message = "Zet eerst 'Beschikbaar voor werk' aan op je profiel. Daarna kun je solliciteren.",
+                userMessage = true
+            });
+        }
+
         var existing = await _db.Applications.FirstOrDefaultAsync(
             a => a.VacancyId == vacancy.Id
                  && (a.CandidateUserId == candidate.Id
@@ -819,7 +840,7 @@ public class ApplicationsController : ControllerBase
                 MatchPercent: match.TotalPercent,
                 MatchBreakdownJson: matchJson,
                 SafetyNetMessage:
-                $"Je matchscore is {match.TotalPercent}%. Pas je profiel aan voor een betere match, of ga toch door (vangnet)."));
+                "Deze baan past minder goed bij je profiel. Pas je profiel aan, of ga toch door."));
         }
 
         var authenticatorStubUsed = false;
@@ -1166,7 +1187,8 @@ public class ApplicationsController : ControllerBase
             DirectContact: ToDirectContactDto(vacancy),
             RequiresSafetyNetConfirmation: false,
             MatchPercent: existing.MatchPercent ?? match.TotalPercent,
-            MatchBreakdownJson: existing.MatchBreakdownJson ?? matchJson));
+            MatchBreakdownJson: existing.MatchBreakdownJson ?? matchJson,
+            ConfirmationLoggedToStub: _mailer.LogsToStub));
     }
 
     /// <summary>
@@ -1262,7 +1284,12 @@ public class ApplicationsController : ControllerBase
         // Only verified "Open" (Pending) applications can be withdrawn — drafts awaiting a code cannot.
         if (!ApplicationRules.CanCandidateWithdraw(application.Status, application.EmailVerifiedAt))
         {
-            return BadRequest(new { message = "Alleen open sollicitaties kunnen worden ingetrokken." });
+            return BadRequest(new
+            {
+                code = "withdraw_not_allowed",
+                message = "Deze sollicitatie kun je niet meer intrekken.",
+                userMessage = true
+            });
         }
 
         _statusRecorder.SetStatus(
@@ -1318,9 +1345,17 @@ public class ApplicationsController : ControllerBase
             return Forbid();
         }
 
-        if (!ApplicationRules.CanEmployerReact(application.Status))
+        var canReact = request.Status == ApplicationStatus.Rejected
+            ? ApplicationRules.CanEmployerReject(application.Status)
+            : ApplicationRules.CanEmployerReact(application.Status);
+        if (!canReact)
         {
-            return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
+            return BadRequest(new
+            {
+                code = "react_not_allowed",
+                message = "Op deze sollicitatie kun je niet meer reageren.",
+                userMessage = true
+            });
         }
 
         var respondedAt = DateTime.UtcNow;
@@ -1666,8 +1701,6 @@ public class ApplicationsController : ControllerBase
             revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
             revealed ? a.SnapshotAboutMe : null,
             revealed ? a.CandidateEmployerCount : 0,
-            a.MatchPercent,
-            MatchBreakdownJson: null,
             a.ViaSafetyNet,
             a.Motivation,
             LegalEligible: true,
@@ -1856,7 +1889,7 @@ public class ApplicationsController : ControllerBase
             branchName: vacancy.Company.Name,
             applicationId: application.Id,
             receivedAtUtc: application.CreatedAt,
-            matchPercent: application.MatchPercent,
+            matchPercent: null,
             companyName: vacancy.Company.Name);
         foreach (var contact in contacts)
         {

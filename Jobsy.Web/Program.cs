@@ -483,6 +483,9 @@ app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
+// After staff auth middleware. /_blazor otherwise only knows Jobsy.Auth, so the
+// circuit treats a pupil as anonymous and Routes sends them to /login.
+app.UseMiddleware<PupilCircuitAuthenticationMiddleware>();
 app.UseRegisterOntdekRedirect();
 app.UseBanenRedirect();
 app.UseBewaardRedirect();

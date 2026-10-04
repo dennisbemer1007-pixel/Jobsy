@@ -53,9 +53,12 @@ else
                 <span aria-hidden="true">@((MarkupString)NavIcons.Download)</span>
                 @Culture["WgDash.Export"]
             </button>
-            <WgAction Kind="WgAction.WgActionKind.Primary" RequiresWrite="true" OnClick="GoNewVacancy">
-                @Culture["WgDash.PostVacancy"]
-            </WgAction>
+            @if (Role != EmployerRole.Regiomanager)
+            {
+                <WgAction Kind="WgAction.WgActionKind.Primary" RequiresWrite="true" OnClick="GoNewVacancy">
+                    @Culture["WgDash.PostVacancy"]
+                </WgAction>
+            }
         </Actions>
 
         <ChildContent>
@@ -119,7 +122,7 @@ else
                                     @foreach (var item in _todos.Take(WerkgeverDashboardRules.DashboardTodoPreview))
                                     {
                                         <li>
-                                            <WgTodoItem Item="item" ShowAction="@(Role != EmployerRole.Regiomanager || !string.IsNullOrEmpty(item.ActionKind))" MobileTap="true" />
+                                            <WgTodoItem Item="item" ShowAction="@(Role != EmployerRole.Regiomanager)" MobileTap="@(Role != EmployerRole.Regiomanager)" />
                                         </li>
                                     }
                                 </ul>
@@ -309,14 +312,14 @@ else
             return Role switch
             {
                 EmployerRole.Regiomanager => string.Format(
-                    Culture["WgDash.Lead.Rm"], Scope.Label, _dash.VestigingCount, period),
+                    Culture["WgDash.Lead.Rm"], Scope.Label, CountPhrase(_dash.VestigingCount, "WgDash.Count.Branch", "WgDash.Count.Branches"), period),
                 EmployerRole.Vestigingsmanager => string.Format(
                     Culture["WgDash.Lead.Vm"], Scope.Label, period),
                 _ => string.Format(
                     Culture["WgDash.Lead.Bm"],
                     Scope.Label,
-                    _dash.VestigingCount,
-                    Math.Max(1, _dash.RegionCount),
+                    CountPhrase(_dash.VestigingCount, "WgDash.Count.Branch", "WgDash.Count.Branches"),
+                    CountPhrase(_dash.RegionCount, "WgDash.Count.Region", "WgDash.Count.Regions"),
                     period)
             };
         }
@@ -355,10 +358,21 @@ else
         await LoadAsync();
     }
 
+    private string CountPhrase(int count, string oneKey, string manyKey)
+        => string.Format(Culture[count == 1 ? oneKey : manyKey], count);
+
     private async Task LoadAsync()
     {
+        if (Scope.Role is null)
+        {
+            await ScopeBootstrap.EnsureLoadedAsync();
+        }
+
         if (IsIntermediary)
         {
+            _loadingDash = false;
+            _loadingTodo = false;
+            StateHasChanged();
             return;
         }
 
@@ -381,15 +395,21 @@ else
         _loadingTodo = true;
         StateHasChanged();
 
-        var dashTask = Api.GetWerkgeverDashboardAsync(_period, Scope.CompanyIds);
-        var todoTask = Api.GetWerkgeverTodoAsync(Scope.CompanyIds, take: 20);
-        await Task.WhenAll(dashTask, todoTask);
-        _dash = dashTask.Result;
-        _todos = todoTask.Result.ToList();
-        _loadingDash = false;
-        _loadingTodo = false;
-        await Counts.ForceRefreshAsync();
-        StateHasChanged();
+        try
+        {
+            var dashTask = Api.GetWerkgeverDashboardAsync(_period, Scope.CompanyIds);
+            var todoTask = Api.GetWerkgeverTodoAsync(Scope.CompanyIds, take: 20);
+            await Task.WhenAll(dashTask, todoTask);
+            _dash = dashTask.Result;
+            _todos = todoTask.Result.ToList();
+            await Counts.ForceRefreshAsync();
+        }
+        finally
+        {
+            _loadingDash = false;
+            _loadingTodo = false;
+            StateHasChanged();
+        }
     }
 
     private RenderFragment[] DesktopKpis(WerkgeverDashboardDto d)

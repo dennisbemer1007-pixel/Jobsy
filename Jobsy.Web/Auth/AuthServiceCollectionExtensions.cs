@@ -13,6 +13,7 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Security;
 using Jobsy.Web.Sales;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -134,6 +135,27 @@ public static class AuthServiceCollectionExtensions
                         await context.HttpContext.SignOutAsync(PupilAuthDefaults.Scheme);
                         PupilApiSessionCookie.Clear(context.HttpContext);
                     }
+                };
+                // A missing or rejected pupil cookie challenges this scheme. First visits
+                // stay on the code form. A request that still carries a pupil cookie
+                // (idle timeout, or only the API ticket left) gets the verlopen message.
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    var http = context.HttpContext;
+                    var hadPupilCookie = http.Request.Cookies.ContainsKey(PupilAuthDefaults.CookieName)
+                        || http.Request.Cookies.ContainsKey(PupilApiSessionCookie.Name);
+                    if (!hadPupilCookie)
+                    {
+                        http.Response.Redirect(context.RedirectUri);
+                        return Task.CompletedTask;
+                    }
+
+                    var codeId = http.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+                    http.RequestServices.GetService<PupilApiTicketStore>()?.Remove(codeId);
+                    PupilApiSessionCookie.Clear(http);
+                    http.Response.Headers.CacheControl = "no-store";
+                    http.Response.Redirect("/leerling?error=expired");
+                    return Task.CompletedTask;
                 };
             });
 
@@ -281,19 +303,8 @@ public static class AuthServiceCollectionExtensions
             };
         });
 
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy(JobsyPolicies.PupilSession, policy =>
-            {
-                policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);
-                policy.RequireAuthenticatedUser();
-                policy.RequireClaim(PupilClaimTypes.PupilCodeId);
-                policy.RequireClaim(PupilClaimTypes.ClassId);
-                policy.RequireClaim(PupilClaimTypes.SchoolId);
-                policy.RequireClaim(PupilClaimTypes.SessionVersion);
-                policy.RequireClaim(PupilClaimTypes.IssuedAt);
-            });
-        });
+        services.AddSingleton<PupilApiTicketStore>();
+        services.AddAuthorization(ConfigureAuthorization);
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
         services.AddAntiforgery(options =>
@@ -307,6 +318,28 @@ public static class AuthServiceCollectionExtensions
         services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Staff policies reject a pupil principal. Pupil pages use <see cref="JobsyPolicies.PupilSession"/> only.
+    /// </summary>
+    internal static void ConfigureAuthorization(AuthorizationOptions options)
+    {
+        options.DefaultPolicy = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .RequireAssertion(ctx => !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(ctx.User))
+            .Build();
+
+        options.AddPolicy(JobsyPolicies.PupilSession, policy =>
+        {
+            policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);
+            policy.RequireAuthenticatedUser();
+            policy.RequireClaim(PupilClaimTypes.PupilCodeId);
+            policy.RequireClaim(PupilClaimTypes.ClassId);
+            policy.RequireClaim(PupilClaimTypes.SchoolId);
+            policy.RequireClaim(PupilClaimTypes.SessionVersion);
+            policy.RequireClaim(PupilClaimTypes.IssuedAt);
+        });
     }
 
     private static async Task ApplyEntraCredentialsBeforeChallengeAsync(RedirectContext context)

@@ -297,7 +297,10 @@ public class Sprint3CandidateTests
 
         Assert.True(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Pending, DateTime.UtcNow));
         Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Pending, null));
-        Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Accepted, DateTime.UtcNow));
+        Assert.True(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Accepted, DateTime.UtcNow));
+        Assert.True(ApplicationRules.CanEmployerReject(ApplicationStatus.Accepted));
+        Assert.True(ApplicationRules.CanEmployerReject(ApplicationStatus.EmployerContacting));
+        Assert.False(ApplicationRules.CanEmployerReject(ApplicationStatus.Hired));
     }
 
     [Fact]

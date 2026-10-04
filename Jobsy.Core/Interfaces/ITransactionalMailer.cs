@@ -5,6 +5,9 @@ namespace Jobsy.Core.Interfaces;
 
 public interface ITransactionalMailer
 {
+    /// <summary>True only for the dev mailer that writes to the log instead of sending.</summary>
+    bool LogsToStub => false;
+
     Task<EmailSendOutcome> SendAsync(
         ComposedEmail mail,
         string to,

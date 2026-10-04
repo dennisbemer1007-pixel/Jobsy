@@ -13,11 +13,27 @@ public static class ApplicationRules
         => existingUserId == candidateUserId
            || string.Equals(existingEmail, candidateEmail, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Accept is only from the open (Pending) state.</summary>
     public static bool CanEmployerReact(ApplicationStatus status)
         => status == ApplicationStatus.Pending;
 
+    /// <summary>
+    /// Reject stays possible after Accept, until the candidate is hired or the application is closed.
+    /// </summary>
+    public static bool CanEmployerReject(ApplicationStatus status)
+        => status is ApplicationStatus.Pending
+            or ApplicationStatus.Accepted
+            or ApplicationStatus.EmployerContacting;
+
+    /// <summary>
+    /// A verified candidate may withdraw while the application is still open, accepted, or in contact.
+    /// Hired and closed applications stay as they are.
+    /// </summary>
     public static bool CanCandidateWithdraw(ApplicationStatus status, DateTime? emailVerifiedAt)
-        => emailVerifiedAt is not null && status == ApplicationStatus.Pending;
+        => emailVerifiedAt is not null
+           && status is ApplicationStatus.Pending
+               or ApplicationStatus.Accepted
+               or ApplicationStatus.EmployerContacting;
 
     public static bool IsOpenForEmployerPipeline(ApplicationStatus status)
         => status is ApplicationStatus.Pending

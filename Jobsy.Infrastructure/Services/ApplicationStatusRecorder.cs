@@ -108,17 +108,20 @@ public sealed class ApplicationStatusRecorder : IApplicationStatusRecorder
             return false;
         }
 
-        if (application.Status != ApplicationStatus.Pending)
+        var from = application.Status;
+        var allowed = newStatus == ApplicationStatus.Rejected
+            ? ApplicationRules.CanEmployerReject(from)
+            : from == ApplicationStatus.Pending;
+        if (!allowed)
         {
             return false;
         }
 
-        var from = application.Status;
         if (_db.Database.IsRelational())
         {
             await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
             var updated = await _db.Applications
-                .Where(a => a.Id == application.Id && a.Status == ApplicationStatus.Pending)
+                .Where(a => a.Id == application.Id && a.Status == from)
                 .ExecuteUpdateAsync(
                     s => s
                         .SetProperty(a => a.Status, newStatus)

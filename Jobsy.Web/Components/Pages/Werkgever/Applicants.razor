@@ -23,6 +23,7 @@
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 @implements IDisposable
 
 <PageTitle>@Culture["WgNav.Applications"] · Lobsy</PageTitle>
@@ -149,10 +150,6 @@
                                                             </span>
                                                             <span class="wg-app-card__name">@DisplayName(a)</span>
                                                         </div>
-                                                        @if (a.MatchPercent is int pct)
-                                                        {
-                                                            <span class="wg-app-card__match">@pct%</span>
-                                                        }
                                                     </div>
                                                     <ul class="wg-app-card__facts">
                                                         @foreach (var fact in CardFacts(a).Take(factTake))
@@ -174,11 +171,11 @@
                                                     }
                                                     else if (col.Column == ApplicationPipelineRules.PipelineColumn.Geaccepteerd)
                                                     {
-                                                        <span class="wg-app-card__age">@string.Format(Culture["WgApp.Since"], (a.RespondedAt ?? a.CreatedAt).ToLocalTime().ToString("dd-MM"))</span>
+                                                        <span class="wg-app-card__age">@string.Format(Culture["WgApp.Since"], AmsterdamTime.ToLocal(a.RespondedAt ?? a.CreatedAt).ToString("dd-MM"))</span>
                                                     }
                                                     else if (col.Column == ApplicationPipelineRules.PipelineColumn.Uitgenodigd)
                                                     {
-                                                        <span class="wg-app-card__age">@string.Format(Culture["WgApp.InvitedOn"], (a.RespondedAt ?? a.CreatedAt).ToLocalTime().ToString("dd-MM"))</span>
+                                                        <span class="wg-app-card__age">@string.Format(Culture["WgApp.InvitedOn"], AmsterdamTime.ToLocal(a.RespondedAt ?? a.CreatedAt).ToString("dd-MM"))</span>
                                                     }
                                                     else if (col.Column == ApplicationPipelineRules.PipelineColumn.Aangenomen)
                                                     {
@@ -227,7 +224,6 @@
                                 <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("vacancy")'>@Culture["WgApp.List.Vacancy"]</button></th>
                                 <th scope="col">@Culture["WgApp.List.Branch"]</th>
                                 <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("status")'>@Culture["WgApp.List.Status"]</button></th>
-                                <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("match")'>@Culture["WgApp.List.Match"]</button></th>
                                 <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("created")'>@Culture["WgApp.List.Applied"]</button></th>
                                 <th scope="col"><button type="button" class="wg-app-sort" @onclick='() => ToggleSort("responded")'>@Culture["WgApp.List.FirstResponse"]</button></th>
                             </Header>
@@ -252,9 +248,8 @@
                                                 @Culture[ApplicationPipelineRules.StatusLabelKey(a.Status)]
                                             </span>
                                         </td>
-                                        <td class="tabular">@(a.MatchPercent is int m ? $"{m}%" : "—")</td>
-                                        <td class="tabular">@a.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</td>
-                                        <td class="tabular">@(a.RespondedAt?.ToLocalTime().ToString("dd-MM-yyyy") ?? "—")</td>
+                                        <td class="tabular">@AmsterdamTime.ToLocal(a.CreatedAt).ToString("dd-MM-yyyy")</td>
+                                        <td class="tabular">@(a.RespondedAt is DateTime responded ? AmsterdamTime.ToLocal(responded).ToString("dd-MM-yyyy") : "—")</td>
                                         <td>
                                             <button type="button" class="btn-compact" @onclick="() => OpenCandidate(a.Id)">@Culture["Common.Details"]</button>
                                         </td>
@@ -462,9 +457,6 @@
                 "vacancy" => _sortAsc
                     ? q.OrderBy(a => a.VacancyTitle, StringComparer.CurrentCultureIgnoreCase)
                     : q.OrderByDescending(a => a.VacancyTitle, StringComparer.CurrentCultureIgnoreCase),
-                "match" => _sortAsc
-                    ? q.OrderBy(a => a.MatchPercent ?? -1)
-                    : q.OrderByDescending(a => a.MatchPercent ?? -1),
                 "status" => _sortAsc ? q.OrderBy(a => a.Status) : q.OrderByDescending(a => a.Status),
                 "responded" => _sortAsc
                     ? q.OrderBy(a => a.RespondedAt ?? DateTime.MinValue)
@@ -542,13 +534,6 @@
                 builder.AddAttribute(36, "class", "wg-app-card__name");
                 builder.AddContent(37, DisplayName(a));
                 builder.CloseElement();
-                if (a.MatchPercent is int pct)
-                {
-                    builder.OpenElement(38, "span");
-                    builder.AddAttribute(39, "class", "wg-app-card__match");
-                    builder.AddContent(40, $"{pct}%");
-                    builder.CloseElement();
-                }
                 builder.CloseElement();
                 builder.OpenElement(41, "span");
                 builder.AddAttribute(42, "class", $"status-pill wg-app-status--{ApplicationPipelineRules.StatusCss(a.Status)}");
@@ -581,7 +566,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -937,7 +922,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
             _messageIsError = true;
         }
         finally { _busyId = null; }
@@ -956,7 +941,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
             _messageIsError = true;
         }
         finally { _busyId = null; }
@@ -975,7 +960,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
             _messageIsError = true;
         }
         finally { _busyId = null; }
@@ -989,7 +974,7 @@
         try { await Api.DownloadApplicationLobsyCvPdfAsync(applicationId, Js); }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
             _messageIsError = true;
         }
         finally { _busyId = null; }

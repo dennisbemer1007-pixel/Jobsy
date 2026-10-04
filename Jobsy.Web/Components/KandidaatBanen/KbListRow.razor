@@ -74,7 +74,7 @@
                 <KbBadgeRow Badges="badges" Fit="fit" MaxVisible="2" />
             </div>
         }
-        <KbWhyLine Text="why" />
+        <KbWhyLine Text="@why" />
 
         <div class="kb-list-row__meta">
             @if (HoursLabel is not null)
@@ -123,20 +123,20 @@
             {
                 if (min == max)
                 {
-                    return string.Format(Culture["Kb.List.HoursSingle"], min.ToString("0.#"));
+                    return string.Format(Culture["Kb.List.HoursSingle"], min.ToString("0"));
                 }
 
-                return string.Format(Culture["Kb.List.Hours"], min.ToString("0.#"), max.ToString("0.#"));
+                return string.Format(Culture["Kb.List.Hours"], min.ToString("0"), max.ToString("0"));
             }
 
             if (Vacancy.MinHoursPerWeek is decimal onlyMin)
             {
-                return string.Format(Culture["Kb.List.HoursSingle"], onlyMin.ToString("0.#"));
+                return string.Format(Culture["Kb.List.HoursSingle"], onlyMin.ToString("0"));
             }
 
             if (Vacancy.MaxHoursPerWeek is decimal onlyMax)
             {
-                return string.Format(Culture["Kb.List.HoursSingle"], onlyMax.ToString("0.#"));
+                return string.Format(Culture["Kb.List.HoursSingle"], onlyMax.ToString("0"));
             }
 
             return null;

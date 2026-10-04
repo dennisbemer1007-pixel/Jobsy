@@ -139,7 +139,11 @@
                         var detailWhy = KbFitMapping.WhyLine(_vacancy, Culture);
                         var detailRank = KbFitMapping.RankLowerLabel(_vacancy, Culture);
                     }
-                    @if (detailFit is not null)
+                    @if (_vacancy.OpenForWorkRequired)
+                    {
+                        <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
+                    }
+                    else if (detailFit is not null)
                     {
                         <div class="kb-fit-panel" data-fit-gate="@(_vacancy.FitGate ?? "")" data-testid="kb-fit-panel">
                             <div class="kb-fit-panel__head">
@@ -149,7 +153,7 @@
                                     <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
                                 }
                             </div>
-                            <KbWhyLine Text="detailWhy" />
+                            <KbWhyLine Text="@detailWhy" />
                             @if (detailFit.GateOpen)
                             {
                                 <ul class="kb-dna" role="list">
@@ -202,18 +206,15 @@
                         {
                             <div class="kb-facts-grid__item">
                                 <span class="kb-facts-grid__label">@Culture["Kb.Detail.HoursFact"]</span>
-                                <p class="kb-facts-grid__value">
-                                    @_vacancy.MinHoursPerWeek?.ToString("0.#")–@_vacancy.MaxHoursPerWeek?.ToString("0.#")
-                                    @Culture["Vacancy.HoursUnit"]
-                                </p>
+                                <p class="kb-facts-grid__value">@HoursRangeText</p>
                             </div>
                         }
                         <div class="kb-facts-grid__item">
                             <span class="kb-facts-grid__label">@Culture["Kb.Detail.WageFact"]</span>
                             <p class="kb-facts-grid__value">
-                                @if (_vacancy.WageVisible && _vacancy.HourlyWage is not null)
+                                @if (_vacancy.WageVisible && DisplayHourlyWage is decimal wage)
                                 {
-                                    <text>€ @_vacancy.HourlyWage.Value.ToString("0.00")</text>
+                                    <text>€ @wage.ToString("0.00")</text>
                                 }
                                 else if (!_vacancy.WageVisible)
                                 {
@@ -321,8 +322,7 @@
                         <div class="vacancy-facts__block">
                             <h2 class="vacancy-facts__title">@Culture["Vacancy.HoursPerWeek"]</h2>
                             <p class="vacancy-facts__text">
-                                @_vacancy.MinHoursPerWeek?.ToString("0.#")–@_vacancy.MaxHoursPerWeek?.ToString("0.#")
-                                @Culture["Vacancy.HoursUnit"]
+                                @HoursRangeText
                                 @if (HoursCategoryLabel is not null)
                                 {
                                     <span class="muted"> · @HoursCategoryLabel</span>
@@ -651,15 +651,15 @@
                                             <span>@Culture["Apply.UseAuthenticator"]</span>
                                         </label>
                                     }
-                                    <label class="apply-check">
-                                        <input type="checkbox" @bind="_acceptedTerms" />
-                                        <span>
-                                            @Culture["Apply.AcceptTerms"]
-                                            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Apply.Terms"]</a>
-                                            @Culture["Apply.AndThe"]
-                                            <a class="auth-link" href="/privacy" target="_blank" rel="noopener">@Culture["Apply.Privacy"]</a>.
-                                        </span>
-                                    </label>
+                                    <div class="apply-check">
+                                        <label>
+                                            <input type="checkbox" @bind="_acceptedTerms" />
+                                            <span>@Culture["Apply.AcceptTerms"]</span>
+                                        </label>
+                                        <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Apply.Terms"]</a>
+                                        @Culture["Apply.AndThe"]
+                                        <a class="auth-link" href="/privacy" target="_blank" rel="noopener">@Culture["Apply.Privacy"]</a>.
+                                    </div>
                                     <label class="apply-check">
                                         <input type="checkbox" @bind="_workPermitConfirmed" />
                                         <span>@Culture["Apply.WorkPermit"]</span>
@@ -677,8 +677,7 @@
                                 @if (_showSafetyNet)
                                 {
                                     <div class="apply-panel apply-panel--warn kb-detail-safety-net">
-                                        <p class="apply-panel__title">Matchscore @_safetyNetPercent%</p>
-                                        <p class="apply-panel__text">@(_safetyNetMessage ?? "Je matchscore is lager dan 50%. Pas je profiel aan of ga toch door via het vangnet.")</p>
+                                        <p class="apply-panel__title">@(_safetyNetMessage ?? "Deze baan past minder goed. Pas je profiel aan, of ga toch door.")</p>
                                         <div class="inline-actions kb-detail-safety-actions">
                                             <a class="login-submit apply-flow__primary" href="@ProfileReturnHref">Ja, pas mijn profiel aan</a>
                                             <button class="engagement-btn apply-flow__secondary"
@@ -933,7 +932,14 @@
         }
         else
         {
-            <a class="btn--primary" href="#apply" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
+            @if (_vacancy?.OpenForWorkRequired == true)
+            {
+                <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
+            }
+            else
+            {
+                <a class="btn--primary" href="@($"/vacancies/{Id}#apply")" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
+            }
         }
     };
 
@@ -1151,6 +1157,16 @@
 
     private bool HasHoursInfo =>
         _vacancy is { MinHoursPerWeek: not null, MaxHoursPerWeek: not null };
+
+    private string HoursRangeText =>
+        _vacancy is { MinHoursPerWeek: decimal min, MaxHoursPerWeek: decimal max }
+            ? $"{min:0}–{max:0} uur"
+            : "";
+
+    private decimal? DisplayHourlyWage =>
+        _vacancy?.HourlyWage ?? _vacancy?.WageByAge.FirstOrDefault()?.HourlyRate;
+
+    private async Task ReloadAfterOpenForWork() => await LoadAsync(null);
 
     private bool HasScheduleInfo =>
         _vacancy is not null
@@ -2199,9 +2215,9 @@
                 _applied = true;
                 _awaitingVerification = false;
                 _enteredVerifyThisSession = false;
-                _message = _useAuthenticator
-                    ? Culture["Apply.CodeSentAuthenticator"]
-                    : Culture["Apply.SentStub"];
+                _message = result?.ConfirmationLoggedToStub == true
+                    ? (_useAuthenticator ? Culture["Apply.CodeSentAuthenticator"] : Culture["Apply.SentStub"])
+                    : Culture["Apply.SentBody"];
                 OpenDirectContactIfAvailable(result?.DirectContact);
             }
         }

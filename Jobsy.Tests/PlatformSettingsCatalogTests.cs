@@ -267,7 +267,7 @@ public class PlatformSettingsEditorBunitTests : BunitContext
         button.Click();
 
         Assert.Contains(
-            "Aan: kandidaten zien banen, de banenkaart en sollicitaties, en werkgevers kunnen vacatures plaatsen. Werkgevers zien dan ook matchpercentages, persoonlijkheidsscores en het AI-verhaal. Weet je het zeker?",
+            "Aan: kandidaten zien banen, de banenkaart en sollicitaties, en werkgevers kunnen vacatures plaatsen. Werkgevers zien geen matchpercentage en geen score. Weet je het zeker?",
             cut.Markup,
             StringComparison.Ordinal);
     }
