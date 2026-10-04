@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using System.Globalization
 @using System.Text.Json
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -23,6 +24,10 @@
     </Actions>
     <ChildContent>
     <BeveiligingTabs ActiveKey="audit" />
+    @if (!string.IsNullOrEmpty(_exportError))
+    {
+        <p class="state-message error" role="alert">@_exportError</p>
+    }
 
     <div class="admin-security-layout">
         <div class="admin-security-layout__main">
@@ -32,20 +37,20 @@
                        placeholder="@Culture["AdminAudit.SearchPlaceholder"]"
                        value="@_q"
                        @oninput="OnSearchInput" />
-                <select class="admin-filter-select" @bind="_action" @bind:after="ReloadAsync">
+                <select class="admin-filter-select" @bind="_action" @bind:after="RefreshAsync">
                     <option value="">@Culture["AdminAudit.Filter.ActionAll"]</option>
                     @foreach (var a in ActionOptions)
                     {
-                        <option value="@a">@ActionLabel(a)</option>
+                        <option value="@a.Value">@Culture[a.LabelKey]</option>
                     }
                 </select>
-                <select class="admin-filter-select" @bind="_period" @bind:after="ReloadAsync">
+                <select class="admin-filter-select" @bind="_period" @bind:after="RefreshAsync">
                     <option value="7">@Culture["AdminAudit.Period.7d"]</option>
                     <option value="30">@Culture["AdminAudit.Period.30d"]</option>
                     <option value="90">@Culture["AdminAudit.Period.90d"]</option>
                     <option value="all">@Culture["AdminAudit.Period.All"]</option>
                 </select>
-                <select class="admin-filter-select" @bind="_result" @bind:after="ReloadAsync">
+                <select class="admin-filter-select" @bind="_result" @bind:after="RefreshAsync">
                     <option value="">@Culture["AdminAudit.Filter.ResultAll"]</option>
                     <option value="success">@Culture["AdminAudit.Result.Success"]</option>
                     <option value="denied">@Culture["AdminAudit.Result.Denied"]</option>
@@ -68,23 +73,23 @@
                         @foreach (var row in _page.Items)
                         {
                             <tr class="admin-audit-row" @onclick="() => OpenDrawer(row)">
-                                <td class="admin-mono">@FormatAmsterdam(row.OccurredAtUtc)</td>
-                                <td>@row.ActorDisplayName</td>
-                                <td><span class="status-pill @ActionPillClass(row.Action)">@ActionLabel(row.Action)</span></td>
-                                <td class="admin-audit-object" title="@ObjectTitle(row)">
+                                <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@FormatAmsterdam(row.OccurredAtUtc)</td>
+                                <td data-label="@Culture["AdminAudit.Col.Actor"]">@row.ActorDisplayName</td>
+                                <td data-label="@Culture["AdminAudit.Col.Action"]"><span class="status-pill @ActionPillClass(row.Action)">@ActionLabel(row.Action)</span></td>
+                                <td class="admin-audit-object" data-label="@Culture["AdminAudit.Col.Object"]" title="@ObjectTitle(row)">
                                     <span>@row.TargetLabel</span>
                                     @if (!string.IsNullOrWhiteSpace(row.Reason))
                                     {
                                         <span class="muted"> · @row.Reason</span>
                                     }
                                 </td>
-                                <td>
+                                <td data-label="@Culture["AdminAudit.Col.Result"]">
                                     <span class="admin-result admin-result--@row.Result">
                                         <span class="admin-result__dot" aria-hidden="true"></span>
                                         @ResultLabel(row.Result)
                                     </span>
                                 </td>
-                                <td class="admin-mono">
+                                <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Correlation"]">
                                     <button type="button" class="admin-copy-btn" title="@Culture["AdminAudit.CopyCorrelation"]"
                                             @onclick:stopPropagation="true"
                                             @onclick="() => CopyAsync(row.CorrelationId)">
@@ -99,7 +104,8 @@
 
             @if (_page is not null)
             {
-                <AdminPager Page="_page.Page" PageSize="_page.PageSize" TotalCount="_page.TotalCount"
+                <AdminPager Page="_page.Page" PageSize="@Math.Max(1, _page.PageSize)" TotalCount="_page.TotalCount"
+                            TotalPages="@AuditPageCount(_page)"
                             PageChanged="OnPageChanged" />
             }
         </div>
@@ -199,11 +205,17 @@
 </AdminDrawer>
 
 @code {
-    private static readonly string[] ActionOptions =
+    private static readonly (string Value, string LabelKey)[] ActionOptions =
     [
-        "settings.platform.update", "maintenance.on", "maintenance.off",
-        "user.mfa.reset", "support-access.grant", "support-access.revoke",
-        "user.block", "user.unblock", "tokens.goodwill.grant", "export.create", "privacy.retention.run"
+        ("settings.platform.update,maintenance.on,maintenance.off", "AdminAudit.Action.Setting"),
+        ("user.mfa.reset", "AdminAudit.Action.MfaReset"),
+        ("support-access.grant,support-access.revoke", "AdminAudit.Action.Support"),
+        ("user.block,user.unblock", "AdminAudit.Action.Block"),
+        ("tokens.goodwill.grant", "AdminAudit.Action.Tokens"),
+        ("export.create", "AdminAudit.Action.Export"),
+        ("privacy.retention.run", "AdminAudit.Action.Retention"),
+        ("vacancy-category.create,vacancy-category.update,vacancy-category.delete", "AdminAudit.Action.Category"),
+        ("masterdata.create,masterdata.update,masterdata.delete", "AdminAudit.Action.Masterdata")
     ];
 
     private AdminAuditPage? _page;
@@ -218,14 +230,15 @@
     private int _pageNum = 1;
     private bool _drawerOpen;
     private AdminAuditItem? _selected;
-    private System.Threading.Timer? _searchDebounce;
+    private readonly DebouncedAction _searchDebounce = new();
+    private string? _exportError;
 
     protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
     public void Dispose()
     {
         Culture.Changed -= OnCultureChanged;
-        _searchDebounce?.Dispose();
+        _searchDebounce.Dispose();
     }
 
     protected override async Task OnInitializedAsync()
@@ -246,35 +259,74 @@
         catch { /* side panels optional */ }
     }
 
-    private async Task ReloadAsync()
+    private Task RefreshAsync()
     {
+        _pageNum = 1;
+        return ReloadAsync();
+    }
+
+    private int _reloadGen;
+
+    private async Task ReloadAsync(CancellationToken ct = default)
+    {
+        var gen = Interlocked.Increment(ref _reloadGen);
         _loading = true;
         try
         {
             var (from, to) = PeriodRange(_period);
-            _page = await Api.GetAdminAuditAsync(
+            var page = await Api.GetAdminAuditAsync(
                 from: from, to: to, action: NullIfEmpty(_action), result: NullIfEmpty(_result),
-                q: NullIfEmpty(_q), page: _pageNum, pageSize: 25);
+                q: NullIfEmpty(_q), page: _pageNum, pageSize: 25, ct: ct);
+            if (gen != Volatile.Read(ref _reloadGen))
+            {
+                return;
+            }
+
+            _page = page;
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch
         {
-            _page = new AdminAuditPage();
+            if (gen == Volatile.Read(ref _reloadGen))
+            {
+                _page = new AdminAuditPage();
+            }
         }
         finally
         {
-            _loading = false;
+            if (gen == Volatile.Read(ref _reloadGen))
+            {
+                _loading = false;
+            }
         }
     }
 
-    private void OnSearchInput(ChangeEventArgs e)
+    private static int AuditPageCount(AdminAuditPage page)
+    {
+        var size = Math.Max(1, page.PageSize);
+        return Math.Max(1, (int)Math.Ceiling(page.TotalCount / (double)size));
+    }
+
+    private Task OnSearchInput(ChangeEventArgs e)
     {
         _q = e.Value?.ToString() ?? "";
-        _searchDebounce?.Dispose();
-        _searchDebounce = new System.Threading.Timer(async _ =>
+        return _searchDebounce.RunAsync(300, async ct =>
         {
-            _pageNum = 1;
-            await InvokeAsync(ReloadAsync);
-        }, null, 300, Timeout.Infinite);
+            await InvokeAsync(async () =>
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                _pageNum = 1;
+                await ReloadAsync(ct);
+                StateHasChanged();
+            });
+        });
     }
 
     private async Task OnPageChanged(int page)
@@ -291,8 +343,13 @@
             var (from, to) = PeriodRange(_period);
             var bytes = await Api.ExportAdminAuditCsvAsync(from, to, NullIfEmpty(_action), NullIfEmpty(_result), NullIfEmpty(_q));
             var b64 = Convert.ToBase64String(bytes);
-            await Js.InvokeVoidAsync("eval",
-                $"(() => {{ const a=document.createElement('a'); a.href='data:text/csv;base64,{b64}'; a.download='lobsy-audit.csv'; a.click(); }})()");
+            await Js.InvokeVoidAsync("jobsyExtras.ensure");
+            await Js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-audit.csv", b64, "text/csv;charset=utf-8");
+            _exportError = null;
+        }
+        catch (Exception)
+        {
+            _exportError = Culture["AdminAudit.ExportFailed"];
         }
         finally
         {
@@ -373,7 +430,12 @@
         "user.block" or "user.unblock" => Culture["AdminAudit.Action.Block"],
         "tokens.goodwill.grant" => Culture["AdminAudit.Action.Tokens"],
         "privacy.account.deleted" => Culture["AdminAudit.Action.Deleted"],
+        "privacy.retention.run" => Culture["AdminAudit.Action.Retention"],
         "auth.admin.login-failed" => Culture["AdminAudit.Action.LoginFailed"],
+        "vacancy-category.create" or "vacancy-category.update" or "vacancy-category.delete"
+            => Culture["AdminAudit.Action.Category"],
+        "masterdata.create" or "masterdata.update" or "masterdata.delete"
+            => Culture["AdminAudit.Action.Masterdata"],
         _ => action
     };
 

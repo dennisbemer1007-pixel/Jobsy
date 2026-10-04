@@ -1,5 +1,7 @@
+@using Jobsy.Core.Features
 @using Jobsy.Web.Navigation
 @inject NavigationManager Navigation
+@inject IFeatureFlags Features
 @inject CultureState Culture
 @inject AdminSidebarState SidebarState
 @inject AdminTodoCountsStore TodoCounts
@@ -10,7 +12,7 @@
     <nav class="admin-sidebar__nav">
         @foreach (var group in AdminNav.Groups)
         {
-            var items = group.Items.Where(i => i.IsAvailable).ToList();
+            var items = group.Items.Where(ShowItem).ToList();
             if (items.Count == 0)
             {
                 continue;
@@ -59,6 +61,22 @@
 
 @code {
     private bool _countsLoaded;
+    private bool _ambassadorsOn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _ambassadorsOn = await Features.IsEnabledAsync(PlatformFeature.Ambassadors);
+        }
+        catch (Exception)
+        {
+            _ambassadorsOn = false;
+        }
+    }
+
+    private bool ShowItem(AdminNavItem item)
+        => item.IsAvailable && (item.Key != "sales" || _ambassadorsOn);
 
     protected override void OnInitialized()
     {

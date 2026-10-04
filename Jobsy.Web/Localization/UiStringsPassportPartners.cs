@@ -92,12 +92,36 @@ public static class UiStringsPassportPartners
             "Utwórz partnera",
             "Creează partener",
             "أنشئ شريكاً");
+        Add("Admin.PassportPartners.Off",
+            "Paspoortpartners staat uit — zet het aan bij Platforminstellingen.",
+            "Passport partners is off — turn it on under Platform settings.",
+            "Partnerzy paszportu są wyłączeni — włącz w ustawieniach platformy.",
+            "Partenerii de pașaport sunt opriți — pornește-i la setările platformei.",
+            "شركاء الجواز متوقفون — فعّلهم من إعدادات المنصة.");
+        Add("Admin.PassportPartners.GenerateCode",
+            "Code maken",
+            "Create code",
+            "Utwórz kod",
+            "Creează cod",
+            "أنشئ رمزاً");
+        Add("Admin.PassportPartners.Deactivate",
+            "Deactiveren",
+            "Deactivate",
+            "Dezaktywuj",
+            "Dezactivează",
+            "إيقاف");
+        Add("Admin.PassportPartners.Pdf",
+            "Codes als PDF",
+            "Codes as PDF",
+            "Kody jako PDF",
+            "Coduri ca PDF",
+            "الرموز كـ PDF");
         Add("Admin.PassportPartners.Company",
-            "Bedrijfs-id",
-            "Company id",
-            "Id firmy",
-            "Id companie",
-            "معرّف الشركة");
+            "Organisatie",
+            "Organisation",
+            "Organizacja",
+            "Organizație",
+            "المنظمة");
         Add("Admin.PassportPartners.Type",
             "Soort partner",
             "Partner kind",

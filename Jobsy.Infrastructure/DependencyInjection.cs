@@ -1,4 +1,5 @@
 using Jobsy.Core.Admin;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -82,6 +83,7 @@ public static class DependencyInjection
         });
         services.AddScoped<IPersonalDataAccessLogger, PersonalDataAccessLogger>();
         services.AddScoped<IAdminAuditLog, AdminAuditLog>();
+        services.AddScoped<IPlatformErrorLog, PlatformErrorLog>();
         services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
         services.AddScoped<IApplicationStatusRecorder, ApplicationStatusRecorder>();
         services.AddSingleton(TimeProvider.System);

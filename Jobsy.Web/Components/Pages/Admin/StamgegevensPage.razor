@@ -10,7 +10,7 @@
 <PageTitle>@Culture["AdminNav.Masterdata"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["AdminNav.Masterdata"]">
-    <AdminTabs BasePath="/admin/content/stamgegevens" ActiveKey="@_tab" Tabs="_tabs" />
+    <AdminTabs BasePath="/admin/content/stamgegevens" @bind-ActiveKey="_tab" Tabs="_tabs" />
     @if (_tab == "exclusiviteit")
     {
         <ExclusivitySection />

@@ -1,6 +1,7 @@
 @page "/admin/beveiliging/systeemlogs"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Time
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -26,7 +27,7 @@
                placeholder="@Culture["AdminLogs.CategoryPlaceholder"]" />
         <input type="date" class="admin-filter-input" @bind="_fromDate" />
         <input type="date" class="admin-filter-input" @bind="_toDate" />
-        <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
+        <button class="btn-compact" type="button" disabled="@_loading" @onclick="FilterAsync">@Culture["Common.Filter"]</button>
     </AdminFilterBar>
 
     @if (!string.IsNullOrEmpty(_error))
@@ -45,14 +46,19 @@
             @foreach (var log in _filtered)
             {
                 <tr>
-                    <td class="admin-mono">@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                    <td>@log.Level</td>
-                    <td>@CategoryLabel(log.Category)</td>
-                    <td>@log.Message</td>
+                    <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(log.CreatedAt).ToString("dd-MM-yyyy HH:mm")</td>
+                    <td data-label="@Culture["AdminLogs.Col.Level"]">@LevelLabel(log.Level)</td>
+                    <td data-label="@Culture["AdminLogs.Col.Category"]">@CategoryLabel(log.Category)</td>
+                    <td data-label="@Culture["AdminLogs.Col.Message"]">@log.Message</td>
                 </tr>
             }
         </Rows>
     </AdminDataTable>
+    @if (_total > _pageSize)
+    {
+        <AdminPager Page="_pageNum" PageSize="_pageSize" TotalCount="_total"
+                    TotalPages="@LogPageCount()" PageChanged="OnPageChanged" />
+    }
 </AdminPageShell>
 
 @code {
@@ -63,6 +69,20 @@
     private DateTime? _toDate;
     private bool _loading = true;
     private string? _error;
+    private int _pageNum = 1;
+    private int _pageSize = 50;
+    private int _total;
+
+    private string LevelLabel(string? level) => level switch
+    {
+        "Warning" => Culture["AdminLogs.Level.Warning"],
+        "Error" => Culture["AdminLogs.Level.Error"],
+        "Info" => Culture["AdminLogs.Level.Info"],
+        _ => level ?? ""
+    };
+
+    private int LogPageCount()
+        => Math.Max(1, (int)Math.Ceiling(_total / (double)Math.Max(1, _pageSize)));
 
     private string CategoryLabel(string? category)
     {
@@ -97,21 +117,39 @@
         await ReloadAsync();
     }
 
+    private async Task FilterAsync()
+    {
+        _pageNum = 1;
+        await ReloadAsync();
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        _pageNum = page;
+        await ReloadAsync();
+    }
+
     private async Task ReloadAsync()
     {
         _loading = true;
         _error = null;
         try
         {
-            _logs = (await Api.GetPlatformLogsAsync(
+            var page = await Api.GetPlatformLogsPageAsync(
+                category: string.IsNullOrWhiteSpace(_category) ? null : _category,
                 level: string.IsNullOrWhiteSpace(_level) ? null : _level,
                 from: _fromDate?.ToUniversalTime(),
-                to: _toDate?.ToUniversalTime())).ToList();
+                to: _toDate?.ToUniversalTime(),
+                page: _pageNum,
+                pageSize: _pageSize);
+            _logs = page.Items.ToList();
+            _total = page.Total;
         }
         catch (Exception ex)
         {
             _error = ex.Message;
             _logs = [];
+            _total = 0;
         }
         finally
         {

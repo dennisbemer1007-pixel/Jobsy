@@ -985,6 +985,80 @@ window.jobsyPageVisible = function () {
     return typeof document === "undefined" || document.visibilityState !== "hidden";
 };
 
+window.jobsyDom = {
+    matchesMedia: function (query) {
+        try {
+            return !!(window.matchMedia && window.matchMedia(query).matches);
+        } catch (e) {
+            return false;
+        }
+    },
+    sessionGet: function (key) {
+        try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    },
+    sessionSet: function (key, value) {
+        try { sessionStorage.setItem(key, value); } catch (e) { }
+    },
+    sessionRemove: function (key) {
+        try { sessionStorage.removeItem(key); } catch (e) { }
+    },
+    shareOrCopy: function (url) {
+        if (navigator.share) {
+            return navigator.share({ url: url });
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(url);
+        }
+        return Promise.reject(new Error("share-unavailable"));
+    },
+    bindKeyFocus: function (selector) {
+        if (window.__jobsyKeyFocusBound) {
+            return;
+        }
+        window.__jobsyKeyFocusBound = true;
+        document.addEventListener("keydown", function (e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+                var el = document.querySelector(selector);
+                if (!el) {
+                    return;
+                }
+                e.preventDefault();
+                el.focus();
+            }
+        });
+    },
+    ensureScript: function (src, globalName) {
+        window.__jobsyScriptPromises = window.__jobsyScriptPromises || {};
+        if (globalName && window[globalName]) {
+            return Promise.resolve();
+        }
+        if (window.__jobsyScriptPromises[src]) {
+            return window.__jobsyScriptPromises[src];
+        }
+        window.__jobsyScriptPromises[src] = new Promise(function (resolve, reject) {
+            var s = document.createElement("script");
+            s.src = src;
+            s.onload = function () { resolve(); };
+            s.onerror = function () {
+                window.__jobsyScriptPromises[src] = null;
+                reject(new Error("Failed to load " + src));
+            };
+            document.head.appendChild(s);
+        });
+        return window.__jobsyScriptPromises[src];
+    }
+};
+
+document.addEventListener("change", function (ev) {
+    var target = ev.target;
+    if (!target || !target.matches || !target.matches("[data-jobsy-submit-form]")) {
+        return;
+    }
+    if (target.form) {
+        target.form.submit();
+    }
+});
+
 window.jobsyMedia = {
     matches: function (query) {
         try {
@@ -1064,7 +1138,18 @@ window.jobsyDialog = (function () {
     }
 
     function onKeyDown(ev) {
-        if (!active || ev.key !== "Tab") {
+        if (!active) {
+            return;
+        }
+        if (ev.key === "Escape") {
+            var closer = active.querySelector("[data-jobsy-dialog-close]");
+            if (closer) {
+                ev.preventDefault();
+                closer.click();
+            }
+            return;
+        }
+        if (ev.key !== "Tab") {
             return;
         }
         var list = focusables(active);
@@ -1132,8 +1217,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-merge"
-            : "/service-worker.js?v=20261004-merge";
+            ? "/service-worker.published.js?v=20261004-admin"
+            : "/service-worker.js?v=20261004-admin";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();

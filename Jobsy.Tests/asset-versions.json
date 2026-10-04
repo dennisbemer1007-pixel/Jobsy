@@ -12,8 +12,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "b415429cc2bc52220920f949f372d812b8dfe0c8e9f7e7b41edf6070d86ed985",
-    "v": "20261003-portal"
+    "sha256": "0bbcfe08d466ee490b6039753d474fb206dc4aa686cb136a1ff8afaf3ab7d343",
+    "v": "20261004-admin"
   },
   "css/features/applications.css": {
     "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "6e85733609b22becd4ea0070d746ba91567f72abd2b79bcaac0e17ec994fc633",
-    "v": "20261004-core"
+    "sha256": "3b018e4e2903c994993efac0e120557ef4588d6a257db92a27e7362fa55ec756",
+    "v": "20261004-admin"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-school2"
   },
   "js/lobsyPush.js": {
-    "sha256": "d983337c9107b477e74b38a086a8a344e292fa21d1a681cf175e04defdf03e5b",
-    "v": "20261004-merge"
+    "sha256": "46fd5ce19285ec201c74a2d79fdda13932678f7f8562d66cc96fec139119d6c0",
+    "v": "20261004-admin"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "ad483205f293dbc50bca607d53be37ce726e9e4669a1ecde8e878b328282a7ab",
-    "v": "20261004-merge"
+    "sha256": "8fbb0d6face34f82bb866fbcd1eafc30f981ded8535209e9c98f107163f092f8",
+    "v": "20261004-admin"
   },
   "service-worker.published.js": {
-    "sha256": "295a391b2caf6cfbe1cd5adc3d7da2f05af4feb026c874941b572302e479f7f6",
-    "v": "20261004-merge"
+    "sha256": "c9b7bd1d8d5cf2a1bfb9a562d8ff9056d467d0cb4b69dcdeb15684b3702c98b1",
+    "v": "20261004-admin"
   }
 }

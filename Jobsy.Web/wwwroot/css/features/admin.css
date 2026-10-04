@@ -1757,7 +1757,23 @@
     gap: var(--space-4, 1rem);
 }
 
-@media (min-width: 1024px) {
+.admin-page h1:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.admin-security-layout__main,
+.admin-data-table-wrap {
+    min-width: 0;
+    overflow-x: auto;
+}
+
+@media (max-width: 1440px) {
+    .admin-security-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (min-width: 1441px) {
     .admin-security-layout {
         grid-template-columns: minmax(0, 1fr) 280px;
         align-items: start;

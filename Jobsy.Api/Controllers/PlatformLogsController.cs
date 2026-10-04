@@ -1,7 +1,9 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,12 +29,15 @@ public class PlatformLogsController : ControllerBase
         [FromQuery] string? level = null,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
         var query = _db.PlatformLogs.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(category))
         {
-            query = query.Where(l => l.Category.Contains(category));
+            var cat = category.Trim().ToLower();
+            query = query.Where(l => l.Category.ToLower().Contains(cat));
         }
 
         if (Enum.TryParse<PlatformLogLevel>(level, true, out var parsedLevel))
@@ -50,9 +55,14 @@ public class PlatformLogsController : ControllerBase
             query = query.Where(l => l.CreatedAt <= to);
         }
 
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 200);
+        var total = await query.CountAsync(cancellationToken);
+        Response.Headers["X-Total-Count"] = total.ToString();
         var items = await query
             .OrderByDescending(l => l.CreatedAt)
-            .Take(500)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(l => new PlatformLogItemDto(
                 l.Id,
                 l.Level.ToString(),
@@ -63,4 +73,37 @@ public class PlatformLogsController : ControllerBase
 
         return Ok(items);
     }
+
+    /// <summary>Web circuit logger. Authorized by the internal secret, not an admin cookie.</summary>
+    [HttpPost("errors")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ReportError(
+        [FromBody] PlatformErrorReport? body,
+        [FromServices] IConfiguration configuration,
+        [FromServices] IPlatformErrorLog log,
+        CancellationToken cancellationToken)
+    {
+        var expected = configuration[InternalClientIpHeaders.ConfigKey];
+        if (string.IsNullOrWhiteSpace(expected)
+            || !Request.Headers.TryGetValue(InternalClientIpHeaders.InternalSecretHeader, out var got)
+            || !string.Equals(got.ToString().Trim(), expected.Trim(), StringComparison.Ordinal))
+        {
+            return Unauthorized();
+        }
+
+        if (body is null || string.IsNullOrWhiteSpace(body.Message))
+        {
+            return BadRequest();
+        }
+
+        await log.WriteAsync(
+            body.Category ?? "Interactive",
+            body.Message,
+            body.SupportCode,
+            body.Detail,
+            cancellationToken);
+        return NoContent();
+    }
 }
+
+public sealed record PlatformErrorReport(string? Category, string? Message, string? SupportCode, string? Detail);

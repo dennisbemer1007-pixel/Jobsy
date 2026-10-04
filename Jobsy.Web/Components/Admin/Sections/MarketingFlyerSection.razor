@@ -1,3 +1,4 @@
+@using Jobsy.Core.Time
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
@@ -17,7 +18,7 @@
                     <button class="btn-compact" type="button" disabled="@_busy" @onclick="DownloadPdfAsync">
                         @(_busyDownload ? Culture["Admin.MarketingFlyerDownloading"] : Culture["Admin.MarketingFlyerDownload"])
                     </button>
-                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="ResetAsync">
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="AskReset">
                         @Culture["Admin.MarketingFlyerReset"]
                     </button>
                     <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveAsync">
@@ -89,11 +90,21 @@
             @if (_form.UpdatedAtUtc is DateTime updated)
             {
                 <p class="muted" style="margin-top:1rem">
-                    @Culture["Admin.MarketingFlyerUpdated"]: @updated.ToLocalTime().ToString("g")
+                    @Culture["Admin.MarketingFlyerUpdated"]: @AmsterdamTime.ToLocal(updated).ToString("dd-MM-yyyy HH:mm")
                 </p>
             }
         </section>
     }
+
+    <LobsyFriendlyDialog IsOpen="_confirmReset"
+                         Title="@Culture["Admin.MarketingFlyerReset"]"
+                         OnClose="CancelReset">
+        <p>@Culture["AdminContent.ResetFlyerBody"]</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" data-jobsy-dialog-close @onclick="CancelReset">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="ConfirmResetAsync">@Culture["Admin.MarketingFlyerReset"]</button>
+        </div>
+    </LobsyFriendlyDialog>
 @code {
     private MarketingFlyerItem _form = new();
     private bool _loading = true;
@@ -102,6 +113,7 @@
     private bool _busyDownload;
     private string? _error;
     private string? _message;
+    private bool _confirmReset;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -146,6 +158,16 @@
         {
             _busy = _busySave = false;
         }
+    }
+
+    private void AskReset() => _confirmReset = true;
+
+    private void CancelReset() => _confirmReset = false;
+
+    private async Task ConfirmResetAsync()
+    {
+        _confirmReset = false;
+        await ResetAsync();
     }
 
     private async Task ResetAsync()

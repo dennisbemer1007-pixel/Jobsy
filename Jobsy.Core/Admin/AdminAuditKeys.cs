@@ -45,6 +45,13 @@ public static class AdminAuditKeys
     public const string AuthAdminLoginFailed = "auth.admin.login-failed";
     public const string EmailTestSend = "email.test-send";
 
+    public const string VacancyCategoryCreate = "vacancy-category.create";
+    public const string VacancyCategoryUpdate = "vacancy-category.update";
+    public const string VacancyCategoryDelete = "vacancy-category.delete";
+    public const string MasterdataCreate = "masterdata.create";
+    public const string MasterdataUpdate = "masterdata.update";
+    public const string MasterdataDelete = "masterdata.delete";
+
     public static class Results
     {
         public const string Success = "success";

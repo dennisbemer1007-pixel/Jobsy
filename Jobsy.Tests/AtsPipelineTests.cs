@@ -18,9 +18,13 @@ public class AtsPipelineTests
             "404 Not Found", "Acme", new string('x', 80), out _));
         // Location / salary may be empty at intake — admin completes in ATS module.
         Assert.True(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", new string('x', 80), out _));
-        Assert.True(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", new string('x', 80), out _));
+            "Kassamedewerker", "Acme", "Wat ga je doen als kassamedewerker? Solliciteer vandaag nog.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Veelgestelde vragen", "HagaZiekenhuis", "Bekijk de veelgestelde vragen over werken bij ons ziekenhuis.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Aanmelden", "HagaZiekenhuis", "Error: Javascript is required to view this page in the browser.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Locaties waar wij zorg verlenen", "HagaZiekenhuis", new string('x', 80), out _));
         Assert.False(AtsListingValidation.TryValidateForReview(
             "Kassamedewerker", "Acme", "kort", out var shortReason));
         Assert.Contains("tekst", shortReason!, StringComparison.OrdinalIgnoreCase);

@@ -10,7 +10,7 @@
 
 <AdminPageShell Title="@Culture["AdminNav.Pricing"]" Lead="@Culture["AdminSettings.PricingLead"]" Wide="true">
     <PricingWhatDrivesSection />
-    <AdminTabs BasePath="/admin/financien/prijzen" ActiveKey="@_tab" Tabs="_tabs" />
+    <AdminTabs BasePath="/admin/financien/prijzen" @bind-ActiveKey="_tab" Tabs="_tabs" />
     @if (_tab == "pushbom")
     {
         <PricingSettingsSection Mode="pushbom" />

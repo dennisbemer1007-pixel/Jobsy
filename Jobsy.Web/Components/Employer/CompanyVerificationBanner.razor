@@ -140,8 +140,8 @@
 
             try
             {
-                _dismissed = await Js.InvokeAsync<bool>("eval", "sessionStorage.getItem('wa.cvBanner.dismiss')==='1'");
-                _successDismissed = await Js.InvokeAsync<bool>("eval", "sessionStorage.getItem('wa.cvBanner.successDismiss')==='1'");
+                _dismissed = await Js.InvokeAsync<string?>("jobsyDom.sessionGet", "wa.cvBanner.dismiss") == "1";
+                _successDismissed = await Js.InvokeAsync<string?>("jobsyDom.sessionGet", "wa.cvBanner.successDismiss") == "1";
             }
             catch
             {
@@ -220,7 +220,7 @@
         _dismissed = true;
         try
         {
-            await Js.InvokeVoidAsync("eval", "sessionStorage.setItem('wa.cvBanner.dismiss','1')");
+            await Js.InvokeVoidAsync("jobsyDom.sessionSet", "wa.cvBanner.dismiss", "1");
         }
         catch
         {
@@ -233,7 +233,7 @@
         _successDismissed = true;
         try
         {
-            await Js.InvokeVoidAsync("eval", "sessionStorage.setItem('wa.cvBanner.successDismiss','1')");
+            await Js.InvokeVoidAsync("jobsyDom.sessionSet", "wa.cvBanner.successDismiss", "1");
         }
         catch
         {
@@ -245,7 +245,8 @@
     {
         try
         {
-            await Js.InvokeVoidAsync("eval", "sessionStorage.removeItem('wa.cvBanner.dismiss');sessionStorage.removeItem('wa.cvBanner.successDismiss')");
+            await Js.InvokeVoidAsync("jobsyDom.sessionRemove", "wa.cvBanner.dismiss");
+            await Js.InvokeVoidAsync("jobsyDom.sessionRemove", "wa.cvBanner.successDismiss");
         }
         catch
         {

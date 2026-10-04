@@ -22,6 +22,10 @@
         <input type="date" class="admin-filter-input" @bind="_toDate" />
         <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
     </AdminFilterBar>
+    @if (!string.IsNullOrEmpty(_idHint))
+    {
+        <p class="state-message @(_idError ? "error" : null)" role="status">@_idHint</p>
+    }
 
     <AdminDataTable Loading="_loading" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminDataAccess.Empty"]">
         <Header>
@@ -60,13 +64,32 @@
     private DateTime? _toDate;
     private bool _loading = true;
 
+    private string? _idHint;
+    private bool _idError;
+
     private List<PersonalDataAccessLogItem> _rows =>
         (_page?.Items ?? [])
             .Where(r => string.IsNullOrWhiteSpace(_resource)
                         || r.Resource.Contains(_resource, StringComparison.OrdinalIgnoreCase))
             .Where(r => string.IsNullOrWhiteSpace(_action)
                         || r.Action.Contains(_action, StringComparison.OrdinalIgnoreCase))
+            .Where(r => MatchesPrefix(r.ActorUserId, _actorPrefix))
+            .Where(r => MatchesPrefix(r.SubjectUserId, _subjectPrefix))
             .ToList();
+
+    private string? _actorPrefix;
+    private string? _subjectPrefix;
+
+    private static bool MatchesPrefix(Guid? id, string? prefix)
+    {
+        if (string.IsNullOrEmpty(prefix))
+        {
+            return true;
+        }
+
+        return id is Guid value
+               && value.ToString("N").StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    }
 
     protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
@@ -85,8 +108,23 @@
         _loading = true;
         try
         {
-            Guid? actor = Guid.TryParse(_actorIdText, out var a) ? a : null;
-            Guid? subject = Guid.TryParse(_subjectIdText, out var s) ? s : null;
+            _idHint = null;
+            _idError = false;
+            _actorPrefix = null;
+            _subjectPrefix = null;
+            if (!TryUserId(_actorIdText, out var actor, out _actorPrefix)
+                || !TryUserId(_subjectIdText, out var subject, out _subjectPrefix))
+            {
+                _idHint = Culture["AdminDataAccess.FullId"];
+                _idError = true;
+                _page = new PersonalDataAccessLogPage();
+                return;
+            }
+
+            if (_actorPrefix is not null || _subjectPrefix is not null)
+            {
+                _idHint = Culture["AdminDataAccess.PrefixNote"];
+            }
             _page = await Api.GetPersonalDataAccessLogAsync(
                 page: 1, pageSize: 50,
                 actorUserId: actor, subjectUserId: subject,
@@ -98,4 +136,30 @@
     }
 
     private static string Short(Guid id) => id.ToString("N")[..8];
+
+    private static bool TryUserId(string text, out Guid? id, out string? prefix)
+    {
+        text = text.Trim();
+        id = null;
+        prefix = null;
+        if (text.Length == 0)
+        {
+            return true;
+        }
+
+        if (Guid.TryParse(text, out var parsed))
+        {
+            id = parsed;
+            return true;
+        }
+
+        var hex = text.Replace("-", "", StringComparison.Ordinal);
+        if (hex.Length >= 4 && hex.All(Uri.IsHexDigit))
+        {
+            prefix = hex.ToLowerInvariant();
+            return true;
+        }
+
+        return false;
+    }
 }

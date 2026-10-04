@@ -230,7 +230,7 @@ public static class UiStringsAdmin
         Add("AdminUsers.FieldEmail", "E-mail", "E-mail", "E-mail", "E-mail", "البريد");
         Add("AdminUsers.FieldPhone", "Telefoon", "Phone", "Telefon", "Telefon", "الهاتف");
         Add("AdminUsers.FieldCreated", "Aangemaakt", "Created", "Utworzono", "Creat", "تاريخ الإنشاء");
-        Add("AdminUsers.FieldEarly", "Early adapter", "Early adopter", "Wczesny adapter", "Early adopter", "متبنٍ مبكر");
+        Add("AdminUsers.FieldEarly", "Early adopter", "Early adopter", "Wczesny użytkownik", "Adoptator timpuriu", "متبنٍ مبكر");
         Add("AdminUsers.OpenOrg", "Organisatie openen", "Open organisation", "Otwórz organizację", "Deschide organizația", "فتح المنظمة");
         Add("AdminUsers.NoMemberships", "Geen extra lidmaatschappen.", "No extra memberships.", "Brak dodatkowych członkostw.", "Fără apartenențe extra.", "لا عضويات إضافية.");
         Add("AdminUsers.RoleChangeHint", "Rol wijzigen kan voor werkgeversrollen via de organisatiepagina (PUT company-users).", "Role changes for employer roles go via the organisation page.", "Zmiana roli pracodawcy przez stronę organizacji.", "Schimbarea rolului angajator via pagina organizației.", "تغيير دور صاحب العمل عبر صفحة المنظمة.");
@@ -486,7 +486,7 @@ public static class UiStringsAdmin
         Add("AdminSettings.LobsyCompany.Kvk", "KvK-nummer", "Chamber of Commerce number", "Numer KRS/KVK", "Număr KvK", "رقم الغرفة التجارية");
         Add("AdminSettings.LobsyCompany.Vat", "BTW-nummer", "VAT number", "Numer VAT", "Număr TVA", "رقم ضريبة القيمة المضافة");
         Add("AdminSettings.LobsyCompany.Iban", "Knab BTW-rekening (IBAN)", "Knab VAT account (IBAN)", "Konto VAT Knab (IBAN)", "Cont TVA Knab (IBAN)", "حساب ضريبة Knab (IBAN)");
-        Add("AdminSettings.LobsyCompany.IbanHint", "GET toont alleen een gemaskeerd IBAN. Laat het veld ongewijzigd om de huidige rekening te behouden; vul een volledig IBAN in om te wijzigen.", "GET only shows a masked IBAN. Leave unchanged to keep the current account; enter a full IBAN to change it.", "GET pokazuje tylko zamaskowany IBAN.", "GET arată doar un IBAN mascat.", "يعرض GET رقم IBAN مقنّعاً فقط.");
+        Add("AdminSettings.LobsyCompany.IbanHint", "We tonen alleen een gemaskeerd IBAN. Laat het veld ongewijzigd om de huidige rekening te behouden; vul een volledig IBAN in om te wijzigen.", "We only show a masked IBAN. Leave unchanged to keep the current account; enter a full IBAN to change it.", "Pokazujemy tylko zamaskowany IBAN. Zostaw pole bez zmian, aby zachować konto.", "Afișăm doar un IBAN mascat. Lasă câmpul neschimbat ca să păstrezi contul.", "نعرض رقم IBAN مقنّعاً فقط. اترك الحقل كما هو للإبقاء على الحساب.");
         Add("AdminSettings.LobsyCompany.IbanVatHint", "Na elke succesvolle Mollie token-aankoop wordt het BTW-bedrag (21%) als overboeking-opdracht gelogd naar dit IBAN, met het unieke factuurnummer als omschrijving/kenmerk.", "After each successful Mollie token purchase, the VAT amount (21%) is logged as a transfer to this IBAN, with the unique invoice number as reference.", "Po każdym udanym zakupie tokenów Mollie kwota VAT (21%) jest logowana jako przelew na ten IBAN.", "După fiecare achiziție reușită de tokenuri Mollie, TVA (21%) este înregistrat ca transfer pe acest IBAN.", "بعد كل شراء رموز Mollie ناجح يُسجَّل مبلغ الضريبة (21٪) كتحويل إلى هذا IBAN.");
         Add("AdminSettings.LobsyCompany.Phone", "Telefoon", "Phone", "Telefon", "Telefon", "الهاتف");
         Add("AdminSettings.LobsyCompany.Email", "E-mail", "Email", "Adres e-mail", "Adresă de e-mail", "البريد");
@@ -494,7 +494,7 @@ public static class UiStringsAdmin
         Add("AdminTabs.TokenPrices", "Tokenprijzen", "Token prices", "Ceny tokenów", "Prețuri token", "أسعار الرموز");
         Add("AdminTabs.PushBom", "PushBom", "PushBom pricing", "Ceny PushBom", "Prețuri PushBom", "تسعير PushBom");
         Add("AdminTabs.FlexTalent", "Flex & talent", "Flex and talent", "Flex i talent", "Flex și talent", "مرن ومواهب");
-        Add("AdminTabs.EarlyAdapters", "Early adapters", "Early-adopter rules", "Reguły early adapter", "Reguli early adapter", "المبادرون الأوائل");
+        Add("AdminTabs.EarlyAdapters", "Early adopters", "Early-adopter rules", "Reguły early adopter", "Reguli early adopter", "المبادرون الأوائل");
         Add("AdminTabs.SalesCommission", "Sales & commissie", "Sales & commission", "Sprzedaż i prowizja", "Sales și comision", "المبيعات والعمولة");
 
         // 06 · Financiën
@@ -602,6 +602,85 @@ public static class UiStringsAdmin
         Add("AdminShell.SearchCorrelations", "Correlatie", "Correlation", "Korelacja", "Corelație", "الارتباط");
         Add("AdminAudit.Lead", "Wie deed wat, wanneer en waarom. Het auditlog kan niet worden aangepast en wordt 7 jaar bewaard.", "Who did what, when and why. The audit log cannot be changed and is kept for 7 years.", "Kto, co, kiedy i dlaczego. Dziennik audytu jest niezmienny i przechowywany 7 lat.", "Cine a făcut ce, când și de ce. Jurnalul de audit nu poate fi modificat și este păstrat 7 ani.", "من فعل ماذا ومتى ولماذا. سجل التدقيق غير قابل للتعديل ويُحفظ 7 سنوات.");
         Add("AdminAudit.ExportCsv", "Exporteren (CSV)", "Export (CSV)", "Eksport (CSV)", "Export (CSV)", "تصدير (CSV)");
+        Add("AdminContent.DeleteCategory",
+            "Categorie verwijderen",
+            "Delete category",
+            "Usuń kategorię",
+            "Șterge categoria",
+            "حذف الفئة");
+        Add("AdminContent.DeleteCategoryBody",
+            "Categorie ‘{0}’ verwijderen? Als die in gebruik is, wordt hij gedeactiveerd.",
+            "Delete category ‘{0}’? If it is in use, it will be deactivated.",
+            "Usunąć kategorię ‘{0}’? Jeśli jest używana, zostanie wyłączona.",
+            "Ștergi categoria ‘{0}’? Dacă este folosită, va fi dezactivată.",
+            "حذف الفئة ‘{0}’؟ إذا كانت مستخدمة فستُعطَّل.");
+        Add("AdminContent.DeleteItem",
+            "Item verwijderen",
+            "Delete item",
+            "Usuń pozycję",
+            "Șterge elementul",
+            "حذف العنصر");
+        Add("AdminContent.DeleteItemBody",
+            "‘{0}’ verwijderen? Dit haalt het item uit de keuzelijsten.",
+            "Delete ‘{0}’? This removes the item from the pick lists.",
+            "Usunąć ‘{0}’? Zniknie z list wyboru.",
+            "Ștergi ‘{0}’? Dispare din liste.",
+            "حذف ‘{0}’؟ سيختفي من القوائم.");
+        Add("AdminContent.ResetFlyerBody",
+            "De tekst op het formulier wordt teruggezet naar de standaard. Niets wordt opgeslagen tot je op Opslaan klikt.",
+            "The form text is reset to the default. Nothing is saved until you click Save.",
+            "Tekst formularza wraca do domyślnego. Nic nie jest zapisywane, dopóki nie klikniesz Zapisz.",
+            "Textul formularului revine la implicit. Nimic nu se salvează până apeși Salvează.",
+            "يعود نص النموذج إلى الافتراضي. لا يُحفظ شيء حتى تضغط حفظ.");
+        Add("AdminAudit.Action.Category",
+            "Vacaturecategorie",
+            "Vacancy category",
+            "Kategoria oferty",
+            "Categorie job",
+            "فئة الوظيفة");
+        Add("AdminAudit.Action.Masterdata",
+            "Stamgegeven",
+            "Master data",
+            "Dane podstawowe",
+            "Date de bază",
+            "بيانات أساسية");
+        Add("AdminAudit.Action.Retention",
+            "Bewaartermijn uitgevoerd",
+            "Retention run",
+            "Retencja uruchomiona",
+            "Rulare retenție",
+            "تشغيل الاحتفاظ");
+        Add("AdminDataAccess.FullId",
+            "Vul een volledig gebruikers-id in, of een kort id van minstens 4 tekens (0-9, a-f).",
+            "Enter a full user id, or a short id of at least 4 characters (0-9, a-f).",
+            "Podaj pełne id użytkownika albo krótki prefiks (min. 4 znaki).",
+            "Introdu un id complet sau un prefix de cel puțin 4 caractere.",
+            "أدخل معرّف مستخدم كاملاً أو بادئة من 4 أحرف على الأقل.");
+        Add("AdminDataAccess.PrefixNote",
+            "Kort id filtert de geladen rijen. Plak het volledige id om op de server te zoeken.",
+            "A short id filters the loaded rows. Paste the full id to search on the server.",
+            "Krótki id filtruje załadowane wiersze.",
+            "Un id scurt filtrează rândurile încărcate.",
+            "المعرّف القصير يصفّي الصفوف المحمّلة.");
+        Add("AdminLogs.Level.Info", "Info", "Info", "Informacja", "Informație", "معلومات");
+        Add("AdminLogs.Level.Warning", "Waarschuwing", "Warning", "Ostrzeżenie", "Avertisment", "تحذير");
+        Add("AdminLogs.Level.Error", "Fout", "Error", "Błąd", "Eroare", "خطأ");
+        Add("AdminFinance.RowOne", "1 regel", "1 row", "1 wiersz", "1 rând", "صف واحد");
+        Add("AdminFinance.RowMany", "{0} regels", "{0} rows", "{0} wierszy", "{0} rânduri", "{0} صفوف");
+        Add("AdminOrgs.KvkDigits",
+            "KvK-nummer moet 8 cijfers zijn.",
+            "The Chamber of Commerce number must be 8 digits.",
+            "Numer KVK musi mieć 8 cyfr.",
+            "Numărul KvK trebuie să aibă 8 cifre.",
+            "يجب أن يتكوّن رقم غرفة التجارة من 8 أرقام.");
+        Add("AdminOrgs.TypeEmployer", "Werkgever", "Employer", "Pracodawca", "Angajator", "صاحب عمل");
+        Add("AdminOrgs.TypeIntermediary", "Intermediair", "Intermediary", "Pośrednik", "Intermediar", "وسيط");
+        Add("AdminAudit.ExportFailed",
+            "Het bestand kon niet worden opgeslagen. Probeer het opnieuw.",
+            "The file could not be saved. Please try again.",
+            "Nie udało się zapisać pliku. Spróbuj ponownie.",
+            "Fișierul nu a putut fi salvat. Încearcă din nou.",
+            "تعذر حفظ الملف. حاول مرة أخرى.");
         Add("AdminAudit.SearchPlaceholder", "Zoek object of correlatie-id", "Search object or correlation id", "Szukaj obiektu lub id korelacji", "Caută obiect sau id corelație", "ابحث عن كائن أو معرّف ارتباط");
         Add("AdminAudit.Filter.ActionAll", "Alle acties", "All actions", "Wszystkie akcje", "Toate acțiunile", "كل الإجراءات");
         Add("AdminAudit.Filter.ResultAll", "Alle", "All", "Wszystkie", "Toate", "الكل");
@@ -676,12 +755,12 @@ public static class UiStringsAdmin
         Add("AdminSettings.ChangesPanel", "Wijzigingen", "Changes", "Zmiany", "Modificări", "التغييرات");
         Add("AdminSettings.ChangesEmpty", "Nog geen instellingswijzigingen.", "No setting changes yet.", "Brak zmian ustawień.", "Nicio modificare de setări.", "لا تغييرات إعدادات بعد.");
         Add("AdminSettings.LastChangedBy", "Laatst gewijzigd door {0} · {1}", "Last changed by {0} · {1}", "Ostatnio zmienione przez {0} · {1}", "Ultima modificare de {0} · {1}", "آخر تعديل بواسطة {0} · {1}");
-        Add("AdminDataAccess.Actor", "Actor (user-id)", "Actor (user id)", "Aktor (id użytkownika)", "Actor (id utilizator)", "الفاعل (معرّف المستخدم)");
-        Add("AdminDataAccess.Subject", "Subject (user-id)", "Subject (user id)", "Podmiot (id użytkownika)", "Subiect (id utilizator)", "الموضوع (معرّف المستخدم)");
-        Add("AdminDataAccess.Resource", "Resource", "Resource name", "Zasób", "Nume resursă", "اسم المورد");
+        Add("AdminDataAccess.Actor", "Wie (gebruikers-id)", "Who (user id)", "Kto (id użytkownika)", "Cine (id utilizator)", "من (معرّف المستخدم)");
+        Add("AdminDataAccess.Subject", "Over wie (gebruikers-id)", "About whom (user id)", "O kim (id użytkownika)", "Despre cine (id utilizator)", "عن من (معرّف المستخدم)");
+        Add("AdminDataAccess.Resource", "Gegeven", "Data item", "Dane", "Dată", "البيان");
         Add("AdminDataAccess.Empty", "Geen inzage-logs gevonden.", "No access logs found.", "Brak logów dostępu.", "Niciun jurnal de acces.", "لا سجلات اطلاع.");
         Add("AdminLogs.Col.Date", "Datum", "Date", "Data", "Dată", "التاريخ");
-        Add("AdminLogs.Col.Level", "Level", "Log level", "Poziom", "Nivel", "المستوى");
+        Add("AdminLogs.Col.Level", "Niveau", "Log level", "Poziom", "Nivel", "المستوى");
         Add("AdminLogs.Col.Category", "Categorie", "Category", "Kategoria", "Categorie jurnal", "الفئة");
         Add("Logs.Category.Scholen.Audit", "Scholen", "Schools", "Szkoły", "Școli", "المدارس");
         Add("TokenSpendCost.Publish", "Publiceren", "Publish", "Publikacja", "Publicare", "النشر");

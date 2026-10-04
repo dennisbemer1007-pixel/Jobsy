@@ -3,6 +3,7 @@ using System.Text.Json;
 using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobsy.Api;
 
@@ -53,6 +54,27 @@ public sealed class ExceptionHandlingMiddleware
         TagSentry(supportCode);
         _logger.LogError(ex, "Unhandled exception {SupportCode} for {Method} {Path} → {Status}",
             supportCode, context.Request.Method, context.Request.Path.Value, status);
+
+        if (status >= 500)
+        {
+            try
+            {
+                var platform = context.RequestServices.GetService<IPlatformErrorLog>();
+                if (platform is not null)
+                {
+                    await platform.WriteAsync(
+                        "Api",
+                        ex.GetType().Name,
+                        supportCode,
+                        context.Request.Path.Value,
+                        CancellationToken.None);
+                }
+            }
+            catch (Exception)
+            {
+                // Logging must not replace the problem response.
+            }
+        }
 
         context.Response.Clear();
         context.Response.StatusCode = status;

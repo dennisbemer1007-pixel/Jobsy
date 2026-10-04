@@ -36,7 +36,7 @@
             <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">Health-check</button>
             <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
         </div>
-        <span class="ats-toolbar__count muted">@_filtered.Count resultaat@(_filtered.Count == 1 ? "" : "en")</span>
+        <span class="ats-toolbar__count muted">@(_filtered.Count == 1 ? "1 resultaat" : $"{_filtered.Count} resultaten")</span>
     </div>
 
     @if (_scrapeReport is not null)

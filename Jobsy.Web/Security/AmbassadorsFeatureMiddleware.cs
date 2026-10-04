@@ -67,9 +67,16 @@ public sealed class AmbassadorsFeatureMiddleware
 
             if (IsGated(path))
             {
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(AmbassadorsFeatureGate.FeatureDisabledJson);
+                // JSON stays for /api. Browser pages get the same friendly access-denied page as schools-off.
+                if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsync(AmbassadorsFeatureGate.FeatureDisabledJson);
+                    return;
+                }
+
+                context.Response.Redirect(FeatureRoutes.AmbassadorsOffAccessDeniedPath);
                 return;
             }
 

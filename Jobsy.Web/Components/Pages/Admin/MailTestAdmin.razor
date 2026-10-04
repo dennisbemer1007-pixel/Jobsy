@@ -138,7 +138,7 @@
                                 title="@Culture["Admin.MailTestPreview"]"
                                 sandbox=""
                                 style="width:@(_width)px;height:720px;max-width:100%;border:1px solid var(--border);background:#fff"
-                                srcdoc="@_preview.Html"></iframe>
+                                src="@PreviewFrameSrc"></iframe>
                         <p class="muted">@Culture["Admin.MailTestLinksDisabled"]</p>
                     }
                     else if (_tab == "text")
@@ -192,6 +192,12 @@
     private readonly List<(string Label, List<EmailTemplateItem> Items)> _groups = [];
     private string? _selectedKey;
     private EmailTemplatePreviewItem? _preview;
+
+    private string PreviewFrameSrc
+        => "/admin/content/emails/preview-frame?key="
+           + Uri.EscapeDataString(_selectedKey ?? "")
+           + "&lang=" + Uri.EscapeDataString(_lang)
+           + "&theme=" + Uri.EscapeDataString(_theme);
     private EmailCatalogSendAllStatusItem? _sendAllStatus;
     private string _lang = "nl";
     private string _theme = "light";

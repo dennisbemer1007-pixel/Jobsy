@@ -501,6 +501,7 @@ app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
 app.MapPupilPdfEndpoints();
+app.MapAdminFrameEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();
 app.MapSeoEndpoints();
