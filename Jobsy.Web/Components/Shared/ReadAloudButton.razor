@@ -1,0 +1,222 @@
+@namespace Jobsy.Web.Components.Shared
+@using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@inherits CultureAwareComponentBase
+@inject IJSRuntime Js
+@inject IServiceProvider Services
+
+@if (_show)
+{
+    <button type="button"
+            class="read-aloud @(_speaking ? "is-speaking" : null)"
+            data-read-aloud
+            data-read-aloud-state="@(_speaking ? "stop" : "play")"
+            aria-pressed="@(_speaking ? "true" : "false")"
+            aria-label="@AriaLabel"
+            @onclick="ToggleAsync"
+            @onclick:stopPropagation="true">
+        <span class="read-aloud__icon" aria-hidden="true">@(_speaking ? "■" : "▶")</span>
+        <span class="read-aloud__label">@(_speaking ? Culture["ReadAloud.Stop"] : Culture["ReadAloud.Play"])</span>
+    </button>
+}
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+
+    [Parameter] public string SpeechKey { get; set; } = "";
+
+    private bool _show;
+    private bool _speaking;
+    private string _spoken = "";
+    private DotNetObjectReference<ReadAloudButton>? _self;
+    private ReadAloudCoordinator? _coordinator;
+
+    private string EffectiveKey => string.IsNullOrWhiteSpace(SpeechKey) ? "text-" + StableHash(Text) : SpeechKey;
+
+    private string AriaLabel => _speaking ? Culture["ReadAloud.StopAria"] : Culture["ReadAloud.PlayAria"];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _coordinator = Services.GetService<ReadAloudCoordinator>();
+        if (_coordinator is not null)
+        {
+            _coordinator.ActiveChanged += OnActiveChanged;
+            _coordinator.PreferenceChanged += OnPreferenceChanged;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ProbeAsync();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_speaking && !string.Equals(_spoken, Text, StringComparison.Ordinal))
+        {
+            await StopQuietlyAsync();
+        }
+    }
+
+    protected override async Task OnCultureChanged()
+    {
+        if (_speaking)
+        {
+            await StopQuietlyAsync();
+        }
+
+        await ProbeAsync();
+        await base.OnCultureChanged();
+    }
+
+    private async Task ProbeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            _show = false;
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
+            _show = probe is { Supported: true, Enabled: true };
+        }
+        catch (Exception)
+        {
+            _show = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ToggleAsync()
+    {
+        if (_speaking)
+        {
+            await StopQuietlyAsync();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            return;
+        }
+
+        try
+        {
+            _self ??= DotNetObjectReference.Create(this);
+            var started = await Js.InvokeAsync<bool>("lobsyReadAloud.speak", Text, Culture.Language, _self);
+            if (!started)
+            {
+                _show = false;
+                return;
+            }
+
+            _spoken = Text;
+            _speaking = true;
+            _coordinator?.SetActive(EffectiveKey);
+        }
+        catch (Exception)
+        {
+            _speaking = false;
+        }
+    }
+
+    [JSInvokable]
+    public void OnSpeechEnded()
+    {
+        _speaking = false;
+        if (_coordinator?.ActiveKey == EffectiveKey)
+        {
+            _coordinator.SetActive(null);
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task StopQuietlyAsync()
+    {
+        _speaking = false;
+        if (_coordinator?.ActiveKey == EffectiveKey)
+        {
+            _coordinator.SetActive(null);
+        }
+
+        try
+        {
+            if (_self is not null)
+            {
+                await Js.InvokeVoidAsync("lobsyReadAloud.stop", _self);
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("lobsyReadAloud.stop");
+            }
+        }
+        catch (Exception)
+        {
+            /* Circuit is going away, or speech is already stopped. */
+        }
+    }
+
+    private void OnActiveChanged()
+        => _ = InvokeAsync(() =>
+        {
+            var speaking = _coordinator?.ActiveKey == EffectiveKey;
+            if (_speaking == speaking)
+            {
+                return;
+            }
+
+            _speaking = speaking;
+            StateHasChanged();
+        });
+
+    private void OnPreferenceChanged()
+        => _ = InvokeAsync(async () =>
+        {
+            if (_speaking)
+            {
+                await StopQuietlyAsync();
+            }
+
+            await ProbeAsync();
+        });
+
+    public override void Dispose()
+    {
+        if (_coordinator is not null)
+        {
+            _coordinator.ActiveChanged -= OnActiveChanged;
+            _coordinator.PreferenceChanged -= OnPreferenceChanged;
+        }
+
+        if (_speaking)
+        {
+            _ = StopQuietlyAsync();
+        }
+
+        _self?.Dispose();
+        base.Dispose();
+    }
+
+    private static string StableHash(string value)
+    {
+        unchecked
+        {
+            var hash = 17;
+            foreach (var ch in value)
+            {
+                hash = (hash * 31) + ch;
+            }
+
+            return hash.ToString("x", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+}

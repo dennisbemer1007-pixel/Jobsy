@@ -179,6 +179,36 @@ public class AdminRun4PlaywrightTests
             new() { Timeout = 30_000 });
     }
 
+    private static async Task WaitForTwoDataRowsAsync(IPage page)
+    {
+        var token = Guid.NewGuid().ToString("N");
+        await page.WaitForFunctionAsync(
+            """
+            (token) => {
+              if (window.__jobsyRowsToken !== token) {
+                window.__jobsyRowsToken = token;
+                window.__jobsyRowsSince = 0;
+              }
+              if (document.querySelector('.admin-data-table__state')) {
+                window.__jobsyRowsSince = 0;
+                return false;
+              }
+              const rows = document.querySelectorAll('table tbody tr');
+              if (rows.length < 2) {
+                window.__jobsyRowsSince = 0;
+                return false;
+              }
+              const now = Date.now();
+              if (!window.__jobsyRowsSince) {
+                window.__jobsyRowsSince = now;
+              }
+              return now - window.__jobsyRowsSince >= 400;
+            }
+            """,
+            token,
+            new() { Timeout = 30_000 });
+    }
+
     private static async Task OpenRowMenuAsync(ILocator toggle)
     {
         await toggle.ClickAsync();
@@ -204,9 +234,16 @@ public class AdminRun4PlaywrightTests
     {
         await GotoInteractiveAsync(page, url);
         var rows = page.Locator("table tbody tr");
-        await rows.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        // The first paint can be a single prerendered row. Wait until two rows stay.
+        await WaitForTwoDataRowsAsync(page);
         var count = await rows.CountAsync();
-        Assert.True(count >= 2, $"Need two rows on {url} to prove search hides a non-match.");
+        if (count < 2)
+        {
+            await WaitForTwoDataRowsAsync(page);
+            count = await rows.CountAsync();
+        }
+
+        Assert.True(count >= 2, $"Need two rows on {url} to prove search hides a non-match (saw {count}).");
 
         // Snapshot the other row before typing. A short token such as "Binckhorst" also
         // matches an address the table does not show, so the query is the full primary

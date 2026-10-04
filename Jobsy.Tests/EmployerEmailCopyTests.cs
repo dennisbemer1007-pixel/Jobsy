@@ -36,8 +36,10 @@ public class EmployerEmailCopyTests
     public void Employer_mails_never_include_candidate_pii_sample()
     {
         const string candidate = "Sanne van Dijk";
+        // A random application id can contain the digits 86 and fail the score check.
         var mail = TransactionalEmails.EmployerNewApplication(
-            "https://lobsy.nl", "Weekendhulp", branchName: "Delft", applicationId: Guid.NewGuid(),
+            "https://lobsy.nl", "Weekendhulp", branchName: "Delft",
+            applicationId: Guid.Parse("11111111-1111-1111-1111-111111111111"),
             receivedAtUtc: DateTime.UtcNow, matchPercent: 86, companyName: "Bakkerij");
         Assert.DoesNotContain(candidate, mail.Html, StringComparison.Ordinal);
         Assert.DoesNotContain(candidate, mail.Text, StringComparison.Ordinal);
