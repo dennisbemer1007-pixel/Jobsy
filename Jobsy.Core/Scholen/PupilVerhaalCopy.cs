@@ -53,8 +53,9 @@ public static class PupilVerhaalCopy
         => TryResolve(key, out value);
 
     /// <summary>
-    /// Pair sentences are stored once. CI and IC (and the other five swapped pairs) resolve to the same line.
-    /// A missing pair falls back to the first letter so a raw key never reaches the pupil.
+    /// Pair texts are stored once. CI and IC share a line. Any two-letter RIASEC segment
+    /// (class prompts, tiles, sentences) tries the alphabetical pair, then the swapped pair,
+    /// then the first letter, so a raw key never reaches the screen.
     /// </summary>
     private static bool TryResolve(string key, out string value)
     {
@@ -63,32 +64,89 @@ public static class PupilVerhaalCopy
             return true;
         }
 
-        const string prefix = "LeerlingStory.Riasec.";
-        if (string.IsNullOrWhiteSpace(key) || !key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(key))
         {
             value = "";
             return false;
         }
 
-        var pair = key[prefix.Length..];
-        if (pair.Length == 2 && IsRiasec(pair[0]) && IsRiasec(pair[1]) && pair[0] != pair[1])
+        if (TryRewritePairSegment(key, out value!))
         {
-            var canonical = PupilStoryTemplates.CanonicalRiasecPair(pair[0], pair[1]);
-            if (All.TryGetValue(prefix + canonical, out value!))
+            return true;
+        }
+
+        if (TryFirstLetterFallback(key, out value!))
+        {
+            return true;
+        }
+
+        value = "";
+        return false;
+    }
+
+    private static bool TryFirstLetterFallback(string key, out string value)
+    {
+        string[] prefixes =
+        [
+            "LeerlingStory.Class.",
+            "LeerlingStory.Tile.Riasec.",
+            "LeerlingStory.Riasec."
+        ];
+        foreach (var prefix in prefixes)
+        {
+            if (!key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
-                return true;
+                continue;
             }
 
-            var swapped = prefix + canonical[1] + canonical[0];
-            if (All.TryGetValue(swapped, out value!))
+            var rest = key[prefix.Length..];
+            if (rest.Length < 1 || !IsRiasec(rest[0]))
+            {
+                continue;
+            }
+
+            var dot = rest.IndexOf('.');
+            var tail = dot >= 0 ? rest[dot..] : "";
+            var candidate = prefix + char.ToUpperInvariant(rest[0]) + tail;
+            if (!string.Equals(candidate, key, StringComparison.OrdinalIgnoreCase)
+                && All.TryGetValue(candidate, out value!))
             {
                 return true;
             }
         }
 
-        if (pair.Length >= 1 && IsRiasec(pair[0]) && All.TryGetValue(prefix + char.ToUpperInvariant(pair[0]), out value!))
+        value = "";
+        return false;
+    }
+
+    private static bool TryRewritePairSegment(string key, out string value)
+    {
+        var parts = key.Split('.');
+        for (var i = 0; i < parts.Length; i++)
         {
-            return true;
+            var seg = parts[i];
+            if (seg.Length != 2
+                || !IsRiasec(seg[0])
+                || !IsRiasec(seg[1])
+                || char.ToUpperInvariant(seg[0]) == char.ToUpperInvariant(seg[1]))
+            {
+                continue;
+            }
+
+            var canonical = PupilStoryTemplates.CanonicalRiasecPair(seg[0], seg[1]);
+            var swapped = string.Concat(canonical[1], canonical[0]);
+            var first = char.ToUpperInvariant(seg[0]).ToString();
+            foreach (var replacement in new[] { canonical, swapped, first })
+            {
+                var previous = parts[i];
+                parts[i] = replacement;
+                if (All.TryGetValue(string.Join('.', parts), out value!))
+                {
+                    return true;
+                }
+
+                parts[i] = previous;
+            }
         }
 
         value = "";
@@ -136,7 +194,7 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Riasec.ER"] = "Je pakt dingen aan en neemt graag het voortouw.";
         d["LeerlingStory.Riasec.ES"] = "Je helpt graag en neemt het voortouw in de groep.";
         d["LeerlingStory.Val.Autonomy"] = "Belangrijk voor jou: zelf kiezen wat je doet.";
-        d["LeerlingStory.Val.Connection"] = "Belangrijk voor jou: samen zijn met anderen.";
+        d["LeerlingStory.Val.Connection"] = "Belangrijk voor jou: samen met anderen.";
         d["LeerlingStory.Val.Achievement"] = "Belangrijk voor jou: iets goed afmaken.";
         d["LeerlingStory.Val.Stability"] = "Belangrijk voor jou: rust en duidelijkheid.";
         d["LeerlingStory.Val.Impact"] = "Belangrijk voor jou: dat anderen er iets aan hebben.";
@@ -204,9 +262,9 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Tile.Riasec.CE.Explain"] = "Dit doe je graag.";
         d["LeerlingStory.Tile.Val.Autonomy"] = "Zelf kiezen";
         d["LeerlingStory.Tile.Val.Autonomy.Explain"] = "Dit vind je belangrijk.";
-        d["LeerlingStory.Tile.Val.Connection"] = "Anderen helpen";
+        d["LeerlingStory.Tile.Val.Connection"] = "Samen met anderen";
         d["LeerlingStory.Tile.Val.Connection.Explain"] = "Dit vind je belangrijk.";
-        d["LeerlingStory.Tile.Val.Achievement"] = "Iets goed doen";
+        d["LeerlingStory.Tile.Val.Achievement"] = "Iets goed afmaken";
         d["LeerlingStory.Tile.Val.Achievement.Explain"] = "Dit vind je belangrijk.";
         d["LeerlingStory.Tile.Val.Stability"] = "Rust en duidelijkheid";
         d["LeerlingStory.Tile.Val.Stability.Explain"] = "Dit vind je belangrijk.";
@@ -417,6 +475,37 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Class.EC.1"] = "Wie neemt graag het voortouw?";
         d["LeerlingStory.Class.EC.2"] = "Wanneer leidde iemand een groepje?";
         d["LeerlingStory.Class.EC.3"] = "Deel een klein initiatief.";
+        // Alphabetical pairs. The keys above use RIASEC letter order; both orders resolve to the same lines.
+        d["LeerlingStory.Class.AI.1"] = "Wie wil graag weten hoe iets werkt?";
+        d["LeerlingStory.Class.AI.2"] = "Welk vak voelt 'uitzoeken'?";
+        d["LeerlingStory.Class.AI.3"] = "Deel een nieuwsgierige vraag.";
+        d["LeerlingStory.Class.AR.1"] = "Wie in de klas maakt graag iets met de handen?";
+        d["LeerlingStory.Class.AR.2"] = "Welk vak voelt 'maken'?";
+        d["LeerlingStory.Class.AR.3"] = "Deel een klein maak-moment.";
+        d["LeerlingStory.Class.CE.1"] = "Wie neemt graag het voortouw?";
+        d["LeerlingStory.Class.CE.2"] = "Wanneer leidde iemand een groepje?";
+        d["LeerlingStory.Class.CE.3"] = "Deel een klein initiatief.";
+        d["LeerlingStory.Class.CI.1"] = "Wie wil graag weten hoe iets werkt?";
+        d["LeerlingStory.Class.CI.2"] = "Welk vak voelt 'uitzoeken'?";
+        d["LeerlingStory.Class.CI.3"] = "Deel een nieuwsgierige vraag.";
+        d["LeerlingStory.Class.CR.1"] = "Wie in de klas maakt graag iets met de handen?";
+        d["LeerlingStory.Class.CR.2"] = "Welk vak voelt 'maken'?";
+        d["LeerlingStory.Class.CR.3"] = "Deel een klein maak-moment.";
+        d["LeerlingStory.Class.CS.1"] = "Wie helpt graag een ander?";
+        d["LeerlingStory.Class.CS.2"] = "Wanneer hielp iemand in de klas?";
+        d["LeerlingStory.Class.CS.3"] = "Deel een moment van zorgen.";
+        d["LeerlingStory.Class.EI.1"] = "Wie wil graag weten hoe iets werkt?";
+        d["LeerlingStory.Class.EI.2"] = "Welk vak voelt 'uitzoeken'?";
+        d["LeerlingStory.Class.EI.3"] = "Deel een nieuwsgierige vraag.";
+        d["LeerlingStory.Class.ER.1"] = "Wie in de klas maakt graag iets met de handen?";
+        d["LeerlingStory.Class.ER.2"] = "Welk vak voelt 'maken'?";
+        d["LeerlingStory.Class.ER.3"] = "Deel een klein maak-moment.";
+        d["LeerlingStory.Class.ES.1"] = "Wie helpt graag een ander?";
+        d["LeerlingStory.Class.ES.2"] = "Wanneer hielp iemand in de klas?";
+        d["LeerlingStory.Class.ES.3"] = "Deel een moment van zorgen.";
+        d["LeerlingStory.Class.IR.1"] = "Wie in de klas maakt graag iets met de handen?";
+        d["LeerlingStory.Class.IR.2"] = "Welk vak voelt 'maken'?";
+        d["LeerlingStory.Class.IR.3"] = "Deel een klein maak-moment.";
         d["LeerlingDroom.Need.ZorgVoorDieren"] = "Je bent zorgzaam, voor mensen én dieren";
         d["LeerlingDroom.Need.ZorgVoorDieren.Next"] = "Oefen met zorgen voor een dier of plant";
         d["LeerlingDroom.Need.Nieuwsgierig"] = "Je wilt weten hoe iets werkt";

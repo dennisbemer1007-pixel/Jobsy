@@ -345,6 +345,8 @@ public class TeacherSchoolLabelBunitTests : BunitContext
         var overview = Render<LeraarKlasOverview>(p => p.Add(x => x.ClassId, ClassId));
         AssertNoRawEnums(overview.Markup);
         Assert.Contains("Rust en duidelijkheid", overview.Markup, StringComparison.Ordinal);
+        Assert.Contains("Weet ik nog niet: 4", overview.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sch-chip-list\"></div>", overview.Markup, StringComparison.Ordinal);
 
         nav.NavigateTo("http://localhost/school/resultaten");
         var school = Render<SchoolResults>();
@@ -443,7 +445,8 @@ public class TeacherSchoolLabelBunitTests : BunitContext
                     [new NamedCountDto("Informal", 2)],
                     [],
                     [],
-                    PupilQuestionSet.Vo),
+                    PupilQuestionSet.Vo,
+                    UndecidedDreamJobCount: 4),
                 PupilQuestionSet.Vo),
             JobsyApiClient.ApiJson);
 

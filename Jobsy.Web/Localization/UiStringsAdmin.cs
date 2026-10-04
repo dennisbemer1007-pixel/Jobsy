@@ -446,6 +446,12 @@ public static class UiStringsAdmin
         Add("AdminSettings.Schools.Enabled.Title", "Scholen-portalen actief", "School portals enabled", "Portale szkół włączone", "Portaluri școli activate", "بوابات المدارس مفعّلة");
         Add("AdminSettings.Schools.Enabled.Desc", "School-, leraar- en leerlingportalen. Bewaartermijn draait altijd, ook als dit uit staat.", "School, teacher and pupil portals. Retention always runs, even when this is off.", "Portale szkoły, nauczyciela i ucznia. Retencja działa zawsze.", "Portaluri școală, profesor și elev. Retenția rulează mereu.", "بوابات المدرسة والمعلم والتلميذ. الاحتفاظ يعمل دائمًا.");
         Add("AdminSettings.Schools.Enabled.ImpactOff", "School- en leerlingportalen zijn niet bereikbaar.", "School and pupil portals are unreachable.", "Portale szkoły i ucznia niedostępne.", "Portalurile școală/elev sunt inaccesibile.", "بوابات المدرسة والتلميذ غير متاحة.");
+        Add("AdminSettings.Schools.Enabled.EnableConfirm",
+            "Aan: scholen, leraren en leerlingen kunnen inloggen. Weet je het zeker?",
+            "On: schools, teachers and pupils can sign in. Are you sure?",
+            "Włączone: szkoły, nauczyciele i uczniowie mogą się logować. Na pewno?",
+            "Pornit: școlile, profesorii și elevii se pot conecta. Ești sigur?",
+            "تشغيل: يمكن للمدارس والمعلمين والتلاميذ تسجيل الدخول. هل أنت متأكد؟");
         Add("AdminSettings.Schools.PerCode.Title", "Resultaten per code voor schoolbeheer", "Per-code results for school admins", "Wyniki per kod dla adminów szkoły", "Rezultate pe cod pentru admini școală", "نتائج لكل رمز لمسؤولي المدرسة");
         Add("AdminSettings.Schools.PerCode.Desc", "Als aan: schoolbeheerders zien korte uitkomsten per code. Uit: alleen groepsresultaten (k≥5).", "When on: school admins see short per-code outcomes. Off: group results only (k≥5).", "Wł: krótkie wyniki per kod. Wył: tylko grupy (k≥5).", "Pornit: rezultate scurte pe cod. Oprit: doar grupuri (k≥5).", "عند التشغيل: نتائج قصيرة لكل رمز. عند الإيقاف: نتائج جماعية فقط.");
         Add("AdminSettings.Schools.RetentionMonth.Title", "Bewaartermijn-maand", "Retention cutoff month", "Miesiąc retencji", "Luna retenției", "شهر قطع الاحتفاظ");
