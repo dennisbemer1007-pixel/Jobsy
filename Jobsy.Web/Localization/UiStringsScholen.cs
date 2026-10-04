@@ -1,3 +1,5 @@
+using Jobsy.Core.Scholen;
+
 namespace Jobsy.Web.Localization;
 
 /// <summary>
@@ -11,7 +13,7 @@ public static class UiStringsScholen
         // —— School shell ——
         nl["School.LoadFailed"] = "De schoolpagina kon niet geladen worden. Probeer het opnieuw.";
         nl["Leraar.LoadFailed"] = "De klasgegevens konden niet geladen worden. Probeer het opnieuw.";
-        nl["Leerling.Login.NoOpenSchool"] = "Je juf of meester zet de test open. Daarna kun je hier je school kiezen.";
+        nl["Leerling.Login.NoOpenSchool"] = "Je leraar zet de test open. Daarna kun je hier je school kiezen.";
         nl["AdminScholen.Agreement.Current"] = "Huidige registratie: {0} · versie {1}.";
         nl["School.ProductLabel"] = "Lobsy voor scholen";
         nl["School.RoleChip"] = "Schoolbeheerder";
@@ -45,7 +47,7 @@ public static class UiStringsScholen
         nl["School.Col.Year"] = "Leerjaar";
         nl["School.Col.QuestionSet"] = "Vragenlijst";
         nl["School.QuestionSet.Groep78"] = "Vragenlijst groep 7/8 (60 vragen)";
-        nl["School.QuestionSet.Vo"] = "Vragenlijst VO";
+        nl["School.QuestionSet.Vo"] = "Vragenlijst VO (100 vragen)";
         nl["School.Results.TestSwitch"] = "Vragenlijst";
         nl["School.Col.Teacher"] = "Leraar";
         nl["School.Col.Codes"] = "Codes";
@@ -88,10 +90,11 @@ public static class UiStringsScholen
         nl["School.Class.Field.Count"] = "Aantal leerlingen";
         nl["School.Class.Field.Teachers"] = "Leraar(en)";
         nl["School.Class.CodesNote"] = "Lobsy maakt voor elke leerling een code. Namen vul je zelf in op de geprinte lijst.";
+        nl["School.Class.SetNote.Shared"] = "Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets.";
         nl["School.Class.SetNote.G78.Title"] = "Vragenlijst: Groep 7/8";
-        nl["School.Class.SetNote.G78.Body"] = "Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets. 60 vragen (Nee … Ja!) · 3 puzzelpauzes · ongeveer 30 minuten.";
+        nl["School.Class.SetNote.G78.Body"] = "60 vragen (Nee … Ja!) · 3 puzzelpauzes · " + PupilSessionDuration.Groep78 + ".";
         nl["School.Class.SetNote.Vo.Title"] = "Vragenlijst: Middelbare school";
-        nl["School.Class.SetNote.Vo.Body"] = "100 vragen (Klopt niet … Klopt helemaal) · 2 lesdelen · ongeveer 40–45 minuten. Pauze na het Pauze-eiland: daar kan de les stoppen.";
+        nl["School.Class.SetNote.Vo.Body"] = "100 vragen (Klopt niet … Klopt helemaal) · " + PupilSessionDuration.VoLessons + ". Pauze na het Pauze-eiland: daar kan de les stoppen.";
         nl["School.Class.LevelLocked"] = "Soort klas ligt vast. Er zijn al leerlingen van deze klas begonnen. Wisselen tussen basisschool en middelbare school kan niet meer, want dan passen hun antwoorden niet bij de vragenlijst. Niveau en leerjaar binnen dezelfde soort kun je wel aanpassen.";
         nl["School.Class.Danger"] = "Klas verwijderen";
         nl["School.Class.Delete"] = "Klas verwijderen";
@@ -198,6 +201,8 @@ public static class UiStringsScholen
         nl["School.Privacy.Confirmations"] = "Bevestigingen per klas";
         nl["School.Privacy.Ouderbrief"] = "Ouderbrief";
         nl["School.Privacy.Copy"] = "Tekst kopiëren";
+        nl["School.Privacy.Copied"] = "Gekopieerd";
+        nl["School.Privacy.AgreementLink"] = "Bekijk de verwerkersovereenkomst";
         nl["School.Privacy.DeleteYear"] = "Alle leerlinggegevens van dit schooljaar nu verwijderen";
         nl["School.Privacy.DeleteYearHelp"] = "Maakt eerst anonieme totalen (vanaf 5) en verwijdert daarna klassen, codes en resultaten van dit schooljaar. Typ VERWIJDER ter bevestiging.";
         nl["School.Privacy.DeleteYearConfirm"] = "Bevestiging";
@@ -209,12 +214,11 @@ public static class UiStringsScholen
         nl["School.Material.Lesbrief"] = "Lesbrief";
         nl["School.Material.LesbriefBody"] = "Korte handleiding voor in de les: codes uitdelen, testvenster, pauze en afronden.";
         nl["School.Material.OpenLesbrief"] = "Lesbrief openen";
-        nl["School.Material.OnDemandNote"] = "De lesbrief wordt on-demand als HTML/PDF getoond (niet vooraf gegenereerd).";
         nl["School.Material.LoginSteps"] = "Zo loggen leerlingen in";
         nl["School.Material.Step1"] = "Ga naar lobsy.nl/leerling";
         nl["School.Material.Step2"] = "Kies school en klas";
         nl["School.Material.Step3"] = "Vul de code van de papieren lijst in";
-        nl["School.Material.Step4"] = "Start de ontdekkingsreis (ca. 25 minuten)";
+        nl["School.Material.Step4"] = "Start de ontdekkingsreis (groep 7/8: " + PupilSessionDuration.Groep78 + ", VO: " + PupilSessionDuration.VoLessons + ")";
 
         nl["School.Nav.Overview"] = "Overzicht";
         nl["School.Nav.Dashboard"] = "Dashboard";
@@ -252,6 +256,7 @@ public static class UiStringsScholen
 
         nl["Leraar.Overview.Title"] = "Klasoverzicht";
         nl["Leraar.Class.NotFound"] = "Klas niet gevonden.";
+        nl["Leraar.Code.NotFound"] = "Code niet gevonden.";
         nl["Leraar.Kpi.Codes"] = "Codes";
         nl["Leraar.Kpi.Completed"] = "Afgerond";
         nl["Leraar.Kpi.InProgress"] = "Bezig";
@@ -333,6 +338,8 @@ public static class UiStringsScholen
         nl["Leerling.Login.Code"] = "Jouw code";
         nl["Leerling.Login.NoName"] = "Je naam hoeft niet. Lobsy kent alleen je code.";
         nl["Leerling.Login.Start"] = "Start je reis";
+        nl["Leerling.Login.ChooseSchool"] = "Kies";
+        nl["Leerling.Login.StaffOther"] = "medewerker";
         nl["Leerling.Login.StaffBusy"] = "Je bent ingelogd als {0}. Log eerst uit om als leerling te starten.";
         nl["Leerling.Login.Error.Invalid"] = "Die code klopt niet bij deze klas. Kijk goed op je kaartje of vraag je leraar.";
         nl["Leerling.Login.Error.Invalid.Vo"] = "Die code klopt niet bij deze klas. Kijk goed op je kaartje of vraag je docent.";
@@ -345,8 +352,8 @@ public static class UiStringsScholen
         nl["Leerling.Pause"] = "Pauze";
         nl["Leerling.Start.Title"] = "Zo werkt het";
         nl["Leerling.Start.Lead"] = "Je gaat op reis door 4 werelden. Lobsy leert jou kennen — zonder namen.";
-        nl["Leerling.Start.NoteTime"] = "Duurt ongeveer 25 minuten.";
-        nl["Leerling.Vo.Start.NoteTime"] = "Duurt ongeveer 40–45 minuten, in twee delen.";
+        nl["Leerling.Start.NoteTime"] = "Duurt " + PupilSessionDuration.Groep78 + ".";
+        nl["Leerling.Vo.Start.NoteTime"] = "Duurt " + PupilSessionDuration.VoLessons + ".";
         nl["Leerling.Start.NoteNoWrong"] = "Er zijn geen foute antwoorden.";
         nl["Leerling.Start.NotePause"] = "Je kunt stoppen en later verder.";
         nl["Leerling.Start.Begin"] = "Beginnen";

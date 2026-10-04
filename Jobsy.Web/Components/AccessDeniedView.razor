@@ -102,7 +102,9 @@
             : Culture["Status.Forbidden.Title"];
 
     private string Lead => _schoolsOff
-        ? Culture["Status.Forbidden.SchoolsOffLead"]
+        ? (_isSignedIn
+            ? Culture["Status.Forbidden.SchoolsOffLead"]
+            : Culture["Status.Forbidden.SchoolsOffLeadGuest"])
         : _employersOff
             ? Culture["Status.Forbidden.EmployersOffLead"]
             : Culture["Status.Forbidden.Lead"];
@@ -151,9 +153,19 @@
 
         if (_schoolsOff)
         {
-            // Logout only. A "my start" link would send school staff back through /home → this page.
-            _showSwitchAccount = true;
-            _primaryHref = "";
+            // Signed-in staff can log out. A "my start" link would send them back through /home.
+            // Guests have no account to switch.
+            if (_isSignedIn)
+            {
+                _showSwitchAccount = true;
+                _primaryHref = "";
+            }
+            else
+            {
+                _showSwitchAccount = false;
+                _primaryHref = "/";
+                _primaryLabel = Culture["Status.Forbidden.ToHomepage"];
+            }
         }
         else if (_employersOff)
         {

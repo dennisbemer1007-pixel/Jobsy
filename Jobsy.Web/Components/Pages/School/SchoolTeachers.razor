@@ -5,6 +5,8 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IFeatureFlags Features
@@ -32,7 +34,7 @@ else
     <div class="sch-filter-row">
         <label>
             @Culture["School.Col.Class"]
-            <select class="input" @bind="_filterClass">
+            <select class="sch-field" @bind="_filterClass">
                 <option value="">@Culture["School.Filter.All"]</option>
                 @foreach (var c in _classes)
                 {
@@ -79,7 +81,7 @@ else
                             ? Culture["School.Teachers.StatusInvited"]
                             : Culture["School.Teachers.StatusActive"])
                     </td>
-                    <td>@(t.LastLoginAtUtc?.ToLocalTime().ToString("dd-MM") ?? "—")</td>
+                    <td>@(t.LastLoginAtUtc is DateTime seen ? LobsyTime.ToAmsterdam(seen).ToString("dd-MM") : "—")</td>
                     <td class="sch-row-actions">
                         <button type="button" class="btn-compact" @onclick="() => OpenAssign(t)">@Culture["School.Teachers.Assign"]</button>
                         <button type="button" class="btn-compact" @onclick="() => Resend(t.UserId)" disabled="@_busy">@Culture["School.Teachers.Resend"]</button>
@@ -95,11 +97,11 @@ else
     <p class="muted">@Culture["School.Teachers.InviteLead"]</p>
     <label>
         @Culture["School.Teachers.Field.Name"]
-        <InputText class="input" @bind-Value="_inviteName" />
+        <InputText class="sch-field" @bind-Value="_inviteName" />
     </label>
     <label>
         @Culture["School.Teachers.Field.Email"]
-        <InputText class="input" @bind-Value="_inviteEmail" />
+        <InputText class="sch-field" @bind-Value="_inviteEmail" />
     </label>
     @if (!string.IsNullOrEmpty(_domainHint))
     {
@@ -165,6 +167,7 @@ else
     private string _filterClass = "";
     private string? _drawerError;
     private string? _domainHint;
+    private IReadOnlyList<string> _allowedDomains = [];
     private string _inviteName = "";
     private string _inviteEmail = "";
     private List<SchoolPortalTeacherListItemDto> _teachers = [];
@@ -194,7 +197,8 @@ else
         {
             await ReloadAsync();
             var profile = await Api.GetSchoolProfileAsync();
-            _domainHint = profile?.AllowedEmailDomains.FirstOrDefault();
+            _allowedDomains = profile?.AllowedEmailDomains ?? [];
+            _domainHint = _allowedDomains.FirstOrDefault();
         }
         else
         {
@@ -231,20 +235,62 @@ else
 
     private async Task SendInvite()
     {
+        _drawerError = ValidateInvite();
+        if (_drawerError is not null)
+        {
+            return;
+        }
+
         _busy = true;
         _drawerError = null;
         try
         {
             await Api.InviteSchoolTeacherAsync(new InviteTeacherRequest(
-                _inviteName, _inviteEmail, _inviteClasses.ToList()));
+                _inviteName.Trim(), _inviteEmail.Trim(), _inviteClasses.ToList()));
             _inviteOpen = false;
             await ReloadAsync();
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _drawerError = ex.Message;
+            _drawerError = PortalActionError.From(error.Message);
         }
         finally { _busy = false; }
+    }
+
+    private string? ValidateInvite()
+    {
+        if (string.IsNullOrWhiteSpace(_inviteName))
+        {
+            return "Vul een naam in.";
+        }
+
+        if (string.IsNullOrWhiteSpace(_inviteEmail))
+        {
+            return "Vul een school-e-mail in.";
+        }
+
+        var email = _inviteEmail.Trim();
+        var at = email.LastIndexOf('@');
+        if (at <= 0 || at != email.IndexOf('@') || email.Any(char.IsWhiteSpace) || !email[(at + 1)..].Contains('.'))
+        {
+            return "Dit e-mailadres klopt niet.";
+        }
+
+        if (_allowedDomains.Count > 0)
+        {
+            var domain = email[(at + 1)..];
+            if (!_allowedDomains.Any(d => string.Equals(d.Trim(), domain, StringComparison.OrdinalIgnoreCase)))
+            {
+                return "Gebruik een e-mailadres van de school.";
+            }
+        }
+
+        if (_inviteClasses.Count == 0)
+        {
+            return "Koppel minstens één klas.";
+        }
+
+        return null;
     }
 
     private void OpenAssign(SchoolPortalTeacherListItemDto t)
@@ -270,7 +316,7 @@ else
             _assignOpen = false;
             await ReloadAsync();
         }
-        catch (Exception ex) { _drawerError = ex.Message; }
+        catch (Exception error) { _drawerError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 

@@ -473,10 +473,12 @@ app.UseAdminProviderGuard();
 // Before authorization: with schools off, teacher (/school) and school admin (/leraar)
 // both get the friendly page instead of 403 vs raw JSON.
 app.UseMiddleware<SchoolsFeatureMiddleware>();
+// Before authorization so pupil cookie challenges (302) still get Cache-Control: no-store.
+// Authentication has already run, so the pupil principal is available.
+app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseAuthorization();
 // After auth so the admin bypass reads the cookie principal (errors 05).
 app.UseMiddleware<MaintenanceMiddleware>();
-app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();
 app.UseMfaEnforcement();

@@ -793,6 +793,20 @@
     margin: 0;
 }
 .ll-login__submit { min-height: 48px; width: 100%; }
+.ll-form--cascade .btn-primary { width: 100%; margin-top: var(--space-2); }
+.ll-login .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1rem;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
 .ll-error { color: var(--danger, #b00); }
 .ll-saved { color: var(--success); font-size: var(--text-sm); }
 .ll-worlds { list-style: none; padding: 0; margin: var(--space-4) 0; display: grid; gap: var(--space-3); }
@@ -1272,8 +1286,8 @@
     margin: 0 0 var(--space-4);
     padding: var(--space-3);
     border-radius: var(--radius-md, 10px);
-    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    background: var(--success-soft);
+    border: 1px solid color-mix(in srgb, var(--success) 35%, var(--border));
 }
 
 .sch-set-note strong {
@@ -1281,10 +1295,102 @@
     margin-bottom: var(--space-1);
 }
 
-.sch-set-note p {
+.sch-set-note p,
+.sch-set-note li {
     margin: 0;
-    color: var(--muted);
+    color: var(--text);
     font-size: var(--text-sm);
+}
+
+.sch-set-note ul {
+    margin: var(--space-2) 0 0;
+    padding-left: 1.15rem;
+}
+
+.sch-set-note li + li {
+    margin-top: var(--space-1);
+}
+
+.sch-shell label:has(.sch-field),
+.ent-drawer label:has(.sch-field) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.sch-shell .sch-field,
+.ent-drawer .sch-field,
+.sch-shell .input,
+.ent-drawer .input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-weight: 400;
+}
+
+.sch-shell .btn-primary,
+.ent-drawer .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1rem;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sch-shell .btn-primary:disabled,
+.ent-drawer .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.sch-shell .sch-privacy-delete {
+    white-space: normal;
+    max-width: 100%;
+    height: auto;
+    text-align: center;
+}
+
+@media (max-width: 639px) {
+    .sch-shell .ent-data-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+    }
+
+    .sch-shell .ent-data-table tr {
+        display: block;
+        margin-bottom: var(--space-3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+
+    .sch-shell .ent-data-table td[data-label] {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: 0;
+    }
+
+    .sch-shell .ent-data-table td[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted);
+    }
 }
 
 .sch-level-locked {

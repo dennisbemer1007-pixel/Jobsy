@@ -157,6 +157,52 @@ public class LeerlingCircuitAuthTests : BunitContext
         }
     }
 
+    [Fact]
+    public async Task Auth_challenge_after_the_middleware_still_sends_no_store()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddAuthentication()
+            .AddCookie(PupilAuthDefaults.Scheme, options =>
+            {
+                options.Cookie.Name = PupilAuthDefaults.CookieName;
+            });
+        builder.Services.AddAuthorization();
+
+        var app = builder.Build();
+        app.UseAuthentication();
+        app.UseMiddleware<LeerlingNoStoreMiddleware>();
+        app.Use(async (ctx, next) =>
+        {
+            if (ctx.Request.Path.StartsWithSegments("/leerling/reis"))
+            {
+                ctx.Response.Redirect("/leerling");
+                return;
+            }
+
+            await next(ctx);
+        });
+        app.Run(ctx =>
+        {
+            ctx.Response.StatusCode = StatusCodes.Status204NoContent;
+            return Task.CompletedTask;
+        });
+
+        await app.StartAsync();
+        try
+        {
+            var client = app.GetTestClient();
+            var reis = await client.GetAsync("/leerling/reis");
+            Assert.Equal(HttpStatusCode.Redirect, reis.StatusCode);
+            Assert.Equal("no-store", reis.Headers.CacheControl?.ToString());
+        }
+        finally
+        {
+            await app.StopAsync();
+            await app.DisposeAsync();
+        }
+    }
+
     private static void MarkResponseStarted(HttpContext http)
     {
         http.Features.Set<Microsoft.AspNetCore.Http.Features.IHttpResponseFeature>(new StartedResponseFeature());

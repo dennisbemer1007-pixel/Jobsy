@@ -74,13 +74,13 @@ else
                         <progress class="sch-progress-meter" max="@row.ProgressTotal" value="@row.ProgressCurrent"></progress>
                         <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
                     </td>
-                    <td>@(row.LastSeenAtUtc is DateTime t ? t.ToLocalTime().ToString("dd-MM HH:mm") : "—")</td>
+                    <td>@(row.LastSeenAtUtc is DateTime t ? LobsyTime.ToAmsterdam(t).ToString("dd-MM HH:mm") : "—")</td>
                     <td class="sch-row-actions">
                         @if (row.Status == PupilCodeStatus.Completed)
                         {
                             <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
                         }
-                        <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => Replace(row.Id)">@Culture["School.Codes.Replace"]</button>
+                        <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => AskReplace(row.Id)">@Culture["School.Codes.Replace"]</button>
                         <span class="muted sch-hint">@Culture["Leraar.Codes.DeleteHint"]</span>
                     </td>
                 </tr>
@@ -89,6 +89,16 @@ else
     </EntDataTable>
     </div>
 }
+
+<LobsyFriendlyDialog IsOpen="_replaceOpen"
+                     Title="@Culture["School.Codes.Replace"]"
+                     Lead="@Culture["School.Codes.ReplaceConfirm"]"
+                     OnClose="CancelReplace">
+    <div class="sch-drawer-actions">
+        <button type="button" class="btn-compact" @onclick="CancelReplace">@Culture["School.Cancel"]</button>
+        <button type="button" class="btn-primary" @onclick="ConfirmReplaceDialog">@Culture["School.Codes.Replace"]</button>
+    </div>
+</LobsyFriendlyDialog>
 
 @code {
     [Parameter] public Guid ClassId { get; set; }
@@ -188,13 +198,33 @@ else
         }
     }
 
+    private bool _replaceOpen;
+    private Guid? _replaceCodeId;
+
+    private void AskReplace(Guid codeId)
+    {
+        _replaceCodeId = codeId;
+        _replaceOpen = true;
+    }
+
+    private void CancelReplace()
+    {
+        _replaceOpen = false;
+        _replaceCodeId = null;
+    }
+
+    private async Task ConfirmReplaceDialog()
+    {
+        var id = _replaceCodeId;
+        CancelReplace();
+        if (id is Guid codeId)
+        {
+            await Replace(codeId);
+        }
+    }
+
     private async Task Replace(Guid codeId)
     {
-        if (!await ConfirmReplace())
-        {
-            return;
-        }
-
         _busy = true;
         _actionError = null;
         try
@@ -211,18 +241,15 @@ else
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _actionError = ex.Message;
+            _actionError = PortalActionError.From(error.Message);
         }
         finally
         {
             _busy = false;
         }
     }
-
-    private Task<bool> ConfirmReplace()
-        => Task.FromResult(true); // confirm dialog via browser: keep simple; API is source of truth
 
     private string StatusLabel(TeacherCodeRowDto row) => row.Status switch
     {
