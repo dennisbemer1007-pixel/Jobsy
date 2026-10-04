@@ -30,11 +30,11 @@ public sealed class ClientPerformanceMetricsTests
                 Address = "A",
                 Location = new GeoPoint(52, 4),
                 Type = CompanyType.Employer,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = companyB,
@@ -43,11 +43,11 @@ public sealed class ClientPerformanceMetricsTests
                 Address = "B",
                 Location = new GeoPoint(52.1, 4.1),
                 Type = CompanyType.Employer,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
 
         db.Vacancies.AddRange(
             new Vacancy
@@ -204,6 +204,11 @@ public sealed class ClientPerformanceMetricsTests
         Assert.Equal("danger", ClientPerformanceStatus.CssModifier(ClientPerformanceBadge.ActionRequired));
         Assert.Equal("warn", ClientPerformanceStatus.CssModifier(ClientPerformanceBadge.LowTokens));
         Assert.Equal("ok", ClientPerformanceStatus.CssModifier(ClientPerformanceBadge.Healthy));
+        Assert.Equal("Geen tokens", ClientPerformanceStatus.LabelNl(ClientPerformanceBadge.LowTokens, 0m));
+        Assert.Equal("Saldo bijna op", ClientPerformanceStatus.LabelNl(ClientPerformanceBadge.LowTokens, 2m));
+        Assert.Equal(
+            "Actie nodig",
+            ClientPerformanceStatus.LabelNl(ClientPerformanceBadge.ActionRequired, 0m));
     }
 
     private static JobsyDbContext CreateDb()

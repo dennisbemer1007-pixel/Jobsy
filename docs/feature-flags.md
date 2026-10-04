@@ -1,6 +1,6 @@
 # Feature flags
 
-Admin toggles live in the singleton `PlatformFeatureSettings` row and are read through `IFeatureFlags` (30s cache). Public bootstrap: `GET api/settings/feature-flags`.
+Admin toggles live in the singleton `PlatformFeatureSettings` row and are read through `IFeatureFlags` (API cache 30s, cleared on save). The web app keeps its own copy for 10 seconds. Public bootstrap: `GET api/settings/feature-flags`.
 
 | Flag | Default | Meaning |
 |---|---|---|

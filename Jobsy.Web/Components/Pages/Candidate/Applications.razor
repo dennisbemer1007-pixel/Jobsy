@@ -85,10 +85,10 @@
             <p class="state-message">
                 @if (_items.Count == 0)
                 {
-                    @Culture["Apps.Empty"]
+                    @(Culture["Apps.Empty"] + (_readOnly ? "" : " "))
                     @if (!_readOnly)
                     {
-                        <text> <a href="@KbRoutes.Map">@Culture["Apps.BrowseMap"]</a>.</text>
+                        <a href="@KbRoutes.Map">@Culture["Apps.BrowseMap"]</a><text>.</text>
                     }
                 }
                 else

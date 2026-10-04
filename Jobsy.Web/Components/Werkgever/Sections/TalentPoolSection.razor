@@ -3,6 +3,8 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject IConfiguration Configuration
+@using Microsoft.Extensions.Configuration
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
@@ -24,10 +26,13 @@
 
     <article class="detail-card">
         <form class="login-form" @onsubmit="SearchAsync" @onsubmit:preventDefault>
-            <label>
-                Tags (competenties / RIASEC)
-                <input @bind="_tags" placeholder="Samenwerken, Social" />
-            </label>
+            @if (ShowRiasecTagFilter)
+            {
+                <label>
+                    Tags (competenties / RIASEC)
+                    <input @bind="_tags" placeholder="Samenwerken, Social" />
+                </label>
+            }
             <label>
                 Max. reistijd (min)
                 <input type="number" min="1" max="180" @bind="_maxTravel" />
@@ -114,6 +119,7 @@
     private string _availability = "";
     private string _transport = TransportLabels.Bike;
     private List<AnonymousTalentCard> _results = [];
+    private bool ShowRiasecTagFilter => Configuration.GetValue("TalentPool:ShowRiasecTagFilter", false);
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,7 +147,8 @@
         _message = null;
         try
         {
-            _results = await Api.SearchTalentPoolAsync(_tags, _maxTravel, _license, _availability, _transport) ?? [];
+            var tags = ShowRiasecTagFilter ? _tags : "";
+            _results = await Api.SearchTalentPoolAsync(tags, _maxTravel, _license, _availability, _transport) ?? [];
         }
         catch (Exception ex)
         {

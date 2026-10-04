@@ -178,6 +178,7 @@ public static class UiStringsSales
         // —— Mijn werkgevers ——
         nl["Sales.Employers.Title"] = "Mijn werkgevers";
         nl["Sales.Employers.Lead"] = "{0} werkgevers via jouw link of code · {1} actief";
+        nl["Sales.Employers.LeadOne"] = "1 werkgever via jouw link of code · {0} actief";
         nl["Sales.Employers.Kpi.Registered"] = "Aangemeld";
         nl["Sales.Employers.Kpi.RegisteredSub"] = "sinds start";
         nl["Sales.Employers.Kpi.FirstPurchase"] = "Eerste aankoop";

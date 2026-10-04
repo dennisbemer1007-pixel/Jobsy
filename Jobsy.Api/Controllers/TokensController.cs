@@ -71,7 +71,7 @@ public class TokensController : ControllerBase
             .Select(c => new TokenBalanceDto(
                 c.Id,
                 c.Name,
-                c.TokenTransactions.Sum(t => t.Amount),
+                c.TokenTransactions.Sum(t => (decimal?)t.Amount) ?? 0m,
                 c.ParentCompanyId,
                 c.TokensManagedByEnterprise))
             .ToListAsync(cancellationToken);

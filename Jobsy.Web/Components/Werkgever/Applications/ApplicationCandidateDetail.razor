@@ -87,8 +87,8 @@
             @if (ApplicationPipelineRules.IsPiiStage(a) && a.CandidateEmployerCount > 0)
             {
                 <div>
-                    <dt>@Culture["WgApp.Fact.Experience"]</dt>
-                    <dd>@a.CandidateEmployerCount</dd>
+                    <dt>@EmployerHistory(a.CandidateEmployerCount)</dt>
+                    <dd class="visually-hidden">@a.CandidateEmployerCount</dd>
                 </div>
             }
         </dl>
@@ -154,6 +154,11 @@
     private string DisplayName => Item is null
         ? ""
         : ApplicationPipelineRules.DisplayName(Item, Culture["WgApp.Anonymous"]);
+
+    private string EmployerHistory(int count)
+        => count == 1
+            ? Culture["WgApp.Fact.EmployersOne"]
+            : string.Format(Culture["WgApp.Fact.EmployersMany"], count);
 
     private async Task SetTab(string tab)
     {
