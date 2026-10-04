@@ -75,6 +75,11 @@ public class AssistantTabPlaywrightTests
         Assert.NotNull(box);
         Assert.True(box!.Y >= 0, $"Assistant tab starts above the viewport (y={box.Y}).");
         Assert.True(box.Y + box.Height <= height + 1, $"Assistant tab ends below the viewport (y={box.Y}, h={box.Height}).");
+
+        await tab.ClickAsync();
+        var panel = page.Locator("#lobsy-assistant-panel");
+        await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+        Assert.True(await panel.IsVisibleAsync());
     }
 
     private static async Task<bool> IsReachableAsync(string baseUrl)
