@@ -89,6 +89,14 @@ public class SettingsController : ControllerBase
             _mistral.BaseUrl,
             _openAi.Model,
             _openAi.BaseUrl);
+        IReadOnlyList<AiFeatureModelDto>? featureModels = null;
+        if (status.Available && string.Equals(status.Provider, AiProviderNames.Mistral, StringComparison.Ordinal))
+        {
+            featureModels = _mistral.ActiveFeatureModels()
+                .Select(row => new AiFeatureModelDto(row.Feature, row.Model))
+                .ToList();
+        }
+
         return Ok(new AiProviderStatusDto(
             status.Provider,
             status.Available ? status.Provider : "Niet ingesteld",
@@ -98,7 +106,8 @@ public class SettingsController : ControllerBase
             status.Model,
             status.RegionCode,
             status.Available,
-            status.EndpointHost));
+            status.EndpointHost,
+            featureModels));
     }
 
     /// <summary>The mail company that actually sends. Read-only: switch with Mail__Provider.</summary>

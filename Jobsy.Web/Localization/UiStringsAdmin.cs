@@ -434,6 +434,17 @@ public static class UiStringsAdmin
         Add("Admin.AiProvider.Fallback", "Mistral staat aan, maar er is geen API-sleutel. De AI blijft uit. OpenAI wordt niet gebruikt.", "Mistral is selected, but there is no API key. AI stays off. OpenAI is not used.", "Mistral jest włączony, ale nie ma klucza API. AI zostaje wyłączone. OpenAI nie jest używane.", "Mistral este pornit, dar nu există o cheie API. AI rămâne oprit. OpenAI nu este folosit.", "Mistral مفعّل، لكن لا يوجد مفتاح API. يبقى الذكاء الاصطناعي متوقفاً. لا يُستخدم OpenAI.");
         Add("Admin.AiProvider.Unavailable", "AI: niet ingesteld. Dit werkt nu even niet.", "AI: not set up. This does not work right now.", "AI: nie ustawione. To teraz nie działa.", "AI: neconfigurat. Asta nu merge acum.", "الذكاء الاصطناعي: غير مُعد. هذا لا يعمل الآن.");
         Add("Admin.AiProvider.ActiveLine", "{0}. Model: {1}. Regio: {2}. Adres: {3}.", "{0}. Model: {1}. Region: {2}. Address: {3}.", "{0}. Model: {1}. Region: {2}. Adres: {3}.", "{0}. Model: {1}. Regiune: {2}. Adresă: {3}.", "{0}. النموذج: {1}. المنطقة: {2}. العنوان: {3}.");
+        Add("Admin.AiProvider.Feature.Story", "Jouw verhaal", "Your story", "Twoja historia", "Povestea ta", "قصتك");
+        Add("Admin.AiProvider.Feature.CareerReport", "Loopbaanrapport", "Career report", "Raport kariery", "Raport de carieră", "تقرير المسار المهني");
+        Add("Admin.AiProvider.Feature.Compass", "Beroepenkompas", "Career compass", "Kompas zawodów", "Busola meseriilor", "بوصلة المهن");
+        Add("Admin.AiProvider.Feature.Chat", "Coach", "Coach", "Trener", "Antrenor", "المدرب");
+        Add(
+            "Admin.AiProvider.ModelsHint",
+            "Een leeg onderdeel gebruikt het model hierboven. Zet een ander model met Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass of Mistral__Models__Chat. Het kompas schrijft ook het loopbaanrapport. Staat het kompasmodel ingevuld, dan wint dat. Anders het rapportmodel.",
+            "An empty part uses the model above. Set another model with Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass or Mistral__Models__Chat. The compass also writes the career report. If the compass model is set, that one wins. Otherwise the report model.",
+            "Pusta część używa modelu powyżej. Inny model ustawiasz przez Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass lub Mistral__Models__Chat. Kompas pisze też raport kariery. Jeśli model kompasu jest ustawiony, wygrywa on. W przeciwnym razie model raportu.",
+            "O parte goală folosește modelul de mai sus. Alt model se setează cu Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass sau Mistral__Models__Chat. Busola scrie și raportul de carieră. Dacă modelul busolei este setat, acela câștigă. Altfel modelul raportului.",
+            "الجزء الفارغ يستخدم النموذج أعلاه. تضبط نموذجاً آخر عبر Mistral__Models__Story أو Mistral__Models__CareerReport أو Mistral__Models__Compass أو Mistral__Models__Chat. البوصلة تكتب أيضاً تقرير المسار. إذا كان نموذج البوصلة مضبوطاً، فهو الذي يُستخدم. وإلا نموذج التقرير.");
         Add("Admin.AiProvider.Region.Eu", "EU", "European Union", "UE", "UE", "الاتحاد الأوروبي");
         Add("Admin.AiProvider.Region.Us", "Verenigde Staten", "United States", "Stany Zjednoczone", "Statele Unite", "الولايات المتحدة");
         Add("Admin.AiProvider.Region.Global", "geen vaste regio", "no fixed region", "brak stałego regionu", "fără regiune fixă", "لا منطقة ثابتة");

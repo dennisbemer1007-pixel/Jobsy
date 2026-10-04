@@ -222,6 +222,8 @@ public record UpdateIntegrationCredentialRequest(
     bool ClearClientSecret = false,
     bool UseEnvironmentCredentials = false);
 
+public sealed record AiFeatureModelDto(string Feature, string Model);
+
 public sealed record AiProviderStatusDto(
     string Provider,
     string DisplayName,
@@ -231,7 +233,8 @@ public sealed record AiProviderStatusDto(
     string? Model = null,
     string? RegionCode = null,
     bool Available = true,
-    string? EndpointHost = null);
+    string? EndpointHost = null,
+    IReadOnlyList<AiFeatureModelDto>? FeatureModels = null);
 
 public sealed record MailProviderStatusDto(
     string Provider,

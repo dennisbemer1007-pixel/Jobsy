@@ -1,4 +1,30 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Options;
+
+/// <summary>Config keys for <c>Mistral:Models</c>. Values are Mistral model ids.</summary>
+public static class MistralFeatureSlots
+{
+    public const string Story = "Story";
+    public const string CareerReport = "CareerReport";
+    public const string Compass = "Compass";
+    public const string Chat = "Chat";
+}
+
+/// <summary>One row on Admin → Integraties.</summary>
+public sealed record MistralActiveFeatureModel(string Feature, string Model);
+
+/// <summary>Per-feature Mistral model. Blank means “use <see cref="MistralOptions.Model"/>”.</summary>
+public sealed class MistralFeatureModels
+{
+    public string? Story { get; set; }
+
+    public string? CareerReport { get; set; }
+
+    public string? Compass { get; set; }
+
+    public string? Chat { get; set; }
+}
 
 /// <summary>
 /// Mistral AI (Paris). Used only when <c>Ai:Provider</c> is <c>Mistral</c>.
@@ -24,7 +50,68 @@ public sealed class MistralOptions
 
     public string Model { get; set; } = DefaultModel;
 
+    /// <summary>
+    /// Optional per-feature overrides. Empty slots use <see cref="Model"/>.
+    /// Env: <c>Mistral__Models__Story</c>, <c>__CareerReport</c>, <c>__Compass</c>, <c>__Chat</c>.
+    /// </summary>
+    public MistralFeatureModels Models { get; set; } = new();
+
     public string BaseUrl { get; set; } = DefaultBaseUrl;
+
+    /// <summary>Model sent for this feature. Other features stay on <see cref="Model"/>.</summary>
+    public string ModelFor(OpenAiFeature feature)
+    {
+        if (feature == OpenAiFeature.CareerCompass)
+        {
+            return ModelForCompassCall();
+        }
+
+        var slot = feature switch
+        {
+            OpenAiFeature.WhoAmI => Models?.Story,
+            OpenAiFeature.AssistantChat => Models?.Chat,
+            _ => null
+        };
+        return Effective(slot, Model);
+    }
+
+    /// <summary>
+    /// The compass call writes the job list and the career-report sentences.
+    /// An explicit compass model wins. Otherwise the career-report model. Otherwise <see cref="Model"/>.
+    /// </summary>
+    public string ModelForCompassCall()
+        => Effective(Models?.Compass, Effective(Models?.CareerReport, Model));
+
+    /// <summary>
+    /// What Admin → Integraties shows: the model each surface sends.
+    /// The career report and the compass share one call, so both rows show that model.
+    /// </summary>
+    public IReadOnlyList<MistralActiveFeatureModel> ActiveFeatureModels()
+    {
+        var compassCall = ModelForCompassCall();
+        return
+        [
+            new(MistralFeatureSlots.Story, ModelFor(OpenAiFeature.WhoAmI)),
+            new(MistralFeatureSlots.CareerReport, compassCall),
+            new(MistralFeatureSlots.Compass, compassCall),
+            new(MistralFeatureSlots.Chat, ModelFor(OpenAiFeature.AssistantChat))
+        ];
+    }
+
+    public static string Effective(string? slot, string? shared)
+    {
+        if (!string.IsNullOrWhiteSpace(slot))
+        {
+            return slot.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(shared))
+        {
+            return shared.Trim();
+        }
+
+        return DefaultModel;
+    }
 
     public static bool HasApiKey(string? apiKey) => !string.IsNullOrWhiteSpace(apiKey);
 

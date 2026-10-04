@@ -146,6 +146,12 @@ public sealed class EmailCatalogSendAllStatusItem
     public string? Error { get; set; }
 }
 
+public sealed class AiFeatureModelItem
+{
+    public string Feature { get; set; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
+}
+
 public sealed class AiProviderStatusItem
 {
     public string Provider { get; set; } = "OpenAI";
@@ -157,6 +163,7 @@ public sealed class AiProviderStatusItem
     public string? RegionCode { get; set; }
     public bool Available { get; set; } = true;
     public string? EndpointHost { get; set; }
+    public List<AiFeatureModelItem> FeatureModels { get; set; } = [];
 }
 
 public sealed class MailProviderStatusItem
