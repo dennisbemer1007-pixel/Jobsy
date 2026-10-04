@@ -43,6 +43,7 @@ public class SchoolClassFormBunitTests : BunitContext
         Assert.Contains("Vragenlijst: Middelbare school", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("100 vragen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Pauze-eiland", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets.", cut.Markup, StringComparison.Ordinal);
 
         var primary = cut.Find("input[value='primary']");
         await primary.ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = "primary" });

@@ -1122,6 +1122,7 @@ public sealed class PupilPortalService : IPupilPortalService
         SchoolLevel.Havo => "havo",
         SchoolLevel.Vwo => "vwo",
         SchoolLevel.Mix => "mix",
+        SchoolLevel.Groep78 => "groep",
         _ => "anders"
     };
 }

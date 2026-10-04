@@ -29,7 +29,7 @@ else if (!string.IsNullOrEmpty(_loadError))
 }
 else if (_detail is null)
 {
-    <p class="state-message error">@Culture["Leraar.Class.NotFound"]</p>
+    <p class="state-message error">@(_missingCode ? Culture["Leraar.Code.NotFound"] : Culture["Leraar.Class.NotFound"])</p>
 }
 else if (_detail.ResultPending || (_detail.Status == PupilCodeStatus.Completed && _detail.Story is null))
 {
@@ -72,7 +72,7 @@ else
             Klas @_detail.ClassName
             @if (_detail.CompletedAtUtc is DateTime done)
             {
-                <span> · @Culture["Leraar.Detail.CompletedOn"] @done.ToLocalTime().ToString("dd-MM-yyyy")</span>
+                <span> · @Culture["Leraar.Detail.CompletedOn"] @LobsyTime.ToAmsterdam(done).ToString("dd-MM-yyyy")</span>
             }
             · @_detail.ProgressCurrent @_detail.ProgressTotal @Culture["Leraar.Detail.Questions"]
             @if (_detail.DurationMinutes is int mins)
@@ -201,6 +201,7 @@ else
 
     private bool _disabled;
     private bool _loading = true;
+    private bool _missingCode;
     private string? _loadError;
     private TeacherCodeDetailDto? _detail;
     private bool _pdfBusy;
@@ -217,11 +218,29 @@ else
 
         _loading = true;
         _loadError = null;
+        _missingCode = false;
         try { _detail = await Api.GetTeacherCodeDetailAsync(ClassId, CodeId); }
         catch (Exception ex)
         {
             _detail = null;
-            if (!PortalLoad.IsNotFound(ex))
+            if (PortalLoad.IsNotFound(ex))
+            {
+                try
+                {
+                    var overview = await Api.GetTeacherOverviewAsync(ClassId);
+                    _missingCode = overview is not null;
+                }
+                catch (Exception overviewError) when (PortalLoad.IsNotFound(overviewError))
+                {
+                    _missingCode = false;
+                }
+                catch (Exception overviewError)
+                {
+                    _loadError = Culture["Leraar.LoadFailed"];
+                    Log.LogWarning(overviewError, "Teacher overview probe failed for {ClassId}", ClassId);
+                }
+            }
+            else
             {
                 _loadError = Culture["Leraar.LoadFailed"];
                 Log.LogWarning(ex, "Teacher code detail failed for {ClassId}", ClassId);

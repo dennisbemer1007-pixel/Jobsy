@@ -254,6 +254,12 @@ public static class UiStringsStatus
             "Ta funkcja jest wyłączona. Włącz ją w ustawieniach platformy.",
             "Funcția este oprită. Pornește-o la setările platformei.",
             "هذه الميزة متوقفة. فعّلها من إعدادات المنصة.");
+        Add("Status.Forbidden.SchoolsOffLeadGuest",
+            "Het scholenportaal is nog niet open. Je hebt geen account nodig. Vragen? Mail support.",
+            "The school portal is not open yet. You do not need an account. Questions? Email support.",
+            "Portal szkolny nie jest jeszcze otwarty. Konto nie jest potrzebne. Pytania? Napisz do wsparcia.",
+            "Portalul școlii nu este încă deschis. Nu ai nevoie de un cont. Întrebări? Scrie la suport.",
+            "بوابة المدارس ليست مفتوحة بعد. لا تحتاج إلى حساب. أسئلة؟ راسل الدعم.");
         Add("Status.Forbidden.SchoolsOffLead",
             "Lobsy voor scholen staat nu uit. Je account blijft bewaard. Log uit, of mail support als je een vraag hebt.",
             "Lobsy for schools is switched off right now. Your account is kept. Sign out, or email support if you have a question.",

@@ -7,9 +7,11 @@
 @inject NavigationManager Nav
 @inject IFeatureFlags Features
 @inject ILogger<LeraarDashboard> Log
+@using Jobsy.Core.Authorization
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
+@inject AuthenticationStateProvider Auth
 
 <PageTitle>@Culture["Leraar.DashboardTitle"] · Lobsy</PageTitle>
 
@@ -25,7 +27,7 @@ else if (_loadFailed)
 {
     <p class="state-message error">@Culture["Leraar.LoadFailed"]</p>
 }
-else if (_empty)
+else if (_empty && !_redirectSchoolAdmin)
 {
     <header class="sch-page-header">
         <h1>@Culture["Leraar.DashboardTitle"]</h1>
@@ -40,6 +42,7 @@ else if (_empty)
     private bool _loading = true;
     private bool _empty;
     private bool _loadFailed;
+    private bool _redirectSchoolAdmin;
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,6 +59,14 @@ else if (_empty)
             var classes = await Api.GetTeacherClassesAsync();
             if (classes.Count == 0)
             {
+                var state = await Auth.GetAuthenticationStateAsync();
+                if (RoleClaimMatching.HasRole(state.User, JobsyRoles.SchoolAdmin))
+                {
+                    _redirectSchoolAdmin = true;
+                    _loading = false;
+                    return;
+                }
+
                 _empty = true;
                 _loading = false;
                 return;
@@ -69,6 +80,15 @@ else if (_empty)
             _empty = false;
             _loading = false;
             Log.LogWarning(ex, "Teacher class list failed to load");
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (_redirectSchoolAdmin && RendererInfo.IsInteractive)
+        {
+            _redirectSchoolAdmin = false;
+            Nav.NavigateTo("/school", replace: true);
         }
     }
 }

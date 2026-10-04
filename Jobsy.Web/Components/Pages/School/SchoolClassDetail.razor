@@ -7,6 +7,8 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.School
 @using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -33,9 +35,18 @@ else
         <p class="sch-breadcrumb"><a href="/school/klassen">@Culture["School.Nav.Classes"]</a> / @_detail.ClassName</p>
         <h1>@_detail.ClassName</h1>
         <p class="muted">
-            @Culture[SchoolLevelRules.LabelKey(_detail.Level)]
-            · @SchoolLevelRules.YearLabel(_detail.Level, _detail.Year)
-            · <span class="sch-pill @(_detail.QuestionSet == PupilQuestionSet.Groep78 ? "sch-pill--ok" : "sch-pill--muted")">@SchoolLevelRules.QuestionSetPillLabel(_detail.QuestionSet)</span>
+            @if (SchoolLevelRules.IsPrimary(_detail.Level))
+            {
+                @SchoolLevelRules.YearLabel(_detail.Level, _detail.Year)
+            }
+            else
+            {
+                @Culture[SchoolLevelRules.LabelKey(_detail.Level)]
+                <text> · </text>
+                @SchoolLevelRules.YearLabel(_detail.Level, _detail.Year)
+                <text> · </text>
+                <span class="sch-pill @(_detail.QuestionSet == PupilQuestionSet.Groep78 ? "sch-pill--ok" : "sch-pill--muted")">@SchoolLevelRules.QuestionSetPillLabel(_detail.QuestionSet)</span>
+            }
             · @_detail.SchoolYearLabel
         </p>
         <div class="sch-admin-toolbar sch-toolbar-wrap">
@@ -59,7 +70,7 @@ else
         {
             <p class="sch-pill sch-pill--ok">
                 @Culture["School.Parents.ConfirmedOn"]
-                @_detail.ParentalInfoConfirmedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy")
+                @(_detail.ParentalInfoConfirmedAtUtc is DateTime confirmed ? LobsyTime.ToAmsterdam(confirmed).ToString("dd-MM-yyyy") : null)
                 @if (!string.IsNullOrEmpty(_detail.ParentalInfoConfirmedByName))
                 {
                     <span> @Culture["School.Parents.By"] @_detail.ParentalInfoConfirmedByName</span>
@@ -120,7 +131,7 @@ else
         <h2>@Culture["School.Class.Danger"]</h2>
         <label>
             @Culture["School.Class.DeleteConfirm"]
-            <InputText class="input" @bind-Value="_deleteConfirm" />
+            <InputText class="sch-field" @bind-Value="_deleteConfirm" />
         </label>
         <button type="button" class="btn-outline-danger" disabled="@_busy" @onclick="DeleteClass">
             @Culture["School.Class.Delete"]
@@ -136,7 +147,7 @@ else
                   FixHref="@_windowFix"
                   OnAction="OnWindowAction" />
 
-<EntDrawer @bind-Open="_editOpen" Title="@Culture["School.Class.Edit"]">
+<EntDrawer @bind-Open="_editOpen" Title="@($"Klas {_edit.ClassName} bewerken")">
     <EditForm Model="_edit" OnValidSubmit="SaveEditAsync">
         <SchoolClassForm @bind-ClassName="_edit.ClassName"
                          @bind-Level="_edit.Level"
@@ -196,9 +207,9 @@ else
             _detail = await Api.GetSchoolClassAsync(ClassId);
             _actionError = null;
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _actionError = ex.Message;
+            _actionError = PortalActionError.From(error.Message);
             _detail = null;
         }
         finally
@@ -211,7 +222,7 @@ else
     {
         _busy = true;
         try { await Api.DownloadSchoolCodeListPdfAsync(Js, ClassId); }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -219,7 +230,7 @@ else
     {
         _busy = true;
         try { await Api.DownloadSchoolCodeListCsvAsync(Js, ClassId); }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -230,7 +241,7 @@ else
         {
             _detail = await Api.AddSchoolClassCodesAsync(ClassId, 1);
         }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -242,7 +253,7 @@ else
             _detail = await Api.ConfirmSchoolParentalAsync(ClassId, confirmed);
             _parentsCheck = false;
         }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -256,16 +267,17 @@ else
             _detail = await Api.SetSchoolTestWindowAsync(ClassId, args.Action, args.ClosesOn);
             _windowOpen = false;
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _windowError = ex.Message;
-            if (ex.Message.Contains("parental", StringComparison.OrdinalIgnoreCase)
-                || ex.Message.Contains("ouders", StringComparison.OrdinalIgnoreCase))
+            var text = PortalActionError.From(error.Message);
+            _windowError = text;
+            if (text.Contains("parental", StringComparison.OrdinalIgnoreCase)
+                || text.Contains("ouders", StringComparison.OrdinalIgnoreCase))
             {
                 _windowFix = $"/school/klassen/{ClassId}";
             }
-            else if (ex.Message.Contains("processor", StringComparison.OrdinalIgnoreCase)
-                     || ex.Message.Contains("verwerker", StringComparison.OrdinalIgnoreCase))
+            else if (text.Contains("processor", StringComparison.OrdinalIgnoreCase)
+                     || text.Contains("verwerker", StringComparison.OrdinalIgnoreCase))
             {
                 _windowFix = "/school/privacy";
             }
@@ -286,7 +298,7 @@ else
             await Api.ReplaceSchoolCodeAsync(ClassId, codeId);
             await ReloadAsync();
         }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -303,7 +315,7 @@ else
             await Api.DeleteSchoolCodeAsync(ClassId, codeId);
             await ReloadAsync();
         }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -315,7 +327,7 @@ else
             await Api.DeleteSchoolClassAsync(ClassId, _deleteConfirm);
             Nav.NavigateTo("/school/klassen");
         }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -372,8 +384,7 @@ else
         }
         catch (Exception failure)
         {
-            // Avoid ex.Message ratchet growth; API validation text is still shown.
-            var apiText = failure.Message;
+            var apiText = PortalActionError.From(failure.Message);
             _editError = apiText.Contains("ligt vast", StringComparison.Ordinal)
                 ? Culture["School.Class.LevelLocked"]
                 : apiText;
@@ -403,7 +414,7 @@ else
         var delta = DateTime.UtcNow - utc;
         if (delta.TotalMinutes < 60) return $"{(int)delta.TotalMinutes} min";
         if (delta.TotalHours < 24) return $"{(int)delta.TotalHours} u";
-        return utc.ToLocalTime().ToString("dd-MM");
+        return LobsyTime.ToAmsterdam(utc).ToString("dd-MM");
     }
 
     private sealed class EditFormModel

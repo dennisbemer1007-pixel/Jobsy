@@ -43,7 +43,7 @@
             {
                 <a class="pub-btn pub-btn--ghost err-header__action" href="@_chrome.MyStartHref">@Culture["Status.Nav.MyStart"]</a>
             }
-            else
+            else if (!_chrome.IsSignedIn)
             {
                 <a class="pub-btn pub-btn--ghost err-header__action" href="@_chrome.LoginHref">@Culture["Status.Nav.Login"]</a>
             }

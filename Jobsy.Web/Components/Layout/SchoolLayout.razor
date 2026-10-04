@@ -140,12 +140,12 @@
             _bottom = ScholenNav.TeacherBottomNav;
             HomeHref = "/leraar";
             _roleLabel = Culture["Leraar.RoleChip"];
-            _scopeLabel = user.Identity?.Name ?? _roleLabel;
+            _scopeLabel = ScopeName(user) ?? _roleLabel;
         }
         else
         {
             _roleLabel = Culture["School.RoleChip"];
-            _scopeLabel = user.Identity?.Name ?? _roleLabel;
+            _scopeLabel = ScopeName(user) ?? _roleLabel;
         }
     }
 
@@ -163,6 +163,12 @@
             _currentClassId = id ?? _assigned.FirstOrDefault()?.Id;
             RefreshTeacherNav();
         }
+    }
+
+    private static string? ScopeName(System.Security.Claims.ClaimsPrincipal user)
+    {
+        var name = user.Identity?.Name;
+        return string.IsNullOrWhiteSpace(name) ? null : name;
     }
 
     private void RefreshTeacherNav()
