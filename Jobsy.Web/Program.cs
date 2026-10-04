@@ -490,6 +490,7 @@ app.MapPrivacyDataExportEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
+app.MapPupilPdfEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();
 app.MapSeoEndpoints();

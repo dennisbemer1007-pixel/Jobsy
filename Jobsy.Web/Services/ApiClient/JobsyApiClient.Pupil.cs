@@ -62,6 +62,26 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilDreamJobResponse>(response.Content, ct);
     }
 
+    /// <summary>
+    /// Story PDF from the API (<c>GET /leerling/pdf</c>). The web host proxies this
+    /// so the pupil link does not 404 on the web origin.
+    /// </summary>
+    public async Task<(byte[]? Bytes, string FileName, int StatusCode)> GetPupilStoryPdfAsync(
+        CancellationToken ct = default)
+    {
+        using var response = await _http.GetAsync("leerling/pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return (null, "lobsy-verhaal.pdf", (int)response.StatusCode);
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                       ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? "lobsy-verhaal.pdf";
+        return (bytes, fileName, (int)response.StatusCode);
+    }
+
     public async Task ClearTeacherLoginPauseAsync(Guid classId, CancellationToken ct = default)
     {
         using var response = await _http.PostAsync(
