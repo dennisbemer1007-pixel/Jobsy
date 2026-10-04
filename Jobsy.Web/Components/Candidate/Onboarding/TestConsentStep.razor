@@ -1,7 +1,9 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
+<PassportPrivacyPromise />
 <h1 tabindex="-1">@Culture["Onboarding.Consent.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Consent.Lead"]</p>
 <ol class="ob-wizard__test-list">

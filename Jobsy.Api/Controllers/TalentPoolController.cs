@@ -2,12 +2,12 @@ using Jobsy.Api.Authorization;
 using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
@@ -35,6 +35,7 @@ public sealed class TalentPoolController : ControllerBase
     }
 
     [HttpGet("search")]
+    [HttpGet("/api/werkgever/talentpool/search")]
     [EnableRateLimiting("public-read")]
     [RequiresVerifiedCompany]
     public async Task<ActionResult<IReadOnlyList<AnonymousTalentCardDto>>> Search(

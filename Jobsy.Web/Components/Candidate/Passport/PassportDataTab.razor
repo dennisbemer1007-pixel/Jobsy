@@ -76,6 +76,20 @@
                     var open = string.Equals(_openSection, section.Id, StringComparison.Ordinal);
                     var panelId = $"passport-data-panel-{section.Id}";
                     var btnId = $"passport-data-btn-{section.Id}";
+                    if (section.Id == "export")
+                    {
+                        <div class="detail-card passport-data__item" role="listitem">
+                            <a class="passport-data__toggle" href="/privacy/data" data-testid="passport-download-data">
+                                <span class="passport-data__icon" aria-hidden="true">@((MarkupString)section.Icon)</span>
+                                <span class="passport-data__toggle-text">
+                                    <span class="passport-data__title">@Culture[section.TitleKey]</span>
+                                    <span class="passport-data__sub">@Culture[section.SubKey]</span>
+                                </span>
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
                     <div class="detail-card passport-data__item @(section.Danger ? "passport-data__item--danger" : null) @(open ? "is-open" : null)"
                          role="listitem">
                         <button type="button"
@@ -125,6 +139,7 @@
                                 }
                                 else if (section.Id == "privacy")
                                 {
+                                    <PassportPrivacyPromise />
                                     <ConsentSection />
                                 }
                                 else if (section.Id == "delete")
@@ -134,6 +149,7 @@
                             </div>
                         }
                     </div>
+                    }
                 }
             </div>
 
@@ -185,6 +201,7 @@
         new("availability", "Profile.Section.Availability", "Passport.Data.AvailabilitySub", NavIcons.Calendar, false),
         new("motivation", "Passport.Data.Motivation", "Passport.Data.MotivationSub", NavIcons.Feedback, false),
         new("privacy", "Profile.Consent.Title", "Passport.Data.PrivacySub", NavIcons.Shield, false),
+        new("export", "Passport.Data.DownloadMine", "Passport.Data.DownloadMineSub", NavIcons.Download, false),
         new("delete", "Profile.UnsubscribeTitle", "Passport.Data.DeleteSub", ActionIcons.Trash, true)
     ];
 

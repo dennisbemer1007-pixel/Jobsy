@@ -8,6 +8,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -24,6 +25,7 @@ public sealed class TalentPoolService : ITalentPoolService
     private readonly IUserNotificationService _notifications;
     private readonly IFlexCommercialService _commercial;
     private readonly IFeatureFlags? _flags;
+    private readonly IConfiguration? _configuration;
 
     public TalentPoolService(
         JobsyDbContext db,
@@ -31,7 +33,8 @@ public sealed class TalentPoolService : ITalentPoolService
         IRoutingService routing,
         IUserNotificationService notifications,
         IFlexCommercialService commercial,
-        IFeatureFlags? flags = null)
+        IFeatureFlags? flags = null,
+        IConfiguration? configuration = null)
     {
         _db = db;
         _tokens = tokens;
@@ -39,6 +42,7 @@ public sealed class TalentPoolService : ITalentPoolService
         _notifications = notifications;
         _commercial = commercial;
         _flags = flags;
+        _configuration = configuration;
     }
 
     public async Task<IReadOnlyList<AnonymousTalentCardDto>> SearchAsync(
@@ -88,10 +92,17 @@ public sealed class TalentPoolService : ITalentPoolService
             .Select(d => d.UserId)
             .ToHashSet();
 
+        var showRiasec = _configuration?.GetValue(TalentPoolRiasecVisibility.ConfigKey, false) ?? false;
         var tagsFilter = query.Tags?
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Select(t => t.Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Off: RIASEC codes in the tags query never match. Competency match tags still do.
+        var matchFilter = showRiasec || tagsFilter is null
+            ? tagsFilter
+            : tagsFilter
+                .Where(t => !TalentPoolRiasecVisibility.IsRiasecCode(t))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var results = new List<AnonymousTalentCardDto>();
         foreach (var user in users)
@@ -127,11 +138,15 @@ public sealed class TalentPoolService : ITalentPoolService
                 }
             }
 
-            if (tagsFilter is { Count: > 0 }
-                && !matchTags.Any(t => tagsFilter.Contains(t))
-                && !riasec.Any(t => tagsFilter.Contains(t)))
+            if (tagsFilter is { Count: > 0 })
             {
-                continue;
+                var matchesCompetency = matchFilter is { Count: > 0 }
+                    && matchTags.Any(t => matchFilter.Contains(t));
+                var matchesRiasec = showRiasec && riasec.Any(t => tagsFilter.Contains(t));
+                if (!matchesCompetency && !matchesRiasec)
+                {
+                    continue;
+                }
             }
 
             var prefs = DeserializePrefs(user.PreferencesJson);
@@ -196,10 +211,10 @@ public sealed class TalentPoolService : ITalentPoolService
             results.Add(new AnonymousTalentCardDto(
                 user.Id,
                 matchTags,
-                riasec,
+                showRiasec ? riasec : [],
                 scores,
                 careerScores,
-                career?.HollandCode,
+                showRiasec ? career?.HollandCode : null,
                 availability,
                 licenses,
                 travelMinutes,
