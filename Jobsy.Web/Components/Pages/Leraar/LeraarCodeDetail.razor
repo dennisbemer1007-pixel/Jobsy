@@ -120,17 +120,20 @@ else
                         <span class="sch-chip">@OwnWord(_detail.LikeOtherWord)</span>
                     }
                 </div>
-                <h2>@Culture["Leraar.Detail.Dislikes"]</h2>
-                <div class="sch-chip-list">
-                    @foreach (var chip in _detail.Dislikes)
-                    {
-                        <span class="sch-chip">@ChipText(chip)</span>
-                    }
-                    @if (!string.IsNullOrWhiteSpace(_detail.DislikeOtherWord))
-                    {
-                        <span class="sch-chip">@OwnWord(_detail.DislikeOtherWord)</span>
-                    }
-                </div>
+                @if (_detail.Dislikes.Count > 0 || !string.IsNullOrWhiteSpace(_detail.DislikeOtherWord))
+                {
+                    <h2>@Culture["Leraar.Detail.Dislikes"]</h2>
+                    <div class="sch-chip-list">
+                        @foreach (var chip in _detail.Dislikes)
+                        {
+                            <span class="sch-chip">@ChipText(chip)</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_detail.DislikeOtherWord))
+                        {
+                            <span class="sch-chip">@OwnWord(_detail.DislikeOtherWord)</span>
+                        }
+                    </div>
+                }
             </section>
 
             <section class="sch-card">

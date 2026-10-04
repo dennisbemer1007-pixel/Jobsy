@@ -71,8 +71,13 @@ public class AiCapabilityTests
     [Fact]
     public void Mistral_defaults_match_the_documented_eu_endpoint()
     {
-        Assert.Equal("https://api.mistral.ai/v1/", MistralOptions.DefaultBaseUrl);
+        Assert.Equal("https://api.eu.mistral.ai/v1/", MistralOptions.DefaultBaseUrl);
         Assert.Equal("mistral-small-latest", MistralOptions.DefaultModel);
+        Assert.True(MistralEndpoint.InferenceStaysInEu(null));
+        Assert.True(MistralEndpoint.InferenceStaysInEu("https://api.eu.mistral.ai/v1/"));
+        Assert.False(MistralEndpoint.InferenceStaysInEu("https://api.mistral.ai/v1/"));
+        Assert.False(MistralEndpoint.InferenceStaysInEu("https://api.us.mistral.ai/v1/"));
+        Assert.Equal(MistralOptions.DefaultBaseUrl, MistralEndpoint.EffectiveBaseUrl("http://127.0.0.1/v1/"));
         Assert.Equal("OpenAI", new AiOptions().Provider);
     }
 }
@@ -99,9 +104,26 @@ public class LegalAiProcessorSelectionTests
         Assert.DoesNotContain(rows, row => row.Id == "openai");
         Assert.Equal("Mistral AI", mistral.Name);
         Assert.Contains("Parijs", mistral.Region, StringComparison.Ordinal);
-        Assert.Contains("EU", mistral.Region, StringComparison.Ordinal);
+        Assert.Contains("verwerking in de EU", mistral.Region, StringComparison.Ordinal);
+        Assert.Contains("buiten de EU", mistral.Region, StringComparison.Ordinal);
         Assert.Equal(LegalProcessors.InsideEu, mistral.TransferBasisKey);
         Assert.Equal(ProcessorStatus.Active, mistral.Status);
+    }
+
+    [Fact]
+    public void Global_mistral_host_does_not_claim_eu_inference()
+    {
+        var rows = LegalAiProcessorSelection.Resolve("Mistral", "key", "https://api.mistral.ai/v1/");
+        var mistral = Assert.Single(rows, row => row.Id == "mistral");
+
+        Assert.Equal("mistral", mistral.Id);
+        Assert.DoesNotContain("verwerking in de EU", mistral.Region, StringComparison.Ordinal);
+        Assert.Contains("geen plek", mistral.Region, StringComparison.Ordinal);
+        Assert.Contains("buiten de EU", mistral.Region, StringComparison.Ordinal);
+        Assert.Equal("Legal.Processor.mistral.Data.Global", mistral.DataKey);
+        Assert.Equal(LegalProcessors.NoStatedPlace, mistral.TransferBasisKey);
+        Assert.DoesNotContain("EU", UiStrings.Get(mistral.DataKey, "nl"), StringComparison.Ordinal);
+        Assert.DoesNotContain("EU", UiStrings.Get(mistral.TransferBasisKey!, "en"), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -131,12 +153,22 @@ public class LegalAiProcessorSelectionTests
             _ => "EU",
         };
         Assert.Contains(regionWord, data, StringComparison.Ordinal);
-        var change = UiStrings.Get("Legal.Change.Privacy.2026-10-06", language);
-        Assert.NotEqual("Legal.Change.Privacy.2026-10-06", change);
+        var globalData = UiStrings.Get("Legal.Processor.mistral.Data.Global", language);
+        Assert.DoesNotContain(regionWord, globalData, StringComparison.Ordinal);
+        var change = UiStrings.Get("Legal.Change.Privacy.2026-10-07", language);
+        Assert.NotEqual("Legal.Change.Privacy.2026-10-07", change);
         var lead = UiStrings.Get("Profile.OwnCvLead.Mistral", language);
         Assert.NotEqual("Profile.OwnCvLead.Mistral", lead);
-        Assert.DoesNotContain("VS", lead, StringComparison.Ordinal);
-        Assert.DoesNotContain("US", lead, StringComparison.Ordinal);
+        Assert.Contains(regionWord, lead, StringComparison.Ordinal);
+        var globalLead = UiStrings.Get("Profile.OwnCvLead.Mistral.Global", language);
+        Assert.NotEqual("Profile.OwnCvLead.Mistral.Global", globalLead);
+        Assert.DoesNotContain("VS", globalLead, StringComparison.Ordinal);
+        Assert.DoesNotContain("US", globalLead, StringComparison.Ordinal);
+        if (language is "nl")
+        {
+            Assert.Contains("geen plek", globalLead, StringComparison.Ordinal);
+            Assert.DoesNotContain("verwerking in de EU", globalLead, StringComparison.Ordinal);
+        }
     }
 }
 
@@ -156,9 +188,11 @@ public class PrivacyMistralProcessorTests : PrivacyRenderTestBase
     {
         var table = RenderPrivacy().Find("#delen .pp-table__grid").TextContent;
 
-        Assert.Contains("Mistral AI", table, StringComparison.Ordinal);
-        Assert.Contains("Parijs", table, StringComparison.Ordinal);
-        Assert.Contains("EU", table, StringComparison.Ordinal);
+        var row = RenderPrivacy().FindAll("#delen tbody tr")
+            .Single(tr => tr.TextContent.Contains("Mistral AI", StringComparison.Ordinal));
+        Assert.Contains("Parijs", row.TextContent, StringComparison.Ordinal);
+        Assert.Contains("verwerking in de EU", row.TextContent, StringComparison.Ordinal);
+        Assert.Contains("Binnen de EU", row.TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain("OpenAI", table, StringComparison.Ordinal);
     }
 
@@ -168,7 +202,39 @@ public class PrivacyMistralProcessorTests : PrivacyRenderTestBase
         var ai = RenderPrivacy().Find("#ai").TextContent;
 
         Assert.Contains("Mistral AI", ai, StringComparison.Ordinal);
-        Assert.Contains("EU", ai, StringComparison.Ordinal);
+        Assert.Contains("verwerking in de EU", ai, StringComparison.Ordinal);
+        Assert.DoesNotContain("naar OpenAI", ai, StringComparison.Ordinal);
+    }
+}
+
+/// <summary>A configured global host must not claim that inference stays in the EU.</summary>
+public class PrivacyMistralGlobalProcessorTests : PrivacyRenderTestBase
+{
+    public PrivacyMistralGlobalProcessorTests()
+    {
+        Services.AddSingleton<IOptions<AiOptions>>(
+            Options.Create(new AiOptions { Provider = "Mistral" }));
+        Services.AddSingleton<IOptions<MistralOptions>>(
+            Options.Create(new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                BaseUrl = "https://api.mistral.ai/v1/"
+            }));
+    }
+
+    [Fact]
+    public void The_table_and_cv_sentence_do_not_claim_eu_processing()
+    {
+        var rendered = RenderPrivacy();
+        var row = rendered.FindAll("#delen tbody tr")
+            .Single(tr => tr.TextContent.Contains("Mistral AI", StringComparison.Ordinal));
+        var ai = rendered.Find("#ai").TextContent;
+
+        Assert.Contains("geen plek", row.TextContent, StringComparison.Ordinal);
+        Assert.DoesNotContain("verwerking in de EU", row.TextContent, StringComparison.Ordinal);
+        Assert.DoesNotContain("Binnen de EU", row.TextContent, StringComparison.Ordinal);
+        Assert.Contains("geen plek", ai, StringComparison.Ordinal);
+        Assert.DoesNotContain("verwerking in de EU", ai, StringComparison.Ordinal);
         Assert.DoesNotContain("naar OpenAI", ai, StringComparison.Ordinal);
     }
 }

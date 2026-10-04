@@ -713,7 +713,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             TopCultures: agg.TopCultures.Select(c => new NamedCountDto(c.Key, c.Count)).ToList(),
             CompetenceBands: agg.CompetenceBands.Select(c => new NamedCountDto(c.Key, c.Count)).ToList(),
             DiscussionPromptKeys: prompts,
-            QuestionSet: questionSet);
+            QuestionSet: questionSet,
+            UndecidedDreamJobCount: agg.UndecidedDreamJobCount);
     }
 
     private TeacherCodeRowDto MapCodeRow(PupilCode code, SchoolClass schoolClass)
