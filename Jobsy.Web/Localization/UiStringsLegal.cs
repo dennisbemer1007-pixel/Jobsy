@@ -366,6 +366,12 @@ public static class UiStringsLegal
             "الحساب والاختبارات والنتائج");
 
         // —— Change log (D16) ——
+        Add("Legal.Change.Privacy.2026-10-07",
+            "De tekst over Mistral volgt het adres van de AI. Alleen bij het EU-adres zeggen we dat de verwerking in de EU gebeurt. Bij het wereldwijde adres belooft Mistral geen plek. Account en facturen van Mistral kunnen buiten de EU staan.",
+            "The Mistral text follows the AI address. Only with the EU address do we say that processing happens in the EU. With the global address Mistral promises no place. Mistral account and billing data can be handled outside the EU.",
+            "Tekst o Mistral zależy od adresu AI. Tylko przy adresie UE piszemy, że przetwarzanie odbywa się w UE. Przy adresie globalnym Mistral nie obiecuje miejsca. Konto i faktury Mistral mogą być obsługiwane poza UE.",
+            "Textul despre Mistral urmează adresa AI. Doar la adresa UE spunem că prelucrarea are loc în UE. La adresa globală Mistral nu promite un loc. Contul și facturile Mistral pot fi gestionate în afara UE.",
+            "نص Mistral يتبع عنوان الذكاء الاصطناعي. نقول إن المعالجة داخل الاتحاد الأوروبي فقط عند عنوان الاتحاد الأوروبي. عند العنوان العالمي لا تعد Mistral بمكان. قد تُعالَج بيانات الحساب والفواتير لدى Mistral خارج الاتحاد الأوروبي.");
         Add("Legal.Change.Privacy.2026-10-06",
             "De AI-rij in de lijst met verwerkers volgt de instelling. Standaard is dat OpenAI (Verenigde Staten). Zet je de AI op Mistral, dan staat Mistral AI (Parijs, gegevens in de EU) in de lijst en OpenAI niet.",
             "The AI row in the processor list follows the setting. By default that is OpenAI (United States). If you switch AI to Mistral, the list shows Mistral AI (Paris, data in the EU) and not OpenAI.",
@@ -510,11 +516,23 @@ public static class UiStringsLegal
             "Funcții AI pe care le alegi tu",
             "ميزات الذكاء الاصطناعي التي تختارها");
         Add("Legal.Processor.mistral.Data",
-            "De tekst die je invult. Bij cv-uitlezen de hele tekst van je cv. Gegevens blijven in de EU",
-            "The text you enter. For cv reading the whole text of your cv. Data stays in the EU",
-            "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV. Dane zostają w UE",
-            "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului. Datele rămân în UE",
-            "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها. تبقى البيانات في الاتحاد الأوروبي");
+            "De tekst die je invult. Bij cv-uitlezen de hele tekst van je cv. Dat is verwerking in de EU",
+            "The text you enter. For cv reading the whole text of your cv. Processing happens in the EU",
+            "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV. Przetwarzanie odbywa się w UE",
+            "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului. Prelucrarea are loc în UE",
+            "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها. تتم المعالجة في الاتحاد الأوروبي");
+        Add("Legal.Processor.mistral.Data.Global",
+            "De tekst die je invult. Bij cv-uitlezen de hele tekst van je cv. Mistral belooft geen plek voor de verwerking",
+            "The text you enter. For cv reading the whole text of your cv. Mistral promises no place for the processing",
+            "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV. Mistral nie obiecuje miejsca przetwarzania",
+            "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului. Mistral nu promite un loc pentru prelucrare",
+            "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها. لا تعد Mistral بمكان للمعالجة");
+        Add("Legal.Transfer.NoPlace",
+            "Mistral noemt geen plek voor deze verwerking",
+            "Mistral names no place for this processing",
+            "Mistral nie podaje miejsca tego przetwarzania",
+            "Mistral nu indică un loc pentru această prelucrare",
+            "لا تحدد Mistral مكاناً لهذه المعالجة");
         Add("Legal.Processor.cursor.Purpose",
             "Feedback die je stuurt verwerken",
             "Handling the feedback you send",

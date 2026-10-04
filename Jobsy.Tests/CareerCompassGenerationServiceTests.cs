@@ -81,7 +81,7 @@ public class CareerCompassGenerationServiceTests
         await sut.GenerateFromCareerDeepAsync(PeakAll());
 
         Assert.Contains(
-            "https://api.mistral.ai/v1/chat/completions",
+            "https://api.eu.mistral.ai/v1/chat/completions",
             handler.LastRequestUri,
             StringComparison.OrdinalIgnoreCase);
         Assert.Contains("mistral-small-latest", handler.LastBody, StringComparison.Ordinal);

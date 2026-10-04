@@ -74,7 +74,9 @@ public class SettingsController : ControllerBase
             decision.Name,
             decision.Kind == AiProviderKind.Mistral ? "Mistral AI" : "OpenAI",
             ReadOnly: true,
-            decision.RequestedMistralWithoutKey));
+            decision.RequestedMistralWithoutKey,
+            InferenceInEu: decision.Kind == AiProviderKind.Mistral
+                && MistralEndpoint.InferenceStaysInEu(_mistral.BaseUrl)));
     }
 
     [HttpGet("token-pricing")]

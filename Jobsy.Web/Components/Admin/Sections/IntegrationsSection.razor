@@ -17,7 +17,9 @@
         {
             <p class="muted" data-testid="ai-provider">
                 <strong>@Culture["Admin.AiProvider.Title"]:</strong>
-                @(IsMistral ? Culture["Admin.AiProvider.Mistral"] : Culture["Admin.AiProvider.OpenAI"])
+                @(IsMistral
+                    ? Culture[_aiProvider.InferenceInEu ? "Admin.AiProvider.Mistral.Eu" : "Admin.AiProvider.Mistral.Global"]
+                    : Culture["Admin.AiProvider.OpenAI"])
                 @Culture["Admin.AiProvider.ReadOnly"]
             </p>
             @if (_aiProvider.FellBackToOpenAi)

@@ -188,6 +188,7 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetRequiredService<AdminAuditAppendOnlyInterceptor>());
         });
 
+        services.AddTransient<AiRouteLoggingHandler>();
         var openAiBaseUrl = configuration.GetSection(OpenAiOptions.SectionName)["BaseUrl"]
             ?? "https://api.openai.com/v1/";
         services.AddHttpClient("OpenAI", client =>
@@ -197,7 +198,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
 
         services.AddHttpClient("IntegrationProbe", client =>
         {
@@ -205,7 +206,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
 
         var cursorBaseUrl = configuration.GetSection(CursorCloudOptions.SectionName)["BaseUrl"]
             ?? "https://api.cursor.com";
@@ -461,7 +462,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<IWhoAmIGenerationService, WhoAmIGenerationService>();
         services.AddScoped<IWhoAmIService, WhoAmIService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
@@ -477,7 +478,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICultureFitAiService, CultureFitAiService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
         services.AddScoped<ICandidateCulturePersonalityService, CandidateCulturePersonalityService>();
@@ -499,7 +500,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICareerCompassGenerationService, CareerCompassGenerationService>();
         services.AddScoped<ICareerPathPlanGenerationService, CareerPathPlanGenerationService>();
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();
@@ -511,14 +512,14 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddHttpClient(RoleFitCheckService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
         services.AddScoped<ITrainingUpskillService, TrainingUpskillService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
@@ -529,7 +530,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICompetenceDeepReportAiService, OpenAiCompetenceDeepReportAiService>();
         services.AddScoped<ICompetenceDeepReportService, CompetenceDeepReportService>();
         services.AddScoped<IKindDeepReportService, KindDeepReportService>();
