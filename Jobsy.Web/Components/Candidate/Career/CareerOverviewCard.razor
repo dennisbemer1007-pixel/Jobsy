@@ -193,6 +193,9 @@
 
     private string PassportHref => PassportOn ? "/candidate/paspoort" : "/candidate/profile";
 
+    private string ClawFact(int count)
+        => count == 1 ? Culture["Career.Fact.ClawOne"] : Culture.Format("Career.Fact.Claws", count);
+
     private string EyebrowText => Plan.GoalReached || Plan.CurrentStepNumber == 0
         ? Culture["Career.Eyebrow"]
         : Culture.Format("Career.EyebrowStep", Plan.CurrentStepNumber, Plan.TotalSteps);
@@ -216,6 +219,11 @@
             if (claws > 0 && courses > 0)
             {
                 return Culture.Format("Career.Overview.Summary", claws, courses);
+            }
+
+            if (claws == 1)
+            {
+                return Culture["Career.Fact.ClawOne"];
             }
 
             if (claws > 0)
@@ -245,7 +253,7 @@
 
             if (step.GapCount > 0)
             {
-                facts.Add(Culture.Format("Career.Fact.Claws", step.GapCount));
+                facts.Add(ClawFact(step.GapCount));
             }
 
             if (step.CourseCount > 0)
@@ -278,7 +286,7 @@
             if (step.GapCount > 0)
             {
                 lines.Add((
-                    Culture.Format("Career.Fact.Claws", step.GapCount),
+                    ClawFact(step.GapCount),
                     string.Join(" · ", step.GapNames.Take(3))));
             }
 

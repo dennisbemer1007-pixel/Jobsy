@@ -1069,6 +1069,76 @@ window.jobsyMedia = {
     }
 };
 
+window.jobsySessionFlag = {
+    get: function (key) {
+        try { return sessionStorage.getItem(key) === "1"; } catch (e) { return false; }
+    },
+    set: function (key) {
+        try { sessionStorage.setItem(key, "1"); } catch (e) { }
+    },
+    remove: function (key) {
+        try { sessionStorage.removeItem(key); } catch (e) { }
+    }
+};
+
+window.jobsySaveFile = function (filename, base64, mimeType) {
+    try {
+        var binary = atob(base64);
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        var blob = new Blob([bytes], { type: mimeType || "application/octet-stream" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = filename || "download.bin";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (e) { }
+};
+
+window.jobsyBindSearchShortcut = function () {
+    if (window.__jobsySalesSearchBound) return;
+    window.__jobsySalesSearchBound = true;
+    document.addEventListener("keydown", function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+            e.preventDefault();
+            var el = document.querySelector(".sp-search__field input");
+            if (el) el.focus();
+        }
+    });
+};
+
+window.jobsyShareUrl = function (url) {
+    if (navigator.share) return navigator.share({ url: url });
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(url);
+};
+
+window.jobsyComposeEnter = function (id) {
+    var el = typeof id === "string" ? document.getElementById(id) : id;
+    if (!el || el.dataset.enterBound) return;
+    el.dataset.enterBound = "1";
+    el.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" || e.shiftKey) return;
+        e.preventDefault();
+        var form = el.closest("form");
+        if (form && typeof form.requestSubmit === "function") form.requestSubmit();
+    });
+};
+
+window.jobsyEnsureInsightsMap = function () {
+    window.__jobsyInsightsMapReady = window.__jobsyInsightsMapReady || new Promise(function (resolve, reject) {
+        if (window.JobsyCandidateInsightsMap) { resolve(); return; }
+        var s = document.createElement("script");
+        s.src = "js/features/kandidaatinzichten-map.js?v=20260928-insights";
+        s.onload = function () { resolve(); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+    return window.__jobsyInsightsMapReady;
+};
+
 window.jobsyQuestionnaire = {
     scrollToQuestion: function (id, smooth) {
         if (!id) {
@@ -1217,8 +1287,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-admin"
-            : "/service-worker.js?v=20261004-admin";
+            ? "/service-worker.published.js?v=20261004-run5c"
+            : "/service-worker.js?v=20261004-run5c";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();

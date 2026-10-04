@@ -22,32 +22,35 @@ public static class JourneyTestFlow
         [
             new(OnboardingWizardCatalog.MiniLevelCount,
                 "Discovery.Shed.Keep",
-                "Discovery.Shed.KeepSub",
+                miniDone ? "Discovery.Shed.DoneSub" : "Discovery.Shed.KeepSub",
                 1,
                 Disabled: miniDone),
             new(OnboardingWizardCatalog.DeeperLevelCount,
                 "Discovery.Shed.Deeper",
-                "Discovery.Shed.DeeperSub10",
+                deeperDone ? "Discovery.Shed.DoneSub" : "Discovery.Shed.DeeperSub10",
                 2,
                 Disabled: deeperDone),
             new(full,
                 "Discovery.Shed.Deepest",
-                culture ? "Discovery.Shed.DeepestSubCulture" : "Discovery.Shed.DeepestSub",
+                fullDone
+                    ? "Discovery.Shed.DoneSub"
+                    : culture ? "Discovery.Shed.DeepestSubCulture" : "Discovery.Shed.DeepestSub",
                 5,
                 Disabled: fullDone)
         ];
     }
 
     /// <summary>
-    /// Default selection on the shed moment: keep current band unless a deeper band is the only remaining option.
+    /// Default selection on the shed: the next band that is not done yet.
+    /// A finished band stays visible as Gedaan and is not preselected.
     /// </summary>
     public static int DefaultSelectedLevel(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
     {
-        var reached = OnboardingWizardCatalog.ReachedLevel(answeredCount, kind);
-        if (reached <= 0) return OnboardingWizardCatalog.MiniLevelCount;
-        if (reached < OnboardingWizardCatalog.DeeperLevelCount) return OnboardingWizardCatalog.MiniLevelCount;
-        if (reached < OnboardingWizardCatalog.FullLevelCount(kind)) return OnboardingWizardCatalog.DeeperLevelCount;
-        return OnboardingWizardCatalog.FullLevelCount(kind);
+        var full = OnboardingWizardCatalog.FullLevelCount(kind);
+        if (answeredCount >= full) return full;
+        if (answeredCount >= OnboardingWizardCatalog.DeeperLevelCount) return full;
+        if (answeredCount >= OnboardingWizardCatalog.MiniLevelCount) return OnboardingWizardCatalog.DeeperLevelCount;
+        return OnboardingWizardCatalog.MiniLevelCount;
     }
 
     public static bool IsFullyDone(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
@@ -99,6 +102,53 @@ public static class JourneyTestFlow
         }
 
         return lines;
+    }
+
+    /// <summary>
+    /// Depth label for an end-screen card: Eerste indruk, Iets dieper, or Helemaal gedaan.
+    /// </summary>
+    public static string DepthLabelKey(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        if (answeredCount >= OnboardingWizardCatalog.FullLevelCount(kind))
+        {
+            return "Discovery.Overview.FullyDone";
+        }
+
+        if (answeredCount >= OnboardingWizardCatalog.DeeperLevelCount)
+        {
+            return "TestDepth.Deeper";
+        }
+
+        if (answeredCount >= OnboardingWizardCatalog.MiniLevelCount)
+        {
+            return "TestDepth.First";
+        }
+
+        return "Discovery.End.NotDiscovered";
+    }
+
+    /// <summary>
+    /// Footnote follows the shallowest of the three end-screen tests.
+    /// </summary>
+    public static string EndHintKey(int competencyAnswered, int careerAnswered, int valuesAnswered)
+    {
+        var keys = new[]
+        {
+            DepthLabelKey(competencyAnswered, OnboardingWizardCatalog.OnboardingTestKind.Competency),
+            DepthLabelKey(careerAnswered, OnboardingWizardCatalog.OnboardingTestKind.Career),
+            DepthLabelKey(valuesAnswered, OnboardingWizardCatalog.OnboardingTestKind.Values)
+        };
+        if (keys.All(k => k == "Discovery.Overview.FullyDone"))
+        {
+            return "Discovery.End.HintFull";
+        }
+
+        if (keys.All(k => k is "Discovery.Overview.FullyDone" or "TestDepth.Deeper"))
+        {
+            return "Discovery.End.HintDeeper";
+        }
+
+        return "Discovery.End.HintFirst";
     }
 
     public static (string? Strength, string? Work, string? Value) EndFacts(OnboardingImpression? impression)

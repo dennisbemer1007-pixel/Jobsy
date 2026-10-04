@@ -190,7 +190,7 @@ public sealed class WhoAmIService : IWhoAmIService
             }
         }
 
-        if (unlocked && competency is { IsComplete: true } cScores
+        if (competency is { IsComplete: true } cScores
             && career is { IsComplete: true } rScores
             && culture is { IsComplete: true } cultureScores)
         {

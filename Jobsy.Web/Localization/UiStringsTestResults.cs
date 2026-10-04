@@ -29,6 +29,8 @@ internal static class UiStringsTestResults
     {
         ["TestResult.Back"] = "Terug naar mijn tests",
         ["TestResult.ScoresCount"] = "{0} scores",
+        ["TestResult.ScoresFromQuestions"] = "{0} scores uit {1} vragen",
+        ["TestResult.Upsell.Self"] = "Een scherper beeld van hoe jij werkt",
         ["TestResult.EditAnswers"] = "Antwoorden wijzigen",
         ["TestResult.Retake"] = "Test opnieuw doen",
         ["TestResult.Quota.Line"] = "Je kunt deze test nog {0} van de {1} keer aanpassen.",
@@ -103,6 +105,8 @@ internal static class UiStringsTestResults
     {
         ["TestResult.Back"] = "Back to my tests",
         ["TestResult.ScoresCount"] = "{0} scores",
+        ["TestResult.ScoresFromQuestions"] = "{0} scores from {1} questions",
+        ["TestResult.Upsell.Self"] = "A sharper picture of how you work",
         ["TestResult.EditAnswers"] = "Edit answers",
         ["TestResult.Retake"] = "Retake test",
         ["TestResult.Quota.Line"] = "You can adjust this test {0} more times (out of {1}).",
@@ -176,6 +180,8 @@ internal static class UiStringsTestResults
     private static Dictionary<string, string> Pl()
     {
         var d = new Dictionary<string, string>(En(), StringComparer.OrdinalIgnoreCase);
+        d["TestResult.ScoresFromQuestions"] = "{0} wyników z {1} pytań";
+        d["TestResult.Upsell.Self"] = "Wyraźniejszy obraz tego, jak pracujesz";
         d["TestResult.EditAnswers"] = "Edytuj odpowiedzi";
         d["TestResult.Retake"] = "Zrób test ponownie";
         d["TestResult.Quota.Line"] = "Możesz jeszcze {0} z {1} razy dostosować ten test.";
@@ -187,6 +193,8 @@ internal static class UiStringsTestResults
     private static Dictionary<string, string> Ro()
     {
         var d = new Dictionary<string, string>(En(), StringComparer.OrdinalIgnoreCase);
+        d["TestResult.ScoresFromQuestions"] = "{0} scoruri din {1} întrebări";
+        d["TestResult.Upsell.Self"] = "O imagine mai clară despre cum lucrezi";
         d["TestResult.EditAnswers"] = "Modifică răspunsurile";
         d["TestResult.Retake"] = "Refă testul";
         d["TestResult.Quota.Line"] = "Poți ajusta acest test încă de {0} ori din {1}.";
@@ -198,6 +206,8 @@ internal static class UiStringsTestResults
     private static Dictionary<string, string> Ar()
     {
         var d = new Dictionary<string, string>(En(), StringComparer.OrdinalIgnoreCase);
+        d["TestResult.ScoresFromQuestions"] = "{0} درجات من {1} أسئلة";
+        d["TestResult.Upsell.Self"] = "صورة أوضح لكيفية عملك";
         d["TestResult.EditAnswers"] = "تعديل الإجابات";
         d["TestResult.Retake"] = "أعد الاختبار";
         d["TestResult.Quota.Line"] = "يمكنك تعديل هذا الاختبار {0} مرات أخرى من أصل {1}.";

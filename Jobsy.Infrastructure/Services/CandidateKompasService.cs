@@ -464,6 +464,18 @@ public sealed class CandidateKompasService : ICandidateKompasService
         var keywords = ParseKeywords(keywordsJson);
         var story = string.IsNullOrWhiteSpace(storyText) ? null : storyText.Trim();
         var unlocked = WhoAmICompleteness.IsUnlocked(profileFilled, competencyDone, careerDone, cultureDone);
+        var scoresReady = competency is { IsComplete: true }
+                          && career is { IsComplete: true }
+                          && culture is { IsComplete: true };
+
+        // The passport reads this summary, not the who-am-i endpoint. A missing stored
+        // story used to stay "wordt geschreven" forever. Compose the same local story.
+        if (story is null && scoresReady)
+        {
+            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, WhoAmIProfileHighlights.Empty, values);
+            keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values);
+            return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc ?? DateTime.UtcNow, WhoAmIStoryStatuses.Ready);
+        }
 
         if (story is null)
         {

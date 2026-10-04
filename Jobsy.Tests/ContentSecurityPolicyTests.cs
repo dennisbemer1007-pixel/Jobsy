@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Http;
 
@@ -94,6 +95,29 @@ public class ContentSecurityPolicyTests
         Assert.Contains("UseMiddleware<SecurityHeadersMiddleware>", program);
         Assert.Contains("ContentSecurityFrameAncestorsPolicy = null", program);
         Assert.DoesNotContain("script-src 'self' 'unsafe-inline'", program);
+    }
+
+    [Fact]
+    public void Js_interop_does_not_invoke_eval()
+    {
+        var rx = new Regex(@"Invoke(?:Void)?Async(?:<[^>]+>)?\s*\(\s*""eval""", RegexOptions.Compiled);
+        var root = Path.Combine(FindRepoRoot(), "Jobsy.Web");
+        var hits = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(root, "*.*", SearchOption.AllDirectories))
+        {
+            if (!file.EndsWith(".cs", StringComparison.Ordinal) && !file.EndsWith(".razor", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var text = File.ReadAllText(file);
+            if (rx.IsMatch(text))
+            {
+                hits.Add(Path.GetRelativePath(root, file));
+            }
+        }
+
+        Assert.Empty(hits);
     }
 
     private static string FindRepoRoot()

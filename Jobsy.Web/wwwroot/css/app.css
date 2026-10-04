@@ -14444,7 +14444,7 @@ html.cookie-consent-known .cookie-consent {
     right: 0;
     left: auto;
     bottom: auto;
-    z-index: 54;
+    z-index: 55;
     transform: translateY(-50%);
 }
 
@@ -14505,16 +14505,19 @@ html.cookie-consent-known .cookie-consent {
 
 .feedback-widget {
     position: fixed;
-    top: 46%;
+    top: calc(50% - 7rem);
     right: 0;
     left: auto;
     bottom: auto;
     z-index: 54;
+    width: max-content;
+    height: max-content;
+    pointer-events: none;
     transform: translateY(-50%);
 }
 
 .feedback-widget.has-bottom-nav {
-    top: 42%;
+    top: calc(50% - 7rem);
 }
 
 .feedback-widget.is-capturing,
@@ -14524,7 +14527,7 @@ html.cookie-consent-known .cookie-consent {
 
 @media (max-width: 720px) {
     .feedback-widget.has-bottom-nav {
-        top: 40%;
+        top: calc(50% - 7rem);
     }
 
     .feedback-widget__tab--edge {
@@ -14533,6 +14536,7 @@ html.cookie-consent-known .cookie-consent {
 }
 
 .feedback-widget__btn {
+    pointer-events: auto;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;

@@ -26,10 +26,30 @@ public static class PassportRedirects
     /// </summary>
     public static string? TryToPassportUrl(string absoluteOrRelativeUri)
     {
-        var kompasTab = CandidateKompasTabs.Normalize(ReadQuery(absoluteOrRelativeUri, "tab"));
-        var passportTab = PassportTabs.FromKompasTab(kompasTab);
+        var raw = ReadQuery(absoluteOrRelativeUri, "tab");
+        var passportTab = MapProfileTab(raw);
         var returnUrl = ReadQuery(absoluteOrRelativeUri, "returnUrl");
         return BuildUrl(PassportPath, passportTab, returnUrl);
+    }
+
+    /// <summary>
+    /// Dutch bookmarks <c>carriere</c> and <c>bewijzen</c> are passport tabs.
+    /// English <c>career</c> is not that bookmark and keeps the Kompas mapping.
+    /// </summary>
+    private static string MapProfileTab(string? raw)
+    {
+        var value = (raw ?? "").Trim().TrimStart('#').ToLowerInvariant();
+        if (value is "carriere" or "carrière" or "loopbaan")
+        {
+            return PassportTabs.Career;
+        }
+
+        if (value is "bewijzen" or "bewijs" or "proof")
+        {
+            return PassportTabs.Proof;
+        }
+
+        return PassportTabs.FromKompasTab(CandidateKompasTabs.Normalize(raw));
     }
 
     public static string BuildPassportUrl(string tab, string? returnUrl = null)

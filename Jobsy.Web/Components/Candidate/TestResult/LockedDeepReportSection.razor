@@ -63,13 +63,14 @@
         <div class="test-result-locked__foot">
             <span><span class="ok" aria-hidden="true">✓</span> @Culture.Format("TestResult.Locked.Foot.Pages", PageCount)</span>
             <span><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Locked.Foot.Apps"]</span>
-            <span><span class="ok" aria-hidden="true">✓</span> @Culture["TestResult.Locked.Foot.Matches"]</span>
+            <span><span class="ok" aria-hidden="true">✓</span> @(EmployersEnabled ? Culture["TestResult.Locked.Foot.Matches"] : Culture["TestResult.Upsell.Self"])</span>
         </div>
     </section>
 }
 
 @code {
     [Parameter, EditorRequired] public AssessmentKind Kind { get; set; }
+    [Parameter] public bool EmployersEnabled { get; set; } = true;
     [Parameter] public int QuestionCount { get; set; } = 150;
 
     private readonly string _titleId = "test-result-locked-" + Guid.NewGuid().ToString("N")[..8];

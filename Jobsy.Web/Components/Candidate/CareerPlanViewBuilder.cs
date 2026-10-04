@@ -55,7 +55,8 @@ public static class CareerPlanViewBuilder
         CareerPathPlanApiModel? plan,
         string uiLanguage,
         string nowLabel = "",
-        string evidence = "")
+        string evidence = "",
+        int experienceYears = 0)
     {
         if (plan is null || (plan.Steps.Count == 0 && string.IsNullOrWhiteSpace(plan.DreamTitle)))
         {
@@ -74,7 +75,7 @@ public static class CareerPlanViewBuilder
         }
 
         var mapped = plan.Steps.OrderBy(s => s.Order).Select(MapStep).ToList();
-        OverlayEvidence(mapped, evidence);
+        OverlayEvidence(mapped, evidence, experienceYears);
         var steps = mapped
             .Select(s => new CareerPlanStepView(
                 s.Id,
@@ -82,11 +83,11 @@ public static class CareerPlanViewBuilder
                 s.Title,
                 ShortTitle(s.Title),
                 s.Status,
-                UnmetGapCount(s, evidence),
+                UnmetGapCount(s, evidence, experienceYears),
                 StepBandLabelKey(s),
                 s.Courses.Count,
                 s.Summary,
-                UnmetGapNames(s, evidence)))
+                UnmetGapNames(s, evidence, experienceYears)))
             .ToList();
 
         var completed = steps.Count(s => s.Status == CareerStepStatus.Completed);
@@ -170,7 +171,7 @@ public static class CareerPlanViewBuilder
         }
 
         var ordered = plan.Steps.OrderBy(s => s.Order).Select(MapStep).ToList();
-        OverlayEvidence(ordered, evidence);
+        OverlayEvidence(ordered, evidence, experienceYears);
         var index = ordered.FindIndex(s => s.Order == order);
         if (index < 0)
         {
@@ -184,8 +185,25 @@ public static class CareerPlanViewBuilder
 
         var missing = new List<CareerStepGapLine>();
         var present = new List<CareerStepGapLine>();
-        foreach (var line in BuildGaps(step, evidence))
+        var alreadyMet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var earlier in ordered.Take(index))
         {
+            foreach (var line in BuildGaps(earlier, evidence, experienceYears))
+            {
+                if (line.Met)
+                {
+                    alreadyMet.Add(line.Text.Trim());
+                }
+            }
+        }
+
+        foreach (var line in BuildGaps(step, evidence, experienceYears))
+        {
+            if (line.Met && alreadyMet.Contains(line.Text.Trim()))
+            {
+                continue;
+            }
+
             (line.Met ? present : missing).Add(new CareerStepGapLine(line.Text, line.Met));
         }
 
@@ -479,7 +497,10 @@ public static class CareerPlanViewBuilder
     /// Builds the passport Carrière compact view from a dashboard model.
     /// Completing steps stays on <c>/carriere</c>.
     /// </summary>
-    public static PassportCareerView BuildPassport(CareerDashboardModel? model, string evidence = "")
+    public static PassportCareerView BuildPassport(
+        CareerDashboardModel? model,
+        string evidence = "",
+        int experienceYears = 0)
     {
         if (model is null || !model.HasPlan || model.Steps.Count == 0)
         {
@@ -497,7 +518,7 @@ public static class CareerPlanViewBuilder
         }
 
         var editable = model.Steps.ToList();
-        OverlayEvidence(editable, evidence);
+        OverlayEvidence(editable, evidence, experienceYears);
         var goalReached = model.GoalReached || (editable.Count > 0 && editable.All(s => s.Status == CareerStepStatus.Completed));
         var active = editable.FirstOrDefault(s => s.Status == CareerStepStatus.Active)
                      ?? editable.FirstOrDefault(s => s.Status == CareerStepStatus.Open)
@@ -612,7 +633,10 @@ public static class CareerPlanViewBuilder
         return "/";
     }
 
-    public static IReadOnlyList<GapLine> BuildGaps(CareerPathDashboardStep? step, string evidence = "")
+    public static IReadOnlyList<GapLine> BuildGaps(
+        CareerPathDashboardStep? step,
+        string evidence = "",
+        int experienceYears = 0)
     {
         if (step is null)
         {
@@ -624,7 +648,7 @@ public static class CareerPlanViewBuilder
         {
             if (IsRealGap(gap))
             {
-                lines.Add(new GapLine(gap.Trim(), Met: GapMatchesEvidence(gap, evidence)));
+                lines.Add(new GapLine(gap.Trim(), Met: GapMatchesEvidence(gap, evidence, experienceYears)));
             }
         }
 
@@ -632,7 +656,7 @@ public static class CareerPlanViewBuilder
         {
             if (IsRealGap(req))
             {
-                lines.Add(new GapLine(req.Trim(), Met: GapMatchesEvidence(req, evidence)));
+                lines.Add(new GapLine(req.Trim(), Met: GapMatchesEvidence(req, evidence, experienceYears)));
             }
         }
 
@@ -665,7 +689,7 @@ public static class CareerPlanViewBuilder
     /// Marks a prefix of steps completed when every real gap is already in the profile.
     /// Later stamps stay open until the prefix reaches them (same rule as certificates).
     /// </summary>
-    public static void OverlayEvidence(IList<CareerPathDashboardStep> steps, string evidence)
+    public static void OverlayEvidence(IList<CareerPathDashboardStep> steps, string evidence, int experienceYears = 0)
     {
         if (steps.Count == 0 || string.IsNullOrWhiteSpace(evidence))
         {
@@ -677,20 +701,18 @@ public static class CareerPlanViewBuilder
         for (var i = 0; i < ordered.Count; i++)
         {
             qualifies[i] = ordered[i].Status == CareerStepStatus.Completed
-                           || GapsAllMet(ordered[i], evidence);
+                           || GapsAllMet(ordered[i], evidence, experienceYears);
         }
 
-        var prefix = true;
         var assignedActive = false;
         for (var i = 0; i < ordered.Count; i++)
         {
-            if (prefix && qualifies[i])
+            if (qualifies[i])
             {
                 ordered[i].Status = CareerStepStatus.Completed;
                 continue;
             }
 
-            prefix = false;
             if (!assignedActive)
             {
                 ordered[i].Status = CareerStepStatus.Active;
@@ -748,15 +770,15 @@ public static class CareerPlanViewBuilder
         return total;
     }
 
-    private static int UnmetGapCount(CareerPathDashboardStep step, string evidence)
-        => UnmetGapNames(step, evidence).Count;
+    private static int UnmetGapCount(CareerPathDashboardStep step, string evidence, int experienceYears = 0)
+        => UnmetGapNames(step, evidence, experienceYears).Count;
 
-    private static IReadOnlyList<string> UnmetGapNames(CareerPathDashboardStep step, string evidence)
+    private static IReadOnlyList<string> UnmetGapNames(CareerPathDashboardStep step, string evidence, int experienceYears = 0)
     {
         var names = new List<string>();
         foreach (var gap in step.SkillsGap.Concat(step.MinRequirements))
         {
-            if (!IsRealGap(gap) || GapMatchesEvidence(gap, evidence))
+            if (!IsRealGap(gap) || GapMatchesEvidence(gap, evidence, experienceYears))
             {
                 continue;
             }
@@ -767,10 +789,24 @@ public static class CareerPlanViewBuilder
         return names;
     }
 
-    private static bool GapsAllMet(CareerPathDashboardStep step, string evidence)
+    private static bool GapsAllMet(CareerPathDashboardStep step, string evidence, int experienceYears = 0)
     {
         var real = step.SkillsGap.Concat(step.MinRequirements).Where(IsRealGap).ToList();
-        return real.Count > 0 && real.All(line => GapMatchesEvidence(line, evidence));
+        if (real.Count == 0)
+        {
+            return experienceYears >= 2 && IsInternshipText(step.Title);
+        }
+
+        return real.All(line => GapMatchesEvidence(line, evidence, experienceYears));
+    }
+
+    private static bool IsInternshipText(string text)
+    {
+        var fold = CareerOccupationKeys.Fold(text);
+        return fold.Contains("stage", StringComparison.Ordinal)
+               || fold.Contains("traineeship", StringComparison.Ordinal)
+               || fold.Contains("stagiair", StringComparison.Ordinal)
+               || fold.Contains("internship", StringComparison.Ordinal);
     }
 
     private static int? MonthsBetween(string? start, string? end)
@@ -808,8 +844,13 @@ public static class CareerPlanViewBuilder
     }
 
     /// <summary>A gap is already met when a meaningful word also appears in the profile evidence.</summary>
-    public static bool GapMatchesEvidence(string gap, string evidence)
+    public static bool GapMatchesEvidence(string gap, string evidence, int experienceYears = 0)
     {
+        if (experienceYears >= 2 && IsInternshipText(gap))
+        {
+            return true;
+        }
+
         if (string.IsNullOrWhiteSpace(gap) || string.IsNullOrWhiteSpace(evidence))
         {
             return false;

@@ -503,6 +503,8 @@ public static class UiStringsDiscovery
             "Zo laten", "Leave it", "Zostaw tak", "Lasă așa", "اتركه هكذا");
         Add("Discovery.Shed.KeepSub",
             "5 vragen · klaar", "5 questions · done", "5 pytań · gotowe", "5 întrebări · gata", "5 أسئلة · جاهز");
+        Add("Discovery.Shed.DoneSub",
+            "Gedaan", "Done", "Gotowe", "Gata", "جاهز");
         Add("Discovery.Shed.Deeper",
             "Iets dieper", "A bit deeper", "Trochę głębiej", "Un pic mai adânc", "أعمق قليلاً");
         Add("Discovery.Shed.DeeperSub10",
@@ -594,6 +596,18 @@ public static class UiStringsDiscovery
             "Pierwsze wrażenie. Im głębiej nurkujesz, tym ostrzejszy obraz.",
             "Prima impresie. Cu cât te scufunzi mai adânc, cu atât imaginea e mai clară.",
             "انطباع أول. كلما غصت أعمق، صارت الصورة أوضح.");
+        Add("Discovery.End.HintDeeper",
+            "Iets dieper. Hoe dieper je duikt, hoe scherper het beeld.",
+            "A bit deeper. The deeper you dive, the sharper the picture.",
+            "Trochę głębiej. Im głębiej nurkujesz, tym ostrzejszy obraz.",
+            "Un pic mai adânc. Cu cât te scufunzi mai adânc, cu atât imaginea e mai clară.",
+            "أعمق قليلاً. كلما غصت أعمق، صارت الصورة أوضح.");
+        Add("Discovery.End.HintFull",
+            "Helemaal gedaan. Dit beeld staat in je paspoort.",
+            "Fully done. This picture is in your passport.",
+            "Całkowicie zrobione. Ten obraz jest w Twoim paszporcie.",
+            "Complet terminat. Această imagine este în pașaportul tău.",
+            "مكتمل بالكامل. هذه الصورة في جوازك.");
         Add("Discovery.End.Deepen",
             "Een test verdiepen", "Deepen a test", "Pogłęb test", "Aprofundează un test", "تعميق اختبار");
         Add("Discovery.End.ViewPassport",

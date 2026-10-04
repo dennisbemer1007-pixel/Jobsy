@@ -198,17 +198,19 @@
             {
                 var model = CareerPaths.FromApi(saved);
                 var evidence = "";
+                var years = 0;
                 try
                 {
                     var profile = await Api.GetMyProfileAsync();
                     evidence = CareerPlanViewBuilder.EvidenceFrom(profile?.Preferences);
+                    years = CareerPlanViewBuilder.ExperienceYears(profile?.Preferences?.Employers);
                 }
                 catch (Exception profileEx) when (!CircuitInterop.IsCircuitGone(profileEx))
                 {
                     evidence = "";
                 }
 
-                _view = CareerPlanViewBuilder.BuildPassport(model, evidence);
+                _view = CareerPlanViewBuilder.BuildPassport(model, evidence, years);
                 await LoadCoursesAsync(_view);
             }
             else

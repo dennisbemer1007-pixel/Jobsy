@@ -1,5 +1,7 @@
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Ops;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -63,6 +65,8 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             }
         }
 
+        await TryRepairAcceptatieTestCandidateAsync(stoppingToken);
+
         try
         {
             var index = _services.GetRequiredService<IVacancyDiscoveryIndex>();
@@ -72,6 +76,44 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Banenkaart index refresh after seed failed; the 15s job will retry.");
+        }
+    }
+
+    /// <summary>
+    /// Acceptatie only. Rewrites the seeded complete candidate's assessment rows.
+    /// The guard refuses production, and this never calls the full seed.
+    /// </summary>
+    private async Task TryRepairAcceptatieTestCandidateAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            var input = TestAccountGuardInputFactory.FromConfiguration(
+                _configuration, _environment, isWebRuntime: true);
+            var guard = TestAccountEnvironmentGuard.Evaluate(input);
+            if (!guard.Allowed)
+            {
+                _logger.LogInformation(
+                    "Test-account assessment repair skipped ({Codes}).",
+                    guard.CodesSummary());
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var seeder = new TestAccountsSeedService(db, _configuration);
+            var repaired = await seeder.RepairCompleteCandidateAssessmentsAsync(stoppingToken);
+            if (!repaired)
+            {
+                _logger.LogInformation("Test-account assessment repair skipped (account missing).");
+                return;
+            }
+
+            await db.SaveChangesAsync(stoppingToken);
+            _logger.LogInformation("Test-account assessment repair applied.");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Test-account assessment repair failed; API continues.");
         }
     }
 }

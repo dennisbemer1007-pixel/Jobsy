@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Ops;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Ops;
@@ -62,6 +63,138 @@ public class TestAccountsCommandTests
             Assert.False(u.AuthenticatorEnabled);
             Assert.Null(u.AuthenticatorSecret);
         });
+    }
+
+    [Fact]
+    public async Task Repair_overwrites_placeholder_scores_without_resetting_preferences()
+    {
+        var (db, config) = CreateDb();
+        var seeder = new TestAccountsSeedService(db, config);
+        await seeder.SeedAsync(false, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Candidate" });
+        await db.SaveChangesAsync();
+
+        var user = await db.Users.SingleAsync(u => u.Email == "test-kandidaat@lobsy.nl");
+        const string preferences = """{"roles":["logistiek"],"years":8}""";
+        user.PreferencesJson = preferences;
+
+        var competency = await db.CandidateCompetencies.SingleAsync(c => c.UserId == user.Id);
+        competency.SamenwerkenPercent = 70;
+        competency.ResultaatgerichtheidPercent = 65;
+        competency.StressbestendigheidPercent = 60;
+        competency.InnovatiePercent = 55;
+        competency.ExtraversiePercent = 50;
+
+        var values = await db.CandidateValuesProfiles.SingleAsync(c => c.UserId == user.Id);
+        values.AutonomyPercent = 70;
+        values.ConnectionPercent = 65;
+        values.AchievementPercent = 60;
+        values.StabilityPercent = 55;
+        values.ImpactPercent = 50;
+
+        var career = await db.CandidateCareerInterests.SingleAsync(c => c.UserId == user.Id);
+        career.Status = CandidateCompetencyStatuses.Completed;
+        career.AnswersJson = CareerTestCatalog.SerializeAnswers(new Dictionary<int, int> { [1] = 3 });
+        career.RealisticPercent = null;
+        career.InvestigativePercent = null;
+        career.ArtisticPercent = null;
+        career.SocialPercent = null;
+        career.EnterprisingPercent = null;
+        career.ConventionalPercent = null;
+
+        var nieuwId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = nieuwId,
+            Email = "test-kandidaat-nieuw@lobsy.nl",
+            FullName = "Nieuw",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            IsTestAccount = true
+        });
+        db.CandidateCompetencies.Add(new CandidateCompetency
+        {
+            Id = Guid.NewGuid(),
+            UserId = nieuwId,
+            Status = CandidateCompetencyStatuses.Completed,
+            SamenwerkenPercent = 70,
+            ResultaatgerichtheidPercent = 65,
+            StressbestendigheidPercent = 60,
+            InnovatiePercent = 55,
+            ExtraversiePercent = 50,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        Assert.True(await seeder.RepairCompleteCandidateAssessmentsAsync());
+        await db.SaveChangesAsync();
+
+        var expectedCompetency = CompetencyTestCatalog.Score(FullLikert(CompetencyTestCatalog.QuestionCount))!;
+        Assert.NotEqual(70, expectedCompetency.Samenwerken);
+        competency = await db.CandidateCompetencies.SingleAsync(c => c.UserId == user.Id);
+        Assert.Equal(expectedCompetency.Samenwerken, competency.SamenwerkenPercent);
+        Assert.Equal(expectedCompetency.Extraversie, competency.ExtraversiePercent);
+        Assert.True(CompetencyTestCatalog.IsComplete(CompetencyTestCatalog.ParseAnswersJson(competency.AnswersJson)));
+
+        var expectedValues = SchwartzValuesCatalog.Score(FullLikert(SchwartzValuesCatalog.QuestionCount))!;
+        values = await db.CandidateValuesProfiles.SingleAsync(c => c.UserId == user.Id);
+        Assert.Equal(expectedValues.Autonomy, values.AutonomyPercent);
+        Assert.NotEqual(70, values.AutonomyPercent);
+
+        career = await db.CandidateCareerInterests.SingleAsync(c => c.UserId == user.Id);
+        Assert.NotNull(career.RealisticPercent);
+        Assert.True(CareerTestCatalog.IsComplete(CareerTestCatalog.ParseAnswersJson(career.AnswersJson)));
+
+        Assert.Equal(preferences, (await db.Users.SingleAsync(u => u.Id == user.Id)).PreferencesJson);
+        var nieuw = await db.CandidateCompetencies.SingleAsync(c => c.UserId == nieuwId);
+        Assert.Equal(70, nieuw.SamenwerkenPercent);
+    }
+
+    private static Dictionary<int, int> FullLikert(int count)
+    {
+        var map = new Dictionary<int, int>(count);
+        for (var i = 1; i <= count; i++)
+        {
+            map[i] = ((i - 1) % 5) + 1;
+        }
+
+        return map;
+    }
+
+    [Fact]
+    public void Startup_repair_is_guarded_and_does_not_run_the_full_seed()
+    {
+        var root = FindRepoRoot();
+        var hosted = File.ReadAllText(Path.Combine(root, "Jobsy.Api", "Jobs", "DatabaseSeedHostedService.cs"));
+        Assert.Contains("TestAccountEnvironmentGuard.Evaluate", hosted, StringComparison.Ordinal);
+        Assert.Contains("RepairCompleteCandidateAssessmentsAsync", hosted, StringComparison.Ordinal);
+        Assert.DoesNotContain("SeedAsync", hosted, StringComparison.Ordinal);
+        Assert.DoesNotContain("EnsureCompleteCandidateAsync", hosted, StringComparison.Ordinal);
+
+        var seed = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure", "Ops", "TestAccountsSeedService.cs"));
+        var start = seed.IndexOf("RepairCompleteCandidateAssessmentsAsync", StringComparison.Ordinal);
+        var end = seed.IndexOf("private static bool SameAnswers", StringComparison.Ordinal);
+        Assert.True(start > 0 && end > start);
+        var slice = seed[start..end];
+        Assert.Contains("FindByKey(\"Candidate\")", slice, StringComparison.Ordinal);
+        Assert.DoesNotContain("kandidaat-nieuw", slice, StringComparison.Ordinal);
+        Assert.DoesNotContain("PreferencesJson", slice, StringComparison.Ordinal);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
     }
 
     [Fact]

@@ -96,6 +96,21 @@ public class KompasDnaLandingTests
             culture,
             null);
         Assert.Equal(WhoAmIStoryStatuses.Ready, matched.Status);
+
+        var persona = CandidateKompasService.BuildWhoAmIStory(
+            null, null, null, null, false,
+            profileFilled: true,
+            competencyDone: true,
+            careerDone: true,
+            cultureDone: true,
+            competency,
+            career,
+            culture,
+            new SchwartzValuesScores(60, 70, 55, 50, 65));
+        Assert.Equal(WhoAmIStoryStatuses.Ready, persona.Status);
+        Assert.False(string.IsNullOrWhiteSpace(persona.Story));
+        Assert.Contains("Ik", persona.Story, StringComparison.Ordinal);
+        Assert.DoesNotContain("wordt geschreven", persona.Story, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

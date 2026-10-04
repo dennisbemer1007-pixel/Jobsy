@@ -62,7 +62,7 @@
                     </span>
                     @if (!string.IsNullOrWhiteSpace(_completedMeta))
                     {
-                        <span class="muted">@_completedMeta · @Culture.Format("TestResult.ScoresCount", _scoreBars.Count)</span>
+                        <span class="muted">@_completedMeta · @Culture.Format("TestResult.ScoresFromQuestions", _scoreBars.Count, _deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)</span>
                     }
                 </p>
             </div>

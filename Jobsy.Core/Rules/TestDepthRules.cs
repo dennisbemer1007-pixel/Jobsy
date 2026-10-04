@@ -98,6 +98,24 @@ public static class TestDepthRules
         return QuestionIdsUpTo(kind, target);
     }
 
+    /// <summary>
+    /// 1-based question the test opens next: the first gap in catalog order.
+    /// A contiguous prefix returns <c>answered + 1</c>. Counting answers is not enough when ids are missing.
+    /// </summary>
+    public static int ResumeQuestionNumber(AssessmentKind kind, IReadOnlyDictionary<int, int> answers)
+    {
+        var ordered = QuestionIdsUpTo(kind, FullCount(kind));
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            if (!answers.ContainsKey(ordered[i]))
+            {
+                return i + 1;
+            }
+        }
+
+        return ordered.Count + 1;
+    }
+
     public static IReadOnlyList<int> QuestionIdsUpTo(AssessmentKind kind, int targetCount)
     {
         var full = FullCount(kind);

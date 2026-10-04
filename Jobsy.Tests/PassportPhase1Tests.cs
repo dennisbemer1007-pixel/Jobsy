@@ -68,6 +68,20 @@ public class PassportRedirectsTests
         Assert.Contains("/candidate/paspoort", url, StringComparison.Ordinal);
         Assert.Contains("tab=data", url, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void TryToPassportUrl_maps_dutch_career_and_proof_tabs()
+    {
+        var career = PassportRedirects.TryToPassportUrl("/candidate/profile?tab=carriere");
+        Assert.EndsWith("?tab=career", career, StringComparison.Ordinal);
+
+        var proof = PassportRedirects.TryToPassportUrl("/candidate/profile?tab=bewijzen");
+        Assert.EndsWith("?tab=proof", proof, StringComparison.Ordinal);
+
+        // English "career" is not the Dutch career bookmark. It stays off the career tab.
+        var test = PassportRedirects.TryToPassportUrl("/candidate/profile?tab=career");
+        Assert.EndsWith("?tab=data", test, StringComparison.Ordinal);
+    }
 }
 
 public class PassportShellRulesTests

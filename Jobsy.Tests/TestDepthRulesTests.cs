@@ -14,6 +14,26 @@ public sealed class TestDepthRulesTests
         => Assert.Equal(expected, TestDepthRules.FullCount(kind));
 
     [Fact]
+    public void ResumeQuestionNumber_uses_the_first_gap_not_the_answer_count()
+    {
+        var ordered = TestDepthRules.QuestionIdsUpTo(AssessmentKind.Competence, 25);
+        var answers = new Dictionary<int, int>();
+        for (var i = 0; i < 11; i++)
+        {
+            if (i == 4)
+            {
+                continue;
+            }
+
+            answers[ordered[i]] = 3;
+        }
+
+        Assert.Equal(10, answers.Count);
+        Assert.Equal(5, TestDepthRules.ResumeQuestionNumber(AssessmentKind.Competence, answers));
+        Assert.NotEqual(answers.Count + 1, TestDepthRules.ResumeQuestionNumber(AssessmentKind.Competence, answers));
+    }
+
+    [Fact]
     public void Bottom_Career_Is200()
         => Assert.Equal(200, TestDepthRules.Bottom(AssessmentKind.Career));
 

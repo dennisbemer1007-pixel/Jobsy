@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "f20de7ea2ee76fbf86c89f0cea6fb5d531b94d49f80c673da5fa3a01edad791d",
-    "v": "20261004-focus"
+    "sha256": "440db1db6d6d06db1d78d7b0578d0f0032d4d1ab11a4647f0b1bc55c1d17d41b",
+    "v": "20261004-run5c"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -76,8 +76,8 @@
     "v": "20261003-journey-polish"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "4bf884cc0cc123b83a29e52e5b57bca186279484bd1bfe07c95934816ab1aa45",
-    "v": "20261003-journey"
+    "sha256": "8b04ecfcc2f63ef4f4d503a2a4a9d46df76a4025f662181788de760b8cd2008e",
+    "v": "20261004-end"
   },
   "css/features/public-pages.css": {
     "sha256": "5517416d9a7ca622dd7a2ab65e0f85828531671b42d58772e42f5900056750c5",
@@ -108,8 +108,8 @@
     "v": "20260929-testresultaten-b2"
   },
   "css/features/tests.css": {
-    "sha256": "f737594dd365dcdb349a45b5fed7dff5dca70165d739509c08135ae9e837bd28",
-    "v": "20261004-flow"
+    "sha256": "2054461ff7c3b2b40e44a5a5c450db8491e9ff7697343678958943b08a98ce10",
+    "v": "20261004-footer"
   },
   "css/features/werkgever-aanmelding.css": {
     "sha256": "61ab5ba72e934f78dde05395a0af29eb0cf55ab4d3d3dfae4c1c19091d799a09",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "3b018e4e2903c994993efac0e120557ef4588d6a257db92a27e7362fa55ec756",
-    "v": "20261004-admin"
+    "sha256": "55a75a8eccdecd88b3b608e46767e204d315cd7b0df42c2b64f875be69ad5042",
+    "v": "20261004-run5c"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "46fd5ce19285ec201c74a2d79fdda13932678f7f8562d66cc96fec139119d6c0",
-    "v": "20261004-admin"
+    "sha256": "da09a3c1d82ba860399acfda0beaca4a03bbbe5d3d4479fdf3433cdd385f438a",
+    "v": "20261004-run5c"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "683e19b7fb00d6b295c09843c4812fefeea7c0acf045a886269c9167c458c889",
-    "v": "20261004-admin"
+    "sha256": "d9b731f5e3f389dd1ff8f227a7ba0785d46def8649ce59db2d51fcc082f71560",
+    "v": "20261004-run5c"
   },
   "service-worker.published.js": {
-    "sha256": "edc3a1017d664eaae8abb60c50d81f23eac42b8958e63ebbfa7752ba75784c13",
-    "v": "20261004-admin"
+    "sha256": "e36ea88f0c12b32721068f30eee9bda61b29d4707ed4813b0a94a0babb64c0f6",
+    "v": "20261004-run5c"
   }
 }
