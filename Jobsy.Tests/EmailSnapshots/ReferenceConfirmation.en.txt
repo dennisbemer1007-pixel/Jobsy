@@ -1,0 +1,37 @@
+KEY: ReferenceConfirmation
+SUBJECT: Alex de Tester asks you to confirm something
+PREHEADER: 5 short questions, no account needed
+KIND: Essential
+--- TEXT ---
+Hello Jan,
+
+Will you confirm this?
+======================
+
+Alex de Tester says they worked there as vakkenvuller. Is that right? You
+have 14 days. You do not need an account.
+
+Lobsy asks this because this person named you. Your answers go to that
+person. That person chooses whether a partner sees them. We keep this while
+the account exists. You do not have to answer.
+
+Rather not? On the page you can say no or report misuse.
+
+Open the questions: https://lobsy.nl/referentie/voorbeeld
+
+Team Lobsy
+
+Someone named you as a person who can confirm this work.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Will you confirm this?
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open the questions -> https://lobsy.nl/referentie/voorbeeld
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

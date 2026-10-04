@@ -172,6 +172,7 @@ public class PublicPagesWebGuardTests
         "/gebruiksvoorwaarden",
         "/hoe-werkt-lobsy",
         "/wie-zijn-wij",
+        "/toegankelijkheid",
         "/partner"
     ];
 
@@ -256,6 +257,7 @@ public class PublicPagesWebGuardTests
     [InlineData("/gebruiksvoorwaarden")]
     [InlineData("/hoe-werkt-lobsy")]
     [InlineData("/wie-zijn-wij")]
+    [InlineData("/toegankelijkheid")]
     [InlineData("/partner")]
     public async Task Static_public_pages_are_complete_html_without_an_interactive_marker(string path)
     {
@@ -283,6 +285,7 @@ public class PublicPagesWebGuardTests
             ["/gebruiksvoorwaarden"] = "Components/Pages/Legal/Gebruiksvoorwaarden.razor",
             ["/hoe-werkt-lobsy"] = "Components/Pages/HowLobsyWorks.razor",
             ["/wie-zijn-wij"] = "Components/Pages/Legal/WieZijnWij.razor",
+            ["/toegankelijkheid"] = "Components/Pages/Legal/Toegankelijkheid.razor",
             ["/partner"] = "Components/Pages/Partner/PartnerSales.razor",
             ["/melden"] = "Components/Pages/Public/Melden.razor"
         };

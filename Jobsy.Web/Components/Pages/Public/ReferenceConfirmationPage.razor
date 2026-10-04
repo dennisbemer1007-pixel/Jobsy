@@ -1,0 +1,133 @@
+@page "/referentie/{Token}"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using Jobsy.Web.Components.Layout.Public
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.WebUtilities
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+
+<PageTitle>@Culture["Referee.PageTitle"] · Lobsy</PageTitle>
+
+<section class="pub-section referee-page" aria-labelledby="referee-title">
+    <div class="pub-card">
+        <PublicLangMenu ReturnPath="@ReturnPath" />
+        <h1 id="referee-title">@Culture["Referee.PageTitle"]</h1>
+        @if (_thanks is not null)
+        {
+            <p role="status">@_thanks</p>
+        }
+        else if (_problem is not null)
+        {
+            <p role="alert">@_problem</p>
+        }
+        else if (_open)
+        {
+            <p class="muted">@_employer</p>
+            <RefereeQuestions Token="@Token" CandidateName="@_name" RoleTitle="@_role" />
+        }
+        else
+        {
+            <p role="status">@Culture["Common.Loading"]</p>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Token { get; set; } = "";
+
+    private bool _open;
+    private string _name = "";
+    private string _role = "";
+    private string _employer = "";
+    private string? _thanks;
+    private string? _problem;
+
+    private string ReturnPath => "/referentie/" + Token;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("klaar", out var done))
+        {
+            _thanks = done.FirstOrDefault() switch
+            {
+                "nee" => Culture["Referee.ThanksDecline"],
+                "melding" => Culture["Referee.ThanksMisuse"],
+                _ => Culture["Referee.Thanks"]
+            };
+            return;
+        }
+
+        if (query.TryGetValue("fout", out var fault))
+        {
+            _problem = fault.FirstOrDefault() switch
+            {
+                "verlopen" => Culture["Referee.Expired"],
+                "gebruikt" => Culture["Referee.Used"],
+                "invullen" => Culture["Referee.AnswersMissing"],
+                _ => Culture["Referee.Invalid"]
+            };
+        }
+
+        if (Token.Length != 64)
+        {
+            _problem ??= Culture["Referee.Invalid"];
+            return;
+        }
+
+        try
+        {
+            var apiBase = (Configuration["ApiBaseUrl"] ?? Configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
+            var client = HttpClientFactory.CreateClient();
+            var view = await client.GetFromJsonAsync<PreviewDto>(
+                $"{apiBase}/api/public/reference-confirmations/{Uri.EscapeDataString(Token)}");
+            if (view is null || string.IsNullOrWhiteSpace(view.State))
+            {
+                _problem ??= Culture["Referee.Invalid"];
+                return;
+            }
+
+            if (!string.Equals(view.State, "open", StringComparison.Ordinal))
+            {
+                _problem ??= view.State switch
+                {
+                    "expired" => Culture["Referee.Expired"],
+                    "used" => Culture["Referee.Used"],
+                    _ => Culture["Referee.Invalid"]
+                };
+                return;
+            }
+
+            _name = view.CandidateName ?? "";
+            _role = view.RoleTitle ?? "";
+            _employer = view.EmployerName ?? "";
+            _open = _problem is null;
+        }
+        catch
+        {
+            _problem ??= Culture["Referee.Invalid"];
+        }
+    }
+
+    private sealed class PreviewDto
+    {
+        [JsonPropertyName("state")]
+        public string? State { get; set; }
+
+        [JsonPropertyName("candidateName")]
+        public string? CandidateName { get; set; }
+
+        [JsonPropertyName("roleTitle")]
+        public string? RoleTitle { get; set; }
+
+        [JsonPropertyName("employerName")]
+        public string? EmployerName { get; set; }
+    }
+}

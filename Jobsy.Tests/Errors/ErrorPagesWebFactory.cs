@@ -35,6 +35,9 @@ public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAs
     /// </summary>
     public bool ApiAnswersNotFound { get; init; }
 
+    /// <summary>Mirrors <c>Seo:NoIndex</c> / <c>Seo__NoIndex</c> on Acceptatie.</summary>
+    public bool NoIndex { get; init; }
+
     public RecordingLoggerProvider Logs { get; } = new();
 
     public HttpClient CreateHtmlClient()
@@ -56,7 +59,8 @@ public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAs
                 ["Support:Email"] = "support@lobsy.nl",
                 // Development keeps the developer exception page; opt in to the production handler.
                 [ErrorPagesExtensions.ForceHandlerConfigKey] = "true",
-                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
+                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
+                ["Seo:NoIndex"] = NoIndex ? "true" : "false"
             });
         });
 

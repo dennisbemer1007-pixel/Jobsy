@@ -1,6 +1,9 @@
 namespace Jobsy.Core.Options;
 
-/// <summary>Lobsy legal identity from config (<c>Legal__*</c>). Empty fields fall back to Bedrijfsgegevens.</summary>
+/// <summary>
+/// Fallback legal identity from config (<c>Legal__*</c>).
+/// A filled Bedrijfsgegevens field wins; these values are used only when that field is empty.
+/// </summary>
 public sealed class LegalOptions
 {
     public const string SectionName = "Legal";

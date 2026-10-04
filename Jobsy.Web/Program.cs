@@ -365,6 +365,16 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
     // Static /melden form POST; the API applies the stricter per-visitor "report" limit.
+    options.AddPolicy("reference-form", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     options.AddPolicy("report-form", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             Jobsy.Web.Security.TrustedClientIp.PartitionKey(
@@ -411,6 +421,7 @@ if (string.IsNullOrWhiteSpace(builder.Configuration[Jobsy.Core.Security.Internal
 
 
 // Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
+app.UseMiddleware<Jobsy.Web.Seo.SeoNoIndexMiddleware>();
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
 app.UseMiddleware<CloudflareOriginMiddleware>();
@@ -499,6 +510,7 @@ app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 app.MapJobsyAuthEndpoints();
 app.MapPublicTokenEndpoints();
 app.MapMailUnsubscribeEndpoints();
+app.MapReferenceConfirmationEndpoints();
 app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
 app.MapPartnerFlyerEndpoints();

@@ -58,6 +58,7 @@ public static partial class PageSeoCatalog
         "/algemene-voorwaarden",
         "/gebruiksvoorwaarden",
         "/wie-zijn-wij",
+        "/toegankelijkheid",
         "/hoe-werkt-lobsy",
         "/westland",
         "/lancering",
@@ -153,6 +154,7 @@ public static partial class PageSeoCatalog
             ["/algemene-voorwaarden"] = Public("Legal.Terms", "Seo.TermsDescription"),
             ["/gebruiksvoorwaarden"] = Public("Legal.Usage", "Seo.UsageDescription"),
             ["/wie-zijn-wij"] = Public("Legal.About", "Seo.AboutDescription"),
+            ["/toegankelijkheid"] = Public("A11y.Seo.Title", "A11y.Seo.Description"),
             ["/westland"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),
             ["/lancering"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),
             ["/ontdek"] = Public("GratisDna.Seo.Title", "GratisDna.Seo.Description", hreflang: true),
@@ -283,6 +285,7 @@ public static partial class PageSeoCatalog
 
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =
     [
+        ("/referentie", Private("Referee.Seo.Title", "Referee.Seo.Description")),
         ("/status/", Private("Status.NotFound.Title", "Seo.PrivateDescription")),
         ("/vacancies/", Public("Vacancy.Title", "Seo.VacancyFallbackDescription", "article")),
         ("/partner/", Public("Partner.Title", "Seo.PartnerDescription", index: false, CanonicalPath: "/partner")),

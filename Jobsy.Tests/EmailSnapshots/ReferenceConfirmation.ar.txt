@@ -1,0 +1,35 @@
+KEY: ReferenceConfirmation
+SUBJECT: ⁨Alex de Tester⁩ يطلب منك تأكيد شيء
+PREHEADER: 5 أسئلة قصيرة، بلا حساب
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Jan⁩،
+
+هل تؤكد هذا؟
+
+⁨Alex de Tester⁩ يقول إنه عمل هناك بصفة ⁨vakkenvuller⁩. هل هذا صحيح؟ لديك 14
+يوماً. لا تحتاج إلى حساب.
+
+يسأل لوبسي لأن هذا الشخص سمّاك. إجاباتك تذهب إليه. هو يختار إن كان الشريك
+يراها. نحتفظ بها ما دام الحساب موجوداً. لست مضطراً للإجابة.
+
+لا تريد؟ في الصفحة يمكنك الرفض أو الإبلاغ عن إساءة.
+
+افتح الأسئلة: https://lobsy.nl/referentie/voorbeeld
+
+فريق Lobsy
+
+سمّاك أحدهم شخصاً يستطيع تأكيد هذا العمل.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: هل تؤكد هذا؟
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: افتح الأسئلة -> https://lobsy.nl/referentie/voorbeeld
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

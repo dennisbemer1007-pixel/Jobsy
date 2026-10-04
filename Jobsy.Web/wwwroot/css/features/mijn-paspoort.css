@@ -2182,3 +2182,52 @@
 .passport-proof__list .diploma-eval__attribution {
     display: block;
 }
+
+.passport-proof__ask {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    margin-bottom: 4.5rem;
+    max-width: 36rem;
+}
+
+.passport-proof__ask-form,
+.referee-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    width: 100%;
+}
+
+.referee-form__q {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.referee-form__choice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+}
+
+.referee-form__side,
+.referee-form__misuse {
+    margin-top: var(--space-3);
+}
+
+.referee-page {
+    max-width: 40rem;
+}
+
+.referee-page .text-input,
+.passport-proof__ask .text-input {
+    width: 100%;
+    max-width: 100%;
+}
