@@ -1,0 +1,40 @@
+@namespace Jobsy.Web.Components.Werkgever
+@using System.Globalization
+@inject CultureState Culture
+
+<span class="wg-vac-apps" data-testid="wg-vac-apps">
+    @if (NewCount > 0)
+    {
+        <span class="wg-vac-apps__total">@Total</span>
+        <span class="wg-vac-apps__sep" aria-hidden="true"> · </span>
+        <span class="wg-vac__new" title="@Aria" aria-label="@Aria">@Badge</span>
+    }
+    else
+    {
+        @Total
+    }
+</span>
+
+@code {
+    [Parameter] public int Total { get; set; }
+    [Parameter] public int NewCount { get; set; }
+
+    private string Badge
+        => string.Format(CultureInfo.InvariantCulture, Culture["WgVac.Apps.NewBadge"], NewCount);
+
+    private string Aria
+    {
+        get
+        {
+            var form = CountPhrase.Form(Culture.Language, NewCount);
+            var key = $"WgVac.Apps.NewAria.{form}";
+            var template = Culture[key];
+            if (string.Equals(template, key, StringComparison.Ordinal))
+            {
+                template = Culture["WgVac.Apps.NewAria.Many"];
+            }
+
+            return string.Format(CultureInfo.InvariantCulture, template, NewCount);
+        }
+    }
+}

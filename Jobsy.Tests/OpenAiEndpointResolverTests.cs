@@ -1,3 +1,4 @@
+using Jobsy.Core.Ai;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
@@ -150,6 +151,55 @@ public class OpenAiEndpointResolverTests
         Assert.Equal("https://api.openai.com/v1/", OpenAiEndpointResolver.Features[feature].DefaultBaseUrl);
     }
 
+    [Theory]
+    [InlineData(OpenAiFeature.WhoAmI)]
+    [InlineData(OpenAiFeature.AssistantChat)]
+    [InlineData(OpenAiFeature.CareerPathPlan)]
+    [InlineData(OpenAiFeature.CultureFit)]
+    [InlineData(OpenAiFeature.VacancyContentModeration)]
+    [InlineData(OpenAiFeature.CvExtraction)]
+    [InlineData(OpenAiFeature.MockInterview)]
+    [InlineData(OpenAiFeature.Translation)]
+    [InlineData(OpenAiFeature.CareerCompass)]
+    [InlineData(OpenAiFeature.RoleFitCheck)]
+    [InlineData(OpenAiFeature.CompetenceDeepReport)]
+    public async Task Mistral_provider_ignores_the_openai_database_key_model_and_url(OpenAiFeature feature)
+    {
+        var sut = CreateSut(
+            dbApiKey: "sk-openai-db",
+            dbModel: "gpt-4o-mini",
+            dbBaseUrl: "https://api.openai.com/v1/",
+            options: new OpenAiOptions
+            {
+                ApiKey = "sk-openai-config",
+                Model = "gpt-4o-mini",
+                BaseUrl = "https://api.openai.com/v1/"
+            },
+            ai: new AiOptions { Provider = "Mistral" },
+            mistral: new MistralOptions { ApiKey = "mistral-test-key", Model = "  ", BaseUrl = "  " });
+
+        var resolved = await sut.ResolveAsync(feature);
+
+        Assert.Equal("mistral-test-key", resolved.ApiKey);
+        Assert.Equal(MistralOptions.DefaultModel, resolved.Model);
+        Assert.Equal(MistralOptions.DefaultBaseUrl, resolved.BaseUrl);
+    }
+
+    [Fact]
+    public async Task Mistral_without_a_key_stays_on_openai()
+    {
+        var sut = CreateSut(
+            dbApiKey: "sk-openai-db",
+            options: new OpenAiOptions { ApiKey = "sk-config", Model = "gpt-4o-mini" },
+            ai: new AiOptions { Provider = "mistral" },
+            mistral: new MistralOptions { ApiKey = "  " });
+
+        var resolved = await sut.ResolveAsync(OpenAiFeature.Translation);
+
+        Assert.Equal("sk-openai-db", resolved.ApiKey);
+        Assert.Equal("https://api.openai.com/v1/", resolved.BaseUrl);
+    }
+
     [Fact]
     public void Feature_table_covers_all_enum_values()
     {
@@ -165,10 +215,14 @@ public class OpenAiEndpointResolverTests
         string? dbApiKey = null,
         string? dbModel = null,
         string? dbBaseUrl = null,
-        OpenAiOptions? options = null)
+        OpenAiOptions? options = null,
+        AiOptions? ai = null,
+        MistralOptions? mistral = null)
         => new(
             new StubCredentials(dbApiKey, dbModel, dbBaseUrl),
-            Options.Create(options ?? new OpenAiOptions { ApiKey = null, Model = "   ", BaseUrl = "   " }));
+            Options.Create(options ?? new OpenAiOptions { ApiKey = null, Model = "   ", BaseUrl = "   " }),
+            Options.Create(ai ?? new AiOptions()),
+            Options.Create(mistral ?? new MistralOptions()));
 
     private sealed class StubCredentials(
         string? apiKey,

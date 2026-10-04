@@ -1,6 +1,8 @@
+using Jobsy.Core.Ai;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services.OpenAi;
@@ -59,13 +61,22 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
 
     private readonly IIntegrationCredentialService _credentials;
     private readonly OpenAiOptions _options;
+    private readonly AiOptions _ai;
+    private readonly MistralOptions _mistral;
+    private readonly ILogger<OpenAiEndpointResolver>? _logger;
 
     public OpenAiEndpointResolver(
         IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options)
+        IOptions<OpenAiOptions> options,
+        IOptions<AiOptions>? ai = null,
+        IOptions<MistralOptions>? mistral = null,
+        ILogger<OpenAiEndpointResolver>? logger = null)
     {
         _credentials = credentials;
         _options = options.Value;
+        _ai = ai?.Value ?? new AiOptions();
+        _mistral = mistral?.Value ?? new MistralOptions();
+        _logger = logger;
     }
 
     public async Task<OpenAiEndpointResolution> ResolveAsync(
@@ -77,10 +88,48 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
             throw new ArgumentOutOfRangeException(nameof(feature), feature, "Unknown OpenAI feature.");
         }
 
+        var decision = AiProviderChoice.Decide(_ai.Provider, _mistral.ApiKey);
+        if (decision.UnknownProvider)
+        {
+            AiProviderFallbackLog.UnknownProvider(_logger, _ai.Provider);
+        }
+
+        if (decision.RequestedMistralWithoutKey)
+        {
+            AiProviderFallbackLog.MissingMistralKey(_logger);
+        }
+
+        if (decision.Kind == AiProviderKind.Mistral)
+        {
+            return new OpenAiEndpointResolution(
+                _mistral.ApiKey!.Trim(),
+                ResolveMistralModel(),
+                ResolveMistralBaseUrl());
+        }
+
         var apiKey = await ResolveApiKeyAsync(defaults.IntegrationKey, cancellationToken);
         var model = await ResolveModelAsync(defaults, cancellationToken);
         var baseUrl = await ResolveBaseUrlAsync(defaults, cancellationToken);
         return new OpenAiEndpointResolution(apiKey, model, baseUrl);
+    }
+
+    private string ResolveMistralModel()
+        => string.IsNullOrWhiteSpace(_mistral.Model)
+            ? MistralOptions.DefaultModel
+            : _mistral.Model.Trim();
+
+    private string ResolveMistralBaseUrl()
+    {
+        var raw = string.IsNullOrWhiteSpace(_mistral.BaseUrl)
+            ? MistralOptions.DefaultBaseUrl
+            : _mistral.BaseUrl;
+        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(raw, out var normalized, out _)
+            && !string.IsNullOrWhiteSpace(normalized))
+        {
+            return normalized;
+        }
+
+        return MistralOptions.DefaultBaseUrl;
     }
 
     private async Task<string?> ResolveApiKeyAsync(IntegrationKey key, CancellationToken cancellationToken)

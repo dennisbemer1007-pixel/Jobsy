@@ -24,6 +24,12 @@ public sealed record LegalProcessor(
 {
     /// <summary>Row-specific note for a planned row; falls back to the generic "not live yet" note.</summary>
     public string? PlannedNoteKey { get; init; }
+
+    /// <summary>
+    /// When set, the row is listed only while this AI provider is the one that actually runs.
+    /// Null means the row is always listed. Values are <c>OpenAI</c> and <c>Mistral</c>.
+    /// </summary>
+    public string? WhenAiProvider { get; init; }
 }
 
 /// <summary>
@@ -98,7 +104,21 @@ public static class LegalProcessors
             "Legal.Processor.openai.Purpose",
             "Legal.Processor.openai.Data",
             ProcessorStatus.Active,
-            DataPrivacyFramework),
+            DataPrivacyFramework)
+        {
+            WhenAiProvider = "OpenAI"
+        },
+        new(
+            "mistral",
+            "Mistral AI",
+            "Frankrijk (Parijs); gegevens in de EU",
+            "Legal.Processor.mistral.Purpose",
+            "Legal.Processor.mistral.Data",
+            ProcessorStatus.Active,
+            InsideEu)
+        {
+            WhenAiProvider = "Mistral"
+        },
         new(
             "cursor",
             "Cursor",

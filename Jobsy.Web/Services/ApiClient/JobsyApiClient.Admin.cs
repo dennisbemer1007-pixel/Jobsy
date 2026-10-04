@@ -708,6 +708,15 @@ public sealed partial class JobsyApiClient
         return new AdminVacancyPage(items, Header(response, "X-Total-Count"), Header(response, "X-Active-Ats"), Header(response, "X-Active-Regular"));
     }
 
+    public async Task<IReadOnlyList<MetricDrilldownItem>> GetAdminVacancyMetricDrilldownAsync(
+        Guid vacancyId,
+        string key,
+        string period = "week",
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<MetricDrilldownItem>>(
+            $"api/admin/vacancies/{vacancyId:D}/metrics/{Uri.EscapeDataString(key)}?period={Uri.EscapeDataString(period)}",
+            ct) ?? [];
+
     public async Task<IReadOnlyList<AtsListingItem>> GetAtsListingsAsync(
         string? status = null,
         string? q = null,
@@ -1219,6 +1228,9 @@ public sealed partial class JobsyApiClient
         => await _http.GetFromJsonAsync<List<IntegrationCredentialItem>>(
             "api/settings/integration-credentials", ct) ?? [];
 
+    public async Task<AiProviderStatusItem?> GetAiProviderAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AiProviderStatusItem>("api/settings/ai-provider", ct);
+
     public async Task<IntegrationCredentialItem?> SaveIntegrationCredentialAsync(
         string key,
         IntegrationCredentialSaveForm form,
@@ -1425,6 +1437,7 @@ public sealed partial class JobsyApiClient
         string? q = null,
         int page = 1,
         int pageSize = 25,
+        IReadOnlyList<string>? labelKeys = null,
         CancellationToken ct = default)
     {
         var qs = new List<string>
@@ -1440,6 +1453,10 @@ public sealed partial class JobsyApiClient
         if (!string.IsNullOrWhiteSpace(targetType)) qs.Add($"targetType={Uri.EscapeDataString(targetType)}");
         if (!string.IsNullOrWhiteSpace(targetId)) qs.Add($"targetId={Uri.EscapeDataString(targetId)}");
         if (!string.IsNullOrWhiteSpace(q)) qs.Add($"q={Uri.EscapeDataString(q)}");
+        if (labelKeys is { Count: > 0 })
+        {
+            qs.Add("labelKeys=" + Uri.EscapeDataString(string.Join(',', labelKeys)));
+        }
 
         return await _http.GetFromJsonAsync<AdminAuditPage>($"api/admin/audit?{string.Join('&', qs)}", ct)
                ?? new AdminAuditPage();
@@ -1451,6 +1468,7 @@ public sealed partial class JobsyApiClient
         string? action = null,
         string? result = null,
         string? q = null,
+        IReadOnlyList<string>? labelKeys = null,
         CancellationToken ct = default)
     {
         var qs = new List<string>();
@@ -1459,6 +1477,10 @@ public sealed partial class JobsyApiClient
         if (!string.IsNullOrWhiteSpace(action)) qs.Add($"action={Uri.EscapeDataString(action)}");
         if (!string.IsNullOrWhiteSpace(result)) qs.Add($"result={Uri.EscapeDataString(result)}");
         if (!string.IsNullOrWhiteSpace(q)) qs.Add($"q={Uri.EscapeDataString(q)}");
+        if (labelKeys is { Count: > 0 })
+        {
+            qs.Add("labelKeys=" + Uri.EscapeDataString(string.Join(',', labelKeys)));
+        }
         var url = qs.Count == 0 ? "api/admin/audit/export" : "api/admin/audit/export?" + string.Join('&', qs);
         return await _http.GetByteArrayAsync(url, ct);
     }

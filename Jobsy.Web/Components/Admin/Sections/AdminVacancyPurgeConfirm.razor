@@ -8,7 +8,7 @@
                          Title="@Culture["WgVac.Delete"]"
                          TitleId="admin-vac-purge"
                          OnClose="OnCancel">
-        <p data-testid="admin-vacancy-delete-confirm">@string.Format(Culture["AdminVacancy.Confirm.Purge"], Item.ApplicationCount)</p>
+        <p data-testid="admin-vacancy-delete-confirm">@string.Format(Culture["AdminVacancy.Confirm.Purge"], CountPhrase.Applications(Culture, Item.ApplicationCount))</p>
         <div class="inline-actions">
             <button type="button" class="btn-compact" data-testid="admin-vacancy-delete-cancel" disabled="@Busy" @onclick="OnCancel">@Culture["Common.Cancel"]</button>
             <button type="button"

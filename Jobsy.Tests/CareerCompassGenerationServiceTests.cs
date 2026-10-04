@@ -61,6 +61,37 @@ public class CareerCompassGenerationServiceTests
     }
 
     [Fact]
+    public async Task Mistral_provider_posts_json_chat_to_mistral_and_ignores_the_openai_key()
+    {
+        var handler = new RecordingHandler { ResponseJson = WrapChat("{}") };
+        var sut = new CareerCompassGenerationService(
+            new NamedHttpClientFactory(handler),
+            new OpenAiEndpointResolver(
+                new StubCredentials("sk-openai-db"),
+                Options.Create(new OpenAiOptions
+                {
+                    ApiKey = "sk-openai-config",
+                    Model = "gpt-4o-mini",
+                    BaseUrl = "https://api.openai.com/v1/"
+                }),
+                Options.Create(new AiOptions { Provider = "Mistral" }),
+                Options.Create(new MistralOptions { ApiKey = "mistral-test-key" })),
+            NullLogger<CareerCompassGenerationService>.Instance);
+
+        await sut.GenerateFromCareerDeepAsync(PeakAll());
+
+        Assert.Contains(
+            "https://api.mistral.ai/v1/chat/completions",
+            handler.LastRequestUri,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("mistral-small-latest", handler.LastBody, StringComparison.Ordinal);
+        Assert.Contains("json_object", handler.LastBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("gpt-4o-mini", handler.LastBody, StringComparison.Ordinal);
+        Assert.Contains("Bearer mistral-test-key", handler.LastAuthorization, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-openai", handler.LastAuthorization, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Http_error_falls_back_to_local_catalog()
     {
         var handler = new RecordingHandler { Status = HttpStatusCode.InternalServerError };
@@ -105,12 +136,14 @@ public class CareerCompassGenerationServiceTests
         public string ResponseJson { get; init; } = """{"choices":[{"message":{"content":"{}"}}]}""";
         public string LastBody { get; private set; } = "";
         public string LastRequestUri { get; private set; } = "";
+        public string LastAuthorization { get; private set; } = "";
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             LastRequestUri = request.RequestUri?.ToString() ?? "";
+            LastAuthorization = request.Headers.Authorization?.ToString() ?? "";
             LastBody = request.Content is null
                 ? ""
                 : await request.Content.ReadAsStringAsync(cancellationToken);

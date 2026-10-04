@@ -118,6 +118,7 @@
                 {
                     <p>@_headlineLead</p>
                 }
+                <ReadAloudButton Text="@ResultSpeech" SpeechKey="result-headline" />
             </article>
         }
 
@@ -175,7 +176,10 @@
 
         <details class="test-detail__accordion">
             <summary>@Culture["Tests.WhatItMeans"]</summary>
-            <p class="login-lead">@ScienceNote</p>
+            <div class="read-aloud-block">
+                <p class="login-lead">@ScienceNote</p>
+                <ReadAloudButton Text="@ScienceNote" SpeechKey="@($"means-{_def.ScienceNoteKey}")" />
+            </div>
             <p class="whoami-model muted">
                 @Culture["Tests.ModelLabel"]: @_def.ModelName.
                 <a href="@_def.ModelUrl" target="_blank" rel="noopener noreferrer">@Culture["Tests.MoreAboutModel"]</a>
@@ -386,6 +390,11 @@
     private string _paymentMode = "unavailable";
     private string? _headline;
     private string? _headlineLead;
+
+    private string ResultSpeech
+        => string.IsNullOrWhiteSpace(_headlineLead)
+            ? _headline ?? ""
+            : $"{_headline}. {_headlineLead}";
     private string? _completedMeta;
     private readonly List<ScoreBar> _scoreBars = [];
     private readonly List<ScoreBar> _personalityBars = [];

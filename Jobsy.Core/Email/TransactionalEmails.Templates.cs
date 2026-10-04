@@ -1,5 +1,6 @@
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Reminders;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Email;
@@ -437,6 +438,23 @@ public static partial class TransactionalEmails
             eyebrow: new EmailEyebrow(S(c, "Email.CompanyReEngagement.Eyebrow"), EmailTone.Sky),
             culture: c,
             reasonText: Sf(c, "Email.Reason.ManagesCompany", EmailBidi.Isolate(c, companyName))), baseUrl);
+    }
+
+    public static ComposedEmail ComebackReminder(
+        string? baseUrl, string? candidateName, string kind, EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        var tests = string.Equals(kind, ComebackReminderKinds.BasicTests, StringComparison.Ordinal);
+        var prefix = tests ? "Email.ComebackTests" : "Email.ComebackLookAgain";
+        var href = tests ? links.Absolute("/profiel/tests") : links.Absolute("/profiel");
+        return Finish(Doc("ComebackReminder", S(c, prefix + ".Subject"),
+            S(c, prefix + ".Preheader"), S(c, prefix + ".Heading"),
+            [P(S(c, prefix + ".P1"))],
+            Button(S(c, prefix + ".Cta"), href),
+            greeting: GreetCandidate(c, candidateName),
+            eyebrow: new EmailEyebrow(S(c, prefix + ".Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
     }
 
     public static ComposedEmail ReferenceConfirmationRequest(

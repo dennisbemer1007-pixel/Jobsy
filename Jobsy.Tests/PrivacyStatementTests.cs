@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Bunit;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Legal;
 using Jobsy.Core.Privacy;
 using Jobsy.Web.Components.Layout;
@@ -144,7 +145,7 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
     {
         var table = RenderPrivacy().Find("#delen .pp-table__grid").TextContent;
 
-        foreach (var row in LegalProcessors.All)
+        foreach (var row in LegalAiProcessorSelection.Resolve(AiProviderKind.OpenAI))
         {
             Assert.Contains(row.Name, table, StringComparison.Ordinal);
             Assert.Contains(row.Region, table, StringComparison.Ordinal);
@@ -155,6 +156,8 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
                 table,
                 StringComparison.Ordinal);
         }
+
+        Assert.DoesNotContain("Mistral", table, StringComparison.Ordinal);
     }
 
     [Theory]

@@ -55,6 +55,7 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("MfaController", "Verify", "Own MFA challenge"),
         ("MfaController", "RegenerateRecoveryCodes", "Own MFA recovery codes"),
         ("MeEmailPreferencesController", "Put", "Own e-mail notification preferences"),
+        ("MeReminderWhatsAppController", "Put", "Own WhatsApp reminder opt-in"),
         ("PrivacyController", "RequestUnsubscribe", "Own unsubscribe request"),
         ("PrivacyController", "ConfirmUnsubscribe", "Own unsubscribe confirm"),
         ("PrivacyController", "DeleteAccount", "Own account delete"),

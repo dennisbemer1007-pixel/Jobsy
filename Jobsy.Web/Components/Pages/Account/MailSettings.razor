@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @layout MainLayout
 @using Microsoft.AspNetCore.Antiforgery
+@using Jobsy.Web.Components.Account
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -40,6 +41,7 @@
                         </span>
                     </label>
                 }
+                <ComebackWhatsAppFields Available="_whatsAppAvailable" OptedIn="_whatsAppOptedIn" Phone="@_whatsAppPhone" />
                 <button type="submit" class="btn btn-primary">@Culture["MailSettings.Save"]</button>
             }
             else
@@ -70,6 +72,9 @@
     private bool _employersOn = true;
     private bool _loadError;
     private bool _saved;
+    private bool _whatsAppAvailable;
+    private bool _whatsAppOptedIn;
+    private string? _whatsAppPhone;
     private string _antiforgeryFieldName = "";
     private string _antiforgeryToken = "";
 
@@ -129,6 +134,10 @@
             }
 
             _alwaysKeys.Add("MailSettings.Always.Security");
+            var whatsApp = await Api.GetReminderWhatsAppAsync();
+            _whatsAppAvailable = whatsApp?.Available == true;
+            _whatsAppOptedIn = whatsApp?.OptedIn == true;
+            _whatsAppPhone = whatsApp?.Phone;
         }
         catch
         {
@@ -141,6 +150,7 @@
         "PushBom" => Culture["MailSettings.PushBom.Label"],
         "VacancyEngagementReminder" => Culture["MailSettings.VacancyEngagement.Label"],
         "CompanyReEngagement" => Culture["MailSettings.CompanyReEngagement.Label"],
+        "ComebackReminder" => Culture["MailSettings.Comeback.Label"],
         _ => key
     };
 
@@ -149,6 +159,7 @@
         "PushBom" => Culture["MailSettings.PushBom.Hint"],
         "VacancyEngagementReminder" => Culture["MailSettings.VacancyEngagement.Hint"],
         "CompanyReEngagement" => Culture["MailSettings.CompanyReEngagement.Hint"],
+        "ComebackReminder" => Culture["MailSettings.Comeback.Hint"],
         _ => ""
     };
 

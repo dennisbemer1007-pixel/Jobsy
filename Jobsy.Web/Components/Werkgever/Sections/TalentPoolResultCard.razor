@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Werkgever.Sections
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Models
 
 <div class="detail-card" data-testid="talent-card">
@@ -26,7 +27,13 @@
     [Parameter] public EventCallback<Guid> OnUnlock { get; set; }
 
     private IEnumerable<string> DisplayTags
-        => ShowRiasec
-            ? Card.MatchTags.Concat(Card.RiasecTags).Distinct(StringComparer.OrdinalIgnoreCase)
-            : Card.MatchTags;
+    {
+        get
+        {
+            IEnumerable<string> tags = ShowRiasec
+                ? Card.MatchTags.Concat(Card.RiasecTags)
+                : Card.MatchTags.Where(t => !TalentPoolRiasecVisibility.IsCareerTestOutput(t));
+            return tags.Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+    }
 }

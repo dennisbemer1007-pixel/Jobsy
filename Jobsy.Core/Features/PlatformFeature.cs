@@ -19,5 +19,8 @@ public enum PlatformFeature
     Schools,
 
     /// <summary>Ambassador programme. Default false. Sales-manager admin stays a separate surface.</summary>
-    Ambassadors
+    Ambassadors,
+
+    /// <summary>WhatsApp come-back reminders. Default false. Needs env config and a candidate opt-in.</summary>
+    WhatsAppReminders
 }

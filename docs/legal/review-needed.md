@@ -6,6 +6,13 @@ They may ship to `acceptatie`; a lawyer reviews them before they go to `main` / 
 Every PR that changes a legal text adds its sections here: document · section id · version ·
 what changed · open question.
 
+## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-06
+
+| Section | Id | What changed | Open question for the lawyer |
+|---|---|---|---|
+| 4 | `delen` | The AI row follows `Ai:Provider`. Default stays OpenAI (United States, DPF). When the provider is Mistral and the API key is set, the table lists Mistral AI (Paris, data in the EU, no transfer basis outside the EEA) and drops OpenAI. A missing Mistral key keeps the OpenAI row, because calls stay on OpenAI. Other American companies in the table are unchanged, so the “Buiten de EU” paragraph stays. | Is “Frankrijk (Parijs); gegevens in de EU” enough, or must the statement name Mistral’s EU contractual option (La Plateforme, EU workspace) as a condition? |
+| 7 | `ai` | The CV sentences name Mistral AI and the EU when that provider is active, and OpenAI when it is not. The CV upload hint in nl, en, pl, ro and ar does the same. | When Mistral is on, is “gegevens blijven in de EU” accurate for a CV that may contain a name and phone number, given Mistral only keeps data in the EU if the workspace was created with the EU option? |
+
 ## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-04
 
 | Section | Id | What changed | Open question for the lawyer |

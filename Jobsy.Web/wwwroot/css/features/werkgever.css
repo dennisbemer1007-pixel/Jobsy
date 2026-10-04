@@ -757,9 +757,10 @@
     align-items: center;
     justify-content: center;
     min-width: 1.25rem;
-    height: 1.25rem;
-    padding: 0 0.35rem;
-    margin-inline-end: 0.35rem;
+    min-height: 1.25rem;
+    height: auto;
+    padding: 0.1rem 0.45rem;
+    margin-inline: 0.35rem;
     border-radius: var(--radius-pill);
     background: var(--brand-deep);
     color: #fff;

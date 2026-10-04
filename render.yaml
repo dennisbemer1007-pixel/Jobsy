@@ -117,6 +117,7 @@ projects:
                 sync: false
               - key: Mail__FromAddress
                 sync: false
+              # Production AI stays on OpenAI (the code default). Do not set Ai__Provider=Mistral here.
               # VAPID keys for Web Push (generate once; do not rotate casually — see PR / docs).
               - key: WebPush__Subject
                 sync: false
@@ -312,6 +313,13 @@ projects:
                 sync: false
               - key: Mail__FromAddress
                 sync: false
+              # AI provider for Acceptatie. Leave unset to stay on OpenAI.
+              # Set Ai__Provider=Mistral and Mistral__ApiKey (EU workspace) in the Dashboard.
+              # The web service needs the same two values so the privacy page matches the API.
+              - key: Ai__Provider
+                sync: false
+              - key: Mistral__ApiKey
+                sync: false
               - key: WebPush__Subject
                 sync: false
               - key: WebPush__PublicKey
@@ -393,4 +401,10 @@ projects:
               - key: WebPush__PublicKey
                 sync: false
               - key: WebPush__PrivateKey
+                sync: false
+              # Same AI provider as lobsy-acc-api, so /privacy names the company that receives calls.
+              # The web does not call the model. It only checks that Mistral__ApiKey is set.
+              - key: Ai__Provider
+                sync: false
+              - key: Mistral__ApiKey
                 sync: false
