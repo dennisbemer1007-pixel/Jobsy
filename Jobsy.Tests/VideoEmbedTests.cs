@@ -21,13 +21,19 @@ public class VideoEmbedTests
     }
 
     [Fact]
-    public void TryGetThumbnailUrl_returns_youtube_hq_image()
+    public void Embed_urls_do_not_load_a_youtube_thumbnail()
     {
-        Assert.Equal(
-            "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-            VideoEmbed.TryGetThumbnailUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
-        Assert.Null(VideoEmbed.TryGetThumbnailUrl("https://vimeo.com/123456789"));
-        Assert.Null(VideoEmbed.TryGetThumbnailUrl(null));
+        var youtube = VideoEmbed.TryGetEmbedUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        var vimeo = VideoEmbed.TryGetEmbedUrl("https://vimeo.com/123456789");
+        Assert.NotNull(youtube);
+        Assert.DoesNotContain("i.ytimg.com", youtube, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("i.ytimg.com", vimeo, StringComparison.OrdinalIgnoreCase);
+
+        var razor = File.ReadAllText(Path.Combine(
+            FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
+        Assert.DoesNotContain("i.ytimg.com", razor, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("TryGetThumbnailUrl", razor, StringComparison.Ordinal);
+        Assert.Contains("Kb.Video.ExternalNotice", razor, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -22,6 +22,10 @@
         return code === prefix || code.indexOf(prefix + "-") === 0;
     }
 
+    function isLocalVoice(voice) {
+        return !!(voice && voice.localService === true);
+    }
+
     function voicesFor(lang) {
         var engine = synth();
         if (!engine || typeof engine.getVoices !== "function") {
@@ -31,11 +35,22 @@
         var all = engine.getVoices() || [];
         var matches = [];
         for (var i = 0; i < all.length; i++) {
-            if (voiceMatches(all[i].lang, prefix)) {
+            if (voiceMatches(all[i].lang, prefix) && isLocalVoice(all[i])) {
                 matches.push(all[i]);
             }
         }
         return matches;
+    }
+
+    function selectLocalVoice(voices, lang) {
+        var list = voices || [];
+        var prefix = uiPrefix(lang);
+        for (var i = 0; i < list.length; i++) {
+            if (voiceMatches(list[i].lang, prefix) && isLocalVoice(list[i])) {
+                return list[i];
+            }
+        }
+        return null;
     }
 
     function isEnabled() {
@@ -122,6 +137,9 @@
             /* Some browsers throw when voice is not a real SpeechSynthesisVoice. */
         }
         utter.lang = (voices[0] && voices[0].lang) || uiPrefix(lang);
+        if (voices[0] && voices[0].localService !== true) {
+            return false;
+        }
         utter.rate = RATE;
         utter.onend = utter.onerror = function () {
             if (token !== mine) {
@@ -150,6 +168,7 @@
 
     window.lobsyReadAloud = {
         rate: RATE,
+        selectLocalVoice: selectLocalVoice,
         probe: probe,
         whenReady: function (lang) {
             return new Promise(function (resolve) {

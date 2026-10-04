@@ -29,7 +29,7 @@ public readonly record struct PrivacyCatalogSnapshot(string Version, string Fing
 /// </summary>
 public static class LegalDocumentVersions
 {
-    public static readonly LegalVersion Privacy = new("2026-10-08", new DateOnly(2026, 10, 8));
+    public static readonly LegalVersion Privacy = new("2026-10-09", new DateOnly(2026, 10, 9));
 
     /// <summary>
     /// One row per published privacy version, pinned to the processor-catalog hash.
@@ -42,7 +42,8 @@ public static class LegalDocumentVersions
     [
         new("2026-10-04", "8c50d3463cae283f8316cd4400525152f3e4cd0e8e9847dabb80e72a8c5ea1da"),
         new("2026-10-05", "3f419899cf93e8a288d7f445e68445e4716d2668a133ee6a99e13b088e3a7619"),
-        new("2026-10-08", "a0ec9cea6430f8b306a706a8b2479a8f51fba1b05b57184b7783f4e334204347")
+        new("2026-10-08", "a0ec9cea6430f8b306a706a8b2479a8f51fba1b05b57184b7783f4e334204347"),
+        new("2026-10-09", "c74d1f5acbefd7d6a697bd1b7b756e2f63435db6d00890f176ea66df98f35a92")
     ];
 
     /// <summary>One version for both terms documents (algemene voorwaarden + gebruiksvoorwaarden).</summary>
@@ -50,6 +51,7 @@ public static class LegalDocumentVersions
 
     public static readonly IReadOnlyList<LegalVersionEntry> PrivacyHistory =
     [
+        new("2026-10-09", new DateOnly(2026, 10, 9), "Legal.Change.Privacy.2026-10-09"),
         new("2026-10-08", new DateOnly(2026, 10, 8), "Legal.Change.Privacy.2026-10-08"),
         new("2026-10-07", new DateOnly(2026, 10, 7), "Legal.Change.Privacy.2026-10-07"),
         new("2026-10-06", new DateOnly(2026, 10, 6), "Legal.Change.Privacy.2026-10-06"),

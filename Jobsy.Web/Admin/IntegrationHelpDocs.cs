@@ -55,18 +55,18 @@ public static class IntegrationHelpDocs
         DocsUrlLabel: "Google Cloud Credentials");
 
     private static readonly Doc Mail = new(
-        Summary: "Uitgaande e-mail. Mail__Provider kiest Resend of Lettermint. SMTP alleen als fallback.",
+        Summary: "Uitgaande e-mail. Mail__Provider kiest Resend of Lettermint.",
         UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails.",
-        WhereToGetKey: "Resend: resend.com → API Keys. Plak bij ‘Resend API-key’, of zet Mail__ResendApiKey / RESEND_API_KEY. Lettermint: lettermint.co → project-token als Lettermint__ApiKey (of LETTERMINT_API_KEY) en Mail__Provider=Lettermint. Zonder die sleutel valt Lettermint terug op Resend. From: Mail__FromAddress op een geverifieerd domein.",
-        Tip: "De Lettermint-sleutel staat alleen in de omgeving, niet in dit formulier. Dit formulier blijft de Resend-sleutel. Op Acceptatie zet je Mail__AllowedRecipientPattern zodat alleen test-*@lobsy.nl (en extra adressen) mail krijgen. Resend heeft voorrang op SMTP. ‘Secrets wissen’ schakelt de Resend-env uit tot je opnieuw opslaat.",
+        WhereToGetKey: "Lettermint: lettermint.co → project-token als Lettermint__ApiKey (of LETTERMINT_API_KEY) en Mail__Provider=Lettermint. Resend: resend.com → API Keys, alleen als Mail__Provider=Resend. From: Mail__FromAddress op een geverifieerd domein.",
+        Tip: "Ontbreekt de Lettermint-sleutel terwijl Mail__Provider=Lettermint staat, dan gaat er geen mail via Resend. De gezondheidscheck toont dan: Mail: niet ingesteld. De Lettermint-sleutel staat alleen in de omgeving, niet in dit formulier. Dit formulier blijft de Resend-sleutel. Op Acceptatie zet je Mail__AllowedRecipientPattern zodat alleen test-*@lobsy.nl (en extra adressen) mail krijgen.",
         DocsUrl: "https://lettermint.co/docs/api-reference/sending/send",
         DocsUrlLabel: "Lettermint Sending API");
 
     private static readonly Doc OpenAi = new(
-        Summary: "OpenAI API voor tekstmodellen.",
-        UsedFor: "Vacaturetekst-moderatie (ongepaste of risicovolle content markeren/blokkeren) én de interactieve coach in ‘Oefen je sollicitatiegesprek’ (met scripted fallback zonder key).",
-        WhereToGetKey: "platform.openai.com → API keys → Create new secret key. Model bijv. gpt-4o-mini. Base URL leeg of https://api.openai.com/v1/",
-        Tip: "Het veld toont na Opslaan geen key terug (alleen gemaskeerd). Test leest de opgeslagen key uit de database — eerst Opslaan of laat Test auto-opslaan.",
-        DocsUrl: "https://platform.openai.com/api-keys",
-        DocsUrlLabel: "OpenAI API keys");
+        Summary: "AI-tekstmodellen. De actieve aanbieder komt uit Ai__Provider (OpenAI of Mistral).",
+        UsedFor: "Vacaturetekst-moderatie en de coach in ‘Oefen je sollicitatiegesprek’. Zonder geldige sleutel voor de gekozen aanbieder blijft de AI uit.",
+        WhereToGetKey: "Mistral: console.mistral.ai, sleutel als Mistral__ApiKey, en Ai__Provider=Mistral. OpenAI: platform.openai.com, alleen als Ai__Provider=OpenAI. Model en regio staan bovenaan deze pagina.",
+        Tip: "Een ontbrekende Mistral-sleutel valt niet terug op OpenAI. Het veld toont na Opslaan geen key terug (alleen gemaskeerd). Test leest de opgeslagen key uit de database — eerst Opslaan of laat Test auto-opslaan.",
+        DocsUrl: "https://console.mistral.ai/",
+        DocsUrlLabel: "Mistral console");
 }

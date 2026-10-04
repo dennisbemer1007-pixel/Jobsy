@@ -13,4 +13,8 @@ public interface IOpenAiEndpointResolver
 }
 
 /// <summary>Resolved OpenAI endpoint settings for one feature call.</summary>
-public sealed record OpenAiEndpointResolution(string? ApiKey, string Model, string BaseUrl);
+public sealed record OpenAiEndpointResolution(
+    string? ApiKey,
+    string Model,
+    string BaseUrl,
+    bool Unavailable = false);

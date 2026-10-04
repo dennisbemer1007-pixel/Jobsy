@@ -493,6 +493,12 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Video.Loading",
             "Video laden", "Loading video",
             "Ładowanie wideo", "Se încarcă video", "جارٍ تحميل الفيديو");
+        Add("Kb.Video.ExternalNotice",
+            "De video laadt van YouTube of Vimeo nadat je op play klikt.",
+            "The video loads from YouTube or Vimeo after you click play.",
+            "Film ładuje się z YouTube lub Vimeo dopiero po kliknięciu play.",
+            "Videoclipul se încarcă de pe YouTube sau Vimeo după ce apeși play.",
+            "يُحمَّل الفيديو من YouTube أو Vimeo بعد الضغط على تشغيل.");
 
         // Map JS transport verbs / fallbacks (banenkaart path)
         Add("Kb.Map.NoVacancies",

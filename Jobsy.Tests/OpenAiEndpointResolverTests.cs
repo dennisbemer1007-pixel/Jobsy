@@ -186,18 +186,40 @@ public class OpenAiEndpointResolverTests
     }
 
     [Fact]
-    public async Task Mistral_without_a_key_stays_on_openai()
+    public async Task Mistral_without_a_key_does_not_use_openai()
     {
+        var log = new CapturingPlatformLog();
         var sut = CreateSut(
             dbApiKey: "sk-openai-db",
             options: new OpenAiOptions { ApiKey = "sk-config", Model = "gpt-4o-mini" },
             ai: new AiOptions { Provider = "mistral" },
-            mistral: new MistralOptions { ApiKey = "  " });
+            mistral: new MistralOptions { ApiKey = "  " },
+            platformLog: log);
+
+        var resolved = await sut.ResolveAsync(OpenAiFeature.Translation);
+        await sut.ResolveAsync(OpenAiFeature.AssistantChat);
+
+        Assert.True(resolved.Unavailable);
+        Assert.Null(resolved.ApiKey);
+        Assert.DoesNotContain("openai.com", resolved.BaseUrl, StringComparison.OrdinalIgnoreCase);
+        var message = Assert.Single(log.Messages);
+        Assert.Contains("OpenAI wordt niet gebruikt", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Explicit_openai_still_uses_the_openai_key()
+    {
+        var sut = CreateSut(
+            dbApiKey: "sk-openai-db",
+            options: new OpenAiOptions { ApiKey = "sk-config" },
+            ai: new AiOptions { Provider = "OpenAI" },
+            mistral: new MistralOptions());
 
         var resolved = await sut.ResolveAsync(OpenAiFeature.Translation);
 
+        Assert.False(resolved.Unavailable);
         Assert.Equal("sk-openai-db", resolved.ApiKey);
-        Assert.Equal("https://api.openai.com/v1/", resolved.BaseUrl);
+        Assert.Contains("api.openai.com", resolved.BaseUrl, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -242,12 +264,31 @@ public class OpenAiEndpointResolverTests
         string? dbBaseUrl = null,
         OpenAiOptions? options = null,
         AiOptions? ai = null,
-        MistralOptions? mistral = null)
+        MistralOptions? mistral = null,
+        Jobsy.Core.Diagnostics.IPlatformErrorLog? platformLog = null)
         => new(
             new StubCredentials(dbApiKey, dbModel, dbBaseUrl),
             Options.Create(options ?? new OpenAiOptions { ApiKey = null, Model = "   ", BaseUrl = "   " }),
             Options.Create(ai ?? new AiOptions()),
-            Options.Create(mistral ?? new MistralOptions()));
+            Options.Create(mistral ?? new MistralOptions()),
+            logger: null,
+            platformLog: platformLog);
+
+    private sealed class CapturingPlatformLog : Jobsy.Core.Diagnostics.IPlatformErrorLog
+    {
+        public List<string> Messages { get; } = [];
+
+        public Task WriteAsync(
+            string category,
+            string message,
+            string? supportCode,
+            string? detail,
+            CancellationToken cancellationToken = default)
+        {
+            Messages.Add(message);
+            return Task.CompletedTask;
+        }
+    }
 
     private sealed class StubCredentials(
         string? apiKey,

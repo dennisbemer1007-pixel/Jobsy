@@ -3,6 +3,7 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Admin;
 using Jobsy.Core.Ai;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -36,6 +37,9 @@ public class SettingsController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly AiOptions _ai;
     private readonly MistralOptions _mistral;
+    private readonly OpenAiOptions _openAi;
+    private readonly MailOptions _mail;
+    private readonly LettermintOptions _lettermint;
     private readonly WhatsAppReminderOptions _whatsApp;
 
     public SettingsController(
@@ -51,7 +55,10 @@ public class SettingsController : ControllerBase
         IUserLookupService users,
         IOptions<AiOptions>? aiOptions = null,
         IOptions<MistralOptions>? mistralOptions = null,
-        IOptions<WhatsAppReminderOptions>? whatsAppOptions = null)
+        IOptions<WhatsAppReminderOptions>? whatsAppOptions = null,
+        IOptions<OpenAiOptions>? openAiOptions = null,
+        IOptions<MailOptions>? mailOptions = null,
+        IOptions<LettermintOptions>? lettermintOptions = null)
     {
         _db = db;
         _credentials = credentials;
@@ -65,6 +72,9 @@ public class SettingsController : ControllerBase
         _users = users;
         _ai = aiOptions?.Value ?? new AiOptions();
         _mistral = mistralOptions?.Value ?? new MistralOptions();
+        _openAi = openAiOptions?.Value ?? new OpenAiOptions();
+        _mail = mailOptions?.Value ?? new MailOptions();
+        _lettermint = lettermintOptions?.Value ?? new LettermintOptions();
         _whatsApp = whatsAppOptions?.Value ?? new WhatsAppReminderOptions();
     }
 
@@ -72,14 +82,39 @@ public class SettingsController : ControllerBase
     [HttpGet("ai-provider")]
     public ActionResult<AiProviderStatusDto> GetAiProvider()
     {
-        var decision = AiProviderChoice.Decide(_ai.Provider, _mistral.ApiKey);
+        var status = ActiveProviderStatus.DescribeAi(
+            _ai.Provider,
+            _mistral.ApiKey,
+            _mistral.Model,
+            _mistral.BaseUrl,
+            _openAi.Model,
+            _openAi.BaseUrl);
         return Ok(new AiProviderStatusDto(
-            decision.Name,
-            decision.Kind == AiProviderKind.Mistral ? "Mistral AI" : "OpenAI",
+            status.Provider,
+            status.Available ? status.Provider : "Niet ingesteld",
             ReadOnly: true,
-            decision.RequestedMistralWithoutKey,
-            InferenceInEu: decision.Kind == AiProviderKind.Mistral
-                && MistralEndpoint.InferenceStaysInEu(_mistral.BaseUrl)));
+            FellBackToOpenAi: false,
+            InferenceInEu: status.RegionCode == ActiveProviderStatus.RegionEu,
+            status.Model,
+            status.RegionCode,
+            status.Available,
+            status.EndpointHost));
+    }
+
+    /// <summary>The mail company that actually sends. Read-only: switch with Mail__Provider.</summary>
+    [HttpGet("mail-provider")]
+    public ActionResult<MailProviderStatusDto> GetMailProvider()
+    {
+        var status = ActiveMailStatus.Describe(
+            _mail.Provider,
+            !string.IsNullOrWhiteSpace(_lettermint.ApiKey),
+            _lettermint.BaseUrl);
+        return Ok(new MailProviderStatusDto(
+            status.Provider,
+            status.Available ? status.Provider : "Mail: niet ingesteld",
+            status.RegionCode,
+            status.EndpointHost,
+            status.Available));
     }
 
     [HttpGet("token-pricing")]

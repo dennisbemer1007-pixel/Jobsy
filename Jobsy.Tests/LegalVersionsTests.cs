@@ -71,7 +71,7 @@ public class LegalVersionsTests
     [Fact]
     public void Dutch_date_reads_as_day_month_year()
         => Assert.Equal(
-            "8 oktober 2026",
+            "9 oktober 2026",
             LegalDocumentVersions.FormatDate(
                 LegalDocumentVersions.Privacy.EffectiveFrom,
                 CultureInfo.GetCultureInfo("nl-NL")));

@@ -227,7 +227,18 @@ public sealed record AiProviderStatusDto(
     string DisplayName,
     bool ReadOnly,
     bool FellBackToOpenAi,
-    bool InferenceInEu = false);
+    bool InferenceInEu = false,
+    string? Model = null,
+    string? RegionCode = null,
+    bool Available = true,
+    string? EndpointHost = null);
+
+public sealed record MailProviderStatusDto(
+    string Provider,
+    string DisplayName,
+    string RegionCode,
+    string? EndpointHost,
+    bool Available);
 
 public record IntegrationCredentialDto(
     string Key,

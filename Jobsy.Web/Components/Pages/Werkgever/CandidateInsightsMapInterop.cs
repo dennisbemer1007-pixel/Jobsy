@@ -7,7 +7,7 @@ internal static class CandidateInsightsMapInterop
     public static Task EnsureLoadedAsync(IJSRuntime js)
         => js.InvokeVoidAsync(
             "jobsyDom.ensureScript",
-            "js/features/kandidaatinzichten-map.js?v=20260928-insights",
+            "js/features/kandidaatinzichten-map.js?v=20261004-14",
             "JobsyCandidateInsightsMap").AsTask();
 
     public static Task MountAsync(IJSRuntime js, string elementId, object options)

@@ -24,12 +24,11 @@ public class ContentSecurityPolicyTests
         var imgSrc = JobsyContentSecurityPolicy.Directive(csp, "img-src");
         Assert.NotNull(imgSrc);
         var imgWithoutHosts = imgSrc
-            .Replace(JobsyContentSecurityPolicy.OpenFreeMap, "", StringComparison.Ordinal)
-            .Replace(JobsyContentSecurityPolicy.YouTubeThumbnail, "", StringComparison.Ordinal);
+            .Replace(JobsyContentSecurityPolicy.OpenFreeMap, "", StringComparison.Ordinal);
         Assert.DoesNotContain("https:", imgWithoutHosts);
         Assert.DoesNotContain("picsum.photos", imgSrc);
+        Assert.DoesNotContain("i.ytimg.com", imgSrc);
         Assert.Contains(JobsyContentSecurityPolicy.OpenFreeMap, imgSrc);
-        Assert.Contains(JobsyContentSecurityPolicy.YouTubeThumbnail, imgSrc);
 
         var connectSrc = JobsyContentSecurityPolicy.Directive(csp, "connect-src");
         Assert.Equal($"connect-src 'self' {JobsyContentSecurityPolicy.OpenFreeMap}", connectSrc);
