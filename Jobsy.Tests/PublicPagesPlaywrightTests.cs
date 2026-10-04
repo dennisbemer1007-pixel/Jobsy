@@ -398,6 +398,7 @@ public class PublicPagesPlaywrightTests
         var table = await page.Locator("#delen .pp-table__grid").InnerTextAsync();
         Assert.Contains("OpenAI", table, StringComparison.Ordinal);
         Assert.DoesNotContain("Mistral", table, StringComparison.Ordinal);
+        Assert.DoesNotContain("verwerking in de EU", table, StringComparison.Ordinal);
     }
 
     private static async Task AssertPartnerPricesAsync(IPage page)

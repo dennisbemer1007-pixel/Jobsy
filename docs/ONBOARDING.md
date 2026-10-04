@@ -43,7 +43,7 @@ Never commit secret values. Set them in **Render Dashboard** (per environment) o
 | `VerificationCodes__Pepper` | API | OTP hashing |
 | `Training__TrackingSecret` | API | Training links |
 | Mollie / OpenAI / KVK integration keys | API / admin integrations | Prefer Dashboard or encrypted integration store — not the repo |
-| `Ai__Provider` / `Mistral__ApiKey` | Acceptatie API **and** web | `OpenAI` (default) or `Mistral`. Production stays on OpenAI. EU workspace for Mistral. |
+| `Ai__Provider` / `Mistral__ApiKey` | Acceptatie API **and** web | `OpenAI` (default) or `Mistral`. Production stays on OpenAI. Leave `Mistral__BaseUrl` unset so calls use the EU endpoint. |
 
 Production and Acceptatie must **not** share the same JWT PEMs or auth secrets. Details: [`deploy-render.md`](deploy-render.md), [`../SECURITY.md`](../SECURITY.md).
 

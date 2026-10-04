@@ -119,18 +119,7 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
             : _mistral.Model.Trim();
 
     private string ResolveMistralBaseUrl()
-    {
-        var raw = string.IsNullOrWhiteSpace(_mistral.BaseUrl)
-            ? MistralOptions.DefaultBaseUrl
-            : _mistral.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(raw, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        return MistralOptions.DefaultBaseUrl;
-    }
+        => MistralEndpoint.EffectiveBaseUrl(_mistral.BaseUrl);
 
     private async Task<string?> ResolveApiKeyAsync(IntegrationKey key, CancellationToken cancellationToken)
     {

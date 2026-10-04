@@ -51,12 +51,18 @@
     {
         get
         {
+            var options = Services.GetService<IOptions<MistralOptions>>()?.Value;
             var decision = AiProviderChoice.Decide(
                 Services.GetService<IOptions<AiOptions>>()?.Value.Provider,
-                Services.GetService<IOptions<MistralOptions>>()?.Value.ApiKey);
-            return decision.Kind == AiProviderKind.Mistral
+                options?.ApiKey);
+            if (decision.Kind != AiProviderKind.Mistral)
+            {
+                return "Profile.OwnCvLead";
+            }
+
+            return MistralEndpoint.InferenceStaysInEu(options?.BaseUrl)
                 ? "Profile.OwnCvLead.Mistral"
-                : "Profile.OwnCvLead";
+                : "Profile.OwnCvLead.Mistral.Global";
         }
     }
 }

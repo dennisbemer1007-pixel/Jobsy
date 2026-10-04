@@ -29,8 +29,13 @@
 
     private bool UsesMistral => AiDecision.Kind == AiProviderKind.Mistral;
 
+    private string? MistralBaseUrl
+        => Services.GetService<IOptions<MistralOptions>>()?.Value.BaseUrl;
+
+    private bool MistralInEu => MistralEndpoint.InferenceStaysInEu(MistralBaseUrl);
+
     private IReadOnlyList<LegalProcessor> ProcessorRows
-        => LegalAiProcessorSelection.Resolve(AiDecision.Kind);
+        => LegalAiProcessorSelection.Resolve(AiDecision.Kind, MistralBaseUrl);
 
     private static int TalentPoolAge => CandidateConsentRules.TalentPoolMinimumAge;
 
@@ -252,9 +257,13 @@
                 </p>
                 <p><strong>Wat de AI doet</strong></p>
                 <ul>
-                    @if (UsesMistral)
+                    @if (UsesMistral && MistralInEu)
                     {
-                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs. Je gegevens blijven in de EU. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs, voor verwerking in de EU. Account en facturen van Mistral kunnen buiten de EU staan. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
+                    }
+                    else if (UsesMistral)
+                    {
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs. Mistral belooft geen plek voor die verwerking. Account en facturen van Mistral kunnen buiten de EU staan. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
                     }
                     else
                     {
