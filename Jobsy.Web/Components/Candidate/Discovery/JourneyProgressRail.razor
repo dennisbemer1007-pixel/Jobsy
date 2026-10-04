@@ -56,7 +56,7 @@
                 </div>
             </li>
         }
-        <li class="journey-rail__step @(IsEnd ? "is-done" : "is-todo is-end")">
+        <li class="journey-rail__step @(IsEnd ?"is-done" : "is-todo is-end")">
             @if (IsEnd)
             {
                 <span class="journey-rail__dot" aria-hidden="true">✓</span>
@@ -75,7 +75,7 @@
         <span class="journey-rail__segs">
             @for (var k = 0; k < 10; k++)
             {
-                <i class="@(k < LayersOff ? "is-off" : null)"></i>
+                <i class="@(k < LayersOff ?"is-off" : null)"></i>
             }
         </span>
         <span>@Culture.Format("Discovery.Rail.LayersCount", LayersOff)</span>

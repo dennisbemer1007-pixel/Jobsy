@@ -98,7 +98,7 @@
                         var selected = _tab == tab;
                         <button type="button"
                                 id="@id"
-                                class="passport-tab @(selected ? "passport-tab--active" : null)"
+                                class="passport-tab @(selected ?"passport-tab--active" : null)"
                                 role="tab"
                                 aria-selected="@(selected ? "true" : "false")"
                                 aria-controls="@($"passport-panel-{tab}")"

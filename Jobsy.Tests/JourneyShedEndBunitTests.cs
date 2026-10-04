@@ -48,7 +48,7 @@ public sealed class JourneyShedEndBunitTests : BunitContext
         var cut = Render<DiscoveryJourney>();
         cut.WaitForAssertion(() => Assert.Contains("Naar het licht", cut.Markup, StringComparison.Ordinal));
 
-        cut.Find("button.btn-compact--primary").Click();
+        cut.Find("button.btn-primary").Click();
 
         cut.WaitForAssertion(() =>
         {

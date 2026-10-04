@@ -11,7 +11,7 @@
         <legend>@Culture["Passport.Shared.Indoor"]</legend>
         @foreach (var code in WorkPreferenceCatalogs.IndoorCodes)
         {
-            <button type="button" class="chip @(Editor.WorkIndoor == code ? "is-on" : null)"
+            <button type="button" class="chip @(Editor.WorkIndoor == code ?"is-on" : null)"
                     @onclick="() => SetIndoor(code)">@Culture[WorkPreferenceCatalogs.IndoorLabelKey(code)]</button>
         }
     </fieldset>
@@ -19,7 +19,7 @@
         <legend>@Culture["Passport.Shared.Outdoor"]</legend>
         @foreach (var code in WorkPreferenceCatalogs.OutdoorCodes)
         {
-            <button type="button" class="chip @(Editor.WorkOutdoor == code ? "is-on" : null)"
+            <button type="button" class="chip @(Editor.WorkOutdoor == code ?"is-on" : null)"
                     @onclick="() => SetOutdoor(code)">@Culture[WorkPreferenceCatalogs.OutdoorLabelKey(code)]</button>
         }
     </fieldset>
@@ -27,7 +27,7 @@
         <legend>@Culture["Passport.Shared.Physical"]</legend>
         @foreach (var code in WorkPreferenceCatalogs.PhysicalWorkCodes)
         {
-            <button type="button" class="chip @(Editor.WorkPhysical == code ? "is-on" : null)"
+            <button type="button" class="chip @(Editor.WorkPhysical == code ?"is-on" : null)"
                     @onclick="() => SetPhysical(code)">@Culture[WorkPreferenceCatalogs.PhysicalLabelKey(code)]</button>
         }
     </fieldset>
@@ -35,7 +35,7 @@
         <legend>@Culture["Passport.Shared.Pace"]</legend>
         @foreach (var code in WorkPreferenceCatalogs.PaceCodes)
         {
-            <button type="button" class="chip @(Editor.WorkPace == code ? "is-on" : null)"
+            <button type="button" class="chip @(Editor.WorkPace == code ?"is-on" : null)"
                     @onclick="() => SetPace(code)">@Culture[WorkPreferenceCatalogs.PaceLabelKey(code)]</button>
         }
     </fieldset>
@@ -51,20 +51,20 @@
     </label>
     @if (!string.IsNullOrWhiteSpace(Editor.WorkRegionSuggestion) && string.IsNullOrWhiteSpace(Editor.WorkRegion))
     {
-        <button type="button" class="btn-compact" @onclick="UseSuggestion">@Editor.WorkRegionSuggestion</button>
+        <button type="button" class="btn btn-secondary" @onclick="UseSuggestion">@Editor.WorkRegionSuggestion</button>
     }
 
     <fieldset class="shared-prefs__group">
         <legend>@Culture["Passport.Shared.OwnCar"]</legend>
-        <button type="button" class="chip @(Editor.HasOwnCar == true ? "is-on" : null)" @onclick="() => SetCar(true)">@Culture["Passport.Shared.Yes"]</button>
-        <button type="button" class="chip @(Editor.HasOwnCar == false ? "is-on" : null)" @onclick="() => SetCar(false)">@Culture["Passport.Shared.No"]</button>
+        <button type="button" class="chip @(Editor.HasOwnCar == true ?"is-on" : null)" @onclick="() => SetCar(true)">@Culture["Passport.Shared.Yes"]</button>
+        <button type="button" class="chip @(Editor.HasOwnCar == false ?"is-on" : null)" @onclick="() => SetCar(false)">@Culture["Passport.Shared.No"]</button>
     </fieldset>
 
     <fieldset class="shared-prefs__group">
         <legend>@Culture["Passport.Shared.Contract"]</legend>
         @foreach (var code in WorkPreferenceCatalogs.ContractCodes)
         {
-            <button type="button" class="chip @(Editor.ContractPreferences.Contains(code) ? "is-on" : null)"
+            <button type="button" class="chip @(Editor.ContractPreferences.Contains(code) ?"is-on" : null)"
                     @onclick="() => ToggleContract(code)">@Culture[WorkPreferenceCatalogs.ContractLabelKey(code)]</button>
         }
     </fieldset>

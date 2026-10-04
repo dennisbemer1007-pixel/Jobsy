@@ -20,7 +20,7 @@ else
         {
             var isSelected = Selected.Contains(transport);
             <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                    class="@(isSelected ? "is-selected" : null)"
+                    class="@(isSelected ?"is-selected" : null)"
                     @onclick="() => SelectTransport.InvokeAsync(transport)">
                 @TransportLabel(transport)
             </button>
@@ -57,7 +57,7 @@ else
             {
                 var isSelected = Draft.DrivingLicenses.Contains(license);
                 <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                        class="@(isSelected ? "is-selected" : null)"
+                        class="@(isSelected ?"is-selected" : null)"
                         @onclick="() => ToggleLicense.InvokeAsync(license)">
                     @license
                 </button>

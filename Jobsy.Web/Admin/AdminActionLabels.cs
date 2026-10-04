@@ -19,6 +19,7 @@ public static partial class AdminActionLabels
         var cultureKey = key switch
         {
             "user.mfa.reset" => "AdminAudit.Action.MfaReset",
+            "user.test-unlock.reset" => "AdminAudit.Action.TestUnlockReset",
             "support-access.grant" or "support-access.revoke" => "AdminAudit.Action.Support",
             "settings.platform.update" or "maintenance.on" or "maintenance.off" => "AdminAudit.Action.Setting",
             "settings.flyer.update" => "AdminAudit.Action.Flyer",
@@ -36,7 +37,6 @@ public static partial class AdminActionLabels
             "masterdata.delete" => "AdminAudit.Action.MasterdataDeleted",
             "user.sessions" or "user.sessions.list" or "user.sessions.revoke" or "user.sessions.revoke-all"
                 => "AdminAudit.Action.Sessions",
-            "user.test-unlock.reset" => "AdminAudit.Action.TestUnlockReset",
             "reference.misuse.handled" => "AdminAudit.Action.MisuseHandled",
             _ => null
         };

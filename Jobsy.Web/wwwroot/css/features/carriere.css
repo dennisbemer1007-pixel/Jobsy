@@ -440,7 +440,8 @@
 .career-now__details li { display: flex; flex-direction: column; gap: 2px; font-size: 0.875rem; line-height: 1.35; }
 .career-now__detail-sub { color: var(--muted); font-size: 0.75rem; }
 .career-now__row { display: flex; align-items: center; gap: 8px; margin-block-start: 10px; }
-.career-now__row .career-btn--primary { margin-inline-start: auto; }
+.career-now__row .career-btn--primary,
+.career-now__row .btn-primary { margin-inline-start: auto; }
 .career-now__more {
   display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0; border: 0;
   background: none; color: var(--brand); font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer;
@@ -1140,8 +1141,10 @@
   /* cr-m6: no sticky footer; the actions live in each request, stacked and full width. */
   .talent-page .career-stage { padding-block-end: var(--space-6); }
   .talent-req__actions { flex-direction: column; }
-  .talent-req__actions .career-btn { width: 100%; }
-  .career-dialog__actions .career-btn { width: 100%; }
+  .talent-req__actions .career-btn,
+  .talent-req__actions .btn { width: 100%; }
+  .career-dialog__actions .career-btn,
+  .career-dialog__actions .btn { width: 100%; }
   .career-stage { padding: 0 var(--space-3) var(--space-5); }
   .career-stage__card { margin-block-start: -16px; }
   .career-card {
@@ -1165,11 +1168,18 @@
   .how-safe--mobile {
     margin-block-end: calc(var(--bottom-nav-clearance, 7rem) + 0.5rem);
   }
-  .career-card__actions--sticky .career-btn { flex: 1 1 100%; }
-  .career-card__actions--sticky .career-btn--icon { flex: 0 0 44px; }
+  .career-card__actions--sticky .career-btn,
+  .career-card__actions--sticky .btn { flex: 1 1 100%; }
+  .career-card__actions--sticky .career-btn--icon,
+  .career-card__actions--sticky .btn-ghost { flex: 0 0 44px; }
 
   /* cr-m7: the whole row is the tap target, so the trailing wording is gone. */
-  .how-stone__row { min-height: 44px; padding-inline: var(--space-2); }
+  .how-stone__row {
+    min-height: 44px;
+    padding-inline: var(--space-2);
+    padding-inline-end: calc(56px + 12px);
+    flex-wrap: wrap;
+  }
   .how-card__ack { text-align: start; }
 
   /* Mobile shows the courses first, then the two blocks stacked (cr-m3). */

@@ -124,12 +124,18 @@ public class CompanyApiKeyServiceTests
         var childId = Guid.NewGuid();
         var foreignId = Guid.NewGuid();
         db.Companies.AddRange(
-            new Company { Id = parentId, Name = "Parent", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+            new Company
+            {
+                Id = parentId,
+                Name = "Parent",
+                KvkNumber = "1",
+                Address = "a",
+                Location = new GeoPoint(52, 4),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = childId,
@@ -138,17 +144,23 @@ public class CompanyApiKeyServiceTests
                 Address = "b",
                 Location = new GeoPoint(52.1, 4.1),
                 ParentCompanyId = parentId,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
-            new Company { Id = foreignId, Name = "Other", KvkNumber = "9", Address = "c", Location = new GeoPoint(52.2, 4.2),
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
+            new Company
+            {
+                Id = foreignId,
+                Name = "Other",
+                KvkNumber = "9",
+                Address = "c",
+                Location = new GeoPoint(52.2, 4.2),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
         await db.SaveChangesAsync();
 
         var auth = new CompanyAuthorizationService(db);

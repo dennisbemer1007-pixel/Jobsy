@@ -36,14 +36,13 @@ else
                                Answered="_answered"
                                TargetCount="_targetCount"
                                BubbleText="@IntroBubble">
-                    <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
                         <fieldset class="test-depth-pick" role="radiogroup" aria-label="@Culture["TestFlow.DepthPick"]">
                             <legend>@Culture["TestFlow.DepthPick"]</legend>
                             @foreach (var band in TestDepthRules.Levels(AssessmentKind.Values))
                             {
                                 var done = _answered >= band.Count;
-                                <label class="test-depth-pick__card @(done ? "is-done" : null) @(_target == band.Level ? "is-on" : null)">
+                                <label class="test-depth-pick__card @(done ?"is-done" : null) @(_target == band.Level ? "is-on" : null)">
                                     <input type="radio" name="depth" value="@band.Level" checked="@(_target == band.Level)"
                                            disabled="@done" @onchange="() => SelectDepth(band.Level)" />
                                     <strong>@Culture[TestDepthRules.NameKey(band.Level)]</strong>
@@ -55,12 +54,12 @@ else
                             <a href="/profiel/tests/values">@Culture["TestFlow.ToMyTests"]</a>
                             @if (_answered >= _fullCount)
                             {
-                                <a class="engagement-btn" href="/profiel/tests/values">@Culture["TestDone.ViewResult"]</a>
+                                <a class="btn btn-primary" href="/profiel/tests/values">@Culture["TestDone.ViewResult"]</a>
                                 <button type="button" class="test-flow__later" @onclick="StartQuestions">@Culture["TestFlow.Again"]</button>
                             }
                             else
                             {
-                                <button type="button" class="engagement-btn" @onclick="StartQuestions">
+                                <button type="button" class="btn btn-primary" @onclick="StartQuestions">
                                     @(_answered == 0 ? Culture["TestFlow.Begin"] : Culture.Format("TestFlow.ContinueAt", ResumeAt))
                                 </button>
                             }
@@ -114,7 +113,7 @@ else
                         </ul>
                         <footer class="test-shell__footer">
                             <a href="/profiel/tests/values">@Culture["TestDone.Back"]</a>
-                            <a class="engagement-btn" href="@(_fromReis ? "/candidate/ontdekkingsreis" : "/profiel/tests/values")">
+                            <a class="btn btn-primary" href="@(_fromReis ? "/candidate/ontdekkingsreis" : "/profiel/tests/values")">
                                 @(_fromReis ? Culture["TestDone.BackToJourney"] : Culture["TestDone.ViewResult"])
                             </a>
                         </footer>
@@ -216,7 +215,7 @@ else
             {
                 var done = _answered >= band.Count;
                 var current = _mode == TestPageShell.ShellMode.Question && _target == band.Level;
-                <li class="@(done ? "is-done" : current ? "is-current" : null)" aria-current="@(current ? "step" : null)">
+                <li class="@(done ?"is-done" : current ? "is-current" : null)" aria-current="@(current ? "step" : null)">
                     @Culture[TestDepthRules.NameKey(band.Level)] · @band.Count
                 </li>
             }

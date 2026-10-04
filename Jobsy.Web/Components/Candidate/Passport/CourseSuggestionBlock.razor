@@ -30,7 +30,7 @@
     <ul class="passport-course__list">
         @foreach (var slot in Slots)
         {
-            <li class="passport-course__item @(slot.IsFree ? "passport-course__item--free" : "passport-course__item--partner")">
+            <li class="passport-course__item @(slot.IsFree ?"passport-course__item--free" : "passport-course__item--partner")">
                 <div class="passport-course__line1">
                     @if (slot.IsFree)
                     {
@@ -60,7 +60,7 @@
                     }
                 </p>
                 <button type="button"
-                        class="btn-compact @(slot.IsFree ? "btn-compact--primary" : null)"
+                        class="btn btn-secondary @(slot.IsFree ?"btn btn-primary" : null)"
                         disabled="@_busy"
                         rel="@slot.Rel"
                         @onclick="() => OpenAsync(slot)">

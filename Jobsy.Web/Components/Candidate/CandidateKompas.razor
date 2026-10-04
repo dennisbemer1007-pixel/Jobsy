@@ -61,7 +61,7 @@
          @onkeydown="OnTabListKeyDown">
         <button type="button"
                 id="kompas-tab-dna"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Dna ? "admin-sublink--active" : null)"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Dna ?"admin-sublink--active" : null)"
                 role="tab"
                 aria-selected="@(_tab == CandidateKompasTabs.Dna ? "true" : "false")"
                 aria-controls="kompas-panel-dna"
@@ -71,7 +71,7 @@
         </button>
         <button type="button"
                 id="kompas-tab-profile"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Profile ? "admin-sublink--active" : null)"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Profile ?"admin-sublink--active" : null)"
                 role="tab"
                 aria-selected="@(_tab == CandidateKompasTabs.Profile ? "true" : "false")"
                 aria-controls="kompas-panel-profile"
@@ -81,7 +81,7 @@
         </button>
         <button type="button"
                 id="kompas-tab-tests"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Tests ? "admin-sublink--active" : null)"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Tests ?"admin-sublink--active" : null)"
                 role="tab"
                 aria-selected="@(_tab == CandidateKompasTabs.Tests ? "true" : "false")"
                 aria-controls="kompas-panel-tests"
@@ -91,7 +91,7 @@
         </button>
         <button type="button"
                 id="kompas-tab-fit"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Fit ? "admin-sublink--active" : null)"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Fit ?"admin-sublink--active" : null)"
                 role="tab"
                 aria-selected="@(_tab == CandidateKompasTabs.Fit ? "true" : "false")"
                 aria-controls="kompas-panel-fit"
@@ -101,7 +101,7 @@
         </button>
     </div>
 
-    <div class="kompas-workspace @(Side is not null && ShouldShowSide ? "kompas-workspace--with-side" : null)">
+    <div class="kompas-workspace @(Side is not null && ShouldShowSide ?"kompas-workspace--with-side" : null)">
     <div class="kompas-workspace__main">
     <article id="kompas-panel-dna"
              class="kompas-card kompas-card--tab"
@@ -175,17 +175,17 @@
                     <legend>@Culture["Profile.Availability"]</legend>
                     <div class="availability-presets" role="group">
                         <button type="button"
-                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.Immediate ? "is-active" : null)"
+                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.Immediate ?"is-active" : null)"
                                 @onclick='() => ApplyAvailability(CandidateAvailabilityPresets.Immediate)'>
                             @Culture["Profile.PresetImmediate"]
                         </button>
                         <button type="button"
-                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.PartTime ? "is-active" : null)"
+                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.PartTime ?"is-active" : null)"
                                 @onclick='() => ApplyAvailability(CandidateAvailabilityPresets.PartTime)'>
                             @Culture["Profile.PresetPartTime"]
                         </button>
                         <button type="button"
-                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.Seasonal ? "is-active" : null)"
+                                class="availability-presets__btn @(_availabilityKind == CandidateAvailabilityPresets.Seasonal ?"is-active" : null)"
                                 @onclick='() => ApplyAvailability(CandidateAvailabilityPresets.Seasonal)'>
                             @Culture["Profile.PresetSeasonal"]
                         </button>

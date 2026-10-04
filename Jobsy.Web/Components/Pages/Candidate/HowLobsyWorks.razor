@@ -19,7 +19,7 @@
 
 <div class="journey-page career-page how-page">
     <CareerStage Variant="ClimbVariant.Stones"
-                 ShowLobster="true"
+                 ShowLobster="false"
                  DesktopStones="@SceneStones"
                  CurrentIndex="@TargetIndex"
                  PlatesShed="6"
@@ -59,14 +59,14 @@
                     @if (Target is { } target)
                     {
                         <button type="button"
-                                class="career-btn career-btn--primary"
+                                class="btn btn-primary"
                                 disabled="@_busy"
                                 @onclick="() => ContinueAsync(target)">
                             @Culture.Format("HowC.Primary", Culture[target.Stone.TitleKey])
                         </button>
                     }
                     <button type="button"
-                            class="career-btn career-btn--text"
+                            class="btn btn-ghost"
                             disabled="@_busy"
                             @onclick="AcknowledgeAsync">
                         @Culture["HowC.Ack"]

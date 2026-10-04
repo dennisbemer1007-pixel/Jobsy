@@ -20,11 +20,13 @@
     {
         <div class="panel-inline-error" role="alert">
             <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
-            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+            <button type="button" class="btn btn-secondary" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
         </div>
     }
     else if (_strength is not null)
     {
+        <p class="passport-proof__intro">@Culture["Passport.Bubble.Proof"]</p>
+        <ReadAloudButton Text="@Culture["Passport.Bubble.Proof"]" SpeechKey="passport-proof-intro" />
         <section class="passport-proof__scale" aria-labelledby="passport-proof-scale-title">
             <div class="passport-proof__scale-head">
                 <h3 id="passport-proof-scale-title" class="passport-proof__h">@Culture["Passport.Proof.ScaleTitle"]</h3>
@@ -37,7 +39,7 @@
                     {
                         var filled = i < _strength.Filled;
                         var step = Math.Min(3, 1 + (i * 2 / Math.Max(1, _strength.Max - 1)));
-                        <span class="passport-proof__seg passport-proof__seg--@step @(filled ? "is-filled" : null)"></span>
+                        <span class="passport-proof__seg passport-proof__seg--@step @(filled ?"is-filled" : null)"></span>
                     }
                 </div>
                 <span class="passport-proof__hard">@Culture["Passport.Proof.Hard"]</span>
@@ -73,7 +75,7 @@
                         }
                     </ul>
                 }
-                <button type="button" class="passport-card__fill-link" @onclick='() => OpenEditor("experience")'>
+                <button type="button" class="btn btn-ghost" @onclick='() => OpenEditor("experience")'>
                     @Culture["Passport.Proof.AddEmployer"]
                 </button>
             </article>
@@ -133,7 +135,7 @@
                         }
                     </ul>
                 }
-                <button type="button" class="passport-card__fill-link" @onclick='() => OpenEditor("certificates")'>
+                <button type="button" class="btn btn-ghost" @onclick='() => OpenEditor("certificates")'>
                     @Culture["Passport.Proof.AddCertificate"]
                 </button>
                 @if (Editor.LearningGoals.Count > 0)
@@ -170,7 +172,7 @@
                     </ul>
                 }
                 <button type="button"
-                        class="passport-card__fill-link"
+                        class="btn btn-ghost"
                         disabled="@(Editor.References.Count >= CandidateProfileEditor.MaxReferences)"
                         @onclick='() => OpenEditor("references")'>
                     @Culture["Passport.Proof.AddReference"]
@@ -182,17 +184,17 @@
                     {
                         <p class="passport-proof__cv-file">@Editor.UploadedCv.FileName</p>
                         <div class="passport-proof__cv-actions">
-                            <button type="button" class="btn-compact" disabled="@Editor.CvBusy" @onclick='() => OpenEditor("cv")'>
+                            <button type="button" class="btn btn-secondary" disabled="@Editor.CvBusy" @onclick='() => OpenEditor("cv")'>
                                 @Culture["Passport.Proof.ReplaceCv"]
                             </button>
-                            <button type="button" class="btn-compact" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
+                            <button type="button" class="btn btn-secondary" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
                                 @Culture["Passport.Proof.DownloadCv"]
                             </button>
                         </div>
                     }
                     else
                     {
-                        <button type="button" class="passport-card__fill-link" @onclick='() => OpenEditor("cv")'>
+                        <button type="button" class="btn btn-ghost" @onclick='() => OpenEditor("cv")'>
                             @Culture["Profile.UploadCv"]
                         </button>
                     }
@@ -201,7 +203,7 @@
         </div>
 
         <p class="passport-proof__note muted">@Culture["Passport.Proof.LobsyCvNote"]</p>
-        <button class="btn-compact" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
+        <button class="btn btn-secondary" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
             @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
         </button>
     }

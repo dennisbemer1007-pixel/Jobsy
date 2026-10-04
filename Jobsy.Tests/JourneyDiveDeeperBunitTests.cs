@@ -47,7 +47,7 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
 
         cut.FindAll("button").First(b => b.TextContent.Contains("Iets dieper", StringComparison.Ordinal)).Click();
         cut.WaitForAssertion(() => Assert.Contains("Duik dieper", cut.Markup, StringComparison.Ordinal));
-        cut.Find("button.btn-compact--primary").Click();
+        cut.Find("button.btn-primary").Click();
 
         cut.WaitForAssertion(() =>
             Assert.Contains("Vraag 6 van 10", cut.Markup, StringComparison.Ordinal));
@@ -70,7 +70,7 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
         cut.WaitForAssertion(() => Assert.Contains("Iets dieper", cut.Markup, StringComparison.Ordinal));
         cut.FindAll("button").First(b => b.TextContent.Contains("Iets dieper", StringComparison.Ordinal)).Click();
         cut.WaitForAssertion(() => Assert.Contains("Duik dieper", cut.Markup, StringComparison.Ordinal));
-        cut.Find("button.btn-compact--primary").Click();
+        cut.Find("button.btn-primary").Click();
         cut.WaitForAssertion(() => Assert.Contains("Vraag 7 van 10", cut.Markup, StringComparison.Ordinal));
 
         for (var step = 0; step < 4; step++)

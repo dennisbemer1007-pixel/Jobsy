@@ -6,7 +6,7 @@
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 
-<aside class="passport-card @(Compact ? "passport-card--compact" : null)" aria-labelledby="passport-card-name">
+<aside class="passport-card @(Compact ?"passport-card--compact" : null)" aria-labelledby="passport-card-name">
     <div class="passport-card__banner">
         <div class="passport-card__banner-text">
             <p class="passport-card__banner-title">@Culture["Passport.Banner"]</p>
@@ -68,7 +68,7 @@
             @Culture.Format("Passport.Layers", FilledLayers, LayerTotal)
             @if (FilledLayers < LayerTotal)
             {
-                <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
+                <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
             }
         </p>
     </div>
@@ -81,7 +81,7 @@
             {
                 <p class="passport-card__story-empty">
                     @Culture["Passport.MyStoryEmpty"]
-                    <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
+                    <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
                 </p>
             }
             else
@@ -99,7 +99,7 @@
                 <span class="passport-card__fact-label">@Culture["Passport.Facts.Languages"]</span>
                 @if (string.IsNullOrWhiteSpace(LanguagesLabel))
                 {
-                    <span class="passport-card__fact-empty">— <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                    <span class="passport-card__fact-empty">— <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
                 }
                 else
                 {
@@ -110,7 +110,7 @@
                 <span class="passport-card__fact-label">@Culture["Passport.Facts.LookingFor"]</span>
                 @if (LookingFor.Count == 0)
                 {
-                    <span class="passport-card__fact-empty">— <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                    <span class="passport-card__fact-empty">— <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
                 }
                 else
                 {
@@ -130,10 +130,10 @@
         </div>
 
         <div class="passport-card__actions">
-            <button type="button" class="btn-compact" disabled="@CvBusy" @onclick="OnDownloadCv">
+            <button type="button" class="btn btn-secondary" disabled="@CvBusy" @onclick="OnDownloadCv">
                 @(CvBusy ? Culture["Common.Loading"] : Culture["Passport.LobsyCv"])
             </button>
-            <button type="button" class="btn-compact btn-compact--primary" @onclick="OnEdit">
+            <button type="button" class="btn btn-primary" @onclick="OnEdit">
                 @Culture["Passport.Edit"]
             </button>
         </div>
@@ -176,7 +176,7 @@
             <span class="passport-card__fact-label">@Culture[labelKey]</span>
             @if (string.IsNullOrWhiteSpace(value))
             {
-                <span class="passport-card__fact-empty">— <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                <span class="passport-card__fact-empty">— <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
             }
             else
             {

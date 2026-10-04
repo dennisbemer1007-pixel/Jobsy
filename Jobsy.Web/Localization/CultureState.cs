@@ -114,7 +114,22 @@ public sealed class CultureState
         var chosen = !string.IsNullOrWhiteSpace(cookie)
             ? JobsyLanguages.Normalize(cookie)
             : JobsyLanguages.Normalize(profileLanguage);
+        var previous = Language;
         Apply(chosen);
+        if (!JobsyLanguages.AreSame(previous, Language))
+        {
+            Changed?.Invoke();
+            try
+            {
+                await _js.InvokeVoidAsync("jobsyCulture.applyDocument", Language, IsRightToLeft);
+            }
+            catch (JSException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
 
         if (api is not null
             && !string.IsNullOrWhiteSpace(cookie)

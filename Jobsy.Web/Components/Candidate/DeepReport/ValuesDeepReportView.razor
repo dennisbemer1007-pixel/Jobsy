@@ -99,7 +99,7 @@
             </ul>
         </section>
 
-        <button type="button" class="engagement-btn" disabled="@Busy" @onclick="OnDownloadPdf">
+        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnDownloadPdf">
             @Culture["Deep.DownloadPdf"]
         </button>
     </article>
@@ -113,7 +113,7 @@
     private string[] _labels = [];
     private int[] _scores = [];
     private int[]? _norms;
-    private bool _employersOn = true;
+    private bool _employersOn;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -123,7 +123,7 @@
         }
         catch (Exception)
         {
-            _employersOn = true;
+            _employersOn = false;
         }
 
         if (Report is null) return;
@@ -138,14 +138,14 @@
     private static string ChooseLine(string domain, string lang)
     {
         var specific = $"values.choose.{domain}";
-        var text = DeepReportCatalog.Get(specific, lang);
-        return text == specific ? DeepReportCatalog.Get("values.choose", lang) : text;
+        return DeepReportCatalog.TryGet(specific, lang, out var text)
+            ? text
+            : DeepReportCatalog.Get("values.choose", lang);
     }
 
     private static string Sentence(string key, string lang)
     {
-        var text = DeepReportCatalog.Get(key, lang);
-        if (!string.Equals(text, key, StringComparison.Ordinal))
+        if (DeepReportCatalog.TryGet(key, lang, out var text))
         {
             return text;
         }

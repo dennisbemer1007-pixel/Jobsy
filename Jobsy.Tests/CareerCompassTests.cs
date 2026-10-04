@@ -159,7 +159,7 @@ public class CareerCompassTests
         Assert.Equal("Mijn Beroepen-kompas", UiStrings.Get("Kompas.Career", "nl"));
         Assert.Equal("Wat betekent dit voor jou?", UiStrings.Get("Kompas.PracticalTitle", "nl"));
         Assert.Contains("95%", UiStrings.Get("Kompas.BandSuper", "nl"));
-        Assert.Contains("kernfit", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Past heel goed", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.Ordinal);
         Assert.Contains("85%", UiStrings.Get("Kompas.BandStrong", "nl"));
         Assert.Contains("75%", UiStrings.Get("Kompas.BandBroaden", "nl"));
         Assert.Equal("Profiel", UiStrings.Get("Kompas.TabProfile", "nl"));

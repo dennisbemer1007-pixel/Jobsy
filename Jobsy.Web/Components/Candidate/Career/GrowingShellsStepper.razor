@@ -3,7 +3,7 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<nav class="career-stepper @(Mobile ? "career-stepper--mobile" : null)"
+<nav class="career-stepper @(Mobile ?"career-stepper--mobile" : null)"
      aria-label="@Culture["Career.Stepper.Aria"]"
      style="--step-count:@(Stones.Count)">
     <ol class="career-stepper__list">

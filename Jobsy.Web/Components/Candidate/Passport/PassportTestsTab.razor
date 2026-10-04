@@ -20,7 +20,7 @@
     {
         <div class="panel-inline-error" role="alert">
             <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
-            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+            <button type="button" class="btn btn-secondary" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
         </div>
     }
     else if (_model is not null)
@@ -44,7 +44,7 @@
                     var showGrow = tile.Kind == AssessmentKind.Competence
                                    && tile.FreeDone
                                    && _courseSlots.Count > 0;
-                    <article class="passport-tests__row @(selected ? "passport-tests__row--selected" : null)"
+                    <article class="passport-tests__row @(selected ?"passport-tests__row--selected" : null)"
                              role="listitem">
                         <div class="passport-tests__row-main">
                             <div class="passport-tests__row-id">
@@ -55,7 +55,7 @@
                                 </div>
                             </div>
 
-                            <a class="btn-compact @(tile.Action is TestsOverviewBuilder.RowAction.Extended ? null : "btn-compact--primary")"
+                            <a class="btn btn-secondary @(tile.Action is TestsOverviewBuilder.RowAction.Extended ? null :"btn btn-primary")"
                                href="@TestsOverviewBuilder.ActionHref(tile)">
                                 @Culture[TestsOverviewBuilder.ActionLabelKey(tile.Action)]
                             </a>
@@ -67,7 +67,7 @@
                                       title="@Culture["Tests.ScanQuick"]"></span>
                                 <span class="passport-tests__bar @FillClass(extended)"
                                       title="@Culture["Tests.ScanExtended"]"></span>
-                                <span class="passport-tests__bar @FillClass(report) @(reportLocked ? "is-locked" : null)"
+                                <span class="passport-tests__bar @FillClass(report) @(reportLocked ?"is-locked" : null)"
                                       title="@Culture["Passport.Tests.Report"]"></span>
                             </div>
                             <div class="passport-tests__bar-labels muted">
@@ -118,7 +118,7 @@
                 }
 
                 <p class="passport-tests__cost">
-                    <a class="passport-card__fill-link" href="/profiel/tests/competentie">@Culture["Passport.Tests.WhatCosts"]</a>
+                    <a class="btn btn-ghost" href="/profiel/tests/competentie">@Culture["Passport.Tests.WhatCosts"]</a>
                 </p>
             </div>
 

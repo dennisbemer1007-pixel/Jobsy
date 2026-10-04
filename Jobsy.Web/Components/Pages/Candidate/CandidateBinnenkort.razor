@@ -4,9 +4,10 @@
 
 <PageTitle>@Culture["WgSoon.CandidateTitle"] · Lobsy</PageTitle>
 
-<section class="page-section card binnenkort-card" aria-labelledby="binnenkort-title">
+<section class="page-section card detail-card binnenkort-card" aria-labelledby="binnenkort-title">
     <h1 id="binnenkort-title" tabindex="-1">@Culture["WgSoon.CandidateTitle"]</h1>
     <p>@Culture["WgSoon.CandidateLead"]</p>
+    <ReadAloudButton Text="@($"{Culture["WgSoon.CandidateTitle"]}. {Culture["WgSoon.CandidateLead"]}")" SpeechKey="binnenkort" />
     <p class="inline-actions">
         <a class="btn btn-primary" href="@OnboardingRoutes.ClassicStartPath">@Culture["WgSoon.CtaCandidate"]</a>
     </p>

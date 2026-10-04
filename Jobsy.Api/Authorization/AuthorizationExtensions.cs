@@ -274,7 +274,7 @@ public static class AuthorizationExtensions
 
             options.AddPolicy(JobsyPolicies.RequireAdminOrEmployer, policy =>
                 policy.RequireAuthenticatedUser()
-                    .RequireRole([JobsyRoles.Admin, ..JobsyRoles.EmployerRoles]));
+                    .RequireRole([JobsyRoles.Admin, .. JobsyRoles.EmployerRoles]));
 
             options.AddPolicy(JobsyPolicies.RequireCandidate, policy =>
                 policy.RequireAuthenticatedUser()

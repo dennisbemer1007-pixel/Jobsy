@@ -22,8 +22,8 @@
             <h3 class="passport-fit__h">@Culture["Passport.Fit.Title"]</h3>
             <p class="login-lead">@(string.IsNullOrWhiteSpace(_session.LockMessage) ? Culture["Fit.Locked"] : _session.LockMessage)</p>
             <div class="passport-fit__locked-actions">
-                <a class="btn-compact btn-compact--primary" href="/candidate/competencies">@Culture["Competency.Start"]</a>
-                <a class="btn-compact" href="/candidate/career">@Culture["Career.Start"]</a>
+                <a class="btn btn-primary" href="/candidate/competencies">@Culture["Competency.Start"]</a>
+                <a class="btn btn-secondary" href="/candidate/career">@Culture["Career.Start"]</a>
             </div>
         </section>
     }
@@ -37,7 +37,7 @@
                         @if (_session.LastResult is not null)
                         {
                             <button type="button"
-                                    class="passport-card__fill-link"
+                                    class="btn btn-ghost"
                                     @onclick="ToggleFullResult">
                                 @Culture["Passport.Fit.FullResult"]
                             </button>
@@ -59,7 +59,7 @@
                                placeholder="@Culture["Passport.Fit.Placeholder"]"
                                @bind="_session.JobTitle"
                                @bind:event="oninput" />
-                        <button class="btn-compact btn-compact--primary" type="submit" disabled="@_session.Busy">
+                        <button class="btn btn-primary" type="submit" disabled="@_session.Busy">
                             @Culture["Passport.Fit.Check"]
                         </button>
                     </form>
@@ -83,7 +83,7 @@
                             @if (result.SimilarRoles.Count > 0)
                             {
                                 <button type="button"
-                                        class="passport-card__fill-link"
+                                        class="btn btn-ghost"
                                         @onclick="ToggleSimilar">
                                     @Culture["Passport.Fit.Similar"]
                                 </button>
@@ -97,7 +97,7 @@
                                 {
                                     <li>
                                         <button type="button"
-                                                class="btn-compact"
+                                                class="btn btn-secondary"
                                                 disabled="@_session.Busy"
                                                 @onclick="() => EvaluateSimilarAsync(role.Title)">
                                             @role.Title
@@ -180,7 +180,7 @@
                 else
                 {
                     <p class="passport-fit__culture-cta">
-                        <a class="passport-card__fill-link" href="/candidate/culture">@Culture["Passport.Fit.DoCultureScan"]</a>
+                        <a class="btn btn-ghost" href="/candidate/culture">@Culture["Passport.Fit.DoCultureScan"]</a>
                     </p>
                 }
 
@@ -188,7 +188,7 @@
                     <section class="detail-card passport-fit__vacancies" aria-labelledby="passport-fit-vacancies-title">
                         <header class="passport-fit__head">
                             <h3 id="passport-fit-vacancies-title" class="passport-fit__h">@Culture["Passport.Fit.VacanciesTitle"]</h3>
-                            <a class="passport-card__fill-link" href="/">@Culture["Passport.Fit.Top10"]</a>
+                            <a class="btn btn-ghost" href="/">@Culture["Passport.Fit.Top10"]</a>
                         </header>
                         <p class="passport-fit__sub">
                             <span class="passport-fit__sub-icon" aria-hidden="true">@((MarkupString)NavIcons.Stone)</span>
@@ -230,7 +230,7 @@
                                     <span class="status-pill">@Culture.Format("Passport.Fit.NewCount", _newContacts)</span>
                                 }
                             </div>
-                            <a class="btn-compact" href="/candidate/talent-contacts">@Culture["Passport.Fit.ViewContacts"]</a>
+                            <a class="btn btn-secondary" href="/candidate/talent-contacts">@Culture["Passport.Fit.ViewContacts"]</a>
                         </div>
                     </section>
                 </FeatureVisible>

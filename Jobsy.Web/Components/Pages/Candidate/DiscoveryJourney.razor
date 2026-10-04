@@ -103,7 +103,7 @@
                     <p class="journey-hint">@Culture["Discovery.Start.HintLanguage"]</p>
                     <div class="journey-step__foot">
                         <span class="journey-step__sp"></span>
-                        <button type="button" class="btn-compact btn-compact--primary" @onclick="BeginAsync">
+                        <button type="button" class="btn btn-primary" @onclick="BeginAsync">
                             @Culture["Discovery.Start.Cta"]
                         </button>
                     </div>
@@ -113,10 +113,10 @@
                     <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
                     <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
                     <div class="journey-step__foot">
-                        <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                        <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                         <span class="journey-step__sp"></span>
                         <button type="button" class="journey-later" @onclick="DeclineConsentAndFinishAsync">@Culture["Discovery.Consent.Decline"]</button>
-                        <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                        <button type="button" class="btn btn-primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
                             @Culture["Onboarding.Consent.Cta"]
                         </button>
                     </div>
@@ -178,7 +178,7 @@
                                 @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
                                 {
                                     var selected = Draft.EmployerPreferences.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
+                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
                                             aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleEmployerPref(code)">
                                         @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
@@ -233,7 +233,7 @@
                                            value="@Draft.LearningGoals[index]"
                                            placeholder="@Culture["Profile.LearningGoalPlaceholder"]"
                                            @oninput="e => SetLearningGoal(index, e.Value?.ToString())" />
-                                    <button type="button" class="btn-compact" @onclick="() => RemoveLearningGoal(index)">×</button>
+                                    <button type="button" class="btn btn-secondary" @onclick="() => RemoveLearningGoal(index)">×</button>
                                 </div>
                             }
                             @if (Draft.LearningGoals.Count < DiscoveryCatalogs.MaxLearningGoals)
@@ -262,7 +262,7 @@
                                                placeholder="@Culture["Profile.CertificateName"]"
                                                value="@Draft.Certificates[index].Name"
                                                @oninput="e => SetCertName(index, e.Value?.ToString())" />
-                                        <button type="button" class="btn-compact" @onclick="() => RemoveCertificate(index)">×</button>
+                                        <button type="button" class="btn btn-secondary" @onclick="() => RemoveCertificate(index)">×</button>
                                     </div>
                                 }
                                 <button type="button" class="journey-chip journey-chip--add" @onclick="AddCertificate">
@@ -308,7 +308,7 @@
                                                     <option value="@level">@Culture[DiscoveryCatalogs.DutchLabelKey(level)]</option>
                                                 }
                                             </select>
-                                            <button type="button" class="btn-compact" @onclick="() => RemoveSpokenLanguage(code)">×</button>
+                                            <button type="button" class="btn btn-secondary" @onclick="() => RemoveSpokenLanguage(code)">×</button>
                                         </div>
                                     }
                                     @if (Draft.SpokenLanguages.Count < DiscoveryCatalogs.MaxSpokenLanguages)
@@ -343,7 +343,7 @@
                                 @foreach (var code in DiscoveryCatalogs.HobbyCodes)
                                 {
                                     var selected = Draft.Hobbies.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
+                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
                                             aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleHobby(code)">
                                         @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
@@ -358,7 +358,7 @@
                                                value="@Draft.HobbyFreeText[index]"
                                                placeholder="@Culture["Discovery.Dislike.SomethingElse"]"
                                                @oninput="e => SetHobbyFree(index, e.Value?.ToString())" />
-                                        <button type="button" class="btn-compact" @onclick="() => RemoveHobbyFree(index)">×</button>
+                                        <button type="button" class="btn btn-secondary" @onclick="() => RemoveHobbyFree(index)">×</button>
                                     </div>
                                 }
                                 @if (Draft.HobbyFreeText.Count < 3)
@@ -404,7 +404,7 @@
                                 @foreach (var code in DiscoveryCatalogs.DislikeCodes)
                                 {
                                     var selected = Draft.Dislikes.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
+                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
                                             aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleDislike(code)">
                                         @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
@@ -419,7 +419,7 @@
                                                value="@Draft.CustomDislikes[index]"
                                                placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
                                                @oninput="e => SetCustomDislike(index, e.Value?.ToString())" />
-                                        <button type="button" class="btn-compact" @onclick="() => RemoveCustomDislike(index)">×</button>
+                                        <button type="button" class="btn btn-secondary" @onclick="() => RemoveCustomDislike(index)">×</button>
                                     </div>
                                 }
                                 @if (Draft.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
@@ -513,7 +513,7 @@
                 }
             </section>
 
-            <div class="journey-lz journey-only-desktop @(IsLightScreen ? "is-rising" : null)">
+            <div class="journey-lz journey-only-desktop @(IsLightScreen ?"is-rising" : null)">
                 <div class="journey-bubble">
                     <p>@LobsterSay</p>
                     <ReadAloudButton Text="@LobsterSay" SpeechKey="journey-lobster-desktop" />
@@ -787,7 +787,7 @@
         <div class="journey-step__foot">
             @if (showBack)
             {
-                <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
             }
             <span class="journey-step__sp"></span>
             @if (showSkip)
@@ -797,7 +797,7 @@
             @if (_reviewMode)
             {
                 <button type="button" class="journey-later" @onclick="ShowOverviewAsync">@Culture["Discovery.Overview.Back"]</button>
-                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="NextAsync">
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="NextAsync">
                     @Culture["Discovery.Overview.Save"]
                 </button>
             }
@@ -806,7 +806,7 @@
                 <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
                 @if (showPrimary)
                 {
-                    <button type="button" class="btn-compact btn-compact--primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                    <button type="button" class="btn btn-primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
                         @Culture["Onboarding.Next"]
                     </button>
                 }
