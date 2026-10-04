@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "38dfb754da54abe203f45adfaab3e2f733ce8ac7aecefe1ab36b64d3d775c529",
-    "v": "20261004-merge"
+    "sha256": "af9a8099ea04d7776cb3e005c834cd2d86fbcf0fa669e11d54c28ec603e64799",
+    "v": "20261004-run5b"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "3b018e4e2903c994993efac0e120557ef4588d6a257db92a27e7362fa55ec756",
-    "v": "20261004-admin"
+    "sha256": "26e1dc8f5e3bd207b897d855627554b194a19cd379a3ca0ced65953472e27400",
+    "v": "20261004-run5b"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-school2"
   },
   "js/lobsyPush.js": {
-    "sha256": "46fd5ce19285ec201c74a2d79fdda13932678f7f8562d66cc96fec139119d6c0",
-    "v": "20261004-admin"
+    "sha256": "501f4cbe483062b75df7cf5733f972bd3102bedd6a2e5cd0dfcab64233a1902f",
+    "v": "20261004-run5b"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "8fbb0d6face34f82bb866fbcd1eafc30f981ded8535209e9c98f107163f092f8",
-    "v": "20261004-admin"
+    "sha256": "880757d9fdbece1a42fdc3e036bc32b674968faa2db5e62099fdcd9fe0b629a2",
+    "v": "20261004-run5b"
   },
   "service-worker.published.js": {
-    "sha256": "c9b7bd1d8d5cf2a1bfb9a562d8ff9056d467d0cb4b69dcdeb15684b3702c98b1",
-    "v": "20261004-admin"
+    "sha256": "b13d8ebab6027385862333936e8684ec7796d6fdd09a0b33b43a144ee000fd04",
+    "v": "20261004-run5b"
   }
 }
