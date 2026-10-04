@@ -28,6 +28,10 @@
         <button class="btn-compact btn-compact--primary" type="submit" disabled="@(_busy || !KvkLooksValid)">
             @Culture["AdminOrgs.LookupEstablishments"]
         </button>
+        @if (!KvkLooksValid)
+        {
+            <p class="muted">@Culture["AdminOrgs.KvkHint"]</p>
+        }
     </form>
 
     @if (_establishments.Count > 0)

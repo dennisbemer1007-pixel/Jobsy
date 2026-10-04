@@ -205,4 +205,32 @@ public static class AdminNav
         var path = relativePath.Split('?', 2)[0].Split('#', 2)[0].Trim('/');
         return string.IsNullOrEmpty(path) ? "/" : "/" + path;
     }
+
+    /// <summary>
+    /// Dashboard is only the exact <c>/admin</c> path. Every other item may match its own subtree.
+    /// </summary>
+    public static bool Matches(string path, AdminNavItem item)
+    {
+        path = Normalize(path);
+        if (string.Equals(path, Normalize(item.Href), StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var alias in item.Aliases)
+        {
+            if (string.Equals(path, Normalize(alias), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var href = Normalize(item.Href);
+        if (href is "/" or "/admin")
+        {
+            return false;
+        }
+
+        return path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+    }
 }

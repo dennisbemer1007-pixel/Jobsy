@@ -88,8 +88,8 @@ public class AdminFinanceRedesignTests : BunitContext
         Assert.Contains("Wat bepaalt welke prijs?", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("admin-impact-note", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Tokenpakketten", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("VacancyTypeTokenCost", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("TokenSpendCost", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Token-kosten per vacaturetype", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Kosten per actie", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

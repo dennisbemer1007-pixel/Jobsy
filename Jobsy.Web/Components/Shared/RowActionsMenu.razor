@@ -1,9 +1,11 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
+@inject IJSRuntime Js
 
 <div class="row-actions-menu @( _open ? "is-open" : null)" @onfocusout="OnFocusOut">
     <button type="button"
+            @ref="_toggle"
             class="icon-btn row-actions-menu__toggle"
             aria-haspopup="menu"
             aria-expanded="@(_open ? "true" : "false")"
@@ -15,7 +17,8 @@
     </button>
     @if (_open)
     {
-        <div class="row-actions-menu__panel" role="menu" @onclick="Close" @onclick:stopPropagation="true" @onkeydown="OnKey">
+        <div @ref="_panel" class="row-actions-menu__panel" role="menu" @onclick="Close" @onclick:stopPropagation="true" @onkeydown="OnKey">
+            <button type="button" class="visually-hidden" data-jobsy-dialog-close @onclick="Close">@Culture["AdminUi.CloseDrawer"]</button>
             @ChildContent
         </div>
     }
@@ -26,6 +29,9 @@
     [Parameter] public string? AriaLabel { get; set; }
 
     private bool _open;
+    private bool _trapped;
+    private ElementReference _toggle;
+    private ElementReference _panel;
 
     private void Toggle()
         => _open = !_open;
@@ -38,6 +44,40 @@
         if (e.Key == "Escape")
         {
             _open = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_open && !_trapped)
+        {
+            _trapped = true;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.trap", _panel);
+            }
+            catch (Exception)
+            {
+            }
+        }
+        else if (!_open && _trapped)
+        {
+            _trapped = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.release");
+            }
+            catch (Exception)
+            {
+            }
+
+            try
+            {
+                await _toggle.FocusAsync();
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 

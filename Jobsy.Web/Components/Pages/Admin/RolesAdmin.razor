@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Security
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Ui
 @inject JobsyApiClient Api
@@ -33,11 +34,11 @@
                 @foreach (var row in _rows)
                 {
                     <tr>
-                        <td><strong>@row.Label</strong></td>
-                        <td>@row.Count.ToString("N0")</td>
-                        <td>@(row.MfaRequired ? Culture["Common.Yes"] : Culture["Common.No"])</td>
-                        <td>@row.Description</td>
-                        <td>
+                        <td data-label="@Culture["AdminUsers.ColRole"]"><strong>@row.Label</strong></td>
+                        <td data-label="@Culture["AdminUsers.RolesCount"]">@row.Count.ToString("N0")</td>
+                        <td data-label="@Culture["AdminUsers.RolesMfaRequired"]">@(row.MfaRequired ? Culture["Common.Yes"] : Culture["Common.No"])</td>
+                        <td data-label="@Culture["AdminUsers.RolesDescription"]">@row.Description</td>
+                        <td data-label="@Culture["AdminUsers.RolesWhat"]">
                             <a href="#roles-matrix-title">@Culture["AdminUsers.RolesMatrixLink"]</a>
                         </td>
                     </tr>
@@ -64,9 +65,10 @@
                         {
                             <tr>
                                 <th scope="row">@cap.Label</th>
-                                @foreach (var cell in cap.Cells)
+                                @for (var i = 0; i < cap.Cells.Length; i++)
                                 {
-                                    <td>@cell</td>
+                                    var label = i < _matrixRoles.Count ? _matrixRoles[i].Label : Culture["AdminUsers.ColRole"];
+                                    <td data-label="@label">@AdminActionLabels.Scope(cap.Cells[i])</td>
                                 }
                             </tr>
                         }

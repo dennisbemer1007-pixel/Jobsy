@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -44,8 +45,8 @@
                     <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(row.OccurredAt).ToString("dd-MM HH:mm")</td>
                     <td class="muted" data-label="@Culture["AdminDataAccess.Actor"]">@Short(row.ActorUserId)</td>
                     <td class="muted" data-label="@Culture["AdminDataAccess.Subject"]">@(row.SubjectUserId is Guid s ? Short(s) : "—")</td>
-                    <td data-label="@Culture["AdminDataAccess.Resource"]">@row.Resource</td>
-                    <td data-label="@Culture["AdminAudit.Col.Action"]">@row.Action</td>
+                    <td data-label="@Culture["AdminDataAccess.Resource"]">@AdminActionLabels.Resource(row.Resource, key => Culture[key])</td>
+                    <td data-label="@Culture["AdminAudit.Col.Action"]">@AdminActionLabels.Label(row.Action, key => Culture[key])</td>
                     <td class="muted" data-label="@Culture["AdminAudit.Reason"]">@(row.Reason ?? "—")</td>
                     <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Correlation"]">@row.CorrelationId</td>
                 </tr>

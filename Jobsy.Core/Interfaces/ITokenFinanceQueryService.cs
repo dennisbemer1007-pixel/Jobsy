@@ -19,6 +19,12 @@ public interface ITokenFinanceQueryService
         int? quarter = null,
         CancellationToken cancellationToken = default);
 
+    Task<string> ExportPurchasesCsvAsync(
+        int? year,
+        int? quarter,
+        int? month,
+        CancellationToken cancellationToken = default);
+
     Task<string> ExportGoodwillCsvAsync(
         int? year = null,
         int? quarter = null,

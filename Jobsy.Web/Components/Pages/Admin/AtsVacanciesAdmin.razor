@@ -5,6 +5,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject CultureState Culture
+@inject IJSRuntime Js
 @implements IDisposable
 
 <PageTitle>@Culture["AdminNav.Ats"] · Lobsy</PageTitle>
@@ -150,7 +151,7 @@
     @if (_edit is not null)
     {
         <div class="ats-detail-backdrop" @onclick="CloseDetail"></div>
-        <aside class="ats-detail-drawer" role="dialog" aria-modal="true" aria-labelledby="ats-detail-title">
+        <aside @ref="_detailPanel" class="ats-detail-drawer" role="dialog" aria-modal="true" aria-labelledby="ats-detail-title">
             <header class="ats-detail-drawer__head">
                 <div class="ats-detail-drawer__head-text">
                     <p class="ats-detail-drawer__eyebrow">
@@ -161,7 +162,7 @@
                     <h2 id="ats-detail-title">@_edit.Title</h2>
                     <p class="ats-detail-drawer__company">@_edit.CompanyName</p>
                 </div>
-                <button class="ats-detail-drawer__close btn-compact" type="button" @onclick="CloseDetail" aria-label="Sluiten">
+                <button class="ats-detail-drawer__close btn-compact" type="button" data-jobsy-dialog-close @onclick="CloseDetail" aria-label="Sluiten">
                     Sluiten
                 </button>
             </header>
@@ -236,6 +237,34 @@
     private string _statusFilter = "PendingReview";
     private AtsScrapeRunReport? _scrapeReport;
     private AtsListingItem? _edit;
+    private ElementReference _detailPanel;
+    private bool _detailTrapped;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_edit is not null && !_detailTrapped)
+        {
+            _detailTrapped = true;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.trap", _detailPanel);
+            }
+            catch (Exception)
+            {
+            }
+        }
+        else if (_edit is null && _detailTrapped)
+        {
+            _detailTrapped = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.release");
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
     private string _editTitle = string.Empty;
     private string _editCompany = string.Empty;
     private string? _editLocation;

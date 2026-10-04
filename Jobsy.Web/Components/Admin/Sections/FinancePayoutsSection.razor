@@ -64,19 +64,19 @@
         {
             var id = row.InvoiceId;
             <tr>
-                <td class="admin-data-table__check">
+                <td class="admin-data-table__check" data-label="@Culture["AdminUsers.ColSelect"]">
                     <input type="checkbox"
                            checked="@_selected.Contains(id)"
                            @onchange="e => ToggleRow(id, e)"
                            aria-label="@row.InvoiceNumber" />
                 </td>
-                <td><code class="admin-mono">@row.InvoiceNumber</code></td>
-                <td>@row.MaskedPayeeName</td>
-                <td class="muted">@row.RoleLabel</td>
-                <td class="muted">@row.MaskedIban</td>
-                <td>@AdminFinanceDisplay.Euro(row.TotalInclVat)</td>
-                <td><span class="status-pill status-pill--pending">Issued</span></td>
-                <td>
+                <td data-label="@Culture["AdminFinance.Col.Invoice"]"><code class="admin-mono">@row.InvoiceNumber</code></td>
+                <td data-label="@Culture["AdminFinance.Col.Payee"]">@row.MaskedPayeeName</td>
+                <td class="muted" data-label="@Culture["AdminFinance.Col.Role"]">@row.RoleLabel</td>
+                <td class="muted" data-label="IBAN">@row.MaskedIban</td>
+                <td data-label="@Culture["AdminFinance.Col.Amount"]">@AdminFinanceDisplay.Euro(row.TotalInclVat)</td>
+                <td data-label="@Culture["AdminFinance.Col.Status"]"><span class="status-pill status-pill--pending">@Culture["AdminFinance.StatusIssued"]</span></td>
+                <td data-label="@Culture["Common.Actions"]">
                     <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy"
                             @onclick="() => MarkPaidAsync(id)">
                         @Culture["AdminFinance.MarkPaid"]

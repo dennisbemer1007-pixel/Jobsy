@@ -43,7 +43,7 @@
                     <input @bind="_clickId" />
                 </label>
                 <label>
-                    Candidate hash
+                    @Culture["AdminTraining.CandidateHash"]
                     <input @bind="_candidateHash" />
                 </label>
                 <label>
@@ -61,10 +61,85 @@
             </form>
         </section>
 
+        @if (_edit is not null)
+        {
+            <section class="detail-card" aria-labelledby="training-offer-edit-title" @onkeydown="OnEditKey">
+                <h3 id="training-offer-edit-title">@Culture["Admin.Training.EditOffer"]</h3>
+                <p><strong>@_edit.Title</strong></p>
+                <div class="masterdata-row__fields">
+                    <label>
+                        @Culture["Admin.Training.Type"]
+                        <select @ref="_editFirst" @bind="_editType">
+                            <option value="Opleiding">Opleiding</option>
+                            <option value="Cursus">Cursus</option>
+                            <option value="Workshop">Workshop</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Duration"]
+                        <input type="number" min="1" @bind="_editDurationValue" />
+                    </label>
+                    <label>
+                        @Culture["AdminTraining.Unit"]
+                        <select @bind="_editDurationUnit">
+                            <option value="">—</option>
+                            <option value="Hours">@Culture["AdminTraining.Hours"]</option>
+                            <option value="Days">@Culture["AdminTraining.Days"]</option>
+                            <option value="Weeks">@Culture["AdminTraining.Weeks"]</option>
+                            <option value="Months">@Culture["AdminTraining.Months"]</option>
+                            <option value="Years">@Culture["AdminTraining.Years"]</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Delivery"]
+                        <select @bind="_editDelivery">
+                            <option value="Online">Online</option>
+                            <option value="OnSite">@Culture["AdminTraining.OnSite"]</option>
+                            <option value="Blended">Blended</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Location"]
+                        <input @bind="_editLocation" />
+                    </label>
+                    <label>
+                        @Culture["AdminTraining.Deeplink"]
+                        <input @bind="_editPath" />
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsFree" />
+                        @Culture["Admin.Training.IsFree"]
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsPartner" />
+                        @Culture["Admin.Training.IsPartner"]
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.AffiliateCode"]
+                        <input @bind="_editAffiliate" />
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editShowInPassport" />
+                        @Culture["Admin.Training.ShowInPassport"]
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsActive" />
+                        @Culture["AdminTraining.Active"]
+                    </label>
+                </div>
+                <div class="inline-actions">
+                    <button type="button" class="btn-compact" @onclick="CancelEdit">@Culture["Common.Cancel"]</button>
+                    <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveOfferAsync">
+                        @Culture["Admin.Training.SaveOffer"]
+                    </button>
+                </div>
+            </section>
+        }
+
         @foreach (var provider in _providers)
         {
             <article class="table-row masterdata-row">
-                <h3>@provider.Name <small>@provider.Kind · @provider.Network · @provider.Region</small></h3>
+                <h3>@provider.Name <small>@ProviderKind(provider.Kind) · @provider.Network · @provider.Region</small></h3>
                 <p>@provider.BaseUrl</p>
                 <p>Velden: @provider.FieldsCsv</p>
                 <p>
@@ -99,77 +174,6 @@
             </article>
         }
 
-        @if (_edit is not null)
-        {
-            <section class="detail-card" aria-labelledby="training-offer-edit-title">
-                <h3 id="training-offer-edit-title">@Culture["Admin.Training.EditOffer"]</h3>
-                <p><strong>@_edit.Title</strong></p>
-                <div class="masterdata-row__fields">
-                    <label>
-                        @Culture["Admin.Training.Type"]
-                        <select @bind="_editType">
-                            <option value="Opleiding">Opleiding</option>
-                            <option value="Cursus">Cursus</option>
-                            <option value="Workshop">Workshop</option>
-                        </select>
-                    </label>
-                    <label>
-                        @Culture["Admin.Training.Duration"]
-                        <input type="number" min="1" @bind="_editDurationValue" />
-                    </label>
-                    <label>
-                        Eenheid
-                        <select @bind="_editDurationUnit">
-                            <option value="">—</option>
-                            <option value="Hours">uren</option>
-                            <option value="Days">dagen</option>
-                            <option value="Weeks">weken</option>
-                            <option value="Months">maanden</option>
-                            <option value="Years">jaren</option>
-                        </select>
-                    </label>
-                    <label>
-                        @Culture["Admin.Training.Delivery"]
-                        <select @bind="_editDelivery">
-                            <option value="Online">Online</option>
-                            <option value="OnSite">Op locatie</option>
-                            <option value="Blended">Blended</option>
-                        </select>
-                    </label>
-                    <label>
-                        @Culture["Admin.Training.Location"]
-                        <input @bind="_editLocation" />
-                    </label>
-                    <label>
-                        Deeplink
-                        <input @bind="_editPath" />
-                    </label>
-                    <label>
-                        <input type="checkbox" @bind="_editIsFree" />
-                        @Culture["Admin.Training.IsFree"]
-                    </label>
-                    <label>
-                        <input type="checkbox" @bind="_editIsPartner" />
-                        @Culture["Admin.Training.IsPartner"]
-                    </label>
-                    <label>
-                        @Culture["Admin.Training.AffiliateCode"]
-                        <input @bind="_editAffiliate" />
-                    </label>
-                    <label>
-                        <input type="checkbox" @bind="_editShowInPassport" />
-                        @Culture["Admin.Training.ShowInPassport"]
-                    </label>
-                    <label>
-                        <input type="checkbox" @bind="_editIsActive" />
-                        Actief
-                    </label>
-                </div>
-                <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveOfferAsync">
-                    @Culture["Admin.Training.SaveOffer"]
-                </button>
-            </section>
-        }
     }
 </AdminPageShell>
 
@@ -227,8 +231,48 @@
         }
     }
 
+    private ElementReference _editFirst;
+    private Guid? _focusedEditId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_edit is not null && _focusedEditId != _edit.Id)
+        {
+            _focusedEditId = _edit.Id;
+            try
+            {
+                await _editFirst.FocusAsync();
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _edit = null;
+        _focusedEditId = null;
+    }
+
+    private void OnEditKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            CancelEdit();
+        }
+    }
+
+    private string ProviderKind(string? kind) => kind switch
+    {
+        "RegionalPartner" => Culture["AdminTraining.RegionalPartner"],
+        "NationalAffiliate" => Culture["AdminTraining.NationalAffiliate"],
+        _ => kind ?? ""
+    };
+
     private void BeginEdit(TrainingOfferAdmin offer)
     {
+        _focusedEditId = null;
         _edit = offer;
         _editType = string.IsNullOrWhiteSpace(offer.Type) ? "Cursus" : offer.Type;
         _editDurationValue = offer.DurationValue;

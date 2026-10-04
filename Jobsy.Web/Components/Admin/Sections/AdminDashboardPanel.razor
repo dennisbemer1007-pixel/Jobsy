@@ -150,7 +150,7 @@
                     <li class="admin-audit-recent__row">
                         <span class="admin-mono muted">@AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM HH:mm")</span>
                         <span>@e.ActorDisplayName</span>
-                        <span class="status-pill">@e.Action</span>
+                        <span class="status-pill">@AdminActionLabels.Label(e.Action, key => Culture[key])</span>
                         <span class="muted">@e.TargetLabel</span>
                     </li>
                 }

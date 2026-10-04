@@ -1,6 +1,8 @@
 @page "/admin/beveiliging/2fa"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -38,11 +40,11 @@
                     @foreach (var row in _overview.ByRole)
                     {
                         <tr>
-                            <td>@row.Role</td>
-                            <td>@row.Enrolled</td>
-                            <td>@row.NotEnrolled</td>
-                            <td>@row.ViaIdp</td>
-                            <td>@row.Total</td>
+                            <td data-label="@Culture["AdminMfa.Col.Role"]">@AdminActionLabels.Role(row.Role, key => Culture[key])</td>
+                            <td data-label="@Culture["AdminMfa.Col.Enrolled"]">@row.Enrolled</td>
+                            <td data-label="@Culture["AdminMfa.Col.NotEnrolled"]">@row.NotEnrolled</td>
+                            <td data-label="@Culture["AdminMfa.Col.ViaIdp"]">@row.ViaIdp</td>
+                            <td data-label="@Culture["AdminMfa.Col.Total"]">@row.Total</td>
                         </tr>
                     }
                 </Rows>
@@ -62,10 +64,10 @@
                     @foreach (var u in _overview.WithoutMfa)
                     {
                         <tr class="admin-audit-row" @onclick="() => OpenUser(u.UserId)">
-                            <td>@u.MaskedName</td>
-                            <td>@u.MaskedEmail</td>
-                            <td>@u.Role</td>
-                            <td class="muted">@(u.LastActiveUtc?.ToLocalTime().ToString("dd-MM HH:mm") ?? "—")</td>
+                            <td data-label="@Culture["AdminUsers.Col.Name"]">@u.MaskedName</td>
+                            <td data-label="@Culture["AdminUsers.Col.Email"]">@u.MaskedEmail</td>
+                            <td data-label="@Culture["AdminUsers.Col.Role"]">@AdminActionLabels.Role(u.Role, key => Culture[key])</td>
+                            <td class="muted" data-label="@Culture["AdminMfa.LastActive"]">@(u.LastActiveUtc is DateTime active ? AmsterdamTime.ToLocal(active).ToString("dd-MM HH:mm") : "—")</td>
                         </tr>
                     }
                 </Rows>
@@ -85,10 +87,10 @@
                     @foreach (var e in _overview.RecentEvents)
                     {
                         <tr>
-                            <td class="admin-mono">@e.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</td>
-                            <td>@e.Action</td>
-                            <td>@e.TargetLabel</td>
-                            <td>@e.Result</td>
+                            <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM HH:mm")</td>
+                            <td data-label="@Culture["AdminAudit.Col.Action"]">@AdminActionLabels.Label(e.Action, key => Culture[key])</td>
+                            <td data-label="@Culture["AdminAudit.Col.Object"]">@e.TargetLabel</td>
+                            <td data-label="@Culture["AdminAudit.Col.Result"]">@e.Result</td>
                         </tr>
                     }
                 </Rows>
