@@ -51,4 +51,18 @@ public static class PassportShellRules
         var remaining = Math.Max(0, remainingQuestionsNearestUnfinished);
         return new ShellProgress(visible, earned, visible.Count, remaining);
     }
+
+    /// <summary>
+    /// Lobster stage is 0 (still in the egg) only when no test has been started.
+    /// A finished journey with provisional answers is stage 1, never both egg and stage 4.
+    /// </summary>
+    public static int LobsterStage(int completedTests, bool anyTestStarted)
+    {
+        if (completedTests > 0)
+        {
+            return Math.Clamp(completedTests, 1, 4);
+        }
+
+        return anyTestStarted ? 1 : 0;
+    }
 }

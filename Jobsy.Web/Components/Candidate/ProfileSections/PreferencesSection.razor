@@ -9,17 +9,21 @@
                                 <input type="number" min="1" max="180" @bind="Editor.MaxTravel" />
                             </label>
 
-                            <label>
-                                @Culture["Profile.PreferredTransport"]
-                                <select @bind="Editor.PreferredTransport">
-                                    <option value="">—</option>
-                                    <option value="Fiets">@Culture["Transport.Bike"]</option>
-                                    <option value="E-bike">@Culture["Transport.EBike"]</option>
-                                    <option value="Auto">@Culture["Transport.Car"]</option>
-                                    <option value="OV">@Culture["Transport.Transit"]</option>
-                                    <option value="Lopend">@Culture["Transport.Walk"]</option>
-                                </select>
-                            </label>
+                            <fieldset class="profile-roles profile-check-grid">
+                                <legend>@Culture["Profile.PreferredTransport"]</legend>
+                                <p class="ob-wizard__hint">@Culture["Onboarding.TransportMulti"]</p>
+                                @foreach (var transport in TransportLabels.Selectable)
+                                {
+                                    var selected = Editor.HasTransport(transport);
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@selected"
+                                               aria-checked="@(selected ? "true" : "false")"
+                                               @onchange="() => Editor.ToggleTransport(transport)" />
+                                        @UiLabels.Transport(Culture, transport)
+                                    </label>
+                                }
+                            </fieldset>
 
                             <fieldset class="profile-roles profile-check-grid">
                                 <legend>@Culture["Profile.Interests"]</legend>

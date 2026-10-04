@@ -123,4 +123,38 @@ public static class JourneyTestFlow
 
     public static string TestHintKey(int step)
         => step == 9 ? "Discovery.Test.HintCulture" : "Discovery.Test.Hint";
+
+    /// <summary>URL token for the shed after step <paramref name="step"/> (7–10).</summary>
+    public static string ShedQuery(int step) => $"shed-{Math.Clamp(step, 7, 10)}";
+
+    /// <summary>
+    /// Restores the shed step from <c>?stap=</c>. Bare <c>shed</c> stays on step 7;
+    /// <c>shed-8</c> restores step 8 so a refresh does not rewind to the first test.
+    /// </summary>
+    public static bool TryParseShedStep(string? stap, out int step)
+    {
+        step = 0;
+        if (string.IsNullOrWhiteSpace(stap))
+        {
+            return false;
+        }
+
+        var value = stap.Trim();
+        if (value.Equals("shed", StringComparison.OrdinalIgnoreCase))
+        {
+            step = 7;
+            return true;
+        }
+
+        const string prefix = "shed-";
+        if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(value[prefix.Length..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed)
+            && parsed is >= 7 and <= 10)
+        {
+            step = parsed;
+            return true;
+        }
+
+        return false;
+    }
 }

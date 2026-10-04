@@ -55,7 +55,14 @@
     </div>
 }
 
-@if (Compass.PracticalNotes.Count > 0)
+@if (!Compass.HasOccupations)
+{
+    <div class="kompas-practical">
+        <h4>@Culture["Kompas.PracticalTitle"]</h4>
+        <p>@Culture[CareerCompassSnapshot.EmptyNoteKey]</p>
+    </div>
+}
+else if (Compass.PracticalNotes.Count > 0)
 {
     <div class="kompas-practical">
         <h4>@Culture["Kompas.PracticalTitle"]</h4>

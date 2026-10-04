@@ -262,7 +262,10 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             insightsStatus);
     }
 
-    /// <summary>Stored compass only — never rebuild on GET.</summary>
+    /// <summary>
+    /// Prefer a stored compass. A completed test with no stored occupations is built in memory
+    /// so the result page is not stuck on the empty prompt while the worker persists it.
+    /// </summary>
     private static (CareerCompassSnapshot Compass, bool Updating) ResolveCompass(
         CandidateCareerInterest? row,
         bool fromDeepAnalysis)
@@ -283,7 +286,10 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             row?.ConventionalPercent);
         if (completed is { IsComplete: true })
         {
-            return (CareerCompassSnapshot.Empty(fromDeepAnalysis), true);
+            var built = CareerCompassBuilder.Build(completed, fromDeepAnalysis);
+            return built.HasOccupations
+                ? (built, true)
+                : (CareerCompassSnapshot.Empty(fromDeepAnalysis), true);
         }
 
         return (CareerCompassSnapshot.Empty(fromDeepAnalysis), false);

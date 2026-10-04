@@ -10,7 +10,9 @@
          role="dialog"
          aria-modal="true"
          aria-labelledby="@TitleId"
-         style="@Style">
+         tabindex="-1"
+         style="@Style"
+         @onkeydown="OnKeyDown">
         @if (Mood == LobsyDialogMood.Celebrate)
         {
             <div class="lobsy-dialog__celebrate">
@@ -116,4 +118,7 @@
     }
 
     private Task CloseAsync() => OnClose.InvokeAsync();
+
+    private Task OnKeyDown(KeyboardEventArgs e)
+        => e.Key == "Escape" && !CloseDisabled ? CloseAsync() : Task.CompletedTask;
 }

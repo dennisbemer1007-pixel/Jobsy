@@ -14,11 +14,12 @@ else
 }
 <fieldset>
     <legend>@Culture["Onboarding.Transport"]</legend>
+    <p class="ob-wizard__hint">@Culture["Onboarding.TransportMulti"]</p>
     <div class="ob-wizard__transport">
         @foreach (var transport in TransportOptions)
         {
-            var isSelected = Draft.Transport == transport;
-            <button type="button" aria-pressed="@isSelected"
+            var isSelected = Selected.Contains(transport);
+            <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
                     class="@(isSelected ? "is-selected" : null)"
                     @onclick="() => SelectTransport.InvokeAsync(transport)">
                 @TransportLabel(transport)
@@ -31,7 +32,8 @@ else
     <div class="ob-wizard__transport">
         @foreach (var minutes in TravelChoices)
         {
-            <button type="button" aria-pressed="@(Draft.MaxTravel == minutes)"
+            var selected = Draft.MaxTravel == minutes;
+            <button type="button" aria-pressed="@(selected ? "true" : "false")"
                     @onclick="() => SelectTravelTime.InvokeAsync(minutes)">
                 @minutes
             </button>
@@ -54,7 +56,7 @@ else
             @foreach (var license in DrivingLicenseLabels.All)
             {
                 var isSelected = Draft.DrivingLicenses.Contains(license);
-                <button type="button" aria-pressed="@isSelected"
+                <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
                         class="@(isSelected ? "is-selected" : null)"
                         @onclick="() => ToggleLicense.InvokeAsync(license)">
                     @license
@@ -75,6 +77,17 @@ else
 
     private static readonly string[] TransportOptions = TransportLabels.Selectable;
     private static readonly int[] TravelChoices = [10, 20, 30, 45];
+
+    private HashSet<string> Selected { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override void OnParametersSet()
+    {
+        Selected.Clear();
+        foreach (var mode in TransportLabels.SplitMany(Draft.Transport))
+        {
+            Selected.Add(mode);
+        }
+    }
 
     private string TransportLabel(string transport) => transport switch
     {

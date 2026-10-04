@@ -35,7 +35,8 @@ else
                       Compact="true"
                       InputPrefix="@InputPrefix"
                       OnAnswer="OnFlowAnswer"
-                      OnFinished="OnFlowFinished" />
+                      OnFinished="OnFlowFinished"
+                      OnLeave="OnLeave" />
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint)
 {
@@ -59,6 +60,7 @@ else
     [Parameter] public bool ShowQuestionCounter { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
+    [Parameter] public EventCallback OnLeave { get; set; }
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
 

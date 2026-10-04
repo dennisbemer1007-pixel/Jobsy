@@ -109,7 +109,7 @@
                 else if (_screen == "toestemming")
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
-                    <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" />
+                    <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
                     <div class="journey-step__foot">
                         <button type="button" class="btn-compact" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                         <span class="journey-step__sp"></span>
@@ -177,7 +177,7 @@
                                 {
                                     var selected = Draft.EmployerPreferences.Contains(code);
                                     <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
-                                            aria-pressed="@selected"
+                                            aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleEmployerPref(code)">
                                         @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
                                     </button>
@@ -216,7 +216,9 @@
                                       TitleKey="Discovery.Step4.DreamTitle"
                                       AsSubsection="true"
                                       ShowLead="false"
+                                      Young="@IsYoungCandidate"
                                       ChooseDream="ChooseDream"
+                                      ChooseTitle="ChooseDreamTitle"
                                       ChooseOwnDream="ChooseOwnDream"
                                       DreamKeyDown="DreamKeyDown" />
                         <section>
@@ -340,7 +342,7 @@
                                 {
                                     var selected = Draft.Hobbies.Contains(code);
                                     <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
-                                            aria-pressed="@selected"
+                                            aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleHobby(code)">
                                         @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
                                     </button>
@@ -401,7 +403,7 @@
                                 {
                                     var selected = Draft.Dislikes.Contains(code);
                                     <button type="button" class="journey-chip @(selected ? "is-selected" : null)"
-                                            aria-pressed="@selected"
+                                            aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => ToggleDislike(code)">
                                         @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
                                     </button>
@@ -499,8 +501,8 @@
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
                                         ResolveQuestionText="QuestionText"
-                                        OnFinished="FinishMiniAsync" />
-                    @RenderFooter(showBack: !_reviewMode, showPrimary: CanNext || _reviewMode)
+                                        OnFinished="FinishMiniAsync"
+                                        OnLeave="BackAsync" />
                 }
             </section>
 
@@ -725,6 +727,12 @@
         }
     }
 
+    private void OnConsentChanged(bool value)
+    {
+        Draft.ConsentRequested = value;
+        StateHasChanged();
+    }
+
     private bool CanNext => _screen == "toestemming"
         ? Draft.ConsentRequested
         : _countedStep switch
@@ -783,6 +791,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Culture.Changed += OnCultureChanged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
         try
@@ -832,7 +841,11 @@
                     return;
                 }
             }
-            if (_screen != "start")
+            if (_screen == "shed")
+            {
+                await PrepareShedAsync();
+            }
+            else if (_screen != "start")
             {
                 await MarkStartedAsync();
                 if (_countedStep is >= 7 and <= 10 && Draft.HasConsent)
@@ -894,9 +907,12 @@
             return;
         }
 
-        if (_screen == "shed")
+        if (JourneyTestFlow.TryParseShedStep(_screen, out var shedStep))
         {
-            _depth = Math.Clamp(_shedStep, 7, 10);
+            _shedStep = shedStep;
+            _countedStep = _shedStep;
+            _screen = "shed";
+            _depth = _shedStep;
             return;
         }
 
@@ -947,9 +963,7 @@
         Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
         Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
         Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
-        Draft.Transport = preferences.PreferredTransport is null
-            ? ""
-            : TransportLabels.Canonical(preferences.PreferredTransport);
+        Draft.Transport = TransportLabels.Normalize(preferences.PreferredTransport);
         Draft.Immediate = profile.AvailableFromDate is null;
         Draft.AvailableFrom = profile.AvailableFromDate;
         Draft.Presets.Clear();
@@ -1205,10 +1219,18 @@
 
     private async Task ShowShedAsync(int step)
     {
-        _shedStep = step;
+        _shedStep = Math.Clamp(step, 7, 10);
+        _countedStep = _shedStep;
         _screen = "shed";
-        _depth = step;
-        var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
+        _depth = _shedStep;
+        await PrepareShedAsync();
+        NavigateStep(JourneyTestFlow.ShedQuery(_shedStep));
+        StateHasChanged();
+    }
+
+    private async Task PrepareShedAsync()
+    {
+        var kind = OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value;
         _answeredCount = await CountAnsweredAsync(kind);
         _shedFullyDone = JourneyTestFlow.IsFullyDone(_answeredCount, kind);
         _shedSelectedLevel = JourneyTestFlow.DefaultSelectedLevel(_answeredCount, kind);
@@ -1218,8 +1240,6 @@
         await RefreshImpressionAsync();
         _shedLines = JourneyTestFlow.ImpressionLinesForTest(
             kind, _state?.Impression, k => Culture[k], " " + Culture["Discovery.Shed.Provisional"]).ToList();
-        NavigateStep("shed");
-        StateHasChanged();
     }
 
     private Task OnShedSelectLevel(int level)
@@ -1724,10 +1744,9 @@
 
     private void SplitAddress(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return;
-        var index = value.Trim().IndexOf(' ');
-        Draft.Postcode = index > 0 ? value[..index].Trim() : value.Trim();
-        Draft.City = index > 0 ? value[(index + 1)..].Trim() : "";
+        var (postcode, city) = PostcodeMatch.SplitHomeAddress(value);
+        Draft.Postcode = postcode;
+        Draft.City = city;
     }
 
     private string HomeAddress() => $"{NormalizePostcode(Draft.Postcode)} {Draft.City.Trim()}".Trim();
@@ -1874,7 +1893,7 @@
 
     private void SelectTransport(string transport)
     {
-        Draft.Transport = transport;
+        Draft.Transport = TransportLabels.Toggle(Draft.Transport, transport);
         ScheduleProfileSave();
     }
 
@@ -1932,9 +1951,15 @@
         ScheduleProfileSave();
     }
 
-    private void ChooseDream(DreamJob job)
+    private bool IsYoungCandidate => CandidateAge.IsYoung(Draft.BirthDate, DateOnly.FromDateTime(DateTime.Today));
+
+    private void ChooseDream(DreamJob job) => ChooseDreamTitle(job.TitleNl);
+
+    private void ChooseDreamTitle(string title)
     {
-        Draft.Dream = job.TitleNl;
+        var dream = (title ?? "").Trim();
+        if (dream.Length == 0) return;
+        Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
         ScheduleDreamSave();
     }
@@ -2077,14 +2102,16 @@
     }
 
     private IEnumerable<string> AvailableLanguageCodes()
-        => DiscoveryCatalogs.SpokenLanguageCodes
+        => DiscoveryCatalogs.AddableSpokenLanguageCodes
             .Where(code => !Draft.SpokenLanguages.Any(l =>
                 string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase)));
 
     private void OnAddLanguage(ChangeEventArgs e)
     {
         var code = DiscoveryCatalogs.CanonicalLanguage(e.Value?.ToString());
-        if (code is null || Draft.SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages) return;
+        if (code is null
+            || string.Equals(code, "nl", StringComparison.OrdinalIgnoreCase)
+            || Draft.SpokenLanguages.Count >= DiscoveryCatalogs.MaxSpokenLanguages) return;
         if (Draft.SpokenLanguages.Any(l => string.Equals(l.Code, code, StringComparison.OrdinalIgnoreCase))) return;
         Draft.SpokenLanguages.Add(new CandidateLanguage { Code = code });
         ScheduleProfileSave();
@@ -2289,8 +2316,29 @@
 
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);
 
+    private async void OnGratisDnaMerged()
+    {
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                if (_countedStep is >= 7 and <= 10)
+                {
+                    await PrepareMiniAsync();
+                }
+
+                StateHasChanged();
+            });
+        }
+        catch
+        {
+            // A later step load still reads the merged answers.
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        GratisDnaMergeNotifier.Merged -= OnGratisDnaMerged;
         Culture.Changed -= OnCultureChanged;
         _saveCts?.Cancel();
         _privateCts?.Cancel();

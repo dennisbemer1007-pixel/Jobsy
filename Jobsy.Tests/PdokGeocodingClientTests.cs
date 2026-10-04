@@ -201,6 +201,17 @@ public class PdokGeocodingClientTests
         Assert.Contains("addressdetails=1", seen.Query, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("2671 AA Naaldwijk", "2671 AA", "Naaldwijk")]
+    [InlineData("2671AA Naaldwijk", "2671 AA", "Naaldwijk")]
+    [InlineData("Naaldwijk", "", "Naaldwijk")]
+    public void SplitHomeAddress_keeps_the_letter_pair_with_the_postcode(string input, string postcode, string city)
+    {
+        var split = PostcodeMatch.SplitHomeAddress(input);
+        Assert.Equal(postcode, split.Postcode);
+        Assert.Equal(city, split.City);
+    }
+
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(

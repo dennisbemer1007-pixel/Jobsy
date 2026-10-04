@@ -60,6 +60,22 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Refill"] = english ? "Fill in again" : "Opnieuw invullen";
         map["Onboarding.AvailabilityRequired"] = english ? "Choose at least one moment when you can work." : "Kies minstens één moment waarop je kunt";
         map["Onboarding.Transport"] = english ? "Transport" : "Vervoer"; map["Onboarding.MaxTravel"] = english ? "Maximum travel" : "Maximaal reizen"; map["Onboarding.Minutes"] = english ? "min" : "min"; map["Onboarding.Other"] = english ? "Other" : "Anders";
+        map["Profile.CurrentJob"] = language switch
+        {
+            "nl" => "Dit is mijn huidige baan",
+            "pl" => "To moja obecna praca",
+            "ro" => "Acesta este jobul meu actual",
+            "ar" => "هذه وظيفتي الحالية",
+            _ => "This is my current job"
+        };
+        map["Onboarding.TransportMulti"] = language switch
+        {
+            "nl" => "Je kunt meer dan één kiezen. De maximale reistijd geldt voor allemaal.",
+            "pl" => "Możesz wybrać więcej niż jeden. Maksymalny czas dojazdu dotyczy wszystkich.",
+            "ro" => "Poți alege mai multe. Timpul maxim de deplasare se aplică tuturor.",
+            "ar" => "يمكنك اختيار أكثر من وسيلة. الحد الأقصى لوقت السفر ينطبق عليها جميعًا.",
+            _ => "You can choose more than one. The maximum travel time applies to all of them."
+        };
         map["Onboarding.DeleteJob"] = english ? "Delete {0}" : "Verwijder {0}";
         map["Onboarding.DreamSearch"] = english ? "Search or type your dream job" : "Zoek of typ je droombaan";
         map["Onboarding.DreamOwn"] = english ? "Use “{0}” as my own dream job" : "Gebruik “{0}” als eigen droombaan";

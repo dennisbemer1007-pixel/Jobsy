@@ -24,3 +24,9 @@
 .ob-fields h1{margin-block:0 8px}
 .ob-fields .ob-wizard__check{flex-direction:row;align-items:center}
 @media (max-width:359px){.ob-fields .ob-wizard__field-row{grid-template-columns:1fr}}
+.month-year{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr);gap:8px}
+.month-year select,.journey-body .ob-wizard__job input,.journey-body .ob-wizard__fine-tune input,.journey-body .ob-wizard__fine-tune select,.ob-wizard__job input{min-block-size:44px;inline-size:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font:inherit}
+.journey-body .ob-wizard__check{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin:8px 0 12px;clear:both}
+.ob-wizard__dream-grid{grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
+.ob-wizard__dream-grid button{min-inline-size:0;overflow-wrap:anywhere}
+.ob-wizard__fine-tune fieldset{margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)}

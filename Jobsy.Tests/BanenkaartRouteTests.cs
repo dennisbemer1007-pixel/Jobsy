@@ -82,11 +82,11 @@ public class BanenkaartRouteTests
 
         using var banen = await client.GetAsync("/banen?q=zorg");
         Assert.Equal(HttpStatusCode.Found, banen.StatusCode);
-        Assert.Equal("/", banen.Headers.Location?.ToString());
+        Assert.Equal(FeatureRoutes.CandidateEmployersComingSoonPath, banen.Headers.Location?.ToString());
 
         using var map = await client.GetAsync("/banenkaart");
         Assert.Equal(HttpStatusCode.Found, map.StatusCode);
-        Assert.Equal("/", map.Headers.Location?.ToString());
+        Assert.Equal(FeatureRoutes.CandidateEmployersComingSoonPath, map.Headers.Location?.ToString());
     }
 
     private static async Task<WebApplication> CreateAppAsync(bool employersEnabled = true)

@@ -7450,6 +7450,23 @@ button.bottom-nav__item {
     }
 }
 
+@media (min-width: 1024px) {
+    .app-shell .bottom-nav {
+        display: none;
+    }
+
+    .app-shell.has-bottom-nav .app-main,
+    .app-shell:has(.bottom-nav) .app-main {
+        padding-bottom: 0;
+    }
+
+    .lobsy-assistant.has-bottom-nav,
+    .feedback-widget.has-bottom-nav,
+    .lobsy-assistant-tab.has-bottom-nav {
+        bottom: 1rem;
+    }
+}
+
 /* Bedrijfsmanager: hide desktop-only org admin from mobile/PWA bottom-nav */
 .desktop-preferred-notice {
     display: none;
@@ -14583,6 +14600,12 @@ html.cookie-consent-known .cookie-consent {
 .feedback-dialog__field textarea,
 .feedback-dialog__field select {
     width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
     font: inherit;
 }
 

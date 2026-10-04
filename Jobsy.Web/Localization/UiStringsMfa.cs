@@ -221,6 +221,12 @@ public static class UiStringsMfa
             "Dalej do Lobsy",
             "Continuă către Lobsy",
             "المتابعة إلى Lobsy");
+        Add("Mfa.AlreadySignedIn",
+            "Je bent al ingelogd. Tweestapsverificatie vraag je alleen tijdens het inloggen.",
+            "You are already signed in. Two-step verification is only asked while signing in.",
+            "Jesteś już zalogowany. Weryfikacji dwuetapowej pytamy tylko przy logowaniu.",
+            "Ești deja autentificat. Verificarea în doi pași se cere doar la autentificare.",
+            "أنت مسجّل الدخول بالفعل. نطلب التحقق بخطوتين فقط أثناء تسجيل الدخول.");
         Add("Mfa.CodesAlreadyShown",
             "Je herstelcodes zijn al getoond. Bewaar ze goed — we tonen ze niet opnieuw.",
             "Your recovery codes were already shown. Keep them safe — we will not show them again.",

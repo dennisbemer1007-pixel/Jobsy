@@ -1127,6 +1127,10 @@
   .how-safe--mobile { display: block; }
 }
 
+@media (min-width: 900px) {
+  .career-only-mobile { display: none !important; }
+}
+
 @media (max-width: 899px) {
   .career-only-mobile { display: block; }
   .career-only-desktop { display: none !important; }

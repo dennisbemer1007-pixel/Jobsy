@@ -137,7 +137,7 @@
 
 .passport-card__layers-bars {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 4px;
     margin-block-end: var(--space-2);
 }
@@ -153,7 +153,8 @@
 .passport-card__layer--2 { background: color-mix(in srgb, var(--accent-soft) 50%, var(--accent)); }
 .passport-card__layer--3 { background: var(--accent); }
 .passport-card__layer--4 { background: color-mix(in srgb, var(--accent) 55%, var(--brand)); }
-.passport-card__layer--5 { background: var(--brand); }
+.passport-card__layer--5 { background: color-mix(in srgb, var(--brand) 70%, var(--accent)); }
+.passport-card__layer--6 { background: var(--brand); }
 
 .passport-card__layers-text {
     margin: 0;
@@ -472,6 +473,15 @@
 
 [dir="rtl"] .passport-tabs.admin-sublinks {
     mask-image: linear-gradient(to left, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+}
+
+@media (min-width: 1024px) {
+    .passport-tabs.admin-sublinks,
+    [dir="rtl"] .passport-tabs.admin-sublinks {
+        flex-wrap: wrap;
+        overflow: visible;
+        mask-image: none;
+    }
 }
 
 /* —— Bubble —— */

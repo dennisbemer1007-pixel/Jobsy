@@ -59,14 +59,17 @@
          aria-valuenow="@CompletenessPercent"
          aria-label="@Culture.Format("Passport.LayersAria", CompletenessPercent)">
         <div class="passport-card__layers-bars" aria-hidden="true">
-            @for (var i = 0; i < 5; i++)
+            @for (var i = 0; i < LayerTotal; i++)
             {
                 <span class="passport-card__layer @(i < FilledLayers ? $"passport-card__layer--{i + 1}" : null)"></span>
             }
         </div>
         <p class="passport-card__layers-text">
-            @Culture.Format("Passport.Layers", FilledLayers)
-            <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
+            @Culture.Format("Passport.Layers", FilledLayers, LayerTotal)
+            @if (FilledLayers < LayerTotal)
+            {
+                <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
+            }
         </p>
     </div>
 
@@ -164,7 +167,8 @@
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback OnDownloadCv { get; set; }
 
-    private int FilledLayers => Math.Clamp(CompletenessPercent / 20, 0, 5);
+    private int LayerTotal => KompasProfileCompleteness.StepCount;
+    private int FilledLayers => KompasProfileCompleteness.FilledSteps(CompletenessPercent);
 
     private RenderFragment Fact(string labelKey, string? value) => __builder =>
     {
