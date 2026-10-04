@@ -9,7 +9,7 @@ public class RoleFitCheckTests
     public void Gate_copy_and_upsell_match_the_product_spec()
     {
         Assert.Equal(
-            "Ontgrendel de Functie-Fit Checker door eerst je korte competentie- en beroepentest in te vullen (ca. 3 minuten).",
+            "Ontgrendel de Functie-Fit Checker door eerst je korte test over hoe je werkt en de beroepentest in te vullen (ongeveer 3 minuten).",
             RoleFitCheckCopy.Locked);
         Assert.Contains("€ 2,99", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
         Assert.Contains("diepte-analyse", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);

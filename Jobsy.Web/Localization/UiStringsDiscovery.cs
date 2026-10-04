@@ -356,7 +356,7 @@ public static class UiStringsDiscovery
             "Tylko dla Ciebie i Twoich dopasowań.",
             "Doar pentru tine și potrivirile tale.",
             "لك ولمطابقاتك فقط.");
-        Add("Discovery.Step7.Title", "Competenties", "Competencies", "Kompetencje", "Competențe", "الكفاءات");
+        Add("Discovery.Step7.Title", "Wat je kunt", "What you can do", "Co potrafisz", "Ce poți face", "ما تستطيع فعله");
         Add("Discovery.Step7.Sub", "Test · 5 vragen", "Test · 5 questions", "Test · 5 pytań", "Test · 5 întrebări", "اختبار · ٥ أسئلة");
         Add("Discovery.Step8.Title", "Beroepen", "Careers", "Zawody", "Meserii", "المهن");
         Add("Discovery.Step8.Sub", "Test · 5 vragen", "Test · 5 questions", "Test · 5 pytań", "Test · 5 întrebări", "اختبار · ٥ أسئلة");
