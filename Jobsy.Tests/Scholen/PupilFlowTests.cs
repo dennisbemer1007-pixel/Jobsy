@@ -113,6 +113,39 @@ public class PupilFlowTests
         Assert.Equal("9151", after.ItemId);
     }
 
+    [Fact]
+    public void Vo_reconnect_before_chips_stays_on_the_island_likes_are_optional()
+    {
+        var vo = new PupilQuestionSetRegistry().Get(Jobsy.Core.Enums.PupilQuestionSet.Vo);
+        var fifty = Fill(vo, 50);
+
+        var dropped = PupilFlow.Next(vo, fifty, islandDone: false);
+        Assert.Equal(PupilFlowStepKind.Island, dropped.Kind);
+
+        var savedEmpty = PupilFlow.Next(vo, fifty, islandDone: true);
+        Assert.Equal(PupilFlowStepKind.Question, savedEmpty.Kind);
+        Assert.Equal("9151", savedEmpty.ItemId);
+
+        var help = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web/Help/PageHelpDocs.cs"));
+        Assert.Contains("Klaar, verder! mag ook leeg.", help, StringComparison.Ordinal);
+    }
+
+    private static string FindRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+
     private Dictionary<string, int> Fill(int count) => Fill(_g78, count);
 
     private static Dictionary<string, int> Fill(PupilQuestionSetDef def, int count)

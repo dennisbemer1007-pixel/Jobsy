@@ -221,6 +221,9 @@ else
             return;
         }
 
+        // Likes are optional: "Klaar, verder!" may be empty. A circuit drop before
+        // chips are saved still lands here. After a save, even with no likes, the
+        // next load continues (VO part break, then question 51).
         var atIsland = state.NeedsIsland
                        || string.Equals(state.NextStep, "island", StringComparison.OrdinalIgnoreCase);
         if (!atIsland)

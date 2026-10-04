@@ -24,8 +24,8 @@
     "v": "20261004-10"
   },
   "css/features/banenkaart.css": {
-    "sha256": "c27d34994dca00364c2d943fbb292a830892ef055effdad2782392c59da2df68",
-    "v": "20261004-11"
+    "sha256": "a6a392c09fe4b4d6ba05d4718d82d44bb18d4786ad10bd49f23f967f4eb250d0",
+    "v": "20261004-14"
   },
   "css/features/carriere.css": {
     "sha256": "0175f9d0225b7ab1cea0aee247f4eb852bb790096c414381701f7d94445a9766",
@@ -100,8 +100,8 @@
     "v": "20261004-10"
   },
   "css/features/scholen.css": {
-    "sha256": "604eefb425e8f03fcf192dd63c3c055564d6084709a7f8857e507dcc438c303d",
-    "v": "20261004-12"
+    "sha256": "27596bde44da542dc90eb601bc731b8e91a5cdac5e24febdc958eb320dab5a6e",
+    "v": "20261004-14"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -136,8 +136,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "2a2b9c82bb4ceb30fbfc17178689e1e3f2ba0ab0b69769be3c149d3838bc5bf7",
-    "v": "20261004-15"
+    "sha256": "019f8a8b1755fcd77e793658b78ef82d7171fdc1af59a1cdade317321ed60e84",
+    "v": "20261004-16"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "c48d9cf19a8b5ef4ec050050a6e6d86a464c6d3233c59d2f826eeaa0f32ea3f4",
-    "v": "20261004-15"
+    "sha256": "81807af4576cb5e24275daaa63427929a81e0282e3537c9ade5bfc8aa2c07c99",
+    "v": "20261004-16"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,15 +208,15 @@
     "v": "20261004-13"
   },
   "manifest.webmanifest": {
-    "sha256": "3625ad6d3d8132bc21deb77aac1829a188208886111824b30de3db39c673b075",
-    "v": "20261004-13"
+    "sha256": "24734edaa71dd22629176dedd0ad0b54921ea57da44a9fb98d221a4a2fc86a74",
+    "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "903b8e3637fb6e642a6d26ea3c0ee05eadafe952c92328ee0fbee256de17210d",
-    "v": "20261004-15"
+    "sha256": "7bfd7964f9cfca3950164ec85144dbbfcbed1e1ac06b5bcc8ff7cfce92bed917",
+    "v": "20261004-16"
   },
   "service-worker.published.js": {
-    "sha256": "439118896304c6ef2a8424d87bdba74e09f7c88e9a421c8ce755662b0628c281",
-    "v": "20261004-15"
+    "sha256": "c831432d8bbff0776e22157c1dbfe1cfb8aa1578989013d2368096167f9fd54a",
+    "v": "20261004-16"
   }
 }

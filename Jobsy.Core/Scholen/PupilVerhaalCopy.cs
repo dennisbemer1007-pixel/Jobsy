@@ -430,8 +430,8 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Class.C.1"] = "Wie houdt van nette plannen?";
         d["LeerlingStory.Class.C.2"] = "Wanneer hielp overzicht?";
         d["LeerlingStory.Class.C.3"] = "Deel een tip voor ordenen.";
-        // Pair prompts name both letters. .1 exists for both letter orders (top letter first).
-        // .2 and .3 stay on the alphabetical key; the other order falls back to it.
+        // Pair prompts name both letters. All three prompts exist for both letter orders
+        // (top letter first). .2 and .3 no longer fall back to the alphabetical key.
         d["LeerlingStory.Class.AC.1"] = "Wie bedenkt graag iets nieuws en houdt van nette plannen?";
         d["LeerlingStory.Class.AC.2"] = "Welk vak voelt creatief én overzichtelijk?";
         d["LeerlingStory.Class.AC.3"] = "Deel een idee dat je netjes uitwerkte.";
@@ -492,6 +492,36 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Class.RI.1"] = "Wie maakt graag iets met de handen en wil weten hoe het werkt?";
         d["LeerlingStory.Class.SI.1"] = "Wie helpt graag een ander en wil weten hoe het werkt?";
         d["LeerlingStory.Class.SR.1"] = "Wie helpt graag een ander en maakt graag iets met de handen?";
+        d["LeerlingStory.Class.CA.2"] = "Welk vak voelt overzichtelijk én creatief?";
+        d["LeerlingStory.Class.CA.3"] = "Deel een net plan met een nieuw idee.";
+        d["LeerlingStory.Class.EA.2"] = "Welk vak voelt als leiding geven én creatief?";
+        d["LeerlingStory.Class.EA.3"] = "Deel een moment waarin jij een groepje startte met een idee.";
+        d["LeerlingStory.Class.IA.2"] = "Welk vak voelt als uitzoeken én bedenken?";
+        d["LeerlingStory.Class.IA.3"] = "Deel een vraag en het nieuwe idee daarbij.";
+        d["LeerlingStory.Class.RA.2"] = "Welk vak voelt als maken én bedenken?";
+        d["LeerlingStory.Class.RA.3"] = "Deel iets dat je maakte en zelf bedacht.";
+        d["LeerlingStory.Class.SA.2"] = "Welk vak voelt helpend én creatief?";
+        d["LeerlingStory.Class.SA.3"] = "Deel hoe je iemand hielp met een idee.";
+        d["LeerlingStory.Class.EC.2"] = "Welk vak voelt als leiding geven én overzichtelijk?";
+        d["LeerlingStory.Class.EC.3"] = "Deel een initiatief met een duidelijk plan.";
+        d["LeerlingStory.Class.IC.2"] = "Welk vak voelt als uitzoeken én een net plan?";
+        d["LeerlingStory.Class.IC.3"] = "Deel wat je uitzocht en netjes noteerde.";
+        d["LeerlingStory.Class.RC.2"] = "Welk vak voelt als maken én een net plan?";
+        d["LeerlingStory.Class.RC.3"] = "Deel iets dat je maakte na een plan.";
+        d["LeerlingStory.Class.SC.2"] = "Welk vak voelt helpend én overzichtelijk?";
+        d["LeerlingStory.Class.SC.3"] = "Deel hoe een net plan iemand hielp.";
+        d["LeerlingStory.Class.IE.2"] = "Welk vak voelt als uitzoeken én het voortouw?";
+        d["LeerlingStory.Class.IE.3"] = "Deel een vraag waarbij jij het voortouw nam.";
+        d["LeerlingStory.Class.RE.2"] = "Welk vak voelt als maken én het voortouw?";
+        d["LeerlingStory.Class.RE.3"] = "Deel iets dat je maakte terwijl jij de leiding had.";
+        d["LeerlingStory.Class.SE.2"] = "Welk vak voelt helpend én als leiding geven?";
+        d["LeerlingStory.Class.SE.3"] = "Deel hoe je hielp door te starten.";
+        d["LeerlingStory.Class.RI.2"] = "Welk vak voelt als zelf maken én uitzoeken?";
+        d["LeerlingStory.Class.RI.3"] = "Deel iets dat je in elkaar zette om het te begrijpen.";
+        d["LeerlingStory.Class.SI.2"] = "Welk vak voelt helpend én als uitzoeken?";
+        d["LeerlingStory.Class.SI.3"] = "Deel hoe je iemand hielp door iets uit te zoeken.";
+        d["LeerlingStory.Class.SR.2"] = "Welk vak voelt helpend én als maken?";
+        d["LeerlingStory.Class.SR.3"] = "Deel een hulp-moment waarin je iets maakte.";
         d["LeerlingDroom.Need.ZorgVoorDieren"] = "Je bent zorgzaam, voor mensen én dieren";
         d["LeerlingDroom.Need.ZorgVoorDieren.Next"] = "Oefen met zorgen voor een dier of plant";
         d["LeerlingDroom.Need.Nieuwsgierig"] = "Je wilt weten hoe iets werkt";

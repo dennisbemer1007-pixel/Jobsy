@@ -50,6 +50,7 @@ public static partial class AdminActionLabels
             "invoice.mark-paid" => "AdminAudit.Action.InvoicePaid",
             "vacancy.extend" => "AdminAudit.Action.VacancyExtended",
             "vacancy.inactive" => "AdminAudit.Action.VacancyInactive",
+            "vacancy.purged" => "AdminAudit.Action.VacancyPurged",
             "apikey.deactivate" => "AdminAudit.Action.ApiKeyOff",
             "report.decided" => "AdminAudit.Action.ReportDecided",
             "email.test-send" => "AdminAudit.Action.EmailTest",
@@ -352,6 +353,7 @@ public static partial class AdminActionLabels
         yield return ("user.test-unlock.reset", "AdminAudit.Action.TestUnlockReset");
         yield return ("reference.misuse.handled", "AdminAudit.Action.MisuseHandled");
         yield return ("vacancy.inactive", "AdminAudit.Action.VacancyInactive");
+        yield return ("vacancy.purged", "AdminAudit.Action.VacancyPurged");
         yield return ("vacancy.extend", "AdminAudit.Action.VacancyExtended");
         yield return ("user.unblock", "AdminAudit.Action.Unblock");
 

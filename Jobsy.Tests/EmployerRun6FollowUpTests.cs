@@ -118,11 +118,17 @@ public class EmployerRun6FollowUpTests
         }
 
         Assert.True(missing.Count == 0, string.Join(", ", missing.Distinct()));
+        Assert.Contains(AdminAuditKeys.VacancyPurged, keys);
         Assert.Equal("Vacature offline gehaald", AdminActionLabels.Label(AdminAuditKeys.VacancyInactive, key => nl[key]));
         Assert.Equal("Vacancy taken offline", AdminActionLabels.Label(AdminAuditKeys.VacancyInactive, key => en[key]));
         Assert.Equal("Oferta wyłączona", AdminActionLabels.Label(AdminAuditKeys.VacancyInactive, key => pl[key]));
         Assert.Equal("Job scos offline", AdminActionLabels.Label(AdminAuditKeys.VacancyInactive, key => ro[key]));
         Assert.Equal("أُوقفت الوظيفة", AdminActionLabels.Label(AdminAuditKeys.VacancyInactive, key => ar[key]));
+        Assert.Equal("Vacature definitief verwijderd", AdminActionLabels.Label(AdminAuditKeys.VacancyPurged, key => nl[key]));
+        Assert.Equal("Vacancy permanently deleted", AdminActionLabels.Label(AdminAuditKeys.VacancyPurged, key => en[key]));
+        Assert.Equal("Oferta trwale usunięta", AdminActionLabels.Label(AdminAuditKeys.VacancyPurged, key => pl[key]));
+        Assert.Equal("Job șters definitiv", AdminActionLabels.Label(AdminAuditKeys.VacancyPurged, key => ro[key]));
+        Assert.Equal("حُذفت الوظيفة نهائياً", AdminActionLabels.Label(AdminAuditKeys.VacancyPurged, key => ar[key]));
     }
 
     private static string FindRoot()

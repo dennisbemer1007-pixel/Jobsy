@@ -1608,12 +1608,19 @@ html.using-keyboard .ll-question__text:focus-visible {
     }
 
     .ll-coach-inline {
-        display: block;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
         margin: 0 0 var(--space-3);
         padding: 12px;
         border: 1px solid #e6d7c3;
         border-radius: 16px;
         background: #fffaf3;
         color: #3d342b;
+    }
+
+    .ll-coach-inline p {
+        margin: 0;
+        flex: 1 1 auto;
     }
 }

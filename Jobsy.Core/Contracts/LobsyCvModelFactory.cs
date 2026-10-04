@@ -511,6 +511,120 @@ public static class LobsyCvModelFactory
         return sb.Length == 0 ? null : sb.ToString();
     }
 
+    /// <summary>
+    /// Talent-pool card line. Day-parts stay as on the CV. When none are set,
+    /// quick choices (Per direct) and hours are shown instead of an empty summary.
+    /// </summary>
+    public static string? FormatTalentPoolAvailability(
+        IReadOnlyDictionary<string, string[]>? availability,
+        bool flexibleTimes,
+        decimal? minHours,
+        decimal? maxHours,
+        IReadOnlyList<string>? presets)
+    {
+        if (HasDayParts(availability))
+        {
+            return FormatAvailability(availability, flexibleTimes);
+        }
+
+        var bits = new List<string>();
+        if (presets is not null)
+        {
+            foreach (var raw in presets)
+            {
+                if (PresetLabel(raw) is { } label && !bits.Contains(label, StringComparer.Ordinal))
+                {
+                    bits.Add(label);
+                }
+            }
+        }
+
+        if (bits.Count == 0 && flexibleTimes)
+        {
+            var detected = CandidateAvailabilityPresets.Detect(minHours, maxHours, true);
+            if (detected == CandidateAvailabilityPresets.Immediate)
+            {
+                bits.Add("Per direct");
+            }
+            else if (detected == CandidateAvailabilityPresets.Seasonal)
+            {
+                bits.Add("Seizoenswerk");
+            }
+            else
+            {
+                bits.Add("Tijden in overleg");
+            }
+        }
+
+        var hours = FormatHourSpan(minHours, maxHours);
+        if (hours is not null)
+        {
+            bits.Add(hours);
+        }
+
+        return bits.Count == 0 ? null : string.Join(" · ", bits);
+    }
+
+    private static bool HasDayParts(IReadOnlyDictionary<string, string[]>? availability)
+    {
+        if (availability is null)
+        {
+            return false;
+        }
+
+        foreach (var day in DayPartMatrix.DayCodes)
+        {
+            if (availability.TryGetValue(day, out var slots) && slots.Length > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string? PresetLabel(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return null;
+        }
+
+        return code.Trim().ToLowerInvariant() switch
+        {
+            "direct" or "immediate" or "per direct" => "Per direct",
+            "school" => "Bijbaan naast school",
+            "weekend" => "Weekenden",
+            "evening" => "Avonden",
+            "office" => "Kantoordagen",
+            "holiday" => "Vakantiewerk",
+            "parttime" or "part-time" => "Parttime",
+            "fulltime" => "Fulltime",
+            "seasonal" or "seizoen" or "seizoenswerk" => "Seizoenswerk",
+            _ => null
+        };
+    }
+
+    private static string? FormatHourSpan(decimal? minHours, decimal? maxHours)
+    {
+        if (minHours is null && maxHours is null)
+        {
+            return null;
+        }
+
+        if (minHours is decimal min && maxHours is decimal max)
+        {
+            var a = TrimHours(min);
+            var b = TrimHours(max);
+            return a == b ? $"{a} uur" : $"{a}–{b} uur";
+        }
+
+        return $"{TrimHours((minHours ?? maxHours)!.Value)} uur";
+    }
+
+    private static string TrimHours(decimal hours)
+        => hours.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
     public static AvailabilityPayload ParseAvailabilityPayload(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))

@@ -33,14 +33,14 @@
             <input @bind="_filterBranch" @bind:event="oninput" placeholder="…" />
         </label>
         <label>
-            Type
-            <select @bind="_filterKind">
+            @Culture["WgTok.Filter.Kind"]
+            <select @bind="_filterKind" data-testid="token-kind-filter">
                 <option value="">—</option>
-                <option value="Spend">Spend</option>
-                <option value="Purchase">Purchase</option>
-                <option value="Allocation">Allocation</option>
-                <option value="Grant">Grant</option>
-                <option value="Goodwill">Goodwill</option>
+                <option value="Spend">@Culture["WgTok.Kind.Spend"]</option>
+                <option value="Purchase">@Culture["WgTok.Kind.Purchase"]</option>
+                <option value="Allocation">@Culture["WgTok.Kind.Allocation"]</option>
+                <option value="Grant">@Culture["WgTok.Kind.Grant"]</option>
+                <option value="Goodwill">@Culture["WgTok.Kind.Goodwill"]</option>
             </select>
         </label>
     </div>
@@ -130,11 +130,22 @@
 
     private async Task ExportCsvAsync()
     {
-        var lines = new List<string> { "Datum;Omschrijving;Vestiging;Door;Mutatie;SaldoNa" };
+        var lines = new List<string>
+        {
+            string.Join(';',
+                Culture["WgTok.Col.Date"],
+                Culture["WgTok.Filter.Kind"],
+                Culture["WgTok.Col.Description"],
+                Culture["WgTok.Col.Branch"],
+                Culture["WgTok.Col.By"],
+                Culture["WgTok.Col.Mutation"],
+                Culture["WgTok.Col.BalanceAfter"])
+        };
         foreach (var log in Filtered)
         {
             lines.Add(string.Join(';',
                 TokenLogPresentation.FormatDateShort(log.CreatedAt),
+                Csv(KindLabel(log.Kind)),
                 Csv(TokenLogPresentation.Describe(log)),
                 Csv(log.CompanyName),
                 Csv(log.ActorName ?? ""),
@@ -147,6 +158,16 @@
         await Js.InvokeVoidAsync("jobsyExtras.ensure");
         await Js.InvokeVoidAsync("jobsyDownload.bytes", "token-mutaties.csv", b64, "text/csv;charset=utf-8");
     }
+
+    private string KindLabel(string? kind) => kind switch
+    {
+        "Spend" => Culture["WgTok.Kind.Spend"],
+        "Purchase" => Culture["WgTok.Kind.Purchase"],
+        "Allocation" => Culture["WgTok.Kind.Allocation"],
+        "Grant" => Culture["WgTok.Kind.Grant"],
+        "Goodwill" => Culture["WgTok.Kind.Goodwill"],
+        _ => string.IsNullOrWhiteSpace(kind) ? "" : kind
+    };
 
     private static string Csv(string s) => "\"" + s.Replace("\"", "\"\"") + "\"";
 }

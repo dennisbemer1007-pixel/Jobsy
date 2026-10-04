@@ -1031,7 +1031,7 @@ else if (_page is not null)
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = Errors.Describe(ex);
         }
         finally
         {
@@ -1127,7 +1127,7 @@ else if (_page is not null)
         }
         catch (Exception ex)
         {
-            _toast = ex.Message;
+            _toast = Errors.Describe(ex);
         }
         finally
         {
@@ -1146,7 +1146,7 @@ else if (_page is not null)
         }
         catch (Exception ex)
         {
-            _toast = ex.Message;
+            _toast = Errors.Describe(ex);
         }
         finally
         {
@@ -1167,7 +1167,7 @@ else if (_page is not null)
         }
         catch (Exception ex)
         {
-            _toast = ex.Message;
+            _toast = Errors.Describe(ex);
         }
         finally
         {
@@ -1188,7 +1188,7 @@ else if (_page is not null)
         }
         catch (Exception ex)
         {
-            _toast = ex.Message;
+            _toast = Errors.Describe(ex);
         }
         finally
         {
@@ -1225,7 +1225,7 @@ else if (_page is not null)
         }
         catch (Exception ex)
         {
-            _bulkError = ex.Message;
+            _bulkError = Errors.Describe(ex);
         }
         finally
         {

@@ -140,7 +140,7 @@ public static class PupilStoryTemplates
     {
         var a = NormalizeLetter(topLetter1);
         var b = NormalizeLetter(topLetter2);
-        // Top letter first, so SA and AS are different prompts. .2/.3 still fall back.
+        // Top letter first for all three prompts, so SA and AS stay different.
         var pair = string.Equals(a, b, StringComparison.Ordinal)
             ? a
             : string.Concat(a, b);
