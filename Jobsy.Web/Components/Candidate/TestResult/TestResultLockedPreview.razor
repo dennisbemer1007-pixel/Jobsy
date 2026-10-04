@@ -75,7 +75,7 @@
     [Parameter] public EventCallback OnSamplePdf { get; set; }
 
     private readonly string _titleId = "passport-locked-" + Guid.NewGuid().ToString("N")[..8];
-    private bool _employersEnabled = true;
+    private bool _employersEnabled;
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,7 +85,8 @@
         }
         catch
         {
-            _employersEnabled = true;
+            // Employers stay off until the flag loads. A failed read must not advertise vacancies.
+            _employersEnabled = false;
         }
     }
 
