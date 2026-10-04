@@ -107,8 +107,57 @@ public class EmailRenderPlaywrightTests : IClassFixture<EmailRenderPlaywrightTes
         var dir = Path.Combine(FindRepoRoot(), "artifacts", "playwright-email");
         Directory.CreateDirectory(dir);
         var shot = Path.Combine(dir, $"{Sanitize(key)}-{lang}-{width}-{theme}.png");
-        await page.ScreenshotAsync(new() { Path = shot, FullPage = true });
+        await SaveFullPageAsync(page, shot);
         _output.WriteLine($"SHOT {Path.GetFileName(shot)}");
+    }
+
+    /// <summary>
+    /// Chromium on CI sometimes returns "Unable to capture screenshot" after fonts load.
+    /// Retry the same full-page capture; the layout assertions above already ran.
+    /// </summary>
+    private static async Task SaveFullPageAsync(IPage page, string path)
+    {
+        await page.EvaluateAsync("() => document.fonts ? document.fonts.ready : Promise.resolve()");
+        PlaywrightException? last = null;
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                await page.ScreenshotAsync(new PageScreenshotOptions
+                {
+                    Path = path,
+                    FullPage = true,
+                    Animations = ScreenshotAnimations.Disabled,
+                    Caret = ScreenshotCaret.Hide,
+                    Timeout = 15_000
+                });
+                var info = new FileInfo(path);
+                if (info.Exists && info.Length > 0)
+                {
+                    return;
+                }
+
+                last = new PlaywrightException($"Screenshot file was empty: {path}");
+            }
+            catch (PlaywrightException ex) when (
+                attempt < 3
+                && (ex.Message.Contains("Unable to capture screenshot", StringComparison.Ordinal)
+                    || ex.Message.Contains("captureScreenshot", StringComparison.Ordinal)))
+            {
+                last = ex;
+            }
+
+            await page.EvaluateAsync("""
+                () => new Promise((resolve) => {
+                  requestAnimationFrame(() => requestAnimationFrame(() => resolve(0)));
+                })
+                """);
+            await Task.Delay(200 * attempt);
+        }
+
+        throw new PlaywrightException(
+            $"Full-page screenshot failed after 3 attempts: {last?.Message}",
+            last ?? new PlaywrightException("Screenshot was not written."));
     }
 
     private static string Sanitize(string key)
