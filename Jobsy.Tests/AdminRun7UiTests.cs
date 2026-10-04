@@ -6,6 +6,7 @@ using Bunit.TestDoubles;
 using Jobsy.Web.Components.Admin.Sections;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -36,6 +37,7 @@ public class AdminRun7UiTests : BunitContext
         Services.AddAuthorizationCore();
         this.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
+        SetRendererInfo(new RendererInfo("Server", true));
     }
 
     [Fact]
@@ -45,7 +47,7 @@ public class AdminRun7UiTests : BunitContext
         cut.WaitForAssertion(() => Assert.Contains("Gewone Gebruiker", cut.Markup, StringComparison.Ordinal), TimeSpan.FromSeconds(3));
 
         await cut.FindAll("tr.admin-user-row").First(r => r.TextContent.Contains("Gewone Gebruiker", StringComparison.Ordinal)).ClickAsync();
-        cut.WaitForAssertion(() => Assert.Contains("Gewone Gebruiker", cut.Find(".admin-user-drawer").TextContent, StringComparison.Ordinal));
+        cut.WaitForAssertion(() => Assert.Contains("Gewone Gebruiker", cut.Find(".admin-drawer__title").TextContent, StringComparison.Ordinal));
         Assert.Empty(cut.FindAll(".admin-user-drawer__reset"));
 
         await cut.FindAll("tr.admin-user-row").First(r => r.TextContent.Contains("Test Persoon", StringComparison.Ordinal)).ClickAsync();

@@ -237,8 +237,16 @@ public static partial class AdminActionLabels
             return "";
         }
 
-        var setting = FindSetting(field);
-        return setting is null ? field.Trim() : text(setting.TitleKey);
+        var trimmed = field.Trim();
+        var setting = FindSetting(trimmed);
+        if (setting is null)
+        {
+            return trimmed;
+        }
+
+        var label = text(setting.TitleKey);
+        // A missing translation returns the culture key. Keep the stored switch key instead.
+        return string.Equals(label, setting.TitleKey, StringComparison.Ordinal) ? trimmed : label;
     }
 
     /// <summary>Bool switches render as Aan/Uit. Other values stay as stored.</summary>
