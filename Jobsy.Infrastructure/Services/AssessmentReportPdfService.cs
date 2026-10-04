@@ -1097,14 +1097,14 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
     private static string ChooseLine(string domain, string lang)
     {
         var specific = $"values.choose.{domain}";
-        var text = DeepReportCatalog.Get(specific, lang);
-        return text == specific ? DeepReportCatalog.Get("values.choose", lang) : text;
+        return DeepReportCatalog.TryGet(specific, lang, out var text)
+            ? text
+            : DeepReportCatalog.Get("values.choose", lang);
     }
 
     private static string StrengthSentence(string key, string label, string lang)
     {
-        var text = DeepReportCatalog.Get(key, lang);
-        if (!string.Equals(text, key, StringComparison.Ordinal))
+        if (DeepReportCatalog.TryGet(key, lang, out var text))
         {
             return text;
         }

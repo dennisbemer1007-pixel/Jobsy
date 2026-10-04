@@ -43,7 +43,7 @@
             @foreach (var row in Rows)
             {
                 var headingId = $"talent-req-{row.Id}";
-                <li class="talent-req @(row.IsOpen ? "talent-req--open" : null)">
+                <li class="talent-req @(row.IsOpen ?"talent-req--open" : null)">
                     <article aria-labelledby="@headingId">
                         <div class="talent-req__top">
                             <span class="talent-req__avatar" aria-hidden="true">@row.Initial</span>
@@ -73,19 +73,19 @@
                         {
                             <div class="talent-req__actions">
                                 <button type="button"
-                                        class="career-btn career-btn--primary"
+                                        class="btn btn-primary"
                                         disabled="@Busy"
                                         @onclick="() => OnAccept.InvokeAsync(row)">
                                     @Culture["TalentC.Action.Yes"]
                                 </button>
                                 <button type="button"
-                                        class="career-btn career-btn--secondary"
+                                        class="btn btn-secondary"
                                         disabled="@Busy"
                                         @onclick="() => OnDecline.InvokeAsync(new TalentDeclineRequest(row, AlreadyPlaced: true))">
                                     @Culture["TalentC.Action.Placed"]
                                 </button>
                                 <button type="button"
-                                        class="career-btn career-btn--text"
+                                        class="btn btn-ghost"
                                         disabled="@Busy"
                                         @onclick="() => OnDecline.InvokeAsync(new TalentDeclineRequest(row, AlreadyPlaced: false))">
                                     @Culture["TalentC.Action.No"]

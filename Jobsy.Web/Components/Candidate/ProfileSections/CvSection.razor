@@ -18,16 +18,16 @@
                                     <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", Editor.UploadedCv.FileName)</p>
                                 }
                                 <div class="profile-cv__actions">
-                                    <label class="engagement-btn">
+                                    <label class="btn btn-primary">
                                         @(Editor.CvBusy ? Culture["Profile.CvUploading"] : Editor.UploadedCv is null ? Culture["Profile.UploadCv"] : Culture["Profile.ReplaceCv"])
                                         <InputFile OnChange="Editor.OnCvSelectedAsync" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
                                     </label>
                                     @if (Editor.UploadedCv is not null)
                                     {
-                                        <button class="engagement-btn" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
+                                        <button class="btn btn-primary" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
                                             @Culture["Profile.DownloadOwnCv"]
                                         </button>
-                                        <button class="engagement-btn" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DeleteOwnCvAsync">
+                                        <button class="btn btn-primary" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DeleteOwnCvAsync">
                                             @Culture["Profile.RemoveOwnCv"]
                                         </button>
                                     }
@@ -39,7 +39,7 @@
                                 <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
                             }
 
-                            <button class="engagement-btn" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
+                            <button class="btn btn-primary" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
                                 @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
                             </button>
                             <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>

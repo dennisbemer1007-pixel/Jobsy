@@ -56,7 +56,7 @@
     {
         <p class="career-note career-note--soft">
             <span>@Culture.Format("Career.CarriedOver", Plan.CarriedOverCount)</span>
-            <button type="button" class="career-btn career-btn--text" @onclick="OnDismissCarriedOver">
+            <button type="button" class="btn btn-ghost" @onclick="OnDismissCarriedOver">
                 @Culture["Career.Dismiss"]
             </button>
         </p>
@@ -75,13 +75,13 @@
         <div class="career-card__actions">
             @if (EmployersOn)
             {
-                <a class="career-btn career-btn--primary" href="/">@Culture["Career.Goal.Vacancies"]</a>
+                <a class="btn btn-primary" href="/">@Culture["Career.Goal.Vacancies"]</a>
             }
             else
             {
-                <a class="career-btn career-btn--primary" href="@PassportHref">@Culture["Career.Goal.Passport"]</a>
+                <a class="btn btn-primary" href="@PassportHref">@Culture["Career.Goal.Passport"]</a>
             }
-            <button type="button" class="career-btn career-btn--text" disabled="@Busy" @onclick="OnChangeDream">
+            <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnChangeDream">
                 @Culture["Career.Goal.NewDream"]
             </button>
         </div>
@@ -101,7 +101,7 @@
                 </ul>
             }
             <div class="career-card__actions">
-                <a class="career-btn career-btn--primary" href="@StepHref(step)">@Culture["Career.Overview.ViewStep"]</a>
+                <a class="btn btn-primary" href="@StepHref(step)">@Culture["Career.Overview.ViewStep"]</a>
             </div>
         </section>
 
@@ -112,7 +112,7 @@
             {
                 <p class="career-now__summary">@SummaryLine</p>
             }
-            <ul class="career-now__details @(_nowExpanded ? null : "is-collapsed")"
+            <ul class="career-now__details @(_nowExpanded ? null :"is-collapsed")"
                 id="career-now-meer"
                 hidden="@(!_nowExpanded)">
                 @foreach (var line in DetailLines)
@@ -135,7 +135,7 @@
                     @(_nowExpanded ? Culture["Career.Overview.Less"] : Culture["Career.Overview.More"])
                     <span class="career-now__chev" aria-hidden="true">@(_nowExpanded ? "▴" : "▾")</span>
                 </button>
-                <a class="career-btn career-btn--primary" href="@StepHref(step)">
+                <a class="btn btn-primary" href="@StepHref(step)">
                     @Culture.Format("Career.Overview.ViewStepN", step.Order)
                 </a>
             </div>
@@ -170,7 +170,7 @@
     {
         <p class="career-card__language">
             <span>@Culture.Format("Career.Language.Line", Culture[$"Career.Lang.{Plan.PlanLanguage}"], Culture[$"Career.Lang.{Culture.Language}"])</span>
-            <button type="button" class="career-btn career-btn--text" disabled="@Busy" @onclick="OnRegenerateLanguage">
+            <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnRegenerateLanguage">
                 @Culture["Career.Language.Action"]
             </button>
         </p>

@@ -21,9 +21,12 @@
 <div class="test-flow @(Compact ? "test-flow--compact" : null) @(Target == TestDepthLevel.Bottom ? "test-flow--deep" : null)" data-test-flow="@Kind">
     @if (question is not null)
     {
-        <p class="test-flow__counter" id="@($"tf-counter-{Kind}")">
-            @Culture.Format("TestFlow.QuestionOf", index + 1, targetCount)
-        </p>
+        @if (Target != TestDepthLevel.Bottom)
+        {
+            <p class="test-flow__counter" id="@($"tf-counter-{Kind}")">
+                @Culture.Format("TestFlow.QuestionOf", index + 1, targetCount)
+            </p>
+        }
         <div class="test-flow__bar" aria-hidden="true">
             @for (var i = 0; i < blocks; i++)
             {

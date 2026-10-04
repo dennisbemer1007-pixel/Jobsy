@@ -16,7 +16,7 @@
                 {
                     var key = SuggestionId(item);
                     <button type="button"
-                            class="career-option @(IsSelected(key) ? "is-selected" : null)"
+                            class="career-option @(IsSelected(key) ?"is-selected" : null)"
                             role="radio"
                             aria-checked="@(IsSelected(key) ? "true" : "false")"
                             disabled="@Disabled"
@@ -58,7 +58,7 @@
         <p class="career-picker__hint">@Culture["Career.Search.Hint"]</p>
 
         <ul id="@($"{Id}-list")"
-            class="career-picker__list @(_open ? "is-open" : null)"
+            class="career-picker__list @(_open ?"is-open" : null)"
             role="listbox"
             aria-label="@Culture["Career.Search.Results"]">
             @for (var i = 0; i < _results.Count; i++)
@@ -67,7 +67,7 @@
                 var item = _results[i];
                 var key = SuggestionId(item);
                 <li id="@($"{Id}-opt-{index}")"
-                    class="career-picker__result @(index == _activeIndex ? "is-active" : null)"
+                    class="career-picker__result @(index == _activeIndex ?"is-active" : null)"
                     role="option"
                     aria-selected="@(IsSelected(key) ? "true" : "false")">
                     <button type="button" disabled="@Disabled" @onclick="() => PickSuggestion(item)">@item.Title</button>

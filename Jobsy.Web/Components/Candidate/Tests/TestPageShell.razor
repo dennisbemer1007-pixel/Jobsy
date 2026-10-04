@@ -7,13 +7,16 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<div class="test-shell journey-page @(Deep ? "test-shell--deep" : null)" data-mode="@Mode">
+<div class="test-shell journey-page @(Deep ?"test-shell--deep" : null)" data-mode="@Mode">
     @if (Mode == ShellMode.Intro)
     {
         <div class="test-shell__layout">
-            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
-                @RailContent
-            </aside>
+            @if (RailContent is not null)
+            {
+                <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                    @RailContent
+                </aside>
+            }
             <div class="test-shell__card">
                 <p class="test-shell__eyebrow">@Culture.Format("TestFlow.Eyebrow.Intro", TestName)</p>
                 <h1 tabindex="-1">@H1</h1>
@@ -38,9 +41,12 @@
     else if (Mode == ShellMode.Question)
     {
         <div class="test-shell__layout">
-            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
-                @RailContent
-            </aside>
+            @if (RailContent is not null)
+            {
+                <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                    @RailContent
+                </aside>
+            }
             <div class="test-shell__card">
                 <p class="test-shell__eyebrow">@(string.IsNullOrWhiteSpace(Eyebrow) ? Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName) : Eyebrow)</p>
                 <h1 tabindex="-1">@H1</h1>
@@ -69,9 +75,12 @@
     else if (Mode == ShellMode.Done)
     {
         <div class="test-shell__layout">
-            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
-                @RailContent
-            </aside>
+            @if (RailContent is not null)
+            {
+                <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                    @RailContent
+                </aside>
+            }
             <div class="test-shell__card test-done">
                 <p class="test-shell__eyebrow">@(string.IsNullOrWhiteSpace(Eyebrow) ? Culture.Format("TestDone.Eyebrow", TestName, LevelName) : Eyebrow)</p>
                 <div class="test-done__shard" aria-hidden="true"></div>
@@ -99,9 +108,12 @@
     else if (Mode == ShellMode.Offer || Mode == ShellMode.Pause || Mode == ShellMode.Checkout)
     {
         <div class="test-shell__layout">
-            <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
-                @RailContent
-            </aside>
+            @if (RailContent is not null)
+            {
+                <aside class="test-shell__rail" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                    @RailContent
+                </aside>
+            }
             <div class="test-shell__card">
                 @if (!string.IsNullOrWhiteSpace(Eyebrow))
                 {

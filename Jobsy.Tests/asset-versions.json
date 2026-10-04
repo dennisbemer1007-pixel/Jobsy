@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "fb45d1613edd2f10c151e129e2505e0ccee0da5dd21d42391cbc6a8689325c33",
-    "v": "20261004-run7m"
+    "sha256": "bd6a1b8aade52b1bfe621f22472a7cf0f956e010841d7df76f18b7807ffd59af",
+    "v": "20261004-run8c"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -28,8 +28,8 @@
     "v": "20261002-kp04"
   },
   "css/features/carriere.css": {
-    "sha256": "466e79f258c0daebf11acbc23d1c79e99c58574358ba21f24b825df508bb6ffd",
-    "v": "20261003-sticky"
+    "sha256": "ba8a50b30dcf1ba608963c64ddc1d662fcdf7370413dce95cc4ae6e03dbf4105",
+    "v": "20261004-run8d"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
@@ -64,28 +64,28 @@
     "v": "20261002-ci-mtp"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "689b63a26121f3f0dfd61ee0f6f5e698f6d4ad989887e6b335338a68e83b8e2c",
-    "v": "20261004-referent"
+    "sha256": "5105d45e9be508c726350e38564068b45c724c2546bdb4ec25186e3b68b56fa9",
+    "v": "20261004-run8c"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
     "v": "20260928-nav-fb"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "aba682f7e6a6513d18476be5769af3294b3de0ea77bb8d03171bddd274d0c03d",
-    "v": "20261003-journey-polish"
+    "sha256": "902217c6bbc58b0a8342483f17b4c58fcdfe4e9eb48f9f36793fa3d3805d2ae7",
+    "v": "20261004-run8c"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "889260c5f1a997a342a7f5849600d1ccb7990329bb472d1363ad399536591ab1",
-    "v": "20261004-run6"
+    "sha256": "c2555242dee6b2b2a0dfda65b628981fa38d86c0c10a48c372a6e97cf3527983",
+    "v": "20261004-run8c"
   },
   "css/features/public-pages.css": {
     "sha256": "5517416d9a7ca622dd7a2ab65e0f85828531671b42d58772e42f5900056750c5",
     "v": "20261003-email"
   },
   "css/features/public-theme.css": {
-    "sha256": "75fe69937158bfd03ff273e79958a9a383829145d7f3e1ba0e036d4439d97831",
-    "v": "20261003-header"
+    "sha256": "257e1ae80b47a5ccd74c7147f049da9dbe355799ff5fc8714f61bc280e82612d",
+    "v": "20261004-run8c"
   },
   "css/features/questionnaire.css": {
     "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "a13ca62937ae102df0b63550d605b9836bfb51be531112da71c7e9641ea44128",
-    "v": "20261004-run7m"
+    "sha256": "ee3865066508ac7f5b23a3311e32cf342e3654081d5f2ee9cf9d0dce5b9a0ca5",
+    "v": "20261004-run8c"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "ecf6f3391cc044c179d9fd31e42bdbca4432c55f561c37f3ce40ba61fdb44a78",
-    "v": "20261004-run7m"
+    "sha256": "76ce23b339a5be55c963e8cafe7d809b04853027a30028d42f4aff8313eaa81a",
+    "v": "20261004-run8c"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -200,8 +200,8 @@
     "v": "20261001-pp07"
   },
   "js/read-aloud.js": {
-    "sha256": "9fc0acd33abf2876fab3e1662413ed32aed17719a901e5a747507427803ba6d0",
-    "v": "20261004-readaloud"
+    "sha256": "93592bf8b9f71bdca53921dceb8c18c76c8479c4eb9f081e8c23f9c5790a8de8",
+    "v": "20261004-run8c"
   },
   "js/vacancyDetailMap.min.js": {
     "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",
@@ -212,11 +212,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "aacd1934e31df3ed71ed2bc31677ed35f451a3554dc6de3c47d2deef21cad2e0",
-    "v": "20261004-run7m"
+    "sha256": "c2d04ee72b69f2918e08173b0803a38313ab4b6e56d68dfe6aa7f4327f68eb93",
+    "v": "20261004-run8c"
   },
   "service-worker.published.js": {
-    "sha256": "adc381cd1cdbb8ef49d46bd92148381b071b4b5a69e7dc369ca4d6d2493e9881",
-    "v": "20261004-run7m"
+    "sha256": "b884781a43f428efa6deabfe570fb9f56716b90605e458a3d986fab55d2c76cb",
+    "v": "20261004-run8c"
   }
 }

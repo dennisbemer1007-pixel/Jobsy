@@ -730,6 +730,140 @@ html:not(.cookie-consent-known) .pub-theme .pub-fixed-bottom {
   }
 }
 
+/* Logged-in account menu on public pages. app.css is not loaded here (NoBlazor). */
+.pub-theme .auth-header {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pub-theme .account-menu {
+  position: relative;
+}
+
+.pub-theme .account-menu__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 11rem;
+  margin: 0;
+  padding: 0.15rem 0.35rem;
+  border: 0;
+  border-radius: var(--pub-radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pub-theme .account-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: none;
+  border-radius: var(--pub-radius-pill);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--brand);
+}
+
+.pub-theme .account-menu__icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.pub-theme .auth-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.pub-theme .auth-user__name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pub-theme .auth-user__role {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.pub-theme .account-menu__panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  inset-inline-end: 0;
+  z-index: 60;
+  min-width: 14rem;
+  max-width: min(18rem, 90vw);
+  margin: 0;
+  padding: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+}
+
+.pub-theme .account-menu:focus-within > .account-menu__panel,
+.pub-theme .account-menu.is-open > .account-menu__panel,
+html[data-header-menu="account"] .pub-theme .account-menu > .account-menu__panel {
+  display: block;
+}
+
+.pub-theme .account-menu__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.7rem 0.65rem;
+  margin-bottom: 0.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pub-theme .account-menu__identity-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pub-theme .account-menu__identity-email {
+  font-size: 0.75rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.pub-theme .account-menu__link {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pub-theme .account-menu__link--logout {
+  color: var(--danger);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .pub-theme .account-menu__toggle .auth-user {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pub-theme .pub-btn--primary,
   .pub-theme .pub-nav__link,

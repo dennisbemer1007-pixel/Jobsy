@@ -17,6 +17,7 @@ public static class AdminActionLabels
         var cultureKey = key switch
         {
             "user.mfa.reset" => "AdminAudit.Action.MfaReset",
+            "user.test-unlock.reset" => "AdminAudit.Action.TestUnlockReset",
             "support-access.grant" or "support-access.revoke" => "AdminAudit.Action.Support",
             "settings.platform.update" or "maintenance.on" or "maintenance.off" => "AdminAudit.Action.Setting",
             "settings.flyer.update" => "AdminAudit.Action.Flyer",

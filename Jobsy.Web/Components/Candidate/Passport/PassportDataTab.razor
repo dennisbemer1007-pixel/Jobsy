@@ -20,11 +20,13 @@
     {
         <div class="panel-inline-error" role="alert">
             <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
-            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+            <button type="button" class="btn btn-secondary" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
         </div>
     }
     else
     {
+        <p class="passport-data__intro">@Culture["Passport.Bubble.Data"]</p>
+        <ReadAloudButton Text="@Culture["Passport.Bubble.Data"]" SpeechKey="passport-data-intro" />
         <CascadingValue Value="Editor">
             <div class="passport-data__switches">
                 <FeatureVisible Feature="PlatformFeature.Employers">
@@ -62,7 +64,7 @@
                         <span class="passport-data__switch-title">@Culture["Profile.Consent.TestAiTitle"]</span>
                         <span class="passport-data__switch-sub">@TestAiSubtext</span>
                     </span>
-                    <span class="status-pill @(Editor.TestAiConsentAt is null ? "status-pill--pending" : "status-pill--accepted")">
+                    <span class="status-pill @(Editor.TestAiConsentAt is null ?"status-pill--pending" : "status-pill--accepted")">
                         @(Editor.TestAiConsentAt is null
                             ? Culture["Passport.Data.ConsentOff"]
                             : Culture["Passport.Data.ConsentOn"])
@@ -90,11 +92,11 @@
                     }
                     else
                     {
-                    <div class="detail-card passport-data__item @(section.Danger ? "passport-data__item--danger" : null) @(open ? "is-open" : null)"
+                    <div class="detail-card passport-data__item @(section.Danger ?"passport-data__item--danger" : null) @(open ? "is-open" : null)"
                          role="listitem">
                         <button type="button"
                                 id="@btnId"
-                                class="passport-data__toggle @(section.Danger ? "passport-data__toggle--danger" : null)"
+                                class="passport-data__toggle @(section.Danger ?"passport-data__toggle--danger" : null)"
                                 aria-expanded="@(open ? "true" : "false")"
                                 aria-controls="@panelId"
                                 @onclick="() => ToggleSection(section.Id)">
@@ -159,7 +161,7 @@
                 {
                     <div class="profile-save-bar">
                         <button type="button"
-                                class="btn-compact btn-compact--primary"
+                                class="btn btn-primary"
                                 disabled="@(Editor.PrivatePrefsSaving)"
                                 @onclick="Editor.SavePrivatePreferencesAsync">
                             @(Editor.PrivatePrefsSaving ? Culture["Common.Loading"] : Culture["Common.Save"])

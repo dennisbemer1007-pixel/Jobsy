@@ -16,7 +16,7 @@ else if (_parentalMissing)
     <div class="test-consent card" data-consent="parental">
         <h2>@Culture["TestFlow.Consent.ParentalTitle"]</h2>
         <p>@Culture["TestFlow.Consent.ParentalLead"]</p>
-        <a class="engagement-btn" href="/candidate/profile">@Culture["TestFlow.Consent.ParentalCta"]</a>
+        <a class="btn btn-primary" href="/candidate/profile">@Culture["TestFlow.Consent.ParentalCta"]</a>
     </div>
 }
 else if (_testConsentMissing)
@@ -24,7 +24,7 @@ else if (_testConsentMissing)
     <div class="test-consent card" data-consent="test">
         <h2>@Culture["TestFlow.Consent.Title"]</h2>
         <p>@Culture["TestFlow.Consent.Lead"]</p>
-        <button type="button" class="engagement-btn" disabled="@_busy" @onclick="GiveConsentAsync">
+        <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="GiveConsentAsync">
             @Culture["TestFlow.Consent.Cta"]
         </button>
         <p><a href="/privacy">@Culture["TestFlow.Consent.Why"]</a></p>

@@ -51,7 +51,7 @@ public class CandidateHowLobsy05BunitTests : BunitContext
 
         Assert.Contains("journey-page career-page", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(1, Occurrences(cut.Markup, "<h1"));
-        Assert.Contains("Vijf stenen, in je eigen tempo", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("In 5 stappen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Je hoeft niet alles tegelijk.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("aria-label=\"Zo werkt Lobsy\"", cut.Markup, StringComparison.Ordinal);
 
@@ -104,7 +104,7 @@ public class CandidateHowLobsy05BunitTests : BunitContext
         _employers = false;
         var cut = Render<HowLobsyWorks>();
 
-        Assert.Contains("Drie stenen, in je eigen tempo", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("In 3 stappen", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(
             ["/candidate/ontdekkingsreis", "/candidate/paspoort", "/carriere"],
             StoneHrefs(cut));
@@ -180,7 +180,7 @@ public class CandidateHowLobsy05BunitTests : BunitContext
         var navigation = Services.GetRequiredService<NavigationManager>();
         var before = navigation.Uri;
 
-        cut.Find(".career-btn--text").Click();
+        cut.Find(".btn-ghost").Click();
 
         Assert.Equal(1, _handler.CompleteCalls);
         Assert.Equal(before, navigation.Uri);
@@ -196,7 +196,7 @@ public class CandidateHowLobsy05BunitTests : BunitContext
         var navigation = Services.GetRequiredService<NavigationManager>();
         var before = navigation.Uri;
 
-        cut.Find(".career-btn--text").Click();
+        cut.Find(".btn-ghost").Click();
 
         Assert.Equal(before, navigation.Uri);
         var alert = cut.Find("[role=\"alert\"]");
@@ -217,7 +217,7 @@ public class CandidateHowLobsy05BunitTests : BunitContext
         };
 
         var cut = Render<HowLobsyWorks>();
-        cut.Find(".career-btn--primary").Click();
+        cut.Find(".btn-primary").Click();
 
         Assert.Equal(1, _handler.CompleteCalls);
         Assert.Equal(
@@ -231,7 +231,7 @@ public class CandidateHowLobsy05BunitTests : BunitContext
         _handler.CompleteStatus = HttpStatusCode.InternalServerError;
         var cut = Render<HowLobsyWorks>();
 
-        cut.Find(".career-btn--primary").Click();
+        cut.Find(".btn-primary").Click();
 
         Assert.Equal(
             "http://localhost/candidate/ontdekkingsreis",

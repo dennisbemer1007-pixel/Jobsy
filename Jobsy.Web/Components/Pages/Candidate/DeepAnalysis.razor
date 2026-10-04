@@ -27,7 +27,7 @@ else if (!_kindOk)
         <div class="test-shell__card">
             <h1 tabindex="-1">@Culture["Deep.UnknownTitle"]</h1>
             <p class="test-shell__lead">@Culture["Deep.UnknownLead"]</p>
-            <p><a class="engagement-btn" href="/profiel">@Culture["DeepPay.ToMyTests"]</a></p>
+            <p><a class="btn btn-primary" href="/profiel">@Culture["DeepPay.ToMyTests"]</a></p>
         </div>
     </div>
 }
@@ -56,6 +56,7 @@ else
                     <ChildContent>
                         <section class="deep-offer">
                             <h2 class="visually-hidden">@Culture["Deep.Offer.WhatTitle"]</h2>
+                            <ReadAloudButton Text="@OfferSpeech" SpeechKey="@($"deep-offer-{_slug}")" />
                             <ul class="deep-offer__get">
                                 <li>✓ @Culture["DeepPay.Get.1"]</li>
                                 <li>✓ @Culture["DeepPay.Get.2"]</li>
@@ -120,7 +121,7 @@ else
                             <footer class="test-shell__footer">
                                 <a href="@($"/profiel/tests/{_slug}")">@Culture["DeepPay.NotNow"]</a>
                                 <button type="button"
-                                        class="engagement-btn"
+                                        class="btn btn-primary"
                                         disabled="@((NeedsWaiver && !_waiverAccepted) || _saving || _paymentMode == "unavailable")"
                                         @onclick="ConfirmOrderAsync">
                                     @(_paymentMode == DeepTestFinanceRules.TestUnlockMethod
@@ -149,7 +150,7 @@ else
                     <ChildContent>
                         <footer class="test-shell__footer">
                             <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="DownloadDonePdfAsync">@Culture["Deep.Done.DownloadPdf"]</button>
-                            <a class="engagement-btn" href="@($"/profiel/tests/{_slug}")">@Culture["Deep.Done.ViewReport"]</a>
+                            <a class="btn btn-primary" href="@($"/profiel/tests/{_slug}")">@Culture["Deep.Done.ViewReport"]</a>
                         </footer>
                     </ChildContent>
                 </TestPageShell>
@@ -178,7 +179,7 @@ else
                         </div>
                         <footer class="test-shell__footer">
                             <a href="@($"/profiel/tests/{_slug}")" @onclick="FlushLaterAsync" @onclick:preventDefault>@Culture["TestFlow.Later"]</a>
-                            <button type="button" class="engagement-btn" @onclick="ContinueAfterPause">
+                            <button type="button" class="btn btn-primary" @onclick="ContinueAfterPause">
                                 @Culture.Format("Deep.Pause.Continue", pausePart.Index + 1)
                             </button>
                         </footer>
@@ -274,6 +275,23 @@ else
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
     private bool NeedsWaiver => _paymentMode != DeepTestFinanceRules.TestUnlockMethod;
+
+    private string OfferSpeech
+    {
+        get
+        {
+            var lines = new[]
+            {
+                Culture["Deep.Offer.Title"],
+                Culture.Format("Deep.Offer.Lead", _questionCount, Culture[_titleKey]),
+                Culture["DeepPay.Get.1"],
+                Culture["DeepPay.Get.2"],
+                _employersOn ? Culture["DeepPay.Get.3"] : Culture["TestResult.Upsell.Self"],
+                Culture["DeepPay.Get.4"]
+            };
+            return string.Join(". ", lines.Where(l => !string.IsNullOrWhiteSpace(l)));
+        }
+    }
 
     private string ChromeEyebrow(TestDepthPart? part)
     {
@@ -615,12 +633,6 @@ else
                     </li>
                 }
             </ol>
-            @if (!offer && _questionCount > _answered)
-            {
-                var left = _questionCount - _answered;
-                var mins = Math.Max(1, (int)Math.Ceiling(left * 12 / 60.0));
-                <p class="test-rail__footer">@Culture.Format("Deep.Rail.Footer", _answered, _questionCount, mins)</p>
-            }
         </div>
     };
 

@@ -159,15 +159,15 @@ public class SalesDashboardReadTests
 
     private static CommissionLedgerEntry Entry(
         Guid smId, Guid companyId, decimal amount, DateTime created, DateTime available) => new()
-    {
-        Id = Guid.NewGuid(),
-        SalesManagerUserId = smId,
-        CompanyId = companyId,
-        Kind = CommissionEntryKind.TokenCommission,
-        AmountExVat = amount,
-        CreatedAt = created,
-        AvailableFromUtc = available
-    };
+        {
+            Id = Guid.NewGuid(),
+            SalesManagerUserId = smId,
+            CompanyId = companyId,
+            Kind = CommissionEntryKind.TokenCommission,
+            AmountExVat = amount,
+            CreatedAt = created,
+            AvailableFromUtc = available
+        };
 
     private static void SeedBeneficiary(JobsyDbContext db, Guid smId)
     {

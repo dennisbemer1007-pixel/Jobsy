@@ -43,13 +43,13 @@
             {
                 <div class="kb-saved__toolbar">
                     <div class="kb-saved__filters" role="group">
-                        <button type="button" class="kb-chip @(_filter == "all" ? "is-selected" : null)" @onclick='() => SetFilter("all")'>
+                        <button type="button" class="kb-chip @(_filter =="all" ? "is-selected" : null)" @onclick='() => SetFilter("all")'>
                             @Culture["Kb.Saved.FilterAll"] · @_items.Count
                         </button>
-                        <button type="button" class="kb-chip @(_filter == "open" ? "is-selected" : null)" @onclick='() => SetFilter("open")'>
+                        <button type="button" class="kb-chip @(_filter =="open" ? "is-selected" : null)" @onclick='() => SetFilter("open")'>
                             @Culture["Kb.Saved.FilterOpen"] · @_countOpen
                         </button>
-                        <button type="button" class="kb-chip @(_filter == "closed" ? "is-selected" : null)" @onclick='() => SetFilter("closed")'>
+                        <button type="button" class="kb-chip @(_filter =="closed" ? "is-selected" : null)" @onclick='() => SetFilter("closed")'>
                             @Culture["Kb.Saved.FilterClosed"] · @_countClosed
                         </button>
                     </div>
@@ -74,7 +74,7 @@
                         var companyPlace = string.IsNullOrWhiteSpace(item.LocationLabel)
                             ? item.CompanyName
                             : $"{item.CompanyName} · {item.LocationLabel}";
-                        <article class="kb-saved-row @(closed ? "kb-saved-row--closed" : null)">
+                        <article class="kb-saved-row @(closed ?"kb-saved-row--closed" : null)">
                             <div class="kb-saved-row__thumb">
                                 <VacancyPhoto Src="@item.ImageUrl"
                                               FallbackSrc="@item.CompanyLogoUrl"
@@ -96,7 +96,7 @@
                                     }
                                     else if (item.FitPercent is int pct)
                                     {
-                                        <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ?? "some") kb-saved-row__fit">
+                                        <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ??"some") kb-saved-row__fit">
                                             @string.Format(Culture["Kb.Fit.Percent"], pct)
                                         </span>
                                     }
@@ -121,7 +121,7 @@
                                 ♥
                             </button>
                         </article>
-                        <article class="kb-saved-card @(closed ? "kb-saved-card--closed" : null)">
+                        <article class="kb-saved-card @(closed ?"kb-saved-card--closed" : null)">
                             <div class="kb-saved-card__media">
                                 <a class="kb-saved-card__media-link" href="@($"/vacancies/{item.VacancyId}")">
                                     <VacancyPhoto Src="@item.ImageUrl"
@@ -162,7 +162,7 @@
                                 }
                                 else if (item.FitPercent is int pctCard)
                                 {
-                                    <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ?? "some")">
+                                    <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ??"some")">
                                         @string.Format(Culture["Kb.Fit.Percent"], pctCard)
                                     </span>
                                 }
@@ -180,7 +180,7 @@
                                 }
                                 else
                                 {
-                                    <a class="btn-compact kb-saved-card__apply" href="@($"/vacancies/{item.VacancyId}")">@Culture["Kb.Saved.Apply"]</a>
+                                    <a class="btn btn-secondary kb-saved-card__apply" href="@($"/vacancies/{item.VacancyId}")">@Culture["Kb.Saved.Apply"]</a>
                                     <a class="kb-saved-card__link" href="@($"/vacancies/{item.VacancyId}")">@Culture["Kb.Saved.View"]</a>
                                 }
                             </div>

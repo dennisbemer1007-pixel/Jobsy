@@ -80,7 +80,7 @@
                 {
                     <button type="button"
                             role="tab"
-                            class="competence-trait-chip @(trait.Domain == _selectedDomain ? "is-active" : null)"
+                            class="competence-trait-chip @(trait.Domain == _selectedDomain ?"is-active" : null)"
                             aria-selected="@(trait.Domain == _selectedDomain ? "true" : "false")"
                             @onclick="() => SelectTrait(trait.Domain)">
                         @trait.LabelNl

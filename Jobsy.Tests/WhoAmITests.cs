@@ -52,6 +52,11 @@ public class WhoAmITests
             Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70));
         Assert.Contains("Ik", story, StringComparison.Ordinal);
         Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(story));
+        foreach (var sentence in story.Split(['.', '!', '?'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var words = sentence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            Assert.True(words.Length <= 20, sentence);
+        }
         Assert.DoesNotContain("@", story, StringComparison.Ordinal);
         Assert.Null(WhoAmIStoryBuilder.Sanitize("Mail me op ada@test.local alsjeblieft"));
         Assert.Null(WhoAmIStoryBuilder.Sanitize("Mijn DISC-profiel is rood."));

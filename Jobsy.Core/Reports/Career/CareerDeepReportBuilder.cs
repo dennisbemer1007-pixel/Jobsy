@@ -57,44 +57,121 @@ public static class CareerDeepReportBuilder
             Domains = domains,
             HollandCode = holland,
             Occupations = occupations,
-            ActionPlan = BuildActionPlan(top3),
+            ActionPlan = BuildActionPlan(top3, occupations),
             StrengthKeys = top3.Select(c => $"strength.{c}").ToList(),
             PitfallKeys = bottom2.Select(c => $"pitfall.{c}").ToList(),
             ComparisonAvailable = comparisonAvailable
         };
     }
 
-    private static List<DeepActionStep> BuildActionPlan(IReadOnlyList<string> top3)
+    private static List<DeepActionStep> BuildActionPlan(
+        IReadOnlyList<string> top3,
+        IReadOnlyList<DeepOccupationFit> occupations)
     {
         var steps = new List<DeepActionStep>();
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var index = 0;
         foreach (var code in top3.Take(3))
         {
             var nl = DeepReportCatalog.RiasecLabel(code, "nl");
             var en = DeepReportCatalog.RiasecLabel(code, "en");
+            var jobNl = ExampleJob(code, occupations, "nl", used);
+            var jobEn = ExampleJob(code, occupations, "en", used);
+            var (bodyNl, bodyEn) = ActionBody(index, jobNl, jobEn);
             steps.Add(new DeepActionStep
             {
                 Title = LocalizedReportText.FromPair(
-                    $"Verken werk rondom «{nl}»",
-                    $"Explore work around “{en}”"),
-                Body = LocalizedReportText.FromPair(
-                    $"Kies één concreet voorbeeldberoep uit je topmatches en praat met iemand die dit werk doet.",
-                    $"Pick one concrete role from your top matches and talk to someone who does that work.")
+                    $"Verken werk rondom {nl}",
+                    $"Explore work around {en}"),
+                Body = LocalizedReportText.FromPair(bodyNl, bodyEn)
             });
+            index++;
         }
 
         while (steps.Count < 3)
         {
+            var filler = steps.Count;
             steps.Add(new DeepActionStep
             {
-                Title = LocalizedReportText.FromPair("Noteer wat je energie geeft", "Note what gives you energy"),
+                Title = LocalizedReportText.FromPair(
+                    filler == 1 ? "Vraag hoe een werkdag eruitziet" : "Noteer wat je energie geeft",
+                    filler == 1 ? "Ask what a workday looks like" : "Note what gives you energy"),
                 Body = LocalizedReportText.FromPair(
-                    "Houd een week bij welke taken je energie geven. Dat scherpt je volgende keuzes.",
-                    "For one week, note which tasks give you energy. That sharpens your next choices.")
+                    filler == 1
+                        ? "Kies één beroep uit de beroepen die bij je passen. Vraag iemand die dit werk doet hoe een gewone dag gaat."
+                        : "Houd een week bij welke taken je energie geven. Gebruik dat bij de beroepen die bij je passen.",
+                    filler == 1
+                        ? "Pick one job from the jobs that fit you. Ask someone who does this work what a normal day is like."
+                        : "For one week, note which tasks give you energy. Use that with the jobs that fit you.")
             });
         }
 
         return steps;
     }
+
+    private static (string Nl, string En) ActionBody(int index, string jobNl, string jobEn) => index switch
+    {
+        0 => (
+            $"Kies {jobNl} uit de beroepen die bij je passen. Praat met iemand die dit werk doet.",
+            $"Pick {jobEn} from the jobs that fit you. Talk to someone who does this work."),
+        1 => (
+            $"Vraag iemand die werkt als {jobNl} hoe een gewone werkdag eruitziet.",
+            $"Ask someone who works as {jobEn} what a normal workday looks like."),
+        _ => (
+            $"Loop een keer mee met {jobNl}. Let op welke taken je energie geven.",
+            $"Shadow someone in {jobEn} once. Notice which tasks give you energy.")
+    };
+
+    private static string ExampleJob(
+        string code,
+        IReadOnlyList<DeepOccupationFit> occupations,
+        string lang,
+        HashSet<string> used)
+    {
+        foreach (var job in occupations)
+        {
+            if (!PrimaryCodeIs(job.TitleNl, code))
+            {
+                continue;
+            }
+
+            var title = job.Title(lang);
+            if (string.IsNullOrWhiteSpace(title) || !used.Add(title))
+            {
+                continue;
+            }
+
+            return title;
+        }
+
+        var (nl, en) = FallbackJob(code);
+        var fallback = ReportLanguage.IsEnglish(lang) ? en : nl;
+        used.Add(fallback);
+        return fallback;
+    }
+
+    private static bool PrimaryCodeIs(string titleNl, string code)
+    {
+        var job = CareerCompassBuilder.Occupations.FirstOrDefault(o =>
+            string.Equals(o.Title, titleNl, StringComparison.OrdinalIgnoreCase));
+        if (job is null || job.Weights.Length == 0)
+        {
+            return false;
+        }
+
+        var top = job.Weights.OrderByDescending(w => w.Weight).First();
+        return string.Equals(top.Code, code, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static (string Nl, string En) FallbackJob(string code) => code switch
+    {
+        CareerTestCatalog.Realistic => ("medewerker tuinbouw / kas", "greenhouse worker"),
+        CareerTestCatalog.Investigative => ("lab- of meetassistent", "lab assistant"),
+        CareerTestCatalog.Artistic => ("winkelstylist", "shop stylist"),
+        CareerTestCatalog.Social => ("helpende zorg", "care assistant"),
+        CareerTestCatalog.Enterprising => ("verkoopmedewerker", "shop sales assistant"),
+        _ => ("administratief medewerker", "office administrator")
+    };
 
     private static string EnglishOccupation(string nl) => nl switch
     {

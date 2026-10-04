@@ -94,7 +94,7 @@
             </ul>
         </section>
 
-        <button type="button" class="engagement-btn" disabled="@Busy" @onclick="OnDownloadPdf">
+        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnDownloadPdf">
             @Culture["Deep.DownloadPdf"]
         </button>
     </article>
@@ -108,7 +108,7 @@
     private string[] _cultureLabels = [];
     private int[] _cultureScores = [];
     private int[]? _cultureNorms;
-    private bool _employersOn = true;
+    private bool _employersOn;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -118,7 +118,7 @@
         }
         catch (Exception)
         {
-            _employersOn = true;
+            _employersOn = false;
         }
 
         if (Report is null) return;

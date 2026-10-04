@@ -78,11 +78,11 @@ public class PublicCompanyPageLookupTests
                 KvkEstablishmentId = "87654321_0001",
                 Location = new GeoPoint(52.0, 4.3),
                 Type = CompanyType.Employer,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = Guid.NewGuid(),
@@ -92,11 +92,11 @@ public class PublicCompanyPageLookupTests
                 KvkEstablishmentId = "87654321_0002",
                 Location = new GeoPoint(52.1, 4.4),
                 Type = CompanyType.Employer,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
         await db.SaveChangesAsync();
 
         var ids = await db.Companies.AsNoTracking()

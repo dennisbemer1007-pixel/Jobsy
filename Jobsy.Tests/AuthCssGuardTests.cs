@@ -50,7 +50,7 @@ public sealed class AuthCssGuardTests
                 SearchOption.TopDirectoryOnly)
             .Append(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Login.razor"));
 
-            foreach (var file in paths)
+        foreach (var file in paths)
         {
             if (!File.Exists(file) || Path.GetFileName(file).Equals("MailSettings.razor", StringComparison.OrdinalIgnoreCase))
             {

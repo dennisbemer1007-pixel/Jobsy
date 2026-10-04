@@ -24,21 +24,21 @@
 
     <div class="admin-sublinks pill-scroller" role="tablist" aria-label="@Culture["Nav.Vacancies"]">
         <button type="button"
-                class="admin-sublink @(_tab == "overview" ? "admin-sublink--active" : null)"
+                class="admin-sublink @(_tab =="overview" ? "admin-sublink--active" : null)"
                 role="tab"
                 aria-selected="@(_tab == "overview" ? "true" : "false")"
                 @onclick='() => SetTab("overview")'>
             @Culture["CandidateVacancies.Overview"]
         </button>
         <button type="button"
-                class="admin-sublink @(_tab == "recent" ? "admin-sublink--active" : null)"
+                class="admin-sublink @(_tab =="recent" ? "admin-sublink--active" : null)"
                 role="tab"
                 aria-selected="@(_tab == "recent" ? "true" : "false")"
                 @onclick='() => SetTab("recent")'>
             @Culture["CandidateVacancies.RecentlyViewed"]
         </button>
         <button type="button"
-                class="admin-sublink @(_tab == "nearby" ? "admin-sublink--active" : null)"
+                class="admin-sublink @(_tab =="nearby" ? "admin-sublink--active" : null)"
                 role="tab"
                 aria-selected="@(_tab == "nearby" ? "true" : "false")"
                 @onclick='() => SetTab("nearby")'>
@@ -273,7 +273,7 @@
                 var travel = vacancy.TravelMinutes is int minutes
                     ? Culture.Format("Discovery.TravelModeMinutes", minutes, UiLabels.TransportVerb(Culture, _transport))
                     : vacancy.CompanyName;
-                <article class="job-card @(vacancy.IsHighlighted ? "job-card--highlight" : null)">
+                <article class="job-card @(vacancy.IsHighlighted ?"job-card--highlight" : null)">
                     <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")">
                         <VacancyPhoto Src="@vacancy.ImageUrl"
                                       FallbackSrc="@vacancy.CompanyLogoUrl"

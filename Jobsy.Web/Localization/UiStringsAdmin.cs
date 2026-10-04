@@ -720,6 +720,7 @@ public static class UiStringsAdmin
         Add("AdminAudit.Result.Denied", "Geblokkeerd", "Denied", "Odrzucone", "Refuzat", "مرفوض");
         Add("AdminAudit.Result.Failed", "Mislukt", "Failed", "Nieudane", "Eșuat", "فشل");
         Add("AdminAudit.Action.MfaReset", "2FA gereset", "2FA reset", "Reset 2FA", "Reset 2FA", "إعادة تعيين 2FA");
+        Add("AdminAudit.Action.TestUnlockReset", "Uitgebreide tests weer op slot", "Extended tests locked again", "Rozszerzone testy znów zablokowane", "Testele extinse sunt din nou blocate", "الاختبارات الموسّعة مقفلة مجددًا");
         Add("AdminAudit.Action.Support", "Support-toegang", "Support access", "Dostęp support", "Acces support", "وصول الدعم");
         Add("AdminAudit.Action.Setting", "Instelling gewijzigd", "Setting changed", "Zmiana ustawienia", "Setare modificată", "تغيير إعداد");
         Add("AdminAudit.Action.Export", "Export gemaakt", "Export created", "Eksport utworzony", "Export creat", "تم التصدير");

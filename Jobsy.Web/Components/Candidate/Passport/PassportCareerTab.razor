@@ -22,19 +22,19 @@
         <section class="detail-card passport-career__empty" aria-labelledby="passport-career-empty-title">
             <h3 id="passport-career-empty-title" class="passport-fit__h">@Culture["Passport.Career.EmptyTitle"]</h3>
             <p class="login-lead">@Culture["Passport.Career.EmptyLead"]</p>
-            <a class="btn-compact btn-compact--primary" href="/carriere">@Culture["Passport.Career.EmptyCta"]</a>
+            <a class="btn btn-primary" href="/carriere">@Culture["Passport.Career.EmptyCta"]</a>
         </section>
     }
     else
     {
         <div class="passport-career__toolbar">
-            <a class="btn-compact" href="/carriere">@Culture["Passport.Career.ChangeDream"]</a>
+            <a class="btn btn-secondary" href="/carriere">@Culture["Passport.Career.ChangeDream"]</a>
         </div>
 
         <section class="detail-card passport-career__dream" aria-labelledby="passport-career-dream-title">
             <header class="passport-fit__head">
                 <h3 id="passport-career-dream-title" class="passport-fit__h">@Culture["Passport.Career.DreamTitle"]</h3>
-                <a class="passport-card__fill-link" href="/carriere">@Culture["Passport.Career.OpenPlan"]</a>
+                <a class="btn btn-ghost" href="/carriere">@Culture["Passport.Career.OpenPlan"]</a>
             </header>
             <p class="passport-career__dream-name">@_view.DreamRoleTitle</p>
 
@@ -103,7 +103,7 @@
                     <ul class="passport-career__gaps">
                         @foreach (var gap in _view.Gaps)
                         {
-                            <li class="passport-career__gap @(gap.Met ? "is-met" : "is-gap")">
+                            <li class="passport-career__gap @(gap.Met ?"is-met" : "is-gap")">
                                 @if (gap.Met)
                                 {
                                     <span class="passport-career__gap-icon" aria-hidden="true">✓</span>
@@ -156,7 +156,7 @@
                     </p>
                 }
                 <FeatureVisible Feature="PlatformFeature.Employers">
-                    <a class="passport-card__fill-link" href="@_view.VacanciesHref">@Culture["Passport.Career.VacanciesLink"]</a>
+                    <a class="btn btn-ghost" href="@_view.VacanciesHref">@Culture["Passport.Career.VacanciesLink"]</a>
                 </FeatureVisible>
             </section>
         </div>

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Jobsy.Core.Rules;
 
@@ -75,7 +76,7 @@ public static class WhoAmIStoryBuilder
 
         sb.Append("Op de werkvloer is mijn kracht ");
         sb.Append(JoinDutch(compTop));
-        sb.Append(". Ik zoek geen droge lijst van tests, maar werk waarin ik dat elke dag kan laten zien, dichtbij huis, in Den Haag of het Westland, bij een ploeg die op elkaar kan bouwen.");
+        sb.Append(". Ik zoek geen droge lijst van tests. Ik wil werk waarin ik dat elke dag laat zien. Dat doe ik dichtbij huis. In Den Haag of het Westland. Bij een ploeg die op elkaar kan bouwen.");
         sb.AppendLine();
         sb.AppendLine();
         if (keywords.Count > 0)
@@ -134,12 +135,119 @@ public static class WhoAmIStoryBuilder
         }
 
         if (trimmed.Contains('@', StringComparison.Ordinal)
-            || System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"\+?\d[\d\s\-]{7,}\d"))
+            || Regex.IsMatch(trimmed, @"\+?\d[\d\s\-]{7,}\d"))
         {
             return null;
         }
 
-        return trimmed;
+        trimmed = PlainLanguage(trimmed);
+        return ShortenLongSentences(trimmed);
+    }
+
+    /// <summary>B1: drop abstract nouns and split any sentence longer than 20 words.</summary>
+    internal static string ShortenLongSentences(string text)
+    {
+        var sb = new StringBuilder(text.Length + 32);
+        var start = 0;
+        for (var i = 0; i <= text.Length; i++)
+        {
+            var atEnd = i == text.Length;
+            var boundary = !atEnd
+                && text[i] is '.' or '!' or '?'
+                && (i + 1 == text.Length || char.IsWhiteSpace(text[i + 1]));
+            if (!atEnd && !boundary)
+            {
+                continue;
+            }
+
+            var end = boundary ? i + 1 : text.Length;
+            if (end <= start)
+            {
+                continue;
+            }
+
+            var sentence = text[start..end];
+            var lead = 0;
+            while (lead < sentence.Length && char.IsWhiteSpace(sentence[lead]))
+            {
+                lead++;
+            }
+
+            sb.Append(sentence[..lead]);
+            var body = sentence[lead..];
+            sb.Append(WordCount(body) > 20 ? ChunkSentence(body) : body);
+            start = end;
+        }
+
+        return sb.ToString();
+    }
+
+    private static string PlainLanguage(string text)
+        => Regex.Replace(
+            Regex.Replace(
+                Regex.Replace(text, @"\bvermogen\b", "wat ik kan", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+                "stimuleren van groei",
+                "beter worden",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+            "maken van impact",
+            "iets doen voor anderen",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static int WordCount(string sentence)
+        => sentence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+
+    private static string ChunkSentence(string sentence)
+    {
+        var trimmed = sentence.TrimEnd();
+        var punct = trimmed.Length > 0 && trimmed[^1] is '.' or '!' or '?' ? trimmed[^1] : '.';
+        var core = trimmed.Length > 0 && trimmed[^1] is '.' or '!' or '?'
+            ? trimmed[..^1]
+            : trimmed;
+        var words = core.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var sb = new StringBuilder();
+        var bucket = new List<string>();
+
+        void Flush(bool last)
+        {
+            if (bucket.Count == 0)
+            {
+                return;
+            }
+
+            if (sb.Length > 0)
+            {
+                sb.Append(' ');
+            }
+
+            var line = string.Join(' ', bucket).Trim().TrimEnd(',', ';');
+            if (line.Length > 0 && char.IsLetter(line[0]))
+            {
+                line = char.ToUpperInvariant(line[0]) + line[1..];
+            }
+
+            sb.Append(line);
+            sb.Append(last ? punct : '.');
+            bucket.Clear();
+        }
+
+        for (var i = 0; i < words.Length; i++)
+        {
+            var word = words[i];
+            bucket.Add(word.TrimEnd(','));
+            var soft = word.EndsWith(',')
+                || word.Equals("en", StringComparison.OrdinalIgnoreCase)
+                || word.Equals("maar", StringComparison.OrdinalIgnoreCase)
+                || word.Equals("zodat", StringComparison.OrdinalIgnoreCase)
+                || word.Equals("want", StringComparison.OrdinalIgnoreCase);
+            var more = i + 1 < words.Length;
+            if (bucket.Count >= 15 || (more && soft && bucket.Count >= 8))
+            {
+                Flush(!more);
+            }
+        }
+
+        Flush(true);
+        return sb.ToString();
     }
 
     private const string Fallback =

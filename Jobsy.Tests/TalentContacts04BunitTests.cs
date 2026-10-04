@@ -93,7 +93,7 @@ public class TalentContacts04BunitTests : BunitContext
         var cut = Render<CandidateTalentContacts>();
 
         Assert.Contains("De tijd is om, maar je kunt nog reageren.", cut.Markup, StringComparison.Ordinal);
-        Assert.Equal(3, cut.FindAll(".talent-req__actions .career-btn").Count);
+        Assert.Equal(3, cut.FindAll(".talent-req__actions .btn").Count);
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public class TalentContacts04BunitTests : BunitContext
         };
 
         var cut = Render<CandidateTalentContacts>();
-        cut.Find(".talent-req__actions .career-btn--primary").Click();
+        cut.Find(".talent-req__actions .btn-primary").Click();
 
         var values = cut.FindAll(".talent-dialog__list dd").Select(d => d.TextContent.Trim()).ToList();
         Assert.Equal(["Kandidaat Test", "kandidaat@lobsy.local", "niet ingevuld"], values);
@@ -160,10 +160,10 @@ public class TalentContacts04BunitTests : BunitContext
     {
         _handler.Rows = [Row(TalentStatus.Pending)];
         var cut = Render<CandidateTalentContacts>();
-        cut.Find(".talent-req__actions .career-btn--primary").Click();
+        cut.Find(".talent-req__actions .btn-primary").Click();
         Assert.NotEmpty(cut.FindAll(".talent-dialog"));
 
-        cut.Find(".career-dialog__actions .career-btn--secondary").Click();
+        cut.Find(".career-dialog__actions .btn-secondary").Click();
 
         Assert.Empty(cut.FindAll(".talent-dialog"));
         Assert.Equal(0, _handler.RespondCalls);
@@ -174,7 +174,7 @@ public class TalentContacts04BunitTests : BunitContext
     {
         _handler.Rows = [Row(TalentStatus.Pending)];
         var cut = Render<CandidateTalentContacts>();
-        cut.Find(".talent-req__actions .career-btn--primary").Click();
+        cut.Find(".talent-req__actions .btn-primary").Click();
 
         _handler.RowsAfterRespond = [Row(TalentStatus.ContactShared)];
         cut.Find(".talent-dialog__share").Click();
@@ -193,7 +193,7 @@ public class TalentContacts04BunitTests : BunitContext
         _handler.PreviewFails = true;
 
         var cut = Render<CandidateTalentContacts>();
-        cut.Find(".talent-req__actions .career-btn--primary").Click();
+        cut.Find(".talent-req__actions .btn-primary").Click();
 
         Assert.Empty(cut.FindAll(".talent-dialog__share"));
         Assert.Contains("We kunnen nu niet laten zien wat er gedeeld wordt.", cut.Markup, StringComparison.Ordinal);
@@ -209,7 +209,7 @@ public class TalentContacts04BunitTests : BunitContext
         var cut = Render<CandidateTalentContacts>();
 
         _handler.RowsAfterRespond = [Row(TalentStatus.CandidateDeclined, declineReason: "AlreadyPlaced")];
-        cut.Find(".talent-req__actions .career-btn--secondary").Click();
+        cut.Find(".talent-req__actions .btn-secondary").Click();
 
         Assert.Equal(1, _handler.RespondCalls);
         Assert.Contains("\"accept\":false", _handler.LastRespondBody, StringComparison.Ordinal);
@@ -224,7 +224,7 @@ public class TalentContacts04BunitTests : BunitContext
         var cut = Render<CandidateTalentContacts>();
 
         _handler.RowsAfterRespond = [Row(TalentStatus.CandidateDeclined)];
-        cut.Find(".talent-req__actions .career-btn--text").Click();
+        cut.Find(".talent-req__actions .btn-ghost").Click();
 
         Assert.Contains("\"alreadyPlaced\":false", _handler.LastRespondBody, StringComparison.Ordinal);
     }
@@ -237,7 +237,7 @@ public class TalentContacts04BunitTests : BunitContext
         _handler.RespondBody = "{\"code\":\"cannot_respond\",\"message\":\"raw server text\"}";
 
         var cut = Render<CandidateTalentContacts>();
-        cut.Find(".talent-req__actions .career-btn--text").Click();
+        cut.Find(".talent-req__actions .btn-ghost").Click();
 
         Assert.Contains("Op dit verzoek kun je niet meer reageren.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("raw server text", cut.Markup, StringComparison.Ordinal);

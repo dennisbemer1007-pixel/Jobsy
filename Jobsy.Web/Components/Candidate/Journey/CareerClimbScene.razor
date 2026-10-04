@@ -1,6 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Journey
 @using System.Globalization
-<div class="career-scene @(Mobile ? "career-scene--mobile" : "career-scene--desktop") @(Celebrate ? "career-scene--celebrate" : null)"
+<div class="career-scene @(Mobile ?"career-scene--mobile" : "career-scene--desktop") @(Celebrate ? "career-scene--celebrate" : null)"
      aria-hidden="true">
     @((MarkupString)_svg)
 
@@ -19,7 +19,7 @@
         @for (var i = 0; i < _points.Count && i < Stones.Count; i++)
         {
             var stone = Stones[i];
-            <span class="career-scene__label career-scene__label--@StateClass(stone.State) @(Mobile ? "career-scene__label--mark" : null)"
+            <span class="career-scene__label career-scene__label--@StateClass(stone.State) @(Mobile ?"career-scene__label--mark" : null)"
                   style="--x:@(Xp(i))%;--y:@(Yp(i))%">
                 @if (Mobile)
                 {

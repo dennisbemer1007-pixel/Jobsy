@@ -55,14 +55,14 @@ public class CarrierePlaywrightTests
 
         await PickADreamAsync(page, "career-empty-dream");
 
-        var submit = page.Locator(".career-card--empty .career-btn--primary").First;
+        var submit = page.Locator(".career-card--empty .btn-primary").First;
         await Assertions.Expect(submit).ToBeEnabledAsync(new() { Timeout = 15_000 });
 
         // Double click must stay one generation: the button disables on the first click.
         await submit.ClickAsync();
         var disabledAfterFirstClick = await page.EvaluateAsync<bool>("""
             () => {
-              const b = document.querySelector('.career-card--empty .career-btn--primary');
+              const b = document.querySelector('.career-card--empty .btn-primary');
               return !b || b.disabled;
             }
             """);
@@ -113,7 +113,7 @@ public class CarrierePlaywrightTests
         await CareerE2e.AssertNoMissingKeyMarkersAsync(page, "F2 step");
         await CareerE2e.ShotAsync(page, "f2-carriere-step-1440");
 
-        var complete = page.Locator(".career-card--step .career-btn--primary").First;
+        var complete = page.Locator(".career-card--step .btn-primary").First;
         if (await complete.CountAsync() == 0)
         {
             return;
@@ -128,9 +128,9 @@ public class CarrierePlaywrightTests
         Assert.Equal(0, await page.Locator(".lobsy-toast").CountAsync());
         await CareerE2e.ShotAsync(page, "f2-carriere-done-1440");
 
-        await page.Locator(".career-card--done .career-btn--text").First.ClickAsync();
+        await page.Locator(".career-card--done .btn-ghost").First.ClickAsync();
         await page.WaitForSelectorAsync(".career-card--step", new() { Timeout = 60_000 });
-        await Assertions.Expect(page.Locator(".career-card--step .career-btn--primary").First)
+        await Assertions.Expect(page.Locator(".career-card--step .btn-primary").First)
             .ToBeVisibleAsync(new() { Timeout = 30_000 });
     }
 
@@ -171,7 +171,7 @@ public class CarrierePlaywrightTests
         await CareerE2e.GoAsync(page, baseUrl, $"{CareerE2e.CareerPath}?stap={current + 1}");
         await page.WaitForSelectorAsync(".career-card--step", new() { Timeout = 60_000 });
 
-        Assert.Equal(0, await page.Locator(".career-card--step .career-btn--primary").CountAsync());
+        Assert.Equal(0, await page.Locator(".career-card--step .btn-primary").CountAsync());
         await Assertions.Expect(page.Locator(".career-card--step .career-step__quiet").First)
             .ToContainTextAsync("Eerst stap");
 
@@ -224,7 +224,7 @@ public class CarrierePlaywrightTests
             return;
         }
 
-        await page.Locator(".career-dialog .career-btn--primary").First.ClickAsync();
+        await page.Locator(".career-dialog .btn-primary").First.ClickAsync();
         await page.WaitForSelectorAsync(".career-card--overview", new() { Timeout = 120_000 });
         if (!await WaitForOverviewDreamAsync(page, dreamBefore, changed: true))
         {
@@ -266,7 +266,7 @@ public class CarrierePlaywrightTests
             var title = await rows.Nth(i).Locator("b").First.InnerTextAsync();
             if (title.Length > 0 && dreamBefore.Contains(title, StringComparison.OrdinalIgnoreCase))
             {
-                restore = rows.Nth(i).Locator(".career-btn--text").First;
+                restore = rows.Nth(i).Locator(".btn-ghost").First;
                 break;
             }
         }
@@ -274,7 +274,7 @@ public class CarrierePlaywrightTests
         Assert.NotNull(restore);
         await ClickPastTheBottomNavAsync(restore);
         await page.WaitForSelectorAsync("#career-restore-title", new() { Timeout = 30_000 });
-        await page.Locator(".career-dialog .career-btn--primary").First.ClickAsync();
+        await page.Locator(".career-dialog .btn-primary").First.ClickAsync();
         Assert.True(
             await WaitForOverviewDreamAsync(page, dreamBefore, changed: false),
             "F4: restoring the archived plan must bring the old dream back.");
@@ -363,7 +363,7 @@ public class CarrierePlaywrightTests
                 continue;
             }
 
-            await open.Locator(".career-btn--primary").First.ClickAsync();
+            await open.Locator(".btn-primary").First.ClickAsync();
             await page.WaitForSelectorAsync(".talent-dialog", new() { Timeout = 30_000 });
             var dialog = await page.Locator(".talent-dialog").First.InnerTextAsync();
             Assert.Contains("Naam", dialog, StringComparison.Ordinal);
@@ -372,11 +372,11 @@ public class CarrierePlaywrightTests
             await CareerE2e.ShotAsync(page, "f6-contacts-share-dialog-1440");
 
             // "Nog niet" closes without sharing: the request stays open.
-            await page.Locator(".talent-dialog .career-btn--secondary").First.ClickAsync();
+            await page.Locator(".talent-dialog .btn-secondary").First.ClickAsync();
             await page.WaitForSelectorAsync(".talent-dialog", new() { State = WaitForSelectorState.Detached, Timeout = 30_000 });
             Assert.True(await page.Locator(".talent-req--open").CountAsync() > 0);
 
-            await page.Locator(".talent-req--open").First.Locator(".career-btn--primary").First.ClickAsync();
+            await page.Locator(".talent-req--open").First.Locator(".btn-primary").First.ClickAsync();
             await page.WaitForSelectorAsync(".talent-dialog__share", new() { Timeout = 30_000 });
             await page.Locator(".talent-dialog__share").ClickAsync();
             await page.WaitForSelectorAsync(".talent-dialog", new() { State = WaitForSelectorState.Detached, Timeout = 60_000 });
@@ -385,7 +385,7 @@ public class CarrierePlaywrightTests
             var second = page.Locator(".talent-req--open").First;
             if (await second.CountAsync() > 0)
             {
-                await second.Locator(".career-btn--secondary").First.ClickAsync();
+                await second.Locator(".btn-secondary").First.ClickAsync();
                 Assert.True(
                     await CareerE2e.WaitForTrueAsync(
                         page,
@@ -445,14 +445,14 @@ public class CarrierePlaywrightTests
         if (await now.CountAsync() > 0)
         {
             var nowTitle = await now.First.InnerTextAsync();
-            await Assertions.Expect(page.Locator(".how-card .career-btn--primary").First)
+            await Assertions.Expect(page.Locator(".how-card .btn-primary").First)
                 .ToContainTextAsync(nowTitle);
         }
 
         await CareerE2e.ShotAsync(page, "f7-how-1440");
 
         var urlBefore = page.Url;
-        await page.Locator(".how-card .career-btn--text").First.ClickAsync();
+        await page.Locator(".how-card .btn-ghost").First.ClickAsync();
         await page.WaitForTimeoutAsync(1_500);
         Assert.Equal(urlBefore, page.Url);
         await Assertions.Expect(page.Locator(".how-card__ack")).ToBeVisibleAsync(new() { Timeout = 30_000 });
@@ -557,8 +557,8 @@ public class CarrierePlaywrightTests
                     () => {
                       const actions = document.querySelector('.career-card__actions') || document.querySelector('.career-dialog__actions');
                       if (!actions) return -1;
-                      const primary = actions.querySelector('.career-btn--primary');
-                      const secondary = actions.querySelector('.career-btn--secondary, .career-btn--text');
+                      const primary = actions.querySelector('.btn-primary');
+                      const secondary = actions.querySelector('.btn-secondary, .btn-ghost');
                       if (!primary || !secondary) return -1;
                       return secondary.getBoundingClientRect().left - primary.getBoundingClientRect().left;
                     }
@@ -626,7 +626,7 @@ public class CarrierePlaywrightTests
 
         Assert.Equal(0, await CareerE2e.SceneAnimationCountAsync(page));
 
-        var complete = page.Locator(".career-card--step .career-btn--primary").First;
+        var complete = page.Locator(".career-card--step .btn-primary").First;
         if (await complete.CountAsync() == 0)
         {
             return;
@@ -637,7 +637,7 @@ public class CarrierePlaywrightTests
         Assert.Equal(0, await CareerE2e.SceneAnimationCountAsync(page));
         await CareerE2e.ShotAsync(page, "f9-carriere-done-reduced-1440");
 
-        await page.Locator(".career-card--done .career-btn--text").First.ClickAsync();
+        await page.Locator(".career-card--done .btn-ghost").First.ClickAsync();
         await page.WaitForSelectorAsync(".career-card--step", new() { Timeout = 60_000 });
     }
 
@@ -888,7 +888,7 @@ public class CarrierePlaywrightTests
             return false;
         }
 
-        await page.Locator(".career-card--empty .career-btn--primary").First.ClickAsync();
+        await page.Locator(".career-card--empty .btn-primary").First.ClickAsync();
         try
         {
             await page.WaitForSelectorAsync(".career-card--overview", new() { Timeout = 180_000 });
@@ -974,7 +974,7 @@ public class CarrierePlaywrightTests
             return false;
         }
 
-        var link = page.Locator(".career-now a.career-btn--primary").First;
+        var link = page.Locator(".career-now a.btn-primary").First;
         if (await link.CountAsync() == 0)
         {
             return false;

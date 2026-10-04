@@ -34,7 +34,7 @@
         <p class="kompas-status">@Culture["Fit.Locked"]</p>
         <div class="kompas-fit-actions">
             <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
-            <a class="engagement-btn" href="/candidate/career">@Culture["Career.Start"]</a>
+            <a class="btn btn-primary" href="/candidate/career">@Culture["Career.Start"]</a>
         </div>
     }
     else
@@ -93,7 +93,7 @@
                                 <ul class="role-fit-checklist">
                                     @foreach (var item in result.FormalItems)
                                     {
-                                        <li class="@(item.Met ? "is-met" : item.Dealbreaker ? "is-gap is-dealbreaker" : "is-gap")">
+                                        <li class="@(item.Met ?"is-met" : item.Dealbreaker ? "is-gap is-dealbreaker" : "is-gap")">
                                             <span aria-hidden="true">@(item.Met ? "✓" : "✗")</span>
                                             <span>
                                                 @if (!item.Met && item.Dealbreaker)
@@ -191,7 +191,7 @@
                                     }
                                 </p>
                                 <p class="muted">@role.Why</p>
-                                <button class="engagement-btn" type="button" disabled="@_session.Busy" @onclick="() => EvaluateSimilarAsync(role.Title)">
+                                <button class="btn btn-primary" type="button" disabled="@_session.Busy" @onclick="() => EvaluateSimilarAsync(role.Title)">
                                     @Culture["Fit.CheckSimilar"]
                                 </button>
                             </li>
@@ -221,13 +221,13 @@
                         }
                     </ul>
                 }
-                <a class="engagement-btn" href="@result.MapHref">@Culture["Fit.OpenMap"]</a>
+                <a class="btn btn-primary" href="@result.MapHref">@Culture["Fit.OpenMap"]</a>
             </section>
 
             @if (result.ShowDeepUpsell)
             {
                 <p class="login-lead fit-upsell">@Culture["Fit.DeepUpsell"]</p>
-                <a class="engagement-btn" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+                <a class="btn btn-primary" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
             }
         }
     }
