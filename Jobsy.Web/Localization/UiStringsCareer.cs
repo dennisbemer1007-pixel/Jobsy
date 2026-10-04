@@ -322,6 +322,12 @@ public static class UiStringsCareer
             "Jeszcze {0} szczypce do wyhodowania",
             "Mai ai {0} clești de crescut",
             "بقي {0} من المخالب لتنمو");
+        Add("Career.Fact.ClawOne",
+            "Nog 1 klauw laten groeien",
+            "1 claw still to grow",
+            "Jeszcze 1 szczypce do wyhodowania",
+            "Mai ai 1 clește de crescut",
+            "بقي مخلب واحد لينمو");
         Add("Career.Fact.Courses",
             "{0} opleidingen · {1} is gratis",
             "{0} courses · {1} is free",

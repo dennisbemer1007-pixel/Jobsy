@@ -158,7 +158,7 @@
     [Parameter] public EventCallback OnGoTests { get; set; }
 
     private bool _storyExpanded;
-    private string EmptyStoryKey => TestsComplete ? "Dna.StoryPending" : "Dna.StoryEmpty";
+    private string EmptyStoryKey => TestsComplete ? "Dna.StoryFallback" : "Dna.StoryEmpty";
 
     private void ToggleStory() => _storyExpanded = !_storyExpanded;
 

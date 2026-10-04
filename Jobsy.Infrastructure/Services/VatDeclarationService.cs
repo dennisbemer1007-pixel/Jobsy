@@ -36,6 +36,7 @@ public sealed class VatDeclarationService : IVatDeclarationService
             .ToListAsync(cancellationToken);
 
         var consumerDates = await _db.ConsumerPurchaseInvoices.AsNoTracking()
+            .ExcludingTestUnlocks()
             .Where(i => i.VatDeclarationId == null)
             .Select(i => i.IssuedAt)
             .ToListAsync(cancellationToken);
@@ -94,6 +95,7 @@ public sealed class VatDeclarationService : IVatDeclarationService
             .ToListAsync(cancellationToken);
 
         var consumers = await _db.ConsumerPurchaseInvoices.AsNoTracking()
+            .ExcludingTestUnlocks()
             .Where(i => i.VatDeclarationId == null
                         && i.IssuedAt >= start && i.IssuedAt < end)
             .ToListAsync(cancellationToken);
@@ -167,6 +169,7 @@ public sealed class VatDeclarationService : IVatDeclarationService
             .ToListAsync(cancellationToken);
 
         var consumers = await _db.ConsumerPurchaseInvoices
+            .ExcludingTestUnlocks()
             .Where(i => i.VatDeclarationId == null
                         && i.IssuedAt >= start && i.IssuedAt < end)
             .ToListAsync(cancellationToken);
@@ -242,7 +245,6 @@ public sealed class VatDeclarationService : IVatDeclarationService
             inv.VatDeclarationStatusLabel = statusLabel;
         }
 
-        
         foreach (var inv in consumers)
         {
             inv.VatDeclarationId = declarationId;

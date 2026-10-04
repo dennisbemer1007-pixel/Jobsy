@@ -760,6 +760,63 @@ public sealed class TestAccountsSeedService
         await EnsureSeedCareerAsync(userId, now, cancellationToken);
     }
 
+    /// <summary>
+    /// Rewrites the seeded complete candidate's assessments when answers or scores
+    /// diverge from the canonical seed (placeholder 70/65/60/55/50, gaps, career "done" without scores).
+    /// Does not touch preferences or the new candidate. Caller saves.
+    /// </summary>
+    public async Task<bool> RepairCompleteCandidateAssessmentsAsync(CancellationToken cancellationToken = default)
+    {
+        var domain = _configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+        var entry = TestAccountCatalog.FindByKey("Candidate");
+        if (entry is null)
+        {
+            return false;
+        }
+
+        var email = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain);
+        var user = await _db.Users.FirstOrDefaultAsync(
+            u => u.IsTestAccount && u.Email == email,
+            cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        var now = DateTime.UtcNow;
+        await EnsureSeedCompetencyAsync(user.Id, now, cancellationToken);
+        await EnsureSeedValuesAsync(user.Id, now, cancellationToken);
+        await EnsureSeedCultureAsync(user.Id, now, cancellationToken);
+        await EnsureSeedCareerAsync(user.Id, now, cancellationToken);
+
+        var onboarding = await _db.CandidateOnboardings
+            .FirstOrDefaultAsync(o => o.UserId == user.Id, cancellationToken);
+        if (onboarding is not null)
+        {
+            MarkJourneyStepsDone(onboarding);
+        }
+
+        return true;
+    }
+
+    private static bool SameAnswers(IReadOnlyDictionary<int, int> stored, IReadOnlyDictionary<int, int> expected)
+    {
+        if (stored.Count != expected.Count)
+        {
+            return false;
+        }
+
+        foreach (var (id, value) in expected)
+        {
+            if (!stored.TryGetValue(id, out var got) || got != value)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static Dictionary<int, int> FullLikert(int count)
     {
         var map = new Dictionary<int, int>(count);
@@ -776,7 +833,14 @@ public sealed class TestAccountsSeedService
         var answers = FullLikert(CompetencyTestCatalog.QuestionCount);
         var scores = CompetencyTestCatalog.Score(answers)!;
         var row = await _db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        if (row is not null && CompetencyTestCatalog.IsComplete(CompetencyTestCatalog.ParseAnswersJson(row.AnswersJson)))
+        if (row is not null
+            && row.Status == CandidateCompetencyStatuses.Completed
+            && SameAnswers(CompetencyTestCatalog.ParseAnswersJson(row.AnswersJson), answers)
+            && row.SamenwerkenPercent == scores.Samenwerken
+            && row.ResultaatgerichtheidPercent == scores.Resultaatgerichtheid
+            && row.StressbestendigheidPercent == scores.Stressbestendigheid
+            && row.InnovatiePercent == scores.Innovatie
+            && row.ExtraversiePercent == scores.Extraversie)
         {
             return;
         }
@@ -804,7 +868,14 @@ public sealed class TestAccountsSeedService
         var answers = FullLikert(SchwartzValuesCatalog.QuestionCount);
         var scores = SchwartzValuesCatalog.Score(answers)!;
         var row = await _db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        if (row is not null && SchwartzValuesCatalog.IsComplete(SchwartzValuesCatalog.ParseAnswers(row.AnswersJson)))
+        if (row is not null
+            && row.Status == CandidateCompetencyStatuses.Completed
+            && SameAnswers(SchwartzValuesCatalog.ParseAnswers(row.AnswersJson), answers)
+            && row.AutonomyPercent == scores.Autonomy
+            && row.ConnectionPercent == scores.Connection
+            && row.AchievementPercent == scores.Achievement
+            && row.StabilityPercent == scores.Stability
+            && row.ImpactPercent == scores.Impact)
         {
             return;
         }
@@ -833,7 +904,20 @@ public sealed class TestAccountsSeedService
         var scores = CulturePersonalityCatalog.Score(answers)!;
         var row = await _db.CandidateCulturePersonalityProfiles
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        if (row is not null && CulturePersonalityCatalog.IsComplete(CulturePersonalityCatalog.ParseAnswers(row.AnswersJson)))
+        if (row is not null
+            && row.Status == CandidateCompetencyStatuses.Completed
+            && SameAnswers(CulturePersonalityCatalog.ParseAnswers(row.AnswersJson), answers)
+            && row.AutonomyPercent == scores.Autonomy
+            && row.InformalPercent == scores.Informal
+            && row.CollaborationPercent == scores.Collaboration
+            && row.FlexibilityPercent == scores.Flexibility
+            && row.InnovationPercent == scores.Innovation
+            && row.PeopleFirstPercent == scores.PeopleFirst
+            && row.OpennessPercent == scores.Openness
+            && row.ConscientiousnessPercent == scores.Conscientiousness
+            && row.ExtraversionPercent == scores.Extraversion
+            && row.AgreeablenessPercent == scores.Agreeableness
+            && row.EmotionalStabilityPercent == scores.EmotionalStability)
         {
             return;
         }
@@ -868,8 +952,14 @@ public sealed class TestAccountsSeedService
         var tags = CareerTestCatalog.DeriveRiasecTags(scores);
         var row = await _db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (row is not null
-            && CareerTestCatalog.IsComplete(CareerTestCatalog.ParseAnswersJson(row.AnswersJson))
-            && row.RealisticPercent is not null)
+            && row.Status == CandidateCompetencyStatuses.Completed
+            && SameAnswers(CareerTestCatalog.ParseAnswersJson(row.AnswersJson), answers)
+            && row.RealisticPercent == scores.Realistic
+            && row.InvestigativePercent == scores.Investigative
+            && row.ArtisticPercent == scores.Artistic
+            && row.SocialPercent == scores.Social
+            && row.EnterprisingPercent == scores.Enterprising
+            && row.ConventionalPercent == scores.Conventional)
         {
             return;
         }

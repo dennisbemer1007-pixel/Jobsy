@@ -27,7 +27,8 @@
 }
 else
 {
-    <TestQuestionFlow Kind="_kind"
+    <TestQuestionFlow @key="FlowEpoch"
+                      Kind="_kind"
                       Questions="_flowQuestions"
                       Answers="Answers"
                       StartAt="CurrentQuestion"
@@ -48,6 +49,7 @@ else
     public sealed record MiniQuestion(int Id, string TextKey);
 
     [Parameter] public int Step { get; set; }
+    [Parameter] public int FlowEpoch { get; set; }
     [Parameter] public int CurrentQuestion { get; set; }
     [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
     [Parameter] public IReadOnlyList<MiniQuestion> Questions { get; set; } = [];

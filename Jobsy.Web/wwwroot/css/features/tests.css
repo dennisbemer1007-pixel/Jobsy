@@ -217,9 +217,13 @@
     position: sticky;
     bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
     z-index: 6;
+    inline-size: 100%;
     margin-inline: -0.25rem;
-    padding: 0.65rem 0.25rem;
-    background: var(--surface);
+    padding: 0.75rem 0.25rem;
+    background-color: var(--surface);
+    background-image: linear-gradient(var(--surface), var(--surface));
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 16px color-mix(in srgb, var(--brand) 10%, transparent);
   }
 }
 

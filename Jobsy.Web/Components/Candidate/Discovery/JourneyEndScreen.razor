@@ -24,9 +24,9 @@
                 <h3>@DisplayName</h3>
             </div>
             <div class="journey-ppc__facts">
-                @Fact("Discovery.End.Fact.Strength", StrengthFact)
-                @Fact("Discovery.End.Fact.Work", WorkFact)
-                @Fact("Discovery.End.Fact.Value", ValueFact)
+                @Fact("Discovery.End.Fact.Strength", StrengthFact, StrengthDepthKey)
+                @Fact("Discovery.End.Fact.Work", WorkFact, WorkDepthKey)
+                @Fact("Discovery.End.Fact.Value", ValueFact, ValueDepthKey)
             </div>
         </div>
 
@@ -66,17 +66,20 @@
     [Parameter] public string? StrengthFact { get; set; }
     [Parameter] public string? WorkFact { get; set; }
     [Parameter] public string? ValueFact { get; set; }
+    [Parameter] public string StrengthDepthKey { get; set; } = "Discovery.End.FirstImpression";
+    [Parameter] public string WorkDepthKey { get; set; } = "Discovery.End.FirstImpression";
+    [Parameter] public string ValueDepthKey { get; set; } = "Discovery.End.FirstImpression";
     [Parameter] public EventCallback Deepen { get; set; }
     [Parameter] public EventCallback ViewPassport { get; set; }
 
-    private RenderFragment Fact(string labelKey, string? value) => __builder =>
+    private RenderFragment Fact(string labelKey, string? value, string depthKey) => __builder =>
     {
         <div class="journey-ppc__fact">
             <small>@Culture[labelKey]</small>
             <b>@(string.IsNullOrWhiteSpace(value) ? Culture["Discovery.End.NotDiscovered"] : value)</b>
             @if (!string.IsNullOrWhiteSpace(value))
             {
-                <span class="journey-ppc__pv">@Culture["Discovery.End.FirstImpression"]</span>
+                <span class="journey-ppc__pv">@Culture[depthKey]</span>
             }
         </div>
     };

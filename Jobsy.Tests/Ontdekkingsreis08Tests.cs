@@ -78,7 +78,12 @@ public class Ontdekkingsreis08CatalogTests
         Assert.True(opts[0].Disabled); // 5
         Assert.True(opts[1].Disabled); // 10
         Assert.False(opts[2].Disabled); // 18
+        Assert.Equal("Discovery.Shed.DoneSub", opts[0].SubKey);
+        Assert.Equal("Discovery.Shed.DoneSub", opts[1].SubKey);
         Assert.Equal("Discovery.Shed.DeepestSubCulture", opts[2].SubKey);
+        Assert.Equal(18, JourneyTestFlow.DefaultSelectedLevel(12, OnboardingWizardCatalog.OnboardingTestKind.Culture));
+        Assert.Equal(25, JourneyTestFlow.DefaultSelectedLevel(10, OnboardingWizardCatalog.OnboardingTestKind.Competency));
+        Assert.Equal(10, JourneyTestFlow.DefaultSelectedLevel(5, OnboardingWizardCatalog.OnboardingTestKind.Career));
     }
 
     private static void AssertSet(int[] ids, int max)
@@ -285,6 +290,24 @@ public class Ontdekkingsreis08ShedBunitTests : BunitContext
         Assert.Contains("Helpen", facts.Work);
         Assert.Equal("Verbinding", facts.Value);
         Assert.Null(JourneyTestFlow.EndFacts(null).Strength);
+    }
+
+    [Fact]
+    public void End_depth_labels_follow_answered_counts()
+    {
+        Assert.Equal("TestDepth.First", JourneyTestFlow.DepthLabelKey(5, OnboardingWizardCatalog.OnboardingTestKind.Competency));
+        Assert.Equal("TestDepth.Deeper", JourneyTestFlow.DepthLabelKey(10, OnboardingWizardCatalog.OnboardingTestKind.Career));
+        Assert.Equal("Discovery.Overview.FullyDone", JourneyTestFlow.DepthLabelKey(25, OnboardingWizardCatalog.OnboardingTestKind.Values));
+        Assert.Equal(
+            "Discovery.End.HintFull",
+            JourneyTestFlow.EndHintKey(25, 25, 25));
+        Assert.Equal(
+            "Discovery.End.HintFirst",
+            JourneyTestFlow.EndHintKey(25, 5, 25));
+        Assert.Equal(
+            "Discovery.End.HintDeeper",
+            JourneyTestFlow.EndHintKey(10, 25, 10));
+        Assert.Equal("Helemaal gedaan", UiStrings.Get("Discovery.End.HintFull", "nl").Split('.')[0]);
     }
 
     [Fact]

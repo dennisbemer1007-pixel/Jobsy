@@ -1,23 +1,22 @@
+using Jobsy.Core.Careers;
+
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Candidate-only hint above the RIASEC list. It does not change match percents
-/// and is never sent to employers or partners.
+/// Candidate-only hint above the RIASEC list. It does not change stored match
+/// percents and is never sent to employers or partners.
 /// </summary>
 public static class CareerGoalFit
 {
     public sealed record Hit(string Title, bool EducationAbove);
 
-    private static readonly string[] HigherEducationTitles =
+    /// <summary>
+    /// Role family for a logistics lead. A shared word like "teamleider" is not enough:
+    /// "Teamleider winkel of horeca" stays out of a logistiek goal.
+    /// </summary>
+    private static readonly string[][] RoleFamilies =
     [
-        "boekhouder",
-        "software",
-        "docent",
-        "verpleegkundige",
-        "ict-beheerder",
-        "hr-medewerker",
-        "lab- of meet",
-        "marketingmedewerker"
+        ["teamleider logistiek", "planner", "planningsmedewerker", "voorman", "logistiek supervisor"]
     ];
 
     public static IReadOnlyList<Hit> Pick(
@@ -25,38 +24,58 @@ public static class CareerGoalFit
         string? dream,
         string? evidence,
         string? education,
-        int take = 3)
+        int take = 4)
     {
-        var needles = Tokens($"{dream} {evidence}");
-        if (needles.Count == 0)
+        var dreamFold = CareerOccupationKeys.Fold(dream ?? "");
+        if (dreamFold.Length == 0)
         {
             return [];
         }
 
-        var rank = EducationRank(education);
-        var hits = new List<Hit>();
+        var currentJobs = CurrentJobFolds(evidence);
+        var ranked = new List<(string Title, int Rank, bool Above)>();
         foreach (var title in titles)
         {
-            if (string.IsNullOrWhiteSpace(title) || hits.Any(h => string.Equals(h.Title, title, StringComparison.OrdinalIgnoreCase)))
+            if (string.IsNullOrWhiteSpace(title)
+                || ranked.Any(h => string.Equals(h.Title, title, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
 
-            var folded = CareerOccupationKeys.Fold(title);
-            if (!needles.Any(n => folded.Contains(n, StringComparison.Ordinal)))
+            var fold = CareerOccupationKeys.Fold(title);
+            if (IsCurrentJob(fold, currentJobs))
             {
                 continue;
             }
 
-            hits.Add(new Hit(title.Trim(), EducationAbove(folded, rank)));
-            if (hits.Count >= take)
+            var rank = RankAgainstDream(fold, dreamFold);
+            if (rank < 0)
             {
-                break;
+                continue;
             }
+
+            ranked.Add((title.Trim(), rank, RequiresHigherEducation(title, education)));
         }
 
-        return hits;
+        return ranked
+            .OrderBy(h => h.Rank)
+            .ThenBy(h => h.Title, StringComparer.OrdinalIgnoreCase)
+            .Take(Math.Max(1, take))
+            .Select(h => new Hit(h.Title, h.Above))
+            .ToList();
     }
+
+    /// <summary>
+    /// Shown percent for the candidate. A title that needs a clearly higher diploma
+    /// cannot stay in the 100% Super-match tier. Stored scores are unchanged.
+    /// </summary>
+    public static int DisplayPercent(string title, int percent, string? education)
+        => percent >= CareerCompassBuilder.SuperMatchMin && RequiresHigherEducation(title, education)
+            ? CareerCompassBuilder.SuperMatchMin - 1
+            : percent;
+
+    public static bool BelongsInSuper(string title, int percent, string? education)
+        => DisplayPercent(title, percent, education) >= CareerCompassBuilder.SuperMatchMin;
 
     public static IReadOnlyList<string> AboveEducation(IEnumerable<string> titles, string? education)
     {
@@ -68,7 +87,7 @@ public static class CareerGoalFit
 
         return titles
             .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Where(t => EducationAbove(CareerOccupationKeys.Fold(t), rank))
+            .Where(t => RequiresHigherEducation(t, education))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
@@ -105,9 +124,107 @@ public static class CareerGoalFit
         return 0;
     }
 
-    private static bool EducationAbove(string foldedTitle, int rank)
-        => rank is > 0 and <= 4
-           && HigherEducationTitles.Any(h => foldedTitle.Contains(h, StringComparison.Ordinal));
+    public static bool RequiresHigherEducation(string title, string? education)
+    {
+        var have = EducationRank(education);
+        if (have is 0 or >= 5)
+        {
+            return false;
+        }
+
+        var need = RequiredRank(title);
+        return need >= 4 && need > have;
+    }
+
+    private static int RankAgainstDream(string titleFold, string dreamFold)
+    {
+        if (titleFold == dreamFold
+            || titleFold.Contains(dreamFold, StringComparison.Ordinal)
+            || dreamFold.Contains(titleFold, StringComparison.Ordinal) && titleFold.Length >= 8)
+        {
+            return 0;
+        }
+
+        return SameFamily(dreamFold, titleFold) ? 1 : -1;
+    }
+
+    private static bool SameFamily(string dreamFold, string titleFold)
+    {
+        foreach (var family in RoleFamilies)
+        {
+            var dreamIn = family.Any(member => dreamFold.Contains(member, StringComparison.Ordinal));
+            var titleIn = family.Any(member => titleFold.Contains(member, StringComparison.Ordinal));
+            if (dreamIn && titleIn)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsCurrentJob(string titleFold, IReadOnlyList<string> currentJobs)
+        => currentJobs.Any(job =>
+            titleFold.Contains(job, StringComparison.Ordinal)
+            || job.Contains(titleFold, StringComparison.Ordinal));
+
+    private static List<string> CurrentJobFolds(string? evidence)
+    {
+        var fold = CareerOccupationKeys.Fold(evidence ?? "");
+        if (fold.Length == 0)
+        {
+            return [];
+        }
+
+        return CareerDreamCatalog.All
+            .Select(entry => CareerOccupationKeys.Fold(entry.Title))
+            .Where(title => title.Length >= 5 && CareerOccupationKeys.Hits(fold, title))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static int RequiredRank(string title)
+    {
+        var entry = FindOccupationEntry(title);
+        return entry is null ? 0 : LevelRank(entry.Level);
+    }
+
+    private static CareerDreamCatalog.Entry? FindOccupationEntry(string title)
+    {
+        var direct = CareerDreamCatalog.FindByTitleOrAlias(title);
+        if (direct is not null)
+        {
+            return direct;
+        }
+
+        var fold = CareerOccupationKeys.Fold(title);
+        CareerDreamCatalog.Entry? best = null;
+        var bestLen = 0;
+        foreach (var entry in CareerDreamCatalog.All)
+        {
+            var entryFold = CareerOccupationKeys.Fold(entry.Title);
+            if (entryFold.Length >= 5
+                && fold.Contains(entryFold, StringComparison.Ordinal)
+                && entryFold.Length > bestLen)
+            {
+                best = entry;
+                bestLen = entryFold.Length;
+            }
+        }
+
+        return best;
+    }
+
+    private static int LevelRank(string level) => level switch
+    {
+        "Entry" => 1,
+        "Mbo2" => 2,
+        "Mbo3" => 3,
+        "Mbo4" => 4,
+        "Hbo" => 5,
+        "Wo" => 6,
+        _ => 0
+    };
 
     private static List<string> Tokens(string? text)
     {

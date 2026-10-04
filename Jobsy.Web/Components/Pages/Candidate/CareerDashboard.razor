@@ -656,7 +656,7 @@
     private void ApplyPlan(CareerPathPlanApiModel? plan)
     {
         _planApi = plan;
-        _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel, _evidence);
+        _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel, _evidence, _experienceYears);
         if (!_plan.HasPlan && !string.IsNullOrWhiteSpace(_plan.DreamTitle))
         {
             var entry = CareerDreamCatalog.FindByTitleOrAlias(_plan.DreamTitle);

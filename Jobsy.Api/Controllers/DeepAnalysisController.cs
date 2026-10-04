@@ -56,6 +56,12 @@ public sealed class DeepAnalysisController : ControllerBase
     [HttpGet("payment-mode")]
     public async Task<ActionResult<object>> PaymentMode(CancellationToken cancellationToken)
     {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user?.IsTestAccount == true)
+        {
+            return Ok(new { mode = DeepTestFinanceRules.TestUnlockMethod });
+        }
+
         var mode = await _payments.GetPaymentModeAsync(cancellationToken);
         return Ok(new { mode });
     }

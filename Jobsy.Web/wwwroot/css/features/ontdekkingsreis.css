@@ -1036,6 +1036,18 @@
   padding-bottom: 2px;
 }
 
+@media (max-width: 639px) {
+  .journey-ppc__who {
+    align-items: flex-start;
+    margin-top: 0;
+    padding-top: 12px;
+  }
+
+  .journey-ppc__av {
+    margin-top: -38px;
+  }
+}
+
 .journey-ppc__facts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

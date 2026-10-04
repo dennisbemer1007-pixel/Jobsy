@@ -110,24 +110,18 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
             throw new InvalidOperationException(AlreadyUnlockedCode);
         }
 
+        await CancelOpenCheckoutsAsync(userId, kind, cancellationToken);
+
+        if (user.IsTestAccount)
+        {
+            return await CreateTestUnlockAsync(userId, kind, locale, cancellationToken);
+        }
+
         var mode = await GetPaymentModeAsync(cancellationToken);
         if (mode == "unavailable")
         {
             _logger.LogWarning("Deep-test checkout unavailable: no Mollie key and stubs disabled.");
             throw new InvalidOperationException(PaymentsUnavailableCode);
-        }
-
-        var open = await _db.DeepAnalysisCheckouts
-            .Where(c => c.UserId == userId && c.Kind == kind && c.Status == DeepAnalysisCheckoutStatus.Pending)
-            .ToListAsync(cancellationToken);
-        foreach (var prior in open)
-        {
-            prior.Status = DeepAnalysisCheckoutStatus.Cancelled;
-            prior.FailedAtUtc = DateTime.UtcNow;
-            if (!prior.IsStub && !string.IsNullOrWhiteSpace(prior.PaymentId))
-            {
-                await _mollie.TryCancelPaymentAsync(prior.PaymentId, cancellationToken);
-            }
         }
 
         var commercial = await _commercial.GetAsync(cancellationToken);
@@ -425,10 +419,83 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
         }
     }
 
+    private async Task<DeepTestCheckoutCreateResult> CreateTestUnlockAsync(
+        Guid userId,
+        AssessmentKind kind,
+        string? locale,
+        CancellationToken cancellationToken)
+    {
+        var checkoutId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var checkout = new DeepAnalysisCheckout
+        {
+            Id = checkoutId,
+            UserId = userId,
+            Kind = kind,
+            PaymentId = $"test_deep_{Guid.NewGuid():N}",
+            AmountEuro = 0,
+            AmountExVatCents = 0,
+            VatAmountCents = 0,
+            TotalAmountCents = 0,
+            PaymentMethod = DeepTestFinanceRules.TestUnlockMethod,
+            ProviderStatus = "test",
+            IsStub = true,
+            WaiverAcceptedAtUtc = now,
+            WaiverTextVersion = DeepAnalysisPricing.WaiverTextVersion,
+            Locale = NormalizeLocale(locale),
+            ExpiresAtUtc = now.AddHours(48),
+            Status = DeepAnalysisCheckoutStatus.Paid,
+            PaidAtUtc = now,
+            CreatedAtUtc = now
+        };
+        _db.DeepAnalysisCheckouts.Add(checkout);
+        await _deep.UnlockForUserAsync(userId, kind, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Deep-test test unlock {CheckoutId} kind={Kind} user={UserId}",
+            checkoutId, kind, userId);
+
+        return new DeepTestCheckoutCreateResult(
+            checkoutId,
+            $"/candidate/deep-analysis/checkout?checkoutId={checkoutId:D}",
+            0,
+            true,
+            kind,
+            checkout.PaymentId);
+    }
+
+    private async Task CancelOpenCheckoutsAsync(
+        Guid userId,
+        AssessmentKind kind,
+        CancellationToken cancellationToken)
+    {
+        var open = await _db.DeepAnalysisCheckouts
+            .Where(c => c.UserId == userId && c.Kind == kind && c.Status == DeepAnalysisCheckoutStatus.Pending)
+            .ToListAsync(cancellationToken);
+        foreach (var prior in open)
+        {
+            prior.Status = DeepAnalysisCheckoutStatus.Cancelled;
+            prior.FailedAtUtc = DateTime.UtcNow;
+            if (!prior.IsStub
+                && !DeepTestFinanceRules.IsTestUnlock(prior.PaymentMethod)
+                && !string.IsNullOrWhiteSpace(prior.PaymentId))
+            {
+                await _mollie.TryCancelPaymentAsync(prior.PaymentId, cancellationToken);
+            }
+        }
+    }
+
     private async Task<DeepTestFulfillResult> EnsurePaidSideEffectsAsync(
         DeepAnalysisCheckout checkout,
         CancellationToken cancellationToken)
     {
+        if (DeepTestFinanceRules.IsTestUnlock(checkout.PaymentMethod))
+        {
+            await _deep.UnlockForUserAsync(checkout.UserId, checkout.Kind, cancellationToken);
+            return new DeepTestFulfillResult(false, "paid", checkout.Id, true, null);
+        }
+
         var alreadyUnlocked = await _db.CandidateDeepAnalyses.AsNoTracking()
             .AnyAsync(
                 d => d.UserId == checkout.UserId

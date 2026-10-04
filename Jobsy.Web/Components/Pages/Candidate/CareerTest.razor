@@ -61,7 +61,7 @@ else
                             else
                             {
                                 <button type="button" class="engagement-btn" @onclick="StartQuestions">
-                                    @(_answered == 0 ? Culture["TestFlow.Begin"] : Culture.Format("TestFlow.ContinueAt", _answered + 1))
+                                    @(_answered == 0 ? Culture["TestFlow.Begin"] : Culture.Format("TestFlow.ContinueAt", ResumeAt))
                                 </button>
                             }
                         </footer>
@@ -142,6 +142,8 @@ else
 
     private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Career, _target);
     private int _fullCount => TestDepthRules.CountFor(AssessmentKind.Career, TestDepthLevel.Full);
+    private static readonly IReadOnlyDictionary<int, int> EmptyAnswers = new Dictionary<int, int>();
+    private int ResumeAt => TestDepthRules.ResumeQuestionNumber(AssessmentKind.Career, _autosave?.Answers ?? EmptyAnswers);
     private string IntroBubble => _answered >= _fullCount
         ? Culture["TestFlow.Bubble.IntroDone"]
         : _answered > 0

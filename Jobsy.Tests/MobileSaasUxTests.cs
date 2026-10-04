@@ -450,6 +450,8 @@ public class MobileSaasUxTests
         Assert.Contains("ChatHost.ToggleRequested", assistant);
         Assert.Contains("UseMascot=\"true\"", assistant);
         Assert.Contains("aria-expanded=\"@(_open ? \"true\" : \"false\")\"", assistant);
+        Assert.Contains("jobsyComposeEnter", assistant);
+        Assert.Contains("OnDraftKeyDown", assistant);
         Assert.DoesNotContain("aria-expanded=\"@_open\"", assistant);
 
         var nav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/BottomNav.razor"));
@@ -475,7 +477,9 @@ public class MobileSaasUxTests
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".lobsy-assistant-tab {\n    position: fixed;\n    top: 50%;\n    right: 0;", css);
         Assert.Contains(".lobsy-assistant-tab__btn {\n    display: inline-flex;\n    align-items: center;\n    gap: 0.35rem;\n    writing-mode: vertical-rl;", css);
-        Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: 46%;\n    right: 0;", css);
+        Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
+        Assert.Contains("pointer-events: none;", css);
+        Assert.Contains(".feedback-widget__btn {\n    pointer-events: auto;", css);
         Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
         Assert.Contains(".lobsy-assistant-tab.has-bottom-nav {\n        top: auto;\n        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", css);
         Assert.Contains(".feedback-widget__tab--edge {\n        display: none !important;", css);

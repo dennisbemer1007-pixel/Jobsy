@@ -38,7 +38,7 @@
         <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
             <p class="journey-mprog__t">
                 <b>@MobileProgressLabel</b>
-                @if (_screen is not "start")
+                @if (_screen is not "start" && !ShowFinishedChrome)
                 {
                     <span class="muted">· @CurrentStepTitle</span>
                 }
@@ -61,7 +61,7 @@
 
         <div class="journey-stage">
             <div class="journey-only-desktop">
-                <JourneyProgressRail CurrentStep="@RailStep" IsEnd="@IsLightScreen" SaveStatus="@_saveStatus" />
+                <JourneyProgressRail CurrentStep="@RailStep" IsEnd="@ShowFinishedChrome" SaveStatus="@_saveStatus" />
             </div>
 
             <section class="journey-step card" aria-live="polite">
@@ -464,6 +464,9 @@
                                       StrengthFact="@_endStrength"
                                       WorkFact="@_endWork"
                                       ValueFact="@_endValue"
+                                      StrengthDepthKey="@_strengthDepthKey"
+                                      WorkDepthKey="@_workDepthKey"
+                                      ValueDepthKey="@_valueDepthKey"
                                       Deepen="GoToOverviewAsync"
                                       ViewPassport="GoToPassportAsync" />
                 }
@@ -490,6 +493,7 @@
                         <span class="journey-only-mobile">@Culture.Format("Discovery.TestOf", _countedStep - 6)</span>
                     </p>
                     <OnboardingMiniTest Step="_countedStep"
+                                        FlowEpoch="_miniFlowEpoch"
                                         CurrentQuestion="_currentQuestion"
                                         TestTabs="MiniTestTabs"
                                         Questions="_miniQuestions"
@@ -568,6 +572,7 @@
     private int _countedStep;
     private int _depth;
     private int _currentQuestion;
+    private int _miniFlowEpoch;
     private string _saveStatus = "idle";
     private string? _error;
     private string _startLead = "";
@@ -594,6 +599,10 @@
     private string? _endStrength;
     private string? _endWork;
     private string? _endValue;
+    private string _strengthDepthKey = "Discovery.End.FirstImpression";
+    private string _workDepthKey = "Discovery.End.FirstImpression";
+    private string _valueDepthKey = "Discovery.End.FirstImpression";
+    private string _endHintKey = "Discovery.End.HintFirst";
     private List<string> _shedLines = [];
     private List<JourneyShedMoment.DepthOption> _shedOptions = [];
     private List<JourneyOverview.OverviewRow> _overviewRows = [];
@@ -608,13 +617,19 @@
 
     private bool IsLightScreen => _screen is "klaar" or "overview";
 
-    private int _platesShed => IsLightScreen
+    private bool JourneyFinished => _state?.IsComplete == true || _state?.FinishReached == true;
+
+    /// <summary>Finished journeys keep the 10/10 rail, including when consent is reopened.</summary>
+    private bool ShowFinishedChrome => IsLightScreen || (_screen == "toestemming" && JourneyFinished);
+
+    private int _platesShed => ShowFinishedChrome
         ? 10
         : _screen == "shed"
             ? _shedStep
             : Math.Max(RailStep - 1, 0);
     private int RailStep => _screen switch
     {
+        "toestemming" when JourneyFinished => 11,
         "toestemming" => 6,
         "shed" => _shedStep + 1,
         "klaar" or "overview" => 11,
@@ -679,7 +694,7 @@
                 return Culture.Format("Discovery.End.HintMatches", count);
             }
 
-            return Culture["Discovery.End.HintFirst"];
+            return Culture[_endHintKey];
         }
     }
 
@@ -693,20 +708,22 @@
         }
     }
 
-    private string MobileProgressLabel => _screen switch
-    {
-        "start" => Culture["Discovery.Rail.StartCountShort"],
-        "klaar" or "overview" => Culture["Discovery.Rail.DoneCountShort"],
-        _ => Culture.Format("Discovery.Rail.StepCount", Math.Max(Math.Min(RailStep, 10), 1))
-    };
+    private string MobileProgressLabel => ShowFinishedChrome
+        ? Culture["Discovery.Rail.DoneCountShort"]
+        : _screen switch
+        {
+            "start" => Culture["Discovery.Rail.StartCountShort"],
+            _ => Culture.Format("Discovery.Rail.StepCount", Math.Max(Math.Min(RailStep, 10), 1))
+        };
 
     private string MobileProgressAria => $"{MobileProgressLabel}, {_platesShed} lagen eraf";
-    private string MarkerLeft => _screen switch
-    {
-        "start" => "2%",
-        "klaar" or "overview" => "95%",
-        _ => $"{(Math.Max(Math.Min(RailStep, 10), 1) - 0.5) / 10 * 100:0.0}%"
-    };
+    private string MarkerLeft => ShowFinishedChrome
+        ? "95%"
+        : _screen switch
+        {
+            "start" => "2%",
+            _ => $"{(Math.Max(Math.Min(RailStep, 10), 1) - 0.5) / 10 * 100:0.0}%"
+        };
 
     private string RolesSummary => Draft.Roles.Count == 0
         ? ""
@@ -752,7 +769,8 @@
                  && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
             2 => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0
                  && !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
-            >= 7 and <= 10 => _miniQuestions.All(q => _miniAnswers.ContainsKey(q.Id)),
+            >= 7 and <= 10 => _miniQuestions.Count > 0
+                && _miniQuestions.All(q => MiniAnswered(q.Id)),
             _ => true
         };
 
@@ -857,7 +875,7 @@
             else if (_screen == "klaar")
             {
                 // A finished journey used to treat klaar as step 10 and bounce back to the shed.
-                ApplyEndFacts();
+                await LoadEndPresentationAsync();
             }
             else if (_screen == "overview")
             {
@@ -1122,9 +1140,34 @@
         }
     }
 
+    private bool MiniAnswered(int id)
+        => _serverAnswers.ContainsKey(id) || _miniAnswers.ContainsKey(id);
+
+    private void FocusFirstOpenMini()
+    {
+        var open = _miniQuestions.FindIndex(q => !MiniAnswered(q.Id));
+        if (open < 0)
+        {
+            return;
+        }
+
+        _currentQuestion = open;
+        _miniFlowEpoch++;
+    }
+
     private async Task NextAsync()
     {
-        if (!CanNext || _busy) return;
+        if (!CanNext || _busy)
+        {
+            // Afronden used to return here with no message when saved answers
+            // were missing from _miniAnswers. Land on the first open question.
+            if (!_busy && _countedStep is >= 7 and <= 10)
+            {
+                FocusFirstOpenMini();
+            }
+
+            return;
+        }
         _busy = true;
         _error = null;
         _miniArrivedViaBack = false;
@@ -1367,8 +1410,20 @@
             NoteSaveFailure(ex);
         }
 
-        ApplyEndFacts();
+        await LoadEndPresentationAsync();
         StateHasChanged();
+    }
+
+    private async Task LoadEndPresentationAsync()
+    {
+        ApplyEndFacts();
+        var competency = await CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind.Competency);
+        var career = await CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind.Career);
+        var values = await CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind.Values);
+        _strengthDepthKey = JourneyTestFlow.DepthLabelKey(competency, OnboardingWizardCatalog.OnboardingTestKind.Competency);
+        _workDepthKey = JourneyTestFlow.DepthLabelKey(career, OnboardingWizardCatalog.OnboardingTestKind.Career);
+        _valueDepthKey = JourneyTestFlow.DepthLabelKey(values, OnboardingWizardCatalog.OnboardingTestKind.Values);
+        _endHintKey = JourneyTestFlow.EndHintKey(competency, career, values);
     }
 
     private void ApplyEndFacts()
@@ -1680,7 +1735,7 @@
 
     private string SegmentClass(int index)
     {
-        if (IsLightScreen) return "is-done";
+        if (ShowFinishedChrome) return "is-done";
         var step = Math.Max(RailStep, 0);
         if (step <= 0) return "";
         if (index < step - 1) return "is-done";

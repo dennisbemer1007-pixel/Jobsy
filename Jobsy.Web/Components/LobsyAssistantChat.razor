@@ -7,6 +7,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject AssistantChatHost ChatHost
 @inject IFeatureFlags FeatureFlags
+@inject IJSRuntime Js
 
 <AuthorizeView>
     <Authorized>
@@ -96,7 +97,8 @@
                                   placeholder="@Culture["Assistant.Placeholder"]"
                                   disabled="@_busy"
                                   @bind="_draft"
-                                  @bind:event="oninput"></textarea>
+                                  @bind:event="oninput"
+                                  @onkeydown="OnDraftKeyDown"></textarea>
                         <button type="submit" class="login-submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">
                             @Culture["Assistant.Send"]
                         </button>
@@ -206,6 +208,33 @@
         if (e.Key is "Escape" or "Esc")
         {
             Close();
+        }
+    }
+
+    private async Task OnDraftKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter" || e.ShiftKey || _busy || string.IsNullOrWhiteSpace(_draft))
+        {
+            return;
+        }
+
+        await SendAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_open)
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyComposeEnter", "lobsy-assistant-input");
+        }
+        catch
+        {
+            // bUnit / no JS: OnDraftKeyDown still sends.
         }
     }
 

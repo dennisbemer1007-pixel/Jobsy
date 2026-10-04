@@ -33,24 +33,24 @@
                 }
             </section>
         }
-        @if (Compass.SuperMatches.Count > 0)
+        @if (SuperForCandidate.Count > 0)
         {
             <section class="kompas-band kompas-band--super">
                 <h4>@Culture["Kompas.BandSuper"]</h4>
                 <ul class="kompas-occupation-list">
-                    @foreach (var item in Compass.SuperMatches)
+                    @foreach (var item in SuperForCandidate)
                     {
                         @OccupationAccordion(item)
                     }
                 </ul>
             </section>
         }
-        @if (Compass.StrongChoices.Count > 0)
+        @if (StrongForCandidate.Count > 0)
         {
             <section class="kompas-band kompas-band--strong">
                 <h4>@Culture["Kompas.BandStrong"]</h4>
                 <ul class="kompas-occupation-list">
-                    @foreach (var item in Compass.StrongChoices)
+                    @foreach (var item in StrongForCandidate)
                     {
                         @OccupationAccordion(item)
                     }
@@ -108,6 +108,17 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
     private IReadOnlyList<CareerGoalFit.Hit> GoalHits =>
         CareerGoalFit.Pick(OccupationTitles, DreamTitle, GoalEvidence, EducationLabel);
 
+    private List<CareerOccupationMatchModel> SuperForCandidate =>
+        (Compass?.SuperMatches ?? [])
+            .Where(item => CareerGoalFit.BelongsInSuper(item.Title, item.Percent, EducationLabel))
+            .ToList();
+
+    private List<CareerOccupationMatchModel> StrongForCandidate =>
+        (Compass?.SuperMatches ?? [])
+            .Where(item => !CareerGoalFit.BelongsInSuper(item.Title, item.Percent, EducationLabel))
+            .Concat(Compass?.StrongChoices ?? [])
+            .ToList();
+
     private IReadOnlyList<string> EducationFlags =>
         CareerGoalFit.AboveEducation(OccupationTitles, EducationLabel);
 
@@ -134,7 +145,11 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
             <details class="kompas-occupation__details">
                 <summary>
                     <span class="kompas-occupation__title">@item.Title</span>
-                    <span class="kompas-occupation__pct">@item.Percent%</span>
+                    @if (CareerGoalFit.RequiresHigherEducation(item.Title, EducationLabel))
+                    {
+                        <span class="muted">@Culture["Kompas.EducationAbove"]</span>
+                    }
+                    <span class="kompas-occupation__pct">@CareerGoalFit.DisplayPercent(item.Title, item.Percent, EducationLabel)%</span>
                 </summary>
                 @OccupationBody(item)
             </details>
