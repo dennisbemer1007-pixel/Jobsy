@@ -99,25 +99,65 @@ public class AdminRun4PlaywrightTests
         var rows = page.Locator("table tbody tr");
         await rows.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var count = await rows.CountAsync();
-        Assert.True(count >= 1, $"No rows on {url} to search.");
-        var first = (await rows.Nth(0).InnerTextAsync()).Trim();
-        var needle = FirstDistinctiveWord(first, count > 1 ? await rows.Nth(1).InnerTextAsync() : "");
+        Assert.True(count >= 2, $"Need two rows on {url} to prove search hides a non-match.");
+
+        // Snapshot the other row before typing. A short token such as "Binckhorst" also
+        // matches an address the table does not show, so the query is the full primary
+        // label (organisation, vacancy title, or user name) whenever the row has one.
+        var labels = page.Locator("table tbody strong");
+        var labelCount = await labels.CountAsync();
+        string needle;
+        string otherProof;
+        if (labelCount >= 2)
+        {
+            needle = (await labels.Nth(0).InnerTextAsync()).Trim();
+            Assert.True(needle.Length >= 4 && needle.Any(char.IsLetter), $"Primary label on {url} is '{needle}'.");
+            otherProof = await FirstOtherLabelAsync(labels, labelCount, needle);
+        }
+        else
+        {
+            var first = (await rows.Nth(0).InnerTextAsync()).Trim();
+            var second = (await rows.Nth(1).InnerTextAsync()).Trim();
+            needle = FirstDistinctiveWord(first, second);
+            otherProof = FirstDistinctiveWord(second, first);
+        }
+
+        Assert.False(string.IsNullOrWhiteSpace(needle), $"No search needle on {url}.");
+        Assert.False(string.IsNullOrWhiteSpace(otherProof), $"No unmatched row on {url}.");
+
         var input = page.Locator(inputSelector).First;
         await input.ClickAsync();
         await input.FillAsync("");
         await page.Keyboard.TypeAsync(needle, new() { Delay = 40 });
-        Assert.Equal(needle, await input.InputValueAsync());
-        await page.WaitForTimeoutAsync(900);
-        var body = await page.Locator("table tbody").InnerTextAsync();
-        Assert.Contains(needle, body, StringComparison.OrdinalIgnoreCase);
-        if (count > 1)
+        await Assertions.Expect(input).ToHaveValueAsync(needle);
+
+        await Assertions.Expect(rows.Filter(new() { HasTextString = needle }).First)
+            .ToBeVisibleAsync(new() { Timeout = 15_000 });
+        await Assertions.Expect(rows.Filter(new() { HasTextString = otherProof }))
+            .ToHaveCountAsync(0, new() { Timeout = 15_000 });
+    }
+
+    private static async Task<string> FirstOtherLabelAsync(ILocator labels, int count, string needle)
+    {
+        var sample = Math.Min(count, 12);
+        for (var i = 1; i < sample; i++)
         {
-            var second = await rows.Nth(1).InnerTextAsync();
-            if (!second.Contains(needle, StringComparison.OrdinalIgnoreCase))
+            var text = (await labels.Nth(i).InnerTextAsync()).Trim();
+            if (text.Length < 4 || !text.Any(char.IsLetter))
             {
-                Assert.DoesNotContain(second.Split('\n', StringSplitOptions.RemoveEmptyEntries)[0].Trim(), body, StringComparison.Ordinal);
+                continue;
             }
+
+            if (text.Contains(needle, StringComparison.OrdinalIgnoreCase)
+                || needle.Contains(text, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return text;
         }
+
+        throw new InvalidOperationException($"No row stays unmatched for '{needle}'.");
     }
 
     private static async Task AssertFastTypeAsync(IPage page, string selector)

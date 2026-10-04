@@ -518,17 +518,28 @@ public class StatusPagesPlaywrightTests
         Assert.Matches(SupportCodePattern, clipboard);
     }
 
-    /// <summary>The admin maintenance control is a <c>button[role=switch]</c>, not a checkbox.</summary>
+    /// <summary>
+    /// The admin maintenance control is a <c>button[role=switch]</c>. Turning it on opens a
+    /// confirm dialog and does not save until that primary button is pressed.
+    /// </summary>
     private static async Task SetSwitchAsync(ILocator toggle, bool on)
     {
+        var want = on ? "true" : "false";
         var state = await toggle.GetAttributeAsync("aria-checked");
-        if (string.Equals(state, on ? "true" : "false", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(state, want, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
         await toggle.ClickAsync();
-        await toggle.Page.WaitForTimeoutAsync(1_000);
+        if (on)
+        {
+            var confirm = toggle.Page.Locator("[role=dialog] button.btn-compact--primary");
+            await Assertions.Expect(confirm).ToBeVisibleAsync(new() { Timeout = 10_000 });
+            await confirm.ClickAsync();
+        }
+
+        await Assertions.Expect(toggle).ToHaveAttributeAsync("aria-checked", want, new() { Timeout = 15_000 });
     }
 
     private sealed record Variant(string Name, string Path, int ExpectedStatus);
