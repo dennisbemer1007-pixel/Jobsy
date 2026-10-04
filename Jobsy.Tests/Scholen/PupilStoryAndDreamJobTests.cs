@@ -73,6 +73,45 @@ public class PupilStoryAndDreamJobTests
     }
 
     [Fact]
+    public void Ai_class_prompts_name_both_letters_and_keep_the_fallback()
+    {
+        var ai = PupilVerhaalCopy.Get("LeerlingStory.Class.AI.1");
+        var ia = PupilVerhaalCopy.Get("LeerlingStory.Class.IA.1");
+        Assert.Equal(ai, ia);
+        Assert.NotEqual(PupilVerhaalCopy.Get("LeerlingStory.Class.I.1"), ai);
+        Assert.NotEqual(PupilVerhaalCopy.Get("LeerlingStory.Class.A.1"), ai);
+        Assert.Contains("nieuw", ai, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("werkt", ai, StringComparison.OrdinalIgnoreCase);
+
+        var prompts = _renderer.ClassDiscussionPromptKeys("A", "I");
+        Assert.Equal(prompts, _renderer.ClassDiscussionPromptKeys("I", "A"));
+        Assert.Contains(prompts, line => line.Contains("nieuw", StringComparison.OrdinalIgnoreCase)
+            && line.Contains("werkt", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Innovatie_plus_artistic_story_does_not_repeat_bedenkt_graag()
+    {
+        var paired = FixtureResult();
+        paired.CompetenceScoresJson = JsonSerializer.Serialize(new CompetencyScores(40, 40, 40, 90, 40));
+        paired.RiasecScoresJson = JsonSerializer.Serialize(new RiasecScores(40, 90, 80, 40, 40, 40));
+        paired.HollandCode = "AI";
+        paired.StoryKeysJson = "[]";
+        var merged = _renderer.Render(paired, null).Body;
+        Assert.Contains("Jij bedenkt graag nieuwe manieren en zoekt uit hoe iets werkt.", merged, StringComparison.Ordinal);
+        Assert.DoesNotContain("Jij bedenkt graag een nieuwe manier.", merged, StringComparison.Ordinal);
+
+        var artistic = FixtureResult();
+        artistic.CompetenceScoresJson = JsonSerializer.Serialize(new CompetencyScores(40, 40, 40, 90, 40));
+        artistic.RiasecScoresJson = JsonSerializer.Serialize(new RiasecScores(40, 40, 90, 40, 40, 40));
+        artistic.HollandCode = "A";
+        artistic.StoryKeysJson = "[]";
+        var made = _renderer.Render(artistic, null).Body;
+        Assert.Contains("Jij bedenkt graag nieuwe manieren en maakt graag iets moois.", made, StringComparison.Ordinal);
+        Assert.DoesNotContain("Jij bedenkt graag een nieuwe manier.", made, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Every_ordered_riasec_pair_renders_a_sentence()
     {
         const string letters = "RIASEC";

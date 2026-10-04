@@ -334,7 +334,7 @@ public static class UiStringsScholen
         nl["Leerling.LoginTitle"] = "Inloggen met code";
         nl["Leerling.Login.Heading"] = "Log in met je code";
         nl["Leerling.Login.Lead"] = "Kies je school en je klas. Typ dan de code van je kaartje.";
-        nl["Leerling.Login.Bubble"] = "Hoi! Kies je school en je klas. Typ dan de code van je kaartje.";
+        nl["Leerling.Login.Bubble"] = "Hoi! Fijn dat je er bent.";
         nl["Leerling.Login.School"] = "Jouw school";
         nl["Leerling.Login.SchoolPlaceholder"] = "Kies je school";
         nl["Leerling.Login.Class"] = "Jouw klas";
@@ -607,6 +607,16 @@ public static class UiStringsScholen
             ar[key] = arText;
         }
 
+        Add("Leerling.Reis.More", "Meer uitleg", "More help", "Więcej pomocy", "Mai mult ajutor", "مزيد من الشرح");
+        Add("Leerling.Coach.Close", "Tip sluiten", "Close the tip", "Zamknij podpowiedź", "Închide sfatul", "أغلق التلميح");
+        Add("Leerling.Coach.Start", "Klaar voor de reis?", "Ready for the trip?", "Gotowy na podróż?", "Gata de drum?", "هل أنت مستعد للرحلة؟");
+        Add("Leerling.Coach.Reis", "Kies wat bij je past.", "Choose what fits you.", "Wybierz to, co do ciebie pasuje.", "Alege ce ți se potrivește.", "اختر ما يناسبك.");
+        Add("Leerling.Coach.Part", "Goed gedaan!", "Well done!", "Dobra robota!", "Bravo!", "أحسنت!");
+        Add("Leerling.Coach.Stop", "Tot snel!", "See you soon!", "Do zobaczenia!", "Pe curând!", "إلى اللقاء!");
+        Add("Leerling.Coach.Back", "Je bent er weer.", "You are back.", "Znowu tu jesteś.", "Ai revenit.", "لقد عدت.");
+        Add("Leerling.Coach.Island", "Even pauze. Je doet het goed.", "A short break. You are doing well.", "Krótka przerwa. Dobrze ci idzie.", "O pauză scurtă. Te descurci bine.", "استراحة قصيرة. أنت تبلي حسناً.");
+        Add("Leerling.Coach.Story", "Kijk, dit ben jij.", "Look, this is you.", "Spójrz, to ty.", "Uite, acesta ești tu.", "انظر، هذا أنت.");
+        Add("Leerling.Coach.Dream", "Welk beroep past bij jou?", "Which job fits you?", "Jaki zawód do ciebie pasuje?", "Ce meserie ți se potrivește?", "أي مهنة تناسبك؟");
         Add("School.Dim.Val.Autonomy", "Zelf kiezen", "Choose for yourself", "Sam wybierasz", "Alegi singur", "تختار بنفسك");
         Add("School.Dim.Val.Connection", "Samen met anderen", "Together with others", "Razem z innymi", "Împreună cu alții", "مع الآخرين");
         Add("School.Dim.Val.Achievement", "Iets goed afmaken", "Finish something well", "Dobrze coś kończysz", "Termini ceva bine", "تنهي شيئاً جيداً");
