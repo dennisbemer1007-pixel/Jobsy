@@ -366,6 +366,12 @@ public static class UiStringsLegal
             "الحساب والاختبارات والنتائج");
 
         // —— Change log (D16) ——
+        Add("Legal.Change.Privacy.2026-10-05",
+            "De AI-verwerker volgt de instelling. Standaard is dat OpenAI in de Verenigde Staten. Zet je de provider op Mistral, dan staat Mistral AI (Parijs, gegevens in de EU) in de lijst en OpenAI niet.",
+            "The AI processor follows the setting. The default is OpenAI in the United States. If you set the provider to Mistral, the list shows Mistral AI (Paris, data in the EU) and not OpenAI.",
+            "Procesor AI zależy od ustawienia. Domyślnie jest to OpenAI w Stanach Zjednoczonych. Gdy ustawisz dostawcę na Mistral, lista pokazuje Mistral AI (Paryż, dane w UE), a nie OpenAI.",
+            "Procesatorul AI urmează setarea. Implicit este OpenAI în Statele Unite. Dacă setezi furnizorul pe Mistral, lista arată Mistral AI (Paris, date în UE), nu OpenAI.",
+            "معالج الذكاء الاصطناعي يتبع الإعداد. الافتراضي هو OpenAI في الولايات المتحدة. إذا جعلت المزود Mistral، تظهر القائمة Mistral AI (باريس، البيانات داخل الاتحاد الأوروبي) وليس OpenAI.");
         Add("Legal.Change.Privacy.2026-10-04",
             "Eerlijke tekst over waar gegevens staan: de app en database in Frankfurt, en diensten van Amerikaanse bedrijven in de lijst met verwerkers. Nieuw stuk: AI en jouw gegevens. Geen scores voor werkgevers, geen AI op leerlinggegevens, AI-antwoorden zijn gelabeld en je kunt een mens om uitleg vragen.",
             "Honest text about where data sits: the app and database in Frankfurt, and services of American companies in the processor list. New part: AI and your data. No scores for employers, no AI on pupil data, AI answers are labelled and you can ask a person to explain.",
@@ -497,6 +503,18 @@ public static class UiStringsLegal
             "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV",
             "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului",
             "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها");
+        Add("Legal.Processor.mistral.Purpose",
+            "AI-functies die jij zelf kiest. De verwerking blijft in de EU",
+            "AI features you choose yourself. Processing stays in the EU",
+            "Funkcje AI, które sam wybierasz. Przetwarzanie zostaje w UE",
+            "Funcții AI pe care le alegi tu. Prelucrarea rămâne în UE",
+            "ميزات الذكاء الاصطناعي التي تختارها. تبقى المعالجة داخل الاتحاد الأوروبي");
+        Add("Legal.Processor.mistral.Data",
+            "De tekst die je invult. Bij cv-uitlezen de hele tekst van je cv",
+            "The text you enter. For CV reading, the whole text of your CV",
+            "Tekst, który wpisujesz. Przy odczycie CV cała jego treść",
+            "Textul pe care îl scrii. La citirea CV-ului, tot textul CV-ului",
+            "النص الذي تكتبه. وعند قراءة السيرة، كامل نصها");
         Add("Legal.Processor.cursor.Purpose",
             "Feedback die je stuurt verwerken",
             "Handling the feedback you send",
@@ -677,11 +695,17 @@ public static class UiStringsLegal
             "AI, potrivire și timp de călătorie",
             "الذكاء الاصطناعي والمطابقة ووقت التنقل");
         Add("Privacy.Sec.ai.Summary",
-            "AI helpt alleen waar jij dat kiest. Een computer beslist nooit alleen over jou; een werkgever kiest zelf.",
-            "AI only helps where you choose it. A computer never decides about you on its own; the employer chooses.",
-            "AI pomaga tylko tam, gdzie tego chcesz. Komputer nigdy nie decyduje sam o tobie; wybiera pracodawca.",
-            "AI ajută doar unde alegi tu. Un computer nu decide niciodată singur despre tine; angajatorul alege.",
-            "الذكاء الاصطناعي يساعد فقط حيث تختار. لا يقرر الحاسوب بشأنك وحده؛ صاحب العمل هو من يختار.");
+            "AI helpt alleen waar jij dat kiest. Die AI is OpenAI in de Verenigde Staten. Een computer beslist nooit alleen over jou; een werkgever kiest zelf.",
+            "AI only helps where you choose it. That AI is OpenAI in the United States. A computer never decides about you on its own; the employer chooses.",
+            "AI pomaga tylko tam, gdzie tego chcesz. To AI to OpenAI w Stanach Zjednoczonych. Komputer nigdy nie decyduje sam o tobie; wybiera pracodawca.",
+            "AI ajută doar unde alegi tu. Acest AI este OpenAI în Statele Unite. Un computer nu decide niciodată singur despre tine; angajatorul alege.",
+            "الذكاء الاصطناعي يساعد فقط حيث تختار. هذا الذكاء هو OpenAI في الولايات المتحدة. لا يقرر الحاسوب بشأنك وحده؛ صاحب العمل هو من يختار.");
+        Add("Privacy.Sec.ai.Summary.Mistral",
+            "AI helpt alleen waar jij dat kiest. Die AI is Mistral AI in Parijs. Je gegevens blijven in de EU. Een computer beslist nooit alleen over jou; een werkgever kiest zelf.",
+            "AI only helps where you choose it. That AI is Mistral AI in Paris. Your data stays in the EU. A computer never decides about you on its own; the employer chooses.",
+            "AI pomaga tylko tam, gdzie tego chcesz. To AI to Mistral AI w Paryżu. Twoje dane zostają w UE. Komputer nigdy nie decyduje sam o tobie; wybiera pracodawca.",
+            "AI ajută doar unde alegi tu. Acest AI este Mistral AI la Paris. Datele tale rămân în UE. Un computer nu decide niciodată singur despre tine; angajatorul alege.",
+            "الذكاء الاصطناعي يساعد فقط حيث تختار. هذا الذكاء هو Mistral AI في باريس. تبقى بياناتك داخل الاتحاد الأوروبي. لا يقرر الحاسوب بشأنك وحده؛ صاحب العمل هو من يختار.");
         Add("Privacy.Sec.beveiliging.Title",
             "Hoe beveiligen we je gegevens?",
             "How do we protect your data?",

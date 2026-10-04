@@ -61,5 +61,9 @@ Resource values never contain HTML — links are composed in the markup.
   `Status = Planned` (and a `PlannedNoteKey`) while the integration is not live yet — that is how
   Pingen was listed before letter verification shipped (Dependency G). `PrivacyStatementTests` keeps
   the rendered table and the catalog in sync.
+- The AI row follows `Ai:Provider` (`LegalProcessors.ForAiProvider`). OpenAI is listed only when the
+  provider is OpenAI (the default). Mistral AI (Paris, data in the EU) is listed only when the
+  provider is Mistral. The web service needs the same `Ai__Provider` as the API, or the privacy page
+  names the wrong company. The web does not call the model.
 - A retention period is **never typed** in the privacy text: add the constant to `PrivacyConstants`
   and a row to `LegalRetention`. `LegalRetentionCatalogTests` checks that every constant has a row.

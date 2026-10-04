@@ -103,6 +103,23 @@ public static class DependencyInjection
         services.AddOptions<OpenAiOptions>()
             .Bind(configuration.GetSection(OpenAiOptions.SectionName));
 
+        services.AddOptions<AiOptions>()
+            .Bind(configuration.GetSection(AiOptions.SectionName));
+
+        services.AddOptions<MistralOptions>()
+            .Bind(configuration.GetSection(MistralOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                if (string.IsNullOrWhiteSpace(options.ApiKey))
+                {
+                    var alt = configuration["MISTRAL_API_KEY"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.ApiKey = alt.Trim();
+                    }
+                }
+            });
+
         services.AddScoped<IOpenAiEndpointResolver, OpenAiEndpointResolver>();
 
         services.AddOptions<CursorCloudOptions>()
@@ -179,8 +196,10 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetRequiredService<AdminAuditAppendOnlyInterceptor>());
         });
 
-        var openAiBaseUrl = configuration.GetSection(OpenAiOptions.SectionName)["BaseUrl"]
-            ?? "https://api.openai.com/v1/";
+        var aiProvider = AiProviderParser.Parse(configuration[$"{AiOptions.SectionName}:Provider"]);
+        var openAiBaseUrl = aiProvider == AiProvider.Mistral
+            ? configuration.GetSection(MistralOptions.SectionName)["BaseUrl"] ?? MistralOptions.DefaultBaseUrl
+            : configuration.GetSection(OpenAiOptions.SectionName)["BaseUrl"] ?? OpenAiOptions.DefaultBaseUrl;
         services.AddHttpClient("OpenAI", client =>
         {
             client.BaseAddress = new Uri(openAiBaseUrl.EndsWith('/') ? openAiBaseUrl : openAiBaseUrl + "/");

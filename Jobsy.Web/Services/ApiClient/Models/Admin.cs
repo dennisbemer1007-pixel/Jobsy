@@ -172,6 +172,12 @@ public sealed class IntegrationCredentialItem
     public DateTime? UpdatedAtUtc { get; set; }
     public bool IgnoresEnvironmentCredentials { get; set; }
     public bool UsesEnvironmentCredentials { get; set; }
+
+    /// <summary>OpenAI tile only. <c>OpenAI</c> or <c>Mistral</c>. Read-only; the switch is <c>Ai__Provider</c>.</summary>
+    public string? ActiveAiProvider { get; set; }
+
+    /// <summary>Model the API will actually call for the active provider.</summary>
+    public string? ActiveAiModel { get; set; }
 }
 
 public sealed class IntegrationCredentialSaveForm

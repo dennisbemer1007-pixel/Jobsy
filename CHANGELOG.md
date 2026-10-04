@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- AI provider switch: `Ai:Provider` is `OpenAI` (default) or `Mistral`. Mistral uses `https://api.mistral.ai/v1/` and `mistral-small-latest`, with the key from `Mistral__ApiKey`. The privacy statement lists only the provider that is actually used (Mistral AI, Paris, data in the EU, or OpenAI in the US). Voorlezen stays browser speech.
+
+### Added
 - Carrière 01 (Web): career API wiring on `/carriere` — fit bands, action kinds, error codes, dream-options/archive client stubs; `UiStringsCareer` for nl/en/pl/ro/ar.
 - Carrière 02 (Web): `/carriere` in the ontdekkingsreis style — `CareerClimbScene` with the lobster climbing stone by stone to the golden dream stone, `CareerRail`, `GrowingShellsStepper`, empty state with real job suggestions + job search, overview with "nu aan de beurt", and a calm dream-change dialog that keeps what you achieved (archive restore from the UI). Removes `HorizonArt`, the native `window.confirm`, the blur-commit dream input, the datalist and every percentage; new `features/carriere.css` (`?v=20260930-carriere`) and copy in nl/en/pl/ro/ar incl. `ar` RTL.
 

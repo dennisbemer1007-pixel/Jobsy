@@ -63,10 +63,10 @@ public static class IntegrationHelpDocs
         DocsUrlLabel: "Resend API keys");
 
     private static readonly Doc OpenAi = new(
-        Summary: "OpenAI API voor tekstmodellen.",
-        UsedFor: "Vacaturetekst-moderatie (ongepaste of risicovolle content markeren/blokkeren) én de interactieve coach in ‘Oefen je sollicitatiegesprek’ (met scripted fallback zonder key).",
-        WhereToGetKey: "platform.openai.com → API keys → Create new secret key. Model bijv. gpt-4o-mini. Base URL leeg of https://api.openai.com/v1/",
-        Tip: "Het veld toont na Opslaan geen key terug (alleen gemaskeerd). Test leest de opgeslagen key uit de database — eerst Opslaan of laat Test auto-opslaan.",
+        Summary: "AI-tekstmodellen. De actieve provider (OpenAI of Mistral) staat boven deze tegel en is alleen lezen.",
+        UsedFor: "Vacaturetekst-moderatie, de coach in ‘Oefen je sollicitatiegesprek’, cv-uitlezen, vertalen en de andere AI-teksten. Zonder sleutel van de actieve provider valt Lobsy terug op lokale tekst.",
+        WhereToGetKey: "OpenAI: platform.openai.com → API keys. Die sleutel en het model hieronder gelden alleen als Ai__Provider=OpenAI (de standaard). Mistral: console.mistral.ai → API key, als Mistral__ApiKey op de API-service. Model standaard mistral-small-latest.",
+        Tip: "Wisselen doe je alleen met env: Ai__Provider=Mistral of OpenAI. De OpenAI-sleutel in deze tegel gaat niet naar Mistral. Voorlezen blijft de stem van de browser.",
         DocsUrl: "https://platform.openai.com/api-keys",
         DocsUrlLabel: "OpenAI API keys");
 }

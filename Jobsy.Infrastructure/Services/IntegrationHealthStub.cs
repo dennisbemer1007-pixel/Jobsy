@@ -15,6 +15,8 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly OpenAiOptions _openAiOptions;
+    private readonly AiOptions _ai;
+    private readonly MistralOptions _mistral;
     private readonly ILogger<IntegrationHealthStub> _logger;
     private readonly KvkHandelsregisterService? _kvk;
 
@@ -25,7 +27,9 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         IPlatformFeatureService features,
         IOptions<OpenAiOptions> openAiOptions,
         ILogger<IntegrationHealthStub> logger,
-        KvkHandelsregisterService? kvk = null)
+        KvkHandelsregisterService? kvk = null,
+        IOptions<AiOptions>? ai = null,
+        IOptions<MistralOptions>? mistral = null)
     {
         _credentials = credentials;
         _httpClientFactory = httpClientFactory;
@@ -34,6 +38,8 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         _openAiOptions = openAiOptions.Value;
         _logger = logger;
         _kvk = kvk;
+        _ai = ai?.Value ?? new AiOptions();
+        _mistral = mistral?.Value ?? new MistralOptions();
     }
 
     public async Task<IReadOnlyList<IntegrationHealthResult>> GetAllAsync(
@@ -190,6 +196,11 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
     private async Task<(bool Ok, string Message)> TestOpenAiAsync(CancellationToken cancellationToken)
     {
+        if (_ai.Resolved == AiProvider.Mistral)
+        {
+            return await TestMistralAsync(cancellationToken);
+        }
+
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.OpenAI, cancellationToken);
         var apiKey = secrets?.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -206,7 +217,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
             baseUrl = string.IsNullOrWhiteSpace(_openAiOptions.BaseUrl)
-                ? "https://api.openai.com/v1/"
+                ? OpenAiOptions.DefaultBaseUrl
                 : _openAiOptions.BaseUrl;
         }
 
@@ -227,6 +238,36 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         return (false, $"OpenAI gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
+    }
+
+    private async Task<(bool Ok, string Message)> TestMistralAsync(CancellationToken cancellationToken)
+    {
+        var apiKey = string.IsNullOrWhiteSpace(_mistral.ApiKey) ? null : _mistral.ApiKey.Trim();
+        if (apiKey is null)
+        {
+            return (false, "Geen Mistral API-key. Zet Mistral__ApiKey op de API-service.");
+        }
+
+        var baseUrl = string.IsNullOrWhiteSpace(_mistral.BaseUrl)
+            ? MistralOptions.DefaultBaseUrl
+            : _mistral.BaseUrl;
+        if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(baseUrl, out var normalized, out var error)
+            || string.IsNullOrWhiteSpace(normalized))
+        {
+            return (false, error ?? "Ongeldige Mistral Base URL.");
+        }
+
+        var client = _httpClientFactory.CreateClient("IntegrationProbe");
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(normalized), "models"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return (true, "Verbinding met Mistral AI OK.");
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        return (false, $"Mistral AI gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
     }
 
     private async Task<(bool Ok, string Message)> TestMollieAsync(CancellationToken cancellationToken)

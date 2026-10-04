@@ -236,7 +236,9 @@ public record IntegrationCredentialDto(
     DateTime? LastPingAtUtc,
     DateTime? UpdatedAtUtc,
     bool IgnoresEnvironmentCredentials = false,
-    bool UsesEnvironmentCredentials = false);
+    bool UsesEnvironmentCredentials = false,
+    string? ActiveAiProvider = null,
+    string? ActiveAiModel = null);
 
 /// <summary>Partial update: null fields keep the current value.</summary>
 public record UpdatePlatformFeatureRequest(

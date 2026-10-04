@@ -146,8 +146,10 @@ These are the chrome strings the rewrite added.
 | `Legal.Cookies.HowLong` | pl / ro / ar draft |
 | `Legal.Cookies.Needed` | pl / ro / ar draft |
 | `Legal.Processor.pingen.Planned` | pl / ro / ar draft |
-| `Legal.Processor.{render, cloudflare, resend, sentry, mollie, pingen, openai, cursor, google-ms, kvk, routing, maps, push, video}.Purpose` | pl / ro / ar draft (14 keys) |
-| `Legal.Processor.{same 14 ids}.Data` | pl / ro / ar draft (14 keys) |
+| `Legal.Processor.{render, cloudflare, resend, sentry, mollie, pingen, openai, mistral, cursor, google-ms, kvk, routing, maps, push, video}.Purpose` | pl / ro / ar draft (15 keys) |
+| `Legal.Processor.{same 15 ids}.Data` | pl / ro / ar draft (15 keys) |
+| `Privacy.Sec.ai.Summary` / `Privacy.Sec.ai.Summary.Mistral` | pl / ro / ar draft |
+| `Legal.Change.Privacy.2026-10-05` | pl / ro / ar draft |
 
 ## 04 — algemene voorwaarden + gebruiksvoorwaarden (`UiStringsLegal.cs`)
 

@@ -101,7 +101,7 @@ Hosted services (API / Infrastructure) include (non-exhaustive):
 
 | Concern | Where |
 |---------|--------|
-| OpenAI | Named HttpClients + integration credentials (`IntegrationKey.OpenAI`); moderation, WhoAmI, assistant, culture-fit, deep analysis |
+| AI | `Ai:Provider` is `OpenAI` (default) or `Mistral`. Chat completions (JSON mode included) use the resolved base URL, model and key. Mistral key is `Mistral__ApiKey` (not the OpenAI admin key). Voorlezen stays browser speech. |
 | Web Push | `WebPush` package + VAPID keys (`WebPush__*`); subscription endpoints under `api/push` |
 | Payments | Mollie (live keys outside Development); stub payments only when `JobsyAuth:AllowStubPayments` |
 

@@ -5,6 +5,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Api.Controllers;
 
@@ -31,6 +33,8 @@ public class SettingsController : ControllerBase
     private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
     private readonly IUserLookupService _users;
+    private readonly AiOptions _ai;
+    private readonly MistralOptions _mistral;
 
     public SettingsController(
         JobsyDbContext db,
@@ -42,7 +46,9 @@ public class SettingsController : ControllerBase
         IFlexCommercialService flexCommercial,
         IAdminAuditLog audit,
         IAdminAuditContext auditContext,
-        IUserLookupService users)
+        IUserLookupService users,
+        IOptions<AiOptions>? ai = null,
+        IOptions<MistralOptions>? mistral = null)
     {
         _db = db;
         _credentials = credentials;
@@ -54,6 +60,8 @@ public class SettingsController : ControllerBase
         _audit = audit;
         _auditContext = auditContext;
         _users = users;
+        _ai = ai?.Value ?? new AiOptions();
+        _mistral = mistral?.Value ?? new MistralOptions();
     }
 
     [HttpGet("token-pricing")]
@@ -820,8 +828,9 @@ snap.CandidateInsightsEnabled,
             snap.SupportEmail,
             snap.PrivacyEmail);
 
-    private static IntegrationCredentialDto ToDto(IntegrationCredentialView view) =>
-        new(
+    private IntegrationCredentialDto ToDto(IntegrationCredentialView view)
+    {
+        var dto = new IntegrationCredentialDto(
             view.Key.ToString(),
             view.DisplayName,
             view.Description,
@@ -846,6 +855,15 @@ snap.CandidateInsightsEnabled,
             view.UpdatedAtUtc,
             view.IgnoresEnvironmentCredentials,
             view.UsesEnvironmentCredentials);
+
+        if (view.Key != IntegrationKey.OpenAI)
+        {
+            return dto;
+        }
+
+        var (provider, model) = AiAdminStatus.Describe(_ai, _mistral, view.Model);
+        return dto with { ActiveAiProvider = provider, ActiveAiModel = model };
+    }
 }
 
 public sealed record PlatformCompanyDto(

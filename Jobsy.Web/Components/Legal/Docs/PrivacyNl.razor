@@ -1,9 +1,13 @@
 @using Jobsy.Core.Legal
+@using Jobsy.Core.Options
 @using Jobsy.Core.Privacy
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
 @inject CultureState Culture
 @inject LegalIdentityProvider LegalIdentity
+@inject IServiceProvider Services
 
 @* Official Dutch privacy statement (D3). B1 Dutch, "je"; every number comes from a constant. *@
 <LegalDocument DocumentId="@LegalDocumentIds.Privacy"
@@ -16,6 +20,19 @@
 @code {
     private string? _privacyContact;
     private IReadOnlyList<LegalSection>? _sections;
+
+    private AiProvider ActiveProvider =>
+        Services.GetService<IOptions<AiOptions>>()?.Value.Resolved ?? AiProvider.OpenAI;
+
+    private bool UseMistral => ActiveProvider == AiProvider.Mistral;
+
+    private IReadOnlyList<LegalProcessor> AiProcessors => LegalProcessors.ForAiProvider(ActiveProvider);
+
+    private string AiVendorName => UseMistral ? "Mistral AI" : "OpenAI";
+
+    private string AiVendorClause => UseMistral
+        ? "Mistral AI in Parijs (Frankrijk). Die gegevens blijven in de EU"
+        : "OpenAI in de Verenigde Staten";
 
     private static int TalentPoolAge => CandidateConsentRules.TalentPoolMinimumAge;
 
@@ -149,7 +166,7 @@
                     Sommige bedrijven doen een stukje van het werk voor ons. Ze mogen jouw gegevens alleen
                     gebruiken voor dat stukje. Dat staat in een contract (een verwerkersovereenkomst).
                 </p>
-                <ProcessorTable />
+                <ProcessorTable Rows="@AiProcessors" />
                 <p id="buiten-de-eu"><strong>Buiten de EU</strong></p>
                 <p>
                     Onze app en database staan in Frankfurt (EU). Een paar diensten zijn van Amerikaanse bedrijven.
@@ -159,6 +176,14 @@
                     EU-VS Data Privacy Framework of de standaardcontractbepalingen van de EU.
                     Pingen zit in Zwitserland; de EU vindt de bescherming daar gelijkwaardig.
                 </p>
+                @if (UseMistral)
+                {
+                    <p>De AI-verwerking blijft in de EU, bij Mistral AI in Parijs.</p>
+                }
+                else
+                {
+                    <p>De AI-verwerking gaat naar OpenAI in de Verenigde Staten.</p>
+                }
                 <p>We verkopen je gegevens niet. Nooit.</p>
                 <p>
                     Bel je of WhatsApp je met een werkgever nadat je sollicitatie is geaccepteerd?
@@ -216,7 +241,7 @@
             Id = "ai",
             Number = "7",
             TitleKey = "Privacy.Sec.ai.Title",
-            SummaryKey = "Privacy.Sec.ai.Summary",
+            SummaryKey = UseMistral ? "Privacy.Sec.ai.Summary.Mistral" : "Privacy.Sec.ai.Summary",
             AliasIds = ["locatie", "jeugdige-arbeid"],
             Body = @<text>
                 <p><strong>Reistijd</strong></p>
@@ -236,8 +261,9 @@
                     om banen te sorteren. Werkgevers zien geen percentage, geen score en geen testantwoorden.
                 </p>
                 <p><strong>Wat de AI doet</strong></p>
+                <p>De AI-verwerker is @AiVendorClause.</p>
                 <ul>
-                    <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar OpenAI, dus misschien ook je naam, adres en telefoonnummer.</li>
+                    <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar @AiVendorName, dus misschien ook je naam, adres en telefoonnummer.</li>
                     <li>Het oefengesprek en de assistent. Daar gaan je naam en je berichten mee. We bewaren het gesprek niet als archief op onze servers.</li>
                     <li>Vacatureteksten controleren en vertalen.</li>
                     <li>Je Beroepen-kompas, de Cultuur Fit en de Functie-Fit Checker. Daar gaan alleen scores, voorkeuren en een functietitel mee. Geen naam, geen e-mailadres.</li>
@@ -245,7 +271,7 @@
                 <p>
                     Werkt de AI niet of hebben we geen sleutel? Dan gebruikt Lobsy een eigen lijst met beroepen
                     uit de Nederlandse arbeidsmarkt. Een cv uploaden is altijd vrijwillig: upload je niets, dan
-                    gaat er geen cv-tekst naar OpenAI.
+                    gaat er geen cv-tekst naar @AiVendorName.
                 </p>
                 <p>
                     <strong>AI en jouw gegevens.</strong> Lobsy geeft werkgevers geen scores en geen ranglijst.

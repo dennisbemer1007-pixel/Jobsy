@@ -31,6 +31,10 @@
         </div>
     </div>
     <p class="company-card__address">@(string.IsNullOrWhiteSpace(StatusMessage) ? Credential.Description : StatusMessage)</p>
+    @if (IsOpenAiIntegration && !string.IsNullOrWhiteSpace(Credential.ActiveAiProvider))
+    {
+        <p class="muted" data-testid="ai-provider">@ProviderNotice</p>
+    }
 
     @if (_helpOpen && Help is not null)
     {
@@ -323,6 +327,29 @@
         !string.IsNullOrWhiteSpace(Health?.StatusMessage)
             ? Health!.StatusMessage
             : Credential.LastPingMessage ?? string.Empty;
+
+    private bool IsOpenAiIntegration =>
+        string.Equals(Credential.Key, "OpenAI", StringComparison.OrdinalIgnoreCase);
+
+    private string ProviderNotice
+    {
+        get
+        {
+            var provider = Credential.ActiveAiProvider;
+            var model = Credential.ActiveAiModel;
+            if (string.Equals(provider, "Mistral", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Actieve AI-provider: Mistral (alleen lezen)"
+                    + (string.IsNullOrWhiteSpace(model) ? "." : $". Model: {model}.")
+                    + " De sleutel komt uit Mistral__ApiKey. Het model en de OpenAI-sleutel hieronder worden niet gebruikt."
+                    + " Wisselen doe je met Ai__Provider.";
+            }
+
+            return "Actieve AI-provider: OpenAI (alleen lezen)"
+                + (string.IsNullOrWhiteSpace(model) ? "." : $". Model: {model}.")
+                + " Wisselen naar Mistral doe je met Ai__Provider=Mistral en Mistral__ApiKey.";
+        }
+    }
 
     private bool IsMailIntegration =>
         string.Equals(Credential.Key, "Mail", StringComparison.OrdinalIgnoreCase);

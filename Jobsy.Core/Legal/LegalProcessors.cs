@@ -1,3 +1,5 @@
+using Jobsy.Core.Options;
+
 namespace Jobsy.Core.Legal;
 
 public enum ProcessorStatus
@@ -100,6 +102,14 @@ public static class LegalProcessors
             ProcessorStatus.Active,
             DataPrivacyFramework),
         new(
+            "mistral",
+            "Mistral AI",
+            "Frankrijk (Parijs); gegevens blijven in de EU",
+            "Legal.Processor.mistral.Purpose",
+            "Legal.Processor.mistral.Data",
+            ProcessorStatus.Active,
+            InsideEu),
+        new(
             "cursor",
             "Cursor",
             "Verenigde Staten",
@@ -159,6 +169,17 @@ public static class LegalProcessors
 
     public static LegalProcessor ById(string id)
         => All.Single(p => string.Equals(p.Id, id, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Rows the privacy statement shows. Mistral AI is listed only when
+    /// <paramref name="provider"/> is Mistral. OpenAI is listed only when OpenAI is the provider.
+    /// The id <c>mistral</c> is the one the processor-host guard (PR 572, not on this branch yet) watches.
+    /// </summary>
+    public static IReadOnlyList<LegalProcessor> ForAiProvider(AiProvider provider)
+    {
+        var hideId = provider == AiProvider.Mistral ? "openai" : "mistral";
+        return All.Where(p => !string.Equals(p.Id, hideId, StringComparison.Ordinal)).ToList();
+    }
 
     public static IReadOnlyList<LegalProcessor> Active
         => All.Where(p => p.Status == ProcessorStatus.Active).ToList();

@@ -120,6 +120,10 @@ builder.Services.AddSingleton<Jobsy.Web.Hosting.IErrorChromeProvider, Jobsy.Web.
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingPriceClient>();
+builder.Services.AddOptions<Jobsy.Core.Options.AiOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.AiOptions.SectionName));
+builder.Services.AddOptions<Jobsy.Core.Options.MistralOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.MistralOptions.SectionName));
 builder.Services.AddSingleton<Jobsy.Web.Services.LegalIdentityProvider>();
 builder.Services.AddHttpClient(Jobsy.Web.Services.LegalIdentityProvider.HttpClientName, client =>
 {

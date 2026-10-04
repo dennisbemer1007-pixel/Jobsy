@@ -13,6 +13,17 @@
     }
     else
     {
+        @if (ActiveAi is not null)
+        {
+            <p class="muted" data-testid="ai-provider-active">
+                Actieve AI-provider: <strong>@ActiveAi.ActiveAiProvider</strong>
+                @if (!string.IsNullOrWhiteSpace(ActiveAi.ActiveAiModel))
+                {
+                    <text> · model @ActiveAi.ActiveAiModel</text>
+                }
+                . Alleen lezen. Wisselen doe je met <code>Ai__Provider</code>.
+            </p>
+        }
         <div class="company-grid">
             @foreach (var cred in _credentials)
             {
@@ -32,6 +43,11 @@
     private bool _loading = true;
     private string? _error;
     private string? _message;
+
+    private IntegrationCredentialItem? ActiveAi =>
+        _credentials.FirstOrDefault(c =>
+            string.Equals(c.Key, "OpenAI", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(c.ActiveAiProvider));
 
 
     protected override void OnInitialized()

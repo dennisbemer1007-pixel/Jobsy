@@ -1,13 +1,17 @@
 @namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Options
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Shared
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
 @inject CultureState Culture
+@inject IServiceProvider Services
 
 @using Microsoft.AspNetCore.Components.Forms
                             <fieldset class="profile-employers">
                                 <legend>@Culture["Profile.OwnCv"]</legend>
-                                <p class="profile-employers__hint">@Culture["Profile.OwnCvLead"]</p>
+                                <p class="profile-employers__hint">@Culture[CvLeadKey]</p>
                                 @if (Editor.UploadedCv is not null)
                                 {
                                     <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", Editor.UploadedCv.FileName)</p>
@@ -41,4 +45,9 @@
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private string CvLeadKey =>
+        Services.GetService<IOptions<AiOptions>>()?.Value.Resolved == AiProvider.Mistral
+            ? "Profile.OwnCvLead.Mistral"
+            : "Profile.OwnCvLead";
 }

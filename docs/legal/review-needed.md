@@ -6,6 +6,15 @@ They may ship to `acceptatie`; a lawyer reviews them before they go to `main` / 
 Every PR that changes a legal text adds its sections here: document · section id · version ·
 what changed · open question.
 
+## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-05
+
+| Section | Id | What changed | Open question for the lawyer |
+|---|---|---|---|
+| 4 | `delen` | The processor table lists one AI company. OpenAI (United States, DPF) only when `Ai:Provider` is OpenAI. Mistral AI (Paris, data in the EU, no transfer basis outside the EEA) only when the provider is Mistral. A sentence under "Buiten de EU" names that company. | Is "gegevens blijven in de EU" accurate for Mistral's API (La Plateforme, Paris) including logs and abuse monitoring? Does the DPF row for OpenAI stay correct while it is the default? |
+| 7 | `ai` | The Dutch body names the active processor (OpenAI in the US, or Mistral AI in Paris). The "In het kort" line does the same in nl, en, pl, ro and ar. Without a key, no CV text is sent. | Must a switch from OpenAI to Mistral be a new consent round? This version does not bump `CurrentConsentVersion`. |
+
+PR #572 (Lettermint, still open) builds the sentence "Waar staan je gegevens?" from the processor list. That sentence is not on `acceptatie` yet, so this version keeps the existing "Buiten de EU" paragraph and only adds the AI sentence. The Mistral row id is `mistral`, which #572's host guard already watches.
+
 ## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-04
 
 | Section | Id | What changed | Open question for the lawyer |

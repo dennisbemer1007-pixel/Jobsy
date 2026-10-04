@@ -9,10 +9,17 @@ public sealed class OpenAiOptions
 {
     public const string SectionName = "OpenAI";
 
-    /// <summary>Bearer token for api.openai.com. Leave empty to use local fallbacks only.</summary>
+    public const string DefaultModel = "gpt-4o-mini";
+
+    public const string DefaultBaseUrl = "https://api.openai.com/v1/";
+
+    /// <summary>
+    /// Bearer token for api.openai.com. Leave empty to use local fallbacks only.
+    /// Ignored when <see cref="AiOptions.Provider"/> is Mistral; that path uses <c>Mistral__ApiKey</c>.
+    /// </summary>
     public string? ApiKey { get; set; }
 
-    public string Model { get; set; } = "gpt-4o-mini";
+    public string Model { get; set; } = DefaultModel;
 
-    public string BaseUrl { get; set; } = "https://api.openai.com/v1/";
+    public string BaseUrl { get; set; } = DefaultBaseUrl;
 }

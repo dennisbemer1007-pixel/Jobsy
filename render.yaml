@@ -117,6 +117,9 @@ projects:
                 sync: false
               - key: Mail__FromAddress
                 sync: false
+              # Production stays on OpenAI. Acceptatie can switch with Ai__Provider.
+              - key: Ai__Provider
+                value: OpenAI
               # VAPID keys for Web Push (generate once; do not rotate casually — see PR / docs).
               - key: WebPush__Subject
                 sync: false
@@ -197,6 +200,8 @@ projects:
                 sync: false
               - key: WebPush__PrivateKey
                 sync: false
+              - key: Ai__Provider
+                value: OpenAI
 
       - name: Acceptatie
         databases:
@@ -312,6 +317,11 @@ projects:
                 sync: false
               - key: Mail__FromAddress
                 sync: false
+              # Placeholders only. Set Mistral in the Dashboard to switch Acceptatie. Production stays OpenAI.
+              - key: Ai__Provider
+                sync: false
+              - key: Mistral__ApiKey
+                sync: false
               - key: WebPush__Subject
                 sync: false
               - key: WebPush__PublicKey
@@ -387,6 +397,12 @@ projects:
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
               - key: TestAccounts__Enabled
+                sync: false
+              # Same provider and key presence as the API, so the privacy page names the company that receives AI calls.
+              # The web service does not call Mistral.
+              - key: Ai__Provider
+                sync: false
+              - key: Mistral__ApiKey
                 sync: false
               - key: WebPush__Subject
                 sync: false

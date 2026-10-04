@@ -26,13 +26,14 @@ public sealed record LegalVersionEntry(string Version, DateOnly EffectiveFrom, s
 /// </summary>
 public static class LegalDocumentVersions
 {
-    public static readonly LegalVersion Privacy = new("2026-10-04", new DateOnly(2026, 10, 4));
+    public static readonly LegalVersion Privacy = new("2026-10-05", new DateOnly(2026, 10, 5));
 
     /// <summary>One version for both terms documents (algemene voorwaarden + gebruiksvoorwaarden).</summary>
     public static readonly LegalVersion Terms = new("2026-10", new DateOnly(2026, 10, 1));
 
     public static readonly IReadOnlyList<LegalVersionEntry> PrivacyHistory =
     [
+        new("2026-10-05", new DateOnly(2026, 10, 5), "Legal.Change.Privacy.2026-10-05"),
         new("2026-10-04", new DateOnly(2026, 10, 4), "Legal.Change.Privacy.2026-10-04"),
         new("2026-10", new DateOnly(2026, 10, 1), "Legal.Change.Privacy.2026-10"),
         new("2026-09", new DateOnly(2026, 9, 26), "Legal.Change.Privacy.2026-09")

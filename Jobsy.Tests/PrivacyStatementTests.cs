@@ -144,7 +144,7 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
     {
         var table = RenderPrivacy().Find("#delen .pp-table__grid").TextContent;
 
-        foreach (var row in LegalProcessors.All)
+        foreach (var row in LegalProcessors.ForAiProvider(Jobsy.Core.Options.AiProvider.OpenAI))
         {
             Assert.Contains(row.Name, table, StringComparison.Ordinal);
             Assert.Contains(row.Region, table, StringComparison.Ordinal);
@@ -209,6 +209,42 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
     [Fact]
     public void Active_rows_carry_no_planned_note()
         => Assert.Empty(RenderPrivacy().FindAll("#delen .pp-table__planned"));
+
+    [Fact]
+    public void Default_page_lists_openai_and_hides_mistral()
+    {
+        var table = RenderPrivacy().Find("#delen .pp-table__grid").TextContent;
+        var ai = RenderPrivacy().Find("#ai").TextContent;
+
+        Assert.Contains("OpenAI", table, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mistral", table, StringComparison.Ordinal);
+        Assert.Contains("OpenAI in de Verenigde Staten", ai, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mistral AI", ai, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("nl", "Mistral AI in Parijs")]
+    [InlineData("en", "Mistral AI in Paris")]
+    [InlineData("pl", "Mistral AI w Paryżu")]
+    [InlineData("ro", "Mistral AI la Paris")]
+    [InlineData("ar", "Mistral AI في باريس")]
+    public void Mistral_provider_names_mistral_in_every_language(string language, string summarySnippet)
+    {
+        Services.AddSingleton<Microsoft.Extensions.Options.IOptions<Jobsy.Core.Options.AiOptions>>(
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AiOptions { Provider = "Mistral" }));
+        UseLanguage(language);
+
+        var page = RenderPrivacy();
+        var table = page.Find("#delen .pp-table__grid").TextContent;
+        var summary = page.Find("#ai .pp-short__text").TextContent;
+        var ai = page.Find("#ai").TextContent;
+
+        Assert.Contains("Mistral AI", table, StringComparison.Ordinal);
+        Assert.DoesNotContain("OpenAI", table, StringComparison.Ordinal);
+        Assert.Contains(summarySnippet, summary, StringComparison.Ordinal);
+        Assert.Contains("Mistral AI", ai, StringComparison.Ordinal);
+        Assert.DoesNotContain("naar OpenAI", ai, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void Transfers_outside_the_eu_name_a_basis_for_every_row()

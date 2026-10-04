@@ -1,6 +1,8 @@
+using System.Threading;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services.OpenAi;
@@ -11,8 +13,11 @@ namespace Jobsy.Infrastructure.Services.OpenAi;
 /// </summary>
 public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
 {
-    public const string DefaultModel = "gpt-4o-mini";
-    public const string DefaultBaseUrl = "https://api.openai.com/v1/";
+    public const string DefaultModel = OpenAiOptions.DefaultModel;
+    public const string DefaultBaseUrl = OpenAiOptions.DefaultBaseUrl;
+
+    private static int _unknownProviderWarned;
+    private static int _missingMistralKeyWarned;
 
     /// <summary>
     /// How config/env <see cref="OpenAiOptions.BaseUrl"/> is applied when DB has no usable base URL.
@@ -59,13 +64,22 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
 
     private readonly IIntegrationCredentialService _credentials;
     private readonly OpenAiOptions _options;
+    private readonly AiOptions _ai;
+    private readonly MistralOptions _mistral;
+    private readonly ILogger<OpenAiEndpointResolver>? _logger;
 
     public OpenAiEndpointResolver(
         IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options)
+        IOptions<OpenAiOptions> options,
+        IOptions<AiOptions>? ai = null,
+        IOptions<MistralOptions>? mistral = null,
+        ILogger<OpenAiEndpointResolver>? logger = null)
     {
         _credentials = credentials;
         _options = options.Value;
+        _ai = ai?.Value ?? new AiOptions();
+        _mistral = mistral?.Value ?? new MistralOptions();
+        _logger = logger;
     }
 
     public async Task<OpenAiEndpointResolution> ResolveAsync(
@@ -77,10 +91,76 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
             throw new ArgumentOutOfRangeException(nameof(feature), feature, "Unknown OpenAI feature.");
         }
 
+        WarnUnknownProviderOnce();
+        if (_ai.Resolved == AiProvider.Mistral)
+        {
+            return ResolveMistral();
+        }
+
         var apiKey = await ResolveApiKeyAsync(defaults.IntegrationKey, cancellationToken);
         var model = await ResolveModelAsync(defaults, cancellationToken);
         var baseUrl = await ResolveBaseUrlAsync(defaults, cancellationToken);
         return new OpenAiEndpointResolution(apiKey, model, baseUrl);
+    }
+
+    /// <summary>
+    /// Mistral uses its own key, model and base URL. The OpenAI row in admin integrations
+    /// (often <c>gpt-4o-mini</c>) is not sent, because that model name is rejected by Mistral.
+    /// </summary>
+    private OpenAiEndpointResolution ResolveMistral()
+    {
+        var apiKey = string.IsNullOrWhiteSpace(_mistral.ApiKey) ? null : _mistral.ApiKey.Trim();
+        if (apiKey is null)
+        {
+            WarnMissingMistralKeyOnce();
+        }
+
+        var model = string.IsNullOrWhiteSpace(_mistral.Model)
+            ? MistralOptions.DefaultModel
+            : _mistral.Model.Trim();
+        return new OpenAiEndpointResolution(apiKey, model, ResolveMistralBaseUrl());
+    }
+
+    private string ResolveMistralBaseUrl()
+    {
+        var fallback = string.IsNullOrWhiteSpace(_mistral.BaseUrl)
+            ? MistralOptions.DefaultBaseUrl
+            : _mistral.BaseUrl;
+        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalized, out _)
+            && !string.IsNullOrWhiteSpace(normalized))
+        {
+            return normalized;
+        }
+
+        return MistralOptions.DefaultBaseUrl;
+    }
+
+    private void WarnUnknownProviderOnce()
+    {
+        if (_ai.IsKnownProvider || string.IsNullOrWhiteSpace(_ai.Provider))
+        {
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _unknownProviderWarned, 1) == 1)
+        {
+            return;
+        }
+
+        _logger?.LogWarning(
+            "AI provider '{Provider}' is unknown. Using OpenAI.",
+            _ai.Provider.Trim());
+    }
+
+    private void WarnMissingMistralKeyOnce()
+    {
+        if (Interlocked.Exchange(ref _missingMistralKeyWarned, 1) == 1)
+        {
+            return;
+        }
+
+        _logger?.LogWarning(
+            "AI provider is Mistral but Mistral:ApiKey is empty. AI calls use the local fallback. Set Mistral__ApiKey. The OpenAI key is not used.");
     }
 
     private async Task<string?> ResolveApiKeyAsync(IntegrationKey key, CancellationToken cancellationToken)
