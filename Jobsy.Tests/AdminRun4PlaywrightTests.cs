@@ -43,7 +43,7 @@ public class AdminRun4PlaywrightTests
         await AssertSearchFiltersAsync(page, baseUrl.TrimEnd('/') + "/admin/beveiliging/systeemlogs", ".admin-filter-bar__search input");
         await AssertSearchFiltersAsync(page, baseUrl.TrimEnd('/') + "/admin/gebruikers", ".admin-filter-bar__search input");
         await AssertFastTypeAsync(page, ".admin-search__input");
-        await page.GotoAsync(baseUrl.TrimEnd('/') + "/admin/organisaties", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await GotoInteractiveAsync(page, baseUrl.TrimEnd('/') + "/admin/organisaties");
         await AssertFastTypeAsync(page, ".admin-filter-bar__search input");
 
         var storage = await desktop.StorageStateAsync();
@@ -57,7 +57,7 @@ public class AdminRun4PlaywrightTests
         var phone = await mobile.NewPageAsync();
         foreach (var path in new[] { "/admin", "/admin/organisaties", "/admin/vacatures", "/admin/gebruikers", "/admin/beveiliging/systeemlogs" })
         {
-            await phone.GotoAsync(baseUrl.TrimEnd('/') + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+            await GotoInteractiveAsync(phone, baseUrl.TrimEnd('/') + path);
             var menu = phone.Locator(".admin-topbar__menu");
             await Assertions.Expect(menu).ToBeVisibleAsync(new() { Timeout = 30_000 });
             var fits = await phone.EvaluateAsync<bool>(
@@ -190,51 +190,97 @@ public class AdminRun4PlaywrightTests
 
     private static async Task AssertMenuStaysOpenAsync(IPage page, string url)
     {
-        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-        // Prerender paints the toggle before the circuit. A click in that window is dropped
-        // and aria-expanded stays "false". Wait until the circuit is interactive, then open.
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 30_000 });
-        var toggle = page.Locator("button.row-actions-menu__toggle").First;
-        await toggle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        for (var attempt = 0; attempt < 2; attempt++)
-        {
-            if (await toggle.GetAttributeAsync("aria-expanded") == "true")
-            {
-                break;
-            }
+        await GotoInteractiveAsync(page, url);
+        // Prerender paints the row menu before the interactive circuit reloads the table.
+        // A click in that gap never reaches Blazor, so aria-expanded stays "false".
+        await WaitForStableRowMenuAsync(page);
 
-            await toggle.ClickAsync();
-            try
-            {
-                await Assertions.Expect(toggle).ToHaveAttributeAsync(
-                    "aria-expanded",
-                    "true",
-                    new() { Timeout = 3_000 });
-                break;
-            }
-            catch (PlaywrightException) when (attempt == 0)
-            {
-            }
+        var toggle = page.Locator("button.row-actions-menu__toggle").First;
+        await OpenRowMenuAsync(toggle);
+
+        var openedAt = DateTime.UtcNow;
+        while (DateTime.UtcNow - openedAt < TimeSpan.FromSeconds(1))
+        {
+            var expanded = await toggle.GetAttributeAsync("aria-expanded");
+            Assert.True(
+                expanded == "true",
+                $"Row menu on {url} closed itself (aria-expanded='{expanded}').");
+            await page.WaitForTimeoutAsync(100);
         }
 
-        await Assertions.Expect(toggle).ToHaveAttributeAsync(
-            "aria-expanded",
-            "true",
-            new() { Timeout = 3_000 });
-        // RowActionsMenu closes on focusout after 150ms when focus has left the menu.
-        // The menu must still be open after that window.
-        await page.WaitForTimeoutAsync(400);
-        Assert.Equal("true", await toggle.GetAttributeAsync("aria-expanded"));
         var item = page.Locator(".row-actions-menu__panel [role='menuitem']").First;
         await item.ClickAsync(new() { Timeout = 5_000 });
     }
 
-    private static async Task AssertSearchFiltersAsync(IPage page, string url, string inputSelector)
+    private static async Task GotoInteractiveAsync(IPage page, string url)
     {
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 30_000 });
+    }
+
+    private static async Task WaitForStableRowMenuAsync(IPage page)
+    {
+        var token = Guid.NewGuid().ToString("N");
+        await page.WaitForFunctionAsync(
+            """
+            (token) => {
+              if (window.__jobsyMenuStableToken !== token) {
+                window.__jobsyMenuStableToken = token;
+                window.__jobsyMenuStableSince = 0;
+                window.__jobsyMenuSawLoading = false;
+              }
+              const tableLoading = document.querySelector('.admin-data-table__state');
+              const toggle = document.querySelector('button.row-actions-menu__toggle');
+              const visible = !!toggle && toggle.getClientRects().length > 0;
+              // A status line can sit next to a ready table. Only a missing menu,
+              // or the table placeholder that replaces the rows, means "still loading".
+              if (tableLoading || !visible) {
+                window.__jobsyMenuSawLoading = true;
+                window.__jobsyMenuStableSince = 0;
+                return false;
+              }
+              const now = Date.now();
+              if (!window.__jobsyMenuStableSince) {
+                window.__jobsyMenuStableSince = now;
+              }
+              const quiet = now - window.__jobsyMenuStableSince;
+              // The interactive circuit reloads the table after prerender. Once that
+              // loading line has come and gone, a short quiet period is enough.
+              // If the reload was too fast to observe, wait longer before clicking.
+              return window.__jobsyMenuSawLoading ? quiet >= 400 : quiet >= 1200;
+            }
+            """,
+            token,
+            new() { Timeout = 30_000 });
+    }
+
+    private static async Task OpenRowMenuAsync(ILocator toggle)
+    {
+        await toggle.ClickAsync();
+        try
+        {
+            await Assertions.Expect(toggle).ToHaveAttributeAsync(
+                "aria-expanded",
+                "true",
+                new() { Timeout = 3_000 });
+        }
+        catch (PlaywrightException)
+        {
+            // The first click can land while Blazor replaces the prerendered button.
+            await toggle.ClickAsync();
+            await Assertions.Expect(toggle).ToHaveAttributeAsync(
+                "aria-expanded",
+                "true",
+                new() { Timeout = 5_000 });
+        }
+    }
+
+    private static async Task AssertSearchFiltersAsync(IPage page, string url, string inputSelector)
+    {
+        await GotoInteractiveAsync(page, url);
         var rows = page.Locator("table tbody tr");
         await rows.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var count = await rows.CountAsync();

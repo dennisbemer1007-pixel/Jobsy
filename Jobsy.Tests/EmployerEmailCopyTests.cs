@@ -41,7 +41,8 @@ public class EmployerEmailCopyTests
             receivedAtUtc: DateTime.UtcNow, matchPercent: 86, companyName: "Bakkerij");
         Assert.DoesNotContain(candidate, mail.Html, StringComparison.Ordinal);
         Assert.DoesNotContain(candidate, mail.Text, StringComparison.Ordinal);
-        Assert.Contains("86 %", mail.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("86", mail.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("86", mail.Html, StringComparison.Ordinal);
 
         var withoutMatch = TransactionalEmails.EmployerNewApplication(
             "https://lobsy.nl", "Weekendhulp", companyName: "Bakkerij");

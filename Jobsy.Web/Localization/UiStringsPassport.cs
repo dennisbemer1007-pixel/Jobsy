@@ -76,7 +76,25 @@ public static class UiStringsPassport
         Add("Passport.Overview.Egg",
             "Jouw kreeft · nog in het ei", "Your lobster · still in the egg", "Twój homar · jeszcze w jajku", "Homarul tău · încă în ou", "كركندك · ما زال في البيضة");
         Add("Passport.Legend.Competence",
-            "Competenties", "Competencies", "Kompetencje", "Competențe", "الكفاءات");
+            "Wat je kunt", "What you can do", "Co potrafisz", "Ce poți face", "ما تستطيع فعله");
+        Add("Passport.PrivacyPromise",
+            "Alleen jij ziet je paspoort. Jij kiest wat je deelt.",
+            "Only you see your passport. You choose what you share.",
+            "Tylko Ty widzisz swój paszport. Ty wybierasz, co udostępniasz.",
+            "Doar tu îți vezi pașaportul. Tu alegi ce împărtășești.",
+            "أنت وحدك ترى جوازك. أنت تختار ما تشاركه.");
+        Add("Passport.Data.DownloadMine",
+            "Download al mijn gegevens",
+            "Download all my data",
+            "Pobierz wszystkie moje dane",
+            "Descarcă toate datele mele",
+            "نزّل كل بياناتي");
+        Add("Passport.Data.DownloadMineSub",
+            "Een bestand met alles wat Lobsy van je bewaart",
+            "A file with everything Lobsy keeps about you",
+            "Plik ze wszystkim, co Lobsy o Tobie przechowuje",
+            "Un fișier cu tot ce păstrează Lobsy despre tine",
+            "ملف فيه كل ما يحتفظ به لوبسي عنك");
         Add("Passport.Legend.Career",
             "Beroepen", "Careers", "Zawody", "Meserii", "المهن");
         Add("Passport.Legend.Culture",
