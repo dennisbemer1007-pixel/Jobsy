@@ -18,6 +18,17 @@ namespace Jobsy.Tests.Scholen;
 public class SchoolPortalRetestTests
 {
     [Fact]
+    public void Pupil_school_picker_listens_on_document_so_prerender_cannot_drop_it()
+    {
+        var root = RepoRoot();
+        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "leerling-login.js"));
+        Assert.Contains("document.addEventListener(\"change\"", js, StringComparison.Ordinal);
+        Assert.Contains("select[data-leerling-school]", js, StringComparison.Ordinal);
+        Assert.DoesNotContain("DOMContentLoaded", js, StringComparison.Ordinal);
+        Assert.DoesNotContain("dataset.bound", js, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Class_file_name_keeps_spaces_and_slashes_as_hyphens()
     {
         Assert.Equal("ZZ-Test-7-8", SchoolPortalService.SanitizeFile("ZZ Test 7/8"));

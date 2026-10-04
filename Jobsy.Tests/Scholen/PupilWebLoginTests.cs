@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities;
@@ -8,7 +9,10 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
+using Jobsy.Web.Auth;
+using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -32,7 +36,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         await EnableSchoolsAsync();
         var seed = await SeedOpenClassAsync();
 
-        using var web = new PupilWebFactory(_api.CreateClient());
+        using var web = new PupilWebFactory(_api.Server.CreateHandler());
         using var client = web.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false,
@@ -54,6 +58,207 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("/leerling/start", location, StringComparison.Ordinal);
         Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
         Assert.Contains(cookies!, c => c.StartsWith(PupilAuthDefaults.CookieName + "=", StringComparison.Ordinal));
+        Assert.Contains(cookies!, c => c.StartsWith(PupilApiSessionCookie.Name + "=", StringComparison.Ordinal));
+        var webTicket = CookieValue(cookies!, PupilAuthDefaults.CookieName);
+        var apiTicket = CookieValue(cookies!, PupilApiSessionCookie.Name);
+        Assert.False(string.IsNullOrWhiteSpace(webTicket));
+        Assert.False(string.IsNullOrWhiteSpace(apiTicket));
+        Assert.NotEqual(webTicket, apiTicket);
+    }
+
+    [Fact]
+    public async Task Logged_in_pupil_loads_start_and_progress_across_separate_hosts()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+        Assert.Contains("/leerling/start", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name);
+        Assert.False(string.IsNullOrWhiteSpace(apiTicket));
+
+        var start = await client.GetAsync("/leerling/start");
+        var html = await start.Content.ReadAsStringAsync();
+        Assert.True(start.StatusCode == HttpStatusCode.OK, $"start returned {(int)start.StatusCode} {html[..Math.Min(html.Length, 400)]}");
+        Assert.DoesNotContain("/login", start.Headers.Location?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(PupilSessionDuration.Groep78, html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Inloggen bij Lobsy", html, StringComparison.Ordinal);
+
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+        var progress = await GetProgressAsync(api, apiTicket!);
+        Assert.Equal(HttpStatusCode.OK, progress.Status);
+        Assert.False(progress.Body!.Completed);
+        Assert.Equal(60, progress.Body.TotalItems);
+    }
+
+    [Fact]
+    public async Task Pupil_can_pause_and_resume_the_same_question()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var first = await GetProgressAsync(api, apiTicket);
+        Assert.Equal(HttpStatusCode.OK, first.Status);
+        var itemId = first.Body!.CurrentItemId;
+        Assert.False(string.IsNullOrWhiteSpace(itemId));
+
+        var saved = await PutAnswerAsync(api, apiTicket, itemId!, 3);
+        Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+
+        var stop = await client.PostAsync("/leerling/pauze", new FormUrlEncodedContent([]));
+        Assert.Equal(HttpStatusCode.Redirect, stop.StatusCode);
+        Assert.Contains("/leerling/stop", stop.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+
+        var again = await PostLoginAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, again.StatusCode);
+        Assert.Contains("/leerling/reis", again.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        var resumedTicket = CookieValue(again.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var resumed = await GetProgressAsync(api, resumedTicket);
+        Assert.Equal(HttpStatusCode.OK, resumed.Status);
+        Assert.Equal(1, resumed.Body!.AnsweredCount);
+        Assert.Equal(3, resumed.Body.Answers[itemId!]);
+
+        var reis = await client.GetAsync("/leerling/reis");
+        var reisHtml = await reis.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, reis.StatusCode);
+        Assert.DoesNotContain("/login", reis.Headers.Location?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Inloggen bij Lobsy", reisHtml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Logged_in_pupil_downloads_the_story_pdf()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        await FinishJourneyAsync(api, apiTicket);
+
+        var pdf = await client.GetAsync("/leerling/pdf");
+        var bytes = await pdf.Content.ReadAsByteArrayAsync();
+        Assert.True(pdf.StatusCode == HttpStatusCode.OK, $"pdf returned {(int)pdf.StatusCode}");
+        Assert.Equal("application/pdf", pdf.Content.Headers.ContentType?.MediaType);
+        Assert.True(bytes.Length > 4 && bytes[0] == (byte)'%' && bytes[1] == (byte)'P' && bytes[2] == (byte)'D' && bytes[3] == (byte)'F');
+        Assert.DoesNotContain("/login", pdf.Headers.Location?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static HttpClient HtmlClient(PupilWebFactory web)
+    {
+        var client = web.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = true
+        });
+        client.DefaultRequestHeaders.Accept.ParseAdd("text/html");
+        return client;
+    }
+
+    private static Task<HttpResponseMessage> PostLoginAsync(HttpClient client, Seed seed)
+        => client.PostAsync("/leerling/login", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["schoolId"] = seed.SchoolId.ToString("D"),
+            ["classId"] = seed.ClassId.ToString("D"),
+            ["code"] = seed.PlainCode
+        }));
+
+    private static string? CookieValue(IEnumerable<string> setCookies, string name)
+    {
+        foreach (var header in setCookies)
+        {
+            var pair = header.Split(';', 2)[0].Trim();
+            var eq = pair.IndexOf('=');
+            if (eq <= 0)
+            {
+                continue;
+            }
+
+            if (string.Equals(pair[..eq].Trim(), name, StringComparison.Ordinal))
+            {
+                return pair[(eq + 1)..].Trim();
+            }
+        }
+
+        return null;
+    }
+
+    private static async Task<(HttpStatusCode Status, PupilProgressStateDto? Body)> GetProgressAsync(
+        HttpClient api,
+        string apiTicket)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/pupil/progress");
+        request.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        var response = await api.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            return (response.StatusCode, null);
+        }
+
+        var body = await response.Content.ReadFromJsonAsync<PupilProgressStateDto>(JobsyApiClient.ApiJson);
+        return (response.StatusCode, body);
+    }
+
+    private static async Task<HttpResponseMessage> PutAnswerAsync(
+        HttpClient api,
+        string apiTicket,
+        string itemId,
+        int value)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            "/api/pupil/progress/answers/" + Uri.EscapeDataString(itemId))
+        {
+            Content = JsonContent.Create(new PupilAnswerRequest(value), options: JobsyApiClient.ApiJson)
+        };
+        request.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        return await api.SendAsync(request);
+    }
+
+    private static async Task FinishJourneyAsync(HttpClient api, string apiTicket)
+    {
+        for (var step = 0; step < 80; step++)
+        {
+            var progress = await GetProgressAsync(api, apiTicket);
+            Assert.Equal(HttpStatusCode.OK, progress.Status);
+            if (progress.Body!.Completed)
+            {
+                return;
+            }
+
+            if (progress.Body.NeedsIsland || progress.Body.NextStep == "island")
+            {
+                var chips = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/chips")
+                {
+                    Content = JsonContent.Create(
+                        new PupilChipsRequest(["sport"], ["rekenen"], null, null),
+                        options: JobsyApiClient.ApiJson)
+                };
+                chips.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+                var savedChips = await api.SendAsync(chips);
+                Assert.Equal(HttpStatusCode.OK, savedChips.StatusCode);
+                continue;
+            }
+
+            Assert.False(string.IsNullOrWhiteSpace(progress.Body.CurrentItemId));
+            var saved = await PutAnswerAsync(api, apiTicket, progress.Body.CurrentItemId!, 3);
+            Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+        }
+
+        Assert.Fail("Pupil journey did not finish.");
     }
 
     private async Task EnableSchoolsAsync()
@@ -121,9 +326,9 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
     private sealed class PupilWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
     {
-        private readonly HttpClient _api;
+        private readonly HttpMessageHandler _api;
 
-        public PupilWebFactory(HttpClient api) => _api = api;
+        public PupilWebFactory(HttpMessageHandler api) => _api = api;
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -145,6 +350,24 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
                 services.AddSingleton<IFeatureFlags>(new SchoolsOnFlags());
                 services.RemoveAll<IHttpClientFactory>();
                 services.AddSingleton<IHttpClientFactory>(new ForwardFactory(_api));
+                services.RemoveAll<JobsyApiClient>();
+                services.AddScoped(sp =>
+                {
+                    var auth = new JobsyApiAuthHandler(
+                        sp.GetRequiredService<IHttpContextAccessor>(),
+                        sp.GetRequiredService<AuthenticationStateProvider>(),
+                        sp,
+                        sp.GetRequiredService<IConfiguration>(),
+                        sp.GetRequiredService<JobsyAccessTokenIssuer>())
+                    {
+                        InnerHandler = new ForwardHandler(_api)
+                    };
+                    var http = new HttpClient(auth, disposeHandler: false)
+                    {
+                        BaseAddress = new Uri("http://api.test/")
+                    };
+                    return new JobsyApiClient(http);
+                });
             });
         }
     }
@@ -168,7 +391,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     {
         private readonly HttpMessageHandler _handler;
 
-        public ForwardFactory(HttpClient api) => _handler = new ForwardHandler(api);
+        public ForwardFactory(HttpMessageHandler api) => _handler = new ForwardHandler(api);
 
         public HttpClient CreateClient(string name)
             => new(_handler, disposeHandler: false);
@@ -178,27 +401,49 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
     private sealed class ForwardHandler : HttpMessageHandler
     {
-        private readonly HttpClient _api;
+        private readonly HttpMessageInvoker _api;
 
-        public ForwardHandler(HttpClient api) => _api = api;
+        public ForwardHandler(HttpMessageHandler api)
+            => _api = new HttpMessageInvoker(api, disposeHandler: false);
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
+            // The Web client calls http://api.test/. The test server only accepts localhost.
             var path = request.RequestUri?.PathAndQuery ?? "/";
-            using var clone = new HttpRequestMessage(request.Method, path);
+            if (!path.StartsWith('/'))
+            {
+                path = "/" + path;
+            }
+
+            using var clone = new HttpRequestMessage(request.Method, new Uri("http://localhost" + path));
+            foreach (var header in request.Headers)
+            {
+                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
             if (request.Content is not null)
             {
                 var bytes = await request.Content.ReadAsByteArrayAsync(cancellationToken);
                 clone.Content = new ByteArrayContent(bytes);
-                if (request.Content.Headers.ContentType is not null)
+                foreach (var header in request.Content.Headers)
                 {
-                    clone.Content.Headers.ContentType = request.Content.Headers.ContentType;
+                    clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
             }
 
             return await _api.SendAsync(clone, cancellationToken);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _api.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
     }
 

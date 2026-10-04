@@ -87,6 +87,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         var response = await base.SendAsync(request, cancellationToken);
+        CaptureRenewedApiTicket(response, httpContext);
         if (response.StatusCode != HttpStatusCode.Unauthorized
             || request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("jobsy-retried"), out var retried)
             && retried)
@@ -110,12 +111,16 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyTrustedClientIp(retry, httpContext);
         ApplyPupilCookie(retry, httpContext);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        return await base.SendAsync(retry, cancellationToken);
+        var retriedResponse = await base.SendAsync(retry, cancellationToken);
+        CaptureRenewedApiTicket(retriedResponse, httpContext);
+        return retriedResponse;
     }
 
     /// <summary>
-    /// Forwards the non-persistent <c>Lobsy.Leerling</c> cookie to <c>api/pupil/*</c>
-    /// so the API Pupil scheme can authorize progress saves.
+    /// Forwards the API-minted pupil ticket (stored opaquely as
+    /// <see cref="PupilApiSessionCookie"/>) to <c>api/pupil/*</c>. The browser's
+    /// <c>Lobsy.Leerling</c> cookie is protected with the Web key ring and the
+    /// API cannot unprotect it.
     /// </summary>
     private static void ApplyPupilCookie(HttpRequestMessage request, HttpContext? httpContext)
     {
@@ -125,8 +130,8 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             return;
         }
 
-        if (httpContext?.Request.Cookies.TryGetValue(PupilAuthDefaults.CookieName, out var cookie) != true
-            || string.IsNullOrWhiteSpace(cookie))
+        var cookie = httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
+        if (string.IsNullOrWhiteSpace(cookie))
         {
             return;
         }
@@ -141,6 +146,34 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         else
         {
             request.Headers.TryAddWithoutValidation("Cookie", $"{PupilAuthDefaults.CookieName}={cookie}");
+        }
+    }
+
+    /// <summary>
+    /// The API may slide its own pupil cookie. Store the new value. Never copy
+    /// it onto <c>Lobsy.Leerling</c>: that name is the Web session.
+    /// </summary>
+    private static void CaptureRenewedApiTicket(HttpResponseMessage response, HttpContext? httpContext)
+    {
+        if (httpContext is null || httpContext.Response.HasStarted)
+        {
+            return;
+        }
+
+        if (!response.Headers.TryGetValues("Set-Cookie", out var values))
+        {
+            return;
+        }
+
+        foreach (var header in values)
+        {
+            if (!PupilApiSessionCookie.TryReadTicket(header, out var value))
+            {
+                continue;
+            }
+
+            PupilApiSessionCookie.Set(httpContext, value);
+            return;
         }
     }
 
@@ -266,6 +299,27 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             // ignore
         }
 
+        // A pupil principal must never land on the staff e-mail form.
+        if (ShouldRedirectPupilToCodeLogin(httpContext))
+        {
+            try
+            {
+                await httpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                PupilApiSessionCookie.Clear(httpContext);
+            }
+            catch (InvalidOperationException)
+            {
+                // Headers already went out; the page still must not show staff login.
+            }
+
+            if (!httpContext.Response.HasStarted)
+            {
+                httpContext.Response.Redirect("/leerling?error=expired");
+            }
+
+            return;
+        }
+
         // Interactive navigations for an authenticated session: send the browser to login.
         // Anonymous SSR routinely gets 401 from optional layout chips (notifications, sales
         // dashboard) — never hijack those into a /login redirect loop.
@@ -281,6 +335,57 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         await Task.CompletedTask;
     }
 
+    /// <summary>Pupil API 401s go back to the code form, not the staff login.</summary>
+    public static bool ShouldRedirectPupilToCodeLogin(HttpContext httpContext)
+    {
+        if (httpContext.Response.HasStarted)
+        {
+            return false;
+        }
+
+        var path = httpContext.Request.Path.Value ?? string.Empty;
+        if (!path.StartsWith("/leerling", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/leerling", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/leerling/login", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!IsPupilPrincipal(httpContext.User)
+            && !httpContext.Request.Cookies.ContainsKey(PupilAuthDefaults.CookieName)
+            && !httpContext.Request.Cookies.ContainsKey(PupilApiSessionCookie.Name))
+        {
+            return false;
+        }
+
+        return httpContext.Request.Headers.Accept.ToString()
+            .Contains("text/html", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsPupilPrincipal(ClaimsPrincipal? user)
+    {
+        if (user is null)
+        {
+            return false;
+        }
+
+        foreach (var identity in user.Identities)
+        {
+            if (!identity.IsAuthenticated)
+            {
+                continue;
+            }
+
+            if (string.Equals(identity.AuthenticationType, PupilAuthDefaults.Scheme, StringComparison.Ordinal)
+                || identity.HasClaim(c => c.Type == PupilClaimTypes.PupilCodeId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Whether an API 401 during an HTML document request should bounce the browser to login.
     /// </summary>
@@ -292,6 +397,12 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        // Pupil sessions use the code form. Never the staff login.
+        if (IsPupilPrincipal(httpContext.User))
         {
             return false;
         }

@@ -1,26 +1,22 @@
 (function () {
-    function bind(root) {
-        var nodes = (root || document).querySelectorAll("select[data-leerling-school]");
-        for (var i = 0; i < nodes.length; i++) {
-            var select = nodes[i];
-            if (select.dataset.bound === "1") {
-                continue;
-            }
+    if (window.__lobsyLeerlingSchool) {
+        return;
+    }
 
-            select.dataset.bound = "1";
-            select.addEventListener("change", function () {
-                if (!this.value || !this.form) {
-                    return;
-                }
+    window.__lobsyLeerlingSchool = true;
 
-                this.form.submit();
-            });
+    // Interactive Server replaces the prerendered <select>. Bind on document so the
+    // listener survives that swap. The "Kies" button still submits when JS is off.
+    document.addEventListener("change", function (event) {
+        var select = event.target;
+        if (!select || !select.matches || !select.matches("select[data-leerling-school]")) {
+            return;
         }
-    }
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", function () { bind(document); });
-    } else {
-        bind(document);
-    }
+        if (!select.value || !select.form) {
+            return;
+        }
+
+        select.form.submit();
+    });
 })();

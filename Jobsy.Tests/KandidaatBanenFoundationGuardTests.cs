@@ -20,11 +20,12 @@ public class KandidaatBanenFoundationGuardTests
     ];
 
     [Fact]
-    public void Focus_css_hides_programmatic_h1_box_only()
+    public void Focus_css_uses_the_brand_ring_on_programmatic_h1()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
-        Assert.Contains("h1[tabindex=\"-1\"]:focus:not(:focus-visible)", css, StringComparison.Ordinal);
-        Assert.Contains("outline: none", css, StringComparison.Ordinal);
+        Assert.Contains("h1[tabindex=\"-1\"]:focus", css, StringComparison.Ordinal);
+        Assert.Contains("outline: 3px solid var(--brand)", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("h1[tabindex=\"-1\"]:focus:not(:focus-visible)", css, StringComparison.Ordinal);
     }
 
     [Fact]

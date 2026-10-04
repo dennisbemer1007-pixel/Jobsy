@@ -18,6 +18,18 @@ public sealed class SchoolsFeatureMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var path = context.Request.Path.Value ?? "";
+        // Authorization challenges for /school and /leraar are 302s written after
+        // this middleware. Register no-store now so those redirects are not cached.
+        // /leerling is handled by LeerlingNoStoreMiddleware. /scholen (public) is not.
+        if (IsStaffPortalPage(path) && !context.Response.HasStarted)
+        {
+            context.Response.OnStarting(() =>
+            {
+                context.Response.Headers.CacheControl = "no-store";
+                return Task.CompletedTask;
+            });
+        }
+
         if (IsGated(path))
         {
             var features = context.RequestServices.GetService<IFeatureFlags>();
@@ -42,6 +54,13 @@ public sealed class SchoolsFeatureMiddleware
 
         await _next(context);
     }
+
+    private static bool IsStaffPortalPage(string path)
+        => StartsWithSegment(path, "/school") || StartsWithSegment(path, "/leraar");
+
+    private static bool StartsWithSegment(string path, string segment)
+        => path.StartsWith(segment, StringComparison.OrdinalIgnoreCase)
+           && (path.Length == segment.Length || path[segment.Length] == '/');
 
     private static bool IsGated(string path)
     {

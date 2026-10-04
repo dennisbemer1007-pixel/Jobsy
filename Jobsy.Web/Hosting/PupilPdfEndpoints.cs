@@ -1,5 +1,7 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Auth;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Jobsy.Web.Hosting;
 
@@ -19,12 +21,26 @@ public static class PupilPdfEndpoints
         {
             http.Response.Headers.CacheControl = "no-store";
             var (bytes, fileName, status) = await api.GetPupilStoryPdfAsync(http.RequestAborted);
-            if (bytes is null || bytes.Length == 0)
+            if (http.Response.HasStarted)
             {
-                return Results.StatusCode(status is >= 400 and < 600 ? status : StatusCodes.Status502BadGateway);
+                return Results.Empty;
             }
 
-            return Results.File(bytes, "application/pdf", fileName);
+            if (bytes is { Length: > 0 })
+            {
+                return Results.File(bytes, "application/pdf", fileName);
+            }
+
+            // A bare 401/409 is re-executed as /status/{code} and shown as 404.
+            // Pupils always stay on the pupil site.
+            if (status is StatusCodes.Status401Unauthorized or StatusCodes.Status403Forbidden)
+            {
+                await http.SignOutAsync(PupilAuthDefaults.Scheme);
+                PupilApiSessionCookie.Clear(http);
+                return Results.Redirect("/leerling?error=expired");
+            }
+
+            return Results.Redirect("/leerling/start");
         }).RequireAuthorization(JobsyPolicies.PupilSession);
 
         return app;
