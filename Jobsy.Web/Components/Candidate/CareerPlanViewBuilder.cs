@@ -185,21 +185,27 @@ public static class CareerPlanViewBuilder
 
         var missing = new List<CareerStepGapLine>();
         var present = new List<CareerStepGapLine>();
-        var alreadyMet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var covered = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var earlier in ordered.Take(index))
         {
+            if (earlier.Status == CareerStepStatus.Completed)
+            {
+                covered.Add(GapKey(TitleWithoutLevel(earlier.Title)));
+                covered.Add(GapKey(ShortTitle(earlier.Title)));
+            }
+
             foreach (var line in BuildGaps(earlier, evidence, experienceYears))
             {
                 if (line.Met)
                 {
-                    alreadyMet.Add(line.Text.Trim());
+                    covered.Add(GapKey(line.Text));
                 }
             }
         }
 
         foreach (var line in BuildGaps(step, evidence, experienceYears))
         {
-            if (line.Met && alreadyMet.Contains(line.Text.Trim()))
+            if (covered.Contains(GapKey(line.Text)))
             {
                 continue;
             }
@@ -214,8 +220,8 @@ public static class CareerPlanViewBuilder
             Id = step.Id,
             Order = step.Order,
             TotalSteps = ordered.Count,
-            Title = TitleWithoutLevel(step.Title),
-            ShortTitle = ShortTitle(step.Title),
+            Title = SentenceCaseTitle(TitleWithoutLevel(step.Title)),
+            ShortTitle = SentenceCaseTitle(ShortTitle(step.Title)),
             Level = LevelFromTitle(step.Title),
             Lead = LeadSentences(step.Summary),
             Status = step.Status,
@@ -364,6 +370,42 @@ public static class CareerPlanViewBuilder
         return (requirement ?? TitleWithoutLevel(step.Title)).Trim();
     }
 
+    /// <summary>First word capital, the rest lower. Keeps short all-caps words such as MBO.</summary>
+    public static string SentenceCaseTitle(string title)
+    {
+        var text = (title ?? "").Trim();
+        if (text.Length == 0)
+        {
+            return "";
+        }
+
+        if (text.Equals("Ervaring in logistiek", StringComparison.OrdinalIgnoreCase)
+            || text.Equals("Ervaring in de logistiek", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Ervaring in de logistiek";
+        }
+
+        var parts = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < parts.Length; i++)
+        {
+            var word = parts[i];
+            if (word.Length <= 4 && word.All(char.IsLetter) && word.All(char.IsUpper))
+            {
+                continue;
+            }
+
+            var lower = word.ToLowerInvariant();
+            parts[i] = i == 0
+                ? char.ToUpperInvariant(lower[0]) + lower[1..]
+                : lower;
+        }
+
+        return string.Join(' ', parts);
+    }
+
+    private static string GapKey(string text)
+        => SentenceCaseTitle(text).Trim();
+
     /// <summary>Short title for the stepper/stones: the first clause, capped on a word boundary.</summary>
     public static string ShortTitle(string title)
     {
@@ -379,6 +421,7 @@ public static class CareerPlanViewBuilder
             text = text[..cut].Trim();
         }
 
+        text = SentenceCaseTitle(text);
         if (text.Length <= 36)
         {
             return text;

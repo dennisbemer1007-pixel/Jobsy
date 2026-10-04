@@ -59,7 +59,7 @@ else
                             <ul class="deep-offer__get">
                                 <li>✓ @Culture["DeepPay.Get.1"]</li>
                                 <li>✓ @Culture["DeepPay.Get.2"]</li>
-                                <li>✓ @(_employersOn ? Culture["DeepPay.Get.3"] : Culture["CareerStep.Band.EyebrowOff"])</li>
+                                <li>✓ @(_employersOn ? Culture["DeepPay.Get.3"] : Culture["TestResult.Upsell.Self"])</li>
                                 <li>✓ @Culture["DeepPay.Get.4"]</li>
                             </ul>
                             <p>
@@ -148,7 +148,7 @@ else
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
                         <footer class="test-shell__footer">
-                            <a href="@($"/profiel/tests/{_slug}")">@Culture["Deep.Done.DownloadPdf"]</a>
+                            <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="DownloadDonePdfAsync">@Culture["Deep.Done.DownloadPdf"]</button>
                             <a class="engagement-btn" href="@($"/profiel/tests/{_slug}")">@Culture["Deep.Done.ViewReport"]</a>
                         </footer>
                     </ChildContent>
@@ -160,7 +160,7 @@ else
                 <TestPageShell Kind="_kind"
                                Mode="TestPageShell.ShellMode.Pause"
                                Deep="true"
-                               Eyebrow="@Culture.Format("Deep.Eyebrow.Part", Culture[_titleKey], pausePart.Index)"
+                               Eyebrow="@ChromeEyebrow(pausePart)"
                                H1="@Culture["Deep.Pause.Title"]"
                                Lead="@Culture.Format("Deep.Pause.Lead", pausePart.Index, _answered, _questionCount)"
                                TestName="@Culture[_titleKey]"
@@ -212,7 +212,6 @@ else
                                 var status = done >= chip.Size ? "done" : (chip.Index == part?.Index ? "now" : "todo");
                                 <li class="deep-topic-chips__item deep-topic-chips__item--@status">
                                     <span>@DeepTestMotivation.PartDisplayName(_kind, chip)</span>
-                                    <small>@done/@chip.Size</small>
                                 </li>
                             }
                         </ol>
@@ -467,6 +466,23 @@ else
         }
     }
 
+    private async Task DownloadDonePdfAsync()
+    {
+        _saving = true;
+        try
+        {
+            await Api.DownloadDeepAnalysisReportAsync(Js, _slug, Culture.Language);
+        }
+        catch (Exception)
+        {
+            _liveSave = Culture["Common.Error"];
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
     private async Task LaterAsync()
     {
         if (_autosave is not null) await _autosave.FlushAsync();
@@ -596,16 +612,12 @@ else
                     var status = offer ? "todo" : done >= p.Size ? "done" : (p.Index == CurrentPart?.Index ? "now" : "todo");
                     <li class="test-rail__part test-rail__part--@status">
                         <span>@DeepTestMotivation.PartDisplayName(_kind, p)</span>
-                        @if (status == "now")
-                        {
-                                <small> · @Culture.Format("Deep.Rail.PartProgress", done + 1, p.Size)</small>
-                        }
                     </li>
                 }
             </ol>
-            @if (!offer)
+            @if (!offer && _questionCount > _answered)
             {
-                var left = Math.Max(0, _questionCount - _answered);
+                var left = _questionCount - _answered;
                 var mins = Math.Max(1, (int)Math.Ceiling(left * 12 / 60.0));
                 <p class="test-rail__footer">@Culture.Format("Deep.Rail.Footer", _answered, _questionCount, mins)</p>
             }

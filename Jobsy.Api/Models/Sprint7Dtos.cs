@@ -170,6 +170,8 @@ public record MfaRegenerateRecoveryCodesRequest(string Code);
 
 public record AdminMfaResetRequest(string Reason, string? ConfirmCode = null);
 
+public record AdminTestUnlockResetRequest(string Reason);
+
 public record EnsureExternalUserRequest(
     string Email,
     string? FullName,

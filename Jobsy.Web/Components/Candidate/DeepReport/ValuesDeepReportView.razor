@@ -2,6 +2,7 @@
 @using Jobsy.Core.Reports
 @using Jobsy.Core.Reports.Values
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 @if (Report is not null)
 {
@@ -33,27 +34,37 @@
                 {
                     <li>
                         <strong>@i. @DeepReportCatalog.ValueLabel(d.Domain, lang)</strong> — @d.Score%
-                        <p class="muted">@DeepReportCatalog.Get("values.choose", lang)</p>
+                        <p class="muted">@ChooseLine(d.Domain, lang)</p>
                     </li>
                     i++;
                 }
             </ol>
         </section>
 
-        <section class="competence-report__section">
-            <h2 class="test-detail__section-title">@Culture["TestResult.Card.Employers"]</h2>
-            <ul class="competence-norm-bars">
-                @foreach (var e in Report.Employers)
-                {
-                    <li class="competence-norm-bar">
-                        <div class="competence-norm-bar__row">
-                            <span>@DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)</span>
-                            <strong>@e.MatchPercent%</strong>
-                        </div>
-                    </li>
-                }
-            </ul>
-        </section>
+        @if (_employersOn)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Card.Employers"]</h2>
+                <ul class="competence-norm-bars">
+                    @foreach (var e in Report.Employers)
+                    {
+                        <li class="competence-norm-bar">
+                            <div class="competence-norm-bar__row">
+                                <span>@DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)</span>
+                            </div>
+                            <p class="muted">@DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)</p>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        else
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Values.WorkMeaning"]</h2>
+                <p>@Culture["TestResult.Values.WorkMeaningBody"]</p>
+            </section>
+        }
 
         @if (Report.ComparisonAvailable)
         {
@@ -77,7 +88,13 @@
             <ul>
                 @foreach (var key in Report.StrengthKeys)
                 {
-                    <li>@DeepReportCatalog.ValueLabel(key.Split('.').Last(), lang)</li>
+                    <li>@Sentence(key, lang)</li>
+                }
+            </ul>
+            <ul>
+                @foreach (var key in Report.PitfallKeys)
+                {
+                    <li class="muted">△ @Sentence(key, lang)</li>
                 }
             </ul>
         </section>
@@ -96,9 +113,19 @@
     private string[] _labels = [];
     private int[] _scores = [];
     private int[]? _norms;
+    private bool _employersOn = true;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
         if (Report is null) return;
         var lang = ReportLanguage.FromUi(Culture.Language);
         _labels = Report.Domains.Select(d => DeepReportCatalog.ValueLabel(d.Domain, lang)).ToArray();
@@ -106,5 +133,23 @@
         _norms = Report.ComparisonAvailable
             ? Report.Domains.Select(d => (int)Math.Round(d.NormMean ?? 0)).ToArray()
             : null;
+    }
+
+    private static string ChooseLine(string domain, string lang)
+    {
+        var specific = $"values.choose.{domain}";
+        var text = DeepReportCatalog.Get(specific, lang);
+        return text == specific ? DeepReportCatalog.Get("values.choose", lang) : text;
+    }
+
+    private static string Sentence(string key, string lang)
+    {
+        var text = DeepReportCatalog.Get(key, lang);
+        if (!string.Equals(text, key, StringComparison.Ordinal))
+        {
+            return text;
+        }
+
+        return DeepReportCatalog.ValueLabel(key.Split('.').Last(), lang);
     }
 }

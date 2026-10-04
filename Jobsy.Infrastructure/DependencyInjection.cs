@@ -178,6 +178,25 @@ public static class DependencyInjection
             });
         services.AddSingleton<IPostConfigureOptions<MailOptions>, MailOptionsLegalIdentityPostConfigure>();
 
+        services.AddOptions<LettermintOptions>()
+            .Bind(configuration.GetSection(LettermintOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                if (string.IsNullOrWhiteSpace(options.ApiKey))
+                {
+                    var alt = configuration["LETTERMINT_API_KEY"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.ApiKey = alt.Trim();
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(options.BaseUrl))
+                {
+                    options.BaseUrl = LettermintOptions.DefaultBaseUrl;
+                }
+            });
+
         services.AddDbContext<JobsyDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString, npgsql =>
@@ -222,6 +241,21 @@ public static class DependencyInjection
         services.AddHttpClient(SmtpEmailService.ResendHttpClientName, client =>
         {
             client.BaseAddress = new Uri(SmtpEmailService.DefaultResendApiBase);
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
+
+        services.AddHttpClient(LettermintEmailSender.HttpClientName, (sp, client) =>
+        {
+            var configured = sp.GetRequiredService<IOptions<LettermintOptions>>().Value.BaseUrl;
+            var baseUrl = string.IsNullOrWhiteSpace(configured)
+                ? LettermintEmailSender.DefaultApiBase
+                : configured.Trim();
+            if (!baseUrl.EndsWith('/'))
+            {
+                baseUrl += "/";
+            }
+
+            client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromSeconds(20);
         });
 

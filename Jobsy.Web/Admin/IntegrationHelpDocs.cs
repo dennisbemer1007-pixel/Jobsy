@@ -55,12 +55,12 @@ public static class IntegrationHelpDocs
         DocsUrlLabel: "Google Cloud Credentials");
 
     private static readonly Doc Mail = new(
-        Summary: "Uitgaande e-mail via Resend API (primair). SMTP alleen als fallback.",
-        UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails — allemaal via Resend wanneer API-key + From gezet zijn.",
-        WhereToGetKey: "resend.com → API Keys → Create. Plak bij ‘Resend API-key’, of zet Mail__ResendApiKey / RESEND_API_KEY op de API-service. From: geverifieerd domein (Mail__FromAddress), of tijdelijk onboarding@resend.dev (alleen naar je eigen inbox).",
-        Tip: "Resend heeft voorrang op SMTP. Op cloud-hosts faalt Gmail-SMTP vaak (5.7.9) — gebruik Resend. Env-vars vullen lege Admin-velden; opgeslagen Admin-keys gaan voor. ‘Secrets wissen’ schakelt env-fill uit tot je opnieuw opslaat of ‘Omgeving opnieuw gebruiken’ kiest. Resend is pas klaar met key én From.",
-        DocsUrl: "https://resend.com/api-keys",
-        DocsUrlLabel: "Resend API keys");
+        Summary: "Uitgaande e-mail. Mail__Provider kiest Resend of Lettermint. SMTP alleen als fallback.",
+        UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails.",
+        WhereToGetKey: "Resend: resend.com → API Keys. Plak bij ‘Resend API-key’, of zet Mail__ResendApiKey / RESEND_API_KEY. Lettermint: lettermint.co → project-token als Lettermint__ApiKey (of LETTERMINT_API_KEY) en Mail__Provider=Lettermint. Zonder die sleutel valt Lettermint terug op Resend. From: Mail__FromAddress op een geverifieerd domein.",
+        Tip: "De Lettermint-sleutel staat alleen in de omgeving, niet in dit formulier. Dit formulier blijft de Resend-sleutel. Op Acceptatie zet je Mail__AllowedRecipientPattern zodat alleen test-*@lobsy.nl (en extra adressen) mail krijgen. Resend heeft voorrang op SMTP. ‘Secrets wissen’ schakelt de Resend-env uit tot je opnieuw opslaat.",
+        DocsUrl: "https://lettermint.co/docs/api-reference/sending/send",
+        DocsUrlLabel: "Lettermint Sending API");
 
     private static readonly Doc OpenAi = new(
         Summary: "OpenAI API voor tekstmodellen.",

@@ -8,6 +8,7 @@
 @using Microsoft.Extensions.Options
 @inject CultureState Culture
 @inject LegalIdentityProvider LegalIdentity
+@inject IConfiguration Configuration
 @inject IServiceProvider Services
 
 @* Official Dutch privacy statement (D3). B1 Dutch, "je"; every number comes from a constant. *@
@@ -23,23 +24,53 @@
     private IReadOnlyList<LegalSection>? _sections;
 
     private AiProviderDecision AiDecision
-        => AiProviderChoice.Decide(
-            Services.GetService<IOptions<AiOptions>>()?.Value.Provider,
-            Services.GetService<IOptions<MistralOptions>>()?.Value.ApiKey);
+        => AiProviderChoice.Decide(AiProvider, MistralApiKey);
 
     private bool UsesMistral => AiDecision.Kind == AiProviderKind.Mistral;
 
+    private bool MistralDataStaysInTheEu
+        => UsesMistral && MistralEndpoint.InferenceStaysInEu(MistralBaseUrl);
+
+    private string? AiProvider
+        => FirstSet(
+            Services.GetService<IOptions<AiOptions>>()?.Value.Provider,
+            Configuration["Ai:Provider"]);
+
+    private string? MistralApiKey
+        => FirstSet(
+            Services.GetService<IOptions<MistralOptions>>()?.Value.ApiKey,
+            Configuration["Mistral:ApiKey"],
+            Configuration["MISTRAL_API_KEY"]);
+
     private string? MistralBaseUrl
-        => Services.GetService<IOptions<MistralOptions>>()?.Value.BaseUrl;
-
-    private bool MistralInEu => MistralEndpoint.InferenceStaysInEu(MistralBaseUrl);
-
-    private IReadOnlyList<LegalProcessor> ProcessorRows
-        => LegalAiProcessorSelection.Resolve(AiDecision.Kind, MistralBaseUrl);
+        => FirstSet(
+            Services.GetService<IOptions<MistralOptions>>()?.Value.BaseUrl,
+            Configuration["Mistral:BaseUrl"]);
 
     private static int TalentPoolAge => CandidateConsentRules.TalentPoolMinimumAge;
 
     private static int ParentalConsentAge => CandidateConsentRules.ParentalConsentAge;
+
+    private IReadOnlyList<LegalProcessor> ActiveProcessors =>
+        LegalProcessorSelection.Resolve(
+            Configuration["Mail:Provider"],
+            !string.IsNullOrWhiteSpace(Configuration["Lettermint:ApiKey"])
+                || !string.IsNullOrWhiteSpace(Configuration["LETTERMINT_API_KEY"]),
+            AiDecision.Kind,
+            MistralBaseUrl);
+
+    private static string? FirstSet(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -169,16 +200,8 @@
                     Sommige bedrijven doen een stukje van het werk voor ons. Ze mogen jouw gegevens alleen
                     gebruiken voor dat stukje. Dat staat in een contract (een verwerkersovereenkomst).
                 </p>
-                <ProcessorTable Rows="@ProcessorRows" />
-                <p id="buiten-de-eu"><strong>Buiten de EU</strong></p>
-                <p>
-                    Onze app en database staan in Frankfurt (EU). Een paar diensten zijn van Amerikaanse bedrijven.
-                    Render, het bedrijf achter die hosting, is zelf een Amerikaans bedrijf.
-                    Die diensten staan in onze lijst met verwerkers, met waar ze werken en welke afspraak we hebben.
-                    Sommige partijen zitten (ook) in de Verenigde Staten. Dan gebruiken we het
-                    EU-VS Data Privacy Framework of de standaardcontractbepalingen van de EU.
-                    Pingen zit in Zwitserland; de EU vindt de bescherming daar gelijkwaardig.
-                </p>
+                <ProcessorTable Rows="@ActiveProcessors" />
+                <DataLocationSentence Rows="@ActiveProcessors" />
                 <p>We verkopen je gegevens niet. Nooit.</p>
                 <p>
                     Bel je of WhatsApp je met een werkgever nadat je sollicitatie is geaccepteerd?
@@ -257,7 +280,7 @@
                 </p>
                 <p><strong>Wat de AI doet</strong></p>
                 <ul>
-                    @if (UsesMistral && MistralInEu)
+                    @if (MistralDataStaysInTheEu)
                     {
                         <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs, voor verwerking in de EU. Account en facturen van Mistral kunnen buiten de EU staan. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
                     }

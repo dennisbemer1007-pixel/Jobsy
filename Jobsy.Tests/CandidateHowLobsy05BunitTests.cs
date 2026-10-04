@@ -278,8 +278,8 @@ public class CandidateHowLobsy05BunitTests : BunitContext
             var cut = Render<HowLobsyWorks>();
 
             Assert.Contains("كيف يعمل لوبسي؟", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("على يسار الشاشة", cut.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("على يمين الشاشة", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("أسفل اليسار", cut.Markup, StringComparison.Ordinal);
+            Assert.DoesNotContain("أسفل اليمين", cut.Markup, StringComparison.Ordinal);
 
             var langs = cut.Find(".how-safe__langs");
             Assert.Equal("rtl", langs.QuerySelector("span[lang=\"ar\"]")!.GetAttribute("dir"));

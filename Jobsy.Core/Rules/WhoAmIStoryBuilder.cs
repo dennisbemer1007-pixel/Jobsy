@@ -12,7 +12,8 @@ public static class WhoAmIStoryBuilder
         RiasecScores career,
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights? profile = null,
-        SchwartzValuesScores? values = null)
+        SchwartzValuesScores? values = null,
+        bool employersEnabled = true)
     {
         var careerTop = TopLabels(
             CareerTestCatalog.RiasecCodes.Select(c => (CareerCompassBuilder.TypeLabel(c), career.Get(c))),
@@ -42,7 +43,9 @@ public static class WhoAmIStoryBuilder
         {
             sb.Append("Wat mij drijft is ");
             sb.Append(JoinDutch(valuesTop));
-            sb.AppendLine(". Dat zoek ik terug in cultuur en beloftes van een werkgever.");
+            sb.AppendLine(employersEnabled
+                ? ". Dat zoek ik terug in cultuur en beloftes van een werkgever."
+                : ". Dat zoek ik terug in hoe een gewone werkdag eruitziet.");
             sb.AppendLine();
         }
 
@@ -79,14 +82,37 @@ public static class WhoAmIStoryBuilder
         {
             sb.Append("Wat mij typeert: ");
             sb.Append(JoinDutch(keywords.Take(4).ToList()));
-            sb.Append(". Ik vertel dit verhaal liever in gewone woorden, zodat een werkgever meteen voelt of we bij elkaar passen.");
+            sb.Append(employersEnabled
+                ? ". Ik vertel dit verhaal liever in gewone woorden, zodat een werkgever meteen voelt of we bij elkaar passen."
+                : ". Ik vertel dit verhaal liever in gewone woorden, zodat meteen duidelijk is of het werk bij me past.");
         }
         else
         {
-            sb.Append("Ik vertel dit verhaal liever in gewone woorden, zodat een werkgever meteen voelt of we bij elkaar passen.");
+            sb.Append(employersEnabled
+                ? "Ik vertel dit verhaal liever in gewone woorden, zodat een werkgever meteen voelt of we bij elkaar passen."
+                : "Ik vertel dit verhaal liever in gewone woorden, zodat meteen duidelijk is of het werk bij me past.");
         }
 
         return Sanitize(sb.ToString()) ?? Fallback;
+    }
+
+    /// <summary>Stored stories stay Dutch. Hide the employer line while that feature is off.</summary>
+    public static string ForDisplay(string? story, bool employersEnabled)
+    {
+        if (string.IsNullOrWhiteSpace(story) || employersEnabled)
+        {
+            return story ?? "";
+        }
+
+        return story
+            .Replace(
+                "Dat zoek ik terug in cultuur en beloftes van een werkgever.",
+                "Dat zoek ik terug in hoe een gewone werkdag eruitziet.",
+                StringComparison.Ordinal)
+            .Replace(
+                "zodat een werkgever meteen voelt of we bij elkaar passen.",
+                "zodat meteen duidelijk is of het werk bij me past.",
+                StringComparison.Ordinal);
     }
 
     public static string? Sanitize(string? story)

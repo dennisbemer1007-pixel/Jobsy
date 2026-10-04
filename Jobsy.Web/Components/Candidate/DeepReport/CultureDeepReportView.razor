@@ -3,6 +3,7 @@
 @using Jobsy.Core.Reports.Culture
 @using Jobsy.Core.Rules
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 @if (Report is not null)
 {
@@ -25,21 +26,30 @@
                              NormLegendLabel="@Culture["TestResult.Card.Radar.Sub.Lobsy"]" />
         </section>
 
-        <section class="competence-report__section">
-            <h2 class="test-detail__section-title">@Culture["TestResult.Card.Employers"]</h2>
-            <ul class="competence-norm-bars">
-                @foreach (var e in Report.Employers)
-                {
-                    <li class="competence-norm-bar">
-                        <div class="competence-norm-bar__row">
-                            <span>@DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)</span>
-                            <strong>@e.MatchPercent%</strong>
-                        </div>
-                        <p class="muted">@DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)</p>
-                    </li>
-                }
-            </ul>
-        </section>
+        @if (_employersOn)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Card.Employers"]</h2>
+                <ul class="competence-norm-bars">
+                    @foreach (var e in Report.Employers)
+                    {
+                        <li class="competence-norm-bar">
+                            <div class="competence-norm-bar__row">
+                                <span>@DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)</span>
+                            </div>
+                            <p class="muted">@DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)</p>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        else
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Culture.WorkStyle"]</h2>
+                <p>@Culture["TestResult.Culture.WorkStyleBody"]</p>
+            </section>
+        }
 
         <section class="competence-report__section">
             <h2 class="test-detail__section-title">@Culture["TestResult.Card.Facets"]</h2>
@@ -98,9 +108,19 @@
     private string[] _cultureLabels = [];
     private int[] _cultureScores = [];
     private int[]? _cultureNorms;
+    private bool _employersOn = true;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
         if (Report is null) return;
         var lang = ReportLanguage.FromUi(Culture.Language);
         var culture = Report.Domains

@@ -135,6 +135,7 @@
                                              ProgressCurrent="_previewProgress"
                                              ProgressTotal="_previewDef.DeepQuestionCount"
                                              ShowSamplePdf="false"
+                                             FreeForTestAccount="_freeForTestAccount"
                                              AllExtendedDone="_model.AllExtendedDone"
                                              ReportLinks="_reportLinks"
                                              OnStart="StartExtendedAsync" />
@@ -159,6 +160,7 @@
     private bool _previewUnlocked;
     private int _previewProgress;
     private decimal _priceEuro = 2.99m;
+    private bool _freeForTestAccount;
     private List<TestResultLockedPreview.ReportLink> _reportLinks = [];
     private CandidateKompasState? _kompas;
 
@@ -251,6 +253,16 @@
     private async Task FinishAsync(TestsOverviewBuilder.OverviewModel model, CandidateCompetencyState? competence)
     {
         _model = model;
+        try
+        {
+            var mode = await Api.GetDeepAnalysisPaymentModeAsync();
+            _freeForTestAccount = mode == DeepTestFinanceRules.TestUnlockMethod;
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _freeForTestAccount = false;
+        }
+
         await LoadQuotasAsync(model);
         await LoadCoursesAsync(competence);
         SetupPreview(model);

@@ -1069,5 +1069,81 @@ public static class UiStringsCareer
             "Krok {0} jest znów otwarty.",
             "Pasul {0} e din nou deschis.",
             "الخطوة {0} مفتوحة مرة أخرى.");
+        Add("Career.Riasec.Realistic",
+            "Aanpakken met je handen", "Working with your hands", "Praca rękami", "Lucru cu mâinile", "العمل بيديك");
+        Add("Career.Riasec.Investigative",
+            "Uitzoeken hoe het zit", "Finding out how it works", "Sprawdzanie jak to działa", "A afla cum funcționează", "معرفة كيف يعمل");
+        Add("Career.Riasec.Artistic",
+            "Iets moois of nieuws maken", "Making something new", "Tworzenie czegoś nowego", "A face ceva nou", "صنع شيء جديد");
+        Add("Career.Riasec.Social",
+            "Mensen helpen", "Helping people", "Pomaganie ludziom", "Ajutarea oamenilor", "مساعدة الناس");
+        Add("Career.Riasec.Enterprising",
+            "Aanjagen en verkopen", "Leading and selling", "Prowadzenie i sprzedaż", "Conducere și vânzare", "القيادة والبيع");
+        Add("Career.Riasec.Conventional",
+            "Netjes organiseren", "Keeping things in order", "Utrzymywanie porządku", "Ținerea ordinii", "ترتيب الأمور");
+        Add("CareerStep.Band.FitBodyOff",
+            "Dit laat zien wat bij jouw manier van werken past.",
+            "This shows what fits the way you work.",
+            "To pokazuje, co pasuje do twojego sposobu pracy.",
+            "Asta arată ce se potrivește cu felul tău de a lucra.",
+            "هذا يبيّن ما يناسب طريقة عملك.");
+        Add("CareerStep.Band.FairOff",
+            "Deze steen past al redelijk. Met {0} wordt het plaatje scherper.",
+            "This stone already fits reasonably. With {0} the picture gets clearer.",
+            "Ten kamień już całkiem pasuje. Z {0} obraz będzie wyraźniejszy.",
+            "Piatra aceasta se potrivește deja destul de bine. Cu {0} imaginea e mai clară.",
+            "هذا الحجر يناسبك بشكل معقول. مع {0} تصبح الصورة أوضح.");
+        Add("Competency.Bar.PeopleEnergy",
+            "Energie van mensen", "Energy from people", "Energia od ludzi", "Energie de la oameni", "طاقة من الناس");
+        Add("TestResult.Values.WorkMeaning",
+            "Wat dit voor je werk betekent", "What this means for your work", "Co to znaczy dla twojej pracy", "Ce înseamnă asta pentru munca ta", "ماذا يعني هذا لعملك");
+        Add("TestResult.Values.WorkMeaningBody",
+            "Gebruik je topwaarden als je taken en een team kiest.",
+            "Use your top values when you choose tasks and a team.",
+            "Użyj swoich najważniejszych wartości, gdy wybierasz zadania i zespół.",
+            "Folosește valorile tale de top când alegi sarcini și o echipă.",
+            "استخدم أهم قيمك عندما تختار المهام والفريق.");
+        Add("TestResult.Culture.WorkStyle",
+            "Hoe jij graag werkt", "How you like to work", "Jak lubisz pracować", "Cum îți place să lucrezi", "كيف تحب أن تعمل");
+        Add("TestResult.Culture.WorkStyleBody",
+            "Zoek een plek waar deze manieren van werken in een gewone week zichtbaar zijn.",
+            "Look for a place where these ways of working show up in a normal week.",
+            "Szukaj miejsca, gdzie ten sposób pracy widać w zwykłym tygodniu.",
+            "Caută un loc unde aceste feluri de a lucra se văd într-o săptămână normală.",
+            "ابحث عن مكان تظهر فيه طرق العمل هذه في أسبوع عادي.");
+        Add("Passport.Bubble.DnaSteady",
+            "Dit is wie je bent op het werk. Je lagen blijven bewaard.",
+            "This is who you are at work. Your layers stay saved.",
+            "To jesteś ty w pracy. Twoje warstwy zostają zapisane.",
+            "Asta ești tu la muncă. Straturile tale rămân salvate.",
+            "هذا أنت في العمل. طبقاتك تبقى محفوظة.");
+        Add("MailSettings.Always.Codes",
+            "Codes (inloggen)", "Codes (sign-in)", "Kody (logowanie)", "Coduri (conectare)", "رموز (تسجيل الدخول)");
+        Add("MailSettings.Always.Security",
+            "Beveiliging", "Security", "Bezpieczeństwo", "Securitate", "الأمان");
+        Add("MailSettings.Always.Applications",
+            "Sollicitaties en reacties", "Applications and replies", "Aplikacje i odpowiedzi", "Candidaturi și răspunsuri", "الطلبات والردود");
+        Add("MailSettings.AlwaysHintOff",
+            "Codes en beveiliging kun je niet uitzetten.",
+            "Codes and security mail cannot be turned off.",
+            "Kodów i wiadomości o bezpieczeństwie nie da się wyłączyć.",
+            "Codurile și mesajele de securitate nu se pot opri.",
+            "لا يمكن إيقاف رسائل الرموز والأمان.");
+        Add("AdminUsers.ResetTests",
+            "Betaalde tests resetten", "Reset paid tests", "Zresetuj płatne testy", "Resetează testele plătite", "إعادة ضبط الاختبارات المدفوعة");
+        Add("AdminUsers.ResetTestsHelp",
+            "Alleen voor een testaccount. De uitgebreide tests gaan weer op slot. Facturen blijven staan.",
+            "Test accounts only. Extended tests lock again. Invoices stay.",
+            "Tylko konto testowe. Rozszerzone testy znów się blokują. Faktury zostają.",
+            "Doar pentru un cont de test. Testele extinse se blochează din nou. Facturile rămân.",
+            "لحسابات الاختبار فقط. تُقفل الاختبارات المفصلة مرة أخرى. الفواتير تبقى.");
+        Add("AdminUsers.ResetTestsReason",
+            "Reden", "Reason", "Powód", "Motiv", "السبب");
+        Add("AdminUsers.ResetTestsDone",
+            "De tests van dit testaccount staan weer op slot.",
+            "This test account's tests are locked again.",
+            "Testy tego konta testowego są znów zablokowane.",
+            "Testele acestui cont de test sunt din nou blocate.",
+            "اختبارات حساب الاختبار هذا مقفلة مرة أخرى.");
     }
 }

@@ -112,10 +112,14 @@ projects:
                 value: "https://lobsy.nl"
               - key: Cors__AllowedOrigins__2
                 value: "https://www.lobsy.nl"
-              # Resend (set values in Render Dashboard — do not commit secrets).
+              # Mail. Provider Resend until Lettermint is verified. Set keys in the Dashboard — do not commit secrets.
+              - key: Mail__Provider
+                value: Resend
               - key: Mail__ResendApiKey
                 sync: false
               - key: Mail__FromAddress
+                sync: false
+              - key: Lettermint__ApiKey
                 sync: false
               # Production AI stays on OpenAI (the code default). Do not set Ai__Provider=Mistral here.
               # VAPID keys for Web Push (generate once; do not rotate casually — see PR / docs).
@@ -192,6 +196,11 @@ projects:
                 value: Production
               - key: TestAccounts__Enabled
                 value: "false"
+              # Same mail provider as the API so the privacy sentence matches the sender.
+              - key: Mail__Provider
+                value: Resend
+              - key: Lettermint__ApiKey
+                sync: false
               - key: WebPush__Subject
                 sync: false
               - key: WebPush__PublicKey
@@ -308,15 +317,25 @@ projects:
                   envVarKey: RENDER_EXTERNAL_URL
               - key: Cors__AllowedOrigins__1
                 value: "https://acceptatie.lobsy.nl"
-              # Leave unset so acc does not email real users with the production From.
+              # Acceptatie mail: Lettermint when the key is set, otherwise Resend.
+              # Only test-*@lobsy.nl (and one extra address) may receive mail.
+              - key: Mail__Provider
+                value: Lettermint
               - key: Mail__ResendApiKey
                 sync: false
               - key: Mail__FromAddress
                 sync: false
+              - key: Lettermint__ApiKey
+                sync: false
+              - key: Mail__AllowedRecipientPattern
+                value: '^test-[^@]+@lobsy\.nl$'
+              - key: Mail__AllowedRecipientAddresses__0
+                sync: false
               # AI provider for Acceptatie. Leave unset to stay on OpenAI.
               # Set Ai__Provider=Mistral and Mistral__ApiKey in the Dashboard.
               # Leave Mistral__BaseUrl unset: the default is the EU endpoint api.eu.mistral.ai.
-              # The web service needs the same two values so the privacy page matches the API.
+              # The privacy page treats Mistral as EU only when that host is api.eu.mistral.ai.
+              # The web service needs the same provider and key so /privacy matches the API.
               - key: Ai__Provider
                 sync: false
               - key: Mistral__ApiKey
@@ -396,6 +415,11 @@ projects:
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
               - key: TestAccounts__Enabled
+                sync: false
+              # Same provider and key presence as the API, so the privacy page drops Resend when Lettermint sends.
+              - key: Mail__Provider
+                value: Lettermint
+              - key: Lettermint__ApiKey
                 sync: false
               - key: WebPush__Subject
                 sync: false

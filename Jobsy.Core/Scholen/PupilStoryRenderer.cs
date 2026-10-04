@@ -41,6 +41,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
                 ChipInSentence(keys.LikeChipKeys[0])));
         }
 
+        MergeDuplicateBedenkt(sentences);
         var body = string.Join(" ", sentences);
         var tiles = new List<PupilStoryTileDto>
         {
@@ -143,6 +144,31 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
 
     private static string ResolveCopy(string key, PupilClassContext ctx, string nowLabel)
         => PupilVerhaalCopy.Get(key, ctx).Replace("{nu}", nowLabel, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Innovatie + an artistic sentence both start with "bedenkt graag".
+    /// One sentence keeps both ideas.
+    /// </summary>
+    private static void MergeDuplicateBedenkt(List<string> sentences)
+    {
+        if (sentences.Count < 2)
+        {
+            return;
+        }
+
+        var first = sentences[0];
+        var second = sentences[1];
+        if (!first.Contains("bedenkt graag", StringComparison.Ordinal)
+            || !second.Contains("bedenkt graag", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        sentences[0] = second.Contains("zoekt uit", StringComparison.Ordinal)
+            ? "Jij bedenkt graag nieuwe manieren en zoekt uit hoe iets werkt."
+            : "Jij bedenkt graag nieuwe manieren en maakt graag iets moois.";
+        sentences.RemoveAt(1);
+    }
 
     private static string ChipLabel(string chipKey)
     {
