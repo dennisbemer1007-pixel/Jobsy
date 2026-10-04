@@ -3,6 +3,10 @@
     "sha256": "656bf6644af3669bd92209cc45172d66800293c796c6c2b15e7485f900f684d1",
     "v": "20261004-assistant"
   },
+  "css/critical.css": {
+    "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
+    "v": "20261004-csp"
+  },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
     "v": "20260929-mfa"
@@ -200,11 +204,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "3a66c0ea020ef5e06711fd0c0fa84ca1d547a017407199d60f6b989290539bc3",
+    "sha256": "5d33ca7ca057247e2b5f7180761a77970b68580bff61edc13042f074070725dc",
     "v": "20261003-shell"
   },
   "service-worker.published.js": {
-    "sha256": "ce7a9ce6874892f0eda8574741749729b32c435acc3adb095a28a2accc9b715c",
+    "sha256": "da6e99ab85c9fe1c94a5cb14f7248c2d07aa27ad644ae1914655af5b5cd1f651",
     "v": "20261003-shell"
   }
 }
