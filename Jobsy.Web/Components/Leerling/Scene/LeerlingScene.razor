@@ -1,30 +1,28 @@
 @namespace Jobsy.Web.Components.Leerling.Scene
 
-<div class="ll-scene ll-scene--depth-@Depth @(IsMobile ? "ll-scene--mobile" : "ll-scene--desktop")"
-     aria-hidden="true">
-    @((MarkupString)_svg)
+<div class="ll-scene ll-scene--depth-@Depth ll-scene--desktop" aria-hidden="true">
+    @((MarkupString)_desktop)
+</div>
+<div class="ll-scene ll-scene--depth-@Depth ll-scene--mobile" aria-hidden="true">
+    @((MarkupString)_mobile)
 </div>
 
 @code {
-    private string _svg = "";
+    private string _desktop = "";
+    private string _mobile = "";
     private int _renderedDepth = -1;
-    private bool _renderedMobile;
 
     [Parameter] public int Depth { get; set; }
-    [Parameter] public bool IsMobile { get; set; }
 
     protected override void OnParametersSet()
     {
-        if (_renderedDepth == Depth && _renderedMobile == IsMobile && _svg.Length > 0)
+        if (_renderedDepth == Depth && _desktop.Length > 0)
         {
             return;
         }
 
         _renderedDepth = Depth;
-        _renderedMobile = IsMobile;
-        var w = IsMobile ? 390 : 1440;
-        var h = IsMobile ? 170 : 772;
-        var lobX = IsMobile ? 60.0 : 1180.0;
-        _svg = LeerlingSceneBuilder.BuildSvg(Depth, w, h, lobX);
+        _desktop = LeerlingSceneBuilder.BuildSvg(Depth, 1440, 772, 1180);
+        _mobile = LeerlingSceneBuilder.BuildSvg(Depth, 390, 170, 60);
     }
 }

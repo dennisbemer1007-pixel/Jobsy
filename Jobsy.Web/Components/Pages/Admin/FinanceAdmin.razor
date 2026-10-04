@@ -95,8 +95,8 @@
                                     <tr>
                                         <td data-label="@Culture["AdminFinance.Col.Date"]">@AmsterdamTime.ToLocal(row.CreatedAt).ToString("dd-MM HH:mm")</td>
                                         <td data-label="@Culture["AdminFinance.Col.Org"]">@row.CompanyName</td>
-                                        <td data-label="@Culture["AdminFinance.Col.Kind"]">@row.Kind</td>
-                                        <td data-label="@Culture["AdminFinance.Col.Reason"]">@AdminActionLabels.VatStatus(row.Reason, key => Culture[key])</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Kind"]">@AdminActionLabels.TokenKind(row.Kind, key => Culture[key])</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Reason"]">@AdminActionLabels.TokenReason(row.Reason, key => Culture[key])</td>
                                         <td data-label="@Culture["AdminFinance.Col.Amount"]">@row.Amount.ToString("0.##")</td>
                                         <td data-label="@Culture["AdminFinance.Col.Old"]">@row.OldBalance.ToString("0.##")</td>
                                         <td data-label="@Culture["AdminFinance.Col.New"]">@row.NewBalance.ToString("0.##")</td>

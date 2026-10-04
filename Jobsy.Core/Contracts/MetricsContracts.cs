@@ -116,4 +116,5 @@ public record PlatformLogItemDto(
     string Level,
     string Category,
     string Message,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? Detail = null);

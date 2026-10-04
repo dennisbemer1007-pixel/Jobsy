@@ -124,7 +124,7 @@ public static class LeerlingSceneBuilder
         }
 
         var hAttr = width > 600 ? "100%" : $"{height}px";
-        return $"<svg class=\"ll-scene__svg\" viewBox=\"0 0 {width} {height}\" preserveAspectRatio=\"none\" width=\"100%\" height=\"{hAttr}\" aria-hidden=\"true\">{e}</svg>";
+        return $"<svg class=\"ll-scene__svg\" viewBox=\"0 0 {width} {height}\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"{hAttr}\" aria-hidden=\"true\">{e}</svg>";
     }
 
     private static string Weed(double x, double bas, double h, double sway, double w, double op)

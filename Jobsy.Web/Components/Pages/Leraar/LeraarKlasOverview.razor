@@ -110,7 +110,7 @@ else
                                           aria-label="@($"{row.ProgressCurrent}/{row.ProgressTotal}")"></progress>
                                 <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
                             </td>
-                            <td>@(row.LastSeenAtUtc is DateTime t ? Relative(t) : "—")</td>
+                            <td>@(row.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
                             <td>
                                 @if (row.Status == PupilCodeStatus.Completed)
                                 {
@@ -329,14 +329,6 @@ else
         PupilCodeStatus.InProgress => "sch-pill--info",
         _ => "sch-pill--muted"
     };
-
-    private static string Relative(DateTime utc)
-    {
-        var span = DateTime.UtcNow - utc;
-        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m";
-        if (span.TotalHours < 24) return $"{(int)span.TotalHours}u";
-        return LobsyTime.ToAmsterdam(utc).ToString("dd-MM");
-    }
 
     public void Dispose() => _pollCts?.Cancel();
 }

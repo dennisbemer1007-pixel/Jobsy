@@ -77,6 +77,7 @@ public static class UiStringsScholen
         nl["School.Class.Empty"] = "Nog geen klassen dit schooljaar.";
         nl["School.Class.NotFound"] = "Klas niet gevonden.";
         nl["School.Class.Field.Name"] = "Klasnaam";
+        nl["School.Class.NameCount"] = "{0} van 12 tekens";
         nl["School.Class.Field.Kind"] = "Soort klas";
         nl["School.Class.Kind.Primary"] = "Basisschool";
         nl["School.Class.Kind.PrimaryHint"] = "Groep 7 of groep 8";
@@ -169,6 +170,7 @@ public static class UiStringsScholen
         nl["School.Results.Title"] = "Resultaten";
         nl["School.Results.Lead"] = "Per klas en per code. Namen zie je hier nooit. Die staan alleen op de eigen lijst van de leraar.";
         nl["School.Results.PickClass"] = "Kies een klas.";
+        nl["School.Results.ClassFailed"] = "De resultaten van deze klas konden niet geladen worden. Probeer het opnieuw.";
         nl["School.Results.Totals"] = "Totalen per klas";
         nl["School.Results.TotalsHidden"] = "Zichtbaar vanaf 5 afgeronde tests.";
         nl["School.Results.Riasec"] = "RIASEC top-3";
@@ -301,6 +303,7 @@ public static class UiStringsScholen
         nl["Leraar.Detail.ResultPending"] = "Bezig met afronden";
         nl["Leraar.Detail.CompletedOn"] = "klaar op";
         nl["Leraar.Detail.Questions"] = "vragen";
+        nl["Leraar.Detail.OwnWord"] = "eigen woord";
         nl["Leraar.Detail.Pdf"] = "PDF downloaden";
         nl["Leraar.Detail.PdfLater"] = "PDF volgt in een volgende versie.";
         nl["Leraar.Detail.NoNameNote"] = "Je ziet een code, geen naam. Zoek de naam op je eigen lijst. Losse antwoorden zie je niet, alleen de uitkomst.";
@@ -342,6 +345,10 @@ public static class UiStringsScholen
         nl["Leerling.Login.ChooseSchool"] = "Kies";
         nl["Leerling.Login.StaffOther"] = "medewerker";
         nl["Leerling.Login.StaffBusy"] = "Je bent ingelogd als {0}. Log eerst uit om als leerling te starten.";
+        nl["Leerling.Login.AlreadyIn"] = "Je bent al ingelogd";
+        nl["Leerling.Login.AlreadyLead"] = "Je bent al ingelogd met je code. Ga verder of stop.";
+        nl["Leerling.Login.Continue"] = "Ga verder";
+        nl["Leerling.Login.Stop"] = "Stoppen";
         nl["Leerling.Login.Error.Invalid"] = "Die code klopt niet bij deze klas. Kijk goed op je kaartje of vraag je leraar.";
         nl["Leerling.Login.Error.Invalid.Vo"] = "Die code klopt niet bij deze klas. Kijk goed op je kaartje of vraag je docent.";
         nl["Leerling.Login.Error.Cooldown"] = "Even pauze. Probeer het over een kwartier opnieuw of vraag je leraar.";
@@ -391,10 +398,11 @@ public static class UiStringsScholen
         nl["Leerling.Reis.SaveFailed"] = "Niet bewaard — probeer opnieuw";
         nl["Leerling.Reis.ResultPending"] = "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.";
         nl["Leerling.Reis.Retry"] = "Probeer opnieuw";
+        nl["Leerling.Reis.Offline"] = "Even geen verbinding. Probeer opnieuw.";
         nl["Leerling.Reis.Prev"] = "Vorige";
         nl["Leerling.Reis.Bubble"] = "Goed bezig! Elke 6 vragen valt er een schaaltje af.";
         nl["Leerling.Reis.Bubble.Vo"] = "Elke 10 vragen valt er een schaaltje af. Je antwoorden worden bewaard.";
-        nl["Leerling.Reis.PlatesGone"] = "{0} van 10 eraf";
+        nl["Leerling.Reis.PlatesGone"] = "Dit is het schild van Lobsy.";
         nl["Leerling.Reis.Done"] = "Klaar!";
         nl["Leerling.Reis.DoneLead"] = "Je hebt alle vragen beantwoord.";
         nl["Leerling.Reis.ToResult"] = "Dit ben jij";
@@ -430,6 +438,7 @@ public static class UiStringsScholen
         nl["Leerling.Island.InvalidOther"] = "Gebruik alleen letters, spaties of een streepje (max. 24).";
         nl["Leerling.Island.Bubble"] = "Even uitrusten op het eiland. Waar word jij blij van?";
         nl["Leerling.Island.Progress"] = "{0} van {1} klaar";
+        nl["Leerling.Island.Between"] = "Pauze tussen wereld {0} en {1}";
         nl["Leerling.Chip.Sport"] = "Sport";
         nl["Leerling.Chip.Buiten"] = "Buiten zijn";
         nl["Leerling.Chip.Dieren"] = "Dieren";

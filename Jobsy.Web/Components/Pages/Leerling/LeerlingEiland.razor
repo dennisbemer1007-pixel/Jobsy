@@ -40,7 +40,7 @@ else
         <section class="ll-card ll-island-card">
             <p class="ll-question__meta">
                 @string.Format(Culture["Leerling.Island.Progress"], _state.AnsweredCount, _state.TotalItems)
-                · @string.Format(Culture["Leerling.Reis.WorldOf"], 2, 4)
+                · @IslandBetween()
             </p>
             <p class="ll-question__world">@Culture["Leerling.World.Island.Title"]</p>
             <h1 class="ll-question__text">@Culture["Leerling.Island.Lead"]</h1>
@@ -116,7 +116,14 @@ else
                 @Culture["Leerling.Island.OtherHint"]
             </p>
 
-            @if (!string.IsNullOrEmpty(_error))
+            @if (_offline)
+            {
+                <p class="ll-error" role="alert">@Culture["Leerling.Reis.Offline"]</p>
+                <button type="button" class="btn-secondary" disabled="@_busy" @onclick="Reload">
+                    @Culture["Leerling.Reis.Retry"]
+                </button>
+            }
+            else if (!string.IsNullOrEmpty(_error))
             {
                 <p class="ll-error" role="alert">@_error</p>
             }
@@ -136,7 +143,7 @@ else
         <div class="ll-lob-zone ll-lob-zone--mobile">
             <LeerlingLobster PlatesShed="@_state.PlatesShed" NewShell="@_state.NewShell" Mobile="true" Size="72" />
         </div>
-        <LeerlingScene Depth="@(_def?.SceneDepth(_state.AnsweredCount) ?? 0)" IsMobile="false" />
+        <LeerlingScene Depth="@(_def?.SceneDepth(_state.AnsweredCount) ?? 0)" />
     </div>
 }
 
@@ -147,6 +154,7 @@ else
     private bool _windowClosed;
     private bool _busy;
     private bool _partBreak;
+    private bool _offline;
     private string? _error;
     private readonly HashSet<string> _likes = new(StringComparer.Ordinal);
     private readonly HashSet<string> _dislikes = new(StringComparer.Ordinal);
@@ -162,63 +170,113 @@ else
 
     private async Task Reload()
     {
-        _loading = true;
+        var previous = _state;
+        _loading = previous is null;
+        _offline = false;
+        PupilProgressStateDto? next = null;
+        for (var attempt = 0; attempt < 2 && next is null; attempt++)
+        {
+            next = await FetchProgressAsync();
+        }
+
+        if (next is null)
+        {
+            if (previous is null)
+            {
+                _state = null;
+                _def = null;
+            }
+            else
+            {
+                _state = previous;
+                _offline = true;
+            }
+        }
+        else
+        {
+            ApplyLoaded(next);
+        }
+
+        _loading = false;
+    }
+
+    private async Task<PupilProgressStateDto?> FetchProgressAsync()
+    {
         try
         {
-            _state = await Api.GetPupilProgressAsync();
-            if (_state is null)
-            {
-                _def = null;
-                return;
-            }
-
-            _def = Registry.Get(_state.QuestionSet);
-
-            if (_state.Completed)
-            {
-                Nav.NavigateTo("/leerling/dit-ben-jij");
-                return;
-            }
-
-            if (!_state.WindowOpen)
-            {
-                _windowClosed = true;
-                return;
-            }
-
-            var atIsland = _state.NeedsIsland
-                           || string.Equals(_state.NextStep, "island", StringComparison.OrdinalIgnoreCase);
-            if (!atIsland)
-            {
-                Nav.NavigateTo("/leerling/reis");
-                return;
-            }
-
-            _likes.Clear();
-            foreach (var k in _state.Likes)
-            {
-                _likes.Add(k);
-            }
-
-            _dislikes.Clear();
-            foreach (var k in _state.Dislikes)
-            {
-                _dislikes.Add(k);
-            }
-
-            _likeOther = _state.LikeOtherWord ?? "";
-            _dislikeOther = _state.DislikeOtherWord ?? "";
-            _likeOtherOpen = !string.IsNullOrEmpty(_likeOther);
-            _dislikeOtherOpen = !string.IsNullOrEmpty(_dislikeOther);
+            return await Api.GetPupilProgressAsync();
         }
         catch
         {
-            _state = null;
+            return null;
         }
-        finally
+    }
+
+    private void ApplyLoaded(PupilProgressStateDto state)
+    {
+        _state = state;
+        _offline = false;
+        _def = Registry.Get(state.QuestionSet);
+
+        if (state.Completed)
         {
-            _loading = false;
+            Nav.NavigateTo("/leerling/dit-ben-jij");
+            return;
         }
+
+        if (!state.WindowOpen)
+        {
+            _windowClosed = true;
+            return;
+        }
+
+        var atIsland = state.NeedsIsland
+                       || string.Equals(state.NextStep, "island", StringComparison.OrdinalIgnoreCase);
+        if (!atIsland)
+        {
+            Nav.NavigateTo("/leerling/reis");
+            return;
+        }
+
+        _likes.Clear();
+        foreach (var k in state.Likes)
+        {
+            _likes.Add(k);
+        }
+
+        _dislikes.Clear();
+        foreach (var k in state.Dislikes)
+        {
+            _dislikes.Add(k);
+        }
+
+        _likeOther = state.LikeOtherWord ?? "";
+        _dislikeOther = state.DislikeOtherWord ?? "";
+        _likeOtherOpen = !string.IsNullOrEmpty(_likeOther);
+        _dislikeOtherOpen = !string.IsNullOrEmpty(_dislikeOther);
+    }
+
+    private string IslandBetween()
+    {
+        var before = 1;
+        var keys = _def?.RailWorldKeys();
+        if (keys is not null)
+        {
+            var count = 0;
+            foreach (var key in keys)
+            {
+                if (string.Equals(key, "pauze-eiland", StringComparison.Ordinal))
+                {
+                    break;
+                }
+
+                count++;
+            }
+
+            before = Math.Max(1, count);
+        }
+
+        return string.Format(Culture["Leerling.Island.Between"], before, before + 1);
     }
 
     private void ToggleLike(string key)

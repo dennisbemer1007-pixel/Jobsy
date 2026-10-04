@@ -17,8 +17,9 @@
                aria-controls="admin-search-listbox"
                aria-autocomplete="list"
                placeholder="@Culture["AdminShell.SearchPlaceholder"]"
-               value="@_query"
-               @oninput="OnInput"
+               @bind="_text"
+               @bind:event="oninput"
+               @bind:after="Publish"
                @onkeydown="OnKeyDown"
                @onfocus="OnFocus" />
         <kbd class="admin-search__kbd">@Culture["AdminShell.SearchShortcut"]</kbd>
@@ -54,6 +55,7 @@
 
     private ElementReference _root;
     private ElementReference _input;
+    private string _text = "";
     private string _query = "";
     private bool _open;
     private bool _loading;
@@ -104,21 +106,33 @@
     [JSInvokable]
     public Task FocusFromShortcutAsync() => FocusAsync();
 
-    private async Task OnInput(ChangeEventArgs e)
+    private void Publish()
     {
-        _query = e.Value?.ToString() ?? "";
+        _query = _text;
         _debounce?.Cancel();
         _debounce?.Dispose();
         _debounce = new CancellationTokenSource();
         var token = _debounce.Token;
+        var typed = _text;
+        _ = SearchAfterDelayAsync(typed, token);
+    }
+
+    private async Task SearchAfterDelayAsync(string typed, CancellationToken token)
+    {
         try
         {
             await Task.Delay(250, token);
+            if (!string.Equals(typed, _text, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _query = typed;
             await SearchAsync(token);
         }
         catch (TaskCanceledException)
         {
-            // debounced
+            // A newer keystroke replaced this query.
         }
     }
 

@@ -26,11 +26,15 @@ public class KandidaatBanenFoundationGuardTests
         var marker = "h1[tabindex=\"-1\"]:focus";
         var at = css.IndexOf(marker, StringComparison.Ordinal);
         Assert.True(at >= 0, "Expected a programmatic h1 focus rule.");
-        var rule = css.Substring(at, Math.Min(280, css.Length - at));
-        Assert.Contains("outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent)", rule, StringComparison.Ordinal);
-        Assert.Contains("outline-offset: 6px", rule, StringComparison.Ordinal);
-        Assert.DoesNotContain("outline: 3px solid", rule, StringComparison.Ordinal);
-        Assert.DoesNotContain("h1[tabindex=\"-1\"]:focus:not(:focus-visible)", css, StringComparison.Ordinal);
+        var rule = css.Substring(at, Math.Min(220, css.Length - at));
+        Assert.Contains("outline: none", rule, StringComparison.Ordinal);
+        var keyboard = "html.using-keyboard h1[tabindex=\"-1\"]:focus-visible";
+        var keyAt = css.IndexOf(keyboard, StringComparison.Ordinal);
+        Assert.True(keyAt > at, "Keyboard focus must be the only brand ring.");
+        var keyRule = css.Substring(keyAt, Math.Min(280, css.Length - keyAt));
+        Assert.Contains("outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent)", keyRule, StringComparison.Ordinal);
+        Assert.Contains("outline-offset: 6px", keyRule, StringComparison.Ordinal);
+        Assert.DoesNotContain("outline: 3px solid", keyRule, StringComparison.Ordinal);
     }
 
     [Fact]

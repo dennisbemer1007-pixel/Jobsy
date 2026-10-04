@@ -29,7 +29,25 @@ public static class PupilVerhaalCopy
     }
 
     public static string Get(string key, PupilClassContext ctx)
-        => Get(key, ctx.Set);
+    {
+        var levelKey = key + LevelSuffix(ctx.Level);
+        if (levelKey != key && All.TryGetValue(levelKey, out var levelText))
+        {
+            return levelText;
+        }
+
+        return Get(key, ctx.Set);
+    }
+
+    private static string LevelSuffix(SchoolLevel level) => level switch
+    {
+        SchoolLevel.Havo => ".Havo",
+        SchoolLevel.Vwo => ".Vwo",
+        SchoolLevel.Groep78 => ".G78",
+        SchoolLevel.Mavo => ".Mavo",
+        SchoolLevel.VmboB or SchoolLevel.VmboK or SchoolLevel.VmboGt => ".Vmbo",
+        _ => ""
+    };
 
     public static bool TryGet(string key, out string value)
         => All.TryGetValue(key, out value!);
@@ -490,6 +508,12 @@ public static class PupilVerhaalCopy
         d["LeerlingDroom.Route.dierenarts.1"] = "Nu: {nu}|Kies straks biologie en scheikunde";
         d["LeerlingDroom.Route.dierenarts.2"] = "Havo of vwo afmaken|Zit je op vmbo? Via mbo Dierenartsassistent kan je ook verder.";
         d["LeerlingDroom.Route.dierenarts.3"] = "Diergeneeskunde studeren|Universiteit Utrecht · 6 jaar";
+        d["LeerlingDroom.Route.dierenarts.2.Havo"] = "Vwo of hbo-propedeuse|Een havo-diploma geeft geen directe toegang. Kies vwo met biologie en scheikunde, of ga via een hbo-propedeuse.";
+        d["LeerlingDroom.Route.dierenarts.3.Havo"] = "Diergeneeskunde studeren|Na vwo of na een hbo-propedeuse · 6 jaar";
+        d["LeerlingDroom.Route.dierenarts.2.G78"] = "Later havo of vwo|Diergeneeskunde vraagt vwo met biologie en scheikunde, of havo en daarna een hbo-propedeuse.";
+        d["LeerlingDroom.Route.dierenarts.3.G78"] = "Diergeneeskunde studeren|Pas na vwo of na een hbo-propedeuse · 6 jaar";
+        d["LeerlingDroom.Route.advocaat.3.Havo"] = "Rechten studeren|Na vwo, of na havo via een hbo-propedeuse · ongeveer 4 tot 6 jaar";
+        d["LeerlingDroom.Route.arts.3.Havo"] = "Geneeskunde|Na vwo met biologie, scheikunde en wiskunde · 6 jaar plus specialisatie";
         d["LeerlingDroom.Route.dierenarts.Goal"] = "Dierenarts!|In een praktijk, dierentuin of op de boerderij";
         d["LeerlingDroom.Alt.dierenarts"] = "Zit je op vmbo? Via mbo Dierenartsassistent (niveau 4) kan je ook verder.";
         d["LeerlingDroom.Route.piloot.1"] = "Nu: {nu}|Kies straks wiskunde en natuurkunde";

@@ -177,7 +177,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
         var pct = total == 0 ? 0d : Math.Round(100d * completed / total, 1);
 
         int? avgMinutes = null;
-        if (completed >= SchoolAnonymity.MinGroupSize)
+        if (completed >= 1)
         {
             var durations = codes
                 .Where(c => c.Status == PupilCodeStatus.Completed && c.Progress?.StartedAtUtc is not null
@@ -185,7 +185,7 @@ public sealed class TeacherPortalService : ITeacherPortalService
                 .Select(c => (c.Progress!.CompletedAtUtc!.Value - c.Progress.StartedAtUtc).TotalMinutes)
                 .Where(m => m > 0 && m < 24 * 60)
                 .ToList();
-            if (durations.Count >= SchoolAnonymity.MinGroupSize)
+            if (durations.Count >= 1)
             {
                 avgMinutes = (int)Math.Round(durations.Average());
             }

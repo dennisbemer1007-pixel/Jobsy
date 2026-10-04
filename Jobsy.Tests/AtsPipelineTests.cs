@@ -26,6 +26,10 @@ public class AtsPipelineTests
         Assert.False(AtsListingValidation.TryValidateForReview(
             "Locaties waar wij zorg verlenen", "HagaZiekenhuis", new string('x', 80), out _));
         Assert.False(AtsListingValidation.TryValidateForReview(
+            "Dit zijn onze zorgverleners", "HagaZiekenhuis", "Wat ga je doen? Solliciteer vandaag nog bij ons team.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Waar bent u naar op zoek?", "HagaZiekenhuis", "Bekijk de vacatures en solliciteer op een functie.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
             "Kassamedewerker", "Acme", "kort", out var shortReason));
         Assert.Contains("tekst", shortReason!, StringComparison.OrdinalIgnoreCase);
         Assert.True(AtsListingValidation.IsDemoListing("Kassamedewerker (demo)", "https://x/demo-abc", null));
