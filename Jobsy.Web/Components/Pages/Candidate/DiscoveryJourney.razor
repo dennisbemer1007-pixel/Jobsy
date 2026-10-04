@@ -493,7 +493,8 @@
                                         CurrentQuestion="_currentQuestion"
                                         TestTabs="MiniTestTabs"
                                         Questions="_miniQuestions"
-                                        Answers="_miniAnswers"
+                                        Answers="MiniVisibleAnswers"
+                                        Depth="@MiniDepth"
                                         InputPrefix="@($"journey-{_countedStep}-")"
                                         TitleKey="@JourneyTestFlow.TestTitleKey(_countedStep)"
                                         LeadKey="Discovery.Test.Lead"
@@ -880,6 +881,13 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+        if (query.TryGetValue("diepte", out var depthVals)
+            && JourneyTestFlow.TryParseDepth(depthVals.FirstOrDefault(), out var depth))
+        {
+            _targetLevel = depth;
+        }
+
         if (query.TryGetValue("stap", out var stapVals))
         {
             ApplyScreen(stapVals.FirstOrDefault() ?? "start");
@@ -1273,7 +1281,9 @@
                 _countedStep = _shedStep;
                 _screen = _shedStep.ToString();
                 _depth = _shedStep;
-                NavigateStep(_screen);
+                // The query survives a circuit reload; otherwise ApplyScreen resets the band to 5
+                // and an empty question list sends the candidate back to this shed.
+                NavigateStep(_screen, depth: _targetLevel);
                 await PrepareMiniAsync();
                 return;
             }
@@ -1288,6 +1298,7 @@
                 return;
             }
 
+            _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
             await GoToCountedStepAsync(_shedStep + 1);
         }
         catch (Exception ex)
@@ -1623,10 +1634,40 @@
         Navigation.NavigateTo("/candidate/paspoort");
     }
 
-    private void NavigateStep(string stap)
+    private void NavigateStep(string stap, int? depth = null)
     {
-        var uri = Navigation.GetUriWithQueryParameter("stap", stap);
-        Navigation.NavigateTo(uri, replace: true);
+        var query = new Dictionary<string, object?>
+        {
+            ["stap"] = stap,
+            ["diepte"] = depth is int level ? JourneyTestFlow.DepthQueryValue(level) : null
+        };
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(query), replace: true);
+    }
+
+    private TestDepthLevel MiniDepth => _targetLevel switch
+    {
+        >= 18 => TestDepthLevel.Full,
+        >= OnboardingWizardCatalog.DeeperLevelCount => TestDepthLevel.Deeper,
+        _ => TestDepthLevel.First
+    };
+
+    private IReadOnlyDictionary<int, int> MiniVisibleAnswers
+    {
+        get
+        {
+            if (_serverAnswers.Count == 0)
+            {
+                return _miniAnswers;
+            }
+
+            var merged = new Dictionary<int, int>(_serverAnswers);
+            foreach (var answer in _miniAnswers)
+            {
+                merged[answer.Key] = answer.Value;
+            }
+
+            return merged;
+        }
     }
 
     private string SegmentClass(int index)
@@ -1697,9 +1738,10 @@
             if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id);
         }
 
-        _miniQuestions = catalog
-            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
-            .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
+        var byId = catalog.ToDictionary(item => item.Id);
+        _miniQuestions = questionIds
+            .Where(byId.ContainsKey)
+            .Select(id => new OnboardingMiniTest.MiniQuestion(id, byId[id].Key))
             .ToList();
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
@@ -1728,7 +1770,7 @@
         if (_miniArrivedViaBack || _screen == "start" || _screen == "toestemming") return;
         if (_countedStep is < 7 or > 10) return;
         if (!Draft.HasConsent) return;
-        if (_miniQuestions.Count > 0) return;
+        if (_miniQuestions.Any(q => !_serverAnswers.ContainsKey(q.Id) && !_miniAnswers.ContainsKey(q.Id))) return;
 
         _busy = true;
         try
