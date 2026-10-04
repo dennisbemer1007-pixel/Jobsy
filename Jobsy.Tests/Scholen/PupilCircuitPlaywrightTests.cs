@@ -231,6 +231,65 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.CloseAsync();
     }
 
+    [Fact(Timeout = 360_000)]
+    public async Task Mobile_pupil_finishes_island_and_last_question_without_offline_card()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var island = await SeedGroep78AtAsync(3, answered: 30, chipsSaved: false);
+        var last = await SeedGroep78AtAsync(3, answered: 59, chipsSaved: true);
+        var baseUrl = EnsureWeb();
+        foreach (var seed in island)
+        {
+            await using var context = await NewMobileContextAsync();
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            page.SetDefaultNavigationTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+            await page.WaitForURLAsync(
+                url => url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
+                UrlCommitted);
+            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+            await page.WaitForURLAsync(
+                url => url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                    && !url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
+                UrlCommitted);
+            await page.GetByRole(AriaRole.Radio, new() { Name = "Soms" }).WaitForAsync();
+            Assert.Equal(0, await page.Locator("[data-testid=leerling-offline]").CountAsync());
+        }
+
+        foreach (var seed in last)
+        {
+            await using var context = await NewMobileContextAsync();
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            page.SetDefaultNavigationTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+            await page.WaitForURLAsync(
+                url => url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                    && !url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
+                UrlCommitted);
+            await page.GetByRole(AriaRole.Radio, new() { Name = "Soms" }).ClickAsync();
+            await page.WaitForURLAsync(
+                url => url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
+                UrlCommitted);
+            await page.Locator("[data-testid=leerling-dit-ben-jij]").WaitForAsync();
+            Assert.Equal(0, await page.Locator("[data-testid=leerling-offline]").CountAsync());
+        }
+    }
+
+    private async Task<IBrowserContext> NewMobileContextAsync()
+        => await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+            UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+            IsMobile = true,
+            HasTouch = true,
+            DeviceScaleFactor = 2
+        });
+
     private string EnsureWeb()
     {
         if (_web is not null)
@@ -267,23 +326,42 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Timeout = 90_000
     };
 
+    /// <summary>
+    /// Reis sends the pupil to the island with a client navigation. That hop
+    /// never fires DOMContentLoaded, so waiting for it misses the new URL.
+    /// </summary>
+    private static readonly PageWaitForURLOptions UrlCommitted = new()
+    {
+        WaitUntil = WaitUntilState.Commit,
+        Timeout = 45_000
+    };
+
     private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
     {
         var classValue = classId.ToString("D");
         Exception? last = null;
         for (var attempt = 0; attempt < 3; attempt++)
         {
+            await page.Context.ClearCookiesAsync();
             await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             // The class list comes from the API. Prerender can show it, then the circuit
             // swaps in an empty select until the same call returns. Poll and POST in one
             // turn so a swap between two driver calls cannot submit the placeholder.
+            // A cookie from an earlier try in this page renders "Je bent al ingelogd"
+            // with no form; resume via /leerling/reis, which follows the saved step.
+            string gate;
             try
             {
-                await page.EvaluateAsync(
+                gate = await page.EvaluateAsync<string>(
                     """
                     ([id, code]) => new Promise((resolve, reject) => {
                       const deadline = performance.now() + 20000;
                       const tick = () => {
+                        const heading = document.querySelector('h1');
+                        if (heading && (heading.textContent || '').includes('Je bent al ingelogd')) {
+                          resolve('already');
+                          return;
+                        }
                         const select = document.querySelector('select[name=classId]');
                         const input = document.querySelector('input[name=code]');
                         const option = select && [...select.options].find(o => o.value === id);
@@ -312,10 +390,27 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     """,
                     new[] { classValue, code });
             }
-            catch (PlaywrightException ex) when (attempt < 2 && IsClassListNotReady(ex))
+            catch (PlaywrightException ex) when (IsClassListNotReady(ex))
             {
                 last = ex;
+                if (attempt == 2)
+                {
+                    var stuck = await page.Locator("body").InnerTextAsync(new() { Timeout = 5_000 });
+                    var stuckSnippet = stuck.Length <= 600 ? stuck : stuck[..600];
+                    throw new TimeoutException($"Login form not ready on {page.Url}. Body: {stuckSnippet}", ex);
+                }
+
                 continue;
+            }
+
+            if (string.Equals(gate, "already", StringComparison.Ordinal))
+            {
+                var origin = new Uri(loginUrl).GetLeftPart(UriPartial.Authority);
+                await page.GotoAsync(origin + "/leerling/reis", new()
+                {
+                    WaitUntil = WaitUntilState.Commit,
+                    Timeout = 45_000
+                });
             }
 
             try
@@ -323,8 +418,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await page.WaitForURLAsync(
                     url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
-                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 45_000 });
+                    UrlCommitted);
                 return;
             }
             catch (TimeoutException ex) when (attempt < 2)
@@ -418,6 +514,69 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await db.SaveChangesAsync();
         var generated = await codes.GenerateAsync(1, cls);
         return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
+    }
+
+    private async Task<IReadOnlyList<Seed>> SeedGroep78AtAsync(int pupils, int answered, bool chipsSaved)
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var registry = scope.ServiceProvider.GetRequiredService<IPupilQuestionSetRegistry>();
+        var school = new School
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mobiel " + Guid.NewGuid().ToString("N")[..6],
+            City = "Naaldwijk",
+            AllowedEmailDomains = "[\"voorbeeldcollege.nl\"]",
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "8A",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = pupils,
+            TestWindow = TestWindowState.Open,
+            ParentalInfoConfirmedAtUtc = DateTime.UtcNow,
+            ParentalInfoConfirmedByUserId = _api.AdminId,
+            ParentalInfoTextVersion = "1",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        await db.SaveChangesAsync();
+        var generated = await codes.GenerateAsync(pupils, cls);
+        var bank = registry.Get(PupilQuestionSet.Groep78).Bank;
+        var answers = bank.AllItems.Take(answered).ToDictionary(i => i.Id, _ => 4);
+        var answersJson = System.Text.Json.JsonSerializer.Serialize(answers);
+        var now = DateTime.UtcNow;
+        foreach (var code in generated)
+        {
+            db.PupilProgresses.Add(new PupilProgress
+            {
+                PupilCodeId = code.Id,
+                AnswersJson = answersJson,
+                CurrentIndex = answered,
+                LikesJson = "[]",
+                DislikesJson = "[]",
+                ChipsSavedAtUtc = chipsSaved ? now : null,
+                StartedAtUtc = now.AddMinutes(-10),
+                UpdatedAtUtc = now
+            });
+        }
+
+        await db.SaveChangesAsync();
+        return generated
+            .Select(code => new Seed(school.Id, cls.Id, codes.Unprotect(code.CodeProtected)!))
+            .ToList();
     }
 
     private async Task<TeacherSeed> SeedFiveFinishedGroep78Async()

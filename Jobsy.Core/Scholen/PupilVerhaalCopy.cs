@@ -165,14 +165,14 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Bf.Innovatie"] = "Jij bedenkt graag een nieuwe manier.";
         d["LeerlingStory.Bf.Extraversie"] = "Jij krijgt energie van mensen om je heen.";
         d["LeerlingStory.Bf.Balanced"] = "Jij bent in evenwicht: soms stil, soms actief.";
-        d["LeerlingStory.Riasec.R"] = "Je maakt graag iets met je handen.";
+        d["LeerlingStory.Riasec.R"] = "Met je handen maak je iets.";
         d["LeerlingStory.Riasec.I"] = "Je wilt graag weten hoe iets werkt.";
         d["LeerlingStory.Riasec.A"] = "Je bedenkt graag iets nieuws of moois.";
         d["LeerlingStory.Riasec.S"] = "Je helpt graag andere mensen of dieren.";
         d["LeerlingStory.Riasec.E"] = "Je neemt graag het voortouw in een groep.";
         d["LeerlingStory.Riasec.C"] = "Je houdt van nette plannen en overzicht.";
         d["LeerlingStory.Riasec.AI"] = "Je bedenkt graag iets nieuws en zoekt uit hoe het werkt.";
-        d["LeerlingStory.Riasec.AR"] = "Je maakt graag iets moois met je handen.";
+        d["LeerlingStory.Riasec.AR"] = "Met je handen maak je iets moois.";
         d["LeerlingStory.Riasec.AS"] = "Je helpt graag en bedenkt iets creatiefs.";
         d["LeerlingStory.Riasec.AE"] = "Je bedenkt ideeën en neemt graag het voortouw.";
         d["LeerlingStory.Riasec.AC"] = "Je maakt iets moois en houdt van nette afspraken.";
@@ -182,13 +182,13 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Riasec.IC"] = "Je zoekt precies uit hoe iets werkt en houdt overzicht.";
         d["LeerlingStory.Riasec.RS"] = "Je helpt graag en maakt graag iets met je handen.";
         d["LeerlingStory.Riasec.RE"] = "Je pakt dingen aan en neemt graag het voortouw.";
-        d["LeerlingStory.Riasec.RC"] = "Je maakt graag iets en houdt van nette stappen.";
+        d["LeerlingStory.Riasec.RC"] = "Met je handen maak je iets en je houdt van nette stappen.";
         d["LeerlingStory.Riasec.SE"] = "Je helpt graag en neemt het voortouw in de groep.";
         d["LeerlingStory.Riasec.SC"] = "Je helpt graag en houdt van nette afspraken.";
         d["LeerlingStory.Riasec.CE"] = "Je houdt overzicht en neemt graag het voortouw.";
         // Same sentence for both letter orders. The lookup sorts the pair, these keys are the sorted form.
         d["LeerlingStory.Riasec.CI"] = "Je zoekt precies uit hoe iets werkt en houdt overzicht.";
-        d["LeerlingStory.Riasec.CR"] = "Je maakt graag iets en houdt van nette stappen.";
+        d["LeerlingStory.Riasec.CR"] = "Met je handen maak je iets en je houdt van nette stappen.";
         d["LeerlingStory.Riasec.CS"] = "Je helpt graag en houdt van nette afspraken.";
         d["LeerlingStory.Riasec.EI"] = "Je zoekt dingen uit en neemt graag het voortouw.";
         d["LeerlingStory.Riasec.ER"] = "Je pakt dingen aan en neemt graag het voortouw.";
@@ -430,7 +430,8 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Class.C.1"] = "Wie houdt van nette plannen?";
         d["LeerlingStory.Class.C.2"] = "Wanneer hielp overzicht?";
         d["LeerlingStory.Class.C.3"] = "Deel een tip voor ordenen.";
-        // Pair prompts name both letters. The other order falls back to this alphabetical key.
+        // Pair prompts name both letters. .1 exists for both letter orders (top letter first).
+        // .2 and .3 stay on the alphabetical key; the other order falls back to it.
         d["LeerlingStory.Class.AC.1"] = "Wie bedenkt graag iets nieuws en houdt van nette plannen?";
         d["LeerlingStory.Class.AC.2"] = "Welk vak voelt creatief én overzichtelijk?";
         d["LeerlingStory.Class.AC.3"] = "Deel een idee dat je netjes uitwerkte.";
@@ -476,6 +477,21 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Class.RS.1"] = "Wie helpt graag en maakt graag iets met de handen?";
         d["LeerlingStory.Class.RS.2"] = "Welk vak voelt als helpen én maken?";
         d["LeerlingStory.Class.RS.3"] = "Deel een moment waarin je hielp door te maken.";
+        d["LeerlingStory.Class.CA.1"] = "Wie houdt van nette plannen en bedenkt graag iets nieuws?";
+        d["LeerlingStory.Class.EA.1"] = "Wie neemt graag het voortouw en bedenkt graag iets nieuws?";
+        d["LeerlingStory.Class.IA.1"] = "Wie wil weten hoe het werkt en bedenkt graag iets nieuws?";
+        d["LeerlingStory.Class.RA.1"] = "Wie maakt graag iets met de handen en bedenkt graag iets nieuws?";
+        d["LeerlingStory.Class.SA.1"] = "Wie helpt graag een ander en bedenkt graag iets nieuws?";
+        d["LeerlingStory.Class.EC.1"] = "Wie neemt graag het voortouw en houdt van nette plannen?";
+        d["LeerlingStory.Class.IC.1"] = "Wie wil weten hoe het werkt en houdt van nette plannen?";
+        d["LeerlingStory.Class.RC.1"] = "Wie maakt graag iets met de handen en houdt van nette plannen?";
+        d["LeerlingStory.Class.SC.1"] = "Wie helpt graag een ander en houdt van nette plannen?";
+        d["LeerlingStory.Class.IE.1"] = "Wie wil weten hoe het werkt en neemt graag het voortouw?";
+        d["LeerlingStory.Class.RE.1"] = "Wie maakt graag iets met de handen en neemt graag het voortouw?";
+        d["LeerlingStory.Class.SE.1"] = "Wie helpt graag een ander en neemt graag het voortouw?";
+        d["LeerlingStory.Class.RI.1"] = "Wie maakt graag iets met de handen en wil weten hoe het werkt?";
+        d["LeerlingStory.Class.SI.1"] = "Wie helpt graag een ander en wil weten hoe het werkt?";
+        d["LeerlingStory.Class.SR.1"] = "Wie helpt graag een ander en maakt graag iets met de handen?";
         d["LeerlingDroom.Need.ZorgVoorDieren"] = "Je bent zorgzaam, voor mensen én dieren";
         d["LeerlingDroom.Need.ZorgVoorDieren.Next"] = "Oefen met zorgen voor een dier of plant";
         d["LeerlingDroom.Need.Nieuwsgierig"] = "Je wilt weten hoe iets werkt";

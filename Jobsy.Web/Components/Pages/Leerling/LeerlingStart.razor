@@ -6,6 +6,7 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject NavigationManager Nav
@@ -51,7 +52,7 @@
 @code {
     private PupilQuestionSetDef? _def;
 
-    private string Spoken => string.Join(' ',
+    private string Spoken => SpokenText.Join(
         Culture["Leerling.Start.Title"],
         Culture["Leerling.Start.Lead"],
         Culture[_def?.StartTimeKey ?? "Leerling.Start.NoteTime"],

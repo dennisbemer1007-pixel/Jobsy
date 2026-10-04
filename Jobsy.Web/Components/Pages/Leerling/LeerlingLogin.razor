@@ -7,6 +7,7 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -14,7 +15,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
 
-<PageTitle>@Culture["Leerling.LoginTitle"] · Lobsy</PageTitle>
+<PageTitle>@(_pupilSession ? Culture["Leerling.Login.AlreadyTitle"] : Culture["Leerling.LoginTitle"]) · Lobsy</PageTitle>
 
 <div class="ll-login">
     <LeerlingCoachCue Text="@CoachHint" />
@@ -178,11 +179,16 @@
         ? Culture["Leerling.Coach.Back"]
         : Culture["Leerling.Login.Bubble"];
 
-    private string GuestSpoken =>
-        $"{Culture["Leerling.Login.Bubble"]} {Culture["Leerling.Login.Lead"]} {Culture["Leerling.Login.NoName"]}";
+    private string GuestSpoken => SpokenText.Join(
+        Culture["Leerling.Login.Bubble"],
+        Culture["Leerling.Login.Lead"],
+        Culture["Leerling.Login.NoName"]);
 
-    private string AlreadySpoken =>
-        $"{Culture["Leerling.Login.AlreadyIn"]} {Culture["Leerling.Login.AlreadyLead"]}";
+    private string AlreadySpoken => SpokenText.Join(
+        Culture["Leerling.Login.AlreadyIn"],
+        SpokenText.WithoutRepeatedLead(
+            Culture["Leerling.Login.AlreadyIn"],
+            Culture["Leerling.Login.AlreadyLead"]));
 
     private PupilQuestionSet ResolveErrorSet()
     {

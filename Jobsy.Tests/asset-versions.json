@@ -100,8 +100,8 @@
     "v": "20261004-10"
   },
   "css/features/scholen.css": {
-    "sha256": "39315aa441b4d7c32ca2fefedf9f4c019c4cf2514ea3f93ab88ece3c8a4e4316",
-    "v": "20261004-10"
+    "sha256": "604eefb425e8f03fcf192dd63c3c055564d6084709a7f8857e507dcc438c303d",
+    "v": "20261004-12"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -184,8 +184,8 @@
     "v": "20260930-landing-5"
   },
   "js/leerling-login.js": {
-    "sha256": "b991a26ac619efecb3a0c3a6e25ecae59c7ca0ea7b6212fa72abd54d6101a129",
-    "v": "20261004-pupil3"
+    "sha256": "25521f1a69b2f38a757d8670e8d3f28befe0458b7a2ce2761f3a5d969eaec2d8",
+    "v": "20261004-12"
   },
   "js/lobsyPush.js": {
     "sha256": "93880ad22de793e792ff33ebcc7a2aeb30a26e958d15cbda4e4b2a9d2eda6db1",

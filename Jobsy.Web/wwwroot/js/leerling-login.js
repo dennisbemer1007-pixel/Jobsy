@@ -1,3 +1,38 @@
+// Outside the school-script guard so a second include still exposes the coach store.
+window.lobsyLeerlingCoach = window.lobsyLeerlingCoach || {
+    key: "lobsy.ll.coach.dismissed",
+    dismissed: function () {
+        try {
+            var raw = sessionStorage.getItem(window.lobsyLeerlingCoach.key);
+            if (!raw) {
+                return [];
+            }
+
+            var parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    },
+    dismiss: function (text) {
+        if (!text) {
+            return false;
+        }
+
+        try {
+            var list = window.lobsyLeerlingCoach.dismissed();
+            if (list.indexOf(text) < 0) {
+                list.push(text);
+            }
+
+            sessionStorage.setItem(window.lobsyLeerlingCoach.key, JSON.stringify(list));
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+};
+
 (function () {
     if (window.__lobsyLeerlingSchool) {
         return;

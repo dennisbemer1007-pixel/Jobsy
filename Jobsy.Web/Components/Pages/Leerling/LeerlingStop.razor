@@ -2,6 +2,7 @@
 @layout LeerlingLayout
 @attribute [AllowAnonymous]
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
 @inject CultureState Culture
 <PageTitle>@(Paused ? Culture["Leerling.Stop.Title"] : Culture["Leerling.Stop.AskTitle"]) · Lobsy</PageTitle>
 
@@ -36,7 +37,7 @@
 
     private string Spoken => Paused
         ? string.Equals(Done, "deel1", StringComparison.Ordinal)
-            ? $"{Culture["Leerling.Stop.Title"]} {Culture["Leerling.Vo.Stop.Part1Body"]}"
-            : $"{Culture["Leerling.Stop.Title"]} {Culture["Leerling.Stop.Body"]}"
-        : $"{Culture["Leerling.Stop.AskTitle"]} {Culture["Leerling.Stop.AskBody"]}";
+            ? SpokenText.Join(Culture["Leerling.Stop.Title"], Culture["Leerling.Vo.Stop.Part1Body"])
+            : SpokenText.Join(Culture["Leerling.Stop.Title"], Culture["Leerling.Stop.Body"])
+        : SpokenText.Join(Culture["Leerling.Stop.AskTitle"], Culture["Leerling.Stop.AskBody"]);
 }

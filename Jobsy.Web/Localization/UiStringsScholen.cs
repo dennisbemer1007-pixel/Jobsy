@@ -297,6 +297,7 @@ public static class UiStringsScholen
         nl["Leraar.DreamJobs.Title"] = "Droombanen";
         nl["Leraar.DreamJobs.Lead"] = "Alleen banen met minstens 2 leerlingen. Minder dan 2 gaat naar Overig. Geen codes bij banen.";
         nl["Leraar.DreamJobs.Undecided"] = "Weet ik nog niet";
+        nl["Leraar.DreamJobs.NotFilled"] = "Nog niet ingevuld";
 
         nl["Leraar.Detail.Title"] = "Codedetail";
         nl["Leraar.Detail.InProgress"] = "Deze code is nog bezig ({0}/{1}).";
@@ -346,7 +347,7 @@ public static class UiStringsScholen
         nl["Leerling.Login.StaffOther"] = "medewerker";
         nl["Leerling.Login.StaffBusy"] = "Je bent ingelogd als {0}. Log eerst uit om als leerling te starten.";
         nl["Leerling.Login.AlreadyIn"] = "Je bent al ingelogd";
-        nl["Leerling.Login.AlreadyLead"] = "Je bent al ingelogd met je code. Ga verder of stop.";
+        nl["Leerling.Login.AlreadyLead"] = "Ga verder of stop. Je code blijft werken.";
         nl["Leerling.Login.Continue"] = "Ga verder";
         nl["Leerling.Login.Stop"] = "Stoppen";
         nl["Leerling.Login.Error.Invalid"] = "Die code klopt niet bij deze klas. Kijk goed op je kaartje of vraag je leraar.";
@@ -608,6 +609,9 @@ public static class UiStringsScholen
         }
 
         Add("Leerling.Reis.More", "Meer uitleg", "More help", "Więcej pomocy", "Mai mult ajutor", "مزيد من الشرح");
+        Add("Leerling.Login.AlreadyTitle", "Je bent al ingelogd", "You are already logged in", "Jesteś już zalogowany", "Ești deja conectat", "أنت مسجّل الدخول بالفعل");
+        Add("Leerling.Vo.PartBreak.DocumentTitle", "Deel 1 is klaar", "Part 1 is done", "Część 1 gotowa", "Partea 1 e gata", "انتهى الجزء 1");
+        Add("Leraar.DreamJobs.NotFilled", "Nog niet ingevuld", "Not filled in yet", "Jeszcze nie wypełnione", "Încă necompletat", "لم يُملأ بعد");
         Add("Leerling.Coach.Close", "Tip sluiten", "Close the tip", "Zamknij podpowiedź", "Închide sfatul", "أغلق التلميح");
         Add("Leerling.Coach.Start", "Klaar voor de reis?", "Ready for the trip?", "Gotowy na podróż?", "Gata de drum?", "هل أنت مستعد للرحلة؟");
         Add("Leerling.Coach.Reis", "Kies wat bij je past.", "Choose what fits you.", "Wybierz to, co do ciebie pasuje.", "Alege ce ți se potrivește.", "اختر ما يناسبك.");
