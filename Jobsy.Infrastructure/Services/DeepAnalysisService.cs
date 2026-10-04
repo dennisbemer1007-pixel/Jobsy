@@ -92,12 +92,22 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         {
             var row = rows.FirstOrDefault(r => r.Kind == kind);
             CompetenceDeepReport? competenceReport = null;
+            CareerDeepReport? careerReport = null;
             if (kind == AssessmentKind.Competence)
             {
                 competenceReport = await LoadOrBuildCompetenceReportAsync(userId, kind, row, cancellationToken);
             }
+            else if (kind == AssessmentKind.Career && _kindReports is not null)
+            {
+                careerReport = await LoadOrBuildCareerReportAsync(userId, row, cancellationToken);
+            }
 
-            result[kind] = ToDto(kind, row, DeepAnalysisPricing.For(commercial, kind), competenceReport);
+            result[kind] = ToDto(
+                kind,
+                row,
+                DeepAnalysisPricing.For(commercial, kind),
+                competenceReport,
+                careerReport);
         }
 
         return result;
@@ -134,6 +144,33 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         {
             _logger.LogWarning(ex, "Competence deep-report build-on-read failed for {UserId}.", userId);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Reads the stored career report, or rebuilds it without waiting on the model
+    /// when the deep analysis is completed but the report is missing or an old version.
+    /// </summary>
+    private async Task<CareerDeepReport?> LoadOrBuildCareerReportAsync(
+        Guid userId,
+        CandidateDeepAnalysis? row,
+        CancellationToken cancellationToken)
+    {
+        if (row is null
+            || !CandidateDeepAnalysisStatuses.IsCompleted(row.Status)
+            || _kindReports is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await _kindReports.GetCareerAsync(userId, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Career deep-report build-on-read failed for {UserId}.", userId);
+            return CareerDeepReportJson.Deserialize(row.ReportJson);
         }
     }
 

@@ -163,7 +163,7 @@ public class CareerCompassTests
         Assert.Contains("85%", UiStrings.Get("Kompas.BandStrong", "nl"));
         Assert.Contains("75%", UiStrings.Get("Kompas.BandBroaden", "nl"));
         Assert.Equal("Profiel", UiStrings.Get("Kompas.TabProfile", "nl"));
-        Assert.Equal("Mijn DNA", UiStrings.Get("Kompas.TabDna", "nl"));
+        Assert.Equal("Wie ik ben", UiStrings.Get("Kompas.TabDna", "nl"));
         Assert.Equal("Tests", UiStrings.Get("Kompas.TabTests", "nl"));
         Assert.Equal("Functiefit", UiStrings.Get("Kompas.TabFit", "nl"));
     }
@@ -415,13 +415,13 @@ public class CareerCompassTests
             """;
         var compass = CareerCompassJson.TryDeserialize(json);
         Assert.NotNull(compass);
-        Assert.True(compass!.SuperMatches.Count >= 3);
-        Assert.All(compass.SuperMatches, m => Assert.InRange(m.Percent, 95, 100));
-        Assert.Equal("Medewerker tuinbouw", compass.SuperMatches[0].Title);
-        Assert.True(compass.SuperMatches[0].Percent >= compass.SuperMatches[^1].Percent);
+        Assert.Empty(compass!.SuperMatches);
         Assert.NotEmpty(compass.StrongChoices);
         Assert.All(compass.StrongChoices, m => Assert.InRange(m.Percent, 85, 94));
-        Assert.True(compass.SuperMatches[^1].Percent > compass.StrongChoices[0].Percent);
+        Assert.Equal("Medewerker tuinbouw / kas", compass.StrongChoices[0].Title);
+        Assert.Equal(90, compass.StrongChoices[0].Percent);
+        Assert.Contains(compass.StrongChoices, m => m.Title == "Servicemonteur" && m.Percent == 89);
+        Assert.DoesNotContain(compass.AllOccupations, m => m.Percent >= 95);
         AssertNoJargon(compass);
     }
 

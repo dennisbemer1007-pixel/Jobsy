@@ -100,20 +100,23 @@ public static class WhoAmIStoryBuilder
     /// <summary>Stored stories stay Dutch. Hide the employer line while that feature is off.</summary>
     public static string ForDisplay(string? story, bool employersEnabled)
     {
-        if (string.IsNullOrWhiteSpace(story) || employersEnabled)
+        if (string.IsNullOrWhiteSpace(story))
         {
-            return story ?? "";
+            return "";
         }
 
-        return story
-            .Replace(
-                "Dat zoek ik terug in cultuur en beloftes van een werkgever.",
-                "Dat zoek ik terug in hoe een gewone werkdag eruitziet.",
-                StringComparison.Ordinal)
-            .Replace(
-                "zodat een werkgever meteen voelt of we bij elkaar passen.",
-                "zodat meteen duidelijk is of het werk bij me past.",
-                StringComparison.Ordinal);
+        var text = employersEnabled
+            ? story
+            : story
+                .Replace(
+                    "Dat zoek ik terug in cultuur en beloftes van een werkgever.",
+                    "Dat zoek ik terug in hoe een gewone werkdag eruitziet.",
+                    StringComparison.Ordinal)
+                .Replace(
+                    "zodat een werkgever meteen voelt of we bij elkaar passen.",
+                    "zodat meteen duidelijk is of het werk bij me past.",
+                    StringComparison.Ordinal);
+        return ShortenLongSentences(PlainLanguage(text));
     }
 
     public static string? Sanitize(string? story)

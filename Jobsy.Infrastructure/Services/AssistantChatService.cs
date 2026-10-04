@@ -110,7 +110,7 @@ public sealed class AssistantChatService : IAssistantChatService
                     context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(ai))
                 {
-                    return new AssistantChatResult(ai.Trim(), UsedAi: true, []);
+                    return new AssistantChatResult(StripMarkup(ai), UsedAi: true, []);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -1182,6 +1182,7 @@ Verbetervoorstellen:
                 }
 
                 AppendPreferenceFacts(sb, prefs, dream);
+                await AppendTestFactsAsync(sb, context.UserId, cancellationToken);
                 sb.Append("month metrics: ");
                 sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
                 return sb.ToString();
@@ -1226,6 +1227,118 @@ Verbetervoorstellen:
 
         return "No extra facts.";
     }
+
+    private async Task AppendTestFactsAsync(StringBuilder sb, Guid userId, CancellationToken cancellationToken)
+    {
+        var competency = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
+        {
+            var top = new (string Label, int Score)[]
+                {
+                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Samenwerken), competency.SamenwerkenPercent ?? 0),
+                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Resultaatgerichtheid), competency.ResultaatgerichtheidPercent ?? 0),
+                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Stressbestendigheid), competency.StressbestendigheidPercent ?? 0),
+                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Innovatie), competency.InnovatiePercent ?? 0),
+                    (WhoAmIKeywords.EverydayCompetency(CompetencyTestCatalog.Extraversie), competency.ExtraversiePercent ?? 0)
+                }
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .Take(3);
+            sb.Append("competenceTop3=")
+                .Append(string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%")))
+                .Append("; ");
+        }
+
+        var career = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var riasec = CareerTestCatalog.CompletedScoresOrNull(
+            career?.Status,
+            career?.RealisticPercent,
+            career?.InvestigativePercent,
+            career?.ArtisticPercent,
+            career?.SocialPercent,
+            career?.EnterprisingPercent,
+            career?.ConventionalPercent);
+        if (riasec is { IsComplete: true })
+        {
+            var top = CareerTestCatalog.RiasecCodes
+                .Select(code => (Label: CareerCompassBuilder.TypeLabel(code), Score: riasec.Get(code)))
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .Take(3);
+            sb.Append("riasecTop3=")
+                .Append(string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%")))
+                .Append("; ");
+        }
+
+        var culture = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
+        {
+            var topCulture = CulturePersonalityCatalog.CultureDimensionCodes
+                .Select(code => (Label: CulturePersonalityCatalog.EverydayLabel(code), Score: ReadCultureScore(culture, code)))
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .First();
+            sb.Append($"cultureTop={topCulture.Label} {topCulture.Score}%; ");
+        }
+
+        var values = await _db.CandidateValuesProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(v => v.UserId == userId, cancellationToken);
+        if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
+        {
+            var topValue = SchwartzValuesCatalog.CategoryCodes
+                .Select(code => (Label: SchwartzValuesCatalog.EverydayLabel(code), Score: ReadValueScore(values, code)))
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .First();
+            sb.Append($"valuesTop={topValue.Label} {topValue.Score}%; ");
+        }
+
+        var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .Where(d => d.UserId == userId && d.Status == CandidateDeepAnalysisStatuses.Completed)
+            .Select(d => d.Kind)
+            .ToListAsync(cancellationToken);
+        sb.Append(deep.Count == 0
+            ? "deepTests=none; "
+            : "deepTests=" + string.Join(",", deep) + "; ");
+
+        var compass = CareerCompassJson.TryDeserialize(career?.CompassJson);
+        if (compass is { HasOccupations: true })
+        {
+            var occupations = compass.AllOccupations
+                .OrderByDescending(m => m.Percent)
+                .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
+                .Take(5);
+            sb.Append("topOccupations=")
+                .Append(string.Join(", ", occupations.Select(m => $"{m.Title} {m.Percent}%")))
+                .Append("; ");
+        }
+    }
+
+    private static int ReadCultureScore(CandidateCulturePersonalityProfile row, string code)
+        => code switch
+        {
+            _ when string.Equals(code, CulturePersonalityCatalog.Autonomy, StringComparison.OrdinalIgnoreCase) => row.AutonomyPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Informal, StringComparison.OrdinalIgnoreCase) => row.InformalPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Collaboration, StringComparison.OrdinalIgnoreCase) => row.CollaborationPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Flexibility, StringComparison.OrdinalIgnoreCase) => row.FlexibilityPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Innovation, StringComparison.OrdinalIgnoreCase) => row.InnovationPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.PeopleFirst, StringComparison.OrdinalIgnoreCase) => row.PeopleFirstPercent ?? 0,
+            _ => 0
+        };
+
+    private static int ReadValueScore(CandidateValuesProfile row, string code)
+        => code switch
+        {
+            _ when string.Equals(code, SchwartzValuesCatalog.Autonomy, StringComparison.OrdinalIgnoreCase) => row.AutonomyPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Connection, StringComparison.OrdinalIgnoreCase) => row.ConnectionPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Achievement, StringComparison.OrdinalIgnoreCase) => row.AchievementPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Stability, StringComparison.OrdinalIgnoreCase) => row.StabilityPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Impact, StringComparison.OrdinalIgnoreCase) => row.ImpactPercent ?? 0,
+            _ => 0
+        };
 
     private static void AppendPreferenceFacts(StringBuilder sb, CandidatePreferencesDto? prefs, string? dream)
     {
@@ -1311,8 +1424,11 @@ Verbetervoorstellen:
         };
 
         return
-            $"You are Lobsy, a helpful lobster assistant. Reply in {languageName}. Be concise (max ~120 words). {scope} " +
+            $"You are Lobsy, a helpful lobster assistant. Reply in {languageName}, plain B1. " +
+            "Plain text only: no markdown, no **, no __, no # headings, and no lines that start with a dash. Maximum 5 short sentences. " +
+            $"{scope} " +
             "Answer using ONLY the scoped facts below and general Lobsy product knowledge. " +
+            "Never say tests are missing when the facts list completed tests, scores or occupations. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
             $"Scoped facts:\n{facts}";
     }
@@ -1345,30 +1461,72 @@ Verbetervoorstellen:
         var lang = JobsyLanguages.Normalize(context.Language);
         return context.Role switch
         {
-            JobsyRoles.Candidate when !employersOn => lang == "en"
-                ? "I can explain how Lobsy works and answer from your profile: preferences, experience, education and your career plan. Jobs come later."
-                : "Ik leg uit hoe Lobsy werkt en antwoord vanuit je profiel: voorkeuren, ervaring, opleiding en je loopbaanplan. Banen komen later.",
-            JobsyRoles.Candidate => lang == "en"
-                ? "I can search vacancies by keyword (e.g. “chauffeur”), explain how Lobsy works, or answer questions about your profile and applications."
-                : "Ik kan vacatures zoeken op trefwoord (bijv. “chauffeur”), uitleggen hoe Lobsy werkt, of vragen beantwoorden over jouw profiel en sollicitaties.",
-            JobsyRoles.SalesManager => lang == "en"
-                ? "Try asking about your commissions, referred suppliers, or invoices."
-                : "Probeer te vragen naar je commissies, doorverwezen leveranciers of facturen.",
-            JobsyRoles.Admin => lang == "en"
-                ? "Try asking how often Lobsy was visited today, which sales manager is most active, or for a KPI overview."
-                : "Probeer te vragen hoe vaak Lobsy vandaag is bezocht, welke salesmanager het meest actief is, of om een KPI-overzicht.",
-            _ => lang == "en"
-                ? "Try asking for your KPI overview, the vacancy with the fewest/most clicks, active vacancies, or tips for low traction."
-                : "Probeer te vragen naar je KPI-overzicht, de vacature met de minste/meeste clicks, actieve vacatures, of tips bij weinig tractie."
+            JobsyRoles.Candidate when !employersOn => InLang(lang,
+                "Ik leg uit hoe Lobsy werkt en antwoord vanuit je profiel: voorkeuren, ervaring, opleiding en je loopbaanplan. Banen komen later.",
+                "I can explain how Lobsy works and answer from your profile: preferences, experience, education and your career plan. Jobs come later.",
+                "Wyjaśniam, jak działa Lobsy, i odpowiadam z twojego profilu: preferencje, doświadczenie, nauka i plan kariery. Oferty przyjdą później.",
+                "Îți explic cum funcționează Lobsy și răspund din profilul tău: preferințe, experiență, studii și planul de carieră. Joburile vin mai târziu.",
+                "أشرح كيف يعمل لوبسي وأجيب من ملفك: تفضيلاتك وخبرتك ودراستك وخطة مسارك. الوظائف تأتي لاحقاً."),
+            JobsyRoles.Candidate => InLang(lang,
+                "Ik kan vacatures zoeken op trefwoord (bijv. chauffeur), uitleggen hoe Lobsy werkt, of vragen beantwoorden over jouw profiel en sollicitaties.",
+                "I can search vacancies by keyword (for example chauffeur), explain how Lobsy works, or answer questions about your profile and applications.",
+                "Mogę szukać ofert po słowie (na przykład kierowca), wyjaśnić jak działa Lobsy albo odpowiedzieć o twoim profilu i aplikacjach.",
+                "Pot căuta joburi după cuvânt (de exemplu șofer), explica cum funcționează Lobsy sau răspunde despre profilul și candidaturile tale.",
+                "يمكنني البحث عن وظائف بكلمة، أو شرح لوبسي، أو الإجابة عن ملفك وطلباتك."),
+            JobsyRoles.SalesManager => InLang(lang,
+                "Probeer te vragen naar je commissies, doorverwezen leveranciers of facturen.",
+                "Try asking about your commissions, referred suppliers, or invoices.",
+                "Zapytaj o prowizje, poleconych dostawców albo faktury.",
+                "Întreabă despre comisioane, furnizorii recomandați sau facturi.",
+                "اسأل عن عمولاتك أو الموردين المحالين أو الفواتير."),
+            JobsyRoles.Admin => InLang(lang,
+                "Probeer te vragen hoe vaak Lobsy vandaag is bezocht, welke salesmanager het meest actief is, of om een KPI-overzicht.",
+                "Try asking how often Lobsy was visited today, which sales manager is most active, or for a KPI overview.",
+                "Zapytaj, jak często dziś odwiedzano Lobsy, który opiekun sprzedaży jest najaktywniejszy, albo o przegląd KPI.",
+                "Întreabă cât de des a fost vizitat Lobsy azi, care manager de vânzări e cel mai activ, sau un rezumat KPI.",
+                "اسأل كم مرة زار الناس لوبسي اليوم، أو أي مدير مبيعات أنشط، أو ملخص المؤشرات."),
+            _ => InLang(lang,
+                "Probeer te vragen naar je KPI-overzicht, de vacature met de minste of meeste clicks, actieve vacatures, of tips bij weinig tractie.",
+                "Try asking for your KPI overview, the vacancy with the fewest or most clicks, active vacancies, or tips for low traction.",
+                "Zapytaj o przegląd KPI, ofertę z najmniejszą lub największą liczbą kliknięć, aktywne oferty albo wskazówki przy małym ruchu.",
+                "Întreabă despre rezumatul KPI, anunțul cu cele mai puține sau cele mai multe clicuri, anunțurile active sau sfaturi când e puțină tracțiune.",
+                "اسأل عن ملخص المؤشرات، أو الإعلان الأقل أو الأكثر نقراً، أو الإعلانات النشطة، أو نصائح عند قلة التفاعل.")
         };
     }
 
     private static string RefuseMessage(AssistantChatContext context)
     {
         var lang = JobsyLanguages.Normalize(context.Language);
-        return lang == "en"
-            ? "I can only help with Lobsy topics within your role. Please ask about jobs, applications, KPIs, or your account."
-            : "Ik help alleen met Lobsy-onderwerpen binnen jouw rol. Vraag gerust naar vacatures, sollicitaties, KPI’s of je account.";
+        return InLang(lang,
+            "Ik help alleen met Lobsy-onderwerpen binnen jouw rol. Vraag gerust naar je profiel, tests of je account.",
+            "I can only help with Lobsy topics within your role. Ask about your profile, tests, KPIs, or your account.",
+            "Pomagam tylko w tematach Lobsy w twojej roli. Pytaj o profil, testy, KPI albo konto.",
+            "Ajut doar cu subiecte Lobsy din rolul tău. Întreabă despre profil, teste, KPI sau cont.",
+            "أساعد فقط في مواضيع لوبسي ضمن دورك. اسأل عن ملفك أو اختباراتك أو المؤشرات أو حسابك.");
+    }
+
+    private static string InLang(string lang, string nl, string en, string pl, string ro, string ar)
+        => lang switch
+        {
+            "en" => en,
+            "pl" => pl,
+            "ro" => ro,
+            "ar" => ar,
+            _ => nl
+        };
+
+    /// <summary>Mistral often returns markdown. The bubble shows plain text.</summary>
+    public static string StripMarkup(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "";
+        }
+
+        var stripped = text.Replace("**", "", StringComparison.Ordinal).Replace("__", "", StringComparison.Ordinal);
+        stripped = Regex.Replace(stripped, @"(?m)^#{1,6}\s*", "");
+        stripped = Regex.Replace(stripped, @"(?m)^-\s+", "");
+        return stripped.Trim();
     }
 
     private static string RefuseNaw(AssistantChatContext context)
@@ -1442,26 +1600,24 @@ Verbetervoorstellen:
     /// </summary>
     private static bool IsVacancySearchIntent(string text, string? workType, string? jobQuery)
     {
-        var mentionsJobs = ContainsAny(text,
-            "vacature", "vacatures", "baan", "banen", "job", "jobs", "werk zoek", "zoek werk");
+        // Advice such as "dichter bij een baan in de zorg" or "which jobs suit me"
+        // is not a vacancy search. Require a search verb or the word vacature.
+        var explicitVacancy = ContainsAny(text, "vacature", "vacatures");
         var searchVerb = ContainsAny(text, "zoek", "search", "toon", "show", "vind", "find");
+        if (!explicitVacancy && !searchVerb)
+        {
+            return false;
+        }
+
+        if (explicitVacancy && searchVerb)
+        {
+            return true;
+        }
+
         var jobWord = !string.IsNullOrWhiteSpace(jobQuery)
                       || ContainsAny(text, "heftruck", "reachtruck", "chauffeur", "orderpicker", "barista", "plukker",
-                          "magazijnmedewerker", "kasmedewerker");
-
-        if (mentionsJobs && (searchVerb || jobWord || workType is not null))
-        {
-            return true;
-        }
-
-        if (searchVerb && (jobWord || workType is not null))
-        {
-            return true;
-        }
-
-        // A leftover token from a general question is not a vacancy search.
-        // Explicit titles still match when the sentence also names jobs or a search verb.
-        return false;
+                          "magazijnmedewerker", "kasmedewerker", "baan", "banen", "job", "jobs", "werk");
+        return jobWord || workType is not null;
     }
 
     private static bool LooksLikePassportHelp(string text) =>

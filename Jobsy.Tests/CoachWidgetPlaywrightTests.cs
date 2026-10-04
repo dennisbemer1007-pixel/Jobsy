@@ -286,10 +286,10 @@ public class CoachWidgetPlaywrightTests
 
     private static async Task AssertCoachSizeAndClearanceAsync(IPage page, bool tipOpen)
     {
-        var steps = await page.EvaluateAsync<int>("() => Math.max(1, Math.ceil(document.documentElement.scrollHeight / 250))");
+        var steps = await page.EvaluateAsync<int>("() => Math.max(1, Math.ceil(document.documentElement.scrollHeight / 40))");
         for (var step = 0; step < steps; step++)
         {
-            await page.EvaluateAsync("(y) => window.scrollTo(0, y)", step * 250);
+            await page.EvaluateAsync("(y) => window.scrollTo(0, y)", step * 40);
             var result = await page.EvaluateAsync<string>(
                 """
                 (expectTip) => {
@@ -305,7 +305,7 @@ public class CoachWidgetPlaywrightTests
                   if (expectTip && tip && !tip.hidden && getComputedStyle(tip).display !== 'none') {
                     boxes.push(tip.getBoundingClientRect());
                   }
-                  const nodes = document.querySelectorAll('a, button, input');
+                  const nodes = document.querySelectorAll('a, button, input, [role="tab"]');
                   for (const node of nodes) {
                     if (dock && dock.contains(node)) continue;
                     const style = getComputedStyle(node);

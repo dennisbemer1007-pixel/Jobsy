@@ -8,7 +8,6 @@ namespace Jobsy.Infrastructure.Jobs;
 /// <summary>Drains <see cref="ICandidateInsightsQueue"/> and recomputes derived insights per user.</summary>
 public sealed class CandidateInsightsWorker : BackgroundService
 {
-    private readonly EmployersJobGate _employersGate;
     private readonly ICandidateInsightsQueue _queue;
     private readonly IServiceScopeFactory _scopes;
     private readonly ILogger<CandidateInsightsWorker> _logger;
@@ -21,7 +20,6 @@ public sealed class CandidateInsightsWorker : BackgroundService
         _queue = queue;
         _scopes = scopes;
         _logger = logger;
-        _employersGate = new EmployersJobGate(_logger, nameof(CandidateInsightsWorker));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -40,11 +38,8 @@ public sealed class CandidateInsightsWorker : BackgroundService
 
             try
             {
-                if (!await _employersGate.ShouldRunAsync(_scopes, stoppingToken))
-                {
-                    continue;
-                }
-
+                // WhoAmI, compass and the competence report are candidate features.
+                // They run while employers are off. The match snapshot is skipped inside Recompute.
                 await using var scope = _scopes.CreateAsyncScope();
                 var computer = scope.ServiceProvider.GetRequiredService<ICandidateInsightsComputer>();
                 await computer.RecomputeAsync(userId, stoppingToken);

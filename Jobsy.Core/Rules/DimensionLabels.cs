@@ -31,7 +31,7 @@ public static class DimensionLabels
             CareerTestCatalog.Social => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social),
             CareerTestCatalog.Enterprising => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising),
             CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
-            SchwartzValuesCatalog.Autonomy => "Eigen regie & uitdaging",
+            SchwartzValuesCatalog.Autonomy => "Zelf kiezen en uitdaging",
             SchwartzValuesCatalog.Connection => "Verbinding & zorg",
             SchwartzValuesCatalog.Achievement => "Prestatie & groei",
             SchwartzValuesCatalog.Stability => "Zekerheid & traditie",

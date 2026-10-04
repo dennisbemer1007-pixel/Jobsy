@@ -45,8 +45,8 @@
                     <label class="checkbox-row">
                         <input type="checkbox" name="pref_@item.Key" value="1" checked="@item.Enabled" />
                         <span>
-                            <strong>@LabelFor(item.Key)</strong>
-                            <span class="muted" style="display:block">@HintFor(item.Key)</span>
+                            <strong class="mail-settings__label">@LabelFor(item.Key)</strong>
+                            <span class="muted mail-settings__hint" style="display:block">@HintFor(item.Key)</span>
                         </span>
                     </label>
                 }
@@ -89,12 +89,34 @@
     private string _antiforgeryToken = "";
 
     private string MailSpeech
-        => string.Join(". ", new[]
+    {
+        get
         {
-            Culture["MailSettings.Title"],
-            Culture["MailSettings.Reminders.Label"],
-            Culture["MailSettings.Comeback.Label"]
-        }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var parts = new List<string>
+            {
+                Culture["MailSettings.Title"],
+                Culture["MailSettings.Reminders.Label"],
+                Culture["MailSettings.Reminders.Hint"],
+                Culture["MailSettings.OptionalHeading"]
+            };
+            foreach (var item in _optional)
+            {
+                parts.Add(LabelFor(item.Key));
+                var hint = HintFor(item.Key);
+                if (!string.IsNullOrWhiteSpace(hint))
+                {
+                    parts.Add(hint);
+                }
+            }
+
+            if (_optional.All(item => item.Key != "ComebackReminder"))
+            {
+                parts.Add(Culture["MailSettings.Comeback.Label"]);
+            }
+
+            return string.Join(". ", parts.Where(s => !string.IsNullOrWhiteSpace(s)));
+        }
+    }
 
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }

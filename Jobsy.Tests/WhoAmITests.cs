@@ -72,7 +72,7 @@ public class WhoAmITests
             Autonomy: 70, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
             Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70));
         Assert.Contains("Samen", user, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Eigen regie", user, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Zelf kiezen", user, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.DoesNotContain("ada", user, StringComparison.OrdinalIgnoreCase);
         Assert.True(CareerCompassBuilder.ContainsForbiddenJargon(WhoAmIPrompt.System));
@@ -87,7 +87,7 @@ public class WhoAmITests
         Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
         Assert.Contains("DnaPanel", kompas, StringComparison.Ordinal);
         Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
-        Assert.Equal("Mijn DNA", Jobsy.Web.Localization.UiStrings.Get("Kompas.TabDna", "nl"));
+        Assert.Equal("Wie ik ben", Jobsy.Web.Localization.UiStrings.Get("Kompas.TabDna", "nl"));
         Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.All[0]);
         Assert.Equal(CandidateKompasTabs.Dna, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Fit, 1));
         Assert.Equal(4, CandidateKompasTabs.All.Length);

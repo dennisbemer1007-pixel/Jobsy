@@ -381,7 +381,12 @@ public class HowLobsySignedInTests : HowLobsyRenderTestBase
         var start = cut.Find(".pp-how__start a");
         Assert.Equal(UiStrings.Get("HowLobsy.You.StartCta"), start.TextContent.Trim());
         Assert.False(string.IsNullOrWhiteSpace(start.GetAttribute("href")));
-        Assert.Equal(4, cut.FindAll("li.pp-how__step").Count);
+        Assert.Equal(3, cut.FindAll("li.pp-how__step").Count);
+        Assert.Contains("Naar mijn paspoort", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("In 3 stappen", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Doe de gratis test", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Geen account nodig", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Account maken", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

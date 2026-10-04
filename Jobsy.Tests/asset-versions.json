@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "e29a20fc793c2a042eb7a06b42ba5df9d7078b0e9c01ba825322ed12289bf0f8",
-    "v": "20261004-14"
+    "sha256": "e7a4846f0603fa3f4ac88cce1e8843ebc22e444f3229aaf73a62ae7ba6394735",
+    "v": "20261004-15"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -28,8 +28,8 @@
     "v": "20261004-14"
   },
   "css/features/carriere.css": {
-    "sha256": "ba8a50b30dcf1ba608963c64ddc1d662fcdf7370413dce95cc4ae6e03dbf4105",
-    "v": "20261004-11"
+    "sha256": "0175f9d0225b7ab1cea0aee247f4eb852bb790096c414381701f7d94445a9766",
+    "v": "20261004-12"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
@@ -136,8 +136,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "a97b54ece75087fcc72f526c5ce1799ed1cc14c28086c04de244eec4f34a07b1",
-    "v": "20261004-15"
+    "sha256": "019f8a8b1755fcd77e793658b78ef82d7171fdc1af59a1cdade317321ed60e84",
+    "v": "20261004-16"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "c48d9cf19a8b5ef4ec050050a6e6d86a464c6d3233c59d2f826eeaa0f32ea3f4",
-    "v": "20261004-15"
+    "sha256": "81807af4576cb5e24275daaa63427929a81e0282e3537c9ade5bfc8aa2c07c99",
+    "v": "20261004-16"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -212,11 +212,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "a9e3b768ea36de8269dc27e7fd3d941c1d7fe2d3be9d3bf630fc1f08e2c7aa3c",
-    "v": "20261004-15"
+    "sha256": "7bfd7964f9cfca3950164ec85144dbbfcbed1e1ac06b5bcc8ff7cfce92bed917",
+    "v": "20261004-16"
   },
   "service-worker.published.js": {
-    "sha256": "8c07a199e8b7d610a41a7245e522ae8a56fda69441055df6988bd8325de5e0b8",
-    "v": "20261004-15"
+    "sha256": "c831432d8bbff0776e22157c1dbfe1cfb8aa1578989013d2368096167f9fd54a",
+    "v": "20261004-16"
   }
 }

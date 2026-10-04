@@ -15,7 +15,7 @@ public class RoleFitCheckTests
         Assert.Contains("diepte-analyse", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
         Assert.Equal(RoleFitCheckCopy.Locked, UiStringsNl("Fit.Locked"));
         Assert.Equal(RoleFitCheckCopy.DeepUpsell, UiStringsNl("Fit.DeepUpsell"));
-        Assert.Equal("Mijn DNA", UiStringsNl("Kompas.TabDna"));
+        Assert.Equal("Wie ik ben", UiStringsNl("Kompas.TabDna"));
         Assert.Equal("Profiel", UiStringsNl("Kompas.TabProfile"));
         Assert.Equal("Tests", UiStringsNl("Kompas.TabTests"));
         Assert.Equal("Functiefit", UiStringsNl("Kompas.TabFit"));

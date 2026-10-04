@@ -24,7 +24,7 @@
             <PubEmoji Glyph="🧭" />
             <span>@Culture["HowLobsy.Eyebrow"]</span>
         </p>
-        <h1 id="how-title" class="pp-doc__title">@Culture["HowLobsy.Title"]</h1>
+        <h1 id="how-title" class="pp-doc__title">@Heading</h1>
         <p class="pp-doc__lead">@Text("HowLobsy.Lead")</p>
     </header>
 
@@ -300,16 +300,45 @@
         return null;
     }
 
+    private string Heading => _candidateStartPath is not null
+        ? Culture.Format("HowLobsy.Title.Counted", Steps().Count)
+        : Culture["HowLobsy.Title"];
+
     private IReadOnlyList<StepCard> Steps()
     {
         var mapHref = _employersEnabled ? PublicRoutes.Banenkaart : null;
+        var first = new StepCard(
+            1,
+            _employersEnabled ? "🗺️" : "🪪",
+            Text("HowLobsy.Step1.Title"),
+            Text("HowLobsy.Step1.Body"),
+            mapHref,
+            mapHref is null ? null : Culture["HowLobsy.Step1.Cta"]);
+        var last = new StepCard(
+            4,
+            "🤝",
+            Text("HowLobsy.Step4.Title"),
+            Text("HowLobsy.Step4.Body"),
+            null,
+            null);
+
+        if (_candidateStartPath is not null)
+        {
+            return
+            [
+                first,
+                new(2, "🪪",
+                    Culture["HowLobsy.SignedIn.PassportTitle"],
+                    Culture["HowLobsy.SignedIn.PassportBody"],
+                    "/candidate/paspoort",
+                    Culture["HowLobsy.SignedIn.PassportCta"]),
+                last with { Number = 3 }
+            ];
+        }
+
         return
         [
-            new(1, _employersEnabled ? "🗺️" : "🪪",
-                Text("HowLobsy.Step1.Title"),
-                Text("HowLobsy.Step1.Body"),
-                mapHref,
-                mapHref is null ? null : Culture["HowLobsy.Step1.Cta"]),
+            first,
             new(2, "✨",
                 Culture["HowLobsy.Step2.Title"],
                 Culture["HowLobsy.Step2.Body"],
@@ -320,11 +349,7 @@
                 Text("HowLobsy.Step3.Body"),
                 PublicRoutes.CreateAccount,
                 Culture["HowLobsy.Step3.Cta"]),
-            new(4, "🤝",
-                Text("HowLobsy.Step4.Title"),
-                Text("HowLobsy.Step4.Body"),
-                null,
-                null),
+            last
         ];
     }
 }

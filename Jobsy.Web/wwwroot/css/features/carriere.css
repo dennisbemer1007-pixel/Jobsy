@@ -126,7 +126,7 @@
 
 .career-scene__lob {
   position: absolute;
-  inset-inline-start: var(--x);
+  inset-inline-start: clamp(calc(var(--size, 64px) / 2), var(--x), calc(100% - (var(--size, 64px) / 2)));
   top: var(--y);
   transform: translate(-50%, -100%);
   animation: career-bob 6s ease-in-out infinite;
@@ -1066,7 +1066,12 @@
 
 .how-stone__text { min-width: 0; flex: 1 1 auto; }
 
-.how-stone__title { display: block; font-size: 0.98rem; font-weight: 600; }
+.how-stone__title {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
 .how-stone__body { display: block; color: var(--text); font-size: 0.86rem; line-height: 1.4; }
 .how-stone__state { display: block; color: var(--muted); font-size: 0.78rem; }
 

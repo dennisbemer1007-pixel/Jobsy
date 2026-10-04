@@ -138,10 +138,10 @@ public static class DeepReportCatalog
             "Compared with {0} Lobsy candidates ({1}). This is not a scientifically validated comparison group."),
 
         // Holland
-        ["holland.title"] = ("Jouw Holland-code uitgelegd", "Your Holland code explained"),
+        ["holland.title"] = ("Jouw beroepsletters", "Your job letters"),
         ["holland.body"] = (
-            "Je code {0} betekent dat je het sterkst scoort op {1}. Typische omgevingen: {2}.",
-            "Your code {0} means you score highest on {1}. Typical environments: {2}."),
+            "Je letters {0} betekenen dat je het sterkst scoort op {1}. Typische omgevingen: {2}. De letters zijn een startpunt. Ze zijn geen cijfer en geen oordeel over jou.",
+            "Your letters {0} mean you score highest on {1}. Typical environments: {2}. The letters are a starting point. They are not a grade and not a judgement of you."),
 
         // Values ranking
         ["values.rank.title"] = ("Jouw waarden op volgorde", "Your values ranked"),
