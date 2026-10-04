@@ -74,7 +74,7 @@ else
                         <progress class="sch-progress-meter" max="@row.ProgressTotal" value="@row.ProgressCurrent"></progress>
                         <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
                     </td>
-                    <td>@(row.LastSeenAtUtc is DateTime t ? LobsyTime.ToAmsterdam(t).ToString("dd-MM HH:mm") : "—")</td>
+                    <td>@(row.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
                     <td class="sch-row-actions">
                         @if (row.Status == PupilCodeStatus.Completed)
                         {

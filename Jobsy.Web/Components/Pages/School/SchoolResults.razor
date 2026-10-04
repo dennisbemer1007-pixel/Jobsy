@@ -57,7 +57,11 @@ else
         }
     </div>
 
-    @if (_results is null)
+    @if (!string.IsNullOrEmpty(_classError))
+    {
+        <p class="state-message error">@_classError</p>
+    }
+    else if (_results is null)
     {
         <p class="muted">@Culture["School.Results.PickClass"]</p>
     }
@@ -157,6 +161,7 @@ else
     private Guid? _selected;
     private List<SchoolPortalClassListItemDto> _classes = [];
     private SchoolPortalResultsDto? _results;
+    private string? _classError;
     private PupilQuestionSet? _filterSet;
     private bool _hasBothSets;
 
@@ -242,6 +247,7 @@ else
         {
             _selected = null;
             _results = null;
+            _classError = null;
         }
     }
 
@@ -253,13 +259,28 @@ else
         {
             _selected = null;
             _results = null;
+            _classError = null;
             return;
         }
 
         if (_selected != chosen || _results is null)
         {
             _selected = chosen;
-            _results = await Api.GetSchoolClassResultsAsync(chosen);
+            _results = null;
+            _classError = null;
+            try
+            {
+                _results = await Api.GetSchoolClassResultsAsync(chosen);
+                if (_results is null)
+                {
+                    _classError = Culture["School.Results.ClassFailed"];
+                }
+            }
+            catch (Exception)
+            {
+                _results = null;
+                _classError = Culture["School.Results.ClassFailed"];
+            }
         }
 
         if (navigate)

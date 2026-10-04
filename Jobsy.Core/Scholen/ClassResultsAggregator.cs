@@ -298,37 +298,35 @@ public static class ClassResultsAggregator
             foreach (var ch in r.HollandCode.Trim().ToUpperInvariant())
             {
                 var letter = ch.ToString();
-                if (counts.TryGetValue(letter, out var value))
+                if (counts.TryGetValue(letter, out var count))
                 {
-                    counts[letter] = ++value;
+                    counts[letter] = count + 1;
                 }
             }
 
             return;
         }
 
-        try
+        using var doc = ParseObject(r.RiasecScoresJson);
+        if (doc is null)
         {
-            using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(r.RiasecScoresJson) ? "{}" : r.RiasecScoresJson);
-            string? top = null;
-            var topScore = double.MinValue;
-            foreach (var prop in doc.RootElement.EnumerateObject())
-            {
-                if (prop.Value.TryGetDouble(out var score) && score > topScore)
-                {
-                    topScore = score;
-                    top = prop.Name;
-                }
-            }
+            return;
+        }
 
-            if (!string.IsNullOrWhiteSpace(top) && counts.TryGetValue(top, out var value))
+        string? top = null;
+        var topScore = double.MinValue;
+        foreach (var prop in doc.RootElement.EnumerateObject())
+        {
+            if (TryScore(prop.Value, out var score) && score > topScore)
             {
-                counts[top] = ++value;
+                topScore = score;
+                top = prop.Name;
             }
         }
-        catch (JsonException)
+
+        if (!string.IsNullOrWhiteSpace(top) && counts.TryGetValue(top, out var value))
         {
-            // ignore malformed snapshot
+            counts[top] = ++value;
         }
     }
 
@@ -338,36 +336,78 @@ public static class ClassResultsAggregator
     /// </summary>
     private static string? CompetenceBand(PupilResult r)
     {
+        using var doc = ParseObject(r.CompetenceScoresJson);
+        if (doc is null)
+        {
+            return null;
+        }
+
+        var scores = new List<double>();
+        foreach (var prop in doc.RootElement.EnumerateObject())
+        {
+            if (TryScore(prop.Value, out var score))
+            {
+                scores.Add(score);
+            }
+        }
+
+        if (scores.Count == 0)
+        {
+            return null;
+        }
+
+        var avg = scores.Average();
+        // The result builder stores 0–100 percentages (and a bool isComplete).
+        // Older rows stored a 1–5 average. TryGetDouble throws on a boolean.
+        var percentage = scores.Max() > 5;
+        var low = percentage ? 50d : 2.5d;
+        var mid = percentage ? 70d : 3.5d;
+        if (avg < low)
+        {
+            return "Laag";
+        }
+
+        if (avg < mid)
+        {
+            return "Midden";
+        }
+
+        return "Hoog";
+    }
+
+    private static bool TryScore(JsonElement element, out double score)
+    {
+        if (element.ValueKind != JsonValueKind.Number)
+        {
+            score = 0;
+            return false;
+        }
+
+        return element.TryGetDouble(out score);
+    }
+
+    /// <summary>
+    /// Stored scores are a JSON object. <c>null</c>, arrays and broken text must not throw:
+    /// <see cref="JsonElement.EnumerateObject"/> raises <see cref="InvalidOperationException"/>
+    /// and that path only runs once a class reaches k ≥ 5.
+    /// </summary>
+    private static JsonDocument? ParseObject(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
         try
         {
-            using var doc = JsonDocument.Parse(
-                string.IsNullOrWhiteSpace(r.CompetenceScoresJson) ? "{}" : r.CompetenceScoresJson);
-            var scores = new List<double>();
-            foreach (var prop in doc.RootElement.EnumerateObject())
+            var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
             {
-                if (prop.Value.TryGetDouble(out var score))
-                {
-                    scores.Add(score);
-                }
-            }
-
-            if (scores.Count == 0)
-            {
+                doc.Dispose();
                 return null;
             }
 
-            var avg = scores.Average();
-            if (avg < 2.5)
-            {
-                return "Laag";
-            }
-
-            if (avg < 3.5)
-            {
-                return "Midden";
-            }
-
-            return "Hoog";
+            return doc;
         }
         catch (JsonException)
         {

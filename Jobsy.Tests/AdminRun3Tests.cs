@@ -214,6 +214,8 @@ public class PlatformErrorLogOn5xxTests
         var entry = Assert.Single(sink.Entries);
         Assert.Equal("Api", entry.Category);
         Assert.StartsWith("LB-", entry.SupportCode, StringComparison.Ordinal);
+        Assert.Contains("secret boom", entry.Detail, StringComparison.Ordinal);
+        Assert.Contains("/api/boom", entry.Detail, StringComparison.Ordinal);
         context.Response.Body.Position = 0;
         using var doc = await JsonDocument.ParseAsync(context.Response.Body);
         Assert.Equal(entry.SupportCode, doc.RootElement.GetProperty("supportCode").GetString());
@@ -236,11 +238,11 @@ public class PlatformErrorLogOn5xxTests
 
     private sealed class CapturingLog : IPlatformErrorLog
     {
-        public List<(string Category, string Message, string? SupportCode)> Entries { get; } = [];
+        public List<(string Category, string Message, string? SupportCode, string? Detail)> Entries { get; } = [];
 
         public Task WriteAsync(string category, string message, string? supportCode, string? detail, CancellationToken cancellationToken = default)
         {
-            Entries.Add((category, message, supportCode));
+            Entries.Add((category, message, supportCode, detail));
             return Task.CompletedTask;
         }
     }

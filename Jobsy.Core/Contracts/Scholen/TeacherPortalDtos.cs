@@ -23,7 +23,7 @@ public sealed record TeacherClassOverviewDto(
     int InProgressCount,
     int NotStartedCount,
     double CompletedPercent,
-    /// <summary>Average minutes when ≥ 5 completed; otherwise null (UI shows "—").</summary>
+    /// <summary>Average minutes once at least one finished code has a duration; otherwise null.</summary>
     int? AverageMinutes,
     TestWindowState TestWindow,
     DateOnly? TestWindowClosesOn,

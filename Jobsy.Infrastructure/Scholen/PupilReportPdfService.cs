@@ -128,8 +128,7 @@ public sealed class PupilReportPdfService : IPupilReportPdfService
                             }
                             else
                             {
-                                right.Item().Text(PupilReportPdfCopy.JobsTitle).SemiBold();
-                                right.Item().PaddingTop(4).Text(string.Join(" · ", model.JobIdeas)).FontSize(8);
+                                right.Item().Text(PupilReportPdfCopy.DreamLater).FontSize(9);
                             }
                         });
                     });

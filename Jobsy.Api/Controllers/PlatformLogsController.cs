@@ -77,7 +77,8 @@ public class PlatformLogsController : ControllerBase
                 l.Level.ToString(),
                 l.Category,
                 l.Message,
-                l.CreatedAt))
+                l.CreatedAt,
+                l.DetailsJson))
             .ToListAsync(cancellationToken);
 
         return Ok(items);

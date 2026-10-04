@@ -704,7 +704,9 @@
     inset-inline: 0;
     top: 56px;
     bottom: 0;
-    z-index: 0;
+    /* .ll-reis is its own stacking context (z-index:1). A later sibling with
+       z-index:0 paints ON the card. Negative z-index stays behind the card. */
+    z-index: -1;
     overflow: hidden;
     pointer-events: none;
     background: linear-gradient(180deg, var(--sky) 0%, var(--sea-0) 44%, var(--sea-1) 60%, var(--sand) 100%);
@@ -771,6 +773,12 @@
     padding: var(--space-3) var(--space-4);
     margin: 0;
     max-width: 28rem;
+}
+.ll-card,
+.ll-rail,
+.ll-lob-zone {
+    position: relative;
+    z-index: 1;
 }
 .ll-card {
     background: var(--surface);
@@ -847,6 +855,7 @@
     max-width: 1100px;
     margin: 0 auto;
 }
+.ll-scene--desktop { display: none; }
 .ll-rail { display: none; }
 .ll-question__meta { font-size: var(--text-sm); color: var(--muted); margin: 0; }
 .ll-question__world {
@@ -1063,6 +1072,7 @@
     .ll-lob-zone { display: block; }
     .ll-lob-zone--mobile { display: none; }
     .ll-scene--mobile { display: none; }
+    .ll-scene--desktop { display: block; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1385,11 +1395,24 @@
     text-align: center;
 }
 
-/* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome reports that as :focus-visible,
-   so the browser draws a heavy black outline. A thin offset brand line stays visible. */
-h1[tabindex="-1"]:focus {
+/* FocusOnNavigate focuses the question h1. That must not draw a box.
+   A ring appears only after the keyboard (html.using-keyboard). */
+h1[tabindex="-1"]:focus,
+h1[tabindex="-1"]:focus-visible,
+.ll-question__text:focus,
+.ll-question__text:focus-visible {
+    outline: none;
+}
+html.using-keyboard h1[tabindex="-1"]:focus-visible,
+html.using-keyboard .ll-question__text:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
     outline-offset: 6px;
+}
+
+.sch-shell .data-table th,
+.sch-shell .data-table th .sch-sort {
+    text-transform: none;
+    letter-spacing: normal;
 }
 
 @media (max-width: 639px) {

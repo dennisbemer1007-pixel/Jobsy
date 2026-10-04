@@ -112,7 +112,7 @@ else
                         <td class="tabular">@codeRow.Number</td>
                         <td><span class="sch-code">@codeRow.DisplayCode</span></td>
                         <td><span class="sch-pill @StatusPill(codeRow.Status)">@StatusLabel(codeRow)</span></td>
-                        <td>@(codeRow.LastSeenAtUtc is DateTime t ? Relative(t) : "—")</td>
+                        <td>@(codeRow.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
                         <td class="sch-row-actions">
                             <button type="button" class="btn-compact" @onclick="() => ReplaceCode(codeRow.Id)" disabled="@_busy">
                                 @Culture["School.Codes.Replace"]
@@ -404,14 +404,6 @@ else
         PupilCodeStatus.InProgress => "sch-pill--warn",
         _ => "sch-pill--muted"
     };
-
-    private static string Relative(DateTime utc)
-    {
-        var delta = DateTime.UtcNow - utc;
-        if (delta.TotalMinutes < 60) return $"{(int)delta.TotalMinutes} min";
-        if (delta.TotalHours < 24) return $"{(int)delta.TotalHours} u";
-        return LobsyTime.ToAmsterdam(utc).ToString("dd-MM");
-    }
 
     private sealed class EditFormModel
     {
