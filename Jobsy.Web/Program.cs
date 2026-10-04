@@ -365,6 +365,16 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
     // Static /melden form POST; the API applies the stricter per-visitor "report" limit.
+    options.AddPolicy("reference-form", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     options.AddPolicy("report-form", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             Jobsy.Web.Security.TrustedClientIp.PartitionKey(
@@ -500,6 +510,7 @@ app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 app.MapJobsyAuthEndpoints();
 app.MapPublicTokenEndpoints();
 app.MapMailUnsubscribeEndpoints();
+app.MapReferenceConfirmationEndpoints();
 app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
 app.MapPartnerFlyerEndpoints();

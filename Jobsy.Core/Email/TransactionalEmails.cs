@@ -217,6 +217,8 @@ public static partial class TransactionalEmails
                 new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),
             "partnerconsentreconfirmreminder" => PartnerConsentReconfirmReminder(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
+            "referenceconfirmation" => ReferenceConfirmationRequest(
+                ctx.PublicWebBaseUrl, "Jan de Vries", ctx.RecipientName, "vakkenvuller", links.ReferenceConfirmation("voorbeeld"), c),
             "contentremoved" => ContentRemoved(
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.VacancyTitle, "Weggehaald",
                 "De tekst vraagt om gegevens die niet mogen.", new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),
