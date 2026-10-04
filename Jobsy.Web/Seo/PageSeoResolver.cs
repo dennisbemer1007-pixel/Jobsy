@@ -44,6 +44,11 @@ public static class PageSeoResolver
             canonical);
 
         var ogType = FirstNonEmpty(overlay?.OgType, entry.OgType, "website")!;
+        if (configuration.GetValue<bool>("Seo:NoIndex"))
+        {
+            indexable = false;
+        }
+
         var robots = indexable ? "index,follow" : "noindex,nofollow";
 
         return new PageSeoModel(

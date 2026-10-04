@@ -17,7 +17,7 @@ else
     <section class="detail-card admin-settings-group">
         <div class="panel-header">
             <h2>@Culture["AdminSettings.LobsyCompany.Title"]</h2>
-            <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="SaveAsync">
+            <button class="btn-compact btn-compact--primary" type="button" data-testid="company-save" disabled="@_busy" @onclick="SaveAsync">
                 @Culture["Common.Save"]
             </button>
         </div>
@@ -31,39 +31,60 @@ else
 
         <div class="login-form admin-company-form">
             <label>
-                @Culture["AdminSettings.LobsyCompany.Name"]
-                <input @bind="_form.CompanyName" />
+                @Culture["AdminSettings.LobsyCompany.LegalName"]
+                <input data-testid="company-legal-name" @bind="_form.LegalName" maxlength="200" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.TradeName"]
+                <input data-testid="company-trade-name" @bind="_form.TradeName" maxlength="200" />
             </label>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Slogan"]
                 <input @bind="_form.Slogan" maxlength="240" />
             </label>
             <p class="muted">@Culture["AdminSettings.LobsyCompany.SloganHint"]</p>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.Visiting"]</p>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Address"]
-                <input @bind="_form.Address" />
+                <input data-testid="company-street" @bind="_form.Address" />
             </label>
             <div class="admin-company-form__row">
                 <label>
                     @Culture["AdminSettings.LobsyCompany.PostalCode"]
-                    <input @bind="_form.PostalCode" />
+                    <input data-testid="company-postal" @bind="_form.PostalCode" />
                 </label>
                 <label>
                     @Culture["AdminSettings.LobsyCompany.City"]
-                    <input @bind="_form.City" />
+                    <input data-testid="company-city" @bind="_form.City" />
                 </label>
             </div>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Country"]
                 <input @bind="_form.Country" />
             </label>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.Postal"]</p>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.PostalHint"]</p>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Address"]
+                <input data-testid="company-postal-street" @bind="_form.PostalStreet" />
+            </label>
+            <div class="admin-company-form__row">
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.PostalCode"]
+                    <input data-testid="company-postal-code" @bind="_form.PostalPostalCode" />
+                </label>
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.City"]
+                    <input data-testid="company-postal-city" @bind="_form.PostalCity" />
+                </label>
+            </div>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Kvk"]
-                <input @bind="_form.KvkNumber" />
+                <input data-testid="company-kvk" @bind="_form.KvkNumber" inputmode="numeric" maxlength="8" />
             </label>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Vat"]
-                <input @bind="_form.VatNumber" />
+                <input data-testid="company-vat" @bind="_form.VatNumber" maxlength="32" />
             </label>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Iban"]
@@ -76,11 +97,15 @@ else
             <p class="muted">@Culture["AdminSettings.LobsyCompany.IbanVatHint"]</p>
             <label>
                 @Culture["AdminSettings.LobsyCompany.Phone"]
-                <input @bind="_form.Phone" />
+                <input data-testid="company-phone" @bind="_form.Phone" />
             </label>
             <label>
-                @Culture["AdminSettings.LobsyCompany.Email"]
-                <input type="email" @bind="_form.Email" />
+                @Culture["AdminSettings.LobsyCompany.SupportEmail"]
+                <input data-testid="company-support-email" type="email" @bind="_form.SupportEmail" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.PrivacyEmail"]
+                <input data-testid="company-privacy-email" type="email" @bind="_form.PrivacyEmail" />
             </label>
         </div>
     </section>
@@ -105,6 +130,10 @@ else
         try
         {
             _form = await Api.GetPlatformCompanyAsync() ?? new PlatformCompanyItem();
+            if (string.IsNullOrWhiteSpace(_form.SupportEmail))
+            {
+                _form.SupportEmail = _form.Email;
+            }
         }
         catch (Exception ex)
         {
@@ -123,6 +152,8 @@ else
         _message = null;
         try
         {
+            _form.Email = _form.SupportEmail;
+            _form.CompanyName = string.IsNullOrWhiteSpace(_form.TradeName) ? _form.CompanyName : _form.TradeName;
             _form = await Api.SavePlatformCompanyAsync(_form) ?? _form;
             await Branding.RefreshAsync();
             _message = Culture["AdminSettings.LobsyCompany.Saved"];

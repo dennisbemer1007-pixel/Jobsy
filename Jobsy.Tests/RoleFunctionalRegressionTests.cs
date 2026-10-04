@@ -131,7 +131,14 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             kvkNumber = Read(current, "kvkNumber"),
             vatNumber = Read(current, "vatNumber"),
             phone = Read(current, "phone"),
-            email = Read(current, "email")
+            email = Read(current, "email"),
+            legalName = Read(current, "legalName"),
+            tradeName = Read(current, "tradeName"),
+            postalStreet = Read(current, "postalStreet"),
+            postalPostalCode = Read(current, "postalPostalCode"),
+            postalCity = Read(current, "postalCity"),
+            supportEmail = Read(current, "supportEmail"),
+            privacyEmail = Read(current, "privacyEmail")
         });
         Assert.Equal(HttpStatusCode.OK, put.StatusCode);
 
@@ -149,7 +156,14 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             kvkNumber = Read(current, "kvkNumber"),
             vatNumber = Read(current, "vatNumber"),
             phone = Read(current, "phone"),
-            email = Read(current, "email")
+            email = Read(current, "email"),
+            legalName = Read(current, "legalName"),
+            tradeName = Read(current, "tradeName"),
+            postalStreet = Read(current, "postalStreet"),
+            postalPostalCode = Read(current, "postalPostalCode"),
+            postalCity = Read(current, "postalCity"),
+            supportEmail = Read(current, "supportEmail"),
+            privacyEmail = Read(current, "privacyEmail")
         });
         Assert.Equal(HttpStatusCode.OK, restore.StatusCode);
     }

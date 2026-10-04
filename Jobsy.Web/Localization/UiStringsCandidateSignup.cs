@@ -52,11 +52,11 @@ public static class UiStringsCandidateSignup
         Add("Signup.EmployerCta", "Bedrijf registreren", "Register your company",
             "Zarejestruj firmę", "Înregistrează compania", "تسجيل الشركة");
         Add("Signup.Under16",
-            "Ben je jonger dan 16? Na het aanmaken vragen we toestemming aan je ouder of voogd.",
-            "Are you under 16? After sign-up we ask your parent or guardian for consent.",
-            "Masz mniej niż 16 lat? Po utworzeniu konta poprosimy rodzica lub opiekuna o zgodę.",
-            "Ai sub 16 ani? După creare cerem acordul părintelui sau tutorelui.",
-            "هل عمرك أقل من 16؟ بعد إنشاء الحساب نطلب موافقة ولي أمرك.");
+            "Lobsy is er vanaf {0} jaar. Ben je jonger dan {0}? Dan kun je geen account maken. Ben je jonger dan {1}? Na het aanmaken vragen we toestemming aan je ouder of voogd. Tot die tijd blijven tests en AI dicht.",
+            "Lobsy is for age {0} and up. Under {0} you cannot create an account. Under {1}? After sign-up we ask your parent or guardian for consent. Until then tests and AI stay closed.",
+            "Lobsy jest od {0} lat. Masz mniej niż {0} lat? Nie możesz założyć konta. Masz mniej niż {1}? Po utworzeniu konta poprosimy rodzica lub opiekuna o zgodę. Do tego czasu testy i AI są zamknięte.",
+            "Lobsy este de la {0} ani. Ai sub {0} ani? Nu poți crea un cont. Ai sub {1}? După creare cerem acordul părintelui sau tutorelui. Până atunci testele și AI rămân închise.",
+            "لوبسي من عمر {0} سنة. أقل من {0}؟ لا يمكنك إنشاء حساب. أقل من {1}؟ بعد إنشاء الحساب نطلب موافقة والدك أو وليّك. حتى ذلك تبقى الاختبارات والذكاء الاصطناعي مغلقة.");
         Add("Signup.ErrorRetry", "Er ging iets mis. Probeer het opnieuw.",
             "Something went wrong. Please try again.",
             "Coś poszło nie tak. Spróbuj ponownie.",

@@ -411,6 +411,7 @@ if (string.IsNullOrWhiteSpace(builder.Configuration[Jobsy.Core.Security.Internal
 
 
 // Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
+app.UseMiddleware<Jobsy.Web.Seo.SeoNoIndexMiddleware>();
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
 app.UseMiddleware<CloudflareOriginMiddleware>();

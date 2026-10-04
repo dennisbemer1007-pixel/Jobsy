@@ -15,6 +15,12 @@ Blueprint: [`render.yaml`](../render.yaml). Project **Lobsy**, twee omgevingen.
 
 Acceptatie heeft **eigen** Postgres en **eigen** secrets. Die omgeving mag nooit de productiedatabase gebruiken.
 
+## Zoekmachines op Acceptatie
+
+Acceptatie en productie draaien allebei met `ASPNETCORE_ENVIRONMENT=Production`. Daarom staat noindex **niet** op die vlag.
+
+Op **alleen** `lobsy-acc-web` staat `Seo__NoIndex=true` (`Seo:NoIndex` in de app). Dan krijgt elke response `X-Robots-Tag: noindex, nofollow`, elke pagina een meta-robots `noindex, nofollow`, `robots.txt` zegt `Disallow: /` en er is geen sitemap-link. De productieservice `jobsy-web` heeft deze variabele niet en blijft indexeerbaar. Zet hem niet op productie.
+
 Namen verschillen per environment omdat Render servicenamen workspace-breed uniek houdt. `fromDatabase` / `fromService` blijven binnen dezelfde environment.
 
 **Niet hernoemen in `render.yaml`:** een andere Production-naam maakt een *nieuwe* API/web/DB aan en laat de bestaande `jobsy-*` (met de echte data) staan. Projectnaam **Lobsy** en Acceptatie-prefix `lobsy-acc-*` zijn genoeg voor de Lobsy-branding.

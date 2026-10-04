@@ -37,8 +37,14 @@
         _rows.Clear();
         Add("Legal.IdentityCard.Name", legal.DisplayName);
         Add("Legal.IdentityCard.Address", legal.AddressLine);
+        if (!string.Equals(legal.PostalAddressLine, legal.AddressLine, StringComparison.OrdinalIgnoreCase))
+        {
+            Add("Legal.IdentityCard.PostalAddress", legal.PostalAddressLine);
+        }
+
         Add("Legal.IdentityCard.Kvk", legal.KvkNumber);
         Add("Legal.IdentityCard.Vat", legal.VatNumber);
+        Add("Legal.IdentityCard.Phone", legal.Phone);
         if (ShowPrivacyContact)
         {
             Add("Legal.IdentityCard.PrivacyQuestions", legal.PrivacyContact, mailTo: true);

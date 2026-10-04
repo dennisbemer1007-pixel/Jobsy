@@ -55,7 +55,8 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
         var logo = _companySettings.GetBrandLogoPng();
         var culture = CultureInfo.GetCultureInfo("nl-NL");
         var code = NormalizeTrackingCode(trackingCode);
-        var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
+        var legal = LegalIdentityService.Compose(null, platform);
+        var brand = string.IsNullOrWhiteSpace(legal.TradeName) ? legal.DisplayName : legal.TradeName.Trim();
         var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
         var qrTarget = code is null
             ? $"{baseUrl}/register"

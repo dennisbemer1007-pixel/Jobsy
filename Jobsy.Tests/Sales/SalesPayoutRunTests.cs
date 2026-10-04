@@ -11,6 +11,7 @@ using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Jobsy.Core.Email;
@@ -520,8 +521,9 @@ public class SalesPayoutRunTests
         await db.SaveChangesAsync();
 
         var wallet = new SalesWalletReadService(db);
+        var company = new PlatformCompanySettingsService(db);
         var svc = new SalesPayoutRequestService(
-            db, wallet, new CapturingEmail(), new PlatformCompanySettingsService(db), new AlwaysOnFeatures());
+            db, wallet, new CapturingEmail(), new AlwaysOnFeatures(), new CompanyBackedLegalIdentity(company));
         var dto = await svc.RequestAsync(userId, mfaSatisfied: true);
         if (requestedAtUtc is DateTime at)
         {

@@ -58,6 +58,7 @@ public class LegalIdentityCardTests : BunitContext
         Assert.DoesNotContain(UiStrings.Get("Legal.IdentityCard.Address"), labels);
         Assert.DoesNotContain(UiStrings.Get("Legal.IdentityCard.Kvk"), labels);
         Assert.DoesNotContain(UiStrings.Get("Legal.IdentityCard.Vat"), labels);
+        Assert.DoesNotContain(UiStrings.Get("Legal.IdentityCard.Phone"), labels);
 
         var markup = cut.Markup;
         Assert.DoesNotContain("[", markup, StringComparison.Ordinal);

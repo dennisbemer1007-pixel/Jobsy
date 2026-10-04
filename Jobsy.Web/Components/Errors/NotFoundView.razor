@@ -1,12 +1,10 @@
 @namespace Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.Brand
-@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 @inject IConfiguration Configuration
-@inject IEmployersSwitch EmployersSwitch
 @*
   404 content (errors 01 / E3). Shared by /status/404 and by pages that answer 404 while keeping
   their own route and layout (VacancyDetail), the way ClosedVacancyView is shared for 410.
@@ -20,12 +18,9 @@
         <p class="err-hero__lead">@Culture["Status.NotFound.Lead"]</p>
 
         <div class="err-actions">
-            @if (_flagKnown)
-            {
-                <a class="pub-btn pub-btn--primary" href="@PrimaryHref">@PrimaryLabel</a>
-            }
+            <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Landing">@Culture["Status.Common.Home"]</a>
             <a class="pub-btn pub-btn--secondary" href="@PublicRoutes.Test">@Culture["Status.Common.FreeTest"]</a>
-            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.HowItWorks">@Culture["Status.Common.Help"]</a>
+            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Contact">@Culture["Status.Common.Contact"]</a>
         </div>
 
         <p class="err-support">
@@ -43,15 +38,6 @@
     [Parameter] public bool Embedded { get; set; }
 
     private string _supportEmail = Jobsy.Web.Hosting.SupportContact.Default;
-    private bool _flagKnown;
-    private bool _employersOn;
-
-    /// <summary>F present: with werkgevers actief OFF the job map is replaced by Mijn Paspoort (E3).</summary>
-    private string PrimaryLabel => _employersOn
-        ? Culture["Status.Common.Banenkaart"]
-        : Culture["Status.Common.Passport"];
-
-    private string PrimaryHref => _employersOn ? PublicRoutes.Banenkaart : PublicRoutes.Test;
 
     private string SupportMailto => Jobsy.Web.Hosting.SupportContact.MailtoLink(_supportEmail);
 
@@ -59,11 +45,10 @@
 
     private string SupportLineSuffix => SplitSupportLine().Suffix;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         _supportEmail = Jobsy.Web.Hosting.SupportContact.Email(Configuration);
-        _employersOn = await EmployersSwitch.IsEnabledAsync();
-        _flagKnown = true;
+        return Task.CompletedTask;
     }
 
     private (string Prefix, string Suffix) SplitSupportLine()

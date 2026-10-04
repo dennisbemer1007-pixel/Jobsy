@@ -766,7 +766,8 @@
         {
             1 => !string.IsNullOrWhiteSpace(Draft.FirstName)
                  && !string.IsNullOrWhiteSpace(Draft.LastName)
-                 && Draft.BirthDate is not null
+                 && Draft.BirthDate is DateOnly born
+                 && !Jobsy.Core.Privacy.CandidateConsentRules.IsBelowMinimumAge(born, DateOnly.FromDateTime(DateTime.Today))
                  && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
             2 => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0
                  && !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
