@@ -281,10 +281,22 @@ public class AdminRun4PlaywrightTests
     private static async Task AssertSearchFiltersAsync(IPage page, string url, string inputSelector)
     {
         await GotoInteractiveAsync(page, url);
-        var rows = page.Locator("table tbody tr");
-        await rows.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        var count = await rows.CountAsync();
-        Assert.True(count >= 2, $"Need two rows on {url} to prove search hides a non-match.");
+        var rows = page.Locator("table.data-table tbody tr");
+        // The circuit can paint the first row before the rest of the page arrives.
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => document.querySelectorAll('table.data-table tbody tr').length >= 2
+                """,
+                null,
+                new() { Timeout = 20_000 });
+        }
+        catch (TimeoutException)
+        {
+            var count = await rows.CountAsync();
+            Assert.True(count >= 2, $"Need two rows on {url} to prove search hides a non-match (saw {count}).");
+        }
 
         // Snapshot the other row before typing. A short token such as "Binckhorst" also
         // matches an address the table does not show, so the query is the full primary
