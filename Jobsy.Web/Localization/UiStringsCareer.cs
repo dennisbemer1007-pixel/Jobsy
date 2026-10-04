@@ -1130,7 +1130,15 @@ public static class UiStringsCareer
             "Codurile și mesajele de securitate nu se pot opri.",
             "لا يمكن إيقاف رسائل الرموز والأمان.");
         Add("AdminUsers.ResetTests",
-            "Betaalde tests resetten", "Reset paid tests", "Zresetuj płatne testy", "Resetează testele plătite", "إعادة ضبط الاختبارات المدفوعة");
+            "Uitgebreide tests resetten", "Reset extended tests", "Zresetuj testy rozszerzone", "Resetează testele extinse", "إعادة ضبط الاختبارات المفصلة");
+        Add("AdminUsers.ResetTestsConfirm",
+            "Uitgebreide tests van {0} weer op slot zetten? Antwoorden en rapporten worden gewist. Facturen blijven staan.",
+            "Lock the extended tests for {0} again? Answers and reports are cleared. Invoices stay.",
+            "Zablokować rozszerzone testy dla {0}? Odpowiedzi i raporty zostaną usunięte. Faktury zostają.",
+            "Blochezi din nou testele extinse pentru {0}? Răspunsurile și rapoartele se șterg. Facturile rămân.",
+            "هل تقفل الاختبارات المفصلة لـ {0} مرة أخرى؟ تُمسح الإجابات والتقارير. الفواتير تبقى.");
+        Add("AdminUsers.ResetTestsSubmit",
+            "Resetten", "Reset", "Resetuj", "Resetează", "إعادة ضبط");
         Add("AdminUsers.ResetTestsHelp",
             "Alleen voor een testaccount. De uitgebreide tests gaan weer op slot. Facturen blijven staan.",
             "Test accounts only. Extended tests lock again. Invoices stay.",

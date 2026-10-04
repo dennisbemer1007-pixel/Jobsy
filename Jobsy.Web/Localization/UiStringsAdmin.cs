@@ -60,6 +60,7 @@ public static class UiStringsAdmin
         Add("AdminNav.MfaSessions", "2FA & sessies", "2FA & sessions", "2FA i sesje", "2FA și sesiuni", "2FA والجلسات");
         Add("AdminNav.Privacy", "Privacy & AVG", "Privacy & GDPR", "Prywatność i RODO", "Confidențialitate și GDPR", "الخصوصية وAVG");
         Add("AdminNav.SystemLogs", "Systeemlogs", "System logs", "Logi systemowe", "Jurnale de sistem", "سجلات النظام");
+        Add("AdminNav.ReferenceMisuse", "Meldingen referent", "Referee reports", "Zgłoszenia referenta", "Rapoarte referent", "بلاغات المرجع");
 
         // Shell
         Add("AdminShell.Beheer", "Beheer", "Admin", "Administracja", "Administrare", "الإدارة");
@@ -731,6 +732,7 @@ public static class UiStringsAdmin
         Add("AdminAudit.ActiveSupportEmpty", "Geen actieve support-toegang.", "No active support access.", "Brak aktywnego dostępu support.", "Niciun acces support activ.", "لا وصول دعم نشط.");
         Add("AdminAudit.MaskingOn", "Gegevens standaard gemaskeerd", "Data masked by default", "Dane domyślnie maskowane", "Date mascate implicit", "البيانات مقنّعة افتراضيًا");
         Add("AdminAudit.On", "Aan", "On", "Wł.", "Pornit", "تشغيل");
+        Add("AdminAudit.Off", "Uit", "Off", "Wył.", "Oprit", "إيقاف");
         Add("AdminAudit.RetentionJob", "Bewaartermijn-taak", "Retention job", "Zadanie retencji", "Job retenție", "مهمة الاحتفاظ");
         Add("AdminAudit.RetentionSchedule", "Nacht 03:00", "Night 03:00", "Noc 03:00", "Noapte 03:00", "ليلًا 03:00");
         Add("AdminAudit.LastRetention", "Laatste run", "Last run", "Ostatni przebieg", "Ultima rulare", "آخر تشغيل");
@@ -777,6 +779,8 @@ public static class UiStringsAdmin
         Add("AdminSettings.LastChangedBy", "Laatst gewijzigd door {0} · {1}", "Last changed by {0} · {1}", "Ostatnio zmienione przez {0} · {1}", "Ultima modificare de {0} · {1}", "آخر تعديل بواسطة {0} · {1}");
         Add("AdminDataAccess.Actor", "Wie (naam of e-mail)", "Who (name or email)", "Kto (imię lub e-mail)", "Cine (nume sau e-mail)", "من (الاسم أو البريد)");
         Add("AdminDataAccess.Subject", "Over wie (naam of e-mail)", "About whom (name or email)", "O kim (imię lub e-mail)", "Despre cine (nume sau e-mail)", "عن من (الاسم أو البريد)");
+        Add("AdminDataAccess.Col.Actor", "Wie", "Who", "Kto", "Cine", "من");
+        Add("AdminDataAccess.Col.Subject", "Over wie", "About whom", "O kim", "Despre cine", "عن من");
         Add("AdminDataAccess.NoUser", "Geen gebruiker met die naam of dat e-mailadres.", "No user with that name or email.", "Brak użytkownika o tej nazwie lub e-mailu.", "Niciun utilizator cu acest nume sau e-mail.", "لا مستخدم بهذا الاسم أو البريد.");
         Add("AdminDataAccess.NoMatch", "Geen gebruiker gevonden", "No user found", "Nie znaleziono użytkownika", "Niciun utilizator găsit", "لم يُعثر على مستخدم");
         Add("AdminDataAccess.Unknown", "Onbekend", "Unknown person", "Nieznana osoba", "Persoană necunoscută", "شخص غير معروف");
@@ -860,6 +864,8 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.MasterdataUpdated", "Stamgegeven gewijzigd", "Master data updated", "Zmieniono dane podstawowe", "Dată de bază modificată", "عُدّل بيان أساسي");
         Add("AdminAudit.Action.MasterdataDeleted", "Stamgegeven verwijderd", "Master data deleted", "Usunięto dane podstawowe", "Dată de bază ștearsă", "حُذف بيان أساسي");
         Add("AdminAudit.Action.Sessions", "Sessies", "Sessions", "Sesje", "Sesiuni", "الجلسات");
+        Add("AdminAudit.Action.TestUnlockReset", "Tests van testaccount gereset", "Test account tests reset", "Zresetowano testy konta testowego", "Testele contului de test au fost resetate", "أُعيد ضبط اختبارات حساب الاختبار");
+        Add("AdminAudit.Action.MisuseHandled", "Melding referent afgehandeld", "Referee report handled", "Zgłoszenie referenta załatwione", "Raportul referentului a fost rezolvat", "تمت معالجة بلاغ المرجع");
         Add("AdminAction.Resource.Users", "Gebruikerslijst", "User list", "Lista użytkowników", "Lista utilizatorilor", "قائمة المستخدمين");
         Add("AdminAction.Resource.UserSessions", "Gebruikerssessies", "User sessions", "Sesje użytkownika", "Sesiuni utilizator", "جلسات المستخدم");
         Add("AdminAction.Resource.PlatformLogs", "Platformlogs", "Platform logs", "Logi platformy", "Jurnale platformă", "سجلات المنصة");
@@ -869,6 +875,7 @@ public static class UiStringsAdmin
         Add("AdminAction.Resource.PupilCode", "Leerlingcode", "Pupil code", "Kod ucznia", "Cod elev", "رمز التلميذ");
         Add("AdminAction.Resource.ApplicationCv", "CV van sollicitatie", "Application CV", "CV aplikacji", "CV-ul candidaturii", "سيرة الطلب");
         Add("AdminLogs.Message.SchoolRetention", "Bewaartermijn scholen uitgevoerd", "School retention run finished", "Retencja szkół wykonana", "Păstrarea datelor școlilor a rulat", "تم تنفيذ مدة حفظ المدارس");
+        Add("AdminLogs.Message.SourceFailed", "Bron niet bereikbaar: {0}", "Source unreachable: {0}", "Źródło niedostępne: {0}", "Sursa nu răspunde: {0}", "المصدر غير متاح: {0}");
         Add("AdminLogs.Message.SourceFailedHttp", "Bron niet bereikbaar: {0} ({1})", "Source unreachable: {0} ({1})", "Źródło niedostępne: {0} ({1})", "Sursa nu răspunde: {0} ({1})", "المصدر غير متاح: {0} ({1})");
         Add("AdminLogs.Message.SourceFailedDns", "Bron niet bereikbaar: {0} (DNS-fout)", "Source unreachable: {0} (DNS error)", "Źródło niedostępne: {0} (błąd DNS)", "Sursa nu răspunde: {0} (eroare DNS)", "المصدر غير متاح: {0} (خطأ DNS)");
         Add("AdminTodo.Misuse.Title", "Melding misbruik referent", "Referee misuse report", "Zgłoszenie nadużycia referencji", "Raport abuz referent", "بلاغ إساءة استخدام مرجع");
@@ -889,6 +896,9 @@ public static class UiStringsAdmin
         Add("AdminDash.Comeback.Back30", "Terug binnen 30 dagen", "Back within 30 days", "Powrót w 30 dni", "Înapoi în 30 de zile", "عاد خلال 30 يوماً");
         Add("AdminDash.Comeback.Unavailable", "Cijfers nu niet beschikbaar.", "Figures are not available right now.", "Liczby są teraz niedostępne.", "Cifrele nu sunt disponibile acum.", "الأرقام غير متاحة الآن.");
         Add("AdminVacancy.OpenInAdmin", "Geopend in beheer. De publieke vacaturepagina blijft dicht zolang werkgevers uit staan.", "Opened in admin. The public vacancy page stays closed while employers are off.", "Otwarte w panelu. Publiczna strona oferty zostaje zamknięta, gdy pracodawcy są wyłączeni.", "Deschis în administrare. Pagina publică a jobului rămâne închisă cât angajatorii sunt opriți.", "مفتوح في الإدارة. تبقى صفحة الوظيفة العامة مغلقة عندما يكون أصحاب العمل متوقفين.");
+        Add("AdminAts.FetchNow", "Nu ophalen", "Fetch now", "Pobierz teraz", "Preia acum", "اجلب الآن");
+        Add("AdminAts.CheckSources", "Bronnen controleren", "Check sources", "Sprawdź źródła", "Verifică sursele", "تحقق من المصادر");
+        Add("AdminAts.CheckSourcesDone", "Bronnen gecontroleerd: {0} wijziging(en).", "Sources checked: {0} change(s).", "Źródła sprawdzone: {0} zmian(y).", "Surse verificate: {0} modificare(i).", "تم فحص المصادر: {0} تغيير(ات).");
         Add("AdminAts.Select", "Selecteer", "Select", "Zaznacz", "Selectează", "تحديد");
         Add("AdminAts.SelectPage", "Alles op deze pagina selecteren", "Select everything on this page", "Zaznacz wszystko na tej stronie", "Selectează tot de pe această pagină", "تحديد كل ما في هذه الصفحة");
         Add("AdminAts.BulkReject", "Geselecteerde afkeuren ({0})", "Reject selected ({0})", "Odrzuć zaznaczone ({0})", "Respinge selecția ({0})", "رفض المحدد ({0})");

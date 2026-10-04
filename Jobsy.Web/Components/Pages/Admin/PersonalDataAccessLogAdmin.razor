@@ -15,6 +15,7 @@
 <AdminPageShell Title="@Culture["AdminNav.DataAccess"]" Lead="@Culture["Admin.PersonalDataAccessLogLead"]">
     <BeveiligingTabs ActiveKey="pii" />
 
+    <div class="admin-access-log">
     <AdminFilterBar>
         <div class="admin-user-picker">
             <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Actor"]"
@@ -74,23 +75,23 @@
     <AdminDataTable Loading="_loading" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminDataAccess.Empty"]">
         <Header>
             <th scope="col">@Culture["AdminAudit.Col.Time"]</th>
-            <th scope="col">@Culture["AdminDataAccess.Actor"]</th>
-            <th scope="col">@Culture["AdminDataAccess.Subject"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Col.Actor"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Col.Subject"]</th>
             <th scope="col">@Culture["AdminDataAccess.Resource"]</th>
             <th scope="col">@Culture["AdminAudit.Col.Action"]</th>
-            <th scope="col">@Culture["AdminAudit.Reason"]</th>
-            <th scope="col">@Culture["AdminAudit.Col.Correlation"]</th>
+            <th scope="col" class="admin-access-log__reason">@Culture["AdminAudit.Reason"]</th>
+            <th scope="col" class="admin-access-log__corr">@Culture["AdminAudit.Col.Correlation"]</th>
         </Header>
         <Rows>
             @foreach (var row in _rows)
             {
                 <tr>
                     <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(row.OccurredAt).ToString("dd-MM HH:mm")</td>
-                    <td data-label="@Culture["AdminDataAccess.Actor"]" title="@row.ActorUserId">
+                    <td data-label="@Culture["AdminDataAccess.Col.Actor"]" title="@row.ActorUserId">
                         <strong>@PersonName(row.ActorName)</strong>
                         <span class="admin-muted">@PersonDetail(row.ActorRole, row.ActorCompanyName, row.ActorEmailMasked)</span>
                     </td>
-                    <td data-label="@Culture["AdminDataAccess.Subject"]" title="@(row.SubjectUserId?.ToString())">
+                    <td data-label="@Culture["AdminDataAccess.Col.Subject"]" title="@(row.SubjectUserId?.ToString())">
                         @if (row.SubjectUserId is null)
                         {
                             <span>—</span>
@@ -103,12 +104,13 @@
                     </td>
                     <td data-label="@Culture["AdminDataAccess.Resource"]">@AdminActionLabels.Resource(row.Resource, key => Culture[key])</td>
                     <td data-label="@Culture["AdminAudit.Col.Action"]">@AdminActionLabels.AccessAction(row.Resource, row.Action, key => Culture[key])</td>
-                    <td class="admin-muted" data-label="@Culture["AdminAudit.Reason"]">@AdminActionLabels.AccessReason(row.Reason, key => Culture[key])</td>
-                    <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Correlation"]">@row.CorrelationId</td>
+                    <td class="admin-muted admin-access-log__reason" data-label="@Culture["AdminAudit.Reason"]">@AdminActionLabels.AccessReason(row.Reason, key => Culture[key])</td>
+                    <td class="admin-mono admin-access-log__corr" data-label="@Culture["AdminAudit.Col.Correlation"]" title="@row.CorrelationId">@ShortCorrelation(row.CorrelationId)</td>
                 </tr>
             }
         </Rows>
     </AdminDataTable>
+    </div>
 </AdminPageShell>
 
 @code {
@@ -350,6 +352,17 @@
            && text.Trim().Length >= 2
            && !Guid.TryParse(text.Trim(), out _)
            && !LooksLikeHexPrefix(text);
+
+    private static string ShortCorrelation(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return "—";
+        }
+
+        var compact = id.Trim();
+        return compact.Length <= 8 ? compact : compact[..8];
+    }
 
     private string PersonName(string? name)
         => string.IsNullOrWhiteSpace(name) ? Culture["AdminDataAccess.Unknown"] : name;

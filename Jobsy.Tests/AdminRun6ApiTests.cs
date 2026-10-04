@@ -128,6 +128,45 @@ public class AdminRun6ApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.DoesNotContain(after!.Items, i => i.Key == "reference-misuse");
     }
 
+    [Fact]
+    public async Task Short_test_unlock_reason_still_names_the_targeted_account()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var user = await db.Users.FirstAsync(u => u.Id == _factory.CandidateId);
+            user.IsTestAccount = true;
+            await db.SaveChangesAsync();
+        }
+
+        try
+        {
+            var client = AdminClient();
+            var response = await client.PostAsJsonAsync(
+                $"api/admin/users/{_factory.CandidateId:D}/test-unlock/reset",
+                new { reason = "abc" });
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            using var verify = _factory.Services.CreateScope();
+            var auditDb = verify.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var audit = await auditDb.AdminAuditEvents
+                .Where(e => e.Action == AdminAuditKeys.UserTestUnlockReset
+                            && e.TargetId == _factory.CandidateId.ToString("D"))
+                .OrderByDescending(e => e.OccurredAtUtc)
+                .FirstAsync();
+            Assert.Equal("Kandidaat T.", audit.TargetLabel);
+            Assert.Equal(AdminAuditKeys.Results.Failed, audit.Result);
+        }
+        finally
+        {
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var user = await db.Users.FirstAsync(u => u.Id == _factory.CandidateId);
+            user.IsTestAccount = false;
+            await db.SaveChangesAsync();
+        }
+    }
+
     private HttpClient AdminClient()
     {
         var client = _factory.CreateClient();
