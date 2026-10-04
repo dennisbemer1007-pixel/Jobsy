@@ -1735,10 +1735,56 @@
     gap: var(--space-3);
 }
 
-@media (min-width: 900px) {
+/* Own dialog: do not use .filter-sheet. That class is display:none from 769px up
+   (mobile filter sheet only), which hid "+ Werkgever toevoegen" on desktop. */
+.passport-proof__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.passport-proof__sheet {
+    position: fixed;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    inset: 0;
+    max-height: min(100dvh, 100vh);
+    height: min(100dvh, 100vh);
+    border-radius: 0;
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* .app-main (z-index: 1) traps this dialog under .bottom-nav (z-index: 50).
+   Lift the page while the editor is open, and hide the nav so Opslaan is tappable. */
+.app-shell:has(.passport-proof__sheet) .app-main {
+    z-index: 100;
+}
+
+@media (max-width: 1023px) {
+    .app-shell:has(.passport-proof__sheet) .bottom-nav,
+    .app-shell:has(.passport-proof__sheet) .cookie-consent {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) {
     .passport-proof__sheet {
-        /* Inline-feel on desktop: keep sheet but wider */
+        display: flex;
+        inset: auto;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(40rem, 92vw);
         max-inline-size: min(40rem, 92vw);
+        height: auto;
+        max-height: min(85dvh, 42rem);
+        border-radius: var(--radius, 12px);
+        padding-bottom: 0;
     }
 }
 

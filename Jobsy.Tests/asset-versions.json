@@ -44,8 +44,8 @@
     "v": "20261004-teaser"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "2b8627098fb42c3a9fff0d56f7da6225cb600d85105867ec3a668cebad16e9a8",
-    "v": "20261004-run3tl"
+    "sha256": "a961366a62b7d661c89968c0c9e8f3b0fa82beb6f8c8dc493a0efe78a471c278",
+    "v": "20261004-apply3"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -64,8 +64,8 @@
     "v": "20261002-ci-mtp"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "689b63a26121f3f0dfd61ee0f6f5e698f6d4ad989887e6b335338a68e83b8e2c",
-    "v": "20261004-referent"
+    "sha256": "9673ef65c64c7cce059c2ba89594b7bed109079bfb3229c2cdedbc65fc7407b2",
+    "v": "20261004-proofsheet"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",

@@ -489,7 +489,7 @@
                             <p class="apply-flow__lead">@ApplyFlowLead</p>
                         </header>
 
-                        <ol class="apply-steps" aria-label="@Culture["Apply.StepsLabel"]">
+                        <ol class="apply-steps @(RequiresEmailCode ? null : "apply-steps--three")" aria-label="@Culture["Apply.StepsLabel"]">
                             <li class="apply-steps__item @ProfileStepClass">
                                 <span class="apply-steps__num" aria-hidden="true">1</span>
                                 <span class="apply-steps__label">@Culture["Apply.StepProfile"]</span>
@@ -502,10 +502,13 @@
                                 <span class="apply-steps__num" aria-hidden="true">3</span>
                                 <span class="apply-steps__label">@Culture["Apply.StepSend"]</span>
                             </li>
-                            <li class="apply-steps__item @VerifyStepClass">
-                                <span class="apply-steps__num" aria-hidden="true">4</span>
-                                <span class="apply-steps__label">@Culture["Apply.StepVerify"]</span>
-                            </li>
+                            @if (RequiresEmailCode)
+                            {
+                                <li class="apply-steps__item @VerifyStepClass">
+                                    <span class="apply-steps__num" aria-hidden="true">4</span>
+                                    <span class="apply-steps__label">@Culture["Apply.StepVerify"]</span>
+                                </li>
+                            }
                         </ol>
                         }
 
@@ -711,7 +714,10 @@
                                         @(_applying ? Culture["Apply.Busy"] : Culture["Apply.Submit"])
                                     </button>
                                 }
-                                <p class="apply-flow__hint">@Culture["Apply.EmailCodeHint"]</p>
+                                @if (RequiresEmailCode)
+                                {
+                                    <p class="apply-flow__hint">@Culture["Apply.EmailCodeHint"]</p>
+                                }
                             </div>
                         }
 
@@ -1097,13 +1103,17 @@
     private string ProfileReturnHref =>
         $"/candidate/profile?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}#apply")}";
 
+    private bool RequiresEmailCode => _vacancy?.RequireEmailVerification == true;
+
     private string ApplyFlowLead => _applied
         ? Culture["Apply.LeadDone"]
         : !_profileReadyForApply
             ? Culture["Apply.LeadProfile"]
             : _awaitingVerification
                 ? Culture["Apply.LeadVerify"]
-                : Culture["Apply.LeadReady"];
+                : RequiresEmailCode
+                    ? Culture["Apply.LeadReady"]
+                    : Culture["Apply.LeadReadyThree"];
 
     private string ProfileStepClass =>
         _applied || _profileReadyForApply ? "is-done" : "is-current";
