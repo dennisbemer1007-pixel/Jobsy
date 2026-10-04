@@ -46,6 +46,30 @@ public class ClassResultsAggregatorTests
         Assert.True(agg.TotalsVisible);
         Assert.Empty(agg.DreamJobs);
         Assert.Equal(5, agg.UndecidedDreamJobCount);
+        Assert.Equal(0, agg.NotFilledDreamJobCount);
+    }
+
+    [Fact]
+    public void Empty_dream_job_is_not_filled_and_only_the_explicit_choice_is_undecided()
+    {
+        var results = new List<PupilResult>
+        {
+            MakeResult("SAE", "Helpen", "arts"),
+            MakeResult("SAE", "Helpen", "arts"),
+            MakeResult("RIC", "Vrijheid", ClassResultsAggregator.UndecidedDreamJobKey),
+            MakeResult("ESA", "Samen", ""),
+            MakeResult("CSE", "Zekerheid", null!),
+        };
+        var agg = ClassResultsAggregator.Aggregate(results, totalCodes: 10, PupilQuestionSet.Vo);
+        Assert.True(agg.TotalsVisible);
+        Assert.Equal(1, agg.UndecidedDreamJobCount);
+        Assert.Equal(2, agg.NotFilledDreamJobCount);
+        Assert.Contains(agg.DreamJobs, d => d.Key == "arts" && d.Count == 2);
+        Assert.DoesNotContain(agg.DreamJobs, d => d.Key == ClassResultsAggregator.UndecidedDreamJobKey);
+
+        var teacher = ClassResultsAggregator.AggregateTeacherGroup(results, PupilQuestionSet.Vo);
+        Assert.Equal(1, teacher.UndecidedDreamJobCount);
+        Assert.Equal(2, teacher.NotFilledDreamJobCount);
     }
 
     [Fact]

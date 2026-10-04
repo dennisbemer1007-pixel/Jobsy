@@ -55,6 +55,8 @@
     {
         if (firstRender)
         {
+            // Let the pupil page start its first load before the voice probe.
+            await Task.Yield();
             await ProbeAsync();
         }
     }

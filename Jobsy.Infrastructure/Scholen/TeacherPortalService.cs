@@ -300,7 +300,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             Visible: agg.Visible,
             CompletedCount: agg.CompletedCount,
             Jobs: agg.DreamJobs.Select(d => new NamedCountDto(d.Key, d.Count)).ToList(),
-            UndecidedCount: agg.UndecidedDreamJobCount);
+            UndecidedCount: agg.UndecidedDreamJobCount,
+            NotFilledCount: agg.NotFilledDreamJobCount);
     }
 
     public async Task<TeacherCodeDetailDto?> GetCodeDetailAsync(
@@ -714,7 +715,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             CompetenceBands: agg.CompetenceBands.Select(c => new NamedCountDto(c.Key, c.Count)).ToList(),
             DiscussionPromptKeys: prompts,
             QuestionSet: questionSet,
-            UndecidedDreamJobCount: agg.UndecidedDreamJobCount);
+            UndecidedDreamJobCount: agg.UndecidedDreamJobCount,
+            NotFilledDreamJobCount: agg.NotFilledDreamJobCount);
     }
 
     private TeacherCodeRowDto MapCodeRow(PupilCode code, SchoolClass schoolClass)

@@ -51,7 +51,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         ApplyAccessToken(request, user, httpContext);
         ApplyTrustedClientIp(request, httpContext);
-        ApplyPupilCookie(request, httpContext, user);
+        user = await ApplyPupilCookieAsync(request, httpContext, user, cancellationToken);
 
         try
         {
@@ -109,7 +109,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         retry.Options.Set(new HttpRequestOptionsKey<bool>("jobsy-retried"), true);
         ApplyAccessToken(retry, user, httpContext);
         ApplyTrustedClientIp(retry, httpContext);
-        ApplyPupilCookie(retry, httpContext, user);
+        user = await ApplyPupilCookieAsync(retry, httpContext, user, cancellationToken);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         var retriedResponse = await base.SendAsync(retry, cancellationToken);
         CaptureRenewedApiTicket(retriedResponse, httpContext, user);
@@ -122,25 +122,37 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     /// <c>Lobsy.Leerling</c> cookie is protected with the Web key ring and the
     /// API cannot unprotect it.
     /// </summary>
-    private void ApplyPupilCookie(HttpRequestMessage request, HttpContext? httpContext, ClaimsPrincipal user)
+    /// <summary>
+    /// Progress and result calls need the API ticket. Right after an in-circuit
+    /// navigation the principal can still be anonymous for a moment. Wait briefly
+    /// so the first call is not sent without a ticket.
+    /// </summary>
+    private async Task<ClaimsPrincipal> ApplyPupilCookieAsync(
+        HttpRequestMessage request,
+        HttpContext? httpContext,
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken)
     {
         var path = request.RequestUri?.AbsolutePath ?? "";
         if (!ForwardsPupilCookie(path))
         {
-            return;
+            return user;
         }
 
-        var cookie = httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
-        if (string.IsNullOrWhiteSpace(cookie))
+        var cookie = ReadPupilTicket(httpContext, user);
+        if (string.IsNullOrWhiteSpace(cookie) && NeedsStoredPupilTicket(path))
         {
-            // The circuit has no request cookies. The ticket was stored when /_blazor authenticated.
-            var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-            cookie = _services.GetService<PupilApiTicketStore>()?.Get(codeId);
+            for (var i = 0; i < 4 && string.IsNullOrWhiteSpace(cookie); i++)
+            {
+                await Task.Delay(80, cancellationToken);
+                user = await ResolveUserAsync();
+                cookie = ReadPupilTicket(httpContext, user);
+            }
         }
 
         if (string.IsNullOrWhiteSpace(cookie))
         {
-            return;
+            return user;
         }
 
         if (request.Headers.TryGetValues("Cookie", out var existing))
@@ -154,7 +166,29 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         {
             request.Headers.TryAddWithoutValidation("Cookie", $"{PupilAuthDefaults.CookieName}={cookie}");
         }
+
+        return user;
     }
+
+    private string? ReadPupilTicket(HttpContext? httpContext, ClaimsPrincipal user)
+    {
+        var cookie = httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
+        if (!string.IsNullOrWhiteSpace(cookie))
+        {
+            return cookie;
+        }
+
+        // The circuit has no request cookies. The ticket was stored when /_blazor authenticated.
+        var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        return _services.GetService<PupilApiTicketStore>()?.Get(codeId);
+    }
+
+    /// <summary>Session calls. The public school list must not wait for a ticket.</summary>
+    internal static bool NeedsStoredPupilTicket(string absolutePath)
+        => absolutePath.Contains("/api/pupil/progress", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/api/pupil/result", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/api/pupil/dreamjob", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/leerling/pdf", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// The API may slide its own pupil cookie. Store the new value. Never copy

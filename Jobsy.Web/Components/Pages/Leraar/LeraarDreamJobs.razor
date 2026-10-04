@@ -51,6 +51,10 @@ else
                 }
             </div>
             <p class="muted">@Culture["Leraar.DreamJobs.Undecided"]: @_dto.UndecidedCount</p>
+            @if (_dto.NotFilledCount > 0)
+            {
+                <p class="muted">@Culture["Leraar.DreamJobs.NotFilled"]: @_dto.NotFilledCount</p>
+            }
         </section>
     }
 }

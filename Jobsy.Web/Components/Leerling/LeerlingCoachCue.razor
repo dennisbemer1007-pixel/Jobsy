@@ -1,7 +1,13 @@
 @namespace Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Services
 @using Microsoft.Extensions.DependencyInjection
+@implements IDisposable
 @inject IServiceProvider Services
+
+@if (_hints?.ShouldShow(Text) == true)
+{
+    <p class="ll-coach-inline" role="status">@Text</p>
+}
 
 @code {
     private LeerlingCoachHint? _hints;
@@ -11,10 +17,24 @@
     protected override void OnInitialized()
     {
         _hints = Services.GetService<LeerlingCoachHint>();
+        if (_hints is not null)
+        {
+            _hints.Changed += OnChanged;
+        }
     }
 
     protected override void OnParametersSet()
     {
         _hints?.Set(Text);
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        if (_hints is not null)
+        {
+            _hints.Changed -= OnChanged;
+        }
     }
 }

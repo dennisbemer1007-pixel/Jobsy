@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
 @inject CultureState Culture
 
 <LeerlingCoachCue Text="@Culture["Leerling.Coach.Part"]" />
@@ -20,7 +21,7 @@
     private ElementReference _heading;
 
     private string Spoken =>
-        $"{Culture["Leerling.Vo.PartBreak.Title"]} {Culture["Leerling.Vo.PartBreak.Body"]}";
+        SpokenText.Join(Culture["Leerling.Vo.PartBreak.Title"], Culture["Leerling.Vo.PartBreak.Body"]);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

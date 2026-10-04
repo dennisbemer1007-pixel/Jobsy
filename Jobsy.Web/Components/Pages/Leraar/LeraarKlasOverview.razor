@@ -179,6 +179,10 @@ else
                         </div>
                     }
                     <p class="muted">@Culture["Leraar.DreamJobs.Undecided"]: @_overview.GroupInsights.UndecidedDreamJobCount</p>
+                    @if (_overview.GroupInsights.NotFilledDreamJobCount > 0)
+                    {
+                        <p class="muted">@Culture["Leraar.DreamJobs.NotFilled"]: @_overview.GroupInsights.NotFilledDreamJobCount</p>
+                    }
                 }
             </section>
         </aside>
