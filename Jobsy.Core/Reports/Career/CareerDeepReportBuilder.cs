@@ -52,8 +52,8 @@ public static class CareerDeepReportBuilder
             GeneratedAtUtc = utcNow,
             FromOpenAi = false,
             Summary = LocalizedReportText.FromPair(
-                $"Je Holland-code is {holland}. Je scoort het sterkst op {string.Join(", ", top3.Select(c => DeepReportCatalog.RiasecLabel(c, "nl")))}.",
-                $"Your Holland code is {holland}. You score highest on {string.Join(", ", top3.Select(c => DeepReportCatalog.RiasecLabel(c, "en")))}."),
+                $"Jouw beroepsletters zijn {holland}. Je scoort het sterkst op {string.Join(", ", top3.Select(c => DeepReportCatalog.RiasecLabel(c, "nl")))}. Daarna zie je beroepen die bij je passen, een actieplan en je sterke kanten.",
+                $"Your job letters are {holland}. You score highest on {string.Join(", ", top3.Select(c => DeepReportCatalog.RiasecLabel(c, "en")))}. Next you see jobs that fit, an action plan and your strengths."),
             Domains = domains,
             HollandCode = holland,
             Occupations = occupations,

@@ -151,7 +151,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                     {
                         <span class="muted">@Culture["Kompas.EducationAbove"]</span>
                     }
-                    <span class="kompas-occupation__pct">@CareerGoalFit.DisplayPercent(item.Title, item.Percent, EducationLabel)%</span>
+                    <span class="kompas-occupation__pct">@item.Percent%</span>
                 </summary>
                 @OccupationBody(item)
             </details>

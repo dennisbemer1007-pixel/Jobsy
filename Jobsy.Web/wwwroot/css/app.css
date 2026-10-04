@@ -20148,3 +20148,39 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     border-color: var(--brand);
     color: #fff;
 }
+
+/* Coach sits at the inline end. Keep tappable rows out of that 56px + 12px gutter. */
+@media (max-width: 480px) {
+    .app-shell:has([data-lobsy-coach]) main :is(
+        a,
+        button,
+        input,
+        textarea,
+        select,
+        summary,
+        [role="tab"]
+    ) {
+        max-inline-size: calc(100% - 68px);
+    }
+
+    .app-shell:has([data-lobsy-coach]) .app-main {
+        padding-bottom: calc(56px + 88px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .mail-settings__label {
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+}
+
+.mail-settings__label {
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.lobsy-coach-dock--tip-aside .lobsy-coach-dock__tip {
+    position: absolute;
+    inset-inline-end: calc(56px + 12px);
+    bottom: 0;
+    max-inline-size: min(16rem, calc(100vw - 56px - 36px));
+}

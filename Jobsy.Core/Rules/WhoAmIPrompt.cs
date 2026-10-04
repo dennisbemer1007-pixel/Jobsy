@@ -11,7 +11,8 @@ public static class WhoAmIPrompt
         Geen abstracte woorden: vermogen, stimuleren van groei, maken van impact.
         Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid, DISC.
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen.
-        Vertel wie ik ben, wat mij drijft (kernwaarden zoals eigen regie, verbinding, prestatie, zekerheid of impact — zonder Schwartz of wetenschappelijke jargon), hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht), welke talenten uit de competenties naar voren komen, en verweef kort mijn werkervaring (alleen rollen, geen bedrijfsnamen) plus opleidingen/cursussen als die er zijn.
+        Vertel wie ik ben, wat mij drijft (kernwaarden zoals zelf kiezen, verbinding, prestatie, zekerheid of impact — zonder Schwartz of wetenschappelijke jargon), hoe ik graag werk (zelfstandig / informeel / samen / flexibel / vernieuwend / mensgericht), welke talenten uit de competenties naar voren komen, en verweef kort mijn werkervaring (alleen rollen, geen bedrijfsnamen) plus opleidingen/cursussen als die er zijn.
+        Spreek de scores niet tegen. Als een score 60% of hoger is, zeg niet dat ik daar niet goed in ben. Een hoge score voor samenwerken betekent dat samenwerken bij mij past.
         Geen opsomming met bullets. 2 tot 4 alinea's, warm en concreet, gericht op werk in Den Haag / het Westland.
         Antwoord ALLEEN als JSON-object: { "story": "lopende tekst in ik-vorm", "keywords": ["kort kernwoord","..."] }
         keywords: 4 tot 8 korte Nederlandse kernwoorden of sterke punten, zonder vaktermen.

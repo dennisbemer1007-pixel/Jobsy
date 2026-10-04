@@ -43,6 +43,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
     private readonly IMemoryCache _cache;
     private readonly ILegalIdentity _legal;
     private readonly IFeatureFlags _features;
+    private readonly IKindDeepReportService _kindReports;
 
     static AssessmentReportPdfService()
     {
@@ -55,7 +56,8 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         ICareerCompassGenerationService careerCompass,
         IMemoryCache cache,
         ILegalIdentity legal,
-        IFeatureFlags features)
+        IFeatureFlags features,
+        IKindDeepReportService kindReports)
     {
         _db = db;
         _companySettings = companySettings;
@@ -63,6 +65,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         _cache = cache;
         _legal = legal;
         _features = features;
+        _kindReports = kindReports;
     }
 
     private static DateTime ToAmsterdam(DateTime utc)
@@ -131,6 +134,20 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         if (kind == AssessmentKind.Career)
         {
             var careerDeep = CareerDeepReportJson.Deserialize(deep.ReportJson);
+            var careerStale = deep.ReportVersion < CareerDeepReportJson.CurrentReportVersion || careerDeep is null;
+            if (careerStale)
+            {
+                try
+                {
+                    careerDeep = await _kindReports.GetCareerAsync(userId, cancellationToken) ?? careerDeep;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    careerDeep ??= CareerDeepReportJson.Deserialize(deep.ReportJson);
+                    _ = ex;
+                }
+            }
+
             if (careerDeep is not null)
             {
                 var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8";
@@ -811,8 +828,23 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         var top = string.Join(", ", report.Domains.OrderByDescending(d => d.Score).Take(3)
             .Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang)));
         var places = string.Join(", ", report.Occupations.Take(3).Select(o => o.Title(lang)));
+        var cover = report.Summary.Resolve(lang);
+        if (!string.IsNullOrWhiteSpace(top))
+        {
+            cover += en
+                ? $" Strongest directions: {top}."
+                : $" Sterkste richtingen: {top}.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(places))
+        {
+            cover += en
+                ? $" Jobs on the next pages: {places}."
+                : $" Beroepen op de volgende pagina's: {places}.";
+        }
+
         return RenderExplicitPages(
-            brand, logo, fullName, generated, lang, title, report.Summary.Resolve(lang),
+            brand, logo, fullName, generated, lang, title, cover,
             [
                 col => WriteScorePage(col, lang, report.Domains.Select(d => (
                     DeepReportCatalog.RiasecLabel(d.Domain, lang), d.Score, d.NormMean))),
@@ -820,6 +852,13 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 {
                     Heading(col, DeepReportCatalog.Get("holland.title", lang));
                     col.Item().Text(DeepReportCatalog.Format("holland.body", lang, report.HollandCode, top, places));
+                    col.Item().PaddingTop(8).Text(en
+                        ? "Read the letters as a direction. A higher score means that kind of work showed up more often in your answers."
+                        : "Lees de letters als een richting. Een hogere score betekent dat dat soort werk vaker in je antwoorden zat.").FontColor(Muted);
+                    foreach (var domain in report.Domains.OrderByDescending(d => d.Score))
+                    {
+                        col.Item().Text($"{DeepReportCatalog.RiasecLabel(domain.Domain, lang)}: {domain.Score}%");
+                    }
                 },
                 col =>
                 {
@@ -847,13 +886,33 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     col.Item().Text(en
                         ? "A higher percent means that direction showed up more often in your answers. It is a starting point, not a grade."
                         : "Een hoger percentage betekent dat die richting vaker in je antwoorden zat. Het is een startpunt, geen cijfer.").FontColor(Muted);
+                    foreach (var domain in report.Domains.OrderByDescending(d => d.Score))
+                    {
+                        var label = DeepReportCatalog.RiasecLabel(domain.Domain, lang);
+                        col.Item().PaddingTop(6).Text($"{label}: {domain.Score}%").SemiBold();
+                        col.Item().Text(en
+                            ? $"Use {label.ToLowerInvariant()} when you compare tasks, not as a mark."
+                            : $"Gebruik {label.ToLowerInvariant()} als je taken vergelijkt. Het is geen cijfer.").FontSize(9).FontColor(Muted);
+                    }
                 },
                 col =>
                 {
                     Heading(col, en ? "What you can do next" : "Wat je hiermee kunt doen");
                     col.Item().Text(en
-                        ? "Pick tasks that match your strengths. Your answers stay yours."
-                        : "Kies taken die bij je sterke kanten horen. Je antwoorden blijven van jou.").FontColor(Muted);
+                        ? "Pick one step from your action plan this week. Your answers stay yours."
+                        : "Kies deze week één stap uit je actieplan. Je antwoorden blijven van jou.").FontColor(Muted);
+                    foreach (var step in report.ActionPlan.Take(3))
+                    {
+                        col.Item().PaddingTop(8).Text(step.Title.Resolve(lang)).SemiBold();
+                        col.Item().Text(step.Body.Resolve(lang)).FontSize(9).FontColor(Muted);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(places))
+                    {
+                        col.Item().PaddingTop(8).Text(en
+                            ? $"Jobs to start with: {places}."
+                            : $"Beroepen om mee te beginnen: {places}.").FontColor(Muted);
+                    }
                 }
             ]);
     }
@@ -1013,13 +1072,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 page.MarginVertical(24);
                 page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
                 BrandHeader(page, brand, logo, title, fullName, generated, AccentTeal);
-                page.Content().PaddingTop(40).Column(col =>
+                page.Content().PaddingTop(28).Column(col =>
                 {
-                    col.Spacing(12);
+                    col.Spacing(10);
                     col.Item().Text(title).FontSize(22).Bold().FontColor(BrandNavy);
                     col.Item().Text(summary).FontSize(12);
-                    col.Item().PaddingTop(20).Text(DeepReportCatalog.Get("pdf.disclaimer", lang))
+                    col.Item().PaddingTop(12).Text(DeepReportCatalog.Get("pdf.disclaimer", lang))
                         .FontColor(Muted).Italic().FontSize(9);
+                    col.Item().PaddingTop(8).Text(DeepReportCatalog.Get("pdf.overview", lang))
+                        .FontSize(11).FontColor(BrandNavy);
                 });
                 BrandFooter(page, brand);
             });

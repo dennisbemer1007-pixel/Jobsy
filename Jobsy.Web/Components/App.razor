@@ -39,7 +39,7 @@
     @if (LoadBlazorRuntime)
     {
         @* Render-blocking versioned CSS — critical shell is already inlined above; full stylesheet is cacheable. *@
-        <link rel="stylesheet" href="css/app.min.css?v=20261004-14" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20261004-15" data-app-css />
         <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261004-11" />
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
         <link rel="stylesheet" href="css/features/mijn-dna.css?v=20261004-10" />
@@ -61,10 +61,10 @@
         <link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261004-13" />
         <link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261004-11" />
         <link rel="stylesheet" href="css/features/tests.css?v=20261004-10" />
-        <link rel="stylesheet" href="css/features/carriere.css?v=20261004-11" />
+        <link rel="stylesheet" href="css/features/carriere.css?v=20261004-12" />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261004-14" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261004-11" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261004-10" /><link rel="stylesheet" href="css/features/applications.css?v=20261004-10" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261004-11" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-10" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20261004-10" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20261004-10" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20261004-10" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20261004-10" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20261004-10" /><link rel="stylesheet" href="css/features/admin.css?v=20261004-10" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20261004-10" /><link rel="stylesheet" href="css/features/werkgever.css?v=20261004-11" /><link rel="stylesheet" href="css/features/scholen.css?v=20261004-12" /><link rel="stylesheet" href="css/features/sales.css?v=20261004-10" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261004-11" /><link rel="stylesheet" href="css/features/auth.css?v=20261004-10" /><link rel="stylesheet" href="css/features/landing.css?v=20261004-10" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261004-10" /><link rel="stylesheet" href="css/features/errors.css?v=20261004-10" /><link rel="stylesheet" href="css/features/reconnect.css?v=20261004-10" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20261004-10" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261004-10" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261004-13" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261004-11" /><link rel="stylesheet" href="css/features/tests.css?v=20261004-10" /><link rel="stylesheet" href="css/features/carriere.css?v=20261004-11" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261004-15" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261004-11" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261004-10" /><link rel="stylesheet" href="css/features/applications.css?v=20261004-10" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261004-11" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-10" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20261004-10" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20261004-10" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20261004-10" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20261004-10" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20261004-10" /><link rel="stylesheet" href="css/features/admin.css?v=20261004-10" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20261004-10" /><link rel="stylesheet" href="css/features/werkgever.css?v=20261004-11" /><link rel="stylesheet" href="css/features/scholen.css?v=20261004-12" /><link rel="stylesheet" href="css/features/sales.css?v=20261004-10" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261004-11" /><link rel="stylesheet" href="css/features/auth.css?v=20261004-10" /><link rel="stylesheet" href="css/features/landing.css?v=20261004-10" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261004-10" /><link rel="stylesheet" href="css/features/errors.css?v=20261004-10" /><link rel="stylesheet" href="css/features/reconnect.css?v=20261004-10" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20261004-10" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261004-10" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261004-13" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261004-11" /><link rel="stylesheet" href="css/features/tests.css?v=20261004-10" /><link rel="stylesheet" href="css/features/carriere.css?v=20261004-12" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -227,11 +227,11 @@
         });
     </script>
         <script src="js/gratis-dna.js?v=20261004-13" nonce="@Nonce" defer></script>
-        <script src="js/app-core.js?v=20261004-14" nonce="@Nonce" defer></script>
+        <script src="js/app-core.js?v=20261004-15" nonce="@Nonce" defer></script>
         <script src="js/landing.js?v=20261004-13" nonce="@Nonce" defer></script>
         <script src="js/public-pages.js?v=20261004-13" nonce="@Nonce" defer></script>
         <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
-        <script src="js/lobsyPush.js?v=20261004-14" nonce="@Nonce" defer></script>
+        <script src="js/lobsyPush.js?v=20261004-15" nonce="@Nonce" defer></script>
         <script src="js/leerling-login.js?v=20261004-13" nonce="@Nonce" defer></script>
         <script src="js/read-aloud.js?v=20261004-14" nonce="@Nonce" defer></script>
     @if (LoadBlazorRuntime)

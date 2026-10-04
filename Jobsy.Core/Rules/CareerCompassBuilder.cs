@@ -58,9 +58,9 @@ public static class CareerCompassBuilder
 
     public static string BandLabel(string band) => band switch
     {
-        BandSuper => "Past heel goed (meer dan 95%)",
-        BandStrong => "Past goed (meer dan 85%)",
-        BandBroaden => "Handige verbreding — meer dan 75% (doorgroeirichtingen)",
+        BandSuper => "Past heel goed (95% of meer)",
+        BandStrong => "Past goed (85% tot 94%)",
+        BandBroaden => "Ook de moeite (75% tot 84%)",
         _ => "Richting om te bekijken"
     };
 

@@ -206,17 +206,9 @@ else
                                BubbleText="@Culture["Deep.Bubble.Question"]">
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
-                        <ol class="deep-topic-chips" aria-label="@Culture["Deep.TopicsLabel"]">
-                            @foreach (var chip in _parts)
-                            {
-                                var done = PartAnswered(chip);
-                                var status = done >= chip.Size ? "done" : (chip.Index == part?.Index ? "now" : "todo");
-                                <li class="deep-topic-chips__item deep-topic-chips__item--@status">
-                                    <span>@DeepTestMotivation.PartDisplayName(_kind, chip)</span>
-                                </li>
-                            }
-                        </ol>
-                        @if (!string.IsNullOrWhiteSpace(motivationKey) && ShouldShowMotivation(motivationKey, part!.Index))
+                        @if (!string.IsNullOrWhiteSpace(motivationKey)
+                             && motivationKey != DeepTestMotivation.PartStart
+                             && ShouldShowMotivation(motivationKey, part!.Index))
                         {
                             <p class="deep-motivation" data-cue="@motivationKey">
                                 @FormatMotivation(motivationKey, part)

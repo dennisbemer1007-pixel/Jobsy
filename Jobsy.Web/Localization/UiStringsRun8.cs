@@ -20,17 +20,65 @@ internal static class UiStringsRun8
         }
 
         Add("Kompas.BandSuper",
-            "Past heel goed (meer dan 95%)",
-            "Fits very well (over 95%)",
-            "Pasuje bardzo dobrze (ponad 95%)",
-            "Se potrivește foarte bine (peste 95%)",
-            "يناسبك جدًا (أكثر من 95%)");
+            "Past heel goed (95% of meer)",
+            "Fits very well (95% or more)",
+            "Pasuje bardzo dobrze (95% lub więcej)",
+            "Se potrivește foarte bine (95% sau mai mult)",
+            "يناسبك جدًا (95% أو أكثر)");
         Add("Kompas.BandStrong",
-            "Past goed (meer dan 85%)",
-            "Fits well (over 85%)",
-            "Pasuje dobrze (ponad 85%)",
-            "Se potrivește bine (peste 85%)",
-            "يناسبك جيدًا (أكثر من 85%)");
+            "Past goed (85% tot 94%)",
+            "Fits well (85% to 94%)",
+            "Pasuje dobrze (85% do 94%)",
+            "Se potrivește bine (85% până la 94%)",
+            "يناسبك جيدًا (من 85% إلى 94%)");
+        Add("Kompas.BandBroaden",
+            "Ook de moeite (75% tot 84%)",
+            "Also worth a look (75% to 84%)",
+            "Też warto (75% do 84%)",
+            "Merită și asta (75% până la 84%)",
+            "يستحق النظر أيضًا (من 75% إلى 84%)");
+        Add("Kompas.TabDna",
+            "Wie ik ben",
+            "Who I am",
+            "Kim jestem",
+            "Cine sunt",
+            "من أنا");
+        Add("TestResult.Upsell.Steps",
+            "Concrete stappen voor je loopbaanplan",
+            "Concrete steps for your career plan",
+            "Konkretne kroki do twojego planu kariery",
+            "Pași concreți pentru planul tău",
+            "خطوات واضحة لخطة مسارك");
+        Add("TestResult.Card.Holland",
+            "Jouw beroepsletters",
+            "Your job letters",
+            "Twoje litery zawodowe",
+            "Literele tale de meserie",
+            "حروف مهنتك");
+        Add("HowLobsy.SignedIn.PassportTitle",
+            "Ga naar je paspoort",
+            "Go to your passport",
+            "Przejdź do paszportu",
+            "Mergi la pașaport",
+            "اذهب إلى جوازك");
+        Add("HowLobsy.SignedIn.PassportBody",
+            "Je tests staan al bij je paspoort. Je hoeft geen nieuw account te maken.",
+            "Your tests are already on your passport. You do not need a new account.",
+            "Twoje testy są już w paszporcie. Nie musisz zakładać nowego konta.",
+            "Testele tale sunt deja în pașaport. Nu ai nevoie de un cont nou.",
+            "اختباراتك موجودة في جوازك. لا تحتاج إلى حساب جديد.");
+        Add("HowLobsy.SignedIn.PassportCta",
+            "Naar mijn paspoort",
+            "Go to my passport",
+            "Do mojego paszportu",
+            "La pașaportul meu",
+            "إلى جوازي");
+        Add("HowLobsy.Title.Counted",
+            "Zo werkt Lobsy. In {0} stappen.",
+            "How Lobsy works. In {0} steps.",
+            "Jak działa Lobsy. W {0} krokach.",
+            "Cum funcționează Lobsy. În {0} pași.",
+            "كيف يعمل Lobsy. في {0} خطوات.");
         Add("Career.Holland",
             "Drie letters die laten zien welk soort werk je leuk vindt: {0}",
             "Three letters that show what kind of work you like: {0}",

@@ -12,19 +12,60 @@ public static class CareerCompassJson
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    /// <summary>Drops markdown fences Mistral sometimes wraps around a JSON object.</summary>
+    public static string? UnwrapModelJson(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        var trimmed = json.Trim();
+        if (trimmed.StartsWith("```", StringComparison.Ordinal))
+        {
+            var firstNl = trimmed.IndexOf('\n');
+            if (firstNl >= 0)
+            {
+                trimmed = trimmed[(firstNl + 1)..];
+            }
+
+            if (trimmed.EndsWith("```", StringComparison.Ordinal))
+            {
+                trimmed = trimmed[..^3];
+            }
+
+            trimmed = trimmed.Trim();
+        }
+
+        if (trimmed.StartsWith('{'))
+        {
+            return trimmed;
+        }
+
+        var start = trimmed.IndexOf('{');
+        var end = trimmed.LastIndexOf('}');
+        if (start >= 0 && end > start)
+        {
+            return trimmed[start..(end + 1)];
+        }
+
+        return trimmed;
+    }
+
     public static string Serialize(CareerCompassSnapshot snapshot)
         => JsonSerializer.Serialize(ToDto(snapshot), Options);
 
     public static CareerCompassSnapshot? TryDeserialize(string? json)
     {
-        if (string.IsNullOrWhiteSpace(json) || json.Trim() is "{}" or "null")
+        var unwrapped = UnwrapModelJson(json);
+        if (string.IsNullOrWhiteSpace(unwrapped) || unwrapped is "{}" or "null")
         {
             return null;
         }
 
         try
         {
-            var dto = JsonSerializer.Deserialize<CompassDto>(json, Options);
+            var dto = JsonSerializer.Deserialize<CompassDto>(unwrapped, Options);
             return dto is null ? null : CareerCompassSanitize.FromDto(dto, fromOpenAi: dto.FromOpenAi);
         }
         catch (JsonException)
