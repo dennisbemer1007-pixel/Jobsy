@@ -19,10 +19,15 @@ public class PassportPartnersAdminBunitTests : BunitContext
     public PassportPartnersAdminBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddSingleton(sp => new CultureState(
-            sp.GetRequiredService<IJSRuntime>(),
-            sp,
-            new FakeAuth(CreateAdmin())));
+        Services.AddSingleton(sp =>
+        {
+            var culture = new CultureState(
+                sp.GetRequiredService<IJSRuntime>(),
+                sp,
+                new FakeAuth(CreateAdmin()));
+            culture.InitializeFromLanguage("nl");
+            return culture;
+        });
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth(CreateAdmin()));
         Services.AddAuthorizationCore();
         this.AddAuthorization().SetAuthorized("admin").SetRoles("Admin");

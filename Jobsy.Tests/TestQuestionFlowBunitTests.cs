@@ -18,10 +18,15 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
-        Services.AddSingleton(sp => new CultureState(
-            sp.GetRequiredService<IJSRuntime>(),
-            sp,
-            sp.GetRequiredService<AuthenticationStateProvider>()));
+        Services.AddSingleton(sp =>
+        {
+            var culture = new CultureState(
+                sp.GetRequiredService<IJSRuntime>(),
+                sp,
+                sp.GetRequiredService<AuthenticationStateProvider>());
+            culture.InitializeFromLanguage("nl");
+            return culture;
+        });
     }
 
     [Fact]
@@ -100,9 +105,12 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
 
         cut.Find("button.test-flow__next").Click();
 
-        Assert.False(finished);
-        Assert.Contains("Vraag 2 van 5", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Statement 2", cut.Markup, StringComparison.Ordinal);
+        cut.WaitForAssertion(() =>
+        {
+            Assert.False(finished);
+            Assert.Contains("Vraag 2 van 5", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Statement 2", cut.Markup, StringComparison.Ordinal);
+        });
     }
 
     [Fact]
