@@ -146,7 +146,8 @@ public class SchoolResultsInitTests : BunitContext
 
         Assert.DoesNotContain("klas=", nav.Uri, StringComparison.Ordinal);
         Assert.DoesNotContain("Laden", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("kon niet geladen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("De resultaten van deze klas konden niet geladen worden", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sch-code", cut.Markup, StringComparison.Ordinal);
     }
 
     private sealed class AnonymousAuth : AuthenticationStateProvider

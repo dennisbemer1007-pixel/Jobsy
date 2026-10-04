@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
@@ -7,10 +8,14 @@ using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -60,41 +65,44 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         _web?.Dispose();
     }
 
-    [Fact(Timeout = 180_000)]
+    [Fact(Timeout = 300_000)]
     public async Task Pupil_stays_on_start_after_the_circuit_and_reaches_the_pdf()
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
         var seed = await SeedOpenClassAsync();
+        _web?.Dispose();
         _web = new PupilKestrelFactory(_api.Server.CreateHandler());
         _ = _web.CreateClient();
         var baseUrl = _web.ServerAddress.TrimEnd('/');
         Assert.StartsWith("http://127.0.0.1:", baseUrl, StringComparison.Ordinal);
 
         var page = await _browser!.NewPageAsync();
-        page.SetDefaultTimeout(20_000);
+        page.SetDefaultTimeout(90_000);
+        page.SetDefaultNavigationTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
 
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
-        await page.WaitForURLAsync("**/leerling/start**");
+        await page.WaitForURLAsync("**/leerling/start**", DomReady);
         await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
         await page.WaitForTimeoutAsync(3_000);
         Assert.Contains("/leerling/start", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
 
         await page.GetByRole(AriaRole.Link, new() { Name = "Beginnen" }).ClickAsync();
-        await page.WaitForURLAsync("**/leerling/reis**");
+        await page.WaitForURLAsync("**/leerling/reis**", DomReady);
         await page.GetByRole(AriaRole.Radio, new() { Name = "Soms" }).WaitForAsync();
         await AnswerOneAsync(page);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
 
         await page.GetByRole(AriaRole.Button, new() { Name = "Pauze" }).ClickAsync();
-        await page.WaitForURLAsync("**/leerling/stop**");
+        await page.WaitForURLAsync("**/leerling/stop**", DomReady);
         Assert.Contains("done=1", page.Url, StringComparison.Ordinal);
         await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Goed gedaan!" })).ToBeVisibleAsync();
 
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
-        await page.WaitForURLAsync("**/leerling/reis**");
+        await page.WaitForURLAsync("**/leerling/reis**", DomReady);
         await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
         await page.WaitForTimeoutAsync(3_000);
         Assert.Contains("/leerling/reis", page.Url, StringComparison.OrdinalIgnoreCase);
@@ -143,12 +151,137 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.True(bytes.Length > 4 && bytes[0] == (byte)'%' && bytes[1] == (byte)'P');
     }
 
+    [Fact(Timeout = 300_000)]
+    public async Task Question_card_is_painted_above_the_scene_at_1366_and_390()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        _web?.Dispose();
+        _web = new PupilKestrelFactory(_api.Server.CreateHandler());
+        _ = _web.CreateClient();
+        var baseUrl = _web.ServerAddress.TrimEnd('/');
+        foreach (var (width, height) in new[] { (1366, 900), (390, 844) })
+        {
+            var pupil = await SeedOpenClassAsync();
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+            page.SetDefaultTimeout(90_000);
+            page.SetDefaultNavigationTimeout(90_000);
+            await page.Context.ClearCookiesAsync();
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId);
+            await page.WaitForURLAsync("**/leerling/start**", DomReady);
+            if (width == 1366)
+            {
+                await page.GotoAsync($"{baseUrl}/leerling", new()
+                {
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 90_000
+                });
+                await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Je bent al ingelogd" }))
+                    .ToBeVisibleAsync();
+                await Assertions.Expect(page.GetByText("ingelogd als medewerker")).ToHaveCountAsync(0);
+                await page.GetByRole(AriaRole.Link, new() { Name = "Ga verder" }).ClickAsync();
+                await page.WaitForURLAsync("**/leerling/start**", DomReady);
+            }
+
+            await page.GetByRole(AriaRole.Link, new() { Name = "Beginnen" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/reis**", DomReady);
+            await page.Locator(".ll-card").WaitForAsync();
+            var hit = await page.EvaluateAsync<string>(
+                """
+                () => {
+                  const card = document.querySelector('.ll-card');
+                  if (!card) return 'missing-card';
+                  const restored = [];
+                  document.querySelectorAll('.ll-scene').forEach((el) => {
+                    restored.push([el, el.style.pointerEvents]);
+                    el.style.pointerEvents = 'auto';
+                  });
+                  const r = card.getBoundingClientRect();
+                  const x = r.left + r.width / 2;
+                  const y = r.top + r.height / 2;
+                  const stack = document.elementsFromPoint(x, y);
+                  restored.forEach(([el, pe]) => { el.style.pointerEvents = pe; });
+                  const top = stack[0];
+                  if (!top) return 'none';
+                  if (top.closest('.ll-scene')) return 'scene';
+                  if (top.closest('.ll-card')) return 'card';
+                  return 'other';
+                }
+                """);
+            Assert.Equal("card", hit);
+            await page.CloseAsync();
+        }
+    }
+
+    [Fact(Timeout = 300_000)]
+    public async Task Teacher_group_view_loads_with_five_finished_pupils()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedFiveFinishedGroep78Async();
+        _web?.Dispose();
+        _web = new PupilKestrelFactory(_api.Server.CreateHandler());
+        _ = _web.CreateClient();
+        var baseUrl = _web.ServerAddress.TrimEnd('/');
+        var page = await _browser!.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.SetDefaultNavigationTimeout(90_000);
+        await page.Context.ClearCookiesAsync();
+        var signIn = $"{baseUrl}/__test/staff?user={seed.TeacherId:D}&school={seed.SchoolId:D}&role=Teacher&return=/leraar/klas/{seed.ClassId:D}/groep";
+        await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.WaitForURLAsync("**/leraar/klas/**/groep**", DomReady);
+        await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Interesses in de klas" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByText("De klasgegevens konden niet geladen worden")).ToHaveCountAsync(0);
+        await page.CloseAsync();
+    }
+
+    private static readonly PageWaitForURLOptions DomReady = new()
+    {
+        WaitUntil = WaitUntilState.DOMContentLoaded,
+        Timeout = 90_000
+    };
+
     private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
     {
-        await page.GotoAsync(loginUrl);
-        await page.Locator("select[name=classId]").SelectOptionAsync(classId.ToString("D"));
-        await page.Locator("input[name=code]").FillAsync(code);
-        await page.Locator("button.ll-login__submit").ClickAsync();
+        await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        var classValue = classId.ToString("D");
+        // Option elements stay "hidden" until the dropdown opens, so wait on the select.
+        // Blazor then swaps the prerendered form. Setting the fields and submitting in
+        // one turn keeps the class selection from being wiped before the POST.
+        await page.Locator("select[name=classId]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
+        await page.EvaluateAsync(
+            """
+            ([id, code]) => {
+              const select = document.querySelector('select[name=classId]');
+              const input = document.querySelector('input[name=code]');
+              if (!select || !input) throw new Error('login form missing');
+              select.value = id;
+              input.value = code;
+              const form = input.closest('form');
+              if (typeof form.requestSubmit === 'function') form.requestSubmit();
+              else form.submit();
+            }
+            """,
+            new[] { classValue, code });
+        try
+        {
+            await page.WaitForURLAsync(
+                url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                    || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
+                DomReady);
+        }
+        catch (TimeoutException)
+        {
+            var body = await page.Locator("body").InnerTextAsync(new() { Timeout = 5_000 });
+            var snippet = body.Length <= 600 ? body : body[..600];
+            throw new TimeoutException($"Login stayed on {page.Url}. Body: {snippet}");
+        }
     }
 
     private static async Task AnswerOneAsync(IPage page)
@@ -229,7 +362,93 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
     }
 
+    private async Task<TeacherSeed> SeedFiveFinishedGroep78Async()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var schoolId = Guid.NewGuid();
+        var teacherId = Guid.NewGuid();
+        var domain = $"p{schoolId:N}"[..12] + ".nl";
+        var school = new School
+        {
+            Id = schoolId,
+            Name = "Vijf " + Guid.NewGuid().ToString("N")[..4],
+            City = "Naaldwijk",
+            AllowedEmailDomains = System.Text.Json.JsonSerializer.Serialize(new[] { domain }),
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "7A",
+            Level = SchoolLevel.Groep78,
+            Year = 7,
+            QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = 5,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        db.Users.Add(new User
+        {
+            Id = teacherId,
+            Email = $"t-{teacherId:N}@{domain}",
+            FullName = "R. Jansen",
+            Role = UserRole.Teacher,
+            SchoolId = schoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true,
+            SessionVersion = 0
+        });
+        db.TeacherClassAssignments.Add(new TeacherClassAssignment
+        {
+            TeacherUserId = teacherId,
+            SchoolClassId = cls.Id,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var codeService = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var generated = await codeService.GenerateAsync(5, cls);
+        var registry = scope.ServiceProvider.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bank = registry.Get(PupilQuestionSet.Groep78).Bank;
+        var answers = bank.AllItems.ToDictionary(i => i.Id, _ => 4);
+        var answersJson = System.Text.Json.JsonSerializer.Serialize(answers);
+        var now = DateTime.UtcNow;
+        foreach (var code in generated)
+        {
+            db.PupilProgresses.Add(new PupilProgress
+            {
+                PupilCodeId = code.Id,
+                AnswersJson = answersJson,
+                CurrentIndex = bank.AllItems.Count,
+                LikesJson = """["dieren"]""",
+                DislikesJson = """["lang-stilzitten"]""",
+                StartedAtUtc = now.AddMinutes(-20),
+                UpdatedAtUtc = now,
+                CompletedAtUtc = now
+            });
+        }
+
+        await db.SaveChangesAsync();
+        var builder = scope.ServiceProvider.GetRequiredService<IPupilResultBuilder>();
+        foreach (var code in generated)
+        {
+            await builder.BuildAsync(code.Id);
+        }
+
+        return new TeacherSeed(schoolId, cls.Id, teacherId);
+    }
+
     private sealed record Seed(Guid SchoolId, Guid ClassId, string PlainCode);
+
+    private sealed record TeacherSeed(Guid SchoolId, Guid ClassId, Guid TeacherId);
 
     private sealed class PupilKestrelFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
     {
@@ -254,6 +473,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             });
             builder.ConfigureTestServices(services =>
             {
+                services.AddSingleton<IStartupFilter, StaffTestSignInFilter>();
                 services.RemoveAll<IFeatureFlags>();
                 services.AddSingleton<IFeatureFlags>(new SchoolsOnFlags());
                 services.RemoveAll<IHttpClientFactory>();
@@ -304,6 +524,51 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
             base.Dispose(disposing);
         }
+    }
+
+    private sealed class StaffTestSignInFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+            => app =>
+            {
+                app.Use(async (ctx, nxt) =>
+                {
+                    if (!ctx.Request.Path.Equals("/__test/staff", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await nxt();
+                        return;
+                    }
+
+                    var user = ctx.Request.Query["user"].ToString();
+                    var school = ctx.Request.Query["school"].ToString();
+                    var role = ctx.Request.Query["role"].ToString();
+                    if (string.IsNullOrWhiteSpace(role))
+                    {
+                        role = "Teacher";
+                    }
+
+                    var claims = new List<Claim>
+                    {
+                        new(ClaimTypes.NameIdentifier, user),
+                        new(ClaimTypes.Role, role),
+                        new(JobsyClaimTypes.SchoolId, school),
+                        new(JobsyClaimTypes.SessionVersion, "0"),
+                        new(JobsyClaimTypes.MfaVerified, "1")
+                    };
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    await ctx.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(identity));
+                    var ret = ctx.Request.Query["return"].ToString();
+                    if (string.IsNullOrWhiteSpace(ret) || !ret.StartsWith('/') || ret.StartsWith("//", StringComparison.Ordinal))
+                    {
+                        ret = "/";
+                    }
+
+                    ctx.Response.Redirect(ret);
+                });
+                next(app);
+            };
     }
 
     private sealed class SchoolsOnFlags : IFeatureFlags

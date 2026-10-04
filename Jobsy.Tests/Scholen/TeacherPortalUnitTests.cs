@@ -5,6 +5,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Navigation;
+using Jobsy.Web.Scholen;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -54,8 +55,96 @@ public class TeacherPortalUnitTests
             new PupilClassContext(SchoolLevel.Havo, 3, PupilQuestionSet.Vo));
         Assert.Equal(route.HaveCount, voRoute.HaveCount);
         Assert.Contains("Nu: klas 3 havo", voRoute.RouteSteps[0], StringComparison.Ordinal);
+        var havoRoute = string.Join(" ", voRoute.RouteSteps);
+        Assert.Contains("hbo-propedeuse", havoRoute, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("vwo", havoRoute, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(3, renderer.ConversationStarterKeys(result).Count);
         Assert.Equal(3, renderer.ClassDiscussionPromptKeys().Count);
+    }
+
+    [Fact]
+    public void Five_null_score_documents_still_show_the_groep78_group()
+    {
+        var five = Enumerable.Range(0, 5).Select(_ =>
+        {
+            var row = MakeResult("C", "Helpen", "Klein", "kok");
+            row.ScoringVersion = "g78-1";
+            row.CompetenceScoresJson = "null";
+            row.RiasecScoresJson = "null";
+            row.ValuesScoresJson = "null";
+            row.CultureScoresJson = "null";
+            return row;
+        }).ToList();
+
+        var shown = ClassResultsAggregator.AggregateTeacherGroup(five, PupilQuestionSet.Groep78);
+        Assert.True(shown.Visible);
+        Assert.Equal(5, shown.CompletedCount);
+        Assert.Equal(6, shown.RiasecBars.Count);
+    }
+
+    [Fact]
+    public void Competence_json_with_isComplete_does_not_throw_at_five()
+    {
+        var five = Enumerable.Range(0, 5).Select(_ =>
+        {
+            var row = MakeResult("SAE", "Helpen", "Klein", "kok");
+            row.ScoringVersion = "g78-1";
+            row.CompetenceScoresJson = """{"samenwerken":55,"resultaatgerichtheid":65,"isComplete":true}""";
+            return row;
+        }).ToList();
+
+        var shown = ClassResultsAggregator.AggregateTeacherGroup(five, PupilQuestionSet.Groep78);
+        Assert.True(shown.Visible);
+        Assert.Contains(shown.CompetenceBands, b => b.Key == "Midden");
+    }
+
+    [Fact]
+    public void Every_riasec_pair_resolves_for_groep78_and_vo()
+    {
+        const string letters = "RIASEC";
+        foreach (var set in new[] { PupilQuestionSet.Groep78, PupilQuestionSet.Vo })
+        {
+            for (var i = 0; i < letters.Length; i++)
+            {
+                for (var j = 0; j < letters.Length; j++)
+                {
+                    if (i == j)
+                    {
+                        continue;
+                    }
+
+                    var result = MakeResult($"{letters[i]}{letters[j]}", "Helpen", "Klein", "kok");
+                    result.ScoringVersion = set == PupilQuestionSet.Groep78 ? "g78-1" : "vo-1";
+                    var keys = PupilStoryTemplates.SelectKeys(result, ["sport"], set);
+                    var text = PupilVerhaalCopy.Get(keys.TileRiasecKey, set);
+                    Assert.False(
+                        text.StartsWith("LeerlingStory.", StringComparison.Ordinal),
+                        keys.TileRiasecKey + " stayed raw for " + set);
+                }
+            }
+        }
+
+        var repaired = PupilStoryTemplates.NormalizeTileRiasecKey("LeerlingStory.Tile.Riasec.CA");
+        Assert.Equal("Creatief en ordenen", PupilVerhaalCopy.Get(repaired));
+    }
+
+    [Fact]
+    public void Groep78_job_ideas_stay_age_appropriate_and_like_connected()
+    {
+        var ideas = PupilRiasecJobIdeas.ForLetters(['C'], PupilQuestionSet.Groep78, ["dieren", "sport", "techniek"]);
+        Assert.Equal(4, ideas.Count);
+        Assert.Contains("dierenverzorger", ideas);
+        Assert.DoesNotContain(ideas, k => k is "notaris" or "accountant" or "makelaar" or "apotheker");
+    }
+
+    [Fact]
+    public void Last_active_uses_today_and_never_a_zero_minute_stamp()
+    {
+        var now = SchoolActivityTime.Format(DateTime.UtcNow);
+        Assert.StartsWith("vandaag ", now, StringComparison.Ordinal);
+        Assert.DoesNotContain("0m", now, StringComparison.Ordinal);
+        var yesterday = SchoolActivityTime.Format(DateTime.UtcNow.AddDays(-1));
+        Assert.StartsWith("gisteren ", yesterday, StringComparison.Ordinal);
     }
 
     [Fact]

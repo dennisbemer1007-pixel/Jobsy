@@ -48,13 +48,30 @@
             @foreach (var log in _filtered)
             {
                 var code = SupportCodeDisplay.Find(log.Message);
-                <tr>
+                var open = _openId == log.Id;
+                <tr class="admin-log-row @(open ? "is-open" : null)"
+                    @onclick="() => Toggle(log.Id)"
+                    @onclick:stopPropagation="true"
+                    @onkeydown="e => OnRowKey(e, log.Id)"
+                    tabindex="0"
+                    role="button"
+                    aria-expanded="@open"
+                    aria-label="@Culture["AdminLogs.OpenRow"]">
                     <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(log.CreatedAt).ToString("dd-MM-yyyy HH:mm")</td>
                     <td data-label="@Culture["AdminLogs.Col.Level"]">@LevelLabel(log.Level)</td>
                     <td data-label="@Culture["AdminLogs.Col.Category"]">@CategoryLabel(log.Category)</td>
                     <td class="admin-mono" data-label="@Culture["AdminLogs.Col.Code"]">@(code ?? "—")</td>
                     <td data-label="@Culture["AdminLogs.Col.Message"]">@log.Message</td>
                 </tr>
+                @if (open)
+                {
+                    <tr class="admin-log-detail" @onclick:stopPropagation="true">
+                        <td colspan="5">
+                            <p class="admin-log-detail__label">@Culture["AdminLogs.Detail"]</p>
+                            <pre class="admin-log-detail__body">@(string.IsNullOrWhiteSpace(log.Detail) ? Culture["AdminLogs.NoDetail"] : log.Detail)</pre>
+                        </td>
+                    </tr>
+                }
             }
         </Rows>
     </AdminDataTable>
@@ -77,6 +94,18 @@
     private int _pageNum = 1;
     private int _pageSize = 50;
     private int _total;
+    private Guid? _openId;
+
+    private void Toggle(Guid id)
+        => _openId = _openId == id ? null : id;
+
+    private void OnRowKey(KeyboardEventArgs e, Guid id)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            Toggle(id);
+        }
+    }
 
     private string LevelLabel(string? level) => level switch
     {

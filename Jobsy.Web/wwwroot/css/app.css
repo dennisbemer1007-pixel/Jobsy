@@ -19443,12 +19443,40 @@ body {
 }
 
 /* ==== mobile-candidate-a11y-polish ==== */
-/* FocusOnNavigate focuses h1[tabindex="-1"]. Chrome treats that script focus as
-   :focus-visible, so :focus:not(:focus-visible){outline:none} left the browser's
-   black outline. A thin offset brand line stays visible without a heavy box. */
-h1[tabindex="-1"]:focus {
+/* Programmatic focus on h1[tabindex="-1"] must not draw a box. Keyboard focus
+   (html.using-keyboard, set from Tab) still gets a thin brand ring. */
+h1[tabindex="-1"]:focus,
+h1[tabindex="-1"]:focus-visible {
+    outline: none;
+}
+html.using-keyboard h1[tabindex="-1"]:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
     outline-offset: 6px;
+}
+
+.admin-log-row {
+    cursor: pointer;
+}
+
+.admin-log-row:hover,
+.admin-log-row.is-open {
+    background: var(--hover);
+}
+
+.admin-log-detail td {
+    background: var(--pearl);
+}
+
+.admin-log-detail__label {
+    margin: 0 0 0.35rem;
+    font-weight: 650;
+}
+
+.admin-log-detail__body {
+    white-space: pre-wrap;
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
 }
 
 .page-help__btn,

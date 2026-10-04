@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen;
@@ -39,7 +40,10 @@ public static class PupilStoryTemplates
     };
 
     /// <summary>Selects story keys from scored result + like chip keys (excludes "Iets anders" free text).</summary>
-    public static PupilStoryKeySet SelectKeys(PupilResult result, IReadOnlyList<string>? likeChipKeys)
+    public static PupilStoryKeySet SelectKeys(
+        PupilResult result,
+        IReadOnlyList<string>? likeChipKeys,
+        PupilQuestionSet set = PupilQuestionSet.Vo)
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -73,7 +77,7 @@ public static class PupilStoryTemplates
             .Take(2)
             .ToList();
 
-        var jobIdeas = PupilRiasecJobIdeas.ForLetters(top2);
+        var jobIdeas = PupilRiasecJobIdeas.ForLetters(top2, set, likes);
 
         return new PupilStoryKeySet(
             Version: Version,
@@ -83,7 +87,7 @@ public static class PupilStoryTemplates
             CultureKey: cultureKey,
             LikeChipKeys: likes,
             TileCompetenceKey: $"LeerlingStory.Tile.Bf.{(balanced ? "Balanced" : bfCode)}",
-            TileRiasecKey: $"LeerlingStory.Tile.Riasec.{string.Concat(top2)}",
+            TileRiasecKey: TileRiasecKey(top2),
             TileValueKey: $"LeerlingStory.Tile.Val.{topValue}",
             TileCultureKey: $"LeerlingStory.Tile.Cult.{topCulture}",
             JobIdeaKeys: jobIdeas);
@@ -205,6 +209,47 @@ public static class PupilStoryTemplates
             .Select(x => x.Letter)
             .Take(2)
             .ToList();
+    }
+
+    /// <summary>Sorted pair so CA and AC share <c>LeerlingStory.Tile.Riasec.AC</c>.</summary>
+    public static string TileRiasecKey(IReadOnlyList<char> top2)
+    {
+        if (top2.Count == 0)
+        {
+            return "LeerlingStory.Tile.Riasec.S";
+        }
+
+        if (top2.Count == 1)
+        {
+            return $"LeerlingStory.Tile.Riasec.{top2[0]}";
+        }
+
+        var a = top2[0];
+        var b = top2[1];
+        if (a > b)
+        {
+            (a, b) = (b, a);
+        }
+
+        return $"LeerlingStory.Tile.Riasec.{a}{b}";
+    }
+
+    /// <summary>Repairs a stored unsorted pair such as <c>LeerlingStory.Tile.Riasec.CA</c>.</summary>
+    public static string NormalizeTileRiasecKey(string key)
+    {
+        const string prefix = "LeerlingStory.Tile.Riasec.";
+        if (string.IsNullOrWhiteSpace(key) || !key.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return key;
+        }
+
+        var rest = key[prefix.Length..];
+        if (rest.Length == 2 && rest[0] > rest[1])
+        {
+            return prefix + rest[1] + rest[0];
+        }
+
+        return key;
     }
 
     private static string RiasecSentenceKey(IReadOnlyList<char> top2)

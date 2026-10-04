@@ -66,7 +66,7 @@ public sealed class ExceptionHandlingMiddleware
                         "Api",
                         ex.GetType().Name,
                         supportCode,
-                        context.Request.Path.Value,
+                        SupportDetail(ex, context.Request.Path.Value),
                         CancellationToken.None);
                 }
             }
@@ -136,6 +136,24 @@ public sealed class ExceptionHandlingMiddleware
         {
             // Sentry is optional (no DSN in Development / tests); never fail the response over it.
         }
+    }
+
+    private static string SupportDetail(Exception ex, string? path)
+    {
+        var message = SanitizeClientMessage(ex.Message);
+        string? frame = null;
+        if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+        {
+            var line = ex.StackTrace
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                frame = SanitizeClientMessage(line);
+            }
+        }
+
+        return string.Join('\n', new[] { message, frame, path }.Where(s => !string.IsNullOrWhiteSpace(s)));
     }
 
     private static string SanitizeClientMessage(string? message)

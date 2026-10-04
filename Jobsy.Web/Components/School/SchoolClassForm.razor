@@ -5,8 +5,9 @@
 
 <label>
     @Culture["School.Class.Field.Name"]
-    <InputText class="sch-field" @bind-Value="ClassName" @bind-Value:after="OnClassNameAfter" />
+    <InputText class="sch-field" maxlength="12" @bind-Value="ClassName" @bind-Value:after="OnClassNameAfter" />
 </label>
+<p class="muted">@string.Format(Culture["School.Class.NameCount"], Math.Min(12, (ClassName ?? "").Length))</p>
 
 @if (LevelLocked)
 {
@@ -144,6 +145,11 @@ else
 
     private async Task OnClassNameAfter()
     {
+        if (ClassName.Length > 12)
+        {
+            ClassName = ClassName[..12];
+        }
+
         await ClassNameChanged.InvokeAsync(ClassName);
         await NotifyChanged();
     }
