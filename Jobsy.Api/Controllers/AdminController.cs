@@ -795,7 +795,6 @@ public class AdminController : ControllerBase
             currentId == r.Id)).ToList());
     }
 
-    [HttpPost("users/{userId:guid}/sessions/{sessionId:guid}/revoke")]
     [HttpPost("users/{userId:guid}/test-unlock/reset")]
     [AdminAudit(AdminAuditKeys.UserTestUnlockReset, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> ResetTestUnlocks(
@@ -858,6 +857,7 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("users/{userId:guid}/sessions/{sessionId:guid}/revoke")]
     [AdminAudit(AdminAuditKeys.UserSessionsRevoke, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> RevokeUserSession(
         Guid userId,
