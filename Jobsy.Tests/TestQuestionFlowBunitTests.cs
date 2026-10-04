@@ -174,6 +174,10 @@ public sealed class TestsStackGuardTests
             var text = File.ReadAllText(Path.Combine(RepoRoot, rel));
             Assert.False(hex.IsMatch(text), $"{rel} contains hex colour");
         }
+
+        var testsCss = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/tests.css"));
+        Assert.Contains("background-color: var(--surface);", testsCss, StringComparison.Ordinal);
+        Assert.Contains("border-top: 1px solid var(--border);", testsCss, StringComparison.Ordinal);
     }
 
     [Fact]
