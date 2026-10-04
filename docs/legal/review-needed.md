@@ -6,6 +6,13 @@ They may ship to `acceptatie`; a lawyer reviews them before they go to `main` / 
 Every PR that changes a legal text adds its sections here: document · section id · version ·
 what changed · open question.
 
+## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-04
+
+| Section | Id | What changed | Open question for the lawyer |
+|---|---|---|---|
+| 4 | `delen` / `buiten-de-eu` | Replaced the line that the app and database are “in the EU, so data stays in the EU”. The text now says the app and database are in Frankfurt (EU), that Render is an American company, and that a few services belong to American companies. Those parties stay in the generated processor table (place + transfer basis). | Is “Frankfurt (EU) + American parent / American subprocessors, named in the table” specific enough, or must each transfer basis be repeated in the paragraph? |
+| 7 | `ai` | New B1 paragraph “AI en jouw gegevens”: no scores or rankings for employers, AI only helps the candidate understand themselves, no AI on pupil data, AI answers are labelled, a person can explain. | Does this match the AI Act role Lobsy wants to claim (not high-risk employment AI)? Is “no AI on pupil data” still true if a later feature sends pupil answers to a model? |
+
 ## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10
 
 Rewritten in public-pages 03 on the `LegalDocument` foundation of 02: B1 Dutch, "je", a summary

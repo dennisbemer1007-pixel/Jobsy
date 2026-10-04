@@ -536,23 +536,113 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         [FromBody] UpdatePlatformCompanyRequest request,
         CancellationToken cancellationToken)
     {
-        var snap = await _companySettings.GetAsync(cancellationToken);
-        var iban = IbanMasking.ResolveStoredIban(request.VatBufferIban, snap.VatBufferIban);
-        snap = await _companySettings.UpdateAsync(
-            new PlatformCompanyUpdate(
-                request.CompanyName ?? "",
-                request.Slogan,
-                request.Address,
-                request.PostalCode,
-                request.City,
-                request.Country,
-                request.KvkNumber,
-                request.VatNumber,
-                request.Phone,
-                request.Email,
-                iban),
-            cancellationToken);
+        var before = await _companySettings.GetAsync(cancellationToken);
+        var iban = IbanMasking.ResolveStoredIban(request.VatBufferIban, before.VatBufferIban);
+        PlatformCompanySnapshot snap;
+        try
+        {
+            snap = await _companySettings.UpdateAsync(
+                new PlatformCompanyUpdate(
+                    request.CompanyName ?? "",
+                    request.Slogan,
+                    request.Address,
+                    request.PostalCode,
+                    request.City,
+                    request.Country,
+                    request.KvkNumber,
+                    request.VatNumber,
+                    request.Phone,
+                    request.Email,
+                    iban,
+                    request.LegalName,
+                    request.TradeName,
+                    request.PostalStreet,
+                    request.PostalPostalCode,
+                    request.PostalCity,
+                    request.SupportEmail,
+                    request.PrivacyEmail),
+                cancellationToken);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        await WriteCompanyAuditAsync(before, snap, cancellationToken);
         return Ok(ToCompanyDto(snap));
+    }
+
+    private async Task WriteCompanyAuditAsync(
+        PlatformCompanySnapshot before,
+        PlatformCompanySnapshot after,
+        CancellationToken cancellationToken)
+    {
+        var changes = CollectCompanyChanges(before, after);
+        _auditContext.SuppressAutoWrite = true;
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var correlation = HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString("N");
+        var ip = HttpContext?.Connection.RemoteIpAddress?.ToString();
+        if (changes.Count == 0)
+        {
+            changes.Add(("unchanged", null, null));
+        }
+
+        foreach (var change in changes)
+        {
+            await _audit.WriteAsync(
+                new AdminAuditEntry(
+                    Action: AdminAuditKeys.SettingsCompanyUpdate,
+                    TargetType: AdminAuditKeys.TargetTypes.Setting,
+                    TargetId: change.Field,
+                    TargetLabel: change.Field,
+                    Reason: null,
+                    DetailsJson: System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        field = change.Field,
+                        from = change.From,
+                        to = change.To
+                    }),
+                    Result: AdminAuditKeys.Results.Success,
+                    ActorUserId: actor?.Id,
+                    ActorRole: "Admin",
+                    CorrelationId: correlation,
+                    IpAddress: ip),
+                cancellationToken);
+        }
+    }
+
+    private static List<(string Field, string? From, string? To)> CollectCompanyChanges(
+        PlatformCompanySnapshot before,
+        PlatformCompanySnapshot after)
+    {
+        var list = new List<(string, string?, string?)>();
+        void Add(string field, string? from, string? to)
+        {
+            if (!string.Equals(from ?? "", to ?? "", StringComparison.Ordinal))
+            {
+                list.Add((field, from, to));
+            }
+        }
+
+        Add("LegalName", before.LegalName, after.LegalName);
+        Add("TradeName", before.TradeName, after.TradeName);
+        Add("CompanyName", before.CompanyName, after.CompanyName);
+        Add("Slogan", before.Slogan, after.Slogan);
+        Add("Address", before.Address, after.Address);
+        Add("PostalCode", before.PostalCode, after.PostalCode);
+        Add("City", before.City, after.City);
+        Add("Country", before.Country, after.Country);
+        Add("PostalStreet", before.PostalStreet, after.PostalStreet);
+        Add("PostalPostalCode", before.PostalPostalCode, after.PostalPostalCode);
+        Add("PostalCity", before.PostalCity, after.PostalCity);
+        Add("KvkNumber", before.KvkNumber, after.KvkNumber);
+        Add("VatNumber", before.VatNumber, after.VatNumber);
+        Add("Phone", before.Phone, after.Phone);
+        Add("SupportEmail", before.SupportEmail, after.SupportEmail);
+        Add("PrivacyEmail", before.PrivacyEmail, after.PrivacyEmail);
+        Add("Email", before.Email, after.Email);
+        Add("VatBufferIban", IbanMasking.ForApi(before.VatBufferIban), IbanMasking.ForApi(after.VatBufferIban));
+        return list;
     }
 
     [HttpGet("marketing-flyer")]
@@ -721,7 +811,14 @@ snap.CandidateInsightsEnabled,
             snap.Phone,
             snap.Email,
             IbanMasking.ForApi(snap.VatBufferIban),
-            snap.UpdatedAtUtc);
+            snap.UpdatedAtUtc,
+            snap.LegalName,
+            snap.TradeName,
+            snap.PostalStreet,
+            snap.PostalPostalCode,
+            snap.PostalCity,
+            snap.SupportEmail,
+            snap.PrivacyEmail);
 
     private static IntegrationCredentialDto ToDto(IntegrationCredentialView view) =>
         new(
@@ -763,7 +860,14 @@ public sealed record PlatformCompanyDto(
     string? Phone,
     string? Email,
     string? VatBufferIban,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    string? LegalName = null,
+    string? TradeName = null,
+    string? PostalStreet = null,
+    string? PostalPostalCode = null,
+    string? PostalCity = null,
+    string? SupportEmail = null,
+    string? PrivacyEmail = null);
 
 public sealed record UpdatePlatformCompanyRequest(
     string? CompanyName,
@@ -776,7 +880,14 @@ public sealed record UpdatePlatformCompanyRequest(
     string? VatNumber,
     string? Phone,
     string? Email,
-    string? VatBufferIban = null);
+    string? VatBufferIban = null,
+    string? LegalName = null,
+    string? TradeName = null,
+    string? PostalStreet = null,
+    string? PostalPostalCode = null,
+    string? PostalCity = null,
+    string? SupportEmail = null,
+    string? PrivacyEmail = null);
 
 public sealed record MarketingFlyerDto(
     string Headline,

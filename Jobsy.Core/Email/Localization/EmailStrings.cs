@@ -17,11 +17,11 @@ public static partial class EmailStrings
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> All { get; } =
         new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["nl"] = EmailStringsNl.Map,
-            ["en"] = EmailStringsEn.Map,
-            ["pl"] = EmailStringsPl.Map,
-            ["ro"] = EmailStringsRo.Map,
-            ["ar"] = EmailStringsAr.Map
+            ["nl"] = EmailStringsReferee.Merge(EmailStringsNl.Map, "nl"),
+            ["en"] = EmailStringsReferee.Merge(EmailStringsEn.Map, "en"),
+            ["pl"] = EmailStringsReferee.Merge(EmailStringsPl.Map, "pl"),
+            ["ro"] = EmailStringsReferee.Merge(EmailStringsRo.Map, "ro"),
+            ["ar"] = EmailStringsReferee.Merge(EmailStringsAr.Map, "ar")
         };
 
     public static IReadOnlyCollection<string> Languages { get; } = ["nl", "en", "pl", "ro", "ar"];

@@ -36,7 +36,8 @@ public sealed class MaintenanceMiddleware
     [
         "/healthz",
         "/robots.txt",
-        "/favicon.ico"
+        "/favicon.ico",
+        "/.well-known/security.txt"
     ];
 
     private readonly RequestDelegate _next;

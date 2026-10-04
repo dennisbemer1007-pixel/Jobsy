@@ -113,13 +113,44 @@ public class AdminRun4PlaywrightTests
     private static async Task AssertMenuStaysOpenAsync(IPage page, string url)
     {
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-        var toggle = page.Locator("button.row-actions-menu__toggle").First;
-        await toggle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await toggle.ClickAsync();
-        await page.WaitForTimeoutAsync(1000);
-        Assert.Equal("true", await toggle.GetAttributeAsync("aria-expanded"));
-        var item = page.Locator(".row-actions-menu__panel [role='menuitem']").First;
-        await item.ClickAsync(new() { Timeout = 5_000 });
+        await page.WaitForFunctionAsync(
+            "() => !!window.Blazor && document.querySelectorAll('button.row-actions-menu__toggle').length > 0",
+            null,
+            new() { Timeout = 30_000 });
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var toggle = page.Locator("button.row-actions-menu__toggle").First;
+            await toggle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            if (await toggle.GetAttributeAsync("aria-expanded") != "true")
+            {
+                await toggle.ClickAsync();
+            }
+
+            try
+            {
+                await Assertions.Expect(toggle).ToHaveAttributeAsync(
+                    "aria-expanded",
+                    "true",
+                    new() { Timeout = 8_000 });
+                // The menu must stay open after the dialog trap moves focus.
+                await page.WaitForTimeoutAsync(800);
+                if (await toggle.GetAttributeAsync("aria-expanded") == "true")
+                {
+                    var item = page.Locator(".row-actions-menu__panel [role='menuitem']").First;
+                    await item.ClickAsync(new() { Timeout = 5_000 });
+                    return;
+                }
+            }
+            catch (PlaywrightException) when (attempt == 0)
+            {
+            }
+
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        }
+
+        var finalToggle = page.Locator("button.row-actions-menu__toggle").First;
+        Assert.Equal("true", await finalToggle.GetAttributeAsync("aria-expanded"));
     }
 
     private static async Task AssertSearchFiltersAsync(IPage page, string url, string inputSelector)

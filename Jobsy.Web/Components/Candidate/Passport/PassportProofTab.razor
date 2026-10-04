@@ -163,6 +163,7 @@
                             <li>
                                 <strong>@(string.IsNullOrWhiteSpace(r.ContactName) ? r.EmployerName : r.ContactName)</strong>
                                 <span class="muted">@r.EmployerName</span>
+                                <ReferenceAskRow Item="r" Row="MatchConfirmation(r)" OnChanged="LoadConfirmationsAsync" />
                             </li>
                         }
                     </ul>
@@ -250,6 +251,7 @@
     private ProofStrengthRules.StrengthView? _strength;
     private string? _hintText;
     private bool _sheetOpen;
+    private List<JobsyApiClient.ReferenceConfirmationItem> _confirmations = [];
     private string _sheetKind = "";
     private string _sheetTitle = "";
 
@@ -289,6 +291,7 @@
             }
 
             Editor.ApplyFromProfile(me);
+            await LoadConfirmationsAsync();
             _loaded = true;
             RefreshStrength();
         }
@@ -338,6 +341,17 @@
             Culture[ProofStrengthRules.NounKey(missing[1].Kind)]);
     }
 
+    private async Task LoadConfirmationsAsync()
+    {
+        _confirmations = (await Api.GetReferenceConfirmationsAsync()).ToList();
+    }
+
+    private JobsyApiClient.ReferenceConfirmationItem? MatchConfirmation(CandidateReferenceItem item)
+        => _confirmations.FirstOrDefault(c => c.ReferenceId == item.Id)
+           ?? _confirmations.FirstOrDefault(c =>
+               string.Equals(c.Email, item.Email, StringComparison.OrdinalIgnoreCase)
+               && string.Equals(c.EmployerName, item.EmployerName, StringComparison.OrdinalIgnoreCase));
+
     private void OpenEditor(string kind)
     {
         _sheetKind = kind;
@@ -356,6 +370,7 @@
     private async Task SaveSheetAsync()
     {
         await Editor.SaveAsync();
+        await LoadConfirmationsAsync();
         RefreshStrength();
         _sheetOpen = false;
     }

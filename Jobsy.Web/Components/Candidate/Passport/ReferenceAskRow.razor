@@ -1,0 +1,185 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Time
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<div class="passport-proof__ask" data-referee-ask>
+    @if (_row?.Status == "confirmed" && _row.ConfirmedAtUtc is DateTime confirmed)
+    {
+        <p class="status-pill">@Culture["Referee.Confirmed"] · @AmsterdamTime.FormatDate(confirmed)</p>
+        <ul class="passport-proof__list">
+            <li><span class="muted">@_row.RoleTitle</span></li>
+            @if (_row.WorkedHere is bool worked)
+            {
+                <li>@(worked ? Culture["Referee.WorkedYes"] : Culture["Referee.WorkedNo"])</li>
+            }
+            @if (!string.IsNullOrWhiteSpace(_row.Period))
+            {
+                <li>@_row.Period</li>
+            }
+            @if (!string.IsNullOrWhiteSpace(_row.DidWell))
+            {
+                <li>@_row.DidWell</li>
+            }
+            @if (!string.IsNullOrWhiteSpace(_row.WorkAgain))
+            {
+                <li>@AgainLabel(_row.WorkAgain)</li>
+            }
+            @if (!string.IsNullOrWhiteSpace(_row.Extra))
+            {
+                <li>@_row.Extra</li>
+            }
+        </ul>
+        <fieldset class="referee-form__q">
+            <legend>@Culture["Referee.ShareTitle"]</legend>
+            <label class="referee-form__choice"><input type="checkbox" @bind="_show" /> @Culture["Referee.ShareMaster"]</label>
+            <label class="referee-form__choice"><input type="checkbox" @bind="_shareWorked" /> @Culture["Referee.ShareWorked"]</label>
+            <label class="referee-form__choice"><input type="checkbox" @bind="_sharePeriod" /> @Culture["Referee.SharePeriod"]</label>
+            <label class="referee-form__choice"><input type="checkbox" @bind="_shareWell" /> @Culture["Referee.ShareWell"]</label>
+            <label class="referee-form__choice"><input type="checkbox" @bind="_shareAgain" /> @Culture["Referee.ShareAgain"]</label>
+            <label class="referee-form__choice"><input type="checkbox" @bind="_shareExtra" /> @Culture["Referee.ShareExtra"]</label>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="SaveShareAsync">@Culture["Referee.ShareSave"]</button>
+        </fieldset>
+    }
+    else if (_row?.Status == "declined")
+    {
+        <p class="muted">@Culture["Referee.Declined"]</p>
+    }
+    else
+    {
+        @if (_row?.Status == "pending")
+        {
+            <p class="muted">@Culture["Referee.Pending"]</p>
+        }
+        <button type="button" class="btn-compact" @onclick="Toggle">@Culture["Referee.Ask"]</button>
+        @if (_open)
+        {
+            <div class="passport-proof__ask-form">
+                <p class="muted">@Culture["Referee.AskHint"]</p>
+                <label class="field-label" for="@_roleId">@Culture["Referee.Role"]</label>
+                <input id="@_roleId" class="text-input" @bind="_role" maxlength="80" autocomplete="off" />
+                <label class="referee-form__choice">
+                    <input type="checkbox" @bind="_consent" />
+                    <span>@Culture["Referee.Consent"]</span>
+                </label>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SendAsync">@Culture["Referee.Send"]</button>
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <p role="status">@_message</p>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CandidateReferenceItem Item { get; set; } = null!;
+    [Parameter] public JobsyApiClient.ReferenceConfirmationItem? Row { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private JobsyApiClient.ReferenceConfirmationItem? _row;
+    private bool _open;
+    private bool _busy;
+    private bool _consent;
+    private bool _show;
+    private bool _shareWorked;
+    private bool _sharePeriod;
+    private bool _shareWell;
+    private bool _shareAgain;
+    private bool _shareExtra;
+    private string _role = "";
+    private string? _message;
+    private readonly string _roleId = "referee-role-" + Guid.NewGuid().ToString("N");
+
+    protected override void OnParametersSet()
+    {
+        _row = Row;
+        if (Row is not null && _role.Length == 0)
+        {
+            _role = Row.RoleTitle ?? "";
+            _show = Row.ShowOnPartnerPassport;
+            _shareWorked = Row.ShareWorkedHere;
+            _sharePeriod = Row.SharePeriod;
+            _shareWell = Row.ShareDidWell;
+            _shareAgain = Row.ShareWorkAgain;
+            _shareExtra = Row.ShareExtra;
+        }
+    }
+
+    private void Toggle() => _open = !_open;
+
+    private async Task SendAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            if (!_consent)
+            {
+                _message = Culture["Referee.Consent"];
+                return;
+            }
+
+            var id = await CurrentReferenceIdAsync();
+            var (ok, message) = await Api.RequestReferenceConfirmationAsync(id, _role, true);
+            _message = ok ? Culture["Referee.Sent"] : message;
+            if (ok)
+            {
+                _open = false;
+                await OnChanged.InvokeAsync();
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveShareAsync()
+    {
+        if (_row is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var id = await CurrentReferenceIdAsync();
+            var ok = await Api.SetReferenceShareAsync(
+                id, _show, _shareWorked, _sharePeriod, _shareWell, _shareAgain, _shareExtra);
+            if (ok)
+            {
+                await OnChanged.InvokeAsync();
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task<Guid> CurrentReferenceIdAsync()
+    {
+        var rows = await Api.GetReferenceConfirmationsAsync();
+        var fresh = rows.FirstOrDefault(r =>
+            string.Equals(r.Email, Item.Email, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(r.EmployerName, Item.EmployerName, StringComparison.OrdinalIgnoreCase));
+        if (fresh is not null && fresh.ReferenceId != Guid.Empty)
+        {
+            return fresh.ReferenceId;
+        }
+
+        return _row?.ReferenceId is Guid id && id != Guid.Empty ? id : Item.Id;
+    }
+
+    private string AgainLabel(string code) => code switch
+    {
+        "yes" => Culture["Referee.AgainYes"],
+        "no" => Culture["Referee.AgainNo"],
+        _ => Culture["Referee.AgainMaybe"]
+    };
+}

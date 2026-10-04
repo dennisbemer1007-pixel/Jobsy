@@ -113,7 +113,11 @@ public sealed record LegalIdentityDto(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? VatNumber,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PrivacyEmail,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SupportEmail,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SchoolsEmail)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SchoolsEmail,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Phone = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PostalStreet = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PostalPostalCode = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PostalCity = null)
 {
     public static LegalIdentityDto From(LegalIdentitySnapshot snap) => new(
         NullIfEmpty(snap.Name),
@@ -126,7 +130,11 @@ public sealed record LegalIdentityDto(
         NullIfEmpty(snap.VatNumber),
         NullIfEmpty(snap.PrivacyEmail),
         NullIfEmpty(snap.SupportEmail),
-        NullIfEmpty(snap.SchoolsEmail));
+        NullIfEmpty(snap.SchoolsEmail),
+        NullIfEmpty(snap.Phone),
+        NullIfEmpty(snap.PostalStreet),
+        NullIfEmpty(snap.PostalPostalCode),
+        NullIfEmpty(snap.PostalCity));
 
     private static string? NullIfEmpty(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

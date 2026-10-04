@@ -102,9 +102,9 @@ public class StatusPagesTests
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Contains("no-store", response.Headers.CacheControl?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("href=\"/banenkaart\"", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
-        Assert.Contains("href=\"/hoe-werkt-lobsy\"", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/melden\"", html, StringComparison.Ordinal);
         Assert.Single(Regex.Matches(html, "<h1", RegexOptions.IgnoreCase));
     }
 
@@ -117,7 +117,8 @@ public class StatusPagesTests
         var response = await client.GetAsync("/status/404");
         var html = await response.Content.ReadAsStringAsync();
 
-        Assert.Contains("Mijn Paspoort", html, StringComparison.Ordinal);
+        Assert.Contains("Naar home", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
         Assert.DoesNotContain("href=\"/banenkaart\"", html, StringComparison.Ordinal);
     }
 }

@@ -44,11 +44,13 @@ public class AmbassadeurFlyerPdfServiceTests
         });
         await db.SaveChangesAsync();
 
+        var company = new FakeCompanySettings();
         var service = new AmbassadeurFlyerPdfService(
             db,
             new FakeSalesCommercial(packageCount: 8),
-            new FakeCompanySettings(),
-            new FakeFeatures());
+            company,
+            new FakeFeatures(),
+            new CompanyBackedLegalIdentity(company));
 
         var candidate = await service.RenderAsync("AM-FLYER1", AmbassadeurFlyerKind.Candidate);
         var entrepreneur = await service.RenderAsync("AM-FLYER1", AmbassadeurFlyerKind.Entrepreneur);

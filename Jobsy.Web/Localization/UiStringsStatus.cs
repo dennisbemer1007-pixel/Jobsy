@@ -76,6 +76,18 @@ public static class UiStringsStatus
             "جرّب مرة أخرى بعد قليل أو عُد إلى البداية.");
 
         // —— Shared actions and small print ——
+        Add("Status.Common.Home",
+            "Naar home",
+            "To home",
+            "Do strony głównej",
+            "La pagina de start",
+            "إلى الرئيسية");
+        Add("Status.Common.Contact",
+            "Contact",
+            "Contact",
+            "Kontakt",
+            "Contact",
+            "اتصال");
         Add("Status.Common.Banenkaart",
             "Banenkaart",
             "Job map",

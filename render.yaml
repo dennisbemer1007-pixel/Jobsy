@@ -335,6 +335,10 @@ projects:
                 value: Production
               - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
                 value: "false"
+              # Acceptatie only. Acc and prod both run ASPNETCORE_ENVIRONMENT=Production,
+              # so this switch is not tied to IsProduction(). The production web service stays indexable.
+              - key: Seo__NoIndex
+                value: "true"
               - key: AllowedHosts
                 value: "*"
               - key: JobsyAuth__AllowDevelopmentAuth

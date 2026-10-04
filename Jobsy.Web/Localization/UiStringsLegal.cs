@@ -128,6 +128,18 @@ public static class UiStringsLegal
             "Adres",
             "Adresă",
             "العنوان");
+        Add("Legal.IdentityCard.PostalAddress",
+            "Postadres",
+            "Postal address",
+            "Adres do korespondencji",
+            "Adresă poștală",
+            "عنوان البريد");
+        Add("Legal.IdentityCard.Phone",
+            "Telefoon",
+            "Phone",
+            "Telefon",
+            "Telefon",
+            "الهاتف");
         Add("Legal.IdentityCard.Kvk",
             "KvK",
             "KvK (Dutch trade register)",
@@ -354,6 +366,12 @@ public static class UiStringsLegal
             "الحساب والاختبارات والنتائج");
 
         // —— Change log (D16) ——
+        Add("Legal.Change.Privacy.2026-10-04",
+            "Eerlijke tekst over waar gegevens staan: de app en database in Frankfurt, en diensten van Amerikaanse bedrijven in de lijst met verwerkers. Nieuw stuk: AI en jouw gegevens. Geen scores voor werkgevers, geen AI op leerlinggegevens, AI-antwoorden zijn gelabeld en je kunt een mens om uitleg vragen.",
+            "Honest text about where data sits: the app and database in Frankfurt, and services of American companies in the processor list. New part: AI and your data. No scores for employers, no AI on pupil data, AI answers are labelled and you can ask a person to explain.",
+            "Uczciwy tekst o tym, gdzie są dane: aplikacja i baza we Frankfurcie oraz usługi amerykańskich firm na liście podmiotów. Nowa część: AI i twoje dane. Brak ocen dla pracodawców, brak AI przy danych uczniów, odpowiedzi AI są oznaczone i możesz poprosić człowieka o wyjaśnienie.",
+            "Text sincer despre unde stau datele: aplicația și baza la Frankfurt și servicii ale firmelor americane în lista de procesatori. Parte nouă: AI și datele tale. Fără scoruri pentru angajatori, fără AI pe datele elevilor, răspunsurile AI sunt etichetate și poți cere unei persoane o explicație.",
+            "نص صادق عن مكان البيانات: التطبيق وقاعدة البيانات في فرانكفورت، وخدمات شركات أمريكية في قائمة المعالجين. جزء جديد: الذكاء الاصطناعي وبياناتك. لا درجات لأصحاب العمل، ولا ذكاء اصطناعي على بيانات التلاميذ، وإجابات الذكاء الاصطناعي موسومة ويمكنك أن تطلب الشرح من شخص.");
         Add("Legal.Change.Privacy.2026-10",
             "Nieuwe opzet in gewone taal: een samenvatting per onderdeel in 5 talen, de volledige lijst met partijen die voor ons werken, een apart stuk over cookies, en de bewaartermijnen en leeftijden rechtstreeks uit de code.",
             "New structure in plain language: a summary per section in 5 languages, the full list of parties working for us, a separate cookie section, and retention periods and ages straight from the code.",

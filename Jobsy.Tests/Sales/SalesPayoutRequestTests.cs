@@ -7,6 +7,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Jobsy.Core.Email;
@@ -178,12 +179,13 @@ public class SalesPayoutRequestTests
     private static SalesPayoutRequestService CreateRequestService(JobsyDbContext db)
     {
         var wallet = new SalesWalletReadService(db);
+        var company = new PlatformCompanySettingsService(db);
         return new SalesPayoutRequestService(
             db,
             wallet,
             new CapturingEmail(),
-            new PlatformCompanySettingsService(db),
-            new AlwaysOnFeatures());
+            new AlwaysOnFeatures(),
+            new CompanyBackedLegalIdentity(company));
     }
 
     private static async Task<(User User, SalesManagerProfile Profile)> SeedBeneficiaryAsync(
