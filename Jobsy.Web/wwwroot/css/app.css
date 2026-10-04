@@ -20007,8 +20007,20 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         width: 100%;
         max-width: none;
         border-radius: 0;
-        z-index: 44;
+        z-index: 1;
         box-sizing: border-box;
+        padding-inline: 2.25rem 4.75rem;
+    }
+
+    .lobsy-coach-dock__btn,
+    .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
+        position: relative;
+        z-index: 2;
+    }
+
+    .lobsy-coach-dock__close {
+        inset-inline-end: auto;
+        inset-inline-start: 0.35rem;
     }
 
     .lobsy-coach-dock__tip .read-aloud {
