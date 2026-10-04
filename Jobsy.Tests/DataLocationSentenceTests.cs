@@ -48,13 +48,13 @@ public class DataLocationSentenceTests : PrivacyRenderTestBase
     }
 
     [Fact]
-    public void Lettermint_without_a_key_keeps_resend_in_the_list()
+    public void Lettermint_without_a_key_lists_neither_mail_company()
     {
         Config["Mail:Provider"] = "Lettermint";
 
         var table = RenderPrivacy().Find("#delen .pp-table__grid").TextContent;
 
-        Assert.Contains("Resend", table, StringComparison.Ordinal);
+        Assert.DoesNotContain("Resend", table, StringComparison.Ordinal);
         Assert.DoesNotContain("Lettermint", table, StringComparison.Ordinal);
     }
 

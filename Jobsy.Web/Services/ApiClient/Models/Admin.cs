@@ -153,6 +153,19 @@ public sealed class AiProviderStatusItem
     public bool ReadOnly { get; set; } = true;
     public bool FellBackToOpenAi { get; set; }
     public bool InferenceInEu { get; set; }
+    public string? Model { get; set; }
+    public string? RegionCode { get; set; }
+    public bool Available { get; set; } = true;
+    public string? EndpointHost { get; set; }
+}
+
+public sealed class MailProviderStatusItem
+{
+    public string Provider { get; set; } = "Resend";
+    public string DisplayName { get; set; } = "Resend";
+    public string RegionCode { get; set; } = "us";
+    public string? EndpointHost { get; set; }
+    public bool Available { get; set; } = true;
 }
 
 public sealed class IntegrationCredentialItem

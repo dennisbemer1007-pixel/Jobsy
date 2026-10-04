@@ -150,7 +150,7 @@ public class MailProviderChoiceTests
     [Theory]
     [InlineData(null, false, MailProviderKind.Resend, false)]
     [InlineData("Resend", true, MailProviderKind.Resend, false)]
-    [InlineData("lettermint", false, MailProviderKind.Resend, true)]
+    [InlineData("lettermint", false, MailProviderKind.NotConfigured, true)]
     [InlineData("Lettermint", true, MailProviderKind.Lettermint, false)]
     public void Provider_follows_config_and_falls_back_without_a_key(
         string? provider,
@@ -195,7 +195,7 @@ public class LettermintSendTests
     }
 
     [Fact]
-    public async Task Missing_lettermint_key_falls_back_to_resend_and_warns_once()
+    public async Task Missing_lettermint_key_does_not_call_resend()
     {
         MailProviderFallbackLog.ResetForTests();
         var handler = new CaptureHandler(HttpStatusCode.OK, """{"id":"re_1"}""");
@@ -204,12 +204,14 @@ public class LettermintSendTests
         var mail = new MailOptions { Provider = "Lettermint", ResendApiKey = "re_test_key" };
         var sut = CreateSender(db, handler, mail, new LettermintOptions(), logger);
 
-        await sut.SendAsync(Sample("alex@example.com"));
-        await sut.SendAsync(Sample("alex@example.com"));
+        var first = await sut.SendAsync(Sample("alex@example.com"));
+        var second = await sut.SendAsync(Sample("alex@example.com"));
 
-        Assert.Contains("api.resend.com", handler.Uri!.AbsoluteUri, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("lettermint", handler.Uri.AbsoluteUri, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(1, logger.Warnings.Count(message => message.Contains("Falling back to Resend", StringComparison.Ordinal)));
+        Assert.Null(handler.Uri);
+        Assert.False(first.DeliveredViaProvider);
+        Assert.False(second.DeliveredViaProvider);
+        Assert.Equal(1, logger.Errors.Count(message => message.Contains("Mail: niet ingesteld", StringComparison.Ordinal)));
+        Assert.Contains(db.PlatformLogs, row => row.Message.Contains("Mail: niet ingesteld", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -344,6 +346,7 @@ public class LettermintSendTests
     private sealed class ListLogger : ILogger<SmtpEmailService>
     {
         public List<string> Warnings { get; } = [];
+        public List<string> Errors { get; } = [];
 
         public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
 
@@ -359,6 +362,11 @@ public class LettermintSendTests
             if (logLevel == LogLevel.Warning)
             {
                 Warnings.Add(formatter(state, exception));
+            }
+
+            if (logLevel == LogLevel.Error)
+            {
+                Errors.Add(formatter(state, exception));
             }
         }
 

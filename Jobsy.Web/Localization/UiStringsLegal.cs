@@ -366,6 +366,12 @@ public static class UiStringsLegal
             "الحساب والاختبارات والنتائج");
 
         // —— Change log (D16) ——
+        Add("Legal.Change.Privacy.2026-10-09",
+            "Nieuw in de lijst: PDOK (Kadaster, Nederland) en Nominatim (OpenStreetMap Foundation, Verenigd Koninkrijk) voor adressen. Kaarttegels van OpenFreeMap komen via Cloudflare. Pushmeldingen zijn versleuteld. Een routeknop opent Google Maps met je locatie, alleen als je klikt. Video’s van YouTube of Vimeo laden pas na een klik. Feedback die een beheerder start, stuurt je naam, een schermafbeelding en het pagina-adres naar Cursor en GitHub.",
+            "New in the list: PDOK (Kadaster, Netherlands) and Nominatim (OpenStreetMap Foundation, United Kingdom) for addresses. OpenFreeMap map tiles come via Cloudflare. Push notifications are encrypted. A route button opens Google Maps with your location, only when you click. Videos from YouTube or Vimeo load only after a click. Feedback that an admin starts sends your name, a screenshot and the page address to Cursor and GitHub.",
+            "Nowe na liście: PDOK (Kadaster, Holandia) i Nominatim (OpenStreetMap Foundation, Wielka Brytania) do adresów. Kafelki map OpenFreeMap idą przez Cloudflare. Powiadomienia push są zaszyfrowane. Przycisk trasy otwiera Google Maps z twoją lokalizacją, tylko po kliknięciu. Filmy z YouTube lub Vimeo ładują się dopiero po kliknięciu. Opinia, którą uruchamia administrator, wysyła twoje imię, zrzut ekranu i adres strony do Cursor i GitHub.",
+            "Nou în listă: PDOK (Kadaster, Olanda) și Nominatim (OpenStreetMap Foundation, Regatul Unit) pentru adrese. Dalele de hartă OpenFreeMap vin prin Cloudflare. Notificările push sunt criptate. Un buton de rută deschide Google Maps cu locația ta, doar când apeși. Videoclipurile de pe YouTube sau Vimeo se încarcă doar după un clic. Feedbackul pornit de un administrator trimite numele tău, o captură de ecran și adresa paginii către Cursor și GitHub.",
+            "جديد في القائمة: PDOK (Kadaster، هولندا) و Nominatim (مؤسسة OpenStreetMap، المملكة المتحدة) للعناوين. مربعات خريطة OpenFreeMap تمر عبر Cloudflare. إشعارات الدفع مشفّرة. زر المسار يفتح خرائط Google مع موقعك، فقط عند الضغط. فيديوهات YouTube أو Vimeo تُحمَّل فقط بعد الضغط. الملاحظات التي يبدأها مشرف ترسل اسمك ولقطة الشاشة وعنوان الصفحة إلى Cursor و GitHub.");
         Add("Legal.Change.Privacy.2026-10-08",
             "De zin over waar je gegevens staan komt uit de lijst. E-mail kan via Lettermint in Nederland, in de EU. OpenAI blijft buiten de EU. Bij Mistral zeggen we alleen bij het EU-adres dat de verwerking in de EU gebeurt. Bij het wereldwijde adres belooft Mistral geen plek. Account en facturen van Mistral kunnen buiten de EU staan.",
             "The sentence about where your data is comes from the list. E-mail can go through Lettermint in the Netherlands, in the EU. OpenAI stays outside the EU. For Mistral we say processing happens in the EU only with the EU address. With the global address Mistral promises no place. Mistral account and billing data can be handled outside the EU.",
@@ -606,17 +612,17 @@ public static class UiStringsLegal
             "Mistral nu indică un loc pentru această prelucrare",
             "لا تحدد Mistral مكاناً لهذه المعالجة");
         Add("Legal.Processor.cursor.Purpose",
-            "Feedback die je stuurt verwerken",
-            "Handling the feedback you send",
-            "Obsługa opinii, które wysyłasz",
-            "Procesarea feedbackului pe care îl trimiți",
-            "معالجة الملاحظات التي ترسلها");
+            "Feedback die een beheerder doorstuurt",
+            "Feedback that an admin sends on",
+            "Opinia, którą przekazuje administrator",
+            "Feedback pe care îl trimite un administrator",
+            "ملاحظات يمررها مشرف");
         Add("Legal.Processor.cursor.Data",
-            "Je feedbacktekst en, als je die meestuurt, een schermafbeelding",
-            "Your feedback text and, if you send it along, a screenshot",
-            "Treść opinii i, jeśli ją dołączysz, zrzut ekranu",
-            "Textul feedbackului și, dacă îl trimiți, o captură de ecran",
-            "نص ملاحظتك، ولقطة شاشة إن أرسلتها");
+            "Je naam, een schermafbeelding, het adres van de pagina en je feedbacktekst. Een beheerder start dit. De tekst komt in GitHub.",
+            "Your name, a screenshot, the page address and your feedback text. An admin starts this. The text goes to GitHub.",
+            "Twoje imię, zrzut ekranu, adres strony i treść opinii. Uruchamia to administrator. Tekst trafia do GitHub.",
+            "Numele tău, o captură de ecran, adresa paginii și textul feedbackului. Un administrator pornește asta. Textul ajunge în GitHub.",
+            "اسمك ولقطة الشاشة وعنوان الصفحة ونص الملاحظة. يبدأ هذا مشرف. يصل النص إلى GitHub.");
         Add("Legal.Processor.google-ms.Purpose",
             "Inloggen met je Google- of Microsoft-account",
             "Signing in with your Google or Microsoft account",
@@ -654,17 +660,53 @@ public static class UiStringsLegal
             "Coordonatele de plecare și destinație și mijlocul de transport",
             "إحداثيات الانطلاق والوصول ووسيلة التنقل");
         Add("Legal.Processor.maps.Purpose",
-            "Kaarten tonen, ook kaartjes in pdf’s",
-            "Showing maps, also map images in pdfs",
-            "Pokazywanie map, także obrazków map w pdf",
-            "Afișarea hărților, inclusiv imagini de hartă în pdf-uri",
-            "عرض الخرائط، وكذلك صور الخرائط في ملفات pdf");
+            "Kaarttegels tonen",
+            "Showing map tiles",
+            "Pokazywanie kafelków mapy",
+            "Afișarea dalelor de hartă",
+            "عرض مربعات الخريطة");
         Add("Legal.Processor.maps.Data",
-            "Het IP-adres van je browser en het stuk kaart dat je bekijkt",
-            "Your browser's IP address and the part of the map you view",
-            "Adres IP przeglądarki i fragment mapy, który oglądasz",
-            "Adresa IP a browserului și zona de hartă pe care o vezi",
-            "عنوان IP لمتصفحك والجزء الذي تشاهده من الخريطة");
+            "Je IP-adres en het stuk kaart dat je bekijkt. De tegels komen via Cloudflare.",
+            "Your IP address and the part of the map you view. The tiles come via Cloudflare.",
+            "Twój adres IP i fragment mapy, który oglądasz. Kafelki idą przez Cloudflare.",
+            "Adresa ta IP și zona de hartă pe care o vezi. Dalele vin prin Cloudflare.",
+            "عنوان IP والجزء الذي تشاهده من الخريطة. المربعات تمر عبر Cloudflare.");
+        Add("Legal.Processor.pdok.Purpose",
+            "Adressen opzoeken",
+            "Looking up addresses",
+            "Wyszukiwanie adresów",
+            "Căutarea adreselor",
+            "البحث عن العناوين");
+        Add("Legal.Processor.pdok.Data",
+            "Het adres of de postcode die je typt",
+            "The address or postcode you type",
+            "Adres lub kod pocztowy, który wpisujesz",
+            "Adresa sau codul poștal pe care îl scrii",
+            "العنوان أو الرمز البريدي الذي تكتبه");
+        Add("Legal.Processor.nominatim.Purpose",
+            "Adressen opzoeken, ook vanuit je locatie",
+            "Looking up addresses, also from your location",
+            "Wyszukiwanie adresów, także z twojej lokalizacji",
+            "Căutarea adreselor, și din locația ta",
+            "البحث عن العناوين، وأيضاً من موقعك");
+        Add("Legal.Processor.nominatim.Data",
+            "Het adres dat je typt, of je GPS-locatie als we die omzetten naar een adres",
+            "The address you type, or your GPS location when we turn it into an address",
+            "Adres, który wpisujesz, albo lokalizacja GPS, gdy zamieniamy ją na adres",
+            "Adresa pe care o scrii, sau locația GPS când o transformăm într-o adresă",
+            "العنوان الذي تكتبه، أو موقع GPS عندما نحوّله إلى عنوان");
+        Add("Legal.Processor.google-maps.Purpose",
+            "Een route openen, alleen als je klikt",
+            "Opening a route, only when you click",
+            "Otwarcie trasy, tylko po kliknięciu",
+            "Deschiderea unei rute, doar când apeși",
+            "فتح مسار، فقط عند الضغط");
+        Add("Legal.Processor.google-maps.Data",
+            "Je locatie en de plek van de vacature, als je op de routeknop klikt",
+            "Your location and the place of the job, when you click the route button",
+            "Twoja lokalizacja i miejsce oferty, gdy klikniesz przycisk trasy",
+            "Locația ta și locul jobului, când apeși butonul de rută",
+            "موقعك ومكان الوظيفة، عندما تضغط زر المسار");
         Add("Legal.Processor.push.Purpose",
             "Meldingen op je telefoon, alleen als je die aanzet",
             "Notifications on your phone, only if you turn them on",
@@ -672,11 +714,11 @@ public static class UiStringsLegal
             "Notificări pe telefon, doar dacă le activezi",
             "إشعارات على هاتفك، فقط إذا شغّلتها");
         Add("Legal.Processor.push.Data",
-            "Een code van je apparaat en de tekst van de melding",
-            "A code of your device and the text of the notification",
-            "Kod twojego urządzenia i treść powiadomienia",
-            "Un cod al dispozitivului și textul notificării",
-            "رمز جهازك ونص الإشعار");
+            "Een code van je apparaat en de tekst van de melding. De tekst is versleuteld. Google, Apple, Mozilla en Microsoft kunnen hem niet lezen.",
+            "A code of your device and the text of the notification. The text is encrypted. Google, Apple, Mozilla and Microsoft cannot read it.",
+            "Kod twojego urządzenia i treść powiadomienia. Tekst jest zaszyfrowany. Google, Apple, Mozilla i Microsoft nie mogą go odczytać.",
+            "Un cod al dispozitivului și textul notificării. Textul este criptat. Google, Apple, Mozilla și Microsoft nu îl pot citi.",
+            "رمز جهازك ونص الإشعار. النص مشفّر. لا يستطيع Google أو Apple أو Mozilla أو Microsoft قراءته.");
         Add("Legal.Processor.video.Purpose",
             "Video’s, pas nadat jij op play klikt",
             "Videos, only after you click play",
@@ -684,11 +726,11 @@ public static class UiStringsLegal
             "Videoclipuri, doar după ce apeși play",
             "الفيديوهات، فقط بعد الضغط على التشغيل");
         Add("Legal.Processor.video.Data",
-            "Je IP-adres en gegevens over je apparaat",
-            "Your IP address and data about your device",
-            "Twój adres IP i dane o urządzeniu",
-            "Adresa ta IP și date despre dispozitiv",
-            "عنوان IP وبيانات عن جهازك");
+            "Pas na een klik: je IP-adres en gegevens over je apparaat. Daarvoor laden we niets van YouTube of Vimeo.",
+            "Only after a click: your IP address and data about your device. Before that we load nothing from YouTube or Vimeo.",
+            "Dopiero po kliknięciu: twój adres IP i dane o urządzeniu. Wcześniej nie ładujemy nic z YouTube ani Vimeo.",
+            "Doar după un clic: adresa ta IP și date despre dispozitiv. Înainte nu încărcăm nimic de pe YouTube sau Vimeo.",
+            "فقط بعد الضغط: عنوان IP وبيانات عن جهازك. قبل ذلك لا نحمّل شيئاً من YouTube أو Vimeo.");
     }
 
     /// <summary>Privacy section titles and summaries (03 writes the Dutch bodies).</summary>

@@ -51,11 +51,11 @@ public class LegalProcessorCatalogTests
     }
 
     [Fact]
-    public void Missing_lettermint_key_keeps_resend()
+    public void Missing_lettermint_key_lists_neither_mail_company()
     {
         var rows = LegalProcessorSelection.Resolve(MailProviderNames.Lettermint, lettermintApiKeyConfigured: false);
 
-        Assert.Contains(rows, row => row.Id == "resend");
+        Assert.DoesNotContain(rows, row => row.Id == "resend");
         Assert.DoesNotContain(rows, row => row.Id == "lettermint");
     }
 

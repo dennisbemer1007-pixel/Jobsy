@@ -62,6 +62,8 @@ public sealed class ReadAloudScriptTests
         Assert.DoesNotContain("WebSocket", js, StringComparison.Ordinal);
         Assert.DoesNotContain("http://", js, StringComparison.Ordinal);
         Assert.DoesNotContain("https://", js, StringComparison.Ordinal);
+        Assert.Contains("localService === true", js, StringComparison.Ordinal);
+        Assert.Contains("selectLocalVoice", js, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -237,7 +239,7 @@ public sealed class ReadAloudBunitTests : BunitContext
 
         cut.WaitForAssertion(() =>
         {
-            Assert.Contains("werkt niet in deze taal", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Er is geen stem op dit apparaat voor deze taal.", cut.Markup, StringComparison.Ordinal);
             Assert.Empty(cut.FindAll("[data-read-aloud-setting] input"));
         });
     }

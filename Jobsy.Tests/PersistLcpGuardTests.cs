@@ -93,7 +93,9 @@ public class PersistLcpGuardTests
         // YouTube iframe only after tap — poster/facade first.
         Assert.Contains("_videoActivated", detail, StringComparison.Ordinal);
         Assert.Contains("detail-card__video-poster", detail, StringComparison.Ordinal);
-        Assert.Contains("VideoThumbnailUrl", detail, StringComparison.Ordinal);
+        Assert.Contains("Kb.Video.ExternalNotice", detail, StringComparison.Ordinal);
+        Assert.DoesNotContain("VideoThumbnailUrl", detail, StringComparison.Ordinal);
+        Assert.DoesNotContain("i.ytimg.com", detail, StringComparison.OrdinalIgnoreCase);
         var activatedIdx = detail.IndexOf("@if (_videoActivated)", StringComparison.Ordinal);
         var iframeIdx = detail.IndexOf("<iframe src=\"@VideoEmbedUrl\"", StringComparison.Ordinal);
         var posterIdx = detail.IndexOf("detail-card__video-poster", StringComparison.Ordinal);

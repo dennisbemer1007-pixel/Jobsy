@@ -16,16 +16,39 @@
         @if (_aiProvider is not null)
         {
             <p class="muted" data-testid="ai-provider">
-                <strong>@Culture["Admin.AiProvider.Title"]:</strong>
-                @(IsMistral
-                    ? Culture[_aiProvider.InferenceInEu ? "Admin.AiProvider.Mistral.Eu" : "Admin.AiProvider.Mistral.Global"]
-                    : Culture["Admin.AiProvider.OpenAI"])
-                @Culture["Admin.AiProvider.ReadOnly"]
+                @if (!_aiProvider.Available)
+                {
+                    <strong>@Culture["Admin.AiProvider.Unavailable"]</strong>
+                }
+                else
+                {
+                    <strong>@Culture["Admin.AiProvider.Title"]:</strong>
+                    @string.Format(
+                        Culture["Admin.AiProvider.ActiveLine"],
+                        AiName,
+                        string.IsNullOrWhiteSpace(_aiProvider.Model) ? "—" : _aiProvider.Model,
+                        Culture[RegionKey(_aiProvider.RegionCode)],
+                        string.IsNullOrWhiteSpace(_aiProvider.EndpointHost) ? "—" : _aiProvider.EndpointHost)
+                }
+                <span>@Culture["Admin.AiProvider.ReadOnly"]</span>
             </p>
-            @if (_aiProvider.FellBackToOpenAi)
-            {
-                <p class="muted">@Culture["Admin.AiProvider.Fallback"]</p>
-            }
+        }
+        @if (_mailProvider is not null)
+        {
+            <p class="muted" data-testid="mail-provider">
+                @if (!_mailProvider.Available)
+                {
+                    <strong>@Culture["Admin.MailProvider.Missing"]</strong>
+                }
+                else
+                {
+                    <strong>@string.Format(
+                        Culture["Admin.MailProvider.ActiveLine"],
+                        _mailProvider.Provider,
+                        Culture[MailRegionKey(_mailProvider.RegionCode)],
+                        string.IsNullOrWhiteSpace(_mailProvider.EndpointHost) ? "—" : _mailProvider.EndpointHost)</strong>
+                }
+            </p>
         }
         <div class="company-grid">
             @foreach (var cred in _credentials)
@@ -44,6 +67,7 @@
     private List<IntegrationHealthItem> _health = [];
     private List<IntegrationCredentialItem> _credentials = [];
     private AiProviderStatusItem? _aiProvider;
+    private MailProviderStatusItem? _mailProvider;
     private bool _loading = true;
     private string? _error;
     private string? _message;
@@ -82,14 +106,33 @@
         try
         {
             _aiProvider = await Api.GetAiProviderAsync();
+            _mailProvider = await Api.GetMailProviderAsync();
         }
         catch (Exception)
         {
             _aiProvider = null;
+            _mailProvider = null;
             _message = Culture["Common.Error"];
         }
     }
 
-    private bool IsMistral
-        => string.Equals(_aiProvider?.Provider, "Mistral", StringComparison.OrdinalIgnoreCase);
+    private string AiName
+        => string.Equals(_aiProvider?.Provider, "Mistral", StringComparison.OrdinalIgnoreCase)
+            ? "Mistral"
+            : "AI";
+
+    private static string RegionKey(string? code) => code switch
+    {
+        "eu" => "Admin.AiProvider.Region.Eu",
+        "us" => "Admin.AiProvider.Region.Us",
+        "global" => "Admin.AiProvider.Region.Global",
+        _ => "Admin.AiProvider.Region.Off"
+    };
+
+    private static string MailRegionKey(string? code) => code switch
+    {
+        "nl" => "Admin.MailProvider.Region.Nl",
+        "us" => "Admin.MailProvider.Region.Us",
+        _ => "Admin.AiProvider.Region.Off"
+    };
 }

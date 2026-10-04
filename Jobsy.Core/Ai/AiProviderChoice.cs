@@ -3,7 +3,10 @@ namespace Jobsy.Core.Ai;
 public enum AiProviderKind
 {
     OpenAI,
-    Mistral
+    Mistral,
+
+    /// <summary>The chosen provider cannot run. Calls do not go to another company.</summary>
+    Unavailable
 }
 
 /// <summary>Config values for <c>Ai:Provider</c>. Compared without case.</summary>
@@ -15,8 +18,9 @@ public static class AiProviderNames
 
 /// <summary>
 /// Which AI company actually receives calls.
-/// Mistral is used only when <c>Ai:Provider</c> is Mistral and <c>Mistral:ApiKey</c> is set.
-/// A missing key stays on OpenAI, so the privacy list does not name a company we do not call.
+/// OpenAI is used only when <c>Ai:Provider</c> is OpenAI (or left empty, which is that default).
+/// Mistral is used only when it is selected and <c>Mistral:ApiKey</c> is set.
+/// A missing or blank Mistral key does not fall back to OpenAI.
 /// </summary>
 public static class AiProviderChoice
 {
@@ -29,8 +33,14 @@ public readonly record struct AiProviderDecision(
     bool RequestedMistralWithoutKey,
     bool UnknownProvider)
 {
-    public string Name
-        => Kind == AiProviderKind.Mistral ? AiProviderNames.Mistral : AiProviderNames.OpenAI;
+    public bool Available => Kind is AiProviderKind.OpenAI or AiProviderKind.Mistral;
+
+    public string Name => Kind switch
+    {
+        AiProviderKind.Mistral => AiProviderNames.Mistral,
+        AiProviderKind.OpenAI => AiProviderNames.OpenAI,
+        _ => "Unavailable"
+    };
 
     public static AiProviderDecision Decide(string? provider, string? mistralApiKey)
     {
@@ -43,14 +53,17 @@ public readonly record struct AiProviderDecision(
 
         if (raw.Equals(AiProviderNames.Mistral, StringComparison.OrdinalIgnoreCase))
         {
-            if (string.IsNullOrWhiteSpace(mistralApiKey))
+            if (!IsUsableKey(mistralApiKey))
             {
-                return new AiProviderDecision(AiProviderKind.OpenAI, true, false);
+                return new AiProviderDecision(AiProviderKind.Unavailable, true, false);
             }
 
             return new AiProviderDecision(AiProviderKind.Mistral, false, false);
         }
 
-        return new AiProviderDecision(AiProviderKind.OpenAI, false, true);
+        return new AiProviderDecision(AiProviderKind.Unavailable, false, true);
     }
+
+    /// <summary>Blank keys are missing. A key with only spaces is invalid.</summary>
+    public static bool IsUsableKey(string? apiKey) => !string.IsNullOrWhiteSpace(apiKey);
 }

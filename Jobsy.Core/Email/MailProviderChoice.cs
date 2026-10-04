@@ -9,16 +9,21 @@ public static class MailProviderNames
 public enum MailProviderKind
 {
     Resend = 0,
-    Lettermint = 1
+    Lettermint = 1,
+
+    /// <summary>Lettermint was selected but the key is missing. Mail is not sent via Resend.</summary>
+    NotConfigured = 2
 }
 
 /// <summary>
 /// Lettermint is used only when it is selected and an API key is configured.
-/// Otherwise mail stays on Resend and <see cref="WarnMissingLettermintKey"/> is true
-/// so the caller can log that fallback once.
+/// A missing key does not fall back to Resend. <see cref="WarnMissingLettermintKey"/>
+/// tells the caller to log that mail is off.
 /// </summary>
 public readonly record struct MailProviderChoice(MailProviderKind Kind, bool WarnMissingLettermintKey)
 {
+    public bool Available => Kind is MailProviderKind.Resend or MailProviderKind.Lettermint;
+
     public static MailProviderChoice Choose(string? provider, bool lettermintApiKeyConfigured)
     {
         var wantsLettermint = string.Equals(
@@ -32,7 +37,7 @@ public readonly record struct MailProviderChoice(MailProviderKind Kind, bool War
 
         if (!lettermintApiKeyConfigured)
         {
-            return new MailProviderChoice(MailProviderKind.Resend, true);
+            return new MailProviderChoice(MailProviderKind.NotConfigured, true);
         }
 
         return new MailProviderChoice(MailProviderKind.Lettermint, false);

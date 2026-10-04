@@ -20,20 +20,28 @@ public static class LegalProcessorSelection
         string? mistralBaseUrl)
     {
         var mailChoice = MailProviderChoice.Choose(mailProvider, lettermintApiKeyConfigured);
-        var activeMail = mailChoice.Kind == MailProviderKind.Lettermint
-            ? MailProviderNames.Lettermint
-            : MailProviderNames.Resend;
-        var activeAi = aiProvider == AiProviderKind.Mistral
-            ? AiProviderNames.Mistral
-            : AiProviderNames.OpenAI;
+        var activeMail = mailChoice.Kind switch
+        {
+            MailProviderKind.Lettermint => MailProviderNames.Lettermint,
+            MailProviderKind.Resend => MailProviderNames.Resend,
+            _ => null
+        };
+        var activeAi = aiProvider switch
+        {
+            AiProviderKind.Mistral => AiProviderNames.Mistral,
+            AiProviderKind.OpenAI => AiProviderNames.OpenAI,
+            _ => null
+        };
         var mistralInEu = aiProvider == AiProviderKind.Mistral
             && MistralEndpoint.InferenceStaysInEu(mistralBaseUrl);
 
         return LegalProcessors.All
             .Where(processor => processor.WhenMailProvider is null
-                || string.Equals(processor.WhenMailProvider, activeMail, StringComparison.OrdinalIgnoreCase))
+                || (activeMail is not null
+                    && string.Equals(processor.WhenMailProvider, activeMail, StringComparison.OrdinalIgnoreCase)))
             .Where(processor => processor.WhenAiProvider is null
-                || string.Equals(processor.WhenAiProvider, activeAi, StringComparison.OrdinalIgnoreCase))
+                || (activeAi is not null
+                    && string.Equals(processor.WhenAiProvider, activeAi, StringComparison.OrdinalIgnoreCase)))
             .Select(processor => ApplyMistralHost(processor, mistralInEu))
             .ToList();
     }

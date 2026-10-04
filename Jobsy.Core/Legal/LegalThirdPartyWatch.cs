@@ -15,7 +15,9 @@ public static class LegalThirdPartyWatch
         ("mollie.com", "mollie"),
         ("cloudflare.com", "cloudflare"),
         ("scaleway.com", "scaleway"),
-        ("mistral.ai", "mistral")
+        ("mistral.ai", "mistral"),
+        ("pdok.nl", "pdok"),
+        ("nominatim.openstreetmap.org", "nominatim")
     ];
 
     public static readonly IReadOnlyList<(string PackageSegment, string ProcessorId)> Packages =
