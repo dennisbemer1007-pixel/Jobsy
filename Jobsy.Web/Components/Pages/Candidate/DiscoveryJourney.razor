@@ -490,6 +490,7 @@
                         <span class="journey-only-mobile">@Culture.Format("Discovery.TestOf", _countedStep - 6)</span>
                     </p>
                     <OnboardingMiniTest Step="_countedStep"
+                                        FlowEpoch="_miniFlowEpoch"
                                         CurrentQuestion="_currentQuestion"
                                         TestTabs="MiniTestTabs"
                                         Questions="_miniQuestions"
@@ -568,6 +569,7 @@
     private int _countedStep;
     private int _depth;
     private int _currentQuestion;
+    private int _miniFlowEpoch;
     private string _saveStatus = "idle";
     private string? _error;
     private string _startLead = "";
@@ -752,7 +754,8 @@
                  && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
             2 => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0
                  && !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
-            >= 7 and <= 10 => _miniQuestions.All(q => _miniAnswers.ContainsKey(q.Id)),
+            >= 7 and <= 10 => _miniQuestions.Count > 0
+                && _miniQuestions.All(q => MiniAnswered(q.Id)),
             _ => true
         };
 
@@ -1122,9 +1125,34 @@
         }
     }
 
+    private bool MiniAnswered(int id)
+        => _serverAnswers.ContainsKey(id) || _miniAnswers.ContainsKey(id);
+
+    private void FocusFirstOpenMini()
+    {
+        var open = _miniQuestions.FindIndex(q => !MiniAnswered(q.Id));
+        if (open < 0)
+        {
+            return;
+        }
+
+        _currentQuestion = open;
+        _miniFlowEpoch++;
+    }
+
     private async Task NextAsync()
     {
-        if (!CanNext || _busy) return;
+        if (!CanNext || _busy)
+        {
+            // Afronden used to return here with no message when saved answers
+            // were missing from _miniAnswers. Land on the first open question.
+            if (!_busy && _countedStep is >= 7 and <= 10)
+            {
+                FocusFirstOpenMini();
+            }
+
+            return;
+        }
         _busy = true;
         _error = null;
         _miniArrivedViaBack = false;

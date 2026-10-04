@@ -1,7 +1,9 @@
 using System.Net;
 using System.Text;
 using Bunit;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Pages.Candidate;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
@@ -29,7 +31,7 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
         Services.AddSingleton<IFeatureFlags>(new FixedFlags());
         Services.AddSingleton<IGeocodingClient>(new NoGeocoder());
         Services.AddSingleton<UserFacingError>();
-        Services.AddSingleton(new JobsyApiClient(new HttpClient(new Handler()) { BaseAddress = new Uri("http://localhost") }));
+        Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
     }
@@ -53,8 +55,49 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
         Assert.DoesNotContain("Niet bewaard", cut.Markup, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Finish_after_dive_opens_the_shed_when_earlier_answers_are_already_saved()
+    {
+        var saved = TestDepthRules.QuestionIdsUpTo(AssessmentKind.Competence, 10).Take(6).ToList();
+        foreach (var id in saved)
+        {
+            _handler.CompetencyAnswers[id] = 4;
+        }
+
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/candidate/ontdekkingsreis?stap=shed-7");
+        var cut = Render<DiscoveryJourney>();
+        cut.WaitForAssertion(() => Assert.Contains("Iets dieper", cut.Markup, StringComparison.Ordinal));
+        cut.FindAll("button").First(b => b.TextContent.Contains("Iets dieper", StringComparison.Ordinal)).Click();
+        cut.WaitForAssertion(() => Assert.Contains("Duik dieper", cut.Markup, StringComparison.Ordinal));
+        cut.Find("button.btn-compact--primary").Click();
+        cut.WaitForAssertion(() => Assert.Contains("Vraag 7 van 10", cut.Markup, StringComparison.Ordinal));
+
+        for (var step = 0; step < 4; step++)
+        {
+            cut.Find("input[type=radio][value='4']").Change(new ChangeEventArgs { Value = "4" });
+            cut.Find("button.test-flow__next").Click();
+        }
+
+        cut.WaitForAssertion(() => Assert.Contains("Wil je dieper", cut.Markup, StringComparison.Ordinal));
+        Assert.DoesNotContain("Niet bewaard", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vraag 10 van 10", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("shed-7", nav.Uri, StringComparison.Ordinal);
+    }
+
+    private readonly Handler _handler = new();
+
     private sealed class Handler : HttpMessageHandler
     {
+        public Dictionary<int, int> CompetencyAnswers { get; } = new()
+        {
+            [1] = 4,
+            [6] = 4,
+            [11] = 4,
+            [16] = 4,
+            [21] = 4
+        };
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
@@ -72,7 +115,7 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
                       {"id":"11111111-1111-1111-1111-111111111111","firstName":"Sanne","lastName":"Test","fullName":"Sanne Test","testAiConsentAt":"2026-10-01T00:00:00Z","preferences":{}}
                       """
                     : path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
-                        ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", new[] { 1, 6, 11, 16, 21 }.Select(id => $"\"{id}\":4")) + "}}"
+                        ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", CompetencyAnswers.Select(pair => $"\"{pair.Key}\":{pair.Value}")) + "}}"
                         : "{\"status\":\"Draft\",\"answers\":{}}";
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
