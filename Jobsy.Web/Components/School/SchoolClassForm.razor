@@ -45,14 +45,14 @@
     <fieldset class="sch-seg-fieldset">
         <legend>@Culture["School.Class.Field.Group"]</legend>
         <div class="sch-seg" role="radiogroup" aria-label="@Culture["School.Class.Field.Group"]">
-            <label class="sch-seg__opt @(Year == 7 ? "is-on" : null)">
-                <input type="radio" name="@_groupGroup" value="7" checked="@(Year == 7)"
-                       @onchange="() => SetYear(7)" />
+            <label class="sch-seg__opt @(_year == 7 ? "is-on" : null)">
+                <input type="radio" name="@_groupGroup" value="7" checked="@(_year == 7)"
+                       @onchange="OnYearRadio" />
                 @Culture["School.Class.Group.7"]
             </label>
-            <label class="sch-seg__opt @(Year == 8 ? "is-on" : null)">
-                <input type="radio" name="@_groupGroup" value="8" checked="@(Year == 8)"
-                       @onchange="() => SetYear(8)" />
+            <label class="sch-seg__opt @(_year == 8 ? "is-on" : null)">
+                <input type="radio" name="@_groupGroup" value="8" checked="@(_year == 8)"
+                       @onchange="OnYearRadio" />
                 @Culture["School.Class.Group.8"]
             </label>
         </div>
@@ -75,9 +75,9 @@ else
             @for (var y = 1; y <= 6; y++)
             {
                 var year = y;
-                <label class="sch-seg__opt @(Year == year ? "is-on" : null)">
-                    <input type="radio" name="@_yearGroup" value="@year" checked="@(Year == year)"
-                           @onchange="() => SetYear(year)" />
+                <label class="sch-seg__opt @(_year == year ? "is-on" : null)">
+                    <input type="radio" name="@_yearGroup" value="@year" checked="@(_year == year)"
+                           @onchange="OnYearRadio" />
                     @year
                 </label>
             }
@@ -123,6 +123,12 @@ else
     private readonly string _groupGroup = $"group-{Guid.NewGuid():N}";
     private readonly string _yearGroup = $"year-{Guid.NewGuid():N}";
     private bool _isPrimary;
+    private int _year = 2;
+    private bool _seen;
+    private bool _yearLocked;
+    private bool _kindChanging;
+    private int _kindEpoch;
+    private bool _echoing;
 
     [Parameter] public string ClassName { get; set; } = "";
     [Parameter] public EventCallback<string> ClassNameChanged { get; set; }
@@ -138,9 +144,42 @@ else
     [Parameter] public HashSet<Guid> SelectedTeacherIds { get; set; } = [];
     [Parameter] public EventCallback StateChanged { get; set; }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         _isPrimary = SchoolLevelRules.IsPrimary(Level);
+        if (!_seen)
+        {
+            _year = Year;
+            _seen = true;
+            return;
+        }
+
+        // A kind switch re-renders with the previous year before YearChanged runs.
+        // After the user picks a year, that stale value must not win.
+        if (_yearLocked)
+        {
+            if (Year != _year && !_echoing)
+            {
+                _echoing = true;
+                try
+                {
+                    await YearChanged.InvokeAsync(_year);
+                }
+                finally
+                {
+                    _echoing = false;
+                }
+            }
+
+            return;
+        }
+
+        if (_kindChanging)
+        {
+            return;
+        }
+
+        _year = Year;
     }
 
     private async Task OnClassNameAfter()
@@ -167,27 +206,44 @@ else
             return;
         }
 
+        _kindChanging = true;
+        var epoch = ++_kindEpoch;
+        _yearLocked = false;
         _isPrimary = primary;
-        if (primary)
-        {
-            Level = SchoolLevel.Groep78;
-            Year = 7;
-        }
-        else
-        {
-            Level = SchoolLevel.Havo;
-            Year = 1;
-        }
+        var intended = primary ? 7 : 1;
+        _year = intended;
+        Year = intended;
+        Level = primary ? SchoolLevel.Groep78 : SchoolLevel.Havo;
 
         await LevelChanged.InvokeAsync(Level);
-        await YearChanged.InvokeAsync(Year);
+        if (epoch == _kindEpoch && !_yearLocked)
+        {
+            _year = intended;
+            Year = intended;
+            await YearChanged.InvokeAsync(intended);
+        }
+
+        _kindChanging = false;
         await NotifyChanged();
+    }
+
+    private async Task OnYearRadio(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var year))
+        {
+            return;
+        }
+
+        await SetYear(year);
     }
 
     private async Task SetYear(int year)
     {
+        _yearLocked = true;
+        _kindEpoch++;
+        _year = year;
         Year = year;
-        await YearChanged.InvokeAsync(Year);
+        await YearChanged.InvokeAsync(year);
         await NotifyChanged();
     }
 

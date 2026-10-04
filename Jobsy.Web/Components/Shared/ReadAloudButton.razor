@@ -25,6 +25,9 @@
 
     [Parameter] public string SpeechKey { get; set; } = "";
 
+    /// <summary>Overrides the play aria-label. Pupil pages use the short "Lees voor".</summary>
+    [Parameter] public string? PlayAria { get; set; }
+
     private bool _show;
     private bool _speaking;
     private string _spoken = "";
@@ -33,7 +36,9 @@
 
     private string EffectiveKey => string.IsNullOrWhiteSpace(SpeechKey) ? "text-" + StableHash(Text) : SpeechKey;
 
-    private string AriaLabel => _speaking ? Culture["ReadAloud.StopAria"] : Culture["ReadAloud.PlayAria"];
+    private string AriaLabel => _speaking
+        ? Culture["ReadAloud.StopAria"]
+        : string.IsNullOrWhiteSpace(PlayAria) ? Culture["ReadAloud.PlayAria"] : PlayAria;
 
     protected override void OnInitialized()
     {

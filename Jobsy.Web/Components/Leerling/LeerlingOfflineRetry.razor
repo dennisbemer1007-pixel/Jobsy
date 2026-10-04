@@ -2,6 +2,7 @@
 @inject CultureState Culture
 
 <section class="ll-card" data-testid="leerling-offline">
+    <LeerlingSpeak Text="@Culture["Leerling.Reis.Offline"]" SpeechKey="ll-offline" />
     <p class="ll-error" role="alert">@Culture["Leerling.Reis.Offline"]</p>
     <button type="button" class="btn-secondary" disabled="@Busy" @onclick="OnRetry">
         @Culture["Leerling.Reis.Retry"]

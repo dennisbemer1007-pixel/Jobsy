@@ -7,7 +7,6 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
-@using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -32,14 +31,12 @@ else if (_result is null)
 else
 {
     <div class="ll-reis ll-dream" data-testid="leerling-droombaan">
-        <div class="ll-result__mascot">
-            <LeerlingLobster PlatesShed="10" Size="96" />
-            <p class="ll-bubble">@LobsterLine</p>
-        </div>
+        <LeerlingCoachCue Text="@CoachHint" />
 
         <section class="ll-card">
             <p class="ll-question__world">@Culture["LeerlingDroom.Title"]</p>
             <h1>@Culture["LeerlingDroom.Lead"]</h1>
+            <LeerlingSpeak Text="@Spoken" SpeechKey="ll-dream" />
 
             <label class="ll-field">
                 <span class="visually-hidden">@Culture["LeerlingDroom.Search"]</span>
@@ -152,10 +149,35 @@ else
     private IReadOnlyList<DreamJob> _matches = [];
     private string? _error;
 
-    private string LobsterLine =>
+    private string CoachHint =>
         !string.IsNullOrWhiteSpace(_dream?.JobTitle)
             ? $"{_dream.JobTitle}? Wauw!"
-            : Culture["LeerlingDroom.Lobster.Generic"];
+            : Culture["Leerling.Coach.Dream"];
+
+    private string Spoken
+    {
+        get
+        {
+            var parts = new List<string> { Culture["LeerlingDroom.Lead"] };
+            if (_dream?.HaveItems is { Count: > 0 })
+            {
+                parts.AddRange(_dream.HaveItems);
+            }
+
+            if (_dream?.LearnItems is { Count: > 0 })
+            {
+                parts.AddRange(_dream.LearnItems);
+            }
+
+            if (_result?.Story.JobIdeas is { Count: > 0 }
+                && string.Equals(_dream?.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
+            {
+                parts.AddRange(_result.Story.JobIdeas);
+            }
+
+            return string.Join(". ", parts);
+        }
+    }
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
