@@ -1269,7 +1269,8 @@ public class AdminController : ControllerBase
                 v.StartDate,
                 v.EndDate,
                 CreatedVia = v.CreatedVia.ToString(),
-                v.ContentModerationPassed
+                v.ContentModerationPassed,
+                v.ClosedAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -1318,7 +1319,8 @@ public class AdminController : ControllerBase
             likes.GetValueOrDefault(v.Id),
             v.ExtensionCount > 0,
             v.CreatedVia,
-            v.ContentModerationPassed)).ToList();
+            v.ContentModerationPassed,
+            v.ClosedAtUtc)).ToList();
 
         if (page is null)
         {

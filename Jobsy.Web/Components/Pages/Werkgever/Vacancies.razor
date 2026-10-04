@@ -210,11 +210,7 @@
                                     </span>
                                 </td>
                                 <td class="tabular" data-label="@Culture["WgVac.Col.Applications"]">
-                                    @if (v.NewApplicationCount > 0)
-                                    {
-                                        <span class="wg-vac__new" title="@Culture["WgVac.Col.Applications"]">@v.NewApplicationCount</span>
-                                    }
-                                    @v.ApplicationCount
+                                    <VacancyApplicationCount Total="v.ApplicationCount" NewCount="v.NewApplicationCount" />
                                 </td>
                                 @if (_colViews)
                                 {

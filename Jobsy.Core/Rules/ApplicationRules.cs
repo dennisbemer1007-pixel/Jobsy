@@ -135,4 +135,8 @@ public static class ApplicationRules
         application.EmailVerificationExpiresAt = null;
         application.EmailVerificationFailedAttempts = 0;
     }
+
+    /// <summary>In-app confirmation body. The subject keeps the vacancy title; the body does not.</summary>
+    public static string ConfirmationNoticeBody(string companyName)
+        => $"{companyName}: je sollicitatie is ontvangen.";
 }
