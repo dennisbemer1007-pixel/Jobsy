@@ -15,6 +15,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -1388,15 +1389,22 @@ public partial class MeController : ControllerBase
         }
 
         var existing = await _db.CandidateReferences.Where(r => r.UserId == userId).ToListAsync(cancellationToken);
+        var oldIds = existing.Select(r => r.Id).ToList();
+        var confirmations = oldIds.Count == 0
+            ? new List<ReferenceConfirmation>()
+            : await _db.ReferenceConfirmations
+                .Where(c => oldIds.Contains(c.CandidateReferenceId))
+                .ToListAsync(cancellationToken);
         if (existing.Count > 0)
         {
             _db.CandidateReferences.RemoveRange(existing);
         }
 
         var order = 0;
+        var added = new List<Core.Entities.CandidateReference>();
         foreach (var row in rows)
         {
-            _db.CandidateReferences.Add(new Core.Entities.CandidateReference
+            var created = new Core.Entities.CandidateReference
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
@@ -1406,9 +1414,12 @@ public partial class MeController : ControllerBase
                 Phone = row.Phone!,
                 SortOrder = order++,
                 CreatedAtUtc = DateTime.UtcNow
-            });
+            };
+            added.Add(created);
+            _db.CandidateReferences.Add(created);
         }
 
+        ReferenceConfirmationService.Rebind(existing, added, confirmations);
         return null;
     }
 

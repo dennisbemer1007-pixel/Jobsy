@@ -515,6 +515,84 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<EmailPreferencesDto>(cancellationToken: ct);
     }
 
+    public async Task<IReadOnlyList<ReferenceConfirmationItem>> GetReferenceConfirmationsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await GetApiJsonAsync<List<ReferenceConfirmationItem>>("api/me/reference-confirmations", ct) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<(bool Ok, string? Message)> RequestReferenceConfirmationAsync(
+        Guid referenceId,
+        string roleTitle,
+        bool consentAccepted,
+        CancellationToken ct = default)
+    {
+        var response = await PostApiJsonAsync(
+            $"api/me/references/{referenceId}/confirmation",
+            new { roleTitle, consentAccepted },
+            ct);
+        if (response.IsSuccessStatusCode)
+        {
+            return (true, null);
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        return (false, ExtractMessage(body) ?? "De mail kon niet weg. Probeer het later opnieuw.");
+    }
+
+    public async Task<bool> SetReferenceShareAsync(
+        Guid referenceId,
+        bool showOnPartnerPassport,
+        bool shareWorkedHere,
+        bool sharePeriod,
+        bool shareDidWell,
+        bool shareWorkAgain,
+        bool shareExtra,
+        CancellationToken ct = default)
+    {
+        var response = await PutApiJsonAsync(
+            $"api/me/references/{referenceId}/confirmation/share",
+            new
+            {
+                showOnPartnerPassport,
+                shareWorkedHere,
+                sharePeriod,
+                shareDidWell,
+                shareWorkAgain,
+                shareExtra
+            },
+            ct);
+        return response.IsSuccessStatusCode;
+    }
+
+    public sealed record ReferenceConfirmationItem(
+        Guid ReferenceId,
+        string EmployerName,
+        string ContactName,
+        string Email,
+        string Status,
+        string? RoleTitle,
+        DateTime? ConfirmedAtUtc,
+        DateTime? DeclinedAtUtc,
+        bool? WorkedHere,
+        string? Period,
+        string? DidWell,
+        string? WorkAgain,
+        string? Extra,
+        bool ShowOnPartnerPassport,
+        bool ShareWorkedHere,
+        bool SharePeriod,
+        bool ShareDidWell,
+        bool ShareWorkAgain,
+        bool ShareExtra,
+        int RequestsUsed);
+
     public sealed record EmailPreferenceItemDto(string Key, string Label, bool Enabled);
 
     public sealed record EmailPreferencesDto(

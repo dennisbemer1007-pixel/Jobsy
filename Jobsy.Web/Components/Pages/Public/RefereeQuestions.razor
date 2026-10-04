@@ -1,0 +1,54 @@
+@namespace Jobsy.Web.Components.Pages.Public
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<form method="post" action="@($"/referentie/{Token}")" class="login-form referee-form" data-enhance="false" data-referee-form>
+    <input type="hidden" name="action" value="submit" />
+    <p class="login-lead">@Culture["Referee.Privacy"]</p>
+
+    <fieldset class="referee-form__q">
+        <legend>@Culture.Format("Referee.Q1", CandidateName, RoleTitle)</legend>
+        <label class="referee-form__choice"><input type="radio" name="worked" value="ja" required /> @Culture["Referee.WorkedYes"]</label>
+        <label class="referee-form__choice"><input type="radio" name="worked" value="nee" /> @Culture["Referee.WorkedNo"]</label>
+    </fieldset>
+
+    <label class="field-label" for="referee-period">@Culture["Referee.Q2"]</label>
+    <input id="referee-period" class="text-input" name="period" maxlength="120" required autocomplete="off" />
+
+    <label class="field-label" for="referee-well">@Culture.Format("Referee.Q3", CandidateName)</label>
+    <textarea id="referee-well" class="text-input" name="didWell" maxlength="400" required rows="3"></textarea>
+
+    <fieldset class="referee-form__q">
+        <legend>@Culture.Format("Referee.Q4", CandidateName)</legend>
+        <label class="referee-form__choice"><input type="radio" name="workAgain" value="ja" required /> @Culture["Referee.AgainYes"]</label>
+        <label class="referee-form__choice"><input type="radio" name="workAgain" value="nee" /> @Culture["Referee.AgainNo"]</label>
+        <label class="referee-form__choice"><input type="radio" name="workAgain" value="misschien" /> @Culture["Referee.AgainMaybe"]</label>
+    </fieldset>
+
+    <label class="field-label" for="referee-extra">@Culture["Referee.Q5"]</label>
+    <p class="muted">@Culture["Referee.Q5Hint"]</p>
+    <textarea id="referee-extra" class="text-input" name="extra" maxlength="400" rows="3"></textarea>
+
+    <button type="submit" class="login-submit">@Culture["Referee.Submit"]</button>
+</form>
+
+<form method="post" action="@($"/referentie/{Token}")" class="referee-form__side" data-enhance="false">
+    <input type="hidden" name="action" value="decline" />
+    <button type="submit" class="btn-compact">@Culture["Referee.Decline"]</button>
+</form>
+
+<details class="referee-form__misuse">
+    <summary>@Culture["Referee.Misuse"]</summary>
+    <form method="post" action="@($"/referentie/{Token}")" data-enhance="false">
+        <input type="hidden" name="action" value="misuse" />
+        <p class="muted">@Culture["Referee.MisuseHint"]</p>
+        <textarea class="text-input" name="message" maxlength="500" rows="3"></textarea>
+        <button type="submit" class="btn-compact">@Culture["Referee.MisuseSend"]</button>
+    </form>
+</details>
+
+@code {
+    [Parameter, EditorRequired] public string Token { get; set; } = "";
+    [Parameter, EditorRequired] public string CandidateName { get; set; } = "";
+    [Parameter, EditorRequired] public string RoleTitle { get; set; } = "";
+}
