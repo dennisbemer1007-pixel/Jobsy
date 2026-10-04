@@ -8,7 +8,6 @@
 @using Jobsy.Web.Components.Ui.Enterprise
 @inject JobsyApiClient Api
 @inject CultureState Culture
-@inject NavigationManager Nav
 @inject IJSRuntime Js
 
 <PageTitle>@Culture["AdminScholen.Report.Title"] · Lobsy</PageTitle>
@@ -339,10 +338,13 @@
             var questionSet = Enum.TryParse<PupilQuestionSet>(_questionSetText, out var qs)
                 ? qs
                 : PupilQuestionSet.Vo;
-            var url = Api.BuildAdminSchoolReportCsvUrl(
-                _year == 0 ? null : _year, schoolId, level, year, questionSet);
-            // Absolute API path via navigation (cookie auth on same origin).
-            await Js.InvokeVoidAsync("open", Nav.ToAbsoluteUri(url).ToString(), "_blank");
+            await Api.DownloadAdminSchoolReportCsvAsync(
+                Js,
+                _year == 0 ? null : _year,
+                schoolId,
+                level,
+                year,
+                questionSet);
         }
         catch (Exception)
         {
