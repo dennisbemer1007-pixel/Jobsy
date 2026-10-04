@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using System.Globalization
+@using Jobsy.Core.Time
 @using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Ui
@@ -24,7 +25,7 @@
                 <button type="button"
                         class="period-tab @(_periodKey == p.Key ? "period-tab--active" : null)"
                         role="tab"
-                        aria-selected="@(_periodKey == p.Key)"
+                        aria-selected="@(_periodKey == p.Key ? "true" : "false")"
                         @onclick="() => SetPeriodAsync(p.Key)">
                     @p.Label
                 </button>
@@ -81,25 +82,25 @@
                                     <th>@Culture["AdminFinance.Col.Date"]</th>
                                     <th>@Culture["AdminFinance.Col.Org"]</th>
                                     <th>@Culture["AdminFinance.Col.Kind"]</th>
-                                    <th>Reason</th>
-                                    <th>Amount</th>
-                                    <th>Old</th>
-                                    <th>New</th>
                                     <th>@Culture["AdminFinance.Col.Reason"]</th>
+                                    <th>@Culture["AdminFinance.Col.Amount"]</th>
+                                    <th>@Culture["AdminFinance.Col.Old"]</th>
+                                    <th>@Culture["AdminFinance.Col.New"]</th>
+                                    <th>@Culture["AdminFinance.Col.Note"]</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var row in _filteredLogs)
                                 {
                                     <tr>
-                                        <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
-                                        <td>@row.CompanyName</td>
-                                        <td>@row.Kind</td>
-                                        <td>@row.Reason</td>
-                                        <td>@row.Amount.ToString("0.##")</td>
-                                        <td>@row.OldBalance.ToString("0.##")</td>
-                                        <td>@row.NewBalance.ToString("0.##")</td>
-                                        <td class="muted">@row.Note</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Date"]">@AmsterdamTime.ToLocal(row.CreatedAt).ToString("dd-MM HH:mm")</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Org"]">@row.CompanyName</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Kind"]">@row.Kind</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Reason"]">@AdminActionLabels.VatStatus(row.Reason, key => Culture[key])</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Amount"]">@row.Amount.ToString("0.##")</td>
+                                        <td data-label="@Culture["AdminFinance.Col.Old"]">@row.OldBalance.ToString("0.##")</td>
+                                        <td data-label="@Culture["AdminFinance.Col.New"]">@row.NewBalance.ToString("0.##")</td>
+                                        <td class="muted" data-label="@Culture["AdminFinance.Col.Note"]">@row.Note</td>
                                     </tr>
                                 }
                             </tbody>
@@ -115,7 +116,7 @@
                         <button type="button"
                                 class="period-tab @(_metricsPeriod == p.Key ? "period-tab--active" : null)"
                                 role="tab"
-                                aria-selected="@(_metricsPeriod == p.Key)"
+                                aria-selected="@(_metricsPeriod == p.Key ? "true" : "false")"
                                 @onclick="() => SetMetricsPeriodAsync(p.Key)">
                             @p.Label
                         </button>
@@ -172,7 +173,7 @@
                                                 {
                                                     <text>@item.Amount.Value.ToString("0.##") · </text>
                                                 }
-                                                @item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")
+                                                @AmsterdamTime.ToLocal(item.CreatedAt).ToString("dd-MM HH:mm")
                                             </span>
                                         </div>
                                     }
@@ -210,20 +211,20 @@
                             @foreach (var row in _visiblePurchases)
                             {
                                 <tr>
-                                    <td>@row.IssuedAt.ToLocalTime().ToString("dd-MM-yyyy")</td>
-                                    <td><code class="admin-mono">@row.InvoiceNumber</code></td>
-                                    <td>@row.CompanyName</td>
-                                    <td>
+                                    <td data-label="@Culture["AdminFinance.Col.Date"]">@AmsterdamTime.ToLocal(row.IssuedAt).ToString("dd-MM-yyyy")</td>
+                                    <td data-label="@Culture["AdminFinance.Col.Invoice"]"><code class="admin-mono">@row.InvoiceNumber</code></td>
+                                    <td data-label="@Culture["AdminFinance.Col.Org"]">@row.CompanyName</td>
+                                    <td data-label="@Culture["AdminFinance.Col.Product"]">
                                         <strong>@row.PackSize tokens</strong>
                                         <span class="muted">@AdminFinanceDisplay.PaymentMethodLabel(row.PaymentMethod)</span>
                                     </td>
-                                    <td>
+                                    <td data-label="Mollie">
                                         <span class="status-pill status-pill--@AdminFinanceDisplay.MollieStatusTone(row.MollieStatus)">
                                             @AdminFinanceDisplay.MollieStatusLabel(row.MollieStatus)
                                         </span>
                                     </td>
-                                    <td>@AdminFinanceDisplay.Euro(row.TotalAmountEuro)</td>
-                                    <td>
+                                    <td data-label="@Culture["AdminFinance.Col.InclVat"]">@AdminFinanceDisplay.Euro(row.TotalAmountEuro)</td>
+                                    <td data-label="@Culture["Common.Actions"]">
                                         <RowActionsMenu>
                                             <button type="button" class="row-action" disabled="@_exportBusy"
                                                     @onclick="() => DownloadPdfAsync(row)">
@@ -469,7 +470,7 @@
             _summary = summaryTask.Result;
             _purchases = purchasesTask.Result.ToList();
             _visiblePurchases = _filterMonth is int m
-                ? _purchases.Where(p => p.IssuedAt.ToLocalTime().Month == m).ToList()
+                ? _purchases.Where(p => AmsterdamTime.ToLocal(p.IssuedAt).Month == m).ToList()
                 : _purchases;
             _kpis = BuildKpis(_summary);
         }
@@ -535,7 +536,7 @@
         _exportBusy = true;
         try
         {
-            await Api.DownloadTokenPurchasesCsvAsync(Js, _filterYear, _filterQuarter);
+            await Api.DownloadTokenPurchasesCsvAsync(Js, _filterYear, _filterQuarter, _filterMonth);
         }
         catch (Exception ex)
         {

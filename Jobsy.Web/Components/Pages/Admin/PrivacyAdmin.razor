@@ -4,6 +4,7 @@
 @using System.Text.Json
 @using Jobsy.Core.Privacy
 @using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -39,9 +40,9 @@
                     <th scope="col">@Culture["AdminPrivacy.Col.Days"]</th>
                 </Header>
                 <Rows>
-                    <tr><td>@Culture["AdminPrivacy.AdminAudit"]</td><td>@(_summary?.AdminAuditRetentionDays ?? PrivacyConstants.AdminAuditRetentionDays)</td></tr>
-                    <tr><td>@Culture["AdminPrivacy.AccessLog"]</td><td>@(_summary?.PersonalDataAccessLogRetentionDays ?? PrivacyConstants.PersonalDataAccessLogRetentionDays)</td></tr>
-                    <tr><td>@Culture["AdminPrivacy.PlatformLogs"]</td><td>@(_summary?.PlatformLogRetentionDays ?? PrivacyConstants.PlatformLogRetentionDays)</td></tr>
+                    <tr><td data-label="@Culture["AdminPrivacy.Col.Dataset"]">@Culture["AdminPrivacy.AdminAudit"]</td><td data-label="@Culture["AdminPrivacy.Col.Days"]">@(_summary?.AdminAuditRetentionDays ?? PrivacyConstants.AdminAuditRetentionDays)</td></tr>
+                    <tr><td data-label="@Culture["AdminPrivacy.Col.Dataset"]">@Culture["AdminPrivacy.AccessLog"]</td><td data-label="@Culture["AdminPrivacy.Col.Days"]">@(_summary?.PersonalDataAccessLogRetentionDays ?? PrivacyConstants.PersonalDataAccessLogRetentionDays)</td></tr>
+                    <tr><td data-label="@Culture["AdminPrivacy.Col.Dataset"]">@Culture["AdminPrivacy.PlatformLogs"]</td><td data-label="@Culture["AdminPrivacy.Col.Days"]">@(_summary?.PlatformLogRetentionDays ?? PrivacyConstants.PlatformLogRetentionDays)</td></tr>
                 </Rows>
             </AdminDataTable>
         </section>
@@ -56,7 +57,7 @@
                     <ul class="admin-audit-changes">
                         @foreach (var kv in ParseCounts(_summary.LastRetentionDetailsJson))
                         {
-                            <li><span class="admin-mono">@kv.Key</span>: @kv.Value</li>
+                            <li><span>@AdminActionLabels.Resource(kv.Key, key => Culture[key])</span>: @kv.Value</li>
                         }
                     </ul>
                 }
@@ -79,9 +80,9 @@
                     @foreach (var e in _deleted)
                     {
                         <tr>
-                            <td class="admin-mono">@AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM HH:mm")</td>
-                            <td>@e.TargetLabel</td>
-                            <td>@e.Result</td>
+                            <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM HH:mm")</td>
+                            <td data-label="@Culture["AdminAudit.Col.Object"]">@e.TargetLabel</td>
+                            <td data-label="@Culture["AdminAudit.Col.Result"]">@e.Result</td>
                         </tr>
                     }
                 </Rows>

@@ -353,6 +353,8 @@ public sealed partial class JobsyApiClient
         string? mfa = null,
         string? active = null,
         string? tab = null,
+        string? sort = null,
+        string? dir = null,
         CancellationToken ct = default)
     {
         var qs = new List<string>
@@ -398,6 +400,16 @@ public sealed partial class JobsyApiClient
         if (!string.IsNullOrWhiteSpace(tab))
         {
             qs.Add($"tab={Uri.EscapeDataString(tab)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            qs.Add($"sort={Uri.EscapeDataString(sort)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(dir))
+        {
+            qs.Add($"dir={Uri.EscapeDataString(dir)}");
         }
 
         return await _http.GetFromJsonAsync<AdminUsersPage>($"api/admin/users?{string.Join('&', qs)}", ct)
@@ -627,6 +639,60 @@ public sealed partial class JobsyApiClient
         return await _http.GetFromJsonAsync<List<AdminVacancyItem>>(url, ct) ?? [];
     }
 
+    public async Task<AdminVacancyPage> GetAdminVacanciesPageAsync(
+        int page,
+        int pageSize,
+        string? moderation = null,
+        string? q = null,
+        string? status = null,
+        string? channel = null,
+        Guid? companyId = null,
+        bool extended = false,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={pageSize}"
+        };
+        if (!string.IsNullOrWhiteSpace(moderation))
+        {
+            qs.Add($"moderation={Uri.EscapeDataString(moderation)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            qs.Add($"status={Uri.EscapeDataString(status)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(channel))
+        {
+            qs.Add($"channel={Uri.EscapeDataString(channel)}");
+        }
+
+        if (companyId is Guid cid)
+        {
+            qs.Add($"companyId={cid:D}");
+        }
+
+        if (extended)
+        {
+            qs.Add("extended=true");
+        }
+
+        using var response = await _http.GetAsync("api/admin/vacancies?" + string.Join('&', qs), ct);
+        response.EnsureSuccessStatusCode();
+        var items = await response.Content.ReadFromJsonAsync<List<AdminVacancyItem>>(ct) ?? [];
+        static int Header(HttpResponseMessage res, string name)
+            => res.Headers.TryGetValues(name, out var values) && int.TryParse(values.FirstOrDefault(), out var n) ? n : 0;
+        return new AdminVacancyPage(items, Header(response, "X-Total-Count"), Header(response, "X-Active-Ats"), Header(response, "X-Active-Regular"));
+    }
+
     public async Task<IReadOnlyList<AtsListingItem>> GetAtsListingsAsync(
         string? status = null,
         string? q = null,
@@ -728,7 +794,7 @@ public sealed partial class JobsyApiClient
         DateTime? to = null,
         CancellationToken ct = default)
     {
-        var page = await GetPlatformLogsPageAsync(category, level, from, to, page: 1, pageSize: 50, ct);
+        var page = await GetPlatformLogsPageAsync(category, level, from, to, page: 1, pageSize: 50, ct: ct);
         return page.Items;
     }
 
@@ -739,6 +805,7 @@ public sealed partial class JobsyApiClient
         DateTime? to = null,
         int page = 1,
         int pageSize = 50,
+        string? q = null,
         CancellationToken ct = default)
     {
         var qs = new List<string>
@@ -764,6 +831,11 @@ public sealed partial class JobsyApiClient
         if (to is not null)
         {
             qs.Add($"to={Uri.EscapeDataString(to.Value.ToString("O"))}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
         }
 
         var url = $"api/platform-logs?{string.Join("&", qs)}";

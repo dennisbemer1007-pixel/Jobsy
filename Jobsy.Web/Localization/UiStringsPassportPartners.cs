@@ -93,11 +93,11 @@ public static class UiStringsPassportPartners
             "Creează partener",
             "أنشئ شريكاً");
         Add("Admin.PassportPartners.Off",
-            "Paspoortpartners staat uit — zet het aan bij Platforminstellingen.",
-            "Passport partners is off — turn it on under Platform settings.",
-            "Partnerzy paszportu są wyłączeni — włącz w ustawieniach platformy.",
-            "Partenerii de pașaport sunt opriți — pornește-i la setările platformei.",
-            "شركاء الجواز متوقفون — فعّلهم من إعدادات المنصة.");
+            "Paspoortpartners staat uit. Zet het aan bij Platforminstellingen.",
+            "Passport partners is off. Turn it on under Platform settings.",
+            "Partnerzy paszportu są wyłączeni. Włącz w ustawieniach platformy.",
+            "Partenerii de pașaport sunt opriți. Pornește-i la setările platformei.",
+            "شركاء الجواز متوقفون. فعّلهم من إعدادات المنصة.");
         Add("Admin.PassportPartners.GenerateCode",
             "Code maken",
             "Create code",

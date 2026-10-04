@@ -31,6 +31,7 @@ public class PlatformLogsController : ControllerBase
         [FromQuery] DateTime? to = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
+        [FromQuery] string? q = null,
         CancellationToken cancellationToken = default)
     {
         var query = _db.PlatformLogs.AsNoTracking().AsQueryable();
@@ -53,6 +54,14 @@ public class PlatformLogsController : ControllerBase
         if (to is not null)
         {
             query = query.Where(l => l.CreatedAt <= to);
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.Trim().ToLower();
+            query = query.Where(l =>
+                l.Message.ToLower().Contains(term)
+                || l.Category.ToLower().Contains(term));
         }
 
         page = Math.Max(1, page);

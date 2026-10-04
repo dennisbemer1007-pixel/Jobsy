@@ -124,24 +124,7 @@
         => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
 
     private bool IsActive(AdminNavItem item)
-    {
-        var path = AdminNav.Normalize(CurrentPath());
-        if (string.Equals(path, AdminNav.Normalize(item.Href), StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        foreach (var alias in item.Aliases)
-        {
-            if (string.Equals(path, AdminNav.Normalize(alias), StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        var href = AdminNav.Normalize(item.Href);
-        return href is not "/" && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
-    }
+        => AdminNav.Matches(CurrentPath(), item);
 
     public void Dispose()
     {

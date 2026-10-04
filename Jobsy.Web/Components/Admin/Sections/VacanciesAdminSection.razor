@@ -1,4 +1,7 @@
 @namespace Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Core.Time
+@using Jobsy.Web.Admin
+@using Jobsy.Web.Components.Admin.Ui
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -22,23 +25,23 @@ else
                     class="vacancy-source-balance__chip @(_channelFilter == "" ? "is-active" : null)"
                     @onclick='() => SetChannelFilter("")'>
                 Alle actief
-                <strong>@_activeTotal</strong>
+                <strong>@_activeTotalCount</strong>
             </button>
             <button type="button"
                     class="vacancy-source-balance__chip @(_channelFilter == "ats" ? "is-active" : null)"
                     @onclick='() => SetChannelFilter("ats")'>
                 <span class="source-badge source-badge--ats">ATS</span>
-                <strong>@_activeAts</strong>
+                <strong>@_activeAtsCount</strong>
             </button>
             <button type="button"
                     class="vacancy-source-balance__chip @(_channelFilter == "regular" ? "is-active" : null)"
                     @onclick='() => SetChannelFilter("regular")'>
                 <span class="source-badge source-badge--regular">Regulier</span>
-                <strong>@_activeRegular</strong>
+                <strong>@_activeRegularCount</strong>
             </button>
-            @if (_activeTotal > 0)
+            @if (_activeTotalCount > 0)
             {
-                <span class="muted">@_activeAts / @_activeTotal ATS · @_activeRegular / @_activeTotal regulier</span>
+                <span class="muted">@_activeAtsCount / @_activeTotalCount ATS · @_activeRegularCount / @_activeTotalCount regulier</span>
             }
         </div>
     }
@@ -49,20 +52,28 @@ else
             <input type="search"
                    @bind="_searchQuery"
                    @bind:event="oninput"
+                   @bind:after="OnSearchChanged"
                    placeholder="@Culture["Vacancy.SearchCompanyOrTitlePlaceholder"]" />
         </label>
         @if (string.IsNullOrWhiteSpace(ModerationFilter))
         {
             <label>
                 Bron
-                <select @bind="_channelFilter">
+                <select @bind="_channelFilter" @bind:after="OnChannelSelect">
                     <option value="">Alle</option>
                     <option value="ats">ATS</option>
                     <option value="regular">Regulier</option>
                 </select>
             </label>
         }
-        <span class="muted">@_filtered.Count van @_vacancies.Count</span>
+        <span class="muted">@_vacancies.Count van @_totalCount</span>
+        <label>
+            @Culture["AdminUi.PageSize"]
+            <select @bind="_pageSize" @bind:after="OnPageSizeChanged">
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </label>
     </div>
 
     @if (!string.IsNullOrEmpty(_message))
@@ -70,7 +81,37 @@ else
         <p class="state-message">@_message</p>
     }
 
-    @if (_filtered.Count == 0)
+    @if (_drillKey is not null)
+    {
+        <section class="panel-section admin-vacancy-drilldown">
+            <h2>@string.Format(Culture["AdminVacancy.Drilldown"], DrillLabel(_drillKey))</h2>
+            @if (_drillLoading)
+            {
+                <p class="state-message">@Culture["Common.Loading"]</p>
+            }
+            else if (_drilldown.Count == 0)
+            {
+                <p class="state-message">@Culture["AdminVacancy.DrilldownEmpty"]</p>
+            }
+            else
+            {
+                <div class="table-list">
+                    @foreach (var item in _drilldown)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@item.Title</strong>
+                                <span class="muted">@item.Subtitle</span>
+                            </div>
+                            <span class="muted">@AmsterdamTime.ToLocal(item.CreatedAt).ToString("dd-MM HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+
+    @if (_vacancies.Count == 0)
     {
         <p class="state-message">@Culture["Admin.NoVacancies"]</p>
     }
@@ -100,41 +141,41 @@ else
                             </button>
                         </th>
                         <th>Bron</th>
-                        <th><button type="button" class="linkish" @onclick='() => Drill("impressions")'>Getoond</button></th>
-                        <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
-                        <th><button type="button" class="linkish" @onclick='() => Drill("shares")'>Shared</button></th>
-                        <th><button type="button" class="linkish" @onclick='() => Drill("applications")'>Applied</button></th>
-                        <th><button type="button" class="linkish" @onclick='() => Drill("extensions")'>Extended</button></th>
-                        <th><button type="button" class="linkish" @onclick='() => Drill("likes")'>Liked</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("impressions")'>@Culture["AdminVacancy.Col.Shown"]</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>@Culture["AdminVacancy.Col.Clicks"]</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("shares")'>@Culture["AdminVacancy.Col.Shared"]</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("applications")'>@Culture["AdminVacancy.Col.Applied"]</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("extensions")'>@Culture["AdminVacancy.Col.Extended"]</button></th>
+                        <th><button type="button" class="linkish" @onclick='() => Drill("likes")'>@Culture["AdminVacancy.Col.Liked"]</button></th>
                         <th class="data-table__col--actions">@Culture["Common.Actions"]</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var v in _filtered)
+                    @foreach (var v in Sorted())
                     {
                         <tr class="data-table__row--interactive"
                             title="@Culture["VacancyAction.OpenHint"]"
                             @ondblclick="() => OpenVacancyDetails(v)">
-                            <td class="data-table__col--wrap">
+                            <td class="data-table__col--wrap" data-label="@Culture["Admin.Title"]">
                                 <a href="/vacancies/@v.Id"><strong>@v.Title</strong></a>
                             </td>
-                            <td class="data-table__col--wrap">@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
-                            <td>@v.Status</td>
-                            <td>@v.StartDate.ToString("dd-MM-yyyy")</td>
-                            <td>@v.EndDate.ToString("dd-MM-yyyy")</td>
-                            <td>
+                            <td class="data-table__col--wrap" data-label="@Culture["Admin.Company"]">@v.CompanyName <span class="muted">@CompanyTypeLabel(v.CompanyType)</span></td>
+                            <td data-label="@Culture["Admin.Status"]">@StatusLabel(v.Status)</td>
+                            <td data-label="@Culture["Vacancy.PlacementDate"]">@v.StartDate.ToString("dd-MM-yyyy")</td>
+                            <td data-label="@Culture["Vacancy.Deadline"]">@v.EndDate.ToString("dd-MM-yyyy")</td>
+                            <td data-label="@Culture["AdminVacancy.Col.Source"]">
                                 <span class="source-badge source-badge--@VacancySourceDisplay.ChannelCssModifier(v.CreatedVia)"
                                       title="@VacancySourceDisplay.Label(v.CreatedVia)">
                                     @VacancySourceDisplay.ChannelLabel(v.CreatedVia)
                                 </span>
                             </td>
-                            <td><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>
-                            <td><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
-                            <td><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>
-                            <td><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
-                            <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
-                            <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
-                            <td class="data-table__col--actions" @ondblclick:stopPropagation="true">
+                            <td data-label="@Culture["AdminVacancy.Col.Shown"]"><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Clicks"]"><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Shared"]"><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Applied"]"><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Extended"]"><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Liked"]"><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
+                            <td class="data-table__col--actions" data-label="@Culture["Common.Actions"]" @ondblclick:stopPropagation="true">
                                 <RowActionsMenu>
                                     <a class="row-actions-menu__item" role="menuitem" href="/vacancies/@v.Id">
                                         @Culture["VacancyAction.View"]
@@ -155,37 +196,18 @@ else
                 </tbody>
             </table>
         </div>
+        <AdminPager Page="_pageNum" PageSize="_pageSize" TotalCount="_totalCount"
+                    TotalPages="@VacancyPageCount()" PageChanged="GoPageAsync" />
     }
 
-    @if (_drillKey is not null)
-    {
-        <section class="panel-section">
-            <h2>Drilldown: @_drillKey</h2>
-            @if (_drillLoading)
-            {
-                <p class="state-message">@Culture["Common.Loading"]</p>
-            }
-            else if (_drilldown.Count == 0)
-            {
-                <p class="state-message">Geen items.</p>
-            }
-            else
-            {
-                <div class="table-list">
-                    @foreach (var item in _drilldown)
-                    {
-                        <div class="table-row">
-                            <div>
-                                <strong>@item.Title</strong>
-                                <span class="muted">@item.Subtitle</span>
-                            </div>
-                            <span class="muted">@item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
-                        </div>
-                    }
-                </div>
-            }
-        </section>
-    }
+    <AdminDrawer Open="@(_openItem is not null)" OpenChanged="OnOpenChanged" Title="@(_openItem?.Title ?? "")">
+        @if (_openItem is AdminVacancyItem open)
+        {
+            <p>@open.CompanyName <span class="muted">@CompanyTypeLabel(open.CompanyType)</span></p>
+            <p>@StatusLabel(open.Status)</p>
+            <a href="/vacancies/@open.Id">@Culture["VacancyAction.View"]</a>
+        }
+    </AdminDrawer>
 }
 
 @code {
@@ -201,24 +223,23 @@ else
     private bool _sortByApplications;
     private Guid? _companyIdFilter;
     private bool _loading = true;
+    private bool _loaded;
     private bool _busy;
     private bool _drillLoading;
     private string? _error;
     private string? _message;
     private string? _drillKey;
     private List<MetricDrilldownItem> _drilldown = [];
+    private int _pageNum = 1;
+    private int _pageSize = 25;
+    private int _totalCount;
+    private int _activeAtsCount;
+    private int _activeRegularCount;
+    private AdminVacancyItem? _openItem;
+    private Guid? _openId;
+    private CancellationTokenSource? _searchCts;
 
-    private List<AdminVacancyItem> _filtered => Filter().ToList();
-
-    private int _activeAts => _vacancies.Count(v =>
-        v.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)
-        && VacancySourceDisplay.IsAts(v.CreatedVia));
-
-    private int _activeRegular => _vacancies.Count(v =>
-        v.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)
-        && !VacancySourceDisplay.IsAts(v.CreatedVia));
-
-    private int _activeTotal => _activeAts + _activeRegular;
+    private int _activeTotalCount => _activeAtsCount + _activeRegularCount;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -227,7 +248,11 @@ else
         => InvokeAsync(StateHasChanged);
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -268,64 +293,134 @@ else
             ModerationFilter = mod.ToString();
         }
 
+        if (qs.TryGetValue("open", out var openRaw) && Guid.TryParse(openRaw, out var openId))
+        {
+            _openId = openId;
+            _searchQuery = openId.ToString("D");
+        }
+
+        await LoadPageAsync();
+    }
+
+    private void OnSearchChanged()
+    {
+        _pageNum = 1;
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+        _ = SearchAfterDelayAsync(token);
+    }
+
+    private async Task SearchAfterDelayAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(300, token);
+            await InvokeAsync(LoadPageAsync);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private Task OnPageSizeChanged()
+    {
+        _pageNum = 1;
+        return LoadPageAsync();
+    }
+
+    private Task GoPageAsync(int page)
+    {
+        _pageNum = Math.Max(1, page);
+        return LoadPageAsync();
+    }
+
+    private int VacancyPageCount()
+        => Math.Max(1, (int)Math.Ceiling(_totalCount / (double)Math.Max(1, _pageSize)));
+
+    private async Task LoadPageAsync()
+    {
+        if (!_loaded)
+        {
+            _loading = true;
+        }
+
+        _error = null;
         try
         {
             var moderation = string.Equals(ModerationFilter, "flagged", StringComparison.OrdinalIgnoreCase)
                 ? "flagged"
                 : null;
-            _vacancies = (await Api.GetAdminVacanciesAsync(moderation)).ToList();
+            var page = await Api.GetAdminVacanciesPageAsync(
+                _pageNum,
+                _pageSize,
+                moderation,
+                string.IsNullOrWhiteSpace(_searchQuery) ? null : _searchQuery,
+                string.IsNullOrWhiteSpace(_statusFilter) ? null : _statusFilter,
+                string.IsNullOrWhiteSpace(_channelFilter) ? null : _channelFilter,
+                _companyIdFilter,
+                _extendedOnly);
+            _vacancies = page.Items.ToList();
+            _totalCount = page.TotalCount;
+            _activeAtsCount = page.ActiveAts;
+            _activeRegularCount = page.ActiveRegular;
+            if (_openId is Guid id)
+            {
+                _openItem = _vacancies.FirstOrDefault(v => v.Id == id);
+                _openId = null;
+            }
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+            _vacancies = [];
         }
         finally
         {
+            _loaded = true;
             _loading = false;
         }
     }
 
-    private IEnumerable<AdminVacancyItem> Filter()
+    private void OnOpenChanged(bool open)
     {
-        IEnumerable<AdminVacancyItem> q = _vacancies;
-        if (_companyIdFilter is Guid cid)
+        if (!open)
         {
-            q = q.Where(v => v.CompanyId == cid);
+            _openItem = null;
         }
-
-        if (!string.IsNullOrWhiteSpace(_searchQuery))
-        {
-            q = q.Where(v =>
-                v.CompanyName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
-                || v.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (!string.IsNullOrWhiteSpace(_statusFilter))
-        {
-            q = q.Where(v => v.Status.Equals(_statusFilter, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (string.Equals(_channelFilter, "ats", StringComparison.OrdinalIgnoreCase))
-        {
-            q = q.Where(v => VacancySourceDisplay.IsAts(v.CreatedVia));
-        }
-        else if (string.Equals(_channelFilter, "regular", StringComparison.OrdinalIgnoreCase))
-        {
-            q = q.Where(v => !VacancySourceDisplay.IsAts(v.CreatedVia));
-        }
-
-        if (_extendedOnly)
-        {
-            q = q.Where(v => v.IsExtended);
-        }
-
-        if (_sortByApplications)
-        {
-            return q.OrderByDescending(v => v.ApplicationCount).ThenBy(v => v.Title);
-        }
-
-        return ApplySort(q);
     }
+
+    private string StatusLabel(string status) => status switch
+    {
+        "Active" => Culture["AdminVacancy.Status.Active"],
+        "Draft" => Culture["AdminVacancy.Status.Draft"],
+        "Archived" => Culture["AdminVacancy.Status.Archived"],
+        "Pending" or "PendingReview" => Culture["AdminVacancy.Status.Pending"],
+        "Inactive" => Culture["AdminVacancy.Status.Inactive"],
+        _ => status
+    };
+
+    private string CompanyTypeLabel(string type)
+        => AdminActionLabels.CompanyType(type, key => Culture[key]) is var label && label.Length > 0
+            ? $"({label})"
+            : "";
+
+    private string DrillLabel(string key) => key switch
+    {
+        "clicks" => Culture["AdminVacancy.Col.Clicks"],
+        "shares" => Culture["AdminVacancy.Col.Shared"],
+        "applications" => Culture["AdminVacancy.Col.Applied"],
+        "extensions" => Culture["AdminVacancy.Col.Extended"],
+        "likes" => Culture["AdminVacancy.Col.Liked"],
+        "impressions" => Culture["AdminVacancy.Col.Shown"],
+        _ => key
+    };
+
+    private IEnumerable<AdminVacancyItem> Sorted()
+        => _sortByApplications
+            ? _vacancies.OrderByDescending(v => v.ApplicationCount).ThenBy(v => v.Title)
+            : ApplySort(_vacancies);
 
     private void ToggleSort(string column)
     {
@@ -360,8 +455,18 @@ else
     private static string MetricHref(AdminVacancyItem v, string metric)
         => $"/vacancies/{v.Id}?metric={metric}";
 
-    private void SetChannelFilter(string channel)
-        => _channelFilter = channel ?? "";
+    private Task OnChannelSelect()
+    {
+        _pageNum = 1;
+        return LoadPageAsync();
+    }
+
+    private Task SetChannelFilter(string channel)
+    {
+        _channelFilter = channel ?? "";
+        _pageNum = 1;
+        return LoadPageAsync();
+    }
 
     private void OpenVacancyDetails(AdminVacancyItem vacancy)
         => Nav.NavigateTo($"/vacancies/{vacancy.Id}");
@@ -392,10 +497,7 @@ else
         {
             await Api.AdminExtendVacancyAsync(v.Id);
             _message = $"Vacature '{v.Title}' verlengd.";
-            var moderation = string.Equals(ModerationFilter, "flagged", StringComparison.OrdinalIgnoreCase)
-                ? "flagged"
-                : null;
-            _vacancies = (await Api.GetAdminVacanciesAsync(moderation)).ToList();
+            await LoadPageAsync();
         }
         catch (Exception ex)
         {
@@ -415,10 +517,7 @@ else
         {
             await Api.AdminDeactivateVacancyAsync(v.Id);
             _message = $"Vacature '{v.Title}' gezet op inactief.";
-            var moderation = string.Equals(ModerationFilter, "flagged", StringComparison.OrdinalIgnoreCase)
-                ? "flagged"
-                : null;
-            _vacancies = (await Api.GetAdminVacanciesAsync(moderation)).ToList();
+            await LoadPageAsync();
         }
         catch (Exception ex)
         {

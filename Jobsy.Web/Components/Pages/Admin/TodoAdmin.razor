@@ -42,15 +42,15 @@
             @foreach (var item in _filtered)
             {
                 <tr>
-                    <td class="admin-todo-list__icon-cell" aria-hidden="true">●</td>
-                    <td>
+                    <td class="admin-todo-list__icon-cell" data-label="@Culture["AdminTodo.Col.Severity"]" aria-hidden="true">●</td>
+                    <td data-label="@Culture["AdminTodo.Col.Title"]">
                         <strong>@FormatTitle(item)</strong>
                         <div class="muted">@item.Subtitle</div>
                     </td>
-                    <td><span class="status-pill">@item.Area</span></td>
-                    <td>@AdminRelativeTime.Format(item.SinceUtc)</td>
-                    <td>@Culture[$"AdminTodo.Severity.{SeverityLabel(item.Severity)}"]</td>
-                    <td>
+                    <td data-label="@Culture["AdminTodo.Col.Area"]"><span class="status-pill">@item.Area</span></td>
+                    <td data-label="@Culture["AdminTodo.Col.Since"]">@AdminRelativeTime.Format(item.SinceUtc)</td>
+                    <td data-label="@Culture["AdminTodo.Col.Severity"]">@Culture[$"AdminTodo.Severity.{SeverityLabel(item.Severity)}"]</td>
+                    <td data-label="@Culture["Common.Actions"]">
                         <a class="btn-compact btn-compact--primary" href="@item.Href">@Culture[item.ActionLabelKey]</a>
                     </td>
                 </tr>

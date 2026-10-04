@@ -123,8 +123,9 @@ public sealed class AdminSearchController : ControllerBase
         string term,
         CancellationToken ct)
     {
+        var lowered = term.ToLower();
         var rows = await _db.Companies.AsNoTracking()
-            .Where(c => c.Name.Contains(term) || c.KvkNumber.Contains(term))
+            .Where(c => c.Name.ToLower().Contains(lowered) || c.KvkNumber.ToLower().Contains(lowered))
             .OrderBy(c => c.Name)
             .Take(5)
             .Select(c => new { c.Id, c.Name, c.KvkNumber })
@@ -142,10 +143,11 @@ public sealed class AdminSearchController : ControllerBase
         CancellationToken ct)
     {
         Guid? asId = Guid.TryParse(term, out var id) ? id : null;
+        var lowered = term.ToLower();
         var rows = await _db.Vacancies.AsNoTracking()
             .Where(v =>
                 (asId != null && v.Id == asId)
-                || v.Title.Contains(term))
+                || v.Title.ToLower().Contains(lowered))
             .OrderByDescending(v => v.CreatedAtUtc)
             .Take(5)
             .Select(v => new { v.Id, v.Title, CompanyName = v.Company != null ? v.Company.Name : null })

@@ -31,12 +31,7 @@
 
     <div class="admin-security-layout">
         <div class="admin-security-layout__main">
-            <AdminFilterBar>
-                <input type="search"
-                       class="admin-filter-input"
-                       placeholder="@Culture["AdminAudit.SearchPlaceholder"]"
-                       value="@_q"
-                       @oninput="OnSearchInput" />
+            <AdminFilterBar Query="@_q" QueryChanged="OnSearchChanged" Placeholder="@Culture["AdminAudit.SearchPlaceholder"]">
                 <select class="admin-filter-select" @bind="_action" @bind:after="RefreshAsync">
                     <option value="">@Culture["AdminAudit.Filter.ActionAll"]</option>
                     @foreach (var a in ActionOptions)
@@ -310,10 +305,10 @@
         return Math.Max(1, (int)Math.Ceiling(page.TotalCount / (double)size));
     }
 
-    private Task OnSearchInput(ChangeEventArgs e)
+    private void OnSearchChanged(string q)
     {
-        _q = e.Value?.ToString() ?? "";
-        return _searchDebounce.RunAsync(300, async ct =>
+        _q = q;
+        _ = _searchDebounce.RunAsync(300, async ct =>
         {
             await InvokeAsync(async () =>
             {
@@ -421,23 +416,7 @@
     private string ObjectTitle(AdminAuditItem row)
         => string.IsNullOrWhiteSpace(row.Reason) ? row.TargetLabel : $"{row.TargetLabel} — {row.Reason}";
 
-    private string ActionLabel(string action) => action switch
-    {
-        "user.mfa.reset" => Culture["AdminAudit.Action.MfaReset"],
-        "support-access.grant" or "support-access.revoke" => Culture["AdminAudit.Action.Support"],
-        "settings.platform.update" or "maintenance.on" or "maintenance.off" => Culture["AdminAudit.Action.Setting"],
-        "export.create" => Culture["AdminAudit.Action.Export"],
-        "user.block" or "user.unblock" => Culture["AdminAudit.Action.Block"],
-        "tokens.goodwill.grant" => Culture["AdminAudit.Action.Tokens"],
-        "privacy.account.deleted" => Culture["AdminAudit.Action.Deleted"],
-        "privacy.retention.run" => Culture["AdminAudit.Action.Retention"],
-        "auth.admin.login-failed" => Culture["AdminAudit.Action.LoginFailed"],
-        "vacancy-category.create" or "vacancy-category.update" or "vacancy-category.delete"
-            => Culture["AdminAudit.Action.Category"],
-        "masterdata.create" or "masterdata.update" or "masterdata.delete"
-            => Culture["AdminAudit.Action.Masterdata"],
-        _ => action
-    };
+    private string ActionLabel(string action) => AdminActionLabels.Label(action, key => Culture[key]);
 
     private static string ActionPillClass(string action) => action switch
     {

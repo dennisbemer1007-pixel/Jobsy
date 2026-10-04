@@ -1,8 +1,11 @@
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject NavigationManager Nav
 @implements IDisposable
 
 @if (_loading)
@@ -17,7 +20,7 @@
                 <button type="button"
                         class="provider-btn @(_activeCategory == category ? "is-active" : null)"
                         role="tab"
-                        aria-selected="@(_activeCategory == category)"
+                        aria-selected="@(_activeCategory == category ? "true" : "false")"
                         @onclick="() => SelectCategory(category)">
                     @MasterdataCategories.DisplayName(category)
                 </button>
@@ -149,6 +152,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("lijst", out var lijst) && MasterdataCategories.IsKnown(lijst))
+        {
+            _activeCategory = MasterdataCategories.Normalize(lijst.ToString());
+        }
+
         try
         {
             await ReloadAsync();
@@ -169,6 +178,15 @@
         _message = null;
         _newValue = "";
         _newLabel = "";
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        var tab = qs.TryGetValue("tab", out var tabRaw) && !string.IsNullOrWhiteSpace(tabRaw)
+            ? tabRaw.ToString()
+            : "stamgegevens";
+        var target = $"/admin/content/stamgegevens?tab={Uri.EscapeDataString(tab)}&lijst={Uri.EscapeDataString(category)}";
+        if (AdminOpenLink.ShouldNavigate(Nav.Uri, target, RendererInfo.IsInteractive))
+        {
+            Nav.NavigateTo(target, forceLoad: false, replace: true);
+        }
     }
 
     private async Task ReloadAsync()

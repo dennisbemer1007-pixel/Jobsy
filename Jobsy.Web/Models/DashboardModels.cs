@@ -847,6 +847,12 @@ public class AdminVacancyItem
     public bool ContentModerationPassed { get; set; } = true;
 }
 
+public sealed record AdminVacancyPage(
+    IReadOnlyList<AdminVacancyItem> Items,
+    int TotalCount,
+    int ActiveAts,
+    int ActiveRegular);
+
 public class AtsListingItem
 {
     public Guid Id { get; set; }

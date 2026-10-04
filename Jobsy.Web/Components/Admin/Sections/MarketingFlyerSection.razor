@@ -1,4 +1,5 @@
 @using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
@@ -164,30 +165,12 @@
 
     private void CancelReset() => _confirmReset = false;
 
-    private async Task ConfirmResetAsync()
+    private void ConfirmResetAsync()
     {
         _confirmReset = false;
-        await ResetAsync();
-    }
-
-    private async Task ResetAsync()
-    {
-        _busy = true;
+        _form = MarketingFlyerDefaults.CreateForm();
         _error = null;
-        _message = null;
-        try
-        {
-            _form = await Api.ResetMarketingFlyerAsync() ?? _form;
-            _message = Culture["Admin.MarketingFlyerResetDone"];
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        _message = Culture["AdminContent.ResetFlyerBody"];
     }
 
     private async Task DownloadPdfAsync()

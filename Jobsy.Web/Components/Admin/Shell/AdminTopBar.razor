@@ -36,6 +36,7 @@
                 aria-label="@Culture["AdminShell.SearchOpen"]"
                 @onclick="OpenMobileSearch">
             <span aria-hidden="true">@((MarkupString)NavIcons.Search)</span>
+            <span class="admin-topbar__search-label">@Culture["AdminShell.SearchOpen"]</span>
         </button>
         <PageHelp />
         <NotificationBell />
@@ -59,7 +60,7 @@
 
 @if (_mobileSearchOpen)
 {
-    <div class="admin-search-sheet" role="dialog" aria-modal="true" aria-label="@Culture["AdminShell.SearchOpen"]">
+    <div class="admin-search-sheet" role="dialog" aria-modal="true" aria-label="@Culture["AdminShell.SearchOpen"]" @onkeydown="OnSearchKey">
         <div class="admin-search-sheet__bar">
             <AdminGlobalSearch AutoFocus="true" OnClose="CloseMobileSearch" />
             <button type="button" class="admin-search-sheet__close" @onclick="CloseMobileSearch">
@@ -78,6 +79,14 @@
 
     private void OpenMobileSearch() => _mobileSearchOpen = true;
     private void CloseMobileSearch() => _mobileSearchOpen = false;
+
+    private void OnSearchKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _mobileSearchOpen = false;
+        }
+    }
 
     public Task FocusSearchAsync() => _search?.FocusAsync() ?? Task.CompletedTask;
 }

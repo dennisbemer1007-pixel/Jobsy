@@ -1,3 +1,5 @@
+@using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Ui
 @inject JobsyApiClient Api
@@ -65,12 +67,12 @@
                 @foreach (var row in _filtered)
                 {
                     <tr>
-                        <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                        <td>@row.CompanyName</td>
-                        <td>@row.TokenAmount.ToString("0.##")</td>
-                        <td>€ 0,00</td>
-                        <td>@row.Reason</td>
-                        <td class="muted">@(row.IssuedByName ?? "—")</td>
+                        <td data-label="@Culture["AdminFinance.Col.Date"]">@AmsterdamTime.ToLocal(row.CreatedAt).ToString("dd-MM-yyyy HH:mm")</td>
+                        <td data-label="@Culture["AdminFinance.Col.Org"]">@row.CompanyName</td>
+                        <td data-label="@Culture["AdminFinance.Col.Tokens"]">@row.TokenAmount.ToString("0.##")</td>
+                        <td data-label="@Culture["AdminFinance.Col.Value"]">€ 0,00</td>
+                        <td data-label="@Culture["AdminFinance.Col.Reason"]">@AdminActionLabels.VatStatus(row.Reason, key => Culture[key])</td>
+                        <td class="muted" data-label="@Culture["AdminFinance.Col.IssuedBy"]">@(row.IssuedByName ?? "—")</td>
                     </tr>
                 }
             </Rows>

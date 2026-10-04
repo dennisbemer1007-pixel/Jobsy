@@ -220,6 +220,8 @@ public class AdminController : ControllerBase
         [FromQuery] string? mfa = null,
         [FromQuery] string? active = null,
         [FromQuery] string? tab = null,
+        [FromQuery] string? sort = null,
+        [FromQuery] string? dir = null,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
@@ -308,8 +310,24 @@ public class AdminController : ControllerBase
         }
 
         var total = await baseQuery.CountAsync(cancellationToken);
-        var pageRows = await baseQuery
-            .OrderBy(u => u.Email)
+        var descending = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
+        var ordered = (sort ?? "").Trim().ToLowerInvariant() switch
+        {
+            "role" => descending
+                ? baseQuery.OrderByDescending(u => u.Role).ThenBy(u => u.FullName)
+                : baseQuery.OrderBy(u => u.Role).ThenBy(u => u.FullName),
+            "created" => descending
+                ? baseQuery.OrderByDescending(u => u.TermsAcceptedAt).ThenBy(u => u.FullName)
+                : baseQuery.OrderBy(u => u.TermsAcceptedAt).ThenBy(u => u.FullName),
+            "lastlogin" => descending
+                ? baseQuery.OrderByDescending(u => u.LastLoginAtUtc).ThenBy(u => u.FullName)
+                : baseQuery.OrderBy(u => u.LastLoginAtUtc).ThenBy(u => u.FullName),
+            "name" => descending
+                ? baseQuery.OrderByDescending(u => u.FullName)
+                : baseQuery.OrderBy(u => u.FullName),
+            _ => baseQuery.OrderBy(u => u.Email)
+        };
+        var pageRows = await ordered
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(u => new
@@ -1129,6 +1147,13 @@ public class AdminController : ControllerBase
     [HttpGet("vacancies")]
     public async Task<ActionResult<IEnumerable<AdminVacancyDetailDto>>> GetVacancies(
         [FromQuery] string? moderation = null,
+        [FromQuery] int? page = null,
+        [FromQuery] int pageSize = 25,
+        [FromQuery] string? q = null,
+        [FromQuery] string? status = null,
+        [FromQuery] string? channel = null,
+        [FromQuery] Guid? companyId = null,
+        [FromQuery] bool extended = false,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Vacancies.AsNoTracking().AsQueryable();
@@ -1183,7 +1208,7 @@ public class AdminController : ControllerBase
             .Select(g => new { g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
 
-        return Ok(vacancies.Select(v => new AdminVacancyDetailDto(
+        var all = vacancies.Select(v => new AdminVacancyDetailDto(
             v.Id,
             v.Title,
             v.Status,
@@ -1201,7 +1226,55 @@ public class AdminController : ControllerBase
             likes.GetValueOrDefault(v.Id),
             v.ExtensionCount > 0,
             v.CreatedVia,
-            v.ContentModerationPassed)));
+            v.ContentModerationPassed)).ToList();
+
+        if (page is null)
+        {
+            return Ok(all);
+        }
+
+        IEnumerable<AdminVacancyDetailDto> filtered = all;
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.Trim();
+            filtered = filtered.Where(v =>
+                v.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || v.CompanyName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || v.Id.ToString("D").Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            filtered = filtered.Where(v => v.Status.Equals(status.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (string.Equals(channel, "ats", StringComparison.OrdinalIgnoreCase))
+        {
+            filtered = filtered.Where(v => string.Equals(v.CreatedVia, "ats", StringComparison.OrdinalIgnoreCase));
+        }
+        else if (string.Equals(channel, "regular", StringComparison.OrdinalIgnoreCase))
+        {
+            filtered = filtered.Where(v => !string.Equals(v.CreatedVia, "ats", StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (companyId is Guid cid)
+        {
+            filtered = filtered.Where(v => v.CompanyId == cid);
+        }
+
+        if (extended)
+        {
+            filtered = filtered.Where(v => v.IsExtended);
+        }
+
+        var list = filtered.ToList();
+        var active = all.Where(v => v.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)).ToList();
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var pageNumber = Math.Max(1, page.Value);
+        Response.Headers["X-Total-Count"] = list.Count.ToString();
+        Response.Headers["X-Active-Ats"] = active.Count(v => string.Equals(v.CreatedVia, "ats", StringComparison.OrdinalIgnoreCase)).ToString();
+        Response.Headers["X-Active-Regular"] = active.Count(v => !string.Equals(v.CreatedVia, "ats", StringComparison.OrdinalIgnoreCase)).ToString();
+        return Ok(list.Skip((pageNumber - 1) * pageSize).Take(pageSize));
     }
 
     [HttpGet("api-keys")]
