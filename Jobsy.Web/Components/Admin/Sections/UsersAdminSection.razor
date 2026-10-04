@@ -188,6 +188,19 @@ else if (_page is not null)
                          OnClose="CloseSupport"
                          OnGranted="OnGrantedAsync" />
 
+    <LobsyFriendlyDialog IsOpen="_resetConfirmOpen"
+                         Title="@Culture["AdminUsers.ResetTests"]"
+                         TitleId="reset-tests-title"
+                         Lead="@ResetTestsConfirmLead"
+                         OnClose="CloseResetConfirm">
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="CloseResetConfirm">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--danger" disabled="@_busy" @onclick="ConfirmResetTestUnlocksAsync">
+                @Culture["AdminUsers.ResetTestsSubmit"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+
     <MfaResetDialog IsOpen="_mfaResetOpen"
                     UserId="_mfaResetUserId"
                     MaskedName="@(_mfaResetName ?? "")"
@@ -245,13 +258,17 @@ else if (_page is not null)
                     @if (_drawerUser.IsTestAccount)
                     {
                         <p class="muted">@Culture["Admin.TestAccountNote"]</p>
-                        <form class="admin-user-drawer__reset" @onsubmit="ResetTestUnlocksAsync" @onsubmit:preventDefault>
+                        <form class="admin-user-drawer__reset" @onsubmit="AskResetTestUnlocks" @onsubmit:preventDefault>
                             <p class="muted">@Culture["AdminUsers.ResetTestsHelp"]</p>
                             <label>
                                 @Culture["AdminUsers.ResetTestsReason"]
-                                <input @bind="_resetTestsReason" maxlength="500" required />
+                                <input @bind="_resetTestsReason" @bind:event="oninput" maxlength="500" minlength="5" required />
                             </label>
-                            <button type="submit" class="btn btn-secondary" disabled="@_busy">@Culture["AdminUsers.ResetTests"]</button>
+                            @if (!string.IsNullOrEmpty(_error))
+                            {
+                                <p class="state-message error" role="alert">@_error</p>
+                            }
+                            <button type="submit" class="btn btn-secondary" disabled="@(_busy || _resetTestsReason.Trim().Length < 5)">@Culture["AdminUsers.ResetTests"]</button>
                         </form>
                     }
                 </div>
@@ -459,6 +476,7 @@ else if (_page is not null)
     private string? _error;
     private string? _toast;
     private string _resetTestsReason = "";
+    private bool _resetConfirmOpen;
     private Guid? _companyIdFilter;
     private int _pageNumber = 1;
     private int _pageSize = 25;
@@ -1012,6 +1030,31 @@ else if (_page is not null)
         {
             _busy = false;
         }
+    }
+
+    private string ResetTestsConfirmLead =>
+        string.Format(Culture["AdminUsers.ResetTestsConfirm"], _drawerUser?.FullName ?? "");
+
+    private void AskResetTestUnlocks()
+    {
+        if (_drawerUser is null || !_drawerUser.IsTestAccount || _resetTestsReason.Trim().Length < 5)
+        {
+            return;
+        }
+
+        _resetConfirmOpen = true;
+    }
+
+    private Task CloseResetConfirm()
+    {
+        _resetConfirmOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmResetTestUnlocksAsync()
+    {
+        _resetConfirmOpen = false;
+        await ResetTestUnlocksAsync();
     }
 
     private async Task ResetTestUnlocksAsync()

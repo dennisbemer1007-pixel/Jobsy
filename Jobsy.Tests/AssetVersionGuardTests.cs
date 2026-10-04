@@ -82,6 +82,40 @@ public class AssetVersionGuardTests
         }
     }
 
+    private static readonly Regex SortableVersion = new(@"^\d{8}-\d{2}$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    [Fact]
+    public void Shell_and_feature_css_versions_are_sortable_yyyymmdd_nn()
+    {
+        var root = FindRepoRoot();
+        var manifestPath = Path.Combine(root, "Jobsy.Tests", "asset-versions.json");
+        var manifest = JsonSerializer.Deserialize<Dictionary<string, AssetVersionEntry>>(
+            File.ReadAllText(manifestPath), JsonOptions)
+            ?? throw new InvalidOperationException("asset-versions.json deserialized to null.");
+
+        foreach (var (relativePath, entry) in manifest)
+        {
+            var required = relativePath is "css/app.min.css" or "js/app-core.js" or "js/lobsyPush.js" or "js/read-aloud.js"
+                || (relativePath.StartsWith("css/features/", StringComparison.Ordinal)
+                    && relativePath.EndsWith(".css", StringComparison.Ordinal));
+            if (!required)
+            {
+                continue;
+            }
+
+            Assert.True(
+                SortableVersion.IsMatch(entry.V),
+                $"{relativePath} uses ?v={entry.V}; expected yyyymmdd-NN.");
+        }
+
+        foreach (var name in new[] { "service-worker.js", "service-worker.published.js" })
+        {
+            var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", name));
+            var match = Regex.Match(js, @"CACHE_VERSION = ""lobsy-shell(?:-published)?-v(?<tag>\d{8}-\d{2})""");
+            Assert.True(match.Success, $"{name} cache name is not yyyymmdd-NN.");
+        }
+    }
+
     [Fact]
     public void JobMap_text_font_uses_single_OpenFreeMap_Noto_faces_only()
     {

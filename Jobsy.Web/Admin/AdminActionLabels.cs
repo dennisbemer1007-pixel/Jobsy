@@ -1,10 +1,12 @@
+using System.Text.RegularExpressions;
+
 namespace Jobsy.Web.Admin;
 
 /// <summary>
 /// One map from stored audit, access-log and retention keys to culture keys.
 /// Unknown keys stay as stored so new actions remain visible.
 /// </summary>
-public static class AdminActionLabels
+public static partial class AdminActionLabels
 {
     public static string Label(string? action, Func<string, string> text)
     {
@@ -34,6 +36,8 @@ public static class AdminActionLabels
             "masterdata.delete" => "AdminAudit.Action.MasterdataDeleted",
             "user.sessions" or "user.sessions.list" or "user.sessions.revoke" or "user.sessions.revoke-all"
                 => "AdminAudit.Action.Sessions",
+            "user.test-unlock.reset" => "AdminAudit.Action.TestUnlockReset",
+            "reference.misuse.handled" => "AdminAudit.Action.MisuseHandled",
             _ => null
         };
 
@@ -187,42 +191,90 @@ public static class AdminActionLabels
         return sourceFailed ?? trimmed;
     }
 
-    /// <summary>ATS scrape failures: "Source failed {host} (HTTP 404)" or "(DNS)".</summary>
+    /// <summary>
+    /// ATS scrape failures stored as "Source failed {host} ({reason})" with an optional ": {exception}" suffix.
+    /// The visible label is Dutch; the raw line stays available for the tooltip.
+    /// </summary>
     public static string? FormatSourceFailed(string message, Func<string, string> text)
     {
-        const string prefix = "Source failed ";
-        if (!message.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        var match = SourceFailedPattern().Match(message.Trim());
+        if (!match.Success)
         {
             return null;
         }
 
-        var rest = message[prefix.Length..].Trim();
-        var open = rest.LastIndexOf('(');
-        var close = rest.EndsWith(')') ? rest.Length - 1 : -1;
-        if (open <= 0 || close <= open)
-        {
-            return null;
-        }
-
-        var host = rest[..open].Trim();
+        var host = match.Groups["host"].Value;
         if (host.Length == 0)
         {
             return null;
         }
 
-        var detail = rest[(open + 1)..close].Trim();
+        var detail = match.Groups["reason"].Value.Trim();
         if (detail.Equals("DNS", StringComparison.OrdinalIgnoreCase))
         {
             return string.Format(text("AdminLogs.Message.SourceFailedDns"), host);
         }
 
-        if (detail.StartsWith("HTTP ", StringComparison.OrdinalIgnoreCase))
+        if (detail.StartsWith("HTTP ", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(detail["HTTP ".Length..].Trim(), out var code))
         {
-            var code = detail["HTTP ".Length..].Trim();
             return string.Format(text("AdminLogs.Message.SourceFailedHttp"), host, code);
         }
 
-        return null;
+        return string.Format(text("AdminLogs.Message.SourceFailed"), host);
+    }
+
+    [GeneratedRegex(
+        @"^Source failed (?<host>\S+) \((?<reason>HTTP \d{3}|DNS|[^)]+)\)(?::.*)?$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex SourceFailedPattern();
+
+    /// <summary>Catalog title for a platform switch, or the stored key when it is not a switch.</summary>
+    public static string ChangeField(string? field, Func<string, string> text)
+    {
+        if (string.IsNullOrWhiteSpace(field))
+        {
+            return "";
+        }
+
+        var setting = FindSetting(field);
+        return setting is null ? field.Trim() : text(setting.TitleKey);
+    }
+
+    /// <summary>Bool switches render as Aan/Uit. Other values stay as stored.</summary>
+    public static string ChangeValue(string? field, string? value, Func<string, string> text)
+    {
+        if (value is null)
+        {
+            return "";
+        }
+
+        var setting = FindSetting(field);
+        if (setting is { Kind: PlatformSettingKind.Bool })
+        {
+            if (value.Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                return text("AdminAudit.On");
+            }
+
+            if (value.Equals("False", StringComparison.OrdinalIgnoreCase))
+            {
+                return text("AdminAudit.Off");
+            }
+        }
+
+        return value;
+    }
+
+    private static PlatformSettingDescriptor? FindSetting(string? field)
+    {
+        if (string.IsNullOrWhiteSpace(field))
+        {
+            return null;
+        }
+
+        return PlatformSettingsCatalog.Entries.FirstOrDefault(e =>
+            string.Equals(e.Key, field.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -274,6 +326,8 @@ public static class AdminActionLabels
         yield return ("view", "AdminDataAccess.Action.View");
         yield return ("pdf", "AdminDataAccess.Action.Pdf");
         yield return ("download", "AdminDataAccess.Action.Download");
+        yield return ("user.test-unlock.reset", "AdminAudit.Action.TestUnlockReset");
+        yield return ("reference.misuse.handled", "AdminAudit.Action.MisuseHandled");
 
         foreach (var entry in PlatformSettingsCatalog.Entries)
         {

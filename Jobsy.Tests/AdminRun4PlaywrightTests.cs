@@ -82,6 +82,7 @@ public class AdminRun4PlaywrightTests
         await AssertFastTypeAsync(page, ".admin-search__input");
         await GotoInteractiveAsync(page, baseUrl.TrimEnd('/') + "/admin/organisaties");
         await AssertFastTypeAsync(page, ".admin-filter-bar__search input");
+        await AssertRun7AdminCopyAsync(page, baseUrl.TrimEnd('/'));
 
         var storage = await desktop.StorageStateAsync();
         await using var mobile = await browser.NewContextAsync(new()
@@ -321,6 +322,49 @@ public class AdminRun4PlaywrightTests
 
         var item = page.Locator(".row-actions-menu__panel [role='menuitem']").First;
         await item.ClickAsync(new() { Timeout = 5_000 });
+    }
+
+    private static async Task AssertRun7AdminCopyAsync(IPage page, string root)
+    {
+        await GotoInteractiveAsync(page, root + "/admin/vacatures/ats");
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Nu ophalen" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Bronnen controleren" })).ToBeVisibleAsync();
+
+        await GotoInteractiveAsync(page, root + "/admin/beveiliging/gegevensinzage");
+        await page.Locator(".admin-access-log thead").WaitForAsync(new() { Timeout = 30_000 });
+        var headers = await page.Locator(".admin-access-log thead th").AllInnerTextsAsync();
+        Assert.Contains(headers, h => h.Trim() == "Wie");
+        Assert.Contains(headers, h => h.Trim() == "Over wie");
+        Assert.DoesNotContain(headers, h => h.Contains("naam of e-mail", StringComparison.OrdinalIgnoreCase));
+        var placeholder = await page.Locator(".admin-user-picker input").First.GetAttributeAsync("placeholder");
+        Assert.Contains("naam of e-mail", placeholder ?? "", StringComparison.Ordinal);
+        var fits = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const table = document.querySelector('.admin-access-log .data-table');
+              const main = document.querySelector('.admin-main');
+              if (!table || !main) return false;
+              return table.scrollWidth <= main.clientWidth + 1;
+            }
+            """);
+        Assert.True(fits, "Gegevensinzage table is wider than the admin content at 1280px.");
+
+        await GotoInteractiveAsync(page, root + "/admin/beveiliging/referent-misbruik");
+        var active = page.Locator(".admin-tabs__tab.is-active");
+        await Assertions.Expect(active).ToContainTextAsync("Meldingen referent");
+        await Assertions.Expect(page.Locator(".admin-breadcrumbs")).ToContainTextAsync("Beveiliging & audit");
+        await Assertions.Expect(page.Locator(".admin-breadcrumbs")).ToContainTextAsync("Meldingen referent");
+
+        await GotoInteractiveAsync(page, root + "/admin/vacatures");
+        var headerCase = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const buttons = [...document.querySelectorAll('.vacancy-grid .data-table th button.linkish')];
+              if (buttons.length === 0) return 'missing';
+              return buttons.every(b => getComputedStyle(b).textTransform === 'uppercase') ? 'ok' : 'plain';
+            }
+            """);
+        Assert.Equal("ok", headerCase);
     }
 
     private static async Task GotoInteractiveAsync(IPage page, string url)
