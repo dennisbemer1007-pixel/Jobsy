@@ -171,7 +171,17 @@
     }
 
     private void OnToggleRequested()
-        => _ = InvokeAsync(Toggle);
+        => _ = InvokeAsync(OpenFromCoachAsync);
+
+    /// <summary>
+    /// The coach button lives in another component. A UI event there does not
+    /// render this chat, so the panel has to be painted here.
+    /// </summary>
+    private async Task OpenFromCoachAsync()
+    {
+        await Toggle();
+        StateHasChanged();
+    }
 
     private async Task ResolveVisibilityAsync()
     {
@@ -204,6 +214,9 @@
         if (_open)
         {
             _focusInput = true;
+            // Show the panel before the assistant HTTP call. A slow reply must
+            // not leave the click looking like a no-op.
+            StateHasChanged();
             if (!_started)
             {
                 await StartAsync();

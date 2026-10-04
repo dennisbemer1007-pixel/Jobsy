@@ -301,6 +301,7 @@ public class StatusPagesPlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
         await using var adminContext = await NewContextAsync(browser, baseUrl, "nl", 1440, 900);
+        await PlaywrightCookieConsent.AcceptAsync(adminContext);
         var adminPage = await adminContext.NewPageAsync();
 
         if (!await TryLoginAsync(adminPage, baseUrl, AdminEmail(), Password()))
@@ -518,17 +519,32 @@ public class StatusPagesPlaywrightTests
         Assert.Matches(SupportCodePattern, clipboard);
     }
 
-    /// <summary>The admin maintenance control is a <c>button[role=switch]</c>, not a checkbox.</summary>
+    /// <summary>
+    /// The admin maintenance control is a <c>button[role=switch]</c>. Turning it on opens a
+    /// confirm dialog and does not save until that primary button is pressed.
+    /// </summary>
     private static async Task SetSwitchAsync(ILocator toggle, bool on)
     {
+        var want = on ? "true" : "false";
         var state = await toggle.GetAttributeAsync("aria-checked");
-        if (string.Equals(state, on ? "true" : "false", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(state, want, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
         await toggle.ClickAsync();
-        await toggle.Page.WaitForTimeoutAsync(1_000);
+        if (on)
+        {
+            // The cookie banner is also role=dialog with a primary button. Confirm only the
+            // maintenance dialog ("Onderhoudsmodus aanzetten" / Bevestigen).
+            var confirm = toggle.Page
+                .GetByRole(AriaRole.Dialog, new() { Name = "Onderhoudsmodus aanzetten" })
+                .GetByRole(AriaRole.Button, new() { Name = "Bevestigen" });
+            await Assertions.Expect(confirm).ToBeVisibleAsync(new() { Timeout = 10_000 });
+            await confirm.ClickAsync();
+        }
+
+        await Assertions.Expect(toggle).ToHaveAttributeAsync("aria-checked", want, new() { Timeout = 15_000 });
     }
 
     private sealed record Variant(string Name, string Path, int ExpectedStatus);

@@ -12,8 +12,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "83b1d9ed81d2a1c404e53b99ddb47b58042757e26b5eac33114e8f2339870e91",
-    "v": "20261004-run3"
+    "sha256": "d620b803496f9504969a1ad72ae7204e98e3b638faf1e804c563c916cffb6638",
+    "v": "20261004-run4"
   },
   "css/features/applications.css": {
     "sha256": "9931dd97577b76c2a955c50a37470503217907bbe2bad7f3041580360c683cba",
@@ -136,16 +136,16 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "d2f24dc5725d66cfc2c6d3498583ddf0501b9753eb9ae666769f7097ce7225d7",
-    "v": "20261004-run6"
+    "sha256": "a81add1ce37939d41b90743557e61c3bc90f08c6d01058f9be1d66627b1336b3",
+    "v": "20261004-run6b"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
     "v": "20260902-bw1"
   },
   "js/blazor-boot.js": {
-    "sha256": "9da5ce28880d95fcb63a586731fded3887c81c45ae077ee32c0a78694fe981dd",
-    "v": "20261003-reconnect"
+    "sha256": "d142e2be0ef852136fcb6cf404f1687e8e7dd35ccd65d7f29cdb701c81bc83fd",
+    "v": "20261004-run6b"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "88f166c1460d4c48dd367e8d58a2ecab6d7077dfb2388352f3edd6123888f646",
-    "v": "20261004-run6"
+    "sha256": "b2d26a88a587e973b919aa98d89b8de7cf2ed18ebd937f6e9d57a980e079fe62",
+    "v": "20261004-run6b"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "410637bc3e7eea4037a9dd4a3a43950c0bae8db8ee29e0378fa3470710db522e",
-    "v": "20261004-run6"
+    "sha256": "84fb39a03d0383501fa34facfb1328c0b50bbf5529996a1e5b9c30ffec9805a8",
+    "v": "20261004-run6b"
   },
   "service-worker.published.js": {
-    "sha256": "8149e7dbc4e988d22352f80dd3ae0071b2ab9657c0890f0845d28b4e1c0548f2",
-    "v": "20261004-run6"
+    "sha256": "a3a16d7198494a7e3a1e99c2f0a79274a6123e08cba2cdd4cfc13e781cbd74df",
+    "v": "20261004-run6b"
   }
 }

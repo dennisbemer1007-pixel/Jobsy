@@ -50,6 +50,10 @@ public class CoachWidgetPlaywrightTests
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 60_000
         });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 30_000 });
 
         var coaches = page.Locator("#lobsy-coach-btn");
         try

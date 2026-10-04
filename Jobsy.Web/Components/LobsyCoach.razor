@@ -43,6 +43,7 @@
     protected override void OnInitialized()
     {
         Tips.Changed += OnTipChanged;
+        ChatHost.Changed += OnChatChanged;
         Navigation.LocationChanged += OnLocationChanged;
         ApplyTip();
     }
@@ -62,8 +63,11 @@
     public void Dispose()
     {
         Tips.Changed -= OnTipChanged;
+        ChatHost.Changed -= OnChatChanged;
         Navigation.LocationChanged -= OnLocationChanged;
     }
+
+    private void OnChatChanged() => _ = InvokeAsync(StateHasChanged);
 
     private void OnTipChanged() => _ = InvokeAsync(async () =>
     {

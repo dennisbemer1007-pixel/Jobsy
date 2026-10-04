@@ -1,6 +1,7 @@
 @page "/admin/organisaties"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -352,7 +353,11 @@
         try
         {
             await Task.Delay(280, token);
-            await InvokeAsync(ReloadAsync);
+            await InvokeAsync(async () =>
+            {
+                await ReloadAsync();
+                StateHasChanged();
+            });
         }
         catch (OperationCanceledException) { }
     }
@@ -404,7 +409,16 @@
 
     private Task OnDrawerOpenChanged(bool open)
     {
-        if (!open) _selected = null;
+        if (!open)
+        {
+            _selected = null;
+            var target = AdminOpenLink.WithoutOpen(Nav.Uri);
+            if (AdminOpenLink.ShouldNavigate(Nav.Uri, target, RendererInfo.IsInteractive))
+            {
+                Nav.NavigateTo(target, forceLoad: false, replace: true);
+            }
+        }
+
         return Task.CompletedTask;
     }
 

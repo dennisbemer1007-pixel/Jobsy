@@ -20,6 +20,8 @@ public class CandidateRun6GuardTests
         Assert.Contains("<LobsyCoach", layout, StringComparison.Ordinal);
         Assert.Contains("HideEdgeTab=\"true\"", layout, StringComparison.Ordinal);
         Assert.Contains("Coach.Feedback", assistant, StringComparison.Ordinal);
+        Assert.Contains("OpenFromCoachAsync", assistant, StringComparison.Ordinal);
+        Assert.Contains("StateHasChanged()", assistant, StringComparison.Ordinal);
         Assert.Contains("right: 24px;", css, StringComparison.Ordinal);
         Assert.Contains("bottom: 24px;", css, StringComparison.Ordinal);
         Assert.Contains("width: 64px;", css, StringComparison.Ordinal);
