@@ -1,14 +1,17 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+@inject IServiceProvider Services
 
-<div class="passport-bubble @(Variant == BubbleVariant.Scene ? "passport-bubble--scene" : null)" role="note">
-    <img class="passport-bubble__mascot"
-         src="/images/brand/mascot-64.webp"
-         width="40"
-         height="40"
-         alt=""
-         aria-hidden="true" />
-    <p class="passport-bubble__text">@Text</p>
-</div>
+@*
+    The page tip now lives in the one coach widget. This component only publishes
+    the sentence; it no longer draws a second lobster.
+*@
+
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <span class="visually-hidden">@Text</span>
+}
 
 @code {
     public enum BubbleVariant
@@ -19,4 +22,12 @@
 
     [Parameter] public string Text { get; set; } = "";
     [Parameter] public BubbleVariant Variant { get; set; } = BubbleVariant.Inline;
+
+    protected override void OnParametersSet()
+    {
+        if (Services.GetService(typeof(CoachTipBus)) is CoachTipBus tips)
+        {
+            tips.Publish(Navigation.Uri, Text);
+        }
+    }
 }

@@ -9,6 +9,8 @@
 @inject AuthenticationStateProvider AuthState
 @inject FeedbackHost FeedbackHost
 
+@if (!HideEdgeTab)
+{
 <div class="feedback-widget feedback-widget--tab @(_hasBottomNav ? "has-bottom-nav" : null) @(_capturing ? "is-capturing" : null) @(_open ? "is-open" : null)">
     <button type="button"
             class="feedback-widget__btn feedback-widget__tab feedback-widget__tab--edge"
@@ -20,6 +22,7 @@
         <span>@(_capturing ? Culture["Feedback.Capturing"] : Culture["Feedback.Button"])</span>
     </button>
 </div>
+}
 
 <LobsyFriendlyDialog IsOpen="_open"
                      Title="@Culture["Feedback.Title"]"
@@ -91,6 +94,7 @@
     private string _roleLabel = "Gast";
 
     [Parameter] public bool HasBottomNav { get; set; }
+    [Parameter] public bool HideEdgeTab { get; set; }
 
     protected override void OnParametersSet()
         => _hasBottomNav = HasBottomNav;

@@ -19443,12 +19443,21 @@ body {
 }
 
 /* ==== mobile-candidate-a11y-polish ==== */
-/* Programmatic focus on h1[tabindex="-1"] must not draw a box. Keyboard focus
-   (html.using-keyboard, set from Tab) still gets a thin brand ring. */
-h1[tabindex="-1"]:focus,
+/* FocusOnNavigate focuses h1[tabindex="-1"]. Script focus must not draw a box.
+   Keyboard focus still gets a thin brand ring, via data-input and using-keyboard. */
+h1[tabindex="-1"]:focus {
+    outline: none;
+}
+
+html[data-input="keyboard"] h1[tabindex="-1"]:focus {
+    outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
+    outline-offset: 6px;
+}
+
 h1[tabindex="-1"]:focus-visible {
     outline: none;
 }
+
 html.using-keyboard h1[tabindex="-1"]:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
     outline-offset: 6px;
@@ -19726,4 +19735,268 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     .app-shell:has(.bottom-nav) .app-footer {
         padding-bottom: 0;
     }
+}
+
+/* Candidate coach: one lobster, bottom-right, above nav / cookie / sticky footer. */
+.lobsy-coach-dock {
+    position: fixed;
+    z-index: 45;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+    max-width: min(280px, calc(100vw - 32px));
+}
+
+.lobsy-coach-dock__btn,
+.lobsy-coach-dock__tip,
+.lobsy-coach-dock__close {
+    pointer-events: auto;
+}
+
+.lobsy-coach-dock__btn {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+    overflow: visible;
+}
+
+.lobsy-coach-dock__btn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: transparent;
+}
+
+.lobsy-coach-dock--compact .lobsy-coach-dock__btn {
+    width: 40px;
+    height: 40px;
+}
+
+.lobsy-coach-dock__tip {
+    position: relative;
+    margin: 0;
+    padding: 0.65rem 2rem 0.65rem 0.75rem;
+    border-radius: 12px;
+    background: #f6efe4;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    max-width: 16rem;
+}
+
+.lobsy-coach-dock__tip p {
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.lobsy-coach-dock__close {
+    position: absolute;
+    top: 0.2rem;
+    right: 0.35rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.lobsy-assistant--coach {
+    right: 24px;
+    bottom: calc(24px + 76px);
+    z-index: 46;
+}
+
+.lobsy-assistant__feedback {
+    margin: 0;
+    padding: 0 0.75rem 0.75rem;
+}
+
+@media (max-width: 639px) {
+    .lobsy-coach-dock {
+        flex-direction: row;
+        align-items: flex-end;
+        max-width: min(220px, calc(100vw - 24px));
+        right: max(12px, env(safe-area-inset-right, 0px));
+        bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .lobsy-coach-dock__tip {
+        max-width: 9.5rem;
+    }
+
+    .lobsy-coach-dock__btn {
+        width: 56px;
+        height: 56px;
+    }
+
+    .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .lobsy-coach-dock__tip p {
+        -webkit-line-clamp: 2;
+    }
+
+    .lobsy-assistant--coach {
+        right: max(12px, env(safe-area-inset-right, 0px));
+        bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 12px + env(safe-area-inset-bottom, 0px) + 68px);
+    }
+
+    body:has(input:focus, textarea:focus):not(:has(#lobsy-assistant-input:focus)) .lobsy-coach-dock {
+        visibility: hidden;
+    }
+}
+
+.app-shell main h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    margin-top: 0;
+}
+
+@media (max-width: 639px) {
+    .app-shell main h1 {
+        font-size: 1.5rem;
+    }
+}
+
+.app-shell .engagement-btn,
+.app-shell .login-submit,
+.app-shell .career-btn:not(.career-btn--text),
+.app-shell .btn-primary {
+    border-radius: 12px;
+}
+
+.mail-settings {
+    max-width: 40rem;
+    margin: 1.25rem auto;
+    padding: 1.25rem;
+}
+
+.mail-settings .checkbox-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin: 0.75rem 0;
+}
+
+.passport-tabs .passport-tab {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-block-size: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--brand);
+    padding: 0.35rem 0.8rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.passport-tabs .passport-tab--active,
+.passport-tabs .passport-tab--active:hover {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+}
+
+.binnenkort-card {
+    max-width: 40rem;
+    margin: 1.25rem auto;
+    padding: 1.25rem;
+}
+
+.ui-icon {
+    display: inline-flex;
+    width: 1.05em;
+    height: 1.05em;
+    vertical-align: -0.15em;
+}
+
+.ui-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.lobsy-coach-art {
+    display: block;
+    width: 72px;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    background: transparent;
+}
+
+.career-scene__lob .lobsy-coach-art {
+    width: var(--size, 56px);
+    height: var(--size, 56px);
+}
+
+.app-shell .btn,
+.app-shell .btn-primary,
+.app-shell .engagement-btn,
+.app-shell .login-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.55rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--brand);
+    background: var(--brand);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.app-shell .btn-secondary {
+    background: var(--surface);
+    color: var(--brand);
+    border-color: var(--border);
+}
+
+.app-shell .btn-ghost {
+    background: transparent;
+    color: var(--brand);
+    border-color: transparent;
+}
+
+.app-shell .btn-upsell,
+.app-shell .btn-gold {
+    background: var(--gold);
+    border-color: var(--gold-deep);
+    color: var(--gold-ink);
+}
+
+.app-shell .engagement-btn--danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+
+.app-shell .btn-primary:hover,
+.app-shell .engagement-btn:hover,
+.app-shell .login-submit:hover {
+    background: var(--accent-hover);
+    border-color: var(--brand);
+    color: #fff;
 }

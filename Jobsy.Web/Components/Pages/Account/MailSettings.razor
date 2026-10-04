@@ -9,11 +9,12 @@
 @inject JobsyApiClient Api
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IAntiforgery Antiforgery
+@inject IFeatureFlags FeatureFlags
 
 <PageTitle>@Culture["MailSettings.Title"] · Lobsy</PageTitle>
 
-<section class="page-section" aria-labelledby="mail-settings-title">
-    <h1 id="mail-settings-title">@Culture["MailSettings.Title"]</h1>
+<section class="page-section mail-settings card" aria-labelledby="mail-settings-title">
+    <h1 id="mail-settings-title" tabindex="-1">@Culture["MailSettings.Title"]</h1>
 
     @if (_loadError)
     {
@@ -21,7 +22,7 @@
     }
     else
     {
-        <form method="post" action="/account/mail-instellingen" class="login-form" data-enhance="false" style="max-width:32rem">
+        <form method="post" action="/account/mail-instellingen" class="login-form" data-enhance="false">
             <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
 
             @if (_optional.Count > 0)
@@ -29,7 +30,7 @@
                 <h2 style="font-size:1.05rem;margin:1.5rem 0 0.75rem">@Culture["MailSettings.OptionalHeading"]</h2>
                 @foreach (var item in _optional)
                 {
-                    <label class="checkbox-row" style="display:flex;gap:0.75rem;align-items:flex-start;margin:0.75rem 0">
+                    <label class="checkbox-row">
                         <input type="checkbox" name="pref_@item.Key" value="1" checked="@item.Enabled" />
                         <span>
                             <strong>@LabelFor(item.Key)</strong>
@@ -37,7 +38,7 @@
                         </span>
                     </label>
                 }
-                <button type="submit" class="login-submit" style="margin-top:1rem">@Culture["MailSettings.Save"]</button>
+                <button type="submit" class="btn btn-primary">@Culture["MailSettings.Save"]</button>
             }
             else
             {
@@ -92,10 +93,23 @@
                 return;
             }
 
+            var employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
             _optional.Clear();
             _optional.AddRange(dto.Optional ?? []);
             _always.Clear();
             _always.AddRange(dto.Always ?? []);
+            if (!employersOn)
+            {
+                _optional.RemoveAll(item => item.Key is "PushBom");
+                for (var i = 0; i < _always.Count; i++)
+                {
+                    if (_always[i].Contains("Sollicitatie", StringComparison.OrdinalIgnoreCase)
+                        || _always[i].Contains("Application", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _always[i] = Culture["CareerStep.Band.EyebrowOff"];
+                    }
+                }
+            }
         }
         catch
         {

@@ -129,6 +129,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
 | `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/candidate/binnenkort` | `Pages/Candidate/CandidateBinnenkort.razor` | Candidate |
 | `/candidate/career` | `Pages/Candidate/CareerTest.razor` | Candidate |
 | `/candidate/competencies` | `Pages/Candidate/CompetencyTest.razor` | Candidate |
 | `/candidate/culture` | `Pages/Candidate/CultureScan.razor` | Candidate |

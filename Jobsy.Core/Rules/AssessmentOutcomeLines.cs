@@ -23,7 +23,17 @@ public static class AssessmentOutcomeLines
             .ThenBy(x => x.Label, StringComparer.Ordinal)
             .ToList();
 
-        return ranked.Count == 0 ? null : $"Sterkst: {ranked[0].Label}";
+        if (ranked.Count == 0)
+        {
+            return null;
+        }
+
+        if (ranked.Count > 1 && ranked[0].Value == ranked[1].Value)
+        {
+            return null;
+        }
+
+        return $"Sterkst: {FriendlyCompetence(ranked[0].Label)}";
     }
 
     public static string? Career(
@@ -83,8 +93,26 @@ public static class AssessmentOutcomeLines
             ],
             DimensionRanking.ValueTieBreak).ToList();
 
-        return ranked.Count == 0
-            ? null
-            : $"Prioriteit: {DimensionLabels.For(ranked[0].Code)}";
+        if (ranked.Count == 0)
+        {
+            return null;
+        }
+
+        if (ranked.Count > 1 && ranked[0].Score == ranked[1].Score)
+        {
+            return null;
+        }
+
+        return $"Prioriteit: {DimensionLabels.For(ranked[0].Code)}";
     }
+
+    private static string FriendlyCompetence(string label) => label switch
+    {
+        "extraversie" => "Energie van mensen",
+        "samenwerken" => "Samenwerken",
+        "resultaatgerichtheid" => "Afronden",
+        "stressbestendigheid" => "Rust onder druk",
+        "innovatie" => "Nieuwe ideeën",
+        _ => label
+    };
 }

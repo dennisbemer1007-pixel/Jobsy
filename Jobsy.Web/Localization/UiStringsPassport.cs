@@ -85,7 +85,7 @@ public static class UiStringsPassport
             "Waarden", "Values", "Wartości", "Valori", "القيم");
 
         Add("Passport.Stat.Strongest",
-            "Jouw sterkste klauw", "Your strongest claw", "Twoja najsilniejsza szczypca", "Clea ta cea mai puternică", "مخلبك الأقوى");
+            "Jouw sterkste stap", "Your strongest step", "Twój najsilniejszy krok", "Pasul tău cel mai puternic", "خطوتك الأقوى");
         Add("Passport.Stat.Work",
             "Werk dat bij je past", "Work that fits you", "Praca, która do ciebie pasuje", "Muncă care ți se potrivește", "عمل يناسبك");
         Add("Passport.Stat.Home",
@@ -243,9 +243,9 @@ public static class UiStringsPassport
         Add("Passport.Fit.Result.Antennas",
             "Wat je antennes zeggen", "What your antennae say", "Co mówią czułki", "Ce spun antenele", "ماذا تقول هوائياتك");
         Add("Passport.Fit.Result.Claws",
-            "Klauwen die je al hebt", "Claws you already have", "Szczypce, które już masz", "Cle pe care le ai deja", "مخالب لديك بالفعل");
+            "Stappen die je al hebt", "Steps you already have", "Kroki, które już masz", "Pași pe care îi ai deja", "خطوات لديك بالفعل");
         Add("Passport.Fit.Result.Growing",
-            "Klauw die nog groeit", "Claw still growing", "Szczypce, które jeszcze rosną", "Clea care încă crește", "مخلب ما زال ينمو");
+            "Stap die nog groeit", "Step still growing", "Krok, który jeszcze rośnie", "Pas care încă crește", "خطوة ما زالت تنمو");
         Add("Passport.Fit.Result.Action",
             "Wat je kunt doen", "What you can do", "Co możesz zrobić", "Ce poți face", "ما يمكنك فعله");
         Add("Passport.Fit.Band.Good",
@@ -255,7 +255,7 @@ public static class UiStringsPassport
         Add("Passport.Fit.Band.NotYet",
             "Past nog niet", "Doesn’t fit yet", "Jeszcze nie pasuje", "Încă nu se potrivește", "لا يناسب بعد");
         Add("Passport.Fit.CourseEyebrow",
-            "Laat je klauw groeien", "Grow your claw", "Pozwól rosnąć szczypcom", "Lasă clea să crească", "دع مخلبك ينمو");
+            "Laat je stap groeien", "Grow your step", "Pozwól rosnąć krokowi", "Lasă pasul să crească", "دع خطوتك تنمو");
         Add("Passport.Fit.CultureTitle",
             "Cultuur: {0}", "Culture: {0}", "Kultura: {0}", "Cultură: {0}", "الثقافة: {0}");
         Add("Passport.Fit.CultureSub",
@@ -302,11 +302,11 @@ public static class UiStringsPassport
         Add("Passport.Career.GapsTitle",
             "Wat je nog mist", "What you still need", "Czego jeszcze brakuje", "Ce îți mai lipsește", "ما ما زال ينقصك");
         Add("Passport.Career.GapsSub",
-            "Welke klauwen je al hebt, en welke je nog laat groeien.",
-            "Which claws you already have, and which you still grow.",
-            "Które szczypce już masz, a które jeszcze rosną.",
-            "Ce cle ai deja și pe care le mai lași să crească.",
-            "أي مخالب لديك، وأيها ما زالت تنمو.");
+            "Welke stappen je al hebt gezet, en welke je nog laat groeien.",
+            "Which steps you already took, and which you still grow.",
+            "Które kroki już masz, a które jeszcze rosną.",
+            "Ce pași ai deja și pe care îi mai lași să crească.",
+            "أي الخطوات لديك، وأيها ما زالت تنمو.");
         Add("Passport.Career.AlreadyHave",
             "heb je al", "you already have", "już masz", "le ai deja", "لديك بالفعل");
         Add("Passport.Career.CourseTitle",
@@ -394,11 +394,11 @@ public static class UiStringsPassport
             "Link partener: Lobsy poate primi o remunerație.",
             "رابط شريك: قد تحصل لوبسي على عمولة.");
         Add("Passport.Course.FreeWhy",
-            "Laat je klauw ‘{0}’ groeien",
-            "Let your ‘{0}’ claw grow",
-            "Pozwól rosnąć szczypcom ‘{0}’",
-            "Lasă clea ‘{0}’ să crească",
-            "دع مخلبك «{0}» ينمو");
+            "Laat je stap ‘{0}’ groeien",
+            "Let your ‘{0}’ step grow",
+            "Pozwól rosnąć krokowi ‘{0}’",
+            "Lasă pasul ‘{0}’ să crească",
+            "دع خطوتك «{0}» تنمو");
         Add("Passport.Course.PartnerWhy",
             "Met certificaat voor je Bewijzen",
             "With a certificate for your Proof",
