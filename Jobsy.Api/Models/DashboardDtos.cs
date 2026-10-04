@@ -101,7 +101,8 @@ public record ApplicationDto(
     string? PictureKind = null,
     IReadOnlyList<ApplicationTimelineStepDto>? Timeline = null,
     string? NextStepKey = null,
-    bool LegacyNoHistory = false);
+    bool LegacyNoHistory = false,
+    bool VacancyClosed = false);
 
 /// <summary>Candidate timeline step (no actor ids).</summary>
 public record ApplicationTimelineStepDto(

@@ -96,12 +96,12 @@ public class ApplicationsController : ControllerBase
             .Where(a => a.EmailVerifiedAt != null)
             .AsQueryable();
 
-        if (accessible is not null)
+        List<Guid>? scope = accessible is null ? null : accessible as List<Guid> ?? accessible.ToList();
+        if (scope is not null)
         {
             query = query.Where(a =>
-                accessible.Contains(a.Vacancy.CompanyId)
-                || (a.Vacancy.IntermediaryCompanyId != null
-                    && accessible.Contains(a.Vacancy.IntermediaryCompanyId.Value)));
+                scope.Contains(a.Vacancy.CompanyId)
+                || scope.Contains(a.Vacancy.IntermediaryCompanyId ?? Guid.Empty));
         }
         else
         {
@@ -166,8 +166,7 @@ public class ApplicationsController : ControllerBase
 
             query = query.Where(a =>
                 branchSet.Contains(a.Vacancy.CompanyId)
-                || (a.Vacancy.IntermediaryCompanyId != null
-                    && branchSet.Contains(a.Vacancy.IntermediaryCompanyId.Value)));
+                || branchSet.Contains(a.Vacancy.IntermediaryCompanyId ?? Guid.Empty));
         }
 
         if (status is { Length: > 0 })
@@ -1403,7 +1402,7 @@ public class ApplicationsController : ControllerBase
         {
             var acceptSubject = $"Je sollicitatie is geaccepteerd: {application.Vacancy.Title}";
             var acceptBody =
-                $"{application.Vacancy.Company.Name}: sollicitatie geaccepteerd — {application.Vacancy.Title}";
+                $"{application.Vacancy.Company.Name}: je sollicitatie is geaccepteerd.";
             var acceptMail = TransactionalEmails.EmployerReactionAccepted(
                 baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
             await _mailer.SendAsync(acceptMail, application.CandidateEmail, cancellationToken: cancellationToken);

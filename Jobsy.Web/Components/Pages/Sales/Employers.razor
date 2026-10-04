@@ -86,7 +86,7 @@
                         tabindex="0"
                         @onclick="() => OpenDrawer(row.CompanyId)"
                         @onkeydown="(e) => OnRowKey(e, row.CompanyId)">
-                        <td>
+                        <td data-label="@Culture["Sales.Employers.Col.Name"]">
                             <strong>@row.DisplayName</strong>
                             <div class="muted">
                                 @if (!string.IsNullOrEmpty(row.Place))
@@ -99,9 +99,9 @@
                                 }
                             </div>
                         </td>
-                        <td>@row.AttributedOn.ToString("dd-MM-yyyy")</td>
-                        <td><span class="sp-status sp-status--@row.Status.ToString().ToLowerInvariant()">@StatusLabel(row)</span></td>
-                        <td>
+                        <td data-label="@Culture["Sales.Employers.Col.Attributed"]">@row.AttributedOn.ToString("dd-MM-yyyy")</td>
+                        <td data-label="@Culture["Sales.Employers.Col.Status"]"><span class="sp-status sp-status--@row.Status.ToString().ToLowerInvariant()">@StatusLabel(row)</span></td>
+                        <td data-label="@Culture["Sales.Employers.Col.Year"]">
                             @if (row.CommissionYear is int y)
                             {
                                 <div class="sp-year-prog" aria-hidden="true">
@@ -118,8 +118,8 @@
                                 <span>—</span>
                             }
                         </td>
-                        <td class="is-num">@SalesMoney.FormatPlain(row.CommissionThisYear)</td>
-                        <td>@(row.LastPurchaseOn?.ToString("dd-MM-yyyy") ?? "—")</td>
+                        <td class="is-num" data-label="@Culture.Format("Sales.Employers.Col.Commission", DateTime.UtcNow.Year)">@SalesMoney.FormatPlain(row.CommissionThisYear)</td>
+                        <td data-label="@Culture["Sales.Employers.Col.LastPurchase"]">@(row.LastPurchaseOn?.ToString("dd-MM-yyyy") ?? "—")</td>
                     </tr>
                 }
             </Rows>
