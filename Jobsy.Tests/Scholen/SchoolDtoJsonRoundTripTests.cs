@@ -141,6 +141,28 @@ public class SchoolDtoJsonRoundTripTests
         Assert.Equal(TestWindowState.Open, bare!.TestWindow);
     }
 
+    [Fact]
+    public void Pupil_login_response_roundtrips_string_status_through_web_options()
+    {
+        var dto = new PupilLoginResponse(
+            "/leerling/start",
+            Guid.Parse("33333333-3333-3333-3333-333333333333"),
+            Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Guid.Parse("22222222-2222-2222-2222-222222222222"),
+            "7A",
+            "ABC-123",
+            PupilCodeStatus.NotStarted,
+            0,
+            60,
+            1);
+        var json = JsonSerializer.Serialize(dto, ApiWire);
+        Assert.Contains("NotStarted", json, StringComparison.Ordinal);
+        var back = JsonSerializer.Deserialize<PupilLoginResponse>(json, JobsyApiClient.ApiJson);
+        Assert.NotNull(back);
+        Assert.Equal(PupilCodeStatus.NotStarted, back!.Status);
+        Assert.Equal("/leerling/start", back.RedirectPath);
+    }
+
     private static void AssertEnumsAreStrings(string json)
     {
         using var doc = JsonDocument.Parse(json);

@@ -5,7 +5,7 @@
 
 <label>
     @Culture["School.Class.Field.Name"]
-    <InputText class="input" @bind-Value="ClassName" @bind-Value:after="OnClassNameAfter" />
+    <InputText class="sch-field" @bind-Value="ClassName" @bind-Value:after="OnClassNameAfter" />
 </label>
 
 @if (LevelLocked)
@@ -61,7 +61,7 @@ else
 {
     <label>
         @Culture["School.Class.Field.Level"]
-        <InputSelect class="input" @bind-Value="Level" @bind-Value:after="OnVoLevelBound">
+        <InputSelect class="sch-field" @bind-Value="Level" @bind-Value:after="OnVoLevelBound">
             @foreach (var level in SchoolLevelRules.VoLevels)
             {
                 <option value="@level">@Culture[SchoolLevelRules.LabelKey(level)]</option>
@@ -86,14 +86,17 @@ else
 
 <div class="sch-set-note" role="status">
     <strong>@(_isPrimary ? Culture["School.Class.SetNote.G78.Title"] : Culture["School.Class.SetNote.Vo.Title"])</strong>
-    <p>@(_isPrimary ? Culture["School.Class.SetNote.G78.Body"] : Culture["School.Class.SetNote.Vo.Body"])</p>
+    <ul>
+        <li>@Culture["School.Class.SetNote.Shared"]</li>
+        <li>@(_isPrimary ? Culture["School.Class.SetNote.G78.Body"] : Culture["School.Class.SetNote.Vo.Body"])</li>
+    </ul>
 </div>
 
 @if (ShowPupilCount)
 {
     <label>
         @Culture["School.Class.Field.Count"]
-        <InputNumber class="input" @bind-Value="PupilCount" @bind-Value:after="OnPupilCountAfter" />
+        <InputNumber class="sch-field" @bind-Value="PupilCount" @bind-Value:after="OnPupilCountAfter" />
     </label>
     <p class="muted">@Culture["School.Class.CodesNote"]</p>
 }

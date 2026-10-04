@@ -143,6 +143,7 @@ else if (_snapshot is not null)
                 <input type="text" class="admin-settings-input admin-settings-input--wide"
                        maxlength="500"
                        @bind="_reason"
+                       @bind:event="oninput"
                        placeholder="@Culture["AdminSettings.ReasonPlaceholder"]" />
             </label>
             <div class="admin-save-bar__actions">

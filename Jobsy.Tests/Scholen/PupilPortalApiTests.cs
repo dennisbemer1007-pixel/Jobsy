@@ -92,6 +92,23 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_class_label_says_groep_not_anders()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync(
+            level: SchoolLevel.Groep78,
+            year: 7,
+            questionSet: PupilQuestionSet.Groep78);
+
+        using var client = _factory.CreateClient();
+        var classes = await client.GetFromJsonAsync<List<PupilClassOptionDto>>(
+            $"api/pupil/schools/{seed.SchoolId:D}/classes", Json);
+        var label = classes!.Single(c => c.Id == seed.ClassId).Label;
+        Assert.Contains("groep 7", label, StringComparison.Ordinal);
+        Assert.DoesNotContain("anders", label, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Window_closed_blocks_answers_with_409_and_login_message()
     {
         await EnableSchoolsAsync(true);

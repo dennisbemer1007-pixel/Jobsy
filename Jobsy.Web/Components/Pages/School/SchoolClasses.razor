@@ -7,6 +7,7 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.School
 @using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Scholen
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -179,9 +180,9 @@ else
                 Nav.NavigateTo($"/school/klassen/{created.Id}");
             }
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _drawerError = ex.Message;
+            _drawerError = PortalActionError.From(error.Message);
         }
         finally
         {

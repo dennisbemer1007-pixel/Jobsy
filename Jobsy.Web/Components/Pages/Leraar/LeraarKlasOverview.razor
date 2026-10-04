@@ -44,9 +44,18 @@ else
     <header class="sch-page-header">
         <h1>Klas @_overview.ClassName</h1>
         <p class="muted">
-            @Culture[SchoolLevelRules.LabelKey(_overview.Level)]
-            · @SchoolLevelRules.YearLabel(_overview.Level, _overview.Year)
-            · <span class="sch-pill @(_overview.QuestionSet == PupilQuestionSet.Groep78 ? "sch-pill--ok" : "sch-pill--muted")">@SchoolLevelRules.QuestionSetPillLabel(_overview.QuestionSet)</span>
+            @if (SchoolLevelRules.IsPrimary(_overview.Level))
+            {
+                @SchoolLevelRules.YearLabel(_overview.Level, _overview.Year)
+            }
+            else
+            {
+                @Culture[SchoolLevelRules.LabelKey(_overview.Level)]
+                <text> · </text>
+                @SchoolLevelRules.YearLabel(_overview.Level, _overview.Year)
+                <text> · </text>
+                <span class="sch-pill @(_overview.QuestionSet == PupilQuestionSet.Groep78 ? "sch-pill--ok" : "sch-pill--muted")">@SchoolLevelRules.QuestionSetPillLabel(_overview.QuestionSet)</span>
+            }
             · @_overview.SchoolYearLabel
             · @_overview.CodeCount @Culture["Leraar.Kpi.Codes"]
         </p>
@@ -271,7 +280,7 @@ else
     {
         _busy = true;
         try { await Api.DownloadTeacherCodeListPdfAsync(Js, ClassId); }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -279,7 +288,7 @@ else
     {
         _busy = true;
         try { await Api.DownloadTeacherCodeListCsvAsync(Js, ClassId); }
-        catch (Exception ex) { _actionError = ex.Message; }
+        catch (Exception error) { _actionError = PortalActionError.From(error.Message); }
         finally { _busy = false; }
     }
 
@@ -301,9 +310,9 @@ else
             _windowOpen = false;
             RestartPoll();
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _windowError = ex.Message;
+            _windowError = PortalActionError.From(error.Message);
         }
         finally
         {
@@ -330,7 +339,7 @@ else
         var span = DateTime.UtcNow - utc;
         if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m";
         if (span.TotalHours < 24) return $"{(int)span.TotalHours}u";
-        return utc.ToLocalTime().ToString("dd-MM");
+        return LobsyTime.ToAmsterdam(utc).ToString("dd-MM");
     }
 
     public void Dispose() => _pollCts?.Cancel();

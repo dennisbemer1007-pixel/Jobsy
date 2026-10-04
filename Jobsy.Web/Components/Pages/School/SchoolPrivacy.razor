@@ -6,6 +6,7 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Scholen
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
@@ -35,6 +36,7 @@ else if (_privacy is not null)
             <p>
                 <span class="sch-pill sch-pill--ok">@d.ToString("dd-MM-yyyy")</span>
                 · @_privacy.ProcessorAgreementVersion
+                · <a href="/privacy#verwerkers">@Culture["School.Privacy.AgreementLink"]</a>
             </p>
         }
         else
@@ -74,7 +76,7 @@ else if (_privacy is not null)
             <pre class="sch-ouderbrief">@letter.Text</pre>
         }
         <div class="sch-admin-toolbar">
-            <button type="button" class="btn-compact" @onclick="CopyLetter">@Culture["School.Privacy.Copy"]</button>
+            <button type="button" class="btn-compact" @onclick="CopyLetter">@(_copied ? Culture["School.Privacy.Copied"] : Culture["School.Privacy.Copy"])</button>
         </div>
     </section>
 
@@ -90,9 +92,9 @@ else if (_privacy is not null)
             <p class="state-message">@_deleteDone</p>
         }
         <label>@Culture["School.Privacy.DeleteYearConfirm"]
-            <input class="input" @bind="_deleteConfirm" />
+            <input class="sch-field" @bind="_deleteConfirm" />
         </label>
-        <button type="button" class="btn-compact btn-outline-danger" disabled="@_deleteBusy" @onclick="DeleteYearAsync">
+        <button type="button" class="btn-compact btn-outline-danger sch-privacy-delete" disabled="@_deleteBusy" @onclick="DeleteYearAsync">
             @Culture["School.Privacy.DeleteYear"]
         </button>
     </section>
@@ -103,6 +105,7 @@ else if (_privacy is not null)
     private bool _loading = true;
     private SchoolPrivacyDto? _privacy;
     private string _deleteConfirm = "";
+    private bool _copied;
     private string? _deleteError;
     private string? _deleteDone;
     private bool _deleteBusy;
@@ -126,10 +129,11 @@ else if (_privacy is not null)
         {
             var text = string.Join("\n\n", _privacy.Ouderbrieven.Select(l => l.Text));
             await Js.InvokeVoidAsync("navigator.clipboard.writeText", text);
+            _copied = true;
         }
         catch
         {
-            // ignore
+            _copied = false;
         }
     }
 
@@ -145,9 +149,9 @@ else if (_privacy is not null)
             _deleteDone = Culture["School.Privacy.DeleteYearDone"];
             _privacy = await Api.GetSchoolPrivacyAsync();
         }
-        catch (Exception ex)
+        catch (Exception error)
         {
-            _deleteError = ex.Message;
+            _deleteError = PortalActionError.From(error.Message);
         }
         finally
         {

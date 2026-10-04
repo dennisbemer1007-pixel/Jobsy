@@ -44,21 +44,23 @@ public sealed partial class JobsyApiClient
             return null;
         }
 
-        try
+        var extracted = TryExtractMessage(body);
+        if (!string.IsNullOrWhiteSpace(extracted))
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(body);
-            if (doc.RootElement.TryGetProperty("message", out var msg))
-            {
-                return msg.GetString();
-            }
-        }
-        catch
-        {
-            // fall through
+            return extracted;
         }
 
-        return body.Length > 400 ? body[..400] : body;
+        var trimmed = body.Trim();
+        if (trimmed.StartsWith('{') || trimmed.StartsWith('['))
+        {
+            return null;
+        }
+
+        return trimmed.Length > 400 ? trimmed[..400] : trimmed;
     }
+
+    private static string ActionError(string body)
+        => Jobsy.Web.Scholen.PortalActionError.From(TryExtractMessage(body));
 
     private async Task<MeGetResult<T>> GetMeJsonAsync<T>(string url, CancellationToken ct)
     {
@@ -116,7 +118,23 @@ public sealed partial class JobsyApiClient
             if (doc.RootElement.TryGetProperty("message", out var message) &&
                 message.ValueKind == JsonValueKind.String)
             {
-                return message.GetString();
+                var text = message.GetString();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    return text;
+                }
+            }
+
+            if (doc.RootElement.TryGetProperty("detail", out var detail) &&
+                detail.ValueKind == JsonValueKind.String)
+            {
+                var text = detail.GetString();
+                if (!string.IsNullOrWhiteSpace(text)
+                    && text.Length <= 400
+                    && !text.Contains("at Jobsy", StringComparison.Ordinal))
+                {
+                    return text;
+                }
             }
         }
         catch (JsonException)
