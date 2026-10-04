@@ -514,7 +514,10 @@
             </section>
 
             <div class="journey-lz journey-only-desktop @(IsLightScreen ? "is-rising" : null)">
-                <p class="journey-bubble">@LobsterSay</p>
+                <div class="journey-bubble">
+                    <p>@LobsterSay</p>
+                    <ReadAloudButton Text="@LobsterSay" SpeechKey="journey-lobster-desktop" />
+                </div>
                 <JourneyLobster PlatesShed="@_platesShed"
                                 NewShell="@IsLightScreen"
                                 FallingPlate="@(_screen == "shed" && !_preferReducedMotion ? _shedStep - 1 : null)"
@@ -529,7 +532,10 @@
                                 NewShell="@IsLightScreen"
                                 Mobile="true"
                                 Label="@Culture["Discovery.Lobster.Aria"]" />
-                <p class="journey-bubble">@LobsterSay</p>
+                <div class="journey-bubble">
+                    <p>@LobsterSay</p>
+                    <ReadAloudButton Text="@LobsterSay" SpeechKey="journey-lobster-mobile" />
+                </div>
             </div>
         </div>
     }

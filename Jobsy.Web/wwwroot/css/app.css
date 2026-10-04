@@ -19723,6 +19723,102 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     display: block;
 }
 
+/* Read-aloud stays in the page flow so the coach tab cannot sit on the control. */
+.read-aloud {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    min-width: 44px;
+    margin-block-start: 0.45rem;
+    padding: 0.35rem 0.75rem;
+    border: 2px solid var(--brand);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+}
+
+.read-aloud:focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.read-aloud.is-speaking {
+    background: var(--accent-soft);
+    color: var(--brand-deep);
+}
+
+.read-aloud__icon {
+    font-size: 0.85rem;
+}
+
+.test-flow__speak,
+.read-aloud-block,
+.test-example__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.test-example__body p,
+.journey-bubble p,
+.passport-bubble__copy {
+    margin: 0;
+}
+
+.read-aloud-setting {
+    border: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    gap: 0.35rem;
+}
+
+.read-aloud-setting__hint {
+    margin: 0;
+    color: var(--muted);
+}
+
+.read-aloud-setting__choice {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    min-height: 44px;
+}
+
+.test-dive-scene__bubble {
+    position: relative;
+    z-index: 2;
+    padding: 0.5rem;
+    max-inline-size: 18rem;
+}
+
+.lobsy-assistant__bubble .read-aloud,
+.mock-interview-bubble .read-aloud {
+    margin-block-start: 0.45rem;
+}
+
+@media (max-width: 639px) {
+    .test-shell__card {
+        padding-right: 3rem;
+    }
+
+    .read-aloud-setting,
+    .journey-mlob .journey-bubble {
+        margin-right: 3rem;
+    }
+}
+
 /* Desktop keeps the header nav. The fixed bottom bar is for narrow viewports. */
 @media (min-width: 1024px) {
     .bottom-nav {
@@ -19799,6 +19895,13 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+.lobsy-coach-dock__tip .read-aloud {
+    margin-block-start: 0.35rem;
+    max-inline-size: 100%;
+    white-space: normal;
+    justify-content: flex-start;
 }
 
 .lobsy-coach-dock__close {

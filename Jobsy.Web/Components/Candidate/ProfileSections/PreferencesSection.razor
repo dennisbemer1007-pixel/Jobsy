@@ -4,6 +4,8 @@
 @using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
+                            <ReadAloudSetting />
+
                             <label>
                                 @Culture["Profile.MaxTravel"]
                                 <input type="number" min="1" max="180" @bind="Editor.MaxTravel" />
