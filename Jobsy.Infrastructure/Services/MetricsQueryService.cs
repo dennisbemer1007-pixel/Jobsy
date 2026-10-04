@@ -512,11 +512,27 @@ public sealed class MetricsQueryService : IMetricsQueryService
         return new ClientPerformanceBoardDto(periodKey, rows);
     }
 
-    public async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
+    public Task<IReadOnlyList<MetricDrilldownItemDto>> GetVacancyDrilldownAsync(
+        string key,
+        Guid vacancyId,
+        string period,
+        CancellationToken cancellationToken = default)
+        => GetDrilldownAsync(key, includePlatformOnly: true, companyIds: null, period, vacancyId, cancellationToken);
+
+    public Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
         string key,
         bool includePlatformOnly,
         IReadOnlyCollection<Guid>? companyIds,
         string period,
+        CancellationToken cancellationToken = default)
+        => GetDrilldownAsync(key, includePlatformOnly, companyIds, period, onlyVacancyId: null, cancellationToken);
+
+    private async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
+        string key,
+        bool includePlatformOnly,
+        IReadOnlyCollection<Guid>? companyIds,
+        string period,
+        Guid? onlyVacancyId,
         CancellationToken cancellationToken = default)
     {
         List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
@@ -529,12 +545,14 @@ public sealed class MetricsQueryService : IMetricsQueryService
         var metricsPeriod = MetricsPeriodParser.Parse(period);
         var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
 
-        var vacancyIds = scopeIds is null
-            ? await _db.Vacancies.AsNoTracking().Select(v => v.Id).ToListAsync(cancellationToken)
-            : await _db.Vacancies.AsNoTracking()
-                .Where(v => scopeIds.Contains(v.CompanyId))
-                .Select(v => v.Id)
-                .ToListAsync(cancellationToken);
+        var vacancyIds = onlyVacancyId is Guid oneVacancy
+            ? new List<Guid> { oneVacancy }
+            : scopeIds is null
+                ? await _db.Vacancies.AsNoTracking().Select(v => v.Id).ToListAsync(cancellationToken)
+                : await _db.Vacancies.AsNoTracking()
+                    .Where(v => scopeIds.Contains(v.CompanyId))
+                    .Select(v => v.Id)
+                    .ToListAsync(cancellationToken);
 
         return key.ToLowerInvariant() switch
         {
@@ -581,8 +599,8 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 .Select(l => new MetricDrilldownItemDto(
                     l.Id, l.Category, l.Message, l.CreatedAt, null))
                 .ToListAsync(cancellationToken),
-            "pushboms" => await TokenReasonDrilldownAsync(TokenSpendReason.PushBom, from, to, scopeIds, cancellationToken),
-            "extensions" => await TokenReasonDrilldownAsync(TokenSpendReason.Extend, from, to, scopeIds, cancellationToken),
+            "pushboms" => await TokenReasonDrilldownAsync(TokenSpendReason.PushBom, from, to, scopeIds, onlyVacancyId, cancellationToken),
+            "extensions" => await TokenReasonDrilldownAsync(TokenSpendReason.Extend, from, to, scopeIds, onlyVacancyId, cancellationToken),
             "active_boosts" => await ActiveBoostsDrilldownAsync(scopeIds, cancellationToken),
             "avg_travel_minutes" or "top_transport_share" =>
                 await MatchTravelDrilldownAsync(vacancyIds, from, to, cancellationToken),
@@ -1212,10 +1230,12 @@ public sealed class MetricsQueryService : IMetricsQueryService
         DateTime from,
         DateTime to,
         IReadOnlyCollection<Guid>? companyIds,
+        Guid? vacancyId,
         CancellationToken ct)
         => await _db.TokenTransactions.AsNoTracking()
             .Where(t => t.Reason == reason && t.CreatedAt >= from && t.CreatedAt <= to)
             .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+            .Where(t => vacancyId == null || t.VacancyId == vacancyId)
             .OrderByDescending(t => t.CreatedAt)
             .Select(t => new MetricDrilldownItemDto(
                 t.Id,

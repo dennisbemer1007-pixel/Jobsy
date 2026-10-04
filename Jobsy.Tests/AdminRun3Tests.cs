@@ -167,7 +167,10 @@ public class AdminRun3LabelTests
         var companies = AdminNav.Groups.SelectMany(g => g.Items).Single(i => i.Href == "/admin/organisaties");
         Assert.False(AdminNav.Matches("/admin/organisaties", dashboard));
         Assert.True(AdminNav.Matches("/admin", dashboard));
-        Assert.True(AdminNav.Matches("/admin/organisaties/aanvragen", companies));
+        Assert.True(AdminNav.Matches("/admin/organisaties", companies));
+        var requests = AdminNav.Groups.SelectMany(g => g.Items).Single(i => i.Href == "/admin/organisaties/aanvragen");
+        Assert.False(AdminNav.Matches("/admin/organisaties/aanvragen", companies));
+        Assert.True(AdminNav.Matches("/admin/organisaties/aanvragen", requests));
     }
 
     [Fact]

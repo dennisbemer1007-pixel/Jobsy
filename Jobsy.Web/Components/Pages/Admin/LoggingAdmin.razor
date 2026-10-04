@@ -61,7 +61,7 @@
                     <td data-label="@Culture["AdminLogs.Col.Level"]">@LevelLabel(log.Level)</td>
                     <td data-label="@Culture["AdminLogs.Col.Category"]">@CategoryLabel(log.Category)</td>
                     <td class="admin-mono" data-label="@Culture["AdminLogs.Col.Code"]">@(code ?? "—")</td>
-                    <td data-label="@Culture["AdminLogs.Col.Message"]">@log.Message</td>
+                    <td data-label="@Culture["AdminLogs.Col.Message"]" title="@log.Message">@AdminActionLabels.LogMessage(log.Message, key => Culture[key])</td>
                 </tr>
                 @if (open)
                 {
