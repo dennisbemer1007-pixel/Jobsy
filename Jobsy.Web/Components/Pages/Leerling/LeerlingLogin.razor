@@ -11,12 +11,13 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
 @inject NavigationManager Nav
 
 <PageTitle>@Culture["Leerling.LoginTitle"] · Lobsy</PageTitle>
 
 <div class="ll-login">
-    <LeerlingScene Depth="0" IsMobile="true" />
+    <LeerlingScene Depth="0" />
     <div class="ll-login__intro">
         <LeerlingLobster PlatesShed="0" Mobile="true" Size="88" Label="Lobsy" />
         <p class="ll-bubble">@Culture["Leerling.Login.Bubble"]</p>
@@ -27,6 +28,17 @@
         <div class="ll-card ll-card--warn" role="alert">
             <p>@_staffBlock</p>
         </div>
+    }
+    else if (_pupilSession)
+    {
+        <section class="ll-card">
+            <h1>@Culture["Leerling.Login.AlreadyIn"]</h1>
+            <p>@Culture["Leerling.Login.AlreadyLead"]</p>
+            <div class="ll-question__nav">
+                <a class="btn-primary" href="/leerling/start">@Culture["Leerling.Login.Continue"]</a>
+                <a class="btn-secondary" href="/leerling/stop">@Culture["Leerling.Login.Stop"]</a>
+            </div>
+        </section>
     }
     else
     {
@@ -99,18 +111,35 @@
     private List<PupilClassOptionDto> _classes = [];
     private string? _error;
     private string? _staffBlock;
+    private bool _pupilSession;
 
     protected override async Task OnInitializedAsync()
     {
         var http = HttpContextAccessor.HttpContext;
-        // Staff principal is already on HttpContext.User from UseAuthentication.
-        // Signing the cookie in here would run after the circuit response has started.
-        if (http?.User.Identity?.IsAuthenticated == true)
+        // The document request keeps the pupil on Items (cookie auth must not run
+        // inside the circuit). The circuit itself puts that principal on User.
+        if (IsStoredPupil(http) || JobsyApiAuthHandler.IsPupilPrincipal(http?.User))
+        {
+            _pupilSession = true;
+            return;
+        }
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (JobsyApiAuthHandler.IsPupilPrincipal(state.User))
+        {
+            _pupilSession = true;
+            return;
+        }
+
+        var signedIn = http?.User.Identity?.IsAuthenticated == true
+            ? http.User
+            : state.User.Identity?.IsAuthenticated == true ? state.User : null;
+        if (signedIn is not null)
         {
             _staffBlock = string.Format(
                 System.Globalization.CultureInfo.CurrentCulture,
                 Culture["Leerling.Login.StaffBusy"],
-                StaffRoleLabel(http.User.FindFirst(ClaimTypes.Role)?.Value));
+                StaffRoleLabel(signedIn.FindFirst(ClaimTypes.Role)?.Value));
             return;
         }
 
@@ -135,6 +164,10 @@
             _ => null
         };
     }
+
+    private static bool IsStoredPupil(HttpContext? http)
+        => http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is ClaimsPrincipal pupil
+           && JobsyApiAuthHandler.IsPupilPrincipal(pupil);
 
     private string StaffRoleLabel(string? role) => role switch
     {

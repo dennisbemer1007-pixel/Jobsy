@@ -74,7 +74,7 @@ else
             {
                 <span> · @Culture["Leraar.Detail.CompletedOn"] @LobsyTime.ToAmsterdam(done).ToString("dd-MM-yyyy")</span>
             }
-            · @_detail.ProgressCurrent @_detail.ProgressTotal @Culture["Leraar.Detail.Questions"]
+            · @QuestionCount()
             @if (_detail.DurationMinutes is int mins)
             {
                 <span> · @mins min</span>
@@ -113,22 +113,22 @@ else
                 <div class="sch-chip-list">
                     @foreach (var chip in _detail.Likes)
                     {
-                        <span class="sch-chip">@chip</span>
+                        <span class="sch-chip">@ChipText(chip)</span>
                     }
                     @if (!string.IsNullOrWhiteSpace(_detail.LikeOtherWord))
                     {
-                        <span class="sch-chip">@_detail.LikeOtherWord</span>
+                        <span class="sch-chip">@OwnWord(_detail.LikeOtherWord)</span>
                     }
                 </div>
                 <h2>@Culture["Leraar.Detail.Dislikes"]</h2>
                 <div class="sch-chip-list">
                     @foreach (var chip in _detail.Dislikes)
                     {
-                        <span class="sch-chip">@chip</span>
+                        <span class="sch-chip">@ChipText(chip)</span>
                     }
                     @if (!string.IsNullOrWhiteSpace(_detail.DislikeOtherWord))
                     {
-                        <span class="sch-chip">@_detail.DislikeOtherWord</span>
+                        <span class="sch-chip">@OwnWord(_detail.DislikeOtherWord)</span>
                     }
                 </div>
             </section>
@@ -266,4 +266,33 @@ else
             _pdfBusy = false;
         }
     }
+
+    private string QuestionCount()
+    {
+        if (_detail is null)
+        {
+            return "";
+        }
+
+        var questions = Culture["Leraar.Detail.Questions"];
+        return _detail.ProgressCurrent == _detail.ProgressTotal
+            ? $"{_detail.ProgressTotal} {questions}"
+            : $"{_detail.ProgressCurrent} van {_detail.ProgressTotal} {questions}";
+    }
+
+    private string ChipText(string key)
+    {
+        var chip = PupilInterestChipCatalog.DislikeChips
+            .FirstOrDefault(c => string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase));
+        if (chip is null)
+        {
+            return key;
+        }
+
+        var label = Culture[chip.LabelKey];
+        return string.Equals(label, chip.LabelKey, StringComparison.Ordinal) ? key : label;
+    }
+
+    private string OwnWord(string word)
+        => $"{word} ({Culture["Leraar.Detail.OwnWord"]})";
 }

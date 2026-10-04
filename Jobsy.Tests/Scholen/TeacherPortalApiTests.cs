@@ -7,7 +7,9 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Scholen;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -233,6 +235,137 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             new TestWindowRequest("open", DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))));
         Assert.Equal(HttpStatusCode.Conflict, open.StatusCode);
         Assert.Contains("parental_info_missing", await open.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Five_finished_groep78_pupils_unlock_group_and_school_totals()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (adminId, _, classId, teacherId) = await SeedGroep78WithBuiltResultsAsync(5);
+
+        using var teacher = JobsyTestAuth.CreateAuthenticatedClient(_factory, teacherId);
+        var overview = await teacher.GetFromJsonAsync<TeacherClassOverviewDto>(
+            $"api/teacher/classes/{classId}/overview", Json);
+        Assert.NotNull(overview);
+        Assert.True(overview!.GroupInsights.Visible);
+        Assert.Equal(5, overview.GroupInsights.CompletedCount);
+        Assert.NotNull(overview.AverageMinutes);
+
+        var group = await teacher.GetFromJsonAsync<TeacherGroupInsightsDto>(
+            $"api/teacher/classes/{classId}/group", Json);
+        Assert.NotNull(group);
+        Assert.True(group!.Visible);
+        Assert.Equal(6, group.RiasecBars.Count);
+
+        var dreams = await teacher.GetFromJsonAsync<TeacherDreamJobsDto>(
+            $"api/teacher/classes/{classId}/dreamjobs", Json);
+        Assert.NotNull(dreams);
+        Assert.True(dreams!.Visible);
+
+        using var admin = JobsyTestAuth.CreateAuthenticatedClient(_factory, adminId);
+        var results = await admin.GetFromJsonAsync<SchoolPortalResultsDto>(
+            $"api/school/classes/{classId}/results", Json);
+        Assert.NotNull(results);
+        Assert.Equal(classId, results!.ClassId);
+        Assert.True(results.Totals.TotalsVisible);
+        Assert.DoesNotContain(
+            results.PerCode ?? [],
+            row => row.DisplayCode.Contains("LeerlingStory", StringComparison.Ordinal));
+    }
+
+    private async Task<(Guid AdminId, Guid SchoolId, Guid ClassId, Guid TeacherId)> SeedGroep78WithBuiltResultsAsync(
+        int count)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var schoolId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var teacherId = Guid.NewGuid();
+        var domain = $"g{schoolId:N}"[..12] + ".nl";
+        db.Schools.Add(new School
+        {
+            Id = schoolId,
+            Name = "Groep College",
+            City = "Naaldwijk",
+            AllowedEmailDomains = JsonSerializer.Serialize(new[] { domain }),
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _factory.AdminId
+        });
+        db.Users.Add(new User
+        {
+            Id = adminId,
+            Email = $"sa-{adminId:N}@{domain}",
+            FullName = "J. Visser",
+            Role = UserRole.SchoolAdmin,
+            SchoolId = schoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true
+        });
+        db.Users.Add(new User
+        {
+            Id = teacherId,
+            Email = $"t-{teacherId:N}@{domain}",
+            FullName = "R. Jansen",
+            Role = UserRole.Teacher,
+            SchoolId = schoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true
+        });
+        var classId = Guid.NewGuid();
+        var schoolClass = new SchoolClass
+        {
+            Id = classId,
+            SchoolId = schoolId,
+            Name = "7A",
+            Level = SchoolLevel.Groep78,
+            Year = 7,
+            QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = count,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.SchoolClasses.Add(schoolClass);
+        db.TeacherClassAssignments.Add(new TeacherClassAssignment
+        {
+            TeacherUserId = teacherId,
+            SchoolClassId = classId,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var generated = await codes.GenerateAsync(count, schoolClass);
+        var registry = scope.ServiceProvider.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bank = registry.Get(PupilQuestionSet.Groep78).Bank;
+        var answers = bank.AllItems.ToDictionary(i => i.Id, _ => 4);
+        var answersJson = JsonSerializer.Serialize(answers);
+        var now = DateTime.UtcNow;
+        foreach (var code in generated)
+        {
+            db.PupilProgresses.Add(new PupilProgress
+            {
+                PupilCodeId = code.Id,
+                AnswersJson = answersJson,
+                CurrentIndex = bank.AllItems.Count,
+                LikesJson = """["dieren","sport"]""",
+                DislikesJson = """["lang-stilzitten"]""",
+                StartedAtUtc = now.AddMinutes(-25),
+                UpdatedAtUtc = now,
+                CompletedAtUtc = now
+            });
+        }
+
+        await db.SaveChangesAsync();
+        var builder = scope.ServiceProvider.GetRequiredService<IPupilResultBuilder>();
+        foreach (var code in generated)
+        {
+            await builder.BuildAsync(code.Id);
+        }
+
+        return (adminId, schoolId, classId, teacherId);
     }
 
     private async Task EnableSchoolsAsync(bool enabled, bool perCode)

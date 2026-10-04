@@ -27,8 +27,8 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
 
         if (keys.LikeChipKeys.Count >= 2)
         {
-            var a = ChipLabel(keys.LikeChipKeys[0]);
-            var b = ChipLabel(keys.LikeChipKeys[1]);
+            var a = ChipInSentence(keys.LikeChipKeys[0]);
+            var b = ChipInSentence(keys.LikeChipKeys[1]);
             sentences.Add(string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 PupilVerhaalCopy.Get("LeerlingStory.Likes.Two"), a, b));
@@ -38,7 +38,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             sentences.Add(string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 PupilVerhaalCopy.Get("LeerlingStory.Likes.One"),
-                ChipLabel(keys.LikeChipKeys[0])));
+                ChipInSentence(keys.LikeChipKeys[0])));
         }
 
         var body = string.Join(" ", sentences);
@@ -49,7 +49,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
                 PupilVerhaalCopy.Get(keys.TileCompetenceKey)),
             new("riasec",
                 PupilVerhaalCopy.Get("LeerlingStory.Tile.DitDoeJe"),
-                PupilVerhaalCopy.Get(keys.TileRiasecKey)),
+                PupilVerhaalCopy.Get(PupilStoryTemplates.NormalizeTileRiasecKey(keys.TileRiasecKey))),
             new("values",
                 PupilVerhaalCopy.Get("LeerlingStory.Tile.Belangrijk"),
                 PupilVerhaalCopy.Get(keys.TileValueKey)),
@@ -180,9 +180,19 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             "talen" => "Talen",
             "reizen" => "Reizen",
             "programmeren" => "Programmeren",
+            "voor-de-klas" => "Voor de klas praten",
+            "lang-stilzitten" => "Lang stilzitten",
+            "hard-werken-kou" => "Hard werken in de kou",
+            "veel-lezen" => "Veel lezen",
+            "alleen-werken" => "Alleen werken",
+            "druk-lawaai" => "Druk en lawaai",
+            "vies-worden" => "Vies worden",
             _ => chipKey
         };
     }
+
+    private static string ChipInSentence(string chipKey)
+        => ChipLabel(chipKey).ToLower(System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
 
     private static List<string> ParseChips(string? json)
     {

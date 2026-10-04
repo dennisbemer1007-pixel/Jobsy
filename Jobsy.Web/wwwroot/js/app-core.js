@@ -1324,8 +1324,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-run6b"
-            : "/service-worker.js?v=20261004-run6b";
+            ? "/service-worker.published.js?v=20261004-run6c"
+            : "/service-worker.js?v=20261004-run6c";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1473,6 +1473,13 @@ window.lobsyPwaInstall = (function () {
     if (next.closest && next.closest("[data-menu-trigger]")) return;
     setOpen(null);
   });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Tab") document.documentElement.classList.add("using-keyboard");
+  }, true);
+  document.addEventListener("pointerdown", function () {
+    document.documentElement.classList.remove("using-keyboard");
+  }, true);
 })();
 
 (function () {

@@ -788,6 +788,9 @@ public static class UiStringsAdmin
         Add("TokenSpendCost.Highlight", "Uitlichten", "Highlight", "Wyróżnienie", "Evidențiere", "إبراز");
         Add("Vacaturecategorie.PublishCostTokens", "Plaatskosten per categorie", "Publish cost per category", "Koszt publikacji kategorii", "Cost publicare pe categorie", "تكلفة النشر لكل فئة");
         Add("AdminLogs.Col.Message", "Bericht", "Message", "Wiadomość", "Mesaj", "الرسالة");
+        Add("AdminLogs.Detail", "Foutdetails", "Error detail", "Szczegóły błędu", "Detalii eroare", "تفاصيل الخطأ");
+        Add("AdminLogs.NoDetail", "Geen extra details.", "No extra detail.", "Brak dodatkowych szczegółów.", "Fără detalii suplimentare.", "لا تفاصيل إضافية.");
+        Add("AdminLogs.OpenRow", "Toon de foutdetails", "Show the error detail", "Pokaż szczegóły błędu", "Arată detaliile erorii", "عرض تفاصيل الخطأ");
         Add("AdminLogs.Empty", "Geen logs gevonden.", "No logs found.", "Brak logów.", "Niciun jurnal.", "لا سجلات.");
         Add("AdminLogs.CategoryPlaceholder", "Categorie", "Category", "Kategoria", "Filtrează categoria", "الفئة");
         Add("Admin.Ambassador.SetOverride", "Afspraak vastleggen", "Set override", "Ustaw wyjątek", "Setează excepția", "تعيين استثناء");

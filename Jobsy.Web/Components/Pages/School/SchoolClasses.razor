@@ -157,6 +157,11 @@ else
     {
         _create = new CreateForm();
         _selectedTeachers.Clear();
+        if (_teacherOptions.Count == 1)
+        {
+            _selectedTeachers.Add(_teacherOptions[0].UserId);
+        }
+
         _drawerError = null;
         _drawerOpen = true;
     }

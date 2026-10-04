@@ -29,5 +29,6 @@ public static class PupilReportPdfCopy
     public const string LikesTitle = "Je houdt van";
     public const string DislikesTitle = "Niet zo leuk vind je";
     public const string JobsTitle = "Beroepen om eens te bekijken";
+    public const string DreamLater = "Je droombaan kies je later.";
     public const string StoryTitle = "Dit ben jij";
 }

@@ -96,19 +96,19 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
 
         result.SchoolClassId = code.SchoolClassId;
         result.CompletedAtUtc = code.Progress.CompletedAtUtc ?? now;
-        result.CompetenceScoresJson = JsonSerializer.Serialize(competence, Json);
-        result.RiasecScoresJson = JsonSerializer.Serialize(riasec, Json);
+        result.CompetenceScoresJson = SerializeScores(competence);
+        result.RiasecScoresJson = SerializeScores(riasec);
         result.HollandCode = string.IsNullOrEmpty(holland) ? null : holland;
-        result.ValuesScoresJson = JsonSerializer.Serialize(values, Json);
+        result.ValuesScoresJson = SerializeScores(values);
         result.TopValue = topValue;
-        result.CultureScoresJson = JsonSerializer.Serialize(culture, Json);
+        result.CultureScoresJson = SerializeScores(culture);
         result.TopCulture = topCulture;
         // Per-test scoring version (G78 → "g78-1"; VO → "vo-1").
         result.ScoringVersion = def.ScoringVersion;
         result.DreamJobKey = code.Progress.DreamJobKey;
 
         var likeKeys = ParseChipKeys(code.Progress.LikesJson);
-        var storyKeys = PupilStoryTemplates.SelectKeys(result, likeKeys);
+        var storyKeys = PupilStoryTemplates.SelectKeys(result, likeKeys, def.Set);
         result.StoryTemplateVersion = PupilStoryTemplates.Version.ToString(System.Globalization.CultureInfo.InvariantCulture);
         result.StoryKeysJson = PupilStoryTemplates.Serialize(storyKeys);
 
@@ -123,6 +123,9 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
 
         await _db.SaveChangesAsync(cancellationToken);
     }
+
+    private static string SerializeScores<T>(T? value) where T : class
+        => value is null ? "{}" : JsonSerializer.Serialize(value, Json);
 
     private static string? TopByCatalogOrder<T>(
         T? scores,
