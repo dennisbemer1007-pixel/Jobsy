@@ -192,7 +192,7 @@
             <ul class="admin-audit-changes">
                 @foreach (var d in details)
                 {
-                    <li><span class="admin-mono">@d.Field</span>: <span class="muted">@d.From</span> → <strong>@d.To</strong></li>
+                    <li title="@d.Field"><span>@ChangeField(d.Field)</span>: <span class="muted">@ChangeValue(d.Field, d.From)</span> → <strong>@ChangeValue(d.Field, d.To)</strong></li>
                 }
             </ul>
         }
@@ -426,6 +426,10 @@
     }
 
     private string ActionLabel(string action) => AdminActionLabels.Label(action, key => Culture[key]);
+
+    private string ChangeField(string field) => AdminActionLabels.ChangeField(field, key => Culture[key]);
+
+    private string ChangeValue(string field, string? value) => AdminActionLabels.ChangeValue(field, value, key => Culture[key]);
 
     private static string ActionPillClass(string action) => action switch
     {

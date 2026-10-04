@@ -2308,3 +2308,47 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
         max-width: none;
     }
 }
+
+.admin-tabs__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    margin-inline-start: 0.35rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: var(--coral, #f54a1b);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Gegevensinzage content width is 968px at 1280px (248px sidebar + page padding). */
+.admin-access-log .data-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.admin-access-log .data-table th,
+.admin-access-log .data-table td {
+    min-width: 0;
+}
+
+.admin-access-log .data-table th.admin-access-log__reason,
+.admin-access-log .data-table td.admin-access-log__reason {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.admin-access-log .data-table th.admin-access-log__corr,
+.admin-access-log .data-table td.admin-access-log__corr {
+    width: 6.5rem;
+    white-space: nowrap;
+}
+
+.vacancy-grid .data-table th button.linkish {
+    letter-spacing: inherit;
+    text-transform: inherit;
+}

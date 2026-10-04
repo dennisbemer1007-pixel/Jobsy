@@ -117,6 +117,8 @@ public static class AdminNav
                 [], IsAvailable: true),
             new("logs", "AdminNav.SystemLogs", "/admin/beveiliging/systeemlogs", NavIcons.Logging,
                 ["/admin/logging"], IsAvailable: true),
+            new("misuse", "AdminNav.ReferenceMisuse", "/admin/beveiliging/referent-misbruik", NavIcons.Logging,
+                [], IsAvailable: true),
         ]),
     ];
 
