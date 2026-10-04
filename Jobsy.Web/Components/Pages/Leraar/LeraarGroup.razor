@@ -64,7 +64,7 @@ else
                 <ol class="sch-rank-list">
                     @foreach (var v in _group.TopValues)
                     {
-                        <li>@v.Key <span class="muted">· @v.Count</span></li>
+                        <li>@PupilDimensionText.Value(Culture, v.Key) <span class="muted">· @v.Count</span></li>
                     }
                 </ol>
             </section>
@@ -73,7 +73,7 @@ else
                 <ol class="sch-rank-list">
                     @foreach (var c in _group.TopCultures)
                     {
-                        <li>@c.Key <span class="muted">· @c.Count</span></li>
+                        <li>@PupilDimensionText.Culture(Culture, c.Key) <span class="muted">· @c.Count</span></li>
                     }
                 </ol>
             </section>
