@@ -124,14 +124,13 @@ public class LegalAiProcessorSelectionTests
         Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Legal.Processor.mistral.Purpose", language)));
         var data = UiStrings.Get("Legal.Processor.mistral.Data", language);
         Assert.False(string.IsNullOrWhiteSpace(data));
-        if (language == "ar")
+        var regionWord = language switch
         {
-            Assert.Contains("الأوروبي", data, StringComparison.Ordinal);
-        }
-        else
-        {
-            Assert.Contains("EU", data, StringComparison.OrdinalIgnoreCase);
-        }
+            "ar" => "الأوروبي",
+            "pl" or "ro" => "UE",
+            _ => "EU",
+        };
+        Assert.Contains(regionWord, data, StringComparison.Ordinal);
         var change = UiStrings.Get("Legal.Change.Privacy.2026-10-06", language);
         Assert.NotEqual("Legal.Change.Privacy.2026-10-06", change);
         var lead = UiStrings.Get("Profile.OwnCvLead.Mistral", language);

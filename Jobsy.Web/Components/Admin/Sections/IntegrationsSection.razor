@@ -81,10 +81,10 @@
         {
             _aiProvider = await Api.GetAiProviderAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _aiProvider = null;
-            _message = ex.Message;
+            _message = Culture["Common.Error"];
         }
     }
 
