@@ -15,7 +15,29 @@
 <AdminPageShell Title="@Culture["AdminNav.DataAccess"]" Lead="@Culture["Admin.PersonalDataAccessLogLead"]">
     <BeveiligingTabs ActiveKey="pii" />
 
-    <AdminFilterBar Query="@_actorQuery" QueryChanged="OnActorChanged" Placeholder="@Culture["AdminDataAccess.Actor"]">
+    <AdminFilterBar>
+        <div class="admin-user-picker">
+            <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Actor"]"
+                   @bind="_actorQuery" @bind:event="oninput" @bind:after="OnActorTyped" autocomplete="off" />
+            @if (_actorHits.Count > 0)
+            {
+                <ul class="admin-user-picker__list">
+                    @foreach (var hit in _actorHits)
+                    {
+                        <li>
+                            <button type="button" @onclick="() => PickActor(hit)">
+                                <strong>@hit.FullName</strong>
+                                <span class="admin-muted">@PickerMeta(hit)</span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+            else if (_actorMiss)
+            {
+                <p class="admin-user-picker__empty" role="status">@Culture["AdminDataAccess.NoMatch"]</p>
+            }
+        </div>
         <div class="admin-user-picker">
             <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Subject"]"
                    @bind="_subjectQuery" @bind:event="oninput" @bind:after="OnSubjectTyped" autocomplete="off" />
@@ -44,24 +66,6 @@
         <input type="date" class="admin-filter-input" @bind="_toDate" />
         <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
     </AdminFilterBar>
-    @if (_actorHits.Count > 0)
-    {
-        <ul class="admin-user-picker__list admin-user-picker__list--inline">
-            @foreach (var hit in _actorHits)
-            {
-                <li>
-                    <button type="button" @onclick="() => PickActor(hit)">
-                        <strong>@hit.FullName</strong>
-                        <span class="admin-muted">@PickerMeta(hit)</span>
-                    </button>
-                </li>
-            }
-        </ul>
-    }
-    @if (_actorMiss && _actorHits.Count == 0)
-    {
-        <p class="admin-user-picker__empty" role="status">@Culture["AdminDataAccess.NoMatch"]</p>
-    }
     @if (!string.IsNullOrEmpty(_idHint))
     {
         <p class="state-message @(_idError ? "error" : null)" role="status">@_idHint</p>
@@ -163,14 +167,10 @@
 
     protected override Task OnInitializedAsync() => ReloadAsync();
 
-    private void OnActorChanged(string q)
+    private void OnActorTyped()
     {
-        if (!string.Equals(q, _actorQuery, StringComparison.Ordinal))
-        {
-            _actorId = null;
-        }
-
-        _actorQuery = q;
+        _actorId = null;
+        var q = _actorQuery;
         _ = _actorSuggest.RunAsync(250, async ct =>
         {
             var hits = await SearchUsersAsync(q, ct);
@@ -356,10 +356,16 @@
 
     private string PersonDetail(string? role, string? company, string? email)
     {
+        var mail = email ?? "";
+        if (string.Equals(role, "Candidate", StringComparison.OrdinalIgnoreCase))
+        {
+            var candidate = AdminActionLabels.Role(role, key => Culture[key]);
+            return mail.Length == 0 ? candidate : $"{candidate} · {mail}";
+        }
+
         var who = !string.IsNullOrWhiteSpace(company)
             ? company
             : AdminActionLabels.Role(role, key => Culture[key]);
-        var mail = email ?? "";
         if (who.Length == 0)
         {
             return mail;
@@ -369,7 +375,21 @@
     }
 
     private string PickerMeta(AdminUserItem hit)
-        => PersonDetail(hit.Role, hit.CompanyName, hit.Email);
+    {
+        var role = AdminActionLabels.Role(hit.Role, key => Culture[key]);
+        if (string.Equals(hit.Role, "Candidate", StringComparison.OrdinalIgnoreCase))
+        {
+            return role;
+        }
+
+        var company = hit.CompanyName?.Trim() ?? "";
+        if (role.Length == 0)
+        {
+            return company;
+        }
+
+        return company.Length == 0 ? role : $"{role} · {company}";
+    }
 
     private static bool TryUserId(string text, out Guid? id, out string? prefix)
     {

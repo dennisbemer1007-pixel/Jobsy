@@ -38,14 +38,14 @@
             <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
         </div>
         <span class="ats-toolbar__count muted">@(_filtered.Count == 1 ? "1 resultaat" : $"{_filtered.Count} resultaten")</span>
-        @if (PendingOnPage().Count > 0)
-        {
-            <div class="ats-toolbar__actions">
-                <button class="btn-compact" type="button" disabled="@_busy" @onclick="RejectSelectedAsync">
-                    @Culture["AdminAts.BulkReject"] (@_selected.Count)
-                </button>
-            </div>
-        }
+        <div class="ats-toolbar__actions">
+            <button class="btn-compact" type="button" disabled="@(_busy || PendingOnPage().Count == 0)" @onclick="SelectAllPending">
+                @Culture["AdminAts.SelectPage"]
+            </button>
+            <button class="btn-compact" type="button" disabled="@(_busy || _selected.Count == 0)" @onclick="AskRejectSelected">
+                @string.Format(Culture["AdminAts.BulkReject"], _selected.Count)
+            </button>
+        </div>
     </div>
 
     @if (_scrapeReport is not null)
@@ -240,6 +240,16 @@
             </footer>
         </aside>
     }
+
+    <LobsyFriendlyDialog IsOpen="_confirmReject"
+                         Title="@Culture["AdminAts.BulkRejectTitle"]"
+                         Lead="@string.Format(Culture["AdminAts.BulkRejectConfirm"], _selected.Count)"
+                         OnClose="() => { _confirmReject = false; return Task.CompletedTask; }">
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" @onclick="() => _confirmReject = false">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="ConfirmRejectSelectedAsync">@Culture["Common.Confirm"]</button>
+        </div>
+    </LobsyFriendlyDialog>
 </AdminPageShell>
 
 @code {
@@ -255,6 +265,7 @@
     private ElementReference _detailPanel;
     private bool _detailTrapped;
     private readonly HashSet<Guid> _selected = [];
+    private bool _confirmReject;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -323,6 +334,30 @@
 
     private List<AtsListingItem> PendingOnPage()
         => _filtered.Where(l => l.Status == "PendingReview").ToList();
+
+    private void SelectAllPending()
+    {
+        foreach (var row in PendingOnPage())
+        {
+            _selected.Add(row.Id);
+        }
+    }
+
+    private void AskRejectSelected()
+    {
+        if (_selected.Count == 0 || _busy)
+        {
+            return;
+        }
+
+        _confirmReject = true;
+    }
+
+    private async Task ConfirmRejectSelectedAsync()
+    {
+        _confirmReject = false;
+        await RejectSelectedAsync();
+    }
 
     private void ToggleSelected(AtsListingItem row, object? value)
     {

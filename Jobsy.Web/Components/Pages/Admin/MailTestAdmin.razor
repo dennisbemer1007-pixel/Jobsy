@@ -280,6 +280,11 @@
                 return Culture["Admin.MailTestGroupAccount"];
             }
 
+            if (string.Equals(t.Audience, "Referent", StringComparison.OrdinalIgnoreCase))
+            {
+                return Culture["Admin.MailTestGroupReferee"];
+            }
+
             return Culture["Admin.MailTestGroupInternal"];
         }
 

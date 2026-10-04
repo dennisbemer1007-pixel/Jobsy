@@ -441,14 +441,15 @@ public static partial class TransactionalEmails
     }
 
     public static ComposedEmail ComebackReminder(
-        string? baseUrl, string? candidateName, string kind, EmailCulture? culture = null)
+        string? baseUrl, string? candidateName, string kind, EmailCulture? culture = null, string? documentKey = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var links = Links(baseUrl);
         var tests = string.Equals(kind, ComebackReminderKinds.BasicTests, StringComparison.Ordinal);
         var prefix = tests ? "Email.ComebackTests" : "Email.ComebackLookAgain";
         var href = tests ? links.Absolute("/profiel/tests") : links.Absolute("/profiel");
-        return Finish(Doc("ComebackReminder", S(c, prefix + ".Subject"),
+        var docKey = string.IsNullOrWhiteSpace(documentKey) ? "ComebackReminder" : documentKey;
+        return Finish(Doc(docKey, S(c, prefix + ".Subject"),
             S(c, prefix + ".Preheader"), S(c, prefix + ".Heading"),
             [P(S(c, prefix + ".P1"))],
             Button(S(c, prefix + ".Cta"), href),
@@ -461,6 +462,7 @@ public static partial class TransactionalEmails
         string? baseUrl,
         string refereeName,
         string candidateName,
+        string workplace,
         string roleTitle,
         string confirmUrl,
         EmailCulture? culture = null)
@@ -473,7 +475,7 @@ public static partial class TransactionalEmails
             S(c, "Email.ReferenceAsk.Preheader"),
             S(c, "Email.ReferenceAsk.Heading"),
             [
-                P(T(c, "Email.ReferenceAsk.P1", EmailArg.Bold(candidateName), EmailArg.Bold(roleTitle), EmailArg.Plain(ReferenceConfirmationRules.TokenDays.ToString(), isolate: false))),
+                P(T(c, "Email.ReferenceAsk.P1", EmailArg.Bold(candidateName), EmailArg.Bold(workplace), EmailArg.Bold(roleTitle), EmailArg.Plain(ReferenceConfirmationRules.TokenDays.ToString(), isolate: false))),
                 P(S(c, "Email.ReferenceAsk.Privacy")),
                 N(S(c, "Email.ReferenceAsk.Note"))
             ],

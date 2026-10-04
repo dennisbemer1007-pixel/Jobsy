@@ -517,7 +517,14 @@ public sealed class MetricsQueryService : IMetricsQueryService
         Guid vacancyId,
         string period,
         CancellationToken cancellationToken = default)
-        => GetDrilldownAsync(key, includePlatformOnly: true, companyIds: null, period, vacancyId, cancellationToken);
+        => GetDrilldownAsync(
+            key,
+            includePlatformOnly: true,
+            companyIds: null,
+            period,
+            vacancyId,
+            countUnverifiedApplications: true,
+            cancellationToken);
 
     public Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
         string key,
@@ -525,7 +532,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         string period,
         CancellationToken cancellationToken = default)
-        => GetDrilldownAsync(key, includePlatformOnly, companyIds, period, onlyVacancyId: null, cancellationToken);
+        => GetDrilldownAsync(key, includePlatformOnly, companyIds, period, onlyVacancyId: null, cancellationToken: cancellationToken);
 
     private async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
         string key,
@@ -533,6 +540,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         string period,
         Guid? onlyVacancyId,
+        bool countUnverifiedApplications = false,
         CancellationToken cancellationToken = default)
     {
         List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
@@ -558,9 +566,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
         {
             "tokens_purchased" or "tokens_spent" => await TokenDrilldownAsync(key, from, to, scopeIds, cancellationToken),
             "tokens_balance" => await TokenBalanceDrilldownAsync(scopeIds, cancellationToken),
-            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken),
-            "applications_pending" => await ApplicationsDrilldownAsync(vacancyIds, from: null, to: null, pendingOnly: true, cancellationToken),
-            "conversion_rate" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken),
+            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken, countUnverifiedApplications),
+            "applications_pending" => await ApplicationsDrilldownAsync(vacancyIds, from: null, to: null, pendingOnly: true, cancellationToken, countUnverifiedApplications),
+            "conversion_rate" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken, countUnverifiedApplications),
             "impressions" => (await _db.VacancySearchImpressions.AsNoTracking()
                     .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
                     .OrderByDescending(i => i.CreatedAt)
@@ -953,10 +961,15 @@ public sealed class MetricsQueryService : IMetricsQueryService
         DateTime? from,
         DateTime? to,
         bool pendingOnly,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool countUnverified = false)
     {
         var query = _db.Applications.AsNoTracking()
-            .Where(a => vacancyIds.Contains(a.VacancyId) && a.EmailVerifiedAt != null);
+            .Where(a => vacancyIds.Contains(a.VacancyId));
+        if (!countUnverified)
+        {
+            query = query.Where(a => a.EmailVerifiedAt != null);
+        }
 
         if (pendingOnly)
         {

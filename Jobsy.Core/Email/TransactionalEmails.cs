@@ -219,12 +219,14 @@ public static partial class TransactionalEmails
             "partnerconsentreconfirmreminder" => PartnerConsentReconfirmReminder(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "referenceconfirmation" => ReferenceConfirmationRequest(
-                ctx.PublicWebBaseUrl, "Jan de Vries", ctx.RecipientName, "vakkenvuller", links.ReferenceConfirmation("voorbeeld"), c),
+                ctx.PublicWebBaseUrl, "Jan de Vries", ctx.RecipientName, ctx.CompanyName, "vakkenvuller", links.ReferenceConfirmation("voorbeeld"), c),
             "contentremoved" => ContentRemoved(
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.VacancyTitle, "Weggehaald",
                 "De tekst vraagt om gegevens die niet mogen.", new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),
             "comebackreminder" => ComebackReminder(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ComebackReminderKinds.LookAgain, c),
+            "comebackremindertests" => ComebackReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ComebackReminderKinds.BasicTests, c, "ComebackReminderTests"),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

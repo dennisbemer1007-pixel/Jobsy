@@ -1,0 +1,106 @@
+@page "/admin/beveiliging/referent-misbruik"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Time
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject UserFacingError UserFacing
+@implements IDisposable
+
+<PageTitle>@Culture["AdminMisuse.Title"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminMisuse.Title"]" Lead="@Culture["AdminMisuse.Lead"]">
+    <BeveiligingTabs />
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message" role="status">@_message</p>
+    }
+
+    <AdminDataTable Loading="_loading" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminMisuse.Empty"]">
+        <Header>
+            <th scope="col">@Culture["AdminMisuse.Col.Date"]</th>
+            <th scope="col">@Culture["AdminMisuse.Col.Candidate"]</th>
+            <th scope="col">@Culture["AdminMisuse.Col.Message"]</th>
+            <th scope="col">@Culture["AdminMisuse.Col.Status"]</th>
+            <th scope="col">@Culture["Common.Actions"]</th>
+        </Header>
+        <Rows>
+            @foreach (var row in _rows)
+            {
+                <tr>
+                    <td class="admin-mono" data-label="@Culture["AdminMisuse.Col.Date"]">@AmsterdamTime.ToLocal(row.CreatedAtUtc).ToString("dd-MM-yyyy HH:mm")</td>
+                    <td data-label="@Culture["AdminMisuse.Col.Candidate"]">@row.CandidateMasked</td>
+                    <td data-label="@Culture["AdminMisuse.Col.Message"]">@row.Message</td>
+                    <td data-label="@Culture["AdminMisuse.Col.Status"]">@StatusLabel(row.Status)</td>
+                    <td data-label="@Culture["Common.Actions"]">
+                        @if (row.Status == "open")
+                        {
+                            <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => MarkHandledAsync(row.Id)">
+                                @Culture["AdminMisuse.MarkHandled"]
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </Rows>
+    </AdminDataTable>
+</AdminPageShell>
+
+@code {
+    private List<ReferenceMisuseItem> _rows = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override Task OnInitializedAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = (await Api.GetReferenceMisuseAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = UserFacing.Describe(ex);
+            _rows = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task MarkHandledAsync(Guid id)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.MarkReferenceMisuseHandledAsync(id);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = UserFacing.Describe(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string StatusLabel(string status)
+        => status == "handled"
+            ? Culture["AdminMisuse.Status.Handled"]
+            : Culture["AdminMisuse.Status.Open"];
+}

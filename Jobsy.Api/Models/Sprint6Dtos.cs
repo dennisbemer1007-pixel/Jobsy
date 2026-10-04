@@ -180,7 +180,9 @@ public record AdminVacancyDetailDto(
     bool IsExtended,
     string CreatedVia = "Manual",
     bool ContentModerationPassed = true,
-    DateTime? ClosedAtUtc = null);
+    DateTime? ClosedAtUtc = null,
+    string? DescriptionExcerpt = null,
+    string Kind = "Regular");
 
 public record RegisterAdminCompanyRequest(
     string KvkNumber,
@@ -302,7 +304,8 @@ public record PlatformFeatureDto(
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
     bool PhoneVerificationEnabled = false,
-    bool WhatsAppRemindersEnabled = false);
+    bool WhatsAppRemindersEnabled = false,
+    bool WhatsAppRemindersConfigured = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

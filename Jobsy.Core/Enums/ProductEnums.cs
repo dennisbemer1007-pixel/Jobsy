@@ -55,7 +55,8 @@ public enum MetricsPeriod
     Week = 1,
     Month = 2,
     Quarter = 3,
-    Year = 4
+    Year = 4,
+    All = 5
 }
 
 public enum ShareChannel

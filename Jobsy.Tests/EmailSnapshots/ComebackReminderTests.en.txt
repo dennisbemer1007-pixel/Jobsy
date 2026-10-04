@@ -1,0 +1,34 @@
+KEY: ComebackReminderTests
+SUBJECT: Your 4 short tests are still open
+PREHEADER: A reminder from Lobsy
+KIND: Optional
+--- TEXT ---
+Hi Alex,
+
+Finish your tests
+=================
+
+You started a week ago. The 4 short tests are not finished yet. They help
+you find work that fits you.
+
+Go to your tests: https://lobsy.nl/profiel/tests
+
+Team Lobsy
+
+You asked for this reminder yourself.
+Unsubscribe from these emails: https://lobsy.nl/mail/afmelden
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail settings: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Finish your tests
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to your tests -> https://lobsy.nl/profiel/tests
+a: Unsubscribe from these emails -> https://lobsy.nl/mail/afmelden
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail settings -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

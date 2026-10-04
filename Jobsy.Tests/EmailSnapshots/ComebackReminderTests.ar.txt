@@ -1,0 +1,33 @@
+KEY: ComebackReminderTests
+SUBJECT: اختباراتك الأربعة القصيرة ما زالت مفتوحة
+PREHEADER: تذكير من لوبسي
+KIND: Optional
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+أكمل اختباراتك
+
+بدأت قبل أسبوع. الاختبارات الأربعة القصيرة لم تكتمل بعد. تساعدك على إيجاد
+عمل يناسبك.
+
+إلى اختباراتك: https://lobsy.nl/profiel/tests
+
+فريق Lobsy
+
+أنت طلبت هذا التذكير بنفسك.
+إلغاء الاشتراك من هذه الرسائل: https://lobsy.nl/mail/afmelden
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+إعدادات البريد: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: أكمل اختباراتك
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: إلى اختباراتك -> https://lobsy.nl/profiel/tests
+a: إلغاء الاشتراك من هذه الرسائل -> https://lobsy.nl/mail/afmelden
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

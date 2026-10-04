@@ -368,6 +368,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.PendingSalesManagerApplicationsSource>();
         services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.OpenPayoutsSource>();
         services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.NewFeedbackSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.ReferenceMisuseSource>();
         services.AddScoped<IAdminTodoService, Jobsy.Infrastructure.Services.AdminTodo.AdminTodoService>();
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
         services.AddSingleton<ISmsSender, SmsSenderStub>();

@@ -98,7 +98,7 @@ else
     {
         <section class="panel-section">
             <h2>Financieel — kosten per actie</h2>
-            <p class="muted">PushBom-prijs volgt uit bereik-tiers hieronder; de flat PushBom-kost geldt alleen als fallback zonder matching tier.</p>
+            <p class="muted">@Culture["AdminFinance.CostIntro"]</p>
             <div class="table-list">
                 @foreach (var cost in _settings?.Costs ?? [])
                 {

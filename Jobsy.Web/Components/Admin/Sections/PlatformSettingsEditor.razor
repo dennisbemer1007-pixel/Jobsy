@@ -67,6 +67,10 @@ else if (_snapshot is not null)
                                         @onclick="() => ToggleBool(entry)">
                                     <span class="admin-switch__thumb"></span>
                                 </button>
+                                @if (entry.Key == "WhatsAppRemindersEnabled" && !_whatsAppConfigured)
+                                {
+                                    <span class="admin-muted admin-settings-note">@Culture["AdminSettings.WhatsAppReminders.NotConfigured"]</span>
+                                }
                             }
                             else if (entry.Kind == PlatformSettingKind.Int)
                             {
@@ -204,6 +208,7 @@ else if (_snapshot is not null)
     private string? _error;
     private string? _message;
     private bool _confirmOpen;
+    private bool _whatsAppConfigured;
     private PlatformSettingDescriptor? _confirmEntry;
     private object? _confirmValue;
     private readonly Dictionary<string, object?> _confirmedValues = new(StringComparer.Ordinal);
@@ -248,6 +253,7 @@ else if (_snapshot is not null)
         try
         {
             var item = await Api.GetPlatformFeaturesAsync() ?? new PlatformFeatureItem();
+            _whatsAppConfigured = item.WhatsAppRemindersConfigured;
             ApplySnapshot(ToSnapshot(item));
             await LoadRecentChangesAsync();
         }
@@ -285,6 +291,11 @@ else if (_snapshot is not null)
         if (entry.Key == "VacancyContentModerationEnabled")
         {
             return value is false;
+        }
+
+        if (entry.ConfirmWhen == PlatformSettingConfirmWhen.On)
+        {
+            return value is true;
         }
 
         return entry.ConfirmOnChange && value is false;
@@ -495,12 +506,30 @@ else if (_snapshot is not null)
             return Culture["AdminSettings.Employers.EnableConfirm"];
         }
 
+        if (entry.Key == "WhatsAppRemindersEnabled" && next is true)
+        {
+            return Culture["AdminSettings.WhatsAppReminders.EnableConfirm"];
+        }
+
         return entry.ImpactKey is null ? null : Culture[entry.ImpactKey];
     }
 
     private static bool NeedsConfirm(PlatformSettingDescriptor entry, object? next)
-        => (entry.Key == "EmployersEnabled" && next is true)
-           || (entry.ConfirmOnChange && next is false);
+    {
+        var when = entry.ConfirmWhen;
+        if (when == PlatformSettingConfirmWhen.None && entry.ConfirmOnChange)
+        {
+            when = PlatformSettingConfirmWhen.Off;
+        }
+
+        return when switch
+        {
+            PlatformSettingConfirmWhen.On => next is true,
+            PlatformSettingConfirmWhen.Off => next is false,
+            PlatformSettingConfirmWhen.Both => next is bool,
+            _ => false
+        };
+    }
 
     private bool AlreadyConfirmed(PlatformSettingDescriptor entry, object? value)
         => _confirmedValues.TryGetValue(entry.Key, out var confirmed) && ValuesEqual(confirmed, value);
