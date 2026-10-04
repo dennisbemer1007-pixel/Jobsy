@@ -21,7 +21,7 @@
     <summary>@Culture["Onboarding.Consent.More"]</summary>
     <p>@Culture["Onboarding.Consent.MoreText"]</p>
 </details>
-<p class="ob-wizard__hint">🔒 @Culture["Onboarding.Consent.Private"]</p>
+<p class="ob-wizard__hint"><span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span> @Culture["Onboarding.Consent.Private"]</p>
 
 @code {
     public sealed record TestTab(int Step, string Title, string Lead);

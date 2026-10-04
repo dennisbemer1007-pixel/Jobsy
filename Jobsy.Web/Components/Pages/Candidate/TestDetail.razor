@@ -213,6 +213,12 @@
         }
         else
         {
+            @if (_deepUnlocked && !_deepCompleted && (_deepState?.AnsweredCount ?? 0) > 0)
+            {
+                <p class="test-detail__resume">
+                    <a href="@_def.DeepStartHref">@Culture.Format("Tests.ResumeHint", _deepState!.AnsweredCount, _def.DeepQuestionCount)</a>
+                </p>
+            }
             <TestResultLockedPreview Kind="_def.Kind"
                                     TitleKey="@_def.TitleKey"
                                     QuestionCount="_def.DeepQuestionCount"
@@ -225,6 +231,7 @@
                                     ProgressTotal="@_def.DeepQuestionCount"
                                     ShowSamplePdf="_samplePdfEnabled"
                                     ShowHeading="false"
+                                    FreeForTestAccount="@(_paymentMode == DeepTestFinanceRules.TestUnlockMethod)"
                                     OnStart="GoToOfferAsync"
                                     OnSamplePdf="OpenSamplePdfAsync" />
         }
@@ -238,8 +245,9 @@
                     {
                         <li>
                             <span>
-                                @(item.CompletedAtUtc?.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
-                                  ?? item.StartedAtUtc.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL")))
+                                @(item.CompletedAtUtc is DateTime doneAt
+                                    ? Jobsy.Web.Services.LobsyTime.ToAmsterdam(doneAt).ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
+                                    : Jobsy.Web.Services.LobsyTime.ToAmsterdam(item.StartedAtUtc).ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL")))
                             </span>
                         </li>
                     }
@@ -319,18 +327,25 @@
                         class="btn-gold btn-gold--split"
                         disabled="@_busy"
                         @onclick="GoToOfferAsync">
-                    <span>@Culture["Tests.ExtendedLabel"]</span>
-                    <span class="btn-gold__meta">@(
-                        _paymentMode == DeepTestFinanceRules.TestUnlockMethod
-                            ? Culture["DeepPay.TestAccountFree"]
-                            : Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro)))</span>
+                    <span>@(_paymentMode == DeepTestFinanceRules.TestUnlockMethod
+                        ? Culture["Tests.StartExtendedFree"]
+                        : Culture["Tests.ExtendedLabel"])</span>
+                    @if (_paymentMode != DeepTestFinanceRules.TestUnlockMethod)
+                    {
+                        <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
+                    }
                 </button>
             }
         </div>
+        @if (_deepUnlocked && !_deepCompleted && (_deepState?.AnsweredCount ?? 0) > 0)
+        {
+            <p class="test-detail__resume">
+                <a href="@_def.DeepStartHref">@Culture.Format("Tests.ResumeHint", _deepState!.AnsweredCount, _def.DeepQuestionCount)</a>
+            </p>
+        }
         @if (_paymentMode == "mollie")
         {
             <p class="test-detail__secure muted">
-                <span aria-hidden="true">🔒</span>
                 @Culture["DeepPay.SecureMollie"]
             </p>
         }
@@ -738,7 +753,7 @@
     private string FormatCompleted(DateTime? completedAtUtc, bool deep)
     {
         var date = completedAtUtc is DateTime dt
-            ? dt.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
+            ? Jobsy.Web.Services.LobsyTime.ToAmsterdam(dt).ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
             : null;
         var scan = deep ? Culture["Tests.ScanExtended"] : Culture["Tests.ScanQuick"];
         return string.IsNullOrWhiteSpace(date) ? scan : $"{date} · {scan}";

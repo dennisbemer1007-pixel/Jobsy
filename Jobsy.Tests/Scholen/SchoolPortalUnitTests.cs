@@ -37,6 +37,18 @@ public class ClassResultsAggregatorTests
     }
 
     [Fact]
+    public void Undecided_dream_jobs_stay_visible_when_nobody_picked_a_job()
+    {
+        var results = Enumerable.Range(0, 5)
+            .Select(_ => MakeResult("R", "Helpen", ClassResultsAggregator.UndecidedDreamJobKey))
+            .ToList();
+        var agg = ClassResultsAggregator.Aggregate(results, totalCodes: 10, PupilQuestionSet.Vo);
+        Assert.True(agg.TotalsVisible);
+        Assert.Empty(agg.DreamJobs);
+        Assert.Equal(5, agg.UndecidedDreamJobCount);
+    }
+
+    [Fact]
     public void Guard_throws_when_result_belongs_to_other_test()
     {
         var results = new List<PupilResult>

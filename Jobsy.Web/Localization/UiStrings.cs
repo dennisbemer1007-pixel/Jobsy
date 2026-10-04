@@ -420,7 +420,7 @@ public static class UiStrings
             ["Assistant.You"] = "Jij",
             ["Assistant.Typing"] = "Even denken…",
             ["Assistant.InputLabel"] = "Jouw vraag",
-            ["Assistant.Placeholder"] = "Stel hier uw vraag",
+            ["Assistant.Placeholder"] = "Stel hier je vraag",
             ["Assistant.Send"] = "Verstuur",
             ["Assistant.Greeting"] = "Hoi! Ik ben Lobsy. Stel me een gerichte vraag binnen jouw rol over vacatures, sollicitaties of je account.",
             ["Assistant.Disclaimer"] = "AI-assistent — geen persoonlijk advies. Deel geen BSN, bankgegevens of wachtwoorden.",
@@ -3456,6 +3456,7 @@ public static class UiStrings
         UiStringsEnterprise.MergeAll(nl, en, pl, ro, ar);
         // D12: Scholen strings are nl-only; other languages fall back via UiStrings.Get.
         UiStringsScholen.MergeNl(nl);
+        UiStringsScholen.MergeDimensions(nl, en, pl, ro, ar);
         UiStringsLeerlingVragen.MergeNl(nl);
         UiStringsLeerlingVragenVo.MergeNl(nl);
         UiStringsLeerlingVerhaal.MergeNl(nl);

@@ -11,7 +11,7 @@ public static class PupilVerhaalCopy
     public static IReadOnlyDictionary<string, string> All { get; } = Build();
 
     public static string Get(string key)
-        => All.TryGetValue(key, out var v) ? v : key;
+        => TryResolve(key, out var v) ? v : key;
 
     /// <summary>VO uses <c>key.Vo</c> when that variant exists; G78 keeps the base key.</summary>
     public static string Get(string key, PupilQuestionSet set)
@@ -50,7 +50,53 @@ public static class PupilVerhaalCopy
     };
 
     public static bool TryGet(string key, out string value)
-        => All.TryGetValue(key, out value!);
+        => TryResolve(key, out value);
+
+    /// <summary>
+    /// Pair sentences are stored once. CI and IC (and the other five swapped pairs) resolve to the same line.
+    /// A missing pair falls back to the first letter so a raw key never reaches the pupil.
+    /// </summary>
+    private static bool TryResolve(string key, out string value)
+    {
+        if (All.TryGetValue(key, out value!))
+        {
+            return true;
+        }
+
+        const string prefix = "LeerlingStory.Riasec.";
+        if (string.IsNullOrWhiteSpace(key) || !key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            value = "";
+            return false;
+        }
+
+        var pair = key[prefix.Length..];
+        if (pair.Length == 2 && IsRiasec(pair[0]) && IsRiasec(pair[1]) && pair[0] != pair[1])
+        {
+            var canonical = PupilStoryTemplates.CanonicalRiasecPair(pair[0], pair[1]);
+            if (All.TryGetValue(prefix + canonical, out value!))
+            {
+                return true;
+            }
+
+            var swapped = prefix + canonical[1] + canonical[0];
+            if (All.TryGetValue(swapped, out value!))
+            {
+                return true;
+            }
+        }
+
+        if (pair.Length >= 1 && IsRiasec(pair[0]) && All.TryGetValue(prefix + char.ToUpperInvariant(pair[0]), out value!))
+        {
+            return true;
+        }
+
+        value = "";
+        return false;
+    }
+
+    private static bool IsRiasec(char letter)
+        => "RIASEC".Contains(char.ToUpperInvariant(letter));
 
     private static Dictionary<string, string> Build()
     {
@@ -82,6 +128,13 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Riasec.SE"] = "Je helpt graag en neemt het voortouw in de groep.";
         d["LeerlingStory.Riasec.SC"] = "Je helpt graag en houdt van nette afspraken.";
         d["LeerlingStory.Riasec.CE"] = "Je houdt overzicht en neemt graag het voortouw.";
+        // Same sentence for both letter orders. The lookup sorts the pair, these keys are the sorted form.
+        d["LeerlingStory.Riasec.CI"] = "Je zoekt precies uit hoe iets werkt en houdt overzicht.";
+        d["LeerlingStory.Riasec.CR"] = "Je maakt graag iets en houdt van nette stappen.";
+        d["LeerlingStory.Riasec.CS"] = "Je helpt graag en houdt van nette afspraken.";
+        d["LeerlingStory.Riasec.EI"] = "Je zoekt dingen uit en neemt graag het voortouw.";
+        d["LeerlingStory.Riasec.ER"] = "Je pakt dingen aan en neemt graag het voortouw.";
+        d["LeerlingStory.Riasec.ES"] = "Je helpt graag en neemt het voortouw in de groep.";
         d["LeerlingStory.Val.Autonomy"] = "Belangrijk voor jou: zelf kiezen wat je doet.";
         d["LeerlingStory.Val.Connection"] = "Belangrijk voor jou: samen zijn met anderen.";
         d["LeerlingStory.Val.Achievement"] = "Belangrijk voor jou: iets goed afmaken.";

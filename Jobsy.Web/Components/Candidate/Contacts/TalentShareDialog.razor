@@ -1,6 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Contacts
 @using Jobsy.Web.Components
-@using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @inject CultureState Culture
@@ -14,7 +13,7 @@
                      CloseOnBackdrop="@(!Busy)"
                      OnClose="OnCancel">
     <div class="career-dialog__lob" aria-hidden="true">
-        <JourneyLobster PlatesShed="4" Size="56" Label="" />
+        <img class="lobsy-coach-art" src="/images/brand/mascot-coach.webp" alt="" width="56" height="56" />
     </div>
 
     @if (Loading)
