@@ -1746,10 +1746,19 @@
             if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id);
         }
 
-        _miniQuestions = catalog
-            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
-            .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
+        // Keep answered questions in the list so the counter stays "6 van 10".
+        // Locked ids are the ones already saved; the first open question is where we start.
+        var byId = catalog.ToDictionary(item => item.Id);
+        _miniQuestions = questionIds
+            .Where(id => byId.ContainsKey(id))
+            .Select(id => new OnboardingMiniTest.MiniQuestion(id, byId[id].Key))
             .ToList();
+        var open = catalog
+            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
+            .Select(item => item.Id)
+            .ToHashSet();
+        var firstOpen = _miniQuestions.FindIndex(question => open.Contains(question.Id));
+        _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
             var merged = new Dictionary<int, int>(_serverAnswers);
