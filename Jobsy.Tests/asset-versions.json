@@ -12,8 +12,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "83b1d9ed81d2a1c404e53b99ddb47b58042757e26b5eac33114e8f2339870e91",
-    "v": "20261004-run3"
+    "sha256": "d620b803496f9504969a1ad72ae7204e98e3b638faf1e804c563c916cffb6638",
+    "v": "20261004-run4"
   },
   "css/features/applications.css": {
     "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
@@ -136,7 +136,7 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "7ed06f15a39db9b23ab12fa7961d169b444b59cec45c4ecbe23c19b18e432a6a",
+    "sha256": "575b30fce7ce2697afd5daad620c9c8866120e489bed5e4e584d793a398d2233",
     "v": "20261004-run5"
   },
   "js/app-extras.js": {

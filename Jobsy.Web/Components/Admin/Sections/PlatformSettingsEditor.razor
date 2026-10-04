@@ -169,7 +169,7 @@ else if (_snapshot is not null)
                     <li>
                         <span class="admin-mono muted">@FormatAmsterdam(c.OccurredAtUtc)</span>
                         <span>@c.ActorDisplayName</span>
-                        <span class="muted">@c.TargetLabel</span>
+                        <span class="muted">@AdminActionLabels.Target(c.TargetLabel, key => Culture[key])</span>
                     </li>
                 }
             </ul>

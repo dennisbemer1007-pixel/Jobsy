@@ -29,8 +29,7 @@
                         <button type="button"
                                 class="mail-preview-item @(_selectedKey == template.Key ? "is-active" : null)"
                                 @onclick="() => SelectAsync(template.Key)">
-                            <strong>@template.Title</strong>
-                            <span class="muted">@template.Key</span>
+                            <strong title="@string.Format(Culture["Admin.MailTestTechnicalName"], template.Key)">@template.Title</strong>
                             <span class="mail-preview-badges">
                                 @if (string.Equals(template.Kind, "O", StringComparison.OrdinalIgnoreCase))
                                 {
