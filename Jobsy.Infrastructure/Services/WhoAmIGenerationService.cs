@@ -110,7 +110,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         request.Content = JsonContent.Create(new
         {
             model,
-            temperature = 0.5,
+            temperature = 0.2,
             response_format = new { type = "json_object" },
             messages = new object[]
             {

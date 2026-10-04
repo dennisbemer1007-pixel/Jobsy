@@ -52,6 +52,11 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
             var generated = await GenerateWithOpenAiAsync(scores, answers, apiKey, model, baseUrl, cancellationToken);
             if (generated is { HasOccupations: true })
             {
+                if (generated.Strengths.Count < 3)
+                {
+                    generated = generated with { Strengths = local.Strengths };
+                }
+
                 return generated;
             }
         }
@@ -80,7 +85,7 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         request.Content = JsonContent.Create(new
         {
             model,
-            temperature = 0.3,
+            temperature = 0.2,
             response_format = new { type = "json_object" },
             messages = new object[]
             {

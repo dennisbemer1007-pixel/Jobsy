@@ -1339,8 +1339,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261004-13"
-            : "/service-worker.js?v=20261004-13";
+            ? "/service-worker.published.js?v=20261004-14"
+            : "/service-worker.js?v=20261004-14";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();
@@ -1543,14 +1543,15 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
   placeTip: function (dock) {
     if (!dock) return;
     var tip = dock.querySelector(".lobsy-coach-dock__tip");
-    dock.classList.remove("lobsy-coach-dock--tip-above");
-    if (tip) tip.hidden = false;
+    dock.classList.add("lobsy-coach-dock--tip-above");
+    dock.classList.remove("lobsy-coach-dock--tip-aside");
     if (!tip) return;
+    tip.hidden = false;
 
-    function overlaps() {
+    function overlapsControls() {
       var tipBox = tip.getBoundingClientRect();
       if (tipBox.width < 2 || tipBox.height < 2) return false;
-      var nodes = document.querySelectorAll("main a, main button, main input, main textarea, main select, main summary, main [role='button'], main p, main h1, main h2, main h3, main li");
+      var nodes = document.querySelectorAll("main a, main button, main input, main textarea, main select, main summary, main [role='tab'], main [role='button']");
       for (var i = 0; i < nodes.length; i++) {
         var el = nodes[i];
         if (!el || dock.contains(el)) continue;
@@ -1567,9 +1568,8 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
       return false;
     }
 
-    if (overlaps()) {
-      dock.classList.add("lobsy-coach-dock--tip-above");
-      if (overlaps()) tip.hidden = true;
+    if (overlapsControls()) {
+      dock.classList.add("lobsy-coach-dock--tip-aside");
     }
   },
   syncClearance: function (dock) {

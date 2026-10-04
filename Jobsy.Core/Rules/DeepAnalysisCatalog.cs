@@ -400,7 +400,7 @@ public static class DeepAnalysisCatalog
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit =>
             "Emotionele stabiliteit: piekdruk (seizoen, horeca, logistiek) is haalbaarder als de rest van het profiel klopt.",
         SchwartzValuesCatalog.Autonomy =>
-            "Eigen regie: rollen met ruimte om zelf te plannen en nieuwe aanpakken te proberen passen bij jouw drijfveren.",
+            "Zelf kiezen: rollen met ruimte om zelf te plannen en nieuwe aanpakken te proberen passen bij jouw drijfveren.",
         SchwartzValuesCatalog.Connection =>
             "Verbinding: teams met warme sfeer, klantcontact en collegiale hulp benutten wat jij belangrijk vindt.",
         SchwartzValuesCatalog.Achievement =>

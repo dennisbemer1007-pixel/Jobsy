@@ -28,8 +28,97 @@ public sealed class KindDeepReportService : IKindDeepReportService
 
     public async Task<CareerDeepReport?> GetCareerAsync(Guid userId, CancellationToken ct = default)
     {
-        var row = await LoadCompletedAsync(userId, AssessmentKind.Career, ct);
-        return row is null ? null : CareerDeepReportJson.Deserialize(row.ReportJson);
+        var row = await _db.CandidateDeepAnalyses
+            .FirstOrDefaultAsync(d => d.UserId == userId && d.Kind == AssessmentKind.Career, ct);
+        if (row is null || !CandidateDeepAnalysisStatuses.IsCompleted(row.Status))
+        {
+            return null;
+        }
+
+        var report = CareerDeepReportJson.Deserialize(row.ReportJson);
+        var stale = row.ReportVersion < CareerDeepReportJson.CurrentReportVersion;
+        var missing = string.IsNullOrWhiteSpace(row.ReportJson) || report is null;
+        if (!stale && !missing)
+        {
+            return report;
+        }
+
+        try
+        {
+            var rebuilt = await BuildCareerCoreAsync(row, tryAi: false, ct);
+            await _db.SaveChangesAsync(ct);
+            return rebuilt;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return report;
+        }
+    }
+
+    /// <summary>
+    /// Always stores a career deep report. Provider output is normalised first;
+    /// an invalid compass falls back to the local catalogue.
+    /// </summary>
+    private async Task<CareerDeepReport> BuildCareerCoreAsync(
+        CandidateDeepAnalysis row,
+        bool tryAi,
+        CancellationToken ct)
+    {
+        var answers = DeepAnalysisCatalog.ParseAnswersJson(row.AnswersJson, AssessmentKind.Career);
+        var domainScores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
+        var riasec = DeepAnalysisCatalog.ToRiasecScores(domainScores);
+        var local = CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true);
+        var means = await _norms.GetMeansIfReadyAsync(AssessmentKind.Career, ct);
+        var now = DateTime.UtcNow;
+
+        var storedJson = await _db.CandidateCareerInterests.AsNoTracking()
+            .Where(c => c.UserId == row.UserId)
+            .Select(c => c.CompassJson)
+            .FirstOrDefaultAsync(ct);
+        var stored = CareerCompassJson.TryDeserialize(storedJson);
+        var compass = local;
+        if (stored is { HasOccupations: true })
+        {
+            // One scored list for the compass and the deep report.
+            compass = stored.Strengths.Count >= 3
+                ? stored
+                : stored with { Strengths = local.Strengths };
+        }
+        else if (tryAi)
+        {
+            try
+            {
+                var generated = await _careerCompass.GenerateFromCareerDeepAsync(answers, ct);
+                if (generated.HasOccupations)
+                {
+                    compass = generated.Strengths.Count >= 3
+                        ? generated
+                        : generated with { Strengths = local.Strengths };
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _ = ex;
+                compass = local;
+            }
+        }
+
+        CareerDeepReport report;
+        try
+        {
+            report = CareerDeepReportBuilder.Build(domainScores, compass, means, now);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _ = ex;
+            report = CareerDeepReportBuilder.Build(domainScores, local, means, now);
+        }
+
+        row.ReportJson = CareerDeepReportJson.Serialize(report);
+        row.ReportVersion = report.ReportVersion;
+        row.ReportGeneratedAtUtc = now;
+        row.UpdatedAtUtc = now;
+        return report;
     }
 
     public async Task<CultureDeepReport?> GetCultureAsync(Guid userId, CancellationToken ct = default)
@@ -77,13 +166,8 @@ public sealed class KindDeepReportService : IKindDeepReportService
         switch (kind)
         {
             case AssessmentKind.Career:
-                {
-                    var compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, ct);
-                    var report = CareerDeepReportBuilder.Build(domainScores, compass, means, now);
-                    row.ReportJson = CareerDeepReportJson.Serialize(report);
-                    row.ReportVersion = report.ReportVersion;
-                    break;
-                }
+                await BuildCareerCoreAsync(row, tryAi: true, ct);
+                break;
             case AssessmentKind.Culture:
                 {
                     var report = CultureDeepReportBuilder.Build(domainScores, means, now);

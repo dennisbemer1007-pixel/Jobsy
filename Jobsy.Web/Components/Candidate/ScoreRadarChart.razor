@@ -30,7 +30,7 @@
                     label.X,
                     label.Y,
                     LabelAnchor(i),
-                    ShortLabel(Labels[i]),
+                    Labels[i],
                     $"{Labels[i]}: {Values[i]}%"))
             }
             @if (HasNorms)
@@ -100,12 +100,6 @@
         if (cos > 0.35) return "start";
         if (cos < -0.35) return "end";
         return "middle";
-    }
-
-    private static string ShortLabel(string label)
-    {
-        if (string.IsNullOrWhiteSpace(label)) return label;
-        return label.Length <= 16 ? label : label[..14].TrimEnd() + "…";
     }
 
     private static string FormatPoint((double X, double Y) p)

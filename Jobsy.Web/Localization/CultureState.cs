@@ -3,6 +3,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Localization;
@@ -17,16 +18,19 @@ public sealed class CultureState
     private readonly IJSRuntime _js;
     private readonly IServiceProvider _services;
     private readonly AuthenticationStateProvider _authState;
+    private readonly IHttpContextAccessor? _http;
     private bool _initialized;
 
     public CultureState(
         IJSRuntime js,
         IServiceProvider services,
-        AuthenticationStateProvider authState)
+        AuthenticationStateProvider authState,
+        IHttpContextAccessor? http = null)
     {
         _js = js;
         _services = services;
         _authState = authState;
+        _http = http;
     }
 
     public string Language { get; private set; } = JobsyLanguages.Default;
@@ -79,12 +83,19 @@ public sealed class CultureState
             return;
         }
 
-        _initialized = true;
+        string? requestCookie = null;
+        var http = _http?.HttpContext;
+        if (http?.Request.Cookies.TryGetValue(CookieName, out var fromRequest) == true)
+        {
+            requestCookie = fromRequest;
+        }
 
-        string? cookie = null;
+        string? jsCookie = null;
+        var jsOk = false;
         try
         {
-            cookie = await _js.InvokeAsync<string?>("jobsyCulture.get");
+            jsCookie = await _js.InvokeAsync<string?>("jobsyCulture.get");
+            jsOk = true;
         }
         catch (JSException)
         {
@@ -92,6 +103,16 @@ public sealed class CultureState
         catch (InvalidOperationException)
         {
         }
+
+        // The interactive circuit often starts before JS is ready. Do not lock the
+        // language to a stored profile until the cookie can be read.
+        if (!jsOk && string.IsNullOrWhiteSpace(requestCookie) && !_initialized)
+        {
+            return;
+        }
+
+        _initialized = true;
+        var cookie = jsOk && !string.IsNullOrWhiteSpace(jsCookie) ? jsCookie : requestCookie;
 
         string? profileLanguage = null;
         JobsyApiClient? api = null;

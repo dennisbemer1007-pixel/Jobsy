@@ -2,6 +2,7 @@ using System.Text.Json;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
@@ -23,6 +24,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
     private readonly ICandidateMatchSnapshotService _matches;
     private readonly ICompetenceDeepReportService _competenceReport;
     private readonly ICandidateCareerPlanService _careerPlans;
+    private readonly IFeatureFlags _features;
     private readonly ILogger<CandidateInsightsComputer> _logger;
 
     public CandidateInsightsComputer(
@@ -31,6 +33,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         ICandidateMatchSnapshotService matches,
         ICompetenceDeepReportService competenceReport,
         ICandidateCareerPlanService careerPlans,
+        IFeatureFlags features,
         ILogger<CandidateInsightsComputer> logger)
     {
         _db = db;
@@ -38,6 +41,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         _matches = matches;
         _competenceReport = competenceReport;
         _careerPlans = careerPlans;
+        _features = features;
         _logger = logger;
     }
 
@@ -124,15 +128,19 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         await RefreshWhoAmIAsync(userId, competency, career, culture, values, highlights, cancellationToken);
         await RefreshCompetenceDeepReportAsync(userId, cancellationToken);
 
-        try
+        var employersOn = await _features.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        if (employersOn)
         {
-            var matchFingerprint = await _matches.ComputeInputFingerprintAsync(userId, cancellationToken);
-            var liveMatches = await _matches.ComputeLiveAsync(userId, cancellationToken);
-            await _matches.SaveComputedAsync(userId, liveMatches, matchFingerprint, cancellationToken);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            _logger.LogWarning(ex, "Match snapshot recompute failed for {UserId}.", userId);
+            try
+            {
+                var matchFingerprint = await _matches.ComputeInputFingerprintAsync(userId, cancellationToken);
+                var liveMatches = await _matches.ComputeLiveAsync(userId, cancellationToken);
+                await _matches.SaveComputedAsync(userId, liveMatches, matchFingerprint, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "Match snapshot recompute failed for {UserId}.", userId);
+            }
         }
 
         try
@@ -218,7 +226,14 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
             return;
         }
 
-        // Local (non-AI) builder — always refresh so GET never needs to rebuild.
+        // Keep a stored compass that already has occupations. Replacing it with a
+        // second local score list made the same job show two different percents.
+        var stored = CareerCompassJson.TryDeserialize(careerRow.CompassJson);
+        if (stored is { HasOccupations: true })
+        {
+            return;
+        }
+
         var compass = CareerCompassBuilder.Build(career, deepDone);
         var json = CareerCompassJson.Serialize(compass);
         if (string.Equals(careerRow.CompassJson, json, StringComparison.Ordinal))

@@ -166,7 +166,7 @@ public static class CareerDreamCatalog
             ["tuinbouwer", "glastuinbouwer"],
             ["tuinder", "tuinbouw", "groente", "plant"]),
         E("kasmedewerker", "Kasmedewerker", "Entry", "groen",
-            ["glastuinbouwmedewerker", "kasarbeider", "kassenwerker"],
+            ["glastuinbouwmedewerker", "kasarbeider", "kassenwerker", "kassenmedewerker"],
             ["kas", "glastuinbouw", "planten", "oogst"]),
         E("vakkenvuller", "Vakkenvuller", "Entry", "retail",
             ["vulploeg", "schappen vullen"],
