@@ -195,7 +195,11 @@
                             @Culture["Passport.Fit.VacanciesSub"]
                         </p>
 
-                        @if (_topMatches.Count == 0)
+                        @if (_topMatches.Count == 0 && !OpenForWork)
+                        {
+                            <OpenForWorkPrompt />
+                        }
+                        else if (_topMatches.Count == 0)
                         {
                             <p class="muted">@Culture["Competency.Matches.Empty"]</p>
                         }
@@ -238,6 +242,7 @@
 @code {
     [Parameter] public bool Active { get; set; }
     [Parameter] public CandidateKompasState? Snapshot { get; set; }
+    [Parameter] public bool OpenForWork { get; set; } = true;
 
     private readonly RoleFitCheckSession _session = new();
     private bool _wasActive;

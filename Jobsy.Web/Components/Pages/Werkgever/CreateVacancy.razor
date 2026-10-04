@@ -1359,7 +1359,7 @@
             if (source is null || _companies.All(c => c.Id != source.CompanyId))
             {
                 _accessDenied = true;
-                _message = "Niet gevonden of geen toegang.";
+                _message = null;
                 return;
             }
 
@@ -1477,7 +1477,7 @@
         catch (Exception)
         {
             _accessDenied = true;
-            _message = "Niet gevonden of geen toegang.";
+            _message = null;
         }
     }
 

@@ -663,8 +663,12 @@ public static class ProfileVacancyMatchCalculator
             : WorkTypeLabels.Expand(parsed).FirstOrDefault() ?? value.Trim();
     }
 
+    public static string FormatHoursRange(decimal? min, decimal? max) => FmtHours(min, max);
+
     private static string FmtHours(decimal? min, decimal? max)
     {
+        static string Whole(decimal value) => value.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
+
         if (min is null && max is null)
         {
             return "—";
@@ -672,15 +676,15 @@ public static class ProfileVacancyMatchCalculator
 
         if (min is null)
         {
-            return $"max. {max}";
+            return $"max. {Whole(max!.Value)}";
         }
 
         if (max is null)
         {
-            return $"min. {min}";
+            return $"min. {Whole(min.Value)}";
         }
 
-        return $"{min}–{max}";
+        return $"{Whole(min.Value)}-{Whole(max.Value)}";
     }
 
     private static string PrettySlot(string code)

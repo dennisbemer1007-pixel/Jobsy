@@ -7,12 +7,13 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Jobsy.Web.Features;
 
 /// <summary>
-/// Web-side feature flags: fetches public GET api/settings/feature-flags with a 30s cache.
+/// Web-side feature flags: fetches public GET api/settings/feature-flags with a 10s cache.
+/// The API cache is cleared as soon as an admin saves a flag.
 /// </summary>
 public sealed class WebFeatureFlags : IFeatureFlags
 {
     public const string CacheKey = "jobsy.web.feature-flags";
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(10);
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;

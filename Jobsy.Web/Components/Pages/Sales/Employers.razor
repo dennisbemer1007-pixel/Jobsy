@@ -18,7 +18,9 @@
             <h1>@Culture["Sales.Employers.Title"]</h1>
             @if (_page is not null)
             {
-                <p class="sp-dash__lead">@Culture.Format("Sales.Employers.Lead", _page.Kpis.TotalEmployers, _page.Kpis.ActiveEmployers)</p>
+                <p class="sp-dash__lead">@(_page.Kpis.TotalEmployers == 1
+                    ? Culture.Format("Sales.Employers.LeadOne", _page.Kpis.ActiveEmployers)
+                    : Culture.Format("Sales.Employers.Lead", _page.Kpis.TotalEmployers, _page.Kpis.ActiveEmployers))</p>
             }
         </div>
     </header>

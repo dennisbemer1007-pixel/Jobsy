@@ -265,7 +265,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                         split.RelativeItem().Background(SoftCoral).Padding(8).Column(loc =>
                         {
                             loc.Spacing(4);
-                            loc.Item().Text("Locatie").FontSize(9).Bold().FontColor(BrandNavy);
+                            loc.Item().Text("Werkplek").FontSize(9).Bold().FontColor(BrandNavy);
 
                             // Workplace pin + privacy reach circle (never candidate home).
                             if (mapPng is { Length: > 0 })

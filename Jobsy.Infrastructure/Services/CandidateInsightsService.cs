@@ -78,7 +78,13 @@ public sealed class CandidateInsightsService : ICandidateInsightsService
         EnsureAllowedRole(principal);
         var scope = await ResolveScopeCompaniesAsync(principal, branchId: null, allowAllUnion: true, cancellationToken);
         var isBranch = RoleClaimMatching.HasRole(principal, JobsyRoles.BranchManager);
-        return scope.Companies
+        var companies = scope.Companies;
+        if (companies.Any(c => c.ParentCompanyId is not null))
+        {
+            companies = companies.Where(c => c.ParentCompanyId is not null).ToList();
+        }
+
+        return companies
             .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
             .Select(c => new CandidateInsightsBranchDto(c.Id, c.Name, IsLocked: isBranch))
             .ToList();
