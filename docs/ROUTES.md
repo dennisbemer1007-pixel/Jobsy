@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (233 routes)
+## Table (235 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -145,6 +145,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
+| `/candidate/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/candidate/vacancies` | `Pages/Candidate/Vacancies.razor` | Candidate |
 | `/candidate/values` | `Pages/Candidate/ValuesScan.razor` | Candidate |
 | `/carriere` | `Pages/Candidate/CareerDashboard.razor` | Candidate |
@@ -200,6 +201,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/privacy` | `Pages/Legal/Privacy.razor` | anonymous |
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
+| `/profiel/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/profiel/tests/{TestKey}` | `Pages/Candidate/TestDetail.razor` | Candidate |
 | `/regional` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/regional/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |

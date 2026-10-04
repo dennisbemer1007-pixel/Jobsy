@@ -1746,10 +1746,9 @@
             if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id);
         }
 
-        var byId = catalog.ToDictionary(item => item.Id);
-        _miniQuestions = questionIds
-            .Where(byId.ContainsKey)
-            .Select(id => new OnboardingMiniTest.MiniQuestion(id, byId[id].Key))
+        _miniQuestions = catalog
+            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
+            .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
             .ToList();
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {

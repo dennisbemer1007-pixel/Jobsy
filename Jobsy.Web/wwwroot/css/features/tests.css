@@ -219,7 +219,7 @@
     z-index: 6;
     margin-inline: -0.25rem;
     padding: 0.65rem 0.25rem;
-    background: var(--surface, #fffcfa);
+    background: var(--surface);
   }
 }
 

@@ -197,8 +197,17 @@
             if (saved is not null && saved.Steps.Count > 0)
             {
                 var model = CareerPaths.FromApi(saved);
-                var profile = await Api.GetMyProfileAsync();
-                var evidence = CareerPlanViewBuilder.EvidenceFrom(profile?.Preferences);
+                var evidence = "";
+                try
+                {
+                    var profile = await Api.GetMyProfileAsync();
+                    evidence = CareerPlanViewBuilder.EvidenceFrom(profile?.Preferences);
+                }
+                catch (Exception profileEx) when (!CircuitInterop.IsCircuitGone(profileEx))
+                {
+                    evidence = "";
+                }
+
                 _view = CareerPlanViewBuilder.BuildPassport(model, evidence);
                 await LoadCoursesAsync(_view);
             }
