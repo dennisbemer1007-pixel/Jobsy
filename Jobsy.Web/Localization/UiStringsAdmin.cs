@@ -230,7 +230,7 @@ public static class UiStringsAdmin
         Add("AdminUsers.FieldEmail", "E-mail", "E-mail", "E-mail", "E-mail", "البريد");
         Add("AdminUsers.FieldPhone", "Telefoon", "Phone", "Telefon", "Telefon", "الهاتف");
         Add("AdminUsers.FieldCreated", "Aangemaakt", "Created", "Utworzono", "Creat", "تاريخ الإنشاء");
-        Add("AdminUsers.FieldEarly", "Early adopter", "Early adopter", "Wczesny użytkownik", "Early adopter", "متبنٍ مبكر");
+        Add("AdminUsers.FieldEarly", "Early adopter", "Early adopter", "Wczesny użytkownik", "Adoptator timpuriu", "متبنٍ مبكر");
         Add("AdminUsers.OpenOrg", "Organisatie openen", "Open organisation", "Otwórz organizację", "Deschide organizația", "فتح المنظمة");
         Add("AdminUsers.NoMemberships", "Geen extra lidmaatschappen.", "No extra memberships.", "Brak dodatkowych członkostw.", "Fără apartenențe extra.", "لا عضويات إضافية.");
         Add("AdminUsers.RoleChangeHint", "Rol wijzigen kan voor werkgeversrollen via de organisatiepagina (PUT company-users).", "Role changes for employer roles go via the organisation page.", "Zmiana roli pracodawcy przez stronę organizacji.", "Schimbarea rolului angajator via pagina organizației.", "تغيير دور صاحب العمل عبر صفحة المنظمة.");
@@ -662,7 +662,7 @@ public static class UiStringsAdmin
             "Krótki id filtruje załadowane wiersze.",
             "Un id scurt filtrează rândurile încărcate.",
             "المعرّف القصير يصفّي الصفوف المحمّلة.");
-        Add("AdminLogs.Level.Info", "Info", "Info", "Info", "Info", "معلومات");
+        Add("AdminLogs.Level.Info", "Info", "Info", "Informacja", "Informație", "معلومات");
         Add("AdminLogs.Level.Warning", "Waarschuwing", "Warning", "Ostrzeżenie", "Avertisment", "تحذير");
         Add("AdminLogs.Level.Error", "Fout", "Error", "Błąd", "Eroare", "خطأ");
         Add("AdminFinance.RowOne", "1 regel", "1 row", "1 wiersz", "1 rând", "صف واحد");

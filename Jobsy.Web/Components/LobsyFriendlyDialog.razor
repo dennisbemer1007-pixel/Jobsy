@@ -131,6 +131,7 @@
             _trapped = true;
             try
             {
+                await _dialog.FocusAsync();
                 await Js.InvokeVoidAsync("jobsyDialog.trap", _dialog);
             }
             catch (Exception)

@@ -15,7 +15,8 @@ public class AdminEmailPreviewSmokeTests
         Assert.Contains("@page \"/admin/content/emails\"", page);
         Assert.Contains("[Authorize(Roles = \"Admin\")]", page);
         Assert.Contains("sandbox=\"\"", page);
-        Assert.Contains("srcdoc=", page);
+        Assert.Contains("/admin/content/emails/preview-frame", page);
+        Assert.DoesNotContain("srcdoc=", page);
         Assert.Contains("GetEmailTemplatePreviewAsync", page);
         Assert.Contains("ar (RTL)", page);
         Assert.Contains("GetEmailTemplatePreviewAsync", client);
