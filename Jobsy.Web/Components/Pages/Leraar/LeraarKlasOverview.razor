@@ -169,12 +169,16 @@ else
                 }
                 else
                 {
-                    <div class="sch-chip-list">
-                        @foreach (var d in _overview.GroupInsights.DreamJobs)
-                        {
-                            <span class="sch-chip">@d.Key @d.Count</span>
-                        }
-                    </div>
+                    @if (_overview.GroupInsights.DreamJobs.Count > 0)
+                    {
+                        <div class="sch-chip-list">
+                            @foreach (var d in _overview.GroupInsights.DreamJobs)
+                            {
+                                <span class="sch-chip">@d.Key @d.Count</span>
+                            }
+                        </div>
+                    }
+                    <p class="muted">@Culture["Leraar.DreamJobs.Undecided"]: @_overview.GroupInsights.UndecidedDreamJobCount</p>
                 }
             </section>
         </aside>

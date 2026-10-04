@@ -495,11 +495,16 @@ else if (_snapshot is not null)
             return Culture["AdminSettings.Employers.EnableConfirm"];
         }
 
+        if (entry.Key == "SchoolsEnabled" && next is true)
+        {
+            return Culture["AdminSettings.Schools.Enabled.EnableConfirm"];
+        }
+
         return entry.ImpactKey is null ? null : Culture[entry.ImpactKey];
     }
 
     private static bool NeedsConfirm(PlatformSettingDescriptor entry, object? next)
-        => (entry.Key == "EmployersEnabled" && next is true)
+        => (entry.Key is "EmployersEnabled" or "SchoolsEnabled" && next is true)
            || (entry.ConfirmOnChange && next is false);
 
     private bool AlreadyConfirmed(PlatformSettingDescriptor entry, object? value)
