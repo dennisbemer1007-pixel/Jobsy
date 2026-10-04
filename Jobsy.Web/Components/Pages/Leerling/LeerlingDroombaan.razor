@@ -11,6 +11,7 @@
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
+@inject IServiceProvider Services
 
 <PageTitle>@Culture["LeerlingDroom.Title"] · Lobsy</PageTitle>
 
@@ -175,7 +176,7 @@ else
                 parts.AddRange(_result.Story.JobIdeas);
             }
 
-            return string.Join(". ", parts);
+            return SpokenText.Join(parts.ToArray());
         }
     }
 
@@ -187,7 +188,7 @@ else
         _sessionLost = false;
         try
         {
-            var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilResultAsync());
+            var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilResultAsync(), Services, "droombaan");
             if (outcome.SessionLost)
             {
                 _sessionLost = true;

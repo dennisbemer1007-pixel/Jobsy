@@ -13,6 +13,7 @@
 @inject NavigationManager Nav
 @inject IJSRuntime Js
 @inject IPupilQuestionSetRegistry Registry
+@inject IServiceProvider Services
 
 <PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
 
@@ -61,7 +62,10 @@ else
     var world = PupilWorldCatalog.Find(worldKey);
     var worldNum = PupilWorldCatalog.TestWorldNumber(worldKey);
     var qLabel = item is null ? "" : Culture[item.TextKey];
-    var imagine = item is null ? "" : Culture[item.ImagineKey];
+    var imagineRaw = item is null ? "" : Culture[item.ImagineKey];
+    var imagineHeading = Culture["Leerling.Reis.Imagine"];
+    var imagine = SpokenText.WithoutRepeatedLead(imagineHeading, imagineRaw);
+    var imagineSpoken = SpokenText.Join(imagineHeading, imagine);
     var plates = _state.PlatesShed;
     var infoId = "ll-imagine-" + (item?.Id ?? "x");
     var cheerKey = _def.CheerKey(_state.AnsweredCount);
@@ -118,7 +122,7 @@ else
                     @onclick="ToggleInfo">i</button>
             <div id="@infoId" class="ll-info @(_infoOpen ? "is-open" : null)" hidden="@(!_infoOpen)">
                 <p><strong>@Culture["Leerling.Reis.Imagine"]</strong></p>
-                <LeerlingSpeak Text="@imagine" SpeechKey="@($"ll-imagine-{item?.Id}")" />
+                <LeerlingSpeak Text="@imagineSpoken" SpeechKey="@($"ll-imagine-{item?.Id}")" />
                 <p>@imagine</p>
                 <button type="button" class="ll-info__close" @onclick="() => _infoOpen = false" aria-label="Sluiten">×</button>
             </div>
@@ -184,7 +188,7 @@ else
         _loading = previous is null;
         _offline = false;
         _sessionLost = false;
-        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync());
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "reis");
         if (outcome.SessionLost)
         {
             _sessionLost = true;

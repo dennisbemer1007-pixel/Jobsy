@@ -3,10 +3,11 @@
 @using Microsoft.Extensions.DependencyInjection
 @implements IDisposable
 @inject IServiceProvider Services
+@inject IJSRuntime Js
 @inject CultureState Culture
 
 <div class="ll-coach" data-ll-coach>
-    @if (_open && !string.IsNullOrWhiteSpace(_hint))
+    @if (_hints?.ShouldShow(_hint) == true)
     {
         <div class="ll-coach__bubble" role="status">
             <p>@_hint</p>
@@ -26,7 +27,7 @@
 @code {
     private LeerlingCoachHint? _hints;
     private string? _hint;
-    private bool _open = true;
+    private bool _storageRequested;
 
     protected override void OnInitialized()
     {
@@ -37,24 +38,54 @@
         }
 
         _hint = _hints.Hint;
-        _open = !string.IsNullOrWhiteSpace(_hint);
         _hints.Changed += OnChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _storageRequested || _hints is null)
+        {
+            return;
+        }
+
+        _storageRequested = true;
+        try
+        {
+            var dismissed = await Js.InvokeAsync<string[]?>("lobsyLeerlingCoach.dismissed");
+            _hints.RememberDismissed(dismissed);
+        }
+        catch (Exception)
+        {
+            // No sessionStorage (tests, blocked storage). Still show a new hint.
+            _hints.MarkLoaded();
+        }
     }
 
     private void OnChanged()
         => _ = InvokeAsync(() =>
         {
-            var next = _hints?.Hint;
-            if (!string.Equals(_hint, next, StringComparison.Ordinal))
-            {
-                _hint = next;
-                _open = !string.IsNullOrWhiteSpace(next);
-            }
-
+            _hint = _hints?.Hint;
             StateHasChanged();
         });
 
-    private void Dismiss() => _open = false;
+    private async Task Dismiss()
+    {
+        var text = _hint;
+        _hints?.Dismiss(text);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyLeerlingCoach.dismiss", text);
+        }
+        catch (Exception)
+        {
+            // The circuit set already hides this hint.
+        }
+    }
 
     public void Dispose()
     {

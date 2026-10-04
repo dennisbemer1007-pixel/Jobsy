@@ -95,7 +95,8 @@ public static class ClassResultsAggregator
             RiasecTop3: riasecTop3,
             TopValues: topValues,
             DreamJobs: dreamJobs,
-            UndecidedDreamJobCount: counts.UndecidedDreamJobs);
+            UndecidedDreamJobCount: counts.UndecidedDreamJobs,
+            NotFilledDreamJobCount: counts.NotFilledDreamJobs);
     }
 
     /// <summary>
@@ -119,7 +120,8 @@ public static class ClassResultsAggregator
                 TopCultures: [],
                 CompetenceBands: [],
                 DreamJobs: [],
-                UndecidedDreamJobCount: 0);
+                UndecidedDreamJobCount: 0,
+                NotFilledDreamJobCount: 0);
         }
 
         var counts = CountAll(results);
@@ -148,6 +150,7 @@ public static class ClassResultsAggregator
             .ToList();
 
         var undecided = counts.UndecidedDreamJobs;
+        var notFilled = counts.NotFilledDreamJobs;
         var dreamJobs = CollapseDreamJobs(counts.DreamJobs);
 
         return new TeacherGroupAggregate(
@@ -158,7 +161,8 @@ public static class ClassResultsAggregator
             TopCultures: topCultures,
             CompetenceBands: competenceBands,
             DreamJobs: dreamJobs,
-            UndecidedDreamJobCount: undecided);
+            UndecidedDreamJobCount: undecided,
+            NotFilledDreamJobCount: notFilled);
     }
 
     /// <summary>School-wide RIASEC top-3 over completed results of one test (same k gate).</summary>
@@ -205,7 +209,8 @@ public static class ClassResultsAggregator
             bag.Cultures,
             bag.CompetenceBands,
             bag.DreamJobs,
-            bag.UndecidedDreamJobs);
+            bag.UndecidedDreamJobs,
+            bag.NotFilledDreamJobs);
     }
 
     /// <summary>Top-3 RIASEC letters by count (ties follow R-I-A-S-E-C).</summary>
@@ -255,6 +260,7 @@ public static class ClassResultsAggregator
         var competenceBands = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var dreamJobs = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var undecided = 0;
+        var notFilled = 0;
 
         foreach (var r in results)
         {
@@ -277,8 +283,11 @@ public static class ClassResultsAggregator
                 competenceBands[band] = competenceBands.GetValueOrDefault(band) + 1;
             }
 
-            if (string.IsNullOrWhiteSpace(r.DreamJobKey)
-                || string.Equals(r.DreamJobKey.Trim(), UndecidedDreamJobKey, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(r.DreamJobKey))
+            {
+                notFilled++;
+            }
+            else if (string.Equals(r.DreamJobKey.Trim(), UndecidedDreamJobKey, StringComparison.OrdinalIgnoreCase))
             {
                 undecided++;
             }
@@ -289,7 +298,7 @@ public static class ClassResultsAggregator
             }
         }
 
-        return new CountBag(riasec, values, cultures, competenceBands, dreamJobs, undecided);
+        return new CountBag(riasec, values, cultures, competenceBands, dreamJobs, undecided, notFilled);
     }
 
     private static void CountRiasec(PupilResult r, Dictionary<string, int> counts)
@@ -447,7 +456,8 @@ public static class ClassResultsAggregator
         Dictionary<string, int> Cultures,
         Dictionary<string, int> CompetenceBands,
         Dictionary<string, int> DreamJobs,
-        int UndecidedDreamJobs);
+        int UndecidedDreamJobs,
+        int NotFilledDreamJobs);
 }
 
 public sealed record NamedCount(string Key, int Count);
@@ -459,7 +469,8 @@ public sealed record RawResultCounts(
     IReadOnlyDictionary<string, int> Cultures,
     IReadOnlyDictionary<string, int> CompetenceBands,
     IReadOnlyDictionary<string, int> DreamJobs,
-    int UndecidedDreamJobs);
+    int UndecidedDreamJobs,
+    int NotFilledDreamJobs = 0);
 
 public sealed record ClassResultsAggregate(
     int TotalCodes,
@@ -469,7 +480,8 @@ public sealed record ClassResultsAggregate(
     IReadOnlyList<NamedCount> RiasecTop3,
     IReadOnlyList<NamedCount> TopValues,
     IReadOnlyList<NamedCount> DreamJobs,
-    int UndecidedDreamJobCount = 0);
+    int UndecidedDreamJobCount = 0,
+    int NotFilledDreamJobCount = 0);
 
 public sealed record TeacherGroupAggregate(
     bool Visible,
@@ -479,4 +491,5 @@ public sealed record TeacherGroupAggregate(
     IReadOnlyList<NamedCount> TopCultures,
     IReadOnlyList<NamedCount> CompetenceBands,
     IReadOnlyList<NamedCount> DreamJobs,
-    int UndecidedDreamJobCount);
+    int UndecidedDreamJobCount,
+    int NotFilledDreamJobCount = 0);

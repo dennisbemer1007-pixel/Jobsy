@@ -53,7 +53,8 @@ public sealed record TeacherGroupInsightsDto(
     IReadOnlyList<NamedCountDto> CompetenceBands,
     IReadOnlyList<string> DiscussionPromptKeys,
     PupilQuestionSet QuestionSet,
-    int UndecidedDreamJobCount = 0);
+    int UndecidedDreamJobCount = 0,
+    int NotFilledDreamJobCount = 0);
 
 public sealed record RiasecBarDto(string Letter, string KidLabelKey, int Count);
 
@@ -61,7 +62,8 @@ public sealed record TeacherDreamJobsDto(
     bool Visible,
     int CompletedCount,
     IReadOnlyList<NamedCountDto> Jobs,
-    int UndecidedCount);
+    int UndecidedCount,
+    int NotFilledCount = 0);
 
 public sealed record TeacherCodeDetailDto(
     Guid CodeId,

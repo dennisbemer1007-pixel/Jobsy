@@ -12,8 +12,9 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IPupilQuestionSetRegistry Registry
+@inject IServiceProvider Services
 
-<PageTitle>@Culture["Leerling.Island.Title"] · Lobsy</PageTitle>
+<PageTitle>@(_partBreak ? Culture["Leerling.Vo.PartBreak.DocumentTitle"] : Culture["Leerling.Island.Title"]) · Lobsy</PageTitle>
 
 @if (_windowClosed)
 {
@@ -173,7 +174,7 @@ else
         _loading = previous is null;
         _offline = false;
         _sessionLost = false;
-        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync());
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "eiland");
         if (outcome.SessionLost)
         {
             _sessionLost = true;

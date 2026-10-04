@@ -1584,9 +1584,36 @@ html.using-keyboard .ll-question__text:focus-visible {
     min-width: 44px;
     min-height: 44px;
 }
+/* Hint in the card. Hidden on a wide screen, where the fixed bubble is used. */
+.ll-coach-inline {
+    display: none;
+}
+
 @media (max-width: 480px) {
     .ll-shell {
         --ll-coach-size: 56px;
-        --ll-coach-clearance: 220px;
+        /* Only the figure stays fixed. 12px inset + 56px figure, plus a small gap. */
+        --ll-coach-clearance: 88px;
+        --ll-coach-gutter: 72px;
+    }
+
+    .ll-main,
+    .ll-legal {
+        padding-inline-end: var(--ll-coach-gutter);
+    }
+
+    /* The 240px bubble used to cover chips, answers and footer links while scrolling. */
+    .ll-coach__bubble {
+        display: none;
+    }
+
+    .ll-coach-inline {
+        display: block;
+        margin: 0 0 var(--space-3);
+        padding: 12px;
+        border: 1px solid #e6d7c3;
+        border-radius: 16px;
+        background: #fffaf3;
+        color: #3d342b;
     }
 }

@@ -140,9 +140,10 @@ public static class PupilStoryTemplates
     {
         var a = NormalizeLetter(topLetter1);
         var b = NormalizeLetter(topLetter2);
+        // Top letter first, so SA and AS are different prompts. .2/.3 still fall back.
         var pair = string.Equals(a, b, StringComparison.Ordinal)
             ? a
-            : CanonicalRiasecPair(a[0], b[0]);
+            : string.Concat(a, b);
         return
         [
             $"LeerlingStory.Class.{pair}.1",

@@ -77,16 +77,115 @@ public class PupilStoryAndDreamJobTests
     {
         var ai = PupilVerhaalCopy.Get("LeerlingStory.Class.AI.1");
         var ia = PupilVerhaalCopy.Get("LeerlingStory.Class.IA.1");
-        Assert.Equal(ai, ia);
+        Assert.NotEqual(ai, ia);
         Assert.NotEqual(PupilVerhaalCopy.Get("LeerlingStory.Class.I.1"), ai);
         Assert.NotEqual(PupilVerhaalCopy.Get("LeerlingStory.Class.A.1"), ai);
         Assert.Contains("nieuw", ai, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("werkt", ai, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("nieuw", ia, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("werkt", ia, StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("Wie wil weten", ia, StringComparison.Ordinal);
 
         var prompts = _renderer.ClassDiscussionPromptKeys("A", "I");
-        Assert.Equal(prompts, _renderer.ClassDiscussionPromptKeys("I", "A"));
-        Assert.Contains(prompts, line => line.Contains("nieuw", StringComparison.OrdinalIgnoreCase)
-            && line.Contains("werkt", StringComparison.OrdinalIgnoreCase));
+        var swapped = _renderer.ClassDiscussionPromptKeys("I", "A");
+        Assert.NotEqual(prompts[0], swapped[0]);
+        Assert.Equal(prompts.Skip(1), swapped.Skip(1));
+        Assert.Contains("nieuw", prompts[0], StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("werkt", prompts[0], StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("Wie wil weten", swapped[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Class_prompt_for_social_then_artistic_names_helping_first()
+    {
+        var prompts = _renderer.ClassDiscussionPromptKeys("S", "A");
+        Assert.Equal("Wie helpt graag een ander en bedenkt graag iets nieuws?", prompts[0]);
+        Assert.Equal(
+            "Wie bedenkt graag iets nieuws en helpt graag een ander?",
+            _renderer.ClassDiscussionPromptKeys("A", "S")[0]);
+    }
+
+    [Fact]
+    public void Consecutive_story_sentences_do_not_share_a_graag_verb()
+    {
+        var personas = new[]
+        {
+            "Samenwerken",
+            "Resultaatgerichtheid",
+            "Stressbestendigheid",
+            "Innovatie",
+            "Extraversie",
+            "Balanced"
+        };
+        const string letters = "RIASEC";
+        foreach (var persona in personas)
+        {
+            for (var i = 0; i < letters.Length; i++)
+            {
+                for (var j = 0; j < letters.Length; j++)
+                {
+                    var suffix = i == j
+                        ? letters[i].ToString()
+                        : string.Concat(letters[i], letters[j]);
+                    var keys = new PupilStoryKeySet(
+                        PupilStoryTemplates.Version,
+                        "LeerlingStory.Bf." + persona,
+                        "LeerlingStory.Riasec." + suffix,
+                        "LeerlingStory.Val.Connection",
+                        "LeerlingStory.Cult.Collaboration",
+                        [],
+                        "LeerlingStory.Tile.Bf." + persona,
+                        "LeerlingStory.Tile.Riasec." + (suffix.Length == 1
+                            ? suffix
+                            : PupilStoryTemplates.CanonicalRiasecPair(suffix[0], suffix[1])),
+                        "LeerlingStory.Tile.Val.Connection",
+                        "LeerlingStory.Tile.Cult.Collaboration",
+                        []);
+                    var result = FixtureResult();
+                    result.StoryKeysJson = JsonSerializer.Serialize(keys);
+                    result.HollandCode = suffix;
+                    var body = _renderer.Render(result, null).Body;
+                    var sentences = body.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    string? previous = null;
+                    foreach (var sentence in sentences)
+                    {
+                        var verb = GraagVerb(sentence);
+                        if (verb is not null && previous is not null)
+                        {
+                            Assert.False(
+                                string.Equals(verb, previous, StringComparison.OrdinalIgnoreCase),
+                                $"{persona} {suffix}: '{previous}' then '{verb}' in {body}");
+                        }
+
+                        if (verb is not null)
+                        {
+                            previous = verb;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static string? GraagVerb(string sentence)
+    {
+        var parts = sentence.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 3)
+        {
+            return null;
+        }
+
+        if (parts[0] is not ("Jij" or "Je"))
+        {
+            return null;
+        }
+
+        if (!string.Equals(parts[2], "graag", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return parts[1].ToLowerInvariant();
     }
 
     [Fact]
@@ -177,7 +276,11 @@ public class PupilStoryAndDreamJobTests
                     var swapped = string.Concat(letters[j], letters[i]);
                     AssertPairFamily("LeerlingStory.Riasec.", suffix, swapped, explain: false);
                     AssertPairFamily("LeerlingStory.Tile.Riasec.", suffix, swapped, explain: true);
-                    for (var n = 1; n <= 3; n++)
+                    var first = PupilVerhaalCopy.Get($"LeerlingStory.Class.{suffix}.1");
+                    var swappedFirst = PupilVerhaalCopy.Get($"LeerlingStory.Class.{swapped}.1");
+                    AssertResolved(first, suffix + ".1");
+                    AssertResolved(swappedFirst, swapped + ".1");
+                    for (var n = 2; n <= 3; n++)
                     {
                         var a = PupilVerhaalCopy.Get($"LeerlingStory.Class.{suffix}.{n}");
                         var b = PupilVerhaalCopy.Get($"LeerlingStory.Class.{swapped}.{n}");
@@ -195,9 +298,9 @@ public class PupilStoryAndDreamJobTests
 
                 if (i != j)
                 {
-                    Assert.Equal(
-                        prompts,
-                        _renderer.ClassDiscussionPromptKeys(letters[j].ToString(), letters[i].ToString()));
+                    var other = _renderer.ClassDiscussionPromptKeys(letters[j].ToString(), letters[i].ToString());
+                    Assert.Equal(prompts.Skip(1), other.Skip(1));
+                    AssertResolved(other[0], string.Concat(letters[j], letters[i]));
                 }
             }
         }
