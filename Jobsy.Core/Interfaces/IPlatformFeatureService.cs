@@ -39,7 +39,8 @@ public sealed record PlatformFeatureSnapshot(
     string? MaintenanceNote = null,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
-    bool PhoneVerificationEnabled = false);
+    bool PhoneVerificationEnabled = false,
+    bool WhatsAppRemindersEnabled = false);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -84,4 +85,5 @@ public sealed record PlatformFeatureUpdate(
     string? MaintenanceNote = null,
     bool? PassportPartnersEnabled = null,
     bool? PassportPdfV2Enabled = null,
-    bool? PhoneVerificationEnabled = null);
+    bool? PhoneVerificationEnabled = null,
+    bool? WhatsAppRemindersEnabled = null);

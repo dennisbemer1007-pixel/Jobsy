@@ -17,12 +17,25 @@ public static partial class EmailStrings
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> All { get; } =
         new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["nl"] = EmailStringsReferee.Merge(EmailStringsNl.Map, "nl"),
-            ["en"] = EmailStringsReferee.Merge(EmailStringsEn.Map, "en"),
-            ["pl"] = EmailStringsReferee.Merge(EmailStringsPl.Map, "pl"),
-            ["ro"] = EmailStringsReferee.Merge(EmailStringsRo.Map, "ro"),
-            ["ar"] = EmailStringsReferee.Merge(EmailStringsAr.Map, "ar")
+            ["nl"] = EmailStringsReferee.Merge(Merge(EmailStringsNl.Map, EmailStringsComeback.For("nl")), "nl"),
+            ["en"] = EmailStringsReferee.Merge(Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")), "en"),
+            ["pl"] = EmailStringsReferee.Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), "pl"),
+            ["ro"] = EmailStringsReferee.Merge(Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")), "ro"),
+            ["ar"] = EmailStringsReferee.Merge(Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar")), "ar")
         };
+
+    private static IReadOnlyDictionary<string, string> Merge(
+        IReadOnlyDictionary<string, string> baseMap,
+        IReadOnlyDictionary<string, string> extra)
+    {
+        var copy = new Dictionary<string, string>(baseMap, StringComparer.Ordinal);
+        foreach (var pair in extra)
+        {
+            copy[pair.Key] = pair.Value;
+        }
+
+        return copy;
+    }
 
     public static IReadOnlyCollection<string> Languages { get; } = ["nl", "en", "pl", "ro", "ar"];
 

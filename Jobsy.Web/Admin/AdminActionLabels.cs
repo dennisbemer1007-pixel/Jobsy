@@ -65,6 +65,7 @@ public static class AdminActionLabels
             "platformLogs" or "platform-logs" => "AdminAction.Resource.PlatformLogs",
             "adminAudit" or "adminAuditEvents" => "AdminAction.Resource.Audit",
             "personalDataAccessLogs" or "admin.personal_data_access_log.list" => "AdminAction.Resource.AccessLog",
+            "admin.search" => "AdminAction.Resource.AdminSearch",
             _ => null
         };
 
@@ -145,12 +146,93 @@ public static class AdminActionLabels
             return "";
         }
 
-        return label.Trim() switch
+        var trimmed = label.Trim();
+        var setting = PlatformSettingsCatalog.Entries.FirstOrDefault(e =>
+            string.Equals(e.Key, trimmed, StringComparison.OrdinalIgnoreCase));
+        if (setting is not null)
+        {
+            return text(setting.TitleKey);
+        }
+
+        return trimmed switch
         {
             "Data retention" => text("AdminAudit.Target.Retention"),
             "audit-csv" => text("AdminAudit.Target.AuditCsv"),
-            _ => label
+            _ => trimmed
         };
+    }
+
+    public static string LogMessage(string? message, Func<string, string> text)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return "";
+        }
+
+        const string schoolRetention = "school.retention.run";
+        var trimmed = message.Trim();
+        if (trimmed.Equals(schoolRetention, StringComparison.OrdinalIgnoreCase))
+        {
+            return text("AdminLogs.Message.SchoolRetention");
+        }
+
+        if (trimmed.StartsWith(schoolRetention, StringComparison.OrdinalIgnoreCase))
+        {
+            return text("AdminLogs.Message.SchoolRetention") + trimmed[schoolRetention.Length..];
+        }
+
+        return trimmed;
+    }
+
+    /// <summary>
+    /// Raw audit keys whose Dutch (or current-locale) label contains <paramref name="query"/>,
+    /// so a search for the label still finds the stored value.
+    /// </summary>
+    public static IReadOnlyList<string> RawKeysForQuery(string? query, Func<string, string> text)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        var term = query.Trim();
+        var hits = new List<string>();
+        foreach (var (raw, cultureKey) in SearchPairs())
+        {
+            if (raw.Contains(term, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var label = text(cultureKey);
+            if (label.Contains(term, StringComparison.OrdinalIgnoreCase))
+            {
+                hits.Add(raw);
+            }
+        }
+
+        return hits.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static IEnumerable<(string Raw, string CultureKey)> SearchPairs()
+    {
+        yield return ("Data retention", "AdminAudit.Target.Retention");
+        yield return ("audit-csv", "AdminAudit.Target.AuditCsv");
+        yield return ("admin.search", "AdminAction.Resource.AdminSearch");
+        yield return ("school.retention.run", "AdminLogs.Message.SchoolRetention");
+        yield return ("user.mfa.reset", "AdminAudit.Action.MfaReset");
+        yield return ("support-access.grant", "AdminAudit.Action.Support");
+        yield return ("settings.platform.update", "AdminAudit.Action.Setting");
+        yield return ("privacy.retention.run", "AdminAudit.Action.Retention");
+        yield return ("admin.users.list", "AdminAction.Resource.Users");
+        yield return ("platformLogs", "AdminAction.Resource.PlatformLogs");
+        yield return ("adminAudit", "AdminAction.Resource.Audit");
+        yield return ("personalDataAccessLogs", "AdminAction.Resource.AccessLog");
+
+        foreach (var entry in PlatformSettingsCatalog.Entries)
+        {
+            yield return (entry.Key, entry.TitleKey);
+        }
     }
 
     public static string AccessAction(string? resource, string? action, Func<string, string> text)

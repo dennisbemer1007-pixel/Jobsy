@@ -20,11 +20,11 @@
         </label>
         <fieldset class="filter-bar" style="border:0;padding:0;margin:0 0 0.75rem">
             <legend class="muted">@Culture["Admin.SupportAccessScope"]</legend>
-            <label class="filter-check"><input type="checkbox" @bind="_scopeContact" /> Contact</label>
-            <label class="filter-check"><input type="checkbox" @bind="_scopeCv" /> CV</label>
-            <label class="filter-check"><input type="checkbox" @bind="_scopeIban" /> IBAN</label>
-            <label class="filter-check"><input type="checkbox" @bind="_scopeApps" /> Applications</label>
-            <label class="filter-check"><input type="checkbox" @bind="_scopeFeedback" /> Feedback</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeContact" /> @Culture["Admin.SupportAccess.Scope.Contact"]</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeCv" /> @Culture["Admin.SupportAccess.Scope.Cv"]</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeIban" /> @Culture["Admin.SupportAccess.Scope.Iban"]</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeApps" /> @Culture["Admin.SupportAccess.Scope.Applications"]</label>
+            <label class="filter-check"><input type="checkbox" @bind="_scopeFeedback" /> @Culture["Admin.SupportAccess.Scope.Feedback"]</label>
         </fieldset>
         <label>
             @Culture["Admin.SupportAccessDuration"]

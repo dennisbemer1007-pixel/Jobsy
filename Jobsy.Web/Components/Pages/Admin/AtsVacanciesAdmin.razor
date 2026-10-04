@@ -38,6 +38,14 @@
             <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
         </div>
         <span class="ats-toolbar__count muted">@(_filtered.Count == 1 ? "1 resultaat" : $"{_filtered.Count} resultaten")</span>
+        @if (PendingOnPage().Count > 0)
+        {
+            <div class="ats-toolbar__actions">
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="RejectSelectedAsync">
+                    @Culture["AdminAts.BulkReject"] (@_selected.Count)
+                </button>
+            </div>
+        }
     </div>
 
     @if (_scrapeReport is not null)
@@ -130,6 +138,13 @@
                     </div>
                     <p class="ats-card__excerpt">@Excerpt(row.Description)</p>
                     <footer class="ats-card__footer" @onclick:stopPropagation="true">
+                        @if (row.Status == "PendingReview")
+                        {
+                            <label class="filter-check">
+                                <input type="checkbox" checked="@_selected.Contains(row.Id)" @onchange="e => ToggleSelected(row, e.Value)" />
+                                @Culture["AdminAts.Select"]
+                            </label>
+                        }
                         <a class="ats-card__source" href="@row.SourceUrl" target="_blank" rel="noopener noreferrer">@row.SourceDomain</a>
                         <div class="ats-card__actions">
                             @if (row.Status is "PendingReview" or "Inactive")
@@ -239,6 +254,7 @@
     private AtsListingItem? _edit;
     private ElementReference _detailPanel;
     private bool _detailTrapped;
+    private readonly HashSet<Guid> _selected = [];
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -299,8 +315,50 @@
         }
         finally
         {
+            var pending = _listings.Where(l => l.Status == "PendingReview").Select(l => l.Id).ToHashSet();
+            _selected.RemoveWhere(id => !pending.Contains(id));
             _loading = false;
         }
+    }
+
+    private List<AtsListingItem> PendingOnPage()
+        => _filtered.Where(l => l.Status == "PendingReview").ToList();
+
+    private void ToggleSelected(AtsListingItem row, object? value)
+    {
+        var on = value is bool b && b;
+        if (on)
+        {
+            _selected.Add(row.Id);
+        }
+        else
+        {
+            _selected.Remove(row.Id);
+        }
+    }
+
+    private async Task RejectSelectedAsync()
+    {
+        var rows = _listings.Where(l => _selected.Contains(l.Id) && l.Status == "PendingReview").ToList();
+        if (rows.Count == 0)
+        {
+            _message = Culture["AdminAts.BulkRejectNone"];
+            return;
+        }
+
+        var done = 0;
+        foreach (var row in rows)
+        {
+            await RejectAsync(row);
+            if (_message != "Afgekeurd.")
+            {
+                return;
+            }
+
+            done++;
+        }
+
+        _message = string.Format(Culture["AdminAts.BulkRejectDone"], done);
     }
 
     private IEnumerable<AtsListingItem> Filter()

@@ -881,11 +881,16 @@
     gap: var(--space-2, 0.5rem);
 }
 
-@media (min-width: 1024px) {
-    .admin-filter-bar,
-    .admin-filter-bar__chips {
-        flex-wrap: nowrap;
-    }
+.admin-filter-bar > .admin-filter-input,
+.admin-filter-bar > .admin-user-picker {
+    flex: 1 1 10rem;
+    min-width: min(100%, 9rem);
+    max-width: 16rem;
+}
+
+.admin-filter-bar > .btn-compact,
+.admin-filter-bar > button {
+    flex: 0 0 auto;
 }
 
 .admin-bulk-bar {
@@ -953,6 +958,24 @@
     margin: 0.25rem 0 0;
     font-size: var(--text-xs, 0.75rem);
     color: var(--muted);
+}
+
+.admin-data-table td.muted,
+.data-table td.muted,
+table td.muted {
+    display: table-cell;
+    margin-top: 0;
+}
+
+.admin-muted {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.admin-user-picker__empty {
+    margin: 0.35rem 0 0;
+    color: var(--muted);
+    font-size: 0.86rem;
 }
 
 .admin-data-table {
@@ -1077,10 +1100,18 @@
     }
 
     .admin-topbar .admin-env-badge {
-        max-width: 4.5rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        max-width: none;
+        overflow: visible;
+    }
+
+    .admin-env-badge--acceptatie .admin-env-badge__label {
+        font-size: 0;
+    }
+
+    .admin-env-badge--acceptatie .admin-env-badge__label::after {
+        content: "Acc";
+        font-size: 0.75rem;
+        font-weight: 700;
     }
 }
 
