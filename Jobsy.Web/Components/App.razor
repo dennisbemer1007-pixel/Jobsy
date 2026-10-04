@@ -274,7 +274,7 @@
         get
         {
             var path = PageSeoCatalog.Normalize(HttpContextAccessor.HttpContext?.Request.Path.Value);
-            if (path is not ("/scholen" or "/privacy" or "/toegankelijkheid"))
+            if (path is not ("/scholen" or "/wie-zijn-wij" or "/privacy" or "/toegankelijkheid"))
             {
                 return DefaultDocumentTitle;
             }
