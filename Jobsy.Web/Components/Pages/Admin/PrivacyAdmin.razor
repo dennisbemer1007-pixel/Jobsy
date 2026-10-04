@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using System.Text.Json
 @using Jobsy.Core.Privacy
+@using Jobsy.Core.Time
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -49,7 +50,7 @@
             <h2 id="last-run-heading">@Culture["AdminPrivacy.LastRun"]</h2>
             @if (_summary?.LastRetentionRunUtc is DateTime lr)
             {
-                <p class="muted">@lr.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</p>
+                <p class="muted">@AmsterdamTime.ToLocal(lr).ToString("dd-MM-yyyy HH:mm")</p>
                 @if (!string.IsNullOrWhiteSpace(_summary.LastRetentionDetailsJson))
                 {
                     <ul class="admin-audit-changes">
@@ -78,7 +79,7 @@
                     @foreach (var e in _deleted)
                     {
                         <tr>
-                            <td class="admin-mono">@e.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                            <td class="admin-mono">@AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM HH:mm")</td>
                             <td>@e.TargetLabel</td>
                             <td>@e.Result</td>
                         </tr>

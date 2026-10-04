@@ -728,7 +728,24 @@ public sealed partial class JobsyApiClient
         DateTime? to = null,
         CancellationToken ct = default)
     {
-        var qs = new List<string>();
+        var page = await GetPlatformLogsPageAsync(category, level, from, to, page: 1, pageSize: 50, ct);
+        return page.Items;
+    }
+
+    public async Task<(IReadOnlyList<PlatformLogItem> Items, int Total)> GetPlatformLogsPageAsync(
+        string? category = null,
+        string? level = null,
+        DateTime? from = null,
+        DateTime? to = null,
+        int page = 1,
+        int pageSize = 50,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={pageSize}"
+        };
         if (!string.IsNullOrWhiteSpace(category))
         {
             qs.Add($"category={Uri.EscapeDataString(category)}");
@@ -749,8 +766,23 @@ public sealed partial class JobsyApiClient
             qs.Add($"to={Uri.EscapeDataString(to.Value.ToString("O"))}");
         }
 
-        var url = qs.Count == 0 ? "api/platform-logs" : $"api/platform-logs?{string.Join("&", qs)}";
-        return await _http.GetFromJsonAsync<List<PlatformLogItem>>(url, ct) ?? [];
+        var url = $"api/platform-logs?{string.Join("&", qs)}";
+        using var response = await _http.GetAsync(url, ct);
+        response.EnsureSuccessStatusCode();
+        var total = 0;
+        if (response.Headers.TryGetValues("X-Total-Count", out var values)
+            && int.TryParse(values.FirstOrDefault(), out var parsed))
+        {
+            total = parsed;
+        }
+
+        var items = await response.Content.ReadFromJsonAsync<List<PlatformLogItem>>(cancellationToken: ct) ?? [];
+        if (total < items.Count)
+        {
+            total = items.Count;
+        }
+
+        return (items, total);
     }
 
     public async Task<FeedbackListItem> SubmitFeedbackAsync(SubmitFeedbackForm form, CancellationToken ct = default)

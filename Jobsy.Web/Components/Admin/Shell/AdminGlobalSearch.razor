@@ -37,11 +37,11 @@
             }
             else
             {
-                @RenderGroup(Culture["AdminShell.SearchUsers"], _result.Users, "users")
-                @RenderGroup(Culture["AdminShell.SearchOrgs"], _result.Organisations, "orgs")
-                @RenderGroup(Culture["AdminShell.SearchVacancies"], _result.Vacancies, "vacancies")
-                @RenderGroup(Culture["AdminShell.SearchInvoices"], _result.Invoices, "invoices")
-                @RenderGroup(Culture["AdminShell.SearchCorrelations"], _result.Correlations, "correlations")
+                @SearchGroup(Culture["AdminShell.SearchUsers"], _result.Users)
+                @SearchGroup(Culture["AdminShell.SearchOrgs"], _result.Organisations)
+                @SearchGroup(Culture["AdminShell.SearchVacancies"], _result.Vacancies)
+                @SearchGroup(Culture["AdminShell.SearchInvoices"], _result.Invoices)
+                @SearchGroup(Culture["AdminShell.SearchCorrelations"], _result.Correlations)
             }
         </div>
     }
@@ -185,46 +185,56 @@
         }
     }
 
-    private RenderFragment RenderGroup(string title, IReadOnlyList<AdminSearchHitDto> items, string key) => builder =>
+    private RenderFragment SearchGroup(string title, IReadOnlyList<AdminSearchHitDto> items) => @<text>
+        @if (items.Count > 0)
+        {
+            <div class="admin-search__group">
+                <p class="admin-search__group-title">@title</p>
+                @foreach (var hit in items)
+                {
+                    var index = _flat.IndexOf(hit);
+                    var active = index == _activeIndex;
+                    <button type="button"
+                            class="admin-search__option @(active ? "is-active" : null)"
+                            role="option"
+                            aria-selected="@(active ? "true" : "false")"
+                            @onmousedown:preventDefault
+                            @onclick="() => OpenHitAsync(hit)">
+                        <span class="admin-search__option-label">@hit.Label</span>
+                        @if (!string.IsNullOrWhiteSpace(hit.Sublabel))
+                        {
+                            <span class="admin-search__option-sub">@DisplaySublabel(hit.Sublabel)</span>
+                        }
+                    </button>
+                }
+            </div>
+        }
+    </text>;
+
+    private string DisplaySublabel(string sublabel)
     {
-        if (items.Count == 0)
+        var parts = sublabel.Split(" · ", 2, StringSplitOptions.None);
+        if (parts.Length != 2)
         {
-            return;
+            return sublabel;
         }
 
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "admin-search__group");
-        builder.OpenElement(2, "p");
-        builder.AddAttribute(3, "class", "admin-search__group-title");
-        builder.AddContent(4, title);
-        builder.CloseElement();
-        foreach (var hit in items)
+        var key = parts[1].Trim() switch
         {
-            var index = _flat.IndexOf(hit);
-            var active = index == _activeIndex;
-            builder.OpenElement(10, "button");
-            builder.AddAttribute(11, "type", "button");
-            builder.AddAttribute(12, "class", "admin-search__option" + (active ? " is-active" : ""));
-            builder.AddAttribute(13, "role", "option");
-            builder.AddAttribute(14, "aria-selected", active);
-            builder.AddAttribute(15, "onclick", EventCallback.Factory.Create(this, () => OpenHitAsync(hit)));
-            builder.OpenElement(16, "span");
-            builder.AddAttribute(17, "class", "admin-search__option-label");
-            builder.AddContent(18, hit.Label);
-            builder.CloseElement();
-            if (!string.IsNullOrWhiteSpace(hit.Sublabel))
-            {
-                builder.OpenElement(19, "span");
-                builder.AddAttribute(20, "class", "admin-search__option-sub");
-                builder.AddContent(21, hit.Sublabel);
-                builder.CloseElement();
-            }
-
-            builder.CloseElement();
-        }
-
-        builder.CloseElement();
-    };
+            "Candidate" => "Status.Forbidden.Role.Candidate",
+            "Teacher" => "Status.Forbidden.Role.Teacher",
+            "SchoolAdmin" => "Status.Forbidden.Role.SchoolAdmin",
+            "BranchManager" => "Status.Forbidden.Role.BranchManager",
+            "RegionalManager" => "Status.Forbidden.Role.RegionalManager",
+            "EnterpriseManager" => "Status.Forbidden.Role.EnterpriseManager",
+            "Intermediary" => "Status.Forbidden.Role.Intermediary",
+            "Admin" => "Status.Forbidden.Role.Admin",
+            "SalesManager" => "Status.Forbidden.Role.SalesManager",
+            "Ambassadeur" => "Status.Forbidden.Role.Ambassadeur",
+            _ => null
+        };
+        return key is null ? sublabel : parts[0] + " · " + Culture[key];
+    }
 
     private async Task OpenHitAsync(AdminSearchHitDto hit)
     {

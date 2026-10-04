@@ -185,14 +185,13 @@
         {
             try
             {
-                var reduce = await Js.InvokeAsync<bool>("eval",
-                    "window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches");
+                var reduce = await Js.InvokeAsync<bool>("jobsyDom.matchesMedia", "(prefers-reduced-motion: reduce)");
                 if (reduce)
                 {
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
                 }
 
-                var narrow = await Js.InvokeAsync<bool>("eval", "window.matchMedia && window.matchMedia('(max-width: 639px)').matches");
+                var narrow = await Js.InvokeAsync<bool>("jobsyDom.matchesMedia", "(max-width: 639px)");
                 _recentLimit = narrow ? 5 : 8;
                 _exampleOpen = !narrow;
             }
@@ -268,8 +267,7 @@
         var delayMs = 250;
         try
         {
-            var reduce = await Js.InvokeAsync<bool>("eval",
-                "window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches");
+            var reduce = await Js.InvokeAsync<bool>("jobsyDom.matchesMedia", "(prefers-reduced-motion: reduce)");
             if (reduce) delayMs = 0;
         }
         catch { /* ignore */ }

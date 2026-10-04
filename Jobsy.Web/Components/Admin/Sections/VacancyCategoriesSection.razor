@@ -2,6 +2,7 @@
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject UserFacingError Errors
 @implements IDisposable
 
 @if (_loading)
@@ -90,7 +91,7 @@
 
                     <div class="inline-actions">
                         <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">@Culture["Common.Save"]</button>
-                        <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Categorie verwijderen" disabled="@(_busyId == item.Id)" @onclick="() => DeleteAsync(item)">
+                        <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="@Culture["AdminContent.DeleteCategory"]" disabled="@(_busyId == item.Id)" @onclick="() => AskDelete(item)">
                             @((MarkupString)ActionIcons.Trash)
                         </button>
                     </div>
@@ -122,6 +123,16 @@
             <p class="state-message @(_error ? "error" : null)">@_message</p>
         }
     }
+
+    <LobsyFriendlyDialog IsOpen="_confirmOpen"
+                         Title="@Culture["AdminContent.DeleteCategory"]"
+                         OnClose="CancelDelete">
+        <p>@string.Format(Culture["AdminContent.DeleteCategoryBody"], _pendingName)</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" data-jobsy-dialog-close @onclick="CancelDelete">@Culture["Common.Cancel"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="ConfirmDeleteAsync">@Culture["AdminContent.DeleteCategory"]</button>
+        </div>
+    </LobsyFriendlyDialog>
 @code {
     private bool _loading = true;
     private bool _creating;
@@ -131,6 +142,9 @@
     private List<VacancyCategoryItem> _items = [];
     private List<VacancyCategoryFieldItem> _fieldCatalog = [];
     private VacancyCategoryForm _new = new() { ColorHex = "#F54A1B", PublishCostTokens = 1m, HighlightCostTokens = 2m };
+    private bool _confirmOpen;
+    private VacancyCategoryItem? _pendingDelete;
+    private string _pendingName = "";
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -155,7 +169,7 @@
         catch (Exception ex)
         {
             _error = true;
-            _message = ex.Message;
+            _message = Errors.Describe(ex);
         }
         finally
         {
@@ -206,7 +220,7 @@
             if (updated is null)
             {
                 _error = true;
-                _message = "Opslaan mislukt.";
+                _message = Culture["Common.Error.TryAgain"];
                 return;
             }
 
@@ -222,11 +236,35 @@
         catch (Exception ex)
         {
             _error = true;
-            _message = ex.Message;
+            _message = Errors.Describe(ex);
         }
         finally
         {
             _busyId = null;
+        }
+    }
+
+    private void AskDelete(VacancyCategoryItem item)
+    {
+        _pendingDelete = item;
+        _pendingName = item.Name;
+        _confirmOpen = true;
+    }
+
+    private void CancelDelete()
+    {
+        _confirmOpen = false;
+        _pendingDelete = null;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        var item = _pendingDelete;
+        _confirmOpen = false;
+        _pendingDelete = null;
+        if (item is not null)
+        {
+            await DeleteAsync(item);
         }
     }
 
@@ -250,7 +288,7 @@
         catch (Exception ex)
         {
             _error = true;
-            _message = ex.Message;
+            _message = Errors.Describe(ex);
         }
         finally
         {
@@ -275,7 +313,7 @@
             if (created is null)
             {
                 _error = true;
-                _message = "Aanmaken mislukt.";
+                _message = Culture["Common.Error.TryAgain"];
                 return;
             }
 
@@ -287,7 +325,7 @@
         catch (Exception ex)
         {
             _error = true;
-            _message = ex.Message;
+            _message = Errors.Describe(ex);
         }
         finally
         {

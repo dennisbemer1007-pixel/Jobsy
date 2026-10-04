@@ -10,7 +10,7 @@
     <form class="login-form" @onsubmit="LookupAsync" @onsubmit:preventDefault>
         <label>
             @Culture["AdminOrgs.KvkNumber"]
-            <input @bind="_kvkNumber" placeholder="8 cijfers" required />
+            <input @bind="_kvkNumber" @bind:event="oninput" placeholder="8 cijfers" inputmode="numeric" maxlength="8" required />
         </label>
         @if (Env.IsDevelopment())
         {
@@ -21,11 +21,11 @@
         <label>
             @Culture["AdminOrgs.ColType"]
             <select @bind="_newType">
-                <option value="Employer">Employer</option>
-                <option value="Intermediary">Intermediary</option>
+                <option value="Employer">@Culture["AdminOrgs.TypeEmployer"]</option>
+                <option value="Intermediary">@Culture["AdminOrgs.TypeIntermediary"]</option>
             </select>
         </label>
-        <button class="btn-compact btn-compact--primary" type="submit" disabled="@_busy">
+        <button class="btn-compact btn-compact--primary" type="submit" disabled="@(_busy || !KvkLooksValid)">
             @Culture["AdminOrgs.LookupEstablishments"]
         </button>
     </form>
@@ -70,8 +70,24 @@
     private bool _busy;
     private string? _message;
 
+    private bool KvkLooksValid
+    {
+        get
+        {
+            var kvk = _kvkNumber.Trim();
+            return kvk.Length == 8 && kvk.All(char.IsDigit);
+        }
+    }
+
     private async Task LookupAsync()
     {
+        if (!KvkLooksValid)
+        {
+            _message = Culture["AdminOrgs.KvkDigits"];
+            _establishments = [];
+            return;
+        }
+
         _busy = true;
         _message = null;
         try

@@ -1,5 +1,7 @@
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Privacy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobsy.Api.Controllers;
 
@@ -38,5 +40,40 @@ internal static class TestSaveErrors
         }
 
         return new BadRequestObjectResult(new { code = "error", message = msg });
+    }
+
+    /// <summary>
+    /// Writes the failure to Systeemlogs with an LB- code, then returns the existing payload.
+    /// </summary>
+    public static async Task<T> LogAsync<T>(
+        ControllerBase controller,
+        Exception ex,
+        T result,
+        string category,
+        CancellationToken cancellationToken) where T : IActionResult
+    {
+        var log = controller.HttpContext?.RequestServices.GetService<IPlatformErrorLog>();
+        if (log is not null)
+        {
+            try
+            {
+                await log.WriteAsync(
+                    category,
+                    ex.Message,
+                    SupportCodeGenerator.Create(),
+                    controller.HttpContext?.Request.Path.Value,
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                // The visitor still gets the original result.
+            }
+        }
+
+        return result;
     }
 }

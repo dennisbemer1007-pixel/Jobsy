@@ -242,6 +242,18 @@ public static class UiStringsStatus
             "Portal szkolny nie jest jeszcze otwarty",
             "Portalul școlii nu este încă deschis",
             "بوابة المدرسة ليست مفتوحة بعد");
+        Add("Status.Forbidden.AmbassadorsOffTitle",
+            "Sales en ambassadeurs staat uit",
+            "Sales and ambassadors is switched off",
+            "Sprzedaż i ambasadorzy są wyłączeni",
+            "Vânzările și ambasadorii sunt oprite",
+            "المبيعات والسفراء متوقفان");
+        Add("Status.Forbidden.AmbassadorsOffLead",
+            "Deze functie staat uit. Zet hem aan bij Platforminstellingen. Tot die tijd is deze pagina niet beschikbaar.",
+            "This feature is off. Turn it on under Platform settings. Until then this page is not available.",
+            "Ta funkcja jest wyłączona. Włącz ją w ustawieniach platformy.",
+            "Funcția este oprită. Pornește-o la setările platformei.",
+            "هذه الميزة متوقفة. فعّلها من إعدادات المنصة.");
         Add("Status.Forbidden.SchoolsOffLead",
             "Lobsy voor scholen staat nu uit. Je account blijft bewaard. Log uit, of mail support als je een vraag hebt.",
             "Lobsy for schools is switched off right now. Your account is kept. Sign out, or email support if you have a question.",

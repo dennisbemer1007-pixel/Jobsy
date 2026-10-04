@@ -42,7 +42,7 @@
             <form method="get" action="/leerling" class="ll-form ll-form--cascade">
                 <label class="ll-field">
                     <span>@Culture["Leerling.Login.School"]</span>
-                    <select name="schoolId" required onchange="this.form.submit()">
+                    <select name="schoolId" required data-jobsy-submit-form>
                         <option value="">@Culture["Leerling.Login.SchoolPlaceholder"]</option>
                         @foreach (var s in _schools)
                         {

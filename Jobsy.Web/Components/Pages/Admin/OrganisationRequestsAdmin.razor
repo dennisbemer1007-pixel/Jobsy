@@ -12,7 +12,7 @@
 <PageTitle>@Culture["AdminNav.Requests"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["AdminNav.Requests"]" Lead="@Culture["AdminOrgs.RequestsLead"]" Wide="true">
-    <AdminTabs BasePath="/admin/organisaties/aanvragen" ActiveKey="@_tab" Tabs="_tabs" />
+    <AdminTabs BasePath="/admin/organisaties/aanvragen" @bind-ActiveKey="_tab" Tabs="_tabs" />
 
     @if (!string.IsNullOrEmpty(_toast))
     {

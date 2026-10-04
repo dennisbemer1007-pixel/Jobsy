@@ -75,7 +75,7 @@
     /// <summary>The page the visitor originally asked for (path + query), kept across login.</summary>
     [Parameter] public string ReturnUrl { get; set; } = "/home";
 
-    /// <summary><c>role</c> (default), <c>employers-off</c> or <c>schools-off</c>.</summary>
+    /// <summary><c>role</c> (default), <c>employers-off</c>, <c>schools-off</c> or <c>ambassadors-off</c>.</summary>
     [Parameter] public string? Reason { get; set; }
 
     [CascadingParameter] private HttpContext? HttpContext { get; set; }
@@ -94,18 +94,23 @@
     private string _antiforgeryToken = "";
 
     private bool _schoolsOff;
+    private bool _ambassadorsOff;
 
     private string Title => _schoolsOff
         ? Culture["Status.Forbidden.SchoolsOffTitle"]
-        : _employersOff
-            ? Culture["Status.Forbidden.EmployersOffTitle"]
-            : Culture["Status.Forbidden.Title"];
+        : _ambassadorsOff
+            ? Culture["Status.Forbidden.AmbassadorsOffTitle"]
+            : _employersOff
+                ? Culture["Status.Forbidden.EmployersOffTitle"]
+                : Culture["Status.Forbidden.Title"];
 
     private string Lead => _schoolsOff
         ? Culture["Status.Forbidden.SchoolsOffLead"]
-        : _employersOff
-            ? Culture["Status.Forbidden.EmployersOffLead"]
-            : Culture["Status.Forbidden.Lead"];
+        : _ambassadorsOff
+            ? Culture["Status.Forbidden.AmbassadorsOffLead"]
+            : _employersOff
+                ? Culture["Status.Forbidden.EmployersOffLead"]
+                : Culture["Status.Forbidden.Lead"];
 
     private string AccountPrefix => SplitTemplate(Culture["Status.Forbidden.AccountIntro"]).Prefix;
 
@@ -132,6 +137,7 @@
         _safeReturnUrl = AuthRedirects.SafeLocalUrl(ReturnUrl);
         _employersOff = string.Equals(Reason, "employers-off", StringComparison.OrdinalIgnoreCase);
         _schoolsOff = string.Equals(Reason, "schools-off", StringComparison.OrdinalIgnoreCase);
+        _ambassadorsOff = string.Equals(Reason, "ambassadors-off", StringComparison.OrdinalIgnoreCase);
 
         var user = http?.User;
         var identity = user?.Identity as ClaimsIdentity;
@@ -154,6 +160,12 @@
             // Logout only. A "my start" link would send school staff back through /home → this page.
             _showSwitchAccount = true;
             _primaryHref = "";
+        }
+        else if (_ambassadorsOff)
+        {
+            _showSwitchAccount = false;
+            _primaryHref = "/admin";
+            _primaryLabel = Culture["Status.Nav.MyStart"];
         }
         else if (_employersOff)
         {

@@ -13,7 +13,7 @@
     <p class="muted admin-cross-link">
         <a href="/admin/financien/uitbetalingen">@Culture["AdminUsers.SalesPayoutsLink"]</a>
     </p>
-    <AdminTabs BasePath="/admin/gebruikers/sales" ActiveKey="@_tab" Tabs="_tabs" />
+    <AdminTabs BasePath="/admin/gebruikers/sales" @bind-ActiveKey="_tab" Tabs="_tabs" />
     @if (_tab == "ambassadeurs")
     {
         <AmbassadeursSection />

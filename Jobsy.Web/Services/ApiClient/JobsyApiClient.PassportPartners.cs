@@ -26,7 +26,56 @@ public sealed partial class JobsyApiClient
             "api/admin/passport-partners",
             new { companyId, displayName, maxBranches },
             ct);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+    }
+
+    public async Task<IReadOnlyList<PassportPartnerCodeItem>> GetAdminPassportPartnerCodesAsync(
+        Guid partnerId, CancellationToken ct = default)
+    {
+        using var response = await _http.GetAsync($"api/admin/passport-partners/{partnerId}/codes", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return [];
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<PassportPartnerCodeItem>>(CaseInsensitiveJson, ct) ?? [];
+    }
+
+    public async Task CreateAdminPassportPartnerCodeAsync(
+        Guid partnerId, Guid branchCompanyId, string? vanityCode, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/passport-partners/{partnerId}/codes",
+            new { branchCompanyId, vanityCode },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+    }
+
+    public async Task DeactivateAdminPassportPartnerCodeAsync(Guid codeId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/passport-partners/codes/{codeId}/deactivate", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+    }
+
+    public async Task<(byte[]? Bytes, int StatusCode)> GetPassportPartnerCodesPdfAsync(
+        Guid partnerId, CancellationToken ct = default)
+    {
+        using var response = await _http.GetAsync($"api/admin/passport-partners/{partnerId}/codes.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return (null, (int)response.StatusCode);
+        }
+
+        return (await response.Content.ReadAsByteArrayAsync(ct), 200);
     }
 
     public async Task SetAdminPassportPartnerActiveAsync(Guid id, bool isActive, CancellationToken ct = default)
@@ -60,4 +109,13 @@ public sealed class PassportPartnerAdminItem
     public int MaxBranches { get; set; }
     public string? Type { get; set; }
     public bool HasLogo { get; set; }
+}
+
+public sealed class PassportPartnerCodeItem
+{
+    public Guid Id { get; set; }
+    public string CodeDisplay { get; set; } = "";
+    public bool IsActive { get; set; }
+    public Guid BranchCompanyId { get; set; }
+    public string BranchName { get; set; } = "";
 }

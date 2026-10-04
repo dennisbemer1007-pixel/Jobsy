@@ -12,8 +12,8 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "b415429cc2bc52220920f949f372d812b8dfe0c8e9f7e7b41edf6070d86ed985",
-    "v": "20261003-portal"
+    "sha256": "0bbcfe08d466ee490b6039753d474fb206dc4aa686cb136a1ff8afaf3ab7d343",
+    "v": "20261004-admin"
   },
   "css/features/applications.css": {
     "sha256": "078770928b9bfe26341e9f722ae9b3a4445e77eae03e64f5624693e6e301b2e1",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "95c27d2c4ce2da2abb05054682cbc734d3451bdc601fd222b48e2061cfa00907",
-    "v": "20261003-portal"
+    "sha256": "daebf935196a719f37abe5196ef407ef544075ddee8cd727580bfbac52e26ab4",
+    "v": "20261004-admin"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -204,11 +204,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "e0f9aad4ef18aaccb698bdd8e99cd7f1142ed85a01b473a25e40df1b2d59fae5",
+    "sha256": "248882f64bcc52a8fe6bab36f3efcde91ca602c3a6b775d04202f213726d87d8",
     "v": "20261003-portal"
   },
   "service-worker.published.js": {
-    "sha256": "d20f9d5c80369b6429199988c703434ceffa816ce65af4bc9ba6f8f574633c83",
+    "sha256": "05bd958894dfa326597834b69147cbeb931bb849d2b0d3e36e4277216b4af87a",
     "v": "20261003-portal"
   }
 }

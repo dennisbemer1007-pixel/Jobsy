@@ -177,7 +177,7 @@ else
     @if (Show("early"))
     {
         <section class="panel-section">
-            <h2>Early adapter rules</h2>
+            <h2>@Culture["AdminTabs.EarlyAdapters"]</h2>
             <div class="table-list">
                 @foreach (var rule in _settings?.EarlyAdapterRules ?? [])
                 {

@@ -36,7 +36,7 @@ public sealed class CandidateKompasController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return await TestSaveErrors.LogAsync(this, ex, NotFound(new { message = ex.Message }), "CandidateJourney", cancellationToken);
         }
     }
 
@@ -56,7 +56,7 @@ public sealed class CandidateKompasController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return await TestSaveErrors.LogAsync(this, ex, NotFound(new { message = ex.Message }), "CandidateJourney", cancellationToken);
         }
     }
 }

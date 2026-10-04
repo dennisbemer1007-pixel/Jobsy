@@ -21,7 +21,7 @@
             @Culture.Format("SalesAdmin.ParkedBalancesNote", _parkedCount, _parkedTotal.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))
         </Jobsy.Web.Components.Ui.Enterprise.EntImpactNote>
     }
-    <AdminTabs BasePath="/admin/financien/uitbetalingen" ActiveKey="@_tab" Tabs="_tabs" />
+    <AdminTabs BasePath="/admin/financien/uitbetalingen" @bind-ActiveKey="_tab" @bind-ActiveKey:after="ReloadAsync" Tabs="_tabs" />
 
     @if (_tab != "declarations" && _tab != "uitbetalingen")
     {
@@ -49,7 +49,7 @@
             <button class="btn-compact btn-compact--primary" type="button" @onclick="OpenWizardAsync">
                 @Culture["AdminFinance.VatWizard"]
             </button>
-            <span class="muted">@_rowCount @Culture["AdminFinance.Rows"]</span>
+            <span class="muted">@RowCount(_rowCount)</span>
         </div>
     }
     else if (_tab == "declarations")
@@ -59,7 +59,7 @@
             <button class="btn-compact btn-compact--primary" type="button" @onclick="OpenWizardAsync">
                 @Culture["AdminFinance.VatWizard"]
             </button>
-            <span class="muted">@_rowCount @Culture["AdminFinance.Rows"]</span>
+            <span class="muted">@RowCount(_rowCount)</span>
         </div>
     }
 
@@ -332,6 +332,9 @@
 }
 
 @code {
+    private string RowCount(int count)
+        => count == 1 ? Culture["AdminFinance.RowOne"] : Culture.Format("AdminFinance.RowMany", count);
+
     private static readonly int[] Years =
         Enumerable.Range(DateTime.UtcNow.Year - 2, 4).Reverse().ToArray();
 

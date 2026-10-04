@@ -248,8 +248,8 @@ public sealed class AdminAuditController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(action))
         {
-            var a = action.Trim();
-            query = query.Where(e => e.Action == a);
+            var keys = action.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            query = query.Where(e => keys.Contains(e.Action));
         }
 
         if (actor is Guid actorId)
@@ -277,11 +277,12 @@ public sealed class AdminAuditController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(q))
         {
-            var term = q.Trim();
+            var term = q.Trim().ToLower();
             query = query.Where(e =>
-                e.TargetLabel.Contains(term)
-                || e.CorrelationId.Contains(term)
-                || (e.Reason != null && e.Reason.Contains(term)));
+                e.TargetLabel.ToLower().Contains(term)
+                || e.CorrelationId.ToLower().Contains(term)
+                || (e.Reason != null && e.Reason.ToLower().Contains(term))
+                || e.Action.ToLower().Contains(term));
         }
 
         return query;

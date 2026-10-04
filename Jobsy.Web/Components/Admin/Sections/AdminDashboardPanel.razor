@@ -1,6 +1,7 @@
 @using System.Globalization
 @using System.Security.Claims
 @using Jobsy.Core.Admin
+@using Jobsy.Core.Time
 @using Jobsy.Core.Interfaces
 @using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
@@ -147,7 +148,7 @@
                 @foreach (var e in _recentAudit)
                 {
                     <li class="admin-audit-recent__row">
-                        <span class="admin-mono muted">@e.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                        <span class="admin-mono muted">@AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM HH:mm")</span>
                         <span>@e.ActorDisplayName</span>
                         <span class="status-pill">@e.Action</span>
                         <span class="muted">@e.TargetLabel</span>

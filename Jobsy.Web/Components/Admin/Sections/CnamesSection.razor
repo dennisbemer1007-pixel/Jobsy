@@ -86,7 +86,12 @@
         <input @bind="_form.Hostname" @bind:event="oninput"
                placeholder="westland.lobsy.nl"
                maxlength="253"
-               autocomplete="off" />
+               autocomplete="off"
+               aria-invalid="@(_formError is not null)" />
+        @if (!string.IsNullOrEmpty(_formError))
+        {
+            <p class="error" role="alert">@_formError</p>
+        }
     </label>
     <label>
         @Culture["AdminOrgs.ColDisplayName"]
@@ -177,6 +182,7 @@
     private bool _helpOpen;
     private bool _formOpen;
     private string? _error;
+    private string? _formError;
     private string? _message;
 
     private readonly List<AddressSuggestion> _suggestions = [];
@@ -250,6 +256,7 @@
         _form = new();
         _suggestions.Clear();
         _showSuggestions = false;
+        _formError = null;
     }
 
     private void ClearAddress()
@@ -347,7 +354,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _formError = ex.Message;
         }
         finally
         {

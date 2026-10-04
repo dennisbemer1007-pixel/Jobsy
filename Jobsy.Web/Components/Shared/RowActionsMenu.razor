@@ -6,7 +6,7 @@
     <button type="button"
             class="icon-btn row-actions-menu__toggle"
             aria-haspopup="menu"
-            aria-expanded="@_open"
+            aria-expanded="@(_open ? "true" : "false")"
             aria-label="@(AriaLabel ?? Culture["Common.Actions"])"
             title="@(AriaLabel ?? Culture["Common.Actions"])"
             @onclick="Toggle"
@@ -15,7 +15,7 @@
     </button>
     @if (_open)
     {
-        <div class="row-actions-menu__panel" role="menu" @onclick="Close" @onclick:stopPropagation="true">
+        <div class="row-actions-menu__panel" role="menu" @onclick="Close" @onclick:stopPropagation="true" @onkeydown="OnKey">
             @ChildContent
         </div>
     }
@@ -32,6 +32,14 @@
 
     private void Close()
         => _open = false;
+
+    private void OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _open = false;
+        }
+    }
 
     private async Task OnFocusOut(FocusEventArgs _)
     {

@@ -307,7 +307,7 @@ internal static class UiStringsExtras
         ["Admin.TestData"] = "Testdata",
         ["Admin.TestAccountFilter"] = "Testaccounts",
         ["Admin.TestAccountNote"] = "Dit is een testaccount. Inloggen zonder 2FA werkt alleen op acceptatie.",
-        ["Admin.WhySeeThis"] = "Waarom moet ik dit zien?",
+        ["Admin.WhySeeThis"] = "Support-toegang aanvragen",
         ["Admin.SupportAccessSoon"] = "Support-toegang volgt in een volgende release.",
         ["Admin.SupportAccessTitle"] = "Tijdelijke support-toegang",
         ["Admin.SupportAccessLead"] = "Alleen voor één persoon, begrensde tijd, met reden (AVG).",

@@ -11,7 +11,7 @@
 
 <AdminPageShell Title="@Culture["AdminNav.CategoriesWages"]">
     <AdminTabs BasePath="/admin/vacatures/categorieen"
-               ActiveKey="@_tab"
+               @bind-ActiveKey="_tab"
                Tabs="_tabs" />
     @if (_tab == "salaris")
     {
