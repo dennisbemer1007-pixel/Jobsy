@@ -101,6 +101,53 @@ public static class JourneyTestFlow
         return lines;
     }
 
+    /// <summary>
+    /// Depth label for an end-screen card: Eerste indruk, Iets dieper, or Helemaal gedaan.
+    /// </summary>
+    public static string DepthLabelKey(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        if (answeredCount >= OnboardingWizardCatalog.FullLevelCount(kind))
+        {
+            return "Discovery.Overview.FullyDone";
+        }
+
+        if (answeredCount >= OnboardingWizardCatalog.DeeperLevelCount)
+        {
+            return "TestDepth.Deeper";
+        }
+
+        if (answeredCount >= OnboardingWizardCatalog.MiniLevelCount)
+        {
+            return "TestDepth.First";
+        }
+
+        return "Discovery.End.NotDiscovered";
+    }
+
+    /// <summary>
+    /// Footnote follows the shallowest of the three end-screen tests.
+    /// </summary>
+    public static string EndHintKey(int competencyAnswered, int careerAnswered, int valuesAnswered)
+    {
+        var keys = new[]
+        {
+            DepthLabelKey(competencyAnswered, OnboardingWizardCatalog.OnboardingTestKind.Competency),
+            DepthLabelKey(careerAnswered, OnboardingWizardCatalog.OnboardingTestKind.Career),
+            DepthLabelKey(valuesAnswered, OnboardingWizardCatalog.OnboardingTestKind.Values)
+        };
+        if (keys.All(k => k == "Discovery.Overview.FullyDone"))
+        {
+            return "Discovery.End.HintFull";
+        }
+
+        if (keys.All(k => k is "Discovery.Overview.FullyDone" or "TestDepth.Deeper"))
+        {
+            return "Discovery.End.HintDeeper";
+        }
+
+        return "Discovery.End.HintFirst";
+    }
+
     public static (string? Strength, string? Work, string? Value) EndFacts(OnboardingImpression? impression)
     {
         if (impression is null) return (null, null, null);

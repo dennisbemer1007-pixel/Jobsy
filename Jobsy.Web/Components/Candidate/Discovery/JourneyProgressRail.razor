@@ -56,8 +56,15 @@
                 </div>
             </li>
         }
-        <li class="journey-rail__step @(IsEnd ? "is-current" : "is-todo is-end")">
-            <span class="journey-rail__dot" aria-hidden="true">☼</span>
+        <li class="journey-rail__step @(IsEnd ? "is-done" : "is-todo is-end")">
+            @if (IsEnd)
+            {
+                <span class="journey-rail__dot" aria-hidden="true">✓</span>
+            }
+            else
+            {
+                <span class="journey-rail__dot" aria-hidden="true">☼</span>
+            }
             <div>
                 <b>@Culture["Discovery.Zone.Light"]</b>
                 <small>@Culture["Discovery.Rail.NewShell"]</small>

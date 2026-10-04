@@ -288,6 +288,24 @@ public class Ontdekkingsreis08ShedBunitTests : BunitContext
     }
 
     [Fact]
+    public void End_depth_labels_follow_answered_counts()
+    {
+        Assert.Equal("TestDepth.First", JourneyTestFlow.DepthLabelKey(5, OnboardingWizardCatalog.OnboardingTestKind.Competency));
+        Assert.Equal("TestDepth.Deeper", JourneyTestFlow.DepthLabelKey(10, OnboardingWizardCatalog.OnboardingTestKind.Career));
+        Assert.Equal("Discovery.Overview.FullyDone", JourneyTestFlow.DepthLabelKey(25, OnboardingWizardCatalog.OnboardingTestKind.Values));
+        Assert.Equal(
+            "Discovery.End.HintFull",
+            JourneyTestFlow.EndHintKey(25, 25, 25));
+        Assert.Equal(
+            "Discovery.End.HintFirst",
+            JourneyTestFlow.EndHintKey(25, 5, 25));
+        Assert.Equal(
+            "Discovery.End.HintDeeper",
+            JourneyTestFlow.EndHintKey(10, 25, 10));
+        Assert.Equal("Helemaal gedaan", UiStrings.Get("Discovery.End.HintFull", "nl").Split('.')[0]);
+    }
+
+    [Fact]
     public void Shed_query_keeps_the_finished_step()
     {
         Assert.Equal("shed-8", JourneyTestFlow.ShedQuery(8));
