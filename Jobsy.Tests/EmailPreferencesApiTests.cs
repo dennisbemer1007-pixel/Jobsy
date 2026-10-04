@@ -43,9 +43,11 @@ public class EmailPreferencesApiTests
         sut.ControllerContext = Authenticated(candidate.Id, candidate.Email);
         var getCand = await sut.Get(CancellationToken.None);
         var candBody = Assert.IsType<OkObjectResult>(getCand.Result).Value as MeEmailPreferencesController.PreferencesResponse;
-        Assert.Single(candBody!.Optional);
+        Assert.Equal(2, candBody!.Optional.Count);
         Assert.Equal("PushBom", candBody.Optional[0].Key);
         Assert.True(candBody.Optional[0].Enabled);
+        Assert.Equal("ComebackReminder", candBody.Optional[1].Key);
+        Assert.False(candBody.Optional[1].Enabled);
 
         var put = await sut.Put(
             new MeEmailPreferencesController.UpdatePreferencesRequest(

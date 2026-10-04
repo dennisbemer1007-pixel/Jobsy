@@ -1,0 +1,34 @@
+KEY: ComebackReminder
+SUBJECT: Kijk nog eens, is er iets nieuws?
+PREHEADER: Een herinnering van Lobsy
+KIND: Optional
+--- TEXT ---
+Hoi Alex,
+
+Er kan iets nieuws voor je zijn
+===============================
+
+Je bent al 4 weken niet op Lobsy geweest. Kijk even of er iets nieuws voor
+je is.
+
+Open Lobsy: https://lobsy.nl/profiel
+
+Team Lobsy
+
+Je vroeg zelf om deze herinnering.
+Afmelden voor deze mails: https://lobsy.nl/mail/afmelden
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail-instellingen: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Er kan iets nieuws voor je zijn
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open Lobsy -> https://lobsy.nl/profiel
+a: Afmelden voor deze mails -> https://lobsy.nl/mail/afmelden
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

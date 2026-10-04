@@ -159,6 +159,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.PhoneVerificationEnabled = phoneVerificationEnabled;
         }
 
+        if (update.WhatsAppRemindersEnabled is bool whatsAppRemindersEnabled)
+        {
+            row.WhatsAppRemindersEnabled = whatsAppRemindersEnabled;
+        }
+
         if (update.MaintenanceEnabled is bool maintenanceEnabled)
         {
             row.MaintenanceEnabled = maintenanceEnabled;
@@ -339,6 +344,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MaintenanceNote,
             row?.PassportPartnersEnabled ?? false,
             row?.PassportPdfV2Enabled ?? false,
-            row?.PhoneVerificationEnabled ?? false);
+            row?.PhoneVerificationEnabled ?? false,
+            row?.WhatsAppRemindersEnabled ?? false);
     }
 }

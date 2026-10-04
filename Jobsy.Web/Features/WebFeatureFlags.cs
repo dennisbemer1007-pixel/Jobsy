@@ -59,7 +59,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.PassportPdfV2Enabled ?? false,
                 dto?.PhoneVerificationEnabled ?? false,
                 dto?.SchoolsEnabled ?? false,
-                dto?.AmbassadorsEnabled ?? false);
+                dto?.AmbassadorsEnabled ?? false,
+                dto?.WhatsAppRemindersEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -105,5 +106,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("ambassadorsEnabled")]
         public bool AmbassadorsEnabled { get; set; }
+
+        [JsonPropertyName("whatsAppRemindersEnabled")]
+        public bool WhatsAppRemindersEnabled { get; set; }
     }
 }

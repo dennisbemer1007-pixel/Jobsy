@@ -262,7 +262,8 @@ public record UpdatePlatformFeatureRequest(
     bool? CandidatePassportEnabled = null,
     bool? PassportPartnersEnabled = null,
     bool? PassportPdfV2Enabled = null,
-    bool? PhoneVerificationEnabled = null);
+    bool? PhoneVerificationEnabled = null,
+    bool? WhatsAppRemindersEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -286,7 +287,8 @@ public record PlatformFeatureDto(
     bool CandidatePassportEnabled = true,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
-    bool PhoneVerificationEnabled = false);
+    bool PhoneVerificationEnabled = false,
+    bool WhatsAppRemindersEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 
