@@ -105,6 +105,13 @@ public static class DependencyInjection
         services.AddOptions<OpenAiOptions>()
             .Bind(configuration.GetSection(OpenAiOptions.SectionName));
 
+        services.AddOptions<AiOptions>()
+            .Bind(configuration.GetSection(AiOptions.SectionName));
+
+        services.AddOptions<MistralOptions>()
+            .Bind(configuration.GetSection(MistralOptions.SectionName))
+            .PostConfigure(options => MistralOptions.ApplyKeyAlias(options, key => configuration[key]));
+
         services.AddScoped<IOpenAiEndpointResolver, OpenAiEndpointResolver>();
 
         services.AddOptions<CursorCloudOptions>()

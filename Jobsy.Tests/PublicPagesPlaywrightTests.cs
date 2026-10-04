@@ -393,6 +393,11 @@ public class PublicPagesPlaywrightTests
         Assert.Contains("OpenStreetMap", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("push", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Frankfurt", text, StringComparison.OrdinalIgnoreCase);
+
+        // Default stack is OpenAI. The table must not name Mistral until Ai__Provider is switched.
+        var table = await page.Locator("#delen .pp-table__grid").InnerTextAsync();
+        Assert.Contains("OpenAI", table, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mistral", table, StringComparison.Ordinal);
     }
 
     private static async Task AssertPartnerPricesAsync(IPage page)

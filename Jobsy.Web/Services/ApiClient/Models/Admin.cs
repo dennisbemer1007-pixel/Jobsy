@@ -146,6 +146,14 @@ public sealed class EmailCatalogSendAllStatusItem
     public string? Error { get; set; }
 }
 
+public sealed class AiProviderStatusItem
+{
+    public string Provider { get; set; } = "OpenAI";
+    public string DisplayName { get; set; } = "OpenAI";
+    public bool ReadOnly { get; set; } = true;
+    public bool FellBackToOpenAi { get; set; }
+}
+
 public sealed class IntegrationCredentialItem
 {
     public string Key { get; set; } = string.Empty;
