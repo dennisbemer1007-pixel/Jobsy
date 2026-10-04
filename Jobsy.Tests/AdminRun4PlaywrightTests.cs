@@ -28,10 +28,11 @@ public class AdminRun4PlaywrightTests
     private const string OrgBravoName = "Aa Zetabravo Organisatiefilter";
     private const string VacAlphaTitle = "Aa Zetaalpha Vacaturefilter";
     private const string VacBravoTitle = "Aa Zetabravo Vacaturefilter";
-    // Single words: the users list masks multi-word names ("Aa Zetaalpha Gebruikerfilter"
-    // becomes "Aa G."), so both rows would look identical and the typed query would miss.
-    private const string UserAlphaName = "Zetaalphagebruiker";
-    private const string UserBravoName = "Zetabravogebruiker";
+    // Single words that sort first: the users list masks multi-word names
+    // ("Aa Zetaalpha Gebruikerfilter" becomes "Aa G."), and name-asc paging
+    // would hide a "Z…" pair past page 1. Neither name contains the other.
+    private const string UserAlphaName = "0aaaalphafilter";
+    private const string UserBravoName = "0aaabravofilter";
     private const string LogAlphaToken = "Aazetaalphalogfilter";
     private const string LogBravoToken = "Aazetabravologfilter";
 
@@ -250,94 +251,80 @@ public class AdminRun4PlaywrightTests
 
     private async Task AssertSearchFiltersAsync(IPage page, string url, string inputSelector)
     {
-        await EnsureAdminSearchRowsAsync();
-        await GotoInteractiveAsync(page, url);
-        var rows = page.Locator("table tbody tr");
-        var count = await CountDataRowsAsync(rows);
-        if (count < 2 && await EnsureAdminSearchRowsAsync())
+        if (PairFor(url) is not { } pair)
         {
-            await GotoInteractiveAsync(page, url);
-            count = await CountDataRowsAsync(rows);
+            Assert.Fail($"No seeded search pair for {url}.");
+            return;
         }
 
-        if (count < 2)
+        var needle = pair.Needle;
+        var other = pair.Other;
+
+        // The unfiltered list is the wrong gate. Users are paged (25, name asc), the
+        // table replaces itself while loading, and a count taken on the first tbody
+        // row can see one row or none. Search the seeded name and wait for that row.
+        string? failure = null;
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            if (_searchDbReady != true)
+            if (!await EnsureAdminSearchRowsAsync())
             {
                 _skippedSearchLists.Add(
-                    $"Skipped search on {url}: fewer than two rows, and the test database was not reachable to seed them.");
+                    $"Skipped search on {url}: the test database was not reachable to seed two rows.");
                 return;
             }
 
-            Assert.True(count >= 2, $"Need two rows on {url} to prove search hides a non-match.");
+            failure = await TryProveSeededSearchAsync(page, url, inputSelector, needle, other);
+            if (failure is null)
+            {
+                return;
+            }
         }
 
-        // Prefer the seeded pair. Those labels do not contain each other, so a hit on
-        // one row is proof the filter hid the other. Fall back to whatever is visible
-        // when the seeded rows are not on this page.
-        var labels = page.Locator("table tbody strong");
-        var labelCount = await labels.CountAsync();
-        string needle;
-        string otherProof;
-        var seeded = await FindSeededPairAsync(rows, count, url);
-        if (seeded is { } pair)
-        {
-            needle = pair.Needle;
-            otherProof = pair.Other;
-        }
-        else if (labelCount >= 2)
-        {
-            // Snapshot the other row before typing. A short token such as "Binckhorst" also
-            // matches an address the table does not show, so the query is the full primary
-            // label (organisation, vacancy title, or user name) whenever the row has one.
-            needle = (await labels.Nth(0).InnerTextAsync()).Trim();
-            Assert.True(needle.Length >= 4 && needle.Any(char.IsLetter), $"Primary label on {url} is '{needle}'.");
-            otherProof = await FirstOtherLabelAsync(labels, labelCount, needle);
-        }
-        else
-        {
-            var first = (await rows.Nth(0).InnerTextAsync()).Trim();
-            var second = (await rows.Nth(1).InnerTextAsync()).Trim();
-            needle = FirstDistinctiveWord(first, second);
-            otherProof = FirstDistinctiveWord(second, first);
-        }
-
-        Assert.False(string.IsNullOrWhiteSpace(needle), $"No search needle on {url}.");
-        Assert.False(string.IsNullOrWhiteSpace(otherProof), $"No unmatched row on {url}.");
-
-        var input = page.Locator(inputSelector).First;
-        await input.ClickAsync();
-        await input.FillAsync("");
-        await page.Keyboard.TypeAsync(needle, new() { Delay = 40 });
-        await Assertions.Expect(input).ToHaveValueAsync(needle);
-
-        await Assertions.Expect(rows.Filter(new() { HasTextString = needle }).First)
-            .ToBeVisibleAsync(new() { Timeout = 15_000 });
-        await Assertions.Expect(rows.Filter(new() { HasTextString = otherProof }))
-            .ToHaveCountAsync(0, new() { Timeout = 15_000 });
+        Assert.Fail($"{failure} {await DescribeSeedReadbackAsync()}");
     }
 
-    private static async Task<string> FirstOtherLabelAsync(ILocator labels, int count, string needle)
+    /// <summary>
+    /// Types <paramref name="needle"/> into the list search. Returns null when that row
+    /// stays visible and the other seeded row is gone.
+    /// </summary>
+    private static async Task<string?> TryProveSeededSearchAsync(
+        IPage page, string url, string inputSelector, string needle, string other)
     {
-        var sample = Math.Min(count, 12);
-        for (var i = 1; i < sample; i++)
+        await GotoInteractiveAsync(page, url);
+        var input = page.Locator(inputSelector).First;
+        var rows = page.Locator("table tbody tr");
+        try
         {
-            var text = (await labels.Nth(i).InnerTextAsync()).Trim();
-            if (text.Length < 4 || !text.Any(char.IsLetter))
-            {
-                continue;
-            }
-
-            if (text.Contains(needle, StringComparison.OrdinalIgnoreCase)
-                || needle.Contains(text, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return text;
+            // The filter bar is rendered with the loaded page, including an empty list.
+            await input.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await input.ClickAsync();
+            await input.FillAsync("");
+            await page.Keyboard.TypeAsync(needle, new() { Delay = 40 });
+            await Assertions.Expect(input).ToHaveValueAsync(needle, new() { Timeout = 5_000 });
+            await Assertions.Expect(rows.Filter(new() { HasTextString = needle }).First)
+                .ToBeVisibleAsync(new() { Timeout = 20_000 });
+            await Assertions.Expect(rows.Filter(new() { HasTextString = other }))
+                .ToHaveCountAsync(0, new() { Timeout = 15_000 });
+            return null;
         }
+        catch (Exception ex) when (ex is PlaywrightException || ex.GetType().Name == "TimeoutException")
+        {
+            var status = "";
+            try
+            {
+                var messages = await page.Locator(".state-message").AllInnerTextsAsync();
+                if (messages.Count > 0)
+                {
+                    status = " Page status: " + string.Join(" | ", messages);
+                }
+            }
+            catch (PlaywrightException)
+            {
+                // The status line is optional context for the retry.
+            }
 
-        throw new InvalidOperationException($"No row stays unmatched for '{needle}'.");
+            return $"Seeded row '{needle}' did not stay visible on {url} while '{other}' was hidden.{status} {ex.Message}";
+        }
     }
 
     private static async Task AssertFastTypeAsync(IPage page, string selector)
@@ -349,23 +336,6 @@ public class AdminRun4PlaywrightTests
         const string typed = "binckhorstxyzab";
         await page.Keyboard.TypeAsync(typed, new() { Delay = 40 });
         Assert.Equal(typed, await input.InputValueAsync());
-    }
-
-    private static string FirstDistinctiveWord(string firstRow, string secondRow)
-    {
-        foreach (var word in firstRow.Split([' ', '\n', '\t', '·'], StringSplitOptions.RemoveEmptyEntries))
-        {
-            var clean = word.Trim();
-            if (clean.Length >= 4
-                && !secondRow.Contains(clean, StringComparison.OrdinalIgnoreCase)
-                && clean.Any(char.IsLetter))
-            {
-                return clean;
-            }
-        }
-
-        var line = firstRow.Split('\n', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
-        return line.Length > 24 ? line[..24] : line;
     }
 
     private static async Task LoginAdminAsync(IPage page, string baseUrl)
@@ -468,20 +438,6 @@ public class AdminRun4PlaywrightTests
         return bytes.ToArray();
     }
 
-    private static async Task<int> CountDataRowsAsync(ILocator rows)
-    {
-        try
-        {
-            await rows.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        }
-        catch (Exception ex) when (ex.GetType().Name == "TimeoutException")
-        {
-            return 0;
-        }
-
-        return await rows.CountAsync();
-    }
-
     private static (string Needle, string Other)? PairFor(string url)
     {
         if (url.Contains("/admin/organisaties", StringComparison.OrdinalIgnoreCase))
@@ -505,34 +461,6 @@ public class AdminRun4PlaywrightTests
         }
 
         return null;
-    }
-
-    private static async Task<(string Needle, string Other)?> FindSeededPairAsync(ILocator rows, int count, string url)
-    {
-        var pair = PairFor(url);
-        if (pair is null)
-        {
-            return null;
-        }
-
-        var seenNeedle = false;
-        var seenOther = false;
-        var sample = Math.Min(count, 50);
-        for (var i = 0; i < sample; i++)
-        {
-            var text = await rows.Nth(i).InnerTextAsync();
-            if (text.Contains(pair.Value.Needle, StringComparison.Ordinal))
-            {
-                seenNeedle = true;
-            }
-
-            if (text.Contains(pair.Value.Other, StringComparison.Ordinal))
-            {
-                seenOther = true;
-            }
-        }
-
-        return seenNeedle && seenOther ? pair : null;
     }
 
     /// <summary>
@@ -588,8 +516,53 @@ public class AdminRun4PlaywrightTests
         await UpsertVacancyAsync(db, VacancyAlphaId, VacAlphaTitle, CompanyAlphaId, new GeoPoint(52.0701, 4.3001));
         await UpsertVacancyAsync(db, VacancyBravoId, VacBravoTitle, CompanyBravoId, new GeoPoint(52.0702, 4.3002));
         await db.SaveChangesAsync();
+
+        var readback = await CountSeededRowsAsync(db);
+        if (readback.Users < 2 || readback.Companies < 2 || readback.Vacancies < 2 || readback.Logs < 2)
+        {
+            throw new InvalidOperationException(
+                "Admin search seed did not land in the CI database (" + FormatSeedCounts(readback) + ").");
+        }
+
         return true;
     }
+
+    private static async Task<string> DescribeSeedReadbackAsync()
+    {
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return "Readback: ConnectionStrings__JobsyDb is not set.";
+        }
+
+        try
+        {
+            var options = new DbContextOptionsBuilder<JobsyDbContext>()
+                .UseNpgsql(connectionString, npgsql => npgsql.UseNetTopologySuite())
+                .Options;
+            await using var db = new JobsyDbContext(options);
+            return "Readback: " + FormatSeedCounts(await CountSeededRowsAsync(db)) + ".";
+        }
+        catch (Exception ex) when (ex is NpgsqlException or SocketException or System.TimeoutException)
+        {
+            return "Readback failed: " + ex.Message;
+        }
+    }
+
+    private static async Task<(int Users, int Companies, int Vacancies, int Logs)> CountSeededRowsAsync(JobsyDbContext db)
+    {
+        var users = await db.Users.AsNoTracking().CountAsync(u => u.Id == UserAlphaId || u.Id == UserBravoId);
+        var companies = await db.Companies.AsNoTracking()
+            .CountAsync(c => c.Id == CompanyAlphaId || c.Id == CompanyBravoId);
+        // Vacancy has a company-scope filter. A bare test context must still see the rows it wrote.
+        var vacancies = await db.Vacancies.IgnoreQueryFilters().AsNoTracking()
+            .CountAsync(v => v.Id == VacancyAlphaId || v.Id == VacancyBravoId);
+        var logs = await db.PlatformLogs.AsNoTracking().CountAsync(l => l.Id == LogAlphaId || l.Id == LogBravoId);
+        return (users, companies, vacancies, logs);
+    }
+
+    private static string FormatSeedCounts((int Users, int Companies, int Vacancies, int Logs) counts)
+        => $"users={counts.Users}, companies={counts.Companies}, vacancies={counts.Vacancies}, logs={counts.Logs}";
 
     private static async Task UpsertCompanyAsync(
         JobsyDbContext db, Guid id, string name, string kvk, GeoPoint location)
