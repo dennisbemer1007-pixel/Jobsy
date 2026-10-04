@@ -163,10 +163,18 @@ builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminTodoChanged>();
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
+    var deploymentLabel = config["Deployment:Label"];
+    if (string.IsNullOrWhiteSpace(deploymentLabel))
+    {
+        // Render sets Lobsy__DeploymentEnvironment (Acceptatie / Production). The web
+        // service does not always have PublicWebBaseUrl, which otherwise stays Lokaal.
+        deploymentLabel = config["Lobsy:DeploymentEnvironment"];
+    }
+
     return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
         Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
             config["PublicWebBaseUrl"],
-            config["Deployment:Label"]));
+            deploymentLabel));
 });
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();

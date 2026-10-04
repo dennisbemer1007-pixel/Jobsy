@@ -96,8 +96,16 @@ public class DeploymentEnvironmentTests
     [InlineData("http://localhost:5201", null, "Lokaal")]
     [InlineData(null, null, "Lokaal")]
     [InlineData("https://lobsy.nl", "Acceptatie", "Acceptatie")]
-    public void Resolve_from_public_web_base_url(string? url, string? overrideLabel, string expected)
-        => Assert.Equal(expected, DeploymentEnvironment.Resolve(url, overrideLabel));
+    [InlineData(null, "Production", "Productie")]
+    [InlineData(null, "Acceptatie", "Acceptatie")]
+    [InlineData("", null, "Acceptatie", "acceptatie.lobsy.nl")]
+    [InlineData("", null, "Acceptatie", "lobsy-acc-web.onrender.com")]
+    public void Resolve_from_public_web_base_url(
+        string? url,
+        string? overrideLabel,
+        string expected,
+        string? requestHost = null)
+        => Assert.Equal(expected, DeploymentEnvironment.Resolve(url, overrideLabel, requestHost));
 }
 
 public class RoleNavCatalogSnapshotTests
