@@ -14,6 +14,8 @@
 @inject NavigationManager Nav
 @inject IJSRuntime Js
 @inject IFeatureFlags Features
+@inject ILogger<LeraarKlasOverview> Log
+@using Jobsy.Web.Scholen
 
 <PageTitle>@( _overview is null ? Culture["Leraar.Overview.Title"] : $"Klas {_overview.ClassName}") · Lobsy</PageTitle>
 
@@ -24,6 +26,10 @@
 else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_loadError))
+{
+    <p class="state-message error">@_loadError</p>
 }
 else if (_overview is null)
 {
@@ -170,7 +176,7 @@ else
                   State="@(_overview?.TestWindow ?? TestWindowState.NotOpen)"
                   ClosesOn="_overview?.TestWindowClosesOn"
                   Busy="_busy"
-                  Error="_windowError"
+                  Error="@_windowError"
                   OnAction="OnWindowAction" />
 
 @code {
@@ -181,6 +187,7 @@ else
     private bool _busy;
     private bool _windowOpen;
     private string? _actionError;
+    private string? _loadError;
     private string? _windowError;
     private TeacherClassOverviewDto? _overview;
     private CancellationTokenSource? _pollCts;
@@ -203,13 +210,19 @@ else
     {
         _loading = true;
         _actionError = null;
+        _loadError = null;
         try
         {
             _overview = await Api.GetTeacherOverviewAsync(ClassId);
         }
-        catch
+        catch (Exception ex)
         {
             _overview = null;
+            _loadError = PortalLoad.IsNotFound(ex) ? null : Culture["Leraar.LoadFailed"];
+            if (_loadError is not null)
+            {
+                Log.LogWarning(ex, "Teacher overview failed for {ClassId}", ClassId);
+            }
         }
         finally
         {

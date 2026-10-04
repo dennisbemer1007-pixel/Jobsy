@@ -78,9 +78,9 @@
                             <input style="width:5rem" type="number" step="0.1" placeholder="override %"
                                    @bind="_overrideInputs[am.UserId]" />
                             <button class="btn-compact" type="button" disabled="@_busy"
-                                    @onclick="() => SetOverrideAsync(am.UserId)">Set override</button>
+                                    @onclick="() => SetOverrideAsync(am.UserId)">@Culture["Admin.Ambassador.SetOverride"]</button>
                             <button class="btn-compact" type="button" disabled="@_busy"
-                                    @onclick="() => ClearOverrideAsync(am.UserId)">Clear</button>
+                                    @onclick="() => ClearOverrideAsync(am.UserId)">@Culture["Admin.Ambassador.ClearOverride"]</button>
                         </div>
                     </div>
                 }

@@ -39,7 +39,7 @@
                     </li>
                 }
             </ul>
-            @if (_chrome.IsSignedIn)
+            @if (_chrome.IsSignedIn && _showHeaderStart)
             {
                 <a class="pub-btn pub-btn--ghost err-header__action" href="@_chrome.MyStartHref">@Culture["Status.Nav.MyStart"]</a>
             }
@@ -69,10 +69,16 @@
     public const string ErrorHeadSection = "error-head";
 
     private ErrorChrome _chrome = default!;
+    private bool _showHeaderStart = true;
 
     protected override void OnInitialized()
     {
         var http = HttpContextAccessor.HttpContext;
+        var path = http?.Request.Path.Value ?? "";
+        // The 403 body already has "Naar mijn start". A second header link pointed at /home
+        // while the button pointed at /ontdek.
+        _showHeaderStart = !path.StartsWith("/access-denied", StringComparison.OrdinalIgnoreCase)
+                           && !path.StartsWith("/status/403", StringComparison.OrdinalIgnoreCase);
         _chrome = ChromeProvider.Build(http);
         Culture.InitializeFromLanguage(_chrome.Language);
         ErrorResponse.ApplyHeaders(http);

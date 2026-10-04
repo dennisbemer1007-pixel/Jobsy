@@ -30,7 +30,7 @@
 
         @if (_tab == "gegevens")
         {
-            <section class="panel-section">
+            <section class="panel-section admin-school-form">
                 <label>@Culture["AdminScholen.Field.Name"]
                     <input class="input" @bind="_editName" />
                 </label>
@@ -53,7 +53,7 @@
                     <button type="button" class="btn-compact btn-outline-danger" disabled="@_busy" @onclick="DeactivateAsync">@Culture["AdminScholen.Deactivate"]</button>
                 }
             </section>
-            <section class="panel-section">
+            <section class="panel-section admin-school-form">
                 <h2>@Culture["AdminScholen.Delete.Title"]</h2>
                 <EntImpactNote><p>@Culture["AdminScholen.Delete.Help"]</p></EntImpactNote>
                 <label>@Culture["AdminScholen.Delete.Confirm"]
@@ -64,7 +64,22 @@
         }
         else if (_tab == "overeenkomst")
         {
-            <section class="panel-section">
+            <section class="panel-section admin-school-form">
+                @if (_school.ProcessorAgreementSignedOn is DateOnly signed)
+                {
+                    <p class="admin-school-status" role="status">
+                        @string.Format(
+                            Culture["AdminScholen.Agreement.Current"],
+                            signed.ToString("dd-MM-yyyy"),
+                            _school.ProcessorAgreementVersion ?? "—")
+                    </p>
+                }
+                else
+                {
+                    <p class="admin-school-status" role="status">
+                        <span class="sch-pill sch-pill--warn">@Culture["AdminScholen.Agreement.Missing"]</span>
+                    </p>
+                }
                 <EntImpactNote><p>@Culture["AdminScholen.Agreement.Note"]</p></EntImpactNote>
                 <label>@Culture["AdminScholen.Agreement.Date"]
                     <InputDate class="input" @bind-Value="_agreementDate" />
@@ -77,7 +92,7 @@
         }
         else if (_tab == "beheerders")
         {
-            <section class="panel-section">
+            <section class="panel-section admin-school-form">
                 <h2>@Culture["AdminScholen.Invite.Title"]</h2>
                 <label>@Culture["AdminScholen.Invite.Name"]
                     <input class="input" @bind="_inviteName" />

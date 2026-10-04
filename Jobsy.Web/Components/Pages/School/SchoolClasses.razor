@@ -11,6 +11,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IFeatureFlags Features
+@inject ILogger<SchoolClasses> Log
 
 <PageTitle>@Culture["School.Class.Title"] · Lobsy</PageTitle>
 
@@ -140,7 +141,8 @@ else
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            Log.LogWarning(ex, "School class list failed to load");
+            _error = Culture["School.LoadFailed"];
         }
         finally
         {

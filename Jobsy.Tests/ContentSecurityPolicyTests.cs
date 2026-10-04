@@ -81,7 +81,8 @@ public class ContentSecurityPolicyTests
     public void App_shell_nonces_scripts_and_avoids_inline_handlers()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("<style nonce=\"@Nonce\">", app);
+        Assert.Contains("css/critical.css", app);
+        Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("<script nonce=\"@Nonce\">", app);
         Assert.Contains("nonce=\"@Nonce\" defer", app);
         Assert.Contains("data-app-css", app);

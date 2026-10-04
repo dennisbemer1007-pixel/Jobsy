@@ -10,7 +10,7 @@
 <div class="admin-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    <AdminTopBar EnvLabel="@Env.Value" OnMenuClick="OpenDrawer" />
+    <AdminTopBar EnvLabel="@BadgeLabel" OnMenuClick="OpenDrawer" />
 
     <div class="admin-shell__body">
         <div class="admin-shell__sidebar admin-shell__sidebar--desktop">
@@ -68,6 +68,24 @@
     {
         _drawerOpen = false;
         InvokeAsync(StateHasChanged);
+    }
+
+    private string BadgeLabel
+    {
+        get
+        {
+            if (!string.Equals(Env.Value, DeploymentEnvironment.Lokaal, StringComparison.Ordinal))
+            {
+                return Env.Value;
+            }
+
+            if (Uri.TryCreate(Navigation.Uri, UriKind.Absolute, out var uri))
+            {
+                return DeploymentEnvironment.Resolve(null, null, uri.Host);
+            }
+
+            return Env.Value;
+        }
     }
 
     private void OpenDrawer() => _drawerOpen = true;

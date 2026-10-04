@@ -397,6 +397,7 @@ public static class AuthServiceCollectionExtensions
                         LocalLoginFailureKind.TooMany => "too-many",
                         LocalLoginFailureKind.Unavailable => "unavailable",
                         LocalLoginFailureKind.AmbassadorsPaused => "ambassadors-paused",
+                        LocalLoginFailureKind.SchoolsPaused => "schools-paused",
                         _ => "invalid"
                     };
                     if (error is "invalid" or "locked" or "too-many")
@@ -431,6 +432,12 @@ public static class AuthServiceCollectionExtensions
             {
                 LoginHintCookie.Set(http, dataProtection, email);
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
+            }
+
+            if (await SchoolPortalClosedAsync(http, principal))
+            {
+                return Results.Redirect(
+                    $"/login?error=schools-paused&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
             return await SignInFromApiProfileAsync(
@@ -2133,6 +2140,26 @@ public static class AuthServiceCollectionExtensions
         "teacher" or "leraar" => "Teacher",
         _ => "Candidate"
     };
+
+    /// <summary>
+    /// School staff cannot sign in while the portal is off. Fail closed when flags cannot be read.
+    /// </summary>
+    private static async Task<bool> SchoolPortalClosedAsync(HttpContext http, ClaimsPrincipal principal)
+    {
+        if (FeatureRoutes.SchoolStaffPortal(principal) is null)
+        {
+            return false;
+        }
+
+        var flags = http.RequestServices.GetService<IFeatureFlags>();
+        if (flags is null)
+        {
+            return true;
+        }
+
+        var snap = await flags.GetAsync(http.RequestAborted);
+        return !snap.SchoolsEnabled;
+    }
 }
 
 public class DemoUserStore

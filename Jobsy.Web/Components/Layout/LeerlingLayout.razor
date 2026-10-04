@@ -1,7 +1,7 @@
 @namespace Jobsy.Web.Components.Layout
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
-@using Microsoft.AspNetCore.Authentication
+@using Jobsy.Web.Security
 @inherits LayoutComponentBase
 @inject CultureState Culture
 @inject NavigationManager Nav
@@ -36,33 +36,32 @@
     private bool _showPause;
     private IDisposable? _displayLanguage;
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
         // Dutch UI only. Do not persist: viewing /leerling must not rewrite a signed-in user's language.
         _displayLanguage ??= Culture.PushDisplayLanguage("nl");
         _chip = "";
         _showPause = false;
+        // Principal was captured in LeerlingNoStoreMiddleware on the HTTP request.
+        // The circuit renders after the response has started, so this must not sign the cookie in.
         var http = HttpContextAccessor.HttpContext;
-        if (http is null)
+        if (http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is not ClaimsPrincipal pupil
+            || pupil.Identity?.IsAuthenticated != true)
         {
             return;
         }
 
-        var auth = await http.AuthenticateAsync(PupilAuthDefaults.Scheme);
-        if (auth.Succeeded && auth.Principal?.Identity?.IsAuthenticated == true)
+        var cls = pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+        var code = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
+        if (!string.IsNullOrWhiteSpace(cls) && !string.IsNullOrWhiteSpace(code))
         {
-            var cls = auth.Principal.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
-            var code = auth.Principal.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
-            if (!string.IsNullOrWhiteSpace(cls) && !string.IsNullOrWhiteSpace(code))
-            {
-                _chip = $"{cls} · {code}";
-            }
-
-            var path = Nav.ToBaseRelativePath(Nav.Uri);
-            _showPause = !path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
-                         && !path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase)
-                         && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);
+            _chip = $"{cls} · {code}";
         }
+
+        var path = Nav.ToBaseRelativePath(Nav.Uri);
+        _showPause = !path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
+                     && !path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase)
+                     && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);
     }
 
     public void Dispose() => _displayLanguage?.Dispose();

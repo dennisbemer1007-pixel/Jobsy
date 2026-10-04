@@ -236,6 +236,24 @@ public static class UiStringsStatus
             "Dla pracodawców: wkrótce",
             "Pentru angajatori: în curând",
             "لأصحاب العمل: قريباً");
+        Add("Status.Forbidden.SchoolsOffTitle",
+            "Het scholenportaal is nog niet open",
+            "The school portal is not open yet",
+            "Portal szkolny nie jest jeszcze otwarty",
+            "Portalul școlii nu este încă deschis",
+            "بوابة المدرسة ليست مفتوحة بعد");
+        Add("Status.Forbidden.SchoolsOffLead",
+            "Lobsy voor scholen staat nu uit. Je account blijft bewaard. Log uit, of mail support als je een vraag hebt.",
+            "Lobsy for schools is switched off right now. Your account is kept. Sign out, or email support if you have a question.",
+            "Lobsy dla szkół jest teraz wyłączone. Twoje konto zostaje. Wyloguj się albo napisz do wsparcia, jeśli masz pytanie.",
+            "Lobsy pentru școli este oprit acum. Contul tău rămâne. Deconectează-te sau scrie la suport dacă ai o întrebare.",
+            "لوبسي للمدارس متوقف الآن. حسابك يبقى محفوظاً. سجّل الخروج، أو راسل الدعم إذا كان لديك سؤال.");
+        Add("Login.SchoolsPaused",
+            "Het scholenportaal is nog niet open. Je account blijft bewaard. Vragen? Mail support@lobsy.nl.",
+            "The school portal is not open yet. Your account is kept. Questions? Email support@lobsy.nl.",
+            "Portal szkolny nie jest jeszcze otwarty. Twoje konto zostaje. Pytania? Napisz na support@lobsy.nl.",
+            "Portalul școlii nu este încă deschis. Contul tău rămâne. Întrebări? Scrie la support@lobsy.nl.",
+            "بوابة المدرسة ليست مفتوحة بعد. حسابك يبقى محفوظاً. أسئلة؟ راسل support@lobsy.nl.");
         Add("Status.Forbidden.EmployersOffLead",
             "Lobsy is nu eerst voor kandidaten. De omgeving voor werkgevers komt terug in een volgende fase.",
             "Lobsy is for candidates first right now. The employer area returns in a later phase.",

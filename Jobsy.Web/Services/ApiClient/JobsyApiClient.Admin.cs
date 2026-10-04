@@ -1537,6 +1537,24 @@ public sealed partial class JobsyApiClient
         return "api/admin/schools/rapportage.csv?" + string.Join('&', q);
     }
 
+    /// <summary>
+    /// Fetches the school report CSV from the API (admin bearer) and hands it to the browser.
+    /// The web host does not serve <c>/api/*</c>, so opening that path in a tab is a 404.
+    /// </summary>
+    public Task DownloadAdminSchoolReportCsvAsync(
+        IJSRuntime js,
+        int? schoolYearStart = null,
+        Guid? schoolId = null,
+        Jobsy.Core.Enums.SchoolLevel? level = null,
+        int? year = null,
+        Jobsy.Core.Enums.PupilQuestionSet questionSet = Jobsy.Core.Enums.PupilQuestionSet.Vo,
+        CancellationToken ct = default)
+        => DownloadNamedFileAsync(
+            BuildAdminSchoolReportCsvUrl(schoolYearStart, schoolId, level, year, questionSet),
+            js,
+            "scholen-rapportage.csv",
+            ct);
+
     public async Task<IReadOnlyList<AdminContentReportItem>> GetContentReportsAsync(
         string? status = null,
         CancellationToken ct = default)

@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject NavigationManager Navigation
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Auth
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 
@@ -43,12 +44,12 @@
 
 <AuthorizeView Roles="@JobsyRoles.SchoolAdmin">
     <Authorized>
-        <RedirectToPath Path="/school" />
+        <SchoolStaffHomeRedirect Path="/school" />
     </Authorized>
 </AuthorizeView>
 
 <AuthorizeView Roles="@JobsyRoles.Teacher">
     <Authorized>
-        <RedirectToPath Path="/leraar" />
+        <SchoolStaffHomeRedirect Path="/leraar" />
     </Authorized>
 </AuthorizeView>

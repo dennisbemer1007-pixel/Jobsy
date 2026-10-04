@@ -691,6 +691,8 @@ public static class UiStringsAdmin
         Add("AdminLogs.Col.Message", "Bericht", "Message", "Wiadomość", "Mesaj", "الرسالة");
         Add("AdminLogs.Empty", "Geen logs gevonden.", "No logs found.", "Brak logów.", "Niciun jurnal.", "لا سجلات.");
         Add("AdminLogs.CategoryPlaceholder", "Categorie", "Category", "Kategoria", "Filtrează categoria", "الفئة");
+        Add("Admin.Ambassador.SetOverride", "Afspraak vastleggen", "Set override", "Ustaw wyjątek", "Setează excepția", "تعيين استثناء");
+        Add("Admin.Ambassador.ClearOverride", "Wissen", "Clear", "Wyczyść", "Șterge", "مسح");
 
         // Onderhoudsmodus (errors 05). Admin UI stays nl + en.
         Add("Admin.Maintenance.Title", "Onderhoudsmodus", "Maintenance mode");

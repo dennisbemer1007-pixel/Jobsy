@@ -132,8 +132,8 @@ else
                   State="@(_detail?.TestWindow ?? TestWindowState.NotOpen)"
                   ClosesOn="_detail?.TestWindowClosesOn"
                   Busy="_busy"
-                  Error="_windowError"
-                  FixHref="_windowFix"
+                  Error="@_windowError"
+                  FixHref="@_windowFix"
                   OnAction="OnWindowAction" />
 
 <EntDrawer @bind-Open="_editOpen" Title="@Culture["School.Class.Edit"]">

@@ -253,22 +253,25 @@ public class JobMapPrerenderGuardTests
     public void App_shell_does_not_load_unpkg_or_map_engine_on_every_page()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
         Assert.DoesNotContain("unpkg.com", app);
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("defer", app);
         AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
         Assert.Contains("css/app.min.css", app);
+        Assert.Contains("css/critical.css", app);
+        Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("media=\"print\"", app);
         Assert.Contains("data-app-css", app);
         Assert.Contains("jobsyLogoFallback", app);
-        Assert.Contains("#job-map", app);
-        Assert.Contains("min-height: 55dvh", app);
-        Assert.Contains("--map-land:#f8f4f0", app);
-        Assert.Contains(".map-stage.is-live .job-map-placeholder", app);
-        Assert.Contains(".lobsy-watermarks { display: none; }", app);
-        Assert.Contains(".app-shell:has(.jobsy-discovery) .lobsy-watermarks", app);
-        Assert.Contains("maplibregl-ctrl-logo", app);
-        Assert.Contains(".jobsy-chrome { display: none; }", app);
+        Assert.Contains("#job-map", critical);
+        Assert.Contains("min-height: 55dvh", critical);
+        Assert.Contains("--map-land:#f8f4f0", critical);
+        Assert.Contains(".map-stage.is-live .job-map-placeholder", critical);
+        Assert.Contains(".lobsy-watermarks { display: none; }", critical);
+        Assert.Contains(".app-shell:has(.jobsy-discovery) .lobsy-watermarks", critical);
+        Assert.Contains("maplibregl-ctrl-logo", critical);
+        Assert.Contains(".jobsy-chrome { display: none; }", critical);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);

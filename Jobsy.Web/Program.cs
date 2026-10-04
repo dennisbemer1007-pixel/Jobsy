@@ -163,10 +163,18 @@ builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminTodoChanged>();
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
+    var deploymentLabel = config["Deployment:Label"];
+    if (string.IsNullOrWhiteSpace(deploymentLabel))
+    {
+        // Render sets Lobsy__DeploymentEnvironment (Acceptatie / Production). The web
+        // service does not always have PublicWebBaseUrl, which otherwise stays Lokaal.
+        deploymentLabel = config["Lobsy:DeploymentEnvironment"];
+    }
+
     return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
         Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
             config["PublicWebBaseUrl"],
-            config["Deployment:Label"]));
+            deploymentLabel));
 });
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
@@ -462,10 +470,12 @@ app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
 app.UseAdminProviderGuard();
+// Before authorization: with schools off, teacher (/school) and school admin (/leraar)
+// both get the friendly page instead of 403 vs raw JSON.
+app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseAuthorization();
 // After auth so the admin bypass reads the cookie principal (errors 05).
 app.UseMiddleware<MaintenanceMiddleware>();
-app.UseMiddleware<SchoolsFeatureMiddleware>();
 app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
 app.UseMiddleware<AmbassadorsFeatureMiddleware>();
@@ -488,6 +498,7 @@ app.MapPrivacyDataExportEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
+app.MapPupilPdfEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();
 app.MapSeoEndpoints();

@@ -8,6 +8,7 @@
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -201,9 +202,9 @@ else
             }
 
             if (string.Equals(_state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(_state.NextPuzzleKey))
+                && PupilPuzzleRoutes.IsBuilt(_state.NextPuzzleKey))
             {
-                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(_state.NextPuzzleKey)}");
+                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(_state.NextPuzzleKey!)}");
                 return;
             }
 
@@ -321,9 +322,9 @@ else
             }
 
             if (string.Equals(result.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(result.NextPuzzleKey))
+                && PupilPuzzleRoutes.IsBuilt(result.NextPuzzleKey))
             {
-                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(result.NextPuzzleKey)}");
+                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(result.NextPuzzleKey!)}");
                 return;
             }
 

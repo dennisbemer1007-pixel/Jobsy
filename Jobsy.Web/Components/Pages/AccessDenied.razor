@@ -14,7 +14,7 @@
   (Routes.razor / AccessDeniedView).
 *@
 
-<PageTitle>@(_employersOff ? Culture["Status.Forbidden.EmployersOffTitle"] : Culture["Page.AccessDeniedTitle"])</PageTitle>
+<PageTitle>@PageHeading</PageTitle>
 
 <AccessDeniedView ReturnUrl="@_returnUrl" Reason="@_reason" />
 
@@ -22,6 +22,13 @@
     private string _returnUrl = "/home";
     private string? _reason;
     private bool _employersOff;
+    private bool _schoolsOff;
+
+    private string PageHeading => _schoolsOff
+        ? Culture["Status.Forbidden.SchoolsOffTitle"]
+        : _employersOff
+            ? Culture["Status.Forbidden.EmployersOffTitle"]
+            : Culture["Page.AccessDeniedTitle"];
 
     protected override void OnInitialized()
     {
@@ -34,6 +41,7 @@
 
         _reason = QueryValue(query, "reason");
         _employersOff = string.Equals(_reason, "employers-off", StringComparison.OrdinalIgnoreCase);
+        _schoolsOff = string.Equals(_reason, "schools-off", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? QueryValue(Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query, string key)
