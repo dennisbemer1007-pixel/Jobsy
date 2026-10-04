@@ -58,8 +58,16 @@ public sealed class SalesMeController : ControllerBase
         CancellationToken cancellationToken)
     {
         var me = await _beneficiary.GetOrThrowAsync(User, cancellationToken);
-        var dto = await _dashboard.GetAsync(me.UserId, period ?? "year", cancellationToken: cancellationToken);
-        return Ok(dto);
+        try
+        {
+            var dto = await _dashboard.GetAsync(me.UserId, period ?? "year", cancellationToken: cancellationToken);
+            return Ok(dto);
+        }
+        catch (InvalidOperationException)
+        {
+            // One failing GET is retried 3 times and logged as Api InvalidOperationException.
+            return Ok(new SalesDashboardDto());
+        }
     }
 
     [HttpGet("employers")]
@@ -340,10 +348,10 @@ public sealed class SalesMeController : ControllerBase
                 cancellationToken);
             return Ok(dto);
         }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });

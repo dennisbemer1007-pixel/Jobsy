@@ -194,6 +194,19 @@
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
 
+    private string StatusText(ApplicationItem a)
+    {
+        if (a.VacancyClosed
+            && (string.Equals(a.Status, "Pending", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(a.Status, "Accepted", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(a.Status, "EmployerContacting", StringComparison.OrdinalIgnoreCase)))
+        {
+            return Culture["Kb.Status.VacancyClosed"];
+        }
+
+        return KbLabels.Status(Culture, a.Status);
+    }
+
     private RenderFragment RenderActiveCard(ApplicationItem a, bool forceVertical = false) => __builder =>
     {
         var rejected = IsRejected(a.Status);
@@ -216,7 +229,7 @@
                     <p class="application-card__company">@CompanyLine(a)</p>
                     <span class="application-card__pill application-card__pill--@KbLabels.StatusModifier(a.Status)">
                         <span class="application-card__pill-dot" aria-hidden="true"></span>
-                        @KbLabels.Status(Culture, a.Status)
+                        @StatusText(a)
                     </span>
                 </div>
                 @RenderMenu(a, vacancyHref)
@@ -265,7 +278,7 @@
                         <h2 class="application-card__title">@a.VacancyTitle</h2>
                         <p class="application-card__company">@CompanyLine(a)</p>
                         <span class="application-card__pill application-card__pill--@KbLabels.StatusModifier(a.Status)">
-                            @KbLabels.Status(Culture, a.Status)
+                            @StatusText(a)
                         </span>
                         <span class="application-card__progress" aria-hidden="true">
                             @for (var i = 0; i < 4; i++)

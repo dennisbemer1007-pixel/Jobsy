@@ -64,14 +64,14 @@
                 @foreach (var log in Filtered)
                 {
                     <tr>
-                        <td>@TokenLogPresentation.FormatDateShort(log.CreatedAt)</td>
-                        <td>@TokenLogPresentation.Describe(log)</td>
-                        <td>@log.CompanyName</td>
-                        <td>@(log.ActorName ?? "—")</td>
-                        <td class="ent-data-table__num @TokenLogPresentation.AmountToneClass(log.Amount)">
+                        <td data-label="@Culture["WgTok.Col.Date"]">@TokenLogPresentation.FormatDateShort(log.CreatedAt)</td>
+                        <td data-label="@Culture["WgTok.Col.Description"]">@TokenLogPresentation.Describe(log)</td>
+                        <td data-label="@Culture["WgTok.Col.Branch"]">@log.CompanyName</td>
+                        <td data-label="@Culture["WgTok.Col.By"]">@(log.ActorName ?? "—")</td>
+                        <td class="ent-data-table__num @TokenLogPresentation.AmountToneClass(log.Amount)" data-label="@Culture["WgTok.Col.Mutation"]">
                             @TokenLogPresentation.FormatAmount(log.Amount)
                         </td>
-                        <td class="ent-data-table__num">@log.NewBalance.ToString("0.##")</td>
+                        <td class="ent-data-table__num" data-label="@Culture["WgTok.Col.BalanceAfter"]">@log.NewBalance.ToString("0.##")</td>
                     </tr>
                 }
             </Rows>

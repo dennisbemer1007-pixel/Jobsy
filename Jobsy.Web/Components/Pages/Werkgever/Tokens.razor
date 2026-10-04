@@ -142,14 +142,14 @@
                             @foreach (var inv in _invoices.Take(3))
                             {
                                 <tr>
-                                    <td>
+                                    <td data-label="@Culture["WgTok.Col.Invoice"]">
                                         <strong>@inv.InvoiceNumber</strong>
                                         <div class="muted">@TokenLogPresentation.FormatDateShort(inv.IssuedAt)</div>
                                     </td>
-                                    <td>@string.Format(Culture["WgTok.InvoicePack"], inv.PackSize)</td>
-                                    <td class="ent-data-table__num">€ @inv.TotalAmountEuro.ToString("0.00")</td>
-                                    <td><span class="status-pill status-pill--success">@inv.Status</span></td>
-                                    <td>
+                                    <td data-label="@Culture["WgTok.Col.Description"]">@string.Format(Culture["WgTok.InvoicePack"], inv.PackSize)</td>
+                                    <td class="ent-data-table__num" data-label="@Culture["WgTok.Col.AmountIncl"]">€ @inv.TotalAmountEuro.ToString("0.00")</td>
+                                    <td data-label="@Culture["WgTok.Col.Status"]"><span class="status-pill status-pill--success">@inv.Status</span></td>
+                                    <td data-label="@Culture["WgTok.Download"]">
                                         <button type="button" class="btn-compact" @onclick="() => DownloadInvoiceAsync(inv)">
                                             @Culture["WgTok.Download"]
                                         </button>
