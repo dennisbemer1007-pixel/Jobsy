@@ -39,8 +39,8 @@
             <Rows>
                 @foreach (var row in _rows)
                 {
-                    <tr class="ent-data-table__row" @onclick="(() => OpenSchool(row.Id))" style="cursor:pointer">
-                        <td>@row.Name</td>
+                    <tr class="ent-data-table__row">
+                        <td><a href="@($"/admin/scholen/{row.Id}")">@row.Name</a></td>
                         <td>@row.City</td>
                         <td>@(row.BrinCode ?? "—")</td>
                         <td>
@@ -118,7 +118,7 @@
 
     protected override async Task OnInitializedAsync() => await ReloadAsync();
 
-    private void OpenSchool(Guid id) => Nav.NavigateTo($"/admin/scholen/{id}");
+    private void OpenCreate() => _drawerOpen = true;
 
     private async Task ReloadAsync()
     {

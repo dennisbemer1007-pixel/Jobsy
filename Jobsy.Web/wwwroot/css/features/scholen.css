@@ -31,6 +31,24 @@
     min-width: 0;
 }
 
+.sch-topbar .ent-scope-chip,
+.sch-topbar .ent-scope-chip__btn {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.sch-topbar .ent-scope-chip__text {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sch-topbar .ent-scope-chip__label,
+.sch-topbar .ent-scope-chip__sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .sch-topbar__account {
     display: flex;
     align-items: center;
@@ -207,7 +225,11 @@
     }
 
     .sch-bottom-nav__item {
-        flex: 1;
+        flex: 1 1 0;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         text-align: center;
         padding: var(--space-2);
         font-size: var(--text-sm);

@@ -50,6 +50,10 @@
                         }
                     </select>
                 </label>
+                @if (_schools.Count == 0)
+                {
+                    <p class="muted">@Culture["Leerling.Login.NoOpenSchool"]</p>
+                }
             </form>
 
             <form method="post" action="/leerling/login" class="ll-form">

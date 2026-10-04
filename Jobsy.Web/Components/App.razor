@@ -21,78 +21,7 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=20260925-coral" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=20260925-coral" />
     <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
-    <style nonce="@Nonce">
-        :root {
-            --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --border:#ddd5cc; --brand:#0f2d5c;
-            --map-land:#f8f4f0; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif;
-            --muted:#5a6a7d; --accent:#0f2d5c; --accent-soft:#e7eef7; --accent-hover:#163a6b;
-            --coral:#f54a1b; --coral-deep:#d93a12; --coral-soft:#ffe8e0;
-            --success:#15803d; --success-soft:#ecfdf3;
-            --gold:#c9a227; --gold-light:#e4c65a; --gold-deep:#a6851c; --gold-soft:#faf6e8;
-            --warn:#a65b00; --warn-soft:#fff8e7; --map-pin:#22c55e;
-        }
-        * { box-sizing: border-box; }
-        html, body { margin: 0; min-height: 100%; max-width: 100%; overflow-x: clip; font-family: var(--font); color: var(--text); background: var(--bg); }
-        html:has(.jobsy-discovery), html:has(.app-shell--match), html:has(.app-shell--questionnaire),
-        body:has(.jobsy-discovery), body:has(.app-shell--match), body:has(.app-shell--questionnaire) { height: 100%; overflow: hidden; }
-        .app-shell { display: flex; flex-direction: column; min-height: 100dvh; max-width: 100%; overflow-x: clip; }
-        .app-shell:has(.jobsy-discovery), .app-shell.app-shell--match, .app-shell.app-shell--questionnaire { height: 100dvh; max-height: 100dvh; overflow: hidden; }
-        .app-main { flex: 1 1 auto; min-height: 0; max-width: 100%; }
-        .app-shell:has(.jobsy-discovery) .app-main { overflow: hidden; display: flex; flex-direction: column; }
-        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-        .lobsy-logo { display: block; width: 56px; height: 56px; flex-shrink: 0; line-height: 0; }
-        .lobsy-logo__img { display: block; width: 100%; height: 100%; object-fit: contain; }
-        html.cookie-consent-known .cookie-consent { display: none; }
-        .cookie-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; contain: layout paint style; padding: 0.65rem 0.85rem; background: #0a2044; color: #f7f4f0; }
-        .cookie-consent a { color: #fff; text-decoration: underline; text-underline-offset: 0.12em; }
-        .cookie-consent__actions { display: flex; flex-wrap: wrap; gap: 0.55rem; }
-        .btn-compact { padding: 0.35rem 0.7rem; border-radius: 8px; border: 1px solid rgba(247,244,240,0.45); background: transparent; color: #f7f4f0; }
-        .btn-compact--primary { background: #d93a12; border-color: #d93a12; color: #fff; }
-        .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; }
-        .lobsy-watermarks { display: none; }
-        .app-shell:has(.jobsy-discovery) .lobsy-watermarks { display: none !important; }
-        .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo { display: none !important; }
-        .jobsy-chrome { display: none; }
-        .jobsy-discovery { display: grid; grid-template-columns: minmax(320px,42%) minmax(0,58%); min-height: 0; height: 100%; position: relative; }
-        .map-pane, .map-stage { position: relative; width: 100%; min-width: 280px; min-height: 55dvh; background: var(--map-land); }
-        .map-stage { flex: 1 1 auto; }
-        #job-map, .job-map { width: 100%; min-width: 280px; min-height: 55dvh; height: 100%; background: var(--map-land); contain: layout; }
-        .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
-        .map-stage.is-live .job-map-placeholder { opacity: 0; visibility: hidden; transition: none; }
-        @@media (max-width: 768px) {
-            .app-shell:has(.jobsy-discovery) .app-header,
-            .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
-            .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-            .jobsy-discovery .jobsy-chrome { display: block; min-height: 10rem; }
-            .map-pane, .map-stage, #job-map, .job-map { min-width: 0; }
-            .jobsy-chrome__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 3.5rem; padding: 0.55rem 0.85rem 0.35rem; }
-            .jobsy-logo, .jobsy-chrome .lobsy-logo, .jobsy-logo__img { width: 48px; height: 48px; }
-            .jobsy-chrome__search { padding: 0.55rem 0.75rem 0.35rem; }
-            .jobsy-search { display: grid; grid-template-columns: 1fr auto; gap: 0.45rem; }
-            .jobsy-search input { width: 100%; min-height: 2.75rem; box-sizing: border-box; }
-        .login-modal .login-form, .login-modal .login-form label { width: 100%; max-width: 100%; }
-        .login-modal .login-form { display: grid; grid-template-columns: minmax(0, 1fr); }
-        .login-modal .login-form input:not([type="checkbox"]):not([type="radio"]) { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; min-height: 3rem; padding: 0.75rem 1rem; border-radius: 14px; }
-        .login-modal .provider-btn { min-height: 2.1rem; padding: 0.32rem 0.7rem; }
-            .jobsy-search__btn { width: 2.75rem; height: 2.75rem; }
-            .jobsy-chrome__actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
-            .jobsy-action { display: inline-flex; min-height: 2.55rem; }
-            .jobsy-discovery.show-map .map-pane,
-            .jobsy-discovery.show-map .map-stage,
-            .jobsy-discovery.show-map #job-map,
-            .jobsy-discovery.show-map .job-map,
-            .jobsy-discovery.show-map .job-map-placeholder { min-height: 55dvh; width: 100%; min-width: 0; }
-        }
-        @@media (min-width: 769px) {
-            .app-header { min-height: 4.25rem; }
-            .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
-            .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
-            .jobsy-discovery:not(.jobsy-discovery--branch) #job-map { min-height: 70vh; width: 100%; }
-        }
-        .img-fallback-empty { background: #e7eef7; object-fit: contain; }
-        /* Static shell always includes the reconnect markup. Hide it until Blazor sets a state class, even before reconnect.css arrives. */
-        #components-reconnect-modal:not(.components-reconnect-show):not(.components-reconnect-retrying):not(.components-reconnect-failed):not(.components-reconnect-rejected):not(.components-reconnect-paused) { display: none; }
-    </style>
+    <link rel="stylesheet" href="css/critical.css?v=20261003-csp" />
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261003-header" />
     <link rel="stylesheet" href="css/features/auth.css?v=20260930-auth04b" />
@@ -105,7 +34,7 @@
     @if (LoadBlazorRuntime)
     {
         @* Render-blocking versioned CSS — critical shell is already inlined above; full stylesheet is cacheable. *@
-        <link rel="stylesheet" href="css/app.min.css?v=20261003-layout" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20261003-portal" data-app-css />
         <link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261003-ob-fields" />
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" />
         <link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" />
@@ -117,10 +46,10 @@
         <link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" />
         <link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" />
         <link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" />
-        <link rel="stylesheet" href="css/features/admin.css?v=20261003-adminfit" />
+        <link rel="stylesheet" href="css/features/admin.css?v=20261003-portal" />
         <link rel="stylesheet" href="css/features/enterprise-ui.css?v=20260929-ent-ui" />
         <link rel="stylesheet" href="css/features/werkgever.css?v=20260929-wg-insights" />
-        <link rel="stylesheet" href="css/features/scholen.css?v=20261003-vragensets5b" />
+        <link rel="stylesheet" href="css/features/scholen.css?v=20261003-portal" />
         <link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" />
         <link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" />
         <link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261002-kp05" />
@@ -130,7 +59,7 @@
         <link rel="stylesheet" href="css/features/carriere.css?v=20261003-sticky" />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261003-layout" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261003-ob-fields" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" /><link rel="stylesheet" href="css/features/applications.css?v=20261002-ci-mtp2" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261002-kp04" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20261003-gd-start" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20261003-adminfit" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20260929-ent-ui" /><link rel="stylesheet" href="css/features/werkgever.css?v=20260929-wg-insights" /><link rel="stylesheet" href="css/features/scholen.css?v=20261003-vragensets5b" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261003-header" /><link rel="stylesheet" href="css/features/auth.css?v=20260930-auth04b" /><link rel="stylesheet" href="css/features/landing.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261003-email" /><link rel="stylesheet" href="css/features/errors.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/reconnect.css?v=20261003-reconnect" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261002-kp05" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261003-diploma" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261003-journey" /><link rel="stylesheet" href="css/features/tests.css?v=20260930-tests-6" /><link rel="stylesheet" href="css/features/carriere.css?v=20261003-sticky" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261003-portal" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261003-ob-fields" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" /><link rel="stylesheet" href="css/features/applications.css?v=20261002-ci-mtp2" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261002-kp04" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20261003-gd-start" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20261003-portal" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20260929-ent-ui" /><link rel="stylesheet" href="css/features/werkgever.css?v=20260929-wg-insights" /><link rel="stylesheet" href="css/features/scholen.css?v=20261003-portal" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261003-header" /><link rel="stylesheet" href="css/features/auth.css?v=20260930-auth04b" /><link rel="stylesheet" href="css/features/landing.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261003-email" /><link rel="stylesheet" href="css/features/errors.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/reconnect.css?v=20261003-reconnect" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261002-kp05" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261003-diploma" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261003-journey" /><link rel="stylesheet" href="css/features/tests.css?v=20260930-tests-6" /><link rel="stylesheet" href="css/features/carriere.css?v=20261003-sticky" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -292,11 +221,11 @@
         });
     </script>
         <script src="js/gratis-dna.js?v=20261003-csp2" nonce="@Nonce" defer></script>
-        <script src="js/app-core.js?v=20261003-shell" nonce="@Nonce" defer></script>
+        <script src="js/app-core.js?v=20261003-portal" nonce="@Nonce" defer></script>
         <script src="js/landing.js?v=20260930-landing-5" nonce="@Nonce" defer></script>
         <script src="js/public-pages.js?v=20261001-pp07" nonce="@Nonce" defer></script>
         <script src="js/navFeedback.js?v=20260928-nav-fb" nonce="@Nonce" defer></script>
-        <script src="js/lobsyPush.js?v=20261003-shell" nonce="@Nonce" defer></script>
+        <script src="js/lobsyPush.js?v=20261003-portal" nonce="@Nonce" defer></script>
     @if (LoadBlazorRuntime)
     {
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@

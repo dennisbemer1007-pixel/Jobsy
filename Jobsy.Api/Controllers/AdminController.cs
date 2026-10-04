@@ -329,6 +329,7 @@ public class AdminController : ControllerBase
                 u.PhoneNumber,
                 u.TermsAcceptedAt,
                 u.AuthenticatorEnrolledAtUtc,
+                u.LastLoginAtUtc,
                 u.IsTestAccount
             })
             .ToListAsync(cancellationToken);
@@ -396,6 +397,10 @@ public class AdminController : ControllerBase
             namesByUser.TryGetValue(u.Id, out var names);
             trustedByUser.TryGetValue(u.Id, out var trustedCount);
             DateTime? lastActive = sessionByUser.ContainsKey(u.Id) ? sess.LastActiveAtUtc : null;
+            if (u.LastLoginAtUtc is DateTime login && (lastActive is null || login > lastActive))
+            {
+                lastActive = login;
+            }
             var activeSessions = sessionByUser.ContainsKey(u.Id) ? sess.ActiveSessionCount : 0;
             items.Add(new AdminUserDetailDto(
                 u.Id,

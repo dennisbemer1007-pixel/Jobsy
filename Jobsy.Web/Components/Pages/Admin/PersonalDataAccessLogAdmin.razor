@@ -1,6 +1,7 @@
 @page "/admin/beveiliging/gegevensinzage"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Time
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
@@ -36,13 +37,13 @@
             @foreach (var row in _rows)
             {
                 <tr>
-                    <td class="admin-mono">@row.OccurredAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
-                    <td class="muted">@Short(row.ActorUserId)</td>
-                    <td class="muted">@(row.SubjectUserId is Guid s ? Short(s) : "—")</td>
-                    <td>@row.Resource</td>
-                    <td>@row.Action</td>
-                    <td class="muted">@(row.Reason ?? "—")</td>
-                    <td class="admin-mono">@row.CorrelationId</td>
+                    <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(row.OccurredAt).ToString("dd-MM HH:mm")</td>
+                    <td class="muted" data-label="@Culture["AdminDataAccess.Actor"]">@Short(row.ActorUserId)</td>
+                    <td class="muted" data-label="@Culture["AdminDataAccess.Subject"]">@(row.SubjectUserId is Guid s ? Short(s) : "—")</td>
+                    <td data-label="@Culture["AdminDataAccess.Resource"]">@row.Resource</td>
+                    <td data-label="@Culture["AdminAudit.Col.Action"]">@row.Action</td>
+                    <td class="muted" data-label="@Culture["AdminAudit.Reason"]">@(row.Reason ?? "—")</td>
+                    <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Correlation"]">@row.CorrelationId</td>
                 </tr>
             }
         </Rows>

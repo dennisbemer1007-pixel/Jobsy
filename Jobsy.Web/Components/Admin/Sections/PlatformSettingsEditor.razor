@@ -1,5 +1,6 @@
 @using Jobsy.Core.Hosting
 @using Jobsy.Core.Interfaces
+@using Jobsy.Core.Time
 @using Jobsy.Web.Admin
 @using Jobsy.Web.Components
 @using Jobsy.Web.Components.Admin.Ui
@@ -60,7 +61,7 @@ else if (_snapshot is not null)
                                 <button type="button"
                                         class="admin-switch @((bool)value! ? "is-on" : null)"
                                         role="switch"
-                                        aria-checked="@((bool)value!)"
+                                        aria-checked="@(((bool)value!) ? "true" : "false")"
                                         aria-label="@Culture[entry.TitleKey]"
                                         disabled="@locked"
                                         @onclick="() => ToggleBool(entry)">
@@ -165,7 +166,7 @@ else if (_snapshot is not null)
                 @foreach (var c in _recentChanges)
                 {
                     <li>
-                        <span class="admin-mono muted">@c.OccurredAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                        <span class="admin-mono muted">@FormatAmsterdam(c.OccurredAtUtc)</span>
                         <span>@c.ActorDisplayName</span>
                         <span class="muted">@c.TargetLabel</span>
                     </li>
@@ -230,7 +231,7 @@ else if (_snapshot is not null)
         return string.Format(
             Culture["AdminSettings.LastChangedBy"],
             e.ActorDisplayName,
-            e.OccurredAtUtc.ToLocalTime().ToString("dd-MM-yyyy"));
+            AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM-yyyy"));
     }
 
     protected override void OnInitialized()

@@ -113,6 +113,11 @@
     color: var(--surface);
 }
 
+.admin-topbar .notification-bell__toggle {
+    color: var(--text);
+    background: var(--surface);
+}
+
 .admin-env-badge {
     display: inline-flex;
     align-items: center;
@@ -1965,6 +1970,98 @@
 .admin-data-table th,
 .admin-data-table td {
     overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+    .admin-data-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .admin-data-table,
+    .admin-data-table tbody,
+    .admin-data-table tr,
+    .admin-data-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .admin-data-table tr {
+        margin-block-end: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm, 8px);
+        background: var(--surface);
+    }
+
+    .admin-data-table td {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: 0;
+        padding: 0.25rem 0;
+    }
+
+    .admin-data-table td::before {
+        content: attr(data-label);
+        font-weight: 650;
+        color: var(--muted);
+        font-size: 0.75rem;
+    }
+}
+
+.admin-school-form {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 36rem;
+}
+
+.admin-school-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+.admin-school-form .input,
+.admin-school-form input.input {
+    font: inherit;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--surface);
+    color: var(--text);
+}
+
+.admin-school-form .filter-check {
+    flex-direction: row;
+    align-items: center;
+    font-weight: 500;
+}
+
+.admin-school-status {
+    margin: 0 0 0.75rem;
+}
+
+.mail-preview-layout { display: grid; grid-template-columns: minmax(220px, 280px) 1fr; gap: 1rem; align-items: start; }
+.mail-preview-list { max-height: 80vh; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); padding: 0.5rem; }
+.mail-preview-group { margin: 0.75rem 0.35rem 0.35rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.mail-preview-item { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; width: 100%; text-align: left; border: 0; background: transparent; padding: 0.55rem 0.6rem; border-radius: 8px; cursor: pointer; color: inherit; }
+.mail-preview-item:hover, .mail-preview-item.is-active { background: var(--accent-soft); }
+.mail-preview-badges { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.mail-preview-badges .badge { font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 999px; background: var(--pearl-mid); }
+.mail-preview-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; }
+.mail-preview-toolbar label, .mail-preview-recipient { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
+.mail-preview-text { white-space: pre-wrap; background: var(--pearl); padding: 1rem; border-radius: var(--radius-sm); max-height: 720px; overflow: auto; }
+.mail-preview-headers { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 1rem; }
+.mail-preview-headers dt { font-weight: 600; }
+@media (max-width: 900px) {
+    .mail-preview-layout { grid-template-columns: 1fr; }
+    .mail-preview-list { max-height: 240px; }
 }
 
 .masterdata-row__fields--4 {
