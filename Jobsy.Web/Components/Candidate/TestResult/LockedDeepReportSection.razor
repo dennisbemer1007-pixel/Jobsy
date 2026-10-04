@@ -82,6 +82,9 @@
         // Web has no DB access: hide Lobsy comparison in the locked teaser until N≥100 is known
         // (paid view/PDF still gate via ComparisonAvailable on the stored report).
         var lobsyReady = Kind is AssessmentKind.Competence;
-        _cards = DeepReportCapabilities.VisibleCards(Kind, lobsyReady);
+        var cards = DeepReportCapabilities.VisibleCards(Kind, lobsyReady);
+        _cards = EmployersEnabled
+            ? cards
+            : cards.Where(c => c.Key != DeepReportCardKey.Employers).ToList();
     }
 }

@@ -20,13 +20,19 @@
     {
         <div class="panel-inline-error" role="alert">
             <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
-            <button type="button" class="btn-compact" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+            <button type="button" class="btn btn-secondary" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
         </div>
     }
     else
     {
         <section class="dna-story" aria-labelledby="dna-story-title">
-            <h3 id="dna-story-title" class="dna-section__title">@Culture["Dna.StoryTitle"]</h3>
+            <div class="dna-section__head">
+                <h3 id="dna-story-title" class="dna-section__title">@Culture["Dna.StoryTitle"]</h3>
+                @if (!string.IsNullOrWhiteSpace(_story))
+                {
+                    <ReadAloudButton Text="@_story" SpeechKey="dna-story" />
+                }
+            </div>
 
             @if (string.IsNullOrWhiteSpace(_story))
             {
@@ -41,7 +47,7 @@
                 {
                     <p class="dna-story__updating" aria-live="polite">@Culture["Dna.StoryUpdating"]</p>
                 }
-                <div class="dna-story__body @(_storyExpanded ? "is-expanded" : "is-clamped")">
+                <div class="dna-story__body @(_storyExpanded ?"is-expanded" : "is-clamped")">
                     <div class="dna-story__text">
                         @foreach (var para in StoryParagraphs(_story))
                         {
@@ -108,7 +114,7 @@
                 {
                     var slide = _slides[slideIndex];
                     var isActive = _activeSlide == slideIndex;
-                    <article class="dna-carousel__slide @(isActive ? "is-active" : null) @(slide.IsProvisional ? "dna-carousel__slide--provisional" : null) @(slide.IsGhost ? "dna-carousel__slide--ghost" : null)"
+                    <article class="dna-carousel__slide @(isActive ?"is-active" : null) @(slide.IsProvisional ? "dna-carousel__slide--provisional" : null) @(slide.IsGhost ? "dna-carousel__slide--ghost" : null)"
                              tabindex="@(isActive ? 0 : -1)"
                              aria-hidden="@(isActive ? "false" : "true")"
                              aria-label="@slide.AriaName">
@@ -186,7 +192,7 @@
                     {
                         var index = i;
                         <button type="button"
-                                class="dna-carousel__dot @(_activeSlide == index ? "is-active" : null)"
+                                class="dna-carousel__dot @(_activeSlide == index ?"is-active" : null)"
                                 role="tab"
                                 aria-selected="@(_activeSlide == index)"
                                 aria-label="@Culture.Format("Dna.CarouselDot", index + 1, _slides.Count)"
@@ -224,7 +230,7 @@
                         statusText,
                         card.Answered,
                         card.QuestionCount);
-                    <a class="dna-tile @(card.Completed ? "dna-tile--complete" : null) @(card.IsProvisional ? "dna-tile--provisional" : null) @(!card.Completed && !card.IsProvisional ? "dna-tile--empty" : null)"
+                    <a class="dna-tile @(card.Completed ?"dna-tile--complete" : null) @(card.IsProvisional ? "dna-tile--provisional" : null) @(!card.Completed && !card.IsProvisional ? "dna-tile--empty" : null)"
                        href="@href"
                        aria-label="@a11y">
                         <header class="dna-tile__head">

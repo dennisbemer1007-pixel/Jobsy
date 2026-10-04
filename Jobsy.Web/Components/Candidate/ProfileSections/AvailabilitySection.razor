@@ -28,32 +28,32 @@
                                 <legend>@Culture["Profile.Availability"]</legend>
                                 <div class="availability-presets" role="group" aria-label="@Culture["Profile.Availability"]">
                                     <button type="button"
-                                            class="availability-presets__btn @(Editor.FlexibleTimes && Editor.AvailabilityKind is null ? "is-active" : null)"
+                                            class="availability-presets__btn @(Editor.FlexibleTimes && Editor.AvailabilityKind is null ?"is-active" : null)"
                                             @onclick='() => Editor.ApplyAvailabilityPreset("flexible")'>
                                         @Culture["Profile.PresetFlexible"]
                                     </button>
                                     <button type="button"
-                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.Immediate ? "is-active" : null)"
+                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.Immediate ?"is-active" : null)"
                                             @onclick='() => Editor.ApplyAvailabilityPreset("immediate")'>
                                         @Culture["Profile.PresetImmediate"]
                                     </button>
                                     <button type="button"
-                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.PartTime ? "is-active" : null)"
+                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.PartTime ?"is-active" : null)"
                                             @onclick='() => Editor.ApplyAvailabilityPreset("parttime")'>
                                         @Culture["Profile.PresetPartTime"]
                                     </button>
                                     <button type="button"
-                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.Seasonal ? "is-active" : null)"
+                                            class="availability-presets__btn @(Editor.AvailabilityKind == CandidateAvailabilityPresets.Seasonal ?"is-active" : null)"
                                             @onclick='() => Editor.ApplyAvailabilityPreset("seasonal")'>
                                         @Culture["Profile.PresetSeasonal"]
                                     </button>
                                     <button type="button"
-                                            class="availability-presets__btn @(!Editor.FlexibleTimes && Editor.IsOfficeHoursPreset() ? "is-active" : null)"
+                                            class="availability-presets__btn @(!Editor.FlexibleTimes && Editor.IsOfficeHoursPreset() ?"is-active" : null)"
                                             @onclick='() => Editor.ApplyAvailabilityPreset("office")'>
                                         @Culture["Profile.PresetOffice"]
                                     </button>
                                     <button type="button"
-                                            class="availability-presets__btn @(!Editor.FlexibleTimes && Editor.IsEveningsPreset() ? "is-active" : null)"
+                                            class="availability-presets__btn @(!Editor.FlexibleTimes && Editor.IsEveningsPreset() ?"is-active" : null)"
                                             @onclick='() => Editor.ApplyAvailabilityPreset("evenings")'>
                                         @Culture["Profile.PresetEvenings"]
                                     </button>
@@ -75,7 +75,7 @@
                                             {
                                                 var key = $"{day}:{slot}";
                                                 var on = Editor.Availability.Contains(key);
-                                                <label class="availability-matrix__cell @(on ? "is-on" : null)">
+                                                <label class="availability-matrix__cell @(on ?"is-on" : null)">
                                                     <input type="checkbox"
                                                            checked="@on"
                                                            @onchange="e => Editor.ToggleAvailability(key, (bool)(e.Value ?? false))" />

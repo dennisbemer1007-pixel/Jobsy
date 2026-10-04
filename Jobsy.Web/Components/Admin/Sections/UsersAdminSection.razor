@@ -264,9 +264,13 @@ else if (_page is not null)
                                 @Culture["AdminUsers.ResetTestsReason"]
                                 <input @bind="_resetTestsReason" @bind:event="oninput" maxlength="500" minlength="5" required />
                             </label>
+                            @if (!string.IsNullOrEmpty(_resetNotice))
+                            {
+                                <p class="state-message" role="status" data-testid="admin-reset-tests-done">@_resetNotice</p>
+                            }
                             @if (!string.IsNullOrEmpty(_error))
                             {
-                                <p class="state-message error" role="alert">@_error</p>
+                                <p class="state-message error" role="alert" data-testid="admin-reset-tests-error">@_error</p>
                             }
                             <button type="submit" class="btn btn-secondary" disabled="@(_busy || _resetTestsReason.Trim().Length < 5)">@Culture["AdminUsers.ResetTests"]</button>
                         </form>
@@ -475,6 +479,7 @@ else if (_page is not null)
     private bool _loading = true;
     private string? _error;
     private string? _toast;
+    private string? _resetNotice;
     private string _resetTestsReason = "";
     private bool _resetConfirmOpen;
     private Guid? _companyIdFilter;
@@ -839,6 +844,8 @@ else if (_page is not null)
     private async Task OpenDrawer(AdminUserItem user, bool updateUrl = true)
     {
         _openMissing = false;
+        _resetNotice = null;
+        _error = null;
         _drawerUser = user;
         _drawerTab = "overzicht";
         _drawerOpen = true;
@@ -1066,15 +1073,16 @@ else if (_page is not null)
 
         _busy = true;
         _error = null;
+        _resetNotice = null;
         try
         {
             await Api.ResetTestUnlocksAsync(_drawerUser.Id, _resetTestsReason);
             _resetTestsReason = "";
-            _toast = Culture["AdminUsers.ResetTestsDone"];
+            _resetNotice = Culture["AdminUsers.ResetTestsDone"];
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = Errors.Describe(ex);
         }
         finally
         {

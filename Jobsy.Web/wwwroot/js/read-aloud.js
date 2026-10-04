@@ -114,8 +114,14 @@
         }
 
         var utter = new SpeechSynthesisUtterance(spoken);
-        utter.voice = voices[0];
-        utter.lang = voices[0].lang || uiPrefix(lang);
+        try {
+            if (voices[0] && window.SpeechSynthesisVoice && voices[0] instanceof window.SpeechSynthesisVoice) {
+                utter.voice = voices[0];
+            }
+        } catch (e) {
+            /* Some browsers throw when voice is not a real SpeechSynthesisVoice. */
+        }
+        utter.lang = (voices[0] && voices[0].lang) || uiPrefix(lang);
         utter.rate = RATE;
         utter.onend = utter.onerror = function () {
             if (token !== mine) {

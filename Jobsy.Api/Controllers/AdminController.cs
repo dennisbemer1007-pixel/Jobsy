@@ -902,13 +902,21 @@ public class AdminController : ControllerBase
         var reason = (request.Reason ?? string.Empty).Trim();
         if (reason.Length < 5 || reason.Length > 500)
         {
-            return BadRequest(new { message = "Geef een reden van 5 tot 500 tekens." });
+            return BadRequest(new
+            {
+                code = "reset_reason_length",
+                message = "Geef een reden van 5 tot 500 tekens."
+            });
         }
 
         _auditContext.Reason = reason;
         if (!target.IsTestAccount)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Alleen een testaccount kan zo worden gereset." });
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "test_account_reset_only",
+                message = "Alleen een testaccount kan zo worden gereset."
+            });
         }
 
         var analyses = await _db.CandidateDeepAnalyses

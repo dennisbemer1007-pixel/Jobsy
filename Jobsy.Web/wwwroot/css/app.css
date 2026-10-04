@@ -748,7 +748,6 @@ html[dir="rtl"] .account-menu__panel {
         display: none;
     }
 
-    .language-selector__code,
     .language-selector__caret {
         display: none;
     }
@@ -4967,7 +4966,6 @@ a.map-popup__apply.map-popup__cta:visited {
         margin-left: auto;
     }
 
-    .jobsy-chrome__header-actions .language-selector__code,
     .jobsy-chrome__header-actions .language-selector__caret {
         display: none;
     }
@@ -19843,13 +19841,18 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     z-index: 45;
     inset-inline-end: 24px;
     inset-inline-start: auto;
-    bottom: 24px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 8px;
     pointer-events: none;
     max-width: min(280px, calc(100vw - 32px));
+}
+
+.app-shell.has-bottom-nav .lobsy-coach-dock,
+.app-shell:has(.bottom-nav) .lobsy-coach-dock {
+    bottom: calc(var(--bottom-nav-h, 64px) + 12px + env(safe-area-inset-bottom, 0px));
 }
 
 .lobsy-coach-dock--tip-above {
@@ -19864,8 +19867,11 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 .lobsy-coach-dock__btn {
-    width: 64px;
-    height: 64px;
+    flex: none;
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -19884,8 +19890,11 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
-    width: 40px;
-    height: 40px;
+    flex: none;
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    min-height: 56px;
 }
 
 .lobsy-coach-dock__tip {
@@ -19942,7 +19951,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 
     .lobsy-coach-dock {
-        flex-direction: row;
+        flex-direction: column;
         align-items: flex-end;
         max-width: min(18rem, calc(100vw - 24px));
         inset-inline-end: max(12px, env(safe-area-inset-inline-end, 0px));
@@ -19955,17 +19964,16 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 
     .lobsy-coach-dock__tip {
-        max-width: min(16rem, calc(100vw - 88px));
+        max-width: calc(100vw - 56px - 36px);
     }
 
-    .lobsy-coach-dock__btn {
+    .lobsy-coach-dock__btn,
+    .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
+        flex: none;
         width: 56px;
         height: 56px;
-    }
-
-    .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
-        width: 40px;
-        height: 40px;
+        min-width: 56px;
+        min-height: 56px;
     }
 
     .lobsy-coach-dock__tip p {
@@ -20011,8 +20019,9 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 .mail-settings .checkbox-row {
     display: flex;
+    flex-direction: row;
     gap: 0.75rem;
-    align-items: flex-start;
+    align-items: center;
     margin: 0.75rem 0;
 }
 

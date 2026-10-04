@@ -80,6 +80,46 @@ public class AdminRun7UiTests : BunitContext
     }
 
     [Fact]
+    public async Task Reset_400_shows_the_dutch_reason_inside_the_drawer()
+    {
+        var cut = Render<UsersAdminSection>();
+        cut.WaitForAssertion(() => Assert.Contains("Test Persoon", cut.Markup, StringComparison.Ordinal), TimeSpan.FromSeconds(3));
+        await cut.FindAll("tr.admin-user-row").First(r => r.TextContent.Contains("Test Persoon", StringComparison.Ordinal)).ClickAsync();
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll(".admin-user-drawer__reset")));
+
+        await cut.Find(".admin-user-drawer__reset input").InputAsync("abcde");
+        await cut.Find(".admin-user-drawer__reset button").ClickAsync();
+        await cut.Find(".lobsy-dialog .btn-compact--danger").ClickAsync();
+
+        cut.WaitForAssertion(() =>
+        {
+            var alert = cut.Find(".admin-user-drawer__reset [role='alert']");
+            Assert.Equal("Geef een reden van 5 tot 500 tekens.", alert.TextContent.Trim());
+        });
+        Assert.DoesNotContain("API call failed", cut.Find(".admin-user-drawer__reset").TextContent, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Reset_success_stays_inside_the_drawer()
+    {
+        _handler.ResetSucceeds = true;
+        var cut = Render<UsersAdminSection>();
+        cut.WaitForAssertion(() => Assert.Contains("Test Persoon", cut.Markup, StringComparison.Ordinal), TimeSpan.FromSeconds(3));
+        await cut.FindAll("tr.admin-user-row").First(r => r.TextContent.Contains("Test Persoon", StringComparison.Ordinal)).ClickAsync();
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll(".admin-user-drawer__reset")));
+
+        await cut.Find(".admin-user-drawer__reset input").InputAsync("abcde");
+        await cut.Find(".admin-user-drawer__reset button").ClickAsync();
+        await cut.Find(".lobsy-dialog .btn-compact--danger").ClickAsync();
+
+        cut.WaitForAssertion(() =>
+        {
+            var status = cut.Find(".admin-user-drawer__reset [role='status']");
+            Assert.Contains("De tests van dit testaccount staan weer op slot.", status.TextContent, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
     public void Misuse_tab_shows_the_open_count_and_is_the_active_item()
     {
         var cut = Render<BeveiligingTabs>(p => p.Add(x => x.ActiveKey, "misuse"));
@@ -98,15 +138,22 @@ public class AdminRun7UiTests : BunitContext
 
     private sealed class ApiHandler : HttpMessageHandler
     {
+        public bool ResetSucceeds { get; set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
             if (path.Contains("/test-unlock/reset", StringComparison.Ordinal))
             {
+                if (ResetSucceeds)
+                {
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
+                }
+
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
                 {
                     Content = new StringContent(
-                        """{"message":"Geef een reden van 5 tot 500 tekens."}""",
+                        """{"code":"reset_reason_length","message":"Geef een reden van 5 tot 500 tekens."}""",
                         Encoding.UTF8,
                         "application/json")
                 });

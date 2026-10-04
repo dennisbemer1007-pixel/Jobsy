@@ -75,6 +75,8 @@ public sealed class UserFacingError
         ApiErrorException.Maintenance => "Status.Maintenance.Short",
         "open_for_work_required" => "Kb.OpenForWork.Required",
         "vacancy_delete_not_allowed" => "AdminVacancy.DeleteOffline",
+        "reset_reason_length" => "AdminUsers.ResetTestsReasonInvalid",
+        "test_account_reset_only" => "AdminUsers.ResetTestsNotTest",
         _ => "Common.Error.TryAgain"
     };
 

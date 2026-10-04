@@ -140,7 +140,7 @@ else
                                     class="data-table__sort"
                                     aria-sort="@SortAria("end")"
                                     @onclick='() => ToggleSort("end")'>
-                                @Culture["Vacancy.Deadline"]
+                                @Culture["AdminVacancy.Col.Closes"]
                             </button>
                         </th>
                         <th>Bron</th>
@@ -165,7 +165,7 @@ else
                             <td class="data-table__col--wrap" data-label="@Culture["Admin.Company"]">@v.CompanyName <span class="muted">@CompanyTypeLabel(v.CompanyType)</span></td>
                             <td data-label="@Culture["Admin.Status"]">@StatusLabel(v.Status)</td>
                             <td data-label="@Culture["Vacancy.PlacementDate"]">@v.StartDate.ToString("dd-MM-yyyy")</td>
-                            <td data-label="@Culture["Vacancy.Deadline"]">@DeadlineLabel(v)</td>
+                            <td data-label="@Culture["AdminVacancy.Col.Closes"]">@DeadlineLabel(v)</td>
                             <td data-label="@Culture["AdminVacancy.Col.Source"]">
                                 <span class="source-badge source-badge--@VacancySourceDisplay.ChannelCssModifier(v.CreatedVia)"
                                       title="@VacancySourceDisplay.Label(v.CreatedVia)">
@@ -215,7 +215,7 @@ else
             <p>@open.CompanyName <span class="muted">@CompanyTypeLabel(open.CompanyType)</span></p>
             <p>@StatusLabel(open.Status)</p>
             <p>@Culture["Vacancy.PlacementDate"]: @open.StartDate.ToString("dd-MM-yyyy")</p>
-            <p>@Culture["Vacancy.Deadline"]: @open.EndDate.ToString("dd-MM-yyyy")</p>
+            <p>@Culture["AdminVacancy.Col.Closes"]: @open.EndDate.ToString("dd-MM-yyyy")</p>
             <ul class="admin-vacancy-drawer__counts">
                 <li>@Culture["AdminVacancy.Col.Shown"]: @open.ImpressionCount</li>
                 <li>@Culture["AdminVacancy.Col.Clicks"]: @open.ClickCount</li>

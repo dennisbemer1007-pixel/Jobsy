@@ -12,7 +12,7 @@
         {
             var isDone = tab.Step <= Step;
             var isNext = tab.Step == Step + 1;
-            <span class="@(isNext ? "is-current" : isDone ? "is-done" : null)">
+            <span class="@(isNext ?"is-current" : isDone ? "is-done" : null)">
                 @if (isDone && !isNext)
                 {
                     <span aria-hidden="true">✓ </span>
@@ -65,7 +65,7 @@
                     {
                         var selected = SelectedLevel == opt.Level;
                         <button type="button"
-                                class="journey-dive__opt @(selected ? "is-on" : null) @(opt.Disabled ? "is-done" : null)"
+                                class="journey-dive__opt @(selected ?"is-on" : null) @(opt.Disabled ? "is-done" : null)"
                                 role="radio"
                                 aria-checked="@(selected ? "true" : "false")"
                                 disabled="@opt.Disabled"
@@ -78,7 +78,7 @@
                             <span class="journey-dive__dd" aria-hidden="true">
                                 @for (var i = 0; i < 5; i++)
                                 {
-                                    <i class="@(i < opt.Dots ? "is-on" : null)"></i>
+                                    <i class="@(i < opt.Dots ?"is-on" : null)"></i>
                                 }
                             </span>
                         </button>
@@ -93,7 +93,7 @@
     <div class="journey-step__foot">
         <span class="journey-step__sp"></span>
         <button type="button" class="journey-later" @onclick="Later">@Culture["Discovery.Later"]</button>
-        <button type="button" class="btn-compact btn-compact--primary" @onclick="Continue">
+        <button type="button" class="btn btn-primary" @onclick="Continue">
             @PrimaryLabel
         </button>
     </div>

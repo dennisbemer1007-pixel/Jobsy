@@ -9,7 +9,7 @@
     {
         var selected = Editor.Hobbies.Contains(code);
         <button type="button"
-                class="kompas-chip @(selected ? "is-selected" : null)"
+                class="kompas-chip @(selected ?"is-selected" : null)"
                 aria-pressed="@(selected ? "true" : "false")"
                 @onclick="() => Editor.ToggleHobby(code, !selected)">
             @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
@@ -27,12 +27,12 @@
                    maxlength="@DiscoveryCatalogs.MaxLearningGoalLength"
                    value="@Editor.LearningGoals[index]"
                    @oninput="e => OnGoalInput(index, e.Value?.ToString())" />
-            <button type="button" class="btn-compact" @onclick="() => RemoveGoal(index)">×</button>
+            <button type="button" class="btn btn-secondary" @onclick="() => RemoveGoal(index)">×</button>
         </div>
     }
     @if (Editor.LearningGoals.Count < DiscoveryCatalogs.MaxLearningGoals)
     {
-        <button type="button" class="passport-card__fill-link" @onclick="AddGoal">
+        <button type="button" class="btn btn-ghost" @onclick="AddGoal">
             + @Culture["Profile.LearningGoalPlaceholder"]
         </button>
     }

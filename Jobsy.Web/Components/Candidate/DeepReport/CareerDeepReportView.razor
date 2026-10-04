@@ -111,12 +111,12 @@
             <ul>
                 @foreach (var key in Report.PitfallKeys)
                 {
-                    <li class="muted">△ @DeepReportCatalog.RiasecLabel(key.Split('.').Last(), lang)</li>
+                    <li class="muted">△ @StrengthLine(key, lang)</li>
                 }
             </ul>
         </section>
 
-        <button type="button" class="engagement-btn" disabled="@Busy" @onclick="OnDownloadPdf">
+        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnDownloadPdf">
             @Culture["Deep.DownloadPdf"]
         </button>
     </article>
@@ -171,8 +171,7 @@
 
     private static string StrengthLine(string key, string lang)
     {
-        var text = DeepReportCatalog.Get(key, lang);
-        if (!string.Equals(text, key, StringComparison.Ordinal))
+        if (DeepReportCatalog.TryGet(key, lang, out var text))
         {
             return text;
         }

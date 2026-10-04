@@ -21,7 +21,7 @@
                         </small>
                     </div>
                     <button type="button"
-                            class="career-btn career-btn--text"
+                            class="btn btn-ghost"
                             disabled="@Busy"
                             @onclick="() => Ask(plan)">
                         @Culture["CareerDream.Restore"]
@@ -40,11 +40,11 @@
                          CloseOnBackdrop="@(!Busy)"
                          OnClose="Cancel">
         <div class="career-dialog__actions">
-            <button type="button" class="career-btn career-btn--secondary" disabled="@Busy" @onclick="Cancel">
+            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="Cancel">
                 @Culture["CareerDream.Cancel"]
             </button>
             <button type="button"
-                    class="career-btn career-btn--primary"
+                    class="btn btn-primary"
                     disabled="@Busy"
                     aria-busy="@(Busy ? "true" : "false")"
                     @onclick="Confirm">

@@ -49,19 +49,19 @@
     }
 
     <div class="career-card__actions career-card__actions--sticky">
-        <button type="button" class="career-btn career-btn--text" disabled="@Busy" @onclick="OnUndo">
+        <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnUndo">
             <span class="career-done__undo-icon" aria-hidden="true">@((MarkupString)ActionIcons.Withdraw)</span>
             <span>@Culture["CareerStep.Undo"]</span>
         </button>
         @if (NextTitle is { Length: > 0 })
         {
-            <button type="button" class="career-btn career-btn--primary" disabled="@Busy" @onclick="OnNext">
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnNext">
                 @Culture.Format("Career.Done.Next", NextNumber)
             </button>
         }
         else
         {
-            <a class="career-btn career-btn--primary" href="/carriere">@Culture["Career.Done.Dream"]</a>
+            <a class="btn btn-primary" href="/carriere">@Culture["Career.Done.Dream"]</a>
         }
     </div>
 </section>

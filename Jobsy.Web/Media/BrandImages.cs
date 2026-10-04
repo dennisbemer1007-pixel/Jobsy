@@ -3,8 +3,8 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned, size-appropriate Lobsy mark URLs (WebP + PNG fallback).</summary>
 public static class BrandImages
 {
-    public const string Version = "20260828-pin";
-    public const string MascotVersion = "20260828-mascot";
+    public const string Version = "20261004-13";
+    public const string MascotVersion = "20261004-13";
 
     public const string Webp64 = $"images/brand/lobsy-64.webp?v={Version}";
     public const string Webp128 = $"images/brand/lobsy-128.webp?v={Version}";

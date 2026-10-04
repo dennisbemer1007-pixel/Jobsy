@@ -16,8 +16,9 @@
 
 <PageTitle>@Culture["MailSettings.Title"] · Lobsy</PageTitle>
 
-<section class="page-section panel-page mail-settings card" dir="@(Culture.IsRightToLeft ? "rtl" : "ltr")" aria-labelledby="mail-settings-title">
+<section class="page-section panel-page mail-settings detail-card card" dir="@(Culture.IsRightToLeft ? "rtl" : "ltr")" aria-labelledby="mail-settings-title">
     <h1 id="mail-settings-title" tabindex="-1">@Culture["MailSettings.Title"]</h1>
+    <ReadAloudButton Text="@MailSpeech" SpeechKey="mail-settings" />
 
     @if (_loadError)
     {
@@ -77,6 +78,14 @@
     private string? _whatsAppPhone;
     private string _antiforgeryFieldName = "";
     private string _antiforgeryToken = "";
+
+    private string MailSpeech
+        => string.Join(". ", new[]
+        {
+            Culture["MailSettings.Title"],
+            Culture["MailSettings.OptionalHeading"],
+            Culture["MailSettings.Comeback.Label"]
+        }.Where(s => !string.IsNullOrWhiteSpace(s)));
 
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }

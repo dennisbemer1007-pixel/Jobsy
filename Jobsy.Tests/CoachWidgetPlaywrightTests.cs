@@ -202,6 +202,131 @@ public class CoachWidgetPlaywrightTests
         }
     }
 
+    public static IEnumerable<object[]> MobileCandidateRoutes()
+        => MobileRoutes.Select(path => new object[] { path });
+
+    private static readonly string[] MobileRoutes =
+    [
+        "/candidate/paspoort",
+        "/candidate/paspoort?tab=dna",
+        "/candidate/paspoort?tab=tests",
+        "/candidate/paspoort?tab=proof",
+        "/candidate/paspoort?tab=data",
+        "/candidate/paspoort?tab=fit",
+        "/candidate/paspoort?tab=career",
+        "/candidate/ontdekkingsreis",
+        "/candidate/start",
+        "/candidate/hoe-werkt-lobsy",
+        "/candidate/career?stap=intro",
+        "/candidate/competencies?stap=intro",
+        "/candidate/culture?stap=intro",
+        "/candidate/values?stap=intro",
+        "/candidate/profile",
+        "/candidate/binnenkort",
+        "/candidate/liked",
+        "/candidate/applications",
+        "/candidate/shared",
+        "/candidate/vacancies",
+        "/candidate/talent-contacts",
+        "/candidate/deep-analysis/competence",
+        "/candidate/deep-analysis/career",
+        "/candidate/deep-analysis/culture",
+        "/candidate/deep-analysis/values",
+        "/profiel/tests/career",
+        "/profiel/tests/values",
+        "/account/mail-instellingen"
+    ];
+
+    [Theory]
+    [MemberData(nameof(MobileCandidateRoutes))]
+    public async Task Coach_is_56_and_clear_of_controls_while_scrolling(string path)
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        if (!await LoginAsync(page, baseUrl, email, password))
+        {
+            return;
+        }
+
+        await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        try
+        {
+            await page.WaitForSelectorAsync("#lobsy-coach-btn", new() { Timeout = 12_000 });
+        }
+        catch (TimeoutException)
+        {
+            return;
+        }
+
+        await AssertCoachSizeAndClearanceAsync(page, tipOpen: true);
+        var close = page.Locator(".lobsy-coach-dock__close");
+        if (await close.CountAsync() > 0 && await close.First.IsVisibleAsync())
+        {
+            await close.First.ClickAsync();
+        }
+
+        await AssertCoachSizeAndClearanceAsync(page, tipOpen: false);
+    }
+
+    private static async Task AssertCoachSizeAndClearanceAsync(IPage page, bool tipOpen)
+    {
+        var steps = await page.EvaluateAsync<int>("() => Math.max(1, Math.ceil(document.documentElement.scrollHeight / 250))");
+        for (var step = 0; step < steps; step++)
+        {
+            await page.EvaluateAsync("(y) => window.scrollTo(0, y)", step * 250);
+            var result = await page.EvaluateAsync<string>(
+                """
+                (expectTip) => {
+                  const btn = document.querySelector('#lobsy-coach-btn');
+                  if (!btn) return 'missing';
+                  const b = btn.getBoundingClientRect();
+                  if (Math.abs(b.width - 56) > 1 || Math.abs(b.height - 56) > 1) {
+                    return 'size ' + Math.round(b.width) + 'x' + Math.round(b.height);
+                  }
+                  const dock = document.querySelector('[data-lobsy-coach], .lobsy-coach-dock');
+                  const tip = dock ? dock.querySelector('.lobsy-coach-dock__tip') : null;
+                  const boxes = [b];
+                  if (expectTip && tip && !tip.hidden && getComputedStyle(tip).display !== 'none') {
+                    boxes.push(tip.getBoundingClientRect());
+                  }
+                  const nodes = document.querySelectorAll('a, button, input');
+                  for (const node of nodes) {
+                    if (dock && dock.contains(node)) continue;
+                    const style = getComputedStyle(node);
+                    if (style.visibility === 'hidden' || style.display === 'none') continue;
+                    const r = node.getBoundingClientRect();
+                    if (r.width < 8 || r.height < 8) continue;
+                    if (r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
+                    for (const box of boxes) {
+                      if (box.left < r.right && box.right > r.left && box.top < r.bottom && box.bottom > r.top) {
+                        return 'overlap';
+                      }
+                    }
+                  }
+                  return 'ok';
+                }
+                """,
+                tipOpen);
+            Assert.Equal("ok", result);
+        }
+    }
+
     private static async Task AssertNoControlOverlapAsync(IPage page)
     {
         var overlaps = await page.EvaluateAsync<int>(

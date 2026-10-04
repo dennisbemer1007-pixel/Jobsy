@@ -931,7 +931,20 @@ public static class UiStringsAdmin
         Add("AdminFinance.Col.Note", "Notitie", "Note", "Notatka", "Notă", "ملاحظة");
         Add("AdminFinance.SkippedNoIban", "Overgeslagen: geen IBAN", "Skipped: no IBAN", "Pominięto: brak IBAN", "Omis: fără IBAN", "تم التخطي: لا يوجد IBAN");
         Add("AdminVacancy.Col.Shown", "Getoond", "Shown", "Wyświetlenia", "Afișări", "مرات العرض");
-        Add("AdminVacancy.Col.Clicks", "Kliks", "Clicks", "Kliknięcia", "Clicuri", "النقرات");
+        Add("AdminVacancy.Col.Clicks", "Klikken", "Clicks", "Kliknięcia", "Clicuri", "النقرات");
+        Add("AdminVacancy.Col.Closes", "Sluitdatum", "Closing date", "Data zakończenia", "Data închiderii", "تاريخ الإغلاق");
+        Add("AdminUsers.ResetTestsReasonInvalid",
+            "Geef een reden van 5 tot 500 tekens.",
+            "Give a reason of 5 to 500 characters.",
+            "Podaj powód od 5 do 500 znaków.",
+            "Dă un motiv de 5 până la 500 de caractere.",
+            "اكتب سبباً من 5 إلى 500 حرفاً.");
+        Add("AdminUsers.ResetTestsNotTest",
+            "Alleen een testaccount kan zo worden gereset.",
+            "Only a test account can be reset this way.",
+            "Tylko konto testowe można tak zresetować.",
+            "Doar un cont de test poate fi resetat așa.",
+            "يمكن إعادة الضبط بهذه الطريقة لحساب اختبار فقط.");
         Add("AdminVacancy.Col.Shared", "Gedeeld", "Shared", "Udostępnienia", "Distribuiri", "المشاركات");
         Add("AdminVacancy.Col.Applied", "Gesolliciteerd", "Applied", "Aplikacje", "Candidaturi", "الطلبات");
         Add("AdminVacancy.Col.Extended", "Verlengd", "Extended", "Przedłużenia", "Prelungiri", "التمديدات");

@@ -86,11 +86,11 @@ public class CareerStepBunitTests : BunitContext
             .Add(x => x.Step, Step(2))
             .Add(x => x.OnComplete, () => completed++));
 
-        cut.Find(".career-only-desktop .career-btn--primary").Click();
+        cut.Find(".career-only-desktop .btn-primary").Click();
         Assert.Equal(1, completed);
 
         cut.Render(p => p.Add(x => x.Busy, true));
-        Assert.True(cut.Find(".career-only-desktop .career-btn--primary").HasAttribute("disabled"));
+        Assert.True(cut.Find(".career-only-desktop .btn-primary").HasAttribute("disabled"));
     }
 
     // ---------- gaps and years ----------
@@ -105,7 +105,7 @@ public class CareerStepBunitTests : BunitContext
         Assert.Equal(6, cut.FindAll(".career-step__gap").Count);
         Assert.Contains("Toon alles (10)", cut.Markup, StringComparison.Ordinal);
 
-        cut.Find(".career-step__block--gaps .career-btn--text").Click();
+        cut.Find(".career-step__block--gaps .btn-ghost").Click();
         Assert.Equal(10, cut.FindAll(".career-step__gap").Count);
         Assert.Contains("heb je al", cut.Markup, StringComparison.Ordinal);
     }
@@ -234,10 +234,10 @@ public class CareerStepBunitTests : BunitContext
             .Add(x => x.Step, Step(2))
             .Add(x => x.PassportOn, true));
 
-        var href = cut.Find(".career-only-desktop a.career-btn--text").GetAttribute("href");
+        var href = cut.Find(".career-only-desktop a.btn-ghost").GetAttribute("href");
         Assert.Equal("/candidate/paspoort?tab=proof&add=certificate&name=Veilig%20werken", href);
 
-        var label = cut.Find(".career-only-mobile a.career-btn--icon").GetAttribute("aria-label");
+        var label = cut.Find(".career-only-mobile a.btn-ghost").GetAttribute("aria-label");
         Assert.Equal("Bewijs toevoegen", label);
     }
 
@@ -248,7 +248,7 @@ public class CareerStepBunitTests : BunitContext
             .Add(x => x.Step, Step(2))
             .Add(x => x.PassportOn, false));
 
-        var href = cut.Find(".career-only-desktop a.career-btn--text").GetAttribute("href");
+        var href = cut.Find(".career-only-desktop a.btn-ghost").GetAttribute("href");
         Assert.Contains("/candidate/profile?add=certificate", href, StringComparison.Ordinal);
         Assert.Contains("#certificates", href, StringComparison.Ordinal);
     }
@@ -346,7 +346,7 @@ public class CareerStepBunitTests : BunitContext
             .Add(x => x.StepTitle, "Keukenervaring opdoen")
             .Add(x => x.OnUndo, () => undone++));
 
-        cut.Find(".career-btn--text").Click();
+        cut.Find(".btn-ghost").Click();
         Assert.Equal(1, undone);
     }
 

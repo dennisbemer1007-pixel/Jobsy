@@ -43,7 +43,7 @@
                 }
                 @if (_isStub && _checkoutId is Guid stubId)
                 {
-                    <button type="button" class="engagement-btn" disabled="@_busy" @onclick="() => StubPayAsync(stubId)">
+                    <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => StubPayAsync(stubId)">
                         @Culture["DeepPay.StubFinish"]
                     </button>
                 }
@@ -105,7 +105,7 @@ else if (_state == "paid")
                 </div>
                 <footer class="test-shell__footer">
                     <a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.Later"]</a>
-                    <a class="engagement-btn" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.StartQ1"]</a>
+                    <a class="btn btn-primary" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.StartQ1"]</a>
                 </footer>
             </div>
         </ChildContent>
@@ -136,7 +136,7 @@ else if (_state is "failed" or "cancelled" or "expired")
                 </ul>
                 <footer class="test-shell__footer">
                     <a href="@($"/profiel/tests/{_testSlug}")">@Culture["DeepPay.BackToTest"]</a>
-                    <a class="engagement-btn" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.RetryPay"]</a>
+                    <a class="btn btn-primary" href="@($"/candidate/deep-analysis/{_testSlug}")">@Culture["DeepPay.RetryPay"]</a>
                 </footer>
             </div>
         </ChildContent>

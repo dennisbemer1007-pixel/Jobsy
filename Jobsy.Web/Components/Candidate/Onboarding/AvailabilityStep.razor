@@ -12,7 +12,7 @@
         {
             var isSelected = Draft.Presets.Contains(preset.Code);
             <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                    class="@(isSelected ? "is-selected" : null)"
+                    class="@(isSelected ?"is-selected" : null)"
                     @onclick="() => TogglePreset.InvokeAsync(preset.Code)">
                 <span>@(isSelected ? "✓" : "")</span>
                 <b>@Culture[preset.Title]</b>
@@ -78,7 +78,7 @@
                         <button type="button"
                                 aria-pressed="@(isAvailable ? "true" : "false")"
                                 aria-label="@AvailabilityLabel(day, slot)"
-                                class="@(isAvailable ? "is-on" : null)"
+                                class="@(isAvailable ?"is-on" : null)"
                                 @onclick="() => ToggleAvailability.InvokeAsync(key)">
                             @UiLabels.AvailabilitySlot(Culture, slot)
                         </button>

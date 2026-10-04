@@ -61,7 +61,7 @@
                                 {
                                     var selected = Editor.EmployerPreferences.Contains(code);
                                     <button type="button"
-                                            class="kompas-chip @(selected ? "is-selected" : null)"
+                                            class="kompas-chip @(selected ?"is-selected" : null)"
                                             aria-pressed="@(selected ? "true" : "false")"
                                             @onclick="() => Editor.ToggleEmployerPreference(code, !selected)">
                                         @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]

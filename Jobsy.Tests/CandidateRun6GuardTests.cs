@@ -23,7 +23,7 @@ public class CandidateRun6GuardTests
         Assert.Contains("OpenFromCoachAsync", assistant, StringComparison.Ordinal);
         Assert.Contains("StateHasChanged()", assistant, StringComparison.Ordinal);
         Assert.Contains("inset-inline-end: 24px;", css, StringComparison.Ordinal);
-        Assert.Contains("bottom: 24px;", css, StringComparison.Ordinal);
+        Assert.Contains("bottom: calc(12px + env(safe-area-inset-bottom, 0px));", css, StringComparison.Ordinal);
         Assert.Contains("width: 64px;", css, StringComparison.Ordinal);
         Assert.Contains("width: 56px;", css, StringComparison.Ordinal);
         Assert.Contains("--bottom-nav-h", css, StringComparison.Ordinal);

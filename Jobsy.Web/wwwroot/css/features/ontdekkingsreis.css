@@ -1165,6 +1165,15 @@
 }
 
 @media (max-width: 639px) {
+  .journey-overview__row {
+    flex-wrap: wrap;
+    padding-inline-end: calc(56px + 12px);
+  }
+
+  .journey-overview__actions {
+    margin-inline-start: 0;
+  }
+
   .journey-shed__body {
     flex-direction: column;
     align-items: stretch;

@@ -59,10 +59,10 @@ public class CareerPageBunitTests : BunitContext
             .Add(x => x.Suggestions, Suggestions(2))
             .Add(x => x.HasChoice, false));
 
-        Assert.True(cut.Find(".career-btn--primary").HasAttribute("disabled"));
+        Assert.True(cut.Find(".btn-primary").HasAttribute("disabled"));
 
         cut.Render(p => p.Add(x => x.HasChoice, true));
-        Assert.False(cut.Find(".career-btn--primary").HasAttribute("disabled"));
+        Assert.False(cut.Find(".btn-primary").HasAttribute("disabled"));
     }
 
     [Fact]
@@ -219,7 +219,7 @@ public class CareerPageBunitTests : BunitContext
             .Add(x => x.OnDismissCarriedOver, () => dismissed = true));
 
         Assert.Contains("Je hebt al 2 stappen gehaald", cut.Markup, StringComparison.Ordinal);
-        cut.Find(".career-note .career-btn--text").Click();
+        cut.Find(".career-note .btn-ghost").Click();
         Assert.True(dismissed);
     }
 
@@ -354,9 +354,9 @@ public class CareerPageBunitTests : BunitContext
 
         Assert.Contains("Een andere droombaan kiezen?", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Blijf bij Kok", cut.Markup, StringComparison.Ordinal);
-        Assert.True(cut.Find(".career-dialog__actions .career-btn--primary").HasAttribute("disabled"));
+        Assert.True(cut.Find(".career-dialog__actions .btn-primary").HasAttribute("disabled"));
 
-        cut.Find(".career-dialog__actions .career-btn--secondary").Click();
+        cut.Find(".career-dialog__actions .btn-secondary").Click();
         Assert.Equal(1, cancelled);
         Assert.Equal(0, confirmed);
     }
@@ -413,10 +413,10 @@ public class CareerPageBunitTests : BunitContext
         Assert.Contains("Eerdere plannen (1)", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Monteur", cut.Markup, StringComparison.Ordinal);
 
-        cut.Find(".career-archive__list .career-btn--text").Click();
+        cut.Find(".career-archive__list .btn-ghost").Click();
         Assert.Contains("Terug naar Monteur?", cut.Markup, StringComparison.Ordinal);
 
-        cut.Find(".career-dialog__actions .career-btn--primary").Click();
+        cut.Find(".career-dialog__actions .btn-primary").Click();
         Assert.Equal(planId, restored);
     }
 

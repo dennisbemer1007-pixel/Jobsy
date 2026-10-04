@@ -58,7 +58,7 @@
                                     @if (!string.IsNullOrWhiteSpace(Editor.HomeAddress) || Editor.HomeLat is not null)
                                     {
                                         <button type="button"
-                                                class="engagement-btn address-field__clear"
+                                                class="btn btn-primary address-field__clear"
                                                 @onclick="Editor.ClearHomeAddress">
                                             @Culture["Common.Clear"]
                                         </button>
@@ -129,7 +129,7 @@
                                                 <option value="@level">@Culture[DiscoveryCatalogs.DutchLabelKey(level)]</option>
                                             }
                                         </select>
-                                        <button type="button" class="btn-compact" @onclick="() => Editor.RemoveSpokenLanguage(langCode)">×</button>
+                                        <button type="button" class="btn btn-secondary" @onclick="() => Editor.RemoveSpokenLanguage(langCode)">×</button>
                                     </div>
                                 }
                                 @if (Editor.SpokenLanguages.Count < DiscoveryCatalogs.MaxSpokenLanguages)

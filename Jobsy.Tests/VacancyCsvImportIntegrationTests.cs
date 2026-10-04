@@ -280,11 +280,11 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Jobsy.
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
                 CsvBatchImportEnabled = true,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = BranchId,
@@ -293,11 +293,11 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Jobsy.
                 Address = "Branch",
                 Location = new GeoPoint(52.01, 4.01),
                 ParentCompanyId = OrgId,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        },
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = DisabledOrgId,
@@ -306,11 +306,11 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Jobsy.
                 Address = "Other",
                 Location = new GeoPoint(52.1, 4.1),
                 CsvBatchImportEnabled = false,
-            VerificationStatus = CompanyVerificationStatus.Verified,
-            VerificationMethod = CompanyVerificationMethod.AdminCreated,
-            VerifiedAtUtc = DateTime.UtcNow,
-            VerificationUpdatedAtUtc = DateTime.UtcNow
-        });
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
 
         db.Users.Add(new User
         {

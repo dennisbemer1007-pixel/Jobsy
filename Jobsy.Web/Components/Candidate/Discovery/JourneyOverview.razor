@@ -18,7 +18,7 @@
                 </div>
                 @if (!string.IsNullOrWhiteSpace(row.ActionLabel))
                 {
-                    <button type="button" class="btn-compact" @onclick="() => OnRowAction.InvokeAsync(row)">
+                    <button type="button" class="btn btn-secondary" @onclick="() => OnRowAction.InvokeAsync(row)">
                         @row.ActionLabel
                     </button>
                 }
@@ -39,13 +39,13 @@
                     @if (test.IsComplete)
                     {
                         <span class="status-pill status-pill--success">@Culture["Discovery.Overview.FullyDone"]</span>
-                        <a class="btn-compact" href="@test.ReportHref">@Culture["Discovery.Overview.FullReport"]</a>
+                        <a class="btn btn-secondary" href="@test.ReportHref">@Culture["Discovery.Overview.FullReport"]</a>
                     }
                     else
                     {
                         @foreach (var level in test.NextLevels)
                         {
-                            <button type="button" class="btn-compact" @onclick="() => OnDeepen.InvokeAsync((test.Step, level))">
+                            <button type="button" class="btn btn-secondary" @onclick="() => OnDeepen.InvokeAsync((test.Step, level))">
                                 @level.Label
                             </button>
                         }

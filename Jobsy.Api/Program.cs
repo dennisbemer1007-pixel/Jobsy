@@ -314,6 +314,8 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+Jobsy.Core.Reports.DeepReportCatalog.Logger =
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Jobsy.DeepReportCatalog");
 
 if (string.IsNullOrWhiteSpace(builder.Configuration[RateLimitPartitioning.ConfigKey])
     && !app.Environment.IsDevelopment())

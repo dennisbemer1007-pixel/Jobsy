@@ -9,7 +9,7 @@
                                 <p class="login-lead">@Culture["Profile.Devices.Lead"]</p>
                                 @if (!Editor.DevicesLoadStarted && !Editor.DevicesLoading)
                                 {
-                                    <button type="button" class="btn-compact" @onclick="Editor.LoadDevicesAsync">
+                                    <button type="button" class="btn btn-secondary" @onclick="Editor.LoadDevicesAsync">
                                         @Culture["Profile.Devices.Title"]
                                     </button>
                                 }
@@ -38,7 +38,7 @@
                                                     </p>
                                                 </div>
                                                 <button type="button"
-                                                        class="engagement-btn"
+                                                        class="btn btn-primary"
                                                         disabled="@Editor.DevicesBusy"
                                                         @onclick="() => Editor.RevokeDeviceAsync(device.Id)">
                                                     @Culture["Profile.Devices.Logout"]
@@ -47,7 +47,7 @@
                                         }
                                     </ul>
                                     <button type="button"
-                                            class="engagement-btn"
+                                            class="btn btn-primary"
                                             disabled="@Editor.DevicesBusy"
                                             @onclick="Editor.RevokeAllDevicesAsync">
                                         @Culture["Profile.Devices.LogoutAll"]

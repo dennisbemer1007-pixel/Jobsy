@@ -11,7 +11,7 @@
     return;
 }
 
-<section class="training-offers training-offers--subtle @(Compact ? "training-offers--compact" : null)"
+<section class="training-offers training-offers--subtle @(Compact ?"training-offers--compact" : null)"
          aria-label="@Culture[string.IsNullOrWhiteSpace(TitleKey) ? "Fit.TrainingTitle" : TitleKey]">
     @if (!Compact)
     {

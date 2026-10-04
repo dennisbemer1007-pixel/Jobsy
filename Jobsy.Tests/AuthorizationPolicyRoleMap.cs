@@ -14,7 +14,7 @@ public static class AuthorizationPolicyRoleMap
         {
             [JobsyPolicies.RequireAdmin] = [JobsyRoles.Admin],
             [JobsyPolicies.RequireEmployer] = JobsyRoles.EmployerRoles,
-            [JobsyPolicies.RequireAdminOrEmployer] = [JobsyRoles.Admin, ..JobsyRoles.EmployerRoles],
+            [JobsyPolicies.RequireAdminOrEmployer] = [JobsyRoles.Admin, .. JobsyRoles.EmployerRoles],
             [JobsyPolicies.RequireCandidate] = [JobsyRoles.Candidate],
             [JobsyPolicies.RequireSalesManager] = [JobsyRoles.SalesManager],
             [JobsyPolicies.RequireAdminOrSalesManager] = [JobsyRoles.Admin, JobsyRoles.SalesManager],
