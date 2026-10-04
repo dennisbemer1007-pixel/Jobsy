@@ -3,7 +3,7 @@
 @inject CultureState Culture
 @inject IJSRuntime Js
 
-<div class="row-actions-menu @( _open ? "is-open" : null)" @onfocusout="OnFocusOut">
+<div class="row-actions-menu @(_open ? "is-open" : null)" @ref="_root" @onfocusout="OnFocusOut">
     <button type="button"
             @ref="_toggle"
             class="icon-btn row-actions-menu__toggle"
@@ -30,6 +30,7 @@
 
     private bool _open;
     private bool _trapped;
+    private ElementReference _root;
     private ElementReference _toggle;
     private ElementReference _panel;
 
@@ -83,7 +84,34 @@
 
     private async Task OnFocusOut(FocusEventArgs _)
     {
+        if (!_open)
+        {
+            return;
+        }
+
+        // jobsyDialog.trap moves focus into the panel and that focusout bubbles.
+        // Close only when focus has actually left the menu.
         await Task.Delay(150);
+        if (!_open)
+        {
+            return;
+        }
+
+        var left = false;
+        try
+        {
+            left = await Js.InvokeAsync<bool>("jobsyDialog.focusLeft", _root);
+        }
+        catch (Exception)
+        {
+            left = false;
+        }
+
+        if (!left || !_open)
+        {
+            return;
+        }
+
         _open = false;
         await InvokeAsync(StateHasChanged);
     }

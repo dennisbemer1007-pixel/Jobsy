@@ -64,7 +64,7 @@ public static class AdminActionLabels
             "admin.users.reveal" or "user.sessions" => "AdminAction.Resource.UserSessions",
             "platformLogs" or "platform-logs" => "AdminAction.Resource.PlatformLogs",
             "adminAudit" or "adminAuditEvents" => "AdminAction.Resource.Audit",
-            "personalDataAccessLogs" => "AdminAction.Resource.AccessLog",
+            "personalDataAccessLogs" or "admin.personal_data_access_log.list" => "AdminAction.Resource.AccessLog",
             _ => null
         };
 
@@ -107,6 +107,118 @@ public static class AdminActionLabels
         "SkippedNoIban" => text("AdminFinance.SkippedNoIban"),
         _ => status ?? ""
     };
+
+    public static string TokenKind(string? kind, Func<string, string> text) => kind switch
+    {
+        "Purchase" => text("AdminToken.Kind.Purchase"),
+        "Spend" => text("AdminToken.Kind.Spend"),
+        "Grant" => text("AdminToken.Kind.Grant"),
+        "Allocation" => text("AdminToken.Kind.Allocation"),
+        "Goodwill" => text("AdminToken.Kind.Goodwill"),
+        _ => kind ?? ""
+    };
+
+    public static string TokenReason(string? reason, Func<string, string> text)
+    {
+        if (string.IsNullOrWhiteSpace(reason) || reason.Equals("None", StringComparison.OrdinalIgnoreCase))
+        {
+            return "—";
+        }
+
+        return reason.Trim() switch
+        {
+            "Publish" => text("TokenSpendCost.Publish"),
+            "Highlight" => text("TokenSpendCost.Highlight"),
+            "PushBom" => text("AdminToken.Reason.PushBom"),
+            "Extend" => text("AdminToken.Reason.Extend"),
+            "ContactUnlock" => text("AdminToken.Reason.ContactUnlock"),
+            "InsightsUnlock" => text("AdminToken.Reason.InsightsUnlock"),
+            "SkippedNoIban" => text("AdminFinance.SkippedNoIban"),
+            _ => VatStatus(reason, text)
+        };
+    }
+
+    public static string Target(string? label, Func<string, string> text)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return "";
+        }
+
+        return label.Trim() switch
+        {
+            "Data retention" => text("AdminAudit.Target.Retention"),
+            "audit-csv" => text("AdminAudit.Target.AuditCsv"),
+            _ => label
+        };
+    }
+
+    public static string AccessAction(string? resource, string? action, Func<string, string> text)
+    {
+        var res = (resource ?? "").Trim();
+        var act = (action ?? "").Trim();
+        if ((res is "admin.personal_data_access_log.list" or "personalDataAccessLogs")
+            && (act.Length == 0 || act.Equals("list", StringComparison.OrdinalIgnoreCase)))
+        {
+            return text("AdminDataAccess.Action.Viewed");
+        }
+
+        if (act.Equals("list", StringComparison.OrdinalIgnoreCase))
+        {
+            return text("AdminDataAccess.Action.List");
+        }
+
+        return Label(act, text);
+    }
+
+    public static string AccessReason(string? reason, Func<string, string> text)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return "—";
+        }
+
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var part in reason.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=');
+            if (eq <= 0)
+            {
+                return reason;
+            }
+
+            map[part[..eq]] = part[(eq + 1)..];
+        }
+
+        if (!map.ContainsKey("page") && !map.ContainsKey("actor") && !map.ContainsKey("subject"))
+        {
+            return reason;
+        }
+
+        var bits = new List<string>();
+        if (map.TryGetValue("page", out var page) && page.Length > 0)
+        {
+            bits.Add(string.Format(text("AdminDataAccess.Reason.Page"), page));
+        }
+
+        if (map.TryGetValue("actor", out var actor) && actor.Length > 0)
+        {
+            bits.Add(string.Format(text("AdminDataAccess.Reason.Actor"), ShortId(actor)));
+        }
+
+        if (map.TryGetValue("subject", out var subject) && subject.Length > 0)
+        {
+            bits.Add(string.Format(text("AdminDataAccess.Reason.Subject"), ShortId(subject)));
+        }
+
+        return bits.Count == 0 ? "—" : string.Join(" · ", bits);
+    }
+
+    private static string ShortId(string value)
+    {
+        var hex = value.Replace("-", "", StringComparison.Ordinal);
+        return hex.Length <= 8 ? hex : hex[..8];
+    }
 
     public static string Scope(string cell) => cell switch
     {

@@ -107,12 +107,12 @@ else if (_page is not null)
                     AllSelectedChanged="OnToggleAll"
                     ShowRowActions="true">
         <Header>
-            <th scope="col"><button type="button" class="data-table__sort" aria-sort="@SortAria("name")" @onclick='() => ToggleSortAsync("name")'>@Culture["AdminUsers.ColUser"]</button></th>
-            <th scope="col"><button type="button" class="data-table__sort" aria-sort="@SortAria("role")" @onclick='() => ToggleSortAsync("role")'>@Culture["AdminUsers.ColRole"]</button></th>
+            <th scope="col" aria-sort="@SortAria("name")"><button type="button" class="data-table__sort" @onclick='() => ToggleSortAsync("name")'>@Culture["AdminUsers.ColUser"]</button></th>
+            <th scope="col" aria-sort="@SortAria("role")"><button type="button" class="data-table__sort" @onclick='() => ToggleSortAsync("role")'>@Culture["AdminUsers.ColRole"]</button></th>
             <th scope="col" class="admin-col-desktop">@Culture["AdminUsers.ColOrg"]</th>
             <th scope="col">@Culture["AdminUsers.ColMfa"]</th>
-            <th scope="col" class="admin-col-desktop"><button type="button" class="data-table__sort" aria-sort="@SortAria("created")" @onclick='() => ToggleSortAsync("created")'>@Culture["AdminUsers.ColCreated"]</button></th>
-            <th scope="col" class="admin-col-desktop"><button type="button" class="data-table__sort" aria-sort="@SortAria("lastlogin")" @onclick='() => ToggleSortAsync("lastlogin")'>@Culture["AdminUsers.ColLastActive"]</button></th>
+            <th scope="col" class="admin-col-desktop" aria-sort="@SortAria("created")"><button type="button" class="data-table__sort" @onclick='() => ToggleSortAsync("created")'>@Culture["AdminUsers.ColCreated"]</button></th>
+            <th scope="col" class="admin-col-desktop" aria-sort="@SortAria("lastlogin")"><button type="button" class="data-table__sort" @onclick='() => ToggleSortAsync("lastlogin")'>@Culture["AdminUsers.ColLastActive"]</button></th>
             <th scope="col">@Culture["AdminUsers.ColStatus"]</th>
         </Header>
         <Rows>
@@ -838,18 +838,31 @@ else if (_page is not null)
     {
         _drawerOpen = false;
         _drawerUser = null;
+        ClearOpenFromUrl();
         return Task.CompletedTask;
     }
 
-    private async Task OnDrawerOpenChanged(bool open)
+    private Task OnDrawerOpenChanged(bool open)
     {
         _drawerOpen = open;
         if (!open)
         {
             _drawerUser = null;
+            ClearOpenFromUrl();
         }
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
+    }
+
+    private void ClearOpenFromUrl()
+    {
+        var target = AdminOpenLink.WithoutOpen(Nav.Uri);
+        if (!AdminOpenLink.ShouldNavigate(Nav.Uri, target, RendererInfo.IsInteractive))
+        {
+            return;
+        }
+
+        Nav.NavigateTo(target, forceLoad: false, replace: true);
     }
 
     private async Task SetDrawerTab(string key)

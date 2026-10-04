@@ -84,7 +84,7 @@ else
 
     @if (_drillKey is not null)
     {
-        <section class="panel-section admin-vacancy-drilldown">
+        <section @ref="_drillRef" class="panel-section admin-vacancy-drilldown" tabindex="-1" @onkeydown="OnDrillKey">
             <h2>@string.Format(Culture["AdminVacancy.Drilldown"], DrillLabel(_drillKey))</h2>
             @if (_drillLoading)
             {
@@ -241,6 +241,8 @@ else
     private int _activeRegularCount;
     private AdminVacancyItem? _openItem;
     private Guid? _openId;
+    private ElementReference _drillRef;
+    private bool _focusDrill;
     private CancellationTokenSource? _searchCts;
 
     private int _activeTotalCount => _activeAtsCount + _activeRegularCount;
@@ -256,6 +258,24 @@ else
         Culture.Changed -= OnCultureChanged;
         _searchCts?.Cancel();
         _searchCts?.Dispose();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusDrill || _drillKey is null)
+        {
+            return;
+        }
+
+        _focusDrill = false;
+        try
+        {
+            await _drillRef.FocusAsync();
+        }
+        catch (Exception)
+        {
+            // The section is gone if the user closed it before paint.
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -321,7 +341,11 @@ else
         try
         {
             await Task.Delay(300, token);
-            await InvokeAsync(LoadPageAsync);
+            await InvokeAsync(async () =>
+            {
+                await LoadPageAsync();
+                StateHasChanged();
+            });
         }
         catch (OperationCanceledException)
         {
@@ -392,6 +416,27 @@ else
         if (!open)
         {
             _openItem = null;
+            ClearOpenFromUrl();
+        }
+    }
+
+    private void ClearOpenFromUrl()
+    {
+        var target = AdminOpenLink.WithoutOpen(Nav.Uri);
+        if (!AdminOpenLink.ShouldNavigate(Nav.Uri, target, RendererInfo.IsInteractive))
+        {
+            return;
+        }
+
+        Nav.NavigateTo(target, forceLoad: false, replace: true);
+    }
+
+    private void OnDrillKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _drillKey = null;
+            _drilldown = [];
         }
     }
 
@@ -478,6 +523,7 @@ else
     private async Task Drill(string key)
     {
         _drillKey = key;
+        _focusDrill = true;
         _drillLoading = true;
         try
         {
