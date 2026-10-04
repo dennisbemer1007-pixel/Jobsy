@@ -26,6 +26,12 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
     });
 }
 
+builder.Services.AddOptions<Jobsy.Core.Options.AiOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.AiOptions.SectionName));
+builder.Services.AddOptions<Jobsy.Core.Options.MistralOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.MistralOptions.SectionName))
+    .PostConfigure(options => Jobsy.Core.Options.MistralOptions.ApplyKeyAlias(options, key => builder.Configuration[key]));
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;

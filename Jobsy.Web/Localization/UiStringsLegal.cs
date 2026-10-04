@@ -366,6 +366,12 @@ public static class UiStringsLegal
             "الحساب والاختبارات والنتائج");
 
         // —— Change log (D16) ——
+        Add("Legal.Change.Privacy.2026-10-06",
+            "De AI-rij in de lijst met verwerkers volgt de instelling. Standaard is dat OpenAI (Verenigde Staten). Zet je de AI op Mistral, dan staat Mistral AI (Parijs, gegevens in de EU) in de lijst en OpenAI niet.",
+            "The AI row in the processor list follows the setting. By default that is OpenAI (United States). If you switch AI to Mistral, the list shows Mistral AI (Paris, data in the EU) and not OpenAI.",
+            "Wiersz AI na liście podmiotów zależy od ustawienia. Domyślnie to OpenAI (Stany Zjednoczone). Gdy przełączysz AI na Mistral, lista pokazuje Mistral AI (Paryż, dane w UE), a nie OpenAI.",
+            "Rândul AI din lista de procesatori urmează setarea. Implicit este OpenAI (Statele Unite). Dacă treci AI pe Mistral, lista arată Mistral AI (Paris, date în UE) și nu OpenAI.",
+            "صف الذكاء الاصطناعي في قائمة المعالجين يتبع الإعداد. الافتراضي هو OpenAI (الولايات المتحدة). إذا بدّلت الذكاء الاصطناعي إلى Mistral، تظهر Mistral AI (باريس، البيانات في الاتحاد الأوروبي) وليس OpenAI.");
         Add("Legal.Change.Privacy.2026-10-04",
             "Eerlijke tekst over waar gegevens staan: de app en database in Frankfurt, en diensten van Amerikaanse bedrijven in de lijst met verwerkers. Nieuw stuk: AI en jouw gegevens. Geen scores voor werkgevers, geen AI op leerlinggegevens, AI-antwoorden zijn gelabeld en je kunt een mens om uitleg vragen.",
             "Honest text about where data sits: the app and database in Frankfurt, and services of American companies in the processor list. New part: AI and your data. No scores for employers, no AI on pupil data, AI answers are labelled and you can ask a person to explain.",
@@ -497,6 +503,18 @@ public static class UiStringsLegal
             "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV",
             "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului",
             "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها");
+        Add("Legal.Processor.mistral.Purpose",
+            "AI-functies die jij zelf kiest",
+            "AI features you choose yourself",
+            "Funkcje AI, które sam wybierasz",
+            "Funcții AI pe care le alegi tu",
+            "ميزات الذكاء الاصطناعي التي تختارها");
+        Add("Legal.Processor.mistral.Data",
+            "De tekst die je invult. Bij cv-uitlezen de hele tekst van je cv. Gegevens blijven in de EU",
+            "The text you enter. For cv reading the whole text of your cv. Data stays in the EU",
+            "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV. Dane zostają w UE",
+            "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului. Datele rămân în UE",
+            "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها. تبقى البيانات في الاتحاد الأوروبي");
         Add("Legal.Processor.cursor.Purpose",
             "Feedback die je stuurt verwerken",
             "Handling the feedback you send",

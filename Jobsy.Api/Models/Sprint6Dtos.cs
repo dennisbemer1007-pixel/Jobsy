@@ -212,6 +212,12 @@ public record UpdateIntegrationCredentialRequest(
     bool ClearClientSecret = false,
     bool UseEnvironmentCredentials = false);
 
+public sealed record AiProviderStatusDto(
+    string Provider,
+    string DisplayName,
+    bool ReadOnly,
+    bool FellBackToOpenAi);
+
 public record IntegrationCredentialDto(
     string Key,
     string DisplayName,

@@ -1204,6 +1204,9 @@ public sealed partial class JobsyApiClient
         => await _http.GetFromJsonAsync<List<IntegrationCredentialItem>>(
             "api/settings/integration-credentials", ct) ?? [];
 
+    public async Task<AiProviderStatusItem?> GetAiProviderAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AiProviderStatusItem>("api/settings/ai-provider", ct);
+
     public async Task<IntegrationCredentialItem?> SaveIntegrationCredentialAsync(
         string key,
         IntegrationCredentialSaveForm form,
