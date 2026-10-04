@@ -35,7 +35,7 @@ public class LeerlingVoPartBreakBunitTests : BunitContext
         Assert.Contains("Stoppen voor nu", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("name=\"part\"", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("value=\"1\"", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("action=\"/leerling/stop\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("action=\"/leerling/pauze\"", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("href=\"/leerling/reis\"", cut.Markup, StringComparison.Ordinal);
     }
 

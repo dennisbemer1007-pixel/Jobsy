@@ -73,7 +73,8 @@ public static class PupilAuthEndpoints
             }
 
             var login = JsonSerializer.Deserialize<PupilLoginResponse>(body, JobsyApiClient.ApiJson);
-            if (login is null)
+            var apiTicket = ReadApiTicket(response);
+            if (login is null || string.IsNullOrEmpty(apiTicket))
             {
                 return Results.Redirect("/leerling?error=invalid");
             }
@@ -89,10 +90,16 @@ public static class PupilAuthEndpoints
                     ExpiresUtc = null
                 });
 
+            // The API ticket is protected with Jobsy.Api keys. Keep it opaque and
+            // forward it on later api/pupil calls. The Web cookie above is only
+            // for this host's authorization.
+            PupilApiSessionCookie.Set(http, apiTicket);
             return Results.Redirect(login.RedirectPath);
         }).AllowAnonymous().RequireRateLimiting("pupil-login");
 
-        app.MapPost("/leerling/stop", async (HttpContext http, IAntiforgery antiforgery) =>
+        // POST must not share /leerling/stop with the Blazor page: both match and
+        // the pause button returns 500. The confirmation page stays GET /leerling/stop.
+        app.MapPost("/leerling/pauze", async (HttpContext http, IAntiforgery antiforgery) =>
         {
             http.Response.Headers.CacheControl = "no-store";
             if (!await antiforgery.IsRequestValidAsync(http))
@@ -101,6 +108,7 @@ public static class PupilAuthEndpoints
             }
 
             await http.SignOutAsync(PupilAuthDefaults.Scheme);
+            PupilApiSessionCookie.Clear(http);
             var form = await http.Request.ReadFormAsync();
             var part = form["part"].ToString();
             if (string.Equals(part, "1", StringComparison.Ordinal))
@@ -127,6 +135,24 @@ public static class PupilAuthEndpoints
             new(PupilClaimTypes.CodeDisplay, login.CodeDisplay),
         };
         return new ClaimsPrincipal(new ClaimsIdentity(claims, PupilAuthDefaults.Scheme));
+    }
+
+    private static string? ReadApiTicket(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues("Set-Cookie", out var values))
+        {
+            return null;
+        }
+
+        foreach (var header in values)
+        {
+            if (PupilApiSessionCookie.TryReadTicket(header, out var value))
+            {
+                return value;
+            }
+        }
+
+        return null;
     }
 
     private static string QuestionSetQuerySuffix(string body)

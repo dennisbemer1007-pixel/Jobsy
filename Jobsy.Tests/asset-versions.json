@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "af9a8099ea04d7776cb3e005c834cd2d86fbcf0fa669e11d54c28ec603e64799",
-    "v": "20261004-run5b"
+    "sha256": "440db1db6d6d06db1d78d7b0578d0f0032d4d1ab11a4647f0b1bc55c1d17d41b",
+    "v": "20261004-run5c"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -100,8 +100,8 @@
     "v": "20260930-sales9"
   },
   "css/features/scholen.css": {
-    "sha256": "bdce25eff8bce55a621deb0636210592537f2d363ba537021ceb48a749dc7f1d",
-    "v": "20261004-school2"
+    "sha256": "71fa05558f4de708b6bb1e34f33c01d8069bd2c02f8a060215a6492f0596dc38",
+    "v": "20261004-pupil3"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "26e1dc8f5e3bd207b897d855627554b194a19cd379a3ca0ced65953472e27400",
-    "v": "20261004-run5b"
+    "sha256": "55a75a8eccdecd88b3b608e46767e204d315cd7b0df42c2b64f875be69ad5042",
+    "v": "20261004-run5c"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -184,12 +184,12 @@
     "v": "20260930-landing-5"
   },
   "js/leerling-login.js": {
-    "sha256": "634d21f17f0420a473ac640840045c74fc1d0c5fe6900ea9a0114c9259278d74",
-    "v": "20261004-school2"
+    "sha256": "b991a26ac619efecb3a0c3a6e25ecae59c7ca0ea7b6212fa72abd54d6101a129",
+    "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "501f4cbe483062b75df7cf5733f972bd3102bedd6a2e5cd0dfcab64233a1902f",
-    "v": "20261004-run5b"
+    "sha256": "da09a3c1d82ba860399acfda0beaca4a03bbbe5d3d4479fdf3433cdd385f438a",
+    "v": "20261004-run5c"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "880757d9fdbece1a42fdc3e036bc32b674968faa2db5e62099fdcd9fe0b629a2",
-    "v": "20261004-run5b"
+    "sha256": "d9b731f5e3f389dd1ff8f227a7ba0785d46def8649ce59db2d51fcc082f71560",
+    "v": "20261004-run5c"
   },
   "service-worker.published.js": {
-    "sha256": "b13d8ebab6027385862333936e8684ec7796d6fdd09a0b33b43a144ee000fd04",
-    "v": "20261004-run5b"
+    "sha256": "e36ea88f0c12b32721068f30eee9bda61b29d4707ed4813b0a94a0babb64c0f6",
+    "v": "20261004-run5c"
   }
 }

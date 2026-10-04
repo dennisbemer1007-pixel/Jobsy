@@ -349,6 +349,7 @@ public static class UiStringsScholen
         nl["Leerling.Login.Error.Window.Vo"] = "Het testvenster van je klas is dicht. Je docent zet het weer open.";
         nl["Leerling.Login.Error.Staff"] = "Log eerst uit om als leerling te starten.";
         nl["Leerling.Login.Error.Retry"] = "Probeer het opnieuw.";
+        nl["Leerling.Login.Error.Expired"] = "Je sessie is verlopen. Log opnieuw in met je code.";
         nl["Leerling.Pause"] = "Pauze";
         nl["Leerling.Start.Title"] = "Zo werkt het";
         nl["Leerling.Start.Lead"] = "Je gaat op reis door 4 werelden. Lobsy leert jou kennen — zonder namen.";
