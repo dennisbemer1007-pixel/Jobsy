@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
@@ -150,6 +151,11 @@ public sealed class AssistantChatService : IAssistantChatService
                     reply,
                     false,
                     [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/hoe-werkt-lobsy", Label: "Hoe werkt Lobsy")]);
+            }
+
+            if (LooksLikePassportHelp(text))
+            {
+                return await CandidatePassportHelpAsync(context, cancellationToken);
             }
 
             if (!employersOn && (LooksLikeApplicationStatus(text) || IsVacancySearchIntent(text, DetectWorkType(text), ExtractJobSearchQuery(lastUser, DetectWorkType(text)))))
@@ -685,6 +691,114 @@ public sealed class AssistantChatService : IAssistantChatService
                     Label: lang == "en" ? "My applications" : "Mijn sollicitaties"),
                 new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/profile",
                     Label: lang == "en" ? "My profile" : "Mijn profiel")
+            ]);
+    }
+
+    private async Task<AssistantChatResult> CandidatePassportHelpAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
+    {
+        var competency = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+        var values = await _db.CandidateValuesProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(v => v.UserId == context.UserId, cancellationToken);
+        var career = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+        var dream = await _db.CandidateCareerPlans.AsNoTracking()
+            .Where(p => p.UserId == context.UserId)
+            .Select(p => p.DreamTitle)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var lang = JobsyLanguages.Normalize(context.Language);
+        var en = lang == "en";
+        var sb = new StringBuilder();
+        var anyFact = false;
+        sb.AppendLine(en ? "From your passport and tests:" : "Vanuit je paspoort en tests:");
+
+        if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
+        {
+            var scores = new CompetencyScores(
+                competency.SamenwerkenPercent,
+                competency.ResultaatgerichtheidPercent,
+                competency.StressbestendigheidPercent,
+                competency.InnovatiePercent,
+                competency.ExtraversiePercent);
+            var top = OnboardingImpressionComposer.TopCompetencyItems(scores, 1);
+            if (top.Count > 0)
+            {
+                anyFact = true;
+                sb.AppendLine(en
+                    ? $"• Strongest competency: {top[0].Label}"
+                    : $"• Sterkste competentie: {top[0].Label}");
+            }
+        }
+
+        var riasec = CareerTestCatalog.CompletedScoresOrNull(
+            career?.Status,
+            career?.RealisticPercent,
+            career?.InvestigativePercent,
+            career?.ArtisticPercent,
+            career?.SocialPercent,
+            career?.EnterprisingPercent,
+            career?.ConventionalPercent);
+        if (riasec is { IsComplete: true })
+        {
+            var rankedRiasec = RiasecRanking.Rank(
+                riasec.Realistic, riasec.Investigative, riasec.Artistic,
+                riasec.Social, riasec.Enterprising, riasec.Conventional);
+            if (rankedRiasec.Count > 0)
+            {
+                anyFact = true;
+                var topCode = rankedRiasec[0].Code;
+                sb.AppendLine(en
+                    ? $"• Career direction: {CareerCompassBuilder.TypeLabel(topCode)}"
+                    : $"• Beroepsrichting: {CareerCompassBuilder.TypeLabel(topCode)}");
+            }
+        }
+
+        if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
+        {
+            var ranked = DimensionRanking.Rank(
+                [
+                    (SchwartzValuesCatalog.Autonomy, values.AutonomyPercent),
+                    (SchwartzValuesCatalog.Connection, values.ConnectionPercent),
+                    (SchwartzValuesCatalog.Achievement, values.AchievementPercent),
+                    (SchwartzValuesCatalog.Stability, values.StabilityPercent),
+                    (SchwartzValuesCatalog.Impact, values.ImpactPercent)
+                ],
+                DimensionRanking.ValueTieBreak);
+            if (ranked.Count > 0)
+            {
+                anyFact = true;
+                sb.AppendLine(en
+                    ? $"• Strongest value: {DimensionLabels.For(ranked[0].Code)}"
+                    : $"• Sterkste waarde: {DimensionLabels.For(ranked[0].Code)}");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(dream))
+        {
+            anyFact = true;
+            sb.AppendLine(en ? $"• Dream: {dream.Trim()}" : $"• Droom: {dream.Trim()}");
+        }
+
+        if (!anyFact)
+        {
+            sb.AppendLine(en
+                ? "I don’t see a finished test yet. Finish the free tests and I can name your strengths."
+                : "Ik zie nog geen afgeronde test. Rond de gratis tests af, dan noem ik je sterke punten.");
+        }
+
+        sb.AppendLine(en
+            ? "Jobs and applications stay off until employers are on. Nothing goes to an employer."
+            : "Banen en sollicitaties blijven uit tot werkgevers aan staan. Niets gaat naar een werkgever.");
+
+        return new AssistantChatResult(
+            sb.ToString().Trim(),
+            false,
+            [
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/paspoort", Label: en ? "My passport" : "Mijn paspoort"),
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/carriere", Label: en ? "Career plan" : "Loopbaanplan")
             ]);
     }
 
@@ -1339,14 +1453,18 @@ Verbetervoorstellen:
             return true;
         }
 
-        // Bare job title / sector: "chauffeur", "horeca vacatures"
-        if (jobWord || (workType is not null && mentionsJobs))
-        {
-            return true;
-        }
-
+        // A leftover token from a general question is not a vacancy search.
+        // Explicit titles still match when the sentence also names jobs or a search verb.
         return false;
     }
+
+    private static bool LooksLikePassportHelp(string text) =>
+        ContainsAny(text,
+            "sterke punt", "sterktes", "strength", "competentie", "vaardigheid",
+            "volgens mijn test", "mijn test", "mijn tests", "waarden", "droombaan", "droom",
+            "loopbaan", "carriere", "carrière", "paspoort", "passport",
+            "wat kun je", "wat kan je", "wat kan lobsy", "what can you",
+            "voor mij doen", "wie ben ik", "who am i");
 
     private static bool LooksLikeCandidateProfile(string text) =>
         ContainsAny(text,

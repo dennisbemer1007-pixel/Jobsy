@@ -103,7 +103,8 @@ jobs:
             --filter-class '*AdminOrganisationsPlaywrightTests' \
             --filter-class '*AdminShellPlaywrightTests' \
             --filter-class '*AdminUsersPlaywrightTests' \
-            --filter-class '*CandidateTestsPlaywrightTests'
+            --filter-class '*CandidateTestsPlaywrightTests' \
+            --filter-class '*AssistantTabPlaywrightTests'
 
       - name: Upload test results
         if: always()

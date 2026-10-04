@@ -7461,8 +7461,7 @@ button.bottom-nav__item {
     }
 
     .lobsy-assistant.has-bottom-nav,
-    .feedback-widget.has-bottom-nav,
-    .lobsy-assistant-tab.has-bottom-nav {
+    .feedback-widget.has-bottom-nav {
         bottom: 1rem;
     }
 }
@@ -14441,7 +14440,7 @@ html.cookie-consent-known .cookie-consent {
 
 .lobsy-assistant-tab {
     position: fixed;
-    top: 26%;
+    top: 50%;
     right: 0;
     left: auto;
     bottom: auto;
@@ -14449,20 +14448,17 @@ html.cookie-consent-known .cookie-consent {
     transform: translateY(-50%);
 }
 
-.lobsy-assistant-tab.has-bottom-nav {
-    top: 22%;
-}
-
 .lobsy-assistant-tab.is-open {
     visibility: hidden;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 639px) {
     .lobsy-assistant-tab.has-bottom-nav {
-        top: 20%;
+        top: auto;
+        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+        transform: none;
     }
 
-    .lobsy-assistant-tab--edge,
     .feedback-widget__tab--edge {
         display: none !important;
     }

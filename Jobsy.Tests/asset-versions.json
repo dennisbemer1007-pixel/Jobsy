@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "49b00f279f52e3691a67b0c763511b68ecb8d918fd852f0f2d240b55ba62b678",
-    "v": "20261003-feedback-fields"
+    "sha256": "656bf6644af3669bd92209cc45172d66800293c796c6c2b15e7485f900f684d1",
+    "v": "20261004-assistant"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -200,11 +200,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "e47c8369d4617009ba9e5dc0e24b604e8444b9f725706e0edd03ab7e3f15e76e",
+    "sha256": "3a66c0ea020ef5e06711fd0c0fa84ca1d547a017407199d60f6b989290539bc3",
     "v": "20261003-shell"
   },
   "service-worker.published.js": {
-    "sha256": "5f494add63c2fe788574cfe87d951b2bd2e2bf4565267d47d43b9c3f1d9cdfbc",
+    "sha256": "ce7a9ce6874892f0eda8574741749729b32c435acc3adb095a28a2accc9b715c",
     "v": "20261003-shell"
   }
 }
