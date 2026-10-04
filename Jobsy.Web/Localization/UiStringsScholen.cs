@@ -608,7 +608,7 @@ public static class UiStringsScholen
         }
 
         Add("School.Dim.Val.Autonomy", "Zelf kiezen", "Choose for yourself", "Sam wybierasz", "Alegi singur", "تختار بنفسك");
-        Add("School.Dim.Val.Connection", "Anderen helpen", "Help others", "Pomagasz innym", "Ajuți pe alții", "تساعد الآخرين");
+        Add("School.Dim.Val.Connection", "Samen met anderen", "Together with others", "Razem z innymi", "Împreună cu alții", "مع الآخرين");
         Add("School.Dim.Val.Achievement", "Iets goed afmaken", "Finish something well", "Dobrze coś kończysz", "Termini ceva bine", "تنهي شيئاً جيداً");
         Add("School.Dim.Val.Stability", "Rust en duidelijkheid", "Calm and clear", "Spokój i jasność", "Liniște și claritate", "هدوء ووضوح");
         Add("School.Dim.Val.Impact", "Verschil maken", "Make a difference", "Robisz różnicę", "Faci o diferență", "تصنع فرقاً");

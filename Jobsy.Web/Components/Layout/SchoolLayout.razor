@@ -85,6 +85,10 @@
             <a class="sch-bottom-nav__item @(active ? "is-active" : null)" href="@item.Href">@Culture[item.LabelKey]</a>
         }
     </nav>
+    <footer class="sch-legal">
+        <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
+        <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
+    </footer>
 </div>
 
 @code {

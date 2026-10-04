@@ -140,12 +140,9 @@ public static class PupilStoryTemplates
     {
         var a = NormalizeLetter(topLetter1);
         var b = NormalizeLetter(topLetter2);
-        if (string.CompareOrdinal(a, b) > 0)
-        {
-            (a, b) = (b, a);
-        }
-
-        var pair = a == b ? a : a + b;
+        var pair = string.Equals(a, b, StringComparison.Ordinal)
+            ? a
+            : CanonicalRiasecPair(a[0], b[0]);
         return
         [
             $"LeerlingStory.Class.{pair}.1",
