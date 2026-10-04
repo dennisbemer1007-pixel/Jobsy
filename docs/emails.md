@@ -8,7 +8,7 @@ Stack files `01`–`09` under `docs/emails/` (branch `docs/emails`). This page i
 2. **Composer** — `TransactionalEmails` partials: build an `EmailDocument` (heading, blocks, optional CTA or OTP, culture). Always finish with `Finish(doc, baseUrl)` so `EmailRenderer` + `EmailBrand` apply.
 3. **Strings** — `EmailStrings` (nl/en/pl/ro/ar). New keys need all five languages; track native review in `docs/i18n/emails-review.md`. Do not grow `docs/i18n/email-untranslated-baseline.txt` without review.
 4. **Links** — only via `EmailLinks` / `JobsyPublicUrl`. Token value in previews: `voorbeeld`. Never put passwords, API keys, or tracking query params in mail.
-5. **Send path** — `ITransactionalMailer` adds Reply-To, optional List-Unsubscribe (kind O only), tags; Resend/SMTP via Integraties. Test sends from admin use `[Test] `, `X-Lobsy-Test: 1`, no List-Unsubscribe.
+5. **Send path** — `ITransactionalMailer` adds Reply-To, optional List-Unsubscribe (kind O only), tags. `Mail:Provider` picks Resend or Lettermint (HTTP APIs); SMTP is the fallback. Lettermint runs only when `Lettermint:ApiKey` is set. Acceptatie can set `Mail:AllowedRecipientPattern` so other recipients are skipped. Test sends from admin use `[Test] `, `X-Lobsy-Test: 1`, no List-Unsubscribe.
 
 ## Admin preview
 

@@ -34,13 +34,15 @@ public abstract class PrivacyRenderTestBase : BunitContext
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
 
+    protected readonly ConfigurationManager Config = new();
+
     protected PrivacyRenderTestBase()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddLogging();
         Services.AddMemoryCache();
         Services.AddSingleton<AuthenticationStateProvider>(new AnonymousAuth());
-        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+        Services.AddSingleton<IConfiguration>(Config);
         Services.AddSingleton<ICookieConsentTokenService, CookieConsentTokenService>();
         Services.AddSingleton<IEmployersSwitch, AlwaysOnEmployersSwitch>();
         Services.AddSingleton<IHostEnvironment>(new PrivacyTestHostEnvironment());
@@ -62,11 +64,13 @@ public abstract class PrivacyRenderTestBase : BunitContext
 
     protected override void Dispose(bool disposing)
     {
-        base.Dispose(disposing);
         if (disposing)
         {
+            Config.Dispose();
             _culture.Dispose();
         }
+
+        base.Dispose(disposing);
     }
 
     protected void UseLanguage(string language)
@@ -145,7 +149,11 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
     {
         var table = RenderPrivacy().Find("#delen .pp-table__grid").TextContent;
 
-        foreach (var row in LegalAiProcessorSelection.Resolve(AiProviderKind.OpenAI))
+        foreach (var row in LegalProcessorSelection.Resolve(
+            mailProvider: null,
+            lettermintApiKeyConfigured: false,
+            AiProviderKind.OpenAI,
+            mistralBaseUrl: null))
         {
             Assert.Contains(row.Name, table, StringComparison.Ordinal);
             Assert.Contains(row.Region, table, StringComparison.Ordinal);
@@ -173,6 +181,8 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
     public void Render_runs_in_frankfurt_and_never_reads_eu_slash_vs()
     {
         var render = LegalProcessors.ById("render");
+        Assert.Equal(ProcessorRegion.UnitedStates, render.CompanyHq);
+        Assert.Equal(ProcessorRegion.EuFrankfurt, render.DataRegion);
         Assert.Contains("Frankfurt", render.Region, StringComparison.Ordinal);
         Assert.DoesNotContain("EU/VS", render.Region, StringComparison.Ordinal);
     }
@@ -181,7 +191,9 @@ public class PrivacyProcessorsTests : PrivacyRenderTestBase
     public void Pingen_is_a_swiss_row_on_the_eu_adequacy_decision()
     {
         var pingen = LegalProcessors.ById("pingen");
-        Assert.Equal("Zwitserland", pingen.Region);
+        Assert.Equal(ProcessorRegion.Switzerland, pingen.CompanyHq);
+        Assert.Equal(ProcessorRegion.Switzerland, pingen.DataRegion);
+        Assert.Contains("Zwitserland", pingen.Region, StringComparison.Ordinal);
         Assert.Equal(LegalProcessors.AdequacyDecision, pingen.TransferBasisKey);
     }
 
@@ -436,6 +448,7 @@ public class PrivacyNoPlaceholderTests : PrivacyRenderTestBase
             Assert.DoesNotContain("Legal.Transfer.", markup, StringComparison.Ordinal);
             Assert.DoesNotContain("Legal.Cookies.", markup, StringComparison.Ordinal);
             Assert.DoesNotContain("Legal.Retention.", markup, StringComparison.Ordinal);
+            Assert.DoesNotContain("Privacy.Where.", markup, StringComparison.Ordinal);
         }
     }
 

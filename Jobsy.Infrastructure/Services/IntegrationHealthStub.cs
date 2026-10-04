@@ -15,6 +15,8 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly OpenAiOptions _openAiOptions;
+    private readonly MailOptions _mailOptions;
+    private readonly LettermintOptions _lettermintOptions;
     private readonly ILogger<IntegrationHealthStub> _logger;
     private readonly KvkHandelsregisterService? _kvk;
     private readonly IOpenAiEndpointResolver? _aiEndpoints;
@@ -27,13 +29,17 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         IOptions<OpenAiOptions> openAiOptions,
         ILogger<IntegrationHealthStub> logger,
         KvkHandelsregisterService? kvk = null,
-        IOpenAiEndpointResolver? aiEndpoints = null)
+        IOpenAiEndpointResolver? aiEndpoints = null,
+        IOptions<MailOptions>? mailOptions = null,
+        IOptions<LettermintOptions>? lettermintOptions = null)
     {
         _credentials = credentials;
         _httpClientFactory = httpClientFactory;
         _mailer = mailer;
         _features = features;
         _openAiOptions = openAiOptions.Value;
+        _mailOptions = mailOptions?.Value ?? new MailOptions();
+        _lettermintOptions = lettermintOptions?.Value ?? new LettermintOptions();
         _logger = logger;
         _kvk = kvk;
         _aiEndpoints = aiEndpoints;
@@ -88,16 +94,28 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
         var resendReady = SmtpEmailService.TryResolveResend(secrets, out _);
         var smtpReady = SmtpEmailService.TryResolveSmtp(secrets, out var smtp);
+        var lettermintReady = MailProviderChoice.Choose(
+            _mailOptions.Provider,
+            !string.IsNullOrWhiteSpace(_lettermintOptions.ApiKey)).Kind == MailProviderKind.Lettermint;
         var redacted = EmailServiceStub.RedactEmail(trimmed);
+        var allow = MailRecipientAllowList.Evaluate(trimmed, _mailOptions);
+        if (allow.Blocked)
+        {
+            var blocked =
+                $"Testmail niet verstuurd. Dit adres staat niet op de lijst voor deze omgeving ({allow.MaskedAddress}).";
+            await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, blocked, cancellationToken);
+            return new SendTestMailResult(false, false, blocked);
+        }
+
         var features = await _features.GetAsync(cancellationToken);
         var composed = TransactionalEmails.MailTest(features.PublicWebBaseUrl);
 
-        if (!resendReady && !smtpReady)
+        if (!lettermintReady && !resendReady && !smtpReady)
         {
             await _mailer.SendAsync(composed, trimmed, cancellationToken: cancellationToken);
             var stubMessage =
-                "Mail niet geconfigureerd. Vul Resend API-key + From in (aanbevolen op cloud), " +
-                "of SMTP-host/gebruiker/app-wachtwoord/From. " +
+                "Mail niet geconfigureerd. Vul Lettermint (Lettermint__ApiKey en Mail__Provider=Lettermint), " +
+                "Resend API-key + From, of SMTP-host/gebruiker/app-wachtwoord/From in. " +
                 $"Testmail naar {redacted} is alleen in PlatformLog gelogd — niet echt verzonden.";
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, stubMessage, cancellationToken);
             return new SendTestMailResult(false, false, stubMessage);
@@ -116,9 +134,11 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
                 return new SendTestMailResult(false, true, failMessage);
             }
 
-            var via = resendReady
-                ? "Resend API"
-                : $"{smtp.Host}:{smtp.Port}";
+            var via = lettermintReady
+                ? "Lettermint"
+                : resendReady
+                    ? "Resend API"
+                    : $"{smtp.Host}:{smtp.Port}";
             var okMessage = $"Testmail verzonden naar {redacted} via {via}.";
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, true, okMessage, cancellationToken);
             return new SendTestMailResult(true, true, okMessage);
@@ -354,6 +374,13 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private async Task<(bool Ok, string Message)> TestMailAsync(CancellationToken cancellationToken)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
+        if (MailProviderChoice.Choose(
+                _mailOptions.Provider,
+                !string.IsNullOrWhiteSpace(_lettermintOptions.ApiKey)).Kind == MailProviderKind.Lettermint)
+        {
+            return (true, "Lettermint-sleutel aanwezig. Gebruik ‘Stuur testmail’ om echt te versturen.");
+        }
+
         if (SmtpEmailService.TryResolveResend(secrets, out _))
         {
             return (true, "Resend API-key + From aanwezig. Gebruik ‘Stuur testmail’ om echt te versturen.");
@@ -369,7 +396,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             return (true, $"SMTP bereikbaar op {smtp.Host}:{smtp.Port}. Let op: Gmail blokkeert cloud-SMTP vaak (5.7.9) — Resend API is betrouwbaarder.");
         }
 
-        return (false, "Configureer Resend (API-key + From) of SMTP (host, poort, gebruiker, app-wachtwoord, From).");
+        return (false, "Configureer Lettermint (Lettermint__ApiKey), Resend (API-key + From) of SMTP (host, poort, gebruiker, app-wachtwoord, From).");
     }
 
     private async Task<(bool Ok, string Message)> TestOAuthAsync(

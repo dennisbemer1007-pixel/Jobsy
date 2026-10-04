@@ -38,12 +38,16 @@ Never commit secret values. Set them in **Render Dashboard** (per environment) o
 | `JobsyAuth__Jwt__Issuer` / `Audience` | both | `jobsy-web` / `jobsy-api` |
 | `CLOUDFLARE_ORIGIN_SECRET` | API (+ CF rule) | Origin header gate |
 | `Sentry__Dsn` | API + Web | Error reporting |
-| `Mail__ResendApiKey` / `Mail__FromAddress` | API | Transactional mail |
+| `Mail__Provider` | API + Web | `Resend` or `Lettermint`. Web needs the same value so the privacy page matches the sender. |
+| `Mail__ResendApiKey` / `Mail__FromAddress` | API | Resend mail. Also `RESEND_API_KEY`. |
+| `Lettermint__ApiKey` | API + Web | Lettermint project token (`LETTERMINT_API_KEY`). Empty key falls back to Resend. Web only checks that the key is present. |
+| `Mail__AllowedRecipientPattern` | API | Acceptatie only, e.g. `^test-[^@]+@lobsy\.nl$`. Empty on production. |
+| `Mail__AllowedRecipientAddresses__0` | API | Optional extra address (the admin) when the pattern is set. |
 | `WebPush__Subject` / `PublicKey` / `PrivateKey` | API | VAPID |
 | `VerificationCodes__Pepper` | API | OTP hashing |
 | `Training__TrackingSecret` | API | Training links |
 | Mollie / OpenAI / KVK integration keys | API / admin integrations | Prefer Dashboard or encrypted integration store — not the repo |
-| `Ai__Provider` / `Mistral__ApiKey` | Acceptatie API **and** web | `OpenAI` (default) or `Mistral`. Production stays on OpenAI. Leave `Mistral__BaseUrl` unset so calls use the EU endpoint. |
+| `Ai__Provider` / `Mistral__ApiKey` / `Mistral__BaseUrl` | Acceptatie API **and** web | `OpenAI` (default) or `Mistral`. Production stays on OpenAI. Leave `Mistral__BaseUrl` unset so calls use the EU endpoint `https://api.eu.mistral.ai/v1/`. The privacy page counts Mistral as EU only when the base URL host is `api.eu.mistral.ai`. |
 
 Production and Acceptatie must **not** share the same JWT PEMs or auth secrets. Details: [`deploy-render.md`](deploy-render.md), [`../SECURITY.md`](../SECURITY.md).
 
