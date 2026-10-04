@@ -78,7 +78,12 @@ public class Ontdekkingsreis08CatalogTests
         Assert.True(opts[0].Disabled); // 5
         Assert.True(opts[1].Disabled); // 10
         Assert.False(opts[2].Disabled); // 18
+        Assert.Equal("Discovery.Shed.DoneSub", opts[0].SubKey);
+        Assert.Equal("Discovery.Shed.DoneSub", opts[1].SubKey);
         Assert.Equal("Discovery.Shed.DeepestSubCulture", opts[2].SubKey);
+        Assert.Equal(18, JourneyTestFlow.DefaultSelectedLevel(12, OnboardingWizardCatalog.OnboardingTestKind.Culture));
+        Assert.Equal(25, JourneyTestFlow.DefaultSelectedLevel(10, OnboardingWizardCatalog.OnboardingTestKind.Competency));
+        Assert.Equal(10, JourneyTestFlow.DefaultSelectedLevel(5, OnboardingWizardCatalog.OnboardingTestKind.Career));
     }
 
     private static void AssertSet(int[] ids, int max)

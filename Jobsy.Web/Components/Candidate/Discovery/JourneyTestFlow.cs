@@ -22,32 +22,35 @@ public static class JourneyTestFlow
         [
             new(OnboardingWizardCatalog.MiniLevelCount,
                 "Discovery.Shed.Keep",
-                "Discovery.Shed.KeepSub",
+                miniDone ? "Discovery.Shed.DoneSub" : "Discovery.Shed.KeepSub",
                 1,
                 Disabled: miniDone),
             new(OnboardingWizardCatalog.DeeperLevelCount,
                 "Discovery.Shed.Deeper",
-                "Discovery.Shed.DeeperSub10",
+                deeperDone ? "Discovery.Shed.DoneSub" : "Discovery.Shed.DeeperSub10",
                 2,
                 Disabled: deeperDone),
             new(full,
                 "Discovery.Shed.Deepest",
-                culture ? "Discovery.Shed.DeepestSubCulture" : "Discovery.Shed.DeepestSub",
+                fullDone
+                    ? "Discovery.Shed.DoneSub"
+                    : culture ? "Discovery.Shed.DeepestSubCulture" : "Discovery.Shed.DeepestSub",
                 5,
                 Disabled: fullDone)
         ];
     }
 
     /// <summary>
-    /// Default selection on the shed moment: keep current band unless a deeper band is the only remaining option.
+    /// Default selection on the shed: the next band that is not done yet.
+    /// A finished band stays visible as Gedaan and is not preselected.
     /// </summary>
     public static int DefaultSelectedLevel(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
     {
-        var reached = OnboardingWizardCatalog.ReachedLevel(answeredCount, kind);
-        if (reached <= 0) return OnboardingWizardCatalog.MiniLevelCount;
-        if (reached < OnboardingWizardCatalog.DeeperLevelCount) return OnboardingWizardCatalog.MiniLevelCount;
-        if (reached < OnboardingWizardCatalog.FullLevelCount(kind)) return OnboardingWizardCatalog.DeeperLevelCount;
-        return OnboardingWizardCatalog.FullLevelCount(kind);
+        var full = OnboardingWizardCatalog.FullLevelCount(kind);
+        if (answeredCount >= full) return full;
+        if (answeredCount >= OnboardingWizardCatalog.DeeperLevelCount) return full;
+        if (answeredCount >= OnboardingWizardCatalog.MiniLevelCount) return OnboardingWizardCatalog.DeeperLevelCount;
+        return OnboardingWizardCatalog.MiniLevelCount;
     }
 
     public static bool IsFullyDone(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)

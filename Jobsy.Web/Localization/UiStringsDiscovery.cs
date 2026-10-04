@@ -503,6 +503,8 @@ public static class UiStringsDiscovery
             "Zo laten", "Leave it", "Zostaw tak", "Lasă așa", "اتركه هكذا");
         Add("Discovery.Shed.KeepSub",
             "5 vragen · klaar", "5 questions · done", "5 pytań · gotowe", "5 întrebări · gata", "5 أسئلة · جاهز");
+        Add("Discovery.Shed.DoneSub",
+            "Gedaan", "Done", "Gotowe", "Gata", "جاهز");
         Add("Discovery.Shed.Deeper",
             "Iets dieper", "A bit deeper", "Trochę głębiej", "Un pic mai adânc", "أعمق قليلاً");
         Add("Discovery.Shed.DeeperSub10",
