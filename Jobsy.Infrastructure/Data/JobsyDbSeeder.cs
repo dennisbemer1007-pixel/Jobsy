@@ -62,6 +62,15 @@ public static class JobsyDbSeeder
 
         try
         {
+            await MockVacancyCopyBackfill.BackfillAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Mock vacancy copy backfill after migrate failed; continuing.");
+        }
+
+        try
+        {
             await AtsScrapeSourceSeeder.SeedAsync(db, logger);
         }
         catch (Exception ex)

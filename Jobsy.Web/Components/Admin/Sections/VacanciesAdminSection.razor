@@ -163,7 +163,7 @@ else
                             <td class="data-table__col--wrap" data-label="@Culture["Admin.Company"]">@v.CompanyName <span class="muted">@CompanyTypeLabel(v.CompanyType)</span></td>
                             <td data-label="@Culture["Admin.Status"]">@StatusLabel(v.Status)</td>
                             <td data-label="@Culture["Vacancy.PlacementDate"]">@v.StartDate.ToString("dd-MM-yyyy")</td>
-                            <td data-label="@Culture["Vacancy.Deadline"]">@v.EndDate.ToString("dd-MM-yyyy")</td>
+                            <td data-label="@Culture["Vacancy.Deadline"]">@DeadlineLabel(v)</td>
                             <td data-label="@Culture["AdminVacancy.Col.Source"]">
                                 <span class="source-badge source-badge--@VacancySourceDisplay.ChannelCssModifier(v.CreatedVia)"
                                       title="@VacancySourceDisplay.Label(v.CreatedVia)">
@@ -442,6 +442,14 @@ else
             _drilldown = [];
         }
     }
+
+    private string DeadlineLabel(AdminVacancyItem v)
+        => ClosedVacancyDeadline.Label(
+            v.Status,
+            v.EndDate,
+            v.ClosedAtUtc,
+            Culture["WgVac.ClosedOn"],
+            Culture["WgVac.Closed"]);
 
     private string StatusLabel(string status) => status switch
     {

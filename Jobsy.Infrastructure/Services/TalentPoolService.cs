@@ -84,11 +84,11 @@ public sealed class TalentPoolService : ITalentPoolService
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Select(t => t.Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        // Off: RIASEC codes in the tags query never match. Competency match tags still do.
+        // Off: career-test names, Dutch type labels and Holland codes never match. Competency tags still do.
         var matchFilter = showRiasec || tagsFilter is null
             ? tagsFilter
             : tagsFilter
-                .Where(t => !TalentPoolRiasecVisibility.IsRiasecCode(t))
+                .Where(t => !TalentPoolRiasecVisibility.IsCareerTestOutput(t))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var results = new List<AnonymousTalentCardDto>();
@@ -114,7 +114,7 @@ public sealed class TalentPoolService : ITalentPoolService
                 : competency is not null
                     ? CompetencyTestCatalog.ParseTagsJson(competency.RiasecTagsJson)
                     : [];
-            if (career is not null)
+            if (showRiasec && career is not null)
             {
                 foreach (var tag in CareerTestCatalog.ParseTagsJson(career.MatchTagsJson))
                 {
@@ -123,6 +123,12 @@ public sealed class TalentPoolService : ITalentPoolService
                         matchTags.Add(tag);
                     }
                 }
+            }
+            else if (!showRiasec)
+            {
+                matchTags = matchTags
+                    .Where(t => !TalentPoolRiasecVisibility.IsCareerTestOutput(t))
+                    .ToList();
             }
 
             if (tagsFilter is { Count: > 0 })

@@ -1781,7 +1781,7 @@ public class ApplicationsController : ControllerBase
     {
         _ = authenticatorStubUsed; // logged by callers if needed; never shown in mail (05.3)
         var subject = $"Sollicitatie bevestigd: {vacancy.Title}";
-        var body = $"Je sollicitatie op {vacancy.Title} bij {vacancy.Company.Name} is ontvangen.";
+        var body = ApplicationRules.ConfirmationNoticeBody(vacancy.Company.Name);
         var mail = TransactionalEmails.ApplicationConfirmation(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
             candidate.FullName,

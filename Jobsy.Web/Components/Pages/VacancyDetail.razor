@@ -482,6 +482,8 @@
                     <Authorized>
                         @if (_vacancy is not null && !_vacancy.OpenForWorkRequired)
                         {
+                        @if (!_applied)
+                        {
                         <header class="apply-flow__header">
                             <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
                             <p class="apply-flow__lead">@ApplyFlowLead</p>
@@ -505,6 +507,7 @@
                                 <span class="apply-steps__label">@Culture["Apply.StepVerify"]</span>
                             </li>
                         </ol>
+                        }
 
                         @if (_applied)
                         {
