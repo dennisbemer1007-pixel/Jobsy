@@ -8,6 +8,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -24,6 +25,7 @@ public sealed class TalentPoolService : ITalentPoolService
     private readonly IUserNotificationService _notifications;
     private readonly IFlexCommercialService _commercial;
     private readonly IFeatureFlags? _flags;
+    private readonly IConfiguration? _configuration;
 
     public TalentPoolService(
         JobsyDbContext db,
@@ -31,7 +33,8 @@ public sealed class TalentPoolService : ITalentPoolService
         IRoutingService routing,
         IUserNotificationService notifications,
         IFlexCommercialService commercial,
-        IFeatureFlags? flags = null)
+        IFeatureFlags? flags = null,
+        IConfiguration? configuration = null)
     {
         _db = db;
         _tokens = tokens;
@@ -39,6 +42,7 @@ public sealed class TalentPoolService : ITalentPoolService
         _notifications = notifications;
         _commercial = commercial;
         _flags = flags;
+        _configuration = configuration;
     }
 
     public async Task<IReadOnlyList<AnonymousTalentCardDto>> SearchAsync(
@@ -75,23 +79,17 @@ public sealed class TalentPoolService : ITalentPoolService
         var careers = careerRows
             .GroupBy(c => c.UserId)
             .ToDictionary(g => g.Key, g => g.First());
-        var deepCompleted = await _db.CandidateDeepAnalyses.AsNoTracking()
-            .Where(d => d.Status == CandidateDeepAnalysisStatuses.Completed && userIds.Contains(d.UserId))
-            .Select(d => new { d.UserId, d.Kind })
-            .ToListAsync(cancellationToken);
-        var competenceDeep = deepCompleted
-            .Where(d => d.Kind == AssessmentKind.Competence)
-            .Select(d => d.UserId)
-            .ToHashSet();
-        var careerDeep = deepCompleted
-            .Where(d => d.Kind == AssessmentKind.Career)
-            .Select(d => d.UserId)
-            .ToHashSet();
-
+        var showRiasec = _configuration?.GetValue(TalentPoolRiasecVisibility.ConfigKey, false) ?? false;
         var tagsFilter = query.Tags?
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Select(t => t.Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Off: RIASEC codes in the tags query never match. Competency match tags still do.
+        var matchFilter = showRiasec || tagsFilter is null
+            ? tagsFilter
+            : tagsFilter
+                .Where(t => !TalentPoolRiasecVisibility.IsRiasecCode(t))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var results = new List<AnonymousTalentCardDto>();
         foreach (var user in users)
@@ -127,11 +125,15 @@ public sealed class TalentPoolService : ITalentPoolService
                 }
             }
 
-            if (tagsFilter is { Count: > 0 }
-                && !matchTags.Any(t => tagsFilter.Contains(t))
-                && !riasec.Any(t => tagsFilter.Contains(t)))
+            if (tagsFilter is { Count: > 0 })
             {
-                continue;
+                var matchesCompetency = matchFilter is { Count: > 0 }
+                    && matchTags.Any(t => matchFilter.Contains(t));
+                var matchesRiasec = showRiasec && riasec.Any(t => tagsFilter.Contains(t));
+                if (!matchesCompetency && !matchesRiasec)
+                {
+                    continue;
+                }
             }
 
             var prefs = DeserializePrefs(user.PreferencesJson);
@@ -169,26 +171,6 @@ public sealed class TalentPoolService : ITalentPoolService
                 continue;
             }
 
-            var scores = competency is null
-                ? null
-                : CompetencyTestCatalog.CompletedScoresOrNull(
-                    competency.Status,
-                    competency.SamenwerkenPercent,
-                    competency.ResultaatgerichtheidPercent,
-                    competency.StressbestendigheidPercent,
-                    competency.InnovatiePercent,
-                    competency.ExtraversiePercent);
-            var careerScores = career is null
-                ? null
-                : CareerTestCatalog.CompletedScoresOrNull(
-                    career.Status,
-                    career.RealisticPercent,
-                    career.InvestigativePercent,
-                    career.ArtisticPercent,
-                    career.SocialPercent,
-                    career.EnterprisingPercent,
-                    career.ConventionalPercent);
-
             var availability = LobsyCvModelFactory.FormatAvailability(
                 prefs.Availability,
                 prefs.FlexibleTimes == true);
@@ -196,16 +178,12 @@ public sealed class TalentPoolService : ITalentPoolService
             results.Add(new AnonymousTalentCardDto(
                 user.Id,
                 matchTags,
-                riasec,
-                scores,
-                careerScores,
-                career?.HollandCode,
+                showRiasec ? riasec : [],
+                showRiasec ? career?.HollandCode : null,
                 availability,
                 licenses,
                 travelMinutes,
-                LobsyCvModelFactory.ExtractCity(prefs.HomeAddress) ?? "Westland / Den Haag",
-                competenceDeep.Contains(user.Id),
-                careerDeep.Contains(user.Id)));
+                LobsyCvModelFactory.ExtractCity(prefs.HomeAddress) ?? "Westland / Den Haag"));
 
             if (results.Count >= take)
             {

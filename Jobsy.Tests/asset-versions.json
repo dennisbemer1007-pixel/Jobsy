@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "e29fe645988aacbc95823a2c515c00c72f3d943d508713fa28dad468d41878ff",
+    "sha256": "20ae86eca75bd6a1de809c6f849fd35a144447a3759278a993f73427fc00e988",
     "v": "20261004-run7"
   },
   "css/critical.css": {
@@ -108,8 +108,8 @@
     "v": "20260929-testresultaten-b2"
   },
   "css/features/tests.css": {
-    "sha256": "6734f5bd9cfad69ecbcac9e66b34765886cafb2055c5512eb3767d03e472021f",
-    "v": "20261004-run6"
+    "sha256": "d49020856b29140f55c8924ba8551a7476b3550f2b63063eea272d9c7437814f",
+    "v": "20261004-run7"
   },
   "css/features/werkgever-aanmelding.css": {
     "sha256": "61ab5ba72e934f78dde05395a0af29eb0cf55ab4d3d3dfae4c1c19091d799a09",
@@ -136,7 +136,7 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "d730a1806aa915fa283cff8abc49bc86040cada479e3a34543b681d83164d729",
+    "sha256": "4aa50ee7be6e684cde42d7c0dd3693d0da5a800946d43c4783ac977d5016c3a8",
     "v": "20261004-run7"
   },
   "js/app-extras.js": {
@@ -188,7 +188,7 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "1dd040163a72e35b3d57947889edf8713ae2c390aa1a64bb92867e3ab3c80cd6",
+    "sha256": "2066692aa6eaf576c763cb6473ccc22a349d93cd69ea68b22f109ff88e4f854d",
     "v": "20261004-run7"
   },
   "js/navFeedback.js": {
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "9d67dd19ae842ff680fa9d5ebd3eea4f95b9fcf736a31371b6509fbf851524bc",
+    "sha256": "d68be5a8452faac36203d75479240c1671dd9452b7527c522767973afbc6c600",
     "v": "20261004-run7"
   },
   "service-worker.published.js": {
-    "sha256": "58030bd0a06beca0dd6a6210ba24ca42915238db639554f77cbae653cf18a029",
+    "sha256": "3b1a7cfe5173778d7baea494978d19baf0bd3ee1ecb435bbf658c663c405c6b3",
     "v": "20261004-run7"
   }
 }

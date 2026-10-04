@@ -1264,6 +1264,21 @@ window.jobsyDialog = (function () {
         }
     }
 
+    function firstFocusable(el) {
+        var list = focusables(el);
+        for (var i = 0; i < list.length; i++) {
+            var node = list[i];
+            // A clipped close control is the first button in row menus. Focusing it
+            // does not stick in headless Chrome, so focus falls to the body and the
+            // menu treats that as "focus left" and closes itself.
+            if (node.classList && node.classList.contains("visually-hidden")) {
+                continue;
+            }
+            return node;
+        }
+        return list.length ? list[0] : el;
+    }
+
     function trap(el) {
         release();
         if (!el) {
@@ -1272,8 +1287,7 @@ window.jobsyDialog = (function () {
         previouslyFocused = document.activeElement;
         active = el;
         document.addEventListener("keydown", onKeyDown, true);
-        var list = focusables(el);
-        var target = list[0] || el;
+        var target = firstFocusable(el);
         try {
             target.focus();
         } catch (e) { }

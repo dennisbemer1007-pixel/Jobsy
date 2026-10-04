@@ -1,0 +1,32 @@
+@namespace Jobsy.Web.Components.Werkgever.Sections
+@using Jobsy.Web.Models
+
+<div class="detail-card" data-testid="talent-card">
+    <p><strong>@Card.RegionLabel</strong> · @(Card.TravelMinutes is int m ? $"{m} min" : "reistijd onbekend")</p>
+    <p data-testid="talent-tags">Tags: @string.Join(", ", DisplayTags)</p>
+    @if (ShowRiasec && !string.IsNullOrWhiteSpace(Card.HollandCode))
+    {
+        <p data-testid="talent-holland">Holland-code: @Card.HollandCode</p>
+    }
+    <p>@(Card.AvailabilitySummary ?? "Beschikbaarheid onbekend")</p>
+    <p>Rijbewijs: @(Card.DrivingLicenses.Count == 0 ? "—" : string.Join(", ", Card.DrivingLicenses))</p>
+    @if (CanMutate)
+    {
+        <button class="login-submit" type="button" @onclick="() => OnUnlock.InvokeAsync(Card.CandidateUserId)">
+            @UnlockLabel
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public AnonymousTalentCard Card { get; set; } = default!;
+    [Parameter] public bool ShowRiasec { get; set; }
+    [Parameter] public bool CanMutate { get; set; }
+    [Parameter] public string UnlockLabel { get; set; } = "";
+    [Parameter] public EventCallback<Guid> OnUnlock { get; set; }
+
+    private IEnumerable<string> DisplayTags
+        => ShowRiasec
+            ? Card.MatchTags.Concat(Card.RiasecTags).Distinct(StringComparer.OrdinalIgnoreCase)
+            : Card.MatchTags;
+}
