@@ -5,7 +5,7 @@ namespace Jobsy.Core.Scholen;
 
 /// <summary>
 /// Fixed dream-job ideas per RIASEC letter (6 each). Chosen by top-2 letters, deterministic.
-/// Groep 7/8 uses a younger pool and prefers jobs that match the pupil's likes.
+/// Likes come first for every age, then the letter pool. Groep 7/8 uses a younger letter pool.
 /// Keys match <see cref="DreamJobCatalog"/> where possible.
 /// </summary>
 public static class PupilRiasecJobIdeas
@@ -66,7 +66,7 @@ public static class PupilRiasecJobIdeas
         var result = new List<string>(4);
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        if (set == PupilQuestionSet.Groep78 && likeKeys is not null)
+        if (likeKeys is not null)
         {
             foreach (var like in likeKeys)
             {

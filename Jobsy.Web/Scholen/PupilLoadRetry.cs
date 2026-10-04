@@ -1,0 +1,71 @@
+using System.Net;
+
+namespace Jobsy.Web.Scholen;
+
+/// <summary>
+/// First load of a pupil page. A real 401/403 means the code session is gone.
+/// A network blip, 5xx or circuit hiccup is retried, then shown as offline.
+/// </summary>
+public static class PupilLoadRetry
+{
+    /// <summary>First try immediately, then 300 ms, then 1 s.</summary>
+    public static readonly int[] AttemptDelaysMs = [0, 300, 1000];
+
+    public static bool IsSessionLost(Exception exception)
+        => exception is HttpRequestException http && IsSessionLost(http.StatusCode);
+
+    public static bool IsSessionLost(HttpStatusCode? status)
+        => status is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden;
+
+    public static async Task<PupilLoadOutcome<T>> RunAsync<T>(
+        Func<Task<T?>> fetch,
+        CancellationToken cancellationToken = default) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(fetch);
+        for (var attempt = 0; attempt < AttemptDelaysMs.Length; attempt++)
+        {
+            if (AttemptDelaysMs[attempt] > 0)
+            {
+                await Task.Delay(AttemptDelaysMs[attempt], cancellationToken);
+            }
+
+            try
+            {
+                var value = await fetch();
+                if (value is not null)
+                {
+                    return PupilLoadOutcome<T>.Ok(value);
+                }
+            }
+            catch (Exception ex) when (IsSessionLost(ex))
+            {
+                return PupilLoadOutcome<T>.Lost();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Transient. Try the next delay.
+            }
+        }
+
+        return PupilLoadOutcome<T>.Offline();
+    }
+}
+
+public readonly record struct PupilLoadOutcome<T> where T : class
+{
+    public T? Value { get; private init; }
+
+    public bool SessionLost { get; private init; }
+
+    public bool IsOffline { get; private init; }
+
+    public static PupilLoadOutcome<T> Ok(T value) => new() { Value = value };
+
+    public static PupilLoadOutcome<T> Lost() => new() { SessionLost = true };
+
+    public static PupilLoadOutcome<T> Offline() => new() { IsOffline = true };
+}
