@@ -232,7 +232,7 @@ public sealed class SalesEmployerReadService : ISalesEmployerReadService, ISales
         var ledger = await _db.CommissionLedgerEntries.AsNoTracking()
             .Where(e => e.SalesManagerUserId == beneficiaryUserId
                         && e.CompanyId != null
-                        && allBranchIds.Contains(e.CompanyId.Value)
+                        && allBranchIds.Contains(e.CompanyId ?? Guid.Empty)
                         && e.Kind != CommissionEntryKind.Payout)
             .Select(e => new
             {
@@ -515,7 +515,7 @@ public sealed class SalesEmployerReadService : ISalesEmployerReadService, ISales
         var entries = await _db.CommissionLedgerEntries.AsNoTracking()
             .Where(e => e.SalesManagerUserId == beneficiaryUserId
                         && e.CompanyId != null
-                        && branchIds.Contains(e.CompanyId.Value)
+                        && branchIds.Contains(e.CompanyId ?? Guid.Empty)
                         && (e.Kind == CommissionEntryKind.TokenCommission
                             || e.Kind == CommissionEntryKind.IndirectTokenCommission
                             || e.Kind == CommissionEntryKind.FounderBonus))

@@ -23,6 +23,8 @@ public static class LegalProcessorFingerprint
                 .Append(processor.Status).Append('|')
                 .Append(processor.TransferBasisKey).Append('|')
                 .Append(processor.WhenMailProvider).Append('|')
+                .Append(processor.WhenAiProvider).Append('|')
+                .Append(processor.LocationNoteKey).Append('|')
                 .Append(processor.PlannedNoteKey).Append('\n');
         }
 

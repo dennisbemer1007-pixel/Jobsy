@@ -12,8 +12,29 @@ public static class DataLocationText
     public static IReadOnlyList<string> SwissCompanyNames(IReadOnlyList<LegalProcessor> processors)
         => processors.Where(p => p.CompanyHq == ProcessorRegion.Switzerland).Select(p => p.Name).ToList();
 
-    public static bool AllCompaniesAreOutsideTheUnitedStates(IReadOnlyList<LegalProcessor> processors)
-        => processors.Count > 0 && processors.All(p => !p.IsAmericanCompany);
+    /// <summary>
+    /// European companies whose data does not stay in the EU (for example Mistral on a non-EU API host).
+    /// American companies are named separately. Switzerland has its own sentence.
+    /// </summary>
+    public static IReadOnlyList<string> OutsideEuCompanyNames(IReadOnlyList<LegalProcessor> processors)
+        => processors
+            .Where(p => p.LocationNoteKey is null
+                && !p.IsAmericanCompany
+                && p.CompanyHq != ProcessorRegion.Switzerland
+                && DataLeavesTheEu(p.DataRegion))
+            .Select(p => p.Name)
+            .ToList();
+
+    public static bool AllDataStaysInTheEuWithEuropeanCompanies(IReadOnlyList<LegalProcessor> processors)
+        => processors.Count > 0
+            && processors.All(p => !p.IsAmericanCompany && p.LocationNoteKey is null)
+            && OutsideEuCompanyNames(processors).Count == 0;
+
+    public static bool DataLeavesTheEu(ProcessorRegion region)
+        => region is ProcessorRegion.UnitedStates
+            or ProcessorRegion.EuAndUnitedStates
+            or ProcessorRegion.EuOrUnitedStates
+            or ProcessorRegion.OutsideEuropeanUnion;
 
     /// <summary>"A, B en C" / "A, B and C" / Arabic comma. One name is returned as-is.</summary>
     public static string JoinNames(IReadOnlyList<string> names, string? language)

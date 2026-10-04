@@ -951,7 +951,7 @@ public class VacanciesController : ControllerBase
             return Ok(Array.Empty<VacancyListItemDto>());
         }
 
-        IReadOnlyCollection<Guid>? scope = accessible;
+        List<Guid>? scope = accessible is null ? null : accessible as List<Guid> ?? accessible.ToList();
         if (companyIds is { Count: > 0 } && accessible is not null)
         {
             var intersection = companyIds.Where(accessible.Contains).Distinct().ToList();
@@ -981,7 +981,7 @@ public class VacanciesController : ControllerBase
             // End-client company OR intermediary org that posted the vacancy.
             query = query.Where(v =>
                 scope.Contains(v.CompanyId)
-                || (v.IntermediaryCompanyId != null && scope.Contains(v.IntermediaryCompanyId.Value)));
+                || scope.Contains(v.IntermediaryCompanyId ?? Guid.Empty));
         }
 
         var vacancies = await query.OrderBy(v => v.Title).ToListAsync(cancellationToken);
@@ -1095,6 +1095,7 @@ public class VacanciesController : ControllerBase
                     RequestedExtend = v.RequestedExtend,
                     NewApplicationCount = newApplicationCounts.GetValueOrDefault(v.Id),
                     HasPushBom = pushBomSet.Contains(v.Id),
+                    ClosedAtUtc = v.ClosedAtUtc,
                     IncompleteFieldCount = v.Status == VacancyStatus.Draft
                         ? VacancyDraftCompletenessRules.CountMissingFields(v)
                         : 0,

@@ -110,6 +110,7 @@ public class ApplicationItem
     public List<ApplicationTimelineStepItem>? Timeline { get; set; }
     public string? NextStepKey { get; set; }
     public bool LegacyNoHistory { get; set; }
+    public bool VacancyClosed { get; set; }
 }
 
 public class ApplicationTimelineStepItem
@@ -797,6 +798,13 @@ public class PersonalDataAccessLogItem
     public string? Reason { get; set; }
     public Guid? SupportAccessGrantId { get; set; }
     public string CorrelationId { get; set; } = string.Empty;
+    public string? ActorName { get; set; }
+    public string? ActorEmailMasked { get; set; }
+    public string? ActorCompanyName { get; set; }
+    public string? SubjectName { get; set; }
+    public string? SubjectEmailMasked { get; set; }
+    public string? SubjectRole { get; set; }
+    public string? SubjectCompanyName { get; set; }
 }
 
 public class PersonalDataAccessLogPage
@@ -844,6 +852,7 @@ public class AdminVacancyItem
     public bool IsExtended { get; set; }
     public string CreatedVia { get; set; } = "Manual";
     public bool ContentModerationPassed { get; set; } = true;
+    public DateTime? ClosedAtUtc { get; set; }
 }
 
 public sealed record AdminVacancyPage(

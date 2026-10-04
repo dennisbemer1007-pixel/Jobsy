@@ -1,10 +1,15 @@
+@using Jobsy.Core.Ai
 @using Jobsy.Core.Legal
+@using Jobsy.Core.Options
 @using Jobsy.Core.Privacy
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
 @inject CultureState Culture
 @inject LegalIdentityProvider LegalIdentity
 @inject IConfiguration Configuration
+@inject IServiceProvider Services
 
 @* Official Dutch privacy statement (D3). B1 Dutch, "je"; every number comes from a constant. *@
 <LegalDocument DocumentId="@LegalDocumentIds.Privacy"
@@ -18,6 +23,30 @@
     private string? _privacyContact;
     private IReadOnlyList<LegalSection>? _sections;
 
+    private AiProviderDecision AiDecision
+        => AiProviderChoice.Decide(AiProvider, MistralApiKey);
+
+    private bool UsesMistral => AiDecision.Kind == AiProviderKind.Mistral;
+
+    private bool MistralDataStaysInTheEu
+        => UsesMistral && MistralEndpoint.InferenceStaysInEu(MistralBaseUrl);
+
+    private string? AiProvider
+        => FirstSet(
+            Services.GetService<IOptions<AiOptions>>()?.Value.Provider,
+            Configuration["Ai:Provider"]);
+
+    private string? MistralApiKey
+        => FirstSet(
+            Services.GetService<IOptions<MistralOptions>>()?.Value.ApiKey,
+            Configuration["Mistral:ApiKey"],
+            Configuration["MISTRAL_API_KEY"]);
+
+    private string? MistralBaseUrl
+        => FirstSet(
+            Services.GetService<IOptions<MistralOptions>>()?.Value.BaseUrl,
+            Configuration["Mistral:BaseUrl"]);
+
     private static int TalentPoolAge => CandidateConsentRules.TalentPoolMinimumAge;
 
     private static int ParentalConsentAge => CandidateConsentRules.ParentalConsentAge;
@@ -25,7 +54,23 @@
     private IReadOnlyList<LegalProcessor> ActiveProcessors =>
         LegalProcessorSelection.Resolve(
             Configuration["Mail:Provider"],
-            !string.IsNullOrWhiteSpace(Configuration["Lettermint:ApiKey"]));
+            !string.IsNullOrWhiteSpace(Configuration["Lettermint:ApiKey"])
+                || !string.IsNullOrWhiteSpace(Configuration["LETTERMINT_API_KEY"]),
+            AiDecision.Kind,
+            MistralBaseUrl);
+
+    private static string? FirstSet(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -235,7 +280,18 @@
                 </p>
                 <p><strong>Wat de AI doet</strong></p>
                 <ul>
-                    <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar OpenAI, dus misschien ook je naam, adres en telefoonnummer.</li>
+                    @if (MistralDataStaysInTheEu)
+                    {
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs, voor verwerking in de EU. Account en facturen van Mistral kunnen buiten de EU staan. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
+                    }
+                    else if (UsesMistral)
+                    {
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs. Mistral belooft geen plek voor die verwerking. Account en facturen van Mistral kunnen buiten de EU staan. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
+                    }
+                    else
+                    {
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar OpenAI, dus misschien ook je naam, adres en telefoonnummer.</li>
+                    }
                     <li>Het oefengesprek en de assistent. Daar gaan je naam en je berichten mee. We bewaren het gesprek niet als archief op onze servers.</li>
                     <li>Vacatureteksten controleren en vertalen.</li>
                     <li>Je Beroepen-kompas, de Cultuur Fit en de Functie-Fit Checker. Daar gaan alleen scores, voorkeuren en een functietitel mee. Geen naam, geen e-mailadres.</li>
@@ -243,7 +299,7 @@
                 <p>
                     Werkt de AI niet of hebben we geen sleutel? Dan gebruikt Lobsy een eigen lijst met beroepen
                     uit de Nederlandse arbeidsmarkt. Een cv uploaden is altijd vrijwillig: upload je niets, dan
-                    gaat er geen cv-tekst naar OpenAI.
+                    @(UsesMistral ? "gaat er geen cv-tekst naar Mistral AI." : "gaat er geen cv-tekst naar OpenAI.")
                 </p>
                 <p>
                     <strong>AI en jouw gegevens.</strong> Lobsy geeft werkgevers geen scores en geen ranglijst.

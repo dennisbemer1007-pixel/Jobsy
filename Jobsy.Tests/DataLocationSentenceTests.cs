@@ -88,6 +88,49 @@ public class DataLocationSentenceTests : PrivacyRenderTestBase
     }
 
     [Fact]
+    public void Mistral_on_the_eu_host_says_processing_stays_in_the_eu()
+    {
+        var mistral = LegalProcessorSelection.ApplyMistralHost(
+            LegalProcessors.ById("mistral"),
+            mistralDataStaysInTheEu: true);
+        var rows = new[] { LegalProcessors.ById("mollie"), mistral };
+
+        var text = Render<Jobsy.Web.Components.Legal.DataLocationSentence>(parameters =>
+            parameters.Add(component => component.Rows, rows)).Find("#buiten-de-eu").TextContent;
+
+        Assert.Contains("Verwerking bij Mistral AI gebeurt in de EU.", text, StringComparison.Ordinal);
+        Assert.Contains("Account en facturen van Mistral kunnen buiten de EU staan.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Al je gegevens blijven in de EU", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("belooft geen plek", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Mistral_on_another_host_promises_no_place()
+    {
+        var rows = new[] { LegalProcessors.ById("mollie"), LegalProcessors.ById("mistral") };
+
+        var text = Render<Jobsy.Web.Components.Legal.DataLocationSentence>(parameters =>
+            parameters.Add(component => component.Rows, rows)).Find("#buiten-de-eu").TextContent;
+
+        Assert.Contains("Mistral belooft geen plek voor de verwerking.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Al je gegevens blijven in de EU", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Amerikaanse bedrijven", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OpenAI_is_named_with_the_american_companies()
+    {
+        var rows = new[] { LegalProcessors.ById("openai"), LegalProcessors.ById("mollie") };
+
+        var text = Render<Jobsy.Web.Components.Legal.DataLocationSentence>(parameters =>
+            parameters.Add(component => component.Rows, rows)).Find("#buiten-de-eu").TextContent;
+
+        Assert.Contains("OpenAI", text, StringComparison.Ordinal);
+        Assert.Contains("Amerikaanse bedrijven", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Al je gegevens blijven in de EU", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_privacy_markup_no_longer_hardcodes_the_data_location_sentence()
     {
         Assert.DoesNotContain("Een paar diensten zijn van Amerikaanse bedrijven", PrivacyMarkupSource, StringComparison.Ordinal);

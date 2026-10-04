@@ -1,3 +1,4 @@
+using Jobsy.Core.Ai;
 using Jobsy.Core.Email;
 
 namespace Jobsy.Core.Legal;
@@ -36,6 +37,18 @@ public sealed record LegalProcessor(
     /// </summary>
     public string? WhenMailProvider { get; init; }
 
+    /// <summary>
+    /// When set, the row is listed only while this AI provider is the one that actually runs.
+    /// Null means the row is always listed. Values are <c>OpenAI</c> and <c>Mistral</c>.
+    /// </summary>
+    public string? WhenAiProvider { get; init; }
+
+    /// <summary>
+    /// Extra sentence for the where-cell and the generated data-location line.
+    /// Mistral uses this for the host wording (EU inference, or no promised place) and the account note.
+    /// </summary>
+    public string? LocationNoteKey { get; init; }
+
     /// <summary>Dutch "where" cell for the official table: company headquarters and data region.</summary>
     public string Region => ProcessorRegionText.DutchWhere(CompanyHq, DataRegion);
 
@@ -53,6 +66,7 @@ public static class LegalProcessors
     public const string DataPrivacyFramework = "Legal.Transfer.Dpf";
     public const string StandardClauses = "Legal.Transfer.Scc";
     public const string AdequacyDecision = "Legal.Transfer.Adequacy";
+    public const string NoStatedPlace = "Legal.Transfer.NoPlace";
 
     public static readonly IReadOnlyList<LegalProcessor> All =
     [
@@ -136,7 +150,23 @@ public static class LegalProcessors
             "Legal.Processor.openai.Purpose",
             "Legal.Processor.openai.Data",
             ProcessorStatus.Active,
-            DataPrivacyFramework),
+            DataPrivacyFramework)
+        {
+            WhenAiProvider = AiProviderNames.OpenAI
+        },
+        new(
+            "mistral",
+            "Mistral AI",
+            ProcessorRegion.France,
+            ProcessorRegion.OutsideEuropeanUnion,
+            "Legal.Processor.mistral.Purpose",
+            "Legal.Processor.mistral.Data.Global",
+            ProcessorStatus.Active,
+            NoStatedPlace)
+        {
+            WhenAiProvider = AiProviderNames.Mistral,
+            LocationNoteKey = "Legal.Processor.mistral.GlobalNote"
+        },
         new(
             "cursor",
             "Cursor",

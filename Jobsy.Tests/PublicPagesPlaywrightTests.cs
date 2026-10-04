@@ -402,8 +402,15 @@ public class PublicPagesPlaywrightTests
         Assert.Contains(title, sentence, StringComparison.Ordinal);
         Assert.Contains(american, sentence, StringComparison.Ordinal);
         Assert.Contains("Resend", sentence, StringComparison.Ordinal);
+        Assert.Contains("OpenAI", sentence, StringComparison.Ordinal);
         Assert.DoesNotContain("Lettermint", sentence, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mistral", sentence, StringComparison.Ordinal);
         Assert.DoesNotContain("Al je gegevens blijven in de EU", sentence, StringComparison.Ordinal);
+
+        // Default stack is OpenAI. The table must not name Mistral until Ai__Provider is switched.
+        var table = await page.Locator("#delen .pp-table__grid").InnerTextAsync();
+        Assert.Contains("OpenAI", table, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mistral", table, StringComparison.Ordinal);
     }
 
     private static readonly Dictionary<string, (string Title, string American)> DataLocationPhrases = new()

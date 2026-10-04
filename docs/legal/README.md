@@ -67,6 +67,9 @@ Resource values never contain HTML — links are composed in the markup.
   No American company in the active list → the sentence says all data stays in the EU with European companies.
   Otherwise it names the American companies. Resend and Lettermint share one slot (`WhenMailProvider`);
   the row follows `Mail:Provider` and whether `Lettermint:ApiKey` is set.
+  OpenAI and Mistral share one slot (`WhenAiProvider`). Mistral inference is in the EU only when the
+  configured base URL host is `api.eu.mistral.ai`. Any other host says Mistral promises no place.
+  Account and billing data at Mistral can still be handled outside the EU.
 - Changing the catalog changes `LegalProcessorFingerprint`. Append a row to
   `LegalDocumentVersions.PrivacyCatalogSnapshots` and bump `Privacy` (version, date, changelog).
   `LegalProcessorCatalogTests` fails if the hash and the version drift apart.

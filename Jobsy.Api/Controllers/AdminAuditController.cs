@@ -43,6 +43,7 @@ public sealed class AdminAuditController : ControllerBase
         [FromQuery] string? targetType,
         [FromQuery] string? targetId,
         [FromQuery] string? q,
+        [FromQuery] string? labelKeys = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
         CancellationToken cancellationToken = default)
@@ -50,7 +51,7 @@ public sealed class AdminAuditController : ControllerBase
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = BuildFilteredQuery(from, to, action, actor, result, targetType, targetId, q);
+        var query = BuildFilteredQuery(from, to, action, actor, result, targetType, targetId, q, labelKeys);
         var total = await query.CountAsync(cancellationToken);
         var rows = await query
             .OrderByDescending(e => e.OccurredAtUtc)
@@ -79,9 +80,10 @@ public sealed class AdminAuditController : ControllerBase
         [FromQuery] string? targetType,
         [FromQuery] string? targetId,
         [FromQuery] string? q,
+        [FromQuery] string? labelKeys = null,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildFilteredQuery(from, to, action, actor, result, targetType, targetId, q);
+        var query = BuildFilteredQuery(from, to, action, actor, result, targetType, targetId, q, labelKeys);
         var rows = await query
             .OrderByDescending(e => e.OccurredAtUtc)
             .Take(50_000)
@@ -233,7 +235,8 @@ public sealed class AdminAuditController : ControllerBase
         string? result,
         string? targetType,
         string? targetId,
-        string? q)
+        string? q,
+        string? labelKeys = null)
     {
         var query = _db.AdminAuditEvents.AsNoTracking().AsQueryable();
         if (from is DateTime f)
@@ -275,14 +278,33 @@ public sealed class AdminAuditController : ControllerBase
             query = query.Where(e => e.TargetId == tid);
         }
 
-        if (!string.IsNullOrWhiteSpace(q))
+        var labelKeyList = (labelKeys ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (!string.IsNullOrWhiteSpace(q) && labelKeyList.Count > 0)
         {
-            var term = q.Trim().ToLower();
+            var term = q.Trim().ToLowerInvariant();
+            query = query.Where(e =>
+                e.TargetLabel.ToLower().Contains(term)
+                || e.CorrelationId.ToLower().Contains(term)
+                || (e.Reason != null && e.Reason.ToLower().Contains(term))
+                || e.Action.ToLower().Contains(term)
+                || labelKeyList.Contains(e.TargetLabel)
+                || labelKeyList.Contains(e.Action));
+        }
+        else if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.Trim().ToLowerInvariant();
             query = query.Where(e =>
                 e.TargetLabel.ToLower().Contains(term)
                 || e.CorrelationId.ToLower().Contains(term)
                 || (e.Reason != null && e.Reason.ToLower().Contains(term))
                 || e.Action.ToLower().Contains(term));
+        }
+        else if (labelKeyList.Count > 0)
+        {
+            query = query.Where(e => labelKeyList.Contains(e.TargetLabel) || labelKeyList.Contains(e.Action));
         }
 
         return query;

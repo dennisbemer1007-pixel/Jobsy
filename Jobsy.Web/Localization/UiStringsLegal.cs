@@ -366,6 +366,18 @@ public static class UiStringsLegal
             "الحساب والاختبارات والنتائج");
 
         // —— Change log (D16) ——
+        Add("Legal.Change.Privacy.2026-10-08",
+            "De zin over waar je gegevens staan komt uit de lijst. E-mail kan via Lettermint in Nederland, in de EU. OpenAI blijft buiten de EU. Bij Mistral zeggen we alleen bij het EU-adres dat de verwerking in de EU gebeurt. Bij het wereldwijde adres belooft Mistral geen plek. Account en facturen van Mistral kunnen buiten de EU staan.",
+            "The sentence about where your data is comes from the list. E-mail can go through Lettermint in the Netherlands, in the EU. OpenAI stays outside the EU. For Mistral we say processing happens in the EU only with the EU address. With the global address Mistral promises no place. Mistral account and billing data can be handled outside the EU.",
+            "Zdanie o tym, gdzie są twoje dane, pochodzi z listy. E-mail może iść przez Lettermint w Holandii, w UE. OpenAI zostaje poza UE. Przy Mistral piszemy, że przetwarzanie jest w UE, tylko przy adresie UE. Przy adresie globalnym Mistral nie obiecuje miejsca. Konto i faktury Mistral mogą być obsługiwane poza UE.",
+            "Fraza despre unde sunt datele tale vine din listă. E-mailul poate merge prin Lettermint în Olanda, în UE. OpenAI rămâne în afara UE. La Mistral spunem că prelucrarea este în UE doar la adresa UE. La adresa globală Mistral nu promite un loc. Contul și facturile Mistral pot fi gestionate în afara UE.",
+            "الجملة عن مكان بياناتك تأتي من القائمة. يمكن أن يمر البريد عبر Lettermint في هولندا، داخل الاتحاد الأوروبي. يبقى OpenAI خارج الاتحاد الأوروبي. بالنسبة إلى Mistral نقول إن المعالجة داخل الاتحاد الأوروبي فقط عند عنوان الاتحاد الأوروبي. عند العنوان العالمي لا تعد Mistral بمكان. قد تُعالَج بيانات الحساب والفواتير لدى Mistral خارج الاتحاد الأوروبي.");
+        Add("Legal.Change.Privacy.2026-10-06",
+            "De AI-rij in de lijst met verwerkers volgt de instelling. Standaard is dat OpenAI (Verenigde Staten). Zet je de AI op Mistral, dan staat Mistral AI (Parijs, gegevens in de EU) in de lijst en OpenAI niet.",
+            "The AI row in the processor list follows the setting. By default that is OpenAI (United States). If you switch AI to Mistral, the list shows Mistral AI (Paris, data in the EU) and not OpenAI.",
+            "Wiersz AI na liście podmiotów zależy od ustawienia. Domyślnie to OpenAI (Stany Zjednoczone). Gdy przełączysz AI na Mistral, lista pokazuje Mistral AI (Paryż, dane w UE), a nie OpenAI.",
+            "Rândul AI din lista de procesatori urmează setarea. Implicit este OpenAI (Statele Unite). Dacă treci AI pe Mistral, lista arată Mistral AI (Paris, date în UE) și nu OpenAI.",
+            "صف الذكاء الاصطناعي في قائمة المعالجين يتبع الإعداد. الافتراضي هو OpenAI (الولايات المتحدة). إذا بدّلت الذكاء الاصطناعي إلى Mistral، تظهر Mistral AI (باريس، البيانات في الاتحاد الأوروبي) وليس OpenAI.");
         Add("Legal.Change.Privacy.2026-10-05",
             "De lijst met bedrijven die voor ons werken zegt nu waar het bedrijf zit en waar de gegevens staan. De zin over waar je gegevens staan komt uit die lijst. E-mail kan via Lettermint in Nederland, in de EU.",
             "The list of companies that work for us now says where the company is based and where the data sits. The sentence about where your data is comes from that list. E-mail can go through Lettermint in the Netherlands, in the EU.",
@@ -491,6 +503,12 @@ public static class UiStringsLegal
             "{0} jest w Szwajcarii. UE uznaje ochronę tam za tak samo dobrą.",
             "{0} este în Elveția. UE consideră protecția de acolo la fel de bună.",
             "{0} في سويسرا. يرى الاتحاد الأوروبي أن الحماية هناك جيدة بنفس القدر.");
+        Add("Privacy.Where.OutsideEu",
+            "Je gegevens gaan ook buiten de EU, via {0}.",
+            "Your data also goes outside the EU, through {0}.",
+            "Twoje dane idą też poza UE, przez {0}.",
+            "Datele tale merg și în afara UE, prin {0}.",
+            "تذهب بياناتك أيضاً خارج الاتحاد الأوروبي، عبر {0}.");
         Add("Legal.Processor.sentry.Purpose",
             "Foutmeldingen zodat we storingen kunnen oplossen",
             "Error reports so we can fix outages",
@@ -545,6 +563,42 @@ public static class UiStringsLegal
             "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV",
             "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului",
             "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها");
+        Add("Legal.Processor.mistral.Purpose",
+            "AI-functies die jij zelf kiest",
+            "AI features you choose yourself",
+            "Funkcje AI, które sam wybierasz",
+            "Funcții AI pe care le alegi tu",
+            "ميزات الذكاء الاصطناعي التي تختارها");
+        Add("Legal.Processor.mistral.Data",
+            "De tekst die je invult. Bij cv-uitlezen de hele tekst van je cv. Dat is verwerking in de EU",
+            "The text you enter. For cv reading the whole text of your cv. Processing happens in the EU",
+            "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV. Przetwarzanie odbywa się w UE",
+            "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului. Prelucrarea are loc în UE",
+            "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها. تتم المعالجة في الاتحاد الأوروبي");
+        Add("Legal.Processor.mistral.Data.Global",
+            "De tekst die je invult. Bij cv-uitlezen de hele tekst van je cv. Mistral belooft geen plek voor de verwerking",
+            "The text you enter. For cv reading the whole text of your cv. Mistral promises no place for the processing",
+            "Tekst, który wpisujesz. Przy czytaniu CV cała treść CV. Mistral nie obiecuje miejsca przetwarzania",
+            "Textul pe care îl introduci. La citirea CV-ului, tot textul CV-ului. Mistral nu promite un loc pentru prelucrare",
+            "النص الذي تكتبه. وعند قراءة السيرة الذاتية كامل نصها. لا تعد Mistral بمكان للمعالجة");
+        Add("Legal.Processor.mistral.EuNote",
+            "Verwerking bij Mistral AI gebeurt in de EU. Account en facturen van Mistral kunnen buiten de EU staan.",
+            "Processing at Mistral AI happens in the EU. Mistral account and billing data can be handled outside the EU.",
+            "Przetwarzanie w Mistral AI odbywa się w UE. Konto i faktury Mistral mogą być obsługiwane poza UE.",
+            "Prelucrarea la Mistral AI are loc în UE. Contul și facturile Mistral pot fi gestionate în afara UE.",
+            "تتم المعالجة لدى Mistral AI داخل الاتحاد الأوروبي. قد تُعالَج بيانات الحساب والفواتير لدى Mistral خارج الاتحاد الأوروبي.");
+        Add("Legal.Processor.mistral.GlobalNote",
+            "Mistral belooft geen plek voor de verwerking. Account en facturen van Mistral kunnen buiten de EU staan.",
+            "Mistral promises no place for the processing. Mistral account and billing data can be handled outside the EU.",
+            "Mistral nie obiecuje miejsca przetwarzania. Konto i faktury Mistral mogą być obsługiwane poza UE.",
+            "Mistral nu promite un loc pentru prelucrare. Contul și facturile Mistral pot fi gestionate în afara UE.",
+            "لا تعد Mistral بمكان للمعالجة. قد تُعالَج بيانات الحساب والفواتير لدى Mistral خارج الاتحاد الأوروبي.");
+        Add("Legal.Transfer.NoPlace",
+            "Mistral noemt geen plek voor deze verwerking",
+            "Mistral names no place for this processing",
+            "Mistral nie podaje miejsca tego przetwarzania",
+            "Mistral nu indică un loc pentru această prelucrare",
+            "لا تحدد Mistral مكاناً لهذه المعالجة");
         Add("Legal.Processor.cursor.Purpose",
             "Feedback die je stuurt verwerken",
             "Handling the feedback you send",

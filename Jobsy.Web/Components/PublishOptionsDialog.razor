@@ -21,7 +21,7 @@
             <label class="publish-option">
                 <input type="checkbox" @bind="_highlight" />
                 <span>
-                    @string.Format(Culture["WgVac.Cost.Highlight"], HighlightCost.ToString("0.##"))
+                    @string.Format(Culture["WgVac.Cost.Highlight"], CountPhrase.Tokens(Culture, HighlightCost))
                 </span>
             </label>
         }
@@ -38,7 +38,7 @@
         <label class="publish-option">
             <input type="checkbox" @bind="_extend" />
             <span>
-                @string.Format(Culture["WgVac.Cost.Extend"], _costs.GetValueOrDefault("Extend", 1m).ToString("0.##"))
+                @string.Format(Culture["WgVac.Cost.Extend"], CountPhrase.Tokens(Culture, _costs.GetValueOrDefault("Extend", 1m)))
             </span>
         </label>
     </div>
@@ -75,7 +75,7 @@
                 else
                 {
                     <p class="pushbom-preview__cost">
-                        @string.Format(Culture["WgVac.Cost.Push"], _preview.CostTokens.ToString("0.##"))
+                        @string.Format(Culture["WgVac.Cost.Push"], CountPhrase.Tokens(Culture, _preview.CostTokens))
                         · saldo @_preview.TokenBalance.ToString("0.##")
                     </p>
                 }
@@ -89,12 +89,12 @@
     {
         <p class="state-message error">@_error</p>
     }
-<div class="inline-actions">
-            <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
-                @(_busy ? Culture["Common.Busy"] : Culture["Employer.Publish"])
-            </button>
-            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
-        </div>
+    <div class="inline-actions">
+        <button type="button" class="btn-compact" data-testid="publish-cancel" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
+        <button type="button" class="btn-compact btn-compact--primary" data-testid="publish-confirm" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
+            @(_busy ? Culture["Common.Busy"] : Culture["Employer.Publish"])
+        </button>
+    </div>
 </LobsyFriendlyDialog>
 
 <TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />

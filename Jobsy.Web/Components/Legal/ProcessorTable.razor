@@ -1,3 +1,4 @@
+@using Jobsy.Core.Ai
 @using Jobsy.Core.Legal
 @using Jobsy.Web.Localization
 @inject CultureState Culture
@@ -27,7 +28,13 @@
                                 <span class="pp-table__planned">(@Culture[row.PlannedNoteKey ?? "Legal.Processors.Planned"])</span>
                             }
                         </th>
-                        <td data-label="@Culture["Legal.Processors.Where"]">@row.Region</td>
+                        <td data-label="@Culture["Legal.Processors.Where"]">
+                            @row.Region
+                            @if (!string.IsNullOrWhiteSpace(row.LocationNoteKey))
+                            {
+                                <span>@Culture[row.LocationNoteKey]</span>
+                            }
+                        </td>
                         <td data-label="@Culture["Legal.Processors.Purpose"]">@Culture[row.PurposeKey]</td>
                         <td data-label="@Culture["Legal.Processors.Data"]">@Culture[row.DataKey]</td>
                         <td data-label="@Culture["Legal.Processors.Basis"]">@Culture[row.TransferBasisKey ?? LegalProcessors.InsideEu]</td>
@@ -44,5 +51,9 @@
     [Parameter] public IReadOnlyList<LegalProcessor>? Rows { get; set; }
 
     private IReadOnlyList<LegalProcessor> Shown
-        => Rows ?? LegalProcessorSelection.Resolve(mailProvider: null, lettermintApiKeyConfigured: false);
+        => Rows ?? LegalProcessorSelection.Resolve(
+            mailProvider: null,
+            lettermintApiKeyConfigured: false,
+            AiProviderKind.OpenAI,
+            mistralBaseUrl: null);
 }

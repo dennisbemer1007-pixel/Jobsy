@@ -308,6 +308,19 @@ Keys uit Integraties gaan voor; env vult lege velden. Na deploy: Integraties →
 
 Als KVK IP-whitelisting aan heeft staan in het Developer Portal, voeg de uitgaande IP’s van Render toe of zet die restrictie uit — anders weigert KVK de calls (dat is geen stub meer).
 
+## AI provider (OpenAI or Mistral)
+
+`Ai:Provider` is `OpenAI` or `Mistral`. The code default is OpenAI, so production stays on OpenAI until you set the variables. The key is not stored in the admin screen.
+
+| Env var | Where | Notes |
+|---------|--------|--------|
+| `Ai__Provider` | Acceptatie API **and** web | `Mistral` or leave unset (`OpenAI`). `sync: false` in the blueprint. |
+| `Mistral__ApiKey` | Acceptatie API **and** web | API sends it. Web only checks that it is set, so `/privacy` matches the calls. Alias: `MISTRAL_API_KEY`. |
+
+Create the Mistral workspace with the **EU** option (Paris). The privacy page treats Mistral as in the EU only when the host of `Mistral__BaseUrl` is `api.eu.mistral.ai` (for example `https://api.eu.mistral.ai/v1/`). Any other host, including `api.mistral.ai`, is data outside the EU. The page reads that host from config. Default model is `mistral-small-latest`. Without a key, calls stay on OpenAI and the privacy page keeps the OpenAI row.
+
+Production (`jobsy-api` / `jobsy-web`) does not list these keys. Do not set `Ai__Provider=Mistral` there until you choose to switch live.
+
 ## Sentry & webhook-ops
 
 1. Maak een Sentry project en zet `Sentry__Dsn` op API én web (Production en eventueel Acceptatie).

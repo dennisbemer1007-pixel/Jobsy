@@ -271,7 +271,8 @@
             var (from, to) = PeriodRange(_period);
             var page = await Api.GetAdminAuditAsync(
                 from: from, to: to, action: NullIfEmpty(_action), result: NullIfEmpty(_result),
-                q: NullIfEmpty(_q), page: _pageNum, pageSize: 25, ct: ct);
+                q: NullIfEmpty(_q), page: _pageNum, pageSize: 25,
+                labelKeys: LabelKeys(_q), ct: ct);
             if (gen != Volatile.Read(ref _reloadGen))
             {
                 return;
@@ -336,7 +337,7 @@
         try
         {
             var (from, to) = PeriodRange(_period);
-            var bytes = await Api.ExportAdminAuditCsvAsync(from, to, NullIfEmpty(_action), NullIfEmpty(_result), NullIfEmpty(_q));
+            var bytes = await Api.ExportAdminAuditCsvAsync(from, to, NullIfEmpty(_action), NullIfEmpty(_result), NullIfEmpty(_q), LabelKeys(_q));
             var b64 = Convert.ToBase64String(bytes);
             await Js.InvokeVoidAsync("jobsyExtras.ensure");
             await Js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-audit.csv", b64, "text/csv;charset=utf-8");
@@ -393,6 +394,9 @@
         };
 
     private static string? NullIfEmpty(string s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+    private IReadOnlyList<string> LabelKeys(string q)
+        => AdminActionLabels.RawKeysForQuery(q, key => Culture[key]);
 
     private static string FormatAmsterdam(DateTime utc)
     {

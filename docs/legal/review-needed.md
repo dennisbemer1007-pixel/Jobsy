@@ -6,11 +6,14 @@ They may ship to `acceptatie`; a lawyer reviews them before they go to `main` / 
 Every PR that changes a legal text adds its sections here: document · section id · version ·
 what changed · open question.
 
-## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-05
+## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-08
+
+One combined version for the lawyer. It replaces the separate 2026-10-05 and 2026-10-06 notes.
 
 | Section | Id | What changed | Open question for the lawyer |
 |---|---|---|---|
-| 4 | `delen` / `buiten-de-eu` | The sentence "Waar staan je gegevens?" is no longer typed by hand. It is built from `LegalProcessors` in five languages. Each row now has a company headquarters and a data region. If no company in the active list is American, the sentence says all data stays in the EU with European companies. If any company is American, the sentence names those services. Lettermint (Netherlands, data in the EU) replaces Resend in the list when `Mail:Provider` is Lettermint and the API key is set. Pingen in Switzerland is still named. | Is "American company" the right line (headquarters), even when the servers are in Frankfurt (Render)? When every American company is gone, is the plain EU sentence enough, with the Swiss sentence for Pingen still next to it? |
+| 4 | `delen` / `buiten-de-eu` | The sentence "Waar staan je gegevens?" is built from the processor list in five languages. Each row has a company headquarters and a data region. If no company in the active list is American and no row says data can leave the EU, the sentence says all data stays in the EU with European companies. If any company is American, the sentence names those services. Lettermint (Netherlands, data in the EU) replaces Resend when `Mail:Provider` is Lettermint and the API key is set. OpenAI (United States) is the AI row unless Mistral is active. Mistral follows the base URL host. `api.eu.mistral.ai`: “verwerking in de EU” and basis “Binnen de EU”, plus “Account en facturen van Mistral kunnen buiten de EU staan.” Any other host, including `api.mistral.ai`: “Mistral belooft geen plek voor de verwerking” and basis “Mistral noemt geen plek voor deze verwerking”, with the same account note. Pingen in Switzerland is still named. | Is "American company" the right line (headquarters), even when the servers are in Frankfurt (Render)? Is “Binnen de EU” still the right basis when inference is on the EU endpoint but Mistral account, API-key and billing data may be handled outside the EU? Is it clear that this is Mistral’s own account, not the candidate’s? |
+| 7 | `ai` | The CV sentences name OpenAI when that provider is active. On `api.eu.mistral.ai` they say the CV goes to Mistral for processing in the EU, and that Mistral account and billing data can be handled outside the EU. On any other host they say Mistral promises no place for that processing, with the same account note. The CV upload hint in nl, en, pl, ro and ar does the same. | When the host is the EU API, is “verwerking in de EU” accurate for a CV that may contain a name and phone number, given account and billing data may still leave the EU? |
 
 ## Privacy statement (`/privacy`, `PrivacyNl.razor`) — version 2026-10-04
 

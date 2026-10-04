@@ -1,11 +1,13 @@
 using System.Net;
-using System.Net.Http.Json;
+using Bunit;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Web.Components.Werkgever.Sections;
+using Jobsy.Web.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -38,11 +40,13 @@ public class TalentPoolRiasecApiTests
 
         var social = await client.GetAsync($"{route}?tags={Uri.EscapeDataString(CareerTestCatalog.Social)}");
         Assert.Equal(HttpStatusCode.OK, social.StatusCode);
-        var socialCards = await ReadCardsAsync(social);
+        var socialJson = await social.Content.ReadAsStringAsync();
+        var socialCards = ReadCards(socialJson);
 
         var competency = await client.GetAsync($"{route}?tags=Samenwerken");
         Assert.Equal(HttpStatusCode.OK, competency.StatusCode);
-        var competencyCards = await ReadCardsAsync(competency);
+        var competencyJson = await competency.Content.ReadAsStringAsync();
+        var competencyCards = ReadCards(competencyJson);
 
         if (showRiasec)
         {
@@ -58,10 +62,66 @@ public class TalentPoolRiasecApiTests
             Assert.Empty(card.RiasecTags);
             Assert.Null(card.HollandCode);
             Assert.Contains("Samenwerken", card.MatchTags);
+            Assert.DoesNotContain(card.MatchTags, TalentPoolRiasecVisibility.IsCareerTestOutput);
+            Assert.DoesNotContain(card.RiasecTags, TalentPoolRiasecVisibility.IsCareerTestOutput);
+            AssertEmployerPayloadHasNoCareerTest(socialJson);
+            AssertEmployerPayloadHasNoCareerTest(competencyJson);
+            AssertHollandCodeNullOrAbsent(socialJson);
+            AssertHollandCodeNullOrAbsent(competencyJson);
+
+            var dutch = await client.GetAsync($"{route}?tags={Uri.EscapeDataString("Mensen helpen")}");
+            Assert.Equal(HttpStatusCode.OK, dutch.StatusCode);
+            Assert.DoesNotContain(
+                factory.CandidateId.ToString("D"),
+                await dutch.Content.ReadAsStringAsync(),
+                StringComparison.OrdinalIgnoreCase);
+            AssertCardMarkupHidesCareerTest(card);
         }
 
-        AssertScoresAbsent(await social.Content.ReadAsStringAsync());
-        AssertScoresAbsent(await competency.Content.ReadAsStringAsync());
+        AssertScoresAbsent(socialJson);
+        AssertScoresAbsent(competencyJson);
+    }
+
+    private static void AssertCardMarkupHidesCareerTest(TalentCardJson card)
+    {
+        using var bunit = new BunitContext();
+        var leaked = new AnonymousTalentCard
+        {
+            RegionLabel = "Westland",
+            MatchTags = ["Samenwerken", .. card.MatchTags, "Realistic", "Social", "Mensen helpen", "SEC"],
+            RiasecTags = ["Social", "Realistic", .. card.RiasecTags],
+            HollandCode = card.HollandCode ?? "S",
+            AvailabilitySummary = "Doordeweeks"
+        };
+        var cut = bunit.Render<TalentPoolResultCard>(p => p
+            .Add(x => x.ShowRiasec, false)
+            .Add(x => x.Card, leaked));
+        var markup = cut.Markup;
+        Assert.Contains("Samenwerken", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-testid=\"talent-holland\"", markup, StringComparison.Ordinal);
+        foreach (var name in CareerTestCatalog.RiasecCodes)
+        {
+            Assert.DoesNotContain(name, markup, StringComparison.OrdinalIgnoreCase);
+        }
+
+        foreach (var name in TalentPoolRiasecVisibility.DutchTypeLabels)
+        {
+            Assert.DoesNotContain(name, markup, StringComparison.OrdinalIgnoreCase);
+        }
+
+        Assert.DoesNotContain(">SEC<", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Holland", markup, StringComparison.OrdinalIgnoreCase);
+
+        var fromApi = bunit.Render<TalentPoolResultCard>(p => p
+            .Add(x => x.ShowRiasec, false)
+            .Add(x => x.Card, new AnonymousTalentCard
+            {
+                RegionLabel = "Westland",
+                MatchTags = card.MatchTags,
+                RiasecTags = card.RiasecTags,
+                HollandCode = card.HollandCode
+            }));
+        Assert.False(TalentPoolRiasecVisibility.ContainsCareerTestName(fromApi.Markup), fromApi.Markup);
     }
 
     private static void AssertScoresAbsent(string json)
@@ -87,6 +147,53 @@ public class TalentPoolRiasecApiTests
         Assert.DoesNotContain("81", json, StringComparison.Ordinal);
     }
 
+    private static void AssertEmployerPayloadHasNoCareerTest(string json)
+    {
+        Assert.False(TalentPoolRiasecVisibility.ContainsCareerTestName(json), json);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        Walk(doc.RootElement);
+    }
+
+    private static void Walk(System.Text.Json.JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case System.Text.Json.JsonValueKind.Object:
+                foreach (var prop in element.EnumerateObject())
+                {
+                    Walk(prop.Value);
+                }
+
+                break;
+            case System.Text.Json.JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray())
+                {
+                    Walk(item);
+                }
+
+                break;
+            case System.Text.Json.JsonValueKind.String:
+                var text = element.GetString();
+                Assert.False(TalentPoolRiasecVisibility.IsCareerTestOutput(text), text);
+                Assert.False(TalentPoolRiasecVisibility.ContainsCareerTestName(text), text);
+                break;
+        }
+    }
+
+    private static void AssertHollandCodeNullOrAbsent(string json)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        foreach (var card in doc.RootElement.EnumerateArray())
+        {
+            if (!card.TryGetProperty("hollandCode", out var holland))
+            {
+                continue;
+            }
+
+            Assert.Equal(System.Text.Json.JsonValueKind.Null, holland.ValueKind);
+        }
+    }
+
     [Fact]
     public void Both_route_templates_are_on_the_search_action()
     {
@@ -99,11 +206,10 @@ public class TalentPoolRiasecApiTests
         Assert.Contains("ShowRiasecTagFilter", File.ReadAllText(Path.Combine(root, "Jobsy.Web/appsettings.json")), StringComparison.Ordinal);
     }
 
-    private static async Task<List<TalentCardJson>> ReadCardsAsync(HttpResponseMessage response)
-    {
-        var cards = await response.Content.ReadFromJsonAsync<List<TalentCardJson>>();
-        return cards ?? [];
-    }
+    private static List<TalentCardJson> ReadCards(string json)
+        => System.Text.Json.JsonSerializer.Deserialize<List<TalentCardJson>>(
+            json,
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
 
     private static string FindRepoRoot()
     {
@@ -235,8 +341,14 @@ public sealed class TalentPoolRiasecApiFactory : WebApplicationFactory<Jobsy.Api
             Status = CandidateCompetencyStatuses.Completed,
             HollandCode = "S",
             SocialPercent = 81,
-            RiasecTagsJson = CareerTestCatalog.SerializeTags([CareerTestCatalog.Social]),
-            MatchTagsJson = CareerTestCatalog.SerializeTags(["Samenwerken"]),
+            RealisticPercent = 70,
+            RiasecTagsJson = CareerTestCatalog.SerializeTags([CareerTestCatalog.Social, CareerTestCatalog.Realistic]),
+            MatchTagsJson = CareerTestCatalog.SerializeTags(
+            [
+                CareerTestCatalog.Realistic,
+                CareerTestCatalog.Social,
+                "Mensen helpen"
+            ]),
             CompletedAtUtc = DateTime.UtcNow
         });
         db.CandidateCompetencies.Add(new CandidateCompetency

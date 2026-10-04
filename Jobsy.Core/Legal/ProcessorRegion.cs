@@ -6,10 +6,12 @@ public enum ProcessorRegion
     Netherlands,
     EuropeanUnion,
     EuFrankfurt,
+    France,
     Switzerland,
     UnitedStates,
     EuAndUnitedStates,
-    EuOrUnitedStates
+    EuOrUnitedStates,
+    OutsideEuropeanUnion
 }
 
 /// <summary>Dutch labels for the official processor table. The privacy sentence uses its own translations.</summary>
@@ -23,10 +25,12 @@ public static class ProcessorRegionText
         ProcessorRegion.Netherlands => "Nederland",
         ProcessorRegion.EuropeanUnion => "EU",
         ProcessorRegion.EuFrankfurt => "EU (Frankfurt)",
+        ProcessorRegion.France => "Frankrijk (Parijs)",
         ProcessorRegion.Switzerland => "Zwitserland",
         ProcessorRegion.UnitedStates => "Verenigde Staten",
         ProcessorRegion.EuAndUnitedStates => "EU en Verenigde Staten",
         ProcessorRegion.EuOrUnitedStates => "EU of Verenigde Staten, afhankelijk van onze instelling",
+        ProcessorRegion.OutsideEuropeanUnion => "buiten de EU",
         _ => throw new ArgumentOutOfRangeException(nameof(region), region, null)
     };
 }

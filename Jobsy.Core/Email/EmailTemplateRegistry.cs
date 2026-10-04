@@ -151,6 +151,8 @@ public static class EmailTemplateRegistry
             "Inhoud beperkt of weggehaald", "Motivering voor de werkgever na een moderatiebesluit, met bezwaarroute."),
         Def("PartnerConsentReconfirmReminder", "PartnerConsentReconfirmReminder", "Kandidaat", EmailKind.Essential, "PassportShare", false,
             "Toestemming opnieuw bevestigen", "14 dagen voor de partnertoestemming verloopt."),
+        Def("ComebackReminder", "ComebackReminder", "Kandidaat", EmailKind.Optional, "ComebackReminder", false,
+            "Kom terug", "Herinnering als de 4 korte tests openstaan, of na 4 weken stilte."),
         Def("ReferenceConfirmation", "ReferenceConfirmation", "Referent", EmailKind.Essential, "ReferenceAsked", false,
             "Bevestiging van een referent", "Mail met een eenmalige link naar 5 korte vragen."),
     ];

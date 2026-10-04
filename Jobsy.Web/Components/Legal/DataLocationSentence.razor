@@ -4,18 +4,29 @@
 
 <p id="buiten-de-eu" class="pp-where" lang="@Culture.Language" dir="@(Culture.IsRightToLeft ? "rtl" : "ltr")">
     <strong>@Culture["Privacy.Where.Title"]</strong>
-    @if (DataLocationText.AllCompaniesAreOutsideTheUnitedStates(Rows))
+    @if (DataLocationText.AllDataStaysInTheEuWithEuropeanCompanies(Rows))
     {
         <span>@Culture["Privacy.Where.AllEu"]</span>
     }
     else
     {
         <span>@Culture["Privacy.Where.Hosting"]</span>
-        <span>@Culture.Format("Privacy.Where.American", AmericanNames)</span>
+        @if (!string.IsNullOrEmpty(AmericanNames))
+        {
+            <span>@Culture.Format("Privacy.Where.American", AmericanNames)</span>
+        }
     }
     @foreach (var name in DataLocationText.SwissCompanyNames(Rows))
     {
         <span>@Culture.Format("Privacy.Where.Swiss", name)</span>
+    }
+    @if (!string.IsNullOrEmpty(OutsideEuNames))
+    {
+        <span>@Culture.Format("Privacy.Where.OutsideEu", OutsideEuNames)</span>
+    }
+    @foreach (var noteKey in LocationNotes)
+    {
+        <span>@Culture[noteKey]</span>
     }
 </p>
 
@@ -25,4 +36,27 @@
     private string AmericanNames => DataLocationText.JoinNames(
         DataLocationText.AmericanCompanyNames(Rows),
         Culture.Language);
+
+    private string OutsideEuNames => DataLocationText.JoinNames(
+        DataLocationText.OutsideEuCompanyNames(Rows),
+        Culture.Language);
+
+    private IReadOnlyList<string> LocationNotes
+    {
+        get
+        {
+            var notes = new List<string>();
+            foreach (var row in Rows)
+            {
+                if (string.IsNullOrWhiteSpace(row.LocationNoteKey) || notes.Contains(row.LocationNoteKey))
+                {
+                    continue;
+                }
+
+                notes.Add(row.LocationNoteKey);
+            }
+
+            return notes;
+        }
+    }
 }

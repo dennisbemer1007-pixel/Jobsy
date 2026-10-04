@@ -80,6 +80,8 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
     public DbSet<OneTimeLink> OneTimeLinks => Set<OneTimeLink>();
     public DbSet<EmailOptOut> EmailOptOuts => Set<EmailOptOut>();
+    public DbSet<CandidateReminderPreference> CandidateReminderPreferences => Set<CandidateReminderPreference>();
+    public DbSet<ComebackReminderLog> ComebackReminderLogs => Set<ComebackReminderLog>();
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
     public DbSet<VacancyLike> VacancyLikes => Set<VacancyLike>();
@@ -315,8 +317,7 @@ public class JobsyDbContext : DbContext
             entity.HasQueryFilter(v =>
                 EnforceCompanyScopeIds == null
                 || EnforceCompanyScopeIds.Contains(v.CompanyId)
-                || (v.IntermediaryCompanyId != null
-                    && EnforceCompanyScopeIds.Contains(v.IntermediaryCompanyId.Value)));
+                || EnforceCompanyScopeIds.Contains(v.IntermediaryCompanyId ?? Guid.Empty));
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();
@@ -1341,6 +1342,30 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.EmailHash, e.Category }).IsUnique();
         });
 
+        modelBuilder.Entity<CandidateReminderPreference>(entity =>
+        {
+            entity.ToTable("CandidateReminderPreferences");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.WhatsAppPhone).HasMaxLength(32);
+            entity.HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey<CandidateReminderPreference>(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ComebackReminderLog>(entity =>
+        {
+            entity.ToTable("ComebackReminderLogs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Kind).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Channels).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.SentAtUtc });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         modelBuilder.Entity<MinimumWageRate>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -1675,6 +1700,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PassportPartnersEnabled).HasDefaultValue(false);
             entity.Property(e => e.PassportPdfV2Enabled).HasDefaultValue(false);
             entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
+            entity.Property(e => e.WhatsAppRemindersEnabled).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<PassportPartner>(entity =>

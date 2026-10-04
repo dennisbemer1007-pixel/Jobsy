@@ -19,6 +19,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private readonly LettermintOptions _lettermintOptions;
     private readonly ILogger<IntegrationHealthStub> _logger;
     private readonly KvkHandelsregisterService? _kvk;
+    private readonly IOpenAiEndpointResolver? _aiEndpoints;
 
     public IntegrationHealthStub(
         IIntegrationCredentialService credentials,
@@ -28,6 +29,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         IOptions<OpenAiOptions> openAiOptions,
         ILogger<IntegrationHealthStub> logger,
         KvkHandelsregisterService? kvk = null,
+        IOpenAiEndpointResolver? aiEndpoints = null,
         IOptions<MailOptions>? mailOptions = null,
         IOptions<LettermintOptions>? lettermintOptions = null)
     {
@@ -40,6 +42,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         _lettermintOptions = lettermintOptions?.Value ?? new LettermintOptions();
         _logger = logger;
         _kvk = kvk;
+        _aiEndpoints = aiEndpoints;
     }
 
     public async Task<IReadOnlyList<IntegrationHealthResult>> GetAllAsync(
@@ -210,6 +213,11 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
     private async Task<(bool Ok, string Message)> TestOpenAiAsync(CancellationToken cancellationToken)
     {
+        if (_aiEndpoints is not null)
+        {
+            return await TestResolvedAiAsync(cancellationToken);
+        }
+
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.OpenAI, cancellationToken);
         var apiKey = secrets?.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -247,6 +255,40 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         return (false, $"OpenAI gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
+    }
+
+    /// <summary>
+    /// Pings the provider that actually serves AI calls (OpenAI or Mistral).
+    /// Mistral's GET /v1/models uses the same bearer shape as OpenAI.
+    /// </summary>
+    private async Task<(bool Ok, string Message)> TestResolvedAiAsync(CancellationToken cancellationToken)
+    {
+        var endpoint = await _aiEndpoints!.ResolveAsync(OpenAiFeature.VacancyContentModeration, cancellationToken);
+        if (string.IsNullOrWhiteSpace(endpoint.ApiKey))
+        {
+            return (false, "Geen API-key geconfigureerd.");
+        }
+
+        if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(endpoint.BaseUrl, out var normalized, out var error)
+            || string.IsNullOrWhiteSpace(normalized))
+        {
+            return (false, error ?? "Ongeldige AI Base URL.");
+        }
+
+        var providerName = normalized.Contains("mistral.ai", StringComparison.OrdinalIgnoreCase)
+            ? "Mistral"
+            : "OpenAI";
+        var client = _httpClientFactory.CreateClient("IntegrationProbe");
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(normalized), "models"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", endpoint.ApiKey);
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return (true, $"Verbinding met {providerName} OK.");
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        return (false, $"{providerName} gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
     }
 
     private async Task<(bool Ok, string Message)> TestMollieAsync(CancellationToken cancellationToken)

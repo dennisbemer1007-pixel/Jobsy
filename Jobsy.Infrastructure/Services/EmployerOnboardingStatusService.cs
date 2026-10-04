@@ -140,9 +140,10 @@ public sealed class EmployerOnboardingStatusService : IEmployerOnboardingStatusS
             .AnyAsync(v => treeIds.Contains(v.CompanyId), cancellationToken);
 
         var branchesFilled = !string.IsNullOrWhiteSpace(root.WorkTypeLabels);
+        // IsCompleted() is case-insensitive C# and cannot be translated. Compare the stored status.
         var cultureDone = await _db.CompanyCultureProfiles.AsNoTracking()
             .AnyAsync(
-                p => p.CompanyId == root.Id && CandidateCompetencyStatuses.IsCompleted(p.Status),
+                p => p.CompanyId == root.Id && p.Status == CandidateCompetencyStatuses.Completed,
                 cancellationToken);
         var valuesDone = await _db.CompanyValuesProfiles.AsNoTracking()
             .AnyAsync(p => p.CompanyId == root.Id, cancellationToken);
@@ -161,7 +162,7 @@ public sealed class EmployerOnboardingStatusService : IEmployerOnboardingStatusS
             || await _db.Users.AsNoTracking()
                 .AnyAsync(
                     u => u.CompanyId != null
-                         && treeIds.Contains(u.CompanyId.Value)
+                         && treeIds.Contains(u.CompanyId ?? Guid.Empty)
                          && u.Id != userId,
                     cancellationToken);
 

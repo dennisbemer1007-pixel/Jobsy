@@ -1,10 +1,12 @@
 using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
 using Jobsy.Core.Admin;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -13,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Api.Controllers;
 
@@ -31,6 +34,8 @@ public class SettingsController : ControllerBase
     private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
     private readonly IUserLookupService _users;
+    private readonly AiOptions _ai;
+    private readonly MistralOptions _mistral;
 
     public SettingsController(
         JobsyDbContext db,
@@ -42,7 +47,9 @@ public class SettingsController : ControllerBase
         IFlexCommercialService flexCommercial,
         IAdminAuditLog audit,
         IAdminAuditContext auditContext,
-        IUserLookupService users)
+        IUserLookupService users,
+        IOptions<AiOptions>? aiOptions = null,
+        IOptions<MistralOptions>? mistralOptions = null)
     {
         _db = db;
         _credentials = credentials;
@@ -54,6 +61,20 @@ public class SettingsController : ControllerBase
         _audit = audit;
         _auditContext = auditContext;
         _users = users;
+        _ai = aiOptions?.Value ?? new AiOptions();
+        _mistral = mistralOptions?.Value ?? new MistralOptions();
+    }
+
+    /// <summary>The AI company that actually receives calls. Read-only: switch with Ai__Provider.</summary>
+    [HttpGet("ai-provider")]
+    public ActionResult<AiProviderStatusDto> GetAiProvider()
+    {
+        var decision = AiProviderChoice.Decide(_ai.Provider, _mistral.ApiKey);
+        return Ok(new AiProviderStatusDto(
+            decision.Name,
+            decision.Kind == AiProviderKind.Mistral ? "Mistral AI" : "OpenAI",
+            ReadOnly: true,
+            decision.RequestedMistralWithoutKey));
     }
 
     [HttpGet("token-pricing")]
@@ -405,7 +426,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CandidatePassportEnabled: request.CandidatePassportEnabled,
                     PassportPartnersEnabled: request.PassportPartnersEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
-                    PhoneVerificationEnabled: request.PhoneVerificationEnabled),
+                    PhoneVerificationEnabled: request.PhoneVerificationEnabled,
+                    WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -476,6 +498,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
+        Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         return list;
     }
 
@@ -495,7 +518,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             passportPdfV2Enabled = snap.PassportPdfV2Enabled,
             phoneVerificationEnabled = snap.PhoneVerificationEnabled,
             schoolsEnabled = snap.SchoolsEnabled,
-            ambassadorsEnabled = snap.AmbassadorsEnabled
+            ambassadorsEnabled = snap.AmbassadorsEnabled,
+            whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled
         });
     }
 
@@ -796,7 +820,8 @@ snap.CandidateInsightsEnabled,
             snap.CandidatePassportEnabled,
             snap.PassportPartnersEnabled,
             snap.PassportPdfV2Enabled,
-            snap.PhoneVerificationEnabled);
+            snap.PhoneVerificationEnabled,
+            snap.WhatsAppRemindersEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

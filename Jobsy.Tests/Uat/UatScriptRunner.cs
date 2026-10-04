@@ -90,7 +90,7 @@ public static class UatScriptRunner
             Assert.Contains("href=\"/algemene-voorwaarden\"", footer, StringComparison.Ordinal);
             Assert.Contains("href=\"/gebruiksvoorwaarden\"", footer, StringComparison.Ordinal);
             Assert.Contains("href=\"/wie-zijn-wij\"", footer, StringComparison.Ordinal);
-            Assert.Contains("href=\"/westland\"", footer, StringComparison.Ordinal);
+            Assert.DoesNotContain("href=\"/westland\"", footer, StringComparison.Ordinal);
         }
 
         if (Contains(blob, "Feedback"))

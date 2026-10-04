@@ -228,8 +228,7 @@ internal static class MockVacancyMedia
             $"We zorgen voor een snelle inwerkperiode en een vast aanspreekpunt op de werkvloer.\n\n" +
             $"Wie zoeken wij?\n{profile} " +
             $"Je communiceert helder, komt afspraken na en vindt het leuk om samen resultaat te boeken. " +
-            $"Solliciteer via Jobsy — we reageren doorgaans binnen één werkdag. " +
-            $"(Mock vacaturetekst #{index + 1}.)";
+            $"Je kunt direct solliciteren. We reageren doorgaans binnen één werkdag.";
     }
 
     private static string FirstWorkTypeLabel(WorkType workTypes)

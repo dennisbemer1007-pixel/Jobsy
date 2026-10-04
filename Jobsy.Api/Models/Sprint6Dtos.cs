@@ -138,7 +138,14 @@ public record PersonalDataAccessLogItemDto(
     string Action,
     string? Reason,
     Guid? SupportAccessGrantId,
-    string CorrelationId);
+    string CorrelationId,
+    string? ActorName = null,
+    string? ActorEmailMasked = null,
+    string? ActorCompanyName = null,
+    string? SubjectName = null,
+    string? SubjectEmailMasked = null,
+    string? SubjectRole = null,
+    string? SubjectCompanyName = null);
 
 public record PersonalDataAccessLogPageDto(
     IReadOnlyList<PersonalDataAccessLogItemDto> Items,
@@ -172,7 +179,8 @@ public record AdminVacancyDetailDto(
     int LikeCount,
     bool IsExtended,
     string CreatedVia = "Manual",
-    bool ContentModerationPassed = true);
+    bool ContentModerationPassed = true,
+    DateTime? ClosedAtUtc = null);
 
 public record RegisterAdminCompanyRequest(
     string KvkNumber,
@@ -211,6 +219,12 @@ public record UpdateIntegrationCredentialRequest(
     bool ClearApiKey = false,
     bool ClearClientSecret = false,
     bool UseEnvironmentCredentials = false);
+
+public sealed record AiProviderStatusDto(
+    string Provider,
+    string DisplayName,
+    bool ReadOnly,
+    bool FellBackToOpenAi);
 
 public record IntegrationCredentialDto(
     string Key,
@@ -262,7 +276,8 @@ public record UpdatePlatformFeatureRequest(
     bool? CandidatePassportEnabled = null,
     bool? PassportPartnersEnabled = null,
     bool? PassportPdfV2Enabled = null,
-    bool? PhoneVerificationEnabled = null);
+    bool? PhoneVerificationEnabled = null,
+    bool? WhatsAppRemindersEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -286,7 +301,8 @@ public record PlatformFeatureDto(
     bool CandidatePassportEnabled = true,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
-    bool PhoneVerificationEnabled = false);
+    bool PhoneVerificationEnabled = false,
+    bool WhatsAppRemindersEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 
