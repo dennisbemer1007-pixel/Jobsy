@@ -40,6 +40,43 @@ public class CareerPlanEvidenceTests
     }
 
     [Fact]
+    public void Eight_years_completes_an_internship_and_hides_a_repeated_gap()
+    {
+        var plan = Plan();
+        plan.Steps.Add(new CareerPathStepApiModel
+        {
+            Id = "c",
+            Order = 3,
+            Title = "Ervaring in Logistiek – Stage of traineeship",
+            Status = "Open",
+            SkillsGap = ["Basiskennis Logistiek", "Stage of traineeship in de logistiek"],
+            YearsExperienceNeeded = 1
+        });
+        plan.Steps.Add(new CareerPathStepApiModel
+        {
+            Id = "d",
+            Order = 4,
+            Title = "Leidinggeven",
+            Status = "Open",
+            SkillsGap = ["Een team aansturen"]
+        });
+
+        var evidence = "orderpicker Logistiek MBO Logistiek";
+        var page = CareerPlanViewBuilder.BuildPage(plan, "nl", "orderpicker", evidence, experienceYears: 8);
+        Assert.Equal(CareerStepStatus.Completed, page.Steps[2].Status);
+        Assert.Equal(CareerStepStatus.Active, page.Steps[1].Status);
+        Assert.Equal(CareerStepStatus.Open, page.Steps[3].Status);
+        Assert.DoesNotContain(page.Steps[2].GapNames, name => name.Contains("Stage", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(page.Steps[2].GapNames, name => name.Contains("Basiskennis", StringComparison.OrdinalIgnoreCase));
+
+        var detail = CareerPlanViewBuilder.BuildStep(plan, 3, evidence, experienceYears: 8);
+        Assert.NotNull(detail);
+        Assert.DoesNotContain(detail!.Present, line => line.Text.Contains("Basiskennis", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Equal("Nog 1 klauw laten groeien", Jobsy.Web.Localization.UiStrings.Get("Career.Fact.ClawOne", "nl"));
+    }
+
+    [Fact]
     public void ExperienceYears_sums_stated_years()
     {
         var years = CareerPlanViewBuilder.ExperienceYears(
