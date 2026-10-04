@@ -33,17 +33,27 @@ public static class CareerDeepReportBuilder
         var deepened = CareerCompassSanitize.EnsureDepth(
             compass ?? CareerCompassSnapshot.Empty(fromDeepAnalysis: true),
             riasec);
-        var occupations = deepened.AllOccupations
+        var occupationList = deepened.AllOccupations
             .OrderByDescending(m => m.Percent)
             .Take(CareerCompassSanitize.MaxCatalogueJobs)
-            .Select(m => new DeepOccupationFit
+            .ToList();
+        var prose = CandidateFactSheet.ForCareerProse(occupationList.Select(m => m.Title));
+        var occupations = occupationList
+            .Select(m =>
             {
-                TitleNl = m.Title,
-                TitleEn = EnglishOccupation(m.Title),
-                MatchPercent = m.Percent,
-                ReasonNl = m.Why,
-                ReasonEn = EnglishReason(m.Why),
-                Band = m.Band
+                var why = CandidateFactGuard.WithoutInventedHistory(
+                    m.Why,
+                    prose,
+                    $"Dit beroep sluit aan bij hoe jij scoort ({m.Percent}%).");
+                return new DeepOccupationFit
+                {
+                    TitleNl = m.Title,
+                    TitleEn = EnglishOccupation(m.Title),
+                    MatchPercent = m.Percent,
+                    ReasonNl = why,
+                    ReasonEn = EnglishReason(why),
+                    Band = m.Band
+                };
             })
             .ToList();
 

@@ -341,14 +341,17 @@ public class CareerCompassTests
     }
 
     [Fact]
-    public void OpenAi_user_prompt_sends_150_answers_without_pii_or_jargon()
+    public void OpenAi_user_prompt_sends_a_fact_sheet_without_raw_answers_or_pii()
     {
         var answers = DeepAnalysisCatalog.CareerQuestions.ToDictionary(q => q.Id, _ => 4);
         var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
         var user = CareerCompassPrompt.User(scores, answers);
         Assert.Contains("200 unieke vragen", user, StringComparison.Ordinal);
         Assert.Contains("Kernfit", user, StringComparison.Ordinal);
-        Assert.Contains("→ 4", user, StringComparison.Ordinal);
+        Assert.Contains("werkervaring: geen", user, StringComparison.Ordinal);
+        Assert.Contains("Feitenlijst", user, StringComparison.Ordinal);
+        Assert.DoesNotContain("→ 4", user, StringComparison.Ordinal);
+        Assert.DoesNotContain(DeepAnalysisCatalog.CareerQuestions[0].PromptNl, user, StringComparison.Ordinal);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.DoesNotContain("gmail", user, StringComparison.OrdinalIgnoreCase);
         AssertNoJargon(user);

@@ -57,6 +57,12 @@ public static class CareerCompassJson
 
     public static CareerCompassSnapshot? TryDeserialize(string? json)
     {
+        var dto = TryRead(json);
+        return dto is null ? null : CareerCompassSanitize.FromDto(dto, fromOpenAi: dto.FromOpenAi);
+    }
+
+    internal static CompassDto? TryRead(string? json)
+    {
         var unwrapped = UnwrapModelJson(json);
         if (string.IsNullOrWhiteSpace(unwrapped) || unwrapped is "{}" or "null")
         {
@@ -65,8 +71,7 @@ public static class CareerCompassJson
 
         try
         {
-            var dto = JsonSerializer.Deserialize<CompassDto>(unwrapped, Options);
-            return dto is null ? null : CareerCompassSanitize.FromDto(dto, fromOpenAi: dto.FromOpenAi);
+            return JsonSerializer.Deserialize<CompassDto>(unwrapped, Options);
         }
         catch (JsonException)
         {

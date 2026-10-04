@@ -308,9 +308,17 @@ public static class CareerCompassSanitize
                 }
 
                 var why = CleanText(item.Why);
+                var safeWhy = $"Dit beroep sluit aan bij hoe jij scoort ({percent}%).";
                 if (why is null || ContainsEnglishLeak(why))
                 {
-                    why = $"Dit beroep sluit aan bij hoe jij scoort ({percent}%).";
+                    why = safeWhy;
+                }
+                else
+                {
+                    why = CandidateFactGuard.WithoutInventedHistory(
+                        why,
+                        CandidateFactSheet.ForCareerProse(),
+                        safeWhy);
                 }
 
                 var keys = CareerOccupationKeys.Merge(title, item.Keys);
@@ -367,6 +375,11 @@ public static class CareerCompassSanitize
                 continue;
             }
 
+            if (CandidateFactGuard.RejectionReason(text, CandidateFactSheet.ForCareerProse()) is not null)
+            {
+                continue;
+            }
+
             var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (words.Length is < 1 or > MaxStrengthWords)
             {
@@ -395,10 +408,12 @@ public static class CareerCompassSanitize
             return [];
         }
 
+        var prose = CandidateFactSheet.ForCareerProse();
         return items
             .Select(CleanText)
             .Where(t => !string.IsNullOrWhiteSpace(t) && !ContainsEnglishLeak(t))
             .Cast<string>()
+            .Where(t => CandidateFactGuard.RejectionReason(t, prose) is null)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(take)
             .ToList();

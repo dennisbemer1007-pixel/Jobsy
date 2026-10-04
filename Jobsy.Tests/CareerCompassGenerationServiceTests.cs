@@ -92,6 +92,76 @@ public class CareerCompassGenerationServiceTests
     }
 
     [Fact]
+    public async Task Invented_titles_are_rejected_once_then_a_catalogue_reply_is_kept()
+    {
+        var invented = WrapChat("""
+            {
+              "strengths": ["Aanpakken", "Helpen", "Ordenen"],
+              "superMatches": [
+                {"title":"Onbekend beroep xyz","percent":99,"why":"Ik heb jarenlang in de bouw gewerkt.","keys":[]}
+              ],
+              "strongChoices": [],
+              "broadening": [],
+              "practicalNotes": ["Kijk welke taken bij je passen."]
+            }
+            """);
+        var clean = WrapChat("""
+            {
+              "strengths": ["Mensen helpen"],
+              "superMatches": [
+                {"title":"Verpleegkundige","percent":98,"why":"Jij wilt voor mensen klaarstaan.","keys":["zorg","verpleeg"]}
+              ],
+              "strongChoices": [
+                {"title":"Docent","percent":88,"why":"Uitleggen past bij je.","keys":["les"]}
+              ],
+              "broadening": [
+                {"title":"HR-medewerker","percent":78,"why":"Mensen en administratie.","keys":["hr"]}
+              ],
+              "practicalNotes": ["Open de banenkaart."]
+            }
+            """);
+        var handler = new RecordingHandler { Responses = [invented, clean] };
+        var log = new CapturingLog();
+        var sut = CreateSut(handler, apiKey: "sk-test", log);
+        var result = await sut.GenerateFromCareerDeepAsync(PeakAll());
+
+        Assert.Equal(2, handler.Calls);
+        Assert.Contains("STRIKT", handler.LastBody, StringComparison.Ordinal);
+        Assert.True(result.FromOpenAi);
+        Assert.Contains(result.SuperMatches, m => m.Title == "Verpleegkundige");
+        Assert.DoesNotContain(result.AllOccupations, m => !CandidateFactGuard.IsCatalogueTitle(m.Title));
+        Assert.DoesNotContain(result.AllOccupations, m => m.Why.Contains("jarenlang", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(log.Messages, m => m.Contains("surface=compass", StringComparison.Ordinal) && m.Contains("reason=unknown-job", StringComparison.Ordinal));
+        Assert.DoesNotContain(log.Messages, m => m.Contains("jarenlang", StringComparison.OrdinalIgnoreCase) || m.Contains('@'));
+    }
+
+    [Fact]
+    public async Task Two_invented_compass_replies_fall_back_to_the_local_catalogue()
+    {
+        var invented = WrapChat("""
+            {
+              "strengths": ["Aanpakken"],
+              "superMatches": [
+                {"title":"Bouwplaats alleskunner","percent":91,"why":"Ik heb in de zorg gestaan.","keys":[]}
+              ],
+              "strongChoices": [],
+              "broadening": [],
+              "practicalNotes": ["Ik heb jarenlang in de bouw gewerkt."]
+            }
+            """);
+        var handler = new RecordingHandler { Responses = [invented, invented] };
+        var sut = CreateSut(handler, apiKey: "sk-test", new CapturingLog());
+        var result = await sut.GenerateFromCareerDeepAsync(PeakAll());
+
+        Assert.Equal(2, handler.Calls);
+        Assert.False(result.FromOpenAi);
+        Assert.NotEmpty(result.AllOccupations);
+        Assert.DoesNotContain(result.AllOccupations, m => !CandidateFactGuard.IsCatalogueTitle(m.Title));
+        Assert.DoesNotContain(result.AllOccupations, m => m.Why.Contains("jarenlang", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.PracticalNotes, n => n.Contains("jarenlang", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task Http_error_falls_back_to_local_catalog()
     {
         var handler = new RecordingHandler { Status = HttpStatusCode.InternalServerError };
@@ -114,13 +184,33 @@ public class CareerCompassGenerationServiceTests
             }
         });
 
-    private static CareerCompassGenerationService CreateSut(HttpMessageHandler handler, string? apiKey)
+    private static CareerCompassGenerationService CreateSut(
+        HttpMessageHandler handler,
+        string? apiKey,
+        CapturingLog? log = null)
         => new(
             new NamedHttpClientFactory(handler),
             new OpenAiEndpointResolver(
                 new StubCredentials(apiKey),
                 Options.Create(new OpenAiOptions { ApiKey = apiKey, Model = "gpt-4o-mini" })),
-            NullLogger<CareerCompassGenerationService>.Instance);
+            NullLogger<CareerCompassGenerationService>.Instance,
+            log);
+
+    private sealed class CapturingLog : Jobsy.Core.Diagnostics.IPlatformErrorLog
+    {
+        public List<string> Messages { get; } = [];
+
+        public Task WriteAsync(
+            string category,
+            string message,
+            string? supportCode,
+            string? detail,
+            CancellationToken cancellationToken = default)
+        {
+            Messages.Add(category + " " + message);
+            return Task.CompletedTask;
+        }
+    }
 
     private sealed class NamedHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
     {
@@ -134,9 +224,11 @@ public class CareerCompassGenerationServiceTests
     {
         public HttpStatusCode Status { get; init; } = HttpStatusCode.OK;
         public string ResponseJson { get; init; } = """{"choices":[{"message":{"content":"{}"}}]}""";
+        public IReadOnlyList<string>? Responses { get; init; }
         public string LastBody { get; private set; } = "";
         public string LastRequestUri { get; private set; } = "";
         public string LastAuthorization { get; private set; } = "";
+        public int Calls { get; private set; }
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -147,9 +239,13 @@ public class CareerCompassGenerationServiceTests
             LastBody = request.Content is null
                 ? ""
                 : await request.Content.ReadAsStringAsync(cancellationToken);
+            var json = Responses is { Count: > 0 }
+                ? Responses[Math.Min(Calls, Responses.Count - 1)]
+                : ResponseJson;
+            Calls++;
             return new HttpResponseMessage(Status)
             {
-                Content = new StringContent(ResponseJson, Encoding.UTF8, "application/json")
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
         }
     }

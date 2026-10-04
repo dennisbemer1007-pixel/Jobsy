@@ -170,7 +170,8 @@ public static class WhoAmIStoryBuilder
         }
 
         profile ??= WhoAmIProfileHighlights.Empty;
-        if (profile.Roles.Count == 0 && InventsWork(story, profile))
+        var sheet = CandidateFactSheet.Personal(profile.Roles, profile.Educations, profile.Certificates);
+        if (CandidateFactGuard.RejectionReason(story, sheet) is not null)
         {
             return false;
         }
@@ -186,41 +187,6 @@ public static class WhoAmIStoryBuilder
         }
 
         return true;
-    }
-
-    private static bool InventsWork(string story, WhoAmIProfileHighlights profile)
-    {
-        if (Regex.IsMatch(
-                story,
-                @"\b(bouw|zorg|horeca|kas|magazijn|keuken|logistiek|onderwijs|transport|techniek|jarenlang)\b",
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-        {
-            return true;
-        }
-
-        if (Regex.IsMatch(
-                story,
-                @"ervaring met|ik heb gewerkt|heb gewerkt|verschillende rollen",
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-        {
-            return true;
-        }
-
-        foreach (var word in new[] { "winkel", "kantoor" })
-        {
-            if (profile.Educations.Concat(profile.Certificates).Any(item =>
-                    item.Contains(word, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
-
-            if (Regex.IsMatch(story, $@"\b{word}\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static bool RepeatsIdea(string story)

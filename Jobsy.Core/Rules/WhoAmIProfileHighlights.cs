@@ -20,7 +20,7 @@ public sealed record WhoAmIProfileHighlights(
         }
 
         var roles = (prefs.Employers ?? [])
-            .Select(e => string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim())
+            .Select(CandidateFactSheet.FormatWorkEntry)
             .Where(r => !string.IsNullOrWhiteSpace(r))
             .Cast<string>()
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -32,9 +32,15 @@ public sealed record WhoAmIProfileHighlights(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(4)
             .ToList();
+        if (!string.IsNullOrWhiteSpace(prefs.EducationDirection)
+            && educations.All(item => !item.Contains(prefs.EducationDirection.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            educations.Add(prefs.EducationDirection.Trim());
+        }
+
         var certificates = (prefs.Certificates ?? [])
             .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-            .Select(c => c.Name.Trim())
+            .Select(CandidateFactSheet.FormatCertificate)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(4)
             .ToList();
