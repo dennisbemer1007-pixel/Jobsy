@@ -10,7 +10,7 @@ namespace Jobsy.Web.Auth;
 
 public static class MailSettingsEndpoints
 {
-    private static readonly string[] handler = new[] { "PushBom", "VacancyEngagementReminder", "CompanyReEngagement" };
+    private static readonly string[] handler = new[] { "PushBom", "VacancyEngagementReminder", "CompanyReEngagement", "ComebackReminder" };
 
     public static IEndpointRouteBuilder MapMailSettingsEndpoints(this IEndpointRouteBuilder app)
     {
@@ -64,6 +64,29 @@ public static class MailSettingsEndpoints
             if (!response.IsSuccessStatusCode)
             {
                 return Results.Redirect("/account/mail-instellingen?error=1");
+            }
+
+            if (form.ContainsKey("whatsapp_shown"))
+            {
+                var optedIn = form.ContainsKey("whatsapp_optin");
+                var phone = form["whatsapp_phone"].ToString();
+                using var whatsApp = new HttpRequestMessage(HttpMethod.Put, "api/me/reminder-whatsapp")
+                {
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new { optedIn, phone }),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+                if (!string.IsNullOrWhiteSpace(jwt))
+                {
+                    whatsApp.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+                }
+
+                var whatsAppResponse = await client.SendAsync(whatsApp);
+                if (!whatsAppResponse.IsSuccessStatusCode)
+                {
+                    return Results.Redirect("/account/mail-instellingen?error=1");
+                }
             }
 
             return Results.Redirect("/account/mail-instellingen?saved=1");

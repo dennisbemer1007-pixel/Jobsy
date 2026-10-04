@@ -534,7 +534,11 @@ else if (_snapshot is not null)
             SchoolRetentionCutoffDay = u.SchoolRetentionCutoffDay,
             AmbassadorsEnabled = u.AmbassadorsEnabled,
             EmployersEnabled = u.EmployersEnabled,
-            CandidatePassportEnabled = u.CandidatePassportEnabled
+            CandidatePassportEnabled = u.CandidatePassportEnabled,
+            PassportPartnersEnabled = u.PassportPartnersEnabled,
+            PassportPdfV2Enabled = u.PassportPdfV2Enabled,
+            PhoneVerificationEnabled = u.PhoneVerificationEnabled,
+            WhatsAppRemindersEnabled = u.WhatsAppRemindersEnabled
         };
         LastPatch = patch;
         return patch;
@@ -593,5 +597,9 @@ else if (_snapshot is not null)
             SchoolRetentionCutoffDay: f.SchoolRetentionCutoffDay,
             AmbassadorsEnabled: f.AmbassadorsEnabled,
             EmployersEnabled: f.EmployersEnabled,
-            CandidatePassportEnabled: f.CandidatePassportEnabled);
+            CandidatePassportEnabled: f.CandidatePassportEnabled,
+            PassportPartnersEnabled: f.PassportPartnersEnabled,
+            PassportPdfV2Enabled: f.PassportPdfV2Enabled,
+            PhoneVerificationEnabled: f.PhoneVerificationEnabled,
+            WhatsAppRemindersEnabled: f.WhatsAppRemindersEnabled);
 }

@@ -27,11 +27,15 @@
                         <li>
                             <button type="button" @onclick="() => PickSubject(hit)">
                                 <strong>@hit.FullName</strong>
-                                <span class="muted">@hit.Email</span>
+                                <span class="admin-muted">@PickerMeta(hit)</span>
                             </button>
                         </li>
                     }
                 </ul>
+            }
+            else if (_subjectMiss)
+            {
+                <p class="admin-user-picker__empty" role="status">@Culture["AdminDataAccess.NoMatch"]</p>
             }
         </div>
         <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Resource"]" @bind="_resource" />
@@ -48,11 +52,15 @@
                 <li>
                     <button type="button" @onclick="() => PickActor(hit)">
                         <strong>@hit.FullName</strong>
-                        <span class="muted">@hit.Email</span>
+                        <span class="admin-muted">@PickerMeta(hit)</span>
                     </button>
                 </li>
             }
         </ul>
+    }
+    @if (_actorMiss && _actorHits.Count == 0)
+    {
+        <p class="admin-user-picker__empty" role="status">@Culture["AdminDataAccess.NoMatch"]</p>
     }
     @if (!string.IsNullOrEmpty(_idHint))
     {
@@ -74,11 +82,24 @@
             {
                 <tr>
                     <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(row.OccurredAt).ToString("dd-MM HH:mm")</td>
-                    <td class="muted" data-label="@Culture["AdminDataAccess.Actor"]">@Short(row.ActorUserId)</td>
-                    <td class="muted" data-label="@Culture["AdminDataAccess.Subject"]">@(row.SubjectUserId is Guid s ? Short(s) : "—")</td>
+                    <td data-label="@Culture["AdminDataAccess.Actor"]" title="@row.ActorUserId">
+                        <strong>@PersonName(row.ActorName)</strong>
+                        <span class="admin-muted">@PersonDetail(row.ActorRole, row.ActorCompanyName, row.ActorEmailMasked)</span>
+                    </td>
+                    <td data-label="@Culture["AdminDataAccess.Subject"]" title="@(row.SubjectUserId?.ToString())">
+                        @if (row.SubjectUserId is null)
+                        {
+                            <span>—</span>
+                        }
+                        else
+                        {
+                            <strong>@PersonName(row.SubjectName)</strong>
+                            <span class="admin-muted">@PersonDetail(row.SubjectRole, row.SubjectCompanyName, row.SubjectEmailMasked)</span>
+                        }
+                    </td>
                     <td data-label="@Culture["AdminDataAccess.Resource"]">@AdminActionLabels.Resource(row.Resource, key => Culture[key])</td>
                     <td data-label="@Culture["AdminAudit.Col.Action"]">@AdminActionLabels.AccessAction(row.Resource, row.Action, key => Culture[key])</td>
-                    <td class="muted" data-label="@Culture["AdminAudit.Reason"]">@AdminActionLabels.AccessReason(row.Reason, key => Culture[key])</td>
+                    <td class="admin-muted" data-label="@Culture["AdminAudit.Reason"]">@AdminActionLabels.AccessReason(row.Reason, key => Culture[key])</td>
                     <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Correlation"]">@row.CorrelationId</td>
                 </tr>
             }
@@ -104,6 +125,8 @@
 
     private string? _idHint;
     private bool _idError;
+    private bool _actorMiss;
+    private bool _subjectMiss;
 
     private List<PersonalDataAccessLogItem> _rows =>
         (_page?.Items ?? [])
@@ -159,6 +182,7 @@
                 }
 
                 _actorHits = hits;
+                _actorMiss = IsEmptyUserSearch(q, hits);
                 StateHasChanged();
             });
         });
@@ -179,6 +203,7 @@
                 }
 
                 _subjectHits = hits;
+                _subjectMiss = IsEmptyUserSearch(q, hits);
                 StateHasChanged();
             });
         });
@@ -189,6 +214,7 @@
         _actorId = user.Id;
         _actorQuery = string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName;
         _actorHits = [];
+        _actorMiss = false;
         return ReloadAsync();
     }
 
@@ -197,6 +223,7 @@
         _subjectId = user.Id;
         _subjectQuery = string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName;
         _subjectHits = [];
+        _subjectMiss = false;
         return ReloadAsync();
     }
 
@@ -318,7 +345,31 @@
         return hex.Length >= 4 && hex.All(Uri.IsHexDigit);
     }
 
-    private static string Short(Guid id) => id.ToString("N")[..8];
+    private static bool IsEmptyUserSearch(string text, List<AdminUserItem> hits)
+        => hits.Count == 0
+           && text.Trim().Length >= 2
+           && !Guid.TryParse(text.Trim(), out _)
+           && !LooksLikeHexPrefix(text);
+
+    private string PersonName(string? name)
+        => string.IsNullOrWhiteSpace(name) ? Culture["AdminDataAccess.Unknown"] : name;
+
+    private string PersonDetail(string? role, string? company, string? email)
+    {
+        var who = !string.IsNullOrWhiteSpace(company)
+            ? company
+            : AdminActionLabels.Role(role, key => Culture[key]);
+        var mail = email ?? "";
+        if (who.Length == 0)
+        {
+            return mail;
+        }
+
+        return mail.Length == 0 ? who : $"{who} · {mail}";
+    }
+
+    private string PickerMeta(AdminUserItem hit)
+        => PersonDetail(hit.Role, hit.CompanyName, hit.Email);
 
     private static bool TryUserId(string text, out Guid? id, out string? prefix)
     {

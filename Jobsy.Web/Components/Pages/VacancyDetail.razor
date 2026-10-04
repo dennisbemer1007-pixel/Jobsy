@@ -139,11 +139,7 @@
                         var detailWhy = KbFitMapping.WhyLine(_vacancy, Culture);
                         var detailRank = KbFitMapping.RankLowerLabel(_vacancy, Culture);
                     }
-                    @if (_vacancy.OpenForWorkRequired)
-                    {
-                        <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
-                    }
-                    else if (detailFit is not null)
+                    @if (!_vacancy.OpenForWorkRequired && detailFit is not null)
                     {
                         <div class="kb-fit-panel" data-fit-gate="@(_vacancy.FitGate ?? "")" data-testid="kb-fit-panel">
                             <div class="kb-fit-panel__head">
@@ -486,6 +482,8 @@
                     <Authorized>
                         @if (_vacancy is not null && !_vacancy.OpenForWorkRequired)
                         {
+                        @if (!_applied)
+                        {
                         <header class="apply-flow__header">
                             <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
                             <p class="apply-flow__lead">@ApplyFlowLead</p>
@@ -509,6 +507,7 @@
                                 <span class="apply-steps__label">@Culture["Apply.StepVerify"]</span>
                             </li>
                         </ol>
+                        }
 
                         @if (_applied)
                         {
@@ -716,9 +715,9 @@
                             </div>
                         }
 
-                        @if (!string.IsNullOrEmpty(_message))
+                        @if (!string.IsNullOrEmpty(_message) && !_applied)
                         {
-                            <p class="apply-flow__message @(_applied ? "is-success" : null)" role="status">@_message</p>
+                            <p class="apply-flow__message" role="status">@_message</p>
                         }
                         }
                     </Authorized>
@@ -2275,7 +2274,7 @@
             {
                 _verificationCode = string.Empty;
                 _enteredVerifyThisSession = false;
-                _message = Culture["Apply.Verified"];
+                _message = null;
                 OpenDirectContactIfAvailable(result?.DirectContact);
             }
             else

@@ -188,6 +188,9 @@ public static class UiStringsKandidaatBanen
             "Jeszcze {0} odznaki: {1}", "Încă {0} badge-uri: {1}", "{0} شارات إضافية: {1}");
 
         // Status (candidate wording)
+        Add("Kb.Status.VacancyClosed",
+            "Vacature gesloten", "Vacancy closed",
+            "Oferta zamknięta", "Anunț închis", "الوظيفة مغلقة");
         Add("Kb.Status.Pending",
             "Verstuurd", "Sent",
             "Wysłano", "Trimis", "أُرسل");

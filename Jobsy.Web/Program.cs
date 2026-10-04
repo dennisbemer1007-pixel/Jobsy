@@ -26,6 +26,12 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
     });
 }
 
+builder.Services.AddOptions<Jobsy.Core.Options.AiOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.AiOptions.SectionName));
+builder.Services.AddOptions<Jobsy.Core.Options.MistralOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.MistralOptions.SectionName))
+    .PostConfigure(options => Jobsy.Core.Options.MistralOptions.ApplyKeyAlias(options, key => builder.Configuration[key]));
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -106,6 +112,7 @@ builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Featu
 builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.Services.ReadAloudCoordinator>();
 // E7: the only place that turns an exception into text a visitor may read.
 builder.Services.AddScoped<Jobsy.Web.Services.UserFacingError>();
 builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();

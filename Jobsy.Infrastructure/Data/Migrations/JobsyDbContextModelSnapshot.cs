@@ -1686,6 +1686,29 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateReferences", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateReminderPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EmailOptedInAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("WhatsAppOptedInAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WhatsAppPhone")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("CandidateReminderPreferences", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateRoleFitCheck", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1913,6 +1936,35 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("CandidateWhoAmIProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ComebackReminderLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Channels")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "SentAtUtc");
+
+                    b.ToTable("ComebackReminderLogs", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CommissionLedgerEntry", b =>
@@ -4761,6 +4813,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("VacancyContentModerationEnabled")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("WhatsAppRemindersEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.HasKey("Id");
 
@@ -8699,6 +8756,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateReminderPreference", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("Jobsy.Core.Entities.CandidateReminderPreference", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateRoleFitCheck", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -8758,6 +8826,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ComebackReminderLog", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("User");
                 });

@@ -202,17 +202,17 @@ else
                                             @foreach (var row in _dash.Branches)
                                             {
                                                 <tr class="wg-row-click" @onclick="() => GoBranch(row.CompanyId)" @onclick:preventDefault="true">
-                                                    <td>
+                                                    <td data-label="@Culture["WgDash.Col.Branch"]">
                                                         <span class="wg-branch-name">@row.Name</span>
                                                         @if (Role == EmployerRole.Bedrijfsmanager && !string.IsNullOrWhiteSpace(row.RegionName))
                                                         {
                                                             <span class="wg-branch-region">@row.RegionName</span>
                                                         }
                                                     </td>
-                                                    <td class="tabular">@row.LiveVacancies</td>
-                                                    <td class="tabular">@row.NewApplications</td>
-                                                    <td class="tabular">@FormatResponse(row.AvgFirstResponseHours)</td>
-                                                    <td>
+                                                    <td class="tabular" data-label="@Culture["WgDash.Col.Live"]">@row.LiveVacancies</td>
+                                                    <td class="tabular" data-label="@Culture["WgDash.Col.New"]">@row.NewApplications</td>
+                                                    <td class="tabular" data-label="@Culture["WgDash.Col.FirstResponse"]">@FormatResponse(row.AvgFirstResponseHours)</td>
+                                                    <td data-label="@Culture["WgDash.Col.Status"]">
                                                         <span class="wg-dotst wg-dotst--@row.Status.ToLowerInvariant()">
                                                             <span class="wg-dotst__dot" aria-hidden="true"></span>
                                                             @StatusLabel(row.Status)

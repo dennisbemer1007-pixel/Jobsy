@@ -253,7 +253,7 @@
                             </Rows>
                         </EntDataTable>
                         <div class="wg-vac__footer">
-                            <span class="muted">@string.Format(Culture["WgApp.Pager"], Paged.Count, ListFiltered.Count)</span>
+                            <span class="muted">@string.Format(Culture["WgApp.Pager"], Paged.Count, CountPhrase.Applications(Culture, ListFiltered.Count))</span>
                             <EntPager Page="_page" TotalPages="@TotalPages" PageChanged="OnPageChanged" />
                         </div>
                     </div>
@@ -542,6 +542,7 @@
             await ScopeBootstrap.EnsureLoadedAsync();
             _companies = (await Api.GetMyCompaniesAsync())?.ToList() ?? [];
             _vacancies = (await Api.GetManagedVacanciesAsync(Scope.CompanyIds.Count > 0 ? Scope.CompanyIds : null)).ToList();
+            ApplyQuery();
             await ReloadAsync();
             ApplyQuery();
         }
@@ -590,7 +591,8 @@
     {
         Guid[]? branches = Guid.TryParse(_branchId, out var b) ? [b] : null;
         int? overdue = _overdueOnly ? ApplicationPipelineRules.OverdueHours : null;
-        _items = (await Api.GetApplicationsAsync(overdueHours: overdue, branchIds: branches)).ToList();
+        Guid? vacancyId = Guid.TryParse(_vacancyId, out var parsedVacancy) ? parsedVacancy : null;
+        _items = (await Api.GetApplicationsAsync(vacancyId: vacancyId, overdueHours: overdue, branchIds: branches)).ToList();
 
         if (_selected is not null)
         {
@@ -608,11 +610,20 @@
         return Task.CompletedTask;
     }
 
-    private Task OnVacancyChanged()
+    private async Task OnVacancyChanged()
     {
         _page = 1;
+        _loading = true;
+        try
+        {
+            await ReloadAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+
         SyncQuery();
-        return Task.CompletedTask;
     }
 
     private async Task OnBranchChanged()

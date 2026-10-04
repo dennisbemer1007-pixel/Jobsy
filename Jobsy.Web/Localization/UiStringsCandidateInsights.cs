@@ -107,8 +107,8 @@ public static class UiStringsCandidateInsights
             "Dichtheid per wijk en reistijd", "Density per neighbourhood and travel time",
             "Gęstość w dzielnicach i czas dojazdu", "Densitate pe cartier și timp de deplasare", "الكثافة لكل حي ووقت التنقل");
         Add("Insights.Premium.Check.Match",
-            "Match met je vacatures", "Match with your vacancies",
-            "Dopasowanie do ofert", "Potrivire cu posturile tale", "تطابق مع وظائفك");
+            "Beschikbaar voor je vacatures", "Available for your vacancies",
+            "Dostępne dla twoich ofert", "Disponibil pentru posturile tale", "متاح لوظائفك");
         Add("Insights.Premium.Check.Fields",
             "Werkvelden, prioriteiten, droombanen", "Work fields, priorities, dream jobs",
             "Obszary, priorytety, wymarzone prace", "Domenii, priorități, joburi de vis", "مجالات وأولويات ووظائف الأحلام");

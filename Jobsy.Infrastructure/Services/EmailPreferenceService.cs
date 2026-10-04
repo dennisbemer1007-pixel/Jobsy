@@ -14,6 +14,8 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
     [
         ("PushBom", "Tips over vacatures bij jou in de buurt",
             r => r == UserRole.Candidate),
+        (EmailOptionalCategories.ComebackReminder, "Herinnering om terug te komen",
+            r => r == UserRole.Candidate),
         ("VacancyEngagementReminder", "Herinnering als je vacature 14 dagen openstaat",
             IsEmployerRole),
         ("CompanyReEngagement", "Bericht als je een tijd niet actief was",
@@ -120,17 +122,6 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
         }
     }
 
-    public async Task OptInAsync(string email, string category, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(category))
-        {
-            return;
-        }
-
-        var hash = EmailAddressHasher.Hash(email);
-        await OptInByHashAsync(hash, category, cancellationToken);
-    }
-
     public async Task OptInByHashAsync(string emailHash, string category, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(emailHash) || string.IsNullOrWhiteSpace(category))
@@ -152,6 +143,21 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task OptInAsync(string email, string category, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(category))
+        {
+            return;
+        }
+
+        var hash = EmailAddressHasher.Hash(email);
+        await OptInByHashAsync(hash, category, cancellationToken);
+        if (string.Equals(category.Trim(), EmailOptionalCategories.ComebackReminder, StringComparison.OrdinalIgnoreCase))
+        {
+            await MarkComebackEmailOptInAsync(email, cancellationToken);
+        }
+    }
+
     public async Task<IReadOnlyList<EmailPreferenceItem>> GetForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await _db.Users.AsNoTracking()
@@ -167,11 +173,46 @@ public sealed class EmailPreferenceService : IEmailPreferenceService
             .Select(o => o.Category)
             .ToListAsync(cancellationToken);
         var optedSet = opted.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var comebackOptIn = await _db.CandidateReminderPreferences.AsNoTracking()
+            .Where(p => p.UserId == user.Id)
+            .Select(p => p.EmailOptedInAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
 
         return Catalog
             .Where(c => c.Allowed(user.Role))
-            .Select(c => new EmailPreferenceItem(c.Key, c.LabelNl, !optedSet.Contains(c.Key)))
+            .Select(c =>
+            {
+                var optedOut = optedSet.Contains(c.Key);
+                var enabled = string.Equals(c.Key, EmailOptionalCategories.ComebackReminder, StringComparison.OrdinalIgnoreCase)
+                    ? comebackOptIn is not null && !optedOut
+                    : !optedOut;
+                return new EmailPreferenceItem(c.Key, c.LabelNl, enabled);
+            })
             .ToList();
+    }
+
+    private async Task MarkComebackEmailOptInAsync(string email, CancellationToken cancellationToken)
+    {
+        var normalized = email.Trim().ToLowerInvariant();
+        var user = await _db.Users.FirstOrDefaultAsync(
+            u => u.Email.ToLower() == normalized && u.Role == UserRole.Candidate,
+            cancellationToken);
+        if (user is null)
+        {
+            return;
+        }
+
+        var row = await _db.CandidateReminderPreferences
+            .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        if (row is null)
+        {
+            row = new CandidateReminderPreference { UserId = user.Id };
+            _db.CandidateReminderPreferences.Add(row);
+        }
+
+        row.EmailOptedInAtUtc ??= DateTime.UtcNow;
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public static bool IsOptionalCategory(string? key)

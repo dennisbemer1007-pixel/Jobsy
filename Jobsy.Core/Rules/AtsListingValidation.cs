@@ -24,7 +24,8 @@ public static class AtsListingValidation
     [
         "veelgestelde vragen", "faq", "locaties waar", "aanmelden", "contact",
         "privacy", "cookie", "inloggen", "over ons", "nieuwsbrief", "sitemap",
-        "dit zijn onze zorgverleners", "waar bent u naar op zoek"
+        "dit zijn onze zorgverleners", "waar bent u naar op zoek",
+        "specialismen en poliklinieken", "onze poliklinieken", "afdelingen en specialismen"
     ];
 
     private static readonly string[] JobSignals =

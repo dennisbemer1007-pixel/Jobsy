@@ -4,6 +4,7 @@ using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
 using Jobsy.Core.Admin;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
@@ -41,6 +42,7 @@ public class AdminController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly IAdminAuditLog _audit;
     private readonly IAdminAuditContext _auditContext;
+    private readonly IMetricsQueryService _metrics;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
@@ -58,6 +60,7 @@ public class AdminController : ControllerBase
         IPlatformFeatureService features,
         IAdminAuditLog audit,
         IAdminAuditContext auditContext,
+        IMetricsQueryService metrics,
         ILogger<AdminController> logger)
     {
         _db = db;
@@ -74,6 +77,7 @@ public class AdminController : ControllerBase
         _features = features;
         _audit = audit;
         _auditContext = auditContext;
+        _metrics = metrics;
         _logger = logger;
     }
 
@@ -536,11 +540,12 @@ public class AdminController : ControllerBase
         }
 
         var total = await query.CountAsync(cancellationToken);
-        var items = await query
+        var raw = await query
             .OrderByDescending(l => l.OccurredAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(l => new PersonalDataAccessLogItemDto(
+            .Select(l => new
+            {
                 l.Id,
                 l.OccurredAt,
                 l.ActorUserId,
@@ -551,8 +556,78 @@ public class AdminController : ControllerBase
                 l.Action,
                 l.Reason,
                 l.SupportAccessGrantId,
-                l.CorrelationId))
+                l.CorrelationId
+            })
             .ToListAsync(cancellationToken);
+
+        var userIds = raw.Select(l => l.ActorUserId)
+            .Concat(raw.Where(l => l.SubjectUserId is Guid).Select(l => l.SubjectUserId!.Value))
+            .Distinct()
+            .ToList();
+        var people = await _db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new
+            {
+                u.Id,
+                u.FullName,
+                u.Email,
+                Role = u.Role.ToString(),
+                CompanyName = u.Company != null ? u.Company.Name : null
+            })
+            .ToDictionaryAsync(u => u.Id, cancellationToken);
+
+        var extraCompanyIds = raw
+            .Where(l => l.SubjectCompanyId is Guid)
+            .Select(l => l.SubjectCompanyId!.Value)
+            .Distinct()
+            .ToList();
+        var companyNames = await _db.Companies.AsNoTracking()
+            .Where(c => extraCompanyIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.Name })
+            .ToDictionaryAsync(c => c.Id, c => c.Name, cancellationToken);
+
+        string? MaskedName(Guid id)
+            => people.TryGetValue(id, out var person) ? PersonalDataMasker.MaskName(person.FullName) : null;
+
+        string? MaskedEmail(Guid id)
+            => people.TryGetValue(id, out var person) ? PersonalDataMasker.MaskEmail(person.Email) : null;
+
+        string? CompanyOf(Guid id)
+            => people.TryGetValue(id, out var person) ? person.CompanyName : null;
+
+        string? RoleOf(Guid id)
+            => people.TryGetValue(id, out var person) ? person.Role : null;
+
+        var items = raw.Select(l =>
+        {
+            string? subjectCompany = l.SubjectUserId is Guid sid ? CompanyOf(sid) : null;
+            if (string.IsNullOrWhiteSpace(subjectCompany)
+                && l.SubjectCompanyId is Guid cid
+                && companyNames.TryGetValue(cid, out var named))
+            {
+                subjectCompany = named;
+            }
+
+            return new PersonalDataAccessLogItemDto(
+                l.Id,
+                l.OccurredAt,
+                l.ActorUserId,
+                l.ActorRole,
+                l.SubjectUserId,
+                l.SubjectCompanyId,
+                l.Resource,
+                l.Action,
+                l.Reason,
+                l.SupportAccessGrantId,
+                l.CorrelationId,
+                MaskedName(l.ActorUserId),
+                MaskedEmail(l.ActorUserId),
+                CompanyOf(l.ActorUserId),
+                l.SubjectUserId is Guid subjectId ? MaskedName(subjectId) : null,
+                l.SubjectUserId is Guid subjectMail ? MaskedEmail(subjectMail) : null,
+                l.SubjectUserId is Guid subjectRole ? RoleOf(subjectRole) : null,
+                subjectCompany);
+        }).ToList();
 
         await this.LogPersonalDataAccessAsync(
             _accessLog,
@@ -1144,6 +1219,23 @@ public class AdminController : ControllerBase
         return Ok(rows);
     }
 
+    [HttpGet("vacancies/{id:guid}/metrics/{key}")]
+    public async Task<ActionResult<IEnumerable<MetricDrilldownItemDto>>> GetVacancyMetricDrilldown(
+        Guid id,
+        string key,
+        [FromQuery] string period = "week",
+        CancellationToken cancellationToken = default)
+    {
+        var exists = await _db.Vacancies.AsNoTracking().AnyAsync(v => v.Id == id, cancellationToken);
+        if (!exists)
+        {
+            return NotFound();
+        }
+
+        var items = await _metrics.GetVacancyDrilldownAsync(key, id, period, cancellationToken);
+        return Ok(items);
+    }
+
     [HttpGet("vacancies")]
     public async Task<ActionResult<IEnumerable<AdminVacancyDetailDto>>> GetVacancies(
         [FromQuery] string? moderation = null,
@@ -1177,7 +1269,8 @@ public class AdminController : ControllerBase
                 v.StartDate,
                 v.EndDate,
                 CreatedVia = v.CreatedVia.ToString(),
-                v.ContentModerationPassed
+                v.ContentModerationPassed,
+                v.ClosedAtUtc
             })
             .ToListAsync(cancellationToken);
 
@@ -1226,7 +1319,8 @@ public class AdminController : ControllerBase
             likes.GetValueOrDefault(v.Id),
             v.ExtensionCount > 0,
             v.CreatedVia,
-            v.ContentModerationPassed)).ToList();
+            v.ContentModerationPassed,
+            v.ClosedAtUtc)).ToList();
 
         if (page is null)
         {

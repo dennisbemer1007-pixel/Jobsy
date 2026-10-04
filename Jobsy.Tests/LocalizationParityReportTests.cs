@@ -217,7 +217,7 @@ internal static class LocalizationParityAllowList
         "Filters", "Urgent", "Dashboard", "Team",
         "Cookies", "Contact", "Privacy", "Tokens",
         // Token is the product word in Dutch and English.
-        "1 token", "{0} tokens",
+        "1 token", "2 tokens", "{0} tokens",
         // public-pages 09: a dash placeholder and the loanword "Flyer" are language-neutral.
         "—", "Flyer (pdf)",
         // Sample Dutch mobile number shown in every language.

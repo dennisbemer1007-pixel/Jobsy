@@ -50,14 +50,20 @@ public sealed class SalesFunnelReadService : ISalesFunnelReadService
                 cancellationToken);
 
         var activeSince = DateTime.UtcNow.AddDays(-90);
-        var activeCompanyIds = await _db.CommissionLedgerEntries.AsNoTracking()
+        // Project the nullable id. CompanyId!.Value throws InvalidOperationException
+        // ("Nullable object must have a value") when EF translates the dashboard query.
+        var activeCompanyIdValues = await _db.CommissionLedgerEntries.AsNoTracking()
             .Where(e => e.SalesManagerUserId == beneficiaryUserId
                         && e.Kind == CommissionEntryKind.TokenCommission
                         && e.CreatedAt >= activeSince
                         && e.CompanyId != null)
-            .Select(e => e.CompanyId!.Value)
+            .Select(e => e.CompanyId)
             .Distinct()
             .ToListAsync(cancellationToken);
+        var activeCompanyIds = activeCompanyIdValues
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .ToList();
 
         var activeNow = 0;
         if (activeCompanyIds.Count > 0)

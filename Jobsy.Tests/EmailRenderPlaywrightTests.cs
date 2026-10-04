@@ -107,8 +107,40 @@ public class EmailRenderPlaywrightTests : IClassFixture<EmailRenderPlaywrightTes
         var dir = Path.Combine(FindRepoRoot(), "artifacts", "playwright-email");
         Directory.CreateDirectory(dir);
         var shot = Path.Combine(dir, $"{Sanitize(key)}-{lang}-{width}-{theme}.png");
-        await page.ScreenshotAsync(new() { Path = shot, FullPage = true });
+        await SaveShotAsync(page, mail.Html, shot);
         _output.WriteLine($"SHOT {Path.GetFileName(shot)}");
+    }
+
+    /// <summary>
+    /// Chromium sometimes refuses a full-page shot right after fonts load when the
+    /// smoke job has been running for a while. Retry on a fresh document.
+    /// </summary>
+    private static async Task SaveShotAsync(IPage page, string html, string shot)
+    {
+        PlaywrightException? last = null;
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                await page.ScreenshotAsync(new PageScreenshotOptions
+                {
+                    Path = shot,
+                    FullPage = true,
+                    Animations = ScreenshotAnimations.Disabled,
+                    Timeout = 20_000
+                });
+                return;
+            }
+            catch (PlaywrightException ex) when (attempt < 2
+                && ex.Message.Contains("capture screenshot", StringComparison.OrdinalIgnoreCase))
+            {
+                last = ex;
+                await page.SetContentAsync(html, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 20_000 });
+                await page.WaitForTimeoutAsync(250);
+            }
+        }
+
+        throw last!;
     }
 
     private static string Sanitize(string key)

@@ -63,14 +63,21 @@
             </p>
         }
 
-        <blockquote class="test-flow__statement" id="@($"tf-stmt-{question.Id}")">
-            “@StripIdPrefix(question.Text)”
-        </blockquote>
+        var spokenQuestion = StripIdPrefix(question.Text);
+        <div class="test-flow__speak">
+            <blockquote class="test-flow__statement" id="@($"tf-stmt-{question.Id}")">
+                “@spokenQuestion”
+            </blockquote>
+            <ReadAloudButton Text="@spokenQuestion" SpeechKey="@($"q-{Kind}-{question.Id}")" />
+        </div>
         @if (!string.IsNullOrWhiteSpace(question.Example))
         {
             <details class="test-example" open="@_exampleOpen">
                 <summary>@Culture["TestFlow.Example"]</summary>
-                <p>@question.Example</p>
+                <div class="test-example__body">
+                    <p>@question.Example</p>
+                    <ReadAloudButton Text="@question.Example" SpeechKey="@($"ex-{Kind}-{question.Id}")" />
+                </div>
             </details>
         }
 

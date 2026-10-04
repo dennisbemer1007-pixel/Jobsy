@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "e29fe645988aacbc95823a2c515c00c72f3d943d508713fa28dad468d41878ff",
-    "v": "20261004-run6c"
+    "sha256": "319ec77aa680ab2da539f183b80791d18f279aef3bf1961ec5e8218784690e8f",
+    "v": "20261004-readaloud2"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -12,12 +12,12 @@
     "v": "20260929-mfa"
   },
   "css/features/admin.css": {
-    "sha256": "d620b803496f9504969a1ad72ae7204e98e3b638faf1e804c563c916cffb6638",
-    "v": "20261004-run4"
+    "sha256": "3f96363957e78af2d2f305d32cb0fafb895c8f1c513b52f5853a409a15784aa7",
+    "v": "20261004-run5d"
   },
   "css/features/applications.css": {
-    "sha256": "9931dd97577b76c2a955c50a37470503217907bbe2bad7f3041580360c683cba",
-    "v": "20261004-run6"
+    "sha256": "aec48fd764287fa304049effd9683a236e3e6f47b38d79e88431cae10875d45d",
+    "v": "20261004-run3tl"
   },
   "css/features/auth.css": {
     "sha256": "3388f3f86c22de763eab34d89641cef75fa0ea83e621d5a4d4373acc182a6f4c",
@@ -44,8 +44,8 @@
     "v": "20261004-teaser"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "736c843a82c05383d4bc4cb1059ab7477a5fbe8500795f2ba78275d88a466a53",
-    "v": "20261004-run2"
+    "sha256": "2b8627098fb42c3a9fff0d56f7da6225cb600d85105867ec3a668cebad16e9a8",
+    "v": "20261004-run3tl"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -116,8 +116,8 @@
     "v": "20260930-wa11"
   },
   "css/features/werkgever.css": {
-    "sha256": "44bcd77653869d34321ab333327910fe3dde319c2ec41ec48ed5e810548da1fc",
-    "v": "20261004-fixlist"
+    "sha256": "4144ac6801630c2e98576cfa5c9537acaa878b0f447dbca5f6a038008b46c269",
+    "v": "20261004-run4"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
@@ -136,8 +136,8 @@
     "v": "20260828-mascot"
   },
   "js/app-core.js": {
-    "sha256": "d72de42a4df479a571159fe1e8a2ad8a70939a8eb62ffaec17a35e4a1a6f985b",
-    "v": "20261004-menu-open"
+    "sha256": "7371e05c95a662edb1fdf2f850a42b861804683f5f129df2504c6451d19ac7a5",
+    "v": "20261004-readaloud3"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-pupil3"
   },
   "js/lobsyPush.js": {
-    "sha256": "8dd78aee8aa5e0b093fe560e635ce24d7ad0cde2013e67badcea07da9f063f9b",
-    "v": "20261004-menu-open"
+    "sha256": "3540c8cf234c2cc214307c75cad9e0e5abfb84493dbc293ebc2166a9b308003e",
+    "v": "20261004-readaloud3"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -198,6 +198,10 @@
   "js/public-pages.js": {
     "sha256": "e5f1baab87e03d1ea0c7ccb09aa7851d5691ac44d0e38394a85f97d1796cd8a1",
     "v": "20261001-pp07"
+  },
+  "js/read-aloud.js": {
+    "sha256": "9fc0acd33abf2876fab3e1662413ed32aed17719a901e5a747507427803ba6d0",
+    "v": "20261004-readaloud"
   },
   "js/vacancyDetailMap.min.js": {
     "sha256": "53ad527a71634e6130223d64fc8243a51f66f4f22b05f3c32fb28e9b06bfb1d2",
@@ -208,11 +212,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "820b1a401b4c9cbccfc478ecf0934f95ad1fe3a142bcfc814bf465c7027e056e",
-    "v": "20261004-menu-open"
+    "sha256": "5ef6350307c0fa3709edfc4ac6014391a3ac05cbdde0db1f4c0f3ee3422f46c3",
+    "v": "20261004-readaloud3"
   },
   "service-worker.published.js": {
-    "sha256": "e10a77a5fedb554d7dc1b1ee53582e94d92df7d1682793fa0c6babe9294bdbdd",
-    "v": "20261004-menu-open"
+    "sha256": "2ab003cd73fbf1e6cd8ec8fec67692fc8d12347c35fb77ddec39b223659a616c",
+    "v": "20261004-readaloud3"
   }
 }

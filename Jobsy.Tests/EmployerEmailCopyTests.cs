@@ -36,17 +36,33 @@ public class EmployerEmailCopyTests
     public void Employer_mails_never_include_candidate_pii_sample()
     {
         const string candidate = "Sanne van Dijk";
-        var mail = TransactionalEmails.EmployerNewApplication(
-            "https://lobsy.nl", "Weekendhulp", branchName: "Delft", applicationId: Guid.NewGuid(),
-            receivedAtUtc: DateTime.UtcNow, matchPercent: 86, companyName: "Bakkerij");
-        Assert.DoesNotContain(candidate, mail.Html, StringComparison.Ordinal);
-        Assert.DoesNotContain(candidate, mail.Text, StringComparison.Ordinal);
-        Assert.DoesNotContain("86", mail.Text, StringComparison.Ordinal);
-        Assert.DoesNotContain("86", mail.Html, StringComparison.Ordinal);
+        // The mail prints the application id and the received-on clock. A random Guid
+        // or the current minute can contain the digits 86, which this test treats as
+        // the match percentage that must stay out of the employer mail. Both fixed
+        // samples (this branch and acceptatie) stay free of those digits.
+        AssertEmployerMailOmitsScore(
+            candidate,
+            Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01"),
+            new DateTime(2026, 4, 3, 10, 15, 0, DateTimeKind.Utc));
+        AssertEmployerMailOmitsScore(
+            candidate,
+            Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            new DateTime(2026, 10, 4, 12, 0, 0, DateTimeKind.Utc));
 
         var withoutMatch = TransactionalEmails.EmployerNewApplication(
             "https://lobsy.nl", "Weekendhulp", companyName: "Bakkerij");
         Assert.DoesNotContain("Match", withoutMatch.Text, StringComparison.Ordinal);
+    }
+
+    private static void AssertEmployerMailOmitsScore(string candidate, Guid applicationId, DateTime receivedAt)
+    {
+        var mail = TransactionalEmails.EmployerNewApplication(
+            "https://lobsy.nl", "Weekendhulp", branchName: "Delft", applicationId: applicationId,
+            receivedAtUtc: receivedAt, matchPercent: 86, companyName: "Bakkerij");
+        Assert.DoesNotContain(candidate, mail.Html, StringComparison.Ordinal);
+        Assert.DoesNotContain(candidate, mail.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("86", mail.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("86", mail.Html, StringComparison.Ordinal);
     }
 
     [Fact]
