@@ -41,6 +41,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly ICareerCompassGenerationService _careerCompass;
     private readonly IMemoryCache _cache;
+    private readonly ILegalIdentity _legal;
     private readonly IFeatureFlags _features;
 
     static AssessmentReportPdfService()
@@ -53,12 +54,14 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         IPlatformCompanySettingsService companySettings,
         ICareerCompassGenerationService careerCompass,
         IMemoryCache cache,
+        ILegalIdentity legal,
         IFeatureFlags features)
     {
         _db = db;
         _companySettings = companySettings;
         _careerCompass = careerCompass;
         _cache = cache;
+        _legal = legal;
         _features = features;
     }
 
@@ -111,8 +114,8 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             return null;
         }
 
-        var platform = await _companySettings.GetAsync(cancellationToken);
-        var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
+        var legal = await _legal.GetAsync(cancellationToken);
+        var brand = string.IsNullOrWhiteSpace(legal.TradeName) ? legal.DisplayName : legal.TradeName.Trim();
         var logo = _companySettings.GetBrandLogoPng();
         var culture = ReportLanguage.IsEnglish(reportLang)
             ? CultureInfo.GetCultureInfo("en-GB")

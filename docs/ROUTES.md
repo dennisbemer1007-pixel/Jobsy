@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (236 routes)
+## Table (237 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -204,6 +204,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
 | `/profiel/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/profiel/tests/{TestKey}` | `Pages/Candidate/TestDetail.razor` | Candidate |
+| `/referentie/{Token}` | `Pages/Public/ReferenceConfirmationPage.razor` | anonymous |
 | `/regional` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/regional/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/regional/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -241,6 +242,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
 | `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
 | `/status/{Code:int}` | `Pages/Status/StatusPage.razor` | anonymous |
+| `/toegankelijkheid` | `Pages/Legal/Toegankelijkheid.razor` | anonymous |
 | `/toestemming` | `Pages/Public/ParentalConsent.razor` | anonymous |
 | `/tokens/checkout-return` | `Pages/TokensCheckoutReturn.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |
 | `/tokens/checkout-stub` | `Pages/TokensCheckoutStub.razor` | BranchManager, EnterpriseManager, Intermediary, Admin |

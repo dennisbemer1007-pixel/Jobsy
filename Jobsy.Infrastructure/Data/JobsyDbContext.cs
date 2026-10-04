@@ -35,6 +35,10 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateDiplomaEvaluation> CandidateDiplomaEvaluations => Set<CandidateDiplomaEvaluation>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
+    public DbSet<ReferenceConfirmation> ReferenceConfirmations => Set<ReferenceConfirmation>();
+    public DbSet<ReferenceConfirmationToken> ReferenceConfirmationTokens => Set<ReferenceConfirmationToken>();
+    public DbSet<ReferenceConfirmationConsentLog> ReferenceConfirmationConsentLogs => Set<ReferenceConfirmationConsentLog>();
+    public DbSet<ReferenceMisuseReport> ReferenceMisuseReports => Set<ReferenceMisuseReport>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
     public DbSet<CandidateCulturePersonalityProfile> CandidateCulturePersonalityProfiles => Set<CandidateCulturePersonalityProfile>();
     public DbSet<CandidateValuesProfile> CandidateValuesProfiles => Set<CandidateValuesProfile>();
@@ -647,6 +651,68 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Phone).HasMaxLength(32).IsRequired();
             entity.HasIndex(e => new { e.UserId, e.SortOrder });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReferenceConfirmation>(entity =>
+        {
+            entity.ToTable("ReferenceConfirmations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RoleTitle).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.PeriodText).HasMaxLength(120);
+            entity.Property(e => e.DidWell).HasMaxLength(400);
+            entity.Property(e => e.WorkAgain).HasMaxLength(16);
+            entity.Property(e => e.ExtraText).HasMaxLength(400);
+            entity.HasIndex(e => e.CandidateReferenceId).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasOne(e => e.CandidateReference)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateReferenceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReferenceConfirmationToken>(entity =>
+        {
+            entity.ToTable("ReferenceConfirmationTokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasOne(e => e.ReferenceConfirmation)
+                .WithMany()
+                .HasForeignKey(e => e.ReferenceConfirmationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReferenceConfirmationConsentLog>(entity =>
+        {
+            entity.ToTable("ReferenceConfirmationConsentLogs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Actor).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Action).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Text).HasMaxLength(500).IsRequired();
+            entity.HasIndex(e => e.UserId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReferenceMisuseReport>(entity =>
+        {
+            entity.ToTable("ReferenceMisuseReports");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Message).HasMaxLength(500);
+            entity.HasIndex(e => e.ReferenceConfirmationId);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -1714,15 +1780,22 @@ public class JobsyDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.LegalName).HasMaxLength(200);
+            entity.Property(e => e.TradeName).HasMaxLength(200);
             entity.Property(e => e.Slogan).HasMaxLength(240);
             entity.Property(e => e.Address).HasMaxLength(240);
             entity.Property(e => e.PostalCode).HasMaxLength(20);
             entity.Property(e => e.City).HasMaxLength(120);
             entity.Property(e => e.Country).HasMaxLength(80);
+            entity.Property(e => e.PostalStreet).HasMaxLength(240);
+            entity.Property(e => e.PostalPostalCode).HasMaxLength(20);
+            entity.Property(e => e.PostalCity).HasMaxLength(120);
             entity.Property(e => e.KvkNumber).HasMaxLength(32);
             entity.Property(e => e.VatNumber).HasMaxLength(32);
             entity.Property(e => e.Phone).HasMaxLength(40);
             entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.SupportEmail).HasMaxLength(200);
+            entity.Property(e => e.PrivacyEmail).HasMaxLength(200);
             entity.Property(e => e.VatBufferIban).HasMaxLength(34);
         });
 

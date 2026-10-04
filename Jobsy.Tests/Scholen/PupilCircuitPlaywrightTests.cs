@@ -270,47 +270,54 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
     {
         var classValue = classId.ToString("D");
-        TimeoutException? last = null;
-        for (var attempt = 0; attempt < 2; attempt++)
+        Exception? last = null;
+        for (var attempt = 0; attempt < 3; attempt++)
         {
             await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            // The class list comes from the API. Under suite load that call can fail
-            // once and leave only the placeholder, which posts as an unknown class.
+            // The class list comes from the API. Prerender can show it, then the circuit
+            // swaps in an empty select until the same call returns. Poll and POST in one
+            // turn so a swap between two driver calls cannot submit the placeholder.
             try
             {
-                await page.WaitForFunctionAsync(
+                await page.EvaluateAsync(
                     """
-                    id => {
-                      const select = document.querySelector('select[name=classId]');
-                      return !!select && [...select.options].some(o => o.value === id);
-                    }
+                    ([id, code]) => new Promise((resolve, reject) => {
+                      const deadline = performance.now() + 20000;
+                      const tick = () => {
+                        const select = document.querySelector('select[name=classId]');
+                        const input = document.querySelector('input[name=code]');
+                        const option = select && [...select.options].find(o => o.value === id);
+                        if (select && input && option) {
+                          option.selected = true;
+                          select.value = id;
+                          input.value = code;
+                          const form = input.closest('form');
+                          if (!form) {
+                            reject(new Error('login form missing'));
+                            return;
+                          }
+                          if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                          else form.submit();
+                          resolve('submitted');
+                          return;
+                        }
+                        if (performance.now() > deadline) {
+                          reject(new Error(select && input ? 'class option missing' : 'login form missing'));
+                          return;
+                        }
+                        setTimeout(tick, 50);
+                      };
+                      tick();
+                    })
                     """,
-                    classValue,
-                    new() { Timeout = 20_000 });
+                    new[] { classValue, code });
             }
-            catch (TimeoutException ex) when (attempt == 0)
+            catch (PlaywrightException ex) when (attempt < 2 && IsClassListNotReady(ex))
             {
                 last = ex;
                 continue;
             }
 
-            // One turn: Blazor must not swap the form between selecting the class and POST.
-            await page.EvaluateAsync(
-                """
-                ([id, code]) => {
-                  const select = document.querySelector('select[name=classId]');
-                  const input = document.querySelector('input[name=code]');
-                  if (!select || !input) throw new Error('login form missing');
-                  const option = [...select.options].find(o => o.value === id);
-                  if (!option) throw new Error('class option missing');
-                  option.selected = true;
-                  input.value = code;
-                  const form = input.closest('form');
-                  if (typeof form.requestSubmit === 'function') form.requestSubmit();
-                  else form.submit();
-                }
-                """,
-                new[] { classValue, code });
             try
             {
                 await page.WaitForURLAsync(
@@ -320,7 +327,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 45_000 });
                 return;
             }
-            catch (TimeoutException ex) when (attempt == 0)
+            catch (TimeoutException ex) when (attempt < 2)
             {
                 last = ex;
             }
@@ -330,6 +337,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var snippet = body.Length <= 600 ? body : body[..600];
         throw new TimeoutException($"Login stayed on {page.Url}. Body: {snippet}", last);
     }
+
+    private static bool IsClassListNotReady(PlaywrightException ex)
+        => ex.Message.Contains("class option missing", StringComparison.Ordinal)
+           || ex.Message.Contains("login form missing", StringComparison.Ordinal);
 
     private static async Task AnswerOneAsync(IPage page)
     {

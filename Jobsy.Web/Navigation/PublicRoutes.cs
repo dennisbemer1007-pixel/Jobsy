@@ -21,6 +21,8 @@ public static class PublicRoutes
     public const string Terms = "/algemene-voorwaarden";
     public const string UsageTerms = "/gebruiksvoorwaarden";
     public const string About = "/wie-zijn-wij";
+    public const string Accessibility = "/toegankelijkheid";
+    public const string Contact = "/melden";
     public const string PassportAnchor = "/#wat-je-krijgt";
     public const string DiscoveryAnchor = "/#ontdekkingsreis";
 }

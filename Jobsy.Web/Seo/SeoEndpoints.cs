@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Features;
+using Jobsy.Web.Services;
 
 namespace Jobsy.Web.Seo;
 
@@ -10,8 +11,13 @@ public static class SitemapXml
 {
     public const int MaxDynamicUrls = 5_000;
 
-    public static string RobotsTxt(string origin)
+    public static string RobotsTxt(string origin, bool noIndex = false)
     {
+        if (noIndex)
+        {
+            return "User-agent: *\nDisallow: /\n";
+        }
+
         var sitemap = origin.TrimEnd('/') + "/sitemap.xml";
         return
             "User-agent: *\n" +
@@ -100,8 +106,9 @@ public static class SeoEndpoints
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
             var snap = await flags.GetAsync(http.RequestAborted);
-            var robots = SitemapXml.RobotsTxt(origin);
-            if (!snap.EmployersEnabled)
+            var noIndex = config.GetValue<bool>("Seo:NoIndex");
+            var robots = SitemapXml.RobotsTxt(origin, noIndex);
+            if (!noIndex && !snap.EmployersEnabled)
             {
                 robots = robots.Replace(
                     "Disallow: /vestiging\n",
@@ -122,6 +129,11 @@ public static class SeoEndpoints
             IFeatureFlags flags,
             CancellationToken cancellationToken) =>
         {
+            if (config.GetValue<bool>("Seo:NoIndex"))
+            {
+                return Results.NotFound();
+            }
+
             var origin = PageSeoResolver.Origin(
                 $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
                 config);
@@ -167,5 +179,41 @@ public static class SeoEndpoints
             http.Response.Headers.ETag = SitemapXml.WeakETag(body, enabled);
             return Results.Text(body, "application/xml; charset=utf-8");
         }).AllowAnonymous();
+
+        app.MapGet("/.well-known/security.txt", async (
+            HttpContext http,
+            IConfiguration config,
+            LegalIdentityProvider legal,
+            CancellationToken cancellationToken) =>
+        {
+            var snap = await legal.GetAsync(cancellationToken);
+            var origin = PageSeoResolver.Origin(
+                $"{http.Request.Scheme}://{http.Request.Host}{http.Request.Path}",
+                config);
+            var body = SecurityTxt.Format(snap.PrivacyContact, origin, DateTime.UtcNow);
+            http.Response.Headers.CacheControl = "public, max-age=3600";
+            return Results.Text(body, "text/plain; charset=utf-8");
+        }).AllowAnonymous();
+    }
+}
+
+/// <summary>RFC 9116 security.txt. The Contact line is omitted when no mailbox is configured.</summary>
+public static class SecurityTxt
+{
+    public static string Format(string? contactEmail, string origin, DateTime utcNow)
+    {
+        var expires = utcNow.AddMonths(12).ToString(
+            "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
+            System.Globalization.CultureInfo.InvariantCulture);
+        var body = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(contactEmail))
+        {
+            body.Append("Contact: mailto:").Append(contactEmail.Trim()).Append('\n');
+        }
+
+        body.Append("Expires: ").Append(expires).Append('\n');
+        body.Append("Preferred-Languages: nl, en\n");
+        body.Append("Canonical: ").Append(origin.TrimEnd('/')).Append("/.well-known/security.txt\n");
+        return body.ToString();
     }
 }

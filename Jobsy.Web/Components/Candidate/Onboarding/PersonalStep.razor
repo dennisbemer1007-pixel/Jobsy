@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Privacy
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
@@ -78,6 +79,10 @@
         </label>
     </div>
     <small>@BirthHint</small>
+    @if (AgeMessage is not null)
+    {
+        <p class="error" role="status">@AgeMessage</p>
+    }
 </fieldset>
 <label>
     @Culture["Profile.Phone"] <small>@Culture["Onboarding.Optional"]</small>
@@ -108,6 +113,34 @@
     [Parameter] public bool EmployersEnabled { get; set; } = true;
     /// <summary>When true, postcode hint mentions employers never see the address.</summary>
     [Parameter] public bool UseDiscoveryPostcodeHint { get; set; }
+
+    private string? AgeMessage
+    {
+        get
+        {
+            if (Draft.BirthDate is not DateOnly born)
+            {
+                return null;
+            }
+
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            if (CandidateConsentRules.IsBelowMinimumAge(born, today))
+            {
+                return Culture.Format("Onboarding.Age.TooYoung", CandidateConsentRules.MinimumCandidateAge);
+            }
+
+            if (CandidateConsentRules.AgeYears(born, today) is int age
+                && age < CandidateConsentRules.ParentalConsentAge)
+            {
+                return Culture.Format(
+                    "Onboarding.Age.Parent",
+                    CandidateConsentRules.MinimumCandidateAge,
+                    CandidateConsentRules.ParentalConsentAge);
+            }
+
+            return null;
+        }
+    }
 
     private string BirthHint => EmployersEnabled
         ? Culture["Onboarding.BirthHint"]

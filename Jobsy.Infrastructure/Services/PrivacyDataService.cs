@@ -537,6 +537,33 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 .OrderBy(r => r.SortOrder)
                 .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone, r.CreatedAtUtc })
                 .ToListAsync(cancellationToken),
+            ReferenceConfirmations = await _db.ReferenceConfirmations.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.RoleTitle,
+                    c.Status,
+                    c.CandidateConsentAtUtc,
+                    c.ConsentVersion,
+                    c.WorkedHere,
+                    c.PeriodText,
+                    c.DidWell,
+                    c.WorkAgain,
+                    c.ExtraText,
+                    c.ConfirmedAtUtc,
+                    c.DeclinedAtUtc,
+                    c.ShowOnPartnerPassport,
+                    c.ShareWorkedHere,
+                    c.SharePeriod,
+                    c.ShareDidWell,
+                    c.ShareWorkAgain,
+                    c.ShareExtra
+                })
+                .ToListAsync(cancellationToken),
+            ReferenceMisuseReports = await _db.ReferenceMisuseReports.AsNoTracking()
+                .Where(r => r.UserId == user.Id)
+                .Select(r => new { r.Message, r.CreatedAtUtc })
+                .ToListAsync(cancellationToken),
             Competencies = await _db.CandidateCompetencies.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .Select(c => new
@@ -1409,6 +1436,39 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (diplomaEvaluations.Count > 0)
         {
             _db.CandidateDiplomaEvaluations.RemoveRange(diplomaEvaluations);
+        }
+
+        var misuse = await _db.ReferenceMisuseReports
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (misuse.Count > 0)
+        {
+            _db.ReferenceMisuseReports.RemoveRange(misuse);
+        }
+
+        var consentLogs = await _db.ReferenceConfirmationConsentLogs
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (consentLogs.Count > 0)
+        {
+            _db.ReferenceConfirmationConsentLogs.RemoveRange(consentLogs);
+        }
+
+        var confirmations = await _db.ReferenceConfirmations
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (confirmations.Count > 0)
+        {
+            var confirmationIds = confirmations.Select(c => c.Id).ToList();
+            var tokens = await _db.ReferenceConfirmationTokens
+                .Where(t => confirmationIds.Contains(t.ReferenceConfirmationId))
+                .ToListAsync(cancellationToken);
+            if (tokens.Count > 0)
+            {
+                _db.ReferenceConfirmationTokens.RemoveRange(tokens);
+            }
+
+            _db.ReferenceConfirmations.RemoveRange(confirmations);
         }
 
         var references = await _db.CandidateReferences

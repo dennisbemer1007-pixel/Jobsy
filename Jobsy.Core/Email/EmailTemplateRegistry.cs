@@ -153,6 +153,8 @@ public static class EmailTemplateRegistry
             "Toestemming opnieuw bevestigen", "14 dagen voor de partnertoestemming verloopt."),
         Def("ComebackReminder", "ComebackReminder", "Kandidaat", EmailKind.Optional, "ComebackReminder", false,
             "Kom terug", "Herinnering als de 4 korte tests openstaan, of na 4 weken stilte."),
+        Def("ReferenceConfirmation", "ReferenceConfirmation", "Referent", EmailKind.Essential, "ReferenceAsked", false,
+            "Bevestiging van een referent", "Mail met een eenmalige link naar 5 korte vragen."),
     ];
 
     private static readonly HashSet<string> GoodNewsKeys = new(

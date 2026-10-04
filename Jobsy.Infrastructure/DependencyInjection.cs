@@ -582,6 +582,7 @@ public static class DependencyInjection
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
+        services.AddScoped<ReferenceConfirmationService>();
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
         services.AddScoped<IFeedbackService, FeedbackService>();

@@ -2,6 +2,7 @@
 @attribute [AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
 @layout PublicLayout
+@using Jobsy.Core.Privacy
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
@@ -33,7 +34,10 @@
 
         @if (_fromUnder16)
         {
-            <p class="pub-signup__note" role="note">@Culture["Signup.Under16"]</p>
+            <p class="pub-signup__note" role="note">@Culture.Format(
+                "Signup.Under16",
+                CandidateConsentRules.MinimumCandidateAge,
+                CandidateConsentRules.ParentalConsentAge)</p>
         }
 
         @if (!string.IsNullOrEmpty(_errorMessage))

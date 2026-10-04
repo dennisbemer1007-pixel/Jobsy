@@ -24,8 +24,9 @@ body itself stays on the page with `lang="nl" dir="ltr"`, also in Arabic.
 ## Rule: no literal identity in markup
 
 Never type Lobsy's name, address, KvK number, btw number or e-mail address in a `.razor` file or a
-resource string. Everything comes from `ILegalIdentity` (D1). An empty `Legal:*` value hides its
-line — it never becomes a placeholder like `[ADRES]`. The only literals allowed are the
+resource string. Everything comes from `ILegalIdentity` (D1). The database row
+(Bedrijfsgegevens) wins. A `Legal:*` value is used only when that database field is empty.
+An empty field hides its line — it never becomes a placeholder like `[ADRES]`. The only literals allowed are the
 `support@lobsy.nl` / `privacy@lobsy.nl` **defaults** in `LegalOptions`.
 
 Guards: `LegalIdentityCardTests`, `PublicPagesWebGuardTests` (no placeholder pattern in the rendered

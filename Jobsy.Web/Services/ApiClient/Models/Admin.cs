@@ -321,15 +321,22 @@ public sealed class SalesParkedBalanceApiItem
 public sealed class PlatformCompanyItem
 {
     public string CompanyName { get; set; } = "Lobsy";
+    public string? LegalName { get; set; }
+    public string? TradeName { get; set; }
     public string Slogan { get; set; } = "Dichtbij genoeg om het pantser te laten vallen";
     public string? Address { get; set; }
     public string? PostalCode { get; set; }
     public string? City { get; set; }
     public string? Country { get; set; } = "NL";
+    public string? PostalStreet { get; set; }
+    public string? PostalPostalCode { get; set; }
+    public string? PostalCity { get; set; }
     public string? KvkNumber { get; set; }
     public string? VatNumber { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
+    public string? SupportEmail { get; set; }
+    public string? PrivacyEmail { get; set; }
     public string? VatBufferIban { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
 }

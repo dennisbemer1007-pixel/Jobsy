@@ -71,7 +71,7 @@ public class PageSeoCatalogTests
         Assert.Contains("<html lang=\"@HtmlLang\"", app);
         Assert.Contains("HtmlLang", app);
         Assert.Contains("theme-color", app);
-        Assert.Contains("Lobsy — vacatures op reistijd", app);
+        Assert.Contains("Lobsy — een loopbaangids in je eigen taal", app);
         Assert.Contains("HeadOutlet", app);
 
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));

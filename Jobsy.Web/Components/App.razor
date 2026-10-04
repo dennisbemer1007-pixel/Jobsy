@@ -1,11 +1,16 @@
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
 <!DOCTYPE html>
 <html lang="@HtmlLang" dir="@HtmlDir">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lobsy — vacatures op reistijd</title>
+    <title>Lobsy — een loopbaangids in je eigen taal</title>
+    @if (NoIndex)
+    {
+        <meta name="robots" content="noindex, nofollow" />
+    }
     <meta name="theme-color" content="#0f2d5c" />
     <meta name="application-name" content="Lobsy" />
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
@@ -53,13 +58,13 @@
         <link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" />
         <link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" />
         <link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261004-run2" />
-        <link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261004-run6b" />
+        <link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261004-referent" />
         <link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261004-run6" />
         <link rel="stylesheet" href="css/features/tests.css?v=20261004-run6" />
         <link rel="stylesheet" href="css/features/carriere.css?v=20261003-sticky" />
     }
     @* NoBlazorRuntime / crawler: skip render-blocking where critical tokens + public-theme + landing cover "/". *@
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261004-run6c" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261003-journey-polish" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" /><link rel="stylesheet" href="css/features/applications.css?v=20261004-run6" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261002-kp04" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-teaser" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20261004-run4" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20261004-fixlist" /><link rel="stylesheet" href="css/features/werkgever.css?v=20261004-fixlist" /><link rel="stylesheet" href="css/features/scholen.css?v=20261004-run6d" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261003-header" /><link rel="stylesheet" href="css/features/auth.css?v=20260930-auth04b" /><link rel="stylesheet" href="css/features/landing.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261003-email" /><link rel="stylesheet" href="css/features/errors.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/reconnect.css?v=20261003-reconnect" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261004-run2" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261004-run6b" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261004-run6" /><link rel="stylesheet" href="css/features/tests.css?v=20261004-run6" /><link rel="stylesheet" href="css/features/carriere.css?v=20261003-sticky" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20261004-run6c" /><link rel="stylesheet" href="css/features/onboarding-wizard.css?v=20261003-journey-polish" /><link rel="stylesheet" href="css/features/questionnaire.css?v=20260928-q-scroll" /><link rel="stylesheet" href="css/features/mijn-dna.css?v=20261002-ci-mtp" /><link rel="stylesheet" href="css/features/applications.css?v=20261004-run6" /><link rel="stylesheet" href="css/features/banenkaart.css?v=20261002-kp04" /><link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-teaser" /><link rel="stylesheet" href="css/features/nav-feedback.css?v=20260928-nav-fb" /><link rel="stylesheet" href="css/features/kandidaatinzichten.css?v=20260929-insights-7" /><link rel="stylesheet" href="css/features/match-desktop.css?v=20260930-kb8" /><link rel="stylesheet" href="css/features/testresultaten.css?v=20260929-testresultaten-b2" /><link rel="stylesheet" href="css/features/account-mfa.css?v=20260929-mfa" /><link rel="stylesheet" href="css/features/admin.css?v=20261004-run4" /><link rel="stylesheet" href="css/features/enterprise-ui.css?v=20261004-fixlist" /><link rel="stylesheet" href="css/features/werkgever.css?v=20261004-fixlist" /><link rel="stylesheet" href="css/features/scholen.css?v=20261004-run6d" /><link rel="stylesheet" href="css/features/sales.css?v=20260930-sales9" /><link rel="stylesheet" href="css/features/public-theme.css?v=20261003-header" /><link rel="stylesheet" href="css/features/auth.css?v=20260930-auth04b" /><link rel="stylesheet" href="css/features/landing.css?v=20261003-a11y" /><link rel="stylesheet" href="css/features/public-pages.css?v=20261003-email" /><link rel="stylesheet" href="css/features/errors.css?v=20261001-errors-5" /><link rel="stylesheet" href="css/features/reconnect.css?v=20261003-reconnect" /><link rel="stylesheet" href="css/features/werkgever-aanmelding.css?v=20260930-wa11" /><link rel="stylesheet" href="css/features/kandidaat-banen.css?v=20261004-run2" /><link rel="stylesheet" href="css/features/mijn-paspoort.css?v=20261004-referent" /><link rel="stylesheet" href="css/features/ontdekkingsreis.css?v=20261004-run6" /><link rel="stylesheet" href="css/features/tests.css?v=20261004-run6" /><link rel="stylesheet" href="css/features/carriere.css?v=20261003-sticky" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -243,6 +248,8 @@
         Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
         ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
         ?? "local";
+
+    private bool NoIndex => Configuration.GetValue<bool>("Seo:NoIndex");
 
     private string Nonce => CspNonce.Get(HttpContextAccessor.HttpContext);
 

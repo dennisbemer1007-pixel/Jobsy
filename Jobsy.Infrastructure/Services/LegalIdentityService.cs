@@ -49,9 +49,19 @@ public sealed class LegalIdentityService : ILegalIdentity
     {
         var legal = _options.CurrentValue;
         var company = await _companySettings.GetAsync(cancellationToken);
+        LogMismatchesOnce(legal, company);
+        return Compose(legal, company);
+    }
 
-        var name = LegalOptions.TrimOrNull(legal.Name);
+    /// <summary>
+    /// Bedrijfsgegevens win. <c>Legal:*</c> fills a field only when the database value is empty.
+    /// </summary>
+    public static LegalIdentitySnapshot Compose(LegalOptions? env, PlatformCompanySnapshot company)
+    {
+        env ??= new LegalOptions();
+
         var companyName = LegalOptions.TrimOrNull(company.CompanyName);
+        var name = LegalOptions.TrimOrNull(company.LegalName);
         if (name is null
             && companyName is not null
             && !string.Equals(companyName, PlatformCompanySettingsService.DefaultCompanyName, StringComparison.OrdinalIgnoreCase))
@@ -59,22 +69,36 @@ public sealed class LegalIdentityService : ILegalIdentity
             name = companyName;
         }
 
-        var tradeName = LegalOptions.TrimOrNull(legal.TradeName) ?? LegalOptions.DefaultTradeName;
-        var street = LegalOptions.TrimOrNull(legal.Street) ?? LegalOptions.TrimOrNull(company.Address);
-        var postal = LegalOptions.TrimOrNull(legal.PostalCode) ?? LegalOptions.TrimOrNull(company.PostalCode);
-        var city = LegalOptions.TrimOrNull(legal.City) ?? LegalOptions.TrimOrNull(company.City);
-        var country = LegalOptions.TrimOrNull(legal.Country) ?? LegalOptions.TrimOrNull(company.Country) ?? LegalOptions.DefaultCountry;
-        var kvk = LegalOptions.TrimOrNull(legal.KvkNumber) ?? LegalOptions.TrimOrNull(company.KvkNumber);
-        var vat = LegalOptions.TrimOrNull(legal.VatNumber) ?? LegalOptions.TrimOrNull(company.VatNumber);
-        var privacy = LegalOptions.TrimOrNull(legal.PrivacyEmail);
-        var support = LegalOptions.TrimOrNull(legal.SupportEmail) ?? LegalOptions.DefaultSupportEmail;
-        var schools = LegalOptions.TrimOrNull(legal.SchoolsEmail);
+        name ??= LegalOptions.TrimOrNull(env.Name);
 
-        LogMismatchesOnce(legal, company);
+        var trade = LegalOptions.TrimOrNull(company.TradeName)
+                    ?? LegalOptions.TrimOrNull(env.TradeName)
+                    ?? LegalOptions.DefaultTradeName;
+        var support = LegalOptions.TrimOrNull(company.SupportEmail)
+                      ?? LegalOptions.TrimOrNull(company.Email)
+                      ?? LegalOptions.TrimOrNull(env.SupportEmail)
+                      ?? LegalOptions.DefaultSupportEmail;
 
         return new LegalIdentitySnapshot(
-            name, tradeName, street, postal, city, country, kvk, vat, privacy, support, schools);
+            name,
+            trade,
+            First(company.Address, env.Street),
+            First(company.PostalCode, env.PostalCode),
+            First(company.City, env.City),
+            First(company.Country, env.Country) ?? LegalOptions.DefaultCountry,
+            First(company.KvkNumber, env.KvkNumber),
+            First(company.VatNumber, env.VatNumber),
+            First(company.PrivacyEmail, env.PrivacyEmail),
+            support,
+            LegalOptions.TrimOrNull(env.SchoolsEmail),
+            LegalOptions.TrimOrNull(company.Phone),
+            LegalOptions.TrimOrNull(company.PostalStreet),
+            LegalOptions.TrimOrNull(company.PostalPostalCode),
+            LegalOptions.TrimOrNull(company.PostalCity));
     }
+
+    private static string? First(string? databaseValue, string? envValue)
+        => LegalOptions.TrimOrNull(databaseValue) ?? LegalOptions.TrimOrNull(envValue);
 
     private void LogMismatchesOnce(LegalOptions legal, PlatformCompanySnapshot company)
     {

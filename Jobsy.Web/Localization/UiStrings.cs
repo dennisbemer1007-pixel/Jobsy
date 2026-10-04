@@ -3481,6 +3481,7 @@ public static class UiStrings
         UiStringsLegal.MergeAll(nl, en, pl, ro, ar);
         UiStringsPublicInfo.MergeAll(nl, en, pl, ro, ar);
         UiStringsComeback.MergeAll(nl, en, pl, ro, ar);
+        UiStringsReferee.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
