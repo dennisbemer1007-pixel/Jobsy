@@ -69,6 +69,19 @@ public class AdminRun4PlaywrightTests
                 }
                 """);
             Assert.True(fits, $"{path} scrolls horizontally at 390px.");
+            var badgeFits = await phone.EvaluateAsync<bool>(
+                """
+                () => {
+                  const badge = document.querySelector('.admin-env-badge');
+                  if (!badge) return true;
+                  const label = badge.querySelector('.admin-env-badge__label');
+                  const after = label ? getComputedStyle(label, '::after').content : '';
+                  const acceptatie = badge.classList.contains('admin-env-badge--acceptatie');
+                  const short = !acceptatie || (after && after.indexOf('Acc') >= 0);
+                  return short && badge.scrollWidth <= badge.clientWidth + 1;
+                }
+                """);
+            Assert.True(badgeFits, $"{path} environment badge is clipped at 390px.");
 
             var search = phone.Locator(".admin-topbar__search-trigger");
             Assert.True(await menu.IsVisibleAsync());
@@ -100,6 +113,71 @@ public class AdminRun4PlaywrightTests
                 $"{path} menu background is '{paint.Actual}' (transparent probe '{paint.Expected}', image '{paint.Image}').");
             Assert.False(await phone.Locator(".admin-topbar__search-label").IsVisibleAsync());
         }
+    }
+
+    [Fact]
+    public async Task Gegevensinzage_columns_line_up_and_filter_stays_visible()
+    {
+        var baseUrl = Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL");
+        if (string.IsNullOrWhiteSpace(baseUrl) || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var desktop = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 900 },
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(desktop);
+        var page = await desktop.NewPageAsync();
+        await LoginAdminAsync(page, baseUrl);
+        await page.GotoAsync(baseUrl.TrimEnd('/') + "/admin/beveiliging/gegevensinzage", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await page.Locator(".admin-filter-bar").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        var layout = await page.EvaluateAsync<GegevensLayout>(
+            """
+            () => {
+              const pageEl = document.querySelector('.admin-page');
+              const bar = document.querySelector('.admin-filter-bar');
+              const filter = bar ? [...bar.querySelectorAll('button')].find(b => /filter/i.test(b.textContent || '')) : null;
+              const pageRect = pageEl ? pageEl.getBoundingClientRect() : null;
+              const barRect = bar ? bar.getBoundingClientRect() : null;
+              const filterRect = filter ? filter.getBoundingClientRect() : null;
+              const table = document.querySelector('table.admin-data-table');
+              let aligned = true;
+              let pairs = 0;
+              if (table) {
+                const heads = [...table.querySelectorAll('thead th')];
+                const cells = [...table.querySelectorAll('tbody tr:first-child td')];
+                pairs = Math.min(heads.length, cells.length);
+                for (let i = 0; i < pairs; i++) {
+                  const gap = Math.abs(heads[i].getBoundingClientRect().left - cells[i].getBoundingClientRect().left);
+                  if (gap > 2) aligned = false;
+                }
+              }
+              return {
+                barInside: !!pageRect && !!barRect && barRect.right <= pageRect.right + 2 && barRect.left >= pageRect.left - 2,
+                filterVisible: !!filterRect && filterRect.width > 0 && filterRect.right <= (pageRect ? pageRect.right + 2 : filterRect.right),
+                aligned,
+                pairs
+              };
+            }
+            """);
+        Assert.True(layout.BarInside, "Gegevensinzage filter bar overflows the page at 1280.");
+        Assert.True(layout.FilterVisible, "Filter button is outside the gegevensinzage page at 1280.");
+        Assert.True(layout.Aligned, "Gegevensinzage columns do not line up with their headers at 1280.");
+    }
+
+    private sealed class GegevensLayout
+    {
+        public bool BarInside { get; set; }
+        public bool FilterVisible { get; set; }
+        public bool Aligned { get; set; }
+        public int Pairs { get; set; }
     }
 
     private sealed class MenuPaint

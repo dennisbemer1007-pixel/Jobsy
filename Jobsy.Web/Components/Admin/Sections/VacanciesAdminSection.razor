@@ -85,7 +85,7 @@ else
     @if (_drillKey is not null)
     {
         <section @ref="_drillRef" class="panel-section admin-vacancy-drilldown" tabindex="-1" @onkeydown="OnDrillKey">
-            <h2>@string.Format(Culture["AdminVacancy.Drilldown"], DrillLabel(_drillKey))</h2>
+            <h2>@string.Format(Culture["AdminVacancy.Drilldown"], DrillLabel(_drillKey))@(_drillVacancyTitle is null ? "" : $" · {_drillVacancyTitle}")</h2>
             @if (_drillLoading)
             {
                 <p class="state-message">@Culture["Common.Loading"]</p>
@@ -158,7 +158,7 @@ else
                             title="@Culture["VacancyAction.OpenHint"]"
                             @ondblclick="() => OpenVacancyDetails(v)">
                             <td class="data-table__col--wrap" data-label="@Culture["Admin.Title"]">
-                                <a href="/vacancies/@v.Id"><strong>@v.Title</strong></a>
+                                <a href="@VacancyOpenHref(v.Id)" @onclick="() => OpenVacancyDetails(v)" @onclick:preventDefault="true"><strong>@v.Title</strong></a>
                             </td>
                             <td class="data-table__col--wrap" data-label="@Culture["Admin.Company"]">@v.CompanyName <span class="muted">@CompanyTypeLabel(v.CompanyType)</span></td>
                             <td data-label="@Culture["Admin.Status"]">@StatusLabel(v.Status)</td>
@@ -170,15 +170,15 @@ else
                                     @VacancySourceDisplay.ChannelLabel(v.CreatedVia)
                                 </span>
                             </td>
-                            <td data-label="@Culture["AdminVacancy.Col.Shown"]"><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>
-                            <td data-label="@Culture["AdminVacancy.Col.Clicks"]"><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
-                            <td data-label="@Culture["AdminVacancy.Col.Shared"]"><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>
-                            <td data-label="@Culture["AdminVacancy.Col.Applied"]"><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
-                            <td data-label="@Culture["AdminVacancy.Col.Extended"]"><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
-                            <td data-label="@Culture["AdminVacancy.Col.Liked"]"><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Shown"]"><button type="button" class="linkish" @onclick='() => DrillVacancy(v, "impressions")'>@v.ImpressionCount</button></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Clicks"]"><button type="button" class="linkish" @onclick='() => DrillVacancy(v, "clicks")'>@v.ClickCount</button></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Shared"]"><button type="button" class="linkish" @onclick='() => DrillVacancy(v, "shares")'>@v.ShareCount</button></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Applied"]"><button type="button" class="linkish" @onclick='() => DrillVacancy(v, "applications")'>@v.ApplicationCount</button></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Extended"]"><button type="button" class="linkish" @onclick='() => DrillVacancy(v, "extensions")'>@v.ExtensionCount</button></td>
+                            <td data-label="@Culture["AdminVacancy.Col.Liked"]"><button type="button" class="linkish" @onclick='() => DrillVacancy(v, "likes")'>@v.LikeCount</button></td>
                             <td class="data-table__col--actions" data-label="@Culture["Common.Actions"]" @ondblclick:stopPropagation="true">
                                 <RowActionsMenu>
-                                    <a class="row-actions-menu__item" role="menuitem" href="/vacancies/@v.Id">
+                                    <a class="row-actions-menu__item" role="menuitem" href="@VacancyOpenHref(v.Id)" @onclick="() => OpenVacancyDetails(v)" @onclick:preventDefault="true">
                                         @Culture["VacancyAction.View"]
                                     </a>
                                     @if (v.Status == "Active")
@@ -209,7 +209,7 @@ else
         {
             <p>@open.CompanyName <span class="muted">@CompanyTypeLabel(open.CompanyType)</span></p>
             <p>@StatusLabel(open.Status)</p>
-            <a href="/vacancies/@open.Id">@Culture["VacancyAction.View"]</a>
+            <p class="admin-muted">@Culture["AdminVacancy.OpenInAdmin"]</p>
         }
     </AdminDrawer>
 }
@@ -233,6 +233,7 @@ else
     private string? _error;
     private string? _message;
     private string? _drillKey;
+    private string? _drillVacancyTitle;
     private List<MetricDrilldownItem> _drilldown = [];
     private int _pageNum = 1;
     private int _pageSize = 25;
@@ -436,6 +437,7 @@ else
         if (e.Key == "Escape")
         {
             _drillKey = null;
+            _drillVacancyTitle = null;
             _drilldown = [];
         }
     }
@@ -501,8 +503,7 @@ else
                 : query.OrderByDescending(v => v.StartDate).ThenBy(v => v.Title)
         };
 
-    private static string MetricHref(AdminVacancyItem v, string metric)
-        => $"/vacancies/{v.Id}?metric={metric}";
+    private string VacancyOpenHref(Guid id) => AdminOpenLink.WithOpen(Nav.Uri, id);
 
     private Task OnChannelSelect()
     {
@@ -518,10 +519,38 @@ else
     }
 
     private void OpenVacancyDetails(AdminVacancyItem vacancy)
-        => Nav.NavigateTo($"/vacancies/{vacancy.Id}");
+    {
+        _openItem = vacancy;
+        var target = VacancyOpenHref(vacancy.Id);
+        if (AdminOpenLink.ShouldNavigate(Nav.Uri, target, RendererInfo.IsInteractive))
+        {
+            Nav.NavigateTo(target, forceLoad: false, replace: true);
+        }
+    }
+
+    private async Task DrillVacancy(AdminVacancyItem vacancy, string key)
+    {
+        _drillVacancyTitle = vacancy.Title;
+        _drillKey = key;
+        _focusDrill = true;
+        _drillLoading = true;
+        try
+        {
+            _drilldown = (await Api.GetAdminVacancyMetricDrilldownAsync(vacancy.Id, key, "week")).ToList();
+        }
+        catch
+        {
+            _drilldown = [];
+        }
+        finally
+        {
+            _drillLoading = false;
+        }
+    }
 
     private async Task Drill(string key)
     {
+        _drillVacancyTitle = null;
         _drillKey = key;
         _focusDrill = true;
         _drillLoading = true;

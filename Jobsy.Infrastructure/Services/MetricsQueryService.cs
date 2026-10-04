@@ -493,11 +493,27 @@ public sealed class MetricsQueryService : IMetricsQueryService
         return new ClientPerformanceBoardDto(periodKey, rows);
     }
 
-    public async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
+    public Task<IReadOnlyList<MetricDrilldownItemDto>> GetVacancyDrilldownAsync(
+        string key,
+        Guid vacancyId,
+        string period,
+        CancellationToken cancellationToken = default)
+        => GetDrilldownAsync(key, includePlatformOnly: true, companyIds: null, period, vacancyId, cancellationToken);
+
+    public Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
         string key,
         bool includePlatformOnly,
         IReadOnlyCollection<Guid>? companyIds,
         string period,
+        CancellationToken cancellationToken = default)
+        => GetDrilldownAsync(key, includePlatformOnly, companyIds, period, onlyVacancyId: null, cancellationToken);
+
+    private async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
+        string key,
+        bool includePlatformOnly,
+        IReadOnlyCollection<Guid>? companyIds,
+        string period,
+        Guid? onlyVacancyId,
         CancellationToken cancellationToken = default)
     {
         // Caller should Forbid platform-only keys; defensive empty when not allowed.
@@ -509,12 +525,14 @@ public sealed class MetricsQueryService : IMetricsQueryService
         var metricsPeriod = MetricsPeriodParser.Parse(period);
         var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
 
-        var vacancyIds = companyIds is null
-            ? await _db.Vacancies.AsNoTracking().Select(v => v.Id).ToListAsync(cancellationToken)
-            : await _db.Vacancies.AsNoTracking()
-                .Where(v => companyIds.Contains(v.CompanyId))
-                .Select(v => v.Id)
-                .ToListAsync(cancellationToken);
+        var vacancyIds = onlyVacancyId is Guid oneVacancy
+            ? new List<Guid> { oneVacancy }
+            : companyIds is null
+                ? await _db.Vacancies.AsNoTracking().Select(v => v.Id).ToListAsync(cancellationToken)
+                : await _db.Vacancies.AsNoTracking()
+                    .Where(v => companyIds.Contains(v.CompanyId))
+                    .Select(v => v.Id)
+                    .ToListAsync(cancellationToken);
 
         return key.ToLowerInvariant() switch
         {
@@ -561,8 +579,8 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 .Select(l => new MetricDrilldownItemDto(
                     l.Id, l.Category, l.Message, l.CreatedAt, null))
                 .ToListAsync(cancellationToken),
-            "pushboms" => await TokenReasonDrilldownAsync(TokenSpendReason.PushBom, from, to, companyIds, cancellationToken),
-            "extensions" => await TokenReasonDrilldownAsync(TokenSpendReason.Extend, from, to, companyIds, cancellationToken),
+            "pushboms" => await TokenReasonDrilldownAsync(TokenSpendReason.PushBom, from, to, companyIds, onlyVacancyId, cancellationToken),
+            "extensions" => await TokenReasonDrilldownAsync(TokenSpendReason.Extend, from, to, companyIds, onlyVacancyId, cancellationToken),
             "active_boosts" => await ActiveBoostsDrilldownAsync(companyIds, cancellationToken),
             "avg_travel_minutes" or "top_transport_share" =>
                 await MatchTravelDrilldownAsync(vacancyIds, from, to, cancellationToken),
@@ -1172,10 +1190,12 @@ public sealed class MetricsQueryService : IMetricsQueryService
         DateTime from,
         DateTime to,
         IReadOnlyCollection<Guid>? companyIds,
+        Guid? vacancyId,
         CancellationToken ct)
         => await _db.TokenTransactions.AsNoTracking()
             .Where(t => t.Reason == reason && t.CreatedAt >= from && t.CreatedAt <= to)
             .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+            .Where(t => vacancyId == null || t.VacancyId == vacancyId)
             .OrderByDescending(t => t.CreatedAt)
             .Select(t => new MetricDrilldownItemDto(
                 t.Id,
@@ -1314,36 +1334,36 @@ public sealed class MetricsQueryService : IMetricsQueryService
                     from, to, bucketCount);
 
             case "site_visits_unique" when includePlatformOnly:
-            {
-                var rows = await _db.SiteVisits.AsNoTracking()
-                    .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
-                    .Select(v => new { v.CreatedAt, v.UserId, v.AnonymousKey, v.Id })
-                    .ToListAsync(ct);
-                return BucketUniqueVisitors(rows.Select(v => (
-                    v.CreatedAt,
-                    v.UserId is Guid uid ? "u:" + uid : "a:" + (v.AnonymousKey ?? v.Id.ToString())
-                )).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.SiteVisits.AsNoTracking()
+                        .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+                        .Select(v => new { v.CreatedAt, v.UserId, v.AnonymousKey, v.Id })
+                        .ToListAsync(ct);
+                    return BucketUniqueVisitors(rows.Select(v => (
+                        v.CreatedAt,
+                        v.UserId is Guid uid ? "u:" + uid : "a:" + (v.AnonymousKey ?? v.Id.ToString())
+                    )).ToList(), from, to, bucketCount);
+                }
 
             case "tokens_purchased":
-            {
-                var rows = await _db.TokenTransactions.AsNoTracking()
-                    .Where(t => t.Kind == TokenTransactionKind.Purchase && t.CreatedAt >= from && t.CreatedAt <= to)
-                    .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
-                    .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
-                    .ToListAsync(ct);
-                return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.TokenTransactions.AsNoTracking()
+                        .Where(t => t.Kind == TokenTransactionKind.Purchase && t.CreatedAt >= from && t.CreatedAt <= to)
+                        .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+                        .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
+                        .ToListAsync(ct);
+                    return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
+                }
 
             case "tokens_spent":
-            {
-                var rows = await _db.TokenTransactions.AsNoTracking()
-                    .Where(t => t.Kind == TokenTransactionKind.Spend && t.CreatedAt >= from && t.CreatedAt <= to)
-                    .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
-                    .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
-                    .ToListAsync(ct);
-                return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.TokenTransactions.AsNoTracking()
+                        .Where(t => t.Kind == TokenTransactionKind.Spend && t.CreatedAt >= from && t.CreatedAt <= to)
+                        .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+                        .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
+                        .ToListAsync(ct);
+                    return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
+                }
 
             default:
                 return new decimal[bucketCount];

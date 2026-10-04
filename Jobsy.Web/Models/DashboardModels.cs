@@ -797,6 +797,13 @@ public class PersonalDataAccessLogItem
     public string? Reason { get; set; }
     public Guid? SupportAccessGrantId { get; set; }
     public string CorrelationId { get; set; } = string.Empty;
+    public string? ActorName { get; set; }
+    public string? ActorEmailMasked { get; set; }
+    public string? ActorCompanyName { get; set; }
+    public string? SubjectName { get; set; }
+    public string? SubjectEmailMasked { get; set; }
+    public string? SubjectRole { get; set; }
+    public string? SubjectCompanyName { get; set; }
 }
 
 public class PersonalDataAccessLogPage

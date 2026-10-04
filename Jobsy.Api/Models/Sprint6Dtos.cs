@@ -138,7 +138,14 @@ public record PersonalDataAccessLogItemDto(
     string Action,
     string? Reason,
     Guid? SupportAccessGrantId,
-    string CorrelationId);
+    string CorrelationId,
+    string? ActorName = null,
+    string? ActorEmailMasked = null,
+    string? ActorCompanyName = null,
+    string? SubjectName = null,
+    string? SubjectEmailMasked = null,
+    string? SubjectRole = null,
+    string? SubjectCompanyName = null);
 
 public record PersonalDataAccessLogPageDto(
     IReadOnlyList<PersonalDataAccessLogItemDto> Items,

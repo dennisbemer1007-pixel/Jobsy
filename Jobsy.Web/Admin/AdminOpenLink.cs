@@ -72,6 +72,14 @@ public static class AdminOpenLink
         return path + "?" + string.Join("&", pairs);
     }
 
+    /// <summary>Set <c>open</c> so the admin drawer opens for this record.</summary>
+    public static string WithOpen(string? currentUri, Guid id)
+    {
+        var without = WithoutOpen(currentUri);
+        var sep = without.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+        return without + sep + "open=" + id.ToString("D");
+    }
+
     /// <summary>Drop <c>open</c> so closing a drawer does not reopen it on refresh.</summary>
     public static string WithoutOpen(string? currentUri)
     {
