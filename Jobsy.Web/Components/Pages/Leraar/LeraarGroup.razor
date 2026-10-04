@@ -9,6 +9,8 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IFeatureFlags Features
+@inject ILogger<LeraarGroup> Log
+@using Jobsy.Web.Scholen
 
 <PageTitle>@Culture["Leraar.Group.Title"] · Lobsy</PageTitle>
 
@@ -19,6 +21,10 @@
 else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_loadError))
+{
+    <p class="state-message error">@_loadError</p>
 }
 else if (_group is null)
 {
@@ -98,6 +104,7 @@ else
 
     private bool _disabled;
     private bool _loading = true;
+    private string? _loadError;
     private TeacherGroupInsightsDto? _group;
 
     protected override async Task OnParametersSetAsync()
@@ -111,8 +118,17 @@ else
         }
 
         _loading = true;
+        _loadError = null;
         try { _group = await Api.GetTeacherGroupAsync(ClassId); }
-        catch { _group = null; }
+        catch (Exception ex)
+        {
+            _group = null;
+            if (!PortalLoad.IsNotFound(ex))
+            {
+                _loadError = Culture["Leraar.LoadFailed"];
+                Log.LogWarning(ex, "Teacher group insights failed for {ClassId}", ClassId);
+            }
+        }
         finally { _loading = false; }
     }
 }

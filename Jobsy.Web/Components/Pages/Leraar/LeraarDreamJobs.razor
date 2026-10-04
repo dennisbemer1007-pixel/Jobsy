@@ -8,6 +8,8 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject IFeatureFlags Features
+@inject ILogger<LeraarDreamJobs> Log
+@using Jobsy.Web.Scholen
 
 <PageTitle>@Culture["Leraar.DreamJobs.Title"] · Lobsy</PageTitle>
 
@@ -18,6 +20,10 @@
 else if (_loading)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_loadError))
+{
+    <p class="state-message error">@_loadError</p>
 }
 else if (_dto is null)
 {
@@ -54,6 +60,7 @@ else
 
     private bool _disabled;
     private bool _loading = true;
+    private string? _loadError;
     private TeacherDreamJobsDto? _dto;
 
     protected override async Task OnParametersSetAsync()
@@ -67,8 +74,17 @@ else
         }
 
         _loading = true;
+        _loadError = null;
         try { _dto = await Api.GetTeacherDreamJobsAsync(ClassId); }
-        catch { _dto = null; }
+        catch (Exception ex)
+        {
+            _dto = null;
+            if (!PortalLoad.IsNotFound(ex))
+            {
+                _loadError = Culture["Leraar.LoadFailed"];
+                Log.LogWarning(ex, "Teacher dream jobs failed for {ClassId}", ClassId);
+            }
+        }
         finally { _loading = false; }
     }
 }

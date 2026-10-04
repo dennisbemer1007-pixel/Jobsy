@@ -9,6 +9,10 @@ public static class UiStringsScholen
     public static void MergeNl(Dictionary<string, string> nl)
     {
         // —— School shell ——
+        nl["School.LoadFailed"] = "De schoolpagina kon niet geladen worden. Probeer het opnieuw.";
+        nl["Leraar.LoadFailed"] = "De klasgegevens konden niet geladen worden. Probeer het opnieuw.";
+        nl["Leerling.Login.NoOpenSchool"] = "Je juf of meester zet de test open. Daarna kun je hier je school kiezen.";
+        nl["AdminScholen.Agreement.Current"] = "Huidige registratie: {0} · versie {1}.";
         nl["School.ProductLabel"] = "Lobsy voor scholen";
         nl["School.RoleChip"] = "Schoolbeheerder";
         nl["School.DashboardTitle"] = "Dashboard";
@@ -85,7 +89,7 @@ public static class UiStringsScholen
         nl["School.Class.Field.Teachers"] = "Leraar(en)";
         nl["School.Class.CodesNote"] = "Lobsy maakt voor elke leerling een code. Namen vul je zelf in op de geprinte lijst.";
         nl["School.Class.SetNote.G78.Title"] = "Vragenlijst: Groep 7/8";
-        nl["School.Class.SetNote.G78.Body"] = "Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets.";
+        nl["School.Class.SetNote.G78.Body"] = "Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets. 60 vragen (Nee … Ja!) · 3 puzzelpauzes · ongeveer 30 minuten.";
         nl["School.Class.SetNote.Vo.Title"] = "Vragenlijst: Middelbare school";
         nl["School.Class.SetNote.Vo.Body"] = "100 vragen (Klopt niet … Klopt helemaal) · 2 lesdelen · ongeveer 40–45 minuten. Pauze na het Pauze-eiland: daar kan de les stoppen.";
         nl["School.Class.LevelLocked"] = "Soort klas ligt vast. Er zijn al leerlingen van deze klas begonnen. Wisselen tussen basisschool en middelbare school kan niet meer, want dan passen hun antwoorden niet bij de vragenlijst. Niveau en leerjaar binnen dezelfde soort kun je wel aanpassen.";
