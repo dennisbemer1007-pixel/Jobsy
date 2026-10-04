@@ -1,6 +1,5 @@
 @page "/leerling/droombaan"
 @layout LeerlingLayout
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen

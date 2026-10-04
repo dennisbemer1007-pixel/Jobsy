@@ -395,12 +395,8 @@ else
         }
     }
 
-    private string StatusLabel(SchoolPortalCodeRowDto code) => code.Status switch
-    {
-        PupilCodeStatus.Completed => Culture["School.Status.Completed"],
-        PupilCodeStatus.InProgress => string.Format(Culture["School.Status.InProgress"], code.ProgressCurrent, code.ProgressTotal),
-        _ => Culture["School.Status.NotStarted"]
-    };
+    private string StatusLabel(SchoolPortalCodeRowDto code)
+        => PupilCodeStatusText.Label(Culture, code.Status, code.ProgressCurrent, code.ProgressTotal, code.LastSeenAtUtc);
 
     private static string StatusPill(PupilCodeStatus s) => s switch
     {

@@ -51,7 +51,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         ApplyAccessToken(request, user, httpContext);
         ApplyTrustedClientIp(request, httpContext);
-        ApplyPupilCookie(request, httpContext);
+        ApplyPupilCookie(request, httpContext, user);
 
         try
         {
@@ -87,7 +87,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         var response = await base.SendAsync(request, cancellationToken);
-        CaptureRenewedApiTicket(response, httpContext);
+        CaptureRenewedApiTicket(response, httpContext, user);
         if (response.StatusCode != HttpStatusCode.Unauthorized
             || request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("jobsy-retried"), out var retried)
             && retried)
@@ -109,10 +109,10 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         retry.Options.Set(new HttpRequestOptionsKey<bool>("jobsy-retried"), true);
         ApplyAccessToken(retry, user, httpContext);
         ApplyTrustedClientIp(retry, httpContext);
-        ApplyPupilCookie(retry, httpContext);
+        ApplyPupilCookie(retry, httpContext, user);
         retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         var retriedResponse = await base.SendAsync(retry, cancellationToken);
-        CaptureRenewedApiTicket(retriedResponse, httpContext);
+        CaptureRenewedApiTicket(retriedResponse, httpContext, user);
         return retriedResponse;
     }
 
@@ -122,7 +122,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     /// <c>Lobsy.Leerling</c> cookie is protected with the Web key ring and the
     /// API cannot unprotect it.
     /// </summary>
-    private static void ApplyPupilCookie(HttpRequestMessage request, HttpContext? httpContext)
+    private void ApplyPupilCookie(HttpRequestMessage request, HttpContext? httpContext, ClaimsPrincipal user)
     {
         var path = request.RequestUri?.AbsolutePath ?? "";
         if (!ForwardsPupilCookie(path))
@@ -131,6 +131,13 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         var cookie = httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
+        if (string.IsNullOrWhiteSpace(cookie))
+        {
+            // The circuit has no request cookies. The ticket was stored when /_blazor authenticated.
+            var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+            cookie = _services.GetService<PupilApiTicketStore>()?.Get(codeId);
+        }
+
         if (string.IsNullOrWhiteSpace(cookie))
         {
             return;
@@ -153,13 +160,11 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     /// The API may slide its own pupil cookie. Store the new value. Never copy
     /// it onto <c>Lobsy.Leerling</c>: that name is the Web session.
     /// </summary>
-    private static void CaptureRenewedApiTicket(HttpResponseMessage response, HttpContext? httpContext)
+    private void CaptureRenewedApiTicket(
+        HttpResponseMessage response,
+        HttpContext? httpContext,
+        ClaimsPrincipal user)
     {
-        if (httpContext is null || httpContext.Response.HasStarted)
-        {
-            return;
-        }
-
         if (!response.Headers.TryGetValues("Set-Cookie", out var values))
         {
             return;
@@ -172,7 +177,13 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
                 continue;
             }
 
-            PupilApiSessionCookie.Set(httpContext, value);
+            var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+            _services.GetService<PupilApiTicketStore>()?.Set(codeId, value);
+            if (httpContext is not null && !httpContext.Response.HasStarted)
+            {
+                PupilApiSessionCookie.Set(httpContext, value);
+            }
+
             return;
         }
     }
@@ -486,20 +497,38 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             return httpUser;
         }
 
+        // /_blazor has no staff cookie. The circuit principal is the pupil, not HttpContext.User
+        // on later interactive calls (that context is often null or still anonymous).
+        try
+        {
+            var state = await _authStateProvider.GetAuthenticationStateAsync();
+            if (IsPupilPrincipal(state.User))
+            {
+                return state.User;
+            }
+
+            if (httpContext is not null
+                && !httpContext.Request.Cookies.ContainsKey("Jobsy.Auth"))
+            {
+                return new ClaimsPrincipal(new ClaimsIdentity());
+            }
+
+            if (state.User.Identity?.IsAuthenticated == true)
+            {
+                return state.User;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Outside a circuit scope.
+        }
+
         if (httpContext is not null
             && !httpContext.Request.Cookies.ContainsKey("Jobsy.Auth"))
         {
             return new ClaimsPrincipal(new ClaimsIdentity());
         }
 
-        try
-        {
-            var state = await _authStateProvider.GetAuthenticationStateAsync();
-            return state.User;
-        }
-        catch (InvalidOperationException)
-        {
-            return httpUser ?? new ClaimsPrincipal(new ClaimsIdentity());
-        }
+        return httpUser ?? new ClaimsPrincipal(new ClaimsIdentity());
     }
 }

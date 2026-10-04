@@ -1,0 +1,9 @@
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Full navigation so the code form is a new document, not an in-circuit loop.
+        Navigation.NavigateTo("/leerling?error=expired", forceLoad: true);
+    }
+}

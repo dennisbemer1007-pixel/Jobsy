@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "440db1db6d6d06db1d78d7b0578d0f0032d4d1ab11a4647f0b1bc55c1d17d41b",
-    "v": "20261004-run5c"
+    "sha256": "6a66974f6be81a1bb9c1cb884ba17f5447999fe57954d64da29b2e7886da31c9",
+    "v": "20261004-circuit"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -100,8 +100,8 @@
     "v": "20260930-sales9"
   },
   "css/features/scholen.css": {
-    "sha256": "71fa05558f4de708b6bb1e34f33c01d8069bd2c02f8a060215a6492f0596dc38",
-    "v": "20261004-pupil3"
+    "sha256": "a59e819292d032020bbe319307fc0117b7521db11b69b4b1d4476871a0dc9a7f",
+    "v": "20261004-h1ring"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
@@ -208,11 +208,11 @@
     "v": "20260925-coral"
   },
   "service-worker.js": {
-    "sha256": "d9b731f5e3f389dd1ff8f227a7ba0785d46def8649ce59db2d51fcc082f71560",
+    "sha256": "855f8ef7e5d8ad79cbaf72df12a9860cb06b3e6c1634b8e465b7117e5875b3a3",
     "v": "20261004-run5c"
   },
   "service-worker.published.js": {
-    "sha256": "e36ea88f0c12b32721068f30eee9bda61b29d4707ed4813b0a94a0babb64c0f6",
+    "sha256": "b7874f8a72ab0064385849b2c0f075cd0ad052b9e20214581567d4e035eff5bb",
     "v": "20261004-run5c"
   }
 }

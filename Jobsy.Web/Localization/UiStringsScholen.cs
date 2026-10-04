@@ -92,7 +92,7 @@ public static class UiStringsScholen
         nl["School.Class.CodesNote"] = "Lobsy maakt voor elke leerling een code. Namen vul je zelf in op de geprinte lijst.";
         nl["School.Class.SetNote.Shared"] = "Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets.";
         nl["School.Class.SetNote.G78.Title"] = "Vragenlijst: Groep 7/8";
-        nl["School.Class.SetNote.G78.Body"] = "60 vragen (Nee … Ja!) · 3 puzzelpauzes · " + PupilSessionDuration.Groep78 + ".";
+        nl["School.Class.SetNote.G78.Body"] = "60 vragen (Nee … Ja!) · 1 pauze-eiland · " + PupilSessionDuration.Groep78 + ".";
         nl["School.Class.SetNote.Vo.Title"] = "Vragenlijst: Middelbare school";
         nl["School.Class.SetNote.Vo.Body"] = "100 vragen (Klopt niet … Klopt helemaal) · " + PupilSessionDuration.VoLessons + ". Pauze na het Pauze-eiland: daar kan de les stoppen.";
         nl["School.Class.LevelLocked"] = "Soort klas ligt vast. Er zijn al leerlingen van deze klas begonnen. Wisselen tussen basisschool en middelbare school kan niet meer, want dan passen hun antwoorden niet bij de vragenlijst. Niveau en leerjaar binnen dezelfde soort kun je wel aanpassen.";
@@ -112,6 +112,7 @@ public static class UiStringsScholen
         nl["School.Codes.DeleteConfirm"] = "Alle antwoorden en uitkomsten van deze code worden direct verwijderd. Gebruik dit bij bezwaar van ouders of leerling. Dit kan niet ongedaan worden.";
 
         nl["School.Status.NotStarted"] = "Nog niet gestart";
+        nl["School.Status.LoggedIn"] = "Ingelogd";
         nl["School.Status.InProgress"] = "Bezig {0}/{1}";
         nl["School.Status.Completed"] = "Afgerond";
 
@@ -401,6 +402,8 @@ public static class UiStringsScholen
         nl["Leerling.WindowClosed.Body"] = "Je antwoorden zijn bewaard. Je leraar zet de test weer open.";
         nl["Leerling.WindowClosed.Body.Vo"] = "Je antwoorden zijn bewaard. Je docent zet de test weer open.";
         nl["Leerling.Session.Lost"] = "Je sessie is verlopen. Log opnieuw in met je code.";
+        nl["Leerling.Stop.AskTitle"] = "Wil je stoppen?";
+        nl["Leerling.Stop.AskBody"] = "Druk op pauze. Je antwoorden blijven dan bewaard.";
         nl["Leerling.Stop.Title"] = "Goed gedaan!";
         nl["Leerling.Stop.Body"] = "Je antwoorden zijn bewaard. Log de volgende keer weer in met dezelfde code.";
         nl["Leerling.Vo.Stop.Part1Body"] = "Volgende keer log je weer in met je code. Je gaat dan verder bij de vuurtoren.";

@@ -53,7 +53,14 @@ public class LeerlingVoPartBreakBunitTests : BunitContext
         nav.NavigateTo("/leerling/stop?done=1");
         var other = Render<LeerlingStop>();
         Assert.DoesNotContain("vuurtoren", other.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Goed gedaan!", other.Markup, StringComparison.Ordinal);
         Assert.Contains("dezelfde code", other.Markup, StringComparison.Ordinal);
+
+        nav.NavigateTo("/leerling/stop");
+        var ask = Render<LeerlingStop>();
+        Assert.Contains("Wil je stoppen?", ask.Markup, StringComparison.Ordinal);
+        Assert.Contains("action=\"/leerling/pauze\"", ask.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Goed gedaan!", ask.Markup, StringComparison.Ordinal);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider
