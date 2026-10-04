@@ -122,9 +122,16 @@
 
             <section class="detail-card passport-career__panel" aria-labelledby="passport-career-course-title">
                 <h3 id="passport-career-course-title" class="passport-fit__h">@Culture["Passport.Career.CourseTitle"]</h3>
-                @if (_courseSlots.Count == 0)
+                @if (_courseSlots.Count == 0 && _view.CourseNames.Count == 0)
                 {
                     <p class="muted">@Culture["Passport.Career.CourseEmpty"]</p>
+                }
+                else if (_courseSlots.Count == 0)
+                {
+                    <p class="career-courses__plain">
+                        <span class="career-courses__icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                        @Culture.Format("CareerStep.Courses.Plain", string.Join(", ", _view.CourseNames))
+                    </p>
                 }
                 else
                 {
@@ -190,7 +197,18 @@
             if (saved is not null && saved.Steps.Count > 0)
             {
                 var model = CareerPaths.FromApi(saved);
-                _view = CareerPlanViewBuilder.BuildPassport(model);
+                var evidence = "";
+                try
+                {
+                    var profile = await Api.GetMyProfileAsync();
+                    evidence = CareerPlanViewBuilder.EvidenceFrom(profile?.Preferences);
+                }
+                catch (Exception profileEx) when (!CircuitInterop.IsCircuitGone(profileEx))
+                {
+                    evidence = "";
+                }
+
+                _view = CareerPlanViewBuilder.BuildPassport(model, evidence);
                 await LoadCoursesAsync(_view);
             }
             else

@@ -685,7 +685,7 @@ public sealed class TestAccountsSeedService
             .FirstOrDefaultAsync(o => o.UserId == candidate.Id, cancellationToken);
         if (onboarding is null)
         {
-            _db.CandidateOnboardings.Add(new CandidateOnboarding
+            onboarding = new CandidateOnboarding
             {
                 Id = TestAccountsIds.OnboardingComplete,
                 UserId = candidate.Id,
@@ -696,7 +696,8 @@ public sealed class TestAccountsSeedService
                 CompletedAtUtc = DateTime.UtcNow.AddDays(-1),
                 UpdatedAtUtc = DateTime.UtcNow,
                 Source = "test-seed"
-            });
+            };
+            _db.CandidateOnboardings.Add(onboarding);
         }
         else
         {
@@ -706,6 +707,8 @@ public sealed class TestAccountsSeedService
             onboarding.CurrentStep = OnboardingWizardCatalog.V3StepCount;
             onboarding.UpdatedAtUtc = DateTime.UtcNow;
         }
+
+        MarkJourneyStepsDone(onboarding);
 
         await EnsureCompletedProfileAsync(candidate.Id, cancellationToken);
 
@@ -731,85 +734,165 @@ public sealed class TestAccountsSeedService
         }
     }
 
+    private static void MarkJourneyStepsDone(CandidateOnboarding onboarding)
+    {
+        var json = string.IsNullOrWhiteSpace(onboarding.StepsJson) ? "[]" : onboarding.StepsJson;
+        var now = DateTime.UtcNow;
+        for (var step = 1; step <= OnboardingWizardCatalog.V3StepCount; step++)
+        {
+            var ev = OnboardingStepAnalytics.Parse(json).FirstOrDefault(e => e.Step == step);
+            if (ev?.CompletedAtUtc is null)
+            {
+                json = OnboardingStepAnalytics.MarkCompleted(
+                    json, step, now, OnboardingWizardCatalog.WizardVersionV3);
+            }
+        }
+
+        onboarding.StepsJson = json;
+    }
+
     private async Task EnsureCompletedProfileAsync(Guid userId, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
-        if (!await _db.CandidateCompetencies.AnyAsync(c => c.UserId == userId, cancellationToken))
+        await EnsureSeedCompetencyAsync(userId, now, cancellationToken);
+        await EnsureSeedValuesAsync(userId, now, cancellationToken);
+        await EnsureSeedCultureAsync(userId, now, cancellationToken);
+        await EnsureSeedCareerAsync(userId, now, cancellationToken);
+    }
+
+    private static Dictionary<int, int> FullLikert(int count)
+    {
+        var map = new Dictionary<int, int>(count);
+        for (var i = 1; i <= count; i++)
         {
-            _db.CandidateCompetencies.Add(new CandidateCompetency
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = """{"1":4,"2":4,"3":3,"4":5,"5":4}""",
-                SamenwerkenPercent = 70,
-                ResultaatgerichtheidPercent = 65,
-                StressbestendigheidPercent = 60,
-                InnovatiePercent = 55,
-                ExtraversiePercent = 50,
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now,
-                CompletedAtUtc = now
-            });
+            map[i] = ((i - 1) % 5) + 1;
         }
 
-        if (!await _db.CandidateValuesProfiles.AnyAsync(c => c.UserId == userId, cancellationToken))
+        return map;
+    }
+
+    private async Task EnsureSeedCompetencyAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
+    {
+        var answers = FullLikert(CompetencyTestCatalog.QuestionCount);
+        var scores = CompetencyTestCatalog.Score(answers)!;
+        var row = await _db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (row is not null && CompetencyTestCatalog.IsComplete(CompetencyTestCatalog.ParseAnswersJson(row.AnswersJson)))
         {
-            _db.CandidateValuesProfiles.Add(new CandidateValuesProfile
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = """{"1":4,"2":3,"3":5}""",
-                AutonomyPercent = 60,
-                ConnectionPercent = 70,
-                AchievementPercent = 55,
-                StabilityPercent = 50,
-                ImpactPercent = 65,
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now,
-                CompletedAtUtc = now
-            });
+            return;
         }
 
-        if (!await _db.CandidateCulturePersonalityProfiles.AnyAsync(c => c.UserId == userId, cancellationToken))
+        row ??= _db.CandidateCompetencies.Add(new CandidateCompetency
         {
-            _db.CandidateCulturePersonalityProfiles.Add(new CandidateCulturePersonalityProfile
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = """{"1":4,"2":3,"3":4}""",
-                AutonomyPercent = 55,
-                InformalPercent = 60,
-                CollaborationPercent = 70,
-                FlexibilityPercent = 65,
-                InnovationPercent = 50,
-                PeopleFirstPercent = 75,
-                OpennessPercent = 60,
-                ConscientiousnessPercent = 65,
-                ExtraversionPercent = 55,
-                AgreeablenessPercent = 70,
-                EmotionalStabilityPercent = 60,
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now,
-                CompletedAtUtc = now
-            });
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CreatedAtUtc = now
+        }).Entity;
+        row.Status = CandidateCompetencyStatuses.Completed;
+        row.AnswersJson = CompetencyTestCatalog.SerializeAnswers(answers);
+        row.SamenwerkenPercent = scores.Samenwerken;
+        row.ResultaatgerichtheidPercent = scores.Resultaatgerichtheid;
+        row.StressbestendigheidPercent = scores.Stressbestendigheid;
+        row.InnovatiePercent = scores.Innovatie;
+        row.ExtraversiePercent = scores.Extraversie;
+        row.MatchTagsJson = CompetencyTestCatalog.SerializeTags(CompetencyTestCatalog.DeriveMatchTags(scores));
+        row.UpdatedAtUtc = now;
+        row.CompletedAtUtc ??= now;
+    }
+
+    private async Task EnsureSeedValuesAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
+    {
+        var answers = FullLikert(SchwartzValuesCatalog.QuestionCount);
+        var scores = SchwartzValuesCatalog.Score(answers)!;
+        var row = await _db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (row is not null && SchwartzValuesCatalog.IsComplete(SchwartzValuesCatalog.ParseAnswers(row.AnswersJson)))
+        {
+            return;
         }
 
-        if (!await _db.CandidateCareerInterests.AnyAsync(c => c.UserId == userId, cancellationToken))
+        row ??= _db.CandidateValuesProfiles.Add(new CandidateValuesProfile
         {
-            _db.CandidateCareerInterests.Add(new CandidateCareerInterest
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = """{"1":4,"2":3}""",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now,
-                CompletedAtUtc = now
-            });
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CreatedAtUtc = now
+        }).Entity;
+        row.Status = CandidateCompetencyStatuses.Completed;
+        row.AnswersJson = SchwartzValuesCatalog.SerializeAnswers(answers);
+        row.AutonomyPercent = scores.Autonomy;
+        row.ConnectionPercent = scores.Connection;
+        row.AchievementPercent = scores.Achievement;
+        row.StabilityPercent = scores.Stability;
+        row.ImpactPercent = scores.Impact;
+        row.MatchTagsJson = SchwartzValuesCatalog.SerializeTags(SchwartzValuesCatalog.DeriveMatchTags(scores));
+        row.UpdatedAtUtc = now;
+        row.CompletedAtUtc ??= now;
+    }
+
+    private async Task EnsureSeedCultureAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
+    {
+        var answers = FullLikert(CulturePersonalityCatalog.QuestionCount);
+        var scores = CulturePersonalityCatalog.Score(answers)!;
+        var row = await _db.CandidateCulturePersonalityProfiles
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (row is not null && CulturePersonalityCatalog.IsComplete(CulturePersonalityCatalog.ParseAnswers(row.AnswersJson)))
+        {
+            return;
         }
+
+        row ??= _db.CandidateCulturePersonalityProfiles.Add(new CandidateCulturePersonalityProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CreatedAtUtc = now
+        }).Entity;
+        row.Status = CandidateCompetencyStatuses.Completed;
+        row.AnswersJson = CulturePersonalityCatalog.SerializeAnswers(answers);
+        row.AutonomyPercent = scores.Autonomy;
+        row.InformalPercent = scores.Informal;
+        row.CollaborationPercent = scores.Collaboration;
+        row.FlexibilityPercent = scores.Flexibility;
+        row.InnovationPercent = scores.Innovation;
+        row.PeopleFirstPercent = scores.PeopleFirst;
+        row.OpennessPercent = scores.Openness;
+        row.ConscientiousnessPercent = scores.Conscientiousness;
+        row.ExtraversionPercent = scores.Extraversion;
+        row.AgreeablenessPercent = scores.Agreeableness;
+        row.EmotionalStabilityPercent = scores.EmotionalStability;
+        row.UpdatedAtUtc = now;
+        row.CompletedAtUtc ??= now;
+    }
+
+    private async Task EnsureSeedCareerAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
+    {
+        var answers = FullLikert(CareerTestCatalog.QuestionCount);
+        var scores = CareerTestCatalog.Score(answers)!;
+        var tags = CareerTestCatalog.DeriveRiasecTags(scores);
+        var row = await _db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (row is not null
+            && CareerTestCatalog.IsComplete(CareerTestCatalog.ParseAnswersJson(row.AnswersJson))
+            && row.RealisticPercent is not null)
+        {
+            return;
+        }
+
+        row ??= _db.CandidateCareerInterests.Add(new CandidateCareerInterest
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CreatedAtUtc = now
+        }).Entity;
+        row.Status = CandidateCompetencyStatuses.Completed;
+        row.AnswersJson = CareerTestCatalog.SerializeAnswers(answers);
+        row.RealisticPercent = scores.Realistic;
+        row.InvestigativePercent = scores.Investigative;
+        row.ArtisticPercent = scores.Artistic;
+        row.SocialPercent = scores.Social;
+        row.EnterprisingPercent = scores.Enterprising;
+        row.ConventionalPercent = scores.Conventional;
+        row.HollandCode = CareerTestCatalog.HollandCode(scores);
+        row.RiasecTagsJson = CareerTestCatalog.SerializeTags(tags);
+        row.MatchTagsJson = CareerTestCatalog.SerializeTags(tags);
+        row.UpdatedAtUtc = now;
+        row.CompletedAtUtc ??= now;
     }
 
     private async Task EnsureSalesProfileAsync(Guid userId, CancellationToken cancellationToken)

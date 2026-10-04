@@ -1059,6 +1059,16 @@ document.addEventListener("change", function (ev) {
     }
 });
 
+window.jobsyMedia = {
+    matches: function (query) {
+        try {
+            return !!(query && window.matchMedia && window.matchMedia(query).matches);
+        } catch (e) {
+            return false;
+        }
+    }
+};
+
 window.jobsyQuestionnaire = {
     scrollToQuestion: function (id, smooth) {
         if (!id) {
@@ -1207,8 +1217,8 @@ window.jobsyDialog = (function () {
     window.addEventListener("load", function () {
         var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
         var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261003-portal"
-            : "/service-worker.js?v=20261003-portal";
+            ? "/service-worker.published.js?v=20261004-admin"
+            : "/service-worker.js?v=20261004-admin";
         navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
     });
 })();

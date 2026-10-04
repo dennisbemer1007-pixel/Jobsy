@@ -527,11 +527,12 @@ html:not(.cookie-consent-known) .pub-theme .gd-questions--warm{
 .pub-theme .gd-lockd__bar.t3 .gd-lockd__fill::after{background:var(--success)}
 .pub-theme .gd-lockd__pill{
   position:absolute;
-  inset-inline:50%;
+  inset-inline:0.75rem;
   inset-block-start:50%;
-  transform:translate(-50%,-50%);
-  display:inline-flex;
+  transform:translateY(-50%);
+  display:flex;
   align-items:center;
+  justify-content:center;
   gap:6px;
   margin:0;
   padding:10px 14px;
@@ -540,7 +541,8 @@ html:not(.cookie-consent-known) .pub-theme .gd-questions--warm{
   box-shadow:var(--pub-shadow-soft);
   font-size:var(--text-sm);
   font-weight:700;
-  white-space:nowrap;
+  text-align:center;
+  white-space:normal;
 }
 .pub-theme .gd-rfoot{
   display:flex;

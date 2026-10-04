@@ -27,7 +27,7 @@
 <PageTitle>@Culture["GratisDna.Seo.Title"] · Lobsy</PageTitle>
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261003-gd-start" />
+    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-teaser" />
 </HeadContent>
 
 <div class="gd-page gd-page--warm" dir="@(Culture.IsRightToLeft ? "rtl" : null)" data-gd-page>
@@ -642,10 +642,21 @@
         _riasecTile = core.RiasecTop.FirstOrDefault();
         _cultureTile = core.CultureHighlight;
         _valueTile = core.TopValue;
-        _strengthChips = core.Strengths.Select(x => x.Label).Take(2).ToArray();
-        _riasecChips = core.RiasecTop.Select(x => x.Label).Take(2).ToArray();
-        _cultureChips = _cultureTile is null ? null : new[] { _cultureTile.Label };
-        _valueChips = _valueTile is null ? null : new[] { _valueTile.Label };
+        _strengthChips = ChipsBesides(_strengthTile?.Label, core.Strengths.Select(x => x.Label));
+        _riasecChips = ChipsBesides(_riasecTile?.Label, core.RiasecTop.Select(x => x.Label));
+        _cultureChips = ChipsBesides(_cultureTile?.Label, _cultureTile is null ? [] : [_cultureTile.Label]);
+        _valueChips = ChipsBesides(_valueTile?.Label, _valueTile is null ? [] : [_valueTile.Label]);
+    }
+
+    private static string[]? ChipsBesides(string? heading, IEnumerable<string> labels)
+    {
+        var chips = labels
+            .Where(label => !string.IsNullOrWhiteSpace(label)
+                            && !string.Equals(label, heading, StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(2)
+            .ToArray();
+        return chips.Length == 0 ? null : chips;
     }
 
     private string TileSentence(string group, string code)

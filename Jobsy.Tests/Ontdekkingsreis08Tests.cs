@@ -298,6 +298,10 @@ public class Ontdekkingsreis08ShedBunitTests : BunitContext
         Assert.Equal(7, bare);
         Assert.False(JourneyTestFlow.TryParseShedStep("shed-6", out _));
         Assert.False(JourneyTestFlow.TryParseShedStep("klaar", out _));
+        Assert.True(JourneyTestFlow.TryParseDepth("10", out var deeper));
+        Assert.Equal(10, deeper);
+        Assert.False(JourneyTestFlow.TryParseDepth("7", out _));
+        Assert.Equal("10", JourneyTestFlow.DepthQueryValue(10));
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

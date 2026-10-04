@@ -202,6 +202,13 @@ public class PdokGeocodingClientTests
     }
 
     [Theory]
+    [InlineData("2671 AA Naaldwijk", "Naaldwijk")]
+    [InlineData("2671AA Naaldwijk", "Naaldwijk")]
+    [InlineData("Herenstraat 12, 2671 AA Naaldwijk", "Naaldwijk")]
+    public void HomeAddressCity_returns_the_place_after_the_postcode(string input, string city)
+        => Assert.Equal(city, Jobsy.Core.Rules.HomeAddressCity.From(input));
+
+    [Theory]
     [InlineData("2671 AA Naaldwijk", "2671 AA", "Naaldwijk")]
     [InlineData("2671AA Naaldwijk", "2671 AA", "Naaldwijk")]
     [InlineData("Naaldwijk", "", "Naaldwijk")]

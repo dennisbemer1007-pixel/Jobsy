@@ -31,7 +31,7 @@ else
                       Questions="_flowQuestions"
                       Answers="Answers"
                       StartAt="CurrentQuestion"
-                      Target="TestDepthLevel.First"
+                      Target="Depth"
                       Compact="true"
                       InputPrefix="@InputPrefix"
                       OnAnswer="OnFlowAnswer"
@@ -58,6 +58,7 @@ else
     [Parameter] public string? HintKey { get; set; }
     [Parameter] public bool ShowHint { get; set; }
     [Parameter] public bool ShowQuestionCounter { get; set; }
+    [Parameter] public TestDepthLevel Depth { get; set; } = TestDepthLevel.First;
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
     [Parameter] public EventCallback OnLeave { get; set; }

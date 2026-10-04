@@ -612,6 +612,54 @@ public class AssistantChatServiceTests
         Assert.DoesNotContain("solliciteer", result.Reply, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Candidate_strengths_question_uses_tests_when_employers_are_off()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "sterk@test.nl",
+            FullName = "Sanne Test",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        db.CandidateCompetencies.Add(new CandidateCompetency
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            SamenwerkenPercent = 40,
+            ResultaatgerichtheidPercent = 88,
+            StressbestendigheidPercent = 50,
+            InnovatiePercent = 45,
+            ExtraversiePercent = 42
+        });
+        db.CandidateCareerPlans.Add(new CandidateCareerPlan
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            DreamTitle = "Teamleider logistiek"
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db, flags: new FixedFeatureFlags(employersEnabled: false));
+        var strengths = await sut.ChatAsync(
+            new AssistantChatContext(userId, JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "Wat zijn mijn sterke punten volgens mijn tests?")],
+            CancellationToken.None);
+        var help = await sut.ChatAsync(
+            new AssistantChatContext(userId, JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "Wat kun je voor mij doen?")],
+            CancellationToken.None);
+
+        Assert.Contains("Teamleider logistiek", strengths.Reply);
+        Assert.DoesNotContain("Banen en sollicitaties komen later. Je paspoort", strengths.Reply);
+        Assert.Contains("paspoort", help.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("vacature", help.Reply, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static AssistantChatService CreateSut(
         JobsyDbContext db,
         StubMetrics? metrics = null,

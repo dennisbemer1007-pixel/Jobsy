@@ -488,7 +488,7 @@ public static class UatScriptRunner
             Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
             Assert.Contains("Kompas.BandStrong", panel, StringComparison.Ordinal);
             Assert.Contains("Kompas.BandBroaden", panel, StringComparison.Ordinal);
-            Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.PracticalEmployersOff", panel, StringComparison.Ordinal);
             Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
 

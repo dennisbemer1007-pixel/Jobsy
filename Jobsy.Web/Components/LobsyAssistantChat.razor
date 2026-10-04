@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject AssistantChatHost ChatHost
+@inject IFeatureFlags FeatureFlags
 
 <AuthorizeView>
     <Authorized>
@@ -34,7 +35,7 @@
                             <LobsyLogo Class="lobsy-assistant__logo" Alt="" UseMascot="true" />
                             <div>
                                 <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
-                                <p class="lobsy-assistant__lead">@Culture["Assistant.Lead"]</p>
+                                <p class="lobsy-assistant__lead">@Culture[_employersOn ? "Assistant.Lead" : "Assistant.LeadEmployersOff"]</p>
                             </div>
                         </div>
                         <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
@@ -119,6 +120,7 @@
     private bool _busy;
     private bool _started;
     private bool _hasBottomNav;
+    private bool _employersOn = true;
     private string _draft = "";
     private string? _error;
     private readonly List<AssistantChatMessage> _messages = [];
@@ -133,6 +135,15 @@
     protected override async Task OnParametersSetAsync()
     {
         _hasBottomNav = HasBottomNav;
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
         await ResolveVisibilityAsync();
     }
 

@@ -11,6 +11,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
+@using Microsoft.Extensions.Logging
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
@@ -19,6 +20,7 @@
 @inject GratisDnaMergeService GratisDnaMerge
 @inject IJSRuntime Js
 @inject UserFacingError UserFacing
+@inject ILogger<DiscoveryJourney> JourneyLog
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
@@ -136,7 +138,7 @@
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
                     <AvailabilityStep Draft="Draft"
-                                      Presets="PresetItems"
+                                      Presets="VisiblePresets"
                                       TogglePreset="TogglePreset"
                                       ToggleFineTune="ToggleFineTune"
                                       SetMinHours="SetMinHoursAsync"
@@ -491,7 +493,8 @@
                                         CurrentQuestion="_currentQuestion"
                                         TestTabs="MiniTestTabs"
                                         Questions="_miniQuestions"
-                                        Answers="_miniAnswers"
+                                        Answers="MiniVisibleAnswers"
+                                        Depth="@MiniDepth"
                                         InputPrefix="@($"journey-{_countedStep}-")"
                                         TitleKey="@JourneyTestFlow.TestTitleKey(_countedStep)"
                                         LeadKey="Discovery.Test.Lead"
@@ -541,6 +544,12 @@
         new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
         new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
     ];
+
+    /// <summary>School and holiday presets are for younger candidates. Adults keep the work-shaped ones.</summary>
+    private IReadOnlyList<AvailabilityStep.Preset> VisiblePresets =>
+        IsYoungCandidate
+            ? PresetItems
+            : PresetItems.Where(p => p.Code is not ("school" or "holiday")).ToArray();
     private static readonly TestConsentStep.TestTab[] ConsentTabs =
     [
         new(7, "Onboarding.Test.Competency", "Onboarding.Test.Competency.Lead"),
@@ -845,6 +854,15 @@
             {
                 await PrepareShedAsync();
             }
+            else if (_screen == "klaar")
+            {
+                // A finished journey used to treat klaar as step 10 and bounce back to the shed.
+                ApplyEndFacts();
+            }
+            else if (_screen == "overview")
+            {
+                await BuildOverviewAsync();
+            }
             else if (_screen != "start")
             {
                 await MarkStartedAsync();
@@ -869,6 +887,13 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+        if (query.TryGetValue("diepte", out var depthVals)
+            && JourneyTestFlow.TryParseDepth(depthVals.FirstOrDefault(), out var depth))
+        {
+            _targetLevel = depth;
+        }
+
         if (query.TryGetValue("stap", out var stapVals))
         {
             ApplyScreen(stapVals.FirstOrDefault() ?? "start");
@@ -956,10 +981,17 @@
         }
 
         Draft.HasConsent = profile.TestAiConsentAt is not null;
+        Draft.ConsentRequested = Draft.HasConsent;
         Draft.HomeLat = profile.HomeLatitude;
         Draft.HomeLng = profile.HomeLongitude;
         var preferences = profile.Preferences ?? new();
         SplitAddress(preferences.HomeAddress);
+        if (PostcodeMatch.IsNlPostcode(NormalizePostcode(Draft.Postcode))
+            && !string.IsNullOrWhiteSpace(Draft.City))
+        {
+            Draft.Postcode = NormalizePostcode(Draft.Postcode);
+            Draft.PostcodeResolved = true;
+        }
         Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
         Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
         Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
@@ -1262,13 +1294,16 @@
                 _countedStep = _shedStep;
                 _screen = _shedStep.ToString();
                 _depth = _shedStep;
-                NavigateStep(_screen);
+                // The query survives a circuit reload; otherwise ApplyScreen resets the band to 5
+                // and an empty question list sends the candidate back to this shed.
+                NavigateStep(_screen, depth: _targetLevel);
                 await PrepareMiniAsync();
                 return;
             }
 
-            // Persist completion flag for full depth; partial stays incomplete.
-            await FlushTestSaveAsync(completed: _answeredCount >= OnboardingWizardCatalog.FullLevelCount(kind));
+            // Never re-post a finished test, and never post an empty body from a refreshed shed.
+            // Both used to 400 and blocked "Naar het licht" / "Verder".
+            await FlushShedTestSaveAsync(kind);
             _state = await Api.SaveMyOnboardingProgressAsync(_shedStep, stepCompleted: true);
             if (_shedStep >= 10)
             {
@@ -1276,17 +1311,41 @@
                 return;
             }
 
+            _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
             await GoToCountedStepAsync(_shedStep + 1);
         }
         catch (Exception ex)
         {
-            _error = UserFacing.Describe(ex);
-            _saveStatus = "error";
+            NoteSaveFailure(ex);
         }
         finally
         {
             _busy = false;
         }
+    }
+
+    private async Task FlushShedTestSaveAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        if (_shedFullyDone || (_serverAnswers.Count == 0 && _miniAnswers.Count == 0))
+        {
+            return;
+        }
+
+        var full = OnboardingWizardCatalog.FullLevelCount(kind);
+        var loaded = _serverAnswers.Count + _miniAnswers.Count;
+        var completed = _answeredCount >= full && loaded >= full;
+        await FlushTestSaveAsync(completed);
+    }
+
+    private void NoteSaveFailure(Exception ex)
+    {
+        if (ex is TestSaveClientException save)
+        {
+            JourneyLog.LogWarning(ex, "Journey test save failed with API code {Code}", save.Code);
+        }
+
+        _error = UserFacing.Describe(ex);
+        _saveStatus = "error";
     }
 
     private async Task ShowEndAsync(bool partial)
@@ -1296,14 +1355,28 @@
         _depth = 11;
         _countedStep = partial ? 6 : 10;
         NavigateStep("klaar");
-        _state = await Api.SaveMyOnboardingProgressAsync(partial ? 6 : 10, stepCompleted: true, finishReached: true);
-        _state = await Api.CompleteMyOnboardingAsync();
-        await RefreshImpressionAsync();
+        try
+        {
+            _state = await Api.SaveMyOnboardingProgressAsync(partial ? 6 : 10, stepCompleted: true, finishReached: true);
+            _state = await Api.CompleteMyOnboardingAsync();
+            await RefreshImpressionAsync();
+        }
+        catch (Exception ex)
+        {
+            // Already-complete onboarding must still open the end screen.
+            NoteSaveFailure(ex);
+        }
+
+        ApplyEndFacts();
+        StateHasChanged();
+    }
+
+    private void ApplyEndFacts()
+    {
         var facts = JourneyTestFlow.EndFacts(_state?.Impression);
         _endStrength = facts.Strength;
         _endWork = facts.Work;
         _endValue = facts.Value;
-        StateHasChanged();
     }
 
     private async Task DeclineConsentAndFinishAsync()
@@ -1385,18 +1458,13 @@
         foreach (var step in JourneyCatalog.Steps.Take(6))
         {
             var ev = _state?.Steps.FirstOrDefault(s => s.Step == step.Number);
-            var isNew = step.Number is >= 3 and <= 6 && ev?.CompletedAtUtc is null && ev?.SkippedAtUtc is null
-                        && (_state?.WizardVersion ?? 3) < OnboardingWizardCatalog.WizardVersionV3;
-            // Completed v2 users: steps 3–6 not filled in v3 terms → Nieuw
-            if (_state?.IsComplete == true && step.Number is >= 3 and <= 6)
-            {
-                var filled = ev?.CompletedAtUtc is not null || ev?.SkippedAtUtc is not null;
-                // Heuristic: if wizard was completed on v2, treat empty discovery fields as Nieuw
-                if (!filled || (_state.WizardVersion < OnboardingWizardCatalog.WizardVersionV3 && !filled))
-                {
-                    isNew = !filled;
-                }
-            }
+            var filled = ev?.CompletedAtUtc is not null || ev?.SkippedAtUtc is not null;
+            // Only a finished v2 journey left steps 3–6 empty. A finished v3 journey is done.
+            var isNew = DiscoveryOverviewRules.StepLooksNew(
+                _state?.IsComplete == true,
+                _state?.WizardVersion ?? OnboardingWizardCatalog.WizardVersionV3,
+                step.Number,
+                filled);
 
             string status;
             string cls;
@@ -1574,10 +1642,40 @@
         Navigation.NavigateTo("/candidate/paspoort");
     }
 
-    private void NavigateStep(string stap)
+    private void NavigateStep(string stap, int? depth = null)
     {
-        var uri = Navigation.GetUriWithQueryParameter("stap", stap);
-        Navigation.NavigateTo(uri, replace: true);
+        var query = new Dictionary<string, object?>
+        {
+            ["stap"] = stap,
+            ["diepte"] = depth is int level ? JourneyTestFlow.DepthQueryValue(level) : null
+        };
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(query), replace: true);
+    }
+
+    private TestDepthLevel MiniDepth => _targetLevel switch
+    {
+        >= 18 => TestDepthLevel.Full,
+        >= OnboardingWizardCatalog.DeeperLevelCount => TestDepthLevel.Deeper,
+        _ => TestDepthLevel.First
+    };
+
+    private IReadOnlyDictionary<int, int> MiniVisibleAnswers
+    {
+        get
+        {
+            if (_serverAnswers.Count == 0)
+            {
+                return _miniAnswers;
+            }
+
+            var merged = new Dictionary<int, int>(_serverAnswers);
+            foreach (var answer in _miniAnswers)
+            {
+                merged[answer.Key] = answer.Value;
+            }
+
+            return merged;
+        }
     }
 
     private string SegmentClass(int index)
@@ -1648,10 +1746,19 @@
             if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id);
         }
 
-        _miniQuestions = catalog
-            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
-            .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
+        // Keep answered questions in the list so the counter stays "6 van 10".
+        // Locked ids are the ones already saved; the first open question is where we start.
+        var byId = catalog.ToDictionary(item => item.Id);
+        _miniQuestions = questionIds
+            .Where(id => byId.ContainsKey(id))
+            .Select(id => new OnboardingMiniTest.MiniQuestion(id, byId[id].Key))
             .ToList();
+        var open = catalog
+            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
+            .Select(item => item.Id)
+            .ToHashSet();
+        var firstOpen = _miniQuestions.FindIndex(question => open.Contains(question.Id));
+        _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
             var merged = new Dictionary<int, int>(_serverAnswers);
@@ -1679,7 +1786,7 @@
         if (_miniArrivedViaBack || _screen == "start" || _screen == "toestemming") return;
         if (_countedStep is < 7 or > 10) return;
         if (!Draft.HasConsent) return;
-        if (_miniQuestions.Count > 0) return;
+        if (_miniQuestions.Any(q => !_serverAnswers.ContainsKey(q.Id) && !_miniAnswers.ContainsKey(q.Id))) return;
 
         _busy = true;
         try

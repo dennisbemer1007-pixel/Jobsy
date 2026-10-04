@@ -57,7 +57,7 @@ internal static class UiStringsValues
         ["ValuesScan.Q11"] = "Ik wil zien dat mijn inzet meetbaar verschil maakt.",
         ["ValuesScan.Q12"] = "Ik stel mezelf doelen en werk er actief naar toe.",
         ["ValuesScan.Q13"] = "Ik vind het prima om gemiddeld te presteren zolang het werk af is.",
-        ["ValuesScan.Q14"] = "Ik ben trots als ik normen of targets overtreft.",
+        ["ValuesScan.Q14"] = "Ik ben trots als ik normen of targets overtref.",
         ["ValuesScan.Q15"] = "Ik zoek geen extra verantwoordelijkheid voor belangrijke resultaten.",
         ["ValuesScan.Q16"] = "Duidelijke afspraken over uren en taken geven mij rust.",
         ["ValuesScan.Q17"] = "Ik werk graag volgens vaste, bewezen procedures.",

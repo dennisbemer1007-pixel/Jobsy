@@ -499,7 +499,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var emptyWipe = await client.PutAsJsonAsync(
             "api/me/competencies",
             new { answers = new Dictionary<string, int>(), complete = false });
-        Assert.Equal(HttpStatusCode.BadRequest, emptyWipe.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, emptyWipe.StatusCode);
         var still = await client.GetFromJsonAsync<JsonElement>("api/me/competencies", JsonOpts);
         Assert.Equal("Completed", still.GetProperty("status").GetString());
         Assert.Equal(25, still.GetProperty("answeredCount").GetInt32());

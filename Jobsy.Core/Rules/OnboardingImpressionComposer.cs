@@ -36,12 +36,15 @@ public static class OnboardingImpressionComposer
             var ranked = DimensionRanking.Rank(
                 OnboardingWizardCatalog.CultureDimensionCodes.Select(code => (code, (int?)cs.Get(code))),
                 DimensionRanking.CultureTieBreak);
-            var best = ranked[0];
-            cultureHighlight = new OnboardingImpressionCoreItem(
-                best.Code,
-                DimensionLabels.For(best.Code),
-                OnboardingImpressionLibrary.CultureSentence(best.Code),
-                best.Score);
+            if (ranked.Count > 0)
+            {
+                var best = ranked[0];
+                cultureHighlight = new OnboardingImpressionCoreItem(
+                    best.Code,
+                    DimensionLabels.For(best.Code),
+                    OnboardingImpressionLibrary.CultureSentence(best.Code),
+                    best.Score);
+            }
         }
 
         OnboardingImpressionCoreItem? topValue = null;
@@ -50,12 +53,15 @@ public static class OnboardingImpressionComposer
             var ranked = DimensionRanking.Rank(
                 SchwartzValuesCatalog.CategoryCodes.Select(code => (code, (int?)vs.Get(code))),
                 DimensionRanking.ValueTieBreak);
-            var best = ranked[0];
-            topValue = new OnboardingImpressionCoreItem(
-                best.Code,
-                DimensionLabels.For(best.Code),
-                OnboardingImpressionLibrary.ValueSentence(best.Code),
-                best.Score);
+            if (ranked.Count > 0)
+            {
+                var best = ranked[0];
+                topValue = new OnboardingImpressionCoreItem(
+                    best.Code,
+                    DimensionLabels.For(best.Code),
+                    OnboardingImpressionLibrary.ValueSentence(best.Code),
+                    best.Score);
+            }
         }
 
         return new OnboardingImpressionCore(strengths, riasecItems, cultureHighlight, topValue);

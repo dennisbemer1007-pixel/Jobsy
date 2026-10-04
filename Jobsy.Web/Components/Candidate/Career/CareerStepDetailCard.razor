@@ -65,7 +65,7 @@
                 </button>
             }
 
-            @if (Step.Years > 0)
+            @if (Step.Years > 0 && !Step.YearsMet)
             {
                 <p class="career-step__years">@Culture.Format("CareerStep.Years", Step.Years)</p>
             }

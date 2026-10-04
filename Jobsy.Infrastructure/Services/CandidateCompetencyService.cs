@@ -43,14 +43,21 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         bool complete,
         CancellationToken cancellationToken = default)
     {
+        var row = await _db.CandidateCompetencies
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (answers.Count == 0 && row is not null && CandidateCompetencyStatuses.IsCompleted(row.Status))
+        {
+            // Journey "Naar het licht" can re-post with no answers loaded. Keep the result.
+            var kept = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
+            return ToDto(row, kept);
+        }
+
         var error = CompetencyTestCatalog.ValidateAnswers(answers, complete);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
         }
 
-        var row = await _db.CandidateCompetencies
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (answers.Count == 0)
         {
             if (row is not null)
@@ -76,7 +83,9 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             _db.CandidateCompetencies.Add(row);
         }
 
-        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status);
+        var storedAnswers = CompetencyTestCatalog.ParseAnswersJson(row.AnswersJson);
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
+            && CompetencyTestCatalog.IsComplete(storedAnswers);
         var answersJson = CompetencyTestCatalog.SerializeAnswers(answers);
         var previousSnapshot = wasCompleted
             ? System.Text.Json.JsonSerializer.Serialize(new
@@ -160,7 +169,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                 previousSnapshot,
                 baselineAnswers,
                 cancellationToken);
-            if (noOp)
+            if (noOp && ScoresMatch(row, previewComplete))
             {
                 var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
                 return ToDto(row, priceNoOp);
@@ -258,6 +267,14 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         var (matches, _) = await _matchSnapshots.GetAsync(userId, cancellationToken);
         return matches;
     }
+
+    private static bool ScoresMatch(CandidateCompetency row, CompetencyScores? preview)
+        => preview is { IsComplete: true }
+           && row.SamenwerkenPercent == preview.Samenwerken
+           && row.ResultaatgerichtheidPercent == preview.Resultaatgerichtheid
+           && row.StressbestendigheidPercent == preview.Stressbestendigheid
+           && row.InnovatiePercent == preview.Innovatie
+           && row.ExtraversiePercent == preview.Extraversie;
 
     private static CandidateCompetencyStateDto ToDto(CandidateCompetency? row, decimal deepAnalysisPriceEuro)
     {
