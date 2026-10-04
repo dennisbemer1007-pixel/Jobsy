@@ -73,6 +73,7 @@ public sealed class UserFacingError
         ApiErrorException.Validation => "Common.Error.Validation",
         // errors 05 §05.2: the maintenance wording lives with the 503 page.
         ApiErrorException.Maintenance => "Status.Maintenance.Short",
+        "open_for_work_required" => "Kb.OpenForWork.Required",
         _ => "Common.Error.TryAgain"
     };
 

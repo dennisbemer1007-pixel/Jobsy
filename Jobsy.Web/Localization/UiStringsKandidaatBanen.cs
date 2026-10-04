@@ -21,6 +21,18 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Fit.Percent",
             "{0}% past bij jou", "{0}% fit for you",
             "{0}% pasuje do ciebie", "{0}% ți se potrivește", "{0}% تناسبك");
+        Add("Kb.OpenForWork.Required",
+            "Zet 'Beschikbaar voor werk' aan. Dan zie je hoe goed een baan bij je past en kun je solliciteren.",
+            "Turn on 'Open for work'. Then you see how well a job fits and you can apply.",
+            "Włącz 'Dostępny do pracy'. Wtedy zobaczysz, jak oferta do ciebie pasuje, i możesz aplikować.",
+            "Activează 'Disponibil pentru lucru'. Atunci vezi cât de bine ți se potrivește un job și poți aplica.",
+            "فعّل 'متاح للعمل'. عندها ترى مدى مناسبة الوظيفة ويمكنك التقديم.");
+        Add("Kb.OpenForWork.Button",
+            "Zet 'Beschikbaar voor werk' aan",
+            "Turn on 'Open for work'",
+            "Włącz 'Dostępny do pracy'",
+            "Activează 'Disponibil pentru lucru'",
+            "فعّل 'متاح للعمل'");
         Add("Kb.Fit.Strong",
             "Sterke match", "Strong fit",
             "Silne dopasowanie", "Potrivire puternică", "تطابق قوي");
@@ -192,7 +204,7 @@ public static class UiStringsKandidaatBanen
             "Niet gekozen", "Not selected",
             "Nie wybrano", "Neselectat", "لم تُختر");
         Add("Kb.Status.FilledElsewhere",
-            "Vergeven aan iemand anders", "Filled by someone else",
+            "Iemand anders gekozen", "Someone else was chosen",
             "Obsada przez kogoś innego", "Ocupat de altcineva", "شُغلت من شخص آخر");
         Add("Kb.Status.Withdrawn",
             "Ingetrokken", "Withdrawn",
@@ -241,11 +253,11 @@ public static class UiStringsKandidaatBanen
             "Afli aici de îndată ce angajatorul răspunde.",
             "ستعلم هنا فور رد صاحب العمل.");
         Add("Kb.Next.Accepted",
-            "De werkgever heeft je gegevens. Houd je telefoon en mail in de gaten.",
-            "The employer has your details. Keep an eye on your phone and email.",
-            "Pracodawca ma Twoje dane. Sprawdzaj telefon i e-mail.",
-            "Angajatorul are datele tale. Urmărește telefonul și e-mailul.",
-            "صاحب العمل لديه بياناتك. راقب هاتفك وبريدك.");
+            "De werkgever kan je naam en Lobsy-CV zien. Contactgegevens deelt Lobsy pas als je wordt aangenomen.",
+            "The employer can see your name and Lobsy CV. Lobsy shares contact details only when you are hired.",
+            "Pracodawca widzi Twoje imię i CV Lobsy. Dane kontaktowe Lobsy podaje dopiero po zatrudnieniu.",
+            "Angajatorul vede numele și CV-ul Lobsy. Datele de contact le dă Lobsy doar când ești angajat.",
+            "يرى صاحب العمل اسمك وسيرة Lobsy. بيانات التواصل يشاركها Lobsy فقط عند التعيين.");
         Add("Kb.Next.EmployerContacting",
             "Oefen je gesprek met Lobsy",
             "Practice your interview with Lobsy",
@@ -300,8 +312,8 @@ public static class UiStringsKandidaatBanen
             "Ai fost invitat la un interviu.",
             "دُعيت إلى مقابلة.");
         Add("Kb.Steps.Outcome",
-            "De uitslag: aangenomen, niet gekozen, of vergeven.",
-            "The outcome: hired, not selected, or filled elsewhere.",
+            "De uitslag: aangenomen, niet gekozen, of iemand anders gekozen.",
+            "The outcome: hired, not selected, or someone else was chosen.",
             "Wynik: zatrudnienie, nie wybrano lub obsadzono.",
             "Rezultatul: angajat, neselectat sau ocupat.",
             "النتيجة: توظيف أو لم تُختر أو شُغلت.");
@@ -334,7 +346,7 @@ public static class UiStringsKandidaatBanen
             "Sluit over {0} dagen", "Closes in {0} days",
             "Zamyka się za {0} dni", "Se închide în {0} zile", "يُغلق خلال {0} أيام");
         Add("Kb.Saved.Fulfilled",
-            "Baan is al vergeven", "Job already filled",
+            "Iemand anders is gekozen", "Someone else was chosen",
             "Oferta już obsadzona", "Jobul e deja ocupat", "الوظيفة مشغولة");
         Add("Kb.Saved.Title",
             "Bewaard", "Saved",

@@ -40,6 +40,12 @@
         </div>
     </header>
 
+    @if (_accessDenied)
+    {
+        <p class="state-message error" data-testid="vacancy-access-denied">Niet gevonden of geen toegang.</p>
+    }
+    else
+    {
     <div class="vacancy-editor__grid">
         <form class="login-form" data-session-draft="true" @onsubmit="SaveAsync" @onsubmit:preventDefault>
             @if (_isIntermediary)
@@ -549,6 +555,7 @@
                                             <input type="checkbox"
                                                    checked="@_scheduleSlots.Contains(key)"
                                                    disabled="@_flexibleTimes"
+                                                   aria-label="@($"{day} {slot}")"
                                                    @onchange="e => ToggleScheduleSlot(key, e)" />
                                         </td>
                                     }
@@ -740,6 +747,7 @@
             </article>
         </aside>
     </div>
+    }
 
     @if (!string.IsNullOrEmpty(_message))
     {
@@ -832,6 +840,7 @@
     private List<string> _educationOptions = EducationLevelLabels.VacancyAll.ToList();
     private bool _saving;
     private bool _isDuplicate;
+    private bool _accessDenied;
     private string? _message;
     private bool _moderationOpen;
     private string? _moderationWarning;
@@ -1315,8 +1324,9 @@
             }
             else if (string.IsNullOrWhiteSpace(_categoryId) || _categories.All(c => c.Id.ToString() != _categoryId))
             {
-                var preferred = _categories.FirstOrDefault(c => c.Slug == "regulier")
-                    ?? _categories.FirstOrDefault();
+                var preferred = _categories.FirstOrDefault(c => c.Id == VacancyCategoryDefaults.RegulierId)
+                    ?? _categories.FirstOrDefault(c => string.Equals(c.Slug, "regulier", StringComparison.OrdinalIgnoreCase))
+                    ?? _categories.FirstOrDefault(c => !string.Equals(c.Slug, "uitzendbureau", StringComparison.OrdinalIgnoreCase));
                 _categoryId = preferred?.Id.ToString() ?? "";
             }
             OnCategoryChanged();
@@ -1346,15 +1356,10 @@
         try
         {
             var source = await Api.GetVacancyAsync(sourceId);
-            if (source is null)
+            if (source is null || _companies.All(c => c.Id != source.CompanyId))
             {
-                _message = "Bronvacature niet gevonden.";
-                return;
-            }
-
-            if (_companies.All(c => c.Id != source.CompanyId))
-            {
-                _message = "Je hebt geen toegang tot de bronvacature.";
+                _accessDenied = true;
+                _message = "Niet gevonden of geen toegang.";
                 return;
             }
 
@@ -1469,9 +1474,10 @@
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _message = ex.Message;
+            _accessDenied = true;
+            _message = "Niet gevonden of geen toegang.";
         }
     }
 

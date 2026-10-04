@@ -138,7 +138,8 @@ public record ApplyResultDto(
     bool RequiresSafetyNetConfirmation = false,
     int? MatchPercent = null,
     string? MatchBreakdownJson = null,
-    string? SafetyNetMessage = null);
+    string? SafetyNetMessage = null,
+    bool ConfirmationLoggedToStub = false);
 
 /// <summary>
 /// Revealed only after a successful (verified) application. Never included on public vacancy payloads.

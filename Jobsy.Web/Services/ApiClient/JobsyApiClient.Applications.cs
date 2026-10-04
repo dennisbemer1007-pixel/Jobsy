@@ -361,8 +361,7 @@ public sealed partial class JobsyApiClient
         }, ct);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+            throw await ApiErrorException.FromResponseAsync(response, ct);
         }
 
         return await response.Content.ReadFromJsonAsync<ApplyResultItem>(cancellationToken: ct);
@@ -373,8 +372,7 @@ public sealed partial class JobsyApiClient
         var response = await _http.PostAsJsonAsync($"api/applications/{applicationId}/react", new { status }, ct);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+            throw await ApiErrorException.FromResponseAsync(response, ct);
         }
     }
 

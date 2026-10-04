@@ -22,6 +22,7 @@
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 @implements IDisposable
 
 <PageTitle>@Culture["WgNav.Vacancies"] · Lobsy</PageTitle>
@@ -32,9 +33,12 @@
             <span aria-hidden="true">@((MarkupString)NavIcons.Download)</span>
             @Culture["WgVac.Export"]
         </button>
-        <WgAction Kind="WgAction.WgActionKind.Primary" RequiresWrite="true" OnClick="GoNewVacancy">
-            @Culture["WgVac.Post"]
-        </WgAction>
+        @if (CanWrite)
+        {
+            <WgAction Kind="WgAction.WgActionKind.Primary" RequiresWrite="true" OnClick="GoNewVacancy">
+                @Culture["WgVac.Post"]
+            </WgAction>
+        }
     </Actions>
 
     <ChildContent>
@@ -182,7 +186,7 @@
                                                aria-label="@v.Title" />
                                     </td>
                                 }
-                                <td>
+                                <td data-label="@Culture["WgVac.Col.Vacancy"]">
                                     <div class="wg-vac__title-cell">
                                         @if (Role == EmployerRole.Regiomanager)
                                         {
@@ -199,12 +203,12 @@
                                         }
                                     </div>
                                 </td>
-                                <td>
+                                <td data-label="@Culture["WgVac.Col.Status"]">
                                     <span class="status-pill wg-vac-status wg-vac-status--@VacancyManageRules.StatusCss(v)">
                                         @StatusLabel(v)
                                     </span>
                                 </td>
-                                <td class="tabular">
+                                <td class="tabular" data-label="@Culture["WgVac.Col.Applications"]">
                                     @if (v.NewApplicationCount > 0)
                                     {
                                         <span class="wg-vac__new" title="@Culture["WgVac.Col.Applications"]">@v.NewApplicationCount</span>
@@ -342,6 +346,9 @@
 @code {
     private enum BulkKind { Extend, Highlight, Duplicate, Deactivate, Approve }
 
+    private bool _singleExtend;
+    private bool _deleteMode;
+
     private List<VacancyListItem> _vacancies = [];
     private List<CompanySummary> _companies = [];
     private List<(Guid Id, string Name)> SalaryTableOptions = [];
@@ -396,7 +403,11 @@
     {
         EmployerRole.Regiomanager => string.Format(Culture["WgVac.Lead.Rm"], Scope.Label),
         EmployerRole.Vestigingsmanager => string.Format(Culture["WgVac.Lead.Vm"], Scope.Label),
-        _ => string.Format(Culture["WgVac.Lead.Bm"], Math.Max(1, BranchOptions.Count))
+        _ => string.Format(
+            Culture["WgVac.Lead.Bm"],
+            string.Format(
+                Culture[BranchOptions.Count == 1 ? "WgDash.Count.Branch" : "WgDash.Count.Branches"],
+                BranchOptions.Count))
     };
 
     private IReadOnlyList<(Guid Id, string Name)> BranchOptions =>
@@ -865,8 +876,17 @@
 
         if (string.Equals(status, "Archived", StringComparison.OrdinalIgnoreCase))
         {
-            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenReopen(v)">
                 @Culture["VacancyAction.Reactivate"]
+            </button>
+        }
+
+        if ((string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase)
+             || string.Equals(status, "Archived", StringComparison.OrdinalIgnoreCase))
+            && v.ApplicationCount == 0)
+        {
+            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenDelete(v)">
+                @Culture["WgVac.Delete"]
             </button>
         }
 
@@ -1063,8 +1083,49 @@
         return Task.CompletedTask;
     }
 
+    private void OpenReopen(VacancyListItem vacancy)
+    {
+        var cost = _costs.GetValueOrDefault("Extend", 1m);
+        var after = _tokenBalance - cost;
+        _singleExtend = true;
+        _deleteMode = false;
+        _confirmKind = BulkKind.Extend;
+        _confirmVacancyId = vacancy.Id;
+        _confirmTitle = Culture["VacancyAction.Reactivate"];
+        _confirmBody = string.Format(Culture["WgVac.Confirm.Reopen"], cost.ToString("0.##"), _tokenBalance.ToString("0.##"), after.ToString("0.##"));
+        _confirmInsufficient = after < 0;
+        _confirmOpen = true;
+    }
+
+    private void OpenDelete(VacancyListItem vacancy)
+    {
+        _deleteMode = true;
+        _singleExtend = false;
+        _confirmVacancyId = vacancy.Id;
+        _confirmTitle = Culture["WgVac.Delete"];
+        _confirmBody = string.Format(Culture["WgVac.Confirm.Delete"], vacancy.Title);
+        _confirmInsufficient = false;
+        _confirmOpen = true;
+    }
+
     private async Task ConfirmProceedAsync()
     {
+        if (_deleteMode && _confirmVacancyId is Guid deleteId)
+        {
+            _confirmOpen = false;
+            _deleteMode = false;
+            await DeleteVacancyAsync(deleteId);
+            return;
+        }
+
+        if (_singleExtend && _confirmVacancyId is Guid extendId)
+        {
+            _confirmOpen = false;
+            _singleExtend = false;
+            await ExtendAsync(extendId);
+            return;
+        }
+
         if (_confirmKind == BulkKind.Approve && _confirmVacancyId is Guid id)
         {
             _confirmOpen = false;
@@ -1286,11 +1347,32 @@
         }
         catch (InsufficientTokensException ex)
         {
-            OpenTopUp(ex.Info);
+            if (Role == EmployerRole.Vestigingsmanager)
+            {
+                _message = Culture["WgVac.Confirm.AskTokens"];
+            }
+            else
+            {
+                OpenTopUp(ex.Info);
+            }
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = UserFacing.Describe(ex);
+        }
+    }
+
+    private async Task DeleteVacancyAsync(Guid id)
+    {
+        try
+        {
+            await Api.DeleteVacancyAsync(id);
+            await RefreshAsync();
+            _message = Culture["WgVac.Deleted"];
+        }
+        catch (Exception ex)
+        {
+            _message = UserFacing.Describe(ex);
         }
     }
 

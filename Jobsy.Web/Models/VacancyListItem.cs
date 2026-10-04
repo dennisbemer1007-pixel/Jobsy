@@ -124,6 +124,9 @@ public class VacancyListItem
     public CandidateFitDimensionsModel? FitDimensions { get; set; }
     /// <summary>Candidate-own-only. Localization key for "Staat lager: …".</summary>
     public string? RankLowerReason { get; set; }
+
+    /// <summary>Candidate must tick "Beschikbaar voor werk" before a fit percent is shown.</summary>
+    public bool OpenForWorkRequired { get; set; }
 }
 
 public sealed class VacancyEngagementBadge

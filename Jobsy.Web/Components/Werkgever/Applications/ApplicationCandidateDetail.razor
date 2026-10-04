@@ -28,7 +28,7 @@
         <div>
             <p class="wg-app-drawer__title">@DisplayName</p>
             <p class="wg-app-drawer__sub">
-                @a.VacancyTitle · @a.CompanyName · @Culture["WgApp.Timeline.Applied"] @a.CreatedAt.ToLocalTime().ToString("dd-MM")
+                @a.VacancyTitle · @a.CompanyName · @Culture["WgApp.Timeline.Applied"] @AmsterdamTime.ToLocal(a.CreatedAt).ToString("dd-MM")
             </p>
         </div>
     </div>
@@ -61,10 +61,6 @@
 
     @if (Tab == "profiel")
     {
-        @if (a.MatchPercent is int pct)
-        {
-            <p><strong>@string.Format(Culture["WgApp.Match"], pct)</strong></p>
-        }
         <dl class="wg-app-facts">
             <div>
                 <dt>@Culture["WgApp.Fact.Travel"]</dt>
@@ -133,13 +129,13 @@
         <dl class="wg-app-facts">
             <div>
                 <dt>@Culture["WgApp.Timeline.Applied"]</dt>
-                <dd>@a.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</dd>
+                <dd>@AmsterdamTime.ToLocal(a.CreatedAt).ToString("dd-MM-yyyy HH:mm")</dd>
             </div>
             @if (a.RespondedAt is DateTime responded)
             {
                 <div>
                     <dt>@Culture["WgApp.Timeline.Responded"]</dt>
-                    <dd>@responded.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</dd>
+                    <dd>@AmsterdamTime.ToLocal(responded).ToString("dd-MM-yyyy HH:mm")</dd>
                 </div>
             }
             <div>

@@ -49,8 +49,7 @@ public class ApplicationsBunitTests : BunitContext
             CompanyName = "Naaldwijk",
             Status = "Pending",
             CandidateName = "Priya Sanders",
-            CreatedAt = DateTime.UtcNow.AddDays(-3),
-            MatchPercent = 92
+            CreatedAt = DateTime.UtcNow.AddDays(-3)
         };
 
         var cut = Render<ApplicationCandidateDetail>(p => p
@@ -59,6 +58,7 @@ public class ApplicationsBunitTests : BunitContext
 
         Assert.Contains("Kandidaat #", cut.Markup);
         Assert.DoesNotContain("Priya", cut.Markup);
+        Assert.DoesNotContain("%", cut.Markup);
         Assert.Contains("Wat je ziet", cut.Markup);
         Assert.Contains("Anoniem profiel", cut.Markup);
     }
@@ -77,8 +77,7 @@ public class ApplicationsBunitTests : BunitContext
             CreatedAt = DateTime.UtcNow.AddDays(-2),
             RespondedAt = DateTime.UtcNow.AddDays(-1),
             PiiRevealed = true,
-            CvPdfAvailable = true,
-            MatchPercent = 90
+            CvPdfAvailable = true
         };
 
         var cut = Render<ApplicationCandidateDetail>(p => p
@@ -114,6 +113,8 @@ public class ApplicationsBunitTests : BunitContext
             .Add(x => x.CanWrite, false));
         Assert.Contains("Reageren doet de vestigings- of bedrijfsmanager", rm.Markup);
         Assert.DoesNotContain("Accepteren", rm.Markup);
+        Assert.DoesNotContain("Lobsy-CV", rm.Markup);
+        Assert.DoesNotContain("CV", rm.Markup);
     }
 
     [Fact]

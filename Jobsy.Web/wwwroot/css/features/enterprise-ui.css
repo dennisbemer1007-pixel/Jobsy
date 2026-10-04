@@ -65,6 +65,14 @@
     gap: var(--space-3);
     align-items: center;
     margin-bottom: var(--space-4);
+    max-width: 100%;
+    min-width: 0;
+}
+
+.ent-filter-bar__select,
+.ent-filter-bar__select select {
+    max-width: 100%;
+    min-width: 0;
 }
 
 .ent-filter-bar__search input {

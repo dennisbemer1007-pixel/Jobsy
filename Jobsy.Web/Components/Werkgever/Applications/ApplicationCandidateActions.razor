@@ -9,13 +9,6 @@
     @if (!CanWrite)
     {
         <p class="wg-readonly-hint">@Culture["WgApp.RmHint"]</p>
-        @if (Item is not null && ApplicationPipelineRules.ShowCvDownload(Item))
-        {
-            <button type="button" class="btn-compact" disabled="@Busy" @onclick="OnDownloadCv">
-                <span aria-hidden="true">@((MarkupString)NavIcons.Download)</span>
-                @Culture["WgApp.Action.Cv"]
-            </button>
-        }
     }
     else if (Item is not null)
     {

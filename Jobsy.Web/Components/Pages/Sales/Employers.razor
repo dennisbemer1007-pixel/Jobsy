@@ -68,7 +68,7 @@
             </ChildContent>
         </EntFilterBar>
 
-        <EntDataTable Loading="_loading" Empty="_page.Items.Count == 0" EmptyText="@Culture["Sales.Employers.Empty"]">
+        <EntDataTable Loading="_loading" Empty="@(_page.Items is null || _page.Items.Count == 0)" EmptyText="@Culture["Sales.Employers.Empty"]">
             <Header>
                 <th scope="col">@Culture["Sales.Employers.Col.Name"]</th>
                 <th scope="col">@Culture["Sales.Employers.Col.Attributed"]</th>
@@ -78,7 +78,7 @@
                 <th scope="col">@Culture["Sales.Employers.Col.LastPurchase"]</th>
             </Header>
             <Rows>
-                @foreach (var row in _page.Items)
+                @foreach (var row in _page.Items ?? [])
                 {
                     <tr class="sp-table-row @(_openId == row.CompanyId ? "is-selected" : null)"
                         tabindex="0"
@@ -123,7 +123,7 @@
             </Rows>
         </EntDataTable>
 
-        @if (_page.Items.Count == 0 && !_loading)
+        @if ((_page.Items?.Count ?? 0) == 0 && !_loading)
         {
             <a class="btn-compact" href="/sales/link">@Culture["Sales.Employers.EmptyCta"]</a>
         }
@@ -196,6 +196,10 @@
                 string.IsNullOrWhiteSpace(_status) ? null : _status,
                 _year,
                 _pageNum);
+        }
+        catch (Exception)
+        {
+            _page = new SalesEmployerPageDto();
         }
         finally
         {

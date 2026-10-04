@@ -108,8 +108,12 @@ public static class UiStringsWerkgever
 
         // Dashboard (02)
         Add("WgDash.Title.Rm", "Regio dashboard", "Region dashboard", "Panel regionu", "Tablou regional", "لوحة المنطقة");
-        Add("WgDash.Lead.Bm", "{0} · {1} vestigingen in {2} regio's · laatste {3}", "{0} · {1} branches in {2} regions · last {3}", "{0} · {1} placówek w {2} regionach · ostatnie {3}", "{0} · {1} filiale în {2} regiuni · ultimele {3}", "{0} · {1} فروع في {2} مناطق · آخر {3}");
-        Add("WgDash.Lead.Rm", "{0} · {1} vestigingen · laatste {2}", "{0} · {1} branches · last {2}", "{0} · {1} placówek · ostatnie {2}", "{0} · {1} filiale · ultimele {2}", "{0} · {1} فروع · آخر {2}");
+        Add("WgDash.Lead.Bm", "{0} · {1} in {2} · laatste {3}", "{0} · {1} in {2} · last {3}", "{0} · {1} w {2} · ostatnie {3}", "{0} · {1} în {2} · ultimele {3}", "{0} · {1} في {2} · آخر {3}");
+        Add("WgDash.Lead.Rm", "{0} · {1} · laatste {2}", "{0} · {1} · last {2}", "{0} · {1} · ostatnie {2}", "{0} · {1} · ultimele {2}", "{0} · {1} · آخر {2}");
+        Add("WgDash.Count.Branch", "{0} vestiging", "{0} branch", "{0} placówka", "{0} filială", "{0} فرع");
+        Add("WgDash.Count.Branches", "{0} vestigingen", "{0} branches", "{0} placówek", "{0} filiale", "{0} فروع");
+        Add("WgDash.Count.Region", "{0} regio", "{0} region", "{0} region", "{0} regiune", "{0} منطقة");
+        Add("WgDash.Count.Regions", "{0} regio's", "{0} regions", "{0} regionów", "{0} regiuni", "{0} مناطق");
         Add("WgDash.Lead.Vm", "{0} · laatste {1}", "{0} · last {1}", "{0} · ostatnie {1}", "{0} · ultimele {1}", "{0} · آخر {1}");
         Add("WgDash.Lead.Intermediary", "KPI’s over alle opdrachtgevers. Detail per bedrijf staat in Bedrijvenoverzicht.", "KPIs across all clients. Per-company detail is in Clients.", "KPI dla wszystkich klientów. Szczegóły per firma w Klienci.", "KPI pentru toți clienții. Detaliile pe firmă sunt la Clienți.", "مؤشرات لكل العملاء. التفاصيل لكل شركة في العملاء.");
         Add("WgDash.Export", "Exporteren", "Export", "Eksportuj", "Exportă", "تصدير");
@@ -212,7 +216,7 @@ public static class UiStringsWerkgever
         Add("PushBom.Confirm", "Versturen", "Send", "Wyślij", "Trimite", "إرسال");
         Add("Employer.PublishOptionsTitle", "Zichtbaarheid & kosten", "Visibility & costs", "Widoczność i koszty", "Vizibilitate și costuri", "الظهور والتكاليف");
 
-        Add("WgVac.Lead.Bm", "Alle vacatures van je {0} vestigingen.", "All vacancies across your {0} branches.", "Wszystkie oferty z {0} placówek.", "Toate posturile din cele {0} filiale.", "كل الوظائف في فروعك الـ {0}.");
+        Add("WgVac.Lead.Bm", "Alle vacatures van je {0}.", "All vacancies across your {0}.", "Wszystkie oferty z {0}.", "Toate posturile din {0}.", "كل الوظائف في {0}.");
         Add("WgVac.Lead.Rm", "Vacatures in regio {0}.", "Vacancies in region {0}.", "Oferty w regionie {0}.", "Posturi în regiunea {0}.", "وظائف في منطقة {0}.");
         Add("WgVac.Lead.Vm", "Vacatures van vestiging {0}.", "Vacancies of branch {0}.", "Oferty placówki {0}.", "Posturi ale filialei {0}.", "وظائف فرع {0}.");
         Add("WgVac.Export", "Exporteren", "Export", "Eksportuj", "Exportă", "تصدير");
@@ -262,6 +266,10 @@ public static class UiStringsWerkgever
         Add("WgVac.Confirm.BulkTitle", "Bulkactie bevestigen?", "Confirm bulk action?", "Potwierdzić akcję zbiorczą?", "Confirmi acțiunea în masă?", "تأكيد الإجراء الجماعي؟");
         Add("WgVac.Confirm.BulkBody", "Totaal {0} tokens. Saldo nu: {1}. Saldo na: {2}.", "Total {0} tokens. Balance now: {1}. Balance after: {2}.", "Razem {0} tokenów. Saldo teraz: {1}. Po: {2}.", "Total {0} tokenuri. Sold acum: {1}. După: {2}.", "المجموع {0} رمزاً. الرصيد الآن: {1}. بعده: {2}.");
         Add("WgVac.Confirm.AskTokens", "Vraag tokens aan bij je bedrijfsmanager", "Ask your company manager for tokens", "Poproś menedżera firmy o tokeny", "Cere tokenuri managerului de firmă", "اطلب الرموز من مدير شركتك");
+        Add("WgVac.Confirm.Reopen", "Dit kost {0} tokens. De vacature staat daarna weer 14 dagen online. Je saldo is nu {1} tokens. Daarna: {2}.", "This costs {0} tokens. The vacancy stays online for 14 more days. Balance now: {1}. After: {2}.", "To kosztuje {0} tokenów. Oferta będzie online jeszcze 14 dni. Saldo teraz: {1}. Potem: {2}.", "Costă {0} tokenuri. Jobul rămâne online încă 14 zile. Sold acum: {1}. După: {2}.", "هذا يكلف {0} رموز. تبقى الوظيفة ظاهرة 14 يوماً أخرى. رصيدك الآن {1}. بعدها: {2}.");
+        Add("WgVac.Delete", "Verwijderen", "Delete", "Usuń", "Șterge", "حذف");
+        Add("WgVac.Deleted", "Vacature verwijderd.", "Vacancy deleted.", "Oferta usunięta.", "Job șters.", "تم حذف الوظيفة.");
+        Add("WgVac.Confirm.Delete", "Vacature '{0}' wordt permanent verwijderd. Dit kan niet terug.", "Vacancy '{0}' is deleted for good. This cannot be undone.", "Oferta '{0}' zostanie trwale usunięta. Nie da się tego cofnąć.", "Jobul '{0}' este șters definitiv. Nu se poate anula.", "ستُحذف الوظيفة '{0}' نهائياً. لا يمكن التراجع.");
         Add("WgVac.Cost.Highlight", "Uitlichten · {0} tokens", "Feature · {0} tokens", "Wyróżnij · {0} tokenów", "Evidențiază · {0} tokenuri", "تمييز · {0} رموز");
         Add("WgVac.Cost.Extend", "Verlengen · {0} tokens", "Extend · {0} tokens", "Przedłuż · {0} tokenów", "Prelungește · {0} tokenuri", "تمديد · {0} رموز");
         Add("WgVac.Cost.Push", "Pushbericht naar kandidaten · {0} tokens", "Push message · {0} tokens", "Powiadomienie · {0} tokenów", "Notificare · {0} tokenuri", "إشعار · {0} رموز");
@@ -305,7 +313,7 @@ public static class UiStringsWerkgever
         Add("WgApp.Tab.Motivation", "Motivatie", "Motivation", "Motywacja", "Motivație", "الدافع");
         Add("WgApp.Tab.Timeline", "Tijdlijn", "Timeline", "Oś czasu", "Cronologie", "الجدول الزمني");
         Add("WgApp.See.Title", "Wat je ziet", "What you see", "Co widzisz", "Ce vezi", "ما تراه");
-        Add("WgApp.See.Anonymous", "Anoniem profiel, match en motivatie", "Anonymous profile, match and motivation", "Anonimowy profil, dopasowanie i motywacja", "Profil anonim, potrivire și motivație", "ملف مجهول والتطابق والدافع");
+        Add("WgApp.See.Anonymous", "Anoniem profiel, reistijd en motivatie", "Anonymous profile, travel time and motivation", "Anonimowy profil, czas dojazdu i motywacja", "Profil anonim, timp de drum și motivație", "ملف مجهول ووقت الطريق والدافع");
         Add("WgApp.See.NameCv", "Naam en Lobsy-cv (na accepteren)", "Name and Lobsy CV (after accept)", "Imię i CV Lobsy (po akceptacji)", "Nume și CV Lobsy (după acceptare)", "الاسم وسيرة Lobsy (بعد القبول)");
         Add("WgApp.See.Contact", "E-mail en telefoon: zichtbaar na aanname", "Email and phone: visible after hire", "E-mail i telefon: widoczne po zatrudnieniu", "E-mail și telefon: vizibile după angajare", "البريد والهاتف: يظهران بعد التعيين");
         Add("WgApp.Fact.Travel", "Reistijd", "Travel time", "Czas dojazdu", "Timp de deplasare", "وقت التنقل");
@@ -432,9 +440,9 @@ public static class UiStringsWerkgever
         Add("WgTeam.Role.Bm.Title", "Bedrijfsmanager", "Company manager", "Menedżer firmy", "Manager de firmă", "مدير الشركة");
         Add("WgTeam.Role.Bm.Body", "Alles voor alle vestigingen: vacatures goedkeuren, tokens kopen en verdelen, facturen, team en bedrijfsprofiel.", "Everything for all branches: approve vacancies, buy and allocate tokens, invoices, team and company profile.", "Wszystko dla wszystkich placówek: zatwierdzanie ofert, tokeny, faktury, zespół i profil.", "Totul pentru toate filialele: aprobare posturi, tokenuri, facturi, echipă și profil.", "كل شيء لكل الفروع: اعتماد الوظائف والرموز والفواتير والفريق وملف الشركة.");
         Add("WgTeam.Role.Rm.Title", "Regiomanager", "Regional manager", "Menedżer regionu", "Manager regional", "مدير المنطقة");
-        Add("WgTeam.Role.Rm.Body", "Kijkt mee in de vestigingen van één regio. Alleen lezen: geen wijzigingen, geen tokens kopen.", "Views the branches of one region. Read only: no changes, no token purchases.", "Podgląd placówek jednego regionu. Tylko odczyt: bez zmian i zakupów tokenów.", "Vede filialele unei regiuni. Doar citire: fără modificări, fără cumpărare tokenuri.", "يعرض فروع منطقة واحدة. للقراءة فقط: بلا تعديلات وبلا شراء رموز.");
+        Add("WgTeam.Role.Rm.Body", "Kijkt mee in de vestigingen van één regio. Alleen lezen: geen vacature plaatsen, niemand uitnodigen, geen CV met naam downloaden.", "Views the branches of one region. Read only: no posting, no invites, no named CV download.", "Podgląd placówek jednego regionu. Tylko odczyt: bez publikacji, zaproszeń i pobierania CV z nazwiskiem.", "Vede filialele unei regiuni. Doar citire: fără postare, invitații sau descărcare CV cu nume.", "يعرض فروع منطقة واحدة. للقراءة فقط: بلا نشر وبلا دعوات وبلا تنزيل سيرة ذات اسم.");
         Add("WgTeam.Role.Vm.Title", "Vestigingsmanager", "Branch manager", "Menedżer placówki", "Manager de filială", "مدير الفرع");
-        Add("WgTeam.Role.Vm.Body", "Alle rechten, maar alleen voor de eigen vestiging: vacatures, sollicitaties, tokens en profiel.", "Full rights, but only for their own branch: vacancies, applications, tokens and profile.", "Pełne prawa tylko dla własnej placówki: oferty, aplikacje, tokeny i profil.", "Drepturi complete doar pentru filiala proprie: posturi, aplicații, tokenuri și profil.", "صلاحيات كاملة لكن لفرعه فقط: الوظائف والطلبات والرموز والملف.");
+        Add("WgTeam.Role.Vm.Body", "Voor de eigen vestiging: vacatures, sollicitaties en het profiel. Tokens: alleen het saldo bekijken en tokens aanvragen. Geen facturen, verbruik, team of vestigingen.", "For their own branch: vacancies, applications and the profile. Tokens: only the balance and a request. No invoices, usage, team or branches.", "Dla własnej placówki: oferty, aplikacje i profil. Tokeny: tylko saldo i prośba. Bez faktur, zużycia, zespołu i placówek.", "Pentru filiala proprie: posturi, candidaturi și profil. Tokenuri: doar soldul și o cerere. Fără facturi, consum, echipă sau filiale.", "لفرعه فقط: الوظائف والطلبات والملف. الرموز: الرصيد وطلب الرموز فقط. بلا فواتير أو استهلاك أو فريق أو فروع.");
 
         Add("WgInvite.Title", "Iemand uitnodigen", "Invite someone", "Zaproś kogoś", "Invită pe cineva", "دعوة شخص");
         Add("WgInvite.Lead", "Eén plek voor alle uitnodigingen in je organisatie.", "One place for all invitations in your organisation.", "Jedno miejsce na wszystkie zaproszenia.", "Un singur loc pentru toate invitațiile.", "مكان واحد لكل الدعوات في منظمتك.");

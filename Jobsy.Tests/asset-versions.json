@@ -32,8 +32,8 @@
     "v": "20261003-sticky"
   },
   "css/features/enterprise-ui.css": {
-    "sha256": "f36a7641c79544431767eb7edb2277989ef4ab36189ce9aafdeacd3de0c136a9",
-    "v": "20260929-ent-ui"
+    "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
+    "v": "20261004-fixlist"
   },
   "css/features/errors.css": {
     "sha256": "9815efc2872ddd3d2b7d4fcf528ac0d0019fe90494ad060682e8d7091c2fec81",
@@ -44,8 +44,8 @@
     "v": "20261004-teaser"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "474f33a517f76c9b1290a3bee730b63fd8bbf7314c013f3d6a84d00aee3f1551",
-    "v": "20261002-kp05"
+    "sha256": "e8cdc094d0867b6757986732115e482f682dee785038c96c8ed38f4799e4dbf1",
+    "v": "20261004-fixlist"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -116,8 +116,8 @@
     "v": "20260930-wa11"
   },
   "css/features/werkgever.css": {
-    "sha256": "a6d1e1997735bcbe82a8aa21fabbd3bead7df94afa86bb66bdb7985123f19074",
-    "v": "20260929-wg-insights"
+    "sha256": "44bcd77653869d34321ab333327910fe3dde319c2ec41ec48ed5e810548da1fc",
+    "v": "20261004-fixlist"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",

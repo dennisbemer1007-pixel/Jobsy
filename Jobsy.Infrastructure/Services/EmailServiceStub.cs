@@ -16,6 +16,8 @@ public sealed class EmailServiceStub : IEmailService, ITransactionalMailer
     private readonly IFeatureFlags? _featureFlags;
     private readonly ILogger<EmailServiceStub> _logger;
 
+    public bool LogsToStub => true;
+
     public EmailServiceStub(JobsyDbContext db, ILogger<EmailServiceStub> logger, IFeatureFlags? featureFlags = null)
     {
         _db = db;

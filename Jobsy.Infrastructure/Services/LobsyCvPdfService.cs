@@ -186,26 +186,17 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 .FontSize(10).FontColor(BrandDeep);
                         });
 
-                        if (!string.IsNullOrWhiteSpace(model.VacancyTitle) || model.MatchPercent is not null)
+                        if (!string.IsNullOrWhiteSpace(model.VacancyTitle))
                         {
                             hero.ConstantItem(150).Background(WarmSand).Padding(10).Column(ctx =>
                             {
                                 ctx.Spacing(2);
                                 ctx.Item().Text("Voor deze rol").FontSize(8).FontColor(AccentTeal);
-                                if (!string.IsNullOrWhiteSpace(model.VacancyTitle))
-                                {
-                                    ctx.Item().Text(model.VacancyTitle!).FontSize(11).Bold().FontColor(BrandNavy);
-                                }
+                                ctx.Item().Text(model.VacancyTitle!).FontSize(11).Bold().FontColor(BrandNavy);
 
                                 if (!string.IsNullOrWhiteSpace(model.CompanyName))
                                 {
                                     ctx.Item().Text(model.CompanyName!).FontSize(9).FontColor(Slate);
-                                }
-
-                                if (model.MatchPercent is int pct)
-                                {
-                                    ctx.Item().PaddingTop(4).Text($"{pct}% match")
-                                        .FontSize(12).Bold().FontColor(AccentTeal);
                                 }
                             });
                         }

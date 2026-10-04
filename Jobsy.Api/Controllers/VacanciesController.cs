@@ -182,7 +182,7 @@ public class VacanciesController : ControllerBase
         if (isCandidate)
         {
             matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
-            if (matchContext is not null)
+            if (matchContext is { OpenForWork: true })
             {
                 fitGate = CandidateFitGate.FromContext(matchContext);
                 matches = await _profileMatch.ScoreAsync(matchContext, candidates, cancellationToken);
@@ -299,10 +299,15 @@ public class VacanciesController : ControllerBase
         string? matchBand = null;
         string? fitGateValue = null;
         string? fitWhyLine = null;
+        var openForWorkRequired = false;
         if (_companyAuth.IsCandidate(User))
         {
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
-            if (matchContext is not null)
+            if (matchContext is { OpenForWork: false })
+            {
+                openForWorkRequired = true;
+            }
+            else if (matchContext is not null)
             {
                 var gate = CandidateFitGate.FromContext(matchContext);
                 var scored = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
@@ -317,7 +322,7 @@ public class VacanciesController : ControllerBase
             }
         }
 
-        return Ok(MapCard(record, showWage, travelMinutes, matchPercent, matchBand, fitGateValue, fitWhyLine));
+        return Ok(MapCard(record, showWage, travelMinutes, matchPercent, matchBand, fitGateValue, fitWhyLine, openForWorkRequired: openForWorkRequired));
     }
 
     /// <summary>
@@ -347,10 +352,15 @@ public class VacanciesController : ControllerBase
 
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
         var fitGate = CandidateFitGate.Closed;
+        var openForWorkRequired = false;
         if (_companyAuth.IsCandidate(User))
         {
             var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
-            if (matchContext is not null)
+            if (matchContext is { OpenForWork: false })
+            {
+                openForWorkRequired = true;
+            }
+            else if (matchContext is not null)
             {
                 fitGate = CandidateFitGate.FromContext(matchContext);
                 var scoreInput = parsed
@@ -402,7 +412,15 @@ public class VacanciesController : ControllerBase
                 fitWhyLine = applied.FitWhyLineNl;
             }
 
-            cards.Add(MapCard(record, showWage, travelMinutes, matchPercent, matchBand, fitGateValue, fitWhyLine));
+            cards.Add(MapCard(
+                record,
+                showWage,
+                travelMinutes,
+                matchPercent,
+                matchBand,
+                fitGateValue,
+                fitWhyLine,
+                openForWorkRequired: openForWorkRequired));
         }
 
         return Ok(cards);
@@ -500,7 +518,7 @@ public class VacanciesController : ControllerBase
         if (_companyAuth.IsCandidate(User))
         {
             matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
-            if (matchContext is not null)
+            if (matchContext is { OpenForWork: true })
             {
                 fitGate = CandidateFitGate.FromContext(matchContext);
                 matches = await _profileMatch.ScoreAsync(
@@ -547,7 +565,11 @@ public class VacanciesController : ControllerBase
                 continue;
             }
 
-            if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
+            if (matchContext is { OpenForWork: false })
+            {
+                dto = dto with { OpenForWorkRequired = true };
+            }
+            else if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
             {
                 string? rankLower = null;
                 dislikeReasons?.TryGetValue(c.Record.Id, out rankLower);
@@ -667,6 +689,16 @@ public class VacanciesController : ControllerBase
         if (vacancy is null)
         {
             return NotFound();
+        }
+
+        if (age is null && _companyAuth.IsCandidate(User))
+        {
+            var viewer = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var fromProfile = AgeRules.AgeYearsFromDateOfBirth(viewer?.DateOfBirth);
+            if (fromProfile is int resolved)
+            {
+                age = Math.Clamp(resolved, 15, 67);
+            }
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -873,7 +905,7 @@ public class VacanciesController : ControllerBase
         }
 
         var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
-        if (matchContext is null)
+        if (matchContext is null || !matchContext.OpenForWork)
         {
             return Ok(new VacancyCultureFitDto(null, null, null, null, InsightsStatuses.Ready, false));
         }
@@ -1699,6 +1731,86 @@ public class VacanciesController : ControllerBase
     }
 
     /// <summary>
+    /// Delete a draft or archived vacancy that has no applications.
+    /// Admin may pass purgeApplications to archive a test vacancy and remove its applications first.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromQuery] bool purgeApplications = false,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        var applicationCount = await _db.Applications.CountAsync(a => a.VacancyId == id, cancellationToken);
+        var isAdmin = _companyAuth.IsAdmin(User);
+
+        if (purgeApplications)
+        {
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "vacancy_purge_admin_only",
+                    message = "Alleen een beheerder kan een vacature met sollicitaties verwijderen.",
+                    userMessage = true
+                });
+            }
+
+            if (!VacancyDeletionRules.AdminMayPurgeWithApplications(applicationCount)
+                && !VacancyDeletionRules.AdminMayDeleteWithoutApplications(vacancy.Status, applicationCount))
+            {
+                return BadRequest(new
+                {
+                    code = "vacancy_delete_not_allowed",
+                    message = "Deze vacature kun je niet verwijderen.",
+                    userMessage = true
+                });
+            }
+
+            if (vacancy.Status is not (VacancyStatus.Draft or VacancyStatus.Archived))
+            {
+                vacancy.Status = VacancyStatus.Archived;
+                vacancy.FulfilledByApplicationId = null;
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            else if (vacancy.FulfilledByApplicationId is not null)
+            {
+                vacancy.FulfilledByApplicationId = null;
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+
+            if (applicationCount > 0)
+            {
+                await _db.Applications.Where(a => a.VacancyId == id).ExecuteDeleteAsync(cancellationToken);
+            }
+        }
+        else if (!VacancyDeletionRules.EmployerMayDelete(vacancy.Status, applicationCount))
+        {
+            var code = applicationCount > 0 ? "vacancy_has_applications" : "vacancy_delete_not_allowed";
+            var message = applicationCount > 0
+                ? "Deze vacature heeft nog sollicitaties. Archiveer hem of vraag een beheerder om hem te verwijderen."
+                : "Alleen een concept of een gearchiveerde vacature zonder sollicitaties kun je verwijderen.";
+            return Conflict(new { code, message, userMessage = true });
+        }
+
+        await _db.Vacancies.Where(v => v.Id == id).ExecuteDeleteAsync(cancellationToken);
+        _discoveryIndex.Invalidate();
+        return NoContent();
+    }
+
+    /// <summary>
     /// Mark a draft "klaar" so it auto-publishes when the company is verified (D4).
     /// Only available while the company is not verified.
     /// </summary>
@@ -2299,7 +2411,8 @@ public class VacanciesController : ControllerBase
         string? fitGate = null,
         string? fitWhyLine = null,
         string? rankLowerReason = null,
-        double? distanceKm = null)
+        double? distanceKm = null,
+        bool openForWorkRequired = false)
     {
         var workType = record.WorkTypeLabelList.FirstOrDefault() ?? record.WorkTypeLabels;
         var thumbnail = VacancyImageUrls.ForCard(
@@ -2332,7 +2445,8 @@ public class VacanciesController : ControllerBase
             rankLowerReason,
             record.MinHoursPerWeek,
             record.MaxHoursPerWeek,
-            distanceKm);
+            distanceKm,
+            openForWorkRequired);
     }
 
     private static string PlaceFromAddress(string? address)
@@ -2983,6 +3097,11 @@ public class VacanciesController : ControllerBase
         if (user is null || matchContext is null)
         {
             return dto;
+        }
+
+        if (!matchContext.OpenForWork)
+        {
+            return dto with { OpenForWorkRequired = true };
         }
 
         var record = VacancyDiscoveryIndex.ToRecord(vacancy);
