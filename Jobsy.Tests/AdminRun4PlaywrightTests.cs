@@ -191,10 +191,42 @@ public class AdminRun4PlaywrightTests
     private static async Task AssertMenuStaysOpenAsync(IPage page, string url)
     {
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        // Prerender paints the toggle before the circuit. A click in that window is dropped
+        // and aria-expanded stays "false". Wait until the circuit is interactive, then open.
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 30_000 });
         var toggle = page.Locator("button.row-actions-menu__toggle").First;
         await toggle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await toggle.ClickAsync();
-        await page.WaitForTimeoutAsync(1000);
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            if (await toggle.GetAttributeAsync("aria-expanded") == "true")
+            {
+                break;
+            }
+
+            await toggle.ClickAsync();
+            try
+            {
+                await Assertions.Expect(toggle).ToHaveAttributeAsync(
+                    "aria-expanded",
+                    "true",
+                    new() { Timeout = 3_000 });
+                break;
+            }
+            catch (PlaywrightException) when (attempt == 0)
+            {
+            }
+        }
+
+        await Assertions.Expect(toggle).ToHaveAttributeAsync(
+            "aria-expanded",
+            "true",
+            new() { Timeout = 3_000 });
+        // RowActionsMenu closes on focusout after 150ms when focus has left the menu.
+        // The menu must still be open after that window.
+        await page.WaitForTimeoutAsync(400);
         Assert.Equal("true", await toggle.GetAttributeAsync("aria-expanded"));
         var item = page.Locator(".row-actions-menu__panel [role='menuitem']").First;
         await item.ClickAsync(new() { Timeout = 5_000 });
