@@ -381,7 +381,7 @@ public static class WhoAmIStoryBuilder
                     "zodat een werkgever meteen voelt of we bij elkaar passen.",
                     "zodat meteen duidelijk is of het werk bij me past.",
                     StringComparison.Ordinal);
-        return ShortenLongSentences(PlainLanguage(text));
+        return NormalizeParagraphs(ShortenLongSentences(PlainLanguage(text)));
     }
 
     public static string? Sanitize(string? story)
@@ -409,7 +409,7 @@ public static class WhoAmIStoryBuilder
         }
 
         trimmed = PlainLanguage(trimmed);
-        return ShortenLongSentences(trimmed);
+        return NormalizeParagraphs(ShortenLongSentences(trimmed));
     }
 
     /// <summary>
@@ -490,16 +490,25 @@ public static class WhoAmIStoryBuilder
     }
 
     /// <summary>
-    /// Blank lines split paragraphs. A model that only uses single newlines is split into
-    /// 2–4 paragraphs before the shape check. One short sentence stays one paragraph.
+    /// Blank lines split paragraphs. A model that only uses single newlines, or one long
+    /// block, is split into 2–3 paragraphs before the shape check. The words stay the
+    /// model's words. One short sentence stays one paragraph.
     /// </summary>
     public static string NormalizeParagraphs(string story)
     {
-        var text = story.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Trim();
-        text = Regex.Replace(text, @"\n{3,}", "\n\n");
+        var text = story.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n')
+            .Replace('\u2028', '\n').Replace('\u2029', '\n').Trim();
+        if (text.Contains("\\n", StringComparison.Ordinal) || text.Contains("\\r", StringComparison.Ordinal))
+        {
+            text = text.Replace("\\r\\n", "\n", StringComparison.Ordinal)
+                .Replace("\\n", "\n", StringComparison.Ordinal)
+                .Replace("\\r", "\n", StringComparison.Ordinal);
+        }
+
+        text = Regex.Replace(text, @"[ \t]*\n[ \t]*\n(?:[ \t]*\n[ \t]*)*", "\n\n").Trim();
         if (text.Contains("\n\n", StringComparison.Ordinal))
         {
-            return text.Trim();
+            return text;
         }
 
         if (!text.Contains('\n', StringComparison.Ordinal))
@@ -584,22 +593,156 @@ public static class WhoAmIStoryBuilder
     private static List<string>? SplitLongBlock(string block)
     {
         var sentences = Regex.Split(block.Trim(), @"(?<=[.!?])\s+")
+            .Select(sentence => sentence.Trim())
             .Where(sentence => sentence.Length > 0)
             .ToList();
-        if (sentences.Count < 2 || block.Length < 80)
+        if (sentences.Count >= 2)
+        {
+            // A short opening sentence used to fail the old half-split (first half under 40
+            // characters) and the whole story stayed one paragraph.
+            if (block.Length < 80)
+            {
+                return null;
+            }
+
+            var target = sentences.Count >= 6 && block.Length >= 240 ? 3 : 2;
+            return PackSentences(sentences, Math.Min(target, sentences.Count));
+        }
+
+        return SplitRunOnSentence(block);
+    }
+
+    /// <summary>Groups existing sentences. Does not add or drop words.</summary>
+    private static List<string> PackSentences(List<string> sentences, int target)
+    {
+        var sizes = new int[target];
+        var baseCount = sentences.Count / target;
+        var extra = sentences.Count % target;
+        for (var i = 0; i < target; i++)
+        {
+            sizes[i] = baseCount + (i < extra ? 1 : 0);
+        }
+
+        var parts = new List<string>(target);
+        var index = 0;
+        foreach (var size in sizes)
+        {
+            parts.Add(string.Join(' ', sentences.GetRange(index, size)));
+            index += size;
+        }
+
+        return parts;
+    }
+
+    /// <summary>
+    /// One sentence with no second period. Break on a clause or word boundary only.
+    /// A short sentence stays one paragraph.
+    /// </summary>
+    private static List<string>? SplitRunOnSentence(string block)
+    {
+        var words = block.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if ((words.Length < 20 && block.Length < 140) || words.Length < 16)
         {
             return null;
         }
 
-        var mid = Math.Max(1, sentences.Count / 2);
-        var first = string.Join(' ', sentences.Take(mid));
-        var second = string.Join(' ', sentences.Skip(mid));
-        if (first.Length < 40 || second.Length < 40)
+        var target = words.Length >= 48 ? 3 : 2;
+        var cuts = ChooseWordCuts(words, target);
+        if (cuts.Count == 0 && target == 3)
+        {
+            cuts = ChooseWordCuts(words, 2);
+        }
+
+        if (cuts.Count == 0)
         {
             return null;
         }
 
-        return [first, second];
+        var parts = new List<string>();
+        var start = 0;
+        foreach (var cut in cuts)
+        {
+            parts.Add(string.Join(' ', words[start..cut]));
+            start = cut;
+        }
+
+        parts.Add(string.Join(' ', words[start..]));
+        return parts;
+    }
+
+    private static List<int> ChooseWordCuts(string[] words, int target)
+    {
+        var boundaries = new List<int>();
+        for (var i = 8; i <= words.Length - 8; i++)
+        {
+            if (IsClauseBoundary(words, i))
+            {
+                boundaries.Add(i);
+            }
+        }
+
+        if (boundaries.Count == 0)
+        {
+            var span = words.Length - 15;
+            if (span <= 0)
+            {
+                return [];
+            }
+
+            boundaries.Capacity = span;
+            for (var i = 8; i < 8 + span; i++)
+            {
+                boundaries.Add(i);
+            }
+        }
+
+        var cuts = new List<int>();
+        for (var part = 1; part < target; part++)
+        {
+            var ideal = (int)Math.Round(words.Length * (part / (double)target));
+            var best = 0;
+            var bestDistance = int.MaxValue;
+            foreach (var index in boundaries)
+            {
+                if (cuts.Any(cut => Math.Abs(index - cut) < 8))
+                {
+                    continue;
+                }
+
+                var distance = Math.Abs(index - ideal);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = index;
+                }
+            }
+
+            if (best == 0)
+            {
+                return [];
+            }
+
+            cuts.Add(best);
+        }
+
+        cuts.Sort();
+        return cuts;
+    }
+
+    private static bool IsClauseBoundary(string[] words, int index)
+    {
+        var previous = words[index - 1];
+        if (previous.EndsWith(',') || previous.EndsWith(';'))
+        {
+            return true;
+        }
+
+        var word = words[index].TrimEnd(',', ';', '.', '!', '?');
+        return word.Equals("en", StringComparison.OrdinalIgnoreCase)
+            || word.Equals("maar", StringComparison.OrdinalIgnoreCase)
+            || word.Equals("want", StringComparison.OrdinalIgnoreCase)
+            || word.Equals("zodat", StringComparison.OrdinalIgnoreCase)
+            || word.Equals("omdat", StringComparison.OrdinalIgnoreCase);
     }
 
     private static List<string> LocalizedRoles(WhoAmIProfileHighlights profile, string? language)

@@ -236,6 +236,65 @@ public class WhoAmITests
         Assert.Contains("Ik", state.Story, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Single_paragraph_model_output_becomes_two_or_three_paragraphs()
+    {
+        var competency = new CompetencyScores(80, 70, 65, 90);
+        var career = new RiasecScores(40, 30, 20, 55, 35, 60);
+        var culture = new CulturePersonalityScores(
+            Autonomy: 40, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
+            Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70);
+        var sheet = CandidateFactSheet.ForWhoAmI(competency, career, culture, WhoAmIProfileHighlights.Empty, null);
+
+        // Three short sentences: the old midpoint split left the first sentence under 40 characters and rejected the story.
+        const string single = "Ik maak taken af. Ik help mensen op de werkvloer. Ik houd de dag rustig en overzichtelijk.";
+        var normalized = WhoAmIStoryBuilder.NormalizeParagraphs(single);
+        var parts = normalized.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        Assert.InRange(parts.Length, 2, 3);
+        Assert.Equal(Words(single), Words(normalized));
+        Assert.Null(WhoAmIStoryBuilder.StoryRuleReason(single, WhoAmIProfileHighlights.Empty, competency, culture, career));
+        Assert.True(WhoAmIStoryBuilder.Accepts(single, WhoAmIProfileHighlights.Empty, competency, culture, career));
+
+        const string ready = "Ik maak taken af. Ik houd de dag overzichtelijk.\n\nIk help mensen op de werkvloer. Ik werk met een duidelijke stap.";
+        Assert.Equal(ready, WhoAmIStoryBuilder.NormalizeParagraphs(ready));
+        Assert.True(WhoAmIStoryBuilder.Accepts(ready, WhoAmIProfileHighlights.Empty, competency, culture, career));
+
+        const string escaped = "Ik maak taken af en houd de dag overzichtelijk. Ik help mensen op de werkvloer.\\n\\nIk zoek een ploeg met een duidelijke stap. Ik laat dat elke dag zien.";
+        var fromEscaped = WhoAmIStoryBuilder.NormalizeParagraphs(escaped);
+        Assert.Contains("\n\n", fromEscaped, StringComparison.Ordinal);
+        Assert.DoesNotContain("\\n", fromEscaped, StringComparison.Ordinal);
+        Assert.Equal(Words(escaped.Replace("\\n", " ", StringComparison.Ordinal)), Words(fromEscaped));
+        Assert.True(WhoAmIStoryBuilder.Accepts(escaped, WhoAmIProfileHighlights.Empty, competency, culture, career));
+
+        const string runOn = "Ik ben iemand die taken afmaakt en dat elke dag laat zien en ik help mensen op de werkvloer en ik houd de lijst bij zodat het werk klaar is en ik zoek een ploeg waar de stappen duidelijk zijn";
+        var runOnParts = WhoAmIStoryBuilder.NormalizeParagraphs(runOn)
+            .Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        Assert.InRange(runOnParts.Length, 2, 3);
+        Assert.Equal(Words(runOn), Words(string.Join('\n', runOnParts)));
+        Assert.Null(CandidateFactGuard.RejectionReason(string.Join("\n\n", runOnParts), sheet));
+
+        Assert.Equal("paragraphs", WhoAmIStoryBuilder.StoryRuleReason(
+            "Ik ben iemand die taken afmaakt en dat elke dag laat zien in gewone woorden."));
+
+        const string invented = "Ik heb jarenlang in de bouw gewerkt bij een kas in Den Haag. Ik deed dat werk elke dag met mijn handen. Ik zoek nu een andere klus en ik maak taken af.";
+        var inventedText = WhoAmIStoryBuilder.NormalizeParagraphs(invented);
+        Assert.InRange(inventedText.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length, 2, 3);
+        Assert.Equal(Words(invented), Words(inventedText));
+        var inventedReason = CandidateFactGuard.RejectionReason(inventedText, sheet);
+        Assert.True(
+            inventedReason is "invented-work" or "invented-place" or "unknown-year",
+            inventedReason);
+        Assert.False(WhoAmIStoryBuilder.Accepts(inventedText, WhoAmIProfileHighlights.Empty, competency, culture, career));
+
+        Assert.Contains("\\n\\n", WhoAmIPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("lege regel", WhoAmIPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("lege regel", CandidateFactGuard.ReasonSentence("paragraphs"), StringComparison.Ordinal);
+        Assert.Contains("\\n\\n", CandidateFactGuard.ReasonSentence("paragraphs"), StringComparison.Ordinal);
+    }
+
+    private static string Words(string text)
+        => string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
     private sealed class NoopInsightsQueue : ICandidateInsightsQueue
     {
         public bool TryEnqueue(Guid userId) => true;
