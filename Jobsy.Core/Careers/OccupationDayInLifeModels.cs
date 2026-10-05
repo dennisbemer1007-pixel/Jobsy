@@ -8,7 +8,10 @@ namespace Jobsy.Core.Careers;
 /// <summary>Candidate-facing read of a stored day. No model call.</summary>
 public interface IOccupationDayInLifeReader
 {
-    Task<OccupationDayReadResult> GetAsync(string? escoId, CancellationToken cancellationToken = default);
+    Task<OccupationDayReadResult> GetAsync(
+        string? escoId,
+        string? language = null,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record OccupationDayReadResult(bool KnownOccupation, bool Enabled, OccupationDayView? Day);
@@ -19,6 +22,7 @@ public sealed record OccupationDayView(
     string Morning,
     string Midday,
     string Afternoon,
+    string Closing,
     IReadOnlyList<string> Highlights,
     string VariesNote,
     bool ThinSource);
@@ -49,6 +53,7 @@ public sealed record OccupationDayDraft(
     string Morning,
     string Midday,
     string Afternoon,
+    string Closing,
     IReadOnlyList<string> Highlights,
     string VariesNote);
 
@@ -89,6 +94,7 @@ public sealed class OccupationDayExportRow
     public string Morning { get; set; } = "";
     public string Midday { get; set; } = "";
     public string Afternoon { get; set; } = "";
+    public string Closing { get; set; } = "";
     public List<string> Highlights { get; set; } = [];
     public string VariesNote { get; set; } = "";
     public string SourceModel { get; set; } = "";
@@ -96,6 +102,7 @@ public sealed class OccupationDayExportRow
     public string ContentHash { get; set; } = "";
     public string Locale { get; set; } = "nl";
     public bool ThinSource { get; set; }
+    public Dictionary<string, OccupationDayStoredTranslation> Translations { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public static class OccupationDayInLifeGate
@@ -124,6 +131,7 @@ public static class OccupationDayInLifeHash
             Norm(draft.Morning),
             Norm(draft.Midday),
             Norm(draft.Afternoon),
+            Norm(draft.Closing),
             string.Join('\n', draft.Highlights.Select(Norm)),
             Norm(draft.VariesNote)
         });

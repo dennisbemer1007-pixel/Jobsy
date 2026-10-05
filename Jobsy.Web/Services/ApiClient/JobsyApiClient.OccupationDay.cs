@@ -7,9 +7,15 @@ namespace Jobsy.Web.Services;
 
 public sealed partial class JobsyApiClient
 {
-    public async Task<OccupationDayResponse?> GetOccupationDayAsync(Guid escoId, CancellationToken ct = default)
+    public async Task<OccupationDayResponse?> GetOccupationDayAsync(
+        Guid escoId,
+        string? language = null,
+        CancellationToken ct = default)
     {
-        var response = await _http.GetAsync($"api/me/occupation-day-in-life/{escoId:D}", ct);
+        var lang = string.IsNullOrWhiteSpace(language) ? "nl" : language.Trim();
+        var response = await _http.GetAsync(
+            $"api/me/occupation-day-in-life/{escoId:D}?lang={Uri.EscapeDataString(lang)}",
+            ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
@@ -75,7 +81,9 @@ public sealed class OccupationDayResponse
     public string? Morning { get; set; }
     public string? Midday { get; set; }
     public string? Afternoon { get; set; }
+    public string? Closing { get; set; }
     public List<string> Highlights { get; set; } = [];
     public string? VariesNote { get; set; }
     public bool ThinSource { get; set; }
+    public string Language { get; set; } = "nl";
 }

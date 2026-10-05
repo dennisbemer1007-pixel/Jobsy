@@ -19,6 +19,9 @@ public class OccupationDayInLife
     public string Midday { get; set; } = "";
     public string Afternoon { get; set; } = "";
 
+    /// <summary>How the typical day wraps up. Shown as the last timeline block.</summary>
+    public string Closing { get; set; } = "";
+
     /// <summary>JSON array of short highlight lines.</summary>
     public string HighlightsJson { get; set; } = "[]";
 
@@ -32,6 +35,9 @@ public class OccupationDayInLife
     public string ContentHash { get; set; } = "";
 
     public string Locale { get; set; } = "nl";
+
+    /// <summary>JSON map of language code to a stored translation. Empty until the one-shot translate runs.</summary>
+    public string TranslationsJson { get; set; } = "{}";
 
     /// <summary>True when the ESCO source was thin and the stored day is intentionally short.</summary>
     public bool ThinSource { get; set; }

@@ -40,6 +40,7 @@ public static partial class OccupationDayInLifeValidator
         RequireSection(found, draft.Morning, min, max);
         RequireSection(found, draft.Midday, min, max);
         RequireSection(found, draft.Afternoon, min, max);
+        RequireSection(found, draft.Closing, min, max);
 
         var highlightMin = facts.IsThin ? 1 : 2;
         if (draft.Highlights.Count < highlightMin || draft.Highlights.Count > 4)
@@ -76,9 +77,16 @@ public static partial class OccupationDayInLifeValidator
             found.Add("zin-te-lang");
         }
 
-        if (Same(draft.Morning, draft.Midday) || Same(draft.Midday, draft.Afternoon) || Same(draft.Morning, draft.Afternoon))
+        var sections = new[] { draft.Morning, draft.Midday, draft.Afternoon, draft.Closing };
+        for (var i = 0; i < sections.Length; i++)
         {
-            found.Add("gelijk");
+            for (var j = i + 1; j < sections.Length; j++)
+            {
+                if (Same(sections[i], sections[j]))
+                {
+                    found.Add("gelijk");
+                }
+            }
         }
 
         var text = string.Join(
@@ -86,10 +94,86 @@ public static partial class OccupationDayInLifeValidator
             draft.Morning,
             draft.Midday,
             draft.Afternoon,
+            draft.Closing,
             string.Join("\n", draft.Highlights),
             draft.VariesNote);
         var source = facts.SourceText;
 
+        CollectInventionReasons(found, text, source);
+
+        reasons = found.Distinct(StringComparer.Ordinal).ToList();
+        return reasons.Count == 0;
+    }
+
+    /// <summary>
+    /// A stored translation must keep the Dutch facts and must not add an employer, city, wage, or diploma.
+    /// </summary>
+    public static bool TryValidateTranslation(
+        OccupationDayDraft source,
+        OccupationDayDraft translated,
+        out IReadOnlyList<string> reasons)
+    {
+        var found = new List<string>();
+        RequireTranslationSection(found, translated.Morning);
+        RequireTranslationSection(found, translated.Midday);
+        RequireTranslationSection(found, translated.Afternoon);
+        RequireTranslationSection(found, translated.Closing);
+        if (translated.Highlights.Count != source.Highlights.Count || translated.Highlights.Count > 4)
+        {
+            found.Add("highlights");
+        }
+        else
+        {
+            foreach (var line in translated.Highlights)
+            {
+                if (string.IsNullOrWhiteSpace(line) || line.Length > 180)
+                {
+                    found.Add("highlights");
+                    break;
+                }
+            }
+        }
+
+        var varies = (translated.VariesNote ?? "").Trim();
+        if (varies.Length < 8 || varies.Length > 500)
+        {
+            found.Add("varies");
+        }
+
+        if (Same(source.Morning, translated.Morning)
+            && Same(source.Midday, translated.Midday)
+            && Same(source.Afternoon, translated.Afternoon)
+            && Same(source.Closing, translated.Closing)
+            && Same(source.VariesNote, translated.VariesNote))
+        {
+            found.Add("onvertaald");
+        }
+
+        var text = string.Join(
+            "\n",
+            translated.TitleNl,
+            translated.Morning,
+            translated.Midday,
+            translated.Afternoon,
+            translated.Closing,
+            string.Join("\n", translated.Highlights),
+            translated.VariesNote);
+        var allowed = string.Join(
+            "\n",
+            source.TitleNl,
+            source.Morning,
+            source.Midday,
+            source.Afternoon,
+            source.Closing,
+            string.Join("\n", source.Highlights),
+            source.VariesNote);
+        CollectInventionReasons(found, text, allowed);
+        reasons = found.Distinct(StringComparer.Ordinal).ToList();
+        return reasons.Count == 0;
+    }
+
+    private static void CollectInventionReasons(List<string> found, string text, string source)
+    {
         if (CareerCompassBuilder.ContainsForbiddenJargon(text))
         {
             found.Add("jargon");
@@ -148,9 +232,21 @@ public static partial class OccupationDayInLifeValidator
         {
             found.Add("stad");
         }
+    }
 
-        reasons = found.Distinct(StringComparer.Ordinal).ToList();
-        return reasons.Count == 0;
+    private static void RequireTranslationSection(List<string> found, string? value)
+    {
+        var text = (value ?? "").Trim();
+        if (text.Length < 8)
+        {
+            found.Add(text.Length == 0 ? "leeg" : "te-kort");
+            return;
+        }
+
+        if (text.Length > 1400)
+        {
+            found.Add("te-lang");
+        }
     }
 
     private static void RequireSection(List<string> found, string? value, int min, int max)

@@ -19,7 +19,10 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
         _options = options.Value;
     }
 
-    public async Task<OccupationDayReadResult> GetAsync(string? escoId, CancellationToken cancellationToken = default)
+    public async Task<OccupationDayReadResult> GetAsync(
+        string? escoId,
+        string? language = null,
+        CancellationToken cancellationToken = default)
     {
         var facts = OccupationDayFacts.For(escoId);
         if (facts is null)
@@ -39,7 +42,7 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             return new OccupationDayReadResult(true, true, null);
         }
 
-        return new OccupationDayReadResult(true, true, ToView(row, facts.TitleNl));
+        return new OccupationDayReadResult(true, true, ToView(row, facts.TitleNl, language));
     }
 
     public async Task<OccupationDayAdminStatus> StatusAsync(
@@ -50,14 +53,17 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
         string? lastEscoId,
         CancellationToken cancellationToken = default)
     {
-        var storedIds = await _db.OccupationDayInLives.AsNoTracking()
-            .Select(item => item.EscoId)
+        var storedRows = await _db.OccupationDayInLives.AsNoTracking()
+            .Select(item => new { item.EscoId, item.ContentHash, item.TranslationsJson })
             .ToListAsync(cancellationToken);
-        var stored = storedIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var complete = storedRows
+            .Where(item => OccupationDayTranslations.IsComplete(item.TranslationsJson, item.ContentHash))
+            .Select(item => item.EscoId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var total = OccupationCatalog.Shared.All.Count;
-        var remaining = OccupationCatalog.Shared.All.Count(job => !stored.Contains(job.Id));
+        var remaining = OccupationCatalog.Shared.All.Count(job => !complete.Contains(job.Id));
         return new OccupationDayAdminStatus(
-            stored.Count,
+            storedRows.Count,
             total,
             remaining,
             running,
@@ -67,7 +73,7 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             lastEscoId);
     }
 
-    internal static OccupationDayView ToView(Jobsy.Core.Entities.OccupationDayInLife row, string title)
+    internal static OccupationDayView ToView(Jobsy.Core.Entities.OccupationDayInLife row, string title, string? language = null)
     {
         IReadOnlyList<string> highlights;
         try
@@ -79,14 +85,30 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             highlights = [];
         }
 
-        return new OccupationDayView(
+        var view = new OccupationDayView(
             row.EscoId,
             string.IsNullOrWhiteSpace(row.TitleNl) ? title : row.TitleNl,
             row.Morning,
             row.Midday,
             row.Afternoon,
+            row.Closing,
             highlights,
             row.VariesNote,
             row.ThinSource);
+        if (!OccupationDayTranslations.TryGet(row.TranslationsJson, language, row.ContentHash, out var translated))
+        {
+            return view;
+        }
+
+        return view with
+        {
+            TitleNl = string.IsNullOrWhiteSpace(translated.Title) ? view.TitleNl : translated.Title,
+            Morning = translated.Morning,
+            Midday = translated.Midday,
+            Afternoon = translated.Afternoon,
+            Closing = translated.Closing,
+            Highlights = translated.Highlights ?? [],
+            VariesNote = string.IsNullOrWhiteSpace(translated.Varies) ? view.VariesNote : translated.Varies
+        };
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Jobsy.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(JobsyDbContext))]
-    partial class JobsyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005200313_AddOccupationDayClosing")]
+    partial class AddOccupationDayClosing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4211,10 +4214,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
-
-                    b.Property<string>("TranslationsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Uri")
                         .IsRequired()

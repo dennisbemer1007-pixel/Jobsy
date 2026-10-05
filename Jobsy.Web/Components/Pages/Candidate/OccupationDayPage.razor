@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Careers
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
@@ -10,11 +12,14 @@
 
 <PageTitle>@(Job is null ? Culture["Day.Eyebrow"] : Culture.Format("Day.Title", Job.Nl)) · Lobsy</PageTitle>
 
-<div class="journey-page">
-    <section class="career-card" aria-labelledby="day-title">
-        <p class="career-card__eyebrow">@Culture["Day.Eyebrow"]</p>
+<div class="journey-page day-life">
+    <section class="day-life__card" aria-labelledby="day-title">
+        <div class="day-life__hello">
+            <LobsyCoachAvatar Class="day-life__mascot" Language="@Culture.Language" Alt="" Animate="false" />
+            <p class="day-life__speech">@Culture["Day.Invite"]</p>
+        </div>
         <h1 id="day-title">@Heading</h1>
-        <p class="career-card__lead">@Culture["Day.Typical"]</p>
+        <p class="day-life__disclaimer">@Culture["Day.Disclaimer"]</p>
 
         @if (_loading)
         {
@@ -35,32 +40,39 @@
         else if (_day is not { Found: true })
         {
             <p class="state-message">@Culture["Day.Empty"]</p>
-            <p class="login-lead">@Culture["Day.EmptyLead"]</p>
+            <p class="day-life__lead">@Culture["Day.EmptyLead"]</p>
         }
         else
         {
             @if (_day.ThinSource)
             {
-                <p class="login-lead">@Culture["Day.Thin"]</p>
+                <p class="day-life__lead">@Culture["Day.Thin"]</p>
             }
-            <ol class="day-in-life">
-                <li>
-                    <h2>@Culture["Day.Morning"]</h2>
+            <ol class="day-life__timeline">
+                <li class="day-life__block">
+                    <h2 class="day-life__chip">@Culture["Day.Morning"]</h2>
                     <p>@_day.Morning</p>
                 </li>
-                <li>
-                    <h2>@Culture["Day.Midday"]</h2>
+                <li class="day-life__block">
+                    <h2 class="day-life__chip">@Culture["Day.Midday"]</h2>
                     <p>@_day.Midday</p>
                 </li>
-                <li>
-                    <h2>@Culture["Day.Afternoon"]</h2>
+                <li class="day-life__block">
+                    <h2 class="day-life__chip">@Culture["Day.Afternoon"]</h2>
                     <p>@_day.Afternoon</p>
                 </li>
+                @if (!string.IsNullOrWhiteSpace(_day.Closing))
+                {
+                    <li class="day-life__block">
+                        <h2 class="day-life__chip">@Culture["Day.Closing"]</h2>
+                        <p>@_day.Closing</p>
+                    </li>
+                }
             </ol>
             @if (_day.Highlights.Count > 0)
             {
-                <h2>@Culture["Day.Highlights"]</h2>
-                <ul>
+                <h2 class="day-life__notes-title">@Culture["Day.Highlights"]</h2>
+                <ul class="day-life__notes">
                     @foreach (var line in _day.Highlights)
                     {
                         <li>@line</li>
@@ -69,13 +81,29 @@
             }
             @if (!string.IsNullOrWhiteSpace(_day.VariesNote))
             {
-                <h2>@Culture["Day.Varies"]</h2>
-                <p>@_day.VariesNote</p>
+                <p class="day-life__varies">@_day.VariesNote</p>
             }
         }
 
-        <p><a href="@BackHref">@Culture["Day.Back"]</a></p>
+        @if (Job is not null && !_loading && !_unknown)
+        {
+            <aside class="day-life__fit" aria-labelledby="day-fit-title">
+                <h2 id="day-fit-title">@Culture["Day.FitTitle"]</h2>
+                <p>@Culture["Day.FitLead"]</p>
+                <div class="day-life__actions">
+                    <a class="career-btn day-life__cta" href="/candidate/profile?tab=fit">@Culture["Day.FitCta"]</a>
+                    <a class="career-btn career-btn--secondary" href="/candidate/profile?tab=tests">@Culture["Day.MoreCta"]</a>
+                </div>
+            </aside>
+        }
+
+        <p class="day-life__back"><a href="@BackHref">@Culture["Day.Back"]</a></p>
     </section>
+
+    @if (Job is not null)
+    {
+        <LobsyBubble Text="@Culture["Day.Coach"]" />
+    }
 </div>
 
 @code {
@@ -92,9 +120,26 @@
 
     private Occupation? Job => OccupationCatalog.Shared.Get(EscoId.ToString("D"));
 
-    private string Heading => Job is null
-        ? Culture["Day.Eyebrow"]
-        : Culture.Format("Day.Title", Job.Nl);
+    private string Heading
+    {
+        get
+        {
+            if (Job is null)
+            {
+                return Culture["Day.Eyebrow"];
+            }
+
+            var title = Job.Nl;
+            if (!JobsyLanguages.AreSame(Culture.Language, "nl")
+                && _day is { Found: true, TitleNl: { Length: > 0 } translated }
+                && !JobsyLanguages.AreSame(_day.Language, "nl"))
+            {
+                title = translated;
+            }
+
+            return Culture.Format("Day.Title", title);
+        }
+    }
 
     private string BackHref => string.Equals(From, "fit", StringComparison.OrdinalIgnoreCase)
         ? "/candidate/profile?tab=fit"
@@ -102,7 +147,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        var key = EscoId.ToString("D");
+        var key = EscoId.ToString("D") + "|" + Culture.Language;
         if (string.Equals(_loadedFor, key, StringComparison.OrdinalIgnoreCase))
         {
             return;
@@ -122,7 +167,7 @@
 
         try
         {
-            _day = await Api.GetOccupationDayAsync(EscoId);
+            _day = await Api.GetOccupationDayAsync(EscoId, Culture.Language);
             _unknown = _day is null;
         }
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))

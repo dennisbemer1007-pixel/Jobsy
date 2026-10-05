@@ -6,7 +6,7 @@ public static class OccupationDayInLifeJson
 {
     public static bool TryParse(string? json, OccupationDayFacts facts, out OccupationDayDraft draft, out string? error)
     {
-        draft = new OccupationDayDraft(facts.TitleNl, "", "", "", [], "");
+        draft = new OccupationDayDraft(facts.TitleNl, "", "", "", "", [], "");
         error = null;
         var payload = Unwrap(json);
         if (payload.Length == 0)
@@ -31,6 +31,7 @@ public static class OccupationDayInLifeJson
                 ReadString(root, "morning"),
                 ReadString(root, "midday"),
                 ReadString(root, "afternoon"),
+                ReadString(root, "closing"),
                 highlights,
                 ReadString(root, "varies"));
             return true;

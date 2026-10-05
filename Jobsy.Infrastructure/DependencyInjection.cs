@@ -571,6 +571,7 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<IOccupationDayInLifeWriter, OccupationDayInLifeOpenAiWriter>();
+        services.AddScoped<IOccupationDayInLifeTranslator, OccupationDayInLifeTranslator>();
         services.AddScoped<OccupationDayInLifeReader>();
         services.AddScoped<IOccupationDayInLifeReader>(sp => sp.GetRequiredService<OccupationDayInLifeReader>());
         services.AddScoped<OccupationDayInLifeGenerator>();

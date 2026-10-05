@@ -28,6 +28,8 @@ public class OccupationDayInLifeTests
         Assert.Contains("geen diploma", prompt, StringComparison.Ordinal);
         Assert.Contains("B1", prompt, StringComparison.Ordinal);
         Assert.Contains("Bron is dun", prompt, StringComparison.Ordinal);
+        Assert.Contains("closing", prompt, StringComparison.Ordinal);
+        Assert.Contains("afronden", prompt, StringComparison.Ordinal);
         Assert.DoesNotContain("kandidaatprofiel", prompt, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -139,9 +141,11 @@ public class OccupationDayInLifeTests
         var generator = Generator(db, writer);
         var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { id };
         var result = await generator.GenerateMissingAsync(5, skipEscoIds: null, only, CancellationToken.None);
-        Assert.Equal(0, result.Generated);
         Assert.Equal(0, writer.Calls);
-        Assert.Equal("Deze tekst blijft staan.", (await db.OccupationDayInLives.SingleAsync()).Morning);
+        var row = await db.OccupationDayInLives.SingleAsync();
+        Assert.Equal("Deze tekst blijft staan.", row.Morning);
+        Assert.Equal(1, result.Generated);
+        Assert.True(OccupationDayTranslations.IsComplete(row.TranslationsJson, row.ContentHash));
     }
 
     [Fact]
@@ -194,6 +198,7 @@ public class OccupationDayInLifeTests
                     Morning = draft.Morning,
                     Midday = draft.Midday,
                     Afternoon = draft.Afternoon,
+                    Closing = draft.Closing,
                     Highlights = draft.Highlights.ToList(),
                     VariesNote = draft.VariesNote,
                     SourceModel = "gpt-4o-mini",
@@ -260,6 +265,102 @@ public class OccupationDayInLifeTests
     }
 
     [Fact]
+    public void Translation_targets_every_supported_ui_language_except_dutch()
+    {
+        Assert.Equal(["en", "pl", "ro", "ar"], OccupationDayTranslations.TargetLanguages);
+        var prompt = OccupationDayTranslationPrompt.System("pl");
+        Assert.Contains("B1", prompt, StringComparison.Ordinal);
+        Assert.Contains("Do not add", prompt, StringComparison.Ordinal);
+        Assert.Contains("city", prompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("wage", prompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("diploma", prompt, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Translation_validator_rejects_a_city_missing_from_the_dutch_source()
+    {
+        var source = CleanDraft();
+        var translated = source with
+        {
+            TitleNl = "order picker",
+            Morning = "You start with your crate and your list. Then you walk to the first rack in Rotterdam."
+        };
+        Assert.False(OccupationDayInLifeValidator.TryValidateTranslation(source, translated, out var reasons));
+        Assert.Contains("stad", reasons);
+    }
+
+    [Fact]
+    public async Task Reader_uses_a_stored_translation_and_falls_back_to_dutch()
+    {
+        var id = OccupationCatalog.Shared.All[0].Id;
+        await using var db = NewDb();
+        var row = Stored(id, "Je start de ochtend met de eerste taak uit de lijst.");
+        row.ContentHash = "hash-nl";
+        row.TranslationsJson = OccupationDayTranslations.Serialize(new Dictionary<string, OccupationDayStoredTranslation>
+        {
+            ["pl"] = new()
+            {
+                Title = "kompletacja zamówień",
+                Morning = "Rano bierzesz listę i zbierasz pierwsze produkty.",
+                Midday = "W środku dnia liczysz produkty i wkładasz je do skrzynki.",
+                Afternoon = "Po południu sprawdzasz listę i uzupełniasz braki.",
+                Closing = "Na końcu oddajesz skrzynki i odkładasz rzeczy.",
+                Highlights = ["Zbieranie", "Liczenie"],
+                Varies = "Kolejność zadań różni się u każdego pracodawcy.",
+                SourceHash = "hash-nl"
+            }
+        });
+        db.OccupationDayInLives.Add(row);
+        await db.SaveChangesAsync();
+        var reader = new OccupationDayInLifeReader(db, Options.Create(new OccupationDayInLifeOptions()));
+
+        var polish = await reader.GetAsync(id, "pl");
+        Assert.Equal("Rano bierzesz listę i zbierasz pierwsze produkty.", polish.Day?.Morning);
+        Assert.Equal("kompletacja zamówień", polish.Day?.TitleNl);
+
+        var english = await reader.GetAsync(id, "en");
+        Assert.Equal(row.Morning, english.Day?.Morning);
+
+        var dutch = await reader.GetAsync(id, "nl");
+        Assert.Equal(row.Morning, dutch.Day?.Morning);
+    }
+
+    [Fact]
+    public async Task Generate_stores_each_language_once()
+    {
+        var id = OccupationCatalog.Shared.All[2].Id;
+        var name = Guid.NewGuid().ToString("N");
+        var translator = new EchoTranslator();
+        await using (var db = NewDb(name))
+        {
+            var writer = new ScriptWriter(CleanJson());
+            var generator = Generator(db, writer, translator);
+            var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { id };
+            var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);
+            Assert.Equal(1, result.Generated);
+            Assert.Equal(1, writer.Calls);
+            Assert.False(result.KeyMissing);
+            Assert.Equal(OccupationDayTranslations.TargetLanguages.Count, translator.Calls);
+            var row = await db.OccupationDayInLives.SingleAsync();
+            Assert.True(OccupationDayTranslations.IsComplete(row.TranslationsJson, row.ContentHash));
+            Assert.True(OccupationDayTranslations.TryGet(row.TranslationsJson, "ar", row.ContentHash, out var arabic));
+            Assert.Contains("ar", arabic.Morning, StringComparison.Ordinal);
+        }
+
+        await using (var db = NewDb(name))
+        {
+            var writer = new ScriptWriter(CleanJson());
+            var againTranslator = new EchoTranslator();
+            var generator = Generator(db, writer, againTranslator);
+            var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { id };
+            var again = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);
+            Assert.Equal(0, again.Generated);
+            Assert.Equal(0, writer.Calls);
+            Assert.Equal(0, againTranslator.Calls);
+        }
+    }
+
+    [Fact]
     public void Candidate_page_shows_an_honest_empty_state_and_does_not_call_openai()
     {
         var root = RepoRoot.Find();
@@ -268,7 +369,22 @@ public class OccupationDayInLifeTests
         var reader = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/OccupationDayInLifeReader.cs"));
         var writer = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/OccupationDayInLifeOpenAiWriter.cs"));
         Assert.Contains("Day.Empty", page, StringComparison.Ordinal);
+        Assert.Contains("Day.Invite", page, StringComparison.Ordinal);
+        Assert.Contains("day-life__timeline", page, StringComparison.Ordinal);
+        Assert.Contains("Day.FitTitle", page, StringComparison.Ordinal);
+        Assert.Contains("LobsyBubble", page, StringComparison.Ordinal);
+        Assert.Contains("Culture.Language", page, StringComparison.Ordinal);
+        var readerSource = reader;
+        Assert.DoesNotContain("IOccupationDayInLifeTranslator", readerSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("ITranslationService", controller, StringComparison.Ordinal);
+        Assert.DoesNotContain("OpenAiFeature", controller, StringComparison.Ordinal);
+        var translator = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/OccupationDayInLifeTranslator.cs"));
+        Assert.Contains("OpenAiFeature.Translation", translator, StringComparison.Ordinal);
+        Assert.DoesNotContain("OccupationDayInLifeTranslator", readerSource, StringComparison.Ordinal);
         Assert.Equal("Nog niet beschikbaar.", UiStrings.Get("Day.Empty", "nl"));
+        Assert.Equal("Een dag als {0}", UiStrings.Get("Day.Title", "nl"));
+        Assert.Equal("Kom, ik neem je mee door een gewone werkdag.", UiStrings.Get("Day.Invite", "nl"));
+        Assert.Equal("Past dit bij jou?", UiStrings.Get("Day.FitTitle", "nl"));
         Assert.DoesNotContain("chat/completions", page, StringComparison.Ordinal);
         Assert.DoesNotContain("OpenAI", page, StringComparison.Ordinal);
         Assert.DoesNotContain("IOccupationDayInLifeWriter", controller, StringComparison.Ordinal);
@@ -296,8 +412,9 @@ public class OccupationDayInLifeTests
         => new(
             "orderpicker",
             "Je begint met het klaarzetten van je bak en je lijst. Daarna loop je naar de eerste stelling.",
-            "Rond de middag ga je door met verzamelen. Je telt de producten en legt ze in de bak.",
-            "Aan het eind zet je de bakken klaar. Je ruimt je plek op en sluit de lijst af.",
+            "In het midden van de dag ga je door met verzamelen. Je telt de producten en legt ze in de bak.",
+            "In de middag zet je de bakken klaar. Je controleert de lijst en vult aan wat nog ontbreekt.",
+            "Aan het eind geef je de bakken door. Je vinkt de lijst af en zet je spullen terug.",
             ["Producten verzamelen", "Aantallen controleren", "Bakken klaarzetten"],
             "De volgorde van taken verschilt per werkgever.");
 
@@ -308,6 +425,7 @@ public class OccupationDayInLifeTests
             + "\"morning\":" + System.Text.Json.JsonSerializer.Serialize(draft.Morning) + ","
             + "\"midday\":" + System.Text.Json.JsonSerializer.Serialize(draft.Midday) + ","
             + "\"afternoon\":" + System.Text.Json.JsonSerializer.Serialize(draft.Afternoon) + ","
+            + "\"closing\":" + System.Text.Json.JsonSerializer.Serialize(draft.Closing) + ","
             + "\"highlights\":" + System.Text.Json.JsonSerializer.Serialize(draft.Highlights) + ","
             + "\"varies\":" + System.Text.Json.JsonSerializer.Serialize(draft.VariesNote)
             + "}";
@@ -324,7 +442,8 @@ public class OccupationDayInLifeTests
             TitleNl = job.Nl,
             Morning = morning,
             Midday = "Daarna ga je door met de taken uit de lijst.",
-            Afternoon = "Aan het eind ruim je je plek op en sluit je af.",
+            Afternoon = "In de middag ruim je je plek op en kijk je de lijst na.",
+            Closing = "Aan het eind vink je de lijst af en zet je je spullen terug.",
             HighlightsJson = "[\"Eerste taak\",\"Plek opruimen\"]",
             VariesNote = "De volgorde verschilt per werkgever.",
             SourceModel = "gpt-4o-mini",
@@ -342,12 +461,41 @@ public class OccupationDayInLifeTests
         return new JobsyDbContext(options);
     }
 
-    private static OccupationDayInLifeGenerator Generator(JobsyDbContext db, IOccupationDayInLifeWriter writer)
+    private static OccupationDayInLifeGenerator Generator(
+        JobsyDbContext db,
+        IOccupationDayInLifeWriter writer,
+        IOccupationDayInLifeTranslator? translator = null)
         => new(
             db,
             writer,
+            translator ?? new EchoTranslator(),
             Options.Create(new OccupationDayInLifeOptions { DelayMilliseconds = 0 }),
             NullLogger<OccupationDayInLifeGenerator>.Instance);
+
+    private sealed class EchoTranslator : IOccupationDayInLifeTranslator
+    {
+        public int Calls { get; private set; }
+
+        public Task<OccupationDayTranslateResult> TranslateAsync(
+            OccupationDayDraft source,
+            string targetLanguage,
+            CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            var tag = " " + targetLanguage;
+            var draft = source with
+            {
+                TitleNl = source.TitleNl + tag,
+                Morning = source.Morning + tag,
+                Midday = source.Midday + tag,
+                Afternoon = source.Afternoon + tag,
+                Closing = source.Closing + tag,
+                VariesNote = source.VariesNote + tag,
+                Highlights = source.Highlights.Select(line => line + tag).ToList()
+            };
+            return Task.FromResult(new OccupationDayTranslateResult(true, draft, null, "test-translator", false));
+        }
+    }
 
     private sealed class ScriptWriter(string json, string? error = null) : IOccupationDayInLifeWriter
     {

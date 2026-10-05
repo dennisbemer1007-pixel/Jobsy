@@ -22,9 +22,9 @@ public static class OccupationDayInLifePrompt
         Gebruik geen woorden als ESCO, ISCO, RIASEC, OCEAN of Big Five.
 
         Antwoord alleen met JSON in deze vorm:
-        {"morning":"...","midday":"...","afternoon":"...","highlights":["...","..."],"varies":"..."}
+        {"morning":"...","midday":"...","afternoon":"...","closing":"...","highlights":["...","..."],"varies":"..."}
 
-        morning is de ochtend, midday de middag, afternoon de namiddag. highlights zijn 2 tot 4 korte punten die in de bron staan. varies legt uit wat kan verschillen.
+        morning is de ochtend. midday is het midden van de dag. afternoon is de middag. closing is het afronden van de dag. highlights zijn 2 tot 4 korte punten die in de bron staan. varies legt uit wat kan verschillen. Verzin in closing geen werkgever en geen stad.
         """;
 
     public const string Retry =
