@@ -22,7 +22,7 @@ public class CandidateRun12Tests
     [Fact]
     public void Chauffeur_profile_match_is_the_worked_example()
     {
-        Assert.Equal(90, CareerCompassBuilder.CatalogueFit("Chauffeur", Profile, "MBO"));
+        Assert.Equal(64, CareerCompassBuilder.CatalogueFit("Chauffeur", Profile, "MBO"));
     }
 
     [Fact]

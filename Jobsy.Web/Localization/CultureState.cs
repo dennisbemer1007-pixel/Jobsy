@@ -213,14 +213,13 @@ public sealed class CultureState
         return new DisplayLanguageScope(this, previous);
     }
 
+    /// <summary>Puts this circuit's language on the current thread only.</summary>
+    public void Reapply() => Apply(Language);
+
     private void Apply(string language)
     {
         Language = JobsyLanguages.Normalize(language);
-        var culture = new CultureInfo(JobsyLanguages.ToCultureName(Language));
-        CultureInfo.CurrentCulture = culture;
-        CultureInfo.CurrentUICulture = culture;
-        CultureInfo.DefaultThreadCurrentCulture = culture;
-        CultureInfo.DefaultThreadCurrentUICulture = culture;
+        JobsyCultures.ApplyToCurrentThread(Language);
     }
 
     private async Task PersistCookieAsync(string language)

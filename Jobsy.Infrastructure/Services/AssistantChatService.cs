@@ -12,6 +12,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -186,6 +187,19 @@ public sealed class AssistantChatService : IAssistantChatService
                 return await CandidateDreamAsync(context, cancellationToken);
             }
 
+            if (LooksLikePassportHelp(text) && !CandidateJobAdvice.Handles(lastUser))
+            {
+                return await CandidatePassportHelpAsync(context, cancellationToken);
+            }
+
+            var jobAdvice = await CandidateJobAdviceAsync(context, lastUser, cancellationToken);
+            if (jobAdvice is not null)
+            {
+                return jobAdvice;
+            }
+
+            // Job advice claims strengths and certificates, but it only answers once the career
+            // test is complete. Until then, passport questions still use the stored tests and dream.
             if (LooksLikePassportHelp(text))
             {
                 return await CandidatePassportHelpAsync(context, cancellationToken);
@@ -216,12 +230,6 @@ public sealed class AssistantChatService : IAssistantChatService
             if (LooksLikeCandidateProfile(text) || LooksLikeCandidateStats(text))
             {
                 return await CandidateProfileAsync(context, DetectPeriod(text), cancellationToken);
-            }
-
-            var jobAdvice = await CandidateJobAdviceAsync(context, lastUser, cancellationToken);
-            if (jobAdvice is not null)
-            {
-                return jobAdvice;
             }
 
             var workType = DetectWorkType(text);
@@ -1646,6 +1654,8 @@ Verbetervoorstellen:
             "If a personal fact is missing, say you do not know. Do not guess. " +
             "Never say tests are missing when the facts list completed tests, scores or occupations. " +
             "Zeg niet wat de persoon leuk vindt (dieren, planten, koken, you like, you enjoy, je werkt graag) tenzij het in de feiten staat. " +
+            "Gebruik nooit de woorden graag, leuk of fijn. " +
+            "Leg een beroep uit met alleen de richting van dat beroep, niet met een andere hoge score. " +
             "Leg een score uit als testuitslag: 'je scoort' of 'uit je test blijkt'. Nooit 'je werkt graag' of 'you like'. " +
             "Job lists and comparisons must use only topOccupations. Do not name Teamleider, leidinggevende, ploegleider or voorman unless that title is in topOccupations. " +
             "You may compare catalogue jobs that are not on the candidate's own list. Explain them with the scores. Do not say you do not know those jobs. " +
@@ -1881,14 +1891,58 @@ Verbetervoorstellen:
         }
     }
 
+    private async Task<IReadOnlyList<(string Code, int Score)>> CompetenceTraitsAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .FirstOrDefaultAsync(
+                d => d.UserId == userId
+                     && d.Kind == AssessmentKind.Competence
+                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
+        if (deep is not null)
+        {
+            var report = CompetenceDeepReportJson.Deserialize(deep.ReportJson);
+            if (report?.Traits is { Count: > 0 })
+            {
+                return report.Traits
+                    .Select(trait => (trait.Domain, trait.Score))
+                    .ToList();
+            }
+
+            var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson);
+            if (answers.Count > 0)
+            {
+                return DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Competence)
+                    .Select(domain => (domain.Domain, domain.Percent))
+                    .ToList();
+            }
+        }
+
+        var basic = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (basic is null || !CandidateCompetencyStatuses.IsCompleted(basic.Status))
+        {
+            return [];
+        }
+
+        return
+        [
+            (CompetencyTestCatalog.Samenwerken, basic.SamenwerkenPercent ?? 0),
+            (CompetencyTestCatalog.Resultaatgerichtheid, basic.ResultaatgerichtheidPercent ?? 0),
+            (CompetencyTestCatalog.Stressbestendigheid, basic.StressbestendigheidPercent ?? 0),
+            (CompetencyTestCatalog.Innovatie, basic.InnovatiePercent ?? 0),
+            (CompetencyTestCatalog.Extraversie, basic.ExtraversiePercent ?? 0)
+        ];
+    }
+
     private async Task<AssistantChatResult?> CandidateJobAdviceAsync(
         AssistantChatContext context,
         string question,
         CancellationToken cancellationToken)
     {
-        if (!CandidateJobAdvice.LooksLikeMotivation(question)
-            && !CandidateJobAdvice.LooksLikeComparison(question)
-            && !CandidateJobAdvice.LooksLikeJobsList(question))
+        if (!CandidateJobAdvice.Handles(question))
         {
             return null;
         }
@@ -1913,13 +1967,20 @@ Verbetervoorstellen:
         var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
         var education = EducationText(prefs);
         var work = WorkEntries(prefs);
+        var certificates = (prefs?.Certificates ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+            .Select(item => item.Name.Trim())
+            .ToList();
+        var competence = await CompetenceTraitsAsync(context.UserId, cancellationToken);
         var reply = CandidateJobAdvice.TryReply(
             context.Language,
             question,
             scores,
             education,
             work.Count > 0,
-            work);
+            work,
+            competence,
+            certificates);
         return string.IsNullOrWhiteSpace(reply) ? null : new AssistantChatResult(reply, false, []);
     }
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Localization;
@@ -19,17 +20,17 @@ public static class WhoAmIStoryBuilder
         string? language = null)
     {
         var careerTop = TopLabels(
-            CareerTestCatalog.RiasecCodes.Select(c => (CareerCompassBuilder.TypeLabel(c), career.Get(c))),
+            CareerTestCatalog.RiasecCodes.Select(c => (c, CareerCompassBuilder.TypeLabel(c), career.Get(c))),
             2);
         var cultureTop = TopLabels(
-            CulturePersonalityCatalog.CategoryCodes.Select(c => (CulturePersonalityCatalog.EverydayLabel(c), culture.Get(c))),
+            CulturePersonalityCatalog.CategoryCodes.Select(c => (c, CulturePersonalityCatalog.EverydayLabel(c), culture.Get(c))),
             2);
         var compTop = TopLabels(
-            CompetencyTestCatalog.QuickScanCategories.Select(c => (WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
+            CompetencyTestCatalog.QuickScanCategories.Select(c => (c, WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
             3);
         var valuesTop = values is { IsComplete: true }
             ? TopLabels(
-                SchwartzValuesCatalog.CategoryCodes.Select(c => (SchwartzValuesCatalog.EverydayLabel(c), values.Get(c))),
+                SchwartzValuesCatalog.CategoryCodes.Select(c => (c, SchwartzValuesCatalog.EverydayLabel(c), values.Get(c))),
                 2)
             : [];
         var keywords = WhoAmIKeywords.FromScores(competency, career, culture, values, language);
@@ -63,7 +64,7 @@ public static class WhoAmIStoryBuilder
             var bits = new List<string>();
             if (profile.Roles.Count > 0)
             {
-                bits.Add("ervaring als " + JoinDutch(profile.Roles.Take(2).ToList()));
+                bits.Add("ervaring als " + JoinDutch(LocalizedRoles(profile, "nl")));
             }
 
             if (profile.Educations.Count > 0)
@@ -123,11 +124,11 @@ public static class WhoAmIStoryBuilder
         bool employersEnabled)
     {
         string Label(string code) => DimensionLabels.For(code, lang);
-        var careerTop = TopLabels(CareerTestCatalog.RiasecCodes.Select(c => (Label(c), career.Get(c))), 2);
-        var cultureTop = TopLabels(CulturePersonalityCatalog.CategoryCodes.Select(c => (Label(c), culture.Get(c))), 2);
-        var compTop = TopLabels(CompetencyTestCatalog.QuickScanCategories.Select(c => (Label(c), competency.Get(c))), 3);
+        var careerTop = TopLabels(CareerTestCatalog.RiasecCodes.Select(c => (c, Label(c), career.Get(c))), 2);
+        var cultureTop = TopLabels(CulturePersonalityCatalog.CategoryCodes.Select(c => (c, Label(c), culture.Get(c))), 2);
+        var compTop = TopLabels(CompetencyTestCatalog.QuickScanCategories.Select(c => (c, Label(c), competency.Get(c))), 3);
         var valuesTop = values is { IsComplete: true }
-            ? TopLabels(SchwartzValuesCatalog.CategoryCodes.Select(c => (Label(c), values.Get(c))), 2)
+            ? TopLabels(SchwartzValuesCatalog.CategoryCodes.Select(c => (c, Label(c), values.Get(c))), 2)
             : [];
         var and = lang switch
         {
@@ -192,10 +193,10 @@ public static class WhoAmIStoryBuilder
             {
                 bits.Add(lang switch
                 {
-                    "pl" => "doświadczenie jako " + Join(profile.Roles.Take(2).ToList()),
-                    "ro" => "experiență ca " + Join(profile.Roles.Take(2).ToList()),
-                    "ar" => "خبرة كـ " + Join(profile.Roles.Take(2).ToList()),
-                    _ => "experience as " + Join(profile.Roles.Take(2).ToList())
+                    "pl" => "doświadczenie jako " + Join(LocalizedRoles(profile, lang)),
+                    "ro" => "experiență ca " + Join(LocalizedRoles(profile, lang)),
+                    "ar" => "خبرة كـ " + Join(LocalizedRoles(profile, lang)),
+                    _ => "experience as " + Join(LocalizedRoles(profile, lang))
                 });
             }
 
@@ -414,13 +415,121 @@ public static class WhoAmIStoryBuilder
             : CandidateFactSheet.Personal(profile.Roles, profile.Educations, profile.Certificates, homeCity: profile.HomeCity);
     }
 
-    /// <summary>Blank lines split paragraphs. A single newline stays inside the paragraph.</summary>
-    internal static string NormalizeParagraphs(string story)
+    /// <summary>
+    /// Blank lines split paragraphs. A model that only uses single newlines is split into
+    /// 2–4 paragraphs before the shape check. One short sentence stays one paragraph.
+    /// </summary>
+    public static string NormalizeParagraphs(string story)
     {
-        var text = story.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
-        text = Regex.Replace(text, @"(?<!\n)\n(?!\n)", " ");
-        return Regex.Replace(text, @"\n{3,}", "\n\n").Trim();
+        var text = story.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Trim();
+        text = Regex.Replace(text, @"\n{3,}", "\n\n");
+        if (text.Contains("\n\n", StringComparison.Ordinal))
+        {
+            return text.Trim();
+        }
+
+        if (!text.Contains('\n', StringComparison.Ordinal))
+        {
+            var split = SplitLongBlock(text);
+            return split is null ? text : string.Join("\n\n", split);
+        }
+
+        var blocks = text
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        blocks = MergeShortLines(blocks);
+        while (blocks.Count > 4)
+        {
+            var index = 0;
+            var best = int.MaxValue;
+            for (var i = 0; i < blocks.Count; i++)
+            {
+                if (blocks[i].Length < best)
+                {
+                    best = blocks[i].Length;
+                    index = i;
+                }
+            }
+
+            var other = index == 0 ? 1 : index - 1;
+            var keep = Math.Min(index, other);
+            var drop = Math.Max(index, other);
+            blocks[keep] = blocks[keep] + " " + blocks[drop];
+            blocks.RemoveAt(drop);
+        }
+
+        if (blocks.Count == 1)
+        {
+            var split = SplitLongBlock(blocks[0]);
+            if (split is not null)
+            {
+                blocks = split;
+            }
+        }
+
+        return string.Join("\n\n", blocks).Trim();
     }
+
+    /// <summary>Raw line count and lengths for the rejection log. No spaces, no profile text.</summary>
+    public static string ParagraphStats(string? story)
+    {
+        if (string.IsNullOrWhiteSpace(story))
+        {
+            return "paragraphs=0";
+        }
+
+        var raw = story.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+        var parts = raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var lengths = string.Join(',', parts.Select(part => part.Length.ToString(CultureInfo.InvariantCulture)));
+        if (lengths.Length > 24)
+        {
+            lengths = lengths[..24];
+        }
+
+        return $"paragraphs={parts.Length};lengths={lengths}";
+    }
+
+    private static List<string> MergeShortLines(List<string> blocks)
+    {
+        var merged = new List<string>();
+        foreach (var block in blocks)
+        {
+            if (merged.Count > 0 && (block.Length < 40 || merged[^1].Length < 80))
+            {
+                merged[^1] = merged[^1] + " " + block;
+            }
+            else
+            {
+                merged.Add(block);
+            }
+        }
+
+        return merged;
+    }
+
+    private static List<string>? SplitLongBlock(string block)
+    {
+        var sentences = Regex.Split(block.Trim(), @"(?<=[.!?])\s+")
+            .Where(sentence => sentence.Length > 0)
+            .ToList();
+        if (sentences.Count < 2 || block.Length < 80)
+        {
+            return null;
+        }
+
+        var mid = Math.Max(1, sentences.Count / 2);
+        var first = string.Join(' ', sentences.Take(mid));
+        var second = string.Join(' ', sentences.Skip(mid));
+        if (first.Length < 40 || second.Length < 40)
+        {
+            return null;
+        }
+
+        return [first, second];
+    }
+
+    private static List<string> LocalizedRoles(WhoAmIProfileHighlights profile, string? language)
+        => profile.Roles.Take(2).Select(role => OccupationTitles.LocalizeWorkLine(role, language)).ToList();
 
     private static bool RepeatsIdea(string story)
     {
@@ -599,10 +708,10 @@ public static class WhoAmIStoryBuilder
     private const string Fallback =
         "Ik ben klaar voor werk dichterbij dan je denkt. Ik zoek een ploeg waar ik mijn inzet, ritme en aandacht voor mensen kwijt kan, in gewone taal, zonder poespas.";
 
-    private static List<string> TopLabels(IEnumerable<(string Label, int Percent)> items, int take)
+    private static List<string> TopLabels(IEnumerable<(string Code, string Label, int Percent)> items, int take)
         => items
             .OrderByDescending(x => x.Percent)
-            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Code, StringComparer.Ordinal)
             .Select(x => x.Label)
             .Where(l => !CareerCompassBuilder.ContainsForbiddenJargon(l))
             .Distinct(StringComparer.OrdinalIgnoreCase)

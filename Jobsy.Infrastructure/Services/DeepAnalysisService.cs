@@ -365,6 +365,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 
             career.MatchTagsJson = CareerTestCatalog.SerializeTags(existing);
             var compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+            compass = compass with { ScoresFingerprint = CareerCompassBuilder.ScoresKey(riasec) };
             career.CompassJson = CareerCompassJson.Serialize(compass);
             career.CompletedAtUtc ??= now;
             career.UpdatedAtUtc = now;

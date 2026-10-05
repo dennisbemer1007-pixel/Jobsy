@@ -13,7 +13,8 @@ public static class CareerCompassPrompt
         Het percentage bij elk beroep staat al in de feitenlijst. Kopieer dat cijfer. Verzin geen 95-100 en geen ander cijfer.
         Kies superMatches 3 tot 4, strongChoices 3 tot 4, broadening 2 tot 4. Samen 8 tot 12 beroepen. Niet meer.
         Elk beroep: title (exact uit de toegestane lijst), percent (het berekende cijfer), why (één warme zin), keys (2-6 korte Nederlandse zoekwoorden, bijv. zorg, verpleeg, kas).
-        De why-zin noemt één van de drie hoogste richtingen uit de feitenlijst, letterlijk (bijvoorbeeld Aanpakken met je handen, Mensen helpen of Netjes organiseren).
+        De why-zin noemt alleen de richting achter de pijl bij dat beroep in de feitenlijst. Noem geen andere richting.
+        Gebruik nooit de woorden graag, leuk of fijn.
         Zeg niet dat de persoon van dieren, planten, koken, schoonmaak of andere dingen houdt, tenzij dat letterlijk in de feiten staat. Leg het beroep uit met de scores.
         practicalNotes: 3 tot 5 korte alinea's onder "Wat betekent dit voor jou?": soort werkomgeving, soort taken, sfeer/cultuur, en hoe de kandidaat dit op de Lobsy-banenkaart gebruikt (filter op hoge match, bewaar wat voelt als 'dit is het').
         strengths: 3 tot 5 sterke kanten in gewone woorden, afgeleid van de hoogste richtingen.

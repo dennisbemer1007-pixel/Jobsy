@@ -94,7 +94,12 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
 
         if (draft.Occupations.Count > 0)
         {
-            sb.AppendLine("Passende beroepen: " + string.Join(", ", draft.Occupations.Select(o => o.Title)));
+            sb.AppendLine("Passende beroepen, met de enige richting die je mag noemen:");
+            foreach (var occupation in draft.Occupations)
+            {
+                var code = CareerCompassBuilder.PrimaryCode(occupation.Title);
+                sb.AppendLine($"- {occupation.Title} → {CareerCompassBuilder.TypeLabel(code)}");
+            }
         }
 
         sb.AppendLine(
@@ -126,6 +131,8 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
                         Noem geen woonplaats of regio. Zeg niet wat de persoon leuk vindt.
                         Zeg niet dat een trek sterk of positief is als de band laag is (score onder 50).
                         Gebruik 'je scoort' of 'uit je test blijkt', niet 'je werkt graag' of 'you like'.
+                        Gebruik nooit de woorden graag, leuk of fijn.
+                        Noem bij een beroep alleen de richting die bij dat beroep hoort.
                         """ + "\n" + CandidateFactGuard.StrictAddendum
                 },
                 new { role = "user", content = sb.ToString() }

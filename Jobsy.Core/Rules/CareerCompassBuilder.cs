@@ -39,7 +39,8 @@ public static class CareerCompassBuilder
             ranked,
             PracticalNotes(scores, strengths, fromDeepAnalysis),
             fromDeepAnalysis,
-            fromOpenAi: false);
+            fromOpenAi: false,
+            ScoresKey(scores));
     }
 
     public static string TypeLabel(string code) => code switch
@@ -174,6 +175,38 @@ public static class CareerCompassBuilder
         var code = DomainForWerkveld(dream?.Werkveld) ?? CareerTestCatalog.Realistic;
         var lone = new CareerOccupationMatch(title, ProfileMatch([(code, 100)], scores), "", "", null);
         return ApplyEducation(lone, education).Percent;
+    }
+
+    /// <summary>The job's own letters in weight order, or empty when the title is not in the catalogue.</summary>
+    public static IReadOnlyList<(string Code, int Weight)> WeightsFor(string title)
+    {
+        var folded = CareerOccupationKeys.Fold(title);
+        CareerOccupation? best = null;
+        var bestLen = 0;
+        foreach (var job in Occupations)
+        {
+            var head = CareerOccupationKeys.Fold(job.Title.Split('/')[0]);
+            var jobFold = CareerOccupationKeys.Fold(job.Title);
+            var hit = jobFold == folded
+                      || head == folded
+                      || (head.Length >= 8 && (folded.Contains(head, StringComparison.Ordinal) || head.Contains(folded, StringComparison.Ordinal)));
+            if (!hit || head.Length <= bestLen)
+            {
+                continue;
+            }
+
+            best = job;
+            bestLen = head.Length;
+        }
+
+        return best is null
+            ? []
+            : best.Weights
+                .Where(weight => weight.Weight > 0)
+                .OrderByDescending(weight => weight.Weight)
+                .ThenBy(weight => weight.Code, StringComparer.Ordinal)
+                .Take(3)
+                .ToList();
     }
 
     /// <summary>Primary direction of a catalogue title, used to keep the same kind of work together.</summary>
@@ -333,23 +366,29 @@ public static class CareerCompassBuilder
             CareerOccupationKeys.FromTitle(job.Title));
     }
 
+    /// <summary>Six letter scores joined, so a stored compass can be checked against the profile.</summary>
+    public static string ScoresKey(RiasecScores scores)
+        => string.Join('|',
+            scores.Realistic,
+            scores.Investigative,
+            scores.Artistic,
+            scores.Social,
+            scores.Enterprising,
+            scores.Conventional);
+
     /// <summary>
-    /// Job-fit percent (0–100) from the candidate's full profile versus the job's Holland letters.
+    /// Job-fit percent (0–100) from the candidate's letter scores versus the job's Holland letters.
     ///
-    /// It is not the score of one direction. Steps:
+    /// It is not stretched. Steps:
     /// 1. Take the job's letters in weight order (1st, 2nd, 3rd).
-    /// 2. Stretch each of the candidate's letter scores onto their own range, so their strongest
-    ///    direction reads as a strong match and their weakest does not:
-    ///    stretched = 48 + 44 × (score − lowest) / (highest − lowest).
-    ///    A nearly flat profile (span under 8) keeps the raw score.
-    /// 3. Weighted mean of those stretched scores: weights 3, 2 and 1. Fewer letters are renormalised.
-    /// 4. Education, applied by <see cref="CatalogueFit"/>: a job that needs a higher diploma is × 0.75.
+    /// 2. Weighted mean of the candidate's raw scores on those letters: weights 3, 2 and 1.
+    ///    Fewer letters are renormalised. The result cannot exceed the highest letter used.
+    /// 3. Education, applied by <see cref="CatalogueFit"/>: a job that needs a higher diploma is × 0.75.
     ///
-    /// Worked example. Profile R66 I38 A37 S64 E43 C62 (lowest 37, highest 66, span 29).
+    /// Worked example. Profile R66 I38 A37 S64 E43 C62.
     /// Job Chauffeur, letters R then C.
-    /// stretched(R) = 48 + 44 × 29/29 = 92. stretched(C) = 48 + 44 × 25/29 = 86.
-    /// match = (3×92 + 2×86) / 5 = 89.6 → 90.
-    /// MBO does not block Chauffeur, so the fit stays 90. A pure Artistic job stays near 48.
+    /// match = (3×66 + 2×62) / 5 = 64.4 → 64.
+    /// MBO does not block Chauffeur, so the fit stays 64.
     /// </summary>
     public static int ProfileMatch(IReadOnlyList<(string Code, int Weight)> weights, RiasecScores scores)
     {
@@ -364,22 +403,6 @@ public static class CareerCompassBuilder
             return 0;
         }
 
-        var values = CareerTestCatalog.RiasecCodes.Select(scores.Get).ToList();
-        var lowest = values.Min();
-        var highest = values.Max();
-        var span = highest - lowest;
-
-        int Stretch(int score)
-        {
-            if (span < 8)
-            {
-                return Math.Clamp(score, 0, 100);
-            }
-
-            var relative = (score - lowest) / (double)span;
-            return (int)Math.Clamp(Math.Round(48 + 44 * relative, MidpointRounding.AwayFromZero), 0, 100);
-        }
-
         int[] rankWeights = [3, 2, 1];
         var used = 0;
         var sum = 0;
@@ -387,7 +410,7 @@ public static class CareerCompassBuilder
         {
             var weight = rankWeights[i];
             used += weight;
-            sum += weight * Stretch(scores.Get(letters[i].Code));
+            sum += weight * scores.Get(letters[i].Code);
         }
 
         return used <= 0
@@ -545,7 +568,8 @@ public sealed record CareerCompassSnapshot(
     IReadOnlyList<CareerOccupationMatch> Broadening,
     IReadOnlyList<string> PracticalNotes,
     bool FromDeepAnalysis,
-    bool FromOpenAi = false)
+    bool FromOpenAi = false,
+    string ScoresFingerprint = "")
 {
     /// <summary>UI key for the incomplete-test prompt. The sentence lives in localization.</summary>
     public const string EmptyNoteKey = "Tests.CareerCompass.Empty";

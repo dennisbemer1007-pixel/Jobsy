@@ -230,23 +230,28 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         // second local score list made the same job show two different percents.
         // A deep compass that collapsed to a handful of titles is topped up in place.
         var stored = CareerCompassJson.TryDeserialize(careerRow.CompassJson);
+        var key = CareerCompassBuilder.ScoresKey(career);
         if (stored is { HasOccupations: true })
         {
-            if (!stored.FromDeepAnalysis)
+            var fresh = string.Equals(stored.ScoresFingerprint, key, StringComparison.Ordinal);
+            if (stored.FromDeepAnalysis)
             {
+                var repaired = CareerCompassSanitize.EnsureDepth(stored, career) with { ScoresFingerprint = key };
+                if (fresh && SameOccupations(stored, repaired))
+                {
+                    return;
+                }
+
+                careerRow.CompassJson = CareerCompassJson.Serialize(repaired);
+                careerRow.UpdatedAtUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
                 return;
             }
 
-            var repaired = CareerCompassSanitize.EnsureDepth(stored, career);
-            if (SameOccupations(stored, repaired))
+            if (fresh)
             {
                 return;
             }
-
-            careerRow.CompassJson = CareerCompassJson.Serialize(repaired);
-            careerRow.UpdatedAtUtc = DateTime.UtcNow;
-            await _db.SaveChangesAsync(cancellationToken);
-            return;
         }
 
         var built = CareerCompassBuilder.Build(career, deepDone);
@@ -303,20 +308,29 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
                       && WhoAmIStoryBuilder.Accepts(sanitized, highlights, competency, culture, career, values);
         }
 
-        var cooledDown = stored?.LastAttemptUtc is not DateTime attempted
-                         || now - attempted >= TimeSpan.FromHours(24);
-        if (fingerprintMatch && storyOk && stored!.FromOpenAi)
+        var shouldGenerate = stored is not null
+                             && CandidateInsightsFingerprint.ShouldGenerateWhoAmI(
+                                 fingerprintMatch,
+                                 stored.FromOpenAi,
+                                 storyOk,
+                                 stored.LastAttemptUtc,
+                                 now);
+        if (stored is null || !shouldGenerate)
         {
-            return;
-        }
+            if (stored is null || !fingerprintMatch)
+            {
+                await StoreLocalWhoAmIAsync(
+                    userId, stored, competency, career, culture, highlights, values, fingerprint, now, cancellationToken);
+            }
 
-        if (fingerprintMatch && !cooledDown)
-        {
             return;
         }
 
         try
         {
+            stored!.LastAttemptUtc = now;
+            stored.UpdatedAtUtc = now;
+            await _db.SaveChangesAsync(cancellationToken);
             var generated = await _whoAmIGenerate.GenerateAsync(
                 competency, career, culture, highlights, values, cancellationToken);
             if (stored is null)
@@ -343,6 +357,41 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         {
             _logger.LogWarning(ex, "WhoAmI story recompute failed for {UserId}.", userId);
         }
+    }
+
+    private async Task StoreLocalWhoAmIAsync(
+        Guid userId,
+        CandidateWhoAmIProfile? stored,
+        CompetencyScores competency,
+        RiasecScores career,
+        CulturePersonalityScores culture,
+        WhoAmIProfileHighlights highlights,
+        SchwartzValuesScores? values,
+        string fingerprint,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var employers = await _features.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        var story = WhoAmIStoryBuilder.Build(competency, career, culture, highlights, values, employers);
+        var keywords = WhoAmIKeywords.FromScores(competency, career, culture, values);
+        if (stored is null)
+        {
+            stored = new CandidateWhoAmIProfile
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CreatedAtUtc = now
+            };
+            _db.CandidateWhoAmIProfiles.Add(stored);
+        }
+
+        stored.StoryText = story;
+        stored.KeywordsJson = JsonSerializer.Serialize(keywords, Json);
+        stored.InputFingerprint = fingerprint;
+        stored.FromOpenAi = false;
+        stored.StoryGeneratedAtUtc = now;
+        stored.UpdatedAtUtc = now;
+        await _db.SaveChangesAsync(cancellationToken);
     }
 
     private async Task RefreshCompetenceDeepReportAsync(Guid userId, CancellationToken cancellationToken)

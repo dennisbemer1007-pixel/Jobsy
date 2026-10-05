@@ -46,7 +46,8 @@ public static class CareerCompassSanitize
             allJobs,
             notes,
             dto.FromDeepAnalysis || fromOpenAi,
-            fromOpenAi || dto.FromOpenAi);
+            fromOpenAi || dto.FromOpenAi,
+            dto.ScoresFingerprint);
     }
 
     public const int MinCatalogueJobs = 8;
@@ -117,7 +118,8 @@ public static class CareerCompassSanitize
             jobs,
             snapshot.PracticalNotes,
             snapshot.FromDeepAnalysis,
-            snapshot.FromOpenAi);
+            snapshot.FromOpenAi,
+            snapshot.ScoresFingerprint);
     }
 
     /// <summary>

@@ -346,13 +346,14 @@
         _busy = true;
         _actionLinks = [];
         var generation = ++_sendGeneration;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         try
         {
             var history = _messages
                 .TakeLast(20)
                 .Select(m => new AssistantChatMessage(m.Role, m.Content))
                 .ToList();
-            var reply = await Api.SendAssistantChatAsync(history);
+            var reply = await Api.SendAssistantChatAsync(history, timeout.Token);
             if (generation != _sendGeneration)
             {
                 return;
@@ -360,6 +361,21 @@
 
             _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
             ApplyActions(reply.Actions);
+        }
+        catch (ApiErrorException ex) when (ex.Code == ApiErrorException.RateLimited || ex.StatusCode == 429)
+        {
+            if (generation == _sendGeneration)
+            {
+                _error = Culture["Assistant.RateLimited"];
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _sendGeneration++;
+            if (generation == _sendGeneration - 1)
+            {
+                _error = Culture["Common.Error.TryAgain"];
+            }
         }
         catch (Exception)
         {

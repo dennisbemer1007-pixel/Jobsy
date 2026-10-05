@@ -754,8 +754,7 @@ public sealed partial class JobsyApiClient
         }, ct);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(TryExtractMessage(body) ?? (string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body));
+            throw await ApiErrorException.FromResponseAsync(response, ct);
         }
 
         return await response.Content.ReadFromJsonAsync<AssistantChatReply>(cancellationToken: ct)

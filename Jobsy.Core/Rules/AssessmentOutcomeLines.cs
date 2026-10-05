@@ -33,7 +33,7 @@ public static class AssessmentOutcomeLines
             return null;
         }
 
-        return $"Sterkst: {FriendlyCompetence(ranked[0].Label)}";
+        return $"Sterkst: {DimensionLabels.For(FriendlyCode(ranked[0].Label))}";
     }
 
     public static string? Career(
@@ -106,13 +106,13 @@ public static class AssessmentOutcomeLines
         return $"Prioriteit: {DimensionLabels.For(ranked[0].Code)}";
     }
 
-    private static string FriendlyCompetence(string label) => label switch
+    private static string FriendlyCode(string label) => label switch
     {
-        "extraversie" => "Energie van mensen",
-        "samenwerken" => "Samenwerken",
-        "resultaatgerichtheid" => "Afronden",
-        "stressbestendigheid" => "Rust onder druk",
-        "innovatie" => "Nieuwe ideeën",
+        "extraversie" => CompetencyTestCatalog.Extraversie,
+        "samenwerken" => CompetencyTestCatalog.Samenwerken,
+        "resultaatgerichtheid" => CompetencyTestCatalog.Resultaatgerichtheid,
+        "stressbestendigheid" => CompetencyTestCatalog.Stressbestendigheid,
+        "innovatie" => CompetencyTestCatalog.Innovatie,
         _ => label
     };
 }
