@@ -136,6 +136,25 @@ public class OccupationCatalogTests
         Assert.Equal(flagLevel3, gate.FlagLevel3);
     }
 
+    [Theory]
+    [InlineData("havo")]
+    [InlineData("vwo")]
+    [InlineData("klas 3 havo")]
+    public void Havo_and_vwo_without_further_education_use_the_mbo_4_gate(string education)
+    {
+        Assert.Equal(CareerEducationGate.MaxIscoLevel("mbo 4"), CareerEducationGate.MaxIscoLevel(education));
+    }
+
+    [Theory]
+    [InlineData("havo mbo 2", "mbo 2")]
+    [InlineData("vwo mbo 4", "mbo 4")]
+    [InlineData("havo hbo", "hbo")]
+    [InlineData("vwo wo", "wo")]
+    public void Further_diploma_takes_precedence_over_havo_and_vwo(string education, string further)
+    {
+        Assert.Equal(CareerEducationGate.MaxIscoLevel(further), CareerEducationGate.MaxIscoLevel(education));
+    }
+
     [Fact]
     public void Unknown_education_has_no_gate_and_mbo_blocks_level_4()
     {

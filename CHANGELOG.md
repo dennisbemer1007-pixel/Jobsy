@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- ESCO occupation catalogue: the 39 hand-weighted jobs are replaced by ESCO v1.2.1 (3,039 Dutch occupations) joined to O*NET 31.0 interest profiles. A job without a usable profile (low or no match) shows "Geen score" and no percentage. Listed suggestions are high or medium confidence only. Education uses the CBS ISCO skill level. Westland corrections ship as `concept, wacht op akkoord` and do nothing until `goedgekeurd`. New public page `/bronnen`. Pipeline: `tools/occupations/` (fetch, build, `--check`).
+- ESCO occupation catalogue: the 39 hand-weighted jobs are replaced by ESCO v1.2.1 (3,039 Dutch occupations) joined to O*NET 31.0 interest profiles. A job without a usable profile (low or no match) shows "Geen score" and no percentage. Listed suggestions are high or medium confidence only. Education uses the CBS ISCO skill level. havo and vwo without a further diploma use the same gate as mbo 4 (NLQF/EQF level 4). Westland corrections ship as `concept, wacht op akkoord` and do nothing until `goedgekeurd`. New public page `/bronnen`. Pipeline: `tools/occupations/` (fetch, build, `--check`).
 
 ### Added
 - Carrière 01 (Web): career API wiring on `/carriere` — fit bands, action kinds, error codes, dream-options/archive client stubs; `UiStringsCareer` for nl/en/pl/ro/ar.

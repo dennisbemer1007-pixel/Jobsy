@@ -4,7 +4,7 @@ namespace Jobsy.Core.Careers;
 
 /// <summary>
 /// ISCO skill-level gate for a known education. Unknown or empty education is no gate.
-/// havo and vwo without a further diploma are treated as mbo 4 (max level 3); that choice is open for review.
+/// havo and vwo without a further diploma are NLQF/EQF level 4, the same gate as mbo 4 (max level 3).
 /// </summary>
 public static class CareerEducationGate
 {
@@ -59,7 +59,7 @@ public static class CareerEducationGate
             return new Result(2, true);
         }
 
-        // Not in the approved map. Treated as mbo 4 so the gate is not wider than mbo 4.
+        // Decided: havo and vwo without a further diploma are NLQF/EQF level 4, same as mbo 4.
         if (tokens.Contains("havo") || tokens.Contains("vwo"))
         {
             return new Result(3, false);
