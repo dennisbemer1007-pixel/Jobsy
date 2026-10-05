@@ -40,7 +40,30 @@ public sealed record PassportPdfModel(
     IReadOnlyList<string> Checked,
     IReadOnlyList<string> NotChecked,
     string GeneratedLabel,
-    DateTime GeneratedAtUtc);
+    DateTime GeneratedAtUtc,
+    string? Story,
+    string? HeroMeta,
+    IReadOnlyList<PassportChip> Chips,
+    IReadOnlyList<PassportGlossLine> Traits,
+    IReadOnlyList<string> HomeLines,
+    IReadOnlyList<PassportGlossLine> ValueLines,
+    IReadOnlyList<PassportJobFit> JobFits,
+    string? PracticalLine,
+    string? PracticalSeek,
+    IReadOnlyList<PassportReferenceQuote> Quotes,
+    IReadOnlyList<PassportDirectionStep> Direction,
+    bool ShowRadar,
+    IReadOnlyList<string> LearningLines);
+
+public sealed record PassportChip(string Text, string Tone);
+
+public sealed record PassportGlossLine(string Label, string Gloss);
+
+public sealed record PassportJobFit(string Title, string Why);
+
+public sealed record PassportReferenceQuote(string Attribution, string Quote);
+
+public sealed record PassportDirectionStep(string Title, string State);
 
 public sealed record PassportShiftChip(string Label, string Status, PassportShiftKind Kind);
 
@@ -53,16 +76,24 @@ public enum PassportShiftKind
 
 public sealed record PassportTextLine(string Label, string Value);
 
-public sealed record PassportExperienceLine(string Title, string? Meta, string? Detail);
+public sealed record PassportExperienceLine(
+    string Title,
+    string? Meta,
+    string? Detail,
+    IReadOnlyList<string>? Duties = null,
+    string? Period = null,
+    string? Place = null,
+    string? Kind = null);
 
-public sealed record PassportDnaCard(string Title, string Body, string? When);
+public sealed record PassportDnaCard(string Title, string Body, string? When, bool Present = true);
 
 /// <summary>One DNA layer as words. Percents never leave the reader.</summary>
 public sealed record PassportDnaLayerFact(
     string Key,
     bool Done,
     DateTime? CompletedAtUtc,
-    IReadOnlyList<string> Words);
+    IReadOnlyList<string> Words,
+    IReadOnlyList<string>? Codes = null);
 
 public static class PassportDnaLayer
 {
