@@ -909,6 +909,11 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.ApiKeyOff", "API-sleutel uitgezet", "API key turned off", "Klucz API wyłączony", "Cheie API oprită", "أُوقف مفتاح API");
         Add("AdminAudit.Action.ReportDecided", "Melding beoordeeld", "Report reviewed", "Zgłoszenie rozpatrzone", "Raport evaluat", "تم تقييم البلاغ");
         Add("AdminAudit.Action.EmailTest", "Testmail verstuurd", "Test email sent", "Wiadomość testowa wysłana", "E-mail de test trimis", "أُرسل بريد تجريبي");
+        Add("AdminAudit.Action.OccupationDayGenerate", "Dag gegenereerd", "Day generated", "Wygenerowano dzień", "Zi generată", "تم توليد اليوم");
+        Add("AdminAudit.Action.OccupationDayStart", "Dagen genereren gestart", "Day generation started", "Uruchomiono generowanie dni", "Generarea zilelor a pornit", "بدأ توليد الأيام");
+        Add("AdminAudit.Action.OccupationDayStop", "Dagen genereren gestopt", "Day generation stopped", "Zatrzymano generowanie dni", "Generarea zilelor s-a oprit", "توقف توليد الأيام");
+        Add("AdminAudit.Action.OccupationDayImport", "Dagen geïmporteerd", "Days imported", "Zaimportowano dni", "Zile importate", "تم استيراد الأيام");
+        Add("AdminAudit.Action.OccupationDayExport", "Dagen geëxporteerd", "Days exported", "Wyeksportowano dni", "Zile exportate", "تم تصدير الأيام");
         Add("AdminAction.Resource.Users", "Gebruikerslijst", "User list", "Lista użytkowników", "Lista utilizatorilor", "قائمة المستخدمين");
         Add("AdminAction.Resource.UserSessions", "Gebruikerssessies", "User sessions", "Sesje użytkownika", "Sesiuni utilizator", "جلسات المستخدم");
         Add("AdminAction.Resource.PlatformLogs", "Platformlogs", "Platform logs", "Logi platformy", "Jurnale platformă", "سجلات المنصة");
