@@ -61,6 +61,7 @@
             @if (OutlookFor(_session.JobTitle, EscoId) is { } preview && _session.LastResult is null)
             {
                 <OccupationOutlookBlock Result="preview" />
+                <OccupationDayLink EscoId="@EscoId" Title="@_session.JobTitle" From="fit" />
             }
         </section>
 
@@ -69,6 +70,7 @@
             @if (OutlookFor(result.JobTitle, EscoId) is { } outlook)
             {
                 <OccupationOutlookBlock Result="outlook" />
+                <OccupationDayLink EscoId="@EscoId" Title="@result.JobTitle" From="fit" />
             }
             <ol class="role-fit-funnel">
                 <li class="role-fit-funnel__step">

@@ -1,3 +1,4 @@
+using Jobsy.Core.Careers;
 using Jobsy.Core.Geo;
 using Jobsy.Core.Admin;
 using Jobsy.Core.Diagnostics;
@@ -105,6 +106,26 @@ public static class DependencyInjection
 
         services.AddOptions<OpenAiOptions>()
             .Bind(configuration.GetSection(OpenAiOptions.SectionName));
+
+        services.AddOptions<OccupationDayInLifeOptions>()
+            .Bind(configuration.GetSection(OccupationDayInLifeOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                var raw = configuration[OccupationDayInLifeOptions.EnabledKey];
+                if (!string.IsNullOrWhiteSpace(raw) && bool.TryParse(raw, out var enabled))
+                {
+                    options.Enabled = enabled;
+                }
+
+                if (string.IsNullOrWhiteSpace(options.Model)
+                    || options.Model.Contains("mistral", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.Model = OccupationDayInLifeOptions.DefaultModel;
+                }
+
+                options.Model = options.Model.Trim();
+                options.DelayMilliseconds = Math.Clamp(options.DelayMilliseconds, 0, 10_000);
+            });
 
         services.AddOptions<AiOptions>()
             .Bind(configuration.GetSection(AiOptions.SectionName));
@@ -542,6 +563,18 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICareerCompassGenerationService, CareerCompassGenerationService>();
+        services.AddHttpClient(OccupationDayInLifeOpenAiWriter.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(45);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
+        services.AddScoped<IOccupationDayInLifeWriter, OccupationDayInLifeOpenAiWriter>();
+        services.AddScoped<OccupationDayInLifeReader>();
+        services.AddScoped<IOccupationDayInLifeReader>(sp => sp.GetRequiredService<OccupationDayInLifeReader>());
+        services.AddScoped<OccupationDayInLifeGenerator>();
+        services.AddSingleton<OccupationDayInLifeBatchRunner>();
         services.AddScoped<ICareerPathPlanGenerationService, CareerPathPlanGenerationService>();
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();
         services.AddScoped<CareerGenerationGuard>();

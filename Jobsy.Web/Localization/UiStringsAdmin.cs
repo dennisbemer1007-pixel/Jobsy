@@ -50,6 +50,7 @@ public static class UiStringsAdmin
         Add("AdminNav.Payouts", "Uitbetalingen & btw", "Payouts & VAT", "Wypłaty i VAT", "Plăți și TVA", "المدفوعات وضريبة القيمة المضافة");
         Add("AdminNav.Flyer", "Werkgeversflyer", "Employer flyer", "Ulotka dla pracodawców", "Flyer pentru angajatori", "نشرة أصحاب العمل");
         Add("AdminNav.Training", "Opleidingen", "Training", "Szkolenia", "Traininguri", "التدريب");
+        Add("AdminNav.DayInLife", "Dag in het leven", "Day in the life", "Dzień z życia", "Zi din viață", "يوم في الحياة");
         Add("AdminNav.Masterdata", "Stamgegevens", "Master data", "Dane podstawowe", "Date de bază", "البيانات الأساسية");
         Add("AdminNav.Emails", "E-mails & meldingen", "E-mails & notifications", "E-maile i powiadomienia", "E-mailuri și notificări", "البريد والإشعارات");
         Add("AdminNav.Features", "Functies", "Features", "Funkcje", "Funcții", "الميزات");

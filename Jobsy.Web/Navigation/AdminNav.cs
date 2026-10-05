@@ -91,6 +91,8 @@ public static class AdminNav
                 ["/admin/marketing-flyer"], IsAvailable: true),
             new("training", "AdminNav.Training", "/admin/content/opleidingen", NavIcons.Masterdata,
                 ["/admin/training"], IsAvailable: true),
+            new("day-in-life", "AdminNav.DayInLife", "/admin/content/dag-in-het-leven", NavIcons.Info,
+                [], IsAvailable: true),
             new("masterdata", "AdminNav.Masterdata", "/admin/content/stamgegevens", NavIcons.Masterdata,
                 ["/admin/masterdata", "/admin/exclusivity"], IsAvailable: true),
             new("emails", "AdminNav.Emails", "/admin/content/emails", NavIcons.Notifications,

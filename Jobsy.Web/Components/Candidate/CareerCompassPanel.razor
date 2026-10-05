@@ -268,6 +268,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                 </ul>
             }
             <OccupationOutlookBlock Result="OutlookFor(item)" />
+            <OccupationDayLink EscoId="@item.EscoId" Title="@item.Title" From="tests" />
             <h5>@Culture["Fit.FormalBlock"]</h5>
             <ul>
                 @foreach (var line in CareerOccupationDetail.Requirements(item.Title))

@@ -1,0 +1,138 @@
+@page "/candidate/beroep/{EscoId:guid}/dag"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Careers
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@(Job is null ? Culture["Day.Eyebrow"] : Culture.Format("Day.Title", Job.Nl)) · Lobsy</PageTitle>
+
+<div class="journey-page">
+    <section class="career-card" aria-labelledby="day-title">
+        <p class="career-card__eyebrow">@Culture["Day.Eyebrow"]</p>
+        <h1 id="day-title">@Heading</h1>
+        <p class="career-card__lead">@Culture["Day.Typical"]</p>
+
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_unknown || Job is null)
+        {
+            <p class="state-message">@Culture["Day.Unknown"]</p>
+        }
+        else if (_error)
+        {
+            <p class="state-message">@Culture["Common.Error"]</p>
+        }
+        else if (_day is { Enabled: false })
+        {
+            <p class="state-message">@Culture["Day.Off"]</p>
+        }
+        else if (_day is not { Found: true })
+        {
+            <p class="state-message">@Culture["Day.Empty"]</p>
+            <p class="login-lead">@Culture["Day.EmptyLead"]</p>
+        }
+        else
+        {
+            @if (_day.ThinSource)
+            {
+                <p class="login-lead">@Culture["Day.Thin"]</p>
+            }
+            <ol class="day-in-life">
+                <li>
+                    <h2>@Culture["Day.Morning"]</h2>
+                    <p>@_day.Morning</p>
+                </li>
+                <li>
+                    <h2>@Culture["Day.Midday"]</h2>
+                    <p>@_day.Midday</p>
+                </li>
+                <li>
+                    <h2>@Culture["Day.Afternoon"]</h2>
+                    <p>@_day.Afternoon</p>
+                </li>
+            </ol>
+            @if (_day.Highlights.Count > 0)
+            {
+                <h2>@Culture["Day.Highlights"]</h2>
+                <ul>
+                    @foreach (var line in _day.Highlights)
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            }
+            @if (!string.IsNullOrWhiteSpace(_day.VariesNote))
+            {
+                <h2>@Culture["Day.Varies"]</h2>
+                <p>@_day.VariesNote</p>
+            }
+        }
+
+        <p><a href="@BackHref">@Culture["Day.Back"]</a></p>
+    </section>
+</div>
+
+@code {
+    [Parameter] public Guid EscoId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "from")]
+    public string? From { get; set; }
+
+    private OccupationDayResponse? _day;
+    private bool _loading = true;
+    private bool _unknown;
+    private bool _error;
+    private string? _loadedFor;
+
+    private Occupation? Job => OccupationCatalog.Shared.Get(EscoId.ToString("D"));
+
+    private string Heading => Job is null
+        ? Culture["Day.Eyebrow"]
+        : Culture.Format("Day.Title", Job.Nl);
+
+    private string BackHref => string.Equals(From, "fit", StringComparison.OrdinalIgnoreCase)
+        ? "/candidate/profile?tab=fit"
+        : "/candidate/profile?tab=tests";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = EscoId.ToString("D");
+        if (string.Equals(_loadedFor, key, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _loadedFor = key;
+        _loading = true;
+        _unknown = false;
+        _error = false;
+        _day = null;
+        if (Job is null)
+        {
+            _unknown = true;
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _day = await Api.GetOccupationDayAsync(EscoId);
+            _unknown = _day is null;
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _day = null;
+            _error = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

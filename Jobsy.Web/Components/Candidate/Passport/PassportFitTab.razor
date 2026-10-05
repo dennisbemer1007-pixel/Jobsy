@@ -79,6 +79,7 @@
                         @if (OutlookFor(result.JobTitle) is { } outlook)
                         {
                             <OccupationOutlookBlock Result="outlook" />
+                            <OccupationDayLink Title="@result.JobTitle" From="fit" />
                         }
                         <div class="passport-fit__last">
                             <p class="passport-fit__last-line">
