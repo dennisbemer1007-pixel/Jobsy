@@ -478,7 +478,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     PassportPartnersEnabled: request.PassportPartnersEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
-                    WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled),
+                    WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
+                    CompactTestPdfEnabled: request.CompactTestPdfEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -552,6 +553,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
+        Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
         return list;
     }
 
@@ -572,7 +574,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             phoneVerificationEnabled = snap.PhoneVerificationEnabled,
             schoolsEnabled = snap.SchoolsEnabled,
             ambassadorsEnabled = snap.AmbassadorsEnabled,
-            whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled
+            whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled,
+            compactTestPdfEnabled = snap.CompactTestPdfEnabled
         });
     }
 
@@ -875,6 +878,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.PassportPdfV2Enabled,
             snap.PhoneVerificationEnabled,
             snap.WhatsAppRemindersEnabled,
+            snap.CompactTestPdfEnabled,
             _whatsApp.IsConfigured);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>

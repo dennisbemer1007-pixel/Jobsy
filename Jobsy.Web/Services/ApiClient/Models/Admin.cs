@@ -246,6 +246,8 @@ public sealed class PlatformFeatureItem
     public bool PassportPdfV2Enabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
     public bool WhatsAppRemindersEnabled { get; set; }
+    /// <summary>Compact chart layout for paid personal test PDFs. Default off.</summary>
+    public bool CompactTestPdfEnabled { get; set; }
     /// <summary>Server has WhatsApp credentials. Never a secret.</summary>
     public bool WhatsAppRemindersConfigured { get; set; }
 }
@@ -276,6 +278,7 @@ public sealed class PlatformFeaturePatch
     public bool? PassportPdfV2Enabled { get; set; }
     public bool? PhoneVerificationEnabled { get; set; }
     public bool? WhatsAppRemindersEnabled { get; set; }
+    public bool? CompactTestPdfEnabled { get; set; }
     public string? Reason { get; set; }
 }
 

@@ -102,6 +102,8 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         CancellationToken cancellationToken = default)
     {
         var reportLang = ReportLanguage.FromUi(lang);
+        var compact = await _features.IsEnabledAsync(PlatformFeature.CompactTestPdf, cancellationToken);
+        var compactTag = compact ? "1" : "0";
         var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
             .FirstOrDefaultAsync(
                 d => d.UserId == userId && d.Kind == kind && d.Status == CandidateDeepAnalysisStatuses.Completed,
@@ -152,10 +154,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             if (careerDeep is not null)
             {
                 var education = EducationLabel(user);
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8:fit:{education}";
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8:fit:{education}:c{compactTag}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang, education);
+                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang, education, compact, lang);
                     _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
 
@@ -212,10 +214,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             var cultureDeep = CultureDeepReportJson.Deserialize(deep.ReportJson);
             if (cultureDeep is not null)
             {
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{cultureDeep.ReportVersion}:{cultureDeep.GeneratedAtUtc:O}:p8:e{employersOn}";
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{cultureDeep.ReportVersion}:{cultureDeep.GeneratedAtUtc:O}:p8:e{employersOn}:c{compactTag}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    cached = RenderCultureDeep(brand, logo, user.FullName, generated, cultureDeep, reportLang, employersOn);
+                    cached = RenderCultureDeep(brand, logo, user.FullName, generated, cultureDeep, reportLang, employersOn, compact, lang);
                     _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
 
@@ -240,10 +242,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             var valuesDeep = ValuesDeepReportJson.Deserialize(deep.ReportJson);
             if (valuesDeep is not null)
             {
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{valuesDeep.ReportVersion}:{valuesDeep.GeneratedAtUtc:O}:p7:e{employersOn}";
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{valuesDeep.ReportVersion}:{valuesDeep.GeneratedAtUtc:O}:p7:e{employersOn}:c{compactTag}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    cached = RenderValuesDeep(brand, logo, user.FullName, generated, valuesDeep, reportLang, employersOn);
+                    cached = RenderValuesDeep(brand, logo, user.FullName, generated, valuesDeep, reportLang, employersOn, compact, lang);
                     _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
 
@@ -275,10 +277,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             var report = CompetenceDeepReportJson.Deserialize(deep.ReportJson);
             if (report is not null)
             {
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{report.ReportVersion}:{report.GeneratedAtUtc:O}";
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{report.ReportVersion}:{report.GeneratedAtUtc:O}:c{compactTag}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    cached = RenderCompetenceDeep(brand, logo, user.FullName, generated, report);
+                    cached = RenderCompetenceDeep(brand, logo, user.FullName, generated, report, compact, lang);
                     _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
 
@@ -428,8 +430,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         byte[] logo,
         string fullName,
         string generated,
-        CompetenceDeepReport report)
+        CompetenceDeepReport report,
+        bool compact = false,
+        string? uiLang = null)
     {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Competence(brand, logo, fullName, generated, report, uiLang);
+        }
+
         return Document.Create(container =>
         {
             AddCompetenceDeepCoverPage(container, brand, logo, fullName, generated, report);
@@ -851,8 +860,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string generated,
         CareerDeepReport report,
         string lang,
-        string? education = null)
+        string? education = null,
+        bool compact = false,
+        string? uiLang = null)
     {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Career(brand, logo, fullName, generated, report, lang, uiLang, education);
+        }
+
         var title = DeepReportCatalog.Get("title.career", lang);
         var en = ReportLanguage.IsEnglish(lang);
         var top = string.Join(", ", report.Domains.OrderByDescending(d => d.Score).Take(3)
@@ -954,8 +970,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string generated,
         CultureDeepReport report,
         string lang,
-        bool employersOn = true)
+        bool employersOn = true,
+        bool compact = false,
+        string? uiLang = null)
     {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Culture(brand, logo, fullName, generated, report, lang, uiLang, employersOn);
+        }
+
         var title = DeepReportCatalog.Get("title.culture", lang);
         var en = ReportLanguage.IsEnglish(lang);
         var cultureAxes = report.Domains
@@ -1031,8 +1054,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string generated,
         ValuesDeepReport report,
         string lang,
-        bool employersOn = true)
+        bool employersOn = true,
+        bool compact = false,
+        string? uiLang = null)
     {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Values(brand, logo, fullName, generated, report, lang, uiLang, employersOn);
+        }
+
         var title = DeepReportCatalog.Get("title.values", lang);
         var en = ReportLanguage.IsEnglish(lang);
         return RenderExplicitPages(
@@ -1154,7 +1184,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         }
     }
 
-    private static string CareerScoreSense(string domain, bool en)
+    internal static string CareerScoreSense(string domain, bool en)
     {
         var key = domain.Trim().ToUpperInvariant();
         return key switch
@@ -1230,7 +1260,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         }
     }
 
-    private static string ChooseLine(string domain, string lang)
+    internal static string ChooseLine(string domain, string lang)
     {
         var specific = $"values.choose.{domain}";
         return DeepReportCatalog.TryGet(specific, lang, out var text)
@@ -1238,7 +1268,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             : DeepReportCatalog.Get("values.choose", lang);
     }
 
-    private static string StrengthSentence(string key, string label, string lang)
+    internal static string StrengthSentence(string key, string label, string lang)
     {
         if (DeepReportCatalog.TryGet(key, lang, out var text))
         {
@@ -1394,7 +1424,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         return FitPercentExplanation.Footnote(items, "nl");
     }
 
-    private static string CareerFootnote(CareerDeepReport report, string? education, string? lang)
+    internal static string CareerFootnote(CareerDeepReport report, string? education, string? lang)
     {
         int? Score(string code)
         {
@@ -1428,7 +1458,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         return FitPercentExplanation.Footnote(items, lang);
     }
 
-    private static void WriteFitFootnote(ColumnDescriptor col, string text)
+    internal static void WriteFitFootnote(ColumnDescriptor col, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {

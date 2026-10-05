@@ -9,6 +9,7 @@ Admin toggles live in the singleton `PlatformFeatureSettings` row and are read t
 | `PassportPartnersEnabled` | **false** | Partner portal, partner codes and consent. Off hides those surfaces. Nothing is deleted. Does not turn on PDF v2. |
 | `PassportPdfV2Enabled` | **false** | Shareable work preferences on the passport Data tab, and later the PDF v2 download. Off leaves the Data tab as it is today. |
 | `PhoneVerificationEnabled` | **false** | SMS phone confirmation. Not a route gate. Stays off until an SMS provider exists. The stub logs the code only in Development. |
+| `CompactTestPdfEnabled` | **false** | Compact personal deep-test PDFs (about 4 A4 pages with charts). Off keeps today's longer layout. Does not change scores, payment, or the partner passport PDF. |
 
 Gate with `[RequiresFeature(PlatformFeature.Employers)]` (pages, controllers, actions) or `<FeatureVisible Feature="PlatformFeature.Employers">` (sections). Minimal APIs: `.RequireFeature(PlatformFeature.Employers)`.
 

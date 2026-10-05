@@ -22,5 +22,8 @@ public enum PlatformFeature
     Ambassadors,
 
     /// <summary>WhatsApp come-back reminders. Default false. Needs env config and a candidate opt-in.</summary>
-    WhatsAppReminders
+    WhatsAppReminders,
+
+    /// <summary>Compact ~4-page personal deep-test PDFs. Default false keeps the longer layout.</summary>
+    CompactTestPdf
 }

@@ -223,6 +223,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("CompactTestPdfEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CompactTestPdfEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.CompactTestPdf.Enabled.Title",
+                DescriptionKey: "AdminSettings.CompactTestPdf.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.CompactTestPdfEnabled,
+                Write: v => new PlatformFeatureUpdate(CompactTestPdfEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         // --- Vacatures ---
         list.Add(new PlatformSettingDescriptor(
             Key: "VacancyContentModerationEnabled",
@@ -462,6 +475,7 @@ public static class PlatformSettingsCatalog
         bool? passportPdfV2Enabled = null;
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
+        bool? compactTestPdfEnabled = null;
 
         foreach (var p in parts)
         {
@@ -497,6 +511,7 @@ public static class PlatformSettingsCatalog
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
+            if (p.CompactTestPdfEnabled is not null) compactTestPdfEnabled = p.CompactTestPdfEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -522,6 +537,7 @@ public static class PlatformSettingsCatalog
             PassportPartnersEnabled: passportPartnersEnabled,
             PassportPdfV2Enabled: passportPdfV2Enabled,
             PhoneVerificationEnabled: phoneVerificationEnabled,
-            WhatsAppRemindersEnabled: whatsAppRemindersEnabled);
+            WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
+            CompactTestPdfEnabled: compactTestPdfEnabled);
     }
 }
