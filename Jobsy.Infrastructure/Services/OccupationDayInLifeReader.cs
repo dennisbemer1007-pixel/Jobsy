@@ -42,7 +42,7 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             return new OccupationDayReadResult(true, true, null);
         }
 
-        return new OccupationDayReadResult(true, true, ToView(row, facts.TitleNl, language));
+        return new OccupationDayReadResult(true, true, ToView(row, facts.TitleNl, language, facts));
     }
 
     public async Task<OccupationDayAdminStatus> StatusAsync(
@@ -73,7 +73,11 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             lastEscoId);
     }
 
-    internal static OccupationDayView ToView(Jobsy.Core.Entities.OccupationDayInLife row, string title, string? language = null)
+    internal static OccupationDayView ToView(
+        Jobsy.Core.Entities.OccupationDayInLife row,
+        string title,
+        string? language = null,
+        OccupationDayFacts? facts = null)
     {
         IReadOnlyList<string> highlights;
         try
@@ -85,6 +89,19 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             highlights = [];
         }
 
+        var blocks = OccupationDayBlocks.Parse(row.BlocksJson);
+        var tasks = ReadLines(row.TasksJson);
+        var skills = ReadLines(row.SkillsJson);
+        if (tasks.Count == 0 && facts is not null)
+        {
+            tasks = facts.Tasks.Take(OccupationDayFacts.MaxTasks).ToList();
+        }
+
+        if (skills.Count == 0 && facts is not null)
+        {
+            skills = facts.Skills.Take(8).ToList();
+        }
+
         var view = new OccupationDayView(
             row.EscoId,
             string.IsNullOrWhiteSpace(row.TitleNl) ? title : row.TitleNl,
@@ -94,12 +111,18 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             row.Closing,
             highlights,
             row.VariesNote,
-            row.ThinSource);
+            row.ThinSource,
+            blocks.Count == 0 ? null : blocks,
+            tasks,
+            skills);
         if (!OccupationDayTranslations.TryGet(row.TranslationsJson, language, row.ContentHash, out var translated))
         {
             return view;
         }
 
+        var translatedBlocks = translated.Blocks is { Count: > 0 }
+            ? OccupationDayBlocks.Normalize(translated.Blocks)
+            : [];
         return view with
         {
             TitleNl = string.IsNullOrWhiteSpace(translated.Title) ? view.TitleNl : translated.Title,
@@ -108,7 +131,27 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
             Afternoon = translated.Afternoon,
             Closing = translated.Closing,
             Highlights = translated.Highlights ?? [],
-            VariesNote = string.IsNullOrWhiteSpace(translated.Varies) ? view.VariesNote : translated.Varies
+            VariesNote = string.IsNullOrWhiteSpace(translated.Varies) ? view.VariesNote : translated.Varies,
+            Blocks = translatedBlocks.Count == 0 ? null : translatedBlocks,
+            Tasks = translated.Tasks is { Count: > 0 } ? translated.Tasks : tasks,
+            Skills = translated.Skills is { Count: > 0 } ? translated.Skills : skills
         };
+    }
+
+    private static List<string> ReadLines(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 }

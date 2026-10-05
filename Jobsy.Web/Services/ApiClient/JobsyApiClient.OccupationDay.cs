@@ -86,4 +86,7 @@ public sealed class OccupationDayResponse
     public string? VariesNote { get; set; }
     public bool ThinSource { get; set; }
     public string Language { get; set; } = "nl";
+    public List<OccupationDayBlock> Blocks { get; set; } = [];
+    public List<string> Tasks { get; set; } = [];
+    public List<string> Skills { get; set; } = [];
 }

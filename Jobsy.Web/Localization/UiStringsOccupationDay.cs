@@ -31,6 +31,8 @@ public static class UiStringsOccupationDay
         Add("Day.FitCta", "Bekijk je functiefit", "See your role fit", "Zobacz dopasowanie roli", "Vezi potrivirea rolului", "اطلع على ملاءمة الدور");
         Add("Day.MoreCta", "Ontdek andere beroepen", "Discover other occupations", "Odkryj inne zawody", "Descoperă alte meserii", "اكتشف مهناً أخرى");
         Add("Day.Coach", "Neem de tijd. Een gewone dag zegt nog niet alles.", "Take your time. A normal day does not say everything.", "Nie spiesz się. Zwykły dzień nie mówi wszystkiego.", "Fără grabă. O zi obișnuită nu spune tot.", "خذ وقتك. اليوم العادي لا يقول كل شيء.");
+        Add("Day.Tasks", "Wat je vaak doet", "What you often do", "Co często robisz", "Ce faci des", "ما تفعله غالبًا");
+        Add("Day.Skills", "Wat dit werk vraagt", "What this work asks", "Czego wymaga ta praca", "Ce cere această muncă", "ما يطلبه هذا العمل");
         Add("Day.Highlights", "Wat vaak terugkomt", "What often comes back", "Co często wraca", "Ce revine des", "ما يتكرر غالبًا");
         Add("Day.Varies", "Wat kan verschillen", "What can differ", "Co może się różnić", "Ce poate diferi", "ما قد يختلف");
         Add("Day.Empty", "Nog niet beschikbaar.", "Not available yet.", "Jeszcze niedostępne.", "Încă nu este disponibil.", "غير متاح بعد.");

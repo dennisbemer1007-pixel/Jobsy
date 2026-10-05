@@ -28,8 +28,11 @@ public class OccupationDayInLifeTests
         Assert.Contains("geen diploma", prompt, StringComparison.Ordinal);
         Assert.Contains("B1", prompt, StringComparison.Ordinal);
         Assert.Contains("Bron is dun", prompt, StringComparison.Ordinal);
-        Assert.Contains("closing", prompt, StringComparison.Ordinal);
-        Assert.Contains("afronden", prompt, StringComparison.Ordinal);
+        Assert.Contains("blocks", prompt, StringComparison.Ordinal);
+        Assert.Contains("start", prompt, StringComparison.Ordinal);
+        Assert.Contains("Pauze", prompt, StringComparison.Ordinal);
+        Assert.Contains("geen klant met een naam", prompt, StringComparison.Ordinal);
+        Assert.Contains("Afronden", prompt, StringComparison.Ordinal);
         Assert.DoesNotContain("kandidaatprofiel", prompt, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -85,6 +88,28 @@ public class OccupationDayInLifeTests
         var clean = CleanDraft();
         var draft = clean with { Morning = clean.Morning + " Soms is dat in Rotterdam." };
         Assert.True(OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons), string.Join(", ", reasons));
+    }
+
+    [Fact]
+    public void Validator_accepts_six_grounded_blocks()
+    {
+        var facts = SampleFacts();
+        Assert.True(OccupationDayInLifeValidator.TryValidate(BlockDraft(), facts, out var reasons), string.Join(", ", reasons));
+    }
+
+    [Fact]
+    public void Validator_rejects_a_city_inside_a_block_and_a_short_timeline()
+    {
+        var facts = SampleFacts();
+        var city = BlockDraft();
+        var blocks = city.Blocks!.ToList();
+        blocks[0] = blocks[0] with { Text = blocks[0].Text + " Dat is in Rotterdam." };
+        Assert.False(OccupationDayInLifeValidator.TryValidate(city with { Blocks = blocks }, facts, out var cityReasons));
+        Assert.Contains("stad", cityReasons);
+
+        var shortDay = BlockDraft() with { Blocks = BlockDraft().Blocks!.Take(2).ToList() };
+        Assert.False(OccupationDayInLifeValidator.TryValidate(shortDay, facts, out var shortReasons));
+        Assert.Contains("blok", shortReasons);
     }
 
     [Fact]
@@ -174,6 +199,34 @@ public class OccupationDayInLifeTests
             Assert.Equal(0, again.Generated);
             Assert.Equal(0, writer.Calls);
             Assert.Equal(1, await db.OccupationDayInLives.CountAsync());
+        }
+    }
+
+    [Fact]
+    public async Task Generate_copies_catalog_tasks_and_drops_model_tasks()
+    {
+        var job = OccupationCatalog.Shared.All.First(item =>
+        {
+            var known = OccupationDayFacts.For(item.Id);
+            return known is not null && (known.Tasks.Count > 0 || known.Skills.Count > 0);
+        });
+        var facts = OccupationDayFacts.For(job.Id)!;
+        var json = CleanJson().TrimEnd('}') + ",\"tasks\":[\"Verzonnen eis\"],\"skills\":[\"Nog een verzinsel\"]}";
+        await using var db = NewDb();
+        var generator = Generator(db, new ScriptWriter(json));
+        var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { job.Id };
+        var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);
+        Assert.Equal(1, result.Generated);
+        var row = await db.OccupationDayInLives.SingleAsync();
+        Assert.DoesNotContain("Verzonnen eis", row.TasksJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("Nog een verzinsel", row.SkillsJson, StringComparison.Ordinal);
+        if (facts.Tasks.Count > 0)
+        {
+            Assert.Contains(facts.Tasks[0], row.TasksJson, StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.Contains(facts.Skills[0], row.SkillsJson, StringComparison.Ordinal);
         }
     }
 
@@ -372,6 +425,9 @@ public class OccupationDayInLifeTests
         Assert.Contains("Day.Invite", page, StringComparison.Ordinal);
         Assert.Contains("day-life__timeline", page, StringComparison.Ordinal);
         Assert.Contains("Day.FitTitle", page, StringComparison.Ordinal);
+        Assert.Contains("Day.Tasks", page, StringComparison.Ordinal);
+        Assert.Contains("Day.Skills", page, StringComparison.Ordinal);
+        Assert.Contains("day-life__cloud", page, StringComparison.Ordinal);
         Assert.Contains("LobsyBubble", page, StringComparison.Ordinal);
         Assert.Contains("/images/brand/mascot-coach.webp", page, StringComparison.Ordinal);
         Assert.DoesNotContain("LobsyCoachAvatar", page, StringComparison.Ordinal);
@@ -387,6 +443,8 @@ public class OccupationDayInLifeTests
         Assert.Equal("Een dag als {0}", UiStrings.Get("Day.Title", "nl"));
         Assert.Equal("Kom, ik neem je mee door een gewone werkdag.", UiStrings.Get("Day.Invite", "nl"));
         Assert.Equal("Past dit bij jou?", UiStrings.Get("Day.FitTitle", "nl"));
+        Assert.Equal("Wat je vaak doet", UiStrings.Get("Day.Tasks", "nl"));
+        Assert.Equal("Wat dit werk vraagt", UiStrings.Get("Day.Skills", "nl"));
         Assert.DoesNotContain("chat/completions", page, StringComparison.Ordinal);
         Assert.DoesNotContain("OpenAI", page, StringComparison.Ordinal);
         Assert.DoesNotContain("IOccupationDayInLifeWriter", controller, StringComparison.Ordinal);
@@ -419,6 +477,30 @@ public class OccupationDayInLifeTests
             "Aan het eind geef je de bakken door. Je vinkt de lijst af en zet je spullen terug.",
             ["Producten verzamelen", "Aantallen controleren", "Bakken klaarzetten"],
             "De volgorde van taken verschilt per werkgever.");
+
+    private static OccupationDayDraft BlockDraft()
+    {
+        var blocks = new List<OccupationDayBlock>
+        {
+            new("start", "Start", "Je start met je lijst en je bak. Je kijkt welke producten eerst gaan."),
+            new("morning", "Ochtend", "In de ochtend loop je langs de stellingen. Je haalt de producten uit het magazijn."),
+            new("plan", "Plannen", "Je plant de rest van de ronde. Je telt wat nog op de lijst staat."),
+            new("pause", "Pauze", "Je neemt pauze. Daarna pak je de lijst weer op en ga je verder."),
+            new("afternoon", "Middag", "In de middag zet je de bakken klaar. Je vult aan wat nog ontbreekt."),
+            new("close", "Afronden", "Aan het eind vink je de lijst af. Je zet je spullen terug.")
+        };
+        return OccupationDayBlocks.WithDerived(new OccupationDayDraft(
+            "orderpicker",
+            "Je begint met het klaarzetten van je bak en je lijst. Daarna loop je naar de eerste stelling.",
+            "In het midden van de dag ga je door met verzamelen. Je telt de producten en legt ze in de bak.",
+            "In de middag zet je de bakken klaar. Je controleert de lijst en vult aan wat nog ontbreekt.",
+            "Aan het eind geef je de bakken door. Je vinkt de lijst af en zet je spullen terug.",
+            ["Producten verzamelen", "Aantallen controleren", "Bakken klaarzetten"],
+            "De volgorde van taken verschilt per werkgever.",
+            blocks,
+            ["orders verzamelen", "tellen"],
+            ["Producten uit het magazijn halen"]));
+    }
 
     private static string CleanJson()
     {
@@ -493,7 +575,12 @@ public class OccupationDayInLifeTests
                 Afternoon = source.Afternoon + tag,
                 Closing = source.Closing + tag,
                 VariesNote = source.VariesNote + tag,
-                Highlights = source.Highlights.Select(line => line + tag).ToList()
+                Highlights = source.Highlights.Select(line => line + tag).ToList(),
+                Blocks = source.Blocks is { Count: > 0 }
+                    ? source.Blocks.Select(block => block with { Label = block.Label + tag, Text = block.Text + tag }).ToList()
+                    : source.Blocks,
+                Tasks = source.Tasks?.Select(line => line + tag).ToList(),
+                Skills = source.Skills?.Select(line => line + tag).ToList()
             };
             return Task.FromResult(new OccupationDayTranslateResult(true, draft, null, "test-translator", false));
         }

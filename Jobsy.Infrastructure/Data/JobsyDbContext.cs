@@ -986,6 +986,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Afternoon).HasMaxLength(2000).IsRequired();
             entity.Property(e => e.Closing).HasMaxLength(2000).IsRequired();
             entity.Property(e => e.HighlightsJson).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.BlocksJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.TasksJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.SkillsJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
             entity.Property(e => e.VariesNote).HasMaxLength(800).IsRequired();
             entity.Property(e => e.SourceModel).HasMaxLength(80).IsRequired();
             entity.Property(e => e.ContentHash).HasMaxLength(64).IsRequired();

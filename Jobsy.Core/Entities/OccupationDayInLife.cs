@@ -25,6 +25,15 @@ public class OccupationDayInLife
     /// <summary>JSON array of short highlight lines.</summary>
     public string HighlightsJson { get; set; } = "[]";
 
+    /// <summary>JSON timeline of 6 to 8 moments. Empty on older rows that only have the four prose fields.</summary>
+    public string BlocksJson { get; set; } = "[]";
+
+    /// <summary>JSON array of ESCO or ILO task lines. Not written by the model.</summary>
+    public string TasksJson { get; set; } = "[]";
+
+    /// <summary>JSON array of ESCO skill labels. Not written by the model.</summary>
+    public string SkillsJson { get; set; } = "[]";
+
     /// <summary>What can differ between employers. Required so the day stays typical, not specific.</summary>
     public string VariesNote { get; set; } = "";
 

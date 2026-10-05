@@ -62,6 +62,9 @@ public sealed class OccupationDayInLifeTranslator : IOccupationDayInLifeTranslat
             afternoon = source.Afternoon,
             closing = source.Closing,
             highlights = source.Highlights,
+            blocks = (source.Blocks ?? []).Select(block => new { key = block.Key, label = block.Label, text = block.Text }),
+            tasks = source.Tasks ?? [],
+            skills = source.Skills ?? [],
             varies = source.VariesNote
         });
 
@@ -100,6 +103,16 @@ public sealed class OccupationDayInLifeTranslator : IOccupationDayInLifeTranslat
 
         var title = ReadTitle(content);
         var draft = string.IsNullOrWhiteSpace(title) ? parsed : parsed with { TitleNl = title };
+        if (draft.Tasks is not { Count: > 0 })
+        {
+            draft = draft with { Tasks = source.Tasks ?? [] };
+        }
+
+        if (draft.Skills is not { Count: > 0 })
+        {
+            draft = draft with { Skills = source.Skills ?? [] };
+        }
+
         return new OccupationDayTranslateResult(true, draft, null, model, false);
     }
 

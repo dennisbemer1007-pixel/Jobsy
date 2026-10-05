@@ -138,10 +138,42 @@
   line-height: 1.5;
 }
 
+.day-life__section {
+  margin: 0 0 1.15rem;
+}
+
+.day-life__section h2,
 .day-life__notes-title {
-  margin: 0 0 0.4rem;
-  font-size: 1rem;
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
   color: var(--brand);
+}
+
+.day-life__cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.day-life__pill {
+  margin: 0;
+  max-width: 100%;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--coral) 28%, var(--border));
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.day-life__pill--skill {
+  background: var(--coral-soft);
+  color: var(--coral-deep);
+  border-color: transparent;
 }
 
 .day-life__notes {

@@ -55,27 +55,27 @@
                 <p class="day-life__lead">@Culture["Day.Thin"]</p>
             }
             <ol class="day-life__timeline">
-                <li class="day-life__block">
-                    <h2 class="day-life__chip">@Culture["Day.Morning"]</h2>
-                    <p>@_day.Morning</p>
-                </li>
-                <li class="day-life__block">
-                    <h2 class="day-life__chip">@Culture["Day.Midday"]</h2>
-                    <p>@_day.Midday</p>
-                </li>
-                <li class="day-life__block">
-                    <h2 class="day-life__chip">@Culture["Day.Afternoon"]</h2>
-                    <p>@_day.Afternoon</p>
-                </li>
-                @if (!string.IsNullOrWhiteSpace(_day.Closing))
+                @foreach (var block in Timeline)
                 {
                     <li class="day-life__block">
-                        <h2 class="day-life__chip">@Culture["Day.Closing"]</h2>
-                        <p>@_day.Closing</p>
+                        <h2 class="day-life__chip">@block.Label</h2>
+                        <p>@block.Text</p>
                     </li>
                 }
             </ol>
-            @if (_day.Highlights.Count > 0)
+            @if (TaskChips.Count > 0)
+            {
+                <section class="day-life__section" aria-labelledby="day-tasks-title">
+                    <h2 id="day-tasks-title">@Culture["Day.Tasks"]</h2>
+                    <ul class="day-life__cloud">
+                        @foreach (var line in TaskChips)
+                        {
+                            <li class="day-life__pill">@line</li>
+                        }
+                    </ul>
+                </section>
+            }
+            else if (_day.Highlights.Count > 0)
             {
                 <h2 class="day-life__notes-title">@Culture["Day.Highlights"]</h2>
                 <ul class="day-life__notes">
@@ -84,6 +84,18 @@
                         <li>@line</li>
                     }
                 </ul>
+            }
+            @if (SkillChips.Count > 0)
+            {
+                <section class="day-life__section" aria-labelledby="day-skills-title">
+                    <h2 id="day-skills-title">@Culture["Day.Skills"]</h2>
+                    <ul class="day-life__cloud">
+                        @foreach (var line in SkillChips)
+                        {
+                            <li class="day-life__pill day-life__pill--skill">@line</li>
+                        }
+                    </ul>
+                </section>
             }
             @if (!string.IsNullOrWhiteSpace(_day.VariesNote))
             {
@@ -150,6 +162,41 @@
     private string BackHref => string.Equals(From, "fit", StringComparison.OrdinalIgnoreCase)
         ? "/candidate/profile?tab=fit"
         : "/candidate/profile?tab=tests";
+
+    private IReadOnlyList<string> TaskChips => _day?.Tasks ?? [];
+
+    private IReadOnlyList<string> SkillChips => _day?.Skills ?? [];
+
+    private IReadOnlyList<OccupationDayBlock> Timeline
+    {
+        get
+        {
+            if (_day?.Blocks is { Count: > 0 } blocks)
+            {
+                return blocks;
+            }
+
+            if (_day is not { Found: true })
+            {
+                return [];
+            }
+
+            var rows = new List<OccupationDayBlock>();
+            Add("morning", Culture["Day.Morning"], _day.Morning);
+            Add("midday", Culture["Day.Midday"], _day.Midday);
+            Add("afternoon", Culture["Day.Afternoon"], _day.Afternoon);
+            Add("close", Culture["Day.Closing"], _day.Closing);
+            return rows;
+
+            void Add(string key, string label, string? text)
+            {
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    rows.Add(new OccupationDayBlock(key, label, text));
+                }
+            }
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {

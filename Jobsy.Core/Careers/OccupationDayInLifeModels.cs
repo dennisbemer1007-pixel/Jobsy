@@ -25,7 +25,10 @@ public sealed record OccupationDayView(
     string Closing,
     IReadOnlyList<string> Highlights,
     string VariesNote,
-    bool ThinSource);
+    bool ThinSource,
+    IReadOnlyList<OccupationDayBlock>? Blocks = null,
+    IReadOnlyList<string>? Tasks = null,
+    IReadOnlyList<string>? Skills = null);
 
 /// <summary>OpenAI completion for one occupation. The candidate path does not use this.</summary>
 public interface IOccupationDayInLifeWriter
@@ -55,7 +58,10 @@ public sealed record OccupationDayDraft(
     string Afternoon,
     string Closing,
     IReadOnlyList<string> Highlights,
-    string VariesNote);
+    string VariesNote,
+    IReadOnlyList<OccupationDayBlock>? Blocks = null,
+    IReadOnlyList<string>? Tasks = null,
+    IReadOnlyList<string>? Skills = null);
 
 public sealed record OccupationDayFailure(string EscoId, string Reason);
 
@@ -103,6 +109,9 @@ public sealed class OccupationDayExportRow
     public string Locale { get; set; } = "nl";
     public bool ThinSource { get; set; }
     public Dictionary<string, OccupationDayStoredTranslation> Translations { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<OccupationDayBlock> Blocks { get; set; } = [];
+    public List<string> Tasks { get; set; } = [];
+    public List<string> Skills { get; set; } = [];
 }
 
 public static class OccupationDayInLifeGate
@@ -133,6 +142,9 @@ public static class OccupationDayInLifeHash
             Norm(draft.Afternoon),
             Norm(draft.Closing),
             string.Join('\n', draft.Highlights.Select(Norm)),
+            string.Join('\n', (draft.Blocks ?? []).Select(block => Norm(block.Key) + "|" + Norm(block.Label) + "|" + Norm(block.Text))),
+            string.Join('\n', (draft.Tasks ?? []).Select(Norm)),
+            string.Join('\n', (draft.Skills ?? []).Select(Norm)),
             Norm(draft.VariesNote)
         });
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();

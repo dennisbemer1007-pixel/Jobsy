@@ -378,7 +378,38 @@ public sealed class OccupationDayInLifeGenerator
             row.Afternoon,
             row.Closing,
             highlights,
-            row.VariesNote);
+            row.VariesNote,
+            OccupationDayBlocks.Parse(row.BlocksJson),
+            ReadLines(row.TasksJson),
+            ReadLines(row.SkillsJson));
+    }
+
+    private static OccupationDayDraft AttachFacts(OccupationDayDraft draft, OccupationDayFacts facts, bool forceCatalog)
+    {
+        var tasks = !forceCatalog && draft.Tasks is { Count: > 0 } ? draft.Tasks : facts.Tasks;
+        var skills = !forceCatalog && draft.Skills is { Count: > 0 } ? draft.Skills : facts.Skills;
+        return OccupationDayBlocks.WithDerived(draft) with
+        {
+            Tasks = tasks.Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(OccupationDayFacts.MaxTasks).ToList(),
+            Skills = skills.Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(8).ToList()
+        };
+    }
+
+    private static List<string> ReadLines(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
     private static string AcceptedTranslationsJson(OccupationDayDraft dutch, OccupationDayExportRow row, string hash)
@@ -482,6 +513,7 @@ public sealed class OccupationDayInLifeGenerator
             return (null, error ?? "onleesbaar", false, model);
         }
 
+        draft = AttachFacts(draft, facts, forceCatalog: true);
         if (!OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons))
         {
             return (null, string.Join("; ", reasons), false, model);
@@ -511,14 +543,17 @@ public sealed class OccupationDayInLifeGenerator
             return false;
         }
 
-        draft = new OccupationDayDraft(
+        draft = OccupationDayBlocks.WithDerived(new OccupationDayDraft(
             facts.TitleNl,
             (row.Morning ?? "").Trim(),
             (row.Midday ?? "").Trim(),
             (row.Afternoon ?? "").Trim(),
             (row.Closing ?? "").Trim(),
             (row.Highlights ?? []).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(4).ToList(),
-            (row.VariesNote ?? "").Trim());
+            (row.VariesNote ?? "").Trim(),
+            row.Blocks ?? [],
+            (row.Tasks ?? []).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(OccupationDayFacts.MaxTasks).ToList(),
+            (row.Skills ?? []).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(8).ToList()));
         if (!OccupationDayInLifeValidator.TryValidate(draft, facts, out _))
         {
             return false;
@@ -548,6 +583,9 @@ public sealed class OccupationDayInLifeGenerator
             Afternoon = draft.Afternoon,
             Closing = draft.Closing,
             HighlightsJson = JsonSerializer.Serialize(draft.Highlights),
+            BlocksJson = OccupationDayBlocks.Serialize(draft.Blocks),
+            TasksJson = JsonSerializer.Serialize(draft.Tasks ?? []),
+            SkillsJson = JsonSerializer.Serialize(draft.Skills ?? []),
             VariesNote = draft.VariesNote,
             SourceModel = Trim(string.IsNullOrWhiteSpace(model) ? OccupationDayInLifeOptions.DefaultModel : model, 80),
             GeneratedAtUtc = generatedAtUtc.Kind == DateTimeKind.Utc
@@ -574,6 +612,9 @@ public sealed class OccupationDayInLifeGenerator
         existing.Afternoon = draft.Afternoon;
         existing.Closing = draft.Closing;
         existing.HighlightsJson = JsonSerializer.Serialize(draft.Highlights);
+        existing.BlocksJson = OccupationDayBlocks.Serialize(draft.Blocks);
+        existing.TasksJson = JsonSerializer.Serialize(draft.Tasks ?? []);
+        existing.SkillsJson = JsonSerializer.Serialize(draft.Skills ?? []);
         existing.VariesNote = draft.VariesNote;
         existing.SourceModel = Trim(string.IsNullOrWhiteSpace(model) ? existing.SourceModel : model, 80);
         existing.GeneratedAtUtc = generatedAtUtc.Kind == DateTimeKind.Utc
@@ -607,6 +648,9 @@ public sealed class OccupationDayInLifeGenerator
             Closing = row.Closing,
             Highlights = highlights,
             VariesNote = row.VariesNote,
+            Blocks = OccupationDayBlocks.Parse(row.BlocksJson).ToList(),
+            Tasks = ReadLines(row.TasksJson),
+            Skills = ReadLines(row.SkillsJson),
             SourceModel = row.SourceModel,
             GeneratedAtUtc = row.GeneratedAtUtc,
             ContentHash = row.ContentHash,

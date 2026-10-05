@@ -37,7 +37,7 @@ public sealed class OccupationDayInLifeController : ControllerBase
         if (!result.Enabled || result.Day is null)
         {
             var title = OccupationCatalog.Shared.Get(escoId.ToString("D"))?.Nl;
-            return Ok(new OccupationDayResponse(result.Enabled, false, escoId.ToString("D"), title, null, null, null, null, [], null, false, language));
+            return Ok(new OccupationDayResponse(result.Enabled, false, escoId.ToString("D"), title, null, null, null, null, [], null, false, language, [], [], []));
         }
 
         var day = result.Day;
@@ -53,7 +53,10 @@ public sealed class OccupationDayInLifeController : ControllerBase
             day.Highlights,
             day.VariesNote,
             day.ThinSource,
-            language));
+            language,
+            day.Blocks ?? [],
+            day.Tasks ?? [],
+            day.Skills ?? []));
     }
 
     private string ResolveLanguage(string? lang)
@@ -84,5 +87,8 @@ public sealed class OccupationDayInLifeController : ControllerBase
         IReadOnlyList<string> Highlights,
         string? VariesNote,
         bool ThinSource,
-        string Language);
+        string Language,
+        IReadOnlyList<OccupationDayBlock>? Blocks = null,
+        IReadOnlyList<string>? Tasks = null,
+        IReadOnlyList<string>? Skills = null);
 }

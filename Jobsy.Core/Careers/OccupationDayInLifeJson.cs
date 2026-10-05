@@ -26,14 +26,18 @@ public static class OccupationDayInLifeJson
 
             var root = doc.RootElement;
             var highlights = ReadHighlights(root);
-            draft = new OccupationDayDraft(
+            var blocks = ReadBlocks(root);
+            draft = OccupationDayBlocks.WithDerived(new OccupationDayDraft(
                 facts.TitleNl,
                 ReadString(root, "morning"),
                 ReadString(root, "midday"),
                 ReadString(root, "afternoon"),
                 ReadString(root, "closing"),
                 highlights,
-                ReadString(root, "varies"));
+                ReadString(root, "varies"),
+                blocks,
+                ReadLines(root, "tasks"),
+                ReadLines(root, "skills")));
             return true;
         }
         catch (JsonException)
@@ -70,6 +74,66 @@ public static class OccupationDayInLifeJson
         => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
             ? (value.GetString() ?? "").Trim()
             : "";
+
+    private static IReadOnlyList<OccupationDayBlock> ReadBlocks(JsonElement root)
+    {
+        if (!root.TryGetProperty("blocks", out var value) || value.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var rows = new List<OccupationDayBlock>();
+        foreach (var item in value.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            var key = ReadString(item, "key");
+            var label = ReadString(item, "label");
+            var text = ReadString(item, "text");
+            if (!OccupationDayBlocks.IsKnown(key) || text.Length == 0)
+            {
+                continue;
+            }
+
+            rows.Add(new OccupationDayBlock(key, label, text));
+        }
+
+        return OccupationDayBlocks.Normalize(rows);
+    }
+
+    private static IReadOnlyList<string> ReadLines(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var lines = new List<string>();
+        foreach (var item in value.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var line = (item.GetString() ?? "").Trim();
+            if (line.Length == 0 || lines.Contains(line, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            lines.Add(line);
+            if (lines.Count == 8)
+            {
+                break;
+            }
+        }
+
+        return lines;
+    }
 
     private static IReadOnlyList<string> ReadHighlights(JsonElement root)
     {

@@ -11,7 +11,7 @@ public static class OccupationDayInLifePrompt
 
         Je gebruikt alleen de feiten in het bericht van de gebruiker: de titel, de andere namen, de beschrijving, de vaardigheden en de taken. Dat zijn feiten over het beroep.
 
-        Verzin geen werkgever, geen bedrijfsnaam, geen stad, geen dorp, geen salaris, geen loon en geen diploma. Schrijf niet over een specifieke kandidaat. Geen "jij hebt" en geen "jouw ervaring". Geen naam van een persoon.
+        Verzin geen werkgever, geen bedrijfsnaam, geen klant met een naam, geen patiënt met een naam, geen stad, geen dorp, geen salaris, geen loon en geen diploma. Schrijf niet over een specifieke kandidaat. Geen "jij hebt" en geen "jouw ervaring". Geen naam van een persoon.
 
         Dit is een typische dag. Beroepen verschillen per werkgever. Zeg dat in het veld "varies", in één of twee korte zinnen.
 
@@ -22,9 +22,16 @@ public static class OccupationDayInLifePrompt
         Gebruik geen woorden als ESCO, ISCO, RIASEC, OCEAN of Big Five.
 
         Antwoord alleen met JSON in deze vorm:
-        {"morning":"...","midday":"...","afternoon":"...","closing":"...","highlights":["...","..."],"varies":"..."}
+        {"blocks":[{"key":"start","label":"Start","text":"..."}],"highlights":["...","..."],"varies":"..."}
 
-        morning is de ochtend. midday is het midden van de dag. afternoon is de middag. closing is het afronden van de dag. highlights zijn 2 tot 4 korte punten die in de bron staan. varies legt uit wat kan verschillen. Verzin in closing geen werkgever en geen stad.
+        blocks zijn 6 tot 8 momenten van een gewone dag. Bij een dunne bron: 4 tot 6 momenten.
+        key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close.
+        Gebruik die volgorde. Sla talk, plan of handover over als de bron geen contact, geen plannen en geen overdragen noemt.
+        label is kort, hooguit drie woorden. "Ochtendzorg" alleen als de bron over zorg gaat. "Gesprek" alleen als de bron contact met mensen noemt. "Overdracht" alleen als de bron overdragen of afstemmen noemt. Anders een korter label dat bij de bron past, zoals "Ochtend" of "Afronden".
+        Pauze mag altijd. Noem daarbij geen plaats.
+        text is één tot drie korte zinnen over dat moment. Alleen feiten uit de bron.
+        highlights zijn 2 tot 4 korte punten die letterlijk bij de taken of vaardigheden passen.
+        varies legt uit wat per werkgever kan verschillen. Verzin geen werkgever, klant, stad of diploma.
         """;
 
     public const string Retry =

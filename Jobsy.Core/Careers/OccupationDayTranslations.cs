@@ -82,6 +82,9 @@ public static class OccupationDayTranslations
             Afternoon = (draft.Afternoon ?? "").Trim(),
             Closing = (draft.Closing ?? "").Trim(),
             Highlights = draft.Highlights.Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(4).ToList(),
+            Blocks = OccupationDayBlocks.Normalize(draft.Blocks).ToList(),
+            Tasks = (draft.Tasks ?? []).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(8).ToList(),
+            Skills = (draft.Skills ?? []).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(8).ToList(),
             Varies = (draft.VariesNote ?? "").Trim(),
             SourceHash = (sourceHash ?? "").Trim().ToLowerInvariant(),
             Model = (model ?? "").Trim()
@@ -95,7 +98,10 @@ public static class OccupationDayTranslations
             translation.Afternoon ?? "",
             translation.Closing ?? "",
             translation.Highlights ?? [],
-            translation.Varies ?? "");
+            translation.Varies ?? "",
+            translation.Blocks ?? [],
+            translation.Tasks ?? [],
+            translation.Skills ?? []);
 
     private static bool TryRead(
         IReadOnlyDictionary<string, OccupationDayStoredTranslation> map,
@@ -135,6 +141,9 @@ public sealed class OccupationDayStoredTranslation
     public string Afternoon { get; set; } = "";
     public string Closing { get; set; } = "";
     public List<string> Highlights { get; set; } = [];
+    public List<OccupationDayBlock> Blocks { get; set; } = [];
+    public List<string> Tasks { get; set; } = [];
+    public List<string> Skills { get; set; } = [];
     public string Varies { get; set; } = "";
     public string SourceHash { get; set; } = "";
     public string Model { get; set; } = "";

@@ -41,6 +41,10 @@ public static partial class OccupationDayInLifeValidator
         RequireSection(found, draft.Midday, min, max);
         RequireSection(found, draft.Afternoon, min, max);
         RequireSection(found, draft.Closing, min, max);
+        if (draft.Blocks is { Count: > 0 } blocks)
+        {
+            ValidateBlocks(found, blocks, facts.IsThin);
+        }
 
         var highlightMin = facts.IsThin ? 1 : 2;
         if (draft.Highlights.Count < highlightMin || draft.Highlights.Count > 4)
@@ -77,7 +81,9 @@ public static partial class OccupationDayInLifeValidator
             found.Add("zin-te-lang");
         }
 
-        var sections = new[] { draft.Morning, draft.Midday, draft.Afternoon, draft.Closing };
+        var sections = draft.Blocks is { Count: > 0 } timeline
+            ? timeline.Select(block => block.Text).ToArray()
+            : [draft.Morning, draft.Midday, draft.Afternoon, draft.Closing];
         for (var i = 0; i < sections.Length; i++)
         {
             for (var j = i + 1; j < sections.Length; j++)
@@ -96,6 +102,7 @@ public static partial class OccupationDayInLifeValidator
             draft.Afternoon,
             draft.Closing,
             string.Join("\n", draft.Highlights),
+            string.Join("\n", (draft.Blocks ?? []).Select(block => block.Label + "\n" + block.Text)),
             draft.VariesNote);
         var source = facts.SourceText;
 
@@ -140,11 +147,34 @@ public static partial class OccupationDayInLifeValidator
             found.Add("varies");
         }
 
+        if (source.Blocks is { Count: > 0 })
+        {
+            var translatedBlocks = translated.Blocks ?? [];
+            if (translatedBlocks.Count != source.Blocks.Count
+                || !translatedBlocks.Select(block => block.Key).SequenceEqual(source.Blocks.Select(block => block.Key)))
+            {
+                found.Add("blok");
+            }
+            else
+            {
+                foreach (var block in translatedBlocks)
+                {
+                    RequireTranslationSection(found, block.Text);
+                    if (string.IsNullOrWhiteSpace(block.Label) || block.Label.Length > 32)
+                    {
+                        found.Add("blok");
+                        break;
+                    }
+                }
+            }
+        }
+
         if (Same(source.Morning, translated.Morning)
             && Same(source.Midday, translated.Midday)
             && Same(source.Afternoon, translated.Afternoon)
             && Same(source.Closing, translated.Closing)
-            && Same(source.VariesNote, translated.VariesNote))
+            && Same(source.VariesNote, translated.VariesNote)
+            && SameBlocks(source.Blocks, translated.Blocks))
         {
             found.Add("onvertaald");
         }
@@ -157,6 +187,9 @@ public static partial class OccupationDayInLifeValidator
             translated.Afternoon,
             translated.Closing,
             string.Join("\n", translated.Highlights),
+            string.Join("\n", (translated.Blocks ?? []).Select(block => block.Label + "\n" + block.Text)),
+            string.Join("\n", translated.Tasks ?? []),
+            string.Join("\n", translated.Skills ?? []),
             translated.VariesNote);
         var allowed = string.Join(
             "\n",
@@ -166,6 +199,9 @@ public static partial class OccupationDayInLifeValidator
             source.Afternoon,
             source.Closing,
             string.Join("\n", source.Highlights),
+            string.Join("\n", (source.Blocks ?? []).Select(block => block.Label + "\n" + block.Text)),
+            string.Join("\n", source.Tasks ?? []),
+            string.Join("\n", source.Skills ?? []),
             source.VariesNote);
         CollectInventionReasons(found, text, allowed);
         reasons = found.Distinct(StringComparer.Ordinal).ToList();
@@ -232,6 +268,71 @@ public static partial class OccupationDayInLifeValidator
         {
             found.Add("stad");
         }
+    }
+
+    private static void ValidateBlocks(List<string> found, IReadOnlyList<OccupationDayBlock> blocks, bool thin)
+    {
+        var min = thin ? MinThinCount() : OccupationDayBlocks.MinNormal;
+        if (blocks.Count < min || blocks.Count > OccupationDayBlocks.Max)
+        {
+            found.Add("blok");
+            return;
+        }
+
+        var keys = blocks.Select(block => block.Key).ToList();
+        if (keys.Distinct(StringComparer.OrdinalIgnoreCase).Count() != keys.Count
+            || keys.Any(key => !OccupationDayBlocks.IsKnown(key))
+            || !keys.Contains("start", StringComparer.OrdinalIgnoreCase)
+            || !keys.Contains("morning", StringComparer.OrdinalIgnoreCase)
+            || !keys.Contains("afternoon", StringComparer.OrdinalIgnoreCase))
+        {
+            found.Add("blok");
+        }
+
+        var textMin = thin ? 12 : 24;
+        foreach (var block in blocks)
+        {
+            var label = (block.Label ?? "").Trim();
+            var text = (block.Text ?? "").Trim();
+            if (label.Length < 2 || label.Length > 32 || text.Length < textMin || text.Length > 700)
+            {
+                found.Add("blok");
+                break;
+            }
+
+            if (LongestSentence(text) > MaxWordsPerSentence || LongestSentence(label) > 6)
+            {
+                found.Add("zin-te-lang");
+                break;
+            }
+        }
+    }
+
+    private static int MinThinCount() => OccupationDayBlocks.MinThin;
+
+    private static bool SameBlocks(IReadOnlyList<OccupationDayBlock>? left, IReadOnlyList<OccupationDayBlock>? right)
+    {
+        var a = left ?? [];
+        var b = right ?? [];
+        if (a.Count == 0 && b.Count == 0)
+        {
+            return true;
+        }
+
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < a.Count; i++)
+        {
+            if (!Same(a[i].Text, b[i].Text))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void RequireTranslationSection(List<string> found, string? value)

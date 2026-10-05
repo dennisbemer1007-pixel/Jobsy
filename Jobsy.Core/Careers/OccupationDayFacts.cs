@@ -12,7 +12,7 @@ public sealed class OccupationDayFacts
 {
     public const int MaxDescriptionChars = 900;
     public const int MaxSkills = 12;
-    public const int MaxTasks = 6;
+    public const int MaxTasks = 8;
 
     private static readonly JsonSerializerOptions Json = new()
     {
