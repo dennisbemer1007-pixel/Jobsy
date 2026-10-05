@@ -5,9 +5,9 @@ namespace Jobsy.Core.Interfaces;
 
 public interface ICandidateKompasService
 {
-    Task<CandidateKompasDto> GetAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<CandidateKompasDto> GetAsync(Guid userId, string? language = null, CancellationToken cancellationToken = default);
 
-    Task<CandidateDnaSummaryDto> GetDnaAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<CandidateDnaSummaryDto> GetDnaAsync(Guid userId, string? language = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Slim read model for Mijn DNA (no questions, answers, profile, or matches).</summary>

@@ -9,6 +9,9 @@ public interface ICandidateCareerPlanService
     /// <summary>Persists the dream job title without regenerating the plan.</summary>
     Task SaveDreamAsync(Guid userId, string? dreamTitle, CancellationToken cancellationToken = default);
 
+    /// <summary>Removes the candidate's dream job and career plans.</summary>
+    Task ClearDreamAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task<string?> GetDreamTitleAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>

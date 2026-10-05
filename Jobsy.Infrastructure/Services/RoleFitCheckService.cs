@@ -173,7 +173,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 NeedsRecheck: false);
         }
 
-        var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep, cultureScores);
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep, cultureScores, employersOn: employersOn);
         var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, cultureScores, cancellationToken)
                        ?? local;
         snapshot = snapshot with
@@ -461,12 +462,20 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             direct = [];
         }
 
+        var steps = employersOn
+            ? snapshot.ActionSteps
+            : snapshot.ActionSteps
+                .Where(step => !CareerCompassBuilder.MentionsEmployerSurface(step)
+                               && !step.Contains("Den Haag", StringComparison.OrdinalIgnoreCase)
+                               && !step.Contains("Westland", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,
             snapshot.MatchPercent,
             snapshot.Strengths,
             snapshot.Gaps,
-            snapshot.ActionSteps,
+            steps,
             snapshot.SearchKeys,
             $"/banenkaart?q={query}",
             snapshot.FromDeepAnalysis,

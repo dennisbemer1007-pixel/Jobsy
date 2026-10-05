@@ -483,7 +483,9 @@
         _lookingFor.Clear();
         if (prefs?.Roles is { Count: > 0 })
         {
-            _lookingFor.AddRange(prefs.Roles.Where(r => !string.IsNullOrWhiteSpace(r)));
+            _lookingFor.AddRange(prefs.Roles
+                .Where(r => !string.IsNullOrWhiteSpace(r))
+                .Select(r => UiLabels.WorkType(Culture, r.Trim())));
         }
 
         _license = DrivingLicenseLabels.Combine(prefs?.DrivingLicenses);

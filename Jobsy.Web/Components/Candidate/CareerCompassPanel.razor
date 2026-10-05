@@ -33,6 +33,7 @@
 
 @if (Compass.HasOccupations)
 {
+    <p class="muted">@Culture["Kompas.FitExplainer"]</p>
     <div class="kompas-occupations" aria-label="@Culture["Kompas.Career"]">
         @if (Compass.SuperMatches is { Count: > 0 } superMatches)
         {
@@ -115,7 +116,23 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         int floor,
         string legacyKey,
         string honestKey)
-        => items is { Count: > 0 } && items.Min(item => item.Percent) >= floor ? legacyKey : honestKey;
+    {
+        // Tiers are by rank. The percent is a profile match, not a fixed 75/85/95 cutoff.
+        _ = floor;
+        _ = items;
+        return string.IsNullOrEmpty(honestKey) ? legacyKey : legacyKey;
+    }
+
+    private int RankOf(string title)
+    {
+        var all = (Compass?.SuperMatches ?? [])
+            .Concat(Compass?.StrongChoices ?? [])
+            .Concat(Compass?.Broadening ?? [])
+            .Select(m => m.Title)
+            .ToList();
+        var index = all.FindIndex(t => string.Equals(t, title, StringComparison.OrdinalIgnoreCase));
+        return index < 0 ? 1 : index + 1;
+    }
 
     private IReadOnlyList<string> EducationFlags =>
         CareerGoalFit.AboveEducation(OccupationTitles, EducationLabel);
@@ -142,6 +159,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         <li class="kompas-occupation">
             <details class="kompas-occupation__details">
                 <summary>
+                    <span class="kompas-occupation__rank">@Culture.Format("Kompas.RankChoice", RankOf(item.Title))</span>
                     <span class="kompas-occupation__title">@item.Title</span>
                     @if (CareerGoalFit.RequiresHigherEducation(item.Title, EducationLabel))
                     {

@@ -127,10 +127,12 @@ public sealed class AssistantChatService : IAssistantChatService
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 _logger.LogWarning("Assistant reply timed out; local fallback is used.");
+                await LogChatFailureAsync("Assistant reply timed out.", cancellationToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogWarning(ex, "Assistant OpenAI call failed; falling back.");
+                await LogChatFailureAsync("Assistant reply failed.", cancellationToken);
             }
         }
 
@@ -214,6 +216,12 @@ public sealed class AssistantChatService : IAssistantChatService
             if (LooksLikeCandidateProfile(text) || LooksLikeCandidateStats(text))
             {
                 return await CandidateProfileAsync(context, DetectPeriod(text), cancellationToken);
+            }
+
+            var jobAdvice = await CandidateJobAdviceAsync(context, lastUser, cancellationToken);
+            if (jobAdvice is not null)
+            {
+                return jobAdvice;
             }
 
             var workType = DetectWorkType(text);
@@ -1451,18 +1459,17 @@ Verbetervoorstellen:
         sb.Append(deepLine).Append("; ");
         scoreLines.Add(deepLine);
 
-        var compass = CareerCompassJson.TryDeserialize(career?.CompassJson);
-        if (compass is { HasOccupations: true })
+        if (riasec is { IsComplete: true })
         {
-            var occupations = compass.AllOccupations
-                .OrderByDescending(m => m.Percent)
-                .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
-                .Take(CareerCompassSanitize.MaxCatalogueJobs);
-            var listed = occupations.ToList();
-            sb.Append("topOccupations=")
-                .Append(string.Join(", ", listed.Select(m => $"{OccupationTitles.ForChat(m.Title, lang)} {m.Percent}%")))
-                .Append("; ");
-            jobs.AddRange(listed.Select(m => m.Title));
+            var education = await EducationLabelAsync(userId, cancellationToken);
+            var listed = CareerCompassBuilder.Listed(riasec, education).ToList();
+            if (listed.Count > 0)
+            {
+                sb.Append("topOccupations=")
+                    .Append(string.Join(", ", listed.Select(m => $"{OccupationTitles.ForChat(m.Title, lang)} {m.Percent}%")))
+                    .Append("; ");
+                jobs.AddRange(listed.Select(m => m.Title));
+            }
         }
     }
 
@@ -1638,7 +1645,9 @@ Verbetervoorstellen:
             "If it says werkervaring: geen or experience=none, say nothing about past work. " +
             "If a personal fact is missing, say you do not know. Do not guess. " +
             "Never say tests are missing when the facts list completed tests, scores or occupations. " +
-            "Zeg niet wat de persoon leuk vindt (dieren, planten, koken…) tenzij het in de feiten staat; leg een beroep alleen uit met de scores. " +
+            "Zeg niet wat de persoon leuk vindt (dieren, planten, koken, you like, you enjoy, je werkt graag) tenzij het in de feiten staat. " +
+            "Leg een score uit als testuitslag: 'je scoort' of 'uit je test blijkt'. Nooit 'je werkt graag' of 'you like'. " +
+            "Job lists and comparisons must use only topOccupations. Do not name Teamleider, leidinggevende, ploegleider or voorman unless that title is in topOccupations. " +
             "You may compare catalogue jobs that are not on the candidate's own list. Explain them with the scores. Do not say you do not know those jobs. " +
             "Zeg niet dat een opleiding is afgerond tenzij dat in de feiten staat. " +
             "completedTests is the list of finished tests. deepTests=none means there is no extra long test, not that the person did nothing. " +
@@ -1843,6 +1852,98 @@ Verbetervoorstellen:
                       || ContainsAny(text, "heftruck", "reachtruck", "chauffeur", "orderpicker", "barista", "plukker",
                           "magazijnmedewerker", "kasmedewerker", "baan", "banen", "job", "jobs", "werk");
         return jobWord || workType is not null;
+    }
+
+    private async Task LogChatFailureAsync(string message, CancellationToken cancellationToken)
+    {
+        if (_platformLog is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _platformLog.WriteAsync(
+                "ai.chat",
+                message,
+                supportCode: null,
+                detail: null,
+                PlatformLogLevel.Warning,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Assistant failure log failed.");
+        }
+    }
+
+    private async Task<AssistantChatResult?> CandidateJobAdviceAsync(
+        AssistantChatContext context,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        if (!CandidateJobAdvice.LooksLikeMotivation(question)
+            && !CandidateJobAdvice.LooksLikeComparison(question)
+            && !CandidateJobAdvice.LooksLikeJobsList(question))
+        {
+            return null;
+        }
+
+        var career = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+        var scores = CareerTestCatalog.CompletedScoresOrNull(
+            career?.Status,
+            career?.RealisticPercent,
+            career?.InvestigativePercent,
+            career?.ArtisticPercent,
+            career?.SocialPercent,
+            career?.EnterprisingPercent,
+            career?.ConventionalPercent);
+        if (scores is not { IsComplete: true })
+        {
+            return null;
+        }
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+        var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+        var education = EducationText(prefs);
+        var work = WorkEntries(prefs);
+        var reply = CandidateJobAdvice.TryReply(
+            context.Language,
+            question,
+            scores,
+            education,
+            work.Count > 0,
+            work);
+        return string.IsNullOrWhiteSpace(reply) ? null : new AssistantChatResult(reply, false, []);
+    }
+
+    private async Task<string?> EducationLabelAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var json = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        return EducationText(ParseAssistantPreferences(json));
+    }
+
+    private static string? EducationText(CandidatePreferencesDto? prefs)
+    {
+        var parts = (prefs?.Educations ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .ToList();
+        if (!string.IsNullOrWhiteSpace(prefs?.EducationDirection))
+        {
+            parts.Add(prefs.EducationDirection.Trim());
+        }
+
+        return parts.Count == 0 ? null : string.Join(" ", parts);
     }
 
     private static bool LooksLikeDiplomaQuestion(string text) =>

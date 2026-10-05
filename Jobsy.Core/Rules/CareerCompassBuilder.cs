@@ -23,9 +23,7 @@ public static class CareerCompassBuilder
             return CareerCompassSnapshot.Empty(fromDeepAnalysis);
         }
 
-        var ranked = Ranked(scores)
-            .Where(m => m.Percent >= BroadenMin)
-            .ToList();
+        var ranked = Listed(scores);
 
         var strengths = CareerTestCatalog.RiasecCodes
             .Select(code => (Code: code, Percent: scores.Get(code), Label: TypeLabel(code)))
@@ -57,9 +55,9 @@ public static class CareerCompassBuilder
 
     public static string BandLabel(string band) => band switch
     {
-        BandSuper => "Past heel goed (95% of meer)",
-        BandStrong => "Past goed (85% tot 94%)",
-        BandBroaden => "Ook de moeite (75% tot 84%)",
+        BandSuper => "Past het best",
+        BandStrong => "Past goed",
+        BandBroaden => "Ook de moeite",
         _ => "Richting om te bekijken"
     };
 
@@ -97,10 +95,56 @@ public static class CareerCompassBuilder
             .ToList();
 
     /// <summary>
-    /// Match percent from the catalogue weights and the candidate's scores.
-    /// A dream-catalogue title uses the work-field's main direction when it has no weights.
+    /// The one job list for the report, the coach, the action plan and /carriere.
+    /// Top 8–12 by profile match. Tiers are by rank, not by a fixed percent.
+    /// Leadership titles stay out when Enterprising is not a top-3 direction.
     /// </summary>
-    public static int CatalogueFit(string title, RiasecScores scores)
+    public static IReadOnlyList<CareerOccupationMatch> Listed(RiasecScores scores, string? education = null)
+    {
+        var allowLead = EnterprisingInTop3(scores);
+        var jobs = Ranked(scores)
+            .Where(job => allowLead || !IsLeadershipTitle(job.Title))
+            .Select(job => ApplyEducation(job, education))
+            .ToList();
+        jobs = CareerCompassSanitize.OrderForEducation(jobs, education);
+        if (jobs.Count > CareerCompassSanitize.MaxCatalogueJobs)
+        {
+            jobs = jobs.Take(CareerCompassSanitize.MaxCatalogueJobs).ToList();
+        }
+
+        return CareerCompassSanitize.AssignRankBands(jobs);
+    }
+
+    /// <summary>Teamleider, voorman and ploegleider need Enterprising in the top 3.</summary>
+    public static bool IsLeadershipTitle(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return false;
+        }
+
+        var fold = title.ToLowerInvariant();
+        return fold.Contains("teamleider", StringComparison.Ordinal)
+               || fold.Contains("leidinggevende", StringComparison.Ordinal)
+               || fold.Contains("ploegleider", StringComparison.Ordinal)
+               || fold.Contains("voorman", StringComparison.Ordinal);
+    }
+
+    public static bool EnterprisingInTop3(RiasecScores scores)
+    {
+        var top = CareerTestCatalog.RiasecCodes
+            .Select(code => (Code: code, Score: scores.Get(code)))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Code, StringComparer.Ordinal)
+            .Take(3);
+        return top.Any(x => string.Equals(x.Code, CareerTestCatalog.Enterprising, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Profile-match percent for a title. See <see cref="ProfileMatch"/> for the formula.
+    /// Pass <paramref name="education"/> to apply the higher-diploma cut.
+    /// </summary>
+    public static int CatalogueFit(string title, RiasecScores scores, string? education = null)
     {
         var folded = CareerOccupationKeys.Fold(title);
         CareerOccupation? best = null;
@@ -123,12 +167,13 @@ public static class CareerCompassBuilder
 
         if (best is not null)
         {
-            return Score(best, scores).Percent;
+            return ApplyEducation(Score(best, scores), education).Percent;
         }
 
         var dream = CareerDreamCatalog.FindByTitleOrAlias(title);
         var code = DomainForWerkveld(dream?.Werkveld) ?? CareerTestCatalog.Realistic;
-        return scores.Get(code);
+        var lone = new CareerOccupationMatch(title, ProfileMatch([(code, 100)], scores), "", "", null);
+        return ApplyEducation(lone, education).Percent;
     }
 
     /// <summary>Primary direction of a catalogue title, used to keep the same kind of work together.</summary>
@@ -275,32 +320,90 @@ public static class CareerCompassBuilder
 
     internal static CareerOccupationMatch Score(CareerOccupation job, RiasecScores scores)
     {
-        var weightSum = 0;
-        var weighted = 0.0;
-        foreach (var (code, weight) in job.Weights)
-        {
-            if (weight <= 0)
-            {
-                continue;
-            }
-
-            weightSum += weight;
-            weighted += scores.Get(code) / 100.0 * weight;
-        }
-
-        var percent = weightSum <= 0
-            ? 0
-            : (int)Math.Clamp(Math.Round(100 * weighted / weightSum, MidpointRounding.AwayFromZero), 0, 100);
         var top = job.Weights
             .OrderByDescending(w => w.Weight)
             .Select(w => TypeLabel(w.Code).ToLowerInvariant())
-            .First();
+            .FirstOrDefault() ?? "werk dat bij je past";
+        var percent = ProfileMatch(job.Weights, scores);
         return new CareerOccupationMatch(
             job.Title,
             percent,
-            Band(percent),
+            "",
             $"Dit werk vraagt vooral {top} — en dat sluit aan bij hoe jij scoort.",
             CareerOccupationKeys.FromTitle(job.Title));
+    }
+
+    /// <summary>
+    /// Job-fit percent (0–100) from the candidate's full profile versus the job's Holland letters.
+    ///
+    /// It is not the score of one direction. Steps:
+    /// 1. Take the job's letters in weight order (1st, 2nd, 3rd).
+    /// 2. Stretch each of the candidate's letter scores onto their own range, so their strongest
+    ///    direction reads as a strong match and their weakest does not:
+    ///    stretched = 48 + 44 × (score − lowest) / (highest − lowest).
+    ///    A nearly flat profile (span under 8) keeps the raw score.
+    /// 3. Weighted mean of those stretched scores: weights 3, 2 and 1. Fewer letters are renormalised.
+    /// 4. Education, applied by <see cref="CatalogueFit"/>: a job that needs a higher diploma is × 0.75.
+    ///
+    /// Worked example. Profile R66 I38 A37 S64 E43 C62 (lowest 37, highest 66, span 29).
+    /// Job Chauffeur, letters R then C.
+    /// stretched(R) = 48 + 44 × 29/29 = 92. stretched(C) = 48 + 44 × 25/29 = 86.
+    /// match = (3×92 + 2×86) / 5 = 89.6 → 90.
+    /// MBO does not block Chauffeur, so the fit stays 90. A pure Artistic job stays near 48.
+    /// </summary>
+    public static int ProfileMatch(IReadOnlyList<(string Code, int Weight)> weights, RiasecScores scores)
+    {
+        var letters = weights
+            .Where(w => w.Weight > 0)
+            .OrderByDescending(w => w.Weight)
+            .ThenBy(w => w.Code, StringComparer.Ordinal)
+            .Take(3)
+            .ToList();
+        if (letters.Count == 0)
+        {
+            return 0;
+        }
+
+        var values = CareerTestCatalog.RiasecCodes.Select(scores.Get).ToList();
+        var lowest = values.Min();
+        var highest = values.Max();
+        var span = highest - lowest;
+
+        int Stretch(int score)
+        {
+            if (span < 8)
+            {
+                return Math.Clamp(score, 0, 100);
+            }
+
+            var relative = (score - lowest) / (double)span;
+            return (int)Math.Clamp(Math.Round(48 + 44 * relative, MidpointRounding.AwayFromZero), 0, 100);
+        }
+
+        int[] rankWeights = [3, 2, 1];
+        var used = 0;
+        var sum = 0;
+        for (var i = 0; i < letters.Count; i++)
+        {
+            var weight = rankWeights[i];
+            used += weight;
+            sum += weight * Stretch(scores.Get(letters[i].Code));
+        }
+
+        return used <= 0
+            ? 0
+            : (int)Math.Clamp(Math.Round(sum / (double)used, MidpointRounding.AwayFromZero), 0, 100);
+    }
+
+    private static CareerOccupationMatch ApplyEducation(CareerOccupationMatch job, string? education)
+    {
+        if (string.IsNullOrWhiteSpace(education) || !CareerGoalFit.RequiresHigherEducation(job.Title, education))
+        {
+            return job;
+        }
+
+        var percent = (int)Math.Clamp(Math.Round(job.Percent * 0.75, MidpointRounding.AwayFromZero), 0, 100);
+        return new CareerOccupationMatch(job.Title, percent, job.Band, job.Why, job.SearchKeys);
     }
 
     private static IReadOnlyList<string> PracticalNotes(

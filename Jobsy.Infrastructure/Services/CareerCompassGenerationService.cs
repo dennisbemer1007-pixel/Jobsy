@@ -64,7 +64,7 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
             };
             for (var attempt = 1; attempt <= systems.Length; attempt++)
             {
-                var (generated, reason) = await GenerateWithOpenAiAsync(
+                var (generated, reason, rejectedText) = await GenerateWithOpenAiAsync(
                     sheet,
                     systems[attempt - 1],
                     apiKey,
@@ -79,7 +79,9 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
                         "compass",
                         reason,
                         attempt,
-                        cancellationToken);
+                        cancellationToken,
+                        model,
+                        rejectedText);
                 }
 
                 if (generated is not null)
@@ -106,7 +108,7 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         return local;
     }
 
-    private async Task<(CareerCompassSnapshot? Snapshot, string? Reason)> GenerateWithOpenAiAsync(
+    private async Task<(CareerCompassSnapshot? Snapshot, string? Reason, string? RejectedText)> GenerateWithOpenAiAsync(
         CandidateFactSheet sheet,
         string systemPrompt,
         string apiKey,
@@ -137,7 +139,7 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
             _logger.LogWarning(
                 "OpenAI beroepen-kompas gaf {StatusCode} (response body not logged).",
                 (int)response.StatusCode);
-            return (null, null);
+            return (null, null, null);
         }
 
         var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
@@ -145,13 +147,13 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         var reason = CandidateFactGuard.CompassRejection(content, sheet);
         if (reason is not null)
         {
-            return (null, reason);
+            return (null, reason, content);
         }
 
         var parsed = CareerCompassJson.TryDeserialize(content);
         return parsed is null
-            ? (null, "unreadable")
-            : (parsed with { FromOpenAi = true, FromDeepAnalysis = true }, null);
+            ? (null, "unreadable", content)
+            : (parsed with { FromOpenAi = true, FromDeepAnalysis = true }, null, null);
     }
 
 

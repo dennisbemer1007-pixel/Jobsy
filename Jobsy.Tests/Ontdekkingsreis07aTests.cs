@@ -247,6 +247,9 @@ public class OntdekkingsreisServiceMigrationTests
         public Task SaveDreamAsync(Guid userId, string? dreamTitle, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
+        public Task ClearDreamAsync(Guid userId, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
         public Task<string?> GetDreamTitleAsync(Guid userId, CancellationToken cancellationToken = default)
             => Task.FromResult<string?>(null);
 

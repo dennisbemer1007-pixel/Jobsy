@@ -46,7 +46,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
         _features = features;
     }
 
-    public async Task<CandidateKompasDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<CandidateKompasDto> GetAsync(Guid userId, string? language = null, CancellationToken cancellationToken = default)
     {
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
@@ -170,7 +170,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             career.Scores,
             culture.Scores,
             values.Scores,
-            WhoAmIProfileHighlights.FromPreferences(prefs));
+            WhoAmIProfileHighlights.FromPreferences(prefs),
+            language);
 
         return new CandidateKompasDto(
             profile,
@@ -188,7 +189,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             completeness);
     }
 
-    public async Task<CandidateDnaSummaryDto> GetDnaAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<CandidateDnaSummaryDto> GetDnaAsync(Guid userId, string? language = null, CancellationToken cancellationToken = default)
     {
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
@@ -388,7 +389,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             careerResolved.Scores,
             cultureResolved.Scores,
             valuesResolved.Scores,
-            WhoAmIProfileHighlights.FromPreferences(prefs));
+            WhoAmIProfileHighlights.FromPreferences(prefs),
+            language);
 
         bool IsDeepCompleted(AssessmentKind kind)
         {
@@ -462,7 +464,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
         RiasecScores? career,
         CulturePersonalityScores? culture,
         SchwartzValuesScores? values,
-        WhoAmIProfileHighlights? highlights = null)
+        WhoAmIProfileHighlights? highlights = null,
+        string? language = null)
     {
         var keywords = ParseKeywords(keywordsJson);
         var story = string.IsNullOrWhiteSpace(storyText) ? null : storyText.Trim();
@@ -470,14 +473,20 @@ public sealed class CandidateKompasService : ICandidateKompasService
         var scoresReady = competency is { IsComplete: true }
                           && career is { IsComplete: true }
                           && culture is { IsComplete: true };
+        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(language);
 
         // The passport reads this summary, not the who-am-i endpoint. A missing stored
         // story used to stay "wordt geschreven" forever. Compose the same local story.
-        if (story is null && scoresReady)
+        // A stored Dutch template is shown in the UI language without overwriting the row.
+        if (scoresReady && (story is null || !fromOpenAi || lang is not "nl"))
         {
-            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values);
-            keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values);
-            return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc ?? DateTime.UtcNow, WhoAmIStoryStatuses.Ready);
+            highlights ??= WhoAmIProfileHighlights.Empty;
+            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values, employersEnabled: true, language);
+            keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values, language);
+            if (string.IsNullOrWhiteSpace(storyText))
+            {
+                return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc ?? DateTime.UtcNow, WhoAmIStoryStatuses.Ready);
+            }
         }
 
         if (story is null)

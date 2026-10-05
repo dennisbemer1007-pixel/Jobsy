@@ -598,6 +598,15 @@
         AddBar("Stressbestendigheid", scores.Stressbestendigheid);
         AddBar("Innovatie", scores.Innovatie);
         AddBar(Culture["Competency.Bar.PeopleEnergy"], scores.Extraversie);
+        if (_deepCompleted && _competenceReport?.Traits is { Count: > 0 } traits)
+        {
+            _scoreBars.Clear();
+            foreach (var trait in traits)
+            {
+                AddBar(string.IsNullOrWhiteSpace(trait.LabelNl) ? trait.Domain : trait.LabelNl, trait.Score);
+            }
+        }
+
         _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }

@@ -214,7 +214,11 @@ public sealed class CandidateFactSheet
     }
 
     private static void AddScore(List<string> scores, string label, int percent)
-        => scores.Add($"{label}: {percent}%");
+        => scores.Add($"{label}: {percent}% ({ScoreBand(percent)})");
+
+    /// <summary>laag / gemiddeld / hoog. Under 50 is below average.</summary>
+    public static string ScoreBand(int percent)
+        => percent < 50 ? "laag" : percent < 70 ? "gemiddeld" : "hoog";
 
     public static CandidateFactSheet ForCareer(
         IReadOnlyList<DeepAnalysisDomainScore> scores,
@@ -245,11 +249,13 @@ public sealed class CandidateFactSheet
         var riasec = DeepAnalysisCatalog.ToRiasecScores(scores);
         if (riasec.IsComplete)
         {
-            lines.Add("Berekende aansluiting (dit percentage ligt vast, verzin geen ander cijfer):");
-            foreach (var job in CareerCompassBuilder.Ranked(riasec).Take(18))
+            lines.Add("Berekende aansluiting (dit percentage ligt vast, verzin geen ander cijfer).");
+            lines.Add("Elke why-zin noemt de richting achter de pijl, bijvoorbeeld: Chauffeur → Aanpakken met je handen.");
+            foreach (var job in CareerCompassBuilder.Listed(riasec))
             {
                 allowed.Add(job.Title);
-                lines.Add($"{job.Title}: {job.Percent}%");
+                var direction = CareerCompassBuilder.TypeLabel(CareerCompassBuilder.PrimaryCode(job.Title));
+                lines.Add($"{job.Title} → {direction}: {job.Percent}%");
             }
         }
 

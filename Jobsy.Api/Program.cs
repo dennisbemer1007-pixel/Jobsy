@@ -265,6 +265,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Coach chats are one request per message. 30 messages must not hit the shared AI cap of 10/min.
+    options.AddPolicy("assistant", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 40,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0
+            }));
     options.AddPolicy("feedback-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),

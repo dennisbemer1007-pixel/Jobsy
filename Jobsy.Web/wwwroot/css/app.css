@@ -20000,6 +20000,10 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 @media (max-width: 480px) {
+    .app-shell:has([data-lobsy-coach]) .app-main {
+        padding-bottom: calc(56px + 88px + 16px + 96px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
+    }
+
     .lobsy-coach-dock__tip {
         position: fixed;
         inset-inline: 0;
@@ -20200,7 +20204,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 
     .app-shell:has([data-lobsy-coach]) .app-main {
-        padding-bottom: calc(56px + 88px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(56px + 88px + 16px + 96px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + env(safe-area-inset-bottom, 0px));
     }
 
     .mail-settings__label {

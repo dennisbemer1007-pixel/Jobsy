@@ -22,8 +22,8 @@ public static class CareerCompassSanitize
     internal static CareerCompassSnapshot? FromDto(CareerCompassJson.CompassDto dto, bool fromOpenAi)
     {
         var strengths = CleanStrengths(dto.Strengths);
-        var allJobs = CleanJobs(
-            (dto.SuperMatches ?? []).Concat(dto.StrongChoices ?? []).Concat(dto.Broadening ?? []).ToList());
+        var allJobs = AssignRankBands(CleanJobs(
+            (dto.SuperMatches ?? []).Concat(dto.StrongChoices ?? []).Concat(dto.Broadening ?? []).ToList()));
         var notes = CleanTexts(dto.PracticalNotes, MaxNotes);
 
         if (allJobs.Count == 0)
@@ -73,10 +73,11 @@ public static class CareerCompassSanitize
                 continue;
             }
 
-            var percent = CareerCompassBuilder.CatalogueFit(title, scores);
+            var percent = CareerCompassBuilder.CatalogueFit(title, scores, education);
             jobs.Add(new CareerOccupationMatch(title, percent, "", job.Why, job.SearchKeys));
         }
 
+        var allowLead = CareerCompassBuilder.EnterprisingInTop3(scores);
         foreach (var local in CareerCompassBuilder.Ranked(scores))
         {
             if (jobs.Count >= MinCatalogueJobs && !IsLoneHigherEducation(jobs))
@@ -85,12 +86,18 @@ public static class CareerCompassSanitize
             }
 
             var title = CanonicalTitle(local.Title) ?? local.Title;
+            if (!allowLead && CareerCompassBuilder.IsLeadershipTitle(title))
+            {
+                continue;
+            }
+
             if (!seen.Add(MatchKey(title)))
             {
                 continue;
             }
 
-            jobs.Add(new CareerOccupationMatch(title, local.Percent, "", local.Why, local.SearchKeys));
+            var fit = CareerCompassBuilder.CatalogueFit(title, scores, education);
+            jobs.Add(new CareerOccupationMatch(title, fit, "", local.Why, local.SearchKeys));
         }
 
         if (IsLoneHigherEducation(jobs))
@@ -357,10 +364,10 @@ public static class CareerCompassSanitize
                 }
 
                 var percent = Math.Clamp(item.Percent, 0, 100);
-                var band = CareerCompassBuilder.Band(percent);
-                if (string.IsNullOrEmpty(band))
+                var band = item.Band ?? "";
+                if (band is not (CareerCompassBuilder.BandSuper or CareerCompassBuilder.BandStrong or CareerCompassBuilder.BandBroaden))
                 {
-                    continue;
+                    band = "";
                 }
 
                 var why = CleanText(item.Why);

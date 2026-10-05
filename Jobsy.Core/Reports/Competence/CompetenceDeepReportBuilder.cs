@@ -112,7 +112,7 @@ public static class CompetenceDeepReportBuilder
         };
     }
 
-    private static List<CompetenceDeepOccupation> FallbackOccupations(
+    internal static List<CompetenceDeepOccupation> FallbackOccupations(
         IReadOnlyList<CompetenceDeepTraitReport> traits)
     {
         var topTraits = traits
@@ -130,11 +130,14 @@ public static class CompetenceDeepReportBuilder
                 continue;
             }
 
+            var reason = string.Equals(trait.Level, CompetenceDeepReportLevels.Hoog, StringComparison.Ordinal)
+                ? pick.Reason
+                : $"Dit sluit aan bij je score op {trait.LabelNl} ({trait.Score}%).";
             result.Add(new CompetenceDeepOccupation
             {
                 Title = pick.Title,
                 MatchPercent = trait.Score,
-                Reason = pick.Reason
+                Reason = reason
             });
         }
 

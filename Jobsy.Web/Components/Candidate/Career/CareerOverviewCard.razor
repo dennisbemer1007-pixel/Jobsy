@@ -84,6 +84,9 @@
             <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnChangeDream">
                 @Culture["Career.Goal.NewDream"]
             </button>
+            <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnClearDream">
+                @Culture["Career.ClearDream"]
+            </button>
         </div>
     }
     else if (Plan.CurrentStep is { } step)
@@ -158,6 +161,15 @@
         </section>
     }
 
+    @if (!string.IsNullOrWhiteSpace(Plan.DreamTitle))
+    {
+        <p class="career-card__actions">
+            <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnClearDream">
+                @Culture["Career.ClearDream"]
+            </button>
+        </p>
+    }
+
     <p class="career-card__source">
         <svg class="career-card__source-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9" />
@@ -186,6 +198,7 @@
     [Parameter] public string? ErrorText { get; set; }
     [Parameter] public int FreeCourseCount { get; set; }
     [Parameter] public EventCallback OnChangeDream { get; set; }
+    [Parameter] public EventCallback OnClearDream { get; set; }
     [Parameter] public EventCallback OnDismissCarriedOver { get; set; }
     [Parameter] public EventCallback OnRegenerateLanguage { get; set; }
 

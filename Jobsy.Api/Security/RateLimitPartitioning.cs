@@ -118,6 +118,32 @@ public static class RateLimitPartitioning
             partition,
             http.Request.Method);
 
+        if (route.StartsWith("/api/assistant", StringComparison.OrdinalIgnoreCase))
+        {
+            var platformLog = http.RequestServices?.GetService<IPlatformErrorLog>();
+            if (platformLog is not null)
+            {
+                try
+                {
+                    await platformLog.WriteAsync(
+                        "ai.chat",
+                        "Assistant chat was rate limited.",
+                        supportCode,
+                        detail: null,
+                        Jobsy.Core.Enums.PlatformLogLevel.Warning,
+                        cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogDebug(ex, "Assistant rate-limit log failed.");
+                }
+            }
+        }
+
         if (http.Response.HasStarted)
         {
             return;

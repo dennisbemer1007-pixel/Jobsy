@@ -32,7 +32,7 @@ public static class WhoAmIStoryBuilder
                 SchwartzValuesCatalog.CategoryCodes.Select(c => (SchwartzValuesCatalog.EverydayLabel(c), values.Get(c))),
                 2)
             : [];
-        var keywords = WhoAmIKeywords.FromScores(competency, career, culture, values);
+        var keywords = WhoAmIKeywords.FromScores(competency, career, culture, values, language);
         profile ??= WhoAmIProfileHighlights.Empty;
         var lang = JobsyLanguages.Normalize(language);
         if (lang is not ("" or "nl"))
@@ -73,7 +73,7 @@ public static class WhoAmIStoryBuilder
 
             if (profile.Certificates.Count > 0)
             {
-                bits.Add("cursussen zoals " + JoinDutch(profile.Certificates.Take(2).ToList()));
+                bits.Add("het certificaat " + JoinDutch(profile.Certificates.Take(2).ToList()));
             }
 
             sb.Append(JoinDutch(bits));
@@ -214,10 +214,10 @@ public static class WhoAmIStoryBuilder
             {
                 bits.Add(lang switch
                 {
-                    "pl" => "kursy takie jak " + Join(profile.Certificates.Take(2).ToList()),
-                    "ro" => "cursuri precum " + Join(profile.Certificates.Take(2).ToList()),
-                    "ar" => "دورات مثل " + Join(profile.Certificates.Take(2).ToList()),
-                    _ => "courses such as " + Join(profile.Certificates.Take(2).ToList())
+                    "pl" => "certyfikat " + Join(profile.Certificates.Take(2).ToList()),
+                    "ro" => "certificatul " + Join(profile.Certificates.Take(2).ToList()),
+                    "ar" => "شهادة " + Join(profile.Certificates.Take(2).ToList()),
+                    _ => "the certificate " + Join(profile.Certificates.Take(2).ToList())
                 });
             }
 
@@ -349,46 +349,77 @@ public static class WhoAmIStoryBuilder
         RiasecScores? career = null,
         SchwartzValuesScores? values = null)
     {
-        if (string.IsNullOrWhiteSpace(story))
+        return StoryRuleReason(story, profile, competency, culture, career, values) is null
+               && CandidateFactGuard.RejectionReason(
+                   story,
+                   FactSheet(profile, competency, culture, career, values)) is null;
+    }
+
+    /// <summary>
+    /// Which story-shape rule failed: too-short, paragraphs, repeats, first-person, samenwerken.
+    /// Null when the shape is fine. Fact mistakes stay on <see cref="CandidateFactGuard"/>.
+    /// </summary>
+    public static string? StoryRuleReason(
+        string? story,
+        WhoAmIProfileHighlights? profile = null,
+        CompetencyScores? competency = null,
+        CulturePersonalityScores? culture = null,
+        RiasecScores? career = null,
+        SchwartzValuesScores? values = null)
+    {
+        if (string.IsNullOrWhiteSpace(story) || story.Trim().Length < 40)
         {
-            return false;
+            return "too-short";
+        }
+
+        if (!FirstPerson.IsMatch(story))
+        {
+            return "first-person";
         }
 
         var normalized = NormalizeParagraphs(story);
         var paragraphs = normalized
             .Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (paragraphs.Length is < 2 or > 4)
+        if (paragraphs.Length is < 2 or > 6)
         {
-            return false;
-        }
-
-        profile ??= WhoAmIProfileHighlights.Empty;
-        var sheet = competency is not null && career is not null && culture is not null
-            ? CandidateFactSheet.ForWhoAmI(competency, career, culture, profile, values)
-            : CandidateFactSheet.Personal(profile.Roles, profile.Educations, profile.Certificates, homeCity: profile.HomeCity);
-        if (CandidateFactGuard.RejectionReason(story, sheet) is not null)
-        {
-            return false;
+            return "paragraphs";
         }
 
         if (RepeatsIdea(story))
         {
-            return false;
+            return "repeats";
         }
 
         if (ContradictsSamenwerken(story, competency, culture))
         {
-            return false;
+            return "samenwerken";
         }
 
-        return true;
+        _ = profile;
+        _ = career;
+        _ = values;
+        return null;
     }
 
-    /// <summary>A single newline is a paragraph break too.</summary>
+    private static CandidateFactSheet FactSheet(
+        WhoAmIProfileHighlights? profile,
+        CompetencyScores? competency,
+        CulturePersonalityScores? culture,
+        RiasecScores? career,
+        SchwartzValuesScores? values)
+    {
+        profile ??= WhoAmIProfileHighlights.Empty;
+        return competency is not null && career is not null && culture is not null
+            ? CandidateFactSheet.ForWhoAmI(competency, career, culture, profile, values)
+            : CandidateFactSheet.Personal(profile.Roles, profile.Educations, profile.Certificates, homeCity: profile.HomeCity);
+    }
+
+    /// <summary>Blank lines split paragraphs. A single newline stays inside the paragraph.</summary>
     internal static string NormalizeParagraphs(string story)
     {
         var text = story.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
-        return Regex.Replace(text, @"(?<!\n)\n(?!\n)", "\n\n");
+        text = Regex.Replace(text, @"(?<!\n)\n(?!\n)", " ");
+        return Regex.Replace(text, @"\n{3,}", "\n\n").Trim();
     }
 
     private static bool RepeatsIdea(string story)
@@ -409,7 +440,7 @@ public static class WhoAmIStoryBuilder
                 stripped,
                 $@"\b{stem}\w*",
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant).Count;
-            if (count >= 4)
+            if (count >= 6)
             {
                 return true;
             }
@@ -560,6 +591,10 @@ public static class WhoAmIStoryBuilder
         Flush(true);
         return sb.ToString();
     }
+
+    private static readonly Regex FirstPerson = new(
+        @"\b(ik|i|eu|ja)\b|أنا",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private const string Fallback =
         "Ik ben klaar voor werk dichterbij dan je denkt. Ik zoek een ploeg waar ik mijn inzet, ritme en aandacht voor mensen kwijt kan, in gewone taal, zonder poespas.";

@@ -40,7 +40,8 @@ public static class RoleFitCheckBuilder
         CompetencyScores competencies,
         RiasecScores career,
         bool fromDeepAnalysis,
-        CulturePersonalityScores? culture = null)
+        CulturePersonalityScores? culture = null,
+        bool employersOn = true)
     {
         var title = NormalizeTitle(jobTitle) ?? "deze functie";
         var occupation = FindClosestOccupation(title);
@@ -68,7 +69,7 @@ public static class RoleFitCheckBuilder
         var strengths = BuildStrengths(title, occupation, competencies, career, culture);
         var gaps = BuildGaps(occupation, competencies, career, culture);
         var path = CareerPathPlanner.ForTitle(title);
-        var steps = BuildSteps(title, gaps, fromDeepAnalysis, path);
+        var steps = BuildSteps(title, gaps, fromDeepAnalysis, path, employersOn);
         var similar = RoleFitFunnel.SuggestSimilar(title, career);
 
         return Sanitize(new RoleFitCheckSnapshot(
@@ -348,7 +349,7 @@ public static class RoleFitCheckBuilder
         return path with { Steps = steps };
     }
 
-    private static List<string> BuildSteps(string title, IReadOnlyList<string> gaps, bool fromDeepAnalysis, CareerPathPlan? path)
+    private static List<string> BuildSteps(string title, IReadOnlyList<string> gaps, bool fromDeepAnalysis, CareerPathPlan? path, bool employersOn = true)
     {
         var role = title.ToLowerInvariant();
         var steps = new List<string>();
@@ -357,11 +358,16 @@ public static class RoleFitCheckBuilder
             steps.Add(path.Summary);
         }
 
-        steps.Add($"Zoek op de Lobsy-banenkaart in Den Haag en het Westland naar {role} en filter op hoge match.");
+        if (employersOn)
+        {
+            steps.Add($"Zoek op de Lobsy-banenkaart in Den Haag en het Westland naar {role} en filter op hoge match.");
+        }
         steps.Add(TrainingCopy.GapAdvice);
         steps.Add(gaps.Count > 0
             ? "Pak het grootste gat uit de lijst hierboven: volg een korte training of vraag of je die taak mag oefenen."
-            : "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit.");
+            : employersOn
+                ? "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit."
+                : "Kies twee beroepen uit je lijst die voelen als ‘dit is het’ en zet die als droombaan.");
         if (!fromDeepAnalysis)
         {
             steps.Add("Wil je een scherper groeistappenplan? Vul de uitgebreide diepte-analyse in.");

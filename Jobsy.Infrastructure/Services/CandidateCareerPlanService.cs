@@ -112,6 +112,25 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
         }
     }
 
+    public async Task ClearDreamAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var plans = await _db.CandidateCareerPlans
+            .Where(p => p.UserId == userId)
+            .ToListAsync(cancellationToken);
+        if (plans.Count == 0)
+        {
+            return;
+        }
+
+        var ids = plans.Select(p => p.Id).ToList();
+        var steps = await _db.CandidateCareerStepProgress
+            .Where(s => ids.Contains(s.PlanId))
+            .ToListAsync(cancellationToken);
+        _db.CandidateCareerStepProgress.RemoveRange(steps);
+        _db.CandidateCareerPlans.RemoveRange(plans);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
     private static string? CatalogKeyFor(string dream)
         => CareerDreamCatalog.FindByTitleOrAlias(dream)?.Key;
 
