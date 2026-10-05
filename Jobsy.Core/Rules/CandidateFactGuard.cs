@@ -89,6 +89,7 @@ public static partial class CandidateFactGuard
         "why-no-direction" => "Elke why-zin noemt één richting uit de feitenlijst.",
         "markdown" => "Geen markdown. Alleen gewone zinnen.",
         "story-rules" => "Schrijf 2 tot 4 alinea's in de ik-vorm, zonder herhaling.",
+        "paragraphs" => "Schrijf 2 tot 4 alinea's. Zet een lege regel tussen de alinea's. In de JSON-string is die lege regel \\n\\n.",
         "claimed-completed" => "Zeg niet dat een opleiding is afgerond. Dat staat niet in de feiten.",
         "unknown-outlook" => "Citeer alleen een vooruitblikzin uit de feitenlijst. Verzin geen andere zin over 2030 of AI.",
         _ => "Gebruik alleen de feitenlijst. Verzin niets."
