@@ -49,14 +49,7 @@ public sealed class PassportDnaReader : IPassportDnaReader
         var deepTraits = competenceDeep is null
             ? []
             : StoredDeepScores.CompetenceTraits(competenceDeep.Status, competenceDeep.AnswersJson, competenceDeep.ReportJson);
-        var competenceWords = deepTraits.Count > 0
-            ? deepTraits.Take(2).Select(trait => DimensionLabels.For(trait.Domain, language)).ToArray()
-            : PassportDnaWords.Competency(competency is null ? null : new CompetencyScores(
-                competency.SamenwerkenPercent,
-                competency.ResultaatgerichtheidPercent,
-                competency.StressbestendigheidPercent,
-                competency.InnovatiePercent,
-                competency.ExtraversiePercent), language);
+        var deepCompetency = CompetencyFromTraits(deepTraits);
         var careerScores = careerDeep is null
             ? null
             : StoredDeepScores.Career(careerDeep.Status, careerDeep.AnswersJson, careerDeep.ReportJson);
@@ -67,52 +60,101 @@ public sealed class PassportDnaReader : IPassportDnaReader
             ? null
             : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
 
+        var competenceScores = deepCompetency ?? (competency is null ? null : new CompetencyScores(
+            competency.SamenwerkenPercent,
+            competency.ResultaatgerichtheidPercent,
+            competency.StressbestendigheidPercent,
+            competency.InnovatiePercent,
+            competency.ExtraversiePercent));
+        var careerForItems = careerScores ?? (career is null ? null : new RiasecScores(
+            career.RealisticPercent,
+            career.InvestigativePercent,
+            career.ArtisticPercent,
+            career.SocialPercent,
+            career.EnterprisingPercent,
+            career.ConventionalPercent));
+        var cultureForItems = cultureScores ?? (culture is null ? null : new CulturePersonalityScores(
+            culture.AutonomyPercent,
+            culture.InformalPercent,
+            culture.CollaborationPercent,
+            culture.FlexibilityPercent,
+            culture.InnovationPercent,
+            culture.PeopleFirstPercent));
+        var valuesForItems = valuesScores ?? (values is null ? null : new SchwartzValuesScores(
+            values.AutonomyPercent,
+            values.ConnectionPercent,
+            values.AchievementPercent,
+            values.StabilityPercent,
+            values.ImpactPercent));
+
+        var competenceItems = PassportDnaWords.CompetencyItems(competenceScores, language, take: 4);
+        var careerItems = PassportDnaWords.CareerItems(careerForItems, language, take: 3);
+        var cultureItems = PassportDnaWords.CultureItems(cultureForItems, language, take: 4);
+        var valueItems = PassportDnaWords.ValueItems(valuesForItems, language, take: 4);
+
         return
         [
             Layer(
                 PassportDnaLayer.Competence,
-                competenceDeep?.CompletedAtUtc ?? competency?.CompletedAtUtc,
-                competency is null && competenceDeep is null,
-                competenceWords),
+                deepCompetency is not null ? competenceDeep!.CompletedAtUtc : competency?.CompletedAtUtc,
+                competenceScores is null,
+                competenceItems),
             Layer(
                 PassportDnaLayer.Career,
-                careerDeep?.CompletedAtUtc ?? career?.CompletedAtUtc,
-                career is null && careerDeep is null,
-                PassportDnaWords.Career(careerScores ?? (career is null ? null : new RiasecScores(
-                    career.RealisticPercent,
-                    career.InvestigativePercent,
-                    career.ArtisticPercent,
-                    career.SocialPercent,
-                    career.EnterprisingPercent,
-                    career.ConventionalPercent)), language)),
+                careerScores is not null ? careerDeep!.CompletedAtUtc : career?.CompletedAtUtc,
+                careerForItems is null,
+                careerItems),
             Layer(
                 PassportDnaLayer.Culture,
-                cultureDeep?.CompletedAtUtc ?? culture?.CompletedAtUtc,
-                culture is null && cultureDeep is null,
-                PassportDnaWords.Culture(cultureScores ?? (culture is null ? null : new CulturePersonalityScores(
-                    culture.AutonomyPercent,
-                    culture.InformalPercent,
-                    culture.CollaborationPercent,
-                    culture.FlexibilityPercent,
-                    culture.InnovationPercent,
-                    culture.PeopleFirstPercent)), language)),
+                cultureScores is not null ? cultureDeep!.CompletedAtUtc : culture?.CompletedAtUtc,
+                cultureForItems is null,
+                cultureItems),
             Layer(
                 PassportDnaLayer.Values,
-                valuesDeep?.CompletedAtUtc ?? values?.CompletedAtUtc,
-                values is null && valuesDeep is null,
-                PassportDnaWords.Values(valuesScores ?? (values is null ? null : new SchwartzValuesScores(
-                    values.AutonomyPercent,
-                    values.ConnectionPercent,
-                    values.AchievementPercent,
-                    values.StabilityPercent,
-                    values.ImpactPercent)), language))
+                valuesScores is not null ? valuesDeep!.CompletedAtUtc : values?.CompletedAtUtc,
+                valuesForItems is null,
+                valueItems)
         ];
+    }
+
+    private static CompetencyScores? CompetencyFromTraits(IReadOnlyList<(string Domain, int Score)> traits)
+    {
+        if (traits.Count == 0)
+        {
+            return null;
+        }
+
+        int? Score(string code)
+        {
+            foreach (var trait in traits)
+            {
+                if (string.Equals(trait.Domain, code, StringComparison.OrdinalIgnoreCase))
+                {
+                    return trait.Score;
+                }
+            }
+
+            return null;
+        }
+
+        var scores = new CompetencyScores(
+            Score(CompetencyTestCatalog.Samenwerken),
+            Score(CompetencyTestCatalog.Resultaatgerichtheid),
+            Score(CompetencyTestCatalog.Stressbestendigheid),
+            Score(CompetencyTestCatalog.Innovatie),
+            Score(CompetencyTestCatalog.Extraversie));
+        return scores.IsComplete ? scores : null;
     }
 
     private static PassportDnaLayerFact Layer(
         string key,
         DateTime? completedAtUtc,
         bool missing,
-        IReadOnlyList<string> words)
-        => new(key, !missing, completedAtUtc, words);
+        IReadOnlyList<(string Code, string Label)> items)
+        => new(
+            key,
+            !missing,
+            completedAtUtc,
+            items.Select(item => item.Label).ToArray(),
+            items.Select(item => item.Code).ToArray());
 }

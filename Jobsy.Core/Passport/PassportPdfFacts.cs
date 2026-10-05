@@ -46,7 +46,10 @@ public sealed record PassportPdfFacts(
     bool EmailVerified,
     bool PhoneVerified,
     bool PhoneVerificationRequired,
-    DateTime GeneratedAtUtc);
+    DateTime GeneratedAtUtc,
+    string? DreamTitle = null,
+    IReadOnlyList<PassportReferenceQuote>? ReferenceQuotes = null,
+    IReadOnlyList<string>? LearningGoals = null);
 
 public static class PassportPdfFactsFactory
 {
@@ -106,7 +109,8 @@ public static class PassportPdfFactsFactory
             EmailVerified: user.EmailVerifiedAtUtc is not null,
             PhoneVerified: user.PhoneVerifiedAtUtc is not null,
             PhoneVerificationRequired: phoneVerificationRequired,
-            GeneratedAtUtc: generatedAtUtc);
+            GeneratedAtUtc: generatedAtUtc,
+            LearningGoals: Goals(preferences.LearningGoals));
     }
 
     public static PassportPdfFacts FromApplication(
@@ -181,6 +185,13 @@ public static class PassportPdfFactsFactory
             PhoneVerificationRequired: phoneVerificationRequired,
             GeneratedAtUtc: generatedAtUtc);
     }
+
+    private static List<string> Goals(IReadOnlyList<string>? goals)
+        => (goals ?? [])
+            .Where(goal => !string.IsNullOrWhiteSpace(goal) && !goal.Contains('%'))
+            .Select(goal => goal.Trim())
+            .Take(5)
+            .ToList();
 
     private static List<PassportPaperFact> Papers(IReadOnlyList<CandidateCertificateDto>? certificates)
         => (certificates ?? [])
