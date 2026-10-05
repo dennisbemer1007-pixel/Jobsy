@@ -120,6 +120,69 @@ public class CompactTestPdfTests
     }
 
     [Fact]
+    public void Compact_section_headings_stay_with_their_body()
+    {
+        foreach (var kind in new[]
+                 {
+                     AssessmentKind.Career, AssessmentKind.Competence, AssessmentKind.Culture, AssessmentKind.Values
+                 })
+        {
+            AssertNoOrphanSectionHeading(Render(kind, compact: true, uiLang: "nl"), kind.ToString());
+        }
+
+        AssertNoOrphanSectionHeading(Render(AssessmentKind.Career, compact: true, uiLang: "en"), "career-en");
+        AssertNoOrphanSectionHeading(Render(AssessmentKind.Culture, compact: true, uiLang: "en"), "culture-en");
+
+        var career = Lines(Render(AssessmentKind.Career, compact: true, uiLang: "nl"));
+        var careerJobs = CareerReport().Occupations.Select(o => o.Title("nl")).ToList();
+        AssertHeadingHasBodyOnSamePage(career, "Beroepen die bij je passen", careerJobs[0] + " —");
+        AssertSectionStartsFreshWhenItContinues(
+            career,
+            "Beroepen die bij je passen",
+            line => careerJobs.Any(title => line.StartsWith(title + " —", StringComparison.Ordinal))
+                    || line.StartsWith("Het percentage is een gewogen gemiddelde", StringComparison.Ordinal));
+
+        var culture = Lines(Render(AssessmentKind.Culture, compact: true, uiLang: "nl"));
+        AssertHeadingHasBodyOnSamePage(
+            culture,
+            "Zo lees je je scores",
+            "Een hoger percentage betekent dat die manier van werken");
+
+        var cultureEn = Lines(Render(AssessmentKind.Culture, compact: true, uiLang: "en"));
+        AssertHeadingHasBodyOnSamePage(
+            cultureEn,
+            "How to read your scores",
+            "A higher percent means that way of working");
+
+        var values = Lines(Render(AssessmentKind.Values, compact: true, uiLang: "nl"));
+        AssertHeadingHasBodyOnSamePage(
+            values,
+            "Zo lees je dit, en wat daarna",
+            "Een hoger percentage betekent dat die waarde");
+
+        var competenceReport = CompetenceReport();
+        competenceReport.Occupations.Clear();
+        for (var i = 1; i <= CareerCompassSanitize.MaxCatalogueJobs; i++)
+        {
+            competenceReport.Occupations.Add(new CompetenceDeepOccupation
+            {
+                Title = $"Layoutberoep {i:00}",
+                MatchPercent = 60,
+                Reason = "Dit sluit aan bij je score en hoort bij dit beroep in het compacte rapport."
+            });
+        }
+
+        var competence = Lines(AssessmentReportPdfService.RenderCompetenceDeep(
+            "Lobsy", [], "Test Kandidaat", "5 oktober 2026", competenceReport, compact: true, uiLang: "nl"));
+        AssertHeadingHasBodyOnSamePage(competence, "Beroepen die bij je passen", "Layoutberoep 01 —");
+        AssertSectionStartsFreshWhenItContinues(
+            competence,
+            "Beroepen die bij je passen",
+            line => line.StartsWith("Layoutberoep ", StringComparison.Ordinal));
+        AssertNoOrphanSectionHeading(competence, "competence-jobs");
+    }
+
+    [Fact]
     public void Sparse_profile_is_not_padded_to_four_pages()
     {
         var sparse = new ValuesDeepReport
@@ -138,6 +201,117 @@ public class CompactTestPdfTests
     {
         var doc = PdfDocument.Open(pdf);
         return doc.GetPages().ToList();
+    }
+
+    /// <summary>
+    /// Content that starts a fresh page sits just under the header (around y=760 on A4).
+    /// A heading lower than this was started in a gap and must not continue on the next page.
+    /// </summary>
+    private const double FreshPageHeadingMinY = 640;
+
+    private static readonly HashSet<string> SectionHeadings = new(StringComparer.Ordinal)
+    {
+        "Beroepen die bij je passen",
+        "Jobs that fit you",
+        "Zo lees je je scores",
+        "How to read your scores",
+        "Zo lees je dit, en wat daarna",
+        "How to read this and what is next",
+        "Wat dit betekent",
+        "What this means",
+        "Jouw beroepsletters",
+        "Your job letters",
+        "Jouw actieplan",
+        "Your action plan",
+        "Sterke punten & valkuilen",
+        "Strengths & pitfalls",
+        "Wat je hiermee kunt doen",
+        "What you can do next",
+        "Werk dat bij je past",
+        "Over deze test",
+        "Hoe jij graag werkt",
+        "How you like to work",
+        "Hoe jij in een team past",
+        "How you show up in a team",
+        "Jouw waarden op volgorde",
+        "Your values ranked",
+        "Wat dit voor je werk betekent",
+        "What this means for your work",
+        "Werkplekken die bij je passen",
+        "Workplaces that fit you",
+        "Werkplekken die bij deze waarden passen",
+        "Workplaces that fit these values"
+    };
+
+    private sealed record PdfLine(int Page, double Y, string Text);
+
+    private static void AssertNoOrphanSectionHeading(byte[] pdf, string label)
+        => AssertNoOrphanSectionHeading(Lines(pdf), label);
+
+    private static void AssertNoOrphanSectionHeading(IReadOnlyList<PdfLine> lines, string label)
+    {
+        foreach (var page in lines.GroupBy(l => l.Page))
+        {
+            var last = page.Where(l => !IsFooter(l.Text)).OrderBy(l => l.Y).FirstOrDefault();
+            if (last is null)
+            {
+                continue;
+            }
+
+            var text = Compact(last.Text);
+            Assert.False(SectionHeadings.Contains(text), $"{label} page {page.Key} ends on section heading '{text}'.");
+        }
+    }
+
+    private static void AssertHeadingHasBodyOnSamePage(IReadOnlyList<PdfLine> lines, string heading, string bodyMarker)
+    {
+        var title = lines.Single(l => Compact(l.Text) == heading);
+        var bodyOnSamePage = lines.Any(l =>
+            l.Page == title.Page
+            && l.Y < title.Y - 1
+            && Compact(l.Text).Contains(bodyMarker, StringComparison.Ordinal));
+        Assert.True(bodyOnSamePage, $"'{heading}' is split from '{bodyMarker}' (page {title.Page}, y {title.Y:0}).");
+    }
+
+    private static void AssertSectionStartsFreshWhenItContinues(
+        IReadOnlyList<PdfLine> lines, string heading, Func<string, bool> continuesOnNextPage)
+    {
+        var title = lines.Single(l => Compact(l.Text) == heading);
+        var spills = lines.Any(l => l.Page > title.Page && continuesOnNextPage(Compact(l.Text)));
+        if (!spills)
+        {
+            return;
+        }
+
+        Assert.True(
+            title.Y >= FreshPageHeadingMinY,
+            $"'{heading}' continues on the next page but starts mid-page at y {title.Y:0}.");
+    }
+
+    private static bool IsFooter(string text)
+        => text.Contains("persoonlijk rapport", StringComparison.Ordinal)
+           || text.Contains("Pagina ", StringComparison.Ordinal);
+
+    private static string Compact(string text)
+        => string.Join(' ', text.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    private static List<PdfLine> Lines(byte[] pdf)
+    {
+        using var doc = PdfDocument.Open(pdf);
+        var lines = new List<PdfLine>();
+        var pageNo = 1;
+        foreach (var page in doc.GetPages())
+        {
+            foreach (var group in page.GetWords().GroupBy(w => Math.Round(w.BoundingBox.Bottom)))
+            {
+                var text = string.Join(' ', group.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text));
+                lines.Add(new PdfLine(pageNo, group.Average(w => w.BoundingBox.Bottom), text));
+            }
+
+            pageNo++;
+        }
+
+        return lines;
     }
 
     private static byte[] Render(AssessmentKind kind, bool compact, string uiLang) => kind switch

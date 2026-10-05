@@ -61,48 +61,53 @@ internal static class CompactDeepReportPdf
                     d.Score,
                     d.NormMean is double n ? $"{d.Score}% (Ø {Math.Round(n)}%)" : $"{d.Score}%")));
 
-            Heading(col, DeepReportCatalog.Get("holland.title", lang));
-            col.Item().Text(DeepReportCatalog.Format("holland.body", lang, report.HollandCode, top, places)).FontSize(9);
-            col.Item().Text(en
-                ? "Read the letters as a direction. A higher score means that kind of work showed up more often in your answers."
-                : "Lees de letters als een richting. Een hogere score betekent dat dat soort werk vaker in je antwoorden zat.")
-                .FontSize(8).FontColor(Muted);
+            Section(col, DeepReportCatalog.Get("holland.title", lang), box =>
+            {
+                box.Item().Text(DeepReportCatalog.Format("holland.body", lang, report.HollandCode, top, places)).FontSize(9);
+                box.Item().Text(en
+                    ? "Read the letters as a direction. A higher score means that kind of work showed up more often in your answers."
+                    : "Lees de letters als een richting. Een hogere score betekent dat dat soort werk vaker in je antwoorden zat.")
+                    .FontSize(8).FontColor(Muted);
+            });
 
-            Heading(col, CompactPdfCopy.WhatItMeans(uiLang));
-            foreach (var domain in ordered)
+            Section(col, CompactPdfCopy.WhatItMeans(uiLang), box =>
             {
-                var label = DeepReportCatalog.RiasecLabel(domain.Domain, lang);
-                MeaningCard(col, $"{label}: {domain.Score}%", AssessmentReportPdfService.CareerScoreSense(domain.Domain, en));
-            }
-
-            Heading(col, en ? "Jobs that fit you" : "Beroepen die bij je passen");
-            if (report.Occupations.Count == 0)
-            {
-                col.Item().Text(en
-                    ? "Your answers do not point to one job yet. Use the directions above as a start."
-                    : "Je antwoorden wijzen nog niet naar één beroep. Gebruik de richtingen hierboven als start.")
-                    .FontSize(9).FontColor(Muted);
-            }
-            else
-            {
-                foreach (var job in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
+                foreach (var domain in ordered)
                 {
-                    JobCard(col,
-                        $"{job.Title(lang)} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%",
-                        job.Reason(lang));
+                    var label = DeepReportCatalog.RiasecLabel(domain.Domain, lang);
+                    MeaningCard(box, $"{label}: {domain.Score}%", AssessmentReportPdfService.CareerScoreSense(domain.Domain, en));
                 }
+            });
 
-                AssessmentReportPdfService.WriteFitFootnote(
-                    col,
-                    AssessmentReportPdfService.CareerFootnote(report, education, lang));
-            }
+            Section(col, en ? "Jobs that fit you" : "Beroepen die bij je passen", box =>
+            {
+                if (report.Occupations.Count == 0)
+                {
+                    box.Item().Text(en
+                        ? "Your answers do not point to one job yet. Use the directions above as a start."
+                        : "Je antwoorden wijzen nog niet naar één beroep. Gebruik de richtingen hierboven als start.")
+                        .FontSize(9).FontColor(Muted);
+                }
+                else
+                {
+                    foreach (var job in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
+                    {
+                        JobCard(box,
+                            $"{job.Title(lang)} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%",
+                            job.Reason(lang));
+                    }
+
+                    AssessmentReportPdfService.WriteFitFootnote(
+                        box,
+                        AssessmentReportPdfService.CareerFootnote(report, education, lang));
+                }
+            });
 
             ActionPlan(col, lang, report.ActionPlan);
             Strengths(col, lang, report.StrengthKeys, report.PitfallKeys, "riasec");
 
-            col.Item().ShowEntire().Column(tail =>
+            Keep(col, tail =>
             {
-                tail.Spacing(4);
                 Heading(tail, en ? "How to read your scores" : "Zo lees je je scores");
                 tail.Item().Text(en
                     ? "A higher percent means that direction showed up more often in your answers. It is a starting point, not a grade."
@@ -161,116 +166,131 @@ internal static class CompactDeepReportPdf
                 col.Item().Text(report.NormSourceLine!).FontSize(7.5f).FontColor(Muted).Italic();
             }
 
-            Heading(col, CompactPdfCopy.WhatItMeans(uiLang));
-            foreach (var trait in traits)
+            // Trait cards are taller than a page together. Keep the heading with the first card,
+            // then let later cards flow. PreventPageBreak on the whole list would skip a page
+            // that still has room for the first card.
+            col.Item().EnsureSpace(TraitSectionMinHeight).Column(section =>
             {
-                col.Item().ShowEntire().Border(1).BorderColor(Line).Background(Card).Padding(6).Column(box =>
+                section.Spacing(7);
+                Heading(section, CompactPdfCopy.WhatItMeans(uiLang));
+                foreach (var trait in traits)
                 {
-                    box.Spacing(3);
-                    box.Item().Row(r =>
+                    section.Item().ShowEntire().Border(1).BorderColor(Line).Background(Card).Padding(6).Column(box =>
                     {
-                        r.RelativeItem().Text(trait.LabelNl).FontSize(11).Bold().FontColor(Purple);
-                        r.ConstantItem(150).AlignRight().AlignMiddle()
-                            .Text($"{trait.Score}/100 · {trait.Level}").FontSize(8).SemiBold().FontColor(Orange);
-                    });
-                    if (!string.IsNullOrWhiteSpace(trait.NormBand))
-                    {
-                        box.Item().Text(trait.NormBand!).FontSize(8).Italic().FontColor(Muted);
-                    }
-
-                    box.Item().Element(e => Bar(e, trait.Score, Purple, trait.NormMean));
-                    if (trait.NormMean is double avg)
-                    {
-                        box.Item().Text($"Gemiddelde van de normgroep: {Math.Round(avg)}/100").FontSize(7.5f).FontColor(Muted);
-                    }
-
-                    if (trait.Facets.Count > 0)
-                    {
-                        box.Item().PaddingTop(2).Text("Facetten").FontSize(8).Bold().FontColor(Ink);
-                        foreach (var facet in trait.Facets)
+                        box.Spacing(3);
+                        box.Item().Row(r =>
                         {
-                            box.Item().Row(r =>
-                            {
-                                r.RelativeItem(4).AlignMiddle().Text(facet.LabelNl).FontSize(7.5f);
-                                r.RelativeItem(5).AlignMiddle().Element(e => Bar(e, facet.Score, Orange, facet.NormMean));
-                                r.ConstantItem(22).AlignRight().AlignMiddle().Text($"{facet.Score}").FontSize(7.5f).Bold().FontColor(Ink);
-                            });
+                            r.RelativeItem().Text(trait.LabelNl).FontSize(11).Bold().FontColor(Purple);
+                            r.ConstantItem(150).AlignRight().AlignMiddle()
+                                .Text($"{trait.Score}/100 · {trait.Level}").FontSize(8).SemiBold().FontColor(Orange);
+                        });
+                        if (!string.IsNullOrWhiteSpace(trait.NormBand))
+                        {
+                            box.Item().Text(trait.NormBand!).FontSize(8).Italic().FontColor(Muted);
                         }
-                    }
 
-                    Mini(box, "Wat betekent dit?", trait.Meaning);
-                    Mini(box, "Zo zie je het op je werk", trait.WorkQuote);
-                    box.Item().Row(r =>
-                    {
-                        r.RelativeItem().Background(SoftCoral).Padding(4).Column(c =>
+                        box.Item().Element(e => Bar(e, trait.Score, Purple, trait.NormMean));
+                        if (trait.NormMean is double avg)
                         {
-                            c.Item().Text("Valkuil").FontSize(8).Bold().FontColor(Orange);
-                            c.Item().Text(trait.Pitfall).FontSize(8);
-                        });
-                        r.ConstantItem(6);
-                        r.RelativeItem().Background(SoftPurple).Padding(4).Column(c =>
+                            box.Item().Text($"Gemiddelde van de normgroep: {Math.Round(avg)}/100").FontSize(7.5f).FontColor(Muted);
+                        }
+
+                        if (trait.Facets.Count > 0)
                         {
-                            c.Item().Text("Tip").FontSize(8).Bold().FontColor(Purple);
-                            c.Item().Text(trait.Tip).FontSize(8);
+                            box.Item().PaddingTop(2).Text("Facetten").FontSize(8).Bold().FontColor(Ink);
+                            foreach (var facet in trait.Facets)
+                            {
+                                box.Item().Row(r =>
+                                {
+                                    r.RelativeItem(4).AlignMiddle().Text(facet.LabelNl).FontSize(7.5f);
+                                    r.RelativeItem(5).AlignMiddle().Element(e => Bar(e, facet.Score, Orange, facet.NormMean));
+                                    r.ConstantItem(22).AlignRight().AlignMiddle().Text($"{facet.Score}").FontSize(7.5f).Bold().FontColor(Ink);
+                                });
+                            }
+                        }
+
+                        Mini(box, "Wat betekent dit?", trait.Meaning);
+                        Mini(box, "Zo zie je het op je werk", trait.WorkQuote);
+                        box.Item().Row(r =>
+                        {
+                            r.RelativeItem().Background(SoftCoral).Padding(4).Column(c =>
+                            {
+                                c.Item().Text("Valkuil").FontSize(8).Bold().FontColor(Orange);
+                                c.Item().Text(trait.Pitfall).FontSize(8);
+                            });
+                            r.ConstantItem(6);
+                            r.RelativeItem().Background(SoftPurple).Padding(4).Column(c =>
+                            {
+                                c.Item().Text("Tip").FontSize(8).Bold().FontColor(Purple);
+                                c.Item().Text(trait.Tip).FontSize(8);
+                            });
                         });
+                        Mini(box, "Sterk in", trait.Strength);
                     });
-                    Mini(box, "Sterk in", trait.Strength);
-                });
-            }
+                }
+            });
 
             var strongest = traits.OrderByDescending(t => t.Score).FirstOrDefault();
             if (strongest is not null)
             {
-                Heading(col, "Werk dat bij je past");
-                col.Item().Row(r =>
+                Section(col, "Werk dat bij je past", box =>
                 {
-                    FitCard(r, "Hier bloei je op", strongest.ThriveAtWork, SoftPurple);
-                    r.ConstantItem(6);
-                    FitCard(r, "Leidinggevende die past", strongest.FittingManager, SoftCoral);
-                    r.ConstantItem(6);
-                    FitCard(r, "Jij in een team", strongest.InTeam, Card);
+                    box.Item().Row(r =>
+                    {
+                        FitCard(r, "Hier bloei je op", strongest.ThriveAtWork, SoftPurple);
+                        r.ConstantItem(6);
+                        FitCard(r, "Leidinggevende die past", strongest.FittingManager, SoftCoral);
+                        r.ConstantItem(6);
+                        FitCard(r, "Jij in een team", strongest.InTeam, Card);
+                    });
                 });
             }
 
-            Heading(col, "Beroepen die bij je passen");
-            if (report.Occupations.Count == 0)
+            Section(col, "Beroepen die bij je passen", box =>
             {
-                col.Item().Text("Vul de vragenlijst volledig in voor persoonlijke beroepssuggesties.").FontSize(9).FontColor(Muted);
-            }
-
-            foreach (var job in report.Occupations)
-            {
-                JobCard(col, $"{job.Title} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%", job.Reason);
-            }
-
-            Heading(col, "Jouw actieplan");
-            var step = 1;
-            foreach (var action in report.ActionPlan.Take(3))
-            {
-                col.Item().ShowEntire().Background(SoftPurple).Padding(6).Column(box =>
+                if (report.Occupations.Count == 0)
                 {
-                    box.Spacing(2);
-                    box.Item().Text($"{step}. {action.Title}").FontSize(10).Bold().FontColor(Purple);
-                    box.Item().Text(action.Body).FontSize(8.5f);
-                    box.Item().Text("☐ Gedaan op: ____").FontSize(8).FontColor(Muted);
-                });
-                step++;
-            }
+                    box.Item().Text("Vul de vragenlijst volledig in voor persoonlijke beroepssuggesties.").FontSize(9).FontColor(Muted);
+                }
 
-            Heading(col, "Over deze test");
-            col.Item().Text("150 vragen · Big Five (IPIP).").FontSize(8);
-            col.Item().Text(
-                    "Goldberg, L. R., Johnson, J. A., Eber, H. W., Hogan, R., Ashton, M. C., Cloninger, C. R., " +
-                    "& Gough, H. G. (2006). The International Personality Item Pool and the future of " +
-                    "public-domain personality measures. Journal of Research in Personality, 40(1), 84–96. ipip.ori.org")
-                .FontSize(7).FontColor(Muted);
-            if (!string.IsNullOrWhiteSpace(report.NormSourceLine))
+                foreach (var job in report.Occupations)
+                {
+                    JobCard(box, $"{job.Title} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%", job.Reason);
+                }
+            });
+
+            Section(col, "Jouw actieplan", box =>
             {
-                col.Item().Text(report.NormSourceLine!).FontSize(7).FontColor(Muted).Italic();
-            }
+                var step = 1;
+                foreach (var action in report.ActionPlan.Take(3))
+                {
+                    box.Item().ShowEntire().Background(SoftPurple).Padding(6).Column(card =>
+                    {
+                        card.Spacing(2);
+                        card.Item().Text($"{step}. {action.Title}").FontSize(10).Bold().FontColor(Purple);
+                        card.Item().Text(action.Body).FontSize(8.5f);
+                        card.Item().Text("☐ Gedaan op: ____").FontSize(8).FontColor(Muted);
+                    });
+                    step++;
+                }
+            });
 
-            col.Item().PaddingTop(2).Text("Dit is geen diagnose.").FontSize(8).Italic().FontColor(Muted);
-            Disclaimer(col, lang);
+            Section(col, "Over deze test", box =>
+            {
+                box.Item().Text("150 vragen · Big Five (IPIP).").FontSize(8);
+                box.Item().Text(
+                        "Goldberg, L. R., Johnson, J. A., Eber, H. W., Hogan, R., Ashton, M. C., Cloninger, C. R., " +
+                        "& Gough, H. G. (2006). The International Personality Item Pool and the future of " +
+                        "public-domain personality measures. Journal of Research in Personality, 40(1), 84–96. ipip.ori.org")
+                    .FontSize(7).FontColor(Muted);
+                if (!string.IsNullOrWhiteSpace(report.NormSourceLine))
+                {
+                    box.Item().Text(report.NormSourceLine!).FontSize(7).FontColor(Muted).Italic();
+                }
+
+                box.Item().PaddingTop(2).Text("Dit is geen diagnose.").FontSize(8).Italic().FontColor(Muted);
+                Disclaimer(box, lang);
+            });
         });
     }
 
@@ -304,49 +324,58 @@ internal static class CompactDeepReportPdf
 
             if (employersOn && report.Employers.Count > 0)
             {
-                Heading(col, en ? "Workplaces that fit you" : "Werkplekken die bij je passen");
-                foreach (var employer in report.Employers.Take(6))
+                Section(col, en ? "Workplaces that fit you" : "Werkplekken die bij je passen", box =>
                 {
-                    JobCard(col,
-                        DeepReportCatalog.Get($"org.{employer.OrgTypeKey}", lang),
-                        DeepReportCatalog.Get($"org.{employer.OrgTypeKey}.why", lang));
-                }
+                    foreach (var employer in report.Employers.Take(6))
+                    {
+                        JobCard(box,
+                            DeepReportCatalog.Get($"org.{employer.OrgTypeKey}", lang),
+                            DeepReportCatalog.Get($"org.{employer.OrgTypeKey}.why", lang));
+                    }
+                });
             }
             else
             {
-                Heading(col, en ? "How you like to work" : "Hoe jij graag werkt");
-                col.Item().Text(en
-                    ? "Look for a place where these ways of working show up in a normal week."
-                    : "Zoek een plek waar deze manieren van werken in een gewone week zichtbaar zijn.")
-                    .FontSize(9).FontColor(Muted);
-                foreach (var axis in cultureAxes.Take(3))
+                Section(col, en ? "How you like to work" : "Hoe jij graag werkt", box =>
                 {
-                    col.Item().Text($"{DeepReportCatalog.CultureLabel(axis.Domain, lang)} — {axis.Score}%").FontSize(9).SemiBold();
-                }
+                    box.Item().Text(en
+                        ? "Look for a place where these ways of working show up in a normal week."
+                        : "Zoek een plek waar deze manieren van werken in een gewone week zichtbaar zijn.")
+                        .FontSize(9).FontColor(Muted);
+                    foreach (var axis in cultureAxes.Take(3))
+                    {
+                        box.Item().Text($"{DeepReportCatalog.CultureLabel(axis.Domain, lang)} — {axis.Score}%").FontSize(9).SemiBold();
+                    }
+                });
             }
 
             if (facets.Count > 0)
             {
-                Heading(col, en ? "How you show up in a team" : "Hoe jij in een team past");
-                Chart(col, uiLang, en
-                    ? "A higher percent means that way of working showed up more often. It is a starting point, not a grade."
-                    : "Een hoger percentage betekent dat die manier van werken vaker in je antwoorden zat. Het is een startpunt, geen cijfer.",
-                    facets.Select(d => BarPoint(DeepReportCatalog.CultureLabel(d.Domain, lang), d)));
+                Section(col, en ? "How you show up in a team" : "Hoe jij in een team past", box =>
+                {
+                    Chart(box, uiLang, en
+                        ? "A higher percent means that way of working showed up more often. It is a starting point, not a grade."
+                        : "Een hoger percentage betekent dat die manier van werken vaker in je antwoorden zat. Het is een startpunt, geen cijfer.",
+                        facets.Select(d => BarPoint(DeepReportCatalog.CultureLabel(d.Domain, lang), d)));
+                });
             }
 
             ActionPlan(col, lang, report.ActionPlan);
             Strengths(col, lang, report.StrengthKeys, report.PitfallKeys, "culture");
-            Heading(col, en ? "How to read your scores" : "Zo lees je je scores");
-            col.Item().Text(en
-                ? "A higher percent means that way of working showed up more often. It is a starting point, not a grade."
-                : "Een hoger percentage betekent dat die manier van werken vaker in je antwoorden zat. Het is een startpunt, geen cijfer.")
-                .FontSize(9).FontColor(Muted);
-            Heading(col, en ? "What you can do next" : "Wat je hiermee kunt doen");
-            col.Item().Text(en
-                ? "Use this picture when you look at a workplace. Your answers stay yours."
-                : "Gebruik dit beeld als je naar een werkplek kijkt. Je antwoorden blijven van jou.")
-                .FontSize(9);
-            Disclaimer(col, lang);
+            Keep(col, tail =>
+            {
+                Heading(tail, en ? "How to read your scores" : "Zo lees je je scores");
+                tail.Item().Text(en
+                    ? "A higher percent means that way of working showed up more often. It is a starting point, not a grade."
+                    : "Een hoger percentage betekent dat die manier van werken vaker in je antwoorden zat. Het is een startpunt, geen cijfer.")
+                    .FontSize(9).FontColor(Muted);
+                Heading(tail, en ? "What you can do next" : "Wat je hiermee kunt doen");
+                tail.Item().Text(en
+                    ? "Use this picture when you look at a workplace. Your answers stay yours."
+                    : "Gebruik dit beeld als je naar een werkplek kijkt. Je antwoorden blijven van jou.")
+                    .FontSize(9);
+                Disclaimer(tail, lang);
+            });
         });
     }
 
@@ -367,44 +396,53 @@ internal static class CompactDeepReportPdf
                 : "Een hoger percentage betekent dat die waarde zwaarder woog in je antwoorden. Vraag in een gesprek hoe dat in een gewone week zichtbaar is.",
                 ordered.Select(d => BarPoint(DeepReportCatalog.ValueLabel(d.Domain, lang), d)));
 
-            Heading(col, DeepReportCatalog.Get("values.rank.title", lang));
-            col.Item().Text(DeepReportCatalog.Get("values.rank.lead", lang)).FontSize(8).Italic().FontColor(Muted);
-            var rank = 1;
-            foreach (var domain in ordered)
+            Section(col, DeepReportCatalog.Get("values.rank.title", lang), box =>
             {
-                MeaningCard(col,
-                    $"{rank}. {DeepReportCatalog.ValueLabel(domain.Domain, lang)} — {domain.Score}%",
-                    AssessmentReportPdfService.ChooseLine(domain.Domain, lang));
-                rank++;
-            }
+                box.Item().Text(DeepReportCatalog.Get("values.rank.lead", lang)).FontSize(8).Italic().FontColor(Muted);
+                var rank = 1;
+                foreach (var domain in ordered)
+                {
+                    MeaningCard(box,
+                        $"{rank}. {DeepReportCatalog.ValueLabel(domain.Domain, lang)} — {domain.Score}%",
+                        AssessmentReportPdfService.ChooseLine(domain.Domain, lang));
+                    rank++;
+                }
+            });
 
             if (employersOn && report.Employers.Count > 0)
             {
-                Heading(col, en ? "Workplaces that fit these values" : "Werkplekken die bij deze waarden passen");
-                foreach (var employer in report.Employers.Take(6))
+                Section(col, en ? "Workplaces that fit these values" : "Werkplekken die bij deze waarden passen", box =>
                 {
-                    JobCard(col,
-                        DeepReportCatalog.Get($"org.{employer.OrgTypeKey}", lang),
-                        DeepReportCatalog.Get($"org.{employer.OrgTypeKey}.why", lang));
-                }
+                    foreach (var employer in report.Employers.Take(6))
+                    {
+                        JobCard(box,
+                            DeepReportCatalog.Get($"org.{employer.OrgTypeKey}", lang),
+                            DeepReportCatalog.Get($"org.{employer.OrgTypeKey}.why", lang));
+                    }
+                });
             }
             else
             {
-                Heading(col, en ? "What this means for your work" : "Wat dit voor je werk betekent");
-                col.Item().Text(en
-                    ? "Use your top values when you choose tasks and a team. You do not need a company name for that."
-                    : "Gebruik je topwaarden als je taken en een team kiest. Daar heb je geen bedrijfsnaam voor nodig.")
-                    .FontSize(9);
+                Section(col, en ? "What this means for your work" : "Wat dit voor je werk betekent", box =>
+                {
+                    box.Item().Text(en
+                        ? "Use your top values when you choose tasks and a team. You do not need a company name for that."
+                        : "Gebruik je topwaarden als je taken en een team kiest. Daar heb je geen bedrijfsnaam voor nodig.")
+                        .FontSize(9);
+                });
             }
 
             ActionPlan(col, lang, report.ActionPlan);
             Strengths(col, lang, report.StrengthKeys, report.PitfallKeys, "value");
-            Heading(col, en ? "How to read this and what is next" : "Zo lees je dit, en wat daarna");
-            col.Item().Text(en
-                ? "A higher percent means that value weighed more in your answers. Ask in a conversation how it shows up in a normal week."
-                : "Een hoger percentage betekent dat die waarde zwaarder woog in je antwoorden. Vraag in een gesprek hoe dat in een gewone week zichtbaar is.")
-                .FontSize(9).FontColor(Muted);
-            Disclaimer(col, lang);
+            Keep(col, tail =>
+            {
+                Heading(tail, en ? "How to read this and what is next" : "Zo lees je dit, en wat daarna");
+                tail.Item().Text(en
+                    ? "A higher percent means that value weighed more in your answers. Ask in a conversation how it shows up in a normal week."
+                    : "Een hoger percentage betekent dat die waarde zwaarder woog in je antwoorden. Vraag in een gesprek hoe dat in een gewone week zichtbaar is.")
+                    .FontSize(9).FontColor(Muted);
+                Disclaimer(tail, lang);
+            });
         });
     }
 
@@ -577,6 +615,33 @@ internal static class CompactDeepReportPdf
         });
     }
 
+    /// <summary>
+    /// Rejects a heading-only fragment (about 30pt) and keeps the competence title with the
+    /// first trait card. A full card is about 250pt, so this stays below that height.
+    /// </summary>
+    private const float TraitSectionMinHeight = 120;
+
+    /// <summary>
+    /// Moves the block to the next page when it does not fit in the space left, so a
+    /// heading does not sit alone at the bottom. A block taller than one page still
+    /// continues after that fresh start.
+    /// </summary>
+    private static void Keep(ColumnDescriptor col, Action<ColumnDescriptor> body)
+    {
+        col.Item().PreventPageBreak().Column(section =>
+        {
+            section.Spacing(7);
+            body(section);
+        });
+    }
+
+    private static void Section(ColumnDescriptor col, string heading, Action<ColumnDescriptor> body)
+        => Keep(col, section =>
+        {
+            Heading(section, heading);
+            body(section);
+        });
+
     private static void Heading(ColumnDescriptor col, string text)
         => col.Item().PaddingTop(3).Text(text).FontSize(12).Bold().FontColor(Purple);
 
@@ -629,34 +694,38 @@ internal static class CompactDeepReportPdf
 
     private static void ActionPlan(ColumnDescriptor col, string lang, IReadOnlyList<DeepActionStep> plan)
     {
-        Heading(col, DeepReportCatalog.Get("pdf.actionPlan", lang));
-        col.Item().Text(DeepReportCatalog.Get("action.lead", lang)).FontSize(8).Italic().FontColor(Muted);
-        var n = 1;
-        foreach (var step in plan.Take(3))
+        Section(col, DeepReportCatalog.Get("pdf.actionPlan", lang), box =>
         {
-            col.Item().ShowEntire().Background(SoftCoral).Padding(6).Column(box =>
+            box.Item().Text(DeepReportCatalog.Get("action.lead", lang)).FontSize(8).Italic().FontColor(Muted);
+            var n = 1;
+            foreach (var step in plan.Take(3))
             {
-                box.Item().Text($"{n}. {step.Title.Resolve(lang)}").FontSize(9).SemiBold().FontColor(Ink);
-                box.Item().Text(step.Body.Resolve(lang)).FontSize(8).FontColor(Muted);
-            });
-            n++;
-        }
+                box.Item().ShowEntire().Background(SoftCoral).Padding(6).Column(card =>
+                {
+                    card.Item().Text($"{n}. {step.Title.Resolve(lang)}").FontSize(9).SemiBold().FontColor(Ink);
+                    card.Item().Text(step.Body.Resolve(lang)).FontSize(8).FontColor(Muted);
+                });
+                n++;
+            }
+        });
     }
 
     private static void Strengths(
         ColumnDescriptor col, string lang, IReadOnlyList<string> strengths, IReadOnlyList<string> pitfalls, string label)
     {
-        Heading(col, DeepReportCatalog.Get("pdf.strengths", lang));
-        col.Item().Text(DeepReportCatalog.Get("strength.lead", lang)).FontSize(8).Italic().FontColor(Muted);
-        foreach (var key in strengths.Take(3))
+        Section(col, DeepReportCatalog.Get("pdf.strengths", lang), box =>
         {
-            col.Item().Text("• " + AssessmentReportPdfService.StrengthSentence(key, label, lang)).FontSize(8.5f);
-        }
+            box.Item().Text(DeepReportCatalog.Get("strength.lead", lang)).FontSize(8).Italic().FontColor(Muted);
+            foreach (var key in strengths.Take(3))
+            {
+                box.Item().Text("• " + AssessmentReportPdfService.StrengthSentence(key, label, lang)).FontSize(8.5f);
+            }
 
-        foreach (var key in pitfalls.Take(3))
-        {
-            col.Item().Text("△ " + AssessmentReportPdfService.StrengthSentence(key, label, lang)).FontSize(8.5f).FontColor(Orange);
-        }
+            foreach (var key in pitfalls.Take(3))
+            {
+                box.Item().Text("△ " + AssessmentReportPdfService.StrengthSentence(key, label, lang)).FontSize(8.5f).FontColor(Orange);
+            }
+        });
     }
 
     private static void Disclaimer(ColumnDescriptor col, string lang)
