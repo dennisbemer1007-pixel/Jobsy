@@ -43,6 +43,41 @@ To approve a row: set `status` to `goedgekeurd`, fill `approvedBy` and `approved
 
 `ilo_tasks_nl.json` holds one Dutch line for each ILO task that the outlook can show (top two and bottom two per ISCO, ties kept apart). A line with status `concept, wacht op akkoord` is not shown. Set `status` to `goedgekeurd`, fill `reviewedBy` and `reviewedOn`, and commit. The build fails when a goedgekeurd line has an empty `nl`. `draft_ilo_nl.py` can refresh the concept drafts; it does not approve anything. The review sheet is `ilo_tasks_nl_review.csv`.
 
+## Honest advice
+
+`honest_advice.nl.json` stores one short Dutch advice line per ESCO occupation. The candidate app only reads that file. It does not call a model.
+
+The block "Eerlijk advies" shows on carrière and functiefit, under "Toekomst van dit werk", when platform flag `HonestAdviceEnabled` is on (default off). No stored line means the block stays hidden. The outlook source line (ROA / ILO, with peildatum) stays under the advice.
+
+Dutch is the source. `en`, `pl`, `ro` and `ar` are stored next to it (`translations`). The page serves the stored language. A missing or stale translation falls back to Dutch. Nothing is translated live. The translator uses the same `Ai__Provider` / OpenAI / Mistral settings as the rest of Lobsy (same call shape as vacancy translation, temperature 0.2).
+
+A small seed is already committed so the UI can be tried without a full run. Fill the rest offline:
+
+```bash
+# hash and peildatum only, no AI
+dotnet run --project tools/occupations/HonestAdviceGen -- --stamp
+
+# one occupation, or the whole catalogue
+dotnet run --project tools/occupations/HonestAdviceGen -- --ids <esco-id>
+dotnet run --project tools/occupations/HonestAdviceGen -- --all --delay-ms 500
+dotnet run --project tools/occupations/HonestAdviceGen -- --translate --delay-ms 500
+```
+
+`--force` regenerates a line even when its source hash is unchanged. Occupations that already match the current outlook facts are skipped. If the outlook has no demand line and no AI line, the tool stores "Dat weten we niet…" and does not call a model.
+
+Env (do not commit keys):
+
+| Variable | Meaning |
+|---|---|
+| `Ai__Provider` | `OpenAI` (default) or `Mistral` |
+| `OpenAI__ApiKey` or `OPENAI_API_KEY` | OpenAI key |
+| `OpenAI__Model` | default `gpt-4o-mini` |
+| `Mistral__ApiKey` or `MISTRAL_API_KEY` | Mistral key |
+| `Mistral__Model` | default `mistral-small-latest` |
+| `Mistral__BaseUrl` | default `https://api.eu.mistral.ai/v1/` |
+
+Commit the JSON after a run. The same file ships to production as an embedded resource.
+
 ## Yearly update
 
 In September, after the O*NET August release and the ROA AIS release, pin the new files in `sources.json`, run fetch and build, and commit. Take a new ESCO version when the Commission publishes one. Re-translate new ILO task lines and leave them on concept until a human approves them.

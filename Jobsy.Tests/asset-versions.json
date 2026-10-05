@@ -43,6 +43,10 @@
     "sha256": "2a7d8f1c132b3556c62fc1cbfbbb8300b579f73ca684b4760bc9275a2fdeada5",
     "v": "20261004-10"
   },
+  "css/features/honest-advice.css": {
+    "sha256": "d5b064e9a289e50881b1c82418401249a30c2bfc987a547cc941b24bfddf02b0",
+    "v": "20261005-07"
+  },
   "css/features/kandidaat-banen.css": {
     "sha256": "a961366a62b7d661c89968c0c9e8f3b0fa82beb6f8c8dc493a0efe78a471c278",
     "v": "20261004-10"

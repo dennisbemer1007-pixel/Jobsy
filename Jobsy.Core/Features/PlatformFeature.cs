@@ -25,5 +25,8 @@ public enum PlatformFeature
     WhatsAppReminders,
 
     /// <summary>Compact ~4-page personal deep-test PDFs. Default false keeps the longer layout.</summary>
-    CompactTestPdf
+    CompactTestPdf,
+
+    /// <summary>Stored honest career advice on job detail. Default false. No live generation.</summary>
+    HonestAdvice
 }

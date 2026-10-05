@@ -569,7 +569,8 @@ else if (_snapshot is not null)
             PhoneVerificationEnabled = u.PhoneVerificationEnabled,
             WhatsAppRemindersEnabled = u.WhatsAppRemindersEnabled,
             CompactTestPdfEnabled = u.CompactTestPdfEnabled,
-            FreeCandidateTestsEnabled = u.FreeCandidateTestsEnabled
+            FreeCandidateTestsEnabled = u.FreeCandidateTestsEnabled,
+            HonestAdviceEnabled = u.HonestAdviceEnabled
         };
         LastPatch = patch;
         return patch;
@@ -634,5 +635,6 @@ else if (_snapshot is not null)
             PhoneVerificationEnabled: f.PhoneVerificationEnabled,
             WhatsAppRemindersEnabled: f.WhatsAppRemindersEnabled,
             CompactTestPdfEnabled: f.CompactTestPdfEnabled,
-            FreeCandidateTestsEnabled: f.FreeCandidateTestsEnabled);
+            FreeCandidateTestsEnabled: f.FreeCandidateTestsEnabled,
+            HonestAdviceEnabled: f.HonestAdviceEnabled);
 }

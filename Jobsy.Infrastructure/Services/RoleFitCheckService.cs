@@ -310,6 +310,14 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 prefs.Licenses,
                 confirmedItems: [jobTitle],
                 checkJobTitles: false);
+            var occupation = Jobsy.Core.Careers.OccupationCatalog.Shared.Resolve(jobTitle);
+            var storedAdvice = occupation is null
+                ? null
+                : Jobsy.Core.Careers.HonestAdviceService.Shared.Get(occupation.Id);
+            if (storedAdvice is not null)
+            {
+                sheet.RememberHonestAdvice([storedAdvice.Text]);
+            }
             var reason = CandidateFactGuard.RejectionReason(visible, sheet);
             if (reason is not null)
             {

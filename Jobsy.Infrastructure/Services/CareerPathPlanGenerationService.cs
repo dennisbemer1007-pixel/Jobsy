@@ -108,6 +108,7 @@ public sealed class CareerPathPlanGenerationService : ICareerPathPlanGenerationS
         sb.AppendLine("Geef precies 4 stappen. Per stap: title, summary, skillsGap[], courses[], minRequirements[], yearsExperienceNeeded moet 0 zijn.");
         sb.AppendLine(FactSheet(dreamTitle, profile).ToPrompt());
         sb.AppendLine(CandidateFactGuard.StrictAddendum);
+        sb.AppendLine("Verzin geen eerlijk advies over hoe AI het werk verandert. Citeer alleen tekst uit Eerlijk advies als die in de feiten staat.");
         sb.AppendLine("Antwoord ALLEEN als JSON: {\"matchPercent\":number,\"matchSummary\":\"...\",\"steps\":[{\"title\":\"...\",\"summary\":\"...\",\"skillsGap\":[],\"courses\":[],\"minRequirements\":[],\"yearsExperienceNeeded\":0}]}");
 
         var languageLine = LanguageNames.TryGetValue(planLanguage, out var languageName)
