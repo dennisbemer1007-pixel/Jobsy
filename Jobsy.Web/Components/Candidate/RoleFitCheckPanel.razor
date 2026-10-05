@@ -61,6 +61,7 @@
             @if (OutlookFor(_session.JobTitle, EscoId) is { } preview && _session.LastResult is null)
             {
                 <OccupationOutlookBlock Result="preview" />
+                <OccupationDayLink EscoId="@EscoId" Title="@_session.JobTitle" From="fit" />
                 @if (_adviceOn && AdviceFor(_session.JobTitle, EscoId) is { } previewAdvice)
                 {
                     <HonestAdviceBlock Text="@previewAdvice.Text" Source="@previewAdvice.Source" />
@@ -73,6 +74,7 @@
             @if (OutlookFor(result.JobTitle, EscoId) is { } outlook)
             {
                 <OccupationOutlookBlock Result="outlook" />
+                <OccupationDayLink EscoId="@EscoId" Title="@result.JobTitle" From="fit" />
                 @if (_adviceOn && AdviceFor(result.JobTitle, EscoId) is { } advice)
                 {
                     <HonestAdviceBlock Text="@advice.Text" Source="@advice.Source" />

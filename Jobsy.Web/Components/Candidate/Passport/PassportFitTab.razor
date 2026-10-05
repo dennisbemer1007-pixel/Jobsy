@@ -80,6 +80,7 @@
                         @if (OutlookFor(result.JobTitle) is { } outlook)
                         {
                             <OccupationOutlookBlock Result="outlook" />
+                            <OccupationDayLink Title="@result.JobTitle" From="fit" />
                             @if (_adviceOn && AdviceFor(result.JobTitle) is { } advice)
                             {
                                 <HonestAdviceBlock Text="@advice.Text" Source="@advice.Source" />

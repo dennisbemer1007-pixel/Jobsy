@@ -55,6 +55,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateOnboarding> CandidateOnboardings => Set<CandidateOnboarding>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
+    public DbSet<OccupationDayInLife> OccupationDayInLives => Set<OccupationDayInLife>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
     public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
     public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
@@ -971,6 +972,29 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OccupationDayInLife>(entity =>
+        {
+            entity.ToTable("OccupationDayInLives");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EscoId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Uri).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.TitleNl).HasMaxLength(160).IsRequired();
+            entity.Property(e => e.Morning).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Midday).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Afternoon).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Closing).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.HighlightsJson).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.BlocksJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.TasksJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.SkillsJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.VariesNote).HasMaxLength(800).IsRequired();
+            entity.Property(e => e.SourceModel).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.ContentHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Locale).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.TranslationsJson).HasColumnType("text").IsRequired();
+            entity.HasIndex(e => e.EscoId).IsUnique();
         });
 
         modelBuilder.Entity<CandidateMatchSnapshot>(entity =>

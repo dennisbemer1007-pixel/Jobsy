@@ -281,6 +281,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                 </ul>
             }
             <OccupationOutlookBlock Result="OutlookFor(item)" />
+            <OccupationDayLink EscoId="@item.EscoId" Title="@item.Title" From="tests" />
             @if (_adviceOn && AdviceFor(item) is { } advice)
             {
                 <HonestAdviceBlock Text="@advice.Text" Source="@advice.Source" />
