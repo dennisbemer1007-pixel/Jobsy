@@ -64,6 +64,18 @@ public static class UiStringsPassport
             "Rijbewijs", "Licence", "Prawo jazdy", "Permis", "رخصة القيادة");
         Add("Passport.LobsyCv",
             "Lobsy-CV", "Lobsy CV", "CV Lobsy", "CV Lobsy", "سيرة Lobsy");
+        Add("Passport.DownloadDna",
+            "DNA-paspoort (PDF)",
+            "DNA passport (PDF)",
+            "Paszport DNA (PDF)",
+            "Pașaport ADN (PDF)",
+            "جواز الحمض النووي (PDF)");
+        Add("Passport.DownloadDnaHint",
+            "Twee pagina's. Alleen wat jij zelf invulde. Geen scores.",
+            "Two pages. Only what you entered yourself. No scores.",
+            "Dwie strony. Tylko to, co sam wpisałeś. Bez wyników.",
+            "Două pagini. Doar ce ai scris tu. Fără scoruri.",
+            "صفحتان. فقط ما كتبته أنت. بلا درجات.");
         Add("Passport.Edit",
             "Aanpassen", "Edit", "Edytuj", "Editează", "تعديل");
         Add("Passport.Tagline",
