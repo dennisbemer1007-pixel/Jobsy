@@ -4,12 +4,17 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 @if (_tip is not null)
 {
     <aside class="job-outlook-tip" aria-labelledby="@_headingId">
         <h4 id="@_headingId">@Culture["Outlook.GoodToKnow"]</h4>
         <OccupationOutlookBlock Result="_tip.Outlook" HideTitle="true" />
+        @if (_adviceOn && Advice is { } advice)
+        {
+            <HonestAdviceBlock Text="@advice.Text" Source="@advice.Source" />
+        }
         @if (_tip.Outlook.ChangeTasks.Count > 0)
         {
             <h5>@Culture["Outlook.WhatChanges"]</h5>
@@ -64,11 +69,25 @@
 @code {
     private readonly string _headingId = "job-tip-" + Guid.NewGuid().ToString("N");
     private CurrentJobTip? _tip;
+    private bool _adviceOn;
+
+    private HonestAdviceResult? Advice
+        => _tip is null ? null : HonestAdviceService.Shared.Get(_tip.EscoId, Culture.Language);
 
     [Parameter] public CandidateEmployerHistoryDto? Entry { get; set; }
     [Parameter] public RiasecScores? Scores { get; set; }
     [Parameter] public string? Education { get; set; }
 
-    protected override void OnParametersSet()
-        => _tip = CurrentJobOutlook.TryCreate(Entry, Scores, Education);
+    protected override async Task OnParametersSetAsync()
+    {
+        _tip = CurrentJobOutlook.TryCreate(Entry, Scores, Education);
+        try
+        {
+            _adviceOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.HonestAdvice);
+        }
+        catch (Exception)
+        {
+            _adviceOn = false;
+        }
+    }
 }

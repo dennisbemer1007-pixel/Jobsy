@@ -17,6 +17,12 @@ public static class UiStringsOutlook
             ar[key] = arText;
         }
 
+        Add("Advice.Title",
+            "Eerlijk advies",
+            "Honest advice",
+            "Szczera rada",
+            "Sfat sincer",
+            "نصيحة صادقة");
         Add("Outlook.Title",
             "Toekomst van dit werk",
             "The future of this work",

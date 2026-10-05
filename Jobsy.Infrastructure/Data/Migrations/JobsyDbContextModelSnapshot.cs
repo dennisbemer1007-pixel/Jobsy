@@ -4867,6 +4867,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateOnly?>("FreePublishUntil")
                         .HasColumnType("date");
 
+                    b.Property<bool>("HonestAdviceEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("InactiveCompanyDays")
                         .HasColumnType("integer");
 

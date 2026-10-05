@@ -62,6 +62,10 @@
             {
                 <OccupationOutlookBlock Result="preview" />
                 <OccupationDayLink EscoId="@EscoId" Title="@_session.JobTitle" From="fit" />
+                @if (_adviceOn && AdviceFor(_session.JobTitle, EscoId) is { } previewAdvice)
+                {
+                    <HonestAdviceBlock Text="@previewAdvice.Text" Source="@previewAdvice.Source" />
+                }
             }
         </section>
 
@@ -71,6 +75,10 @@
             {
                 <OccupationOutlookBlock Result="outlook" />
                 <OccupationDayLink EscoId="@EscoId" Title="@result.JobTitle" From="fit" />
+                @if (_adviceOn && AdviceFor(result.JobTitle, EscoId) is { } advice)
+                {
+                    <HonestAdviceBlock Text="@advice.Text" Source="@advice.Source" />
+                }
             }
             <ol class="role-fit-funnel">
                 <li class="role-fit-funnel__step">
@@ -253,6 +261,7 @@
     private readonly RoleFitCheckSession _session = new();
     private bool _wasActive;
     private bool _employersOn = true;
+    private bool _adviceOn;
     private bool _skipsPayment;
 
     protected override async Task OnInitializedAsync()
@@ -260,6 +269,7 @@
         _session.ActiveVacancyId = VacancyId;
         Culture.Changed += OnCultureChanged;
         _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        _adviceOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.HonestAdvice);
         try
         {
             var mode = await Api.GetDeepAnalysisPaymentModeAsync();
@@ -333,6 +343,17 @@
         }
 
         return string.IsNullOrWhiteSpace(id) ? null : Jobsy.Core.Careers.OccupationOutlook.Shared.Get(id);
+    }
+
+    private Jobsy.Core.Careers.HonestAdviceResult? AdviceFor(string? title, string? escoId)
+    {
+        var id = escoId;
+        if (string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(title))
+        {
+            id = Jobsy.Core.Careers.OccupationCatalog.Shared.Resolve(title)?.Id;
+        }
+
+        return string.IsNullOrWhiteSpace(id) ? null : Jobsy.Core.Careers.HonestAdviceService.Shared.Get(id, Culture.Language);
     }
 
     private async Task EvaluateSimilarAsync(string title)

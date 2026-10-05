@@ -297,7 +297,8 @@ public record UpdatePlatformFeatureRequest(
     bool? PhoneVerificationEnabled = null,
     bool? WhatsAppRemindersEnabled = null,
     bool? CompactTestPdfEnabled = null,
-    bool? FreeCandidateTestsEnabled = null);
+    bool? FreeCandidateTestsEnabled = null,
+    bool? HonestAdviceEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -325,7 +326,8 @@ public record PlatformFeatureDto(
     bool WhatsAppRemindersEnabled = false,
     bool CompactTestPdfEnabled = false,
     bool WhatsAppRemindersConfigured = false,
-    bool FreeCandidateTestsEnabled = true);
+    bool FreeCandidateTestsEnabled = true,
+    bool HonestAdviceEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

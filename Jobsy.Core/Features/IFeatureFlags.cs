@@ -18,7 +18,8 @@ public sealed record FeatureFlagSnapshot(
     bool SchoolsEnabled = false,
     bool AmbassadorsEnabled = false,
     bool WhatsAppRemindersEnabled = false,
-    bool CompactTestPdfEnabled = false)
+    bool CompactTestPdfEnabled = false,
+    bool HonestAdviceEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -32,6 +33,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.Ambassadors => AmbassadorsEnabled,
         PlatformFeature.WhatsAppReminders => WhatsAppRemindersEnabled,
         PlatformFeature.CompactTestPdf => CompactTestPdfEnabled,
+        PlatformFeature.HonestAdvice => HonestAdviceEnabled,
         _ => false
     };
 }

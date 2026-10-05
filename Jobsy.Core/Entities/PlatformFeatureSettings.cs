@@ -111,6 +111,12 @@ public class PlatformFeatureSettings
     public bool CompactTestPdfEnabled { get; set; }
 
     /// <summary>
+    /// When true, job detail shows the stored honest-advice line for that occupation.
+    /// Default false. The text is read from embedded JSON. Nothing is generated per candidate.
+    /// </summary>
+    public bool HonestAdviceEnabled { get; set; }
+
+    /// <summary>
     /// When true, every candidate unlocks the uitgebreide analyse without Mollie.
     /// Default true so acceptatie is free after deploy. An admin can turn it off.
     /// Test accounts stay free even when this is false.

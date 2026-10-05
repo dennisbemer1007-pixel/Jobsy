@@ -1,0 +1,22 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <section class="honest-advice" aria-labelledby="@_headingId">
+        <h5 id="@_headingId">@Culture["Advice.Title"]</h5>
+        <p>@Text</p>
+        @if (!string.IsNullOrWhiteSpace(Source))
+        {
+            <p class="honest-advice__source">@Source</p>
+        }
+    </section>
+}
+
+@code {
+    private readonly string _headingId = "advice-" + Guid.NewGuid().ToString("N");
+
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public string? Source { get; set; }
+}
