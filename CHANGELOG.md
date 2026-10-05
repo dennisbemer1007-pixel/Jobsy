@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Added
+- DNA-paspoort PDF v2 (behind `PassportPdfV2Enabled`, default off): `GET api/me/lobsy-cv.pdf` and `GET api/me/paspoort.pdf`, plus the application Lobsy-CV download, render a 2-page A4 passport (who you are, then what you have done) in the candidate's language (nl/en/pl/ro/ar). Words from completed tests only — no percentages, no date of birth, no AI story. Flag off keeps the existing Lobsy-CV.
+
 - Carrière 01 (Web): career API wiring on `/carriere` — fit bands, action kinds, error codes, dream-options/archive client stubs; `UiStringsCareer` for nl/en/pl/ro/ar.
 - Carrière 02 (Web): `/carriere` in the ontdekkingsreis style — `CareerClimbScene` with the lobster climbing stone by stone to the golden dream stone, `CareerRail`, `GrowingShellsStepper`, empty state with real job suggestions + job search, overview with "nu aan de beurt", and a calm dream-change dialog that keeps what you achieved (archive restore from the UI). Removes `HorizonArt`, the native `window.confirm`, the blur-commit dream input, the datalist and every percentage; new `features/carriere.css` (`?v=20260930-carriere`) and copy in nl/en/pl/ro/ar incl. `ar` RTL.
 
