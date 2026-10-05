@@ -10,16 +10,15 @@ namespace Jobsy.Infrastructure.Services.Passport;
 
 public sealed class PassportPdfService : IPassportPdfService
 {
-    private static readonly Color Navy = Color.FromHex("#0E2A4A");
-    private static readonly Color Ink = Color.FromHex("#1B2430");
-    private static readonly Color Muted = Color.FromHex("#5E6A78");
-    private static readonly Color Orange = Color.FromHex("#E4572E");
-    private static readonly Color Soft = Color.FromHex("#F6F4F1");
-    private static readonly Color Peach = Color.FromHex("#FFF4EC");
-    private static readonly Color Blue = Color.FromHex("#E6F1FB");
-    private static readonly Color Green = Color.FromHex("#E5F6EC");
-    private static readonly Color GreenInk = Color.FromHex("#1C7A4A");
-    private static readonly Color Line = Color.FromHex("#E4DDD4");
+    private static readonly Color Navy = Color.FromHex("#0F2D5C");
+    private static readonly Color Ink = Color.FromHex("#122033");
+    private static readonly Color Muted = Color.FromHex("#5A6A7D");
+    private static readonly Color Orange = Color.FromHex("#F54A1B");
+    private static readonly Color Soft = Color.FromHex("#F7F4F0");
+    private static readonly Color Peach = Color.FromHex("#FFE8E0");
+    private static readonly Color Sand = Color.FromHex("#F3EBE3");
+    private static readonly Color Green = Color.FromHex("#ECFDF3");
+    private static readonly Color GreenInk = Color.FromHex("#15803D");
     private static readonly Color White = Colors.White;
 
     private readonly IPlatformCompanySettingsService _companySettings;
@@ -62,18 +61,24 @@ public sealed class PassportPdfService : IPassportPdfService
         page.Margin(0);
         page.DefaultTextStyle(style => style.FontSize(9).FontColor(Ink).LineHeight(1.25f));
 
-        page.Header().Background(Navy).PaddingHorizontal(16).PaddingVertical(9).Row(row =>
+        page.Header().Height(40).Background(Navy).Layers(layers =>
         {
-            row.RelativeItem().AlignMiddle().Text(text =>
+            layers.Layer().AlignRight().PaddingRight(132).AlignMiddle().Width(168).Height(40).Svg(HelixSvg());
+            layers.PrimaryLayer().PaddingHorizontal(16).AlignMiddle().Row(row =>
             {
-                text.Span("Lobsy").FontSize(15).Bold().FontColor(White);
-                text.Span("    ").FontSize(11);
-                text.Span(PassportPdfStrings.T(lang, "Title")).FontSize(11).FontColor(Color.FromHex("#D5E2F2"));
+                row.ConstantItem(18).Height(18).AlignMiddle().Svg(LobsterSvg());
+                row.ConstantItem(7);
+                row.RelativeItem().AlignMiddle().Text(text =>
+                {
+                    text.Span("Lobsy").FontSize(15).Bold().FontColor(White);
+                    text.Span("    ").FontSize(11);
+                    text.Span(PassportPdfStrings.T(lang, "Title")).FontSize(11).FontColor(Color.FromHex("#D5E2F2"));
+                });
+                row.ConstantItem(140).AlignMiddle().AlignRight().Text(page2
+                        ? PassportPdfStrings.T(lang, "Page2")
+                        : PassportPdfStrings.T(lang, "Page1"))
+                    .FontSize(11).FontColor(White);
             });
-            row.ConstantItem(150).AlignMiddle().AlignRight().Text(page2
-                    ? PassportPdfStrings.T(lang, "Page2")
-                    : PassportPdfStrings.T(lang, "Page1"))
-                .FontSize(11).FontColor(White);
         });
 
         page.Content().PaddingHorizontal(16).PaddingTop(8).PaddingBottom(4).ScaleToFit().Column(col =>
@@ -156,42 +161,39 @@ public sealed class PassportPdfService : IPassportPdfService
 
     private static void Page2(ColumnDescriptor col, PassportPdfModel model, string lang)
     {
+        var paid = OfKind(model, "paid");
+        var volunteer = OfKind(model, "volunteer");
+        var care = OfKind(model, "care");
+
         SectionTitle(col, PassportPdfStrings.T(lang, "WorkExperience"));
-        var jobs = model.Experience.Take(4).ToList();
-        if (jobs.Count == 0)
+        if (paid.Count == 0 && volunteer.Count == 0 && care.Count == 0)
         {
             col.Item().Text(PassportPdfStrings.T(lang, "NoExperience")).FontSize(8.5f).FontColor(Muted);
         }
-
-        foreach (var job in jobs)
+        else if (paid.Count == 0)
         {
-            col.Item().Border(1).BorderColor(Line).Padding(7).Column(card =>
-            {
-                card.Item().Row(row =>
-                {
-                    row.RelativeItem().Text(job.Title).FontSize(10).Bold().FontColor(Navy);
-                    if (!string.IsNullOrWhiteSpace(job.Period))
-                    {
-                        row.ConstantItem(108).AlignRight().Text(job.Period).FontSize(8).Bold().FontColor(Orange);
-                    }
-                });
-                if (!string.IsNullOrWhiteSpace(job.Place))
-                {
-                    card.Item().PaddingTop(1).Text(job.Place).FontSize(8).FontColor(Muted);
-                }
-
-                var duties = job.Duties ?? [];
-                foreach (var duty in duties)
-                {
-                    card.Item().PaddingTop(1).Text("–  " + duty).FontSize(8);
-                }
-            });
+            col.Item().Text(PassportPdfStrings.T(lang, "NoPaid")).FontSize(8.5f).FontColor(Muted);
+        }
+        else
+        {
+            ExperienceCards(col, paid);
         }
 
-        var hidden = Math.Max(0, model.Experience.Count - jobs.Count) + model.ExperienceMore;
-        if (hidden > 0)
+        if (model.ExperienceMore > 0)
         {
-            col.Item().Text(PassportPdfStrings.F(lang, "More", hidden)).FontSize(7.5f).FontColor(Muted);
+            col.Item().Text(PassportPdfStrings.F(lang, "More", model.ExperienceMore)).FontSize(7.5f).FontColor(Muted);
+        }
+
+        if (volunteer.Count > 0)
+        {
+            SectionTitle(col, PassportPdfStrings.T(lang, "VolunteerTitle"));
+            ExperienceCards(col, volunteer);
+        }
+
+        if (care.Count > 0)
+        {
+            SectionTitle(col, PassportPdfStrings.T(lang, "CareTitle"));
+            ExperienceCards(col, care);
         }
 
         SectionTitle(col, PassportPdfStrings.T(lang, "PapersTitle"));
@@ -208,8 +210,23 @@ public sealed class PassportPdfService : IPassportPdfService
                 row.VerticalSpacing(4);
                 foreach (var paper in papers)
                 {
-                    row.Item().Background(Soft).Border(1).BorderColor(Line).PaddingHorizontal(6).PaddingVertical(3)
+                    row.Item().Background(Peach).PaddingHorizontal(7).PaddingVertical(3)
                         .Text(paper).FontSize(8).FontColor(Ink);
+                }
+            });
+        }
+
+        if (model.LearningLines.Count > 0)
+        {
+            SectionTitle(col, PassportPdfStrings.T(lang, "LearnTitle"));
+            col.Item().Inlined(row =>
+            {
+                row.Spacing(4);
+                row.VerticalSpacing(4);
+                foreach (var goal in model.LearningLines)
+                {
+                    row.Item().Background(Sand).PaddingHorizontal(7).PaddingVertical(3)
+                        .Text(goal).FontSize(8).FontColor(Ink);
                 }
             });
         }
@@ -262,7 +279,7 @@ public sealed class PassportPdfService : IPassportPdfService
             });
         }
 
-        col.Item().Border(1).BorderColor(Line).Padding(8).Row(row =>
+        col.Item().Background(Soft).Padding(8).Row(row =>
         {
             row.RelativeItem().Column(yes =>
             {
@@ -318,8 +335,8 @@ public sealed class PassportPdfService : IPassportPdfService
                             var bg = chip.Tone switch
                             {
                                 "open" => Peach,
-                                "role" => Soft,
-                                _ => Blue
+                                "role" => Sand,
+                                _ => Soft
                             };
                             var color = chip.Tone == "open" ? Orange : Ink;
                             chips.Item().Background(bg).PaddingHorizontal(6).PaddingVertical(2)
@@ -381,7 +398,7 @@ public sealed class PassportPdfService : IPassportPdfService
             SectionTitle(block, PassportPdfStrings.T(lang, "ValuesTitle"));
             foreach (var line in model.ValueLines)
             {
-                block.Item().PaddingTop(4).Background(Peach).PaddingHorizontal(6).PaddingVertical(5).Text(text =>
+                block.Item().PaddingTop(3).Text(text =>
                 {
                     text.Span(line.Label).FontSize(8.5f).Bold().FontColor(Orange);
                     text.Span("  —  " + line.Gloss).FontSize(8.5f).FontColor(Ink);
@@ -396,7 +413,14 @@ public sealed class PassportPdfService : IPassportPdfService
         {
             SectionTitle(block, PassportPdfStrings.T(lang, "RadarTitle"));
             block.Item().PaddingTop(1).Text(PassportPdfStrings.T(lang, "RadarNote")).FontSize(7.5f).FontColor(Muted);
-            block.Item().PaddingTop(2).Element(box => Radar(box, model));
+            if (model.ShowRadar)
+            {
+                block.Item().PaddingTop(2).Element(box => Radar(box, model));
+            }
+            else if (model.Dna.Any(card => card.Present))
+            {
+                block.Item().PaddingTop(2).Text(PassportPdfStrings.T(lang, "RadarSkipped")).FontSize(8).FontColor(Muted);
+            }
         });
     }
 
@@ -433,7 +457,7 @@ public sealed class PassportPdfService : IPassportPdfService
             SectionTitle(block, PassportPdfStrings.T(lang, "JobsTitle"));
             foreach (var job in model.JobFits)
             {
-                block.Item().PaddingTop(4).Border(1).BorderColor(Line).PaddingHorizontal(6).PaddingVertical(4).Column(card =>
+                block.Item().PaddingTop(3).Column(card =>
                 {
                     card.Item().Text(text =>
                     {
@@ -448,7 +472,7 @@ public sealed class PassportPdfService : IPassportPdfService
 
     private static void Practical(ColumnDescriptor col, PassportPdfModel model, string lang)
     {
-        col.Item().Border(1).BorderColor(Line).Background(Soft).Padding(7).Column(block =>
+        col.Item().Background(Soft).Padding(7).Column(block =>
         {
             block.Item().Text(PassportPdfStrings.T(lang, "PracticalTitle")).FontSize(9).Bold().FontColor(Navy);
             if (!string.IsNullOrWhiteSpace(model.PracticalLine))
@@ -490,7 +514,7 @@ public sealed class PassportPdfService : IPassportPdfService
 
     private static string RadarSvg(bool competence, bool career, bool culture, bool values)
     {
-        static double Radius(bool on) => on ? 78 : 18;
+        static double Radius(bool on) => on ? 78 : 0;
         static string At(double radius, double degrees)
         {
             var rad = degrees * Math.PI / 180d;
@@ -512,18 +536,67 @@ public sealed class PassportPdfService : IPassportPdfService
                + "<polygon points=\"" + Ring(48) + "\" fill=\"none\" stroke=\"#E4DDD4\" stroke-width=\"1\"/>"
                + "<line x1=\"100\" y1=\"22\" x2=\"100\" y2=\"178\" stroke=\"#E4DDD4\" stroke-width=\"1\"/>"
                + "<line x1=\"22\" y1=\"100\" x2=\"178\" y2=\"100\" stroke=\"#E4DDD4\" stroke-width=\"1\"/>"
-               + "<polygon points=\"" + shape + "\" fill=\"#F8CDBF\" stroke=\"#E4572E\" stroke-width=\"2.2\"/>"
+               + "<polygon points=\"" + shape + "\" fill=\"#FFE8E0\" stroke=\"#F54A1B\" stroke-width=\"2.2\"/>"
                + "</svg>";
     }
 
     private static string AvatarSvg()
-        => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><circle cx=\"18\" cy=\"18\" r=\"18\" fill=\"#0E2A4A\"/></svg>";
+        => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><circle cx=\"18\" cy=\"18\" r=\"18\" fill=\"#0F2D5C\"/></svg>";
 
     private static string AvatarLetter(PassportPdfModel model)
     {
         var letter = model.FullName.FirstOrDefault(char.IsLetter);
         return letter == default ? model.Initials[..1] : char.ToUpperInvariant(letter).ToString();
     }
+
+    private static List<PassportExperienceLine> OfKind(PassportPdfModel model, string kind)
+        => model.Experience.Where(line => string.Equals(line.Kind ?? "paid", kind, StringComparison.Ordinal)).ToList();
+
+    private static void ExperienceCards(ColumnDescriptor col, IReadOnlyList<PassportExperienceLine> jobs)
+    {
+        foreach (var job in jobs)
+        {
+            col.Item().Background(Soft).Padding(7).Row(row =>
+            {
+                row.ConstantItem(3).Background(Orange);
+                row.ConstantItem(8);
+                row.RelativeItem().Column(card =>
+                {
+                    card.Item().Row(line =>
+                    {
+                        line.RelativeItem().Text(job.Title).FontSize(10).Bold().FontColor(Navy);
+                        if (!string.IsNullOrWhiteSpace(job.Period))
+                        {
+                            line.ConstantItem(108).AlignRight().Text(job.Period).FontSize(8).Bold().FontColor(Orange);
+                        }
+                    });
+                    if (!string.IsNullOrWhiteSpace(job.Place))
+                    {
+                        card.Item().PaddingTop(1).Text(job.Place).FontSize(8).FontColor(Muted);
+                    }
+
+                    foreach (var duty in job.Duties ?? [])
+                    {
+                        card.Item().PaddingTop(1).Text("–  " + duty).FontSize(8);
+                    }
+                });
+            });
+        }
+    }
+
+    private static string HelixSvg()
+        => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 168 40\" fill=\"none\">"
+           + "<path d=\"M0 14 C 14 14, 14 26, 28 26 S 42 14, 56 14 S 70 26, 84 26 S 98 14, 112 14 S 126 26, 140 26 S 154 14, 168 14\" stroke=\"#D5E2F2\" stroke-width=\"1.2\" opacity=\"0.55\"/>"
+           + "<path d=\"M0 26 C 14 26, 14 14, 28 14 S 42 26, 56 26 S 70 14, 84 14 S 98 26, 112 26 S 126 14, 140 14 S 154 26, 168 26\" stroke=\"#F54A1B\" stroke-width=\"1\" opacity=\"0.45\"/>"
+           + "</svg>";
+
+    private static string LobsterSvg()
+        => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">"
+           + "<path d=\"M7.2 9.2c-1.8-2.4-4.4-1.6-3.6.8\" fill=\"none\" stroke=\"#F54A1B\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>"
+           + "<path d=\"M16.8 9.2c1.8-2.4 4.4-1.6 3.6.8\" fill=\"none\" stroke=\"#F54A1B\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>"
+           + "<ellipse cx=\"12\" cy=\"12.2\" rx=\"3.1\" ry=\"4.3\" fill=\"#F54A1B\"/>"
+           + "<path d=\"M9.1 15.4c.5 2.5 5.3 2.5 5.8 0\" fill=\"#F54A1B\"/>"
+           + "</svg>";
 
     private static void SectionTitle(ColumnDescriptor col, string title)
     {

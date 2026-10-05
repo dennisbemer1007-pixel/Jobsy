@@ -207,7 +207,10 @@ public class PassportPdfV2Tests
         var pdf = await Render(facts);
         var text = TextOf(pdf);
         Assert.Contains("Je hebt nog geen werkervaring ingevuld.", text, StringComparison.Ordinal);
-        Assert.Contains("Nog geen gedeelde referentie.", text, StringComparison.Ordinal);
+        Assert.Contains("Nog geen referenties via Lobsy.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vrijwilligerswerk", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mantelzorg", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Wat ik wil leren", text, StringComparison.Ordinal);
         Assert.Contains("Nog niet gedaan", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Kwekerij", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Orderpicker", text, StringComparison.Ordinal);
@@ -278,6 +281,7 @@ public class PassportPdfV2Tests
 
         Directory.CreateDirectory(dir);
         var rich = await Render(RichSample());
+        var thin = await Render(ThinSample());
         var sparse = await Render(FullFacts() with
         {
             OpenForWork = false,
@@ -299,8 +303,10 @@ public class PassportPdfV2Tests
             MaxHours = null
         });
         await File.WriteAllBytesAsync(Path.Combine(dir, "rich.pdf"), rich.Bytes);
+        await File.WriteAllBytesAsync(Path.Combine(dir, "thin.pdf"), thin.Bytes);
         await File.WriteAllBytesAsync(Path.Combine(dir, "sparse.pdf"), sparse.Bytes);
         Assert.Equal(2, rich.Pages);
+        Assert.Equal(2, thin.Pages);
         Assert.Equal(2, sparse.Pages);
     }
 
@@ -450,6 +456,104 @@ public class PassportPdfV2Tests
         ];
         return PassportPdfFactsFactory.FromUser(user, prefs, dna, includeContact: true, phoneVerificationRequired: false, Generated);
     }
+
+    [Fact]
+    public void Story_stays_short_and_uses_only_entered_facts()
+    {
+        var full = PassportPdfModelBuilder.Build(FullFacts());
+        Assert.NotNull(full.Story);
+        Assert.Contains("Ik werk graag met mijn handen.", full.Story, StringComparison.Ordinal);
+        Assert.Contains("Kwekerij De Voorbeeldtuin", full.Story, StringComparison.Ordinal);
+        Assert.Contains("Uit je tests:", full.Story, StringComparison.Ordinal);
+        Assert.DoesNotContain("Westland", full.Story, StringComparison.Ordinal);
+        Assert.DoesNotContain("32", full.Story, StringComparison.Ordinal);
+        Assert.True(full.Story!.Length <= 450);
+
+        var thinWords = PassportPdfModelBuilder.Build(FullFacts() with
+        {
+            OwnWords = null,
+            Experience = null,
+            Dna = PassportDnaLayer.None()
+        });
+        Assert.Null(thinWords.Story);
+    }
+
+    [Fact]
+    public void Radar_is_drawn_only_when_two_layers_are_done()
+    {
+        var none = PassportPdfModelBuilder.Build(FullFacts() with { Dna = PassportDnaLayer.None() });
+        Assert.False(none.ShowRadar);
+
+        var one = PassportPdfModelBuilder.Build(FullFacts() with
+        {
+            Dna = [new PassportDnaLayerFact(PassportDnaLayer.Competence, true, Generated, ["Samen & aardig"])]
+        });
+        Assert.False(one.ShowRadar);
+
+        var full = PassportPdfModelBuilder.Build(FullFacts());
+        Assert.True(full.ShowRadar);
+    }
+
+    [Fact]
+    public async Task Thin_page_surfaces_real_unpaid_work_and_learning_goals()
+    {
+        var pdf = await Render(ThinSample());
+        var text = TextOf(pdf);
+        Assert.Equal(2, pdf.Pages);
+        Assert.Contains("Nog geen betaald werk ingevuld.", text, StringComparison.Ordinal);
+        Assert.Contains("Vrijwilligerswerk", text, StringComparison.Ordinal);
+        Assert.Contains("Mantelzorg", text, StringComparison.Ordinal);
+        Assert.Contains("Wat ik wil leren", text, StringComparison.Ordinal);
+        Assert.Contains("Nederlands op het werk", text, StringComparison.Ordinal);
+        Assert.Contains("MBO 1", text, StringComparison.Ordinal);
+        Assert.Contains("Nog geen referenties via Lobsy.", text, StringComparison.Ordinal);
+        Assert.Contains("Nog te weinig lagen voor een plaatje.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Kwekerij", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Learning_goals_flow_from_preferences()
+    {
+        var user = new User
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01"),
+            FullName = "Marta Kowalska",
+            Email = "marta@example.com"
+        };
+        var prefs = new CandidatePreferencesDto(
+            ["Orderpicker"],
+            null,
+            null,
+            LearningGoals: ["Heftruck rijden", "Score 80%"]);
+        var facts = PassportPdfFactsFactory.FromUser(
+            user,
+            prefs,
+            PassportDnaLayer.None(),
+            includeContact: false,
+            phoneVerificationRequired: false,
+            Generated);
+        var model = PassportPdfModelBuilder.Build(facts);
+        Assert.Equal(["Heftruck rijden"], model.LearningLines);
+    }
+
+    private static PassportPdfFacts ThinSample()
+        => FullFacts() with
+        {
+            Roles = null,
+            Experience =
+            [
+                new PassportExperienceFact("Zorghuis Wateringen", "Vrijwillige zorghulp", "2025-01", null, null, "Bewoners begeleiden"),
+                new PassportExperienceFact("Oma thuis", "Mantelzorg", "2019-01", "2021-02", null, "Boodschappen en afspraken")
+            ],
+            Certificates = null,
+            OwnWords = "Ik help graag mensen.",
+            Dna = [new PassportDnaLayerFact(PassportDnaLayer.Competence, true, Generated, ["Samen & aardig"])],
+            EmailVerified = false,
+            DreamTitle = null,
+            ReferenceQuotes = null,
+            LearningGoals = ["Nederlands op het werk"]
+        };
 
     private static PassportPdfFacts RichSample()
     {

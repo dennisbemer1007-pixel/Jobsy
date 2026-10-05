@@ -51,7 +51,9 @@ public sealed record PassportPdfModel(
     string? PracticalLine,
     string? PracticalSeek,
     IReadOnlyList<PassportReferenceQuote> Quotes,
-    IReadOnlyList<PassportDirectionStep> Direction);
+    IReadOnlyList<PassportDirectionStep> Direction,
+    bool ShowRadar,
+    IReadOnlyList<string> LearningLines);
 
 public sealed record PassportChip(string Text, string Tone);
 
@@ -80,7 +82,8 @@ public sealed record PassportExperienceLine(
     string? Detail,
     IReadOnlyList<string>? Duties = null,
     string? Period = null,
-    string? Place = null);
+    string? Place = null,
+    string? Kind = null);
 
 public sealed record PassportDnaCard(string Title, string Body, string? When, bool Present = true);
 

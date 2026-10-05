@@ -130,7 +130,9 @@ public static class PassportPdfModelBuilder
             PracticalLine: PracticalLine(lang, facts, hasAvailabilitySignal, culture),
             PracticalSeek: PracticalSeek(lang, facts),
             Quotes: quotes,
-            Direction: direction);
+            Direction: direction,
+            ShowRadar: facts.Dna.Count(layer => layer.Done) >= 2,
+            LearningLines: CleanList(facts.LearningGoals, 5));
     }
 
     public static IReadOnlyList<(string Code, PassportShiftKind Kind)> DeriveShifts(
@@ -401,35 +403,88 @@ public static class PassportPdfModelBuilder
     private static (IReadOnlyList<PassportExperienceLine> Lines, int More) Experience(PassportPdfFacts facts)
     {
         var lang = JobsyLanguages.Normalize(facts.Language);
-        var all = (facts.Experience ?? [])
-            .Where(item => !string.IsNullOrWhiteSpace(item.Employer))
-            .Select(item =>
+        var paid = new List<PassportExperienceLine>();
+        var volunteer = new List<PassportExperienceLine>();
+        var care = new List<PassportExperienceLine>();
+        foreach (var item in facts.Experience ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(item.Employer))
             {
-                var period = Period(lang, item);
-                var hasRole = !string.IsNullOrWhiteSpace(item.Role);
-                var title = hasRole ? item.Role!.Trim() : item.Employer.Trim();
-                var place = hasRole ? item.Employer.Trim() : null;
-                var meta = hasRole ? JoinMeta(item.Employer.Trim(), period) : period;
-                var duties = Duties(item.Description);
-                return new PassportExperienceLine(title, meta, duties.Count == 0 ? null : string.Join(" ", duties), duties, period, place);
-            })
-            .ToList();
+                continue;
+            }
 
-        if (all.Count == 0 && facts.ExperienceCountWithoutNames > 0)
+            var line = ExperienceLine(lang, item);
+            switch (line.Kind)
+            {
+                case "volunteer":
+                    volunteer.Add(line);
+                    break;
+                case "care":
+                    care.Add(line);
+                    break;
+                default:
+                    paid.Add(line);
+                    break;
+            }
+        }
+
+        if (paid.Count == 0 && volunteer.Count == 0 && care.Count == 0 && facts.ExperienceCountWithoutNames > 0)
         {
             return (
             [
                 new PassportExperienceLine(
                     PassportPdfStrings.F(facts.Language, "ExperienceCount", facts.ExperienceCountWithoutNames),
                     null,
-                    null)
+                    null,
+                    Kind: "paid")
             ],
             0);
         }
 
-        var more = Math.Max(0, all.Count - MaxExperience);
-        return (all.Take(MaxExperience).ToArray(), more);
+        var shown = new List<PassportExperienceLine>(8);
+        shown.AddRange(paid.Take(3));
+        shown.AddRange(volunteer.Take(2));
+        shown.AddRange(care.Take(2));
+        var more = paid.Count + volunteer.Count + care.Count - shown.Count;
+        return (shown, more);
     }
+
+    private static PassportExperienceLine ExperienceLine(string lang, PassportExperienceFact item)
+    {
+        var period = Period(lang, item);
+        var hasRole = !string.IsNullOrWhiteSpace(item.Role);
+        var title = hasRole ? item.Role!.Trim() : item.Employer.Trim();
+        var place = hasRole ? item.Employer.Trim() : null;
+        var meta = hasRole ? JoinMeta(item.Employer.Trim(), period) : period;
+        var duties = Duties(item.Description);
+        return new PassportExperienceLine(
+            title,
+            meta,
+            duties.Count == 0 ? null : string.Join(" ", duties),
+            duties,
+            period,
+            place,
+            ExperienceKind(item));
+    }
+
+    private static string ExperienceKind(PassportExperienceFact item)
+    {
+        if (HasKind(item, "mantelzorg"))
+        {
+            return "care";
+        }
+
+        if (HasKind(item, "vrijwillig"))
+        {
+            return "volunteer";
+        }
+
+        return "paid";
+    }
+
+    private static bool HasKind(PassportExperienceFact item, string needle)
+        => (item.Role ?? "").Contains(needle, StringComparison.OrdinalIgnoreCase)
+           || item.Employer.Contains(needle, StringComparison.OrdinalIgnoreCase);
 
     private static (IReadOnlyList<string> Lines, int More) Certificates(PassportPdfFacts facts)
     {
@@ -545,65 +600,133 @@ public static class PassportPdfModelBuilder
     private static string? Story(string lang, PassportPdfFacts facts)
     {
         var parts = new List<string>();
-        var own = Clip(facts.OwnWords, 320);
+        var own = Opening(facts.OwnWords);
         if (own is not null)
         {
             parts.Add(Finish(own));
         }
 
-        foreach (var job in (facts.Experience ?? []).Where(item => !string.IsNullOrWhiteSpace(item.Employer)).Take(2))
+        var extras = 0;
+        var extraCap = own is not null && FillsStory(own) ? 1 : 3;
+
+        void TryAdd(string sentence)
         {
+            if (extras >= extraCap || parts.Count >= 4)
+            {
+                return;
+            }
+
+            var before = parts.Count;
+            AddFresh(parts, sentence);
+            if (parts.Count > before)
+            {
+                extras++;
+            }
+        }
+
+        foreach (var job in facts.Experience ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(job.Employer))
+            {
+                continue;
+            }
+
             var current = IsCurrent(job);
             var sentence = string.IsNullOrWhiteSpace(job.Role)
                 ? PassportPdfStrings.F(lang, current ? "StoryWorksPlace" : "StoryWorkedPlace", job.Employer.Trim())
                 : PassportPdfStrings.F(lang, current ? "StoryWorks" : "StoryWorked", job.Employer.Trim(), job.Role.Trim());
-            AddFresh(parts, sentence);
-            var duties = Duties(job.Description);
-            var duty = duties.Count == 0 ? null : duties[0];
-            if (duty is not null)
+            TryAdd(sentence);
+            break;
+        }
+
+        var labels = TestLabels(lang, facts);
+        if (labels.Count > 0)
+        {
+            TryAdd(PassportPdfStrings.F(lang, "StoryTests", string.Join(", ", labels)));
+        }
+
+        return parts.Count == 0 ? null : Clip(string.Join(" ", parts), 450);
+    }
+
+    private static string? Opening(string? text)
+    {
+        var source = Blank(text);
+        if (source is null || source.Contains('%'))
+        {
+            return null;
+        }
+
+        var sentences = new List<string>(2);
+        var current = new StringBuilder();
+        foreach (var ch in source)
+        {
+            current.Append(ch);
+            if (ch is '.' or '!' or '?')
             {
-                AddFresh(parts, Finish(duty));
+                var sentence = current.ToString().Trim();
+                current.Clear();
+                if (sentence.Length > 0)
+                {
+                    sentences.Add(sentence);
+                }
+
+                if (sentences.Count == 2)
+                {
+                    break;
+                }
             }
         }
 
-        var educations = (facts.Educations ?? [])
-            .Where(item => !string.IsNullOrWhiteSpace(item))
-            .Select(item => item.Trim())
-            .Take(2)
-            .ToArray();
-        if (educations.Length > 0)
+        if (sentences.Count < 2 && current.Length > 0)
         {
-            AddFresh(parts, PassportPdfStrings.F(lang, "StoryEducation", string.Join(", ", educations)));
+            var tail = current.ToString().Trim();
+            if (tail.Length > 0)
+            {
+                sentences.Add(tail);
+            }
         }
 
-        var papers = (facts.Certificates ?? [])
-            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
-            .Select(item => item.Name.Trim())
-            .Take(3)
-            .ToArray();
-        if (papers.Length > 0)
+        return sentences.Count == 0 ? null : Clip(string.Join(" ", sentences), 180);
+    }
+
+    private static bool FillsStory(string own)
+        => own.Count(ch => ch is '.' or '!' or '?') >= 2 || own.Length >= 160;
+
+    private static IReadOnlyList<string> TestLabels(string lang, PassportPdfFacts facts)
+    {
+        var labels = new List<string>(3);
+        foreach (var key in PassportDnaLayer.Keys)
         {
-            AddFresh(parts, PassportPdfStrings.F(lang, "StoryPapers", string.Join(", ", papers)));
+            PassportDnaLayerFact? layer = null;
+            foreach (var item in facts.Dna)
+            {
+                if (item.Key == key)
+                {
+                    layer = item;
+                    break;
+                }
+            }
+
+            var items = LayerItems(layer, lang);
+            if (items.Count == 0)
+            {
+                continue;
+            }
+
+            var label = items[0].Label.Trim();
+            if (label.Length == 0 || label.Contains('%') || labels.Contains(label, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            labels.Add(label);
+            if (labels.Count == 3)
+            {
+                break;
+            }
         }
 
-        var roles = CleanList(facts.Roles, 3);
-        if (roles.Count > 0)
-        {
-            AddFresh(parts, PassportPdfStrings.F(lang, "StorySeeks", string.Join(", ", roles)));
-        }
-
-        var hours = Hours(lang, facts.MinHours, facts.MaxHours);
-        if (hours is not null)
-        {
-            AddFresh(parts, PassportPdfStrings.F(lang, "StoryHours", hours));
-        }
-
-        if (!string.IsNullOrWhiteSpace(facts.WorkRegion))
-        {
-            AddFresh(parts, PassportPdfStrings.F(lang, "StoryRegion", facts.WorkRegion.Trim()));
-        }
-
-        return parts.Count == 0 ? null : Clip(string.Join(" ", parts), 720);
+        return labels;
     }
 
     private static void AddFresh(List<string> parts, string sentence)
