@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Api.Models;
+using Jobsy.Api.Passport;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
@@ -41,6 +42,7 @@ public partial class MeController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly ITranslationService _translation;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
+    private readonly PassportPdfDownload _passportPdf;
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
     private readonly ICandidateInsightsQueue _insightsQueue;
@@ -55,6 +57,7 @@ public partial class MeController : ControllerBase
         IPlatformFeatureService features,
         ITranslationService translation,
         ILobsyCvPdfService lobsyCvPdf,
+        PassportPdfDownload passportPdf,
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
         ICandidateInsightsQueue insightsQueue,
@@ -67,6 +70,7 @@ public partial class MeController : ControllerBase
         _features = features;
         _translation = translation;
         _lobsyCvPdf = lobsyCvPdf;
+        _passportPdf = passportPdf;
         _cvText = cvText;
         _cvExtraction = cvExtraction;
         _insightsQueue = insightsQueue;
@@ -779,6 +783,16 @@ public partial class MeController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
+        var features = await _features.GetAsync(cancellationToken);
+        if (features.PassportPdfV2Enabled)
+        {
+            var passport = await _passportPdf.ForCandidateAsync(
+                user,
+                features.PhoneVerificationEnabled,
+                cancellationToken);
+            return File(passport.Pdf, "application/pdf", passport.FileName);
+        }
+
         var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
             .AnyAsync(c => c.UserId == user.Id, cancellationToken);
         var preferences = ParsePreferences(user.PreferencesJson);
@@ -805,6 +819,13 @@ public partial class MeController : ControllerBase
         var fileName = _lobsyCvPdf.BuildFileName(model);
         return File(pdf, "application/pdf", fileName);
     }
+
+    /// <summary>Same download as <see cref="DownloadMyLobsyCv"/>. The flag chooses the document.</summary>
+    [HttpGet("paspoort.pdf")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("public-pdf")]
+    public Task<IActionResult> DownloadMyPassport(CancellationToken cancellationToken)
+        => DownloadMyLobsyCv(cancellationToken);
 
     private async Task<IReadOnlyList<string>> LoadCvHighlightsAsync(Guid userId, CancellationToken cancellationToken)
     {

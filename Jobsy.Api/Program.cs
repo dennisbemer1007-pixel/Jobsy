@@ -87,6 +87,7 @@ builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddScoped<Jobsy.Api.Admin.IAdminAuditContext, Jobsy.Api.Admin.AdminAuditContext>();
 builder.Services.AddScoped<Jobsy.Api.Admin.AdminAuditFilter>();
 builder.Services.AddScoped<Jobsy.Api.Filters.FeatureGateFilter>();
+builder.Services.AddScoped<Jobsy.Api.Passport.PassportPdfDownload>();
 builder.Services.AddControllers(options =>
     {
         options.Filters.AddService<Jobsy.Api.Admin.AdminAuditFilter>();

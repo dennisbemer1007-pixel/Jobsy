@@ -3,9 +3,8 @@
 ## Unreleased
 
 ### Added
+- DNA-paspoort PDF v2 (behind `PassportPdfV2Enabled`, default off): `GET api/me/lobsy-cv.pdf` and `GET api/me/paspoort.pdf`, plus the application Lobsy-CV download, render a 2-page A4 passport (who you are, then what you have done) in the candidate's language (nl/en/pl/ro/ar). Words from completed tests only — no percentages, no date of birth, no AI story. Flag off keeps the existing Lobsy-CV.
 - ESCO occupation catalogue: the 39 hand-weighted jobs are replaced by ESCO v1.2.1 (3,039 Dutch occupations) joined to O*NET 31.0 interest profiles. A job without a usable profile (low or no match) shows "Geen score" and no percentage. Listed suggestions are high or medium confidence only. Education uses the CBS ISCO skill level. havo and vwo without a further diploma use the same gate as mbo 4 (NLQF/EQF level 4). The shown match is the weighted average of the six letter scores, kept to two decimals so jobs stay apart, and equal percents share a tier. Next to each shown percent, a “?” button opens a plain explanation of that calculation for this candidate and this job (nl, en, pl, ro, ar). The PDF uses a short footnote from the same numbers. Westland corrections ship as `concept, wacht op akkoord` and do nothing until `goedgekeurd`. New public page `/bronnen`. Pipeline: `tools/occupations/` (fetch, build, `--check`).
-
-### Added
 - Carrière 01 (Web): career API wiring on `/carriere` — fit bands, action kinds, error codes, dream-options/archive client stubs; `UiStringsCareer` for nl/en/pl/ro/ar.
 - Carrière 02 (Web): `/carriere` in the ontdekkingsreis style — `CareerClimbScene` with the lobster climbing stone by stone to the golden dream stone, `CareerRail`, `GrowingShellsStepper`, empty state with real job suggestions + job search, overview with "nu aan de beurt", and a calm dream-change dialog that keeps what you achieved (archive restore from the UI). Removes `HorizonArt`, the native `window.confirm`, the blur-commit dream input, the datalist and every percentage; new `features/carriere.css` (`?v=20260930-carriere`) and copy in nl/en/pl/ro/ar incl. `ar` RTL.
 

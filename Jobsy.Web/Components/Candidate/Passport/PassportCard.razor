@@ -130,8 +130,8 @@
         </div>
 
         <div class="passport-card__actions">
-            <button type="button" class="btn btn-secondary" disabled="@CvBusy" @onclick="OnDownloadCv">
-                @(CvBusy ? Culture["Common.Loading"] : Culture["Passport.LobsyCv"])
+            <button type="button" class="btn btn-secondary" disabled="@CvBusy" data-testid="passport-download-pdf" @onclick="OnDownloadCv">
+                @(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])
             </button>
             <button type="button" class="btn btn-primary" @onclick="OnEdit">
                 @Culture["Passport.Edit"]
@@ -164,6 +164,7 @@
     [Parameter] public string? LicenseLabel { get; set; }
     [Parameter] public string OneLiner { get; set; } = "";
     [Parameter] public bool CvBusy { get; set; }
+    [Parameter] public bool DnaPassport { get; set; }
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback OnDownloadCv { get; set; }
 
