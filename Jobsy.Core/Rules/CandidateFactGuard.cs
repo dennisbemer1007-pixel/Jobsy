@@ -72,6 +72,11 @@ public static partial class CandidateFactGuard
             return "unknown-outlook";
         }
 
+        if (MentionsUnsourcedAdvice(text, sheet))
+        {
+            return "unknown-advice";
+        }
+
         return null;
     }
 
@@ -91,6 +96,7 @@ public static partial class CandidateFactGuard
         "story-rules" => "Schrijf 2 tot 4 alinea's in de ik-vorm, zonder herhaling.",
         "claimed-completed" => "Zeg niet dat een opleiding is afgerond. Dat staat niet in de feiten.",
         "unknown-outlook" => "Citeer alleen een vooruitblikzin uit de feitenlijst. Verzin geen andere zin over 2030 of AI.",
+        "unknown-advice" => "Citeer alleen een eerlijk advies uit de feitenlijst. Verzin geen ander advies over het beroep of over AI.",
         _ => "Gebruik alleen de feitenlijst. Verzin niets."
     };
 
@@ -243,10 +249,7 @@ public static partial class CandidateFactGuard
             }
 
             var trimmed = sentence.Trim();
-            var allowed = sheet.OutlookLines.Any(line =>
-                line.Contains(trimmed, StringComparison.Ordinal)
-                || trimmed.Contains(line, StringComparison.Ordinal));
-            if (!allowed)
+            if (!QuoteAllowed(trimmed, sheet.OutlookLines) && !QuoteAllowed(trimmed, sheet.HonestAdviceLines))
             {
                 return true;
             }
@@ -254,6 +257,42 @@ public static partial class CandidateFactGuard
 
         return false;
     }
+
+    private static bool MentionsUnsourcedAdvice(string text, CandidateFactSheet sheet)
+    {
+        foreach (var sentence in SplitSentences(text))
+        {
+            if (!LooksLikeHonestAdvice(sentence))
+            {
+                continue;
+            }
+
+            if (!QuoteAllowed(sentence.Trim(), sheet.HonestAdviceLines))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool QuoteAllowed(string trimmed, IReadOnlyList<string> lines)
+        => lines.Any(line =>
+            line.Contains(trimmed, StringComparison.Ordinal)
+            || trimmed.Contains(line, StringComparison.Ordinal));
+
+    private static bool LooksLikeHonestAdvice(string sentence)
+        => sentence.Contains("eerlijk advies", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("met AI", StringComparison.Ordinal)
+           || sentence.Contains("AI verandert", StringComparison.Ordinal)
+           || sentence.Contains("te weinig gegevens voor een advies", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("with AI", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("AI changes", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("honest advice", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("przez AI", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("z AI", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("din cauza AI", StringComparison.OrdinalIgnoreCase)
+           || sentence.Contains("الذكاء الاصطناعي", StringComparison.Ordinal);
 
     private static bool LooksLikeOutlook(string sentence)
         => sentence.Contains("Tot 2030", StringComparison.Ordinal)

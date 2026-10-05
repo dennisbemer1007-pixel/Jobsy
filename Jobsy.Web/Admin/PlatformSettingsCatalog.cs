@@ -236,6 +236,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("HonestAdviceEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "HonestAdviceEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.HonestAdvice.Enabled.Title",
+                DescriptionKey: "AdminSettings.HonestAdvice.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.HonestAdviceEnabled,
+                Write: v => new PlatformFeatureUpdate(HonestAdviceEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("FreeCandidateTestsEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -493,6 +506,7 @@ public static class PlatformSettingsCatalog
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
         bool? compactTestPdfEnabled = null;
+        bool? honestAdviceEnabled = null;
         bool? freeCandidateTestsEnabled = null;
 
         foreach (var p in parts)
@@ -531,6 +545,7 @@ public static class PlatformSettingsCatalog
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
             if (p.CompactTestPdfEnabled is not null) compactTestPdfEnabled = p.CompactTestPdfEnabled;
             if (p.FreeCandidateTestsEnabled is not null) freeCandidateTestsEnabled = p.FreeCandidateTestsEnabled;
+            if (p.HonestAdviceEnabled is not null) honestAdviceEnabled = p.HonestAdviceEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -558,6 +573,7 @@ public static class PlatformSettingsCatalog
             PhoneVerificationEnabled: phoneVerificationEnabled,
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
             CompactTestPdfEnabled: compactTestPdfEnabled,
-            FreeCandidateTestsEnabled: freeCandidateTestsEnabled);
+            FreeCandidateTestsEnabled: freeCandidateTestsEnabled,
+            HonestAdviceEnabled: honestAdviceEnabled);
     }
 }

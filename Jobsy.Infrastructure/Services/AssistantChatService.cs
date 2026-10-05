@@ -1306,8 +1306,9 @@ Verbetervoorstellen:
                 var scoreLines = new List<string>();
                 var jobs = new List<string>();
                 var outlookLines = new List<string>();
+                var adviceLines = new List<string>();
                 AppendPreferenceFacts(sb, prefs, dream, user?.AvailableFromDate);
-                await AppendTestFactsAsync(sb, context.UserId, context.Language, prefs, scoreLines, jobs, outlookLines, cancellationToken);
+                await AppendTestFactsAsync(sb, context.UserId, context.Language, prefs, scoreLines, jobs, outlookLines, adviceLines, cancellationToken);
                 sb.Append("month metrics: ");
                 sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
                 var work = WorkEntries(prefs);
@@ -1338,6 +1339,7 @@ Verbetervoorstellen:
 
                 var sheet = CandidateFactSheet.Personal(work, education, certificates, jobs, scoreLines, confirmed);
                 sheet.RememberOutlook(outlookLines);
+                sheet.RememberHonestAdvice(adviceLines);
                 sb.AppendLine();
                 sb.Append(sheet.ToPrompt());
                 return (sb.ToString(), sheet);
@@ -1400,6 +1402,7 @@ Verbetervoorstellen:
         List<string> scoreLines,
         List<string> jobs,
         List<string> outlookLines,
+        List<string> adviceLines,
         CancellationToken cancellationToken)
     {
         var lang = JobsyLanguages.Normalize(language);
@@ -1541,6 +1544,12 @@ Verbetervoorstellen:
                 {
                     outlookLines.Add(sourced.AiLine);
                 }
+
+                var advice = Jobsy.Core.Careers.HonestAdviceService.Shared.Get(job.EscoId, lang);
+                if (advice is not null)
+                {
+                    adviceLines.Add(advice.Text);
+                }
             }
         }
 
@@ -1548,6 +1557,14 @@ Verbetervoorstellen:
         {
             var tip = Jobsy.Core.Careers.CurrentJobOutlook.TryCreate(employer, riasec, education);
             outlookLines.AddRange(Jobsy.Core.Careers.CurrentJobOutlook.QuoteLines(tip));
+            if (!string.IsNullOrWhiteSpace(employer.EscoId))
+            {
+                var advice = Jobsy.Core.Careers.HonestAdviceService.Shared.Get(employer.EscoId, lang);
+                if (advice is not null)
+                {
+                    adviceLines.Add(advice.Text);
+                }
+            }
             foreach (var job in tip?.Adjacent ?? [])
             {
                 jobs.Add(job.Title);
@@ -1746,6 +1763,7 @@ Verbetervoorstellen:
             "completedTests is the list of finished tests. deepTests=none means there is no extra long test, not that the person did nothing. " +
             "Never use the words Riasec, RIASEC, Career-test, Holland, ISCO, ESCO, O*NET, gradient or werksterkte. Use only labels that appear in the facts. " +
             "A sentence about demand until 2030 or about AI changing tasks may only be copied from the Vooruitblik lines. Do not invent another outlook. " +
+            "Honest advice about a job may only be copied from the Eerlijk advies lines. Do not invent another opinion about how AI changes that work. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
             $"Scoped facts:\n{facts}";
     }

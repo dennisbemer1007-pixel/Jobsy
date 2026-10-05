@@ -480,7 +480,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
-                    FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled),
+                    FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled,
+                    HonestAdviceEnabled: request.HonestAdviceEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -556,6 +557,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
         Add("FreeCandidateTestsEnabled", before.FreeCandidateTestsEnabled.ToString(), after.FreeCandidateTestsEnabled.ToString());
+        Add("HonestAdviceEnabled", before.HonestAdviceEnabled.ToString(), after.HonestAdviceEnabled.ToString());
         return list;
     }
 
@@ -577,7 +579,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             schoolsEnabled = snap.SchoolsEnabled,
             ambassadorsEnabled = snap.AmbassadorsEnabled,
             whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled,
-            compactTestPdfEnabled = snap.CompactTestPdfEnabled
+            compactTestPdfEnabled = snap.CompactTestPdfEnabled,
+            honestAdviceEnabled = snap.HonestAdviceEnabled
         });
     }
 
@@ -882,7 +885,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.WhatsAppRemindersEnabled,
             snap.CompactTestPdfEnabled,
             _whatsApp.IsConfigured,
-            snap.FreeCandidateTestsEnabled);
+            snap.FreeCandidateTestsEnabled,
+            snap.HonestAdviceEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

@@ -60,6 +60,9 @@ public sealed class CandidateFactSheet
     /// <summary>Exact outlook sentences the coach may quote. Empty means no outlook claim is allowed.</summary>
     public IReadOnlyList<string> OutlookLines { get; private set; } = [];
 
+    /// <summary>Stored honest-advice text the coach may quote. Empty means no parallel advice is allowed.</summary>
+    public IReadOnlyList<string> HonestAdviceLines { get; private set; } = [];
+
     public bool HasWorkExperience => WorkExperience.Count > 0;
 
     public string ToPrompt()
@@ -110,12 +113,30 @@ public sealed class CandidateFactSheet
             }
         }
 
+        if (HonestAdviceLines.Count > 0)
+        {
+            sb.AppendLine("Eerlijk advies (citeer alleen deze tekst, verzin geen ander advies over het beroep of over AI):");
+            foreach (var line in HonestAdviceLines)
+            {
+                sb.Append("- ").AppendLine(line);
+            }
+        }
+
         return sb.ToString();
     }
 
     public void RememberOutlook(IEnumerable<string>? lines)
     {
         OutlookLines = (lines ?? [])
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => line.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    public void RememberHonestAdvice(IEnumerable<string>? lines)
+    {
+        HonestAdviceLines = (lines ?? [])
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .Select(line => line.Trim())
             .Distinct(StringComparer.Ordinal)
@@ -274,6 +295,7 @@ public sealed class CandidateFactSheet
             lines.Add("Berekende aansluiting (dit percentage ligt vast, verzin geen ander cijfer).");
             lines.Add("Elke why-zin noemt de richting achter de pijl, bijvoorbeeld: Chauffeur → Aanpakken met je handen.");
             var outlook = new List<string>();
+            var adviceLines = new List<string>();
             foreach (var job in CareerCompassBuilder.Listed(riasec))
             {
                 allowed.Add(job.Title);
@@ -289,6 +311,12 @@ public sealed class CandidateFactSheet
                 {
                     outlook.Add(sourced.AiLine);
                 }
+
+                var advice = Jobsy.Core.Careers.HonestAdviceService.Shared.Get(job.EscoId);
+                if (advice is not null)
+                {
+                    adviceLines.Add(advice.Text);
+                }
             }
 
             var sheet = new CandidateFactSheet(
@@ -302,6 +330,7 @@ public sealed class CandidateFactSheet
                 checkJobTitles: true,
                 directionLabels: directions);
             sheet.RememberOutlook(outlook);
+            sheet.RememberHonestAdvice(adviceLines);
             return sheet;
         }
 
