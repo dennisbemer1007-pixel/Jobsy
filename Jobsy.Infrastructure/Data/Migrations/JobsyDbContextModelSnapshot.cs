@@ -3830,6 +3830,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("SmallModel")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("TenantId")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");

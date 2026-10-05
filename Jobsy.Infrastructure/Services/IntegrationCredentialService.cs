@@ -173,6 +173,18 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             {
                 row.Model = "gpt-4o-mini";
             }
+
+            // Null keeps the saved small model. Empty clears it so cheap calls follow Model.
+            if (update.SmallModel is not null)
+            {
+                var small = update.SmallModel.Trim();
+                if (small.Length > 64)
+                {
+                    throw new InvalidOperationException("Klein model mag maximaal 64 tekens zijn.");
+                }
+
+                row.SmallModel = small.Length == 0 ? null : small;
+            }
         }
 
         // New credentials invalidate previous ping until retested.
@@ -236,6 +248,14 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         return secrets?.Model;
     }
 
+    public async Task<string?> GetSmallModelAsync(
+        IntegrationKey key,
+        CancellationToken cancellationToken = default)
+    {
+        var secrets = await GetSecretsAsync(key, cancellationToken);
+        return secrets?.SmallModel;
+    }
+
     public async Task<string?> GetBaseUrlAsync(
         IntegrationKey key,
         CancellationToken cancellationToken = default)
@@ -263,6 +283,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         string? clientSecret = null;
         string? tenantId = null;
         string? model = null;
+        string? smallModel = null;
         string? baseUrl = null;
         string? fromAddress = null;
 
@@ -273,6 +294,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             clientSecret = string.IsNullOrWhiteSpace(row.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret);
             tenantId = string.IsNullOrWhiteSpace(row.TenantId) ? null : row.TenantId.Trim();
             model = string.IsNullOrWhiteSpace(row.Model) ? null : row.Model.Trim();
+            smallModel = string.IsNullOrWhiteSpace(row.SmallModel) ? null : row.SmallModel.Trim();
             baseUrl = string.IsNullOrWhiteSpace(row.BaseUrl) ? null : row.BaseUrl.Trim();
             fromAddress = string.IsNullOrWhiteSpace(row.FromAddress) ? null : row.FromAddress.Trim();
         }
@@ -291,7 +313,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         }
 
         if (apiKey is null && clientId is null && clientSecret is null && tenantId is null
-            && model is null && baseUrl is null && fromAddress is null)
+            && model is null && smallModel is null && baseUrl is null && fromAddress is null)
         {
             _cache?.Set(cacheKey, (IntegrationCredentialSecrets?)null, SecretsCacheTtl);
             return null;
@@ -304,7 +326,8 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             tenantId,
             model,
             baseUrl,
-            fromAddress);
+            fromAddress,
+            smallModel);
         _cache?.Set(cacheKey, secrets, SecretsCacheTtl);
         return secrets;
     }
@@ -451,6 +474,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             row?.LastPingAtUtc,
             row?.UpdatedAtUtc,
             ignoresEnv,
-            usedEnvKey || usedEnvFrom);
+            usedEnvKey || usedEnvFrom,
+            SupportsModel(key) ? TrimOrNull(row?.SmallModel) : null);
     }
 }

@@ -55,6 +55,102 @@ public class OpenAiEndpointResolverTests
         Assert.Equal("gpt-db", resolved.Model);
     }
 
+    [Theory]
+    [InlineData(OpenAiFeature.VacancyContentModeration)]
+    [InlineData(OpenAiFeature.CvExtraction)]
+    [InlineData(OpenAiFeature.Translation)]
+    public async Task Cheap_feature_uses_small_model_even_when_the_database_model_is_medium(OpenAiFeature feature)
+    {
+        var sut = CreateSut(
+            dbModel: "mistral-medium-latest",
+            options: new OpenAiOptions
+            {
+                Model = "mistral-medium-latest",
+                SmallModel = " mistral-small-latest "
+            });
+
+        var resolved = await sut.ResolveAsync(feature);
+
+        Assert.Equal("mistral-small-latest", resolved.Model);
+    }
+
+    [Theory]
+    [InlineData(OpenAiFeature.WhoAmI)]
+    [InlineData(OpenAiFeature.AssistantChat)]
+    [InlineData(OpenAiFeature.CareerPathPlan)]
+    [InlineData(OpenAiFeature.CultureFit)]
+    [InlineData(OpenAiFeature.MockInterview)]
+    [InlineData(OpenAiFeature.CareerCompass)]
+    [InlineData(OpenAiFeature.RoleFitCheck)]
+    [InlineData(OpenAiFeature.CompetenceDeepReport)]
+    public async Task Quality_feature_keeps_the_database_model_when_a_small_model_is_set(OpenAiFeature feature)
+    {
+        var sut = CreateSut(
+            dbModel: "mistral-medium-latest",
+            options: new OpenAiOptions
+            {
+                Model = "gpt-config",
+                SmallModel = "mistral-small-latest"
+            });
+
+        var resolved = await sut.ResolveAsync(feature);
+
+        Assert.Equal("mistral-medium-latest", resolved.Model);
+    }
+
+    [Fact]
+    public async Task Cheap_feature_falls_back_to_the_quality_model_when_small_model_is_empty()
+    {
+        var sut = CreateSut(
+            dbModel: "mistral-medium-latest",
+            options: new OpenAiOptions { Model = "gpt-config", SmallModel = "   " });
+
+        var resolved = await sut.ResolveAsync(OpenAiFeature.Translation);
+
+        Assert.Equal("mistral-medium-latest", resolved.Model);
+    }
+
+    [Fact]
+    public async Task Cheap_feature_uses_config_model_when_small_model_and_database_are_empty()
+    {
+        var sut = CreateSut(
+            dbModel: null,
+            options: new OpenAiOptions { Model = " gpt-config ", SmallModel = "" });
+
+        var resolved = await sut.ResolveAsync(OpenAiFeature.CvExtraction);
+
+        Assert.Equal("gpt-config", resolved.Model);
+    }
+
+    [Fact]
+    public async Task Tile_small_model_wins_over_config_small_model()
+    {
+        var sut = CreateSut(
+            dbModel: "mistral-medium-latest",
+            dbSmallModel: " tile-small ",
+            options: new OpenAiOptions { SmallModel = "env-small" },
+            ai: new AiOptions { SmallModel = "ai-small" });
+
+        var cheap = await sut.ResolveAsync(OpenAiFeature.VacancyContentModeration);
+        var quality = await sut.ResolveAsync(OpenAiFeature.MockInterview);
+
+        Assert.Equal("tile-small", cheap.Model);
+        Assert.Equal("mistral-medium-latest", quality.Model);
+    }
+
+    [Fact]
+    public async Task Ai_small_model_is_used_when_the_openai_small_model_is_empty()
+    {
+        var sut = CreateSut(
+            dbModel: "mistral-medium-latest",
+            options: new OpenAiOptions { Model = "mistral-medium-latest", SmallModel = "  " },
+            ai: new AiOptions { SmallModel = " mistral-small-latest " });
+
+        var resolved = await sut.ResolveAsync(OpenAiFeature.Translation);
+
+        Assert.Equal("mistral-small-latest", resolved.Model);
+    }
+
     [Fact]
     public async Task Config_model_wins_over_default()
     {
@@ -252,6 +348,69 @@ public class OpenAiEndpointResolverTests
     }
 
     [Fact]
+    public async Task Mistral_cheap_features_use_the_small_model_and_quality_stays_on_medium()
+    {
+        var sut = CreateSut(
+            dbModel: "gpt-db-ignored",
+            options: new OpenAiOptions { SmallModel = "openai-small-ignored-because-mistral-small-is-set" },
+            ai: new AiOptions { Provider = "Mistral", SmallModel = "ai-small-ignored" },
+            mistral: new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                Model = "mistral-medium-latest",
+                SmallModel = " mistral-small-latest ",
+                Models = new MistralFeatureModels { Story = "mistral-large-latest" }
+            });
+
+        var story = await sut.ResolveAsync(OpenAiFeature.WhoAmI);
+        var interview = await sut.ResolveAsync(OpenAiFeature.MockInterview);
+        var translation = await sut.ResolveAsync(OpenAiFeature.Translation);
+        var cv = await sut.ResolveAsync(OpenAiFeature.CvExtraction);
+        var moderation = await sut.ResolveAsync(OpenAiFeature.VacancyContentModeration);
+
+        Assert.Equal("mistral-large-latest", story.Model);
+        Assert.Equal("mistral-medium-latest", interview.Model);
+        Assert.Equal("mistral-small-latest", translation.Model);
+        Assert.Equal("mistral-small-latest", cv.Model);
+        Assert.Equal("mistral-small-latest", moderation.Model);
+    }
+
+    [Fact]
+    public async Task Mistral_cheap_feature_uses_ai_small_model_when_mistral_small_model_is_empty()
+    {
+        var sut = CreateSut(
+            ai: new AiOptions { Provider = "Mistral", SmallModel = "mistral-small-latest" },
+            mistral: new MistralOptions
+            {
+                ApiKey = "mistral-test-key",
+                Model = "mistral-medium-latest",
+                SmallModel = "  "
+            });
+
+        var translation = await sut.ResolveAsync(OpenAiFeature.Translation);
+        var story = await sut.ResolveAsync(OpenAiFeature.WhoAmI);
+
+        Assert.Equal("mistral-small-latest", translation.Model);
+        Assert.Equal("mistral-medium-latest", story.Model);
+    }
+
+    [Fact]
+    public void Cheap_features_are_only_the_mechanical_calls()
+    {
+        var cheap = Enum.GetValues<OpenAiFeature>()
+            .Where(AiModelRouting.UsesSmallModel)
+            .ToArray();
+
+        Assert.Equal(
+            [
+                OpenAiFeature.VacancyContentModeration,
+                OpenAiFeature.CvExtraction,
+                OpenAiFeature.Translation
+            ],
+            cheap);
+    }
+
+    [Fact]
     public async Task Mistral_career_report_model_is_used_when_compass_slot_is_empty()
     {
         var sut = CreateSut(
@@ -330,12 +489,13 @@ public class OpenAiEndpointResolverTests
         string? dbApiKey = null,
         string? dbModel = null,
         string? dbBaseUrl = null,
+        string? dbSmallModel = null,
         OpenAiOptions? options = null,
         AiOptions? ai = null,
         MistralOptions? mistral = null,
         Jobsy.Core.Diagnostics.IPlatformErrorLog? platformLog = null)
         => new(
-            new StubCredentials(dbApiKey, dbModel, dbBaseUrl),
+            new StubCredentials(dbApiKey, dbModel, dbBaseUrl, dbSmallModel),
             Options.Create(options ?? new OpenAiOptions { ApiKey = null, Model = "   ", BaseUrl = "   " }),
             Options.Create(ai ?? new AiOptions()),
             Options.Create(mistral ?? new MistralOptions()),
@@ -361,7 +521,8 @@ public class OpenAiEndpointResolverTests
     private sealed class StubCredentials(
         string? apiKey,
         string? model,
-        string? baseUrl) : IIntegrationCredentialService
+        string? baseUrl,
+        string? smallModel = null) : IIntegrationCredentialService
     {
         public Task<IntegrationCredentialView?> GetAsync(IntegrationKey key, CancellationToken cancellationToken = default)
             => Task.FromResult<IntegrationCredentialView?>(null);
@@ -388,6 +549,9 @@ public class OpenAiEndpointResolverTests
 
         public Task<string?> GetModelAsync(IntegrationKey key, CancellationToken cancellationToken = default)
             => Task.FromResult(model);
+
+        public Task<string?> GetSmallModelAsync(IntegrationKey key, CancellationToken cancellationToken = default)
+            => Task.FromResult(smallModel);
 
         public Task<string?> GetBaseUrlAsync(IntegrationKey key, CancellationToken cancellationToken = default)
             => Task.FromResult(baseUrl);

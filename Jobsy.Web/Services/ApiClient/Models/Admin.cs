@@ -188,6 +188,7 @@ public sealed class IntegrationCredentialItem
     public string? ClientId { get; set; }
     public string? TenantId { get; set; }
     public string? Model { get; set; }
+    public string? SmallModel { get; set; }
     public string? BaseUrl { get; set; }
     public string? FromAddress { get; set; }
     public bool SupportsApiKey { get; set; }
@@ -208,6 +209,7 @@ public sealed class IntegrationCredentialSaveForm
 {
     public string? ApiKey { get; set; }
     public string? Model { get; set; }
+    public string? SmallModel { get; set; }
     public string? ClientId { get; set; }
     public string? ClientSecret { get; set; }
     public string? TenantId { get; set; }

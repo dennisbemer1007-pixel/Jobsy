@@ -25,6 +25,13 @@ public interface IIntegrationCredentialService
 
     Task<string?> GetModelAsync(IntegrationKey key, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Cheaper model saved on the OpenAI tile. Null when that field is empty.
+    /// The default keeps older test doubles working.
+    /// </summary>
+    Task<string?> GetSmallModelAsync(IntegrationKey key, CancellationToken cancellationToken = default)
+        => Task.FromResult<string?>(null);
+
     Task<string?> GetBaseUrlAsync(IntegrationKey key, CancellationToken cancellationToken = default);
 
     Task<IntegrationCredentialSecrets?> GetSecretsAsync(
@@ -43,7 +50,9 @@ public sealed record IntegrationCredentialUpdate(
     bool ClearApiKey = false,
     bool ClearClientSecret = false,
     /// <summary>Re-enable Mail env/config bootstrap after an Admin clear suppressed it.</summary>
-    bool UseEnvironmentCredentials = false);
+    bool UseEnvironmentCredentials = false,
+    /// <summary>Null keeps the saved value. Empty clears it.</summary>
+    string? SmallModel = null);
 
 public sealed record IntegrationCredentialSecrets(
     string? ApiKey,
@@ -52,7 +61,8 @@ public sealed record IntegrationCredentialSecrets(
     string? TenantId,
     string? Model,
     string? BaseUrl,
-    string? FromAddress);
+    string? FromAddress,
+    string? SmallModel = null);
 
 public sealed record IntegrationCredentialView(
     IntegrationKey Key,
@@ -78,4 +88,5 @@ public sealed record IntegrationCredentialView(
     DateTime? LastPingAtUtc,
     DateTime? UpdatedAtUtc,
     bool IgnoresEnvironmentCredentials = false,
-    bool UsesEnvironmentCredentials = false);
+    bool UsesEnvironmentCredentials = false,
+    string? SmallModel = null);
