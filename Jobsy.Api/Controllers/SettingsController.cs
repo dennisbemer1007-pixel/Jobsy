@@ -92,7 +92,8 @@ public class SettingsController : ControllerBase
         IReadOnlyList<AiFeatureModelDto>? featureModels = null;
         if (status.Available && string.Equals(status.Provider, AiProviderNames.Mistral, StringComparison.Ordinal))
         {
-            featureModels = _mistral.ActiveFeatureModels()
+            var smallFallback = AiModelRouting.FirstNonEmpty(_ai.SmallModel, _openAi.SmallModel);
+            featureModels = _mistral.ActiveFeatureModels(smallFallback)
                 .Select(row => new AiFeatureModelDto(row.Feature, row.Model))
                 .ToList();
         }
@@ -826,6 +827,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             var fields = new List<string>();
             if (request.ApiKey is not null || request.ClearApiKey) fields.Add("ApiKey");
             if (request.Model is not null) fields.Add("Model");
+            if (request.SmallModel is not null) fields.Add("SmallModel");
             if (request.ClientId is not null) fields.Add("ClientId");
             if (request.ClientSecret is not null || request.ClearClientSecret) fields.Add("ClientSecret");
             if (request.TenantId is not null) fields.Add("TenantId");
@@ -848,7 +850,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     request.FromAddress,
                     request.ClearApiKey,
                     request.ClearClientSecret,
-                    request.UseEnvironmentCredentials),
+                    request.UseEnvironmentCredentials,
+                    request.SmallModel),
                 cancellationToken);
             return Ok(ToDto(saved));
         }
@@ -935,7 +938,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             view.LastPingAtUtc,
             view.UpdatedAtUtc,
             view.IgnoresEnvironmentCredentials,
-            view.UsesEnvironmentCredentials);
+            view.UsesEnvironmentCredentials,
+            view.SmallModel);
 }
 
 public sealed record PlatformCompanyDto(

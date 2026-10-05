@@ -1709,6 +1709,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ClientSecret).HasMaxLength(2048);
             entity.Property(e => e.TenantId).HasMaxLength(128);
             entity.Property(e => e.Model).HasMaxLength(64);
+            entity.Property(e => e.SmallModel).HasMaxLength(64);
             entity.Property(e => e.BaseUrl).HasMaxLength(512);
             entity.Property(e => e.FromAddress).HasMaxLength(256);
             entity.Property(e => e.LastPingMessage).HasMaxLength(500);

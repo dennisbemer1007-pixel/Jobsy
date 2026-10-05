@@ -168,6 +168,11 @@
                     Model
                     <input @bind="_model" @bind:event="oninput" @bind:after="MarkDirty" placeholder="gpt-4o-mini" />
                 </label>
+                <label>
+                    Klein model (goedkope diensten)
+                    <input @bind="_smallModel" @bind:event="oninput" @bind:after="MarkDirty" placeholder="leeg = zelfde als Model" />
+                </label>
+                <p class="muted">Voor vertaling, het uitlezen van een CV en de controle van een vacaturetekst. Laat leeg om het model hierboven te gebruiken.</p>
             }
 
             @if (Credential.SupportsBaseUrl)
@@ -293,6 +298,7 @@
     private string _clientSecret = "";
     private string _tenantId = "";
     private string _model = "gpt-4o-mini";
+    private string _smallModel = "";
     private string _baseUrl = "";
     private string _smtpPort = "587";
     private string _fromAddress = "";
@@ -378,6 +384,7 @@
         _clientId = Credential.ClientId ?? "";
         _tenantId = Credential.TenantId ?? "";
         _model = Credential.Model ?? "gpt-4o-mini";
+        _smallModel = Credential.SmallModel ?? "";
         SplitHostAndPort(Credential.BaseUrl, out _baseUrl, out _smtpPort);
         _fromAddress = Credential.FromAddress ?? "";
         if (IsMailIntegration && string.IsNullOrWhiteSpace(_testMailTo) && !string.IsNullOrWhiteSpace(_fromAddress))
@@ -482,6 +489,7 @@
     {
         ApiKey = Credential.SupportsApiKey ? _apiKey : null,
         Model = Credential.SupportsModel ? _model : null,
+        SmallModel = Credential.SupportsModel ? _smallModel : null,
         ClientId = Credential.SupportsOAuth ? _clientId : null,
         ClientSecret = Credential.SupportsOAuth ? _clientSecret : null,
         TenantId = Credential.SupportsTenantId ? _tenantId : null,

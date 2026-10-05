@@ -10,4 +10,11 @@ public sealed class AiOptions
 
     /// <summary><c>OpenAI</c> or <c>Mistral</c>. An unknown name does not call OpenAI.</summary>
     public string Provider { get; set; } = "OpenAI";
+
+    /// <summary>
+    /// Optional cheaper model for translation, CV extraction and vacancy moderation.
+    /// Used only when the active provider has no small model of its own.
+    /// Env: <c>Ai__SmallModel</c>.
+    /// </summary>
+    public string? SmallModel { get; set; }
 }
