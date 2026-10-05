@@ -12,7 +12,8 @@ public static class CareerCompassHierarchy
         IReadOnlyList<CareerOccupationMatch> jobs,
         IReadOnlyList<string> notes,
         bool fromDeepAnalysis,
-        bool fromOpenAi)
+        bool fromOpenAi,
+        string? scoresFingerprint = null)
     {
         var ranked = jobs
             .OrderByDescending(m => m.Percent)
@@ -32,7 +33,8 @@ public static class CareerCompassHierarchy
             broaden,
             notes,
             fromDeepAnalysis,
-            fromOpenAi);
+            fromOpenAi,
+            scoresFingerprint ?? "");
     }
 
     private static List<CareerOccupationMatch> TakeBand(IReadOnlyList<CareerOccupationMatch> items, string band)

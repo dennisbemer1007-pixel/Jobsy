@@ -9,17 +9,32 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class CandidateJobAdvice
 {
+    public static bool Handles(string? question)
+        => !string.IsNullOrWhiteSpace(question)
+           && (LooksLikeMotivation(question)
+               || LooksLikeComparison(question)
+               || LooksLikeJobsList(question)
+               || CandidateCoachScript.Handles(question));
+
     public static string? TryReply(
         string? language,
         string question,
         RiasecScores? scores,
         string? education,
         bool hasWorkExperience,
-        IReadOnlyList<string>? workLines = null)
+        IReadOnlyList<string>? workLines = null,
+        IReadOnlyList<(string Code, int Score)>? competence = null,
+        IReadOnlyList<string>? certificates = null)
     {
         if (scores is not { IsComplete: true } || string.IsNullOrWhiteSpace(question))
         {
             return null;
+        }
+
+        var scripted = CandidateCoachScript.TryReply(language, question, scores, education, competence, certificates);
+        if (scripted is not null)
+        {
+            return scripted;
         }
 
         var lang = JobsyLanguages.Normalize(language);
@@ -109,6 +124,23 @@ public static class CandidateJobAdvice
             foreach (var alias in entry.Aliases)
             {
                 TryAdd(hits, folded, alias, entry.Title);
+            }
+        }
+
+        foreach (var (stem, title) in new (string Stem, string Title)[]
+                 {
+                     ("kierowc", "Chauffeur"),
+                     ("sofer", "Chauffeur"),
+                     ("driver", "Chauffeur"),
+                     ("السائق", "Chauffeur")
+                 })
+        {
+            var stemFold = CareerOccupationKeys.Fold(stem);
+            if (folded.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Any(word => word.Equals(stemFold, StringComparison.Ordinal)
+                             || word.StartsWith(stemFold, StringComparison.Ordinal)))
+            {
+                hits.Add((title, stemFold.Length + 1));
             }
         }
 
@@ -231,8 +263,13 @@ public static class CandidateJobAdvice
             ? top?.Percent ?? CareerCompassBuilder.CatalogueFit(job, scores, education)
             : CareerCompassBuilder.CatalogueFit(named, scores, education);
         var shown = OccupationTitles.ForChat(job, lang);
-        var (label, score) = TopDirection(scores, lang);
-        var direction = CareerCompassBuilder.TypeLabel(CareerCompassBuilder.PrimaryCode(job));
+        var ownLetters = CareerCompassBuilder.WeightsFor(job);
+        var directionCode = ownLetters.Count > 0
+            ? ownLetters[0].Code
+            : CareerCompassBuilder.PrimaryCode(job);
+        var directionScore = scores.Get(directionCode);
+        var direction = DimensionLabels.For(directionCode, lang);
+        var directionFits = directionScore >= 50;
         var work = hasWorkExperience && workLines is { Count: > 0 }
             ? string.Join(", ", workLines.Take(2))
             : null;
@@ -241,21 +278,45 @@ public static class CandidateJobAdvice
         {
             return lang switch
             {
-                "en" => $"You have no work experience in your profile yet. Your test shows {shown} fits you at {percent}%. You score {score}% on {label}. Short motivation: I want to start as {shown}. My test shows that {direction} fits me.",
-                "pl" => $"W twoim profilu nie ma jeszcze doświadczenia w pracy. Z testu wynika, że {shown} pasuje w {percent}%. Twój wynik w {label} to {score}%. Krótka motywacja: Chcę zacząć jako {shown}. Z mojego testu wynika, że {direction} do mnie pasuje.",
-                "ro" => $"Nu ai încă experiență de muncă în profil. Din test reiese că {shown} ți se potrivește în proporție de {percent}%. Scorul tău la {label} este {score}%. Motivație scurtă: Vreau să încep ca {shown}. Din testul meu reiese că {direction} mi se potrivește.",
-                "ar" => $"لا توجد خبرة عمل في ملفك بعد. يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%. درجتك في {label} هي {score}%. دافع قصير: أريد أن أبدأ كـ {shown}. يظهر من اختباري أن {direction} يناسبني.",
-                _ => $"Je hebt nog geen werkervaring in je profiel. Uit je test blijkt dat {shown} bij je past, met {percent}%. Je scoort {score}% op {label}. Korte motivatie: Ik wil graag aan de slag als {shown}. Uit mijn test blijkt dat {direction} bij mij past."
+                "en" => $"You have no work experience in your profile yet. Your test shows {shown} fits you at {percent}%. Short motivation: I want to start as {shown}. {MotivationClaim("en", direction, directionScore, directionFits)}",
+                "pl" => $"W twoim profilu nie ma jeszcze doświadczenia w pracy. Z testu wynika, że {shown} pasuje w {percent}%. Krótka motywacja: Chcę zacząć jako {shown}. {MotivationClaim("pl", direction, directionScore, directionFits)}",
+                "ro" => $"Nu ai încă experiență de muncă în profil. Din test reiese că {shown} ți se potrivește în proporție de {percent}%. Motivație scurtă: Vreau să încep ca {shown}. {MotivationClaim("ro", direction, directionScore, directionFits)}",
+                "ar" => $"لا توجد خبرة عمل في ملفك بعد. يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%. دافع قصير: أريد أن أبدأ كـ {shown}. {MotivationClaim("ar", direction, directionScore, directionFits)}",
+                _ => $"Je hebt nog geen werkervaring in je profiel. Uit je test blijkt dat {shown} bij je past, met {percent}%. Korte motivatie: Ik wil aan de slag als {shown}. {MotivationClaim("nl", direction, directionScore, directionFits)}"
             };
         }
 
         return lang switch
         {
-            "en" => $"Your profile lists this work: {work}. Your test shows {shown} fits you at {percent}%. You score {score}% on {label}. Short motivation: I want to work as {shown}. My test shows that {direction} fits me.",
-            "pl" => $"W twoim profilu jest ta praca: {work}. Z testu wynika, że {shown} pasuje w {percent}%. Twój wynik w {label} to {score}%. Krótka motywacja: Chcę pracować jako {shown}. Z mojego testu wynika, że {direction} do mnie pasuje.",
-            "ro" => $"În profilul tău este această muncă: {work}. Din test reiese că {shown} ți se potrivește în proporție de {percent}%. Scorul tău la {label} este {score}%. Motivație scurtă: Vreau să lucrez ca {shown}. Din testul meu reiese că {direction} mi se potrivește.",
-            "ar" => $"في ملفك هذا العمل: {work}. يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%. درجتك في {label} هي {score}%. دافع قصير: أريد أن أعمل كـ {shown}. يظهر من اختباري أن {direction} يناسبني.",
-            _ => $"In je profiel staat dit werk: {work}. Uit je test blijkt dat {shown} bij je past, met {percent}%. Je scoort {score}% op {label}. Korte motivatie: Ik wil graag werken als {shown}. Uit mijn test blijkt dat {direction} bij mij past."
+            "en" => $"Your profile lists this work: {work}. Your test shows {shown} fits you at {percent}%. Short motivation: I want to work as {shown}. {MotivationClaim("en", direction, directionScore, directionFits)}",
+            "pl" => $"W twoim profilu jest ta praca: {work}. Z testu wynika, że {shown} pasuje w {percent}%. Krótka motywacja: Chcę pracować jako {shown}. {MotivationClaim("pl", direction, directionScore, directionFits)}",
+            "ro" => $"În profilul tău este această muncă: {work}. Din test reiese că {shown} ți se potrivește în proporție de {percent}%. Motivație scurtă: Vreau să lucrez ca {shown}. {MotivationClaim("ro", direction, directionScore, directionFits)}",
+            "ar" => $"في ملفك هذا العمل: {work}. يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%. دافع قصير: أريد أن أعمل كـ {shown}. {MotivationClaim("ar", direction, directionScore, directionFits)}",
+            _ => $"In je profiel staat dit werk: {work}. Uit je test blijkt dat {shown} bij je past, met {percent}%. Korte motivatie: Ik wil werken als {shown}. {MotivationClaim("nl", direction, directionScore, directionFits)}"
+        };
+    }
+
+    private static string MotivationClaim(string lang, string direction, int score, bool fits)
+    {
+        if (!fits)
+        {
+            return lang switch
+            {
+                "en" => $"My test shows that I score {score}% on {direction}.",
+                "pl" => $"Z mojego testu wynika, że mam {score}% w {direction}.",
+                "ro" => $"Din testul meu reiese că am {score}% la {direction}.",
+                "ar" => $"يظهر من اختباري أن درجتي {score}% في {direction}.",
+                _ => $"Uit mijn test blijkt dat ik {score}% scoor op {direction}."
+            };
+        }
+
+        return lang switch
+        {
+            "en" => $"My test shows that {direction} ({score}%) fits me.",
+            "pl" => $"Z mojego testu wynika, że {direction} ({score}%) do mnie pasuje.",
+            "ro" => $"Din testul meu reiese că {direction} ({score}%) mi se potrivește.",
+            "ar" => $"يظهر من اختباري أن {direction} ({score}%) يناسبني.",
+            _ => $"Uit mijn test blijkt dat {direction} ({score}%) bij mij past."
         };
     }
 

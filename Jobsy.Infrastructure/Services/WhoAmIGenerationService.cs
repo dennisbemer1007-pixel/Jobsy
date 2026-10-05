@@ -105,7 +105,8 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
                         attempt,
                         cancellationToken,
                         endpoint.Model,
-                        rejectedText);
+                        rejectedText,
+                        WhoAmIStoryBuilder.ParagraphStats(rejectedText));
                 }
             }
         }
@@ -190,12 +191,15 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         }
 
         var story = WhoAmIStoryBuilder.Sanitize(dto?.Story);
-        var shape = WhoAmIStoryBuilder.StoryRuleReason(story, profile, competency, culture, career, values);
-        var reason = CandidateFactGuard.RejectionReason(story, sheet) ?? shape;
-        if (reason is not null || story is null)
+        var normalized = story is null ? null : WhoAmIStoryBuilder.NormalizeParagraphs(story);
+        var shape = WhoAmIStoryBuilder.StoryRuleReason(normalized, profile, competency, culture, career, values);
+        var reason = CandidateFactGuard.RejectionReason(normalized, sheet) ?? shape;
+        if (reason is not null || normalized is null)
         {
             return (null, reason ?? "story-rules", story ?? dto?.Story);
         }
+
+        story = normalized;
 
         var keywords = (dto?.Keywords ?? [])
             .Where(k => !string.IsNullOrWhiteSpace(k) && !CareerCompassBuilder.ContainsForbiddenJargon(k))

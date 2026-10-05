@@ -294,14 +294,24 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             row?.SocialPercent,
             row?.EnterprisingPercent,
             row?.ConventionalPercent);
+        var key = completed is { IsComplete: true } scored ? CareerCompassBuilder.ScoresKey(scored) : null;
         if (stored is { HasOccupations: true })
         {
+            var fresh = key is not null
+                        && string.Equals(stored.ScoresFingerprint, key, StringComparison.Ordinal);
             if (stored.FromDeepAnalysis)
             {
-                return (CareerCompassSanitize.EnsureDepth(stored, completed), false);
+                var deepened = CareerCompassSanitize.EnsureDepth(stored, completed) with
+                {
+                    ScoresFingerprint = key ?? stored.ScoresFingerprint
+                };
+                return (deepened, !fresh);
             }
 
-            return (stored, false);
+            if (fresh)
+            {
+                return (stored, false);
+            }
         }
 
         if (completed is { IsComplete: true })

@@ -92,6 +92,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
     options.DisconnectedCircuitMaxRetained = 100;
 });
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.CircuitExceptionLogger>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.RequestCultureCircuitHandler>();
 
 builder.Services.AddTransient<Jobsy.Web.Auth.TrustedClientIpHandler>();
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);

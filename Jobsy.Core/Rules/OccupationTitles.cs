@@ -1,3 +1,5 @@
+using Jobsy.Core.Localization;
+
 namespace Jobsy.Core.Rules;
 
 /// <summary>Dutch catalogue titles with a plain English name for non-Dutch coach text.</summary>
@@ -64,5 +66,40 @@ public static class OccupationTitles
         return English.TryGetValue(title.Trim(), out var english) && !string.Equals(english, title, StringComparison.OrdinalIgnoreCase)
             ? $"{title.Trim()} ({english})"
             : title.Trim();
+    }
+
+    /// <summary>
+    /// Translates the Dutch "vanaf" year marker and adds the English job name in brackets.
+    /// The Dutch title itself stays, so the fact is still recognisable.
+    /// </summary>
+    public static string LocalizeWorkLine(string? line, string? language)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return "";
+        }
+
+        var lang = JobsyLanguages.Normalize(language);
+        var since = lang switch
+        {
+            "en" => "since",
+            "pl" => "od",
+            "ro" => "din",
+            "ar" => "منذ",
+            _ => "vanaf"
+        };
+        var text = line.Trim();
+        string tail = "";
+        var marker = text.IndexOf(" vanaf ", StringComparison.Ordinal);
+        if (marker >= 0)
+        {
+            tail = " " + since + text[(marker + " vanaf".Length)..];
+            text = text[..marker];
+        }
+
+        var paren = text.IndexOf(" (", StringComparison.Ordinal);
+        var title = paren >= 0 ? text[..paren] : text;
+        var rest = paren >= 0 ? text[paren..] : "";
+        return ForChat(title, lang) + rest + tail;
     }
 }

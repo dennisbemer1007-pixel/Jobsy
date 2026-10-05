@@ -171,6 +171,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             culture.Scores,
             values.Scores,
             WhoAmIProfileHighlights.FromPreferences(prefs),
+            features.EmployersEnabled,
             language);
 
         return new CandidateKompasDto(
@@ -191,6 +192,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
 
     public async Task<CandidateDnaSummaryDto> GetDnaAsync(Guid userId, string? language = null, CancellationToken cancellationToken = default)
     {
+        var features = await _features.GetAsync(cancellationToken);
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
             ?? throw new InvalidOperationException("Gebruiker niet gevonden.");
@@ -390,6 +392,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             cultureResolved.Scores,
             valuesResolved.Scores,
             WhoAmIProfileHighlights.FromPreferences(prefs),
+            features.EmployersEnabled,
             language);
 
         bool IsDeepCompleted(AssessmentKind kind)
@@ -465,6 +468,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
         CulturePersonalityScores? culture,
         SchwartzValuesScores? values,
         WhoAmIProfileHighlights? highlights = null,
+        bool employersEnabled = false,
         string? language = null)
     {
         var keywords = ParseKeywords(keywordsJson);
@@ -481,7 +485,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
         if (scoresReady && (story is null || !fromOpenAi || lang is not "nl"))
         {
             highlights ??= WhoAmIProfileHighlights.Empty;
-            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values, employersEnabled: true, language);
+            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values, employersEnabled, language);
             keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values, language);
             if (string.IsNullOrWhiteSpace(storyText))
             {

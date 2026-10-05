@@ -19,13 +19,17 @@ internal static class AiFactRejectionLog
         int attempt,
         CancellationToken cancellationToken,
         string? model = null,
-        string? rejectedText = null)
+        string? rejectedText = null,
+        string? stats = null)
     {
         var safeSurface = CleanToken(surface, "ai");
         var safeReason = CleanToken(reason, "rejected");
         var safeModel = string.IsNullOrWhiteSpace(model) ? "" : " model=" + CleanToken(model, "model");
         var hash = string.IsNullOrWhiteSpace(rejectedText) ? "" : " textHash=" + TextHash(rejectedText);
-        var message = $"AI-tekst afgewezen. surface={safeSurface} reason={safeReason} attempt={attempt}{safeModel}{hash}";
+        var safeStats = string.IsNullOrWhiteSpace(stats) || stats.IndexOfAny(['@', ' ', '\n', '\r']) >= 0
+            ? ""
+            : " " + stats;
+        var message = $"AI-tekst afgewezen. surface={safeSurface} reason={safeReason} attempt={attempt}{safeModel}{hash}{safeStats}";
         logger.LogWarning("{Message}", message);
         if (platformLog is null)
         {

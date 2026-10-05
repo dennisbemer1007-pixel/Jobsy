@@ -20207,6 +20207,18 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         padding-bottom: calc(56px + 88px + 16px + 96px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + env(safe-area-inset-bottom, 0px));
     }
 
+    .app-shell:has([data-lobsy-coach]) :is(
+        .passport-tabs,
+        .passport-tests__bar-labels,
+        .passport-tests__row,
+        .competence-trait-chips,
+        .test-page
+    ) {
+        padding-inline-end: calc(56px + 16px);
+        scroll-padding-inline-end: calc(56px + 16px);
+        box-sizing: border-box;
+    }
+
     .mail-settings__label {
         font-size: 1rem;
         line-height: 1.4;

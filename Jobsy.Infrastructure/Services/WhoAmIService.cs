@@ -228,19 +228,29 @@ public sealed class WhoAmIService : IWhoAmIService
             var now = DateTime.UtcNow;
             var fingerprintChanged = stored is not null
                                      && !string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal);
-            var cooledDown = stored?.LastAttemptUtc is not DateTime attempted
-                             || now - attempted >= TimeSpan.FromHours(24);
-            var wantsModel = stored is not null && (!stored.FromOpenAi || !storyOk);
+            var shouldGenerate = stored is not null
+                                 && CandidateInsightsFingerprint.ShouldGenerateWhoAmI(
+                                     !fingerprintChanged,
+                                     stored.FromOpenAi,
+                                     storyOk,
+                                     stored.LastAttemptUtc,
+                                     now);
             if (stored is null)
             {
                 generatedAt = await PersistLocalStoryAsync(
                     userId, dutchTemplate, keywords.Count > 0 ? keywords : WhoAmIKeywords.FromScores(cScores, rScores, cultureScores, values), fingerprint, cancellationToken);
                 fromOpenAi = false;
             }
-            else if ((fingerprintChanged || wantsModel) && cooledDown)
+            else if (shouldGenerate)
             {
                 insightsStatus = InsightsStatuses.Updating;
                 _queue.TryEnqueue(userId);
+            }
+            else if (fingerprintChanged)
+            {
+                generatedAt = await PersistLocalStoryAsync(
+                    userId, dutchTemplate, keywords.Count > 0 ? keywords : WhoAmIKeywords.FromScores(cScores, rScores, cultureScores, values), fingerprint, cancellationToken);
+                fromOpenAi = false;
             }
         }
 

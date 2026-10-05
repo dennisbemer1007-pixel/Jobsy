@@ -9,7 +9,15 @@ public static class CareerInterestDeepReset
 {
     public static bool ClearDeepCompass(CandidateCareerInterest row, DateTime utcNow)
     {
-        if (!MarksDeepAnalysis(row.CompassJson))
+        var parsed = CareerCompassJson.TryDeserialize(row.CompassJson);
+        var scoresPreview = CareerTestCatalog.Score(CareerTestCatalog.ParseAnswersJson(row.AnswersJson));
+        var currentKey = scoresPreview is { IsComplete: true }
+            ? CareerCompassBuilder.ScoresKey(scoresPreview)
+            : null;
+        var fingerprintMismatch = parsed is { HasOccupations: true }
+                                  && currentKey is not null
+                                  && !string.Equals(parsed.ScoresFingerprint, currentKey, StringComparison.Ordinal);
+        if (!MarksDeepAnalysis(row.CompassJson) && !fingerprintMismatch)
         {
             return false;
         }

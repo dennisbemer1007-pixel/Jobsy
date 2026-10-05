@@ -159,11 +159,11 @@ public static class UiStringsCareer
             "Ți se potrivește",
             "يناسبك");
         Add("Career.Empty.SuggestLead",
-            "Uit je paspoort: wat je goed kunt en leuk vindt.",
-            "From your passport: what you are good at and enjoy.",
-            "Z twojego paszportu: w czym jesteś dobry i co lubisz.",
-            "Din pașaportul tău: ce știi să faci și ce îți place.",
-            "من جوازك: ما تجيده وما تحبه.");
+            "Uit je paspoort: wat bij je past.",
+            "From your passport: what fits you.",
+            "Z twojego paszportu: co do ciebie pasuje.",
+            "Din pașaportul tău: ce ți se potrivește.",
+            "من جوازك: ما يناسبك.");
         Add("Career.Empty.Or",
             "of",
             "or",
