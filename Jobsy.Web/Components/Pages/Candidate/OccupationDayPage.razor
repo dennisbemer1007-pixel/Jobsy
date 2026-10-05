@@ -63,40 +63,44 @@
                     </li>
                 }
             </ol>
-            @if (TaskChips.Count > 0)
-            {
-                <section class="day-life__section" aria-labelledby="day-tasks-title">
-                    <h2 id="day-tasks-title">@Culture["Day.Tasks"]</h2>
-                    <ul class="day-life__cloud">
-                        @foreach (var line in TaskChips)
-                        {
-                            <li class="day-life__pill">@line</li>
-                        }
-                    </ul>
-                </section>
-            }
-            else if (_day.Highlights.Count > 0)
-            {
-                <h2 class="day-life__notes-title">@Culture["Day.Highlights"]</h2>
-                <ul class="day-life__notes">
-                    @foreach (var line in _day.Highlights)
-                    {
-                        <li>@line</li>
-                    }
-                </ul>
-            }
-            @if (SkillChips.Count > 0)
-            {
-                <section class="day-life__section" aria-labelledby="day-skills-title">
-                    <h2 id="day-skills-title">@Culture["Day.Skills"]</h2>
-                    <ul class="day-life__cloud">
-                        @foreach (var line in SkillChips)
-                        {
-                            <li class="day-life__pill day-life__pill--skill">@line</li>
-                        }
-                    </ul>
-                </section>
-            }
+            <div class="day-life__facts">
+                @if (TaskChips.Count > 0)
+                {
+                    <section class="day-life__section" aria-labelledby="day-tasks-title">
+                        <h2 id="day-tasks-title">@Culture["Day.Tasks"]</h2>
+                        <ul class="day-life__cloud">
+                            @foreach (var line in TaskChips)
+                            {
+                                <li class="day-life__pill">@line</li>
+                            }
+                        </ul>
+                    </section>
+                }
+                else if (_day.Highlights.Count > 0)
+                {
+                    <section class="day-life__section" aria-labelledby="day-notes-title">
+                        <h2 id="day-notes-title" class="day-life__notes-title">@Culture["Day.Highlights"]</h2>
+                        <ul class="day-life__notes">
+                            @foreach (var line in _day.Highlights)
+                            {
+                                <li>@line</li>
+                            }
+                        </ul>
+                    </section>
+                }
+                @if (SkillChips.Count > 0)
+                {
+                    <section class="day-life__section" aria-labelledby="day-skills-title">
+                        <h2 id="day-skills-title">@Culture["Day.Skills"]</h2>
+                        <ul class="day-life__cloud">
+                            @foreach (var line in SkillChips)
+                            {
+                                <li class="day-life__pill day-life__pill--skill">@line</li>
+                            }
+                        </ul>
+                    </section>
+                }
+            </div>
             @if (!string.IsNullOrWhiteSpace(_day.VariesNote))
             {
                 <p class="day-life__varies">@_day.VariesNote</p>
@@ -106,8 +110,17 @@
         @if (Job is not null && !_loading && !_unknown)
         {
             <aside class="day-life__fit" aria-labelledby="day-fit-title">
+                <div class="day-life__tip">
+                    <img class="day-life__mascot day-life__mascot--tip"
+                         src="/images/brand/mascot-coach.webp"
+                         srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
+                         alt=""
+                         width="72"
+                         height="72"
+                         decoding="async" />
+                    <p class="day-life__speech">@Culture["Day.FitLead"]</p>
+                </div>
                 <h2 id="day-fit-title">@Culture["Day.FitTitle"]</h2>
-                <p>@Culture["Day.FitLead"]</p>
                 <div class="day-life__actions">
                     <a class="career-btn day-life__cta" href="/candidate/profile?tab=fit">@Culture["Day.FitCta"]</a>
                     <a class="career-btn career-btn--secondary" href="/candidate/profile?tab=tests">@Culture["Day.MoreCta"]</a>

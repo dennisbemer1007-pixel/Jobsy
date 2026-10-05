@@ -24,7 +24,7 @@ public static class OccupationDayInLifePrompt
         Antwoord alleen met JSON in deze vorm:
         {"blocks":[{"key":"start","label":"Start","text":"..."}],"highlights":["...","..."],"varies":"..."}
 
-        blocks zijn 6 tot 8 momenten van een gewone dag. Bij een dunne bron: 4 tot 6 momenten.
+        blocks zijn bij voorkeur 7 momenten van een gewone dag. 6 of 8 mag als de bron dat nodig maakt. Bij een dunne bron: 4 tot 6 momenten.
         key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close.
         Gebruik die volgorde. Sla talk, plan of handover over als de bron geen contact, geen plannen en geen overdragen noemt.
         label is kort, hooguit drie woorden. "Ochtendzorg" alleen als de bron over zorg gaat. "Gesprek" alleen als de bron contact met mensen noemt. "Overdracht" alleen als de bron overdragen of afstemmen noemt. Anders een korter label dat bij de bron past, zoals "Ochtend" of "Afronden".

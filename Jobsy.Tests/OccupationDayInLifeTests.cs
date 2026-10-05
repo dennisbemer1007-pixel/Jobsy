@@ -428,6 +428,9 @@ public class OccupationDayInLifeTests
         Assert.Contains("Day.Tasks", page, StringComparison.Ordinal);
         Assert.Contains("Day.Skills", page, StringComparison.Ordinal);
         Assert.Contains("day-life__cloud", page, StringComparison.Ordinal);
+        Assert.Contains("day-life__tip", page, StringComparison.Ordinal);
+        Assert.Contains("day-life__mascot--tip", page, StringComparison.Ordinal);
+        Assert.Contains("bij voorkeur 7", OccupationDayInLifePrompt.System, StringComparison.Ordinal);
         Assert.Contains("LobsyBubble", page, StringComparison.Ordinal);
         Assert.Contains("/images/brand/mascot-coach.webp", page, StringComparison.Ordinal);
         Assert.DoesNotContain("LobsyCoachAvatar", page, StringComparison.Ordinal);
