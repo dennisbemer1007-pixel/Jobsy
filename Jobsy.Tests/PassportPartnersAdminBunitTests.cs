@@ -45,10 +45,10 @@ public class PassportPartnersAdminBunitTests : BunitContext
     }
 
     [Fact]
-    public void Empty_partner_form_asks_for_the_required_fields_in_dutch()
+    public async Task Empty_partner_form_asks_for_the_required_fields_in_dutch()
     {
         var cut = Render<PassportPartnersAdmin>();
-        cut.Find("button.btn-compact--primary").Click();
+        await cut.Find("button.btn-compact--primary").ClickAsync();
         Assert.Contains("Vul een geldig bedrijfs-id in.", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Vul een weergavenaam in.", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Opslaan lukte niet", cut.Markup, StringComparison.Ordinal);
