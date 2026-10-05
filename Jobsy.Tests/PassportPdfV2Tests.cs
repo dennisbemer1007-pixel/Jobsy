@@ -146,6 +146,165 @@ public class PassportPdfV2Tests
     }
 
     [Fact]
+    public async Task Rich_layout_uses_mock_sections_without_scores()
+    {
+        var pdf = await Render(FullFacts());
+        var text = TextOf(pdf);
+        Assert.Equal(2, pdf.Pages);
+        Assert.Contains("Mijn verhaal", text, StringComparison.Ordinal);
+        Assert.Contains("Jouw sterkste eigenschappen", text, StringComparison.Ordinal);
+        Assert.Contains("Hier voel je je thuis", text, StringComparison.Ordinal);
+        Assert.Contains("Wat je belangrijk vindt", text, StringComparison.Ordinal);
+        Assert.Contains("Jouw DNA in één oogopslag", text, StringComparison.Ordinal);
+        Assert.Contains("Werk dat bij je past", text, StringComparison.Ordinal);
+        Assert.Contains("Praktisch", text, StringComparison.Ordinal);
+        Assert.Contains("Werkervaring", text, StringComparison.Ordinal);
+        Assert.Contains("Deel alleen als jij dat wilt", text, StringComparison.Ordinal);
+        Assert.Contains("denkt mee in het team", text, StringComparison.Ordinal);
+        Assert.Contains("Orderpicker", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Samira", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Sparse_profile_does_not_invent_experience_quotes_or_jobs()
+    {
+        var facts = FullFacts() with
+        {
+            OpenForWork = false,
+            WorkRegion = null,
+            AvailableFrom = null,
+            MinHours = null,
+            MaxHours = null,
+            FlexibleTimes = false,
+            Availability = null,
+            PreferredTransport = null,
+            Licenses = null,
+            MaxTravelMinutes = null,
+            HasOwnCar = null,
+            Email = null,
+            Phone = null,
+            WhatsApp = false,
+            SpokenLanguages = null,
+            DutchLevel = null,
+            WorkPreferences = null,
+            ShareEmployerPreferences = false,
+            EmployerPreferences = null,
+            Roles = null,
+            ContractPreferences = null,
+            Experience = null,
+            Certificates = null,
+            Educations = null,
+            OwnWords = null,
+            Motivation = null,
+            Dna = PassportDnaLayer.None(),
+            EmailVerified = false,
+            PhoneVerified = false,
+            DreamTitle = null,
+            ReferenceQuotes = null
+        };
+
+        var pdf = await Render(facts);
+        var text = TextOf(pdf);
+        Assert.Contains("Je hebt nog geen werkervaring ingevuld.", text, StringComparison.Ordinal);
+        Assert.Contains("Nog geen gedeelde referentie.", text, StringComparison.Ordinal);
+        Assert.Contains("Nog niet gedaan", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Kwekerij", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Orderpicker", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ze pakt het werk rustig op.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Samira", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Reference_quote_is_shown_only_when_a_real_answer_is_supplied()
+    {
+        var without = PassportPdfModelBuilder.Build(FullFacts());
+        Assert.Empty(without.Quotes);
+
+        var withQuote = PassportPdfModelBuilder.Build(FullFacts() with
+        {
+            ReferenceQuotes =
+            [
+                new PassportReferenceQuote("Jan · Kwekerij De Voorbeeldtuin", "Ze pakt het werk rustig op.")
+            ]
+        });
+        Assert.Equal("Ze pakt het werk rustig op.", withQuote.Quotes[0].Quote);
+
+        var dropped = PassportPdfModelBuilder.Build(FullFacts() with
+        {
+            ReferenceQuotes = [new PassportReferenceQuote("Jan", "Score 80%")]
+        });
+        Assert.Empty(dropped.Quotes);
+
+        var pdf = await Render(FullFacts() with
+        {
+            ReferenceQuotes =
+            [
+                new PassportReferenceQuote("Jan · Kwekerij De Voorbeeldtuin", "Ze pakt het werk rustig op.")
+            ],
+            DreamTitle = "Teamleider logistiek"
+        });
+        var text = TextOf(pdf);
+        Assert.Contains("Ze pakt het werk rustig op.", text, StringComparison.Ordinal);
+        Assert.Contains("Teamleider logistiek", text, StringComparison.Ordinal);
+        Assert.Contains("later", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Trait_glosses_exist_in_all_five_languages_without_percentages()
+    {
+        foreach (var key in PassportTraitCopy.Keys)
+        {
+            var parts = key.Split('.', 2);
+            foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
+            {
+                var text = PassportTraitCopy.Gloss(parts[0], parts[1], lang);
+                Assert.False(string.IsNullOrWhiteSpace(text));
+                Assert.DoesNotContain("%", text);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Write_review_samples_when_a_folder_is_set()
+    {
+        var dir = Environment.GetEnvironmentVariable("PASSPORT_SAMPLE_DIR");
+        if (string.IsNullOrWhiteSpace(dir))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(dir);
+        var rich = await Render(RichSample());
+        var sparse = await Render(FullFacts() with
+        {
+            OpenForWork = false,
+            Roles = null,
+            Experience = null,
+            Certificates = null,
+            Educations = null,
+            OwnWords = null,
+            DutchLevel = null,
+            SpokenLanguages = null,
+            WorkPreferences = null,
+            ShareEmployerPreferences = false,
+            EmployerPreferences = null,
+            Dna = PassportDnaLayer.None(),
+            EmailVerified = false,
+            DreamTitle = null,
+            ReferenceQuotes = null,
+            MinHours = null,
+            MaxHours = null
+        });
+        await File.WriteAllBytesAsync(Path.Combine(dir, "rich.pdf"), rich.Bytes);
+        await File.WriteAllBytesAsync(Path.Combine(dir, "sparse.pdf"), sparse.Bytes);
+        Assert.Equal(2, rich.Pages);
+        Assert.Equal(2, sparse.Pages);
+    }
+
+    [Fact]
     public async Task Long_profile_still_fits_on_two_pages()
     {
         var jobs = Enumerable.Range(1, 8)
@@ -210,7 +369,8 @@ public class PassportPdfV2Tests
                      "Jobsy.Core/Passport/PassportPdfFacts.cs",
                      "Jobsy.Core/Passport/PassportPdfModelBuilder.cs",
                      "Jobsy.Api/Passport/PassportPdfDownload.cs",
-                     "Jobsy.Infrastructure/Services/Passport/PassportPdfService.cs"
+                     "Jobsy.Infrastructure/Services/Passport/PassportPdfService.cs",
+                     "Jobsy.Core/Passport/PassportTraitCopy.cs"
                  })
         {
             var source = File.ReadAllText(Path.Combine(root, relative));
@@ -289,6 +449,71 @@ public class PassportPdfV2Tests
             new(PassportDnaLayer.Values, true, done, ["Zekerheid & traditie"])
         ];
         return PassportPdfFactsFactory.FromUser(user, prefs, dna, includeContact: true, phoneVerificationRequired: false, Generated);
+    }
+
+    private static PassportPdfFacts RichSample()
+    {
+        var done = Generated;
+        var facts = FullFacts() with
+        {
+            FullName = "Samira El Amrani",
+            WorkRegion = "Wateringen",
+            IncludeContact = false,
+            Email = null,
+            Phone = null,
+            WhatsApp = false,
+            DutchLevel = "basis",
+            SpokenLanguages = [new CandidateLanguageDto("ar", null)],
+            MinHours = 16,
+            MaxHours = 24,
+            Roles = ["Helpende zorg", "Assistent welzijn", "Gastvrouw", "Zorghulp"],
+            Experience =
+            [
+                new PassportExperienceFact(
+                    "Zorghuis Wateringen",
+                    "Vrijwillige zorghulp",
+                    "2025-01",
+                    null,
+                    null,
+                    "Bewoners begeleiden bij wandelen en activiteiten\nHelpen bij maaltijden en een rustig gesprek\nAfspraken doorgeven aan het team"),
+                new PassportExperienceFact(
+                    "Restaurant Al Bahr, Den Haag",
+                    "Bediening / gastvrouw",
+                    "2021-03",
+                    "2024-12",
+                    null,
+                    "Gasten ontvangen, bestellingen, afrekenen\nSamenwerken in een drukke avondploeg\nKlachten rustig oplossen"),
+                new PassportExperienceFact(
+                    "Oma (thuis, Wateringen)",
+                    "Mantelzorg",
+                    "2019-01",
+                    "2021-02",
+                    null,
+                    "Dagelijkse hulp: medicijnen, boodschappen, afspraken\nContact met huisarts en familie plannen")
+            ],
+            Educations = ["MBO 1", "Inburgering A2"],
+            Certificates =
+            [
+                new PassportPaperFact("Nederlands B1", null),
+                new PassportPaperFact("BHV / EHBO", null),
+                new PassportPaperFact("VCA Basis", 2024)
+            ],
+            OwnWords = "Ik werk het liefst in een warm team waar mensen elkaar helpen. Door mantelzorg leerde ik rustig blijven en doorzetten. Ik wil stappen zetten in de zorg, dichtbij huis.",
+            DreamTitle = "Verzorgende IG",
+            ReferenceQuotes =
+            [
+                new PassportReferenceQuote("Teamleider · Zorghuis Wateringen", "Samira is rustig, vriendelijk en leert snel. Ze komt afspraken na."),
+                new PassportReferenceQuote("Supervisor · Restaurant Al Bahr", "Betrouwbaar in de bediening, ook op drukke avonden.")
+            ],
+            Dna =
+            [
+                new(PassportDnaLayer.Competence, true, done, ["Samen & aardig", "Kalm blijven", "Nieuwe dingen proberen", "Afmaken & netjes werken"], ["Samenwerken", "Stressbestendigheid", "Innovatie", "Resultaatgerichtheid"]),
+                new(PassportDnaLayer.Career, true, done, ["Mensen helpen", "Aanpakken met je handen"], ["Social", "Realistic"]),
+                new(PassportDnaLayer.Culture, true, done, ["Mensen voorop", "Samenwerken"], ["PeopleFirst", "Collaboration"]),
+                new(PassportDnaLayer.Values, true, done, ["Verbinding & zorg", "Prestatie & groei", "Zekerheid & traditie", "Impact & rechtvaardigheid"], ["Connection", "Achievement", "Stability", "Impact"])
+            ]
+        };
+        return facts;
     }
 
     private static string FindRepoRoot()

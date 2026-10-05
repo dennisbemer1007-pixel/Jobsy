@@ -46,7 +46,9 @@ public sealed record PassportPdfFacts(
     bool EmailVerified,
     bool PhoneVerified,
     bool PhoneVerificationRequired,
-    DateTime GeneratedAtUtc);
+    DateTime GeneratedAtUtc,
+    string? DreamTitle = null,
+    IReadOnlyList<PassportReferenceQuote>? ReferenceQuotes = null);
 
 public static class PassportPdfFactsFactory
 {
