@@ -64,6 +64,11 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
 
     public async Task<string> GetPaymentModeAsync(CancellationToken cancellationToken = default)
     {
+        if ((await _features.GetAsync(cancellationToken)).FreeCandidateTestsEnabled)
+        {
+            return DeepTestFinanceRules.FreeForEveryoneMethod;
+        }
+
         if (AllowStubPayments())
         {
             return "stub";
@@ -98,7 +103,8 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
             throw new InvalidOperationException(ConsentRequiredCode);
         }
 
-        if (!waiverAccepted && !user.IsTestAccount)
+        var freeForEveryone = (await _features.GetAsync(cancellationToken)).FreeCandidateTestsEnabled;
+        if (!waiverAccepted && !user.IsTestAccount && !freeForEveryone)
         {
             throw new InvalidOperationException(WaiverRequiredCode);
         }
@@ -114,7 +120,14 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
 
         if (user.IsTestAccount)
         {
-            return await CreateTestUnlockAsync(userId, kind, locale, cancellationToken);
+            return await CreateZeroEuroUnlockAsync(
+                userId, kind, locale, DeepTestFinanceRules.TestUnlockMethod, cancellationToken);
+        }
+
+        if (freeForEveryone)
+        {
+            return await CreateZeroEuroUnlockAsync(
+                userId, kind, locale, DeepTestFinanceRules.FreeForEveryoneMethod, cancellationToken);
         }
 
         var mode = await GetPaymentModeAsync(cancellationToken);
@@ -419,26 +432,29 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
         }
     }
 
-    private async Task<DeepTestCheckoutCreateResult> CreateTestUnlockAsync(
+    private async Task<DeepTestCheckoutCreateResult> CreateZeroEuroUnlockAsync(
         Guid userId,
         AssessmentKind kind,
         string? locale,
+        string paymentMethod,
         CancellationToken cancellationToken)
     {
         var checkoutId = Guid.NewGuid();
         var now = DateTime.UtcNow;
+        var isTestAccount = paymentMethod == DeepTestFinanceRules.TestUnlockMethod;
+        var idPrefix = isTestAccount ? "test_deep_" : "free_deep_";
         var checkout = new DeepAnalysisCheckout
         {
             Id = checkoutId,
             UserId = userId,
             Kind = kind,
-            PaymentId = $"test_deep_{Guid.NewGuid():N}",
+            PaymentId = $"{idPrefix}{Guid.NewGuid():N}",
             AmountEuro = 0,
             AmountExVatCents = 0,
             VatAmountCents = 0,
             TotalAmountCents = 0,
-            PaymentMethod = DeepTestFinanceRules.TestUnlockMethod,
-            ProviderStatus = "test",
+            PaymentMethod = paymentMethod,
+            ProviderStatus = isTestAccount ? "test" : "free",
             IsStub = true,
             WaiverAcceptedAtUtc = now,
             WaiverTextVersion = DeepAnalysisPricing.WaiverTextVersion,
@@ -453,8 +469,8 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
         await _db.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Deep-test test unlock {CheckoutId} kind={Kind} user={UserId}",
-            checkoutId, kind, userId);
+            "Deep-test zero-euro unlock {CheckoutId} kind={Kind} method={Method} user={UserId}",
+            checkoutId, kind, paymentMethod, userId);
 
         return new DeepTestCheckoutCreateResult(
             checkoutId,
@@ -478,7 +494,7 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
             prior.Status = DeepAnalysisCheckoutStatus.Cancelled;
             prior.FailedAtUtc = DateTime.UtcNow;
             if (!prior.IsStub
-                && !DeepTestFinanceRules.IsTestUnlock(prior.PaymentMethod)
+                && !DeepTestFinanceRules.IsZeroEuroUnlock(prior.PaymentMethod)
                 && !string.IsNullOrWhiteSpace(prior.PaymentId))
             {
                 await _mollie.TryCancelPaymentAsync(prior.PaymentId, cancellationToken);
@@ -490,7 +506,7 @@ public sealed class DeepTestPaymentService : IDeepTestPaymentService
         DeepAnalysisCheckout checkout,
         CancellationToken cancellationToken)
     {
-        if (DeepTestFinanceRules.IsTestUnlock(checkout.PaymentMethod))
+        if (DeepTestFinanceRules.IsZeroEuroUnlock(checkout.PaymentMethod))
         {
             await _deep.UnlockForUserAsync(checkout.UserId, checkout.Kind, cancellationToken);
             return new DeepTestFulfillResult(false, "paid", checkout.Id, true, null);

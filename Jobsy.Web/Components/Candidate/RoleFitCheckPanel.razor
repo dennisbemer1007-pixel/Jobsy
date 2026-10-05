@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
@@ -234,8 +236,8 @@
 
             @if (result.ShowDeepUpsell)
             {
-                <p class="login-lead fit-upsell">@Culture["Fit.DeepUpsell"]</p>
-                <a class="btn btn-primary" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+                <p class="login-lead fit-upsell">@FitCopy("Fit.DeepUpsell")</p>
+                <a class="btn btn-primary" href="/candidate/deep-analysis/career">@FitCopy("Career.DeepUnlock")</a>
             }
         }
     }
@@ -249,13 +251,26 @@
     private readonly RoleFitCheckSession _session = new();
     private bool _wasActive;
     private bool _employersOn = true;
+    private bool _skipsPayment;
 
     protected override async Task OnInitializedAsync()
     {
         _session.ActiveVacancyId = VacancyId;
         Culture.Changed += OnCultureChanged;
         _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        try
+        {
+            var mode = await Api.GetDeepAnalysisPaymentModeAsync();
+            _skipsPayment = DeepTestFinanceRules.SkipsCandidatePayment(mode);
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _skipsPayment = false;
+        }
     }
+
+    private string FitCopy(string key)
+        => _skipsPayment ? TestAccountCopy.StripPrice(Culture[key]) : Culture[key];
 
     private IEnumerable<string> ActionLines(IReadOnlyList<string> steps)
     {

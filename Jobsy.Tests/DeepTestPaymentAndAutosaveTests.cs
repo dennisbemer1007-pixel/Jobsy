@@ -168,7 +168,7 @@ public class DeepTestStubGuardTests
         await db.SaveChangesAsync();
 
         var mollie = new RecordingMollie();
-        var sut = CreatePayments(db, isDevelopment: false, allowStub: false, mollie: mollie);
+        var sut = CreatePayments(db, isDevelopment: false, allowStub: false, mollie: mollie, freeForEveryone: false);
         var created = await sut.CreateCheckoutAsync(userId, AssessmentKind.Career, true, "nl");
 
         Assert.Equal(1, mollie.Creates);
@@ -177,7 +177,67 @@ public class DeepTestStubGuardTests
         var checkout = await db.DeepAnalysisCheckouts.SingleAsync();
         Assert.Equal(DeepAnalysisCheckoutStatus.Pending, checkout.Status);
         Assert.False(DeepTestFinanceRules.IsTestUnlock(checkout.PaymentMethod));
+        Assert.False(DeepTestFinanceRules.IsFreeForEveryoneUnlock(checkout.PaymentMethod));
         Assert.Empty(db.CandidateDeepAnalyses);
+    }
+
+    [Theory]
+    [InlineData(AssessmentKind.Competence)]
+    [InlineData(AssessmentKind.Career)]
+    [InlineData(AssessmentKind.Values)]
+    [InlineData(AssessmentKind.Culture)]
+    public async Task Free_for_everyone_unlocks_every_deep_test_without_mollie(AssessmentKind kind)
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var user = Consented(userId);
+        user.IsTestAccount = false;
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var mollie = new RecordingMollie();
+        var sut = CreatePayments(db, isDevelopment: false, allowStub: false, mollie: mollie, freeForEveryone: true);
+
+        Assert.Equal(DeepTestFinanceRules.FreeForEveryoneMethod, await sut.GetPaymentModeAsync());
+
+        var created = await sut.CreateCheckoutAsync(userId, kind, waiverAccepted: false, locale: "nl");
+
+        Assert.Equal(0, mollie.Creates);
+        Assert.Equal(0, created.TotalCents);
+        var checkout = await db.DeepAnalysisCheckouts.SingleAsync();
+        Assert.Equal(DeepAnalysisCheckoutStatus.Paid, checkout.Status);
+        Assert.Equal(0, checkout.AmountEuro);
+        Assert.Equal(DeepTestFinanceRules.FreeForEveryoneMethod, checkout.PaymentMethod);
+        Assert.StartsWith("free_deep_", checkout.PaymentId, StringComparison.Ordinal);
+        Assert.True(CandidateDeepAnalysisStatuses.IsUnlocked(
+            (await db.CandidateDeepAnalyses.SingleAsync()).Status));
+        Assert.Empty(db.ConsumerPurchaseInvoices);
+
+        var replay = await sut.TryFulfillAsync(checkout.Id, DeepTestFulfillSource.Webhook);
+        Assert.True(replay.Unlocked);
+        Assert.Empty(db.ConsumerPurchaseInvoices);
+    }
+
+    [Fact]
+    public async Task Gratis_unlock_stays_out_of_vat_totals()
+    {
+        await using var db = CreateDb();
+        var issued = new DateTime(2026, 5, 15, 10, 0, 0, DateTimeKind.Utc);
+        var (ex, vat, total) = TokenVatPricing.SplitInclVatEuros(2.99m);
+        var buyerId = Guid.NewGuid();
+        db.Users.Add(Consented(buyerId));
+        var realCheckout = Guid.NewGuid();
+        var freeCheckout = Guid.NewGuid();
+        db.DeepAnalysisCheckouts.Add(PaidCheckout(realCheckout, buyerId, "tr_real", ex, vat, total, "ideal", issued));
+        db.DeepAnalysisCheckouts.Add(PaidCheckout(freeCheckout, buyerId, "free_deep_x", 0, 0, 0, DeepTestFinanceRules.FreeForEveryoneMethod, issued));
+        db.ConsumerPurchaseInvoices.Add(Invoice(realCheckout, buyerId, "LOB-KT-2026-0011", ex, vat, total, "ideal", issued));
+        db.ConsumerPurchaseInvoices.Add(Invoice(freeCheckout, buyerId, "LOB-KT-2026-0012", 0, 0, 0, DeepTestFinanceRules.FreeForEveryoneMethod, issued));
+        await db.SaveChangesAsync();
+
+        var preview = await new VatDeclarationService(db, new PlatformCompanySettingsService(db))
+            .PreviewAsync(2026, 2);
+        Assert.Equal(1, preview.ConsumerInvoiceCount);
+        Assert.Equal(total, preview.ConsumerOmzetExVatCents + preview.ConsumerVatCents);
     }
 
     [Fact]
@@ -275,7 +335,7 @@ public class DeepTestStubGuardTests
     }
 
     private static DeepTestPaymentService CreatePayments(
-        JobsyDbContext db, bool isDevelopment, bool allowStub, IMollieApiClient mollie)
+        JobsyDbContext db, bool isDevelopment, bool allowStub, IMollieApiClient mollie, bool freeForEveryone = false)
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -296,7 +356,7 @@ public class DeepTestStubGuardTests
                 NullLogger<DeepAnalysisService>.Instance,
                 new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db))),
             mollie,
-            new StubFeatures(),
+            new StubFeatures(freeForEveryone),
             new RealInvoices(db),
             new StubVat(),
             new StubMail(),
@@ -340,10 +400,12 @@ public class DeepTestStubGuardTests
         public Task TryCancelPaymentAsync(string paymentId, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
-    private sealed class StubFeatures : IPlatformFeatureService
+    private sealed class StubFeatures(bool freeForEveryone = false) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.test", DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(
+                false, false, "https://lobsy.test", DateTime.UtcNow,
+                FreeCandidateTestsEnabled: freeForEveryone));
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
     }

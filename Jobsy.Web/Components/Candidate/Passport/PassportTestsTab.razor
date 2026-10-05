@@ -136,6 +136,7 @@
                                              ProgressTotal="_previewDef.DeepQuestionCount"
                                              ShowSamplePdf="false"
                                              FreeForTestAccount="_freeForTestAccount"
+                                             FreeForEveryone="_freeForEveryone"
                                              AllExtendedDone="_model.AllExtendedDone"
                                              ReportLinks="_reportLinks"
                                              OnStart="StartExtendedAsync" />
@@ -161,6 +162,7 @@
     private int _previewProgress;
     private decimal _priceEuro = 2.99m;
     private bool _freeForTestAccount;
+    private bool _freeForEveryone;
     private List<TestResultLockedPreview.ReportLink> _reportLinks = [];
     private CandidateKompasState? _kompas;
 
@@ -257,10 +259,12 @@
         {
             var mode = await Api.GetDeepAnalysisPaymentModeAsync();
             _freeForTestAccount = mode == DeepTestFinanceRules.TestUnlockMethod;
+            _freeForEveryone = mode == DeepTestFinanceRules.FreeForEveryoneMethod;
         }
         catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
         {
             _freeForTestAccount = false;
+            _freeForEveryone = false;
         }
 
         await LoadQuotasAsync(model);

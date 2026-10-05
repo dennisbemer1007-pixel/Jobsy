@@ -248,6 +248,8 @@ public sealed class PlatformFeatureItem
     public bool WhatsAppRemindersEnabled { get; set; }
     /// <summary>Compact chart layout for paid personal test PDFs. Default off.</summary>
     public bool CompactTestPdfEnabled { get; set; }
+    /// <summary>When true, candidates take paid tests without Mollie. Default on.</summary>
+    public bool FreeCandidateTestsEnabled { get; set; } = true;
     /// <summary>Server has WhatsApp credentials. Never a secret.</summary>
     public bool WhatsAppRemindersConfigured { get; set; }
 }
@@ -279,6 +281,7 @@ public sealed class PlatformFeaturePatch
     public bool? PhoneVerificationEnabled { get; set; }
     public bool? WhatsAppRemindersEnabled { get; set; }
     public bool? CompactTestPdfEnabled { get; set; }
+    public bool? FreeCandidateTestsEnabled { get; set; }
     public string? Reason { get; set; }
 }
 

@@ -1703,6 +1703,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
             entity.Property(e => e.WhatsAppRemindersEnabled).HasDefaultValue(false);
             entity.Property(e => e.CompactTestPdfEnabled).HasDefaultValue(false);
+            entity.Property(e => e.FreeCandidateTestsEnabled).HasDefaultValue(true);
         });
 
         modelBuilder.Entity<PassportPartner>(entity =>

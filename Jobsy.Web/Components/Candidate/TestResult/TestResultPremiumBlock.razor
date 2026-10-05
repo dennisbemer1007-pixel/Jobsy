@@ -35,10 +35,10 @@ else
             <button type="button"
                     class="btn-gold"
                     disabled="@Busy"
-                    aria-label="@Culture.Format("TestResult.Gold.StartAria", FormattedPrice)"
+                    aria-label="@(SkipsPay ? FreeCta : Culture.Format("TestResult.Gold.StartAria", FormattedPrice))"
                     @onclick="OnStart">
-                <span>@(FreeForTestAccount ? Culture["Tests.StartExtendedFree"] : Culture["TestResult.Gold.Start"])</span>
-                @if (!FreeForTestAccount)
+                <span>@FreeCta</span>
+                @if (!SkipsPay)
                 {
                     <span class="btn-gold__meta">
                         <span class="btn-gold__price">€ @FormattedPrice</span>
@@ -47,9 +47,13 @@ else
                 }
             </button>
             <p class="test-result-premium__fine">
-                @if (!FreeForTestAccount)
+                @if (!SkipsPay)
                 {
                     <span>@Culture["TestResult.Gold.Fine"]</span>
+                }
+                else if (FreeForEveryone)
+                {
+                    <span>@Culture["DeepPay.EveryoneNote"]</span>
                 }
                 else
                 {
@@ -81,9 +85,18 @@ else
     [Parameter] public int ProgressTotal { get; set; } = 150;
     [Parameter] public bool ShowSamplePdf { get; set; }
     [Parameter] public bool FreeForTestAccount { get; set; }
+    [Parameter] public bool FreeForEveryone { get; set; }
     [Parameter] public EventCallback OnStart { get; set; }
     [Parameter] public EventCallback OnSamplePdf { get; set; }
 
     private string FormattedPrice =>
         PriceEuro.ToString("0.00", CultureInfo.CurrentUICulture);
+
+    private bool SkipsPay => FreeForTestAccount || FreeForEveryone;
+
+    private string FreeCta => FreeForEveryone
+        ? Culture["Tests.StartExtendedEveryoneFree"]
+        : FreeForTestAccount
+            ? Culture["Tests.StartExtendedFree"]
+            : Culture["TestResult.Gold.Start"];
 }

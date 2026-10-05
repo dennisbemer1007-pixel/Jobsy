@@ -57,14 +57,14 @@ else if (_state == "paid")
                    Mode="TestPageShell.ShellMode.Checkout"
                    Deep="true"
                    Eyebrow="@Culture["DeepPay.Title"]"
-                   H1="@(_isTestUnlock ? Culture["DeepPay.OpenedTitle"] : Culture["DeepPay.PaidTitle"])"
+                   H1="@(_isZeroEuro ? Culture["DeepPay.OpenedTitle"] : Culture["DeepPay.PaidTitle"])"
                    Lead="@Culture.Format("Deep.Checkout.PaidLead", _testName)"
                    TestName="@_testName"
                    Answered="0"
                    TargetCount="qCount"
                    BubbleText="@Culture["Deep.Checkout.Bubble.Paid"]">
         <RailContent>
-            <p class="test-rail__zone">@(_isTestUnlock ? Culture["Deep.Rail.OpenedReady"] : Culture["Deep.Rail.PaidReady"])</p>
+            <p class="test-rail__zone">@(_isZeroEuro ? Culture["Deep.Rail.OpenedReady"] : Culture["Deep.Rail.PaidReady"])</p>
         </RailContent>
         <ChildContent>
             <div class="deep-checkout deep-checkout--paid">
@@ -74,6 +74,10 @@ else if (_state == "paid")
                     @if (_isTestUnlock)
                     {
                         <div><dt class="visually-hidden">@Culture["DeepPay.Fact.Amount"]</dt><dd>@Culture["DeepPay.PriceFree"]</dd></div>
+                    }
+                    else if (_isEveryoneFree)
+                    {
+                        <div><dt class="visually-hidden">@Culture["DeepPay.Fact.Amount"]</dt><dd>@Culture["DeepPay.EveryonePrice"]</dd></div>
                     }
                     else
                     {
@@ -88,6 +92,10 @@ else if (_state == "paid")
                 @if (_isTestUnlock)
                 {
                     <p>@Culture["DeepPay.TestAccountNote"]</p>
+                }
+                else if (_isEveryoneFree)
+                {
+                    <p>@Culture["DeepPay.EveryoneNote"]</p>
                 }
                 else
                 {
@@ -165,6 +173,8 @@ else
     private string _paidLocal = "";
     private bool _isStub;
     private bool _isTestUnlock;
+    private bool _isEveryoneFree;
+    private bool _isZeroEuro;
     private bool _busy;
     private bool _timedOut;
     private Guid? _checkoutId;
@@ -261,6 +271,8 @@ else
         _invoiceNumber = status.InvoiceNumber;
         _isStub = status.IsStub;
         _isTestUnlock = DeepTestFinanceRules.IsTestUnlock(status.PaymentMethod);
+        _isEveryoneFree = DeepTestFinanceRules.IsFreeForEveryoneUnlock(status.PaymentMethod);
+        _isZeroEuro = DeepTestFinanceRules.IsZeroEuroUnlock(status.PaymentMethod);
         if (status.PaidAtUtc is DateTime paid)
         {
             var amsterdam = TimeZoneInfo.FindSystemTimeZoneById(

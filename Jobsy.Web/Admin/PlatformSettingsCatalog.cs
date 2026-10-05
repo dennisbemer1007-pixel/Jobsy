@@ -236,6 +236,23 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("FreeCandidateTestsEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "FreeCandidateTestsEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.FreeCandidateTests.Enabled.Title",
+                DescriptionKey: "AdminSettings.FreeCandidateTests.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.FreeCandidateTestsEnabled,
+                Write: v => new PlatformFeatureUpdate(FreeCandidateTestsEnabled: ToBool(v)),
+                ImpactKey: "AdminSettings.FreeCandidateTests.Enabled.ImpactOff",
+                ImpactLevel: PlatformSettingImpactLevel.Warn,
+                ConfirmOnChange: true,
+                ConfirmWhen: PlatformSettingConfirmWhen.Off,
+                ShowOnDashboard: true));
+        }
+
         // --- Vacatures ---
         list.Add(new PlatformSettingDescriptor(
             Key: "VacancyContentModerationEnabled",
@@ -476,6 +493,7 @@ public static class PlatformSettingsCatalog
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
         bool? compactTestPdfEnabled = null;
+        bool? freeCandidateTestsEnabled = null;
 
         foreach (var p in parts)
         {
@@ -512,6 +530,7 @@ public static class PlatformSettingsCatalog
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
             if (p.CompactTestPdfEnabled is not null) compactTestPdfEnabled = p.CompactTestPdfEnabled;
+            if (p.FreeCandidateTestsEnabled is not null) freeCandidateTestsEnabled = p.FreeCandidateTestsEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -538,6 +557,7 @@ public static class PlatformSettingsCatalog
             PassportPdfV2Enabled: passportPdfV2Enabled,
             PhoneVerificationEnabled: phoneVerificationEnabled,
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
-            CompactTestPdfEnabled: compactTestPdfEnabled);
+            CompactTestPdfEnabled: compactTestPdfEnabled,
+            FreeCandidateTestsEnabled: freeCandidateTestsEnabled);
     }
 }
