@@ -95,7 +95,18 @@ public static class CandidateCoachScript
         if (fold.Contains("motivatie", StringComparison.Ordinal)
             || fold.Contains("motivation", StringComparison.Ordinal)
             || fold.Contains("certificaat", StringComparison.Ordinal)
-            || fold.Contains("certificate", StringComparison.Ordinal))
+            || fold.Contains("certificate", StringComparison.Ordinal)
+            || fold.Contains("waarde", StringComparison.Ordinal)
+            || fold.Contains("cultuur", StringComparison.Ordinal)
+            || fold.Contains("werksfeer", StringComparison.Ordinal)
+            || fold.Contains("belangrijk", StringComparison.Ordinal)
+            || fold.Contains("uren", StringComparison.Ordinal)
+            || fold.Contains(" uur", StringComparison.Ordinal)
+            || fold.Contains("beschik", StringComparison.Ordinal)
+            || fold.Contains("hours", StringComparison.Ordinal)
+            || fold.Contains("values", StringComparison.Ordinal)
+            || fold.Contains("culture", StringComparison.Ordinal)
+            || fold.Contains("available", StringComparison.Ordinal))
         {
             return false;
         }

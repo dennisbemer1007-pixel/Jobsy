@@ -12,6 +12,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -117,7 +118,7 @@ public sealed class AssistantChatService : IAssistantChatService
                     context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, aiCts.Token);
                 if (!string.IsNullOrWhiteSpace(ai))
                 {
-                    return new AssistantChatResult(StripMarkup(ai), UsedAi: true, []);
+                    return new AssistantChatResult(CandidateCoachPolish.Apply(StripMarkup(ai)), UsedAi: true, []);
                 }
 
                 if (rejectedFacts && string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
@@ -185,6 +186,12 @@ public sealed class AssistantChatService : IAssistantChatService
             if (LooksLikeDreamQuestion(text))
             {
                 return await CandidateDreamAsync(context, cancellationToken);
+            }
+
+            var profileFacts = await CandidateProfileFactsAsync(context, lastUser, cancellationToken);
+            if (profileFacts is not null)
+            {
+                return profileFacts;
             }
 
             if (LooksLikePassportHelp(text) && !CandidateJobAdvice.Handles(lastUser))
@@ -762,7 +769,19 @@ public sealed class AssistantChatService : IAssistantChatService
         var anyFact = false;
         sb.AppendLine(en ? "From your passport and tests:" : "Vanuit je paspoort en tests:");
 
-        if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
+        var competenceDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Competence, cancellationToken);
+        var deepTraits = competenceDeep is null
+            ? []
+            : StoredDeepScores.CompetenceTraits(competenceDeep.Status, competenceDeep.AnswersJson, competenceDeep.ReportJson);
+        if (deepTraits.Count > 0)
+        {
+            anyFact = true;
+            var label = DimensionLabels.For(deepTraits[0].Domain, lang);
+            sb.AppendLine(en
+                ? $"• Strongest competency: {label}"
+                : $"• Sterkste competentie: {label}");
+        }
+        else if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
         {
             var scores = new CompetencyScores(
                 competency.SamenwerkenPercent,
@@ -780,14 +799,15 @@ public sealed class AssistantChatService : IAssistantChatService
             }
         }
 
-        var riasec = CareerTestCatalog.CompletedScoresOrNull(
-            career?.Status,
-            career?.RealisticPercent,
-            career?.InvestigativePercent,
-            career?.ArtisticPercent,
-            career?.SocialPercent,
-            career?.EnterprisingPercent,
-            career?.ConventionalPercent);
+        var riasec = await PreferredCareerScoresAsync(context.UserId, cancellationToken)
+            ?? CareerTestCatalog.CompletedScoresOrNull(
+                career?.Status,
+                career?.RealisticPercent,
+                career?.InvestigativePercent,
+                career?.ArtisticPercent,
+                career?.SocialPercent,
+                career?.EnterprisingPercent,
+                career?.ConventionalPercent);
         if (riasec is { IsComplete: true })
         {
             var rankedRiasec = RiasecRanking.Rank(
@@ -803,16 +823,23 @@ public sealed class AssistantChatService : IAssistantChatService
             }
         }
 
-        if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
+        var valuesDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Values, cancellationToken);
+        var deepValues = valuesDeep is null
+            ? null
+            : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
+        if (deepValues is { IsComplete: true } || (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status)))
         {
             var ranked = DimensionRanking.Rank(
-                [
-                    (SchwartzValuesCatalog.Autonomy, values.AutonomyPercent),
-                    (SchwartzValuesCatalog.Connection, values.ConnectionPercent),
-                    (SchwartzValuesCatalog.Achievement, values.AchievementPercent),
-                    (SchwartzValuesCatalog.Stability, values.StabilityPercent),
-                    (SchwartzValuesCatalog.Impact, values.ImpactPercent)
-                ],
+                deepValues is { IsComplete: true }
+                    ? SchwartzValuesCatalog.CategoryCodes.Select(code => (code, (int?)deepValues.Get(code)))
+                    :
+                    [
+                        (SchwartzValuesCatalog.Autonomy, values!.AutonomyPercent),
+                        (SchwartzValuesCatalog.Connection, values.ConnectionPercent),
+                        (SchwartzValuesCatalog.Achievement, values.AchievementPercent),
+                        (SchwartzValuesCatalog.Stability, values.StabilityPercent),
+                        (SchwartzValuesCatalog.Impact, values.ImpactPercent)
+                    ],
                 DimensionRanking.ValueTieBreak);
             if (ranked.Count > 0)
             {
@@ -1279,7 +1306,7 @@ Verbetervoorstellen:
                 var scoreLines = new List<string>();
                 var jobs = new List<string>();
                 var outlookLines = new List<string>();
-                AppendPreferenceFacts(sb, prefs, dream);
+                AppendPreferenceFacts(sb, prefs, dream, user?.AvailableFromDate);
                 await AppendTestFactsAsync(sb, context.UserId, context.Language, prefs, scoreLines, jobs, outlookLines, cancellationToken);
                 sb.Append("month metrics: ");
                 sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
@@ -1379,7 +1406,19 @@ Verbetervoorstellen:
         var completed = new List<string>();
         var competency = await _db.CandidateCompetencies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
+        var competenceDeep = await CompletedDeepAsync(userId, AssessmentKind.Competence, cancellationToken);
+        var deepTraits = competenceDeep is null
+            ? []
+            : StoredDeepScores.CompetenceTraits(competenceDeep.Status, competenceDeep.AnswersJson, competenceDeep.ReportJson);
+        if (deepTraits.Count > 0)
+        {
+            completed.Add(TestName(lang, "work"));
+            var line = string.Join(", ", deepTraits.Take(3).Select(trait =>
+                $"{DimensionLabels.For(trait.Domain, lang)} {trait.Score}%"));
+            sb.Append("competenceTop3=").Append(line).Append("; ");
+            scoreLines.Add("competenceTop3=" + line);
+        }
+        else if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
         {
             completed.Add(TestName(lang, "work"));
             var top = new (string Label, int Score)[]
@@ -1401,14 +1440,15 @@ Verbetervoorstellen:
 
         var career = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var riasec = CareerTestCatalog.CompletedScoresOrNull(
-            career?.Status,
-            career?.RealisticPercent,
-            career?.InvestigativePercent,
-            career?.ArtisticPercent,
-            career?.SocialPercent,
-            career?.EnterprisingPercent,
-            career?.ConventionalPercent);
+        var riasec = await PreferredCareerScoresAsync(userId, cancellationToken)
+            ?? CareerTestCatalog.CompletedScoresOrNull(
+                career?.Status,
+                career?.RealisticPercent,
+                career?.InvestigativePercent,
+                career?.ArtisticPercent,
+                career?.SocialPercent,
+                career?.EnterprisingPercent,
+                career?.ConventionalPercent);
         if (riasec is { IsComplete: true })
         {
             completed.Add(TestName(lang, "career"));
@@ -1424,11 +1464,19 @@ Verbetervoorstellen:
 
         var culture = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
+        var cultureDeep = await CompletedDeepAsync(userId, AssessmentKind.Culture, cancellationToken);
+        var deepCulture = cultureDeep is null
+            ? null
+            : StoredDeepScores.Culture(cultureDeep.Status, cultureDeep.AnswersJson, cultureDeep.ReportJson);
+        if (deepCulture is { IsComplete: true } || (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status)))
         {
             completed.Add(TestName(lang, "culture"));
             var topCulture = CulturePersonalityCatalog.CultureDimensionCodes
-                .Select(code => (Label: DimensionLabels.For(code, lang), Score: ReadCultureScore(culture, code)))
+                .Select(code => (
+                    Label: DimensionLabels.For(code, lang),
+                    Score: deepCulture is { IsComplete: true }
+                        ? deepCulture.Get(code)
+                        : ReadCultureScore(culture!, code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .First();
@@ -1438,11 +1486,17 @@ Verbetervoorstellen:
 
         var values = await _db.CandidateValuesProfiles.AsNoTracking()
             .FirstOrDefaultAsync(v => v.UserId == userId, cancellationToken);
-        if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
+        var valuesDeep = await CompletedDeepAsync(userId, AssessmentKind.Values, cancellationToken);
+        var deepValues = valuesDeep is null
+            ? null
+            : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
+        if (deepValues is { IsComplete: true } || (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status)))
         {
             completed.Add(TestName(lang, "values"));
             var topValue = SchwartzValuesCatalog.CategoryCodes
-                .Select(code => (Label: DimensionLabels.For(code, lang), Score: ReadValueScore(values, code)))
+                .Select(code => (
+                    Label: DimensionLabels.For(code, lang),
+                    Score: deepValues is { IsComplete: true } ? deepValues.Get(code) : ReadValueScore(values!, code)))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
                 .First();
@@ -1568,7 +1622,7 @@ Verbetervoorstellen:
             _ => 0
         };
 
-    private static void AppendPreferenceFacts(StringBuilder sb, CandidatePreferencesDto? prefs, string? dream)
+    private static void AppendPreferenceFacts(StringBuilder sb, CandidatePreferencesDto? prefs, string? dream, DateOnly? availableFrom)
     {
         if (!string.IsNullOrWhiteSpace(dream))
         {
@@ -1627,6 +1681,15 @@ Verbetervoorstellen:
         {
             sb.Append("certificates=none; ");
         }
+
+        if (prefs.MinHoursPerWeek is not null || prefs.MaxHoursPerWeek is not null)
+        {
+            sb.Append($"hoursPerWeek={prefs.MinHoursPerWeek?.ToString() ?? "?"}-{prefs.MaxHoursPerWeek?.ToString() ?? "?"}; ");
+        }
+
+        sb.Append(availableFrom is DateOnly from && from > DateOnly.FromDateTime(DateTime.UtcNow)
+            ? $"availableFrom={from:yyyy-MM-dd}; "
+            : "availability=per direct; ");
     }
 
     private static CandidatePreferencesDto? ParseAssistantPreferences(string? json)
@@ -1958,6 +2021,107 @@ Verbetervoorstellen:
         ];
     }
 
+    private static int? WholeHours(decimal? hours)
+        => hours is decimal value ? (int)Math.Round(value, MidpointRounding.AwayFromZero) : null;
+
+    private async Task<CandidateDeepAnalysis?> CompletedDeepAsync(
+        Guid userId,
+        AssessmentKind kind,
+        CancellationToken cancellationToken)
+        => await _db.CandidateDeepAnalyses.AsNoTracking()
+            .FirstOrDefaultAsync(
+                d => d.UserId == userId
+                     && d.Kind == kind
+                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
+
+    private async Task<RiasecScores?> PreferredCareerScoresAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var deep = await CompletedDeepAsync(userId, AssessmentKind.Career, cancellationToken);
+        return deep is null ? null : StoredDeepScores.Career(deep.Status, deep.AnswersJson, deep.ReportJson);
+    }
+
+    private async Task<AssistantChatResult?> CandidateProfileFactsAsync(
+        AssistantChatContext context,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        if (!CandidateProfileFacts.Handles(question))
+        {
+            return null;
+        }
+
+        var lang = JobsyLanguages.Normalize(context.Language);
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+        var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+        var valuesDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Values, cancellationToken);
+        var valuesScores = valuesDeep is null
+            ? null
+            : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
+        if (valuesScores is not { IsComplete: true })
+        {
+            var values = await _db.CandidateValuesProfiles.AsNoTracking()
+                .FirstOrDefaultAsync(v => v.UserId == context.UserId, cancellationToken);
+            if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
+            {
+                valuesScores = new SchwartzValuesScores(
+                    values.AutonomyPercent,
+                    values.ConnectionPercent,
+                    values.AchievementPercent,
+                    values.StabilityPercent,
+                    values.ImpactPercent);
+            }
+        }
+
+        var cultureDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Culture, cancellationToken);
+        var cultureScores = cultureDeep is null
+            ? null
+            : StoredDeepScores.Culture(cultureDeep.Status, cultureDeep.AnswersJson, cultureDeep.ReportJson);
+        if (cultureScores is not { IsComplete: true })
+        {
+            var culture = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+            if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
+            {
+                cultureScores = new CulturePersonalityScores(
+                    culture.AutonomyPercent,
+                    culture.InformalPercent,
+                    culture.CollaborationPercent,
+                    culture.FlexibilityPercent,
+                    culture.InnovationPercent,
+                    culture.PeopleFirstPercent,
+                    culture.OpennessPercent,
+                    culture.ConscientiousnessPercent,
+                    culture.ExtraversionPercent,
+                    culture.AgreeablenessPercent,
+                    culture.EmotionalStabilityPercent);
+            }
+        }
+
+        var valuesLine = valuesScores is { IsComplete: true }
+            ? DimensionRanking.Rank(
+                    SchwartzValuesCatalog.CategoryCodes.Select(code => (code, (int?)valuesScores.Get(code))),
+                    DimensionRanking.ValueTieBreak)
+                .Select(item => DimensionLabels.For(item.Code, lang))
+                .FirstOrDefault()
+            : null;
+        var cultureWords = PassportDnaWords.Culture(cultureScores, lang, 1);
+        var cultureLine = cultureWords.Count == 0 ? null : cultureWords[0];
+        var reply = CandidateProfileFacts.TryReply(
+            lang,
+            question,
+            WholeHours(prefs?.MinHoursPerWeek),
+            WholeHours(prefs?.MaxHoursPerWeek),
+            user?.AvailableFromDate,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            valuesLine,
+            cultureLine);
+        return string.IsNullOrWhiteSpace(reply)
+            ? null
+            : new AssistantChatResult(CandidateCoachPolish.Apply(reply), false, []);
+    }
+
     private async Task<AssistantChatResult?> CandidateJobAdviceAsync(
         AssistantChatContext context,
         string question,
@@ -1968,16 +2132,20 @@ Verbetervoorstellen:
             return null;
         }
 
-        var career = await _db.CandidateCareerInterests.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
-        var scores = CareerTestCatalog.CompletedScoresOrNull(
-            career?.Status,
-            career?.RealisticPercent,
-            career?.InvestigativePercent,
-            career?.ArtisticPercent,
-            career?.SocialPercent,
-            career?.EnterprisingPercent,
-            career?.ConventionalPercent);
+        var scores = await PreferredCareerScoresAsync(context.UserId, cancellationToken);
+        if (scores is not { IsComplete: true })
+        {
+            var career = await _db.CandidateCareerInterests.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+            scores = CareerTestCatalog.CompletedScoresOrNull(
+                career?.Status,
+                career?.RealisticPercent,
+                career?.InvestigativePercent,
+                career?.ArtisticPercent,
+                career?.SocialPercent,
+                career?.EnterprisingPercent,
+                career?.ConventionalPercent);
+        }
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
         var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);

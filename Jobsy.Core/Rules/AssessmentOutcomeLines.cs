@@ -33,8 +33,18 @@ public static class AssessmentOutcomeLines
             return null;
         }
 
-        return $"Sterkst: {DimensionLabels.For(FriendlyCode(ranked[0].Label))}";
+        return StrongestLine(DimensionLabels.For(FriendlyCode(ranked[0].Label)), "nl");
     }
+
+    public static string StrongestLine(string label, string? lang)
+        => Jobsy.Core.Localization.JobsyLanguages.Normalize(lang) switch
+        {
+            "en" => $"Strongest: {label}",
+            "pl" => $"Najsilniej: {label}",
+            "ro" => $"Cel mai puternic: {label}",
+            "ar" => $"الأقوى: {label}",
+            _ => $"Sterkst: {label}"
+        };
 
     public static string? Career(
         int? realistic,

@@ -1,3 +1,4 @@
+using Jobsy.Core.Careers;
 using Jobsy.Core.Reports;
 using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
@@ -35,7 +36,9 @@ internal static class CompactDeepReportPdf
         var ordered = report.Domains.OrderByDescending(d => d.Score).ToList();
         var topLabels = ordered.Take(3).Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang)).ToList();
         var top = string.Join(", ", topLabels);
-        var places = CareerDeepReportBuilder.TypicalPlaces(report, lang);
+        var places = CareerDeepReportBuilder.TypicalPlaces(report, lang, education);
+        var jobs = CareerDeepReportBuilder.ShownOccupations(report, education);
+        var percentLang = string.IsNullOrWhiteSpace(uiLang) ? lang : uiLang;
         var summary = report.Summary.Resolve(lang);
         if (!string.IsNullOrWhiteSpace(top))
         {
@@ -81,7 +84,7 @@ internal static class CompactDeepReportPdf
 
             Section(col, en ? "Jobs that fit you" : "Beroepen die bij je passen", box =>
             {
-                if (report.Occupations.Count == 0)
+                if (jobs.Count == 0)
                 {
                     box.Item().Text(en
                         ? "Your answers do not point to one job yet. Use the directions above as a start."
@@ -90,16 +93,12 @@ internal static class CompactDeepReportPdf
                 }
                 else
                 {
-                    foreach (var job in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
+                    foreach (var job in jobs)
                     {
                         JobCard(box,
-                            $"{job.Title(lang)} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%",
+                            $"{job.Title(lang)} — {CareerCompassBuilder.FormatPercent(job.MatchPercent, percentLang)}%",
                             job.Reason(lang));
                     }
-
-                    AssessmentReportPdfService.WriteFitFootnote(
-                        box,
-                        AssessmentReportPdfService.CareerFootnote(report, education, lang));
                 }
             });
 
@@ -140,6 +139,9 @@ internal static class CompactDeepReportPdf
         });
     }
 
+    private static string TraitJudgement(CompetenceDeepTraitReport trait)
+        => !string.IsNullOrWhiteSpace(trait.NormBand) ? trait.NormBand! : trait.Level;
+
     internal static byte[] Competence(
         string brand, byte[] logo, string fullName, string generated,
         CompetenceDeepReport report, string? uiLang)
@@ -159,7 +161,7 @@ internal static class CompactDeepReportPdf
                 traits.Select(t => (
                     t.LabelNl,
                     t.Score,
-                    string.IsNullOrWhiteSpace(t.Level) ? $"{t.Score}/100" : $"{t.Score}/100 · {t.Level}")));
+                    string.IsNullOrWhiteSpace(TraitJudgement(t)) ? $"{t.Score}/100" : $"{t.Score}/100 · {TraitJudgement(t)}")));
 
             if (!string.IsNullOrWhiteSpace(report.NormSourceLine))
             {
@@ -181,13 +183,9 @@ internal static class CompactDeepReportPdf
                         box.Item().Row(r =>
                         {
                             r.RelativeItem().Text(trait.LabelNl).FontSize(11).Bold().FontColor(Purple);
-                            r.ConstantItem(150).AlignRight().AlignMiddle()
-                                .Text($"{trait.Score}/100 · {trait.Level}").FontSize(8).SemiBold().FontColor(Orange);
+                            r.ConstantItem(170).AlignRight().AlignMiddle()
+                                .Text($"{trait.Score}/100 · {TraitJudgement(trait)}").FontSize(8).SemiBold().FontColor(Orange);
                         });
-                        if (!string.IsNullOrWhiteSpace(trait.NormBand))
-                        {
-                            box.Item().Text(trait.NormBand!).FontSize(8).Italic().FontColor(Muted);
-                        }
 
                         box.Item().Element(e => Bar(e, trait.Score, Purple, trait.NormMean));
                         if (trait.NormMean is double avg)
@@ -255,7 +253,10 @@ internal static class CompactDeepReportPdf
 
                 foreach (var job in report.Occupations)
                 {
-                    JobCard(box, $"{job.Title} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%", job.Reason);
+                    var heading = OccupationCatalog.Shared.Resolve(job.Title) is { IsListable: true }
+                        ? $"{job.Title} — {CareerCompassBuilder.FormatPercent(job.MatchPercent, "nl")}%"
+                        : job.Title;
+                    JobCard(box, heading, job.Reason);
                 }
             });
 

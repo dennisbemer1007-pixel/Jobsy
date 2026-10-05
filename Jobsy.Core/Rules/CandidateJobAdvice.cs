@@ -30,6 +30,22 @@ public static class CandidateJobAdvice
         IReadOnlyList<string>? certificates = null,
         bool employersEnabled = true)
     {
+        var reply = Reply(
+            language, question, scores, education, hasWorkExperience, workLines, competence, certificates, employersEnabled);
+        return string.IsNullOrWhiteSpace(reply) ? null : CandidateCoachPolish.Apply(reply);
+    }
+
+    private static string? Reply(
+        string? language,
+        string question,
+        RiasecScores? scores,
+        string? education,
+        bool hasWorkExperience,
+        IReadOnlyList<string>? workLines,
+        IReadOnlyList<(string Code, int Score)>? competence,
+        IReadOnlyList<string>? certificates,
+        bool employersEnabled)
+    {
         if (string.IsNullOrWhiteSpace(question))
         {
             return null;
@@ -259,7 +275,7 @@ public static class CandidateJobAdvice
     {
         var listed = CareerCompassBuilder.Listed(scores, education);
         var lines = listed.Select((job, index) =>
-            $"{index + 1}. {OccupationTitles.ForChat(job.Title, lang)} ({CareerCompassBuilder.FormatPercent(job.Percent)}%)");
+            $"{index + 1}. {OccupationTitles.ForChat(job.Title, lang)} ({CareerCompassBuilder.FormatPercent(job.Percent, lang)}%)");
         var list = JoinParts(lang, lines.ToList());
         var (label, score) = TopDirection(scores, lang);
         return lang switch
@@ -274,10 +290,32 @@ public static class CandidateJobAdvice
 
     private static string Comparison(string lang, string question, RiasecScores scores, string? education)
     {
-        var titles = TitlesIn(question);
+        var titles = TitlesIn(question).ToList();
+        string? preface = null;
+        var mentionsChauffeur = titles.RemoveAll(title =>
+                string.Equals(title, "Chauffeur", StringComparison.OrdinalIgnoreCase)) > 0
+            || CareerOccupationKeys.Fold(question).Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Contains("chauffeur");
+        if (mentionsChauffeur
+            && !titles.Any(title => CareerOccupationKeys.Fold(title).Contains("chauffeur", StringComparison.Ordinal)))
+        {
+            titles.Insert(0, "vrachtwagenchauffeur");
+            preface = lang switch
+            {
+                "en" => "Driver is not one job in the list. We compare lorry driver.",
+                "pl" => "Kierowca nie jest jednym zawodem na liście. Porównujemy kierowcę ciężarówki.",
+                "ro" => "Șofer nu este o singură meserie în listă. Comparăm șofer de camion.",
+                "ar" => "سائق ليست مهنة واحدة في القائمة. نقارن سائق الشاحنة.",
+                _ => "Chauffeur staat niet als één beroep in de lijst. We vergelijken vrachtwagenchauffeur."
+            };
+        }
+
+        string Shown(decimal value) => CareerCompassBuilder.FormatPercent(value, lang);
+        string WithPreface(string text) => string.IsNullOrWhiteSpace(preface) ? text : preface + " " + text;
+
         if (titles.Count == 0)
         {
-            return JobsList(lang, scores, education);
+            return WithPreface(JobsList(lang, scores, education));
         }
 
         var scored = titles
@@ -290,70 +328,85 @@ public static class CandidateJobAdvice
         var bestName = OccupationTitles.ForChat(best.Title, lang);
         if (best.Percent is not decimal bestPercent)
         {
-            return NoScoreReply(lang);
+            var names = string.Join(lang == "en" ? " and " : " en ", scored.Select(item => OccupationTitles.ForChat(item.Title, lang)));
+            return WithPreface(lang switch
+            {
+                "en" => $"We have no reliable score for {names}.",
+                "pl" => $"Nie mamy pewnego wyniku dla: {names}.",
+                "ro" => $"Nu avem un scor sigur pentru {names}.",
+                "ar" => $"ليس لدينا درجة موثوقة لـ {names}.",
+                _ => $"Voor {names} hebben we geen betrouwbare score."
+            });
         }
 
         if (scored.Count == 1)
         {
-            return lang switch
+            return WithPreface(lang switch
             {
-                "en" => $"Your test shows {bestName} fits you at {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
-                "pl" => $"Z twojego testu wynika, że {bestName} pasuje w {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
-                "ro" => $"Din testul tău reiese că {bestName} ți se potrivește în proporție de {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
-                "ar" => $"يظهر من اختبارك أن {bestName} يناسبك بنسبة {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
-                _ => $"Uit je test blijkt dat {bestName} bij je past, met {CareerCompassBuilder.FormatPercent(bestPercent)}%."
-            };
+                "en" => $"Your test shows {bestName} fits you at {Shown(bestPercent)}%.",
+                "pl" => $"Z twojego testu wynika, że {bestName} pasuje w {Shown(bestPercent)}%.",
+                "ro" => $"Din testul tău reiese că {bestName} ți se potrivește în proporție de {Shown(bestPercent)}%.",
+                "ar" => $"يظهر من اختبارك أن {bestName} يناسبك بنسبة {Shown(bestPercent)}%.",
+                _ => $"Uit je test blijkt dat {bestName} bij je past, met {Shown(bestPercent)}%."
+            });
         }
 
         var other = scored[1];
         var otherName = OccupationTitles.ForChat(other.Title, lang);
         if (other.Percent is not decimal otherPercent)
         {
-            return NoScoreReply(lang);
+            return WithPreface(lang switch
+            {
+                "en" => $"{bestName} fits you at {Shown(bestPercent)}%. We have no reliable score for {otherName}.",
+                "pl" => $"{bestName} pasuje w {Shown(bestPercent)}%. Nie mamy pewnego wyniku dla {otherName}.",
+                "ro" => $"{bestName} ți se potrivește în proporție de {Shown(bestPercent)}%. Nu avem un scor sigur pentru {otherName}.",
+                "ar" => $"{bestName} يناسبك بنسبة {Shown(bestPercent)}%. ليس لدينا درجة موثوقة لـ {otherName}.",
+                _ => $"{bestName} past bij je, met {Shown(bestPercent)}%. Voor {otherName} hebben we geen betrouwbare score."
+            });
         }
 
         var bestLetters = LetterLabels(best.Title, lang);
         var otherLetters = LetterLabels(other.Title, lang);
-        var bestShown = CareerCompassBuilder.FormatPercent(bestPercent);
-        var otherShown = CareerCompassBuilder.FormatPercent(otherPercent);
+        var bestShown = Shown(bestPercent);
+        var otherShown = Shown(otherPercent);
         if (bestPercent == otherPercent)
         {
             var shared = SharedLetterLabels(best.Title, other.Title, lang);
             if (shared.Count > 0 && SameLetters(best.Title, other.Title))
             {
                 var both = JoinLabels(lang, shared);
-                return lang switch
+                return WithPreface(lang switch
                 {
                     "en" => $"Both fit you equally ({bestShown}%); both ask for {both}.",
                     "pl" => $"Oba pasują tak samo ({bestShown}%); oba wymagają {both}.",
                     "ro" => $"Ambele ți se potrivesc la fel ({bestShown}%); ambele cer {both}.",
                     "ar" => $"كلاهما يناسبك بنفس الدرجة ({bestShown}%)؛ كلاهما يطلب {both}.",
                     _ => $"Beide passen even goed ({bestShown}%); ze vragen allebei {both}."
-                };
+                });
             }
 
             var left = JoinLabels(lang, bestLetters);
             var right = JoinLabels(lang, otherLetters);
-            return lang switch
+            return WithPreface(lang switch
             {
                 "en" => $"Both fit you equally ({bestShown}%). {bestName} asks for {left}. {otherName} asks for {right}.",
                 "pl" => $"Oba pasują tak samo ({bestShown}%). {bestName} wymaga {left}. {otherName} wymaga {right}.",
                 "ro" => $"Ambele ți se potrivesc la fel ({bestShown}%). {bestName} cere {left}. {otherName} cere {right}.",
                 "ar" => $"كلاهما يناسبك بنفس الدرجة ({bestShown}%). {bestName} يطلب {left}. {otherName} يطلب {right}.",
                 _ => $"Beide passen even goed ({bestShown}%). {bestName} vraagt {left}. {otherName} vraagt {right}."
-            };
+            });
         }
 
         var bestAsk = JoinLabels(lang, bestLetters);
         var otherAsk = JoinLabels(lang, otherLetters);
-        return lang switch
+        return WithPreface(lang switch
         {
             "en" => $"{bestName} fits you better ({bestShown}%) than {otherName} ({otherShown}%). {bestName} asks for {bestAsk}. {otherName} asks for {otherAsk}.",
             "pl" => $"{bestName} pasuje lepiej ({bestShown}%) niż {otherName} ({otherShown}%). {bestName} wymaga {bestAsk}. {otherName} wymaga {otherAsk}.",
             "ro" => $"{bestName} ți se potrivește mai bine ({bestShown}%) decât {otherName} ({otherShown}%). {bestName} cere {bestAsk}. {otherName} cere {otherAsk}.",
             "ar" => $"{bestName} يناسبك أكثر ({bestShown}%) من {otherName} ({otherShown}%). {bestName} يطلب {bestAsk}. {otherName} يطلب {otherAsk}.",
             _ => $"{bestName} past beter ({bestShown}%) dan {otherName} ({otherShown}%). {bestName} vraagt {bestAsk}. {otherName} vraagt {otherAsk}."
-        };
+        });
     }
 
 

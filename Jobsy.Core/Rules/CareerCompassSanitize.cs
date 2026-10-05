@@ -176,6 +176,8 @@ public static class CareerCompassSanitize
         return jobs
             .OrderBy(job => Demote(job) ? 1 : 0)
             .ThenByDescending(job => job.Percent)
+            .ThenByDescending(CareerCompassBuilder.CommonRank)
+            .ThenByDescending(CareerCompassBuilder.TierRank)
             .ThenBy(job => job.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }

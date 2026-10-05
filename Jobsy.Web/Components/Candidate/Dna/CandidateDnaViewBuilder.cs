@@ -285,6 +285,34 @@ public static class CandidateDnaViewBuilder
         var axes = new List<ChartAxisValue>();
         string? top = null;
         string summary = t("Dna.TileNotStarted");
+        if (deep?.CompetenceReport?.Traits is { Count: > 0 } traits)
+        {
+            var rankedTraits = traits
+                .OrderByDescending(trait => trait.Score)
+                .ThenBy(trait => trait.Domain, StringComparer.Ordinal)
+                .ToList();
+            axes = rankedTraits
+                .Select(trait => new ChartAxisValue(DimensionLabels.For(trait.Domain, language), trait.Score))
+                .ToList();
+            top = DimensionLabels.For(rankedTraits[0].Domain, language);
+            summary = format("Dna.TileSummaryStrong", top);
+            return new DnaCard(
+                AssessmentKind.Competence,
+                def.TitleKey,
+                completed,
+                extended,
+                def.DetailHref,
+                def.FreeStartHref,
+                answered,
+                def.FreeQuestionCount,
+                def.FreeMinutesApprox,
+                provisional,
+                top,
+                summary,
+                axes,
+                [],
+                []);
+        }
 
         if ((completed || provisional) && scores is not null)
         {
@@ -346,6 +374,18 @@ public static class CandidateDnaViewBuilder
         var bars = new List<ChartAxisValue>();
         string? top = null;
         string summary = t("Dna.TileNotStarted");
+        if (deep?.CareerReport?.Domains is { Count: > 0 } careerDomains)
+        {
+            scores = new RiasecScoreSet
+            {
+                Realistic = DomainScore(careerDomains, CareerTestCatalog.Realistic),
+                Investigative = DomainScore(careerDomains, CareerTestCatalog.Investigative),
+                Artistic = DomainScore(careerDomains, CareerTestCatalog.Artistic),
+                Social = DomainScore(careerDomains, CareerTestCatalog.Social),
+                Enterprising = DomainScore(careerDomains, CareerTestCatalog.Enterprising),
+                Conventional = DomainScore(careerDomains, CareerTestCatalog.Conventional)
+            };
+        }
 
         if ((completed || provisional) && scores is not null)
         {
@@ -413,6 +453,18 @@ public static class CandidateDnaViewBuilder
         var poles = new List<(string LowLabel, string HighLabel, int? Percent)>();
         string? top = null;
         string summary = t("Dna.TileNotStarted");
+        if (deep?.CultureReport?.Domains is { Count: > 0 } cultureDomains)
+        {
+            scores = new CulturePersonalityScoreSet
+            {
+                Autonomy = DomainScore(cultureDomains, CulturePersonalityCatalog.Autonomy),
+                Informal = DomainScore(cultureDomains, CulturePersonalityCatalog.Informal),
+                Collaboration = DomainScore(cultureDomains, CulturePersonalityCatalog.Collaboration),
+                Flexibility = DomainScore(cultureDomains, CulturePersonalityCatalog.Flexibility),
+                Innovation = DomainScore(cultureDomains, CulturePersonalityCatalog.Innovation),
+                PeopleFirst = DomainScore(cultureDomains, CulturePersonalityCatalog.PeopleFirst)
+            };
+        }
 
         if ((completed || provisional) && scores is not null)
         {
@@ -477,6 +529,17 @@ public static class CandidateDnaViewBuilder
         var bars = new List<ChartAxisValue>();
         string? top = null;
         string summary = t("Dna.TileNotStarted");
+        if (deep?.ValuesReport?.Domains is { Count: > 0 } valueDomains)
+        {
+            scores = new SchwartzValuesScoreSet
+            {
+                Autonomy = DomainScore(valueDomains, SchwartzValuesCatalog.Autonomy),
+                Connection = DomainScore(valueDomains, SchwartzValuesCatalog.Connection),
+                Achievement = DomainScore(valueDomains, SchwartzValuesCatalog.Achievement),
+                Stability = DomainScore(valueDomains, SchwartzValuesCatalog.Stability),
+                Impact = DomainScore(valueDomains, SchwartzValuesCatalog.Impact)
+            };
+        }
 
         if ((completed || provisional) && scores is not null)
         {
@@ -534,6 +597,9 @@ public static class CandidateDnaViewBuilder
             .OrderByDescending(x => x.Percent)
             .ThenBy(x => x.Code, StringComparer.Ordinal)
             .ToList();
+
+    private static int? DomainScore(IEnumerable<Jobsy.Core.Reports.Career.DeepDomainScore> domains, string code)
+        => domains.FirstOrDefault(domain => string.Equals(domain.Domain, code, StringComparison.OrdinalIgnoreCase))?.Score;
 
     private static bool IsCompleted(string? status)
         => string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase);

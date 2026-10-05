@@ -174,7 +174,7 @@ public class CompactTestPdfTests
 
         var competence = Lines(AssessmentReportPdfService.RenderCompetenceDeep(
             "Lobsy", [], "Test Kandidaat", "5 oktober 2026", competenceReport, compact: true, uiLang: "nl"));
-        AssertHeadingHasBodyOnSamePage(competence, "Beroepen die bij je passen", "Layoutberoep 01 —");
+        AssertHeadingHasBodyOnSamePage(competence, "Beroepen die bij je passen", "Layoutberoep 01");
         AssertSectionStartsFreshWhenItContinues(
             competence,
             "Beroepen die bij je passen",

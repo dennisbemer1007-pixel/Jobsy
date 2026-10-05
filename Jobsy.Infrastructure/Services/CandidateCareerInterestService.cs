@@ -158,6 +158,12 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         Guid userId,
         CancellationToken cancellationToken = default)
     {
+        var deepScores = await PreferredDeepCareerAsync(userId, cancellationToken);
+        if (deepScores is { IsComplete: true })
+        {
+            return deepScores;
+        }
+
         var row = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (row is null)
@@ -204,12 +210,6 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             (matches, matchStatus) = await _matchSnapshots.GetAsync(userId, cancellationToken);
         }
 
-        var deepDone = await _db.CandidateDeepAnalyses.AsNoTracking()
-            .AnyAsync(
-                d => d.UserId == userId
-                     && d.Kind == AssessmentKind.Career
-                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
-                cancellationToken);
         var completed = CareerTestCatalog.CompletedScoresOrNull(
             row?.Status,
             row?.RealisticPercent,
@@ -218,8 +218,12 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             row?.SocialPercent,
             row?.EnterprisingPercent,
             row?.ConventionalPercent);
-        var (compass, compassUpdating) = ResolveCompass(row, deepDone);
-        if (compassUpdating && completed is { IsComplete: true })
+        var deepScores = await PreferredDeepCareerAsync(userId, cancellationToken);
+        var preferred = deepScores ?? completed;
+        var fromDeep = deepScores is { IsComplete: true };
+        var education = await EducationLabelAsync(userId, cancellationToken);
+        var (compass, compassUpdating) = ResolveCompass(row, fromDeep, preferred, education);
+        if (compassUpdating && preferred is { IsComplete: true })
         {
             _queue.TryEnqueue(userId);
         }
@@ -227,7 +231,28 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         var insights = InsightsStatuses.IsUpdating(matchStatus) || compassUpdating
             ? InsightsStatuses.Updating
             : InsightsStatuses.Ready;
-        return ToDto(row, price, matches, compass, insights);
+        return ToDto(row, price, matches, compass, insights, preferred);
+    }
+
+    private async Task<RiasecScores?> PreferredDeepCareerAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .Where(d => d.UserId == userId
+                        && d.Kind == AssessmentKind.Career
+                        && d.Status == CandidateDeepAnalysisStatuses.Completed)
+            .Select(d => new { d.Status, d.AnswersJson, d.ReportJson })
+            .FirstOrDefaultAsync(cancellationToken);
+        return deep is null ? null : StoredDeepScores.Career(deep.Status, deep.AnswersJson, deep.ReportJson);
+    }
+
+    private async Task<string?> EducationLabelAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var json = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        var prefs = MatchingProfileMapper.DeserializePrefs(json);
+        return CandidateEducationLabel.From(prefs.Educations, prefs.EducationDirection);
     }
 
     private static bool ScoresMatch(CandidateCareerInterest row, RiasecScores? preview)
@@ -244,18 +269,21 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         decimal deepAnalysisPriceEuro,
         IReadOnlyList<CandidateMatchedVacancyDto> matches,
         CareerCompassSnapshot compass,
-        string insightsStatus)
+        string insightsStatus,
+        RiasecScores? scoreOverride = null)
     {
         var answers = CareerTestCatalog.ParseAnswersJson(row?.AnswersJson);
         var preview = CareerTestCatalog.Score(answers);
-        var completed = CareerTestCatalog.CompletedScoresOrNull(
-            row?.Status,
-            row?.RealisticPercent,
-            row?.InvestigativePercent,
-            row?.ArtisticPercent,
-            row?.SocialPercent,
-            row?.EnterprisingPercent,
-            row?.ConventionalPercent);
+        var completed = scoreOverride is { IsComplete: true }
+            ? scoreOverride
+            : CareerTestCatalog.CompletedScoresOrNull(
+                row?.Status,
+                row?.RealisticPercent,
+                row?.InvestigativePercent,
+                row?.ArtisticPercent,
+                row?.SocialPercent,
+                row?.EnterprisingPercent,
+                row?.ConventionalPercent);
         return new CandidateCareerInterestStateDto(
             row?.Status ?? CandidateCompetencyStatuses.Draft,
             answers,
@@ -283,45 +311,33 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
     /// </summary>
     private static (CareerCompassSnapshot Compass, bool Updating) ResolveCompass(
         CandidateCareerInterest? row,
-        bool fromDeepAnalysis)
+        bool fromDeepAnalysis,
+        RiasecScores? scores,
+        string? education)
     {
         var stored = CareerCompassJson.TryDeserialize(row?.CompassJson);
-        var completed = CareerTestCatalog.CompletedScoresOrNull(
-            row?.Status,
-            row?.RealisticPercent,
-            row?.InvestigativePercent,
-            row?.ArtisticPercent,
-            row?.SocialPercent,
-            row?.EnterprisingPercent,
-            row?.ConventionalPercent);
-        var key = completed is { IsComplete: true } scored ? CareerCompassBuilder.ScoresKey(scored) : null;
-        if (stored is { HasOccupations: true })
+        var key = scores is { IsComplete: true } scored ? CareerCompassBuilder.ScoresKey(scored) : null;
+        if (scores is { IsComplete: true })
         {
-            var fresh = key is not null
-                        && string.Equals(stored.ScoresFingerprint, key, StringComparison.Ordinal);
-            if (stored.FromDeepAnalysis)
-            {
-                var deepened = CareerCompassSanitize.EnsureDepth(stored, completed) with
-                {
-                    ScoresFingerprint = key ?? stored.ScoresFingerprint
-                };
-                return (deepened, !fresh);
-            }
-
-            if (fresh)
-            {
-                return (stored, false);
-            }
-        }
-
-        if (completed is { IsComplete: true })
-        {
-            var built = CareerCompassBuilder.Build(completed, fromDeepAnalysis);
+            var built = CareerCompassBuilder.CopyReasons(
+                CareerCompassBuilder.Build(scores, fromDeepAnalysis || stored?.FromDeepAnalysis == true, education),
+                stored);
+            var fresh = stored is { HasOccupations: true }
+                        && key is not null
+                        && string.Equals(stored.ScoresFingerprint, key, StringComparison.Ordinal)
+                        && SameOccupations(stored, built);
             return built.HasOccupations
-                ? (built, true)
+                ? (fresh ? stored! : built, !fresh)
                 : (CareerCompassSnapshot.Empty(fromDeepAnalysis), true);
         }
 
         return (CareerCompassSnapshot.Empty(fromDeepAnalysis), false);
+    }
+
+    private static bool SameOccupations(CareerCompassSnapshot left, CareerCompassSnapshot right)
+    {
+        var a = left.AllOccupations.Select(job => job.Title + ":" + CareerCompassBuilder.FormatPercent(job.Percent));
+        var b = right.AllOccupations.Select(job => job.Title + ":" + CareerCompassBuilder.FormatPercent(job.Percent));
+        return a.SequenceEqual(b, StringComparer.Ordinal);
     }
 }

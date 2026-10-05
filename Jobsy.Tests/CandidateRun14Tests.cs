@@ -34,7 +34,7 @@ public class CandidateRun14Tests
         var equal = "Wat is het verschil tussen flexodrukker en diepdrukker voor mij?";
         var reply = CandidateJobAdvice.TryReply("nl", equal, Profile, "MBO", hasWorkExperience: false);
         Assert.Equal(
-            "Beide passen even goed (60.04%); ze vragen allebei Netjes organiseren, Aanpakken met je handen en Aanjagen en verkopen.",
+            "Beide passen even goed (60,04%); ze vragen allebei Netjes organiseren, Aanpakken met je handen en Aanjagen en verkopen.",
             reply);
         Assert.DoesNotContain("beter", reply, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("niet", reply, StringComparison.OrdinalIgnoreCase);

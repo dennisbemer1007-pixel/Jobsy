@@ -28,6 +28,7 @@ public sealed class OccupationCatalog
     private readonly Dictionary<string, List<Occupation>> _byAlt;
     private readonly Dictionary<string, List<Occupation>> _byIsco;
     private readonly List<(string Fold, string Isco)> _cbsTitles;
+    private readonly HashSet<string> _cbsFolds;
     private readonly List<SearchRule> _searchRules;
     private readonly List<LevelSwap> _swaps;
 
@@ -54,6 +55,10 @@ public sealed class OccupationCatalog
         _byIsco = all.GroupBy(item => item.Isco, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.Ordinal);
         _cbsTitles = cbs.Select(item => (CareerOccupationKeys.Fold(item.Title), item.Isco)).ToList();
+        _cbsFolds = _cbsTitles
+            .Select(item => item.Fold)
+            .Where(fold => fold.Length > 0)
+            .ToHashSet(StringComparer.Ordinal);
         _searchRules = searchRules.ToList();
         _swaps = swaps.ToList();
         Listable = all.Where(item => item.IsListable).ToList();
@@ -211,6 +216,16 @@ public sealed class OccupationCatalog
         }
 
         return _byAlt.TryGetValue(fold, out var alts) && alts.Count == 1 ? alts[0] : null;
+    }
+
+    /// <summary>
+    /// True when the official Dutch title is in the CBS occupation index.
+    /// Alternate names are ignored, so a niche job is not marked common via a generic alias.
+    /// </summary>
+    public bool IsCommonDutchTitle(Occupation occupation)
+    {
+        var fold = CareerOccupationKeys.Fold(occupation.Nl);
+        return fold.Length > 0 && _cbsFolds.Contains(fold);
     }
 
     public static bool IsLeadership(Occupation occupation)

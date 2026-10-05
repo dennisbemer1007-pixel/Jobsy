@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Pages.Candidate.DeepReport
 @* Full paid Competence deep report (150-item Big Five test). *@
 @using System.Globalization
+@using Jobsy.Core.Careers
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
@@ -166,7 +167,10 @@
                         <li class="competence-occupation">
                             <div class="competence-occupation__row">
                                 <span class="competence-occupation__title">@occupation.Title</span>
-                                <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", CareerCompassBuilder.FormatPercent(occupation.MatchPercent))</span>
+                                @if (ShowsMatch(occupation.Title))
+                                {
+                                    <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", CareerCompassBuilder.FormatPercent(occupation.MatchPercent, Culture.Language))</span>
+                                }
                             </div>
                             <p class="muted">@occupation.Reason</p>
                         </li>
@@ -206,6 +210,9 @@
     [Parameter] public int QuestionCount { get; set; } = 150;
     [Parameter] public bool Busy { get; set; }
     [Parameter] public EventCallback OnDownloadPdf { get; set; }
+
+    private static bool ShowsMatch(string? title)
+        => OccupationCatalog.Shared.Resolve(title) is { IsListable: true };
 
     private string[] _traitLabels = [];
     private int[] _traitScores = [];

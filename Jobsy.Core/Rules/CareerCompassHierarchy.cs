@@ -18,6 +18,8 @@ public static class CareerCompassHierarchy
     {
         var ranked = jobs
             .OrderByDescending(m => m.Percent)
+            .ThenByDescending(CareerCompassBuilder.CommonRank)
+            .ThenByDescending(CareerCompassBuilder.TierRank)
             .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
 

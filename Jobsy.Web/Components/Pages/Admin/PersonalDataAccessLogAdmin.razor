@@ -72,7 +72,7 @@
         <p class="state-message @(_idError ? "error" : null)" role="status">@_idHint</p>
     }
 
-    <AdminDataTable Loading="_loading" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminDataAccess.Empty"]">
+    <AdminDataTable Loading="_loading" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminDataAccess.Empty"]" KeepHeader="true">
         <Header>
             <th scope="col">@Culture["AdminAudit.Col.Time"]</th>
             <th scope="col">@Culture["AdminDataAccess.Col.Actor"]</th>

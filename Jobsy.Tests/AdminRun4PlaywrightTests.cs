@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.ValueObjects;
@@ -331,13 +332,12 @@ public class AdminRun4PlaywrightTests
         await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Bronnen controleren" })).ToBeVisibleAsync();
 
         await GotoInteractiveAsync(page, root + "/admin/beveiliging/gegevensinzage");
-        // The table appears only after the log loads. A one-shot read can land in the gap
-        // where the header row is not in the DOM yet.
-        await Assertions.Expect(page.GetByRole(AriaRole.Columnheader, new() { Name = "Wie", Exact = true }))
-            .ToBeVisibleAsync(new() { Timeout = 30_000 });
-        await Assertions.Expect(page.GetByRole(AriaRole.Columnheader, new() { Name = "Over wie", Exact = true }))
-            .ToBeVisibleAsync();
-        var headerText = await page.Locator(".admin-access-log thead th").AllTextContentsAsync();
+        // Headers stay in the table while the log loads. Wait for those cells, not a
+        // columnheader role that can match before `.admin-access-log thead th` exists.
+        var headerCells = page.Locator(".admin-access-log thead th");
+        await Assertions.Expect(headerCells.Nth(1)).ToHaveTextAsync(new Regex(@"^\s*Wie\s*$"), new() { Timeout = 30_000 });
+        await Assertions.Expect(headerCells.Nth(2)).ToHaveTextAsync(new Regex(@"^\s*Over wie\s*$"));
+        var headerText = await headerCells.AllTextContentsAsync();
         Assert.Contains(headerText, h => string.Equals(h.Trim(), "Wie", StringComparison.Ordinal));
         Assert.Contains(headerText, h => string.Equals(h.Trim(), "Over wie", StringComparison.Ordinal));
         Assert.DoesNotContain(headerText, h => h.Contains("naam of e-mail", StringComparison.OrdinalIgnoreCase));

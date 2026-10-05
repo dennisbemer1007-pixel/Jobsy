@@ -16,14 +16,14 @@ public static class CareerCompassBuilder
     public const string BandStrong = "strong";
     public const string BandBroaden = "broaden";
 
-    public static CareerCompassSnapshot Build(RiasecScores? scores, bool fromDeepAnalysis = false)
+    public static CareerCompassSnapshot Build(RiasecScores? scores, bool fromDeepAnalysis = false, string? education = null)
     {
         if (scores is not { IsComplete: true })
         {
             return CareerCompassSnapshot.Empty(fromDeepAnalysis);
         }
 
-        var ranked = Listed(scores);
+        var ranked = Listed(scores, education);
 
         var strengths = CareerTestCatalog.RiasecCodes
             .Select(code => (Code: code, Percent: scores.Get(code), Label: TypeLabel(code)))
@@ -92,6 +92,8 @@ public static class CareerCompassBuilder
         => OccupationCatalog.Shared.Listable
             .Select(job => Score(job, scores))
             .OrderByDescending(m => m.Percent)
+            .ThenByDescending(CommonRank)
+            .ThenByDescending(TierRank)
             .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
@@ -129,9 +131,115 @@ public static class CareerCompassBuilder
         }
 
         ApplyLevelSwaps(jobs, scores, gate);
+        if (gate.MaxLevel is < 4)
+        {
+            jobs = PreferCommonJobs(jobs, scores);
+        }
+
         jobs = TakeDiverse(jobs, perIsco: 2, take: CareerCompassSanitize.MaxCatalogueJobs);
         jobs = CareerCompassSanitize.OrderForEducation(jobs, education);
         return CareerCompassSanitize.AssignPercentBands(jobs);
+    }
+
+    /// <summary>
+    /// For mbo, vmbo, havo and vwo: keep common CBS titles, and prefer those whose main
+    /// direction is in the candidate's top 3. Niche titles fill the list only when fewer
+    /// than 8 common jobs remain.
+    /// </summary>
+    private static List<CareerOccupationMatch> PreferCommonJobs(List<CareerOccupationMatch> jobs, RiasecScores scores)
+    {
+        var top = CareerTestCatalog.RiasecCodes
+            .Select(code => (Code: code, Score: scores.Get(code)))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Code, StringComparer.Ordinal)
+            .Take(3)
+            .Select(x => x.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        int Bucket(CareerOccupationMatch job)
+        {
+            if (CommonRank(job) == 0)
+            {
+                return 2;
+            }
+
+            return top.Contains(PrimaryCode(job.Title)) ? 0 : 1;
+        }
+
+        var ordered = jobs
+            .OrderBy(Bucket)
+            .ThenByDescending(job => job.Percent)
+            .ThenByDescending(TierRank)
+            .ThenBy(job => job.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var common = ordered.Where(job => Bucket(job) < 2).ToList();
+        var picked = TakeDiverse(common, perIsco: 2, take: CareerCompassSanitize.MaxCatalogueJobs);
+        if (picked.Count >= 8)
+        {
+            return picked;
+        }
+
+        var seen = picked
+            .Select(job => job.EscoId ?? job.Title)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var catalog = OccupationCatalog.Shared;
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var job in picked)
+        {
+            var isco = catalog.Get(job.EscoId)?.Isco ?? "";
+            counts.TryGetValue(isco, out var seenCount);
+            counts[isco] = seenCount + 1;
+        }
+
+        foreach (var job in ordered)
+        {
+            var key = job.EscoId ?? job.Title;
+            if (!seen.Add(key))
+            {
+                continue;
+            }
+
+            var isco = catalog.Get(job.EscoId)?.Isco ?? "";
+            counts.TryGetValue(isco, out var seenCount);
+            if (isco.Length > 0 && seenCount >= 2)
+            {
+                continue;
+            }
+
+            counts[isco] = seenCount + 1;
+            picked.Add(job);
+            if (picked.Count == CareerCompassSanitize.MaxCatalogueJobs)
+            {
+                break;
+            }
+        }
+
+        return picked;
+    }
+
+    /// <summary>1 when the official Dutch title is in the CBS index, otherwise 0.</summary>
+    internal static int CommonRank(CareerOccupationMatch job)
+    {
+        var occupation = string.IsNullOrWhiteSpace(job.EscoId)
+            ? OccupationCatalog.Shared.Resolve(job.Title)
+            : OccupationCatalog.Shared.Get(job.EscoId);
+        return occupation is not null && OccupationCatalog.Shared.IsCommonDutchTitle(occupation) ? 1 : 0;
+    }
+
+    /// <summary>Tighter sourced link ranks higher: exact, narrow, close, then broad.</summary>
+    internal static int TierRank(CareerOccupationMatch job)
+    {
+        var occupation = string.IsNullOrWhiteSpace(job.EscoId)
+            ? OccupationCatalog.Shared.Resolve(job.Title)
+            : OccupationCatalog.Shared.Get(job.EscoId);
+        return occupation?.Tier switch
+        {
+            "exact" => 4,
+            "narrow" => 3,
+            "close" => 2,
+            "broad" => 1,
+            _ => 0
+        };
     }
 
     private static void ApplyLevelSwaps(List<CareerOccupationMatch> jobs, RiasecScores scores, CareerEducationGate.Result gate)
@@ -450,6 +558,51 @@ public static class CareerCompassBuilder
     /// <summary>Shown percent, up to two decimals, invariant so the fact sheet and the screen match.</summary>
     public static string FormatPercent(decimal percent)
         => percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>Dutch, Polish and Romanian use a decimal comma. English and Arabic keep a dot.</summary>
+    public static string FormatPercent(decimal percent, string? lang)
+    {
+        var code = Jobsy.Core.Localization.JobsyLanguages.Normalize(lang);
+        if (code is "nl" or "pl" or "ro")
+        {
+            return percent.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+        }
+
+        return FormatPercent(percent);
+    }
+
+    /// <summary>
+    /// Keeps a stored "why" only when the title and the percent are the same.
+    /// A stored sentence must not cite a different percent than the one on screen.
+    /// </summary>
+    public static CareerCompassSnapshot CopyReasons(CareerCompassSnapshot built, CareerCompassSnapshot? stored)
+    {
+        if (stored is not { HasOccupations: true })
+        {
+            return built;
+        }
+
+        var jobs = built.AllOccupations.Select(job =>
+        {
+            var previous = stored.AllOccupations.FirstOrDefault(other =>
+                string.Equals(CareerOccupationKeys.Fold(other.Title), CareerOccupationKeys.Fold(job.Title), StringComparison.Ordinal));
+            if (previous is null || previous.Percent != job.Percent || string.IsNullOrWhiteSpace(previous.Why))
+            {
+                return job;
+            }
+
+            return job with { Why = previous.Why };
+        }).ToList();
+
+        return CareerCompassHierarchy.FromOccupations(
+            built.Strengths,
+            jobs,
+            built.PracticalNotes,
+            built.FromDeepAnalysis,
+            built.FromOpenAi,
+            built.ScoresFingerprint,
+            built.ModelAttemptUtc);
+    }
 
     /// <summary>
     /// Job-fit percent (0–100). It is a weighted mean of the candidate's own letter scores,
