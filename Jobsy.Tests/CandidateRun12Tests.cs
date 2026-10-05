@@ -20,9 +20,9 @@ public class CandidateRun12Tests
         Openness: 50, Conscientiousness: 72, Extraversion: 48, Agreeableness: 68, EmotionalStability: 58);
 
     [Fact]
-    public void Chauffeur_profile_match_is_the_worked_example()
+    public void Tuinbouwmedewerker_profile_match_is_the_worked_example()
     {
-        Assert.Equal(64, CareerCompassBuilder.CatalogueFit("Chauffeur", Profile, "MBO"));
+        Assert.Equal(59.14m, CareerCompassBuilder.CatalogueFit("tuinbouwmedewerker", Profile, "MBO"));
     }
 
     [Fact]
@@ -32,12 +32,12 @@ public class CandidateRun12Tests
             ["Aanpakken met je handen"],
             [],
             [],
-            [new CareerOccupationMatch("Chauffeur", 64, "", "Dit sluit aan.", ["chauffeur"])],
+            [new CareerOccupationMatch("tuinbouwmedewerker", 59, "", "Dit sluit aan.", ["tuinbouw"])],
             ["Kijk naar de lijst."],
             FromDeepAnalysis: true);
         var back = CareerCompassJson.TryDeserialize(CareerCompassJson.Serialize(snapshot));
         Assert.NotNull(back);
-        Assert.Contains(back!.AllOccupations, job => job.Title == "Chauffeur" && job.Percent == 64);
+        Assert.Contains(back!.AllOccupations, job => job.Title == "tuinbouwmedewerker" && job.Percent == 59);
         Assert.True(back.FromDeepAnalysis);
     }
 
@@ -72,10 +72,14 @@ public class CandidateRun12Tests
         Assert.NotEqual(hands, tidy);
         Assert.NotEqual(people, tidy);
         Assert.Contains(hands, title => title.Contains("bouw", StringComparison.OrdinalIgnoreCase)
+                                         || title.Contains("tuin", StringComparison.OrdinalIgnoreCase)
                                          || title.Contains("kas", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(people, title => title.Contains("zorg", StringComparison.OrdinalIgnoreCase)
-                                          || title.Contains("Helpende", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(tidy, title => title.Contains("Administratief", StringComparison.OrdinalIgnoreCase));
+                                          || title.Contains("verpleeg", StringComparison.OrdinalIgnoreCase)
+                                          || title.Contains("helpende", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(tidy, title => title.Contains("kantoor", StringComparison.OrdinalIgnoreCase)
+                                        || title.Contains("administratief", StringComparison.OrdinalIgnoreCase)
+                                        || title.Contains("boekhoud", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -106,13 +110,13 @@ public class CandidateRun12Tests
     {
         var compare = CandidateJobAdvice.TryReply(
             "nl",
-            "Past hovenier of magazijnmedewerker beter bij mij?",
+            "Past tuinbouwmedewerker of magazijnmedewerker beter bij mij?",
             Profile,
             "MBO",
             false);
         Assert.NotNull(compare);
-        Assert.Contains("Hovenier", compare, StringComparison.Ordinal);
-        Assert.Contains("Magazijnmedewerker", compare, StringComparison.Ordinal);
+        Assert.Contains("tuinbouwmedewerker", compare, StringComparison.Ordinal);
+        Assert.Contains("magazijnmedewerker", compare, StringComparison.Ordinal);
         Assert.Contains("past beter", compare, StringComparison.Ordinal);
         Assert.DoesNotContain("niet", compare, StringComparison.OrdinalIgnoreCase);
 
@@ -122,13 +126,13 @@ public class CandidateRun12Tests
 
         var motivation = CandidateJobAdvice.TryReply(
             "nl",
-            "Schrijf een korte motivatie als kok met mijn werkervaring",
+            "Schrijf een korte motivatie als tuinbouwmedewerker met mijn werkervaring",
             Profile,
             "MBO",
             hasWorkExperience: false);
         Assert.NotNull(motivation);
         Assert.Contains("nog geen werkervaring", motivation, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Kok", motivation, StringComparison.Ordinal);
+        Assert.Contains("tuinbouwmedewerker", motivation, StringComparison.Ordinal);
         Assert.DoesNotContain("je werkt graag", motivation, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -137,8 +141,8 @@ public class CandidateRun12Tests
     {
         var reply = CandidateJobAdvice.TryReply("en", "Which jobs fit me?", Profile, "MBO", false);
         Assert.NotNull(reply);
-        Assert.Contains("(", reply, StringComparison.Ordinal);
         Assert.Contains("Your test shows", reply, StringComparison.Ordinal);
+        Assert.Contains(CareerCompassBuilder.Listed(Profile, "MBO")[0].Title, reply, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -151,12 +155,19 @@ public class CandidateRun12Tests
         var social = report.ActionPlan.First(step => (step.Title.Nl ?? "").Contains("Mensen helpen", StringComparison.Ordinal));
         var body = social.Body.Nl ?? "";
         Assert.DoesNotContain("Chauffeur", body, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Helpende", body, StringComparison.OrdinalIgnoreCase);
-        var titles = report.ActionPlan
-            .Select(step => step.Body.Nl ?? "")
-            .Where(text => text.Contains("Helpende", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        Assert.True(titles.Count <= 1);
+        var socialTitle = report.Occupations
+            .Select(job => job.TitleNl)
+            .FirstOrDefault(title => CareerCompassBuilder.PrimaryCode(title) == CareerTestCatalog.Social);
+        if (socialTitle is null)
+        {
+            Assert.Contains("een beroep uit je lijst", body, StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            Assert.Contains(socialTitle, body, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(1, report.ActionPlan.Count(step =>
+                (step.Body.Nl ?? "").Contains(socialTitle, StringComparison.OrdinalIgnoreCase)));
+        }
     }
 
     [Fact]

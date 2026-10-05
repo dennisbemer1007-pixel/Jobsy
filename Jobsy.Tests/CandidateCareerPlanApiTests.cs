@@ -162,7 +162,8 @@ public class CandidateCareerPlanApiTests : IClassFixture<RoleFunctionalWebAppFac
         var options = await client.GetFromJsonAsync<JsonElement>("api/me/career-path/dream-options?q=orderpick", JsonOpts);
         var results = options.GetProperty("results").EnumerateArray().ToList();
         Assert.NotEmpty(results);
-        Assert.Contains(results, r => r.GetProperty("title").GetString() == "Orderpicker");
+        Assert.Contains(results, r => r.GetProperty("title").GetString() == "orderpicker");
+        Assert.Contains(results, r => r.GetProperty("noScore").GetBoolean());
     }
 
     [Fact]

@@ -389,10 +389,10 @@ public sealed record HorizonCareerPathStepDto(
 
 public sealed record HorizonCareerCourseDto(string Name, bool OnProfile);
 
-public sealed record CareerDreamOptionDto(string? CatalogKey, string Title, string? ReasonKey)
+public sealed record CareerDreamOptionDto(string? CatalogKey, string Title, string? ReasonKey, string? Description = null, bool NoScore = false)
 {
     public static CareerDreamOptionDto From(CareerDreamOptionView view)
-        => new(view.CatalogKey, view.Title, view.ReasonKey);
+        => new(view.CatalogKey, view.Title, view.ReasonKey, view.Description, view.NoScore);
 }
 
 public sealed record CareerDreamOptionsDto(

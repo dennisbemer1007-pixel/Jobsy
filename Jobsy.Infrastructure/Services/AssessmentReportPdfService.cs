@@ -1,4 +1,5 @@
 using System.Globalization;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
@@ -152,10 +153,11 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
 
             if (careerDeep is not null)
             {
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8:c{compactTag}";
+                var education = EducationLabel(user);
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8:fit:{education}:c{compactTag}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang, compact, lang);
+                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang, education, compact, lang);
                     _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
 
@@ -204,7 +206,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     };
                 }
 
-                bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
+                bytes = RenderCareer(brand, logo, user.FullName, generated, compass, EducationLabel(user));
             }
         }
         else if (kind == AssessmentKind.Culture)
@@ -339,7 +341,8 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         byte[] logo,
         string fullName,
         string generated,
-        CareerCompassSnapshot compass)
+        CareerCompassSnapshot compass,
+        string? education = null)
     {
         return Document.Create(container =>
         {
@@ -365,11 +368,12 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     }
 
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandSuper),
-                        SoftMint, compass.SuperMatches, "Nog geen super-match boven 95%. Kijk bij sterke keus: daar zit vaak al iets dat heel dichtbij komt.");
+                        SoftMint, compass.SuperMatches, "Geen beroep in deze groep.");
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandStrong),
-                        SoftSky, compass.StrongChoices, "Nog geen sterke keus boven 85%. De verbreding hieronder blijft de moeite waard.");
+                        SoftSky, compass.StrongChoices, "Geen beroep in deze groep.");
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandBroaden),
-                        WarmSand, compass.Broadening, "Nog geen verbreding boven 75%. Zet je voorkeuren op de banenkaart en kijk welke taken je energie geven.");
+                        WarmSand, compass.Broadening, "Geen beroep in deze groep.");
+                    WriteFitFootnote(col, CompassFootnote(compass, education));
 
                     col.Item().PaddingTop(8).Background(SoftSky).Padding(12).Column(box =>
                     {
@@ -699,10 +703,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     col.Item().Row(r =>
                     {
                         r.RelativeItem().Text(occupation.Title).FontSize(11).SemiBold().FontColor(BrandNavy);
-                        r.ConstantItem(50).AlignRight().Text($"{occupation.MatchPercent}%")
+                        r.ConstantItem(58).AlignRight().Text($"{CareerCompassBuilder.FormatPercent(occupation.MatchPercent)}%")
                             .FontColor(BrandDeep).Bold();
                     });
-                    col.Item().Element(e => ScoreBar(e, occupation.MatchPercent, null, AccentTeal));
+                    col.Item().Element(e => ScoreBar(e, (double)occupation.MatchPercent, null, AccentTeal));
                     col.Item().Text(occupation.Reason).FontSize(9).FontColor(Muted);
                 }
             });
@@ -856,12 +860,13 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string generated,
         CareerDeepReport report,
         string lang,
+        string? education = null,
         bool compact = false,
         string? uiLang = null)
     {
         if (compact)
         {
-            return CompactDeepReportPdf.Career(brand, logo, fullName, generated, report, lang, uiLang);
+            return CompactDeepReportPdf.Career(brand, logo, fullName, generated, report, lang, uiLang, education);
         }
 
         var title = DeepReportCatalog.Get("title.career", lang);
@@ -913,9 +918,11 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     {
                         foreach (var o in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
                         {
-                            col.Item().Text($"{o.Title(lang)} — {o.MatchPercent}%").SemiBold();
+                            col.Item().Text($"{o.Title(lang)} — {CareerCompassBuilder.FormatPercent(o.MatchPercent)}%").SemiBold();
                             col.Item().Text(o.Reason(lang)).FontSize(9).FontColor(Muted);
                         }
+
+                        WriteFitFootnote(col, CareerFootnote(report, education, lang));
                     }
                 },
                 col => WriteActionPage(col, lang, report.ActionPlan),
@@ -1387,6 +1394,80 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         });
     }
 
+    private static string? EducationLabel(User user)
+    {
+        var prefs = MatchingProfileMapper.DeserializePrefs(user.PreferencesJson);
+        var label = string.Join(
+            " ",
+            (prefs.Educations ?? []).Append(prefs.EducationDirection ?? "").Where(item => !string.IsNullOrWhiteSpace(item)));
+        return string.IsNullOrWhiteSpace(label) ? null : label;
+    }
+
+    private static string CompassFootnote(CareerCompassSnapshot compass, string? education)
+    {
+        var scores = FitPercentExplanation.TryScores(compass.ScoresFingerprint);
+        if (scores is null)
+        {
+            return FitPercentExplanation.FormulaOnly("nl");
+        }
+
+        var items = new List<FitPercentExplanation>();
+        foreach (var job in compass.AllOccupations)
+        {
+            var explain = FitPercentExplanation.Build(job.Title, scores, education);
+            if (explain is not null)
+            {
+                items.Add(explain);
+            }
+        }
+
+        return FitPercentExplanation.Footnote(items, "nl");
+    }
+
+    internal static string CareerFootnote(CareerDeepReport report, string? education, string? lang)
+    {
+        int? Score(string code)
+        {
+            var hit = report.Domains.FirstOrDefault(domain =>
+                string.Equals(domain.Domain, code, StringComparison.OrdinalIgnoreCase));
+            return hit is null ? null : hit.Score;
+        }
+
+        var scores = FitPercentExplanation.TryScores(
+            Score(CareerTestCatalog.Realistic),
+            Score(CareerTestCatalog.Investigative),
+            Score(CareerTestCatalog.Artistic),
+            Score(CareerTestCatalog.Social),
+            Score(CareerTestCatalog.Enterprising),
+            Score(CareerTestCatalog.Conventional));
+        if (scores is null)
+        {
+            return FitPercentExplanation.FormulaOnly(lang);
+        }
+
+        var items = new List<FitPercentExplanation>();
+        foreach (var job in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
+        {
+            var explain = FitPercentExplanation.Build(job.TitleNl, scores, education);
+            if (explain is not null)
+            {
+                items.Add(explain);
+            }
+        }
+
+        return FitPercentExplanation.Footnote(items, lang);
+    }
+
+    internal static void WriteFitFootnote(ColumnDescriptor col, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        col.Item().PaddingTop(4).Text(text).FontSize(8).FontColor(Muted);
+    }
+
     private static void WriteOccupationBand(
         ColumnDescriptor col,
         string heading,
@@ -1409,7 +1490,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 box.Item().Row(r =>
                 {
                     r.RelativeItem().Text($"{item.Title}").SemiBold();
-                    r.ConstantItem(42).AlignRight().Text($"{item.Percent}%").FontColor(BrandDeep).Bold();
+                    r.ConstantItem(58).AlignRight().Text($"{CareerCompassBuilder.FormatPercent(item.Percent)}%").FontColor(BrandDeep).Bold();
                 });
                 box.Item().Text(item.Why).FontSize(9).FontColor(Muted);
             }

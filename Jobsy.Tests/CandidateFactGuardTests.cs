@@ -123,12 +123,17 @@ public class CandidateFactGuardTests
         Assert.Equal("unknown-job", CandidateFactGuard.CompassRejection(recordedMistral, sheet));
 
         var direction = sheet.DirectionLabels[0];
+        var published = sheet.Scores.First(line =>
+            line.Contains(allowed, StringComparison.OrdinalIgnoreCase) && line.Contains('%'));
+        var percentStart = published.LastIndexOf(": ", StringComparison.Ordinal) + 2;
+        var percentEnd = published.IndexOf('%', percentStart);
+        var publishedPercent = int.Parse(published[percentStart..percentEnd], System.Globalization.CultureInfo.InvariantCulture);
         var placeNote = JsonSerializer.Serialize(new
         {
             strengths = new[] { "Aanpakken", "Helpen", "Ordenen" },
             superMatches = new[]
             {
-                new { title = allowed, percent = 90, why = $"Dit sluit aan bij {direction}.", keys = new[] { "klus" } }
+                new { title = allowed, percent = publishedPercent, why = $"Dit sluit aan bij {direction}.", keys = new[] { "klus" } }
             },
             strongChoices = Array.Empty<object>(),
             broadening = Array.Empty<object>(),

@@ -36,15 +36,15 @@ public class CareerCompassGenerationServiceTests
             strengths = new[] { "Mensen helpen", "Aanpakken", "Ordenen" },
             superMatches = new[]
             {
-                new { title = allowed.Titles[0], percent = 98, why = allowed.Why, keys = new[] { "klus" } }
+                new { title = allowed.Titles[0], percent = allowed.Percents[0], why = allowed.Why, keys = new[] { "klus" } }
             },
             strongChoices = new[]
             {
-                new { title = allowed.Titles[1], percent = 88, why = allowed.Why, keys = new[] { "taak" } }
+                new { title = allowed.Titles[1], percent = allowed.Percents[1], why = allowed.Why, keys = new[] { "taak" } }
             },
             broadening = new[]
             {
-                new { title = allowed.Titles[2], percent = 78, why = allowed.Why, keys = new[] { "werk" } }
+                new { title = allowed.Titles[2], percent = allowed.Percents[2], why = allowed.Why, keys = new[] { "werk" } }
             },
             practicalNotes = new[]
             {
@@ -120,15 +120,15 @@ public class CareerCompassGenerationServiceTests
             strengths = new[] { "Mensen helpen", "Aanpakken", "Ordenen" },
             superMatches = new[]
             {
-                new { title = allowed.Titles[0], percent = 98, why = allowed.Why, keys = new[] { "klus" } }
+                new { title = allowed.Titles[0], percent = allowed.Percents[0], why = allowed.Why, keys = new[] { "klus" } }
             },
             strongChoices = new[]
             {
-                new { title = allowed.Titles[1], percent = 88, why = allowed.Why, keys = new[] { "taak" } }
+                new { title = allowed.Titles[1], percent = allowed.Percents[1], why = allowed.Why, keys = new[] { "taak" } }
             },
             broadening = new[]
             {
-                new { title = allowed.Titles[2], percent = 78, why = allowed.Why, keys = new[] { "werk" } }
+                new { title = allowed.Titles[2], percent = allowed.Percents[2], why = allowed.Why, keys = new[] { "werk" } }
             },
             practicalNotes = new[] { "Open de banenkaart." }
         }));
@@ -187,13 +187,22 @@ public class CareerCompassGenerationServiceTests
     private static Dictionary<int, int> PeakAll()
         => DeepAnalysisCatalog.CareerQuestions.ToDictionary(q => q.Id, q => q.Reverse ? 1 : 5);
 
-    private static (IReadOnlyList<string> Titles, string Direction, string Why) AllowedReply()
+    private static (IReadOnlyList<string> Titles, IReadOnlyList<int> Percents, string Direction, string Why) AllowedReply()
     {
         var answers = PeakAll();
         var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
         var sheet = CandidateFactSheet.ForCareer(scores, answers);
+        var titles = sheet.AllowedJobTitles.Take(3).ToList();
+        var percents = titles.Select(title =>
+        {
+            var line = sheet.Scores.First(item =>
+                item.Contains(title, StringComparison.OrdinalIgnoreCase) && item.Contains('%'));
+            var start = line.LastIndexOf(": ", StringComparison.Ordinal) + 2;
+            var end = line.IndexOf('%', start);
+            return int.Parse(line[start..end], System.Globalization.CultureInfo.InvariantCulture);
+        }).ToList();
         var direction = sheet.DirectionLabels[0];
-        return (sheet.AllowedJobTitles.Take(3).ToList(), direction, $"Dit sluit aan bij {direction}.");
+        return (titles, percents, direction, $"Dit sluit aan bij {direction}.");
     }
 
     private static string WrapChat(string content)

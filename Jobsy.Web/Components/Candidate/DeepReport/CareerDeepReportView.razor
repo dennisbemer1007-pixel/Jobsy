@@ -1,7 +1,9 @@
 @namespace Jobsy.Web.Components.Pages.Candidate.DeepReport
+@using Jobsy.Core.Careers
 @using Jobsy.Core.Reports
 @using Jobsy.Core.Reports.Career
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
 @inject CultureState Culture
 
 @if (Report is not null)
@@ -55,17 +57,28 @@
             <section class="competence-report__section">
                 <h2 class="test-detail__section-title">@Culture["TestResult.Card.Occupations"]</h2>
                 <ul class="competence-norm-bars">
-                    @foreach (var o in Report.Occupations.Take(10))
+                    @foreach (var o in Report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
                     {
+                        var explain = ExplainOccupation(o.TitleNl);
                         <li class="competence-norm-bar">
-                            <div class="competence-norm-bar__row">
-                                <span>@o.Title(lang)</span>
-                                <strong>@o.MatchPercent%</strong>
-                            </div>
+                            @if (explain is not null)
+                            {
+                                <FitPercentInfo Model="explain" Language="@Culture.Language">
+                                    <span>@o.Title(lang)</span>
+                                </FitPercentInfo>
+                            }
+                            else
+                            {
+                                <div class="competence-norm-bar__row">
+                                    <span>@o.Title(lang)</span>
+                                    <strong>@CareerCompassBuilder.FormatPercent(o.MatchPercent)%</strong>
+                                </div>
+                            }
                             <p class="muted">@o.Reason(lang)</p>
                         </li>
                     }
                 </ul>
+                <p class="muted">@Culture["Occ.Footnote"]</p>
             </section>
         }
 
@@ -165,6 +178,37 @@
             ? Report.Domains.Select(d => (int)Math.Round(d.NormMean ?? 0)).ToArray()
             : null;
     }
+
+    private RiasecScores? ReportScores
+    {
+        get
+        {
+            if (Report is null)
+            {
+                return null;
+            }
+
+            int? Score(string code)
+            {
+                var hit = Report.Domains.FirstOrDefault(domain =>
+                    string.Equals(domain.Domain, code, StringComparison.OrdinalIgnoreCase));
+                return hit is null ? null : hit.Score;
+            }
+
+            return FitPercentExplanation.TryScores(
+                Score(CareerTestCatalog.Realistic),
+                Score(CareerTestCatalog.Investigative),
+                Score(CareerTestCatalog.Artistic),
+                Score(CareerTestCatalog.Social),
+                Score(CareerTestCatalog.Enterprising),
+                Score(CareerTestCatalog.Conventional));
+        }
+    }
+
+    private FitPercentExplanation? ExplainOccupation(string title)
+        => ReportScores is { } scores
+            ? FitPercentExplanation.Build(title, scores, EducationLabel)
+            : null;
 
     private string RiasecUi(string domain)
         => Culture[$"Career.Riasec.{domain}"];

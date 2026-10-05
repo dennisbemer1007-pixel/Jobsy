@@ -419,6 +419,9 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+Jobsy.Core.Careers.OccupationCatalog.Configure(
+    app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
+    app.Environment.IsProduction());
 Jobsy.Core.Reports.DeepReportCatalog.Logger =
     app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Jobsy.DeepReportCatalog");
 

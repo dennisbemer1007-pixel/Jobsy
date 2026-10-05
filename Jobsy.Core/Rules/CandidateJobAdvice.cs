@@ -188,10 +188,12 @@ public static class CandidateJobAdvice
     {
         var folded = CareerOccupationKeys.Fold(question);
         var hits = new List<(string Title, int Len)>();
-        foreach (var job in CareerCompassBuilder.Occupations)
+        foreach (var job in OccupationCatalog.Shared.All)
         {
-            var head = job.Title.Split('/')[0].Trim();
-            TryAdd(hits, folded, head, job.Title);
+            if (job.Nl.Length >= 4)
+            {
+                TryAdd(hits, folded, job.Nl, job.Nl);
+            }
         }
 
         foreach (var entry in CareerDreamCatalog.All)
@@ -257,7 +259,7 @@ public static class CandidateJobAdvice
     {
         var listed = CareerCompassBuilder.Listed(scores, education);
         var lines = listed.Select((job, index) =>
-            $"{index + 1}. {OccupationTitles.ForChat(job.Title, lang)} ({job.Percent}%)");
+            $"{index + 1}. {OccupationTitles.ForChat(job.Title, lang)} ({CareerCompassBuilder.FormatPercent(job.Percent)}%)");
         var list = JoinParts(lang, lines.ToList());
         var (label, score) = TopDirection(scores, lang);
         return lang switch
@@ -286,23 +288,35 @@ public static class CandidateJobAdvice
             .ToList();
         var best = scored[0];
         var bestName = OccupationTitles.ForChat(best.Title, lang);
+        if (best.Percent is not decimal bestPercent)
+        {
+            return NoScoreReply(lang);
+        }
+
         if (scored.Count == 1)
         {
             return lang switch
             {
-                "en" => $"Your test shows {bestName} fits you at {best.Percent}%.",
-                "pl" => $"Z twojego testu wynika, że {bestName} pasuje w {best.Percent}%.",
-                "ro" => $"Din testul tău reiese că {bestName} ți se potrivește în proporție de {best.Percent}%.",
-                "ar" => $"يظهر من اختبارك أن {bestName} يناسبك بنسبة {best.Percent}%.",
-                _ => $"Uit je test blijkt dat {bestName} bij je past, met {best.Percent}%."
+                "en" => $"Your test shows {bestName} fits you at {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
+                "pl" => $"Z twojego testu wynika, że {bestName} pasuje w {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
+                "ro" => $"Din testul tău reiese că {bestName} ți se potrivește în proporție de {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
+                "ar" => $"يظهر من اختبارك أن {bestName} يناسبك بنسبة {CareerCompassBuilder.FormatPercent(bestPercent)}%.",
+                _ => $"Uit je test blijkt dat {bestName} bij je past, met {CareerCompassBuilder.FormatPercent(bestPercent)}%."
             };
         }
 
         var other = scored[1];
         var otherName = OccupationTitles.ForChat(other.Title, lang);
+        if (other.Percent is not decimal otherPercent)
+        {
+            return NoScoreReply(lang);
+        }
+
         var bestLetters = LetterLabels(best.Title, lang);
         var otherLetters = LetterLabels(other.Title, lang);
-        if (best.Percent == other.Percent)
+        var bestShown = CareerCompassBuilder.FormatPercent(bestPercent);
+        var otherShown = CareerCompassBuilder.FormatPercent(otherPercent);
+        if (bestPercent == otherPercent)
         {
             var shared = SharedLetterLabels(best.Title, other.Title, lang);
             if (shared.Count > 0 && SameLetters(best.Title, other.Title))
@@ -310,11 +324,11 @@ public static class CandidateJobAdvice
                 var both = JoinLabels(lang, shared);
                 return lang switch
                 {
-                    "en" => $"Both fit you equally ({best.Percent}%); both ask for {both}.",
-                    "pl" => $"Oba pasują tak samo ({best.Percent}%); oba wymagają {both}.",
-                    "ro" => $"Ambele ți se potrivesc la fel ({best.Percent}%); ambele cer {both}.",
-                    "ar" => $"كلاهما يناسبك بنفس الدرجة ({best.Percent}%)؛ كلاهما يطلب {both}.",
-                    _ => $"Beide passen even goed ({best.Percent}%); ze vragen allebei {both}."
+                    "en" => $"Both fit you equally ({bestShown}%); both ask for {both}.",
+                    "pl" => $"Oba pasują tak samo ({bestShown}%); oba wymagają {both}.",
+                    "ro" => $"Ambele ți se potrivesc la fel ({bestShown}%); ambele cer {both}.",
+                    "ar" => $"كلاهما يناسبك بنفس الدرجة ({bestShown}%)؛ كلاهما يطلب {both}.",
+                    _ => $"Beide passen even goed ({bestShown}%); ze vragen allebei {both}."
                 };
             }
 
@@ -322,11 +336,11 @@ public static class CandidateJobAdvice
             var right = JoinLabels(lang, otherLetters);
             return lang switch
             {
-                "en" => $"Both fit you equally ({best.Percent}%). {bestName} asks for {left}. {otherName} asks for {right}.",
-                "pl" => $"Oba pasują tak samo ({best.Percent}%). {bestName} wymaga {left}. {otherName} wymaga {right}.",
-                "ro" => $"Ambele ți se potrivesc la fel ({best.Percent}%). {bestName} cere {left}. {otherName} cere {right}.",
-                "ar" => $"كلاهما يناسبك بنفس الدرجة ({best.Percent}%). {bestName} يطلب {left}. {otherName} يطلب {right}.",
-                _ => $"Beide passen even goed ({best.Percent}%). {bestName} vraagt {left}. {otherName} vraagt {right}."
+                "en" => $"Both fit you equally ({bestShown}%). {bestName} asks for {left}. {otherName} asks for {right}.",
+                "pl" => $"Oba pasują tak samo ({bestShown}%). {bestName} wymaga {left}. {otherName} wymaga {right}.",
+                "ro" => $"Ambele ți se potrivesc la fel ({bestShown}%). {bestName} cere {left}. {otherName} cere {right}.",
+                "ar" => $"كلاهما يناسبك بنفس الدرجة ({bestShown}%). {bestName} يطلب {left}. {otherName} يطلب {right}.",
+                _ => $"Beide passen even goed ({bestShown}%). {bestName} vraagt {left}. {otherName} vraagt {right}."
             };
         }
 
@@ -334,13 +348,23 @@ public static class CandidateJobAdvice
         var otherAsk = JoinLabels(lang, otherLetters);
         return lang switch
         {
-            "en" => $"{bestName} fits you better ({best.Percent}%) than {otherName} ({other.Percent}%). {bestName} asks for {bestAsk}. {otherName} asks for {otherAsk}.",
-            "pl" => $"{bestName} pasuje lepiej ({best.Percent}%) niż {otherName} ({other.Percent}%). {bestName} wymaga {bestAsk}. {otherName} wymaga {otherAsk}.",
-            "ro" => $"{bestName} ți se potrivește mai bine ({best.Percent}%) decât {otherName} ({other.Percent}%). {bestName} cere {bestAsk}. {otherName} cere {otherAsk}.",
-            "ar" => $"{bestName} يناسبك أكثر ({best.Percent}%) من {otherName} ({other.Percent}%). {bestName} يطلب {bestAsk}. {otherName} يطلب {otherAsk}.",
-            _ => $"{bestName} past beter ({best.Percent}%) dan {otherName} ({other.Percent}%). {bestName} vraagt {bestAsk}. {otherName} vraagt {otherAsk}."
+            "en" => $"{bestName} fits you better ({bestShown}%) than {otherName} ({otherShown}%). {bestName} asks for {bestAsk}. {otherName} asks for {otherAsk}.",
+            "pl" => $"{bestName} pasuje lepiej ({bestShown}%) niż {otherName} ({otherShown}%). {bestName} wymaga {bestAsk}. {otherName} wymaga {otherAsk}.",
+            "ro" => $"{bestName} ți se potrivește mai bine ({bestShown}%) decât {otherName} ({otherShown}%). {bestName} cere {bestAsk}. {otherName} cere {otherAsk}.",
+            "ar" => $"{bestName} يناسبك أكثر ({bestShown}%) من {otherName} ({otherShown}%). {bestName} يطلب {bestAsk}. {otherName} يطلب {otherAsk}.",
+            _ => $"{bestName} past beter ({bestShown}%) dan {otherName} ({otherShown}%). {bestName} vraagt {bestAsk}. {otherName} vraagt {otherAsk}."
         };
     }
+
+
+    private static string NoScoreReply(string lang) => lang switch
+    {
+        "en" => "We have no reliable source to compare this job with your profile.",
+        "pl" => "Nie mamy pewnego źródła, aby porównać ten zawód z Twoim profilem.",
+        "ro" => "Nu avem o sursă sigură ca să comparăm această meserie cu profilul tău.",
+        "ar" => "ليس لدينا مصدر موثوق لنقارن هذه المهنة بملفك.",
+        _ => OccupationCopy.NoScoreSentence
+    };
 
     private static string WorkClaim(string lang, string question, IReadOnlyList<string>? workLines)
     {
@@ -524,6 +548,13 @@ public static class CandidateJobAdvice
         var percent = named is null
             ? top?.Percent ?? CareerCompassBuilder.CatalogueFit(job, scores, education)
             : CareerCompassBuilder.CatalogueFit(named, scores, education);
+        if (percent is not decimal fit)
+        {
+            return NoScoreReply(lang);
+        }
+
+        var shownFit = CareerCompassBuilder.FormatPercent(fit);
+
         var shown = OccupationTitles.ForChat(job, lang);
         var ownLetters = CareerCompassBuilder.WeightsFor(job);
         var directionCode = ownLetters.Count > 0
@@ -540,21 +571,21 @@ public static class CandidateJobAdvice
         {
             return lang switch
             {
-                "en" => $"You have no work experience in your profile yet. Your test shows {shown} fits you at {percent}%. Short motivation: I want to start as {shown}. {MotivationClaim("en", direction, directionScore, directionFits)}",
-                "pl" => $"W twoim profilu nie ma jeszcze doświadczenia w pracy. Z testu wynika, że {shown} pasuje w {percent}%. Krótka motywacja: Chcę zacząć jako {shown}. {MotivationClaim("pl", direction, directionScore, directionFits)}",
-                "ro" => $"Nu ai încă experiență de muncă în profil. Din test reiese că {shown} ți se potrivește în proporție de {percent}%. Motivație scurtă: Vreau să încep ca {shown}. {MotivationClaim("ro", direction, directionScore, directionFits)}",
-                "ar" => $"لا توجد خبرة عمل في ملفك بعد. يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%. دافع قصير: أريد أن أبدأ كـ {shown}. {MotivationClaim("ar", direction, directionScore, directionFits)}",
-                _ => $"Je hebt nog geen werkervaring in je profiel. Uit je test blijkt dat {shown} bij je past, met {percent}%. Korte motivatie: Ik wil aan de slag als {shown}. {MotivationClaim("nl", direction, directionScore, directionFits)}"
+                "en" => $"You have no work experience in your profile yet. Your test shows {shown} fits you at {shownFit}%. Short motivation: I want to start as {shown}. {MotivationClaim("en", direction, directionScore, directionFits)}",
+                "pl" => $"W twoim profilu nie ma jeszcze doświadczenia w pracy. Z testu wynika, że {shown} pasuje w {shownFit}%. Krótka motywacja: Chcę zacząć jako {shown}. {MotivationClaim("pl", direction, directionScore, directionFits)}",
+                "ro" => $"Nu ai încă experiență de muncă în profil. Din test reiese că {shown} ți se potrivește în proporție de {shownFit}%. Motivație scurtă: Vreau să încep ca {shown}. {MotivationClaim("ro", direction, directionScore, directionFits)}",
+                "ar" => $"لا توجد خبرة عمل في ملفك بعد. يظهر من اختبارك أن {shown} يناسبك بنسبة {shownFit}%. دافع قصير: أريد أن أبدأ كـ {shown}. {MotivationClaim("ar", direction, directionScore, directionFits)}",
+                _ => $"Je hebt nog geen werkervaring in je profiel. Uit je test blijkt dat {shown} bij je past, met {shownFit}%. Korte motivatie: Ik wil aan de slag als {shown}. {MotivationClaim("nl", direction, directionScore, directionFits)}"
             };
         }
 
         return lang switch
         {
-            "en" => $"Your profile lists this work: {work}. Your test shows {shown} fits you at {percent}%. Short motivation: I want to work as {shown}. {MotivationClaim("en", direction, directionScore, directionFits)}",
-            "pl" => $"W twoim profilu jest ta praca: {work}. Z testu wynika, że {shown} pasuje w {percent}%. Krótka motywacja: Chcę pracować jako {shown}. {MotivationClaim("pl", direction, directionScore, directionFits)}",
-            "ro" => $"În profilul tău este această muncă: {work}. Din test reiese că {shown} ți se potrivește în proporție de {percent}%. Motivație scurtă: Vreau să lucrez ca {shown}. {MotivationClaim("ro", direction, directionScore, directionFits)}",
-            "ar" => $"في ملفك هذا العمل: {work}. يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%. دافع قصير: أريد أن أعمل كـ {shown}. {MotivationClaim("ar", direction, directionScore, directionFits)}",
-            _ => $"In je profiel staat dit werk: {work}. Uit je test blijkt dat {shown} bij je past, met {percent}%. Korte motivatie: Ik wil werken als {shown}. {MotivationClaim("nl", direction, directionScore, directionFits)}"
+            "en" => $"Your profile lists this work: {work}. Your test shows {shown} fits you at {shownFit}%. Short motivation: I want to work as {shown}. {MotivationClaim("en", direction, directionScore, directionFits)}",
+            "pl" => $"W twoim profilu jest ta praca: {work}. Z testu wynika, że {shown} pasuje w {shownFit}%. Krótka motywacja: Chcę pracować jako {shown}. {MotivationClaim("pl", direction, directionScore, directionFits)}",
+            "ro" => $"În profilul tău este această muncă: {work}. Din test reiese că {shown} ți se potrivește în proporție de {shownFit}%. Motivație scurtă: Vreau să lucrez ca {shown}. {MotivationClaim("ro", direction, directionScore, directionFits)}",
+            "ar" => $"في ملفك هذا العمل: {work}. يظهر من اختبارك أن {shown} يناسبك بنسبة {shownFit}%. دافع قصير: أريد أن أعمل كـ {shown}. {MotivationClaim("ar", direction, directionScore, directionFits)}",
+            _ => $"In je profiel staat dit werk: {work}. Uit je test blijkt dat {shown} bij je past, met {shownFit}%. Korte motivatie: Ik wil werken als {shown}. {MotivationClaim("nl", direction, directionScore, directionFits)}"
         };
     }
 

@@ -98,7 +98,10 @@ public static class CareerCompassJson
         Percent = match.Percent,
         Band = match.Band,
         Why = match.Why,
-        Keys = match.SearchKeys.ToList()
+        Keys = match.SearchKeys.ToList(),
+        EscoId = match.EscoId,
+        Confidence = string.IsNullOrEmpty(match.Confidence) ? null : match.Confidence,
+        NoScore = match.NoScore ? true : null
     };
 
     internal sealed class CompassDto
@@ -121,9 +124,12 @@ public static class CareerCompassJson
     internal sealed class OccupationDto
     {
         public string? Title { get; set; }
-        public int Percent { get; set; }
+        public decimal Percent { get; set; }
         public string? Band { get; set; }
         public string? Why { get; set; }
         public List<string>? Keys { get; set; }
+        public string? EscoId { get; set; }
+        public string? Confidence { get; set; }
+        public bool? NoScore { get; set; }
     }
 }

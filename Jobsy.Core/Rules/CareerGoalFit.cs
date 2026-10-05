@@ -147,12 +147,35 @@ public static class CareerGoalFit
         return 0;
     }
 
-    /// <summary>Mbo4, hbo or wo, even when the candidate's own education is unknown.</summary>
+    /// <summary>
+    /// A catalogue job is clearly higher when its ISCO skill level is 4.
+    /// A free-text title that is not an ESCO occupation keeps the old dream-catalog rank.
+    /// </summary>
     public static bool IsClearlyHigherEducation(string title)
-        => RequiredRank(title) >= 4;
+    {
+        var occupation = OccupationCatalog.Shared.Resolve(title);
+        if (occupation is not null)
+        {
+            return occupation.IscoLevel >= 4;
+        }
+
+        return RequiredRank(title) >= 4;
+    }
 
     public static bool RequiresHigherEducation(string title, string? education)
     {
+        var occupation = OccupationCatalog.Shared.Resolve(title);
+        if (occupation is not null)
+        {
+            var gate = CareerEducationGate.MaxIscoLevel(education);
+            if (gate.MaxLevel is not int max || occupation.IscoLevel is not int level)
+            {
+                return false;
+            }
+
+            return level > max;
+        }
+
         var have = EducationRank(education);
         if (have is 0 or >= 5)
         {

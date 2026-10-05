@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Pages.Candidate.DeepReport
 @* Full paid Competence deep report (150-item Big Five test). *@
 @using System.Globalization
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
@@ -165,7 +166,7 @@
                         <li class="competence-occupation">
                             <div class="competence-occupation__row">
                                 <span class="competence-occupation__title">@occupation.Title</span>
-                                <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", occupation.MatchPercent)</span>
+                                <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", CareerCompassBuilder.FormatPercent(occupation.MatchPercent))</span>
                             </div>
                             <p class="muted">@occupation.Reason</p>
                         </li>

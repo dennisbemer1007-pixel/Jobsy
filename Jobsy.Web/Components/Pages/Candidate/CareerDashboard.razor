@@ -53,6 +53,8 @@
             </RailContent>
             <ChildContent>
                 <CareerEmptyCard Suggestions="@_suggestions"
+                                 Scores="@_careerScores"
+                                 Education="@_educationLabel"
                                  Busy="@_busy"
                                  HasChoice="@(_choice is not null)"
                                  ErrorText="@_error"
@@ -165,6 +167,8 @@
                            ProofHasExperience="@_plan.ProofHasExperience"
                            ErrorText="@_dialogError"
                            Suggestions="@DialogSuggestions"
+                           Scores="@_careerScores"
+                           Education="@_educationLabel"
                            OnChoice="SetChoice"
                            OnSearch="SearchDreamsAsync"
                            OnConfirm="ChangeDreamAsync"
@@ -185,6 +189,8 @@
     private string _stepContextId = "";
     private CareerPlanViewModel _plan = CareerPlanViewModel.Empty;
     private IReadOnlyList<CareerDreamOptionApiItem> _suggestions = [];
+    private RiasecScores? _careerScores;
+    private string? _educationLabel;
     private IReadOnlyList<ArchivedCareerPlanApiModel> _archived = [];
     private CareerDreamChoice? _choice;
     private string _nowLabel = "";
@@ -285,6 +291,14 @@
             var options = await Api.GetCareerDreamOptionsAsync();
             _suggestions = options?.Suggestions ?? [];
             _archived = await Api.GetArchivedCareerPlansAsync();
+            try
+            {
+                ApplyCareerScores(await Api.GetMyCareerInterestsAsync());
+            }
+            catch (Exception)
+            {
+                _careerScores = null;
+            }
         }
         catch (Exception ex)
         {
@@ -679,6 +693,23 @@
         _nowLabel = current?.Role?.Trim() ?? "";
         _evidence = CareerPlanViewBuilder.EvidenceFrom(prefs);
         _experienceYears = CareerPlanViewBuilder.ExperienceYears(prefs.Employers);
+        _educationLabel = string.Join(
+            " ",
+            (prefs.Educations ?? []).Append(prefs.EducationDirection ?? "").Where(item => !string.IsNullOrWhiteSpace(item)));
+    }
+
+    private void ApplyCareerScores(CandidateCareerInterestState? state)
+    {
+        var scores = state?.Scores;
+        _careerScores = scores is { IsComplete: true }
+            ? new RiasecScores(
+                scores.Realistic,
+                scores.Investigative,
+                scores.Artistic,
+                scores.Social,
+                scores.Enterprising,
+                scores.Conventional)
+            : null;
     }
 
     private void ApplyPlan(CareerPathPlanApiModel? plan)

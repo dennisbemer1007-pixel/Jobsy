@@ -28,7 +28,7 @@ internal static class CompactDeepReportPdf
 
     internal static byte[] Career(
         string brand, byte[] logo, string fullName, string generated,
-        CareerDeepReport report, string lang, string? uiLang)
+        CareerDeepReport report, string lang, string? uiLang, string? education = null)
     {
         var en = ReportLanguage.IsEnglish(lang);
         var title = DeepReportCatalog.Get("title.career", lang);
@@ -87,8 +87,14 @@ internal static class CompactDeepReportPdf
             {
                 foreach (var job in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
                 {
-                    JobCard(col, $"{job.Title(lang)} — {job.MatchPercent}%", job.Reason(lang));
+                    JobCard(col,
+                        $"{job.Title(lang)} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%",
+                        job.Reason(lang));
                 }
+
+                AssessmentReportPdfService.WriteFitFootnote(
+                    col,
+                    AssessmentReportPdfService.CareerFootnote(report, education, lang));
             }
 
             ActionPlan(col, lang, report.ActionPlan);
@@ -234,7 +240,7 @@ internal static class CompactDeepReportPdf
 
             foreach (var job in report.Occupations)
             {
-                JobCard(col, $"{job.Title} — {job.MatchPercent}%", job.Reason);
+                JobCard(col, $"{job.Title} — {CareerCompassBuilder.FormatPercent(job.MatchPercent)}%", job.Reason);
             }
 
             Heading(col, "Jouw actieplan");

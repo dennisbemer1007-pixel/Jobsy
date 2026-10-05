@@ -144,7 +144,7 @@ public class CompactTestPdfTests
     {
         AssessmentKind.Career => AssessmentReportPdfService.RenderCareerDeep(
             "Lobsy", [], "Test Kandidaat", "5 oktober 2026", CareerReport(),
-            ReportLanguage.FromUi(uiLang), compact, uiLang),
+            ReportLanguage.FromUi(uiLang), education: null, compact: compact, uiLang: uiLang),
         AssessmentKind.Competence => AssessmentReportPdfService.RenderCompetenceDeep(
             "Lobsy", [], "Test Kandidaat", "5 oktober 2026", CompetenceReport(), compact, uiLang),
         AssessmentKind.Culture => AssessmentReportPdfService.RenderCultureDeep(

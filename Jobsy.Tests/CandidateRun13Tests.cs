@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Security.Claims;
 using Jobsy.Api.Security;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -68,19 +69,15 @@ public class CandidateRun13Tests
     [Fact]
     public void Shown_match_never_exceeds_the_letters_the_job_uses()
     {
-        Assert.Equal(64, CareerCompassBuilder.CatalogueFit("Chauffeur", Profile, "MBO"));
-        Assert.Equal(66, CareerCompassBuilder.CatalogueFit("Medewerker bouw / afbouw", Profile, "MBO"));
-
-        foreach (var job in CareerCompassBuilder.Occupations)
+        var letters = CareerTestCatalog.RiasecCodes.Select(Profile.Get).ToList();
+        var floor = letters.Min();
+        var ceiling = letters.Max();
+        Assert.Equal(59.13m, CareerCompassBuilder.ProfileMatch([7, 1.97, 1.59, 1.66, 2.09, 3.35], Profile));
+        Assert.Null(CareerCompassBuilder.CatalogueFit("dit beroep bestaat niet xyz", Profile, "MBO"));
+        foreach (var job in OccupationCatalog.Shared.Listable)
         {
-            var letters = job.Weights
-                .Where(weight => weight.Weight > 0)
-                .OrderByDescending(weight => weight.Weight)
-                .Take(3)
-                .Select(weight => Profile.Get(weight.Code))
-                .ToList();
-            var match = CareerCompassBuilder.ProfileMatch(job.Weights, Profile);
-            Assert.True(match <= letters.Max(), $"{job.Title} shows {match} above {letters.Max()}");
+            var match = CareerCompassBuilder.ProfileMatch(job.Oi!, Profile);
+            Assert.InRange(match, (decimal)floor, (decimal)ceiling);
         }
     }
 
@@ -205,22 +202,22 @@ public class CandidateRun13Tests
         Assert.Contains(DeepReportCatalog.Get("pitfall." + CareerTestCatalog.Realistic, "nl"), pitfalls, StringComparison.Ordinal);
         Assert.DoesNotContain("Flexibel", pitfalls, StringComparison.Ordinal);
 
-        var reason = CandidateJobAdvice.TryReply("nl", "Waarom past chauffeur bij mij?", Profile, "MBO", false);
+        var reason = CandidateJobAdvice.TryReply("nl", "Waarom past tuinbouwmedewerker bij mij?", Profile, "MBO", false);
         Assert.Contains("66%", reason, StringComparison.Ordinal);
         Assert.Contains("62%", reason, StringComparison.Ordinal);
         Assert.DoesNotContain("Mensen helpen", reason, StringComparison.Ordinal);
 
-        var polish = CandidateJobAdvice.TryReply("pl", "Dlaczego zawód kierowcy do mnie pasuje?", Profile, "MBO", false);
+        var polish = CandidateJobAdvice.TryReply("pl", "Dlaczego zawód tuinbouwmedewerker do mnie pasuje?", Profile, "MBO", false);
         Assert.Contains("66%", polish, StringComparison.Ordinal);
         Assert.Contains("62%", polish, StringComparison.Ordinal);
         Assert.DoesNotContain("Mensen helpen", polish, StringComparison.Ordinal);
         Assert.DoesNotContain("1.", polish, StringComparison.Ordinal);
 
-        var romanian = CandidateJobAdvice.TryReply("ro", "De ce mi se potrivește meseria de șofer?", Profile, "MBO", false);
+        var romanian = CandidateJobAdvice.TryReply("ro", "De ce mi se potrivește meseria de tuinbouwmedewerker?", Profile, "MBO", false);
         Assert.Contains("66%", romanian, StringComparison.Ordinal);
         Assert.DoesNotContain("1.", romanian, StringComparison.Ordinal);
 
-        var arabic = CandidateJobAdvice.TryReply("ar", "لماذا تناسبني مهنة السائق؟", Profile, "MBO", false);
+        var arabic = CandidateJobAdvice.TryReply("ar", "لماذا تناسبني مهنة tuinbouwmedewerker؟", Profile, "MBO", false);
         Assert.Contains("66%", arabic, StringComparison.Ordinal);
         Assert.DoesNotContain("1.", arabic, StringComparison.Ordinal);
 
@@ -243,11 +240,15 @@ public class CandidateRun13Tests
         Assert.Contains("drie hoogste", lead, StringComparison.Ordinal);
 
         var direction = CandidateJobAdvice.TryReply("nl", "Welke beroepen passen bij mensen helpen?", Profile, "MBO", false);
-        Assert.Contains("Helpende zorg", direction, StringComparison.Ordinal);
+        Assert.NotNull(direction);
+        Assert.True(
+            direction!.Contains("Geen beroep op je lijst", StringComparison.Ordinal)
+            || direction.Contains("zorg", StringComparison.OrdinalIgnoreCase)
+            || direction.Contains("verpleeg", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain("Chauffeur", direction, StringComparison.Ordinal);
 
         var motivation = CandidateJobAdvice.TryReply(
-            "nl", "Schrijf een korte motivatie voor de functie kok", Profile, "MBO", false);
+            "nl", "Schrijf een korte motivatie voor de functie tuinbouwmedewerker", Profile, "MBO", false);
         Assert.Contains("Aanpakken", motivation, StringComparison.Ordinal);
         Assert.Contains("66%", motivation, StringComparison.Ordinal);
         Assert.DoesNotContain("Mensen helpen", motivation, StringComparison.Ordinal);

@@ -17,7 +17,7 @@ public static class CompetenceDeepReportBuilder
         IReadOnlyDictionary<int, int> answers,
         INormProvider norms,
         string? jobTitle,
-        IReadOnlyList<(string Title, int MatchPercent, string Reason)>? occupations,
+        IReadOnlyList<(string Title, decimal MatchPercent, string Reason)>? occupations,
         string? aiSummary,
         IReadOnlyList<(string Title, string Body)>? aiPlan,
         bool fromOpenAi,
