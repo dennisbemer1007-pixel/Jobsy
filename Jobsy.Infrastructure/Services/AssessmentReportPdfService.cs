@@ -1,4 +1,5 @@
 using System.Globalization;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
@@ -150,10 +151,11 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
 
             if (careerDeep is not null)
             {
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8";
+                var education = EducationLabel(user);
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8:fit:{education}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang);
+                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang, education);
                     _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
 
@@ -177,7 +179,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     };
                 }
 
-                bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
+                bytes = RenderCareer(brand, logo, user.FullName, generated, compass, EducationLabel(user));
             }
         }
         else if (kind == AssessmentKind.Culture)
@@ -312,7 +314,8 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         byte[] logo,
         string fullName,
         string generated,
-        CareerCompassSnapshot compass)
+        CareerCompassSnapshot compass,
+        string? education = null)
     {
         return Document.Create(container =>
         {
@@ -343,6 +346,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                         SoftSky, compass.StrongChoices, "Geen beroep in deze groep.");
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandBroaden),
                         WarmSand, compass.Broadening, "Geen beroep in deze groep.");
+                    WriteFitFootnote(col, CompassFootnote(compass, education));
 
                     col.Item().PaddingTop(8).Background(SoftSky).Padding(12).Column(box =>
                     {
@@ -821,7 +825,8 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string fullName,
         string generated,
         CareerDeepReport report,
-        string lang)
+        string lang,
+        string? education = null)
     {
         var title = DeepReportCatalog.Get("title.career", lang);
         var en = ReportLanguage.IsEnglish(lang);
@@ -875,6 +880,8 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                             col.Item().Text($"{o.Title(lang)} — {CareerCompassBuilder.FormatPercent(o.MatchPercent)}%").SemiBold();
                             col.Item().Text(o.Reason(lang)).FontSize(9).FontColor(Muted);
                         }
+
+                        WriteFitFootnote(col, CareerFootnote(report, education, lang));
                     }
                 },
                 col => WriteActionPage(col, lang, report.ActionPlan),
@@ -1330,6 +1337,80 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 x.TotalPages().FontColor(Muted).FontSize(8);
             });
         });
+    }
+
+    private static string? EducationLabel(User user)
+    {
+        var prefs = MatchingProfileMapper.DeserializePrefs(user.PreferencesJson);
+        var label = string.Join(
+            " ",
+            (prefs.Educations ?? []).Append(prefs.EducationDirection ?? "").Where(item => !string.IsNullOrWhiteSpace(item)));
+        return string.IsNullOrWhiteSpace(label) ? null : label;
+    }
+
+    private static string CompassFootnote(CareerCompassSnapshot compass, string? education)
+    {
+        var scores = FitPercentExplanation.TryScores(compass.ScoresFingerprint);
+        if (scores is null)
+        {
+            return FitPercentExplanation.FormulaOnly("nl");
+        }
+
+        var items = new List<FitPercentExplanation>();
+        foreach (var job in compass.AllOccupations)
+        {
+            var explain = FitPercentExplanation.Build(job.Title, scores, education);
+            if (explain is not null)
+            {
+                items.Add(explain);
+            }
+        }
+
+        return FitPercentExplanation.Footnote(items, "nl");
+    }
+
+    private static string CareerFootnote(CareerDeepReport report, string? education, string? lang)
+    {
+        int? Score(string code)
+        {
+            var hit = report.Domains.FirstOrDefault(domain =>
+                string.Equals(domain.Domain, code, StringComparison.OrdinalIgnoreCase));
+            return hit is null ? null : hit.Score;
+        }
+
+        var scores = FitPercentExplanation.TryScores(
+            Score(CareerTestCatalog.Realistic),
+            Score(CareerTestCatalog.Investigative),
+            Score(CareerTestCatalog.Artistic),
+            Score(CareerTestCatalog.Social),
+            Score(CareerTestCatalog.Enterprising),
+            Score(CareerTestCatalog.Conventional));
+        if (scores is null)
+        {
+            return FitPercentExplanation.FormulaOnly(lang);
+        }
+
+        var items = new List<FitPercentExplanation>();
+        foreach (var job in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
+        {
+            var explain = FitPercentExplanation.Build(job.TitleNl, scores, education);
+            if (explain is not null)
+            {
+                items.Add(explain);
+            }
+        }
+
+        return FitPercentExplanation.Footnote(items, lang);
+    }
+
+    private static void WriteFitFootnote(ColumnDescriptor col, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        col.Item().PaddingTop(4).Text(text).FontSize(8).FontColor(Muted);
     }
 
     private static void WriteOccupationBand(

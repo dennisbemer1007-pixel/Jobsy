@@ -232,6 +232,76 @@ public class OccupationCatalogTests
     }
 
     [Fact]
+    public void Explanation_numbers_recompute_to_the_shown_percent()
+    {
+        const string title = "tuinbouwmedewerker";
+        var explain = FitPercentExplanation.Build(title, Profile, "mbo 4");
+        Assert.NotNull(explain);
+        var occupation = OccupationCatalog.Shared.Resolve(title);
+        Assert.NotNull(occupation?.Oi);
+
+        decimal weightSum = 0m;
+        decimal productSum = 0m;
+        foreach (var term in explain!.Terms)
+        {
+            if (term.Weight <= 0m)
+            {
+                continue;
+            }
+
+            Assert.Equal(term.Weight * term.Score, term.Product);
+            weightSum += term.Weight;
+            productSum += term.Product;
+        }
+
+        var recomputed = decimal.Round(productSum / weightSum, 2, MidpointRounding.AwayFromZero);
+        var shown = CareerCompassBuilder.CatalogueFit(title, Profile, "mbo 4");
+        Assert.Equal(shown, recomputed);
+        Assert.Equal(recomputed, explain.Percent);
+        Assert.Equal(CareerCompassBuilder.ProfileMatch(occupation!.Oi!, Profile), explain.Percent);
+        Assert.Equal(CareerCompassBuilder.MatchMath(occupation.Oi!, Profile).Percent, explain.Percent);
+
+        var equation = $"{productSum.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} / {weightSum.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} = {CareerCompassBuilder.FormatPercent(recomputed)}";
+        var dutch = FitPercentExplanation.Render(explain, "nl");
+        Assert.Contains(equation, dutch, StringComparison.Ordinal);
+        Assert.Contains(CareerCompassBuilder.FormatPercent(explain.Percent), dutch, StringComparison.Ordinal);
+        Assert.Contains("O*NET 31.0", dutch, StringComparison.Ordinal);
+        Assert.Contains(explain.EscoId, dutch, StringComparison.Ordinal);
+        Assert.Contains("mbo 4", dutch, StringComparison.Ordinal);
+        Assert.Contains(explain.Confidence == "high" ? "hoog" : "gemiddeld", dutch, StringComparison.Ordinal);
+        foreach (var term in explain.Terms.Where(term => term.Weight > 0m))
+        {
+            Assert.Contains($"{FitPercentExplanation.Num(term.Weight)} × {term.Score} = {FitPercentExplanation.Num(term.Product)}", dutch, StringComparison.Ordinal);
+        }
+
+        if (explain.OnetCodes.Count > 0)
+        {
+            Assert.Contains(explain.OnetCodes[0], dutch, StringComparison.Ordinal);
+        }
+
+        foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
+        {
+            var text = FitPercentExplanation.Render(explain, lang);
+            Assert.False(string.IsNullOrWhiteSpace(text));
+            Assert.Contains(equation, text, StringComparison.Ordinal);
+            Assert.Contains("O*NET 31.0", text, StringComparison.Ordinal);
+            Assert.Contains(explain.EscoId, text, StringComparison.Ordinal);
+            Assert.Contains("mbo 4", text, StringComparison.Ordinal);
+        }
+
+        var footnote = FitPercentExplanation.Footnote([explain], "nl");
+        Assert.Contains(equation, footnote, StringComparison.Ordinal);
+        Assert.Contains(explain.EscoId, footnote, StringComparison.Ordinal);
+        Assert.True(footnote.Length < dutch.Length);
+
+        var root = TestRepo.FindRoot();
+        Assert.Contains("FitPercentInfo", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
+        Assert.Contains("FitPercentInfo", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DeepReport/CareerDeepReportView.razor")), StringComparison.Ordinal);
+        Assert.Contains("FitPercentInfo", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Career/CareerDreamPicker.razor")), StringComparison.Ordinal);
+        Assert.Contains("FitPercentExplanation.Footnote", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/AssessmentReportPdfService.cs")), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Bronnen_page_keeps_the_required_attribution()
     {
         var root = TestRepo.FindRoot();

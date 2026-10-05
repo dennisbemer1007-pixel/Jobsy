@@ -464,34 +464,56 @@ public static class CareerCompassBuilder
     /// 689.5 / 11.66 = 59.133… → 59.13.
     /// </summary>
     public static decimal ProfileMatch(IReadOnlyList<double> oi, RiasecScores scores)
-    {
-        if (oi.Count < 6)
-        {
-            return 0m;
-        }
+        => MatchMath(oi, scores).Percent;
 
+    /// <summary>
+    /// The terms behind <see cref="ProfileMatch"/>. The explanation text is built from this,
+    /// so the shown percent and the worked example cannot drift apart.
+    /// </summary>
+    public static ProfileMatchMath MatchMath(IReadOnlyList<double> oi, RiasecScores scores)
+    {
+        var terms = new List<ProfileMatchTerm>(6);
         decimal used = 0m;
         decimal sum = 0m;
-        for (var i = 0; i < 6; i++)
+        if (oi.Count >= 6)
         {
-            var level = decimal.Round((decimal)oi[i], 2, MidpointRounding.AwayFromZero);
-            var weight = level - 1m;
-            if (weight <= 0m)
+            for (var i = 0; i < 6; i++)
             {
-                continue;
+                var level = decimal.Round((decimal)oi[i], 2, MidpointRounding.AwayFromZero);
+                var weight = level - 1m;
+                var score = scores.Get(CareerTestCatalog.RiasecCodes[i]);
+                var counts = weight > 0m;
+                var product = counts ? weight * score : 0m;
+                if (counts)
+                {
+                    used += weight;
+                    sum += product;
+                }
+
+                terms.Add(new ProfileMatchTerm(
+                    CareerTestCatalog.RiasecCodes[i],
+                    score,
+                    level,
+                    counts ? weight : 0m,
+                    product));
             }
-
-            used += weight;
-            sum += weight * scores.Get(CareerTestCatalog.RiasecCodes[i]);
         }
 
-        if (used <= 0m)
+        var percent = 0m;
+        if (used > 0m)
         {
-            return 0m;
+            percent = decimal.Round(sum / used, 2, MidpointRounding.AwayFromZero);
+            if (percent < 0m)
+            {
+                percent = 0m;
+            }
+            else if (percent > 100m)
+            {
+                percent = 100m;
+            }
         }
 
-        var percent = decimal.Round(sum / used, 2, MidpointRounding.AwayFromZero);
-        return percent < 0m ? 0m : percent > 100m ? 100m : percent;
+        return new ProfileMatchMath(percent, used, sum, terms);
     }
 
     private static IReadOnlyList<string> PracticalNotes(
@@ -564,6 +586,19 @@ public static class CareerCompassBuilder
     };
 
 }
+
+public readonly record struct ProfileMatchTerm(
+    string Code,
+    int Score,
+    decimal Oi,
+    decimal Weight,
+    decimal Product);
+
+public readonly record struct ProfileMatchMath(
+    decimal Percent,
+    decimal WeightSum,
+    decimal ProductSum,
+    IReadOnlyList<ProfileMatchTerm> Terms);
 
 public sealed record CareerOccupation(string Title, params (string Code, int Weight)[] Weights);
 

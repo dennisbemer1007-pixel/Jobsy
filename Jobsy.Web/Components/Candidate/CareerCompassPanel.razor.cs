@@ -9,6 +9,17 @@ public partial class CareerCompassPanel
     [Parameter]
     public RiasecScoreSet? CareerDirection { get; set; }
 
+    private RiasecScores? DirectionScores
+        => CareerDirection is { IsComplete: true } scores
+            ? new RiasecScores(
+                scores.Realistic,
+                scores.Investigative,
+                scores.Artistic,
+                scores.Social,
+                scores.Enterprising,
+                scores.Conventional)
+            : null;
+
     private RoleFitCheckSnapshot? BuildInsight(string title)
     {
         if (Competencies is not { IsComplete: true } c || CareerDirection is not { IsComplete: true } r)
