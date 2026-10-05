@@ -4757,6 +4757,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("FreeCandidateTestsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<DateOnly?>("FreePublishUntil")
                         .HasColumnType("date");
 

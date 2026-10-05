@@ -112,6 +112,24 @@ public static class UiStringsFeatureFlags
             "Krótkie raporty testów",
             "Rapoarte scurte de test",
             "تقارير اختبار قصيرة");
+        Add("AdminSettings.FreeCandidateTests.Enabled.Title",
+            "Tests gratis voor iedereen",
+            "Tests free for everyone",
+            "Testy za darmo dla wszystkich",
+            "Teste gratuite pentru toată lumea",
+            "الاختبارات مجانية للجميع");
+        Add("AdminSettings.FreeCandidateTests.Enabled.Desc",
+            "Aan = kandidaten doen de uitgebreide test zonder te betalen. Uit = ze betalen weer. Een testaccount blijft altijd gratis.",
+            "On = candidates take the extended test without paying. Off = they pay again. A test account stays free.",
+            "Wł. = kandydaci robią test rozszerzony bez płatności. Wył. = znów płacą. Konto testowe zostaje darmowe.",
+            "Pornit = candidații fac testul extins fără plată. Oprit = plătesc din nou. Un cont de test rămâne gratuit.",
+            "تشغيل = يجري المرشحون الاختبار الموسّع دون دفع. إيقاف = يدفعون مرة أخرى. حساب الاختبار يبقى مجانياً.");
+        Add("AdminSettings.FreeCandidateTests.Enabled.ImpactOff",
+            "Uit: kandidaten moeten weer betalen voor de uitgebreide test.",
+            "Off: candidates have to pay for the extended test again.",
+            "Wył.: kandydaci znów płacą za test rozszerzony.",
+            "Oprit: candidații trebuie să plătească din nou testul extins.",
+            "إيقاف: يجب على المرشحين الدفع مرة أخرى للاختبار الموسّع.");
         Add("AdminSettings.CompactTestPdf.Enabled.Desc",
             "Aan = het uitgebreide persoonlijke testrapport is ongeveer 4 pagina's met grafieken. Uit = de langere rapporten van nu.",
             "On = the extended personal test report is about 4 pages with charts. Off = today's longer reports.",

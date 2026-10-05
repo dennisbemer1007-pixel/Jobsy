@@ -78,12 +78,12 @@ else
                                     <span>@Culture.Format("Deep.Offer.TileFreeKeepLead", TestDepthRules.FullCount(_kind))</span>
                                 </div>
                             </div>
-                            @if (_paymentMode == DeepTestFinanceRules.TestUnlockMethod)
+                            @if (SkipsPayment)
                             {
                                 <p class="deep-offer__price">
-                                    <strong>@Culture["DeepPay.TestAccountFree"]</strong>
+                                    <strong>@(IsTestAccountMode ? Culture["DeepPay.TestAccountFree"] : Culture["DeepPay.EveryoneFree"])</strong>
                                 </p>
-                                <p class="muted">@Culture["DeepPay.TestAccountNote"]</p>
+                                <p class="muted">@(IsTestAccountMode ? Culture["DeepPay.TestAccountNote"] : Culture["DeepPay.EveryoneNote"])</p>
                             }
                             else
                             {
@@ -104,7 +104,7 @@ else
                                     <p class="muted">@Culture["DeepPay.StubHint"]</p>
                                 }
                             }
-                            @if (_paymentMode != DeepTestFinanceRules.TestUnlockMethod)
+                            @if (!SkipsPayment)
                             {
                                 <label class="deep-pay-waiver">
                                     <input type="checkbox" @bind="_waiverAccepted" />
@@ -124,7 +124,7 @@ else
                                         class="btn btn-primary"
                                         disabled="@((NeedsWaiver && !_waiverAccepted) || _saving || _paymentMode == "unavailable")"
                                         @onclick="ConfirmOrderAsync">
-                                    @(_paymentMode == DeepTestFinanceRules.TestUnlockMethod
+                                    @(SkipsPayment
                                         ? Culture["DeepPay.TestAccountCta"]
                                         : Culture.Format("DeepPay.PayCta", _priceLabel))
                                 </button>
@@ -266,7 +266,10 @@ else
     private readonly HashSet<string> _shownCues = [];
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
-    private bool NeedsWaiver => _paymentMode != DeepTestFinanceRules.TestUnlockMethod;
+    private bool IsTestAccountMode => _paymentMode == DeepTestFinanceRules.TestUnlockMethod;
+    private bool IsEveryoneFreeMode => _paymentMode == DeepTestFinanceRules.FreeForEveryoneMethod;
+    private bool SkipsPayment => DeepTestFinanceRules.SkipsCandidatePayment(_paymentMode);
+    private bool NeedsWaiver => !SkipsPayment;
 
     private string OfferSpeech
     {

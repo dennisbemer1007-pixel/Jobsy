@@ -41,7 +41,12 @@ public sealed record PlatformFeatureSnapshot(
     bool PassportPdfV2Enabled = false,
     bool PhoneVerificationEnabled = false,
     bool WhatsAppRemindersEnabled = false,
-    bool CompactTestPdfEnabled = false);
+    bool CompactTestPdfEnabled = false,
+    /// <summary>
+    /// Product default is on when no settings row exists. This record default stays
+    /// false so test stubs that omit the flag keep the paid checkout path.
+    /// </summary>
+    bool FreeCandidateTestsEnabled = false);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -88,4 +93,6 @@ public sealed record PlatformFeatureUpdate(
     bool? PassportPdfV2Enabled = null,
     bool? PhoneVerificationEnabled = null,
     bool? WhatsAppRemindersEnabled = null,
-    bool? CompactTestPdfEnabled = null);
+    bool? CompactTestPdfEnabled = null,
+    /// <summary>Null = keep existing. Product insert default is on.</summary>
+    bool? FreeCandidateTestsEnabled = null);

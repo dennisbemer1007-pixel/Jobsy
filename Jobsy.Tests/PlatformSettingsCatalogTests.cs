@@ -102,6 +102,34 @@ public class PlatformSettingsCatalogTests
     }
 
     [Fact]
+    public async Task Free_candidate_tests_start_on_and_can_be_switched_off()
+    {
+        var entry = PlatformSettingsCatalog.Entries.Single(e => e.Key == "FreeCandidateTestsEnabled");
+        Assert.Equal("AdminSettings.FreeCandidateTests.Enabled.Title", entry.TitleKey);
+        Assert.Equal("AdminSettings.FreeCandidateTests.Enabled.Desc", entry.DescriptionKey);
+        Assert.True(entry.ShowOnDashboard);
+        Assert.True(new Jobsy.Core.Entities.PlatformFeatureSettings().FreeCandidateTestsEnabled);
+
+        var strings = File.ReadAllText(Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..",
+            "Jobsy.Web", "Localization", "UiStringsFeatureFlags.cs")));
+        Assert.Contains("Tests gratis voor iedereen", strings, StringComparison.Ordinal);
+        Assert.Contains("zonder te betalen", strings, StringComparison.Ordinal);
+
+        await using var db = CreateDb();
+        var sut = CreateFeatures(db);
+        var snap = await sut.GetAsync();
+        Assert.True(snap.FreeCandidateTestsEnabled);
+        Assert.True(entry.Read(snap) is true);
+
+        snap = await sut.UpdateAsync(entry.Write(false));
+        Assert.False(entry.Read(snap) is true);
+
+        snap = await sut.UpdateAsync(entry.Write(true));
+        Assert.True(entry.Read(snap) is true);
+    }
+
+    [Fact]
     public void Passport_descriptor_reads_on_for_default_row_and_write_off_works()
     {
         var entry = PlatformSettingsCatalog.Entries.Single(e => e.Key == "CandidatePassportEnabled");

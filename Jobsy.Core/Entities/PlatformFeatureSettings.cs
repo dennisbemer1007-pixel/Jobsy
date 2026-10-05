@@ -111,6 +111,13 @@ public class PlatformFeatureSettings
     public bool CompactTestPdfEnabled { get; set; }
 
     /// <summary>
+    /// When true, every candidate unlocks the uitgebreide analyse without Mollie.
+    /// Default true so acceptatie is free after deploy. An admin can turn it off.
+    /// Test accounts stay free even when this is false.
+    /// </summary>
+    public bool FreeCandidateTestsEnabled { get; set; } = true;
+
+    /// <summary>
     /// When true, everyone except admins gets the 503 maintenance page (errors 05). Default false.
     /// </summary>
     public bool MaintenanceEnabled { get; set; }

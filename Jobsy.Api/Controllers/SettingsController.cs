@@ -479,7 +479,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
-                    CompactTestPdfEnabled: request.CompactTestPdfEnabled),
+                    CompactTestPdfEnabled: request.CompactTestPdfEnabled,
+                    FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -554,6 +555,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
+        Add("FreeCandidateTestsEnabled", before.FreeCandidateTestsEnabled.ToString(), after.FreeCandidateTestsEnabled.ToString());
         return list;
     }
 
@@ -879,7 +881,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.PhoneVerificationEnabled,
             snap.WhatsAppRemindersEnabled,
             snap.CompactTestPdfEnabled,
-            _whatsApp.IsConfigured);
+            _whatsApp.IsConfigured,
+            snap.FreeCandidateTestsEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

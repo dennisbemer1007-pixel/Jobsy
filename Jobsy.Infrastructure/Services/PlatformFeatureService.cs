@@ -169,6 +169,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.CompactTestPdfEnabled = compactTestPdfEnabled;
         }
 
+        if (update.FreeCandidateTestsEnabled is bool freeCandidateTestsEnabled)
+        {
+            row.FreeCandidateTestsEnabled = freeCandidateTestsEnabled;
+        }
+
         if (update.MaintenanceEnabled is bool maintenanceEnabled)
         {
             row.MaintenanceEnabled = maintenanceEnabled;
@@ -255,6 +260,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.SessionInactivityTimeoutMinutes = SessionSecurityRules.DefaultInactivityTimeoutMinutes;
         row.SupportAccessNotifyAdmins = false;
         row.SupportAccessNotifySubject = false;
+        row.FreeCandidateTestsEnabled = true;
     }
 
     private bool IsAllowedPublicOrigin(string origin)
@@ -351,6 +357,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.PassportPdfV2Enabled ?? false,
             row?.PhoneVerificationEnabled ?? false,
             row?.WhatsAppRemindersEnabled ?? false,
-            row?.CompactTestPdfEnabled ?? false);
+            row?.CompactTestPdfEnabled ?? false,
+            row?.FreeCandidateTestsEnabled ?? true);
     }
 }

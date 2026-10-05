@@ -240,7 +240,8 @@
                                     ProgressTotal="@_def.DeepQuestionCount"
                                     ShowSamplePdf="_samplePdfEnabled"
                                     ShowHeading="false"
-                                    FreeForTestAccount="@(_paymentMode == DeepTestFinanceRules.TestUnlockMethod)"
+                                    FreeForTestAccount="@IsTestAccountMode"
+                                    FreeForEveryone="@IsEveryoneFreeMode"
                                     OnStart="GoToOfferAsync"
                                     OnSamplePdf="OpenSamplePdfAsync" />
         }
@@ -336,10 +337,12 @@
                         class="btn-gold btn-gold--split"
                         disabled="@_busy"
                         @onclick="GoToOfferAsync">
-                    <span>@(_paymentMode == DeepTestFinanceRules.TestUnlockMethod
+                    <span>@(IsTestAccountMode
                         ? Culture["Tests.StartExtendedFree"]
-                        : Culture["Tests.ExtendedLabel"])</span>
-                    @if (_paymentMode != DeepTestFinanceRules.TestUnlockMethod)
+                        : IsEveryoneFreeMode
+                            ? Culture["Tests.StartExtendedEveryoneFree"]
+                            : Culture["Tests.ExtendedLabel"])</span>
+                    @if (!SkipsPayment)
                     {
                         <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
                     }
@@ -362,9 +365,13 @@
         {
             <p class="test-detail__secure muted">@Culture["DeepPay.StubHint"]</p>
         }
-        else if (_paymentMode == DeepTestFinanceRules.TestUnlockMethod)
+        else if (IsTestAccountMode)
         {
             <p class="test-detail__secure muted">@Culture["DeepPay.TestAccountNote"]</p>
+        }
+        else if (IsEveryoneFreeMode)
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.EveryoneNote"]</p>
         }
         else if (_paymentMode == "unavailable")
         {
@@ -823,8 +830,12 @@
         _ => null
     };
 
+    private bool IsTestAccountMode => _paymentMode == DeepTestFinanceRules.TestUnlockMethod;
+    private bool IsEveryoneFreeMode => _paymentMode == DeepTestFinanceRules.FreeForEveryoneMethod;
+    private bool SkipsPayment => DeepTestFinanceRules.SkipsCandidatePayment(_paymentMode);
+
     private string ScienceNote
-        => _paymentMode == DeepTestFinanceRules.TestUnlockMethod
+        => SkipsPayment
             ? TestAccountCopy.StripPrice(Culture[_def?.ScienceNoteKey ?? ""])
             : Culture[_def?.ScienceNoteKey ?? ""];
 
