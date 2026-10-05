@@ -20219,6 +20219,16 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         box-sizing: border-box;
     }
 
+    /* The 56px coach sits on the inline end. Lift it above a bottom tab strip and keep links clear. */
+    .app-shell:has(.passport-tabs) .lobsy-coach-dock,
+    .app-shell:has(.test-page) .lobsy-coach-dock {
+        bottom: calc(44px + 12px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell:has([data-lobsy-coach]) .test-page a {
+        margin-inline-end: calc(56px + 16px);
+    }
+
     .mail-settings__label {
         font-size: 1rem;
         line-height: 1.4;

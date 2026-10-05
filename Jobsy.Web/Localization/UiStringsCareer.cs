@@ -1147,6 +1147,30 @@ public static class UiStringsCareer
             "لحسابات الاختبار فقط. تُقفل الاختبارات المفصلة مرة أخرى. الفواتير تبقى.");
         Add("AdminUsers.ResetTestsReason",
             "Reden", "Reason", "Powód", "Motiv", "السبب");
+        Add("AdminUsers.RegenerateStory",
+            "Verhaal opnieuw genereren",
+            "Generate the story again",
+            "Wygeneruj historię ponownie",
+            "Generează povestea din nou",
+            "أعد إنشاء القصة");
+        Add("AdminUsers.RegenerateStoryHelp",
+            "Alleen voor een testaccount. Het verhaal wordt meteen opnieuw gemaakt, zonder een dag te wachten.",
+            "Test accounts only. The story is made again right away, without waiting a day.",
+            "Tylko konto testowe. Historia powstaje od razu, bez czekania dnia.",
+            "Doar pentru un cont de test. Povestea se face din nou acum, fără să aștepți o zi.",
+            "لحسابات الاختبار فقط. تُصنع القصة مرة أخرى الآن، دون انتظار يوم.");
+        Add("AdminUsers.RegenerateStoryDone",
+            "Het verhaal wordt opnieuw gemaakt.",
+            "The story is being made again.",
+            "Historia jest tworzona ponownie.",
+            "Povestea se face din nou.",
+            "تُصنع القصة مرة أخرى.");
+        Add("AdminUsers.RegenerateStoryNotTest",
+            "Alleen een testaccount kan het verhaal opnieuw laten maken.",
+            "Only a test account can make the story again.",
+            "Tylko konto testowe może utworzyć historię ponownie.",
+            "Doar un cont de test poate face povestea din nou.",
+            "يمكن إعادة إنشاء القصة لحساب اختبار فقط.");
         Add("AdminUsers.ResetTestsDone",
             "De tests van dit testaccount staan weer op slot.",
             "This test account's tests are locked again.",

@@ -47,12 +47,13 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights? profile = null,
         SchwartzValuesScores? values = null,
+        IReadOnlyList<(string Code, int Score)>? competence = null,
         CancellationToken cancellationToken = default)
     {
         profile ??= WhoAmIProfileHighlights.Empty;
         var employersEnabled = _flags is not null
             && await _flags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
-        var local = Local(competency, career, culture, profile, values, employersEnabled);
+        var local = Local(competency, career, culture, profile, values, employersEnabled, competence);
         var endpoint = await _openAi.ResolveAsync(OpenAiFeature.WhoAmI, cancellationToken);
         if (endpoint.Unavailable)
         {
@@ -128,9 +129,10 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights profile,
         SchwartzValuesScores? values,
-        bool employersEnabled)
+        bool employersEnabled,
+        IReadOnlyList<(string Code, int Score)>? competence = null)
         => new(
-            WhoAmIStoryBuilder.Build(competency, career, culture, profile, values, employersEnabled),
+            WhoAmIStoryBuilder.Build(competency, career, culture, profile, values, employersEnabled, competence: competence),
             WhoAmIKeywords.FromScores(competency, career, culture, values),
             FromOpenAi: false);
 

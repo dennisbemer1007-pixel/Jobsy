@@ -122,17 +122,17 @@ internal static class UiStringsRun8
             "Cum funcționează Lobsy. În {0} pași.",
             "كيف يعمل Lobsy. في {0} خطوات.");
         Add("Career.Holland",
-            "Drie letters die laten zien welk soort werk je leuk vindt: {0}",
-            "Three letters that show what kind of work you like: {0}",
-            "Trzy litery, które pokazują, jaką pracę lubisz: {0}",
-            "Trei litere care arată ce fel de muncă îți place: {0}",
-            "ثلاثة أحرف تُظهر نوع العمل الذي تحبه: {0}");
+            "Drie letters die laten zien welk soort werk bij je past: {0}",
+            "Three letters that show what kind of work fits you: {0}",
+            "Trzy litery, które pokazują, jaka praca do ciebie pasuje: {0}",
+            "Trei litere care arată ce fel de muncă ți se potrivește: {0}",
+            "ثلاثة أحرف تُظهر نوع العمل الذي يناسبك: {0}");
         Add("TestResult.Card.Holland.Sub",
-            "Drie letters die laten zien welk soort werk je leuk vindt",
-            "Three letters that show what kind of work you like",
-            "Trzy litery, które pokazują, jaką pracę lubisz",
-            "Trei litere care arată ce fel de muncă îți place",
-            "ثلاثة أحرف تُظهر نوع العمل الذي تحبه");
+            "Drie letters die laten zien welk soort werk bij je past",
+            "Three letters that show what kind of work fits you",
+            "Trzy litery, które pokazują, jaka praca do ciebie pasuje",
+            "Trei litere care arată ce fel de muncă ți se potrivește",
+            "ثلاثة أحرف تُظهر نوع العمل الذي يناسبك");
         Add("TestResult.Card.Radar",
             "Jij vergeleken met anderen",
             "You compared with others",

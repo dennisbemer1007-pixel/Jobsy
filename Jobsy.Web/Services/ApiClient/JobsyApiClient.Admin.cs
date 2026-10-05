@@ -449,6 +449,20 @@ public sealed partial class JobsyApiClient
         throw await ApiErrorException.FromResponseAsync(response, ct);
     }
 
+    public async Task RegenerateWhoAmIStoryAsync(Guid userId, string reason, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/admin/users/{userId:D}/whoami/regenerate",
+            new { reason },
+            ct);
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        throw await ApiErrorException.FromResponseAsync(response, ct);
+    }
+
     public async Task<IReadOnlyList<AdminUserSessionItem>> GetAdminUserSessionsAsync(
         Guid userId,
         CancellationToken ct = default)
