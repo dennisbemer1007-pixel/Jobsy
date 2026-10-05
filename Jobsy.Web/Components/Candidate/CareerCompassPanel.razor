@@ -223,7 +223,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                     }
                     else
                     {
-                        <span class="kompas-occupation__pct">@CareerCompassBuilder.FormatPercent(item.Percent)%</span>
+                        <span class="kompas-occupation__pct">@CareerCompassBuilder.FormatPercent(item.Percent, Culture.Language)%</span>
                     }
                 }
             </summary>

@@ -829,8 +829,20 @@ public sealed class TestAccountsSeedService
         return map;
     }
 
+    private Task<bool> HasCompletedDeepAsync(Guid userId, AssessmentKind kind, CancellationToken cancellationToken)
+        => _db.CandidateDeepAnalyses.AnyAsync(
+            d => d.UserId == userId
+                 && d.Kind == kind
+                 && d.Status == CandidateDeepAnalysisStatuses.Completed,
+            cancellationToken);
+
     private async Task EnsureSeedCompetencyAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
     {
+        if (await HasCompletedDeepAsync(userId, AssessmentKind.Competence, cancellationToken))
+        {
+            return;
+        }
+
         var answers = FullLikert(CompetencyTestCatalog.QuestionCount);
         var scores = CompetencyTestCatalog.Score(answers)!;
         var row = await _db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
@@ -866,6 +878,11 @@ public sealed class TestAccountsSeedService
 
     private async Task EnsureSeedValuesAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
     {
+        if (await HasCompletedDeepAsync(userId, AssessmentKind.Values, cancellationToken))
+        {
+            return;
+        }
+
         var answers = FullLikert(SchwartzValuesCatalog.QuestionCount);
         var scores = SchwartzValuesCatalog.Score(answers)!;
         var row = await _db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
@@ -901,6 +918,11 @@ public sealed class TestAccountsSeedService
 
     private async Task EnsureSeedCultureAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
     {
+        if (await HasCompletedDeepAsync(userId, AssessmentKind.Culture, cancellationToken))
+        {
+            return;
+        }
+
         var answers = FullLikert(CulturePersonalityCatalog.QuestionCount);
         var scores = CulturePersonalityCatalog.Score(answers)!;
         var row = await _db.CandidateCulturePersonalityProfiles
@@ -948,6 +970,11 @@ public sealed class TestAccountsSeedService
 
     private async Task EnsureSeedCareerAsync(Guid userId, DateTime now, CancellationToken cancellationToken)
     {
+        if (await HasCompletedDeepAsync(userId, AssessmentKind.Career, cancellationToken))
+        {
+            return;
+        }
+
         var answers = FullLikert(CareerTestCatalog.QuestionCount);
         var scores = CareerTestCatalog.Score(answers)!;
         var tags = CareerTestCatalog.DeriveRiasecTags(scores);

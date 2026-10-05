@@ -194,10 +194,10 @@ public sealed class FitPercentExplanation
         lines.Add(FilledHeading(code));
         foreach (var term in explain.Terms.Where(term => term.Weight > 0m))
         {
-            lines.Add($"{Num(term.Weight)} × {term.Score} = {Num(term.Product)}");
+            lines.Add($"{Num(term.Weight, code)} × {term.Score} = {Num(term.Product, code)}");
         }
 
-        lines.Add(explain.Equation);
+        lines.Add(EquationFor(explain, code));
         if (explain.HasEducationGate)
         {
             lines.Add(EducationLine(code, explain.Education));
@@ -258,6 +258,19 @@ public sealed class FitPercentExplanation
 
     public static string Num(decimal value)
         => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    public static string Num(decimal value, string? lang)
+    {
+        var code = JobsyLanguages.Normalize(lang);
+        return code is "nl" or "pl" or "ro"
+            ? value.ToString("0.##", CultureInfo.GetCultureInfo("nl-NL"))
+            : Num(value);
+    }
+
+    private static string EquationFor(FitPercentExplanation explain, string? lang)
+        => explain.WeightSum <= 0m
+            ? CareerCompassBuilder.FormatPercent(explain.Percent, lang)
+            : $"{Num(explain.ProductSum, lang)} / {Num(explain.WeightSum, lang)} = {CareerCompassBuilder.FormatPercent(explain.Percent, lang)}";
 
     private static string Intro(string lang, string title) => lang switch
     {

@@ -22,9 +22,12 @@ public class CareerCompassGenerationServiceTests
         Assert.False(result.FromOpenAi);
         Assert.True(result.FromDeepAnalysis);
         Assert.True(result.HasOccupations);
-        Assert.Contains(result.AllOccupations, m => m.Title.Contains("kas", StringComparison.OrdinalIgnoreCase)
-                                                 || m.Title.Contains("bouw", StringComparison.OrdinalIgnoreCase)
-                                                 || m.Title.Contains("zorg", StringComparison.OrdinalIgnoreCase));
+        Assert.InRange(result.AllOccupations.Count(), CareerCompassSanitize.MinCatalogueJobs, CareerCompassSanitize.MaxCatalogueJobs);
+        Assert.All(result.AllOccupations, m =>
+        {
+            Assert.False(m.NoScore);
+            Assert.True(CandidateFactGuard.IsCatalogueTitle(m.Title));
+        });
     }
 
     [Fact]

@@ -162,7 +162,7 @@ public class OccupationCatalogTests
         var line = string.Join(" | ", listed.Select(job =>
             $"{CareerCompassBuilder.FormatPercent(job.Percent)} {job.Band} {job.Title}"));
         Assert.Equal(
-            "64.22 super autopoetser | 64.22 super vliegtuigschoonmaker | 63.61 super medewerker keuken | 63.42 super schoonmaker treinen | 63.18 strong onderhoudstechnicus pijpleidingen | 62.78 strong gevelreiniger | 62.78 strong glazenwasser | 62.78 strong schoonmaker pretpark | 62.77 broaden wasserettemedewerker | 62.77 broaden wasserijmedewerker | 62.76 broaden medewerker raffinaderij | 62.76 broaden operator ontinkting",
+            "64.22 super autopoetser | 64.22 super vliegtuigschoonmaker | 63.61 super medewerker keuken | 63.42 super schoonmaker treinen | 63.18 strong onderhoudstechnicus pijpleidingen | 62.78 strong gevelreiniger | 62.78 strong glazenwasser | 62.78 strong schoonmaker pretpark | 62.77 broaden wasserijmedewerker | 62.77 broaden wasserettemedewerker | 62.76 broaden medewerker raffinaderij | 62.76 broaden operator ontinkting",
             line);
         foreach (var group in listed.GroupBy(job => job.Percent))
         {
@@ -261,17 +261,18 @@ public class OccupationCatalogTests
         Assert.Equal(CareerCompassBuilder.ProfileMatch(occupation!.Oi!, Profile), explain.Percent);
         Assert.Equal(CareerCompassBuilder.MatchMath(occupation.Oi!, Profile).Percent, explain.Percent);
 
-        var equation = $"{productSum.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} / {weightSum.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)} = {CareerCompassBuilder.FormatPercent(recomputed)}";
+        string Equation(string lang)
+            => $"{FitPercentExplanation.Num(productSum, lang)} / {FitPercentExplanation.Num(weightSum, lang)} = {CareerCompassBuilder.FormatPercent(recomputed, lang)}";
         var dutch = FitPercentExplanation.Render(explain, "nl");
-        Assert.Contains(equation, dutch, StringComparison.Ordinal);
-        Assert.Contains(CareerCompassBuilder.FormatPercent(explain.Percent), dutch, StringComparison.Ordinal);
+        Assert.Contains(Equation("nl"), dutch, StringComparison.Ordinal);
+        Assert.Contains(CareerCompassBuilder.FormatPercent(explain.Percent, "nl"), dutch, StringComparison.Ordinal);
         Assert.Contains("O*NET 31.0", dutch, StringComparison.Ordinal);
         Assert.Contains(explain.EscoId, dutch, StringComparison.Ordinal);
         Assert.Contains("mbo 4", dutch, StringComparison.Ordinal);
         Assert.Contains(explain.Confidence == "high" ? "hoog" : "gemiddeld", dutch, StringComparison.Ordinal);
         foreach (var term in explain.Terms.Where(term => term.Weight > 0m))
         {
-            Assert.Contains($"{FitPercentExplanation.Num(term.Weight)} × {term.Score} = {FitPercentExplanation.Num(term.Product)}", dutch, StringComparison.Ordinal);
+            Assert.Contains($"{FitPercentExplanation.Num(term.Weight, "nl")} × {term.Score} = {FitPercentExplanation.Num(term.Product, "nl")}", dutch, StringComparison.Ordinal);
         }
 
         if (explain.OnetCodes.Count > 0)
@@ -283,14 +284,14 @@ public class OccupationCatalogTests
         {
             var text = FitPercentExplanation.Render(explain, lang);
             Assert.False(string.IsNullOrWhiteSpace(text));
-            Assert.Contains(equation, text, StringComparison.Ordinal);
+            Assert.Contains(Equation(lang), text, StringComparison.Ordinal);
             Assert.Contains("O*NET 31.0", text, StringComparison.Ordinal);
             Assert.Contains(explain.EscoId, text, StringComparison.Ordinal);
             Assert.Contains("mbo 4", text, StringComparison.Ordinal);
         }
 
         var footnote = FitPercentExplanation.Footnote([explain], "nl");
-        Assert.Contains(equation, footnote, StringComparison.Ordinal);
+        Assert.Contains(explain.Equation, footnote, StringComparison.Ordinal);
         Assert.Contains(explain.EscoId, footnote, StringComparison.Ordinal);
         Assert.True(footnote.Length < dutch.Length);
 
@@ -298,7 +299,11 @@ public class OccupationCatalogTests
         Assert.Contains("FitPercentInfo", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
         Assert.Contains("FitPercentInfo", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DeepReport/CareerDeepReportView.razor")), StringComparison.Ordinal);
         Assert.Contains("FitPercentInfo", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Career/CareerDreamPicker.razor")), StringComparison.Ordinal);
-        Assert.Contains("FitPercentExplanation.Footnote", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/AssessmentReportPdfService.cs")), StringComparison.Ordinal);
+        var pdf = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/AssessmentReportPdfService.cs"));
+        var compact = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/CompactDeepReportPdf.cs"));
+        Assert.DoesNotContain("FitPercentExplanation.Footnote", pdf, StringComparison.Ordinal);
+        Assert.DoesNotContain("WriteFitFootnote", pdf, StringComparison.Ordinal);
+        Assert.DoesNotContain("WriteFitFootnote", compact, StringComparison.Ordinal);
     }
 
     [Fact]

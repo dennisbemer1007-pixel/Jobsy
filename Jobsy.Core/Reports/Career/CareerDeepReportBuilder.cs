@@ -1,3 +1,4 @@
+using Jobsy.Core.Careers;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Reports.Career;
@@ -163,11 +164,92 @@ public static class CareerDeepReportBuilder
         return null;
     }
 
-    public static string TypicalPlaces(CareerDeepReport report, string lang)
+    /// <summary>
+    /// Job list recomputed from this report's own domain scores.
+    /// A stored percent is kept only when it equals the recomputed percent.
+    /// Titles that do not resolve to a listable occupation are left out.
+    /// </summary>
+    public static IReadOnlyList<DeepOccupationFit> ShownOccupations(CareerDeepReport report, string? education = null)
     {
-        if (report.Occupations.Count >= 3)
+        var scores = DomainScores(report);
+        if (scores is not { IsComplete: true })
         {
-            return string.Join(", ", report.Occupations.Take(3).Select(o => o.Title(lang)));
+            return report.Occupations
+                .Where(job => OccupationCatalog.Shared.Resolve(job.TitleNl) is { IsListable: true })
+                .ToList();
+        }
+
+        var shown = new List<DeepOccupationFit>();
+        foreach (var match in CareerCompassBuilder.Listed(scores, education))
+        {
+            var stored = report.Occupations.FirstOrDefault(job =>
+                string.Equals(
+                    CareerOccupationKeys.Fold(job.TitleNl),
+                    CareerOccupationKeys.Fold(match.Title),
+                    StringComparison.Ordinal));
+            var samePercent = stored is not null && stored.MatchPercent == match.Percent;
+            var reason = samePercent && !string.IsNullOrWhiteSpace(stored!.ReasonNl)
+                ? stored.ReasonNl
+                : $"Dit beroep sluit aan bij hoe jij scoort ({CareerCompassBuilder.FormatPercent(match.Percent, "nl")}%).";
+            shown.Add(new DeepOccupationFit
+            {
+                TitleNl = match.Title,
+                TitleEn = samePercent && !string.IsNullOrWhiteSpace(stored?.TitleEn)
+                    ? stored!.TitleEn
+                    : EnglishOccupation(match.Title),
+                MatchPercent = match.Percent,
+                ReasonNl = reason,
+                ReasonEn = samePercent && !string.IsNullOrWhiteSpace(stored?.ReasonEn)
+                    ? stored!.ReasonEn
+                    : EnglishReason(reason),
+                Band = match.Band
+            });
+        }
+
+        return shown;
+    }
+
+    public static RiasecScores? DomainScores(CareerDeepReport? report)
+    {
+        if (report is null || report.Domains.Count == 0)
+        {
+            return null;
+        }
+
+        int? Score(string code)
+        {
+            var hit = report.Domains.FirstOrDefault(domain =>
+                string.Equals(domain.Domain, code, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(domain.Domain, Letter(code), StringComparison.OrdinalIgnoreCase));
+            return hit is null ? null : hit.Score;
+        }
+
+        return FitPercentExplanation.TryScores(
+            Score(CareerTestCatalog.Realistic),
+            Score(CareerTestCatalog.Investigative),
+            Score(CareerTestCatalog.Artistic),
+            Score(CareerTestCatalog.Social),
+            Score(CareerTestCatalog.Enterprising),
+            Score(CareerTestCatalog.Conventional));
+    }
+
+    private static string Letter(string code) => code.ToUpperInvariant() switch
+    {
+        "REALISTIC" => "R",
+        "INVESTIGATIVE" => "I",
+        "ARTISTIC" => "A",
+        "SOCIAL" => "S",
+        "ENTERPRISING" => "E",
+        "CONVENTIONAL" => "C",
+        _ => code
+    };
+
+    public static string TypicalPlaces(CareerDeepReport report, string lang, string? education = null)
+    {
+        var shown = ShownOccupations(report, education);
+        if (shown.Count >= 3)
+        {
+            return string.Join(", ", shown.Take(3).Select(o => o.Title(lang)));
         }
 
         return CareerCompassBuilder.TypicalEnvironments(

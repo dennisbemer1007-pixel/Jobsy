@@ -112,19 +112,27 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
             ? valuesResolved.Scores
             : null;
 
-        var deepDone = await _db.CandidateDeepAnalyses.AsNoTracking()
-            .AnyAsync(
-                d => d.UserId == userId
-                     && d.Kind == AssessmentKind.Career
-                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
-                cancellationToken);
+        var careerDeep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .Where(d => d.UserId == userId
+                        && d.Kind == AssessmentKind.Career
+                        && d.Status == CandidateDeepAnalysisStatuses.Completed)
+            .Select(d => new { d.Status, d.AnswersJson, d.ReportJson })
+            .FirstOrDefaultAsync(cancellationToken);
+        var deepCareerScores = careerDeep is null
+            ? null
+            : StoredDeepScores.Career(careerDeep.Status, careerDeep.AnswersJson, careerDeep.ReportJson);
+        var deepDone = deepCareerScores is { IsComplete: true };
+        if (deepDone)
+        {
+            career = deepCareerScores;
+        }
+
+        var preferredCareer = deepCareerScores
+            ?? (careerResolved.Scores is { IsComplete: true } ? careerResolved.Scores : career);
+        var education = CandidateEducationLabel.From(prefs?.Educations, prefs?.EducationDirection);
 
         // Compass can use provisional RIASEC so Carrière has a first signal after the wizard.
-        await RefreshCompassAsync(
-            careerRow,
-            careerResolved.Scores is { IsComplete: true } ? careerResolved.Scores : career,
-            deepDone,
-            cancellationToken);
+        await RefreshCompassAsync(careerRow, preferredCareer, deepDone, education, cancellationToken);
         await RefreshWhoAmIAsync(userId, competency, career, culture, values, highlights, cancellationToken);
         await RefreshCompetenceDeepReportAsync(userId, cancellationToken);
 
@@ -147,7 +155,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         {
             var snapshot = BuildCareerSnapshot(
                 competencyResolved.Scores,
-                careerResolved.Scores,
+                preferredCareer,
                 cultureResolved.Scores,
                 valuesResolved.Scores);
             await _careerPlans.TryGeneratePendingAsync(userId, snapshot, cancellationToken);
@@ -219,6 +227,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         CandidateCareerInterest? careerRow,
         RiasecScores? career,
         bool deepDone,
+        string? education,
         CancellationToken cancellationToken)
     {
         if (careerRow is null || career is not { IsComplete: true })
@@ -226,39 +235,19 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
             return;
         }
 
-        // Keep a stored compass that already has occupations. Replacing it with a
-        // second local score list made the same job show two different percents.
-        // A deep compass that collapsed to a handful of titles is topped up in place.
         var stored = CareerCompassJson.TryDeserialize(careerRow.CompassJson);
+        var built = CareerCompassBuilder.CopyReasons(
+            CareerCompassBuilder.Build(career, deepDone || stored?.FromDeepAnalysis == true, education),
+            stored);
         var key = CareerCompassBuilder.ScoresKey(career);
-        if (stored is { HasOccupations: true })
+        if (stored is { HasOccupations: true }
+            && string.Equals(stored.ScoresFingerprint, key, StringComparison.Ordinal)
+            && SameOccupations(stored, built))
         {
-            var fresh = string.Equals(stored.ScoresFingerprint, key, StringComparison.Ordinal);
-            if (stored.FromDeepAnalysis)
-            {
-                var repaired = CareerCompassSanitize.EnsureDepth(stored, career) with { ScoresFingerprint = key };
-                if (fresh && SameOccupations(stored, repaired))
-                {
-                    return;
-                }
-
-                careerRow.CompassJson = CareerCompassJson.Serialize(repaired);
-                careerRow.UpdatedAtUtc = DateTime.UtcNow;
-                await _db.SaveChangesAsync(cancellationToken);
-                return;
-            }
-
-            if (fresh)
-            {
-                return;
-            }
+            return;
         }
 
-        var built = CareerCompassBuilder.Build(career, deepDone);
-        var compass = deepDone
-            ? CareerCompassSanitize.EnsureDepth(built, career)
-            : built;
-        var json = CareerCompassJson.Serialize(compass);
+        var json = CareerCompassJson.Serialize(built);
         if (string.Equals(careerRow.CompassJson, json, StringComparison.Ordinal))
         {
             return;

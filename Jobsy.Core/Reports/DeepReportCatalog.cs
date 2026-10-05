@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -339,7 +340,15 @@ public static class DeepReportCatalog
         => Get($"value.{code}", lang);
 
     public static string CultureLabel(string code, string? lang)
-        => Get($"culture.{code}", lang);
+    {
+        if (string.Equals(code, CulturePersonalityCatalog.Extraversion, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(code, "Extraversie", StringComparison.OrdinalIgnoreCase))
+        {
+            return DimensionLabels.For(CulturePersonalityCatalog.Extraversion, lang);
+        }
+
+        return Get($"culture.{code}", lang);
+    }
 
     public static string FileName(AssessmentKindSlug kind, string? lang, DateTime utcNow)
     {

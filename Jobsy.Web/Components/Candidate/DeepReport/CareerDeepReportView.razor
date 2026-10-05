@@ -32,7 +32,7 @@
             <p><strong>@Report.HollandCode</strong></p>
             <p class="muted">@DeepReportCatalog.Format("holland.body", lang, Report.HollandCode,
                 string.Join(", ", Report.Domains.OrderByDescending(d => d.Score).Take(3).Select(d => RiasecUi(d.Domain))),
-                string.Join(", ", Report.Occupations.Take(3).Select(o => o.Title(lang))))</p>
+                string.Join(", ", ShownJobs.Take(3).Select(o => o.Title(lang))))</p>
         </section>
 
         @if (GoalHits.Count > 0)
@@ -52,12 +52,12 @@
             </section>
         }
 
-        @if (Report.Occupations.Count > 0)
+        @if (ShownJobs.Count > 0)
         {
             <section class="competence-report__section">
                 <h2 class="test-detail__section-title">@Culture["TestResult.Card.Occupations"]</h2>
                 <ul class="competence-norm-bars">
-                    @foreach (var o in Report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
+                    @foreach (var o in ShownJobs)
                     {
                         var explain = ExplainOccupation(o.TitleNl);
                         <li class="competence-norm-bar">
@@ -71,7 +71,6 @@
                             {
                                 <div class="competence-norm-bar__row">
                                     <span>@o.Title(lang)</span>
-                                    <strong>@CareerCompassBuilder.FormatPercent(o.MatchPercent)%</strong>
                                 </div>
                             }
                             <p class="muted">@o.Reason(lang)</p>
@@ -153,7 +152,7 @@
             }
 
             var lang = ReportLanguage.FromUi(Culture.Language);
-            var titles = Report.Occupations.Select(o => o.Title(lang))
+            var titles = CareerDeepReportBuilder.ShownOccupations(Report, EducationLabel).Select(o => o.Title(lang))
                 .Concat(CareerGoalFit.DreamTitles(DreamTitle))
                 .ToList();
             return CareerGoalFit.Pick(titles, DreamTitle, GoalEvidence, EducationLabel);
@@ -178,6 +177,9 @@
             ? Report.Domains.Select(d => (int)Math.Round(d.NormMean ?? 0)).ToArray()
             : null;
     }
+
+    private IReadOnlyList<DeepOccupationFit> ShownJobs
+        => Report is null ? [] : CareerDeepReportBuilder.ShownOccupations(Report, EducationLabel);
 
     private RiasecScores? ReportScores
     {

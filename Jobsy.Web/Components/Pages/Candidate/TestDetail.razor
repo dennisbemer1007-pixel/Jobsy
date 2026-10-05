@@ -608,6 +608,16 @@
         }
 
         _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
+        if (_deepCompleted && _scoreBars.Count > 0)
+        {
+            var top = _scoreBars[0];
+            var second = _scoreBars.Count > 1 ? _scoreBars[1].Percent : -1;
+            if (top.Percent > second && !string.IsNullOrWhiteSpace(top.Label))
+            {
+                _headline = AssessmentOutcomeLines.StrongestLine(top.Label, Culture.Language);
+            }
+        }
+
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
 
