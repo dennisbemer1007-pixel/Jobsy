@@ -70,7 +70,17 @@
                     class="career-picker__result @(index == _activeIndex ?"is-active" : null)"
                     role="option"
                     aria-selected="@(IsSelected(key) ? "true" : "false")">
-                    <button type="button" disabled="@Disabled" @onclick="() => PickSuggestion(item)">@item.Title</button>
+                    <button type="button" disabled="@Disabled" @onclick="() => PickSuggestion(item)">
+                        <span>@item.Title</span>
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <small>@item.Description</small>
+                        }
+                        @if (item.NoScore)
+                        {
+                            <small>@Culture["Occ.NoScore"]. @Culture["Occ.NoScoreWhy"]</small>
+                        }
+                    </button>
                 </li>
             }
         </ul>

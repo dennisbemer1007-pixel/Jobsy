@@ -75,7 +75,22 @@ public static class CareerCompassSanitize
             }
 
             var percent = CareerCompassBuilder.CatalogueFit(title, scores, education);
-            jobs.Add(new CareerOccupationMatch(title, percent, "", job.Why, job.SearchKeys));
+            if (percent is not int fit)
+            {
+                continue;
+            }
+
+            var resolved = OccupationCatalog.Shared.Resolve(title);
+            jobs.Add(job with
+            {
+                Title = resolved?.Nl ?? title,
+                Percent = fit,
+                Band = "",
+                EscoId = resolved?.Id ?? job.EscoId,
+                Confidence = resolved?.Confidence ?? job.Confidence,
+                OnetCodes = resolved?.Onet ?? job.OnetCodes,
+                NoScore = false
+            });
         }
 
         var allowLead = CareerCompassBuilder.EnterprisingInTop3(scores);
@@ -87,7 +102,10 @@ public static class CareerCompassSanitize
             }
 
             var title = CanonicalTitle(local.Title) ?? local.Title;
-            if (!allowLead && CareerCompassBuilder.IsLeadershipTitle(title))
+            var resolvedLead = OccupationCatalog.Shared.Resolve(title);
+            if (!allowLead && (resolvedLead is not null
+                    ? OccupationCatalog.IsLeadership(resolvedLead)
+                    : CareerCompassBuilder.IsLeadershipTitle(title)))
             {
                 continue;
             }
@@ -98,7 +116,12 @@ public static class CareerCompassSanitize
             }
 
             var fit = CareerCompassBuilder.CatalogueFit(title, scores, education);
-            jobs.Add(new CareerOccupationMatch(title, fit, "", local.Why, local.SearchKeys));
+            if (fit is not int percent)
+            {
+                continue;
+            }
+
+            jobs.Add(local with { Title = title, Percent = percent, Band = "" });
         }
 
         if (IsLoneHigherEducation(jobs))
@@ -180,7 +203,7 @@ public static class CareerCompassSanitize
                     ? CareerCompassBuilder.BandStrong
                     : CareerCompassBuilder.BandBroaden;
             var job = jobs[i];
-            banded.Add(new CareerOccupationMatch(job.Title, job.Percent, band, job.Why, job.SearchKeys));
+            banded.Add(job with { Band = band });
         }
 
         return banded;
@@ -215,27 +238,8 @@ public static class CareerCompassSanitize
 
     private static string? ExactTitle(string raw)
     {
-        var dream = CareerDreamCatalog.FindByTitleOrAlias(raw);
-        if (dream is not null)
-        {
-            return dream.Title;
-        }
-
-        foreach (var occ in CareerCompassBuilder.Occupations)
-        {
-            if (string.Equals(occ.Title, raw, StringComparison.OrdinalIgnoreCase))
-            {
-                return occ.Title;
-            }
-
-            var head = occ.Title.Split('/')[0].Trim();
-            if (head.Length > 0 && string.Equals(head, raw, StringComparison.OrdinalIgnoreCase))
-            {
-                return occ.Title;
-            }
-        }
-
-        return null;
+        var occupation = OccupationCatalog.Shared.Resolve(raw);
+        return occupation?.Nl;
     }
 
     private static IEnumerable<string> TitleVariants(string raw)
@@ -321,24 +325,15 @@ public static class CareerCompassSanitize
 
     private static IEnumerable<(string Phrase, string Canonical)> CataloguePhrases()
     {
-        foreach (var entry in CareerDreamCatalog.All)
+        foreach (var occ in OccupationCatalog.Shared.All)
         {
-            var canonical = ExactTitle(entry.Title) ?? entry.Title;
-            yield return (entry.Title, canonical);
-            foreach (var alias in entry.Aliases)
+            yield return (occ.Nl, occ.Nl);
+            foreach (var alt in occ.Alt)
             {
-                yield return (alias, canonical);
-            }
-        }
-
-        foreach (var occ in CareerCompassBuilder.Occupations)
-        {
-            var canonical = ExactTitle(occ.Title) ?? occ.Title;
-            yield return (occ.Title, canonical);
-            var head = occ.Title.Split('/')[0].Trim();
-            if (head.Length > 0)
-            {
-                yield return (head, canonical);
+                if (alt.Length >= 8)
+                {
+                    yield return (alt, occ.Nl);
+                }
             }
         }
     }
@@ -360,7 +355,9 @@ public static class CareerCompassSanitize
             foreach (var part in ExpandTitle(item.Title))
             {
                 var title = CanonicalTitle(part);
-                if (title is null || !seen.Add(title))
+                var resolved = title is null ? null : OccupationCatalog.Shared.Resolve(title);
+                // Listed suggestions are high or medium confidence only. Low and none stay searchable, without a percent.
+                if (title is null || resolved is not { IsListable: true } || !seen.Add(title))
                 {
                     continue;
                 }
@@ -386,8 +383,17 @@ public static class CareerCompassSanitize
                         safeWhy);
                 }
 
-                var keys = CareerOccupationKeys.Merge(title, item.Keys);
-                list.Add(new CareerOccupationMatch(title, percent, band, why, keys));
+                var keys = CareerOccupationKeys.Merge(resolved.Nl, item.Keys);
+                list.Add(new CareerOccupationMatch(
+                    resolved.Nl,
+                    percent,
+                    band,
+                    why,
+                    keys,
+                    resolved.Id,
+                    resolved.Confidence,
+                    resolved.Onet,
+                    false));
             }
         }
 

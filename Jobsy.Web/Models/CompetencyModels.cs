@@ -220,6 +220,8 @@ public sealed class CareerOccupationMatchModel
     public string Why { get; set; } = "";
     public List<string> Keys { get; set; } = [];
     public List<string> SearchKeys { get; set; } = [];
+    public string? EscoId { get; set; }
+    public bool NoScore { get; set; }
 }
 
 public sealed class CareerCompassModel

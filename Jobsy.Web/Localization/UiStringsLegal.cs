@@ -1302,5 +1302,72 @@ public static class UiStringsLegal
             "Coś poszło nie tak. Spróbuj ponownie.",
             "Ceva nu a mers bine. Încearcă din nou.",
             "حدث خطأ ما. حاول مرة أخرى.");
+
+        Add("Occ.NoScore",
+            "Geen score",
+            "No score",
+            "Brak wyniku",
+            "Fără scor",
+            "لا توجد درجة");
+        Add("Occ.NoScoreWhy",
+            "We hebben geen betrouwbare bron om dit beroep met jouw profiel te vergelijken.",
+            "We have no reliable source to compare this job with your profile.",
+            "Nie mamy pewnego źródła, aby porównać ten zawód z Twoim profilem.",
+            "Nu avem o sursă sigură ca să comparăm această meserie cu profilul tău.",
+            "ليس لدينا مصدر موثوق لنقارن هذه المهنة بملفك.");
+        Add("Occ.ExtraTraining",
+            "met (extra) opleiding",
+            "with extra training",
+            "z dodatkowym szkoleniem",
+            "cu pregătire în plus",
+            "مع تدريب إضافي");
+        Add("Occ.PreviewBanner",
+            "Voorbeeld: concept-correcties actief",
+            "Preview: draft corrections are on",
+            "Podgląd: poprawki robocze są włączone",
+            "Previzualizare: corecțiile schiță sunt active",
+            "معاينة: تصحيحات المسودة مفعّلة");
+        Add("Occ.Footnote",
+            "Beroepen: ESCO (Europese Commissie). Interesses per beroep: O*NET (VS). Meer op de pagina Bronnen.",
+            "Jobs: ESCO (European Commission). Interests per job: O*NET (US). More on the Sources page.",
+            "Zawody: ESCO (Komisja Europejska). Zainteresowania przy zawodzie: O*NET (USA). Więcej na stronie Źródła.",
+            "Meserii: ESCO (Comisia Europeană). Interese pe meserie: O*NET (SUA). Mai mult pe pagina Surse.",
+            "المهن: ESCO (المفوضية الأوروبية). الاهتمامات لكل مهنة: O*NET (الولايات المتحدة). المزيد في صفحة المصادر.");
+        Add("Occ.SourcesTitle",
+            "Bronnen",
+            "Sources",
+            "Źródła",
+            "Surse",
+            "المصادر");
+        Add("Occ.SourcesLead",
+            "Waar de beroepen en de interessescores vandaan komen.",
+            "Where the jobs and the interest scores come from.",
+            "Skąd biorą się zawody i wyniki zainteresowań.",
+            "De unde vin meseriile și scorurile de interese.",
+            "من أين تأتي المهن ودرجات الاهتمام.");
+        Add("Occ.SourcesEscoNl",
+            "Lobsy gebruikt ESCO v1.2.1 en heeft de koppeling voor een aantal beroepen aangepast.",
+            "Lobsy uses ESCO v1.2.1 and has adjusted the link for some jobs.",
+            "Lobsy używa ESCO v1.2.1 i zmieniło powiązanie przy części zawodów.",
+            "Lobsy folosește ESCO v1.2.1 și a ajustat legătura pentru unele meserii.",
+            "يستخدم Lobsy تصنيف ESCO v1.2.1 وقد عدّل الربط لبعض المهن.");
+        Add("Footer.Sources",
+            "Bronnen",
+            "Sources",
+            "Źródła",
+            "Surse",
+            "المصادر");
+        Add("Seo.SourcesTitle",
+            "Bronnen",
+            "Sources",
+            "Źródła",
+            "Surse",
+            "المصادر");
+        Add("Seo.SourcesDescription",
+            "Waar Lobsy de beroepen en interessescores vandaan haalt: ESCO, O*NET en CBS.",
+            "Where Lobsy gets jobs and interest scores: ESCO, O*NET and CBS.",
+            "Skąd Lobsy bierze zawody i wyniki: ESCO, O*NET i CBS.",
+            "De unde ia Lobsy meseriile și scorurile: ESCO, O*NET și CBS.",
+            "من أين يأخذ Lobsy المهن والدرجات: ESCO وO*NET وCBS.");
     }
 }

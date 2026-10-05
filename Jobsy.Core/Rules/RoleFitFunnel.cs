@@ -127,24 +127,13 @@ public static class RoleFitFunnel
 
     private static int InterestPercent(string title, RiasecScores career)
     {
-        var folded = CareerOccupationKeys.Fold(title);
-        CareerOccupation? best = null;
-        var hits = 0;
-        foreach (var job in CareerCompassBuilder.Occupations)
+        var sourced = CareerCompassBuilder.CatalogueFit(title, career);
+        if (sourced is int percent)
         {
-            var score = CareerOccupationKeys.FromTitle(job.Title).Count(key => CareerOccupationKeys.Hits(folded, key));
-            if (CareerOccupationKeys.Hits(folded, CareerOccupationKeys.Fold(job.Title)))
-            {
-                score += 3;
-            }
-
-            if (score > hits)
-            {
-                hits = score;
-                best = job;
-            }
+            return percent;
         }
 
-        return best is null ? 70 : CareerCompassBuilder.Score(best, career).Percent;
+        var values = CareerTestCatalog.RiasecCodes.Select(career.Get).OrderByDescending(v => v).Take(2).ToList();
+        return values.Count == 0 ? 0 : (int)Math.Round(values.Average(), MidpointRounding.AwayFromZero);
     }
 }

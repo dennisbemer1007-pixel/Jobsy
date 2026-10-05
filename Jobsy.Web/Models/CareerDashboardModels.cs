@@ -102,6 +102,8 @@ public sealed class CareerDreamOptionApiItem
     public string? CatalogKey { get; set; }
     public string Title { get; set; } = "";
     public string? ReasonKey { get; set; }
+    public string? Description { get; set; }
+    public bool NoScore { get; set; }
 }
 
 public sealed class ArchivedCareerPlanApiModel

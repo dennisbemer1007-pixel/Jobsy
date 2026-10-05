@@ -1308,14 +1308,6 @@ Verbetervoorstellen:
                     confirmed.Add(prefs.PreferredTransport.Trim());
                 }
 
-                foreach (var occupation in CareerCompassBuilder.Occupations)
-                {
-                    if (!jobs.Exists(job => string.Equals(job, occupation.Title, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        jobs.Add(occupation.Title);
-                    }
-                }
-
                 var sheet = CandidateFactSheet.Personal(work, education, certificates, jobs, scoreLines, confirmed);
                 sb.AppendLine();
                 sb.Append(sheet.ToPrompt());

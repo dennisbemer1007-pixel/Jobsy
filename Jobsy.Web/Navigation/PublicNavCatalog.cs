@@ -23,7 +23,8 @@ public static class PublicNavCatalog
             new("PublicFooter.Terms", PublicRoutes.Terms),
             new("PublicFooter.UsageTerms", PublicRoutes.UsageTerms),
             new("PublicFooter.About", PublicRoutes.About),
-            new("PublicFooter.Accessibility", PublicRoutes.Accessibility)
+            new("PublicFooter.Accessibility", PublicRoutes.Accessibility),
+            new("Footer.Sources", PublicRoutes.Sources)
         ]);
 
     /// <summary>
@@ -37,7 +38,8 @@ public static class PublicNavCatalog
             new("PublicFooter.Cookies", PublicRoutes.PrivacyCookies),
             new("PublicFooter.UsageTerms", PublicRoutes.UsageTerms),
             new("PublicFooter.About", PublicRoutes.About),
-            new("PublicFooter.Accessibility", PublicRoutes.Accessibility)
+            new("PublicFooter.Accessibility", PublicRoutes.Accessibility),
+            new("Footer.Sources", PublicRoutes.Sources)
         ]);
 
     private static readonly IReadOnlyList<PublicNavItem> HeaderOn =

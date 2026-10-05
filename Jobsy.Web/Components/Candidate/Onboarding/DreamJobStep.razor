@@ -1,6 +1,9 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Careers
 @using Jobsy.Core.Rules
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Config
+@inject IHostEnvironment HostEnv
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
@@ -18,6 +21,10 @@
     {
         <p class="ob-wizard__lead">@Culture["Onboarding.Step6.Lead"]</p>
     }
+}
+@if (Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction())
+{
+    <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
 }
 <div class="ob-wizard__dream-search">
     <input role="combobox"
@@ -42,10 +49,22 @@
             }
             else
             {
-                @foreach (var entry in CareerDreamCatalog.Search(Draft.DreamSearch, 8))
+                @foreach (var hit in OccupationCatalog.Shared.Search(Draft.DreamSearch, 8, Draft.Education))
                 {
-                    <button type="button" role="option" @onclick="() => ChooseTitle.InvokeAsync(entry.Title)">
-                        <span>@entry.Title</span>
+                    <button type="button" role="option" @onclick="() => ChooseTitle.InvokeAsync(hit.Title)">
+                        <span>@hit.Title</span>
+                        @if (!string.IsNullOrWhiteSpace(hit.Description))
+                        {
+                            <small>@hit.Description</small>
+                        }
+                        @if (hit.NoScore)
+                        {
+                            <small>@Culture["Occ.NoScore"]. @Culture["Occ.NoScoreWhy"]</small>
+                        }
+                        else if (hit.LevelNote)
+                        {
+                            <small>@Culture["Occ.ExtraTraining"]</small>
+                        }
                     </button>
                 }
             }

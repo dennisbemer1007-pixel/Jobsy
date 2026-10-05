@@ -74,6 +74,7 @@ public static partial class CandidateFactGuard
         "invented-place" => "Noem geen woonplaats of regio. Die staat niet in de feiten.",
         "invented-like" => "Zeg niet wat de persoon leuk vindt. Dat staat niet in de feiten.",
         "unknown-job" => "Noem alleen een beroep uit de toegestane lijst.",
+        "unknown-percent" => "Gebruik alleen een percentage uit de feitenlijst.",
         "why-no-direction" => "Elke why-zin noemt één richting uit de feitenlijst.",
         "markdown" => "Geen markdown. Alleen gewone zinnen.",
         "story-rules" => "Schrijf 2 tot 4 alinea's in de ik-vorm, zonder herhaling.",
@@ -173,6 +174,11 @@ public static partial class CandidateFactGuard
             if (!WhyNamesOwnDirection(item.Title, item.Why, sheet.DirectionLabels))
             {
                 return "why-no-direction";
+            }
+
+            if (!JobPercentAllowed(item.Title, item.Percent, sheet))
+            {
+                return "unknown-percent";
             }
         }
 
@@ -520,6 +526,25 @@ public static partial class CandidateFactGuard
         return false;
     }
 
+    private static bool JobPercentAllowed(string? title, int percent, CandidateFactSheet sheet)
+    {
+        var publishes = sheet.Scores.Any(line => line.Contains('→') && line.Contains('%'));
+        if (!publishes)
+        {
+            return true;
+        }
+
+        var canonical = CareerCompassSanitize.CanonicalTitle(title) ?? title?.Trim() ?? "";
+        if (canonical.Length == 0)
+        {
+            return false;
+        }
+
+        return sheet.Scores.Any(line =>
+            line.Contains(canonical, StringComparison.OrdinalIgnoreCase)
+            && line.Contains($": {percent}%", StringComparison.Ordinal));
+    }
+
     private static bool MentionsUnknownJob(string text, CandidateFactSheet sheet)
     {
         foreach (var phrase in JobPhrases.Value)
@@ -613,13 +638,9 @@ public static partial class CandidateFactGuard
             }
         }
 
-        foreach (var occupation in CareerCompassBuilder.Occupations)
+        foreach (var occupation in OccupationCatalog.Shared.All)
         {
-            Add(occupation.Title, 3);
-            foreach (var part in occupation.Title.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-            {
-                Add(part, 4);
-            }
+            Add(occupation.Nl, 4);
         }
 
         foreach (var entry in CareerDreamCatalog.All)

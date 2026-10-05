@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Reports;
 using Jobsy.Core.Reports.Career;
@@ -412,6 +413,18 @@ public static class CandidateCoachScript
             lang is "ar" ? " و" : lang is "nl" ? " en " : ", ",
             letters.Select(item => $"{DimensionLabels.For(item.Code, lang)} ({item.Score}%)"));
         var percent = CareerCompassBuilder.CatalogueFit(title, scores, education);
+        if (percent is null)
+        {
+            return lang switch
+            {
+                "en" => "We have no reliable source to compare this job with your profile.",
+                "pl" => "Nie mamy pewnego źródła, aby porównać ten zawód z Twoim profilem.",
+                "ro" => "Nu avem o sursă sigură ca să comparăm această meserie cu profilul tău.",
+                "ar" => "ليس لدينا مصدر موثوق لنقارن هذه المهنة بملفك.",
+                _ => OccupationCopy.NoScoreSentence
+            };
+        }
+
         var strong = letters.Count > 0 && letters.All(item => item.Score >= 50);
         if (strong)
         {

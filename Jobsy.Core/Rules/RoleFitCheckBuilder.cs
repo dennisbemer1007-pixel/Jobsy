@@ -44,10 +44,8 @@ public static class RoleFitCheckBuilder
         bool employersOn = true)
     {
         var title = NormalizeTitle(jobTitle) ?? "deze functie";
-        var occupation = FindClosestOccupation(title);
-        var interestPercent = occupation is null
-            ? Average(career)
-            : CareerCompassBuilder.Score(occupation, career).Percent;
+        var occupation = CareerCompassBuilder.WeightedOccupation(title);
+        var interestPercent = CareerCompassBuilder.CatalogueFit(title, career) ?? Average(career);
         var competencePercent = CompetenceFit(occupation, competencies);
         var culturePercent = culture is { IsComplete: true } completeCulture
             ? CulturePersonalityFitRules.FitPercent(occupation, completeCulture)
@@ -167,30 +165,6 @@ public static class RoleFitCheckBuilder
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(take)
             .ToList();
-    }
-
-    private static CareerOccupation? FindClosestOccupation(string title)
-    {
-        CareerOccupation? best = null;
-        var bestHits = 0;
-        var foldedTitle = CareerOccupationKeys.Fold(title);
-        foreach (var job in CareerCompassBuilder.Occupations)
-        {
-            var keys = CareerOccupationKeys.FromTitle(job.Title);
-            var hits = keys.Count(key => CareerOccupationKeys.Hits(foldedTitle, key));
-            if (CareerOccupationKeys.Hits(foldedTitle, CareerOccupationKeys.Fold(job.Title)))
-            {
-                hits += 3;
-            }
-
-            if (hits > bestHits)
-            {
-                bestHits = hits;
-                best = job;
-            }
-        }
-
-        return bestHits > 0 ? best : null;
     }
 
     private static int Average(RiasecScores scores)

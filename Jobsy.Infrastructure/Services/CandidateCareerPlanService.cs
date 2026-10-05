@@ -525,9 +525,9 @@ public sealed class CandidateCareerPlanService : ICandidateCareerPlanService
         if (q.Length >= 2)
         {
             var results = new List<CareerDreamOptionView>();
-            foreach (var entry in CareerDreamCatalog.Search(q, 8))
+            foreach (var hit in OccupationCatalog.Shared.Search(q, 8))
             {
-                results.Add(new CareerDreamOptionView(entry.Key, entry.Title, null));
+                results.Add(new CareerDreamOptionView(hit.EscoId, hit.Title, null, hit.Description, hit.NoScore));
             }
 
             if (results.Count < 8)
