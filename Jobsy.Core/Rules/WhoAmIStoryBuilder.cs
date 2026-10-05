@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Localization;
 
 namespace Jobsy.Core.Rules;
 
@@ -14,7 +15,8 @@ public static class WhoAmIStoryBuilder
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights? profile = null,
         SchwartzValuesScores? values = null,
-        bool employersEnabled = true)
+        bool employersEnabled = true,
+        string? language = null)
     {
         var careerTop = TopLabels(
             CareerTestCatalog.RiasecCodes.Select(c => (CareerCompassBuilder.TypeLabel(c), career.Get(c))),
@@ -23,8 +25,8 @@ public static class WhoAmIStoryBuilder
             CulturePersonalityCatalog.CategoryCodes.Select(c => (CulturePersonalityCatalog.EverydayLabel(c), culture.Get(c))),
             2);
         var compTop = TopLabels(
-            CompetencyTestCatalog.CategoryCodes.Select(c => (WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
-            2);
+            CompetencyTestCatalog.QuickScanCategories.Select(c => (WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
+            3);
         var valuesTop = values is { IsComplete: true }
             ? TopLabels(
                 SchwartzValuesCatalog.CategoryCodes.Select(c => (SchwartzValuesCatalog.EverydayLabel(c), values.Get(c))),
@@ -32,10 +34,15 @@ public static class WhoAmIStoryBuilder
             : [];
         var keywords = WhoAmIKeywords.FromScores(competency, career, culture, values);
         profile ??= WhoAmIProfileHighlights.Empty;
+        var lang = JobsyLanguages.Normalize(language);
+        if (lang is not ("" or "nl"))
+        {
+            return Sanitize(BuildTranslated(lang, career, culture, competency, values, profile, keywords, employersEnabled)) ?? Fallback;
+        }
 
         var sb = new StringBuilder();
-        sb.Append("Ik ben iemand die tot zijn recht komt bij ");
-        sb.Append(JoinDutch(careerTop));
+        sb.Append("Ik kom tot mijn recht als ik ");
+        sb.Append(JoinDutch(careerTop.Select(FirstPersonDirection).ToList()));
         sb.Append(". Op de werkvloer voel ik me het best bij ");
         sb.Append(JoinDutch(cultureTop));
         sb.AppendLine(".");
@@ -76,7 +83,15 @@ public static class WhoAmIStoryBuilder
 
         sb.Append("Op de werkvloer is mijn kracht ");
         sb.Append(JoinDutch(compTop));
-        sb.Append(". Ik zoek geen droge lijst van tests. Ik wil werk waarin ik dat elke dag laat zien. Dat doe ik dichtbij huis. In Den Haag of het Westland. Bij een ploeg die op elkaar kan bouwen.");
+        sb.Append(". Ik wil werk waarin ik dat elke dag laat zien.");
+        if (!string.IsNullOrWhiteSpace(profile.HomeCity))
+        {
+            sb.Append(" Dat doe ik in ");
+            sb.Append(profile.HomeCity.Trim());
+            sb.Append('.');
+        }
+
+        sb.Append(" Bij een ploeg die op elkaar kan bouwen.");
         sb.AppendLine();
         sb.AppendLine();
         if (keywords.Count > 0)
@@ -97,7 +112,182 @@ public static class WhoAmIStoryBuilder
         return Sanitize(sb.ToString()) ?? Fallback;
     }
 
-    /// <summary>Stored stories stay Dutch. Hide the employer line while that feature is off.</summary>
+    private static string BuildTranslated(
+        string lang,
+        RiasecScores career,
+        CulturePersonalityScores culture,
+        CompetencyScores competency,
+        SchwartzValuesScores? values,
+        WhoAmIProfileHighlights profile,
+        IReadOnlyList<string> keywords,
+        bool employersEnabled)
+    {
+        string Label(string code) => DimensionLabels.For(code, lang);
+        var careerTop = TopLabels(CareerTestCatalog.RiasecCodes.Select(c => (Label(c), career.Get(c))), 2);
+        var cultureTop = TopLabels(CulturePersonalityCatalog.CategoryCodes.Select(c => (Label(c), culture.Get(c))), 2);
+        var compTop = TopLabels(CompetencyTestCatalog.QuickScanCategories.Select(c => (Label(c), competency.Get(c))), 3);
+        var valuesTop = values is { IsComplete: true }
+            ? TopLabels(SchwartzValuesCatalog.CategoryCodes.Select(c => (Label(c), values.Get(c))), 2)
+            : [];
+        var and = lang switch
+        {
+            "pl" => "i",
+            "ro" => "și",
+            "ar" => "و",
+            _ => "and"
+        };
+        string Join(IReadOnlyList<string> items) => JoinWith(items, and);
+
+        var sb = new StringBuilder();
+        sb.Append(lang switch
+        {
+            "pl" => "Najlepiej pracuję, gdy skupiam się na ",
+            "ro" => "Lucrez cel mai bine când mă concentrez pe ",
+            "ar" => "أعمل بأفضل شكل عندما أركز على ",
+            _ => "I do my best work when I focus on "
+        });
+        sb.Append(Join(careerTop));
+        sb.Append(lang switch
+        {
+            "pl" => ". W pracy najlepiej czuję się przy ",
+            "ro" => ". La lucru mă simt cel mai bine cu ",
+            "ar" => ". في العمل أشعر بأفضل حال مع ",
+            _ => ". At work I feel best with "
+        });
+        sb.Append(Join(cultureTop));
+        sb.AppendLine(".");
+        sb.AppendLine();
+        if (valuesTop.Count > 0)
+        {
+            sb.Append(lang switch
+            {
+                "pl" => "Napędza mnie ",
+                "ro" => "Mă motivează ",
+                "ar" => "ما يدفعني هو ",
+                _ => "What drives me is "
+            });
+            sb.Append(Join(valuesTop));
+            sb.AppendLine(employersEnabled
+                ? lang switch
+                {
+                    "pl" => ". Tego szukam w zwykłym dniu pracy i w obietnicach miejsca pracy.",
+                    "ro" => ". Asta caut într-o zi normală de lucru și în promisiunile locului de muncă.",
+                    "ar" => ". هذا ما أبحث عنه في يوم عمل عادي وفي وعود مكان العمل.",
+                    _ => ". I look for that in a normal workday and in what a workplace promises."
+                }
+                : lang switch
+                {
+                    "pl" => ". Tego szukam w zwykłym dniu pracy.",
+                    "ro" => ". Asta caut într-o zi normală de lucru.",
+                    "ar" => ". هذا ما أبحث عنه في يوم عمل عادي.",
+                    _ => ". I look for that in a normal workday."
+                });
+            sb.AppendLine();
+        }
+
+        if (profile.Roles.Count > 0 || profile.Educations.Count > 0 || profile.Certificates.Count > 0)
+        {
+            var bits = new List<string>();
+            if (profile.Roles.Count > 0)
+            {
+                bits.Add(lang switch
+                {
+                    "pl" => "doświadczenie jako " + Join(profile.Roles.Take(2).ToList()),
+                    "ro" => "experiență ca " + Join(profile.Roles.Take(2).ToList()),
+                    "ar" => "خبرة كـ " + Join(profile.Roles.Take(2).ToList()),
+                    _ => "experience as " + Join(profile.Roles.Take(2).ToList())
+                });
+            }
+
+            if (profile.Educations.Count > 0)
+            {
+                bits.Add(lang switch
+                {
+                    "pl" => "wykształcenie " + Join(profile.Educations.Take(2).ToList()),
+                    "ro" => "studii " + Join(profile.Educations.Take(2).ToList()),
+                    "ar" => "تعليم " + Join(profile.Educations.Take(2).ToList()),
+                    _ => "education " + Join(profile.Educations.Take(2).ToList())
+                });
+            }
+
+            if (profile.Certificates.Count > 0)
+            {
+                bits.Add(lang switch
+                {
+                    "pl" => "kursy takie jak " + Join(profile.Certificates.Take(2).ToList()),
+                    "ro" => "cursuri precum " + Join(profile.Certificates.Take(2).ToList()),
+                    "ar" => "دورات مثل " + Join(profile.Certificates.Take(2).ToList()),
+                    _ => "courses such as " + Join(profile.Certificates.Take(2).ToList())
+                });
+            }
+
+            sb.Append(lang switch
+            {
+                "pl" => "Na mojej drodze widać ",
+                "ro" => "Pe drumul meu se vede ",
+                "ar" => "في مساري ترى ",
+                _ => "On my path you see "
+            });
+            sb.Append(Join(bits));
+            sb.AppendLine(".");
+            sb.AppendLine();
+        }
+
+        sb.Append(lang switch
+        {
+            "pl" => "W pracy moją siłą jest ",
+            "ro" => "La lucru puterea mea este ",
+            "ar" => "في العمل قوتي هي ",
+            _ => "At work my strength is "
+        });
+        sb.Append(Join(compTop));
+        sb.Append(lang switch
+        {
+            "pl" => ". Chcę pracy, w której pokazuję to każdego dnia.",
+            "ro" => ". Vreau muncă în care arăt asta în fiecare zi.",
+            "ar" => ". أريد عملاً أُظهر فيه ذلك كل يوم.",
+            _ => ". I want work where I show that every day."
+        });
+        if (!string.IsNullOrWhiteSpace(profile.HomeCity))
+        {
+            sb.Append(lang switch
+            {
+                "pl" => " Robię to w ",
+                "ro" => " Fac asta în ",
+                "ar" => " أفعل ذلك في ",
+                _ => " I do that in "
+            });
+            sb.Append(profile.HomeCity.Trim());
+            sb.Append('.');
+        }
+
+        sb.AppendLine();
+        sb.AppendLine();
+        if (keywords.Count > 0)
+        {
+            sb.Append(lang switch
+            {
+                "pl" => "Co mnie opisuje: ",
+                "ro" => "Ce mă descrie: ",
+                "ar" => "ما يصفني: ",
+                _ => "What describes me: "
+            });
+            sb.Append(Join(keywords.Take(4).ToList()));
+            sb.Append('.');
+        }
+
+        return sb.ToString();
+    }
+
+    private static string JoinWith(IReadOnlyList<string> items, string and) => items.Count switch
+    {
+        0 => "",
+        1 => items[0],
+        2 => $"{items[0]} {and} {items[1]}",
+        _ => string.Join(", ", items.Take(items.Count - 1)) + " " + and + " " + items[^1]
+    };
+
+    /// <summary>Hide the employer line while that feature is off. The Dutch template is translated on display.</summary>
     public static string ForDisplay(string? story, bool employersEnabled)
     {
         if (string.IsNullOrWhiteSpace(story))
@@ -155,14 +345,17 @@ public static class WhoAmIStoryBuilder
         string? story,
         WhoAmIProfileHighlights? profile,
         CompetencyScores? competency,
-        CulturePersonalityScores? culture)
+        CulturePersonalityScores? culture,
+        RiasecScores? career = null,
+        SchwartzValuesScores? values = null)
     {
         if (string.IsNullOrWhiteSpace(story))
         {
             return false;
         }
 
-        var paragraphs = story
+        var normalized = NormalizeParagraphs(story);
+        var paragraphs = normalized
             .Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (paragraphs.Length is < 2 or > 4)
         {
@@ -170,7 +363,9 @@ public static class WhoAmIStoryBuilder
         }
 
         profile ??= WhoAmIProfileHighlights.Empty;
-        var sheet = CandidateFactSheet.Personal(profile.Roles, profile.Educations, profile.Certificates);
+        var sheet = competency is not null && career is not null && culture is not null
+            ? CandidateFactSheet.ForWhoAmI(competency, career, culture, profile, values)
+            : CandidateFactSheet.Personal(profile.Roles, profile.Educations, profile.Certificates, homeCity: profile.HomeCity);
         if (CandidateFactGuard.RejectionReason(story, sheet) is not null)
         {
             return false;
@@ -189,15 +384,32 @@ public static class WhoAmIStoryBuilder
         return true;
     }
 
+    /// <summary>A single newline is a paragraph break too.</summary>
+    internal static string NormalizeParagraphs(string story)
+    {
+        var text = story.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+        return Regex.Replace(text, @"(?<!\n)\n(?!\n)", "\n\n");
+    }
+
     private static bool RepeatsIdea(string story)
     {
+        var stripped = story;
+        foreach (var label in ScoreLabels)
+        {
+            stripped = Regex.Replace(
+                stripped,
+                Regex.Escape(label),
+                " ",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        }
+
         foreach (var stem in new[] { "helpen", "help", "netjes" })
         {
             var count = Regex.Matches(
-                story,
+                stripped,
                 $@"\b{stem}\w*",
                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant).Count;
-            if (count >= 3)
+            if (count >= 4)
             {
                 return true;
             }
@@ -205,6 +417,15 @@ public static class WhoAmIStoryBuilder
 
         return false;
     }
+
+    private static readonly string[] ScoreLabels =
+    [
+        "mensen helpen",
+        "netjes organiseren",
+        "netjes en betrouwbaar",
+        "afmaken & netjes werken",
+        "afmaken en netjes werken"
+    ];
 
     private static bool ContradictsSamenwerken(
         string story,
@@ -354,9 +575,38 @@ public static class WhoAmIStoryBuilder
             .ToList();
 
     private static string LowerInside(string value)
-        => string.IsNullOrWhiteSpace(value)
-            ? value
-            : char.ToLowerInvariant(value[0]) + value[1..];
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        var parts = value.Split(' ');
+        parts[0] = KeepCaps(parts[0]);
+        return string.Join(' ', parts);
+    }
+
+    private static string KeepCaps(string token)
+    {
+        var letters = token.Where(char.IsLetter).ToArray();
+        if (letters.Length >= 2 && letters.All(char.IsUpper))
+        {
+            return token;
+        }
+
+        return token.Length == 0 ? token : char.ToLowerInvariant(token[0]) + token[1..];
+    }
+
+    private static string FirstPersonDirection(string label) => label.Trim().ToLowerInvariant() switch
+    {
+        "aanpakken met je handen" => "met mijn handen werk",
+        "mensen helpen" => "mensen help",
+        "netjes organiseren" => "dingen netjes organiseer",
+        "uitzoeken hoe het zit" => "uitzoek hoe het zit",
+        "iets moois of nieuws maken" => "iets moois of nieuws maak",
+        "aanjagen en verkopen" => "zaken aanjaag en verkoop",
+        _ => label
+    };
 
     private static string JoinDutch(IReadOnlyList<string> items)
     {

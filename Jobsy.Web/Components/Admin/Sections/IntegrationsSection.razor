@@ -64,7 +64,7 @@
             </p>
         }
         <div class="company-grid">
-            @foreach (var cred in _credentials)
+            @foreach (var cred in VisibleCredentials)
             {
                 var health = _health.FirstOrDefault(h => string.Equals(h.Key, cred.Key, StringComparison.OrdinalIgnoreCase));
                 <IntegrationSettingsTile @key="cred.Key" Credential="cred" Health="health" OnChanged="ReloadAsync" />
@@ -129,6 +129,11 @@
         }
     }
 
+    private IEnumerable<IntegrationCredentialItem> VisibleCredentials
+        => _aiProvider?.HideOpenAiProbe == true
+            ? _credentials.Where(c => !string.Equals(c.Key, "OpenAI", StringComparison.OrdinalIgnoreCase))
+            : _credentials;
+
     private bool ShowMistralModels
         => _aiProvider is { Available: true, FeatureModels.Count: > 0 }
            && string.Equals(_aiProvider.Provider, "Mistral", StringComparison.OrdinalIgnoreCase);
@@ -146,6 +151,10 @@
             "CareerReport" => "Admin.AiProvider.Feature.CareerReport",
             "Compass" => "Admin.AiProvider.Feature.Compass",
             "Chat" => "Admin.AiProvider.Feature.Chat",
+            "CareerPath" => "Admin.AiProvider.Feature.CareerPath",
+            "CompetenceReport" => "Admin.AiProvider.Feature.CompetenceReport",
+            "CultureFit" => "Admin.AiProvider.Feature.CultureFit",
+            "RoleFit" => "Admin.AiProvider.Feature.RoleFit",
             _ => null
         };
         return key is null ? feature : Culture[key];

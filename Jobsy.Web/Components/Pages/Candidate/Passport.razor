@@ -511,9 +511,9 @@
         CandidateDnaViewBuilder.TextLookup t = k => Culture[k];
         CandidateDnaViewBuilder.TextFormat format = (k, args) => Culture.Format(k, args);
         _view = _kompas is not null
-            ? CandidateDnaViewBuilder.FromKompas(_kompas, t, format)
+            ? CandidateDnaViewBuilder.FromKompas(_kompas, t, format, Culture.Language)
             : _dna is not null
-                ? CandidateDnaViewBuilder.FromDnaSummary(_dna, t, format)
+                ? CandidateDnaViewBuilder.FromDnaSummary(_dna, t, format, Culture.Language)
                 : null;
 
         _highlights = _view?.Highlights.ToList() ?? [];

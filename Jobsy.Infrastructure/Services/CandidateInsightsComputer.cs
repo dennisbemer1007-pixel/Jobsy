@@ -291,16 +291,26 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         var stored = await _db.CandidateWhoAmIProfiles
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         var now = DateTime.UtcNow;
+        var sanitized = stored is null ? null : WhoAmIStoryBuilder.Sanitize(stored.StoryText);
         var fingerprintMatch = stored is not null
                                && string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal)
-                               && WhoAmIStoryBuilder.Sanitize(stored.StoryText) is not null;
-        var retryFallback = stored is not null
-                            && CandidateInsightsFingerprint.ShouldRetryFallback(
-                                stored.FromOpenAi,
-                                stored.StoryGeneratedAtUtc,
-                                now);
+                               && sanitized is not null;
+        var storyOk = false;
+        if (sanitized is not null)
+        {
+            var sheet = CandidateFactSheet.ForWhoAmI(competency, career, culture, highlights, values);
+            storyOk = CandidateFactGuard.RejectionReason(sanitized, sheet) is null
+                      && WhoAmIStoryBuilder.Accepts(sanitized, highlights, competency, culture, career, values);
+        }
 
-        if (fingerprintMatch && !retryFallback)
+        var cooledDown = stored?.LastAttemptUtc is not DateTime attempted
+                         || now - attempted >= TimeSpan.FromHours(24);
+        if (fingerprintMatch && storyOk && stored!.FromOpenAi)
+        {
+            return;
+        }
+
+        if (fingerprintMatch && !cooledDown)
         {
             return;
         }
@@ -325,6 +335,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
             stored.InputFingerprint = fingerprint;
             stored.FromOpenAi = generated.FromOpenAi;
             stored.StoryGeneratedAtUtc = now;
+            stored.LastAttemptUtc = now;
             stored.UpdatedAtUtc = now;
             await _db.SaveChangesAsync(cancellationToken);
         }

@@ -2082,7 +2082,7 @@
         ScheduleProfileSave();
     }
 
-    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory());
+    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
 
     private void RemoveJob(CandidateEmployerHistory job)
     {

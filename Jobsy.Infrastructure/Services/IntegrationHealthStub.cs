@@ -220,6 +220,11 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
     private async Task<(bool Ok, string Message)> TestOpenAiAsync(CancellationToken cancellationToken)
     {
+        if (string.Equals(_aiOptions.Provider, AiProviderNames.Mistral, StringComparison.OrdinalIgnoreCase))
+        {
+            return (true, "OpenAI wordt niet gebruikt. De AI loopt via Mistral.");
+        }
+
         if (_aiEndpoints is not null)
         {
             return await TestResolvedAiAsync(cancellationToken);

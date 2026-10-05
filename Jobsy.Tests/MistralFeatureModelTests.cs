@@ -112,7 +112,7 @@ public class MistralFeatureModelTests
         var mistralBody = Assert.IsType<AiProviderStatusDto>(mistralOk.Value);
         Assert.Equal(MistralOptions.DefaultModel, mistralBody.Model);
         var rows = Assert.IsAssignableFrom<IReadOnlyList<AiFeatureModelDto>>(mistralBody.FeatureModels);
-        Assert.Equal(4, rows.Count);
+        Assert.Equal(8, rows.Count);
         Assert.Equal("mistral-medium-latest", Assert.Single(rows, row => row.Feature == "Story").Model);
         Assert.Equal("mistral-small-latest", Assert.Single(rows, row => row.Feature == "Chat").Model);
 

@@ -37,6 +37,30 @@ internal static class UiStringsRun8
             "Też warto (75% do 84%)",
             "Merită și asta (75% până la 84%)",
             "يستحق النظر أيضًا (من 75% إلى 84%)");
+        Add("Kompas.BandRankTop",
+            "Past het best bij je scores",
+            "Best match for your scores",
+            "Najlepiej pasuje do twoich wyników",
+            "Se potrivește cel mai bine cu scorurile tale",
+            "الأنسب لنتائجك");
+        Add("Kompas.BandRankMid",
+            "Past ook goed bij je scores",
+            "Also a good match for your scores",
+            "Też dobrze pasuje do twoich wyników",
+            "Se potrivește bine și cu scorurile tale",
+            "يناسب نتائجك أيضاً");
+        Add("Kompas.BandRankAlso",
+            "Ook de moeite waard",
+            "Also worth a look",
+            "Też warto zobaczyć",
+            "Merită și asta",
+            "يستحق النظر أيضاً");
+        Add("Assistant.NewChat",
+            "Nieuw gesprek",
+            "New chat",
+            "Nowa rozmowa",
+            "Conversație nouă",
+            "محادثة جديدة");
         Add("Kompas.TabDna",
             "Wie ik ben",
             "Who I am",

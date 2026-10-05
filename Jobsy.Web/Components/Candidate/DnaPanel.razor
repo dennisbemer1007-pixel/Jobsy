@@ -78,7 +78,7 @@
                 @if (_storyExpanded && _storyGeneratedAt is DateTime generated)
                 {
                     <p class="dna-story__meta">
-                        @Culture.Format("Dna.StoryUpdated", generated.ToLocalTime().ToString("dd-MM-yyyy"))
+                        @Culture.Format("Dna.StoryUpdated", NlDate.Day(generated))
                     </p>
                 }
             }
@@ -490,7 +490,8 @@
             valuesStatus, valuesScores, valuesAnswered,
             competenceDeep, careerDeep, cultureDeep, valuesDeep,
             k => Culture[k],
-            (k, args) => Culture.Format(k, args));
+            (k, args) => Culture.Format(k, args),
+            Culture.Language);
 
         _cards.Clear();
         _cards.AddRange(view.Cards);

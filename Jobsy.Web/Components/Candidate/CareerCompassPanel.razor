@@ -34,24 +34,24 @@
 @if (Compass.HasOccupations)
 {
     <div class="kompas-occupations" aria-label="@Culture["Kompas.Career"]">
-        @if (SuperForCandidate.Count > 0)
+        @if (Compass.SuperMatches is { Count: > 0 } superMatches)
         {
             <section class="kompas-band kompas-band--super">
-                <h4>@Culture["Kompas.BandSuper"]</h4>
+                <h4>@Culture[BandHeading(superMatches, 95, "Kompas.BandSuper", "Kompas.BandRankTop")]</h4>
                 <ul class="kompas-occupation-list">
-                    @foreach (var item in SuperForCandidate)
+                    @foreach (var item in superMatches)
                     {
                         @OccupationAccordion(item)
                     }
                 </ul>
             </section>
         }
-        @if (StrongForCandidate.Count > 0)
+        @if (Compass.StrongChoices is { Count: > 0 } strongChoices)
         {
             <section class="kompas-band kompas-band--strong">
-                <h4>@Culture["Kompas.BandStrong"]</h4>
+                <h4>@Culture[BandHeading(strongChoices, 85, "Kompas.BandStrong", "Kompas.BandRankMid")]</h4>
                 <ul class="kompas-occupation-list">
-                    @foreach (var item in StrongForCandidate)
+                    @foreach (var item in strongChoices)
                     {
                         @OccupationAccordion(item)
                     }
@@ -61,7 +61,7 @@
         @if (Compass.Broadening.Count > 0)
         {
             <section class="kompas-band kompas-band--broaden">
-                <h4>@Culture["Kompas.BandBroaden"]</h4>
+                <h4>@Culture[BandHeading(Compass.Broadening, 75, "Kompas.BandBroaden", "Kompas.BandRankAlso")]</h4>
                 <ul class="kompas-occupation-list">
                     @foreach (var item in Compass.Broadening)
                     {
@@ -110,16 +110,12 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
     private IReadOnlyList<CareerGoalFit.Hit> GoalHits =>
         CareerGoalFit.Pick(OccupationTitles, DreamTitle, GoalEvidence, EducationLabel);
 
-    private List<CareerOccupationMatchModel> SuperForCandidate =>
-        (Compass?.SuperMatches ?? [])
-            .Where(item => CareerGoalFit.BelongsInSuper(item.Title, item.Percent, EducationLabel))
-            .ToList();
-
-    private List<CareerOccupationMatchModel> StrongForCandidate =>
-        (Compass?.SuperMatches ?? [])
-            .Where(item => !CareerGoalFit.BelongsInSuper(item.Title, item.Percent, EducationLabel))
-            .Concat(Compass?.StrongChoices ?? [])
-            .ToList();
+    private static string BandHeading(
+        IReadOnlyList<CareerOccupationMatchModel>? items,
+        int floor,
+        string legacyKey,
+        string honestKey)
+        => items is { Count: > 0 } && items.Min(item => item.Percent) >= floor ? legacyKey : honestKey;
 
     private IReadOnlyList<string> EducationFlags =>
         CareerGoalFit.AboveEducation(OccupationTitles, EducationLabel);

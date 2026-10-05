@@ -17,7 +17,9 @@ public sealed class CandidateFactSheet
         IReadOnlyList<string> allowedJobTitles,
         IReadOnlyList<string> confirmedItems,
         bool personalHistory,
-        bool checkJobTitles)
+        bool checkJobTitles,
+        IReadOnlyList<string>? directionLabels = null,
+        string? homeCity = null)
     {
         Scores = scores;
         WorkExperience = workExperience;
@@ -27,6 +29,8 @@ public sealed class CandidateFactSheet
         ConfirmedItems = confirmedItems;
         PersonalHistory = personalHistory;
         CheckJobTitles = checkJobTitles;
+        DirectionLabels = directionLabels ?? [];
+        HomeCity = string.IsNullOrWhiteSpace(homeCity) ? null : homeCity.Trim();
     }
 
     public IReadOnlyList<string> Scores { get; }
@@ -46,6 +50,12 @@ public sealed class CandidateFactSheet
 
     /// <summary>When true, a catalogue job title must be on the allowed list or in the work entries.</summary>
     public bool CheckJobTitles { get; }
+
+    /// <summary>Top direction labels a compass "why" must name. Empty skips that check.</summary>
+    public IReadOnlyList<string> DirectionLabels { get; }
+
+    /// <summary>City from the home address. Empty means the story must not name a place.</summary>
+    public string? HomeCity { get; }
 
     public bool HasWorkExperience => WorkExperience.Count > 0;
 
@@ -71,6 +81,9 @@ public sealed class CandidateFactSheet
         sb.AppendLine(Certificates.Count == 0
             ? "certificaten: geen"
             : "certificaten: " + string.Join(", ", Certificates));
+        sb.AppendLine(string.IsNullOrWhiteSpace(HomeCity)
+            ? "woonplaats: geen"
+            : "woonplaats: " + HomeCity);
         if (ConfirmedItems.Count > 0)
         {
             sb.AppendLine("bevestigd: " + string.Join(", ", ConfirmedItems));
@@ -97,7 +110,8 @@ public sealed class CandidateFactSheet
 
         var corpus = string.Join(
             '\n',
-            WorkExperience.Concat(Education).Concat(Certificates).Concat(ConfirmedItems));
+            WorkExperience.Concat(Education).Concat(Certificates).Concat(ConfirmedItems).Concat(Scores)
+                .Append(HomeCity ?? ""));
         return corpus.Contains(token.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
@@ -135,39 +149,72 @@ public sealed class CandidateFactSheet
     {
         profile ??= WhoAmIProfileHighlights.Empty;
         var scores = new List<string>();
-        foreach (var code in CompetencyTestCatalog.CategoryCodes)
+        foreach (var code in CompetencyTestCatalog.QuickScanCategories)
         {
-            scores.Add($"{WhoAmIKeywords.EverydayCompetency(code)}: {competency.Get(code)}%");
+            AddScore(scores, FactLabel(WhoAmIKeywords.EverydayCompetency(code), code), competency.Get(code));
         }
 
         foreach (var code in CulturePersonalityCatalog.CategoryCodes)
         {
-            scores.Add($"{CulturePersonalityCatalog.EverydayLabel(code)}: {culture.Get(code)}%");
+            AddScore(scores, FactLabel(CulturePersonalityCatalog.EverydayLabel(code), "werksfeer"), culture.Get(code));
         }
 
         if (values is { IsComplete: true })
         {
             foreach (var code in SchwartzValuesCatalog.CategoryCodes)
             {
-                scores.Add($"{SchwartzValuesCatalog.EverydayLabel(code)}: {values.Get(code)}%");
+                AddScore(scores, FactLabel(SchwartzValuesCatalog.EverydayLabel(code), "waarden"), values.Get(code));
             }
         }
 
         foreach (var code in CareerTestCatalog.RiasecCodes)
         {
-            scores.Add($"{CareerCompassBuilder.TypeLabel(code)}: {career.Get(code)}%");
+            AddScore(scores, FactLabel(CareerCompassBuilder.TypeLabel(code), "richting"), career.Get(code));
         }
+
+        var allowed = career.IsComplete
+            ? CareerCompassBuilder.Ranked(career).Take(15).Select(job => job.Title).ToList()
+            : new List<string>();
 
         return new CandidateFactSheet(
             scores,
             profile.Roles,
             profile.Educations,
             profile.Certificates,
-            [],
+            allowed,
             [],
             personalHistory: true,
-            checkJobTitles: true);
+            checkJobTitles: allowed.Count > 0,
+            homeCity: profile.HomeCity);
     }
+
+    /// <summary>Same everyday words stay unique when two tests share a label.</summary>
+    internal static string FactLabel(string label, string source)
+    {
+        if (string.Equals(label, "Nieuwe dingen proberen", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(source, "werksfeer", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Vernieuwen in de werksfeer";
+        }
+
+        if (string.Equals(label, "Zelf kiezen en uitdaging", StringComparison.OrdinalIgnoreCase)
+            && source is "waarden" or "richting")
+        {
+            return source == "waarden" ? "Zelf kiezen wat belangrijk is" : label;
+        }
+
+        if (string.Equals(source, CulturePersonalityCatalog.Autonomy, StringComparison.OrdinalIgnoreCase)
+            || (string.Equals(label, "Zelf kiezen en uitdaging", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(source, "werksfeer", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "Zelfstandig je dag indelen";
+        }
+
+        return label;
+    }
+
+    private static void AddScore(List<string> scores, string label, int percent)
+        => scores.Add($"{label}: {percent}%");
 
     public static CandidateFactSheet ForCareer(
         IReadOnlyList<DeepAnalysisDomainScore> scores,
@@ -194,13 +241,28 @@ public sealed class CandidateFactSheet
         }
 
         var allowed = new List<string>();
+        var directions = ordered.Take(3).Select(s => CareerCompassBuilder.TypeLabel(s.Domain)).ToList();
         var riasec = DeepAnalysisCatalog.ToRiasecScores(scores);
         if (riasec.IsComplete)
         {
-            allowed.AddRange(CareerCompassBuilder.Ranked(riasec).Take(40).Select(job => job.Title));
+            lines.Add("Berekende aansluiting (dit percentage ligt vast, verzin geen ander cijfer):");
+            foreach (var job in CareerCompassBuilder.Ranked(riasec).Take(18))
+            {
+                allowed.Add(job.Title);
+                lines.Add($"{job.Title}: {job.Percent}%");
+            }
         }
 
-        return new CandidateFactSheet(lines, [], [], [], allowed, [], personalHistory: false, checkJobTitles: true);
+        return new CandidateFactSheet(
+            lines,
+            [],
+            [],
+            [],
+            allowed,
+            [],
+            personalHistory: false,
+            checkJobTitles: true,
+            directionLabels: directions);
     }
 
     /// <summary>Prose already tied to a catalogue job list. Job titles are checked on the list itself.</summary>
@@ -222,7 +284,9 @@ public sealed class CandidateFactSheet
         IReadOnlyList<string>? certificates,
         IReadOnlyList<string>? allowedJobTitles = null,
         IReadOnlyList<string>? scores = null,
-        IReadOnlyList<string>? confirmedItems = null)
+        IReadOnlyList<string>? confirmedItems = null,
+        bool checkJobTitles = true,
+        string? homeCity = null)
         => new(
             scores ?? [],
             workExperience ?? [],
@@ -231,7 +295,8 @@ public sealed class CandidateFactSheet
             allowedJobTitles ?? [],
             confirmedItems ?? [],
             personalHistory: true,
-            checkJobTitles: true);
+            checkJobTitles: checkJobTitles,
+            homeCity: homeCity);
 
     /// <summary>Role, confirmed years and start/end years. Never the employer name.</summary>
     public static string? FormatWorkEntry(CandidateEmployerHistoryDto entry)

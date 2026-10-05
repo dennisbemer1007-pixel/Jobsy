@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Jobsy.Core.Ai;
 using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
@@ -24,17 +25,20 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
     private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<WhoAmIGenerationService> _logger;
     private readonly IPlatformErrorLog? _platformLog;
+    private readonly IFeatureFlags? _flags;
 
     public WhoAmIGenerationService(
         IHttpClientFactory httpClientFactory,
         IOpenAiEndpointResolver openAi,
         ILogger<WhoAmIGenerationService> logger,
-        IPlatformErrorLog? platformLog = null)
+        IPlatformErrorLog? platformLog = null,
+        IFeatureFlags? flags = null)
     {
         _httpClientFactory = httpClientFactory;
         _openAi = openAi;
         _logger = logger;
         _platformLog = platformLog;
+        _flags = flags;
     }
 
     public async Task<WhoAmIGeneratedStory> GenerateAsync(
@@ -46,7 +50,9 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         CancellationToken cancellationToken = default)
     {
         profile ??= WhoAmIProfileHighlights.Empty;
-        var local = Local(competency, career, culture, profile, values);
+        var employersEnabled = _flags is not null
+            && await _flags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        var local = Local(competency, career, culture, profile, values, employersEnabled);
         var endpoint = await _openAi.ResolveAsync(OpenAiFeature.WhoAmI, cancellationToken);
         if (endpoint.Unavailable)
         {
@@ -62,23 +68,23 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         var sheet = CandidateFactSheet.ForWhoAmI(competency, career, culture, profile, values);
         try
         {
-            using var openAiCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            openAiCts.CancelAfter(TimeSpan.FromSeconds(7));
-            var systems = new[]
+            string? previousReason = null;
+            for (var attempt = 1; attempt <= 2; attempt++)
             {
-                WhoAmIPrompt.System,
-                WhoAmIPrompt.System + "\n" + CandidateFactGuard.StrictAddendum
-            };
-            for (var attempt = 1; attempt <= systems.Length; attempt++)
-            {
-                var (generated, reason) = await GenerateWithOpenAiAsync(
+                using var openAiCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                openAiCts.CancelAfter(TimeSpan.FromSeconds(12));
+                var system = attempt == 1
+                    ? WhoAmIPrompt.System
+                    : WhoAmIPrompt.System + "\n" + CandidateFactGuard.StrictAddendum
+                      + "\nVorige poging afgewezen: " + CandidateFactGuard.ReasonSentence(previousReason);
+                var (generated, reason, rejectedText) = await GenerateWithOpenAiAsync(
                     competency,
                     career,
                     culture,
                     profile,
                     values,
                     sheet,
-                    systems[attempt - 1],
+                    system,
                     apiKey,
                     endpoint.Model,
                     endpoint.BaseUrl,
@@ -88,6 +94,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
                     return generated;
                 }
 
+                previousReason = reason;
                 if (reason is not null)
                 {
                     await AiFactRejectionLog.WriteAsync(
@@ -96,7 +103,9 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
                         "whoami",
                         reason,
                         attempt,
-                        cancellationToken);
+                        cancellationToken,
+                        endpoint.Model,
+                        rejectedText);
                 }
             }
         }
@@ -117,13 +126,14 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         RiasecScores career,
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights profile,
-        SchwartzValuesScores? values)
+        SchwartzValuesScores? values,
+        bool employersEnabled)
         => new(
-            WhoAmIStoryBuilder.Build(competency, career, culture, profile, values),
+            WhoAmIStoryBuilder.Build(competency, career, culture, profile, values, employersEnabled),
             WhoAmIKeywords.FromScores(competency, career, culture, values),
             FromOpenAi: false);
 
-    private async Task<(WhoAmIGeneratedStory? Story, string? Reason)> GenerateWithOpenAiAsync(
+    private async Task<(WhoAmIGeneratedStory? Story, string? Reason, string? RejectedText)> GenerateWithOpenAiAsync(
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
@@ -159,14 +169,14 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             _logger.LogWarning(
                 "OpenAI Wie-ben-ik gaf {StatusCode} (response body not logged).",
                 (int)response.StatusCode);
-            return (null, null);
+            return (null, null, null);
         }
 
         var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
         var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
         if (string.IsNullOrWhiteSpace(content))
         {
-            return (null, "empty");
+            return (null, "empty", null);
         }
 
         StoryDto? dto;
@@ -176,17 +186,17 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         }
         catch (JsonException)
         {
-            return (null, "unreadable");
+            return (null, "unreadable", content);
         }
 
         var story = WhoAmIStoryBuilder.Sanitize(dto?.Story);
         var reason = CandidateFactGuard.RejectionReason(story, sheet)
-            ?? (story is null || !story.Contains("ik", StringComparison.OrdinalIgnoreCase) || !WhoAmIStoryBuilder.Accepts(story, profile, competency, culture)
+            ?? (story is null || !story.Contains("ik", StringComparison.OrdinalIgnoreCase) || !WhoAmIStoryBuilder.Accepts(story, profile, competency, culture, career, values)
                 ? "story-rules"
                 : null);
         if (reason is not null || story is null)
         {
-            return (null, reason ?? "story-rules");
+            return (null, reason ?? "story-rules", story ?? dto?.Story);
         }
 
         var keywords = (dto?.Keywords ?? [])
@@ -200,7 +210,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             keywords = WhoAmIKeywords.FromScores(competency, career, culture, values).ToList();
         }
 
-        return (new WhoAmIGeneratedStory(story, keywords, FromOpenAi: true), null);
+        return (new WhoAmIGeneratedStory(story, keywords, FromOpenAi: true), null, null);
     }
 
 

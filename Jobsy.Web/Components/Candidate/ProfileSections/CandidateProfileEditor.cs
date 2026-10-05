@@ -552,7 +552,7 @@ public sealed class CandidateProfileEditor : IDisposable
 
     public void AddEmployer()
     {
-        Employers.Add(new CandidateEmployerHistory());
+        Employers.Add(new CandidateEmployerHistory { IsCurrent = false });
         Notify();
     }
 
@@ -597,6 +597,27 @@ public sealed class CandidateProfileEditor : IDisposable
         }
 
         Employers[index].EndMonth = normalized;
+        if (normalized is not null)
+        {
+            Employers[index].IsCurrent = false;
+        }
+
+        Notify();
+    }
+
+    public void SetEmployerCurrent(int index, bool current)
+    {
+        if (index < 0 || index >= Employers.Count)
+        {
+            return;
+        }
+
+        Employers[index].IsCurrent = current;
+        if (current)
+        {
+            Employers[index].EndMonth = null;
+        }
+
         Notify();
     }
 
@@ -834,7 +855,8 @@ public sealed class CandidateProfileEditor : IDisposable
                             Years = e.Years,
                             StartMonth = string.IsNullOrWhiteSpace(e.StartMonth) ? null : e.StartMonth.Trim(),
                             EndMonth = string.IsNullOrWhiteSpace(e.EndMonth) ? null : e.EndMonth.Trim(),
-                            Description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim()
+                            Description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim(),
+                            IsCurrent = e.IsCurrent
                         })
                         .ToList(),
                     Educations = SelectedEducations

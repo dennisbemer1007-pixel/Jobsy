@@ -234,7 +234,8 @@ public sealed record AiProviderStatusDto(
     string? RegionCode = null,
     bool Available = true,
     string? EndpointHost = null,
-    IReadOnlyList<AiFeatureModelDto>? FeatureModels = null);
+    IReadOnlyList<AiFeatureModelDto>? FeatureModels = null,
+    bool HideOpenAiProbe = false);
 
 public sealed record MailProviderStatusDto(
     string Provider,

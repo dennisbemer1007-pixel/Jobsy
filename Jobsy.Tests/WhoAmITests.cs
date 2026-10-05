@@ -72,7 +72,7 @@ public class WhoAmITests
             Autonomy: 70, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
             Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70));
         Assert.Contains("Samen", user, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Zelf kiezen", user, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Zelfstandig je dag indelen", user, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.DoesNotContain("ada", user, StringComparison.OrdinalIgnoreCase);
         Assert.True(CareerCompassBuilder.ContainsForbiddenJargon(WhoAmIPrompt.System));
@@ -98,7 +98,7 @@ public class WhoAmITests
         const string ok = """
             Ik pak taken aan en maak ze af. Samenwerken past bij mij.
 
-            Ik houd van een duidelijke dag. In Den Haag of het Westland voel ik me op mijn plek.
+            Ik houd van een duidelijke dag. Ik maak af waar ik aan begin.
             """;
         Assert.True(WhoAmIStoryBuilder.Accepts(ok, WhoAmIProfileHighlights.Empty, competency, culture));
     }
@@ -145,14 +145,14 @@ public class WhoAmITests
         var root = RepoRoot.Find();
         var di = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/DependencyInjection.cs"));
         Assert.Contains("WhoAmIGenerationService.HttpClientName", di, StringComparison.Ordinal);
-        Assert.Contains("TimeSpan.FromSeconds(8)", di, StringComparison.Ordinal);
+        Assert.Contains("TimeSpan.FromSeconds(14)", di, StringComparison.Ordinal);
         Assert.DoesNotContain(
             "WhoAmIGenerationService.HttpClientName, client =>\n        {\n            client.Timeout = TimeSpan.FromSeconds(25);",
             di.Replace("\r\n", "\n"),
             StringComparison.Ordinal);
 
         var generation = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/WhoAmIGenerationService.cs"));
-        Assert.Contains("CancelAfter(TimeSpan.FromSeconds(7))", generation, StringComparison.Ordinal);
+        Assert.Contains("CancelAfter(TimeSpan.FromSeconds(12))", generation, StringComparison.Ordinal);
     }
 
     [Fact]

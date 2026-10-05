@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -37,6 +38,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly IVacancyDiscoveryIndex _discovery;
     private readonly IProfileVacancyMatchService _matches;
     private readonly IFeatureFlags _featureFlags;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public RoleFitCheckService(
         JobsyDbContext db,
@@ -51,7 +53,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         ICultureFitAiService cultureFit,
         IVacancyDiscoveryIndex discovery,
         IProfileVacancyMatchService matches,
-        IFeatureFlags featureFlags)
+        IFeatureFlags featureFlags,
+        IPlatformErrorLog? platformLog = null)
     {
         _db = db;
         _competencies = competencies;
@@ -66,6 +69,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _discovery = discovery;
         _matches = matches;
         _featureFlags = featureFlags;
+        _platformLog = platformLog;
     }
 
     public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -274,7 +278,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 response_format = new { type = "json_object" },
                 messages = new object[]
                 {
-                    new { role = "system", content = RoleFitCheckPrompt.System },
+                    new { role = "system", content = RoleFitCheckPrompt.System + "\n" + CandidateFactGuard.StrictAddendum },
                     new { role = "user", content = user }
                 }
             });
@@ -293,6 +297,23 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             var parsed = RoleFitCheckJson.TryDeserialize(content, jobTitle, fromDeep);
             if (parsed is null || parsed.Strengths.Count == 0)
             {
+                return null;
+            }
+
+            var visible = string.Join(
+                '\n',
+                parsed.Strengths.Concat(parsed.Gaps).Concat(parsed.ActionSteps));
+            var sheet = CandidateFactSheet.Personal(
+                prefs.Roles,
+                [],
+                prefs.Licenses,
+                confirmedItems: [jobTitle],
+                checkJobTitles: false);
+            var reason = CandidateFactGuard.RejectionReason(visible, sheet);
+            if (reason is not null)
+            {
+                await AiFactRejectionLog.WriteAsync(
+                    _platformLog, _logger, "role-fit", reason, 1, cancellationToken, model, visible);
                 return null;
             }
 

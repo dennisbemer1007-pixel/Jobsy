@@ -42,6 +42,16 @@ public static partial class CandidateFactGuard
             return "unknown-year";
         }
 
+        if (MentionsUnknownPlace(text, sheet))
+        {
+            return "invented-place";
+        }
+
+        if (MentionsInventedLike(text, sheet))
+        {
+            return "invented-like";
+        }
+
         if (sheet.CheckJobTitles && MentionsUnknownJob(text, sheet))
         {
             return "unknown-job";
@@ -49,6 +59,22 @@ public static partial class CandidateFactGuard
 
         return null;
     }
+
+    /// <summary>One Dutch sentence for a second model attempt. No profile text.</summary>
+    public static string ReasonSentence(string? reason) => reason switch
+    {
+        "invented-work" => "De vorige tekst verzon werk of een sector. Laat dat weg.",
+        "unknown-diploma" => "Noem alleen het opleidingsniveau dat in de feiten staat.",
+        "unknown-year" => "Noem geen jaartal of aantal jaren dat niet in de feiten staat.",
+        "invented-place" => "Noem geen woonplaats of regio. Die staat niet in de feiten.",
+        "invented-like" => "Zeg niet wat de persoon leuk vindt. Dat staat niet in de feiten.",
+        "unknown-job" => "Noem alleen een beroep uit de toegestane lijst.",
+        "why-no-direction" => "Elke why-zin noemt één richting uit de feitenlijst.",
+        "markdown" => "Geen markdown. Alleen gewone zinnen.",
+        "story-rules" => "Schrijf 2 tot 4 alinea's in de ik-vorm, zonder herhaling.",
+        "claimed-completed" => "Zeg niet dat een opleiding is afgerond. Dat staat niet in de feiten.",
+        _ => "Gebruik alleen de feitenlijst. Verzin niets."
+    };
 
     public static string WithoutInventedHistory(string? text, CandidateFactSheet sheet, string fallback)
         => RejectionReason(text, sheet) is null ? text!.Trim() : fallback;
@@ -100,35 +126,82 @@ public static partial class CandidateFactGuard
             }
         }
 
-        var prose = new List<string>();
+        var proseSheet = CandidateFactSheet.ForCareerProse(sheet.AllowedJobTitles);
         if (dto.Strengths is not null)
         {
-            prose.AddRange(dto.Strengths);
+            foreach (var line in dto.Strengths)
+            {
+                var reason = RejectionReason(line, proseSheet);
+                if (reason is not null)
+                {
+                    return reason;
+                }
+            }
         }
 
         if (dto.PracticalNotes is not null)
         {
-            prose.AddRange(dto.PracticalNotes);
+            foreach (var line in dto.PracticalNotes)
+            {
+                // A place name in one sentence is dropped later. Other invented facts still fail the reply.
+                var reason = NoteRejection(line, proseSheet);
+                if (reason is not null)
+                {
+                    return reason;
+                }
+            }
         }
 
         foreach (var item in (dto.SuperMatches ?? []).Concat(dto.StrongChoices ?? []).Concat(dto.Broadening ?? []))
         {
-            if (!string.IsNullOrWhiteSpace(item.Why))
-            {
-                prose.Add(item.Why);
-            }
-        }
-
-        var proseSheet = CandidateFactSheet.ForCareerProse(sheet.AllowedJobTitles);
-        foreach (var line in prose)
-        {
-            if (string.IsNullOrWhiteSpace(line))
+            if (string.IsNullOrWhiteSpace(item.Why))
             {
                 continue;
             }
 
-            var reason = RejectionReason(line, proseSheet);
-            if (reason is not null)
+            var whyReason = RejectionReason(item.Why, proseSheet);
+            if (whyReason is not null)
+            {
+                return whyReason;
+            }
+
+            if (sheet.DirectionLabels.Count > 0 && !NamesDirection(item.Why, sheet.DirectionLabels))
+            {
+                return "why-no-direction";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Drops sentences the fact guard rejects. A note can keep "Open de banenkaart."
+    /// when a later sentence names a place that is not on the fact sheet.
+    /// </summary>
+    internal static string? WithoutRejectedSentences(string? text, CandidateFactSheet sheet)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var kept = SplitSentences(text)
+            .Where(sentence => RejectionReason(sentence, sheet) is null)
+            .ToList();
+        return kept.Count == 0 ? null : string.Join(" ", kept);
+    }
+
+    private static string? NoteRejection(string? text, CandidateFactSheet sheet)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        foreach (var sentence in SplitSentences(text))
+        {
+            var reason = RejectionReason(sentence, sheet);
+            if (reason is not null && reason != "invented-place")
             {
                 return reason;
             }
@@ -191,16 +264,134 @@ public static partial class CandidateFactGuard
 
     private static bool MentionsUnknownDiploma(string text, CandidateFactSheet sheet)
     {
-        foreach (Match match in Diploma().Matches(text))
+        if (CompletedClaim().IsMatch(text) && !sheet.HistoryContains("afgerond"))
         {
-            if (!sheet.HistoryContains(match.Value))
+            return true;
+        }
+
+        var education = string.Join(" ", sheet.Education);
+        foreach (Match match in LevelToken().Matches(text))
+        {
+            var around = Around(text, match.Index, match.Length);
+            if (!EducationAllowsLevel(education, match.Value, around))
             {
                 return true;
             }
         }
 
+        if (DiplomaWord().IsMatch(text) && sheet.Education.Count == 0)
+        {
+            return true;
+        }
+
         return false;
     }
+
+    private static bool EducationAllowsLevel(string education, string token, string context)
+    {
+        if (string.IsNullOrWhiteSpace(education))
+        {
+            return false;
+        }
+
+        var edu = education.ToLowerInvariant();
+        var level = token.ToLowerInvariant();
+        if (level == "wo")
+        {
+            return Regex.IsMatch(edu, @"\bwo\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
+                   || edu.Contains("universit", StringComparison.Ordinal);
+        }
+
+        if (!edu.Contains(level, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (level != "mbo")
+        {
+            return true;
+        }
+
+        var textLevel = MboNumber(context);
+        var eduLevel = MboNumber(edu);
+        if (textLevel is int wanted && eduLevel is int have && wanted != have)
+        {
+            return false;
+        }
+
+        return textLevel is null || eduLevel is not null;
+    }
+
+    private static int? MboNumber(string text)
+    {
+        var match = Regex.Match(
+            text,
+            @"mbo(?:\s*-\s*|\s+niveau\s+|\s+)([1-4])",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return match.Success && int.TryParse(match.Groups[1].Value, out var level) ? level : null;
+    }
+
+    private static string Around(string text, int index, int length)
+    {
+        var start = Math.Max(0, index - 12);
+        var end = Math.Min(text.Length, index + length + 16);
+        return text[start..end];
+    }
+
+    private static bool MentionsUnknownPlace(string text, CandidateFactSheet sheet)
+    {
+        foreach (var place in PlaceNames)
+        {
+            if (!ContainsPhrase(text, place))
+            {
+                continue;
+            }
+
+            if (sheet.HistoryContains(place) || PlaceMatchesCity(place, sheet.HomeCity))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool PlaceMatchesCity(string place, string? city)
+        => !string.IsNullOrWhiteSpace(city)
+           && (city.Contains(place, StringComparison.OrdinalIgnoreCase)
+               || place.Contains(city, StringComparison.OrdinalIgnoreCase));
+
+    private static bool MentionsInventedLike(string text, CandidateFactSheet sheet)
+    {
+        foreach (var sentence in SplitSentences(text))
+        {
+            if (Negated().IsMatch(sentence) || !LikeClaim().IsMatch(sentence))
+            {
+                continue;
+            }
+
+            foreach (var word in LikeObjects)
+            {
+                if (!ContainsPhrase(sentence, word))
+                {
+                    continue;
+                }
+
+                if (!sheet.HistoryContains(word))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool NamesDirection(string why, IReadOnlyList<string> labels)
+        => labels.Any(label =>
+            label.Length > 0 && why.Contains(label, StringComparison.OrdinalIgnoreCase));
 
     private static bool MentionsUnknownYear(string text, CandidateFactSheet sheet)
     {
@@ -338,8 +529,45 @@ public static partial class CandidateFactGuard
     [GeneratedRegex(@"\bin\s+de\s+(zorg|bouw|horeca|kas|magazijn|keuken|logistiek|onderwijs|transport|techniek|winkel|kantoor|landbouw|schoonmaak)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex SectorPhrase();
 
-    [GeneratedRegex(@"\b(diploma|mbo|hbo|vwo|havo|vmbo|bachelor|master|universiteit)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex Diploma();
+    [GeneratedRegex(@"\b(mbo|hbo|wo|vwo|havo|vmbo|bachelor|master|universiteit)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex LevelToken();
+
+    [GeneratedRegex(@"\b(diploma|opleiding)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex DiplomaWord();
+
+    [GeneratedRegex(@"\bafgerond\w*", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex CompletedClaim();
+
+    [GeneratedRegex(@"\b(vind|vindt|graag|hart|enthousiast|leuk|fijn|houd van|houdt van)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex LikeClaim();
+
+    private static readonly string[] LikeObjects =
+    [
+        "dieren", "planten", "koken", "kook", "schoonmaak", "schoonmaken", "tuinieren", "bloemen"
+    ];
+
+    /// <summary>Place names from the regional hosts. A story may use one only when it is on the fact sheet.</summary>
+    internal static readonly string[] PlaceNames =
+    [
+        "Den Haag",
+        "Westland",
+        "Delft",
+        "Rotterdam",
+        "Naaldwijk",
+        "Honselersdijk",
+        "Poeldijk",
+        "Wateringen",
+        "Maasdijk",
+        "Kwintsheul",
+        "'s-Gravenzande",
+        "Heenweg",
+        "De Lier",
+        "Rijswijk",
+        "Zoetermeer",
+        "Scheveningen",
+        "Leidschendam",
+        "Voorburg"
+    ];
 
     [GeneratedRegex(@"jarenlang|\b\d{1,2}\s+jaar\b|\b(?:19|20)\d{2}\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex YearClaim();

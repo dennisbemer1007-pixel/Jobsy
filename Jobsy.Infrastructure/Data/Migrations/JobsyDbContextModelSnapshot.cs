@@ -1917,6 +1917,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<DateTime?>("LastAttemptUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("StoryGeneratedAtUtc")
                         .HasColumnType("timestamp with time zone");
 

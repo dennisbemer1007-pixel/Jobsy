@@ -19954,7 +19954,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 @media (max-width: 639px) {
     .app-shell:has([data-lobsy-coach]) .app-main {
-        padding-bottom: calc(56px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(56px + 88px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-coach-dock {
@@ -19994,8 +19994,8 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 12px + env(safe-area-inset-bottom, 0px) + 68px);
     }
 
-    body:has(input:focus, textarea:focus):not(:has(#lobsy-assistant-input:focus)) .lobsy-coach-dock {
-        visibility: hidden;
+    body:has(input:focus, textarea:focus):not(:has(#lobsy-assistant-input:focus)) .lobsy-coach-dock__tip {
+        display: none;
     }
 }
 
@@ -20200,7 +20200,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 
     .app-shell:has([data-lobsy-coach]) .app-main {
-        padding-bottom: calc(56px + 88px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(56px + 88px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + env(safe-area-inset-bottom, 0px));
     }
 
     .mail-settings__label {

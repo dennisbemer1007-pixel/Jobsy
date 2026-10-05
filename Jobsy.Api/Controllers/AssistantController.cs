@@ -37,7 +37,7 @@ public sealed class AssistantController : ControllerBase
     {
         if (request.Messages.Count > AssistantChatService.MaxHistoryMessages)
         {
-            return BadRequest(new { message = "Het gesprek is te lang. Start een nieuw chatgesprek." });
+            request.Messages = request.Messages.TakeLast(AssistantChatService.MaxHistoryMessages).ToList();
         }
 
         foreach (var msg in request.Messages)

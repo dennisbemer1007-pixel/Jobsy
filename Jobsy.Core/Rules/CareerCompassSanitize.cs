@@ -56,39 +56,29 @@ public static class CareerCompassSanitize
     /// Keeps provider jobs and, when fewer than 8 catalogue titles survived,
     /// fills from the local ranking for the same scores. AI "why" text stays.
     /// </summary>
-    public static CareerCompassSnapshot EnsureDepth(CareerCompassSnapshot snapshot, RiasecScores? scores)
+    public static CareerCompassSnapshot EnsureDepth(CareerCompassSnapshot snapshot, RiasecScores? scores, string? education = null)
     {
         if (scores is not { IsComplete: true })
         {
             return snapshot;
         }
 
-        var jobs = snapshot.AllOccupations.ToList();
-        if (jobs.Count >= MinCatalogueJobs && !IsLoneHigherEducation(jobs))
-        {
-            return snapshot;
-        }
-
+        var jobs = new List<CareerOccupationMatch>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var job in jobs)
+        foreach (var job in snapshot.AllOccupations)
         {
-            seen.Add(MatchKey(job.Title));
-        }
-
-        var ranked = CareerCompassBuilder.Ranked(scores);
-        var floor = jobs.Count == 0 ? 84 : Math.Min(84, jobs.Min(j => j.Percent) - 1);
-        if (floor < CareerCompassBuilder.BroadenMin)
-        {
-            floor = 84;
-        }
-
-        foreach (var local in ranked)
-        {
-            if (jobs.Count >= MaxCatalogueJobs)
+            var title = CanonicalTitle(job.Title) ?? job.Title;
+            if (!seen.Add(MatchKey(title)))
             {
-                break;
+                continue;
             }
 
+            var percent = CareerCompassBuilder.CatalogueFit(title, scores);
+            jobs.Add(new CareerOccupationMatch(title, percent, "", job.Why, job.SearchKeys));
+        }
+
+        foreach (var local in CareerCompassBuilder.Ranked(scores))
+        {
             if (jobs.Count >= MinCatalogueJobs && !IsLoneHigherEducation(jobs))
             {
                 break;
@@ -100,12 +90,7 @@ public static class CareerCompassSanitize
                 continue;
             }
 
-            var percent = local.Percent >= CareerCompassBuilder.BroadenMin
-                ? local.Percent
-                : floor;
-            percent = Math.Clamp(percent, CareerCompassBuilder.BroadenMin, 100);
-            floor = Math.Max(CareerCompassBuilder.BroadenMin, percent - 2);
-            jobs.Add(new CareerOccupationMatch(title, percent, CareerCompassBuilder.Band(percent), local.Why, local.SearchKeys));
+            jobs.Add(new CareerOccupationMatch(title, local.Percent, "", local.Why, local.SearchKeys));
         }
 
         if (IsLoneHigherEducation(jobs))
@@ -113,12 +98,83 @@ public static class CareerCompassSanitize
             jobs.Clear();
         }
 
+        jobs = OrderForEducation(jobs, education);
+        if (jobs.Count > MaxCatalogueJobs)
+        {
+            jobs = jobs.Take(MaxCatalogueJobs).ToList();
+        }
+
+        jobs = AssignRankBands(jobs);
         return CareerCompassHierarchy.FromOccupations(
             snapshot.Strengths,
             jobs,
             snapshot.PracticalNotes,
             snapshot.FromDeepAnalysis,
             snapshot.FromOpenAi);
+    }
+
+    /// <summary>
+    /// A job that needs a clearly higher diploma sorts after jobs the candidate can do now.
+    /// </summary>
+    internal static List<CareerOccupationMatch> OrderForEducation(
+        List<CareerOccupationMatch> jobs,
+        string? education)
+    {
+        bool Demote(CareerOccupationMatch job)
+        {
+            if (!string.IsNullOrWhiteSpace(education))
+            {
+                return CareerGoalFit.RequiresHigherEducation(job.Title, education);
+            }
+
+            if (!CareerGoalFit.IsClearlyHigherEducation(job.Title))
+            {
+                return false;
+            }
+
+            var code = CareerCompassBuilder.PrimaryCode(job.Title);
+            return jobs.Any(other =>
+                !ReferenceEquals(other, job)
+                && !CareerGoalFit.IsClearlyHigherEducation(other.Title)
+                && string.Equals(CareerCompassBuilder.PrimaryCode(other.Title), code, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return jobs
+            .OrderBy(job => Demote(job) ? 1 : 0)
+            .ThenByDescending(job => job.Percent)
+            .ThenBy(job => job.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    internal static List<CareerOccupationMatch> AssignRankBands(List<CareerOccupationMatch> jobs)
+    {
+        var count = jobs.Count;
+        if (count == 0)
+        {
+            return jobs;
+        }
+
+        var super = count >= 10 ? 4 : 3;
+        var strong = count >= 9 ? 4 : 3;
+        if (super + strong >= count)
+        {
+            super = Math.Max(1, count / 3);
+            strong = Math.Max(1, (count - super) / 2);
+        }
+
+        var banded = new List<CareerOccupationMatch>(count);
+        for (var i = 0; i < count; i++)
+        {
+            var band = i < super
+                ? CareerCompassBuilder.BandSuper
+                : i < super + strong
+                    ? CareerCompassBuilder.BandStrong
+                    : CareerCompassBuilder.BandBroaden;
+            var job = jobs[i];
+            banded.Add(new CareerOccupationMatch(job.Title, job.Percent, band, job.Why, job.SearchKeys));
+        }
+
+        return banded;
     }
 
     /// <summary>Catalogue title, or null when the provider invented a name we do not know.</summary>
@@ -411,9 +467,9 @@ public static class CareerCompassSanitize
         var prose = CandidateFactSheet.ForCareerProse();
         return items
             .Select(CleanText)
+            .Select(text => CandidateFactGuard.WithoutRejectedSentences(text, prose))
             .Where(t => !string.IsNullOrWhiteSpace(t) && !ContainsEnglishLeak(t))
             .Cast<string>()
-            .Where(t => CandidateFactGuard.RejectionReason(t, prose) is null)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(take)
             .ToList();

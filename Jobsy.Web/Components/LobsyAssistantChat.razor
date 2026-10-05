@@ -40,6 +40,7 @@
                                 <p class="lobsy-assistant__lead">@Culture[_employersOn ? "Assistant.Lead" : "Assistant.LeadEmployersOff"]</p>
                             </div>
                         </div>
+                        <button type="button" class="btn btn-ghost" @onclick="StartNewChat" disabled="@_busy">@Culture["Assistant.NewChat"]</button>
                         <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
                     </header>
 
@@ -140,6 +141,7 @@
     private bool _employersOn = true;
     private string _draft = "";
     private string? _error;
+    private int _sendGeneration;
     private readonly List<AssistantChatMessage> _messages = [];
     private List<AssistantChatActionItem> _actionLinks = [];
 
@@ -319,6 +321,17 @@
         }
     }
 
+    private async Task StartNewChat()
+    {
+        _sendGeneration++;
+        _messages.Clear();
+        _actionLinks = [];
+        _error = null;
+        _draft = "";
+        _started = false;
+        await StartAsync();
+    }
+
     private async Task SendAsync()
     {
         if (_busy || string.IsNullOrWhiteSpace(_draft))
@@ -332,16 +345,28 @@
         _messages.Add(new AssistantChatMessage("user", text));
         _busy = true;
         _actionLinks = [];
+        var generation = ++_sendGeneration;
         try
         {
-            var history = _messages.Select(m => new AssistantChatMessage(m.Role, m.Content)).ToList();
+            var history = _messages
+                .TakeLast(20)
+                .Select(m => new AssistantChatMessage(m.Role, m.Content))
+                .ToList();
             var reply = await Api.SendAssistantChatAsync(history);
+            if (generation != _sendGeneration)
+            {
+                return;
+            }
+
             _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
             ApplyActions(reply.Actions);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            if (generation == _sendGeneration)
+            {
+                _error = Culture["Common.Error.TryAgain"];
+            }
         }
         finally
         {

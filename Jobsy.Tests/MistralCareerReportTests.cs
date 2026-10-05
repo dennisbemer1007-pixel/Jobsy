@@ -63,7 +63,7 @@ public class MistralCareerReportTests
         Assert.NotNull(report);
         Assert.False(string.IsNullOrWhiteSpace(report.HollandCode));
         Assert.NotEmpty(report.ActionPlan);
-        Assert.Contains(report.Occupations, o => o.TitleNl == "Hovenier" && o.MatchPercent == 92);
+        Assert.Contains(report.Occupations, o => o.TitleNl == "Hovenier" && o.MatchPercent == CareerCompassBuilder.CatalogueFit("Hovenier", new RiasecScores(66, 38, 37, 64, 43, 62)));
 
         var pdf = AssessmentReportPdfService.RenderCareerDeep(
             "Lobsy", [], "Test Kandidaat", "4 okt 2026", report, "nl");
@@ -108,7 +108,7 @@ public class MistralCareerReportTests
         var compass = CareerCompassSanitize.EnsureDepth(thin, scores);
         var jobs = compass.AllOccupations.ToList();
         Assert.InRange(jobs.Count, CareerCompassSanitize.MinCatalogueJobs, CareerCompassSanitize.MaxCatalogueJobs);
-        Assert.Contains(jobs, m => m.Title == "Elektrotechnicus" && m.Percent == 89);
+        Assert.Contains(jobs, m => m.Title == "Elektrotechnicus" && m.Percent == CareerCompassBuilder.CatalogueFit("Elektrotechnicus", scores));
         Assert.Contains(jobs, m => !CareerGoalFit.IsClearlyHigherEducation(m.Title));
 
         var domains = new List<DeepAnalysisDomainScore>

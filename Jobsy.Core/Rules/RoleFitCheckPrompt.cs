@@ -10,7 +10,7 @@ public static class RoleFitCheckPrompt
         Bij een bredere match (geen exacte titelhit, wel goede fit) geef je in strengths of gaps een korte onderbouwing waarom deze rol toch past.
         Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, DISC, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid.
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen verzinnen.
-        Beoordeel ALGEMENE functies op de Nederlandse arbeidsmarkt. Noem Den Haag en het Westland alleen als zoekadvies op de Lobsy-banenkaart.
+        Beoordeel ALGEMENE functies op de Nederlandse arbeidsmarkt. Noem geen woonplaats of regio, tenzij die in de feitenlijst staat.
         matchPercent: 0-100, eerlijk. 95+ alleen bij een kernfit, 85-94 sterk, 75-84 verbreding, daaronder een mogelijke switch met duidelijk gat.
         strengths: 2 tot 4 zinnen — waar de kandidaat al aan voldoet (opleiding, competenties/drijfveren, overdraagbare ervaring, reistijd/uren).
         gaps: 2 tot 4 zinnen — wat nog ontbreekt, inclusief harde papieren eisen. Geen valse hoop.

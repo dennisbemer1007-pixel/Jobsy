@@ -1,4 +1,7 @@
+using System.Security.Cryptography;
+using System.Text;
 using Jobsy.Core.Diagnostics;
+using Jobsy.Core.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
@@ -14,11 +17,15 @@ internal static class AiFactRejectionLog
         string surface,
         string reason,
         int attempt,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? model = null,
+        string? rejectedText = null)
     {
         var safeSurface = CleanToken(surface, "ai");
         var safeReason = CleanToken(reason, "rejected");
-        var message = $"AI-tekst afgewezen. surface={safeSurface} reason={safeReason} attempt={attempt}";
+        var safeModel = string.IsNullOrWhiteSpace(model) ? "" : " model=" + CleanToken(model, "model");
+        var hash = string.IsNullOrWhiteSpace(rejectedText) ? "" : " textHash=" + TextHash(rejectedText);
+        var message = $"AI-tekst afgewezen. surface={safeSurface} reason={safeReason} attempt={attempt}{safeModel}{hash}";
         logger.LogWarning("{Message}", message);
         if (platformLog is null)
         {
@@ -27,7 +34,13 @@ internal static class AiFactRejectionLog
 
         try
         {
-            await platformLog.WriteAsync(Category, message, supportCode: null, detail: null, cancellationToken);
+            await platformLog.WriteAsync(
+                Category,
+                message,
+                supportCode: null,
+                detail: null,
+                PlatformLogLevel.Warning,
+                cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -53,5 +66,11 @@ internal static class AiFactRejectionLog
         }
 
         return token.IndexOfAny(['@', ' ', '\n', '\r']) >= 0 ? fallback : token;
+    }
+
+    private static string TextHash(string text)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(text));
+        return Convert.ToHexString(hash.AsSpan(0, 8)).ToLowerInvariant();
     }
 }

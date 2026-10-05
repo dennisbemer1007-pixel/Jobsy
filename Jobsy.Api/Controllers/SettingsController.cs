@@ -97,6 +97,7 @@ public class SettingsController : ControllerBase
                 .ToList();
         }
 
+        var hideOpenAi = string.Equals(_ai.Provider, AiProviderNames.Mistral, StringComparison.OrdinalIgnoreCase);
         return Ok(new AiProviderStatusDto(
             status.Provider,
             status.Available ? status.Provider : "Niet ingesteld",
@@ -107,7 +108,8 @@ public class SettingsController : ControllerBase
             status.RegionCode,
             status.Available,
             status.EndpointHost,
-            featureModels));
+            featureModels,
+            HideOpenAiProbe: hideOpenAi));
     }
 
     /// <summary>The mail company that actually sends. Read-only: switch with Mail__Provider.</summary>

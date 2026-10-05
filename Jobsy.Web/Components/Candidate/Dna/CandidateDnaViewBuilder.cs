@@ -76,7 +76,7 @@ public static class CandidateDnaViewBuilder
            ?? dna?.ProfileCompletenessPercent
            ?? fallback;
 
-    public static DnaViewModel FromKompas(CandidateKompasState kompas, TextLookup t, TextFormat format)
+    public static DnaViewModel FromKompas(CandidateKompasState kompas, TextLookup t, TextFormat format, string language = "nl")
         => Paint(
             kompas.Competencies?.Status,
             kompas.Competencies?.Scores ?? kompas.Competencies?.PreviewScores,
@@ -95,9 +95,10 @@ public static class CandidateDnaViewBuilder
             kompas.CultureDeep,
             kompas.ValuesDeep,
             t,
-            format);
+            format,
+            language);
 
-    public static DnaViewModel FromDnaSummary(CandidateDnaSummary dna, TextLookup t, TextFormat format)
+    public static DnaViewModel FromDnaSummary(CandidateDnaSummary dna, TextLookup t, TextFormat format, string language = "nl")
     {
         var competence = dna.Competencies;
         var career = dna.CareerInterests;
@@ -121,7 +122,8 @@ public static class CandidateDnaViewBuilder
             DeepStub(culture?.DeepCompleted ?? false),
             DeepStub(values?.DeepCompleted ?? false),
             t,
-            format);
+            format,
+            language);
     }
 
     private static DeepAnalysisState? DeepStub(bool completed)
@@ -145,12 +147,13 @@ public static class CandidateDnaViewBuilder
         DeepAnalysisState? cultureDeep,
         DeepAnalysisState? valuesDeep,
         TextLookup t,
-        TextFormat format)
+        TextFormat format,
+        string language = "nl")
     {
-        var competence = BuildCompetence(competenceStatus, competenceScores, competenceAnswered, competenceDeep, t, format);
-        var career = BuildCareer(careerStatus, careerScores, careerAnswered, careerDeep, t, format);
+        var competence = BuildCompetence(competenceStatus, competenceScores, competenceAnswered, competenceDeep, t, format, language);
+        var career = BuildCareer(careerStatus, careerScores, careerAnswered, careerDeep, t, format, language);
         var culture = BuildCulture(cultureStatus, cultureScores, cultureAnswered, cultureDeep, t);
-        var values = BuildValues(valuesStatus, valuesScores, valuesAnswered, valuesDeep, t);
+        var values = BuildValues(valuesStatus, valuesScores, valuesAnswered, valuesDeep, t, language);
 
         var cards = new List<DnaCard> { competence, career, culture, values };
         var highlights = new List<DnaHighlight>();
@@ -175,7 +178,7 @@ public static class CandidateDnaViewBuilder
             highlights,
             slides,
             BuildCultureDetail(culture, t),
-            BuildValuesDetail(values, t),
+            BuildValuesDetail(values, t, language),
             cards.Count(c => c.Completed));
     }
 
@@ -224,7 +227,7 @@ public static class CandidateDnaViewBuilder
             aside);
     }
 
-    private static DetailBlock BuildValuesDetail(DnaCard values, TextLookup t)
+    private static DetailBlock BuildValuesDetail(DnaCard values, TextLookup t, string language)
     {
         var aside = values.Completed
             ? t("Dna.StatusComplete")
@@ -233,7 +236,7 @@ public static class CandidateDnaViewBuilder
                 : t("Test.Status.NotDone");
         return new DetailBlock(
             [],
-            values.Bars.Count > 0 ? values.Bars : GhostValueBars(),
+            values.Bars.Count > 0 ? values.Bars : GhostValueBars(language),
             !values.Completed && !values.IsProvisional,
             values.StartHref,
             values.QuestionCount,
@@ -249,9 +252,9 @@ public static class CandidateDnaViewBuilder
             })
             .ToList();
 
-    private static List<ChartAxisValue> GhostValueBars()
+    private static List<ChartAxisValue> GhostValueBars(string language)
         => SchwartzValuesCatalog.CategoryCodes
-            .Select(code => new ChartAxisValue(DimensionLabels.For(code), null))
+            .Select(code => new ChartAxisValue(DimensionLabels.For(code, language), null))
             .ToList();
 
     private static string ChartAltKey(AssessmentKind kind) => kind switch
@@ -272,7 +275,7 @@ public static class CandidateDnaViewBuilder
 
     private static DnaCard BuildCompetence(
         string? status, CompetencyScoreSet? scores, int answered, DeepAnalysisState? deep,
-        TextLookup t, TextFormat format)
+        TextLookup t, TextFormat format, string language)
     {
         var def = AssessmentTestCatalog.TryGet(AssessmentKind.Competence)!;
         var freeDone = IsCompleted(status);
@@ -302,12 +305,12 @@ public static class CandidateDnaViewBuilder
             {
                 var pct = ranked.FirstOrDefault(r => r.Code == code).Percent;
                 var has = ranked.Any(r => r.Code == code);
-                axes.Add(new ChartAxisValue(DeepAnalysisQuestionHelp.DomainLabel(code), has ? pct : null));
+                axes.Add(new ChartAxisValue(DimensionLabels.For(code, language), has ? pct : null));
             }
 
             if (ranked.Count > 0)
             {
-                top = DeepAnalysisQuestionHelp.DomainLabel(ranked[0].Code);
+                top = DimensionLabels.For(ranked[0].Code, language);
                 summary = format("Dna.TileSummaryStrong", top);
             }
         }
@@ -332,7 +335,7 @@ public static class CandidateDnaViewBuilder
 
     private static DnaCard BuildCareer(
         string? status, RiasecScoreSet? scores, int answered, DeepAnalysisState? deep,
-        TextLookup t, TextFormat format)
+        TextLookup t, TextFormat format, string language)
     {
         var def = AssessmentTestCatalog.TryGet(AssessmentKind.Career)!;
         var freeDone = IsCompleted(status);
@@ -363,20 +366,20 @@ public static class CandidateDnaViewBuilder
             {
                 var hit = ranked.FirstOrDefault(r => r.Code == code);
                 var has = ranked.Any(r => r.Code == code);
-                axes.Add(new ChartAxisValue(CareerCompassBuilder.TypeLabel(code), has ? hit.Percent : null, code[..1]));
+                axes.Add(new ChartAxisValue(DimensionLabels.For(code, language), has ? hit.Percent : null, code[..1]));
             }
 
             foreach (var (code, pct) in ranked.Take(3))
             {
-                bars.Add(new ChartAxisValue(CareerCompassBuilder.TypeLabel(code), pct, code[..1]));
+                bars.Add(new ChartAxisValue(DimensionLabels.For(code, language), pct, code[..1]));
             }
 
             if (ranked.Count > 0)
             {
-                top = CareerCompassBuilder.TypeLabel(ranked[0].Code);
+                top = DimensionLabels.For(ranked[0].Code, language);
                 summary = format(
                     "Dna.TileSummaryTop",
-                    string.Join(" · ", ranked.Take(3).Select(r => CareerCompassBuilder.TypeLabel(r.Code))));
+                    string.Join(" · ", ranked.Take(3).Select(r => DimensionLabels.For(r.Code, language))));
             }
         }
 
@@ -464,7 +467,7 @@ public static class CandidateDnaViewBuilder
 
     private static DnaCard BuildValues(
         string? status, SchwartzValuesScoreSet? scores, int answered, DeepAnalysisState? deep,
-        TextLookup t)
+        TextLookup t, string language)
     {
         var def = AssessmentTestCatalog.TryGet(AssessmentKind.Values)!;
         var freeDone = IsCompleted(status);
@@ -489,21 +492,21 @@ public static class CandidateDnaViewBuilder
                 .Select(x => (Code: x.Code, Percent: x.Score))
                 .ToList();
             bars = ranked
-                .Select(r => new ChartAxisValue(DimensionLabels.For(r.Code), r.Percent))
+                .Select(r => new ChartAxisValue(DimensionLabels.For(r.Code, language), r.Percent))
                 .Concat(SchwartzValuesCatalog.CategoryCodes
                     .Where(c => ranked.All(r => r.Code != c))
-                    .Select(c => new ChartAxisValue(DimensionLabels.For(c), null)))
+                    .Select(c => new ChartAxisValue(DimensionLabels.For(c, language), null)))
                 .ToList();
 
             if (ranked.Count > 0)
             {
-                top = DimensionLabels.For(ranked[0].Code);
+                top = DimensionLabels.For(ranked[0].Code, language);
                 summary = top;
             }
         }
         else
         {
-            bars = GhostValueBars();
+            bars = GhostValueBars(language);
         }
 
         return new DnaCard(
