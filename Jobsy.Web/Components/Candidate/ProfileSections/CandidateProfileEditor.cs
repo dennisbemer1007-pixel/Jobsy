@@ -605,6 +605,50 @@ public sealed class CandidateProfileEditor : IDisposable
         Notify();
     }
 
+    public void SetEmployerRole(int index, string? role)
+    {
+        if (index < 0 || index >= Employers.Count)
+        {
+            return;
+        }
+
+        var next = string.IsNullOrWhiteSpace(role) ? null : role.Trim();
+        var previousRaw = Employers[index].Role;
+        var previous = string.IsNullOrWhiteSpace(previousRaw) ? null : previousRaw.Trim();
+        if (!string.Equals(previous, next, StringComparison.Ordinal))
+        {
+            Employers[index].EscoId = null;
+            Employers[index].OccupationDismissed = false;
+        }
+
+        Employers[index].Role = next;
+        Notify();
+    }
+
+    public void ConfirmEmployerOccupation(int index, string escoId)
+    {
+        if (index < 0 || index >= Employers.Count || string.IsNullOrWhiteSpace(escoId))
+        {
+            return;
+        }
+
+        Employers[index].EscoId = escoId.Trim();
+        Employers[index].OccupationDismissed = false;
+        Notify();
+    }
+
+    public void DismissEmployerOccupation(int index)
+    {
+        if (index < 0 || index >= Employers.Count)
+        {
+            return;
+        }
+
+        Employers[index].EscoId = null;
+        Employers[index].OccupationDismissed = true;
+        Notify();
+    }
+
     public void SetEmployerCurrent(int index, bool current)
     {
         if (index < 0 || index >= Employers.Count)
@@ -856,7 +900,10 @@ public sealed class CandidateProfileEditor : IDisposable
                             StartMonth = string.IsNullOrWhiteSpace(e.StartMonth) ? null : e.StartMonth.Trim(),
                             EndMonth = string.IsNullOrWhiteSpace(e.EndMonth) ? null : e.EndMonth.Trim(),
                             Description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim(),
-                            IsCurrent = e.IsCurrent
+                            IsCurrent = e.IsCurrent,
+                            EscoId = string.IsNullOrWhiteSpace(e.Role) || string.IsNullOrWhiteSpace(e.EscoId)
+                                ? null
+                                : e.EscoId.Trim()
                         })
                         .ToList(),
                     Educations = SelectedEducations

@@ -66,8 +66,15 @@ def fetch_file(item: dict) -> None:
         "onet-31.0-career-interest-types": "career_interest_types.csv",
         "onet-31.0-occupation-data": "occupation_data.csv",
         "cbs-brc-2014-ed2025": "brc2014.xlsx",
+        "roa-ais-2030-2026": "ais_tot_2030.csv",
+        "roa-ais-2030-2026-toelichting": "ais_tot_2030_toelichting.csv",
+        "ilo-wp140-genai-isco08": "ilo_genai_scores.xlsx",
     }[item["id"]]
     dest = CACHE / name
+    expected = item.get("sha256")
+    if dest.exists() and expected and sha256_file(dest) == expected:
+        print(f"fetch {item['id']} (cache matches pin)")
+        return
     print(f"fetch {item['id']}")
     download(item["url"], dest)
     digest = require_hash(dest, item.get("sha256"))

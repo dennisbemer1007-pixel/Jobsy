@@ -74,7 +74,8 @@ public sealed record LobsyCvEmployerEntry(
     int? Years,
     string? Description,
     string? StartMonth = null,
-    string? EndMonth = null);
+    string? EndMonth = null,
+    string? EscoId = null);
 
 public sealed record LobsyCvCertificateEntry(
     string Name,

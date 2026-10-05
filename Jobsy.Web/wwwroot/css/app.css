@@ -20380,3 +20380,55 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     bottom: 0;
     max-inline-size: min(16rem, calc(100vw - 56px - 36px));
 }
+
+.outlook-block,
+.job-outlook-tip {
+    margin: 0.75rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface) 94%, var(--hover));
+}
+
+.outlook-block h5,
+.job-outlook-tip h4,
+.job-outlook-tip h5 {
+    margin: 0 0 0.35rem;
+}
+
+.outlook-block p,
+.job-outlook-tip p,
+.job-outlook-tip li {
+    margin: 0.25rem 0;
+}
+
+.outlook-block__source {
+    color: var(--muted, #5c6570);
+    font-size: 0.9rem;
+}
+
+.profile-occupation-pick {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.profile-occupation-pick ul,
+.job-outlook-tip ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.profile-occupation-pick li {
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.profile-occupation-pick__confirmed {
+    margin: 0;
+}

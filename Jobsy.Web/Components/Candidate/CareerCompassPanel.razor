@@ -231,6 +231,17 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         </details>
     };
 
+    private static OccupationOutlookResult? OutlookFor(CareerOccupationMatchModel item)
+    {
+        var id = item.EscoId;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            id = OccupationCatalog.Shared.Resolve(item.Title)?.Id;
+        }
+
+        return string.IsNullOrWhiteSpace(id) ? null : OccupationOutlook.Shared.Get(id);
+    }
+
     private RenderFragment OccupationBody(CareerOccupationMatchModel item) => __builder =>
     {
         var insight = BuildInsight(item.Title);
@@ -256,6 +267,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                     }
                 </ul>
             }
+            <OccupationOutlookBlock Result="OutlookFor(item)" />
             <h5>@Culture["Fit.FormalBlock"]</h5>
             <ul>
                 @foreach (var line in CareerOccupationDetail.Requirements(item.Title))

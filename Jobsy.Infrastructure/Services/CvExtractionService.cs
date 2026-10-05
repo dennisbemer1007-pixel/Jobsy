@@ -144,7 +144,11 @@ public sealed class CvExtractionService : ICvExtractionService
                     e.Years is >= 0 and <= 80 ? e.Years : null,
                     EmptyToNull(e.Description),
                     LobsyCvModelFactory.NormalizeMonth(e.StartMonth),
-                    LobsyCvModelFactory.NormalizeMonth(e.EndMonth)))
+                    LobsyCvModelFactory.NormalizeMonth(e.EndMonth))
+                {
+                    // A CV upload never confirms an occupation. The candidate does that later.
+                    EscoId = null
+                })
                 .Take(12)
                 .ToList(),
             Certificates: parsed.Certificates?

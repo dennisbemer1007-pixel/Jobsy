@@ -602,6 +602,9 @@ def build(out_dir: Path, diff_path: Path | None) -> dict:
         "onet-31.0-career-interest-types": CACHE / "career_interest_types.csv",
         "onet-31.0-occupation-data": CACHE / "occupation_data.csv",
         "cbs-brc-2014-ed2025": CACHE / "brc2014.xlsx",
+        "roa-ais-2030-2026": CACHE / "ais_tot_2030.csv",
+        "roa-ais-2030-2026-toelichting": CACHE / "ais_tot_2030_toelichting.csv",
+        "ilo-wp140-genai-isco08": CACHE / "ilo_genai_scores.xlsx",
     }
     for item in sources["inputs"]:
         entry = {
@@ -638,6 +641,18 @@ def build(out_dir: Path, diff_path: Path | None) -> dict:
             ),
             "crosswalk": "ESCO–O*NET crosswalk: European Commission & U.S. Department of Labor (2022).",
             "cbs": "CBS, Beroepenclassificatie BRC 2014 editie 2025 (CC BY 4.0).",
+            "roa": (
+                "ROA (2026). Arbeidsmarktinformatiesysteem tot 2030 – Arbeidsmarktinformatie, editie 2026. "
+                "DataverseNL. https://doi.org/10.34894/DVQTOG (CC BY 4.0). "
+                "Indicator huidige arbeidsmarktsituatie en verwachte ontwikkeling: UWV, via ROA."
+            ),
+            "ilo": (
+                "Gmyrek, P. et al. (2025). Generative AI and Jobs: A Refined Global Index of Occupational Exposure. "
+                "ILO Working Paper 140. © ILO, CC BY 4.0. This is an adaptation of a copyrighted work of the "
+                "International Labour Organization (ILO). This adaptation has not been prepared, reviewed or endorsed "
+                "by the ILO and should not be considered an official ILO adaptation. The ILO disclaims all responsibility "
+                "for its content and accuracy. Responsibility rests solely with the author(s) of the adaptation."
+            ),
         },
         "correctionsVersion": corrections.get("version"),
     }
@@ -691,11 +706,38 @@ def check() -> None:
     print("check ok: committed catalogue matches the cache")
 
 
+def check_outlook() -> None:
+    from build_outlook import build as build_outlook
+
+    with tempfile.TemporaryDirectory(prefix="outlook-check-") as tmp:
+        out = Path(tmp)
+        build_outlook(out, write_review=False)
+        failed = False
+        for name in ("outlook.json", "occupation-skills.json", "skills.nl.json"):
+            committed = json.loads((OUT / name).read_text(encoding="utf-8"))
+            fresh = json.loads((out / name).read_text(encoding="utf-8"))
+            if committed != fresh:
+                print(f"committed {name} differs from a rebuild", file=sys.stderr)
+                failed = True
+        if failed:
+            raise SystemExit(1)
+    print("check ok: committed outlook matches the cache")
+
+
 def main() -> None:
     if "--check" in sys.argv:
         check()
+        check_outlook()
+        return
+    if "--skills" in sys.argv:
+        from build_outlook import build as build_outlook
+
+        build_outlook(OUT)
         return
     build(OUT, ROOT / "last-diff.md")
+    from build_outlook import build as build_outlook
+
+    build_outlook(OUT)
 
 
 if __name__ == "__main__":

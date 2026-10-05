@@ -31,6 +31,26 @@
       "version": "2014-editie-2025",
       "url": "https://www.cbs.nl/-/media/_excel/2026/17/brc2014.xlsx",
       "sha256": "a38a9344b0602d816db5448a5a329b207c42803d2494e6a3e33a25e23bf84e03"
+    },
+    {
+      "id": "roa-ais-2030-2026",
+      "version": "editie-2026-v5",
+      "url": "https://dataverse.nl/api/access/datafile/674144",
+      "sha256": "3c0b5a7ad0e98ee1785d0415bd24a6fe3457aa3eb283c53230fc4c428482bc38",
+      "note": "AIStot2030_Arbeidsmarktinformatie_editie2026.csv. DataverseNL doi:10.34894/DVQTOG, dataset version 5, CC BY 4.0. A HEAD request returns 403; GET works. Encoding cp1252, delimiter ';'."
+    },
+    {
+      "id": "roa-ais-2030-2026-toelichting",
+      "version": "editie-2026-v5",
+      "url": "https://dataverse.nl/api/access/datafile/674140",
+      "sha256": "b69b587323b9d94a3a287d159a619705a4c1319c6546f9012dc48713b9657432",
+      "note": "AIStot2030_Arbeidsmarktinformatie_editie2026_toelichting.csv. Definitions for the PR."
+    },
+    {
+      "id": "ilo-wp140-genai-isco08",
+      "version": "2025",
+      "url": "https://github.com/pgmyrek/2025_GenAI_scores_ISCO08/raw/main/Final_Scores_ISCO08_Gmyrek_et_al_2025.xlsx",
+      "sha256": "c1940b87e7293b1eb95b530b6d3da7cd806b61d217c4bff1e69372b2cff5c90a"
     }
   ]
 }

@@ -403,9 +403,15 @@ public static class CareerCompassBuilder
         }
 
         // Whole-word only: "sociale" is Dutch, "Social" as type name is jargon.
+        // ISCO, ESCO and gradient are the same: a candidate never needs those names.
+        if (text.Contains("O*NET", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return System.Text.RegularExpressions.Regex.IsMatch(
             text,
-            @"\b(Social|Artistic|DISC)\b",
+            @"\b(Social|Artistic|DISC|ISCO|ESCO|gradient)\b",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
     }
 

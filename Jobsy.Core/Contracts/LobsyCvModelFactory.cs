@@ -45,7 +45,8 @@ public static class LobsyCvModelFactory
                 e.Years,
                 string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim(),
                 NormalizeMonth(e.StartMonth),
-                NormalizeMonth(e.EndMonth)))
+                NormalizeMonth(e.EndMonth),
+                string.IsNullOrWhiteSpace(e.EscoId) ? null : e.EscoId.Trim()))
             .ToList();
 
         var certificates = (preferences.Certificates ?? Array.Empty<CandidateCertificateDto>())

@@ -76,6 +76,10 @@
 
                     @if (_session.LastResult is { } result)
                     {
+                        @if (OutlookFor(result.JobTitle) is { } outlook)
+                        {
+                            <OccupationOutlookBlock Result="outlook" />
+                        }
                         <div class="passport-fit__last">
                             <p class="passport-fit__last-line">
                                 @Culture.Format("Passport.Fit.LastCheck", result.JobTitle)
@@ -240,6 +244,12 @@
 </div>
 
 @code {
+    private static Jobsy.Core.Careers.OccupationOutlookResult? OutlookFor(string? title)
+    {
+        var occupation = Jobsy.Core.Careers.OccupationCatalog.Shared.Resolve(title);
+        return occupation is null ? null : Jobsy.Core.Careers.OccupationOutlook.Shared.Get(occupation.Id);
+    }
+
     [Parameter] public bool Active { get; set; }
     [Parameter] public CandidateKompasState? Snapshot { get; set; }
     [Parameter] public bool OpenForWork { get; set; } = true;

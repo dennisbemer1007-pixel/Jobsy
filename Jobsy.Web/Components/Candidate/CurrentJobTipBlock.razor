@@ -1,0 +1,74 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (_tip is not null)
+{
+    <aside class="job-outlook-tip" aria-labelledby="@_headingId">
+        <h4 id="@_headingId">@Culture["Outlook.GoodToKnow"]</h4>
+        <OccupationOutlookBlock Result="_tip.Outlook" HideTitle="true" />
+        @if (_tip.Outlook.ChangeTasks.Count > 0)
+        {
+            <h5>@Culture["Outlook.WhatChanges"]</h5>
+            <ul>
+                @foreach (var line in _tip.Outlook.ChangeTasks)
+                {
+                    <li>@line</li>
+                }
+            </ul>
+        }
+        @if (_tip.Outlook.HumanTasks.Count > 0)
+        {
+            <h5>@Culture["Outlook.WhatStays"]</h5>
+            <ul>
+                @foreach (var line in _tip.Outlook.HumanTasks)
+                {
+                    <li>@line</li>
+                }
+            </ul>
+        }
+        @if (_tip.Adjacent.Count > 0)
+        {
+            <h5>@Culture["Outlook.Nearby"]</h5>
+            <ul class="job-outlook-tip__jobs">
+                @foreach (var job in _tip.Adjacent)
+                {
+                    <li>
+                        <a href="@($"/candidate/profile?tab=fit&esco={Uri.EscapeDataString(job.EscoId)}")">@job.Title</a>
+                    </li>
+                }
+            </ul>
+        }
+        else if (!string.IsNullOrWhiteSpace(_tip.NoAdjacentMessage))
+        {
+            <p>@(string.Equals(Culture.Language, "nl", StringComparison.OrdinalIgnoreCase)
+                ? _tip.NoAdjacentMessage
+                : Culture["Outlook.NoAdjacent"])</p>
+        }
+        @if (_tip.SkillsToLearn.Count > 0)
+        {
+            <h5>@Culture["Outlook.Learn"]</h5>
+            <ul>
+                @foreach (var skill in _tip.SkillsToLearn)
+                {
+                    <li>@skill</li>
+                }
+            </ul>
+        }
+    </aside>
+}
+
+@code {
+    private readonly string _headingId = "job-tip-" + Guid.NewGuid().ToString("N");
+    private CurrentJobTip? _tip;
+
+    [Parameter] public CandidateEmployerHistoryDto? Entry { get; set; }
+    [Parameter] public RiasecScores? Scores { get; set; }
+    [Parameter] public string? Education { get; set; }
+
+    protected override void OnParametersSet()
+        => _tip = CurrentJobOutlook.TryCreate(Entry, Scores, Education);
+}

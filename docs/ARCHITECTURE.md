@@ -157,13 +157,15 @@ flowchart TB
 
 Candidates see jobs from one generated catalogue, not from a hand-written list.
 
-1. `python3 tools/occupations/fetch.py` downloads the pinned sources into `tools/occupations/.cache/` (gitignored): ESCO v1.2.1 Dutch, the ESCO–O*NET crosswalk, O*NET 31.0 interest files, and the CBS BRC 2014 editie 2025 workbook. Pins and sha256 values are in `tools/occupations/sources.json`.
-2. `python3 tools/occupations/build_catalog.py` writes `Jobsy.Core/Data/Occupations/*.json`. Those files are embedded and committed. The .NET build does not use the network.
+1. `python3 tools/occupations/fetch.py` downloads the pinned sources into `tools/occupations/.cache/` (gitignored): ESCO v1.2.1 Dutch, the ESCO–O*NET crosswalk, O*NET 31.0 interest files, the CBS BRC 2014 editie 2025 workbook, ROA AIS tot 2030 (editie 2026) and ILO Working Paper 140 task scores. Pins and sha256 values are in `tools/occupations/sources.json`.
+2. `python3 tools/occupations/build_catalog.py` writes `Jobsy.Core/Data/Occupations/*.json`, including `outlook.json`, `occupation-skills.json` and `skills.nl.json`. Those files are embedded and committed. The .NET build does not use the network.
 3. `python3 tools/occupations/build_catalog.py --check` rebuilds in a temp directory and fails if the committed JSON changed. It ignores `generatorCommit`. It needs the cache from step 1. A manual GitHub Action `Occupation catalogue check` runs fetch + `--check`. It is `workflow_dispatch` only.
 
 `corrections.json` stores O*NET codes, never interest numbers. A row applies only when its status is `goedgekeurd`. Concept and rejected rows do not change the committed profiles. Approving a row is a data change: set the status, fill `approvedBy` and `approvedOn`, rerun the build, commit. `Occupations:PreviewConceptCorrections` can apply concept rows outside Production. Production ignores that flag.
 
-Update the pins in September, after the O*NET August release. Take a new ESCO version when one is published.
+Update the pins in September, after the O*NET August release and the ROA AIS release. Take a new ESCO version when one is published.
+
+Job outlook text is templates only (`OccupationOutlook`). ROA supplies the demand line up to 2030. ILO Working Paper 140 supplies how far generative AI can reach the tasks. The two highest and two lowest ILO task lines are translated once into `tools/occupations/ilo_tasks_nl.json`. A line is shown only when its status is `goedgekeurd`. Until then the sentence leaves the example out. Reviewers use `tools/occupations/ilo_tasks_nl_review.csv`. The coach may quote those template sentences and no other outlook.
 
 The same `CareerCompassSnapshot` (keyed by ESCO id) feeds the report, the coach, the action plan, `/carriere` and the role-fit check. The model may pick a job from that snapshot. It does not invent a title or a percentage.
 

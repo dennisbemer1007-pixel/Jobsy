@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- Sourced job outlook ("Toekomst van dit werk") on the job check and career job detail, and a calm "Goed om te weten" tip on a confirmed current job. Sentences are templates from ROA AIS tot 2030 (editie 2026) and ILO Working Paper 140. ILO task lines ship as concept translations and stay hidden until `goedgekeurd`. The candidate confirms the ESCO occupation; a CV upload never sets it.
+
+### Added
 - ESCO occupation catalogue: the 39 hand-weighted jobs are replaced by ESCO v1.2.1 (3,039 Dutch occupations) joined to O*NET 31.0 interest profiles. A job without a usable profile (low or no match) shows "Geen score" and no percentage. Listed suggestions are high or medium confidence only. Education uses the CBS ISCO skill level. havo and vwo without a further diploma use the same gate as mbo 4 (NLQF/EQF level 4). The shown match is the weighted average of the six letter scores, kept to two decimals so jobs stay apart, and equal percents share a tier. Next to each shown percent, a “?” button opens a plain explanation of that calculation for this candidate and this job (nl, en, pl, ro, ar). The PDF uses a short footnote from the same numbers. Westland corrections ship as `concept, wacht op akkoord` and do nothing until `goedgekeurd`. New public page `/bronnen`. Pipeline: `tools/occupations/` (fetch, build, `--check`).
 
 ### Added
