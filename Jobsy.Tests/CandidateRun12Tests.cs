@@ -115,8 +115,10 @@ public class CandidateRun12Tests
             "MBO",
             false);
         Assert.NotNull(compare);
-        Assert.Contains("Uit je test blijkt", compare, StringComparison.Ordinal);
-        Assert.DoesNotContain("Dat staat niet in je gegevens", compare, StringComparison.Ordinal);
+        Assert.Contains("tuinbouwmedewerker", compare, StringComparison.Ordinal);
+        Assert.Contains("magazijnmedewerker", compare, StringComparison.Ordinal);
+        Assert.Contains("past beter", compare, StringComparison.Ordinal);
+        Assert.DoesNotContain("niet", compare, StringComparison.OrdinalIgnoreCase);
 
         var arabic = CandidateJobAdvice.TryReply("ar", "ما الوظائف التي تناسبني؟", Profile, "MBO", false);
         Assert.NotNull(arabic);

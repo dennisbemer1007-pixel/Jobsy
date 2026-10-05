@@ -143,7 +143,7 @@ public sealed class CompetenceDeepReportService : ICompetenceDeepReportService
         }
 
         var generatedAt = row.ReportGeneratedAtUtc ?? report.GeneratedAtUtc;
-        if (DateTime.UtcNow - generatedAt < TimeSpan.FromHours(1))
+        if (DateTime.UtcNow - generatedAt < TimeSpan.FromHours(24))
         {
             return;
         }

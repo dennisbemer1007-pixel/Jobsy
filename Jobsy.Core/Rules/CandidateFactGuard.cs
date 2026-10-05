@@ -62,6 +62,11 @@ public static partial class CandidateFactGuard
             return "unknown-job";
         }
 
+        if (DeniesOwnDirection(text))
+        {
+            return "denied-own-direction";
+        }
+
         return null;
     }
 
@@ -75,6 +80,7 @@ public static partial class CandidateFactGuard
         "invented-like" => "Zeg niet wat de persoon leuk vindt. Dat staat niet in de feiten.",
         "unknown-job" => "Noem alleen een beroep uit de toegestane lijst.",
         "unknown-percent" => "Gebruik alleen een percentage uit de feitenlijst.",
+        "denied-own-direction" => "Zeg niet dat een beroep een eigen richting niet heeft.",
         "why-no-direction" => "Elke why-zin noemt één richting uit de feitenlijst.",
         "markdown" => "Geen markdown. Alleen gewone zinnen.",
         "story-rules" => "Schrijf 2 tot 4 alinea's in de ik-vorm, zonder herhaling.",
@@ -399,6 +405,93 @@ public static partial class CandidateFactGuard
 
         return false;
     }
+
+    /// <summary>
+    /// A reply that says job X does not match direction D, while D is one of X's catalogue letters.
+    /// A line about the person's own top directions ("zit niet bij je hoogste") stays.
+    /// </summary>
+    private static bool DeniesOwnDirection(string text)
+    {
+        foreach (var sentence in SplitSentences(text))
+        {
+            if (IsPersonTopDenial(sentence))
+            {
+                continue;
+            }
+
+            foreach (var title in CandidateJobAdvice.TitlesIn(sentence))
+            {
+                if (!NegatesJob(sentence, title))
+                {
+                    continue;
+                }
+
+                foreach (var weight in CareerCompassBuilder.WeightsFor(title))
+                {
+                    if (SentenceNamesDirection(sentence, weight.Code))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsPersonTopDenial(string sentence)
+    {
+        var fold = sentence.ToLowerInvariant();
+        return fold.Contains("hoogste", StringComparison.Ordinal)
+               || fold.Contains("top 3", StringComparison.Ordinal)
+               || fold.Contains("top3", StringComparison.Ordinal)
+               || fold.Contains("your top", StringComparison.Ordinal)
+               || fold.Contains("najwyższ", StringComparison.Ordinal)
+               || fold.Contains("najwyzsz", StringComparison.Ordinal)
+               || fold.Contains("primele", StringComparison.Ordinal)
+               || fold.Contains("أعلى", StringComparison.Ordinal);
+    }
+
+    private static bool NegatesJob(string sentence, string title)
+    {
+        var index = sentence.IndexOf(title, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+        {
+            var head = title.Split('/')[0].Trim();
+            index = head.Length >= 4
+                ? sentence.IndexOf(head, StringComparison.OrdinalIgnoreCase)
+                : -1;
+            if (index < 0)
+            {
+                return false;
+            }
+
+            title = head;
+        }
+
+        var start = Math.Max(0, index - 12);
+        var end = Math.Min(sentence.Length, index + title.Length + 16);
+        var window = sentence[start..end];
+        return JobNegation().IsMatch(window);
+    }
+
+    private static bool SentenceNamesDirection(string sentence, string code)
+    {
+        foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
+        {
+            var label = DimensionLabels.For(code, lang);
+            if (label.Length >= 4 && sentence.Contains(label, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var dutch = CareerCompassBuilder.TypeLabel(code);
+        return dutch.Length >= 4 && sentence.Contains(dutch, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [GeneratedRegex(@"\b(niet|not|nie|nu|doesn't|does not)\b|لا|ليس", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex JobNegation();
 
     private static bool NamesDirection(string why, IReadOnlyList<string> labels)
         => labels.Any(label =>

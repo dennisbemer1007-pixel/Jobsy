@@ -129,10 +129,11 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
                         op B1-niveau en spreek de lezer aan met 'je'. Geen jargon zoals OCEAN, Big Five, RIASEC,
                         DISC. Blijf dicht bij het gegeven profiel; verzin geen feiten die er niet in staan.
                         Noem geen woonplaats of regio. Zeg niet wat de persoon leuk vindt.
-                        Zeg niet dat een trek sterk of positief is als de band laag is (score onder 50).
+                        Zeg niet dat een trek sterk of positief is als de score 50 of lager is.
                         Gebruik 'je scoort' of 'uit je test blijkt', niet 'je werkt graag' of 'you like'.
-                        Gebruik nooit de woorden graag, leuk of fijn.
-                        Noem bij een beroep alleen de richting die bij dat beroep hoort.
+                        Gebruik nooit de woorden graag, leuk, fijn, you like, you enjoy, lubisz, îți place of تحب.
+                        Noem bij een beroep alleen de richting die bij dat beroep hoort, en noem die naam letterlijk.
+                        Zeg nooit dat een beroep een eigen richting niet heeft.
                         """ + "\n" + CandidateFactGuard.StrictAddendum
                 },
                 new { role = "user", content = sb.ToString() }

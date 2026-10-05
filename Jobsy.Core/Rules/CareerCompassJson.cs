@@ -88,7 +88,8 @@ public static class CareerCompassJson
         PracticalNotes = snapshot.PracticalNotes.ToList(),
         FromDeepAnalysis = snapshot.FromDeepAnalysis,
         FromOpenAi = snapshot.FromOpenAi,
-        ScoresFingerprint = string.IsNullOrWhiteSpace(snapshot.ScoresFingerprint) ? null : snapshot.ScoresFingerprint
+        ScoresFingerprint = string.IsNullOrWhiteSpace(snapshot.ScoresFingerprint) ? null : snapshot.ScoresFingerprint,
+        ModelAttemptUtc = snapshot.ModelAttemptUtc
     };
 
     private static OccupationDto ToItem(CareerOccupationMatch match) => new()
@@ -113,6 +114,8 @@ public static class CareerCompassJson
         public bool FromDeepAnalysis { get; set; }
         public bool FromOpenAi { get; set; }
         public string? ScoresFingerprint { get; set; }
+
+        public DateTime? ModelAttemptUtc { get; set; }
     }
 
     public static string ReadScoresFingerprint(string? json)

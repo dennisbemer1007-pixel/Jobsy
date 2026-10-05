@@ -20351,6 +20351,11 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         box-sizing: border-box;
     }
 
+    /* Last tab and an empty test link stay left of the 56px coach. */
+    .app-shell:has([data-lobsy-coach]) .test-page a {
+        margin-inline-end: calc(56px + 16px);
+    }
+
     .mail-settings__label {
         font-size: 1rem;
         line-height: 1.4;

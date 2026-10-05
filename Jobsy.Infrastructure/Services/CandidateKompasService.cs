@@ -156,6 +156,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             cultureProvisional,
             valuesProvisional);
 
+        var (storyTraits, storyFromDeep) = await WhoAmICompetenceLoader.LoadAsync(_db, userId, cancellationToken);
+        var competenceSource = WhoAmICompetenceSource.FingerprintSuffix(storyTraits, storyFromDeep);
         var whoAmI = BuildWhoAmIStory(
             whoAmIRow?.StoryText,
             whoAmIRow?.KeywordsJson,
@@ -172,7 +174,9 @@ public sealed class CandidateKompasService : ICandidateKompasService
             values.Scores,
             WhoAmIProfileHighlights.FromPreferences(prefs),
             features.EmployersEnabled,
-            language);
+            language,
+            storyFromDeep ? storyTraits : null,
+            competenceSource);
 
         return new CandidateKompasDto(
             profile,
@@ -377,6 +381,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             cultureProvisional,
             valuesProvisional);
 
+        var (dnaTraits, dnaDeep) = await WhoAmICompetenceLoader.LoadAsync(_db, userId, cancellationToken);
+        var dnaSource = WhoAmICompetenceSource.FingerprintSuffix(dnaTraits, dnaDeep);
         var whoAmI = BuildWhoAmIStory(
             whoAmIRow?.StoryText,
             whoAmIRow?.KeywordsJson,
@@ -393,7 +399,9 @@ public sealed class CandidateKompasService : ICandidateKompasService
             valuesResolved.Scores,
             WhoAmIProfileHighlights.FromPreferences(prefs),
             features.EmployersEnabled,
-            language);
+            language,
+            dnaDeep ? dnaTraits : null,
+            dnaSource);
 
         bool IsDeepCompleted(AssessmentKind kind)
         {
@@ -469,7 +477,9 @@ public sealed class CandidateKompasService : ICandidateKompasService
         SchwartzValuesScores? values,
         WhoAmIProfileHighlights? highlights = null,
         bool employersEnabled = false,
-        string? language = null)
+        string? language = null,
+        IReadOnlyList<(string Code, int Score)>? competence = null,
+        string? competenceSource = null)
     {
         var keywords = ParseKeywords(keywordsJson);
         var story = string.IsNullOrWhiteSpace(storyText) ? null : storyText.Trim();
@@ -485,7 +495,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
         if (scoresReady && (story is null || !fromOpenAi || lang is not "nl"))
         {
             highlights ??= WhoAmIProfileHighlights.Empty;
-            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values, employersEnabled, language);
+            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values, employersEnabled, language, competence);
             keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values, language);
             if (string.IsNullOrWhiteSpace(storyText))
             {
@@ -507,7 +517,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
         }
 
         highlights ??= WhoAmIProfileHighlights.Empty;
-        var expected = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values);
+        var expected = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values, competenceSource);
         var stale = !string.Equals(storedFingerprint, expected, StringComparison.Ordinal);
         var retryFallback = CandidateInsightsFingerprint.ShouldRetryFallback(
             fromOpenAi,

@@ -315,8 +315,10 @@ public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Jobs
             CulturePersonalityScores culture,
             WhoAmIProfileHighlights? profile = null,
             SchwartzValuesScores? values = null,
+            IReadOnlyList<(string Code, int Score)>? competence = null,
             CancellationToken cancellationToken = default)
         {
+            _ = competence;
             Interlocked.Increment(ref WhoAmICalls);
             // Worker/write path may call this; GETs must keep WhoAmICalls at 0.
             return Task.FromResult(new WhoAmIGeneratedStory(

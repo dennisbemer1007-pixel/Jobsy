@@ -627,7 +627,8 @@ public sealed record CareerCompassSnapshot(
     IReadOnlyList<string> PracticalNotes,
     bool FromDeepAnalysis,
     bool FromOpenAi = false,
-    string ScoresFingerprint = "")
+    string ScoresFingerprint = "",
+    DateTime? ModelAttemptUtc = null)
 {
     /// <summary>UI key for the incomplete-test prompt. The sentence lives in localization.</summary>
     public const string EmptyNoteKey = "Tests.CareerCompass.Empty";

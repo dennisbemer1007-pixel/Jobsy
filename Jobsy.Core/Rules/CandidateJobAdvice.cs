@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Core.Careers;
 using Jobsy.Core.Localization;
 
@@ -14,6 +15,8 @@ public static class CandidateJobAdvice
            && (LooksLikeMotivation(question)
                || LooksLikeComparison(question)
                || LooksLikeJobsList(question)
+               || LooksLikeWorkClaim(question)
+               || LooksLikeEmployerName(question)
                || CandidateCoachScript.Handles(question));
 
     public static string? TryReply(
@@ -24,9 +27,26 @@ public static class CandidateJobAdvice
         bool hasWorkExperience,
         IReadOnlyList<string>? workLines = null,
         IReadOnlyList<(string Code, int Score)>? competence = null,
-        IReadOnlyList<string>? certificates = null)
+        IReadOnlyList<string>? certificates = null,
+        bool employersEnabled = true)
     {
-        if (scores is not { IsComplete: true } || string.IsNullOrWhiteSpace(question))
+        if (string.IsNullOrWhiteSpace(question))
+        {
+            return null;
+        }
+
+        var lang = JobsyLanguages.Normalize(language);
+        if (LooksLikeEmployerName(question) && !employersEnabled)
+        {
+            return EmployerNameHidden(lang);
+        }
+
+        if (LooksLikeWorkClaim(question))
+        {
+            return WorkClaim(lang, question, workLines);
+        }
+
+        if (scores is not { IsComplete: true })
         {
             return null;
         }
@@ -37,7 +57,6 @@ public static class CandidateJobAdvice
             return scripted;
         }
 
-        var lang = JobsyLanguages.Normalize(language);
         if (LooksLikeMotivation(question))
         {
             return Motivation(lang, question, scores, education, hasWorkExperience, workLines);
@@ -80,8 +99,65 @@ public static class CandidateJobAdvice
                           || fold.Contains("porówn", StringComparison.Ordinal)
                           || fold.Contains("compar", StringComparison.Ordinal)
                           || fold.Contains("أفضل", StringComparison.Ordinal)
-                          || fold.Contains("مقارنة", StringComparison.Ordinal);
+                          || fold.Contains("مقارنة", StringComparison.Ordinal)
+                          || fold.Contains("verschil", StringComparison.Ordinal)
+                          || fold.Contains("difference", StringComparison.Ordinal)
+                          || fold.Contains("różnic", StringComparison.Ordinal)
+                          || fold.Contains("roznc", StringComparison.Ordinal)
+                          || fold.Contains("diferen", StringComparison.Ordinal)
+                          || fold.Contains("الفرق", StringComparison.Ordinal)
+                          || OfOrOfPattern.IsMatch(fold);
         return compareWord && TitlesIn(text).Count >= 1;
+    }
+
+    /// <summary>A work-history claim such as "did I work as a forklift driver for five years?".</summary>
+    public static bool LooksLikeWorkClaim(string text)
+    {
+        var fold = text.ToLowerInvariant();
+        var work = fold.Contains("gewerkt", StringComparison.Ordinal)
+                   || fold.Contains("worked", StringComparison.Ordinal)
+                   || fold.Contains("work as", StringComparison.Ordinal)
+                   || fold.Contains("pracowa", StringComparison.Ordinal)
+                   || fold.Contains("lucrat", StringComparison.Ordinal)
+                   || fold.Contains("عملت", StringComparison.Ordinal)
+                   || fold.Contains("أعمل", StringComparison.Ordinal);
+        if (!work)
+        {
+            return false;
+        }
+
+        return YearWord.IsMatch(fold)
+               || TitlesIn(text).Count > 0
+               || fold.Contains("heftruck", StringComparison.Ordinal)
+               || fold.Contains("forklift", StringComparison.Ordinal)
+               || fold.Contains("wózek", StringComparison.Ordinal)
+               || fold.Contains("wozek", StringComparison.Ordinal)
+               || fold.Contains("stivuitor", StringComparison.Ordinal)
+               || fold.Contains("رافعة", StringComparison.Ordinal);
+    }
+
+    public static bool LooksLikeEmployerName(string text)
+    {
+        var fold = text.ToLowerInvariant();
+        var employer = fold.Contains("werkgever", StringComparison.Ordinal)
+                       || fold.Contains("employer", StringComparison.Ordinal)
+                       || fold.Contains("pracodawc", StringComparison.Ordinal)
+                       || fold.Contains("angajator", StringComparison.Ordinal)
+                       || fold.Contains("صاحب العمل", StringComparison.Ordinal);
+        if (!employer)
+        {
+            return false;
+        }
+
+        return fold.Contains("naam", StringComparison.Ordinal)
+               || fold.Contains("name", StringComparison.Ordinal)
+               || fold.Contains("nazw", StringComparison.Ordinal)
+               || fold.Contains("nume", StringComparison.Ordinal)
+               || fold.Contains("اسم", StringComparison.Ordinal)
+               || fold.Contains("wie is", StringComparison.Ordinal)
+               || fold.Contains("who is", StringComparison.Ordinal)
+               || fold.Contains("kto jest", StringComparison.Ordinal)
+               || fold.Contains("cine este", StringComparison.Ordinal);
     }
 
     public static bool LooksLikeJobsList(string text)
@@ -184,7 +260,7 @@ public static class CandidateJobAdvice
         var listed = CareerCompassBuilder.Listed(scores, education);
         var lines = listed.Select((job, index) =>
             $"{index + 1}. {OccupationTitles.ForChat(job.Title, lang)} ({CareerCompassBuilder.FormatPercent(job.Percent)}%)");
-        var list = string.Join(", ", lines);
+        var list = JoinParts(lang, lines.ToList());
         var (label, score) = TopDirection(scores, lang);
         return lang switch
         {
@@ -236,27 +312,50 @@ public static class CandidateJobAdvice
             return NoScoreReply(lang);
         }
 
+        var bestLetters = LetterLabels(best.Title, lang);
+        var otherLetters = LetterLabels(other.Title, lang);
+        var bestShown = CareerCompassBuilder.FormatPercent(bestPercent);
+        var otherShown = CareerCompassBuilder.FormatPercent(otherPercent);
         if (bestPercent == otherPercent)
         {
+            var shared = SharedLetterLabels(best.Title, other.Title, lang);
+            if (shared.Count > 0 && SameLetters(best.Title, other.Title))
+            {
+                var both = JoinLabels(lang, shared);
+                return lang switch
+                {
+                    "en" => $"Both fit you equally ({bestShown}%); both ask for {both}.",
+                    "pl" => $"Oba pasują tak samo ({bestShown}%); oba wymagają {both}.",
+                    "ro" => $"Ambele ți se potrivesc la fel ({bestShown}%); ambele cer {both}.",
+                    "ar" => $"كلاهما يناسبك بنفس الدرجة ({bestShown}%)؛ كلاهما يطلب {both}.",
+                    _ => $"Beide passen even goed ({bestShown}%); ze vragen allebei {both}."
+                };
+            }
+
+            var left = JoinLabels(lang, bestLetters);
+            var right = JoinLabels(lang, otherLetters);
             return lang switch
             {
-                "en" => $"Your test shows {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) and {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%) fit you equally.",
-                "pl" => $"Z twojego testu wynika, że {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) i {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%) pasują tak samo.",
-                "ro" => $"Din testul tău reiese că {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) și {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%) ți se potrivesc la fel.",
-                "ar" => $"يظهر من اختبارك أن {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) و{otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%) يناسبانك بنفس الدرجة.",
-                _ => $"Uit je test blijkt dat {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) en {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%) even goed passen."
+                "en" => $"Both fit you equally ({bestShown}%). {bestName} asks for {left}. {otherName} asks for {right}.",
+                "pl" => $"Oba pasują tak samo ({bestShown}%). {bestName} wymaga {left}. {otherName} wymaga {right}.",
+                "ro" => $"Ambele ți se potrivesc la fel ({bestShown}%). {bestName} cere {left}. {otherName} cere {right}.",
+                "ar" => $"كلاهما يناسبك بنفس الدرجة ({bestShown}%). {bestName} يطلب {left}. {otherName} يطلب {right}.",
+                _ => $"Beide passen even goed ({bestShown}%). {bestName} vraagt {left}. {otherName} vraagt {right}."
             };
         }
 
+        var bestAsk = JoinLabels(lang, bestLetters);
+        var otherAsk = JoinLabels(lang, otherLetters);
         return lang switch
         {
-            "en" => $"Your test shows {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) fits you better than {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%).",
-            "pl" => $"Z twojego testu wynika, że {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) pasuje lepiej niż {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%).",
-            "ro" => $"Din testul tău reiese că {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) ți se potrivește mai bine decât {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%).",
-            "ar" => $"يظهر من اختبارك أن {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) يناسبك أكثر من {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%).",
-            _ => $"Uit je test blijkt dat {bestName} ({CareerCompassBuilder.FormatPercent(bestPercent)}%) beter past dan {otherName} ({CareerCompassBuilder.FormatPercent(otherPercent)}%)."
+            "en" => $"{bestName} fits you better ({bestShown}%) than {otherName} ({otherShown}%). {bestName} asks for {bestAsk}. {otherName} asks for {otherAsk}.",
+            "pl" => $"{bestName} pasuje lepiej ({bestShown}%) niż {otherName} ({otherShown}%). {bestName} wymaga {bestAsk}. {otherName} wymaga {otherAsk}.",
+            "ro" => $"{bestName} ți se potrivește mai bine ({bestShown}%) decât {otherName} ({otherShown}%). {bestName} cere {bestAsk}. {otherName} cere {otherAsk}.",
+            "ar" => $"{bestName} يناسبك أكثر ({bestShown}%) من {otherName} ({otherShown}%). {bestName} يطلب {bestAsk}. {otherName} يطلب {otherAsk}.",
+            _ => $"{bestName} past beter ({bestShown}%) dan {otherName} ({otherShown}%). {bestName} vraagt {bestAsk}. {otherName} vraagt {otherAsk}."
         };
     }
+
 
     private static string NoScoreReply(string lang) => lang switch
     {
@@ -266,6 +365,172 @@ public static class CandidateJobAdvice
         "ar" => "ليس لدينا مصدر موثوق لنقارن هذه المهنة بملفك.",
         _ => OccupationCopy.NoScoreSentence
     };
+
+    private static string WorkClaim(string lang, string question, IReadOnlyList<string>? workLines)
+    {
+        var lines = (workLines ?? [])
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => OccupationTitles.LocalizeWorkLine(line, lang))
+            .Where(line => line.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var asked = AskedWorkNeedles(question);
+        var hit = lines.FirstOrDefault(line =>
+            asked.Any(needle => line.Contains(needle, StringComparison.OrdinalIgnoreCase)));
+        if (hit is not null && !YearsDisagree(question, hit))
+        {
+            return lang switch
+            {
+                "en" => $"Yes. Your profile lists {hit}.",
+                "pl" => $"Tak. W twoim profilu jest {hit}.",
+                "ro" => $"Da. În profilul tău este {hit}.",
+                "ar" => $"نعم. في ملفك {hit}.",
+                _ => $"Ja. In je profiel staat {hit}."
+            };
+        }
+
+        if (lines.Count == 0)
+        {
+            return lang switch
+            {
+                "en" => "No, that is not in your profile. You have no work in your profile yet.",
+                "pl" => "Nie, tego nie ma w twoim profilu. Nie masz jeszcze pracy w profilu.",
+                "ro" => "Nu, asta nu este în profilul tău. Nu ai încă muncă în profil.",
+                "ar" => "لا، هذا ليس في ملفك. لا يوجد عمل في ملفك بعد.",
+                _ => "Nee, dat staat niet in je profiel. Je hebt nog geen werk in je profiel."
+            };
+        }
+
+        var only = JoinParts(lang, lines);
+        return lang switch
+        {
+            "en" => $"No, that is not in your profile. You only have {only}.",
+            "pl" => $"Nie, tego nie ma w twoim profilu. Masz tylko {only}.",
+            "ro" => $"Nu, asta nu este în profilul tău. Ai doar {only}.",
+            "ar" => $"لا، هذا ليس في ملفك. لديك فقط {only}.",
+            _ => $"Nee, dat staat niet in je profiel. Je hebt alleen {only}."
+        };
+    }
+
+    private static string EmployerNameHidden(string lang) => lang switch
+    {
+        "en" => "The name is not shown.",
+        "pl" => "Nazwa nie jest pokazywana.",
+        "ro" => "Numele nu este arătat.",
+        "ar" => "الاسم غير معروض.",
+        _ => "De naam wordt niet getoond."
+    };
+
+    private static List<string> AskedWorkNeedles(string question)
+    {
+        var needles = new List<string>();
+        foreach (var title in TitlesIn(question))
+        {
+            needles.Add(title);
+            var head = title.Split('/')[0].Trim();
+            if (head.Length >= 4)
+            {
+                needles.Add(head);
+            }
+        }
+
+        var fold = question.ToLowerInvariant();
+        if (fold.Contains("heftruck", StringComparison.Ordinal)
+            || fold.Contains("forklift", StringComparison.Ordinal)
+            || fold.Contains("wózek", StringComparison.Ordinal)
+            || fold.Contains("wozek", StringComparison.Ordinal)
+            || fold.Contains("stivuitor", StringComparison.Ordinal)
+            || fold.Contains("رافعة", StringComparison.Ordinal))
+        {
+            needles.Add("heftruck");
+            needles.Add("Heftruck");
+            needles.Add("forklift");
+        }
+
+        return needles;
+    }
+
+    private static bool YearsDisagree(string question, string line)
+    {
+        var asked = Regex.Match(question, @"\b(\d{1,2})\s*(jaar|years|lat|ani)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (!asked.Success)
+        {
+            return false;
+        }
+
+        var inLine = Regex.Match(line, @"\((\d{1,2})\s*jaar\)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return inLine.Success && inLine.Groups[1].Value != asked.Groups[1].Value;
+    }
+
+    private static List<string> LetterLabels(string title, string lang)
+    {
+        var weights = CareerCompassBuilder.WeightsFor(title);
+        var labels = weights
+            .Select(weight => DimensionLabels.For(weight.Code, lang))
+            .Where(label => !string.IsNullOrWhiteSpace(label))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (labels.Count == 0)
+        {
+            labels.Add(DimensionLabels.For(CareerCompassBuilder.PrimaryCode(title), lang));
+        }
+
+        return labels;
+    }
+
+    private static List<string> SharedLetterLabels(string left, string right, string lang)
+    {
+        var rightCodes = CareerCompassBuilder.WeightsFor(right).Select(weight => weight.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return CareerCompassBuilder.WeightsFor(left)
+            .Where(weight => rightCodes.Contains(weight.Code))
+            .Select(weight => DimensionLabels.For(weight.Code, lang))
+            .Where(label => !string.IsNullOrWhiteSpace(label))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static bool SameLetters(string left, string right)
+    {
+        var a = CareerCompassBuilder.WeightsFor(left).Select(weight => weight.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var b = CareerCompassBuilder.WeightsFor(right).Select(weight => weight.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return a.SetEquals(b);
+    }
+
+    private static string JoinLabels(string lang, IReadOnlyList<string> labels) => JoinParts(lang, labels);
+
+    private static string JoinParts(string lang, IReadOnlyList<string> items)
+    {
+        if (items.Count == 0)
+        {
+            return "";
+        }
+
+        if (items.Count == 1)
+        {
+            return items[0];
+        }
+
+        var and = lang switch
+        {
+            "pl" => "i",
+            "ro" => "și",
+            "ar" => "و",
+            "en" => "and",
+            _ => "en"
+        };
+        var comma = lang is "ar" ? "، " : ", ";
+        return items.Count == 2
+            ? $"{items[0]} {and} {items[1]}"
+            : string.Join(comma, items.Take(items.Count - 1)) + " " + and + " " + items[^1];
+    }
+
+    private static readonly Regex OfOrOfPattern = new(
+        @"\bof\b.+\bof\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex YearWord = new(
+        @"\b(jaar|years|year|lat|ani)\b|سنوات|سنة",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static string Motivation(
         string lang,
@@ -299,7 +564,7 @@ public static class CandidateJobAdvice
         var direction = DimensionLabels.For(directionCode, lang);
         var directionFits = directionScore >= 50;
         var work = hasWorkExperience && workLines is { Count: > 0 }
-            ? string.Join(", ", workLines.Take(2))
+            ? JoinParts(lang, workLines.Take(2).ToList())
             : null;
 
         if (string.IsNullOrWhiteSpace(work))

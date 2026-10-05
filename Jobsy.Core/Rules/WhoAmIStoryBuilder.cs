@@ -17,7 +17,8 @@ public static class WhoAmIStoryBuilder
         WhoAmIProfileHighlights? profile = null,
         SchwartzValuesScores? values = null,
         bool employersEnabled = true,
-        string? language = null)
+        string? language = null,
+        IReadOnlyList<(string Code, int Score)>? competence = null)
     {
         var careerTop = TopLabels(
             CareerTestCatalog.RiasecCodes.Select(c => (c, CareerCompassBuilder.TypeLabel(c), career.Get(c))),
@@ -25,9 +26,7 @@ public static class WhoAmIStoryBuilder
         var cultureTop = TopLabels(
             CulturePersonalityCatalog.CategoryCodes.Select(c => (c, CulturePersonalityCatalog.EverydayLabel(c), culture.Get(c))),
             2);
-        var compTop = TopLabels(
-            CompetencyTestCatalog.QuickScanCategories.Select(c => (c, WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
-            3);
+        var compTop = StrengthLabels(competence, competency, "nl");
         var valuesTop = values is { IsComplete: true }
             ? TopLabels(
                 SchwartzValuesCatalog.CategoryCodes.Select(c => (c, SchwartzValuesCatalog.EverydayLabel(c), values.Get(c))),
@@ -38,7 +37,7 @@ public static class WhoAmIStoryBuilder
         var lang = JobsyLanguages.Normalize(language);
         if (lang is not ("" or "nl"))
         {
-            return Sanitize(BuildTranslated(lang, career, culture, competency, values, profile, keywords, employersEnabled)) ?? Fallback;
+            return Sanitize(BuildTranslated(lang, career, culture, competency, values, profile, keywords, employersEnabled, competence)) ?? Fallback;
         }
 
         var sb = new StringBuilder();
@@ -82,10 +81,8 @@ public static class WhoAmIStoryBuilder
             sb.AppendLine();
         }
 
-        sb.Append("Op de werkvloer is mijn kracht ");
-        sb.Append(JoinDutch(compTop));
-        sb.Append(". Ik wil werk waarin ik dat elke dag laat zien.");
-        if (!string.IsNullOrWhiteSpace(profile.HomeCity))
+        AppendStrength(sb, "nl", compTop);
+        if (compTop.Count > 0 && !string.IsNullOrWhiteSpace(profile.HomeCity))
         {
             sb.Append(" Dat doe ik in ");
             sb.Append(profile.HomeCity.Trim());
@@ -121,12 +118,13 @@ public static class WhoAmIStoryBuilder
         SchwartzValuesScores? values,
         WhoAmIProfileHighlights profile,
         IReadOnlyList<string> keywords,
-        bool employersEnabled)
+        bool employersEnabled,
+        IReadOnlyList<(string Code, int Score)>? competence)
     {
         string Label(string code) => DimensionLabels.For(code, lang);
         var careerTop = TopLabels(CareerTestCatalog.RiasecCodes.Select(c => (c, Label(c), career.Get(c))), 2);
         var cultureTop = TopLabels(CulturePersonalityCatalog.CategoryCodes.Select(c => (c, Label(c), culture.Get(c))), 2);
-        var compTop = TopLabels(CompetencyTestCatalog.QuickScanCategories.Select(c => (c, Label(c), competency.Get(c))), 3);
+        var compTop = StrengthLabels(competence, competency, lang);
         var valuesTop = values is { IsComplete: true }
             ? TopLabels(SchwartzValuesCatalog.CategoryCodes.Select(c => (c, Label(c), values.Get(c))), 2)
             : [];
@@ -137,12 +135,12 @@ public static class WhoAmIStoryBuilder
             "ar" => "و",
             _ => "and"
         };
-        string Join(IReadOnlyList<string> items) => JoinWith(items, and);
+        string Join(IReadOnlyList<string> items) => JoinWith(items, and, lang is "ar" ? "، " : ", ");
 
         var sb = new StringBuilder();
         sb.Append(lang switch
         {
-            "pl" => "Najlepiej pracuję, gdy skupiam się na ",
+            "pl" => "Najlepiej pracuję, gdy chodzi o: ",
             "ro" => "Lucrez cel mai bine când mă concentrez pe ",
             "ar" => "أعمل بأفضل شكل عندما أركز على ",
             _ => "I do my best work when I focus on "
@@ -234,22 +232,8 @@ public static class WhoAmIStoryBuilder
             sb.AppendLine();
         }
 
-        sb.Append(lang switch
-        {
-            "pl" => "W pracy moją siłą jest ",
-            "ro" => "La lucru puterea mea este ",
-            "ar" => "في العمل قوتي هي ",
-            _ => "At work my strength is "
-        });
-        sb.Append(Join(compTop));
-        sb.Append(lang switch
-        {
-            "pl" => ". Chcę pracy, w której pokazuję to każdego dnia.",
-            "ro" => ". Vreau muncă în care arăt asta în fiecare zi.",
-            "ar" => ". أريد عملاً أُظهر فيه ذلك كل يوم.",
-            _ => ". I want work where I show that every day."
-        });
-        if (!string.IsNullOrWhiteSpace(profile.HomeCity))
+        AppendStrength(sb, lang, compTop);
+        if (compTop.Count > 0 && !string.IsNullOrWhiteSpace(profile.HomeCity))
         {
             sb.Append(lang switch
             {
@@ -262,6 +246,13 @@ public static class WhoAmIStoryBuilder
             sb.Append('.');
         }
 
+        sb.Append(lang switch
+        {
+            "pl" => " W zespole, na który można liczyć.",
+            "ro" => " Într-o echipă pe care te poți baza.",
+            "ar" => " مع فريق يمكن الاعتماد عليه.",
+            _ => " With a team that can count on each other."
+        });
         sb.AppendLine();
         sb.AppendLine();
         if (keywords.Count > 0)
@@ -280,13 +271,96 @@ public static class WhoAmIStoryBuilder
         return sb.ToString();
     }
 
-    private static string JoinWith(IReadOnlyList<string> items, string and) => items.Count switch
+    private static string JoinWith(IReadOnlyList<string> items, string and, string comma = ", ") => items.Count switch
     {
         0 => "",
         1 => items[0],
         2 => $"{items[0]} {and} {items[1]}",
-        _ => string.Join(", ", items.Take(items.Count - 1)) + " " + and + " " + items[^1]
+        _ => string.Join(comma, items.Take(items.Count - 1)) + " " + and + " " + items[^1]
     };
+
+    /// <summary>Traits at 50 or higher. One trait uses the singular line. None drops the line.</summary>
+    private static List<string> StrengthLabels(
+        IReadOnlyList<(string Code, int Score)>? competence,
+        CompetencyScores competency,
+        string? lang)
+    {
+        IEnumerable<(string Code, int Score)> source = competence is not null
+            ? competence
+            : CompetencyTestCatalog.QuickScanCategories.Select(code => (code, competency.Get(code)));
+        return source
+            .Where(item => item.Score >= 50 && !string.IsNullOrWhiteSpace(item.Code))
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => item.Code, StringComparer.Ordinal)
+            .Select(item => DimensionLabels.For(item.Code, lang))
+            .Where(label => !string.IsNullOrWhiteSpace(label) && !CareerCompassBuilder.ContainsForbiddenJargon(label))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(3)
+            .ToList();
+    }
+
+    private static void AppendStrength(StringBuilder sb, string lang, IReadOnlyList<string> labels)
+    {
+        if (labels.Count == 0)
+        {
+            return;
+        }
+
+        if (lang is "" or "nl")
+        {
+            if (labels.Count == 1)
+            {
+                sb.Append("Mijn sterkste kant is ");
+                sb.Append(LowerInside(labels[0]));
+            }
+            else
+            {
+                sb.Append("Op de werkvloer is mijn kracht ");
+                sb.Append(JoinDutch(labels));
+            }
+
+            sb.Append(". Ik wil werk waarin ik dat elke dag laat zien.");
+            return;
+        }
+
+        if (labels.Count == 1)
+        {
+            sb.Append(lang switch
+            {
+                "pl" => "Moja najmocniejsza strona to ",
+                "ro" => "Partea mea cea mai puternică este ",
+                "ar" => "أقوى جانب لدي هو ",
+                _ => "My strongest side is "
+            });
+            sb.Append(labels[0]);
+        }
+        else
+        {
+            sb.Append(lang switch
+            {
+                "pl" => "W pracy moją siłą jest ",
+                "ro" => "La lucru puterea mea este ",
+                "ar" => "في العمل قوتي هي ",
+                _ => "At work my strength is "
+            });
+            var and = lang switch
+            {
+                "pl" => "i",
+                "ro" => "și",
+                "ar" => "و",
+                _ => "and"
+            };
+            sb.Append(JoinWith(labels, and, lang is "ar" ? "، " : ", "));
+        }
+
+        sb.Append(lang switch
+        {
+            "pl" => ". Chcę pracy, w której pokazuję to każdego dnia.",
+            "ro" => ". Vreau muncă în care arăt asta în fiecare zi.",
+            "ar" => ". أريد عملاً أُظهر فيه ذلك كل يوم.",
+            _ => ". I want work where I show that every day."
+        });
+    }
 
     /// <summary>Hide the employer line while that feature is off. The Dutch template is translated on display.</summary>
     public static string ForDisplay(string? story, bool employersEnabled)

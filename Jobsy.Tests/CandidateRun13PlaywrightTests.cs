@@ -15,15 +15,24 @@ public class CandidateRun13PlaywrightTests
     {
         await using var page = await OpenAsync(390, 844, PageHtml());
         var tab = await page.Locator("#career-tab").BoundingBoxAsync();
+        var link = await page.Locator("#empty-link").BoundingBoxAsync();
         var button = await page.Locator("#lobsy-coach-btn").BoundingBoxAsync();
         Assert.NotNull(tab);
         Assert.NotNull(button);
-        var overlaps = tab!.X < button!.X + button.Width
-                       && tab.X + tab.Width > button.X
-                       && tab.Y < button.Y + button.Height
-                       && tab.Y + tab.Height > button.Y;
-        Assert.False(overlaps, $"Carrière tab ({tab.X},{tab.Y},{tab.Width}x{tab.Height}) overlaps the coach button.");
+        Assert.False(Overlaps(tab, button), $"Carrière tab ({tab!.X},{tab.Y},{tab.Width}x{tab.Height}) overlaps the coach button.");
+        if (link is not null && link.Width > 0 && link.Height > 0)
+        {
+            Assert.False(Overlaps(link, button), "The values link overlaps the coach button.");
+        }
     }
+
+    private static bool Overlaps(Microsoft.Playwright.LocatorBoundingBoxResult? left, Microsoft.Playwright.LocatorBoundingBoxResult? right)
+        => left is not null
+           && right is not null
+           && left.X < right.X + right.Width
+           && left.X + left.Width > right.X
+           && left.Y < right.Y + right.Height
+           && left.Y + left.Height > right.Y;
 
     private static async Task<IPage> OpenAsync(int width, int height, string html)
     {
@@ -51,12 +60,14 @@ public class CandidateRun13PlaywrightTests
                + "<style>" + css + "</style></head><body>"
                + "<div class=\"app-shell\" data-lobsy-coach>"
                + "<main class=\"app-main\">"
-               + "<div class=\"passport-tabs\" style=\"position:fixed;left:0;right:0;bottom:88px;display:flex;gap:8px\">"
-               + "<button type=\"button\">Overzicht</button>"
-               + "<button type=\"button\" id=\"career-tab\">Carrière</button>"
+               + "<div class=\"passport-tabs\" style=\"position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:flex-end;align-items:center;height:56px\">"
+               + "<button type=\"button\" class=\"passport-tab\" id=\"career-tab\">Carrière</button>"
+               + "</div>"
+               + "<div class=\"test-page\" style=\"position:fixed;left:0;right:0;bottom:12px;height:56px;display:flex;align-items:center;justify-content:flex-end\">"
+               + "<a id=\"empty-link\" href=\"/profiel/tests/values\" style=\"display:inline-block;width:40px;height:40px\"></a>"
                + "</div></main>"
-               + "<div class=\"lobsy-coach-dock\" data-lobsy-coach style=\"position:fixed;right:12px;bottom:88px\">"
-               + "<button type=\"button\" id=\"lobsy-coach-btn\" class=\"lobsy-coach-dock__btn\" style=\"width:56px;height:56px\" aria-label=\"Coach\"></button>"
+               + "<div class=\"lobsy-coach-dock\" data-lobsy-coach>"
+               + "<button type=\"button\" id=\"lobsy-coach-btn\" class=\"lobsy-coach-dock__btn\" aria-label=\"Coach\"></button>"
                + "</div></div></body></html>";
     }
 }

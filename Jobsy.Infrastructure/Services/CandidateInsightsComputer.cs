@@ -292,7 +292,10 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
             return;
         }
 
-        var fingerprint = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values);
+        var (competenceTraits, competenceDeep) = await WhoAmICompetenceLoader.LoadAsync(_db, userId, cancellationToken);
+        var competenceSource = WhoAmICompetenceSource.FingerprintSuffix(competenceTraits, competenceDeep);
+        var competence = competenceDeep ? competenceTraits : null;
+        var fingerprint = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values, competenceSource);
         var stored = await _db.CandidateWhoAmIProfiles
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         var now = DateTime.UtcNow;
@@ -308,19 +311,22 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
                       && WhoAmIStoryBuilder.Accepts(sanitized, highlights, competency, culture, career, values);
         }
 
-        var shouldGenerate = stored is not null
-                             && CandidateInsightsFingerprint.ShouldGenerateWhoAmI(
-                                 fingerprintMatch,
-                                 stored.FromOpenAi,
-                                 storyOk,
-                                 stored.LastAttemptUtc,
-                                 now);
-        if (stored is null || !shouldGenerate)
+        var forced = WhoAmIForceRegeneration.Consume(userId);
+        var shouldGenerate = forced
+                             || (stored is not null
+                                 && WhoAmIForceRegeneration.ShouldGenerate(
+                                     fingerprintMatch,
+                                     stored.FromOpenAi,
+                                     storyOk,
+                                     stored.LastAttemptUtc,
+                                     now,
+                                     forced: false));
+        if (!shouldGenerate)
         {
             if (stored is null || !fingerprintMatch)
             {
                 await StoreLocalWhoAmIAsync(
-                    userId, stored, competency, career, culture, highlights, values, fingerprint, now, cancellationToken);
+                    userId, stored, competency, career, culture, highlights, values, fingerprint, now, cancellationToken, competence);
             }
 
             return;
@@ -328,11 +334,6 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
 
         try
         {
-            stored!.LastAttemptUtc = now;
-            stored.UpdatedAtUtc = now;
-            await _db.SaveChangesAsync(cancellationToken);
-            var generated = await _whoAmIGenerate.GenerateAsync(
-                competency, career, culture, highlights, values, cancellationToken);
             if (stored is null)
             {
                 stored = new CandidateWhoAmIProfile
@@ -344,7 +345,16 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
                 _db.CandidateWhoAmIProfiles.Add(stored);
             }
 
-            stored.StoryText = generated.Story ?? "";
+            stored.LastAttemptUtc = now;
+            stored.UpdatedAtUtc = now;
+            await _db.SaveChangesAsync(cancellationToken);
+            var generated = await _whoAmIGenerate.GenerateAsync(
+                competency, career, culture, highlights, values, competence, cancellationToken);
+            var employersForStory = await _features.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+            var storyText = generated.FromOpenAi
+                ? generated.Story ?? ""
+                : WhoAmIStoryBuilder.Build(competency, career, culture, highlights, values, employersForStory, competence: competence);
+            stored.StoryText = storyText;
             stored.KeywordsJson = JsonSerializer.Serialize(generated.Keywords, Json);
             stored.InputFingerprint = fingerprint;
             stored.FromOpenAi = generated.FromOpenAi;
@@ -369,10 +379,11 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
         SchwartzValuesScores? values,
         string fingerprint,
         DateTime now,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyList<(string Code, int Score)>? competence = null)
     {
         var employers = await _features.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
-        var story = WhoAmIStoryBuilder.Build(competency, career, culture, highlights, values, employers);
+        var story = WhoAmIStoryBuilder.Build(competency, career, culture, highlights, values, employers, competence: competence);
         var keywords = WhoAmIKeywords.FromScores(competency, career, culture, values);
         if (stored is null)
         {
@@ -398,7 +409,7 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
     {
         try
         {
-            // Retries a stale (>1h old, template-only) AI summary when a prior completion-time
+            // Retries a stale (>24h old, template-only) AI summary when a prior completion-time
             // AI call failed or timed out.
             await _competenceReport.RefineAiAsync(userId, cancellationToken);
 

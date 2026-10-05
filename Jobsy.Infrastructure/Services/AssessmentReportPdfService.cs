@@ -168,7 +168,32 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 var compass = CareerCompassJson.TryDeserialize(careerRow?.CompassJson);
                 if (compass is not { HasOccupations: true })
                 {
-                    compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                    var riasec = DeepAnalysisCatalog.ToRiasecScores(
+                        DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career));
+                    var scoresKey = CareerCompassBuilder.ScoresKey(riasec);
+                    var attemptAt = DateTime.UtcNow;
+                    if (CareerCompassAttempt.TryBegin(userId, careerRow?.CompassJson, scoresKey, attemptAt))
+                    {
+                        try
+                        {
+                            compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                            compass = compass with { ScoresFingerprint = scoresKey, ModelAttemptUtc = attemptAt };
+                            if (careerRow is not null)
+                            {
+                                careerRow.CompassJson = CareerCompassJson.Serialize(compass);
+                                careerRow.UpdatedAtUtc = attemptAt;
+                                await _db.SaveChangesAsync(cancellationToken);
+                            }
+                        }
+                        finally
+                        {
+                            CareerCompassAttempt.End(userId, scoresKey);
+                        }
+                    }
+                    else
+                    {
+                        compass = CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true);
+                    }
                 }
 
                 if (!employersOn)

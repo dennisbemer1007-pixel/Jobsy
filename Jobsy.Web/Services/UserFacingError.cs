@@ -77,6 +77,7 @@ public sealed class UserFacingError
         "vacancy_delete_not_allowed" => "AdminVacancy.DeleteOffline",
         "reset_reason_length" => "AdminUsers.ResetTestsReasonInvalid",
         "test_account_reset_only" => "AdminUsers.ResetTestsNotTest",
+        "test_account_story_only" => "AdminUsers.RegenerateStoryNotTest",
         _ => "Common.Error.TryAgain"
     };
 
