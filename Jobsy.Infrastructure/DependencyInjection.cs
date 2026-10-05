@@ -1,21 +1,21 @@
 using Jobsy.Core.Careers;
-using Jobsy.Core.Geo;
 using Jobsy.Core.Admin;
 using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Geo;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
+using Jobsy.Core.Reminders;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
-using Jobsy.Core.Reminders;
 using Jobsy.Infrastructure.Jobs;
-using Jobsy.Infrastructure.Reminders;
 using Jobsy.Infrastructure.Ops;
+using Jobsy.Infrastructure.Reminders;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
@@ -528,6 +528,17 @@ public static class DependencyInjection
         services.AddScoped<IWhoAmIService, WhoAmIService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
+        services.AddOptions<UploadScanOptions>()
+            .Bind(configuration.GetSection(UploadScanOptions.SectionName));
+        // ClamAV stays off until UploadScan:Enabled. No AI body logger on this client.
+        services.AddHttpClient(UploadMalwareScanner.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(130);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddSingleton<IUploadMalwareScanner, UploadMalwareScanner>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
         services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
         // KB-FALLBACK(D): paspoort 06 absent — no down-rank / "Staat lager".

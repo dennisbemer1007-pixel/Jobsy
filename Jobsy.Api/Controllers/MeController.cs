@@ -11,6 +11,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
+using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
@@ -21,6 +22,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Api.Controllers;
 
@@ -48,6 +52,10 @@ public partial class MeController : ControllerBase
     private readonly ICandidateInsightsQueue _insightsQueue;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ITransactionalMailer _mailer;
+    private readonly IUploadMalwareScanner _malwareScanner;
+    private readonly IOptions<UploadScanOptions> _uploadScan;
+    private readonly IHostEnvironment _environment;
+    private readonly ILogger<MeController> _logger;
     private const string VacancySourceLanguage = "nl";
 
     public MeController(
@@ -62,7 +70,11 @@ public partial class MeController : ControllerBase
         ICvExtractionService cvExtraction,
         ICandidateInsightsQueue insightsQueue,
         ICandidateMatchSnapshotService matchSnapshots,
-        ITransactionalMailer mailer)
+        ITransactionalMailer mailer,
+        IUploadMalwareScanner malwareScanner,
+        IOptions<UploadScanOptions> uploadScan,
+        IHostEnvironment environment,
+        ILogger<MeController> logger)
     {
         _companyAuth = companyAuth;
         _users = users;
@@ -76,6 +88,10 @@ public partial class MeController : ControllerBase
         _insightsQueue = insightsQueue;
         _matchSnapshots = matchSnapshots;
         _mailer = mailer;
+        _malwareScanner = malwareScanner;
+        _uploadScan = uploadScan;
+        _environment = environment;
+        _logger = logger;
     }
 
     [HttpGet("access")]
@@ -925,6 +941,24 @@ public partial class MeController : ControllerBase
         await using var buffer = new MemoryStream();
         await file.CopyToAsync(buffer, cancellationToken);
         var bytes = buffer.ToArray();
+
+        if (!CandidateCvFileRules.TryValidateBytes(bytes, contentType, out var bytesError))
+        {
+            return BadRequest(new { message = bytesError });
+        }
+
+        var scan = await _malwareScanner.ScanAsync(bytes, cancellationToken);
+        var failClosed = _uploadScan.Value.RejectWhenUnavailable(_environment.IsDevelopment());
+        if (!UploadScanRules.TryAccept(scan, failClosed, out var scanError))
+        {
+            _logger.LogWarning(
+                "CV-upload geweigerd. UserId={UserId} SizeBytes={SizeBytes} Verdict={Verdict} Threat={Threat}",
+                user.Id,
+                bytes.Length,
+                scan.Verdict,
+                scan.ThreatName);
+            return BadRequest(new { message = scanError });
+        }
 
         var existing = await _db.CandidateUploadedCvs.FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
         if (existing is null)

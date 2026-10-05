@@ -357,3 +357,7 @@ cd /app && dotnet Jobsy.Api.dll test-accounts status
 **Dashboard (Acceptatie → `lobsy-acc-api`):** set `TestAccounts__Enabled=true` and one secret per role (`TestAccounts__Password__Candidate`, `CandidateNew`, `BranchManager`, `EnterpriseManager`, `RegionalManager`, `Intermediary`, `SalesManager`, `Admin`, `Ambassadeur`, and when needed `Teacher` / `SchoolAdmin`). Passwords never go in git. On `lobsy-acc-web` set `Lobsy__DeploymentEnvironment=Acceptatie` and `TestAccounts__Enabled=true` (no passwords). Production keeps `Lobsy__DeploymentEnvironment=Production` and `TestAccounts__Enabled=false`.
 
 Hard guard: Acceptatie marker + switch + `lobsy-acc-*` service name + allowlisted public host + database name `lobsy` + stub payments / no `live_` Mollie + non-Development host. Never run this CLI against production.
+
+## CV-virusscan (ClamAV, optioneel)
+
+Standaard uit. Magic-byte checks op `POST /api/me/cv` draaien altijd. Knoppen en een EU-pad (zelf-gehoste ClamAV, geen Amerikaans scan-SaaS): [`cv-upload-malware-scan.md`](cv-upload-malware-scan.md). Zet de scan pas aan als clamd bereikbaar is; anders weigert Acceptatie/productie elke CV-upload (fail-closed).
