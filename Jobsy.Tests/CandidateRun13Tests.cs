@@ -72,12 +72,12 @@ public class CandidateRun13Tests
         var letters = CareerTestCatalog.RiasecCodes.Select(Profile.Get).ToList();
         var floor = letters.Min();
         var ceiling = letters.Max();
-        Assert.Equal(59, CareerCompassBuilder.ProfileMatch([7, 1.97, 1.59, 1.66, 2.09, 3.35], Profile));
+        Assert.Equal(59.13m, CareerCompassBuilder.ProfileMatch([7, 1.97, 1.59, 1.66, 2.09, 3.35], Profile));
         Assert.Null(CareerCompassBuilder.CatalogueFit("dit beroep bestaat niet xyz", Profile, "MBO"));
         foreach (var job in OccupationCatalog.Shared.Listable)
         {
             var match = CareerCompassBuilder.ProfileMatch(job.Oi!, Profile);
-            Assert.InRange(match, floor, ceiling);
+            Assert.InRange(match, (decimal)floor, (decimal)ceiling);
         }
     }
 

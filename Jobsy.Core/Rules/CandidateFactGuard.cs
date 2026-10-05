@@ -526,7 +526,7 @@ public static partial class CandidateFactGuard
         return false;
     }
 
-    private static bool JobPercentAllowed(string? title, int percent, CandidateFactSheet sheet)
+    private static bool JobPercentAllowed(string? title, decimal percent, CandidateFactSheet sheet)
     {
         var publishes = sheet.Scores.Any(line => line.Contains('→') && line.Contains('%'));
         if (!publishes)
@@ -542,7 +542,7 @@ public static partial class CandidateFactGuard
 
         return sheet.Scores.Any(line =>
             line.Contains(canonical, StringComparison.OrdinalIgnoreCase)
-            && line.Contains($": {percent}%", StringComparison.Ordinal));
+            && line.Contains($": {CareerCompassBuilder.FormatPercent(percent)}%", StringComparison.Ordinal));
     }
 
     private static bool MentionsUnknownJob(string text, CandidateFactSheet sheet)

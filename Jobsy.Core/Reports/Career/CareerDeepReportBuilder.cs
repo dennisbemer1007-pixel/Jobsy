@@ -43,7 +43,7 @@ public static class CareerDeepReportBuilder
                 var why = CandidateFactGuard.WithoutInventedHistory(
                     m.Why,
                     prose,
-                    $"Dit beroep sluit aan bij hoe jij scoort ({m.Percent}%).");
+                    $"Dit beroep sluit aan bij hoe jij scoort ({CareerCompassBuilder.FormatPercent(m.Percent)}%).");
                 return new DeepOccupationFit
                 {
                     TitleNl = m.Title,

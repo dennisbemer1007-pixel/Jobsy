@@ -45,7 +45,10 @@ public static class RoleFitCheckBuilder
     {
         var title = NormalizeTitle(jobTitle) ?? "deze functie";
         var occupation = CareerCompassBuilder.WeightedOccupation(title);
-        var interestPercent = CareerCompassBuilder.CatalogueFit(title, career) ?? Average(career);
+        var sourcedFit = CareerCompassBuilder.CatalogueFit(title, career);
+        var interestPercent = sourcedFit is decimal fit
+            ? (int)decimal.Round(fit, 0, MidpointRounding.AwayFromZero)
+            : Average(career);
         var competencePercent = CompetenceFit(occupation, competencies);
         var culturePercent = culture is { IsComplete: true } completeCulture
             ? CulturePersonalityFitRules.FitPercent(occupation, completeCulture)

@@ -215,7 +215,7 @@ public sealed class CandidateMatchedVacancy
 public sealed class CareerOccupationMatchModel
 {
     public string Title { get; set; } = "";
-    public int Percent { get; set; }
+    public decimal Percent { get; set; }
     public string Band { get; set; } = "";
     public string Why { get; set; } = "";
     public List<string> Keys { get; set; } = [];

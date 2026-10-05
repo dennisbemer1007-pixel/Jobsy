@@ -255,7 +255,7 @@ public sealed class CandidateFactSheet
             {
                 allowed.Add(job.Title);
                 var direction = CareerCompassBuilder.TypeLabel(CareerCompassBuilder.PrimaryCode(job.Title));
-                lines.Add($"{job.Title} → {direction}: {job.Percent}%");
+                lines.Add($"{job.Title} → {direction}: {CareerCompassBuilder.FormatPercent(job.Percent)}%");
             }
         }
 

@@ -22,7 +22,7 @@ public static class CareerCompassSanitize
     internal static CareerCompassSnapshot? FromDto(CareerCompassJson.CompassDto dto, bool fromOpenAi)
     {
         var strengths = CleanStrengths(dto.Strengths);
-        var allJobs = AssignRankBands(CleanJobs(
+        var allJobs = AssignPercentBands(CleanJobs(
             (dto.SuperMatches ?? []).Concat(dto.StrongChoices ?? []).Concat(dto.Broadening ?? []).ToList()));
         var notes = CleanTexts(dto.PracticalNotes, MaxNotes);
 
@@ -75,7 +75,7 @@ public static class CareerCompassSanitize
             }
 
             var percent = CareerCompassBuilder.CatalogueFit(title, scores, education);
-            if (percent is not int fit)
+            if (percent is not decimal fit)
             {
                 continue;
             }
@@ -116,7 +116,7 @@ public static class CareerCompassSanitize
             }
 
             var fit = CareerCompassBuilder.CatalogueFit(title, scores, education);
-            if (fit is not int percent)
+            if (fit is not decimal percent)
             {
                 continue;
             }
@@ -135,7 +135,7 @@ public static class CareerCompassSanitize
             jobs = jobs.Take(MaxCatalogueJobs).ToList();
         }
 
-        jobs = AssignRankBands(jobs);
+        jobs = AssignPercentBands(jobs);
         return CareerCompassHierarchy.FromOccupations(
             snapshot.Strengths,
             jobs,
@@ -178,7 +178,11 @@ public static class CareerCompassSanitize
             .ToList();
     }
 
-    internal static List<CareerOccupationMatch> AssignRankBands(List<CareerOccupationMatch> jobs)
+    /// <summary>
+    /// Tiers follow the shown percent. A tied percent is never split across "Past het best",
+    /// "Past goed" and "Ook de moeite". Targets stay about a third each when the percents differ.
+    /// </summary>
+    internal static List<CareerOccupationMatch> AssignPercentBands(List<CareerOccupationMatch> jobs)
     {
         var count = jobs.Count;
         if (count == 0)
@@ -186,27 +190,38 @@ public static class CareerCompassSanitize
             return jobs;
         }
 
-        var super = count >= 10 ? 4 : 3;
-        var strong = count >= 9 ? 4 : 3;
-        if (super + strong >= count)
+        var superTarget = count >= 10 ? 4 : 3;
+        var strongTarget = count >= 9 ? 4 : 3;
+        if (superTarget + strongTarget >= count)
         {
-            super = Math.Max(1, count / 3);
-            strong = Math.Max(1, (count - super) / 2);
+            superTarget = Math.Max(1, count / 3);
+            strongTarget = Math.Max(1, (count - superTarget) / 2);
         }
 
-        var banded = new List<CareerOccupationMatch>(count);
-        for (var i = 0; i < count; i++)
+        var targets = new[] { superTarget, strongTarget, count };
+        var bands = new[]
         {
-            var band = i < super
-                ? CareerCompassBuilder.BandSuper
-                : i < super + strong
-                    ? CareerCompassBuilder.BandStrong
-                    : CareerCompassBuilder.BandBroaden;
-            var job = jobs[i];
-            banded.Add(job with { Band = band });
+            CareerCompassBuilder.BandSuper,
+            CareerCompassBuilder.BandStrong,
+            CareerCompassBuilder.BandBroaden
+        };
+        var bandByPercent = new Dictionary<decimal, string>();
+        var bandIndex = 0;
+        var filled = 0;
+        foreach (var percent in jobs.Select(job => job.Percent).Distinct())
+        {
+            var size = jobs.Count(job => job.Percent == percent);
+            if (bandIndex < 2 && filled > 0 && filled + size > targets[bandIndex])
+            {
+                bandIndex++;
+                filled = 0;
+            }
+
+            bandByPercent[percent] = bands[bandIndex];
+            filled += size;
         }
 
-        return banded;
+        return jobs.Select(job => job with { Band = bandByPercent[job.Percent] }).ToList();
     }
 
     /// <summary>Catalogue title, or null when the provider invented a name we do not know.</summary>
@@ -362,7 +377,7 @@ public static class CareerCompassSanitize
                     continue;
                 }
 
-                var percent = Math.Clamp(item.Percent, 0, 100);
+                var percent = decimal.Round(Math.Clamp(item.Percent, 0m, 100m), 2, MidpointRounding.AwayFromZero);
                 var band = item.Band ?? "";
                 if (band is not (CareerCompassBuilder.BandSuper or CareerCompassBuilder.BandStrong or CareerCompassBuilder.BandBroaden))
                 {
@@ -370,7 +385,7 @@ public static class CareerCompassSanitize
                 }
 
                 var why = CleanText(item.Why);
-                var safeWhy = $"Dit beroep sluit aan bij hoe jij scoort ({percent}%).";
+                var safeWhy = $"Dit beroep sluit aan bij hoe jij scoort ({CareerCompassBuilder.FormatPercent(percent)}%).";
                 if (why is null || ContainsEnglishLeak(why))
                 {
                     why = safeWhy;

@@ -35,7 +35,7 @@ public class CareerCompassTests
         Assert.NotEmpty(compass.SuperMatches);
         Assert.NotEmpty(compass.StrongChoices);
         Assert.NotEmpty(compass.Broadening);
-        Assert.All(compass.AllOccupations, m => Assert.InRange(m.Percent, 1, 100));
+        Assert.All(compass.AllOccupations, m => Assert.InRange(m.Percent, 1m, 100m));
         Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(compass.PracticalNotes, n => n == TrainingCopy.GapAdvice);
         Assert.DoesNotContain(compass.PracticalNotes, n => n.Contains("150 vragen", StringComparison.OrdinalIgnoreCase));
@@ -49,7 +49,7 @@ public class CareerCompassTests
         Assert.NotEmpty(compass.SuperMatches);
         Assert.NotEmpty(compass.StrongChoices);
         Assert.NotEmpty(compass.Broadening);
-        Assert.All(compass.AllOccupations, job => Assert.InRange(job.Percent, 1, 100));
+        Assert.All(compass.AllOccupations, job => Assert.InRange(job.Percent, 1m, 100m));
     }
 
     [Fact]
@@ -164,6 +164,13 @@ public class CareerCompassTests
         Assert.Equal("Mijn Beroepen-kompas", UiStrings.Get("Kompas.Career", "nl"));
         Assert.Equal("Wat betekent dit voor jou?", UiStrings.Get("Kompas.PracticalTitle", "nl"));
         Assert.Contains("Past het best", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.Ordinal);
+        var explainer = UiStrings.Get("Kompas.FitExplainer", "nl");
+        Assert.Contains("gemiddelde", explainer, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("plek in de lijst", explainer, StringComparison.OrdinalIgnoreCase);
+        Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Kompas.FitExplainer", "en")));
+        Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Kompas.FitExplainer", "pl")));
+        Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Kompas.FitExplainer", "ro")));
+        Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Kompas.FitExplainer", "ar")));
         Assert.DoesNotContain("95%", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.Ordinal);
         Assert.DoesNotContain("85%", UiStrings.Get("Kompas.BandStrong", "nl"), StringComparison.Ordinal);
         Assert.DoesNotContain("75%", UiStrings.Get("Kompas.BandBroaden", "nl"), StringComparison.Ordinal);

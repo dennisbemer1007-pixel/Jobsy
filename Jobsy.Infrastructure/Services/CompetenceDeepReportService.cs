@@ -180,7 +180,7 @@ public sealed class CompetenceDeepReportService : ICompetenceDeepReportService
         }
     }
 
-    private async Task<IReadOnlyList<(string Title, int MatchPercent, string Reason)>?> TryLoadTopOccupationsAsync(
+    private async Task<IReadOnlyList<(string Title, decimal MatchPercent, string Reason)>?> TryLoadTopOccupationsAsync(
         Guid userId, CancellationToken ct)
     {
         var career = await _db.CandidateCareerInterests.AsNoTracking()
@@ -199,7 +199,6 @@ public sealed class CompetenceDeepReportService : ICompetenceDeepReportService
         }
 
         var top = CareerCompassBuilder.Listed(scores)
-            .Take(8)
             .Select(o => (o.Title, o.Percent, o.Why))
             .ToList();
         return top.Count > 0 ? top : null;

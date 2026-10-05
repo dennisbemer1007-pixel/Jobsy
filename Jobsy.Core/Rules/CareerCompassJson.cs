@@ -121,7 +121,7 @@ public static class CareerCompassJson
     internal sealed class OccupationDto
     {
         public string? Title { get; set; }
-        public int Percent { get; set; }
+        public decimal Percent { get; set; }
         public string? Band { get; set; }
         public string? Why { get; set; }
         public List<string>? Keys { get; set; }

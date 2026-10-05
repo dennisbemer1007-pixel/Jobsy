@@ -22,7 +22,7 @@ public class CandidateRun12Tests
     [Fact]
     public void Tuinbouwmedewerker_profile_match_is_the_worked_example()
     {
-        Assert.Equal(59, CareerCompassBuilder.CatalogueFit("tuinbouwmedewerker", Profile, "MBO"));
+        Assert.Equal(59.14m, CareerCompassBuilder.CatalogueFit("tuinbouwmedewerker", Profile, "MBO"));
     }
 
     [Fact]

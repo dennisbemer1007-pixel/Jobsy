@@ -271,8 +271,8 @@ public sealed class CandidateInsightsComputer : ICandidateInsightsComputer
 
     private static bool SameOccupations(CareerCompassSnapshot left, CareerCompassSnapshot right)
     {
-        var a = left.AllOccupations.Select(j => j.Title + ":" + j.Percent).OrderBy(x => x, StringComparer.Ordinal);
-        var b = right.AllOccupations.Select(j => j.Title + ":" + j.Percent).OrderBy(x => x, StringComparer.Ordinal);
+        var a = left.AllOccupations.Select(j => j.Title + ":" + CareerCompassBuilder.FormatPercent(j.Percent)).OrderBy(x => x, StringComparer.Ordinal);
+        var b = right.AllOccupations.Select(j => j.Title + ":" + CareerCompassBuilder.FormatPercent(j.Percent)).OrderBy(x => x, StringComparer.Ordinal);
         return a.SequenceEqual(b, StringComparer.Ordinal);
     }
 

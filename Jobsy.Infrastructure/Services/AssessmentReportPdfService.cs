@@ -338,11 +338,11 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     }
 
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandSuper),
-                        SoftMint, compass.SuperMatches, "Nog geen super-match boven 95%. Kijk bij sterke keus: daar zit vaak al iets dat heel dichtbij komt.");
+                        SoftMint, compass.SuperMatches, "Geen beroep in deze groep.");
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandStrong),
-                        SoftSky, compass.StrongChoices, "Nog geen sterke keus boven 85%. De verbreding hieronder blijft de moeite waard.");
+                        SoftSky, compass.StrongChoices, "Geen beroep in deze groep.");
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandBroaden),
-                        WarmSand, compass.Broadening, "Nog geen verbreding boven 75%. Zet je voorkeuren op de banenkaart en kijk welke taken je energie geven.");
+                        WarmSand, compass.Broadening, "Geen beroep in deze groep.");
 
                     col.Item().PaddingTop(8).Background(SoftSky).Padding(12).Column(box =>
                     {
@@ -665,10 +665,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     col.Item().Row(r =>
                     {
                         r.RelativeItem().Text(occupation.Title).FontSize(11).SemiBold().FontColor(BrandNavy);
-                        r.ConstantItem(50).AlignRight().Text($"{occupation.MatchPercent}%")
+                        r.ConstantItem(58).AlignRight().Text($"{CareerCompassBuilder.FormatPercent(occupation.MatchPercent)}%")
                             .FontColor(BrandDeep).Bold();
                     });
-                    col.Item().Element(e => ScoreBar(e, occupation.MatchPercent, null, AccentTeal));
+                    col.Item().Element(e => ScoreBar(e, (double)occupation.MatchPercent, null, AccentTeal));
                     col.Item().Text(occupation.Reason).FontSize(9).FontColor(Muted);
                 }
             });
@@ -872,7 +872,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     {
                         foreach (var o in report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
                         {
-                            col.Item().Text($"{o.Title(lang)} — {o.MatchPercent}%").SemiBold();
+                            col.Item().Text($"{o.Title(lang)} — {CareerCompassBuilder.FormatPercent(o.MatchPercent)}%").SemiBold();
                             col.Item().Text(o.Reason(lang)).FontSize(9).FontColor(Muted);
                         }
                     }
@@ -1354,7 +1354,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 box.Item().Row(r =>
                 {
                     r.RelativeItem().Text($"{item.Title}").SemiBold();
-                    r.ConstantItem(42).AlignRight().Text($"{item.Percent}%").FontColor(BrandDeep).Bold();
+                    r.ConstantItem(58).AlignRight().Text($"{CareerCompassBuilder.FormatPercent(item.Percent)}%").FontColor(BrandDeep).Bold();
                 });
                 box.Item().Text(item.Why).FontSize(9).FontColor(Muted);
             }

@@ -128,9 +128,9 @@ public static class RoleFitFunnel
     private static int InterestPercent(string title, RiasecScores career)
     {
         var sourced = CareerCompassBuilder.CatalogueFit(title, career);
-        if (sourced is int percent)
+        if (sourced is decimal percent)
         {
-            return percent;
+            return (int)decimal.Round(percent, 0, MidpointRounding.AwayFromZero);
         }
 
         var values = CareerTestCatalog.RiasecCodes.Select(career.Get).OrderByDescending(v => v).Take(2).ToList();

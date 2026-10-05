@@ -46,8 +46,8 @@ public class OccupationCatalogTests
     {
         var letters = CareerTestCatalog.RiasecCodes.Select(Profile.Get).ToList();
         var match = CareerCompassBuilder.ProfileMatch([7, 1.97, 1.59, 1.66, 2.09, 3.35], Profile);
-        Assert.Equal(59, match);
-        Assert.InRange(match, letters.Min(), letters.Max());
+        Assert.Equal(59.13m, match);
+        Assert.InRange(match, (decimal)letters.Min(), (decimal)letters.Max());
     }
 
     [Fact]
@@ -153,6 +153,35 @@ public class OccupationCatalogTests
     public void Further_diploma_takes_precedence_over_havo_and_vwo(string education, string further)
     {
         Assert.Equal(CareerEducationGate.MaxIscoLevel(further), CareerEducationGate.MaxIscoLevel(education));
+    }
+
+    [Fact]
+    public void Run14_profile_shows_distinct_percents_and_equal_percents_share_a_tier()
+    {
+        var listed = CareerCompassBuilder.Listed(new RiasecScores(66, 38, 37, 64, 43, 62));
+        var line = string.Join(" | ", listed.Select(job =>
+            $"{CareerCompassBuilder.FormatPercent(job.Percent)} {job.Band} {job.Title}"));
+        Assert.Equal(
+            "64.22 super autopoetser | 64.22 super vliegtuigschoonmaker | 63.61 super medewerker keuken | 63.42 super schoonmaker treinen | 63.18 strong onderhoudstechnicus pijpleidingen | 62.78 strong gevelreiniger | 62.78 strong glazenwasser | 62.78 strong schoonmaker pretpark | 62.77 broaden wasserettemedewerker | 62.77 broaden wasserijmedewerker | 62.76 broaden medewerker raffinaderij | 62.76 broaden operator ontinkting",
+            line);
+        foreach (var group in listed.GroupBy(job => job.Percent))
+        {
+            Assert.Single(group.Select(job => job.Band).Distinct());
+        }
+
+        var tied = new List<CareerOccupationMatch>();
+        foreach (var (title, percent) in new (string Title, decimal Percent)[]
+        {
+            ("a", 70m), ("b", 70m), ("c", 70m), ("d", 70m), ("e", 70m),
+            ("f", 60m), ("g", 50m), ("h", 40m)
+        })
+        {
+            tied.Add(new CareerOccupationMatch(title, percent, "", "Dit werk vraagt vooral aanpakken met je handen."));
+        }
+
+        var banded = CareerCompassSanitize.AssignPercentBands(tied);
+        Assert.Equal(5, banded.Count(job => job.Percent == 70m && job.Band == CareerCompassBuilder.BandSuper));
+        Assert.DoesNotContain(banded, job => job.Percent == 70m && job.Band != CareerCompassBuilder.BandSuper);
     }
 
     [Fact]

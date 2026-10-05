@@ -126,7 +126,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         string legacyKey,
         string honestKey)
     {
-        // Tiers are by rank. The percent is a profile match, not a fixed 75/85/95 cutoff.
+        // Tiers follow the shown percent. Equal percents share a tier.
         _ = floor;
         _ = items;
         return string.IsNullOrEmpty(honestKey) ? legacyKey : legacyKey;
@@ -194,7 +194,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                     }
                     else
                     {
-                        <span class="kompas-occupation__pct">@item.Percent%</span>
+                        <span class="kompas-occupation__pct">@CareerCompassBuilder.FormatPercent(item.Percent)%</span>
                     }
                 </summary>
                 @OccupationBody(item)

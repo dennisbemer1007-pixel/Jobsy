@@ -96,8 +96,8 @@ public static class CareerCompassBuilder
             .ToList();
 
     /// <summary>
-    /// The one job list for the report, the coach, the action plan and /carriere.
-    /// Top 8–12 by profile match. Tiers are by rank, not by a fixed percent.
+    /// The one job list for the report, the coach, the action plan, the PDF, /carriere and the competence report.
+    /// Top 8–12 by profile match. A tier comes from the shown percent, so equal percents share a tier.
     /// Leadership stays out when Enterprising is not a top-3 direction.
     /// At most two jobs per ISCO unit group. Only high and medium confidence.
     /// </summary>
@@ -131,7 +131,7 @@ public static class CareerCompassBuilder
         ApplyLevelSwaps(jobs, scores, gate);
         jobs = TakeDiverse(jobs, perIsco: 2, take: CareerCompassSanitize.MaxCatalogueJobs);
         jobs = CareerCompassSanitize.OrderForEducation(jobs, education);
-        return CareerCompassSanitize.AssignRankBands(jobs);
+        return CareerCompassSanitize.AssignPercentBands(jobs);
     }
 
     private static void ApplyLevelSwaps(List<CareerOccupationMatch> jobs, RiasecScores scores, CareerEducationGate.Result gate)
@@ -226,7 +226,7 @@ public static class CareerCompassBuilder
     /// Null when the title does not resolve, or when that occupation has no sourced profile.
     /// <paramref name="education"/> does not change the number: the education gate only decides what is listed.
     /// </summary>
-    public static int? CatalogueFit(string title, RiasecScores scores, string? education = null)
+    public static decimal? CatalogueFit(string title, RiasecScores scores, string? education = null)
     {
         _ = education;
         var occupation = OccupationCatalog.Shared.Resolve(title);
@@ -441,34 +441,42 @@ public static class CareerCompassBuilder
             scores.Enterprising,
             scores.Conventional);
 
+    /// <summary>Shown percent, up to two decimals, invariant so the fact sheet and the screen match.</summary>
+    public static string FormatPercent(decimal percent)
+        => percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
     /// <summary>
     /// Job-fit percent (0–100). It is a weighted mean of the candidate's own letter scores,
     /// so it never exceeds their highest letter and never drops below their lowest.
     ///
     /// Steps:
     /// 1. Weight each letter with w = OI − 1 (0..6), straight from the sourced profile.
-    /// 2. percent = round(Σ w·score / Σ w), midpoint away from zero, clamped to 0..100.
+    /// 2. percent = round(Σ w·score / Σ w, 2 decimals), midpoint away from zero, clamped to 0..100.
     /// 3. Letters with w = 0 do not pull the result.
+    ///
+    /// Two decimals stay, because rounding to a whole number hid real differences
+    /// (the run-14 profile put many realistic jobs on 63 or 64). The same profile still shows the same percent.
     ///
     /// Worked example. Profile R66 I38 A37 S64 E43 C62.
     /// Tuinbouwmedewerker OI [7, 1.97, 1.59, 1.66, 2.09, 3.35].
     /// Weights [6, 0.97, 0.59, 0.66, 1.09, 2.35], sum of weights 11.66.
     /// Σ w·score = 6×66 + 0.97×38 + 0.59×37 + 0.66×64 + 1.09×43 + 2.35×62 = 689.5.
-    /// 689.5 / 11.66 = 59.13 → 59.
+    /// 689.5 / 11.66 = 59.133… → 59.13.
     /// </summary>
-    public static int ProfileMatch(IReadOnlyList<double> oi, RiasecScores scores)
+    public static decimal ProfileMatch(IReadOnlyList<double> oi, RiasecScores scores)
     {
         if (oi.Count < 6)
         {
-            return 0;
+            return 0m;
         }
 
-        double used = 0;
-        double sum = 0;
+        decimal used = 0m;
+        decimal sum = 0m;
         for (var i = 0; i < 6; i++)
         {
-            var weight = oi[i] - 1d;
-            if (weight <= 0)
+            var level = decimal.Round((decimal)oi[i], 2, MidpointRounding.AwayFromZero);
+            var weight = level - 1m;
+            if (weight <= 0m)
             {
                 continue;
             }
@@ -477,9 +485,13 @@ public static class CareerCompassBuilder
             sum += weight * scores.Get(CareerTestCatalog.RiasecCodes[i]);
         }
 
-        return used <= 0
-            ? 0
-            : (int)Math.Clamp(Math.Round(sum / used, MidpointRounding.AwayFromZero), 0, 100);
+        if (used <= 0m)
+        {
+            return 0m;
+        }
+
+        var percent = decimal.Round(sum / used, 2, MidpointRounding.AwayFromZero);
+        return percent < 0m ? 0m : percent > 100m ? 100m : percent;
     }
 
     private static IReadOnlyList<string> PracticalNotes(
@@ -557,7 +569,7 @@ public sealed record CareerOccupation(string Title, params (string Code, int Wei
 
 public sealed record CareerOccupationMatch(
     string Title,
-    int Percent,
+    decimal Percent,
     string Band,
     string Why,
     IReadOnlyList<string>? Keys = null,

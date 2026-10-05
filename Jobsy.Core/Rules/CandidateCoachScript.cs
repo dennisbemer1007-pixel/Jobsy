@@ -430,10 +430,10 @@ public static class CandidateCoachScript
         {
             return lang switch
             {
-                "en" => $"Your test shows {shown} fits you at {percent}%, because of {parts}.",
-                "pl" => $"Z twojego testu wynika, że {shown} pasuje w {percent}%, przez {parts}.",
-                "ro" => $"Din testul tău reiese că {shown} ți se potrivește în proporție de {percent}%, prin {parts}.",
-                "ar" => $"يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%، بسبب {parts}.",
+                "en" => $"Your test shows {shown} fits you at {CareerCompassBuilder.FormatPercent(percent.Value)}%, because of {parts}.",
+                "pl" => $"Z twojego testu wynika, że {shown} pasuje w {CareerCompassBuilder.FormatPercent(percent.Value)}%, przez {parts}.",
+                "ro" => $"Din testul tău reiese că {shown} ți se potrivește în proporție de {CareerCompassBuilder.FormatPercent(percent.Value)}%, prin {parts}.",
+                "ar" => $"يظهر من اختبارك أن {shown} يناسبك بنسبة {CareerCompassBuilder.FormatPercent(percent.Value)}%، بسبب {parts}.",
                 _ => $"Uit je test blijkt dat {shown} past bij {parts}."
             };
         }

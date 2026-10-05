@@ -55,12 +55,12 @@
             <section class="competence-report__section">
                 <h2 class="test-detail__section-title">@Culture["TestResult.Card.Occupations"]</h2>
                 <ul class="competence-norm-bars">
-                    @foreach (var o in Report.Occupations.Take(10))
+                    @foreach (var o in Report.Occupations.Take(CareerCompassSanitize.MaxCatalogueJobs))
                     {
                         <li class="competence-norm-bar">
                             <div class="competence-norm-bar__row">
                                 <span>@o.Title(lang)</span>
-                                <strong>@o.MatchPercent%</strong>
+                                <strong>@CareerCompassBuilder.FormatPercent(o.MatchPercent)%</strong>
                             </div>
                             <p class="muted">@o.Reason(lang)</p>
                         </li>
