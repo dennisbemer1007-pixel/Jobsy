@@ -2,15 +2,7 @@
 @inject CultureState Culture
 
 <div class="admin-data-table-wrap">
-    @if (Loading)
-    {
-        <p class="admin-data-table__state">@Culture["AdminUi.Loading"]</p>
-    }
-    else if (Empty)
-    {
-        <p class="admin-data-table__state">@(EmptyText ?? Culture["AdminUi.Empty"])</p>
-    }
-    else
+    @if (ShowTable)
     {
         <table class="admin-data-table data-table">
             <thead>
@@ -30,15 +22,50 @@
                 </tr>
             </thead>
             <tbody>
-                @Rows
+                @if (KeepHeader && Loading)
+                {
+                    <tr>
+                        <td colspan="12">
+                            <p class="admin-data-table__state">@Culture["AdminUi.Loading"]</p>
+                        </td>
+                    </tr>
+                }
+                else if (KeepHeader && Empty)
+                {
+                    <tr>
+                        <td colspan="12">
+                            <p class="admin-data-table__state">@(EmptyText ?? Culture["AdminUi.Empty"])</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @Rows
+                }
             </tbody>
         </table>
+    }
+    else if (Loading)
+    {
+        <p class="admin-data-table__state">@Culture["AdminUi.Loading"]</p>
+    }
+    else if (Empty)
+    {
+        <p class="admin-data-table__state">@(EmptyText ?? Culture["AdminUi.Empty"])</p>
     }
 </div>
 
 @code {
     [Parameter] public bool Loading { get; set; }
     [Parameter] public bool Empty { get; set; }
+
+    /// <summary>
+    /// Keep the column headers on screen while the list is loading and when it has no rows.
+    /// Other admin lists still replace the whole table with the status line.
+    /// </summary>
+    [Parameter] public bool KeepHeader { get; set; }
+
+    private bool ShowTable => KeepHeader || (!Loading && !Empty);
     [Parameter] public string? EmptyText { get; set; }
     [Parameter] public bool ShowCheckbox { get; set; }
     [Parameter] public bool AllSelected { get; set; }
