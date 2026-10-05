@@ -47,7 +47,7 @@ public static class VacancyOccupationMatch
                 continue;
             }
 
-            var score = Math.Clamp(ratio * (occupation.Percent / 100.0), 0, 1);
+            var score = Math.Clamp(ratio * (double)(occupation.Percent / 100m), 0, 1);
             if (best is null || score > best.Value.Score01)
             {
                 best = new Fit(score, occupation.Title);

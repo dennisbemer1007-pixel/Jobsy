@@ -1,12 +1,21 @@
 @namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Core.Careers
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
+@inject IConfiguration Config
+@inject IHostEnvironment HostEnv
 
 @if (Compass is null)
 {
     return;
+}
+
+@if (_preview)
+{
+    <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
 }
 
 @if (Compass.Strengths.Count > 0)
@@ -72,6 +81,7 @@
             </section>
         }
     </div>
+    <p class="muted">@Culture["Occ.Footnote"]</p>
 }
 
 @if (!Compass.HasOccupations)
@@ -117,7 +127,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         string legacyKey,
         string honestKey)
     {
-        // Tiers are by rank. The percent is a profile match, not a fixed 75/85/95 cutoff.
+        // Tiers follow the shown percent. Equal percents share a tier.
         _ = floor;
         _ = items;
         return string.IsNullOrEmpty(honestKey) ? legacyKey : legacyKey;
@@ -138,6 +148,15 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         CareerGoalFit.AboveEducation(OccupationTitles, EducationLabel);
 
     private bool _employersOn = true;
+    private bool _preview;
+
+    private bool ExtraTraining(string title)
+    {
+        var occupation = OccupationCatalog.Shared.Resolve(title);
+        return occupation is not null && CareerEducationGate.NeedsExtraTraining(
+            occupation.IscoLevel,
+            CareerEducationGate.MaxIscoLevel(EducationLabel));
+    }
 
     private IReadOnlyList<string> VisibleNotes =>
         CareerCompassBuilder.NotesForCandidate(Compass?.PracticalNotes ?? [], _employersOn);
@@ -146,6 +165,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
     {
         try
         {
+            _preview = Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction();
             _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
         }
         catch (Exception)
@@ -156,20 +176,59 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
 
     private RenderFragment OccupationAccordion(CareerOccupationMatchModel item) => __builder =>
     {
+        var explain = Explain(item);
         <li class="kompas-occupation">
-            <details class="kompas-occupation__details">
-                <summary>
-                    <span class="kompas-occupation__rank">@Culture.Format("Kompas.RankChoice", RankOf(item.Title))</span>
-                    <span class="kompas-occupation__title">@item.Title</span>
-                    @if (CareerGoalFit.RequiresHigherEducation(item.Title, EducationLabel))
-                    {
-                        <span class="muted">@Culture["Kompas.EducationAbove"]</span>
-                    }
-                    <span class="kompas-occupation__pct">@item.Percent%</span>
-                </summary>
-                @OccupationBody(item)
-            </details>
+            @if (explain is not null)
+            {
+                <FitPercentInfo Model="explain" Language="@Culture.Language">
+                    @OccupationDetails(item, showPercent: false)
+                </FitPercentInfo>
+            }
+            else
+            {
+                @OccupationDetails(item, showPercent: true)
+            }
         </li>
+    };
+
+    private FitPercentExplanation? Explain(CareerOccupationMatchModel item)
+    {
+        if (item.NoScore || DirectionScores is not { } scores)
+        {
+            return null;
+        }
+
+        return FitPercentExplanation.Build(item.Title, scores, EducationLabel);
+    }
+
+    private RenderFragment OccupationDetails(CareerOccupationMatchModel item, bool showPercent) => __builder =>
+    {
+        <details class="kompas-occupation__details">
+            <summary>
+                <span class="kompas-occupation__rank">@Culture.Format("Kompas.RankChoice", RankOf(item.Title))</span>
+                <span class="kompas-occupation__title">@item.Title</span>
+                @if (ExtraTraining(item.Title))
+                {
+                    <span class="muted">@Culture["Occ.ExtraTraining"]</span>
+                }
+                else if (CareerGoalFit.RequiresHigherEducation(item.Title, EducationLabel))
+                {
+                    <span class="muted">@Culture["Kompas.EducationAbove"]</span>
+                }
+                @if (showPercent)
+                {
+                    @if (item.NoScore)
+                    {
+                        <span class="kompas-occupation__pct">@Culture["Occ.NoScore"]</span>
+                    }
+                    else
+                    {
+                        <span class="kompas-occupation__pct">@CareerCompassBuilder.FormatPercent(item.Percent)%</span>
+                    }
+                }
+            </summary>
+            @OccupationBody(item)
+        </details>
     };
 
     private RenderFragment OccupationBody(CareerOccupationMatchModel item) => __builder =>

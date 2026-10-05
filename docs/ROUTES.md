@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (239 routes)
+## Table (240 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -127,6 +127,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/branch/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/vacancies` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/vacancies/new` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
+| `/bronnen` | `Pages/Legal/Bronnen.razor` | anonymous |
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
 | `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |

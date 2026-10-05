@@ -21,15 +21,15 @@ public class MistralCareerReportTests
                 "Plannen"
               ],
               "superMatches": [
-                {"title":"Hovenier of Kassenmedewerker","percent":92,"why":"This is a hands-on career match.","keys":["hovenier","kas"]}
+                {"title":"tuinbouwmedewerker of magazijnmedewerker","percent":92,"why":"This is a hands-on career match.","keys":["tuinbouw","magazijn"]}
               ],
               "strongChoices": [
-                {"title":"Helpende zorg","percent":88,"why":"Jij wilt mensen helpen.","keys":["zorg"]},
-                {"title":"Administratief medewerker","percent":86,"why":"Jij houdt van overzicht.","keys":["admin"]},
+                {"title":"algemeen verpleegkundige","percent":88,"why":"Jij wilt mensen helpen.","keys":["zorg"]},
+                {"title":"kantoorbediende","percent":86,"why":"Jij houdt van overzicht.","keys":["kantoor"]},
                 {"title":"Onbekend beroep xyz","percent":99,"why":"Verzonnen titel.","keys":[]}
               ],
               "broadening": [
-                {"title":"Kassamedewerker","percent":80,"why":"Jij staat graag in de winkel.","keys":["kassa"]}
+                {"title":"kassamedewerker","percent":80,"why":"Jij staat graag in de winkel.","keys":["kassa"]}
               ],
               "practicalNotes": ["Kijk welke taken bij je passen."]
             }
@@ -38,9 +38,9 @@ public class MistralCareerReportTests
         var compass = CareerCompassJson.TryDeserialize(json);
         Assert.NotNull(compass);
         Assert.DoesNotContain(compass!.Strengths, s => s.Contains("hands-on", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(compass.AllOccupations, m => m.Title == "Hovenier" && m.Percent == 92);
-        Assert.Contains(compass.AllOccupations, m => m.Title == "Kasmedewerker" && m.Percent == 92);
-        Assert.Contains(compass.AllOccupations, m => m.Title == "Helpende zorg en welzijn");
+        Assert.Contains(compass.AllOccupations, m => m.Title == "tuinbouwmedewerker" && m.Percent == 92);
+        Assert.Contains(compass.AllOccupations, m => m.Title == "magazijnmedewerker" && m.Percent == 92);
+        Assert.Contains(compass.AllOccupations, m => m.Title == "algemeen verpleegkundige");
         Assert.DoesNotContain(compass.AllOccupations, m => m.Title.Contains("Onbekend", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(compass.AllOccupations, m => m.Percent >= 95);
 
@@ -62,7 +62,7 @@ public class MistralCareerReportTests
         Assert.NotNull(report);
         Assert.False(string.IsNullOrWhiteSpace(report.HollandCode));
         Assert.NotEmpty(report.ActionPlan);
-        Assert.Contains(report.Occupations, o => o.TitleNl == "Hovenier" && o.MatchPercent == CareerCompassBuilder.CatalogueFit("Hovenier", new RiasecScores(66, 38, 37, 64, 43, 62)));
+        Assert.Contains(report.Occupations, o => o.TitleNl == "tuinbouwmedewerker" && o.MatchPercent == CareerCompassBuilder.CatalogueFit("tuinbouwmedewerker", new RiasecScores(66, 38, 37, 64, 43, 62)));
 
         var pdf = AssessmentReportPdfService.RenderCareerDeep(
             "Lobsy", [], "Test Kandidaat", "4 okt 2026", report, "nl");
@@ -84,7 +84,7 @@ public class MistralCareerReportTests
             {
               "strengths": ["Aanpakken", "Helpen", "Ordenen"],
               "superMatches": [
-                {"title":"Elektrotechnicus","percent":89,"why":"Jij pakt technische klussen aan.","keys":["elektro"]}
+                {"title":"elektrotechnicus","percent":89,"why":"Jij pakt technische klussen aan.","keys":["elektro"]}
               ],
               "strongChoices": [
                 {"title":"Allround technisch talent","percent":91,"why":"Verzonnen titel.","keys":[]},
@@ -99,7 +99,7 @@ public class MistralCareerReportTests
 
         var thin = CareerCompassJson.TryDeserialize(json);
         Assert.NotNull(thin);
-        Assert.Contains(thin!.AllOccupations, m => m.Title == "Elektrotechnicus" && m.Percent == 89);
+        Assert.Contains(thin!.AllOccupations, m => m.Title == "elektrotechnicus" && m.Percent == 89);
         Assert.True(thin.AllOccupations.Count() < CareerCompassSanitize.MinCatalogueJobs);
         Assert.DoesNotContain(thin.AllOccupations, m => m.Title.Contains("alleskunner", StringComparison.OrdinalIgnoreCase));
 
@@ -107,7 +107,7 @@ public class MistralCareerReportTests
         var compass = CareerCompassSanitize.EnsureDepth(thin, scores);
         var jobs = compass.AllOccupations.ToList();
         Assert.InRange(jobs.Count, CareerCompassSanitize.MinCatalogueJobs, CareerCompassSanitize.MaxCatalogueJobs);
-        Assert.Contains(jobs, m => m.Title == "Elektrotechnicus" && m.Percent == CareerCompassBuilder.CatalogueFit("Elektrotechnicus", scores));
+        Assert.Contains(jobs, m => m.Title == "elektrotechnicus" && m.Percent == CareerCompassBuilder.CatalogueFit("elektrotechnicus", scores));
         Assert.Contains(jobs, m => !CareerGoalFit.IsClearlyHigherEducation(m.Title));
 
         var domains = new List<DeepAnalysisDomainScore>
@@ -163,7 +163,7 @@ public class MistralCareerReportTests
             {
                 StrongChoices =
                 [
-                    new CareerOccupationMatch("Elektrotechnicus", 89, CareerCompassBuilder.BandStrong, "Technische klus.", ["elektro"])
+                    new CareerOccupationMatch("elektrotechnicus", 89, CareerCompassBuilder.BandStrong, "Technische klus.", ["elektro"])
                 ]
             };
         }
@@ -184,7 +184,7 @@ public class MistralCareerReportTests
         Assert.True(CareerInterestDeepReset.ClearDeepCompass(row, new DateTime(2026, 10, 4, 0, 0, 0, DateTimeKind.Utc)));
         var stored = CareerCompassJson.TryDeserialize(row.CompassJson);
         Assert.True(stored is null || (!stored.FromDeepAnalysis && !stored.HasOccupations));
-        Assert.DoesNotContain("Elektrotechnicus", row.CompassJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("elektrotechnicus", row.CompassJson, StringComparison.Ordinal);
         Assert.Equal(basic!.Realistic, row.RealisticPercent);
         Assert.Equal(basic.Social, row.SocialPercent);
         Assert.Equal(CareerTestCatalog.HollandCode(basic), row.HollandCode);

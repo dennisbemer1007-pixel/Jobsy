@@ -38,11 +38,11 @@ internal static class UiStringsRun8
             "Merită și asta",
             "يستحق النظر أيضًا");
         Add("Kompas.FitExplainer",
-            "Het percentage is hoe goed je hele profiel bij dit beroep past. De plek in de lijst telt mee.",
-            "The percentage is how well your whole profile fits this job. The place in the list matters too.",
-            "Procent to dopasowanie całego profilu do tego zawodu. Miejsce na liście też się liczy.",
-            "Procentul arată cât de bine se potrivește tot profilul tău cu această meserie. Locul în listă contează și el.",
-            "النسبة هي مدى تناسب ملفك كله مع هذه المهنة. الترتيب في القائمة مهم أيضًا.");
+            "Het percentage is het gemiddelde van je scores. Richtingen die dit beroep meer vraagt, tellen zwaarder. Dezelfde score staat in dezelfde groep.",
+            "The percentage is the average of your scores. Letters this job needs more count for more. The same score sits in the same group.",
+            "Procent to średnia twoich wyników. Litery, których ten zawód potrzebuje bardziej, liczą się bardziej. Ten sam wynik jest w tej samej grupie.",
+            "Procentul este media scorurilor tale. Literele de care această meserie are mai multă nevoie contează mai mult. Același scor stă în același grup.",
+            "النسبة هي متوسط درجاتك. الحروف التي تحتاجها هذه المهنة أكثر تُحسب أكثر. الدرجة نفسها في المجموعة نفسها.");
         Add("Kompas.RankChoice",
             "{0}e keus",
             "choice {0}",

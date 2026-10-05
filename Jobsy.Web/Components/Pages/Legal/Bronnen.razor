@@ -1,0 +1,43 @@
+@page "/bronnen"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<PageTitle>@Culture["Occ.SourcesTitle"] · Lobsy</PageTitle>
+
+<section class="pub-section pp-about" aria-labelledby="bronnen-title">
+    <header class="pp-doc__hero">
+        <h1 id="bronnen-title" class="pp-doc__title">@Culture["Occ.SourcesTitle"]</h1>
+        <p class="pp-doc__lead">@Culture["Occ.SourcesLead"]</p>
+    </header>
+
+    <article class="pp-about__story">
+        <h2>ESCO</h2>
+        <p>This service uses the ESCO classification of the European Commission.</p>
+        <p>@Culture["Occ.SourcesEscoNl"]</p>
+    </article>
+
+    <article class="pp-about__story">
+        <h2>O*NET</h2>
+        <p>
+            This page includes information from the O*NET 31.0 Database by the U.S. Department of Labor,
+            Employment and Training Administration (USDOL/ETA). Used under the CC BY 4.0 license.
+            O*NET® is a trademark of USDOL/ETA. Lobsy has modified all or some of this information.
+            USDOL/ETA has not approved, endorsed, or tested these modifications.
+        </p>
+        <p><a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0</a></p>
+    </article>
+
+    <article class="pp-about__story">
+        <h2>ESCO–O*NET</h2>
+        <p>ESCO–O*NET crosswalk: European Commission &amp; U.S. Department of Labor (2022).</p>
+    </article>
+
+    <article class="pp-about__story">
+        <h2>CBS</h2>
+        <p>CBS, Beroepenclassificatie BRC 2014 editie 2025 (CC BY 4.0).</p>
+    </article>
+</section>
