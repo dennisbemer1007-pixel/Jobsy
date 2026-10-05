@@ -188,6 +188,7 @@ public sealed class IntegrationCredentialItem
     public string? ClientId { get; set; }
     public string? TenantId { get; set; }
     public string? Model { get; set; }
+    public string? SmallModel { get; set; }
     public string? BaseUrl { get; set; }
     public string? FromAddress { get; set; }
     public bool SupportsApiKey { get; set; }
@@ -208,6 +209,7 @@ public sealed class IntegrationCredentialSaveForm
 {
     public string? ApiKey { get; set; }
     public string? Model { get; set; }
+    public string? SmallModel { get; set; }
     public string? ClientId { get; set; }
     public string? ClientSecret { get; set; }
     public string? TenantId { get; set; }
@@ -248,6 +250,8 @@ public sealed class PlatformFeatureItem
     public bool WhatsAppRemindersEnabled { get; set; }
     /// <summary>Compact chart layout for paid personal test PDFs. Default off.</summary>
     public bool CompactTestPdfEnabled { get; set; }
+    /// <summary>Stored honest advice on job detail. Default off.</summary>
+    public bool HonestAdviceEnabled { get; set; }
     /// <summary>When true, candidates take paid tests without Mollie. Default on.</summary>
     public bool FreeCandidateTestsEnabled { get; set; } = true;
     /// <summary>Server has WhatsApp credentials. Never a secret.</summary>
@@ -282,6 +286,7 @@ public sealed class PlatformFeaturePatch
     public bool? WhatsAppRemindersEnabled { get; set; }
     public bool? CompactTestPdfEnabled { get; set; }
     public bool? FreeCandidateTestsEnabled { get; set; }
+    public bool? HonestAdviceEnabled { get; set; }
     public string? Reason { get; set; }
 }
 

@@ -9,8 +9,11 @@ using Microsoft.Extensions.Options;
 namespace Jobsy.Infrastructure.Services.OpenAi;
 
 /// <summary>
-/// Shared OpenAI API-key / model / base-URL resolution formerly copied into 11 services.
-/// Fallback order is unchanged: DB integration credentials → <see cref="OpenAiOptions"/> → feature defaults.
+/// Shared API-key / model / base-URL resolution for every AI feature.
+/// Quality calls: DB integration model → <see cref="OpenAiOptions.Model"/> → feature default.
+/// Cheap calls use a small model first when one is set (tile, then <c>OpenAI__SmallModel</c>, then <c>Ai__SmallModel</c>).
+/// That small model still wins when the database model is the quality model.
+/// Mistral (<c>Ai__Provider=Mistral</c>) uses <see cref="MistralOptions.ModelFor"/> with the same split.
 /// </summary>
 public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
 {
@@ -113,13 +116,13 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
         }
 
         var apiKey = await ResolveApiKeyAsync(defaults.IntegrationKey, cancellationToken);
-        var model = await ResolveModelAsync(defaults, cancellationToken);
+        var model = await ResolveModelAsync(feature, defaults, cancellationToken);
         var baseUrl = await ResolveBaseUrlAsync(defaults, cancellationToken);
         return new OpenAiEndpointResolution(apiKey, model, baseUrl);
     }
 
     private string ResolveMistralModel(OpenAiFeature feature)
-        => _mistral.ModelFor(feature);
+        => _mistral.ModelFor(feature, AiModelRouting.FirstNonEmpty(_ai.SmallModel, _options.SmallModel));
 
     private string ResolveMistralBaseUrl()
         => MistralEndpoint.EffectiveBaseUrl(_mistral.BaseUrl);
@@ -135,12 +138,25 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
         return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
     }
 
-    private async Task<string> ResolveModelAsync(FeatureDefaults defaults, CancellationToken cancellationToken)
+    private async Task<string> ResolveModelAsync(
+        OpenAiFeature feature,
+        FeatureDefaults defaults,
+        CancellationToken cancellationToken)
     {
+        if (AiModelRouting.UsesSmallModel(feature))
+        {
+            var fromTile = await _credentials.GetSmallModelAsync(defaults.IntegrationKey, cancellationToken);
+            var small = AiModelRouting.FirstNonEmpty(fromTile, _options.SmallModel, _ai.SmallModel);
+            if (small is not null)
+            {
+                return small;
+            }
+        }
+
         var fromDb = await _credentials.GetModelAsync(defaults.IntegrationKey, cancellationToken);
         if (!string.IsNullOrWhiteSpace(fromDb))
         {
-            return fromDb;
+            return fromDb.Trim();
         }
 
         return string.IsNullOrWhiteSpace(_options.Model)

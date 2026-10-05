@@ -1,0 +1,249 @@
+@page "/candidate/beroep/{EscoId:guid}/dag"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@(Job is null ? Culture["Day.Eyebrow"] : Culture.Format("Day.Title", Job.Nl)) · Lobsy</PageTitle>
+
+<div class="journey-page day-life">
+    <section class="day-life__card" aria-labelledby="day-title">
+        <div class="day-life__hello">
+            <img class="day-life__mascot"
+                 src="/images/brand/mascot-coach.webp"
+                 srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
+                 alt=""
+                 width="96"
+                 height="96"
+                 decoding="async" />
+            <p class="day-life__speech">@Culture["Day.Invite"]</p>
+        </div>
+        <h1 id="day-title">@Heading</h1>
+        <p class="day-life__disclaimer">@Culture["Day.Disclaimer"]</p>
+
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_unknown || Job is null)
+        {
+            <p class="state-message">@Culture["Day.Unknown"]</p>
+        }
+        else if (_error)
+        {
+            <p class="state-message">@Culture["Common.Error"]</p>
+        }
+        else if (_day is { Enabled: false })
+        {
+            <p class="state-message">@Culture["Day.Off"]</p>
+        }
+        else if (_day is not { Found: true })
+        {
+            <p class="state-message">@Culture["Day.Empty"]</p>
+            <p class="day-life__lead">@Culture["Day.EmptyLead"]</p>
+        }
+        else
+        {
+            @if (_day.ThinSource)
+            {
+                <p class="day-life__lead">@Culture["Day.Thin"]</p>
+            }
+            <ol class="day-life__timeline">
+                @foreach (var block in Timeline)
+                {
+                    <li class="day-life__block">
+                        <h2 class="day-life__chip">@block.Label</h2>
+                        <p>@block.Text</p>
+                    </li>
+                }
+            </ol>
+            <div class="day-life__facts">
+                @if (TaskChips.Count > 0)
+                {
+                    <section class="day-life__section" aria-labelledby="day-tasks-title">
+                        <h2 id="day-tasks-title">@Culture["Day.Tasks"]</h2>
+                        <ul class="day-life__cloud">
+                            @foreach (var line in TaskChips)
+                            {
+                                <li class="day-life__pill">@line</li>
+                            }
+                        </ul>
+                    </section>
+                }
+                else if (_day.Highlights.Count > 0)
+                {
+                    <section class="day-life__section" aria-labelledby="day-notes-title">
+                        <h2 id="day-notes-title" class="day-life__notes-title">@Culture["Day.Highlights"]</h2>
+                        <ul class="day-life__notes">
+                            @foreach (var line in _day.Highlights)
+                            {
+                                <li>@line</li>
+                            }
+                        </ul>
+                    </section>
+                }
+                @if (SkillChips.Count > 0)
+                {
+                    <section class="day-life__section" aria-labelledby="day-skills-title">
+                        <h2 id="day-skills-title">@Culture["Day.Skills"]</h2>
+                        <ul class="day-life__cloud">
+                            @foreach (var line in SkillChips)
+                            {
+                                <li class="day-life__pill day-life__pill--skill">@line</li>
+                            }
+                        </ul>
+                    </section>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_day.VariesNote))
+            {
+                <p class="day-life__varies">@_day.VariesNote</p>
+            }
+        }
+
+        @if (Job is not null && !_loading && !_unknown)
+        {
+            <aside class="day-life__fit" aria-labelledby="day-fit-title">
+                <div class="day-life__tip">
+                    <img class="day-life__mascot day-life__mascot--tip"
+                         src="/images/brand/mascot-coach.webp"
+                         srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
+                         alt=""
+                         width="72"
+                         height="72"
+                         decoding="async" />
+                    <p class="day-life__speech">@Culture["Day.FitLead"]</p>
+                </div>
+                <h2 id="day-fit-title">@Culture["Day.FitTitle"]</h2>
+                <div class="day-life__actions">
+                    <a class="career-btn day-life__cta" href="/candidate/profile?tab=fit">@Culture["Day.FitCta"]</a>
+                    <a class="career-btn career-btn--secondary" href="/candidate/profile?tab=tests">@Culture["Day.MoreCta"]</a>
+                </div>
+            </aside>
+        }
+
+        <p class="day-life__back"><a href="@BackHref">@Culture["Day.Back"]</a></p>
+    </section>
+
+    @if (Job is not null)
+    {
+        <LobsyBubble Text="@Culture["Day.Coach"]" />
+    }
+</div>
+
+@code {
+    [Parameter] public Guid EscoId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "from")]
+    public string? From { get; set; }
+
+    private OccupationDayResponse? _day;
+    private bool _loading = true;
+    private bool _unknown;
+    private bool _error;
+    private string? _loadedFor;
+
+    private Occupation? Job => OccupationCatalog.Shared.Get(EscoId.ToString("D"));
+
+    private string Heading
+    {
+        get
+        {
+            if (Job is null)
+            {
+                return Culture["Day.Eyebrow"];
+            }
+
+            var title = Job.Nl;
+            if (!JobsyLanguages.AreSame(Culture.Language, "nl")
+                && _day is { Found: true, TitleNl: { Length: > 0 } translated }
+                && !JobsyLanguages.AreSame(_day.Language, "nl"))
+            {
+                title = translated;
+            }
+
+            return Culture.Format("Day.Title", title);
+        }
+    }
+
+    private string BackHref => string.Equals(From, "fit", StringComparison.OrdinalIgnoreCase)
+        ? "/candidate/profile?tab=fit"
+        : "/candidate/profile?tab=tests";
+
+    private IReadOnlyList<string> TaskChips => _day?.Tasks ?? [];
+
+    private IReadOnlyList<string> SkillChips => _day?.Skills ?? [];
+
+    private IReadOnlyList<OccupationDayBlock> Timeline
+    {
+        get
+        {
+            if (_day?.Blocks is { Count: > 0 } blocks)
+            {
+                return blocks;
+            }
+
+            if (_day is not { Found: true })
+            {
+                return [];
+            }
+
+            var rows = new List<OccupationDayBlock>();
+            Add("morning", Culture["Day.Morning"], _day.Morning);
+            Add("midday", Culture["Day.Midday"], _day.Midday);
+            Add("afternoon", Culture["Day.Afternoon"], _day.Afternoon);
+            Add("close", Culture["Day.Closing"], _day.Closing);
+            return rows;
+
+            void Add(string key, string label, string? text)
+            {
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    rows.Add(new OccupationDayBlock(key, label, text));
+                }
+            }
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = EscoId.ToString("D") + "|" + Culture.Language;
+        if (string.Equals(_loadedFor, key, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _loadedFor = key;
+        _loading = true;
+        _unknown = false;
+        _error = false;
+        _day = null;
+        if (Job is null)
+        {
+            _unknown = true;
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _day = await Api.GetOccupationDayAsync(EscoId, Culture.Language);
+            _unknown = _day is null;
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _day = null;
+            _error = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

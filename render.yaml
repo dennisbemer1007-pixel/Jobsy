@@ -340,6 +340,13 @@ projects:
                 sync: false
               - key: Mistral__ApiKey
                 sync: false
+              # Quality model (stories, coach, plans). Example: mistral-medium-latest.
+              # Cheap calls (translation, CV, vacancy check) use Mistral__SmallModel when set.
+              # Leave SmallModel empty to keep those calls on Mistral__Model.
+              - key: Mistral__Model
+                sync: false
+              - key: Mistral__SmallModel
+                sync: false
               - key: WebPush__Subject
                 sync: false
               - key: WebPush__PublicKey

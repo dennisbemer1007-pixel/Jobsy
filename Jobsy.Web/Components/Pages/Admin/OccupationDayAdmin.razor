@@ -1,0 +1,218 @@
+@page "/admin/content/dag-in-het-leven"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Careers
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>@Culture["AdminNav.DayInLife"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.DayInLife"]" Lead="@Culture["Admin.Day.Lead"]">
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_status is null)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <p>@Culture.Format("Admin.Day.Stored", _status.Stored, _status.Total, _status.Remaining)</p>
+        @if (_status.Running)
+        {
+            <p class="login-lead">@Culture.Format("Admin.Day.Running", _status.GeneratedThisRun, _status.FailedThisRun)</p>
+        }
+        @if (string.Equals(_status.LastError, OccupationDayWriteErrors.KeyMissing, StringComparison.Ordinal))
+        {
+            <p class="state-message">@Culture["Admin.Day.Key"]</p>
+        }
+
+        <div class="masterdata-row__fields">
+            <button class="login-submit" type="button" disabled="@(_busy || _status.Running)" @onclick="StartAsync">@Culture["Admin.Day.Start"]</button>
+            <button class="provider-btn" type="button" disabled="@(_busy || _status.Running)" @onclick="ChunkAsync">@Culture["Admin.Day.Chunk"]</button>
+            <button class="provider-btn" type="button" disabled="@_busy" @onclick="StopAsync">@Culture["Admin.Day.Stop"]</button>
+            <button class="provider-btn" type="button" disabled="@_busy" @onclick="ExportAsync">@Culture["Admin.Day.Export"]</button>
+        </div>
+        <label>
+            @Culture["Admin.Day.Import"]
+            <InputFile OnChange="ImportAsync" accept=".json,application/json" />
+        </label>
+    }
+</AdminPageShell>
+
+@code {
+    private OccupationDayAdminStatus? _status;
+    private string? _message;
+    private bool _busy;
+    private bool _polling;
+    private CancellationTokenSource? _poll;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+        if (_status?.Running == true)
+        {
+            StartPolling();
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            _status = await Api.GetOccupationDayStatusAsync();
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
+        }
+    }
+
+    private async Task StartAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.StartOccupationDayBatchAsync();
+            await RefreshAsync();
+            StartPolling();
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ChunkAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.GenerateOccupationDaysAsync(10);
+            if (result?.KeyMissing == true)
+            {
+                _message = Culture["Admin.Day.Key"];
+            }
+
+            await RefreshAsync();
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task StopAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.StopOccupationDayBatchAsync();
+            await RefreshAsync();
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ExportAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.DownloadOccupationDayExportAsync(Js);
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ImportAsync(InputFileChangeEventArgs args)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await using var stream = args.File.OpenReadStream(20_000_000);
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+            var result = await Api.ImportOccupationDaysAsync(json);
+            _message = result is null
+                ? Culture["Common.Error"]
+                : $"{result.Inserted} nieuw, {result.Updated} bijgewerkt, {result.Unchanged} gelijk, {result.Rejected} afgekeurd.";
+            await RefreshAsync();
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void StartPolling()
+    {
+        _poll?.Cancel();
+        _poll = new CancellationTokenSource();
+        _polling = true;
+        _ = PollAsync(_poll.Token);
+    }
+
+    private async Task PollAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested && _polling)
+            {
+                await Task.Delay(3000, cancellationToken);
+                await RefreshAsync();
+                if (_status is not { Running: true })
+                {
+                    break;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex) when (ex is OperationCanceledException
+            || Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+        }
+    }
+
+    public void Dispose()
+    {
+        _polling = false;
+        _poll?.Cancel();
+        _poll?.Dispose();
+    }
+}

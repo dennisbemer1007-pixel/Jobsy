@@ -50,6 +50,7 @@ public static class UiStringsAdmin
         Add("AdminNav.Payouts", "Uitbetalingen & btw", "Payouts & VAT", "Wypłaty i VAT", "Plăți și TVA", "المدفوعات وضريبة القيمة المضافة");
         Add("AdminNav.Flyer", "Werkgeversflyer", "Employer flyer", "Ulotka dla pracodawców", "Flyer pentru angajatori", "نشرة أصحاب العمل");
         Add("AdminNav.Training", "Opleidingen", "Training", "Szkolenia", "Traininguri", "التدريب");
+        Add("AdminNav.DayInLife", "Dag in het leven", "Day in the life", "Dzień z życia", "Zi din viață", "يوم في الحياة");
         Add("AdminNav.Masterdata", "Stamgegevens", "Master data", "Dane podstawowe", "Date de bază", "البيانات الأساسية");
         Add("AdminNav.Emails", "E-mails & meldingen", "E-mails & notifications", "E-maile i powiadomienia", "E-mailuri și notificări", "البريد والإشعارات");
         Add("AdminNav.Features", "Functies", "Features", "Funkcje", "Funcții", "الميزات");
@@ -442,13 +443,17 @@ public static class UiStringsAdmin
         Add("Admin.AiProvider.Feature.CompetenceReport", "Competentierapport", "Competence report", "Raport kompetencji", "Raport de competențe", "تقرير الكفاءات");
         Add("Admin.AiProvider.Feature.CultureFit", "Cultuurfit", "Culture fit", "Dopasowanie kultury", "Potrivire culturală", "ملاءمة الثقافة");
         Add("Admin.AiProvider.Feature.RoleFit", "Functiefit", "Role fit", "Dopasowanie roli", "Potrivire rol", "ملاءمة الوظيفة");
+        Add("Admin.AiProvider.Feature.MockInterview", "Oefengesprek", "Practice interview", "Rozmowa próbna", "Interviu de exercițiu", "مقابلة تدريبية");
+        Add("Admin.AiProvider.Feature.VacancyModeration", "Vacaturecontrole", "Vacancy check", "Kontrola oferty", "Verificare anunț", "فحص الوظيفة");
+        Add("Admin.AiProvider.Feature.CvExtraction", "CV uitlezen", "Read CV", "Odczyt CV", "Citire CV", "قراءة السيرة");
+        Add("Admin.AiProvider.Feature.Translation", "Vertaling", "Translation", "Tłumaczenie", "Traducere", "الترجمة");
         Add(
             "Admin.AiProvider.ModelsHint",
-            "Een leeg onderdeel gebruikt het model hierboven. Zet een ander model met Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass, Mistral__Models__Chat, Mistral__Models__CareerPath, Mistral__Models__CompetenceReport, Mistral__Models__CultureFit of Mistral__Models__RoleFit. Het kompas schrijft ook het loopbaanrapport. Staat het kompasmodel ingevuld, dan wint dat. Anders het rapportmodel.",
-            "An empty part uses the model above. Set another model with Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass, Mistral__Models__Chat, Mistral__Models__CareerPath, Mistral__Models__CompetenceReport, Mistral__Models__CultureFit or Mistral__Models__RoleFit. The compass also writes the career report. If the compass model is set, that one wins. Otherwise the report model.",
-            "Pusta część używa modelu powyżej. Inny model ustawiasz przez Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass lub Mistral__Models__Chat. Kompas pisze też raport kariery. Jeśli model kompasu jest ustawiony, wygrywa on. W przeciwnym razie model raportu.",
-            "O parte goală folosește modelul de mai sus. Alt model se setează cu Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass sau Mistral__Models__Chat. Busola scrie și raportul de carieră. Dacă modelul busolei este setat, acela câștigă. Altfel modelul raportului.",
-            "الجزء الفارغ يستخدم النموذج أعلاه. تضبط نموذجاً آخر عبر Mistral__Models__Story أو Mistral__Models__CareerReport أو Mistral__Models__Compass أو Mistral__Models__Chat. البوصلة تكتب أيضاً تقرير المسار. إذا كان نموذج البوصلة مضبوطاً، فهو الذي يُستخدم. وإلا نموذج التقرير.");
+            "Een leeg onderdeel gebruikt het model hierboven. Zet een ander model met Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass, Mistral__Models__Chat, Mistral__Models__CareerPath, Mistral__Models__CompetenceReport, Mistral__Models__CultureFit of Mistral__Models__RoleFit. Het kompas schrijft ook het loopbaanrapport. Staat het kompasmodel ingevuld, dan wint dat. Anders het rapportmodel. Vertaling, CV uitlezen en vacaturecontrole gebruiken Mistral__SmallModel als dat is ingevuld. Anders het model hierboven. Ai__SmallModel en OpenAI__SmallModel gelden alleen als Mistral__SmallModel leeg is.",
+            "An empty part uses the model above. Set another model with Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass, Mistral__Models__Chat, Mistral__Models__CareerPath, Mistral__Models__CompetenceReport, Mistral__Models__CultureFit or Mistral__Models__RoleFit. The compass also writes the career report. If the compass model is set, that one wins. Otherwise the report model. Translation, CV reading and vacancy checks use Mistral__SmallModel when that is set. Otherwise the model above. Ai__SmallModel and OpenAI__SmallModel apply only when Mistral__SmallModel is empty.",
+            "Pusta część używa modelu powyżej. Inny model ustawiasz przez Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass lub Mistral__Models__Chat. Kompas pisze też raport kariery. Jeśli model kompasu jest ustawiony, wygrywa on. W przeciwnym razie model raportu. Tłumaczenie, odczyt CV i kontrola oferty używają Mistral__SmallModel, gdy jest ustawiony. Inaczej modelu powyżej.",
+            "O parte goală folosește modelul de mai sus. Alt model se setează cu Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass sau Mistral__Models__Chat. Busola scrie și raportul de carieră. Dacă modelul busolei este setat, acela câștigă. Altfel modelul raportului. Traducerea, citirea CV-ului și verificarea anunțului folosesc Mistral__SmallModel când este setat. Altfel modelul de mai sus.",
+            "الجزء الفارغ يستخدم النموذج أعلاه. تضبط نموذجاً آخر عبر Mistral__Models__Story أو Mistral__Models__CareerReport أو Mistral__Models__Compass أو Mistral__Models__Chat. البوصلة تكتب أيضاً تقرير المسار. إذا كان نموذج البوصلة مضبوطاً، فهو الذي يُستخدم. وإلا نموذج التقرير. الترجمة وقراءة السيرة وفحص الوظيفة تستخدم Mistral__SmallModel عند ضبطه. وإلا النموذج أعلاه.");
         Add("Admin.AiProvider.Region.Eu", "EU", "European Union", "UE", "UE", "الاتحاد الأوروبي");
         Add("Admin.AiProvider.Region.Us", "Verenigde Staten", "United States", "Stany Zjednoczone", "Statele Unite", "الولايات المتحدة");
         Add("Admin.AiProvider.Region.Global", "geen vaste regio", "no fixed region", "brak stałego regionu", "fără regiune fixă", "لا منطقة ثابتة");
@@ -908,6 +913,11 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.ApiKeyOff", "API-sleutel uitgezet", "API key turned off", "Klucz API wyłączony", "Cheie API oprită", "أُوقف مفتاح API");
         Add("AdminAudit.Action.ReportDecided", "Melding beoordeeld", "Report reviewed", "Zgłoszenie rozpatrzone", "Raport evaluat", "تم تقييم البلاغ");
         Add("AdminAudit.Action.EmailTest", "Testmail verstuurd", "Test email sent", "Wiadomość testowa wysłana", "E-mail de test trimis", "أُرسل بريد تجريبي");
+        Add("AdminAudit.Action.OccupationDayGenerate", "Dag gegenereerd", "Day generated", "Wygenerowano dzień", "Zi generată", "تم توليد اليوم");
+        Add("AdminAudit.Action.OccupationDayStart", "Dagen genereren gestart", "Day generation started", "Uruchomiono generowanie dni", "Generarea zilelor a pornit", "بدأ توليد الأيام");
+        Add("AdminAudit.Action.OccupationDayStop", "Dagen genereren gestopt", "Day generation stopped", "Zatrzymano generowanie dni", "Generarea zilelor s-a oprit", "توقف توليد الأيام");
+        Add("AdminAudit.Action.OccupationDayImport", "Dagen geïmporteerd", "Days imported", "Zaimportowano dni", "Zile importate", "تم استيراد الأيام");
+        Add("AdminAudit.Action.OccupationDayExport", "Dagen geëxporteerd", "Days exported", "Wyeksportowano dni", "Zile exportate", "تم تصدير الأيام");
         Add("AdminAction.Resource.Users", "Gebruikerslijst", "User list", "Lista użytkowników", "Lista utilizatorilor", "قائمة المستخدمين");
         Add("AdminAction.Resource.UserSessions", "Gebruikerssessies", "User sessions", "Sesje użytkownika", "Sesiuni utilizator", "جلسات المستخدم");
         Add("AdminAction.Resource.PlatformLogs", "Platformlogs", "Platform logs", "Logi platformy", "Jurnale platformă", "سجلات المنصة");

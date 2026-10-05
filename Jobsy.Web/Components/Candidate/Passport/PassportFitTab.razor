@@ -10,6 +10,7 @@
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
 <div class="passport-fit">
     @if (_session.Loading)
@@ -79,6 +80,11 @@
                         @if (OutlookFor(result.JobTitle) is { } outlook)
                         {
                             <OccupationOutlookBlock Result="outlook" />
+                            <OccupationDayLink Title="@result.JobTitle" From="fit" />
+                            @if (_adviceOn && AdviceFor(result.JobTitle) is { } advice)
+                            {
+                                <HonestAdviceBlock Text="@advice.Text" Source="@advice.Source" />
+                            }
                         }
                         <div class="passport-fit__last">
                             <p class="passport-fit__last-line">
@@ -250,6 +256,12 @@
         return occupation is null ? null : Jobsy.Core.Careers.OccupationOutlook.Shared.Get(occupation.Id);
     }
 
+    private Jobsy.Core.Careers.HonestAdviceResult? AdviceFor(string? title)
+    {
+        var occupation = Jobsy.Core.Careers.OccupationCatalog.Shared.Resolve(title);
+        return occupation is null ? null : Jobsy.Core.Careers.HonestAdviceService.Shared.Get(occupation.Id, Culture.Language);
+    }
+
     [Parameter] public bool Active { get; set; }
     [Parameter] public CandidateKompasState? Snapshot { get; set; }
     [Parameter] public bool OpenForWork { get; set; } = true;
@@ -262,9 +274,19 @@
     private string _courseSkill = "";
     private List<CandidateMatchedVacancy> _topMatches = [];
     private int _newContacts;
+    private bool _adviceOn;
 
     protected override async Task OnParametersSetAsync()
     {
+        try
+        {
+            _adviceOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.HonestAdvice);
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _adviceOn = false;
+        }
+
         if (!Active)
         {
             return;

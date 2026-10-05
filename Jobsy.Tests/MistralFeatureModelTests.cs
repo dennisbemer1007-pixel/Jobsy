@@ -51,6 +51,57 @@ public class MistralFeatureModelTests
         Assert.Equal("mistral-medium-latest", rows[MistralFeatureSlots.CareerReport]);
         Assert.Equal("mistral-medium-latest", rows[MistralFeatureSlots.Compass]);
         Assert.Equal("mistral-small-latest", rows[MistralFeatureSlots.Chat]);
+        Assert.Equal("mistral-small-latest", rows[MistralFeatureSlots.Translation]);
+        Assert.Equal(12, rows.Count);
+    }
+
+    [Fact]
+    public void Cheap_rows_use_the_small_model_when_it_is_set()
+    {
+        var options = new MistralOptions
+        {
+            Model = "mistral-medium-latest",
+            SmallModel = "mistral-small-latest",
+            Models = new MistralFeatureModels { Story = "mistral-large-latest" }
+        };
+
+        var rows = options.ActiveFeatureModels().ToDictionary(row => row.Feature, row => row.Model);
+
+        Assert.Equal("mistral-large-latest", rows[MistralFeatureSlots.Story]);
+        Assert.Equal("mistral-medium-latest", rows[MistralFeatureSlots.MockInterview]);
+        Assert.Equal("mistral-small-latest", rows[MistralFeatureSlots.Translation]);
+        Assert.Equal("mistral-small-latest", rows[MistralFeatureSlots.CvExtraction]);
+        Assert.Equal("mistral-small-latest", rows[MistralFeatureSlots.VacancyModeration]);
+        Assert.Equal("mistral-small-latest", options.ModelFor(OpenAiFeature.Translation));
+        Assert.Equal("mistral-medium-latest", options.ModelFor(OpenAiFeature.MockInterview));
+    }
+
+    [Fact]
+    public void Config_section_binds_small_model_keys()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["OpenAI:Model"] = "mistral-medium-latest",
+                ["OpenAI:SmallModel"] = "mistral-small-latest",
+                ["Ai:SmallModel"] = "from-ai",
+                ["Mistral:Model"] = "mistral-medium-latest",
+                ["Mistral:SmallModel"] = "mistral-small-latest"
+            })
+            .Build();
+
+        var openAi = new OpenAiOptions();
+        var ai = new AiOptions();
+        var mistral = new MistralOptions();
+        config.GetSection(OpenAiOptions.SectionName).Bind(openAi);
+        config.GetSection(AiOptions.SectionName).Bind(ai);
+        config.GetSection(MistralOptions.SectionName).Bind(mistral);
+
+        Assert.Equal("mistral-medium-latest", openAi.Model);
+        Assert.Equal("mistral-small-latest", openAi.SmallModel);
+        Assert.Equal("from-ai", ai.SmallModel);
+        Assert.Equal("mistral-small-latest", mistral.ModelFor(OpenAiFeature.CvExtraction));
+        Assert.Equal("mistral-medium-latest", mistral.ModelFor(OpenAiFeature.WhoAmI));
     }
 
     [Fact]
@@ -112,7 +163,7 @@ public class MistralFeatureModelTests
         var mistralBody = Assert.IsType<AiProviderStatusDto>(mistralOk.Value);
         Assert.Equal(MistralOptions.DefaultModel, mistralBody.Model);
         var rows = Assert.IsAssignableFrom<IReadOnlyList<AiFeatureModelDto>>(mistralBody.FeatureModels);
-        Assert.Equal(8, rows.Count);
+        Assert.Equal(12, rows.Count);
         Assert.Equal("mistral-medium-latest", Assert.Single(rows, row => row.Feature == "Story").Model);
         Assert.Equal("mistral-small-latest", Assert.Single(rows, row => row.Feature == "Chat").Model);
 

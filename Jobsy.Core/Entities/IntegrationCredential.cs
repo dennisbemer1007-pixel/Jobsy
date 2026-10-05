@@ -14,6 +14,13 @@ public class IntegrationCredential
     public string? ClientSecret { get; set; }
     public string? TenantId { get; set; }
     public string? Model { get; set; }
+
+    /// <summary>
+    /// Optional cheaper model for translation, CV extraction and vacancy moderation.
+    /// Empty means those calls use <see cref="Model"/>.
+    /// </summary>
+    public string? SmallModel { get; set; }
+
     public string? BaseUrl { get; set; }
     public string? FromAddress { get; set; }
     /// <summary>

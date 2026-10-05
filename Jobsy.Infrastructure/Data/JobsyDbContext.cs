@@ -55,6 +55,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateOnboarding> CandidateOnboardings => Set<CandidateOnboarding>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
+    public DbSet<OccupationDayInLife> OccupationDayInLives => Set<OccupationDayInLife>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
     public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
     public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
@@ -973,6 +974,29 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<OccupationDayInLife>(entity =>
+        {
+            entity.ToTable("OccupationDayInLives");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EscoId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Uri).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.TitleNl).HasMaxLength(160).IsRequired();
+            entity.Property(e => e.Morning).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Midday).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Afternoon).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.Closing).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.HighlightsJson).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.BlocksJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.TasksJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.SkillsJson).HasColumnType("text").IsRequired().HasDefaultValue("[]");
+            entity.Property(e => e.VariesNote).HasMaxLength(800).IsRequired();
+            entity.Property(e => e.SourceModel).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.ContentHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Locale).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.TranslationsJson).HasColumnType("text").IsRequired();
+            entity.HasIndex(e => e.EscoId).IsUnique();
+        });
+
         modelBuilder.Entity<CandidateMatchSnapshot>(entity =>
         {
             entity.ToTable("CandidateMatchSnapshots");
@@ -1685,6 +1709,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ClientSecret).HasMaxLength(2048);
             entity.Property(e => e.TenantId).HasMaxLength(128);
             entity.Property(e => e.Model).HasMaxLength(64);
+            entity.Property(e => e.SmallModel).HasMaxLength(64);
             entity.Property(e => e.BaseUrl).HasMaxLength(512);
             entity.Property(e => e.FromAddress).HasMaxLength(256);
             entity.Property(e => e.LastPingMessage).HasMaxLength(500);
@@ -1703,6 +1728,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
             entity.Property(e => e.WhatsAppRemindersEnabled).HasDefaultValue(false);
             entity.Property(e => e.CompactTestPdfEnabled).HasDefaultValue(false);
+            entity.Property(e => e.HonestAdviceEnabled).HasDefaultValue(false);
             entity.Property(e => e.FreeCandidateTestsEnabled).HasDefaultValue(true);
         });
 

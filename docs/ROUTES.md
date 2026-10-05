@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (240 routes)
+## Table (242 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -64,6 +64,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/cockpit` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/companies` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/company` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/content/dag-in-het-leven` | `Pages/Admin/OccupationDayAdmin.razor` | Admin |
 | `/admin/content/emails` | `Pages/Admin/MailTestAdmin.razor` | Admin |
 | `/admin/content/opleidingen` | `Pages/Admin/TrainingAdmin.razor` | Admin |
 | `/admin/content/paginas` | `Pages/Admin/PaginasFlyerPage.razor` | Admin |
@@ -131,6 +132,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
 | `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/candidate/beroep/{EscoId:guid}/dag` | `Pages/Candidate/OccupationDayPage.razor` | Candidate |
 | `/candidate/binnenkort` | `Pages/Candidate/CandidateBinnenkort.razor` | Candidate |
 | `/candidate/career` | `Pages/Candidate/CareerTest.razor` | Candidate |
 | `/candidate/competencies` | `Pages/Candidate/CompetencyTest.razor` | Candidate |

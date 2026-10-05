@@ -220,7 +220,8 @@ public record UpdateIntegrationCredentialRequest(
     string? FromAddress = null,
     bool ClearApiKey = false,
     bool ClearClientSecret = false,
-    bool UseEnvironmentCredentials = false);
+    bool UseEnvironmentCredentials = false,
+    string? SmallModel = null);
 
 public sealed record AiFeatureModelDto(string Feature, string Model);
 
@@ -268,7 +269,8 @@ public record IntegrationCredentialDto(
     DateTime? LastPingAtUtc,
     DateTime? UpdatedAtUtc,
     bool IgnoresEnvironmentCredentials = false,
-    bool UsesEnvironmentCredentials = false);
+    bool UsesEnvironmentCredentials = false,
+    string? SmallModel = null);
 
 /// <summary>Partial update: null fields keep the current value.</summary>
 public record UpdatePlatformFeatureRequest(
@@ -297,7 +299,8 @@ public record UpdatePlatformFeatureRequest(
     bool? PhoneVerificationEnabled = null,
     bool? WhatsAppRemindersEnabled = null,
     bool? CompactTestPdfEnabled = null,
-    bool? FreeCandidateTestsEnabled = null);
+    bool? FreeCandidateTestsEnabled = null,
+    bool? HonestAdviceEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -325,7 +328,8 @@ public record PlatformFeatureDto(
     bool WhatsAppRemindersEnabled = false,
     bool CompactTestPdfEnabled = false,
     bool WhatsAppRemindersConfigured = false,
-    bool FreeCandidateTestsEnabled = true);
+    bool FreeCandidateTestsEnabled = true,
+    bool HonestAdviceEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

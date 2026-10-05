@@ -92,7 +92,8 @@ public class SettingsController : ControllerBase
         IReadOnlyList<AiFeatureModelDto>? featureModels = null;
         if (status.Available && string.Equals(status.Provider, AiProviderNames.Mistral, StringComparison.Ordinal))
         {
-            featureModels = _mistral.ActiveFeatureModels()
+            var smallFallback = AiModelRouting.FirstNonEmpty(_ai.SmallModel, _openAi.SmallModel);
+            featureModels = _mistral.ActiveFeatureModels(smallFallback)
                 .Select(row => new AiFeatureModelDto(row.Feature, row.Model))
                 .ToList();
         }
@@ -480,7 +481,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
-                    FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled),
+                    FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled,
+                    HonestAdviceEnabled: request.HonestAdviceEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -556,6 +558,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
         Add("FreeCandidateTestsEnabled", before.FreeCandidateTestsEnabled.ToString(), after.FreeCandidateTestsEnabled.ToString());
+        Add("HonestAdviceEnabled", before.HonestAdviceEnabled.ToString(), after.HonestAdviceEnabled.ToString());
         return list;
     }
 
@@ -577,7 +580,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             schoolsEnabled = snap.SchoolsEnabled,
             ambassadorsEnabled = snap.AmbassadorsEnabled,
             whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled,
-            compactTestPdfEnabled = snap.CompactTestPdfEnabled
+            compactTestPdfEnabled = snap.CompactTestPdfEnabled,
+            honestAdviceEnabled = snap.HonestAdviceEnabled
         });
     }
 
@@ -823,6 +827,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             var fields = new List<string>();
             if (request.ApiKey is not null || request.ClearApiKey) fields.Add("ApiKey");
             if (request.Model is not null) fields.Add("Model");
+            if (request.SmallModel is not null) fields.Add("SmallModel");
             if (request.ClientId is not null) fields.Add("ClientId");
             if (request.ClientSecret is not null || request.ClearClientSecret) fields.Add("ClientSecret");
             if (request.TenantId is not null) fields.Add("TenantId");
@@ -845,7 +850,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     request.FromAddress,
                     request.ClearApiKey,
                     request.ClearClientSecret,
-                    request.UseEnvironmentCredentials),
+                    request.UseEnvironmentCredentials,
+                    request.SmallModel),
                 cancellationToken);
             return Ok(ToDto(saved));
         }
@@ -882,7 +888,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.WhatsAppRemindersEnabled,
             snap.CompactTestPdfEnabled,
             _whatsApp.IsConfigured,
-            snap.FreeCandidateTestsEnabled);
+            snap.FreeCandidateTestsEnabled,
+            snap.HonestAdviceEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(
@@ -931,7 +938,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             view.LastPingAtUtc,
             view.UpdatedAtUtc,
             view.IgnoresEnvironmentCredentials,
-            view.UsesEnvironmentCredentials);
+            view.UsesEnvironmentCredentials,
+            view.SmallModel);
 }
 
 public sealed record PlatformCompanyDto(

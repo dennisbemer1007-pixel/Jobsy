@@ -1,3 +1,4 @@
+using Jobsy.Core.Ai;
 using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Options;
@@ -13,6 +14,10 @@ public static class MistralFeatureSlots
     public const string CompetenceReport = "CompetenceReport";
     public const string CultureFit = "CultureFit";
     public const string RoleFit = "RoleFit";
+    public const string MockInterview = "MockInterview";
+    public const string VacancyModeration = "VacancyModeration";
+    public const string CvExtraction = "CvExtraction";
+    public const string Translation = "Translation";
 }
 
 /// <summary>One row on Admin → Integraties.</summary>
@@ -60,10 +65,19 @@ public sealed class MistralOptions
 
     public string? ApiKey { get; set; }
 
+    /// <summary>Quality model. Cheap features use <see cref="SmallModel"/> when that is set.</summary>
     public string Model { get; set; } = DefaultModel;
 
     /// <summary>
-    /// Optional per-feature overrides. Empty slots use <see cref="Model"/>.
+    /// Optional cheaper model for translation, CV extraction and vacancy moderation.
+    /// Empty means those features use <see cref="Model"/>.
+    /// Env: <c>Mistral__SmallModel</c>. <c>Ai__SmallModel</c> and then <c>OpenAI__SmallModel</c>
+    /// are used only when this is empty (see <see cref="ModelFor"/>).
+    /// </summary>
+    public string? SmallModel { get; set; }
+
+    /// <summary>
+    /// Optional per-feature overrides for quality calls. Empty slots use <see cref="Model"/>.
     /// Env: <c>Mistral__Models__Story</c>, <c>__CareerReport</c>, <c>__Compass</c>, <c>__Chat</c>,
     /// <c>__CareerPath</c>, <c>__CompetenceReport</c>, <c>__CultureFit</c>, <c>__RoleFit</c>.
     /// </summary>
@@ -71,9 +85,18 @@ public sealed class MistralOptions
 
     public string BaseUrl { get; set; } = DefaultBaseUrl;
 
-    /// <summary>Model sent for this feature. Other features stay on <see cref="Model"/>.</summary>
-    public string ModelFor(OpenAiFeature feature)
+    /// <summary>
+    /// Model sent for this feature.
+    /// Cheap features use <see cref="SmallModel"/>, then <paramref name="smallModelFallback"/>, then <see cref="Model"/>.
+    /// Quality features use their slot, then <see cref="Model"/>.
+    /// </summary>
+    public string ModelFor(OpenAiFeature feature, string? smallModelFallback = null)
     {
+        if (AiModelRouting.UsesSmallModel(feature))
+        {
+            return Effective(AiModelRouting.FirstNonEmpty(SmallModel, smallModelFallback), Model);
+        }
+
         if (feature == OpenAiFeature.CareerCompass)
         {
             return ModelForCompassCall();
@@ -103,19 +126,23 @@ public sealed class MistralOptions
     /// What Admin → Integraties shows: the model each surface sends.
     /// The career report and the compass share one call, so both rows show that model.
     /// </summary>
-    public IReadOnlyList<MistralActiveFeatureModel> ActiveFeatureModels()
+    public IReadOnlyList<MistralActiveFeatureModel> ActiveFeatureModels(string? smallModelFallback = null)
     {
         var compassCall = ModelForCompassCall();
         return
         [
-            new(MistralFeatureSlots.Story, ModelFor(OpenAiFeature.WhoAmI)),
+            new(MistralFeatureSlots.Story, ModelFor(OpenAiFeature.WhoAmI, smallModelFallback)),
             new(MistralFeatureSlots.CareerReport, compassCall),
             new(MistralFeatureSlots.Compass, compassCall),
-            new(MistralFeatureSlots.Chat, ModelFor(OpenAiFeature.AssistantChat)),
-            new(MistralFeatureSlots.CareerPath, ModelFor(OpenAiFeature.CareerPathPlan)),
-            new(MistralFeatureSlots.CompetenceReport, ModelFor(OpenAiFeature.CompetenceDeepReport)),
-            new(MistralFeatureSlots.CultureFit, ModelFor(OpenAiFeature.CultureFit)),
-            new(MistralFeatureSlots.RoleFit, ModelFor(OpenAiFeature.RoleFitCheck))
+            new(MistralFeatureSlots.Chat, ModelFor(OpenAiFeature.AssistantChat, smallModelFallback)),
+            new(MistralFeatureSlots.CareerPath, ModelFor(OpenAiFeature.CareerPathPlan, smallModelFallback)),
+            new(MistralFeatureSlots.CompetenceReport, ModelFor(OpenAiFeature.CompetenceDeepReport, smallModelFallback)),
+            new(MistralFeatureSlots.CultureFit, ModelFor(OpenAiFeature.CultureFit, smallModelFallback)),
+            new(MistralFeatureSlots.RoleFit, ModelFor(OpenAiFeature.RoleFitCheck, smallModelFallback)),
+            new(MistralFeatureSlots.MockInterview, ModelFor(OpenAiFeature.MockInterview, smallModelFallback)),
+            new(MistralFeatureSlots.VacancyModeration, ModelFor(OpenAiFeature.VacancyContentModeration, smallModelFallback)),
+            new(MistralFeatureSlots.CvExtraction, ModelFor(OpenAiFeature.CvExtraction, smallModelFallback)),
+            new(MistralFeatureSlots.Translation, ModelFor(OpenAiFeature.Translation, smallModelFallback))
         ];
     }
 

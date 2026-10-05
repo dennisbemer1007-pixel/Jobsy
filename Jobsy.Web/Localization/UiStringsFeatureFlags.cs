@@ -130,6 +130,18 @@ public static class UiStringsFeatureFlags
             "Wył.: kandydaci znów płacą za test rozszerzony.",
             "Oprit: candidații trebuie să plătească din nou testul extins.",
             "إيقاف: يجب على المرشحين الدفع مرة أخرى للاختبار الموسّع.");
+        Add("AdminSettings.HonestAdvice.Enabled.Title",
+            "Eerlijk advies",
+            "Honest advice",
+            "Szczera rada",
+            "Sfat sincer",
+            "نصيحة صادقة");
+        Add("AdminSettings.HonestAdvice.Enabled.Desc",
+            "Aan = bij een beroep staat een kort opgeslagen advies. Uit = dat blok blijft verborgen. Er wordt niets live verzonnen.",
+            "On = a job shows a short stored piece of advice. Off = that block stays hidden. Nothing is invented live.",
+            "Wł. = przy zawodzie widać krótką zapisaną radę. Wył. = ten blok zostaje ukryty. Nic nie jest wymyślane na żywo.",
+            "Pornit = la o meserie apare un sfat scurt salvat. Oprit = blocul rămâne ascuns. Nu se inventează nimic pe loc.",
+            "تشغيل = تظهر نصيحة قصيرة محفوظة عند المهنة. إيقاف = يبقى هذا الجزء مخفياً. لا يُختلق شيء مباشرة.");
         Add("AdminSettings.CompactTestPdf.Enabled.Desc",
             "Aan = het uitgebreide persoonlijke testrapport is ongeveer 4 pagina's met grafieken. Uit = de langere rapporten van nu.",
             "On = the extended personal test report is about 4 pages with charts. Off = today's longer reports.",

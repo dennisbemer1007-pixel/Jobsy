@@ -55,6 +55,11 @@ public static partial class AdminActionLabels
             "apikey.deactivate" => "AdminAudit.Action.ApiKeyOff",
             "report.decided" => "AdminAudit.Action.ReportDecided",
             "email.test-send" => "AdminAudit.Action.EmailTest",
+            "occupation-day.generate" => "AdminAudit.Action.OccupationDayGenerate",
+            "occupation-day.start" => "AdminAudit.Action.OccupationDayStart",
+            "occupation-day.stop" => "AdminAudit.Action.OccupationDayStop",
+            "occupation-day.import" => "AdminAudit.Action.OccupationDayImport",
+            "occupation-day.export" => "AdminAudit.Action.OccupationDayExport",
             _ => null
         };
 
@@ -358,6 +363,11 @@ public static partial class AdminActionLabels
         yield return ("vacancy.purged", "AdminAudit.Action.VacancyPurged");
         yield return ("vacancy.extend", "AdminAudit.Action.VacancyExtended");
         yield return ("user.unblock", "AdminAudit.Action.Unblock");
+        yield return ("occupation-day.generate", "AdminAudit.Action.OccupationDayGenerate");
+        yield return ("occupation-day.start", "AdminAudit.Action.OccupationDayStart");
+        yield return ("occupation-day.stop", "AdminAudit.Action.OccupationDayStop");
+        yield return ("occupation-day.import", "AdminAudit.Action.OccupationDayImport");
+        yield return ("occupation-day.export", "AdminAudit.Action.OccupationDayExport");
 
         foreach (var entry in PlatformSettingsCatalog.Entries)
         {

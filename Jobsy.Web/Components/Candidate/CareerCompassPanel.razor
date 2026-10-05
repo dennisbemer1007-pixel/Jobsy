@@ -149,6 +149,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
 
     private bool _employersOn = true;
     private bool _preview;
+    private bool _adviceOn;
 
     private bool ExtraTraining(string title)
     {
@@ -167,6 +168,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         {
             _preview = Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction();
             _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+            _adviceOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.HonestAdvice);
         }
         catch (Exception)
         {
@@ -242,6 +244,17 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         return string.IsNullOrWhiteSpace(id) ? null : OccupationOutlook.Shared.Get(id);
     }
 
+    private Jobsy.Core.Careers.HonestAdviceResult? AdviceFor(CareerOccupationMatchModel item)
+    {
+        var id = item.EscoId;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            id = OccupationCatalog.Shared.Resolve(item.Title)?.Id;
+        }
+
+        return string.IsNullOrWhiteSpace(id) ? null : Jobsy.Core.Careers.HonestAdviceService.Shared.Get(id, Culture.Language);
+    }
+
     private RenderFragment OccupationBody(CareerOccupationMatchModel item) => __builder =>
     {
         var insight = BuildInsight(item.Title);
@@ -268,6 +281,11 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                 </ul>
             }
             <OccupationOutlookBlock Result="OutlookFor(item)" />
+            <OccupationDayLink EscoId="@item.EscoId" Title="@item.Title" From="tests" />
+            @if (_adviceOn && AdviceFor(item) is { } advice)
+            {
+                <HonestAdviceBlock Text="@advice.Text" Source="@advice.Source" />
+            }
             <h5>@Culture["Fit.FormalBlock"]</h5>
             <ul>
                 @foreach (var line in CareerOccupationDetail.Requirements(item.Title))
