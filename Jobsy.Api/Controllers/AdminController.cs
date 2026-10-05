@@ -972,6 +972,54 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("users/{userId:guid}/whoami/regenerate")]
+    [AdminAudit(AdminAuditKeys.UserWhoAmIRegenerate, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
+    public async Task<IActionResult> RegenerateWhoAmIStory(
+        Guid userId,
+        [FromBody] AdminTestUnlockResetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var target = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        _auditContext.TargetId = userId.ToString("D");
+        _auditContext.TargetLabel = PersonalDataMasker.MaskName(target.FullName);
+
+        var reason = (request.Reason ?? string.Empty).Trim();
+        if (reason.Length < 5 || reason.Length > 500)
+        {
+            return BadRequest(new
+            {
+                code = "reset_reason_length",
+                message = "Geef een reden van 5 tot 500 tekens."
+            });
+        }
+
+        _auditContext.Reason = reason;
+        if (!target.IsTestAccount)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "test_account_story_only",
+                message = "Alleen een testaccount kan het verhaal opnieuw laten maken."
+            });
+        }
+
+        WhoAmIForceRegeneration.Request(userId);
+        _insightsQueue.TryEnqueue(userId);
+        return NoContent();
+    }
+
     [HttpPost("users/{userId:guid}/sessions/{sessionId:guid}/revoke")]
     [AdminAudit(AdminAuditKeys.UserSessionsRevoke, TargetType = AdminAuditKeys.TargetTypes.User, TargetRouteKey = "userId")]
     public async Task<IActionResult> RevokeUserSession(

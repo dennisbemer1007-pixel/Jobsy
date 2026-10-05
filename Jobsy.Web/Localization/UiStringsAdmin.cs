@@ -890,6 +890,7 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.MasterdataDeleted", "Stamgegeven verwijderd", "Master data deleted", "Usunięto dane podstawowe", "Dată de bază ștearsă", "حُذف بيان أساسي");
         Add("AdminAudit.Action.Sessions", "Sessies", "Sessions", "Sesje", "Sesiuni", "الجلسات");
         Add("AdminAudit.Action.TestUnlockReset", "Tests van testaccount gereset", "Test account tests reset", "Zresetowano testy konta testowego", "Testele contului de test au fost resetate", "أُعيد ضبط اختبارات حساب الاختبار");
+        Add("AdminAudit.Action.WhoAmIRegenerate", "Verhaal opnieuw gemaakt", "Story generated again", "Historia wygenerowana ponownie", "Povestea a fost generată din nou", "أُعيد إنشاء القصة");
         Add("AdminAudit.Action.MisuseHandled", "Melding referent afgehandeld", "Referee report handled", "Zgłoszenie referenta załatwione", "Raportul referentului a fost rezolvat", "تمت معالجة بلاغ المرجع");
         Add("AdminAudit.Action.Unblock", "Blokkade opgeheven", "Block lifted", "Blokada zdjęta", "Blocarea a fost ridicată", "رُفع الإيقاف");
         Add("AdminAudit.Action.PricingUpdated", "Prijzen gewijzigd", "Prices changed", "Ceny zmienione", "Prețuri modificate", "تم تغيير الأسعار");

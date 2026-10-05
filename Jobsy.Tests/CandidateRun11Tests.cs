@@ -123,7 +123,7 @@ public class CandidateRun11Tests
     public void Chat_titles_add_an_english_name_in_brackets()
     {
         Assert.Equal("Kok (Cook)", OccupationTitles.ForChat("Kok", "en"));
-        Assert.Equal("Kok (Cook)", OccupationTitles.ForChat("Kok", "ar"));
+        Assert.Equal("Kok (طبّاخ)", OccupationTitles.ForChat("Kok", "ar"));
         Assert.Equal("Kok", OccupationTitles.ForChat("Kok", "nl"));
     }
 

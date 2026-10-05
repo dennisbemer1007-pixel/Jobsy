@@ -205,13 +205,17 @@ public sealed class WhoAmIService : IWhoAmIService
             && career is { IsComplete: true } rScores
             && culture is { IsComplete: true } cultureScores)
         {
-            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores, profileHighlights, values);
+            var (competenceTraits, competenceDeep) = await WhoAmICompetenceLoader.LoadAsync(_db, userId, cancellationToken);
+            var competenceSource = WhoAmICompetenceSource.FingerprintSuffix(competenceTraits, competenceDeep);
+            var competence = competenceDeep ? competenceTraits : null;
+            var fingerprint = WhoAmICompleteness.Fingerprint(
+                cScores, rScores, cultureScores, profileHighlights, values, competenceSource);
             var sheet = CandidateFactSheet.ForWhoAmI(cScores, rScores, cultureScores, profileHighlights, values);
             var storyOk = story is not null
                           && CandidateFactGuard.RejectionReason(story, sheet) is null
                           && WhoAmIStoryBuilder.Accepts(story, profileHighlights, cScores, cultureScores, rScores, values);
             var dutchTemplate = WhoAmIStoryBuilder.Build(
-                cScores, rScores, cultureScores, profileHighlights, values, employersEnabled);
+                cScores, rScores, cultureScores, profileHighlights, values, employersEnabled, competence: competence);
             if (!storyOk)
             {
                 story = dutchTemplate;
@@ -222,7 +226,7 @@ public sealed class WhoAmIService : IWhoAmIService
             story = fromOpenAi
                 ? WhoAmIStoryBuilder.ForDisplay(story, employersEnabled)
                 : WhoAmIStoryBuilder.ForDisplay(
-                    WhoAmIStoryBuilder.Build(cScores, rScores, cultureScores, profileHighlights, values, employersEnabled, language),
+                    WhoAmIStoryBuilder.Build(cScores, rScores, cultureScores, profileHighlights, values, employersEnabled, language, competence),
                     employersEnabled);
 
             var now = DateTime.UtcNow;

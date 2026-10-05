@@ -593,11 +593,11 @@
         _headline = AssessmentOutcomeLines.Competence(
             scores.Samenwerken, scores.Resultaatgerichtheid, scores.Stressbestendigheid,
             scores.Innovatie, scores.Extraversie);
-        AddBar("Samenwerken", scores.Samenwerken);
-        AddBar("Resultaatgerichtheid", scores.Resultaatgerichtheid);
-        AddBar("Stressbestendigheid", scores.Stressbestendigheid);
-        AddBar("Innovatie", scores.Innovatie);
-        AddBar(Culture["Competency.Bar.PeopleEnergy"], scores.Extraversie);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Samenwerken, Culture.Language), scores.Samenwerken);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Resultaatgerichtheid, Culture.Language), scores.Resultaatgerichtheid);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Stressbestendigheid, Culture.Language), scores.Stressbestendigheid);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Innovatie, Culture.Language), scores.Innovatie);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Extraversie, Culture.Language), scores.Extraversie);
         if (_deepCompleted && _competenceReport?.Traits is { Count: > 0 } traits)
         {
             _scoreBars.Clear();

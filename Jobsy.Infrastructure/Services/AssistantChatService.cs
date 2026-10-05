@@ -1957,11 +1957,6 @@ Verbetervoorstellen:
             career?.SocialPercent,
             career?.EnterprisingPercent,
             career?.ConventionalPercent);
-        if (scores is not { IsComplete: true })
-        {
-            return null;
-        }
-
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
         var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
@@ -1972,6 +1967,14 @@ Verbetervoorstellen:
             .Select(item => item.Name.Trim())
             .ToList();
         var competence = await CompetenceTraitsAsync(context.UserId, cancellationToken);
+        if (scores is not { IsComplete: true }
+            && !CandidateJobAdvice.LooksLikeWorkClaim(question)
+            && !CandidateJobAdvice.LooksLikeEmployerName(question))
+        {
+            return null;
+        }
+
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
         var reply = CandidateJobAdvice.TryReply(
             context.Language,
             question,
@@ -1980,7 +1983,8 @@ Verbetervoorstellen:
             work.Count > 0,
             work,
             competence,
-            certificates);
+            certificates,
+            employersOn);
         return string.IsNullOrWhiteSpace(reply) ? null : new AssistantChatResult(reply, false, []);
     }
 

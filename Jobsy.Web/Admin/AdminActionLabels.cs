@@ -20,6 +20,7 @@ public static partial class AdminActionLabels
         {
             "user.mfa.reset" => "AdminAudit.Action.MfaReset",
             "user.test-unlock.reset" => "AdminAudit.Action.TestUnlockReset",
+            "user.whoami.regenerate" => "AdminAudit.Action.WhoAmIRegenerate",
             "support-access.grant" or "support-access.revoke" => "AdminAudit.Action.Support",
             "settings.platform.update" or "maintenance.on" or "maintenance.off" => "AdminAudit.Action.Setting",
             "settings.flyer.update" => "AdminAudit.Action.Flyer",
@@ -351,6 +352,7 @@ public static partial class AdminActionLabels
         yield return ("pdf", "AdminDataAccess.Action.Pdf");
         yield return ("download", "AdminDataAccess.Action.Download");
         yield return ("user.test-unlock.reset", "AdminAudit.Action.TestUnlockReset");
+        yield return ("user.whoami.regenerate", "AdminAudit.Action.WhoAmIRegenerate");
         yield return ("reference.misuse.handled", "AdminAudit.Action.MisuseHandled");
         yield return ("vacancy.inactive", "AdminAudit.Action.VacancyInactive");
         yield return ("vacancy.purged", "AdminAudit.Action.VacancyPurged");

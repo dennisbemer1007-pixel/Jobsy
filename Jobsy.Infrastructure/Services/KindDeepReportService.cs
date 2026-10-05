@@ -86,20 +86,38 @@ public sealed class KindDeepReportService : IKindDeepReportService
         }
         else if (tryAi)
         {
-            try
+            var scoresKey = CareerCompassBuilder.ScoresKey(riasec);
+            if (CareerCompassAttempt.TryBegin(row.UserId, storedJson, scoresKey, now))
             {
-                var generated = await _careerCompass.GenerateFromCareerDeepAsync(answers, ct);
-                if (generated.HasOccupations)
+                try
                 {
-                    compass = generated.Strengths.Count >= 3
-                        ? generated
-                        : generated with { Strengths = local.Strengths };
+                    var generated = await _careerCompass.GenerateFromCareerDeepAsync(answers, ct);
+                    if (generated.HasOccupations)
+                    {
+                        compass = generated.Strengths.Count >= 3
+                            ? generated
+                            : generated with { Strengths = local.Strengths };
+                    }
+
+                    compass = compass with { ScoresFingerprint = scoresKey, ModelAttemptUtc = now };
                 }
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _ = ex;
-                compass = local;
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _ = ex;
+                    compass = local with { ScoresFingerprint = scoresKey, ModelAttemptUtc = now };
+                }
+                finally
+                {
+                    CareerCompassAttempt.End(row.UserId, scoresKey);
+                }
+
+                var careerRow = await _db.CandidateCareerInterests
+                    .FirstOrDefaultAsync(c => c.UserId == row.UserId, ct);
+                if (careerRow is not null)
+                {
+                    careerRow.CompassJson = CareerCompassJson.Serialize(compass);
+                    careerRow.UpdatedAtUtc = now;
+                }
             }
         }
 

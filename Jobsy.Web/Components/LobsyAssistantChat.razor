@@ -349,10 +349,7 @@
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         try
         {
-            var history = _messages
-                .TakeLast(20)
-                .Select(m => new AssistantChatMessage(m.Role, m.Content))
-                .ToList();
+            var history = AssistantChatHistory.ForRequest(_messages).ToList();
             var reply = await Api.SendAssistantChatAsync(history, timeout.Token);
             if (generation != _sendGeneration)
             {
@@ -366,6 +363,7 @@
         {
             if (generation == _sendGeneration)
             {
+                RestoreUnanswered(text);
                 _error = Culture["Assistant.RateLimited"];
             }
         }
@@ -374,6 +372,7 @@
             _sendGeneration++;
             if (generation == _sendGeneration - 1)
             {
+                RestoreUnanswered(text);
                 _error = Culture["Common.Error.TryAgain"];
             }
         }
@@ -388,6 +387,14 @@
         {
             _busy = false;
         }
+    }
+
+    private void RestoreUnanswered(string text)
+    {
+        var restored = AssistantChatHistory.RestoreAfterUnanswered(_messages, text);
+        _messages.Clear();
+        _messages.AddRange(restored.Messages);
+        _draft = restored.Draft;
     }
 
     private void ApplyActions(IReadOnlyList<AssistantChatActionItem>? actions)

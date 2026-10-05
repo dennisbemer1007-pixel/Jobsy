@@ -364,8 +364,28 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             }
 
             career.MatchTagsJson = CareerTestCatalog.SerializeTags(existing);
-            var compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
-            compass = compass with { ScoresFingerprint = CareerCompassBuilder.ScoresKey(riasec) };
+            var scoresKey = CareerCompassBuilder.ScoresKey(riasec);
+            CareerCompassSnapshot compass;
+            if (CareerCompassAttempt.TryBegin(userId, career.CompassJson, scoresKey, now))
+            {
+                try
+                {
+                    compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                }
+                finally
+                {
+                    CareerCompassAttempt.End(userId, scoresKey);
+                }
+
+                compass = compass with { ScoresFingerprint = scoresKey, ModelAttemptUtc = now };
+            }
+            else
+            {
+                compass = CareerCompassJson.TryDeserialize(career.CompassJson)
+                          ?? CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true);
+                compass = compass with { ScoresFingerprint = scoresKey };
+            }
+
             career.CompassJson = CareerCompassJson.Serialize(compass);
             career.CompletedAtUtc ??= now;
             career.UpdatedAtUtc = now;

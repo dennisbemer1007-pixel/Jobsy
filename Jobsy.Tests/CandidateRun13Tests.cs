@@ -166,8 +166,8 @@ public class CandidateRun13Tests
     public void Work_line_translates_vanaf_and_keeps_the_dutch_title()
     {
         Assert.Equal("Chauffeur (Driver) since 2023", OccupationTitles.LocalizeWorkLine("Chauffeur vanaf 2023", "en"));
-        Assert.Equal("Chauffeur (Driver) od 2023", OccupationTitles.LocalizeWorkLine("Chauffeur vanaf 2023", "pl"));
-        Assert.Equal("Chauffeur (Driver) din 2023", OccupationTitles.LocalizeWorkLine("Chauffeur vanaf 2023", "ro"));
+        Assert.Equal("Chauffeur (Kierowca) od 2023", OccupationTitles.LocalizeWorkLine("Chauffeur vanaf 2023", "pl"));
+        Assert.Equal("Chauffeur (Șofer) din 2023", OccupationTitles.LocalizeWorkLine("Chauffeur vanaf 2023", "ro"));
         Assert.Contains("منذ 2023", OccupationTitles.LocalizeWorkLine("Chauffeur vanaf 2023", "ar"), StringComparison.Ordinal);
         Assert.DoesNotContain("vanaf", OccupationTitles.LocalizeWorkLine("Vakkenvuller supermarkt vanaf 2023", "en"), StringComparison.Ordinal);
         Assert.Contains("since 2023", OccupationTitles.LocalizeWorkLine("Vakkenvuller supermarkt vanaf 2023", "en"), StringComparison.Ordinal);
@@ -355,7 +355,7 @@ public class CandidateRun13Tests
         Assert.Contains("انتظر", UiStrings.Get("Assistant.RateLimited", "ar"), StringComparison.Ordinal);
         Assert.Equal("Uit je paspoort: wat bij je past.", UiStrings.Get("Career.Empty.SuggestLead", "nl"));
         Assert.Contains("Samen & aardig", AssessmentOutcomeLines.Competence(70, 45, 40, 30, 60), StringComparison.Ordinal);
-        Assert.Contains("nooit de woorden graag, leuk of fijn", CareerCompassPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("nooit de woorden graag, leuk, fijn", CareerCompassPrompt.System, StringComparison.Ordinal);
     }
 
     private static DefaultHttpContext UserContext(Guid userId)

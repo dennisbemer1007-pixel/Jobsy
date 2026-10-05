@@ -121,6 +121,19 @@ public static class CandidateCoachScript
                || fold.Contains("vca", StringComparison.Ordinal);
     }
 
+    private static bool AsksForCertificateList(string text)
+    {
+        var fold = text.ToLowerInvariant();
+        return fold.Contains("welke certificaat", StringComparison.Ordinal)
+               || fold.Contains("welke certificaten", StringComparison.Ordinal)
+               || fold.Contains("which certificate", StringComparison.Ordinal)
+               || fold.Contains("what certificate", StringComparison.Ordinal)
+               || fold.Contains("jakie certyfikat", StringComparison.Ordinal)
+               || fold.Contains("care certificat", StringComparison.Ordinal)
+               || fold.Contains("ما الشهاد", StringComparison.Ordinal)
+               || fold.Contains("أي شهاد", StringComparison.Ordinal);
+    }
+
     private static bool LooksLikeStrengths(string text)
     {
         var fold = text.ToLowerInvariant();
@@ -227,6 +240,19 @@ public static class CandidateCoachScript
                 "ro" => "Nu. În profilul tău nu sunt certificate.",
                 "ar" => "لا. لا توجد شهادات في ملفك.",
                 _ => "Nee, er staan geen certificaten in je profiel."
+            };
+        }
+
+        if (AsksForCertificateList(question))
+        {
+            var listed = string.Join(lang is "ar" ? "، " : ", ", known);
+            return lang switch
+            {
+                "en" => $"Your profile lists {listed}.",
+                "pl" => $"W twoim profilu jest {listed}.",
+                "ro" => $"În profilul tău este {listed}.",
+                "ar" => $"في ملفك {listed}.",
+                _ => $"In je profiel staat {listed}."
             };
         }
 

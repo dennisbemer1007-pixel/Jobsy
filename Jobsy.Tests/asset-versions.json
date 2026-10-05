@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "6ce83764235483228437cf05712aecda2cfdeba43775cc1f94cdfc44a39fbf81",
-    "v": "20261005-02"
+    "sha256": "9f5a3700b29a573e070d56da89e10ad4490edca556b140d81a5b53badc2d7f7b",
+    "v": "20261005-04"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -136,8 +136,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "a1e3de2778e01b863aa0b41953b76a23b05b38fb763196ff0c75a9b0351b8911",
-    "v": "20261005-02"
+    "sha256": "4ae4e29447fe5c366a873b3c273b56a7b1c3f4cbd352f3df9e7f7896ec2a1eba",
+    "v": "20261005-04"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -188,8 +188,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "b8be43d88373cd511f7b30a42fa94b36ec2760c2327a017fca88f43b9bbf5802",
-    "v": "20261005-02"
+    "sha256": "2413c9e8aac93b05b4dc71a40348f737fe094091d1677010438620bf735c4866",
+    "v": "20261005-04"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -212,11 +212,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "a343216fd5a017adae15b02ca096f91c9dcf96c6c40070dfcd89b5b586182abe",
-    "v": "20261005-02"
+    "sha256": "09dafabff2a3c8450c0ac7db8ce7dc4debfa16abd010754b061e25b78ec29e5b",
+    "v": "20261005-04"
   },
   "service-worker.published.js": {
-    "sha256": "3f85c43f5986f8cb155dc3691ba0f4cf5e55b124ca215f943acee9fcc4108266",
-    "v": "20261005-02"
+    "sha256": "4affdb9d7311bde12fe147a13efda681f312d372395607b8c48af78b6ad58f77",
+    "v": "20261005-04"
   }
 }
