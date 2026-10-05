@@ -493,6 +493,8 @@ public static class DependencyInjection
             sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
+        services.AddScoped<IPassportPdfService, Jobsy.Infrastructure.Services.Passport.PassportPdfService>();
+        services.AddScoped<IPassportDnaReader, Jobsy.Infrastructure.Services.Passport.PassportDnaReader>();
         services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
         {
             // One attempt is 12s. Stay under the 20s API client budget.

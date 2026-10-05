@@ -164,6 +164,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.WhatsAppRemindersEnabled = whatsAppRemindersEnabled;
         }
 
+        if (update.CompactTestPdfEnabled is bool compactTestPdfEnabled)
+        {
+            row.CompactTestPdfEnabled = compactTestPdfEnabled;
+        }
+
         if (update.MaintenanceEnabled is bool maintenanceEnabled)
         {
             row.MaintenanceEnabled = maintenanceEnabled;
@@ -345,6 +350,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.PassportPartnersEnabled ?? false,
             row?.PassportPdfV2Enabled ?? false,
             row?.PhoneVerificationEnabled ?? false,
-            row?.WhatsAppRemindersEnabled ?? false);
+            row?.WhatsAppRemindersEnabled ?? false,
+            row?.CompactTestPdfEnabled ?? false);
     }
 }

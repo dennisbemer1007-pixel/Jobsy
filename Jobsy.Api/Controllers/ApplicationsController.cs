@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Jobsy.Api.Authorization;
+using Jobsy.Api.Passport;
 using Jobsy.Api.Models;
 using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
@@ -36,6 +37,7 @@ public class ApplicationsController : ControllerBase
     private readonly IPushNotificationService _push;
     private readonly IPlatformFeatureService _features;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
+    private readonly PassportPdfDownload _passportPdf;
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
@@ -51,6 +53,7 @@ public class ApplicationsController : ControllerBase
         IPushNotificationService push,
         IPlatformFeatureService features,
         ILobsyCvPdfService lobsyCvPdf,
+        PassportPdfDownload passportPdf,
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
         IVacancyDiscoveryIndex discoveryIndex,
@@ -65,6 +68,7 @@ public class ApplicationsController : ControllerBase
         _push = push;
         _features = features;
         _lobsyCvPdf = lobsyCvPdf;
+        _passportPdf = passportPdf;
         _notifications = notifications;
         _actionTokens = actionTokens;
         _discoveryIndex = discoveryIndex;
@@ -443,11 +447,7 @@ public class ApplicationsController : ControllerBase
                 });
             }
 
-            var model = LobsyCvModelFactory.FromApplicationForDownload(
-                application,
-                includePii: true,
-                includeDirectContact: true);
-            var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
+            var (pdf, fileName) = await RenderApplicationCvAsync(application, includeDirectContact: true, cancellationToken);
             await this.LogPersonalDataAccessAsync(
                 _accessLog,
                 caller.Id,
@@ -458,7 +458,7 @@ public class ApplicationsController : ControllerBase
                 subjectCompanyId: application.Vacancy.CompanyId,
                 reason: "lobsy-cv;owner",
                 cancellationToken: cancellationToken);
-            return File(pdf, "application/pdf", _lobsyCvPdf.BuildFileName(model));
+            return File(pdf, "application/pdf", fileName);
         }
 
         if (!_companyAuth.IsEmployer(User) && !_companyAuth.IsAdmin(User))
@@ -504,11 +504,10 @@ public class ApplicationsController : ControllerBase
         }
 
         await MaybeRecordEmployerViewedAsync(application, caller.Id, DateTime.UtcNow, cancellationToken);
-        var employerModel = LobsyCvModelFactory.FromApplicationForDownload(
+        var (employerPdf, employerFileName) = await RenderApplicationCvAsync(
             application,
-            includePii: true,
-            includeDirectContact: ApplicationRules.IsDirectContactRevealed(application.Status));
-        var employerPdf = await _lobsyCvPdf.RenderAsync(employerModel, cancellationToken);
+            ApplicationRules.IsDirectContactRevealed(application.Status),
+            cancellationToken);
         await this.LogPersonalDataAccessAsync(
             _accessLog,
             caller.Id,
@@ -519,7 +518,31 @@ public class ApplicationsController : ControllerBase
             subjectCompanyId: application.Vacancy.CompanyId,
             reason: "lobsy-cv",
             cancellationToken: cancellationToken);
-        return File(employerPdf, "application/pdf", _lobsyCvPdf.BuildFileName(employerModel));
+        return File(employerPdf, "application/pdf", employerFileName);
+    }
+
+    private async Task<(byte[] Pdf, string FileName)> RenderApplicationCvAsync(
+        Application application,
+        bool includeDirectContact,
+        CancellationToken cancellationToken)
+    {
+        var features = await _features.GetAsync(cancellationToken);
+        if (features.PassportPdfV2Enabled)
+        {
+            var passport = await _passportPdf.ForApplicationAsync(
+                application,
+                includeDirectContact,
+                features.PhoneVerificationEnabled,
+                cancellationToken);
+            return (passport.Pdf, passport.FileName);
+        }
+
+        var model = LobsyCvModelFactory.FromApplicationForDownload(
+            application,
+            includePii: true,
+            includeDirectContact: includeDirectContact);
+        var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
+        return (pdf, _lobsyCvPdf.BuildFileName(model));
     }
 
     private async Task<CompanyVerificationStatus> ResolveRootVerificationStatusAsync(

@@ -567,7 +567,8 @@ else if (_snapshot is not null)
             PassportPartnersEnabled = u.PassportPartnersEnabled,
             PassportPdfV2Enabled = u.PassportPdfV2Enabled,
             PhoneVerificationEnabled = u.PhoneVerificationEnabled,
-            WhatsAppRemindersEnabled = u.WhatsAppRemindersEnabled
+            WhatsAppRemindersEnabled = u.WhatsAppRemindersEnabled,
+            CompactTestPdfEnabled = u.CompactTestPdfEnabled
         };
         LastPatch = patch;
         return patch;
@@ -630,5 +631,6 @@ else if (_snapshot is not null)
             PassportPartnersEnabled: f.PassportPartnersEnabled,
             PassportPdfV2Enabled: f.PassportPdfV2Enabled,
             PhoneVerificationEnabled: f.PhoneVerificationEnabled,
-            WhatsAppRemindersEnabled: f.WhatsAppRemindersEnabled);
+            WhatsAppRemindersEnabled: f.WhatsAppRemindersEnabled,
+            CompactTestPdfEnabled: f.CompactTestPdfEnabled);
 }

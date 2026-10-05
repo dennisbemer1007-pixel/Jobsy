@@ -106,6 +106,18 @@ public static class UiStringsFeatureFlags
             "Wył. = kandydaci nie widzą dodatkowych preferencji. PDF v2 przyjdzie później.",
             "Oprit = candidații nu văd preferințele partajabile. PDF v2 vine mai târziu.",
             "إيقاف = لا يرى المرشحون التفضيلات القابلة للمشاركة. ملف PDF v2 يأتي لاحقاً.");
+        Add("AdminSettings.CompactTestPdf.Enabled.Title",
+            "Korte testrapporten",
+            "Short test reports",
+            "Krótkie raporty testów",
+            "Rapoarte scurte de test",
+            "تقارير اختبار قصيرة");
+        Add("AdminSettings.CompactTestPdf.Enabled.Desc",
+            "Aan = het uitgebreide persoonlijke testrapport is ongeveer 4 pagina's met grafieken. Uit = de langere rapporten van nu.",
+            "On = the extended personal test report is about 4 pages with charts. Off = today's longer reports.",
+            "Wł. = rozszerzony raport osobisty ma około 4 stron z wykresami. Wył. = dzisiejsze dłuższe raporty.",
+            "Pornit = raportul personal extins are cam 4 pagini cu grafice. Oprit = rapoartele mai lungi de acum.",
+            "تشغيل = التقرير الشخصي الموسّع حوالي 4 صفحات مع رسوم. إيقاف = التقارير الأطول الحالية.");
         Add("AdminSettings.PhoneVerification.Enabled.Title",
             "Telefoon bevestigen",
             "Confirm phone",

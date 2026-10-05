@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.ProfileSections
 @using Jobsy.Core.Ai
+@using Jobsy.Core.Features
 @using Jobsy.Core.Options
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
@@ -8,6 +9,7 @@
 @using Microsoft.Extensions.Options
 @inject CultureState Culture
 @inject IServiceProvider Services
+@inject IFeatureFlags FeatureFlags
 
 @using Microsoft.AspNetCore.Components.Forms
                             <fieldset class="profile-employers">
@@ -39,13 +41,25 @@
                                 <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
                             }
 
-                            <button class="btn btn-primary" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
-                                @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
+                            <button class="btn btn-primary" type="button" data-testid="profile-download-pdf" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
+                                @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture[_dnaPassport ? "Passport.DownloadDna" : "Profile.DownloadLobsyCv"])
                             </button>
                             <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
+                            @if (_dnaPassport)
+                            {
+                                <p class="profile-address__hint">@Culture["Passport.DownloadDnaHint"]</p>
+                            }
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private bool _dnaPassport;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _dnaPassport = flags.PassportPdfV2Enabled;
+    }
 
     private string OwnCvLeadKey
     {

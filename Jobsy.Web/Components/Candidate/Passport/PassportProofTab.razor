@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Features
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ProfileSections
@@ -9,6 +10,7 @@
 @inject CultureState Culture
 @inject CandidateProfileEditor Editor
 @inject IJSRuntime Js
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <div class="passport-proof">
@@ -222,9 +224,13 @@
         </div>
 
         <p class="passport-proof__note muted">@Culture["Passport.Proof.LobsyCvNote"]</p>
-        <button class="btn btn-secondary" type="button" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
-            @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
+        <button class="btn btn-secondary" type="button" data-testid="passport-proof-download-pdf" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
+            @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture[_dnaPassport ? "Passport.DownloadDna" : "Profile.DownloadLobsyCv"])
         </button>
+        @if (_dnaPassport)
+        {
+            <p class="muted">@Culture["Passport.DownloadDnaHint"]</p>
+        }
     }
 </div>
 
@@ -281,6 +287,8 @@
     /// <summary>Opens the matching editor once, for example <c>experience</c> from a vacancy link.</summary>
     [Parameter] public string? InitialItem { get; set; }
 
+    private bool _dnaPassport;
+    private bool _flagsLoaded;
     private bool _loading = true;
     private bool _loadFailed;
     private bool _loaded;
@@ -306,6 +314,13 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (!_flagsLoaded)
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _dnaPassport = flags.PassportPdfV2Enabled;
+            _flagsLoaded = true;
+        }
+
         if (Active && !_loaded)
         {
             await LoadAsync();
