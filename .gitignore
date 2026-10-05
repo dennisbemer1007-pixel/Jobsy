@@ -57,3 +57,4 @@ TestResults/
 
 # Occupation catalogue downloads (rebuild with tools/occupations/fetch.py)
 tools/occupations/.cache/
+__pycache__/
