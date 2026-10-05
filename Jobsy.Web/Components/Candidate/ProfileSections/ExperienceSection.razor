@@ -1,8 +1,12 @@
 @namespace Jobsy.Web.Components.Candidate.ProfileSections
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Contracts
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Models
 @inject CultureState Culture
 
                             <fieldset class="profile-employers">
@@ -19,7 +23,9 @@
                                             </label>
                                             <label class="profile-employer-card__field profile-employer-card__field--role">
                                                 <span>@Culture["Profile.Role"]</span>
-                                                <input placeholder="@Culture["Profile.RolePlaceholder"]" @bind="Editor.Employers[idx].Role" />
+                                                <input placeholder="@Culture["Profile.RolePlaceholder"]"
+                                                       value="@Editor.Employers[idx].Role"
+                                                       @onchange="e => Editor.SetEmployerRole(idx, e.Value?.ToString())" />
                                             </label>
                                             <button type="button"
                                                     class="icon-btn icon-btn--danger"
@@ -57,6 +63,48 @@
                                                       placeholder="@Culture["Profile.DutiesPlaceholder"]"
                                                       @bind="Editor.Employers[idx].Description"></textarea>
                                         </label>
+                                        @if (ShowOccupationPicker(idx))
+                                        {
+                                            <div class="profile-occupation-pick">
+                                                <p>@Culture["Outlook.AskWork"]</p>
+                                                <ul>
+                                                    @foreach (var hit in OccupationCatalog.Shared.Search(Editor.Employers[idx].Role, 5))
+                                                    {
+                                                        <li>
+                                                            <p><strong>@hit.Title</strong></p>
+                                                            @if (!string.IsNullOrWhiteSpace(hit.Description))
+                                                            {
+                                                                <p class="muted">@hit.Description</p>
+                                                            }
+                                                            <button type="button"
+                                                                    class="btn btn-secondary"
+                                                                    @onclick="() => Editor.ConfirmEmployerOccupation(idx, hit.EscoId)">
+                                                                @Culture["Outlook.YesThis"]
+                                                            </button>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                                <button type="button"
+                                                        class="btn btn-ghost"
+                                                        @onclick="() => Editor.DismissEmployerOccupation(idx)">
+                                                    @Culture["Outlook.NotListed"]
+                                                </button>
+                                            </div>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(Editor.Employers[idx].EscoId))
+                                        {
+                                            var confirmed = OccupationCatalog.Shared.Get(Editor.Employers[idx].EscoId);
+                                            @if (confirmed is not null)
+                                            {
+                                                <p class="profile-occupation-pick__confirmed">@Culture.Format("Outlook.Confirmed", confirmed.Nl)</p>
+                                                @if (IsCurrentRow(idx))
+                                                {
+                                                    <CurrentJobTipBlock Entry="ToDto(Editor.Employers[idx])"
+                                                                        Scores="DirectionScores"
+                                                                        Education="@EducationLabel" />
+                                                }
+                                            }
+                                        }
                                     </div>
                                 }
                                 <button type="button" class="icon-btn icon-btn--add" title="@Culture["Profile.AddEmployer"]" aria-label="@Culture["Profile.AddEmployer"]" @onclick="Editor.AddEmployer">
@@ -68,4 +116,53 @@
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+    [CascadingParameter] public CandidateKompasState? Kompas { get; set; }
+
+    private string? EducationLabel
+        => Editor.SelectedEducations.Count == 0
+            ? null
+            : string.Join(" ", Editor.SelectedEducations);
+
+    private RiasecScores? DirectionScores
+    {
+        get
+        {
+            var scores = Kompas?.CareerInterests?.Scores;
+            return scores is { IsComplete: true }
+                ? new RiasecScores(
+                    scores.Realistic,
+                    scores.Investigative,
+                    scores.Artistic,
+                    scores.Social,
+                    scores.Enterprising,
+                    scores.Conventional)
+                : null;
+        }
+    }
+
+    private bool ShowOccupationPicker(int index)
+    {
+        var row = Editor.Employers[index];
+        return !string.IsNullOrWhiteSpace(row.Role)
+               && string.IsNullOrWhiteSpace(row.EscoId)
+               && !row.OccupationDismissed;
+    }
+
+    private bool IsCurrentRow(int index)
+    {
+        var row = Editor.Employers[index];
+        return row.IsCurrent == true
+               || (!string.IsNullOrWhiteSpace(row.StartMonth) && string.IsNullOrWhiteSpace(row.EndMonth));
+    }
+
+    private static CandidateEmployerHistoryDto ToDto(CandidateEmployerHistory row)
+        => new(
+            row.EmployerName,
+            row.Role,
+            row.Years,
+            row.Description,
+            row.StartMonth,
+            row.EndMonth,
+            row.IsCurrent,
+            row.EscoId);
 }

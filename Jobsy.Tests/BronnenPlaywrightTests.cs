@@ -39,6 +39,10 @@ public class BronnenPlaywrightTests
         Assert.Contains("O*NET 31.0 Database", body, StringComparison.Ordinal);
         Assert.Contains("USDOL/ETA has not approved, endorsed, or tested these modifications.", body, StringComparison.Ordinal);
         Assert.Contains("CBS, Beroepenclassificatie BRC 2014 editie 2025 (CC BY 4.0).", body, StringComparison.Ordinal);
+        Assert.Contains("https://doi.org/10.34894/DVQTOG", body, StringComparison.Ordinal);
+        Assert.Contains("Arbeidsmarktinformatiesysteem tot 2030", body, StringComparison.Ordinal);
+        Assert.Contains("should not be considered an official ILO adaptation", body, StringComparison.Ordinal);
+        Assert.Contains("Vaardigheden bij een beroep komen uit dezelfde ESCO-lijst.", body, StringComparison.Ordinal);
         if (lang == "nl")
         {
             Assert.Contains(

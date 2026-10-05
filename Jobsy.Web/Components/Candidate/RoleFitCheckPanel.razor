@@ -56,10 +56,18 @@
                     @(_session.ActiveVacancyId is Guid ? Culture["Fit.CheckMyFit"] : Culture["Fit.Check"])
                 </button>
             </form>
+            @if (OutlookFor(_session.JobTitle, EscoId) is { } preview && _session.LastResult is null)
+            {
+                <OccupationOutlookBlock Result="preview" />
+            }
         </section>
 
         @if (_session.LastResult is { } result)
         {
+            @if (OutlookFor(result.JobTitle, EscoId) is { } outlook)
+            {
+                <OccupationOutlookBlock Result="outlook" />
+            }
             <ol class="role-fit-funnel">
                 <li class="role-fit-funnel__step">
                     <h4>@Culture["Fit.Step1"]</h4>
@@ -235,6 +243,7 @@
 
 @code {
     [Parameter] public Guid? VacancyId { get; set; }
+    [Parameter] public string? EscoId { get; set; }
     [Parameter] public bool Active { get; set; } = true;
 
     private readonly RoleFitCheckSession _session = new();
@@ -270,6 +279,15 @@
             _session.ActiveVacancyId = vid;
         }
 
+        if (!string.IsNullOrWhiteSpace(EscoId) && string.IsNullOrWhiteSpace(_session.JobTitle))
+        {
+            var occupation = Jobsy.Core.Careers.OccupationCatalog.Shared.Get(EscoId);
+            if (occupation is not null)
+            {
+                _session.JobTitle = occupation.Nl;
+            }
+        }
+
         var opening = Active && !_wasActive;
         _wasActive = Active;
         if (opening)
@@ -287,6 +305,17 @@
     private async Task EvaluateAsync()
     {
         await _session.EvaluateAsync(Api, Culture["Common.Error"]);
+    }
+
+    private static Jobsy.Core.Careers.OccupationOutlookResult? OutlookFor(string? title, string? escoId)
+    {
+        var id = escoId;
+        if (string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(title))
+        {
+            id = Jobsy.Core.Careers.OccupationCatalog.Shared.Resolve(title)?.Id;
+        }
+
+        return string.IsNullOrWhiteSpace(id) ? null : Jobsy.Core.Careers.OccupationOutlook.Shared.Get(id);
     }
 
     private async Task EvaluateSimilarAsync(string title)

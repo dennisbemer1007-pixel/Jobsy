@@ -1278,8 +1278,9 @@ Verbetervoorstellen:
 
                 var scoreLines = new List<string>();
                 var jobs = new List<string>();
+                var outlookLines = new List<string>();
                 AppendPreferenceFacts(sb, prefs, dream);
-                await AppendTestFactsAsync(sb, context.UserId, context.Language, scoreLines, jobs, cancellationToken);
+                await AppendTestFactsAsync(sb, context.UserId, context.Language, prefs, scoreLines, jobs, outlookLines, cancellationToken);
                 sb.Append("month metrics: ");
                 sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
                 var work = WorkEntries(prefs);
@@ -1309,6 +1310,7 @@ Verbetervoorstellen:
                 }
 
                 var sheet = CandidateFactSheet.Personal(work, education, certificates, jobs, scoreLines, confirmed);
+                sheet.RememberOutlook(outlookLines);
                 sb.AppendLine();
                 sb.Append(sheet.ToPrompt());
                 return (sb.ToString(), sheet);
@@ -1367,8 +1369,10 @@ Verbetervoorstellen:
         StringBuilder sb,
         Guid userId,
         string? language,
+        CandidatePreferencesDto? prefs,
         List<string> scoreLines,
         List<string> jobs,
+        List<string> outlookLines,
         CancellationToken cancellationToken)
     {
         var lang = JobsyLanguages.Normalize(language);
@@ -1459,9 +1463,9 @@ Verbetervoorstellen:
         sb.Append(deepLine).Append("; ");
         scoreLines.Add(deepLine);
 
+        var education = await EducationLabelAsync(userId, cancellationToken);
         if (riasec is { IsComplete: true })
         {
-            var education = await EducationLabelAsync(userId, cancellationToken);
             var listed = CareerCompassBuilder.Listed(riasec, education).ToList();
             if (listed.Count > 0)
             {
@@ -1469,6 +1473,30 @@ Verbetervoorstellen:
                     .Append(string.Join(", ", listed.Select(m => $"{OccupationTitles.ForChat(m.Title, lang)} {m.Percent}%")))
                     .Append("; ");
                 jobs.AddRange(listed.Select(m => m.Title));
+            }
+
+            foreach (var job in listed)
+            {
+                var sourced = Jobsy.Core.Careers.OccupationOutlook.Shared.Get(job.EscoId);
+                if (!string.IsNullOrWhiteSpace(sourced.DemandLine))
+                {
+                    outlookLines.Add(sourced.DemandLine);
+                }
+
+                if (!string.IsNullOrWhiteSpace(sourced.AiLine))
+                {
+                    outlookLines.Add(sourced.AiLine);
+                }
+            }
+        }
+
+        foreach (var employer in prefs?.Employers ?? [])
+        {
+            var tip = Jobsy.Core.Careers.CurrentJobOutlook.TryCreate(employer, riasec, education);
+            outlookLines.AddRange(Jobsy.Core.Careers.CurrentJobOutlook.QuoteLines(tip));
+            foreach (var job in tip?.Adjacent ?? [])
+            {
+                jobs.Add(job.Title);
             }
         }
     }
@@ -1653,7 +1681,8 @@ Verbetervoorstellen:
             "You may compare catalogue jobs that are not on the candidate's own list. Explain them with the scores. Do not say you do not know those jobs. " +
             "Zeg niet dat een opleiding is afgerond tenzij dat in de feiten staat. " +
             "completedTests is the list of finished tests. deepTests=none means there is no extra long test, not that the person did nothing. " +
-            "Never use the words Riasec, RIASEC, Career-test, Holland or werksterkte. Use only labels that appear in the facts. " +
+            "Never use the words Riasec, RIASEC, Career-test, Holland, ISCO, ESCO, O*NET, gradient or werksterkte. Use only labels that appear in the facts. " +
+            "A sentence about demand until 2030 or about AI changing tasks may only be copied from the Vooruitblik lines. Do not invent another outlook. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
             $"Scoped facts:\n{facts}";
     }

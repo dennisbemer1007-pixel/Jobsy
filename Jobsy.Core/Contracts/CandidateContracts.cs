@@ -76,7 +76,9 @@ public record CandidateEmployerHistoryDto(
     /// <summary>Start month as yyyy-MM. End empty means currently employed.</summary>
     string? StartMonth = null,
     string? EndMonth = null,
-    bool? IsCurrent = null);
+    bool? IsCurrent = null,
+    /// <summary>ESCO occupation id confirmed by the candidate. Never set from a CV upload.</summary>
+    string? EscoId = null);
 
 public record CandidateCertificateDto(
     string Name,

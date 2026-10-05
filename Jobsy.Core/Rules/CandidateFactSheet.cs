@@ -57,6 +57,9 @@ public sealed class CandidateFactSheet
     /// <summary>City from the home address. Empty means the story must not name a place.</summary>
     public string? HomeCity { get; }
 
+    /// <summary>Exact outlook sentences the coach may quote. Empty means no outlook claim is allowed.</summary>
+    public IReadOnlyList<string> OutlookLines { get; private set; } = [];
+
     public bool HasWorkExperience => WorkExperience.Count > 0;
 
     public string ToPrompt()
@@ -98,7 +101,25 @@ public sealed class CandidateFactSheet
             }
         }
 
+        if (OutlookLines.Count > 0)
+        {
+            sb.AppendLine("Vooruitblik (citeer alleen deze zinnen, verzin geen andere zin over 2030 of AI):");
+            foreach (var line in OutlookLines)
+            {
+                sb.Append("- ").AppendLine(line);
+            }
+        }
+
         return sb.ToString();
+    }
+
+    public void RememberOutlook(IEnumerable<string>? lines)
+    {
+        OutlookLines = (lines ?? [])
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => line.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
     }
 
     public bool HistoryContains(string token)
@@ -111,6 +132,7 @@ public sealed class CandidateFactSheet
         var corpus = string.Join(
             '\n',
             WorkExperience.Concat(Education).Concat(Certificates).Concat(ConfirmedItems).Concat(Scores)
+                .Concat(OutlookLines)
                 .Append(HomeCity ?? ""));
         return corpus.Contains(token.Trim(), StringComparison.OrdinalIgnoreCase);
     }
@@ -251,12 +273,36 @@ public sealed class CandidateFactSheet
         {
             lines.Add("Berekende aansluiting (dit percentage ligt vast, verzin geen ander cijfer).");
             lines.Add("Elke why-zin noemt de richting achter de pijl, bijvoorbeeld: Chauffeur → Aanpakken met je handen.");
+            var outlook = new List<string>();
             foreach (var job in CareerCompassBuilder.Listed(riasec))
             {
                 allowed.Add(job.Title);
                 var direction = CareerCompassBuilder.TypeLabel(CareerCompassBuilder.PrimaryCode(job.Title));
                 lines.Add($"{job.Title} → {direction}: {CareerCompassBuilder.FormatPercent(job.Percent)}%");
+                var sourced = Jobsy.Core.Careers.OccupationOutlook.Shared.Get(job.EscoId);
+                if (!string.IsNullOrWhiteSpace(sourced.DemandLine))
+                {
+                    outlook.Add(sourced.DemandLine);
+                }
+
+                if (!string.IsNullOrWhiteSpace(sourced.AiLine))
+                {
+                    outlook.Add(sourced.AiLine);
+                }
             }
+
+            var sheet = new CandidateFactSheet(
+                lines,
+                [],
+                [],
+                [],
+                allowed,
+                [],
+                personalHistory: false,
+                checkJobTitles: true,
+                directionLabels: directions);
+            sheet.RememberOutlook(outlook);
+            return sheet;
         }
 
         return new CandidateFactSheet(

@@ -1633,6 +1633,19 @@ public partial class MeController : ControllerBase
                         }
                     }
 
+                    string? escoId = null;
+                    if (!string.IsNullOrWhiteSpace(role)
+                        && item.TryGetProperty("escoId", out var escoEl)
+                        && escoEl.ValueKind == JsonValueKind.String)
+                    {
+                        var rawEsco = escoEl.GetString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(rawEsco)
+                            && Jobsy.Core.Careers.OccupationCatalog.Shared.Get(rawEsco) is not null)
+                        {
+                            escoId = rawEsco;
+                        }
+                    }
+
                     employers.Add(new CandidateEmployerHistoryDto(
                         name.Trim(),
                         string.IsNullOrWhiteSpace(role) ? null : role.Trim(),
@@ -1640,7 +1653,8 @@ public partial class MeController : ControllerBase
                         description,
                         startMonth,
                         endMonth,
-                        isCurrent));
+                        isCurrent,
+                        escoId));
                 }
             }
 
@@ -2058,7 +2072,10 @@ public partial class MeController : ControllerBase
                         description,
                         startMonth = LobsyCvModelFactory.NormalizeMonth(e.StartMonth),
                         endMonth = NormalizeEmployerEndMonth(e.StartMonth, e.EndMonth),
-                        isCurrent = e.IsCurrent
+                        isCurrent = e.IsCurrent,
+                        escoId = string.IsNullOrWhiteSpace(e.Role) || string.IsNullOrWhiteSpace(e.EscoId)
+                            ? null
+                            : e.EscoId.Trim()
                     };
                 })
                 .ToArray(),

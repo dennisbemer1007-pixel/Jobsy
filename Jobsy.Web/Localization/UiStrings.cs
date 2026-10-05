@@ -3499,6 +3499,7 @@ public static class UiStrings
         UiStringsAuth.MergeAll(nl, en, pl, ro, ar);
         UiStringsStatus.MergeAll(nl, en, pl, ro, ar);
         UiStringsLegal.MergeAll(nl, en, pl, ro, ar);
+        UiStringsOutlook.MergeAll(nl, en, pl, ro, ar);
         UiStringsPublicInfo.MergeAll(nl, en, pl, ro, ar);
         UiStringsComeback.MergeAll(nl, en, pl, ro, ar);
         UiStringsReadAloud.MergeAll(nl, en, pl, ro, ar);

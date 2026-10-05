@@ -226,7 +226,7 @@
              aria-labelledby="kompas-tab-fit"
              hidden="@(_tab != CandidateKompasTabs.Fit)">
         <PanelErrorBoundary Name="role-fit">
-            <RoleFitCheckPanel VacancyId="@_vacancyId" Active="@(_tab == CandidateKompasTabs.Fit)" />
+            <RoleFitCheckPanel VacancyId="@_vacancyId" EscoId="@_fitEscoId" Active="@(_tab == CandidateKompasTabs.Fit)" />
         </PanelErrorBoundary>
     </article>
     </div>
@@ -257,6 +257,7 @@
     private Dictionary<string, List<string>> _availability = new(StringComparer.OrdinalIgnoreCase);
     private string _tab = CandidateKompasTabs.Dna;
     private Guid? _vacancyId;
+    private string? _fitEscoId;
     private bool _listeningToLocation;
     /// <summary>False until JS reports ≥1024px — avoids Top 10 flash on mobile prerender.</summary>
     private bool _isWideViewport;
@@ -446,6 +447,15 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("esco", out var escoValues))
+        {
+            var esco = escoValues.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(esco))
+            {
+                _fitEscoId = esco.Trim();
+            }
+        }
+
         if (query.TryGetValue("vacancyId", out var vacancyValues)
             && Guid.TryParse(vacancyValues.FirstOrDefault(), out var vacancyId))
         {

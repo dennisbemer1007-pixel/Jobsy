@@ -275,6 +275,12 @@ public sealed class CandidateEmployerHistory
     /// <summary>Null means a saved job with no end month is still the current job. A new empty row is false.</summary>
     public bool? IsCurrent { get; set; }
 
+    /// <summary>ESCO id the candidate confirmed for this role. Cleared when the role text changes.</summary>
+    public string? EscoId { get; set; }
+
+    /// <summary>True after "Staat er niet bij". Not stored. A new role asks again.</summary>
+    public bool OccupationDismissed { get; set; }
+
     public bool ShowsAsCurrent =>
         IsCurrent == true
         || (IsCurrent is null

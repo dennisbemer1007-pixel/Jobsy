@@ -67,6 +67,11 @@ public static partial class CandidateFactGuard
             return "denied-own-direction";
         }
 
+        if (MentionsUnsourcedOutlook(text, sheet))
+        {
+            return "unknown-outlook";
+        }
+
         return null;
     }
 
@@ -85,6 +90,7 @@ public static partial class CandidateFactGuard
         "markdown" => "Geen markdown. Alleen gewone zinnen.",
         "story-rules" => "Schrijf 2 tot 4 alinea's in de ik-vorm, zonder herhaling.",
         "claimed-completed" => "Zeg niet dat een opleiding is afgerond. Dat staat niet in de feiten.",
+        "unknown-outlook" => "Citeer alleen een vooruitblikzin uit de feitenlijst. Verzin geen andere zin over 2030 of AI.",
         _ => "Gebruik alleen de feitenlijst. Verzin niets."
     };
 
@@ -226,6 +232,40 @@ public static partial class CandidateFactGuard
 
         return null;
     }
+
+    private static bool MentionsUnsourcedOutlook(string text, CandidateFactSheet sheet)
+    {
+        foreach (var sentence in SplitSentences(text))
+        {
+            if (!LooksLikeOutlook(sentence))
+            {
+                continue;
+            }
+
+            var trimmed = sentence.Trim();
+            var allowed = sheet.OutlookLines.Any(line =>
+                line.Contains(trimmed, StringComparison.Ordinal)
+                || trimmed.Contains(line, StringComparison.Ordinal));
+            if (!allowed)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool LooksLikeOutlook(string sentence)
+        => sentence.Contains("Tot 2030", StringComparison.Ordinal)
+           || sentence.Contains("van elke 100 banen", StringComparison.Ordinal)
+           || sentence.Contains("door AI", StringComparison.Ordinal)
+           || sentence.Contains("door computers", StringComparison.Ordinal)
+           || sentence.Contains("verandert AI", StringComparison.Ordinal)
+           || sentence.Contains("Dat weten we niet: de ILO", StringComparison.Ordinal)
+           || sentence.Contains("Dat weten we niet: er zijn geen cijfers", StringComparison.Ordinal)
+           || sentence.Contains("blijft mensenwerk", StringComparison.Ordinal)
+           || sentence.Contains("iets extra's te leren", StringComparison.Ordinal)
+           || sentence.Contains("geen beroep gevonden dat dichtbij ligt", StringComparison.Ordinal);
 
     private static bool MentionsUnknownWork(string text, CandidateFactSheet sheet)
     {
