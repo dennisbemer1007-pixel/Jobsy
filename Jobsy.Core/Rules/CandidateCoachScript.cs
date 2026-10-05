@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Reports;
 using Jobsy.Core.Reports.Career;
@@ -438,15 +439,27 @@ public static class CandidateCoachScript
             lang is "ar" ? " و" : lang is "nl" ? " en " : ", ",
             letters.Select(item => $"{DimensionLabels.For(item.Code, lang)} ({item.Score}%)"));
         var percent = CareerCompassBuilder.CatalogueFit(title, scores, education);
+        if (percent is null)
+        {
+            return lang switch
+            {
+                "en" => "We have no reliable source to compare this job with your profile.",
+                "pl" => "Nie mamy pewnego źródła, aby porównać ten zawód z Twoim profilem.",
+                "ro" => "Nu avem o sursă sigură ca să comparăm această meserie cu profilul tău.",
+                "ar" => "ليس لدينا مصدر موثوق لنقارن هذه المهنة بملفك.",
+                _ => OccupationCopy.NoScoreSentence
+            };
+        }
+
         var strong = letters.Count > 0 && letters.All(item => item.Score >= 50);
         if (strong)
         {
             return lang switch
             {
-                "en" => $"Your test shows {shown} fits you at {percent}%, because of {parts}.",
-                "pl" => $"Z twojego testu wynika, że {shown} pasuje w {percent}%, przez {parts}.",
-                "ro" => $"Din testul tău reiese că {shown} ți se potrivește în proporție de {percent}%, prin {parts}.",
-                "ar" => $"يظهر من اختبارك أن {shown} يناسبك بنسبة {percent}%، بسبب {parts}.",
+                "en" => $"Your test shows {shown} fits you at {CareerCompassBuilder.FormatPercent(percent.Value)}%, because of {parts}.",
+                "pl" => $"Z twojego testu wynika, że {shown} pasuje w {CareerCompassBuilder.FormatPercent(percent.Value)}%, przez {parts}.",
+                "ro" => $"Din testul tău reiese că {shown} ți se potrivește în proporție de {CareerCompassBuilder.FormatPercent(percent.Value)}%, prin {parts}.",
+                "ar" => $"يظهر من اختبارك أن {shown} يناسبك بنسبة {CareerCompassBuilder.FormatPercent(percent.Value)}%، بسبب {parts}.",
                 _ => $"Uit je test blijkt dat {shown} past bij {parts}."
             };
         }

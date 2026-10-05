@@ -1,0 +1,146 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Rules
+@implements IDisposable
+
+<div class="fit-host">
+    <div class="fit-host__main">
+        @ChildContent
+    </div>
+    <div class="fit-pct__row">
+        <span class="fit-pct__value">@CareerCompassBuilder.FormatPercent(Model.Percent)%</span>
+        <button type="button"
+                class="fit-pct__help"
+                @ref="_toggle"
+                aria-expanded="@(_open ? "true" : "false")"
+                aria-controls="@(_open ? _panelId : null)"
+                aria-label="@FitPercentExplanation.ButtonLabel(Language, Model.Title)"
+                @onclick="Toggle"
+                @onclick:stopPropagation="true"
+                @onclick:preventDefault="true"
+                @onkeydown="OnToggleKey"
+                @onkeydown:stopPropagation="true">?</button>
+    </div>
+    @if (_open)
+    {
+        <div id="@_panelId"
+             class="fit-pct__panel"
+             role="region"
+             aria-labelledby="@_titleId"
+             @onkeydown="OnPanelKey"
+             @onkeydown:stopPropagation="true">
+            <h3 id="@_titleId" tabindex="-1" @ref="_heading">@FitPercentExplanation.PanelTitle(Language)</h3>
+            @foreach (var line in FitPercentExplanation.Lines(Model, Language))
+            {
+                <p class="@(IsEquation(line) ? "fit-pct__eq" : null)" dir="@(IsEquation(line) ? "ltr" : null)">@line</p>
+            }
+            <button type="button" class="fit-pct__close" @onclick="Close" @onclick:stopPropagation="true">
+                @FitPercentExplanation.CloseLabel(Language)
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly string _panelId = "fitpct-" + Guid.NewGuid().ToString("N")[..8];
+    private readonly string _titleId = "fitpct-title-" + Guid.NewGuid().ToString("N")[..8];
+    private ElementReference _toggle;
+    private ElementReference _heading;
+    private bool _open;
+    private bool _focusHeading;
+    private bool _focusToggle;
+    private string _key = "";
+    private bool _disposed;
+
+    [Parameter, EditorRequired] public FitPercentExplanation Model { get; set; } = null!;
+    [Parameter] public string? Language { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var key = $"{Model.EscoId}|{Model.Percent}|{Model.Education}";
+        if (!string.Equals(key, _key, StringComparison.Ordinal))
+        {
+            _key = key;
+            _open = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (_focusHeading)
+        {
+            _focusHeading = false;
+            try
+            {
+                await _heading.FocusAsync();
+            }
+            catch (Exception)
+            {
+                // The circuit can dispose the element before focus lands.
+            }
+        }
+        else if (_focusToggle)
+        {
+            _focusToggle = false;
+            try
+            {
+                await _toggle.FocusAsync();
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
+    private void Toggle()
+    {
+        _open = !_open;
+        if (_open)
+        {
+            _focusHeading = true;
+        }
+        else
+        {
+            _focusToggle = true;
+        }
+    }
+
+    private void Close()
+    {
+        if (!_open)
+        {
+            return;
+        }
+
+        _open = false;
+        _focusToggle = true;
+    }
+
+    private void OnToggleKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape" && _open)
+        {
+            Close();
+        }
+    }
+
+    private void OnPanelKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            Close();
+        }
+    }
+
+    private bool IsEquation(string line)
+        => line.Contains('×', StringComparison.Ordinal)
+           || (line.Contains(" / ", StringComparison.Ordinal) && line.Contains('=', StringComparison.Ordinal));
+
+    public void Dispose() => _disposed = true;
+}

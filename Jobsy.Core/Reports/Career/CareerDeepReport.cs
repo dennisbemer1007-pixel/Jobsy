@@ -37,7 +37,7 @@ public sealed class DeepOccupationFit
     public string TitleKey { get; set; } = "";
     public string TitleNl { get; set; } = "";
     public string TitleEn { get; set; } = "";
-    public int MatchPercent { get; set; }
+    public decimal MatchPercent { get; set; }
     public string ReasonNl { get; set; } = "";
     public string ReasonEn { get; set; } = "";
     public string Band { get; set; } = "";

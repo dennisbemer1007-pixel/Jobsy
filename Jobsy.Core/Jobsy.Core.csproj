@@ -2,6 +2,9 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Data/Norms/big-five-norms.json" />
+    <EmbeddedResource Include="Data/Occupations/*.json" WithCulture="false" />
+    <!-- occupations.nl.json would otherwise become a Dutch satellite resource. -->
+    <EmbeddedResource Update="Data/Occupations/occupations.nl.json" WithCulture="false" LogicalName="Jobsy.Core.Data.Occupations.occupations.nl.json" />
     <EmbeddedResource Include="Data/SampleReports/*.json" />
     <EmbeddedResource Include="Data/DeepItems/*.json" />
     <EmbeddedResource Include="Scholen/Resources/dutch-first-names.txt" />

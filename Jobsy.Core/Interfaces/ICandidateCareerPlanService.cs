@@ -107,7 +107,7 @@ public sealed record ArchivedCareerPlanView(
     int TotalSteps,
     DateTime ExpiresAtUtc);
 
-public sealed record CareerDreamOptionView(string? CatalogKey, string Title, string? ReasonKey);
+public sealed record CareerDreamOptionView(string? CatalogKey, string Title, string? ReasonKey, string? Description = null, bool NoScore = false);
 
 public sealed record CareerDreamOptionsView(
     IReadOnlyList<CareerDreamOptionView> Suggestions,

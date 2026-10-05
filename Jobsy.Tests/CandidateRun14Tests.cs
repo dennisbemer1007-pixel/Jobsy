@@ -27,12 +27,14 @@ public class CandidateRun14Tests
         Assert.True(CandidateJobAdvice.LooksLikeComparison("ما الفرق بين Chauffeur و Kok؟"));
         Assert.True(CandidateJobAdvice.LooksLikeComparison("of Kok of Chauffeur"));
 
-        Assert.Equal(64, CareerCompassBuilder.CatalogueFit("Chauffeur", Profile, "MBO"));
-        Assert.Equal(64, CareerCompassBuilder.CatalogueFit("Productiemedewerker", Profile, "MBO"));
+        // ESCO: flexodrukker and diepdrukker share one O*NET profile, so the percent and the letters match.
+        Assert.Equal(60.04m, CareerCompassBuilder.CatalogueFit("flexodrukker", Profile, "MBO"));
+        Assert.Equal(60.04m, CareerCompassBuilder.CatalogueFit("diepdrukker", Profile, "MBO"));
 
-        var reply = CandidateJobAdvice.TryReply("nl", question, Profile, "MBO", hasWorkExperience: false);
+        var equal = "Wat is het verschil tussen flexodrukker en diepdrukker voor mij?";
+        var reply = CandidateJobAdvice.TryReply("nl", equal, Profile, "MBO", hasWorkExperience: false);
         Assert.Equal(
-            "Beide passen even goed (64%); ze vragen allebei Aanpakken met je handen en Netjes organiseren.",
+            "Beide passen even goed (60.04%); ze vragen allebei Netjes organiseren, Aanpakken met je handen en Aanjagen en verkopen.",
             reply);
         Assert.DoesNotContain("beter", reply, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("niet", reply, StringComparison.OrdinalIgnoreCase);
@@ -144,7 +146,7 @@ public class CandidateRun14Tests
         var stamped = new CareerCompassSnapshot(
             ["aanpakken"],
             [],
-            [new CareerOccupationMatch("Chauffeur", 64, CareerCompassBuilder.BandStrong, "Dit beroep vraagt Aanpakken met je handen.")],
+            [new CareerOccupationMatch("tuinbouwmedewerker", 59.14m, CareerCompassBuilder.BandStrong, "Dit beroep vraagt Aanpakken met je handen.")],
             [],
             ["Kijk welke taken bij je passen."],
             FromDeepAnalysis: true,

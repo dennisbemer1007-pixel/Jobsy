@@ -54,3 +54,7 @@ package-lock.json
 !tools/css/package-lock.json
 Jobsy.Api/scholen-code-hmac.key
 TestResults/
+
+# Occupation catalogue downloads (rebuild with tools/occupations/fetch.py)
+tools/occupations/.cache/
+__pycache__/

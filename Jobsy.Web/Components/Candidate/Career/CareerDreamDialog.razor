@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -23,6 +24,8 @@
 
     <CareerDreamPicker Id="career-dialog-dream"
                        Suggestions="@Suggestions"
+                       Scores="@Scores"
+                       Education="@Education"
                        Disabled="@Busy"
                        OnSearch="@OnSearch"
                        OnChoice="@OnChoice" />
@@ -60,6 +63,8 @@
     [Parameter] public bool ProofHasExperience { get; set; }
     [Parameter] public string? ErrorText { get; set; }
     [Parameter] public IReadOnlyList<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
+    [Parameter] public RiasecScores? Scores { get; set; }
+    [Parameter] public string? Education { get; set; }
     [Parameter] public EventCallback<CareerDreamChoice?> OnChoice { get; set; }
     [Parameter] public EventCallback OnConfirm { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
