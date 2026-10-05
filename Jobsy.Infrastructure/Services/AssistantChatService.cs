@@ -198,6 +198,13 @@ public sealed class AssistantChatService : IAssistantChatService
                 return jobAdvice;
             }
 
+            // Job advice claims strengths and certificates, but it only answers once the career
+            // test is complete. Until then, passport questions still use the stored tests and dream.
+            if (LooksLikePassportHelp(text))
+            {
+                return await CandidatePassportHelpAsync(context, cancellationToken);
+            }
+
             if (!employersOn && (LooksLikeApplicationStatus(text) || IsVacancySearchIntent(text, DetectWorkType(text), ExtractJobSearchQuery(lastUser, DetectWorkType(text)))))
             {
                 var lang = JobsyLanguages.Normalize(context.Language);
