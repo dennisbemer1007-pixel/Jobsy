@@ -271,6 +271,15 @@ public sealed class CandidateEmployerHistory
     public string? StartMonth { get; set; }
     public string? EndMonth { get; set; }
     public string? Description { get; set; }
+
+    /// <summary>Null means a saved job with no end month is still the current job. A new empty row is false.</summary>
+    public bool? IsCurrent { get; set; }
+
+    public bool ShowsAsCurrent =>
+        IsCurrent == true
+        || (IsCurrent is null
+            && !string.IsNullOrWhiteSpace(EmployerName)
+            && string.IsNullOrWhiteSpace(EndMonth));
 }
 
 public sealed class CandidateCertificate

@@ -12,11 +12,20 @@ public sealed class PlatformErrorLog(JobsyDbContext db) : IPlatformErrorLog
         @"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    public Task WriteAsync(
+        string category,
+        string message,
+        string? supportCode,
+        string? detail,
+        CancellationToken cancellationToken = default)
+        => WriteAsync(category, message, supportCode, detail, PlatformLogLevel.Error, cancellationToken);
+
     public async Task WriteAsync(
         string category,
         string message,
         string? supportCode,
         string? detail,
+        PlatformLogLevel level,
         CancellationToken cancellationToken = default)
     {
         var code = string.IsNullOrWhiteSpace(supportCode) ? SupportCodeGenerator.Create() : supportCode.Trim();
@@ -46,7 +55,7 @@ public sealed class PlatformErrorLog(JobsyDbContext db) : IPlatformErrorLog
         db.PlatformLogs.Add(new PlatformLog
         {
             Id = Guid.NewGuid(),
-            Level = PlatformLogLevel.Error,
+            Level = level,
             Category = cat,
             Message = text,
             DetailsJson = string.IsNullOrWhiteSpace(details) ? null : details,

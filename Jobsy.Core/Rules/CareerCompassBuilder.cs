@@ -1,3 +1,5 @@
+using Jobsy.Core.Careers;
+
 namespace Jobsy.Core.Rules;
 
 /// <summary>
@@ -93,6 +95,70 @@ public static class CareerCompassBuilder
             .OrderByDescending(m => m.Percent)
             .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
+
+    /// <summary>
+    /// Match percent from the catalogue weights and the candidate's scores.
+    /// A dream-catalogue title uses the work-field's main direction when it has no weights.
+    /// </summary>
+    public static int CatalogueFit(string title, RiasecScores scores)
+    {
+        var folded = CareerOccupationKeys.Fold(title);
+        CareerOccupation? best = null;
+        var bestLen = 0;
+        foreach (var job in Occupations)
+        {
+            var head = CareerOccupationKeys.Fold(job.Title.Split('/')[0]);
+            var jobFold = CareerOccupationKeys.Fold(job.Title);
+            var hit = jobFold == folded
+                      || head == folded
+                      || (head.Length >= 8 && (folded.Contains(head, StringComparison.Ordinal) || head.Contains(folded, StringComparison.Ordinal)));
+            if (!hit || head.Length <= bestLen)
+            {
+                continue;
+            }
+
+            best = job;
+            bestLen = head.Length;
+        }
+
+        if (best is not null)
+        {
+            return Score(best, scores).Percent;
+        }
+
+        var dream = CareerDreamCatalog.FindByTitleOrAlias(title);
+        var code = DomainForWerkveld(dream?.Werkveld) ?? CareerTestCatalog.Realistic;
+        return scores.Get(code);
+    }
+
+    /// <summary>Primary direction of a catalogue title, used to keep the same kind of work together.</summary>
+    public static string PrimaryCode(string title)
+    {
+        var folded = CareerOccupationKeys.Fold(title);
+        foreach (var job in Occupations)
+        {
+            var head = CareerOccupationKeys.Fold(job.Title.Split('/')[0]);
+            if (head.Length >= 4 && (folded == head || folded.Contains(head, StringComparison.Ordinal) || head.Contains(folded, StringComparison.Ordinal)))
+            {
+                return job.Weights.OrderByDescending(w => w.Weight).Select(w => w.Code).FirstOrDefault()
+                       ?? CareerTestCatalog.Realistic;
+            }
+        }
+
+        var dream = CareerDreamCatalog.FindByTitleOrAlias(title);
+        return DomainForWerkveld(dream?.Werkveld) ?? CareerTestCatalog.Realistic;
+    }
+
+    private static string? DomainForWerkveld(string? werkveld) => (werkveld ?? "").Trim().ToLowerInvariant() switch
+    {
+        "groen" or "techniek" or "transport" or "productie" or "bouw" => CareerTestCatalog.Realistic,
+        "lab" or "onderzoek" => CareerTestCatalog.Investigative,
+        "zorg" or "horeca" or "dieren" or "onderwijs" or "welzijn" => CareerTestCatalog.Social,
+        "verkoop" or "events" or "commercie" => CareerTestCatalog.Enterprising,
+        "administratie" or "kantoor" or "finance" or "ict" or "logistiek" => CareerTestCatalog.Conventional,
+        "creatief" or "media" or "design" => CareerTestCatalog.Artistic,
+        _ => null
+    };
 
     /// <summary>Short workplace phrases for the top directions, used when fewer than three jobs survived.</summary>
     public static string TypicalEnvironments(IEnumerable<string> domainCodes, string? lang)

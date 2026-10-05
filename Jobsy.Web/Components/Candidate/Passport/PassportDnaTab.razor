@@ -74,7 +74,7 @@
                 }
                 @if (StoryGeneratedAt is DateTime generated)
                 {
-                    <p class="passport-dna__meta">@Culture.Format("Dna.StoryUpdated", generated.ToLocalTime().ToString("dd-MM-yyyy"))</p>
+                    <p class="passport-dna__meta">@Culture.Format("Dna.StoryUpdated", NlDate.Day(generated))</p>
                 }
             }
             @if (Hobbies.Count > 0)

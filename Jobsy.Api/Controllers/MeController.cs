@@ -1599,13 +1599,27 @@ public partial class MeController : ControllerBase
                         endMonth = null;
                     }
 
+                    bool? isCurrent = null;
+                    if (item.TryGetProperty("isCurrent", out var currentEl))
+                    {
+                        if (currentEl.ValueKind == JsonValueKind.True)
+                        {
+                            isCurrent = true;
+                        }
+                        else if (currentEl.ValueKind == JsonValueKind.False)
+                        {
+                            isCurrent = false;
+                        }
+                    }
+
                     employers.Add(new CandidateEmployerHistoryDto(
                         name.Trim(),
                         string.IsNullOrWhiteSpace(role) ? null : role.Trim(),
                         years,
                         description,
                         startMonth,
-                        endMonth));
+                        endMonth,
+                        isCurrent));
                 }
             }
 
@@ -2022,7 +2036,8 @@ public partial class MeController : ControllerBase
                         years = e.Years is >= 0 and <= 80 ? e.Years : null,
                         description,
                         startMonth = LobsyCvModelFactory.NormalizeMonth(e.StartMonth),
-                        endMonth = NormalizeEmployerEndMonth(e.StartMonth, e.EndMonth)
+                        endMonth = NormalizeEmployerEndMonth(e.StartMonth, e.EndMonth),
+                        isCurrent = e.IsCurrent
                     };
                 })
                 .ToArray(),

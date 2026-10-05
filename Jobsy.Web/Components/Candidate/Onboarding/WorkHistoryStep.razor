@@ -38,11 +38,11 @@
                 </label>
                 <label class="ob-wizard__check">
                     <input type="checkbox"
-                           checked="@string.IsNullOrWhiteSpace(item.EndMonth)"
+                           checked="@item.ShowsAsCurrent"
                            @onchange="e => SetCurrentJob(item, e.Value is true)" />
                     @Culture["Profile.CurrentJob"]
                 </label>
-                @if (!string.IsNullOrWhiteSpace(item.EndMonth))
+                @if (!item.ShowsAsCurrent)
                 {
                     <label>
                         @Culture["Profile.EmployerTo"]
@@ -73,14 +73,9 @@
 
     private Task SetCurrentJob(CandidateEmployerHistory item, bool current)
     {
-        if (current)
-        {
-            return SetJobEnd.InvokeAsync((item, null));
-        }
-
-        var end = string.IsNullOrWhiteSpace(item.StartMonth)
-            ? $"{DateTime.UtcNow:yyyy-MM}"
-            : item.StartMonth;
-        return SetJobEnd.InvokeAsync((item, end));
+        item.IsCurrent = current;
+        return current
+            ? SetJobEnd.InvokeAsync((item, null))
+            : Draft.NotifyChangedAsync();
     }
 }

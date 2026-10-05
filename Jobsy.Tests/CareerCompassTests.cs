@@ -393,7 +393,8 @@ public class CareerCompassTests
         Assert.Empty(compass.StrongChoices);
         Assert.DoesNotContain(compass.AllOccupations, m => m.Title.Contains("RIASEC", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(compass.AllOccupations, m => m.Percent < 75);
-        Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(compass.PracticalNotes, n => n.Contains("Den Haag", StringComparison.OrdinalIgnoreCase));
+        Assert.NotEmpty(compass.PracticalNotes);
         AssertNoJargon(compass);
     }
 

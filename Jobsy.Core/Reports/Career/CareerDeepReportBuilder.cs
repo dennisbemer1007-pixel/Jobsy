@@ -28,7 +28,6 @@ public static class CareerDeepReportBuilder
         var holland = CareerTestCatalog.HollandCode(riasec);
         var ranked = domains.OrderByDescending(d => d.Score).ThenBy(d => d.Domain).ToList();
         var top3 = ranked.Take(3).Select(d => d.Domain).ToList();
-        var bottom2 = ranked.TakeLast(2).Select(d => d.Domain).ToList();
 
         var deepened = CareerCompassSanitize.EnsureDepth(
             compass ?? CareerCompassSnapshot.Empty(fromDeepAnalysis: true),
@@ -72,7 +71,7 @@ public static class CareerDeepReportBuilder
             Occupations = occupations,
             ActionPlan = BuildActionPlan(top3, occupations),
             StrengthKeys = top3.Select(c => $"strength.{c}").ToList(),
-            PitfallKeys = bottom2.Select(c => $"pitfall.{c}").ToList(),
+            PitfallKeys = top3.Select(c => $"pitfall.{c}").ToList(),
             ComparisonAvailable = comparisonAvailable
         };
     }
@@ -143,7 +142,7 @@ public static class CareerDeepReportBuilder
     {
         foreach (var job in occupations)
         {
-            if (!PrimaryCodeIs(job.TitleNl, code))
+            if (!PrimaryCodeIs(job.TitleNl, code) || SkipHigherEducation(job.TitleNl, occupations))
             {
                 continue;
             }
@@ -159,6 +158,11 @@ public static class CareerDeepReportBuilder
 
         foreach (var job in occupations)
         {
+            if (SkipHigherEducation(job.TitleNl, occupations))
+            {
+                continue;
+            }
+
             var title = job.Title(lang);
             if (string.IsNullOrWhiteSpace(title) || !used.Add(title))
             {
@@ -181,6 +185,20 @@ public static class CareerDeepReportBuilder
         return CareerCompassBuilder.TypicalEnvironments(
             report.Domains.OrderByDescending(d => d.Score).Select(d => d.Domain),
             lang);
+    }
+
+    private static bool SkipHigherEducation(string titleNl, IReadOnlyList<DeepOccupationFit> occupations)
+    {
+        if (!CareerGoalFit.IsClearlyHigherEducation(titleNl))
+        {
+            return false;
+        }
+
+        var code = CareerCompassBuilder.PrimaryCode(titleNl);
+        return occupations.Any(other =>
+            !string.Equals(other.TitleNl, titleNl, StringComparison.OrdinalIgnoreCase)
+            && !CareerGoalFit.IsClearlyHigherEducation(other.TitleNl)
+            && string.Equals(CareerCompassBuilder.PrimaryCode(other.TitleNl), code, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool PrimaryCodeIs(string titleNl, string code)

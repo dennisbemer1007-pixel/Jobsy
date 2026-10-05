@@ -164,6 +164,7 @@ public sealed class AiProviderStatusItem
     public bool Available { get; set; } = true;
     public string? EndpointHost { get; set; }
     public List<AiFeatureModelItem> FeatureModels { get; set; } = [];
+    public bool HideOpenAiProbe { get; set; }
 }
 
 public sealed class MailProviderStatusItem

@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -21,15 +22,18 @@ public sealed class CultureFitAiService : ICultureFitAiService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<CultureFitAiService> _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public CultureFitAiService(
         IHttpClientFactory httpClientFactory,
         IOpenAiEndpointResolver openAi,
-        ILogger<CultureFitAiService> logger)
+        ILogger<CultureFitAiService> logger,
+        IPlatformErrorLog? platformLog = null)
     {
         _httpClientFactory = httpClientFactory;
         _openAi = openAi;
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<CultureFitResult?> TryRefineAsync(
@@ -55,6 +59,16 @@ public sealed class CultureFitAiService : ICultureFitAiService
         {
             var model = endpoint.Model;
             var baseUrl = endpoint.BaseUrl;
+            var sheet = CandidateFactSheet.Personal(
+                [],
+                [],
+                [],
+                scores:
+                [
+                    $"Samenwerken {scores.Samenwerken ?? 0}%",
+                    $"Afmaken {scores.Resultaatgerichtheid ?? 0}%"
+                ],
+                checkJobTitles: false);
             var client = _httpClientFactory.CreateClient(HttpClientName);
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -67,7 +81,7 @@ public sealed class CultureFitAiService : ICultureFitAiService
                 response_format = new { type = "json_object" },
                 messages = new object[]
                 {
-                    new { role = "system", content = CultureFitPrompt.System },
+                    new { role = "system", content = CultureFitPrompt.System + "\n" + sheet.ToPrompt() + "\n" + CandidateFactGuard.StrictAddendum },
                     new { role = "user", content = CultureFitPrompt.User(pillarLabels, scores, culture) }
                 }
             });
@@ -83,7 +97,21 @@ public sealed class CultureFitAiService : ICultureFitAiService
 
             var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
             var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
-            return CultureFitJson.TryParse(content, local);
+            var parsed = CultureFitJson.TryParse(content, local);
+            if (parsed is null)
+            {
+                return null;
+            }
+
+            var reason = CandidateFactGuard.RejectionReason(parsed.Why, sheet);
+            if (reason is not null)
+            {
+                await AiFactRejectionLog.WriteAsync(
+                    _platformLog, _logger, "culture-fit", reason, 1, cancellationToken, model, parsed.Why);
+                return null;
+            }
+
+            return parsed;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

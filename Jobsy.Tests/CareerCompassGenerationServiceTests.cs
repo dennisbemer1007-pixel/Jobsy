@@ -30,29 +30,38 @@ public class CareerCompassGenerationServiceTests
     [Fact]
     public async Task OpenAi_success_sanitizes_json_and_sets_from_openai()
     {
-        var inner = """
+        var allowed = AllowedReply();
+        var inner = JsonSerializer.Serialize(new
+        {
+            strengths = new[] { "Mensen helpen", "Aanpakken", "Ordenen" },
+            superMatches = new[]
             {
-              "strengths": ["Mensen helpen"],
-              "superMatches": [
-                {"title":"Verpleegkundige","percent":98,"why":"Jij wilt voor mensen klaarstaan.","keys":["zorg","verpleeg"]}
-              ],
-              "strongChoices": [
-                {"title":"Docent","percent":88,"why":"Uitleggen past bij je.","keys":["les","onderwijs"]}
-              ],
-              "broadening": [
-                {"title":"HR-medewerker","percent":78,"why":"Mensen en administratie.","keys":["personeel","hr"]}
-              ],
-              "practicalNotes": ["Open de banenkaart. Vacatures in Den Haag of het Westland die op zorg lijken scoren hoger."]
+                new { title = allowed.Titles[0], percent = 98, why = allowed.Why, keys = new[] { "klus" } }
+            },
+            strongChoices = new[]
+            {
+                new { title = allowed.Titles[1], percent = 88, why = allowed.Why, keys = new[] { "taak" } }
+            },
+            broadening = new[]
+            {
+                new { title = allowed.Titles[2], percent = 78, why = allowed.Why, keys = new[] { "werk" } }
+            },
+            practicalNotes = new[]
+            {
+                "Open de banenkaart. Vacatures in Den Haag of het Westland die op zorg lijken scoren hoger."
             }
-            """;
+        });
         var handler = new RecordingHandler { ResponseJson = WrapChat(inner) };
         var sut = CreateSut(handler, apiKey: "sk-test");
         var result = await sut.GenerateFromCareerDeepAsync(PeakAll());
 
         Assert.True(result.FromOpenAi);
         Assert.True(result.FromDeepAnalysis);
-        Assert.Contains(result.SuperMatches, m => m.Title == "Verpleegkundige");
+        Assert.Contains(result.AllOccupations, m => m.Title == allowed.Titles[0]);
+        Assert.Contains(result.AllOccupations, m => m.Why.Contains(allowed.Direction, StringComparison.OrdinalIgnoreCase));
         Assert.Contains(result.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.PracticalNotes, n => n.Contains("Den Haag", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(result.PracticalNotes, n => n.Contains("Westland", StringComparison.OrdinalIgnoreCase));
         Assert.Contains("json_object", handler.LastBody, StringComparison.Ordinal);
         Assert.Contains("chat/completions", handler.LastRequestUri, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@", handler.LastBody, StringComparison.Ordinal);
@@ -105,21 +114,24 @@ public class CareerCompassGenerationServiceTests
               "practicalNotes": ["Kijk welke taken bij je passen."]
             }
             """);
-        var clean = WrapChat("""
+        var allowed = AllowedReply();
+        var clean = WrapChat(JsonSerializer.Serialize(new
+        {
+            strengths = new[] { "Mensen helpen", "Aanpakken", "Ordenen" },
+            superMatches = new[]
             {
-              "strengths": ["Mensen helpen"],
-              "superMatches": [
-                {"title":"Verpleegkundige","percent":98,"why":"Jij wilt voor mensen klaarstaan.","keys":["zorg","verpleeg"]}
-              ],
-              "strongChoices": [
-                {"title":"Docent","percent":88,"why":"Uitleggen past bij je.","keys":["les"]}
-              ],
-              "broadening": [
-                {"title":"HR-medewerker","percent":78,"why":"Mensen en administratie.","keys":["hr"]}
-              ],
-              "practicalNotes": ["Open de banenkaart."]
-            }
-            """);
+                new { title = allowed.Titles[0], percent = 98, why = allowed.Why, keys = new[] { "klus" } }
+            },
+            strongChoices = new[]
+            {
+                new { title = allowed.Titles[1], percent = 88, why = allowed.Why, keys = new[] { "taak" } }
+            },
+            broadening = new[]
+            {
+                new { title = allowed.Titles[2], percent = 78, why = allowed.Why, keys = new[] { "werk" } }
+            },
+            practicalNotes = new[] { "Open de banenkaart." }
+        }));
         var handler = new RecordingHandler { Responses = [invented, clean] };
         var log = new CapturingLog();
         var sut = CreateSut(handler, apiKey: "sk-test", log);
@@ -128,7 +140,7 @@ public class CareerCompassGenerationServiceTests
         Assert.Equal(2, handler.Calls);
         Assert.Contains("STRIKT", handler.LastBody, StringComparison.Ordinal);
         Assert.True(result.FromOpenAi);
-        Assert.Contains(result.SuperMatches, m => m.Title == "Verpleegkundige");
+        Assert.Contains(result.AllOccupations, m => m.Title == allowed.Titles[0]);
         Assert.DoesNotContain(result.AllOccupations, m => !CandidateFactGuard.IsCatalogueTitle(m.Title));
         Assert.DoesNotContain(result.AllOccupations, m => m.Why.Contains("jarenlang", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(log.Messages, m => m.Contains("surface=compass", StringComparison.Ordinal) && m.Contains("reason=unknown-job", StringComparison.Ordinal));
@@ -174,6 +186,15 @@ public class CareerCompassGenerationServiceTests
 
     private static Dictionary<int, int> PeakAll()
         => DeepAnalysisCatalog.CareerQuestions.ToDictionary(q => q.Id, q => q.Reverse ? 1 : 5);
+
+    private static (IReadOnlyList<string> Titles, string Direction, string Why) AllowedReply()
+    {
+        var answers = PeakAll();
+        var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
+        var sheet = CandidateFactSheet.ForCareer(scores, answers);
+        var direction = sheet.DirectionLabels[0];
+        return (sheet.AllowedJobTitles.Take(3).ToList(), direction, $"Dit sluit aan bij {direction}.");
+    }
 
     private static string WrapChat(string content)
         => JsonSerializer.Serialize(new

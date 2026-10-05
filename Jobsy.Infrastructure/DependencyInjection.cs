@@ -495,9 +495,8 @@ public static class DependencyInjection
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
         {
-            // Keep well under JobsyApiClient's 20s budget so GET /who-am-i can
-            // fall back to the local story before the Blazor circuit times out.
-            client.Timeout = TimeSpan.FromSeconds(8);
+            // One attempt is 12s. Stay under the 20s API client budget.
+            client.Timeout = TimeSpan.FromSeconds(14);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
@@ -653,6 +652,8 @@ public static class DependencyInjection
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<IbanEncryptionMigrationHostedService>();
         services.AddHostedService<SalesCommissionBackfillHostedService>();
+        services.AddHostedService<WhoAmIStoryBackfillHostedService>();
+        services.AddHostedService<CareerCompassDeepResetHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<UnverifiedCompanyReminderHostedService>();

@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Reports.Competence;
@@ -29,15 +30,18 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<OpenAiCompetenceDeepReportAiService> _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public OpenAiCompetenceDeepReportAiService(
         IHttpClientFactory httpClientFactory,
         IOpenAiEndpointResolver openAi,
-        ILogger<OpenAiCompetenceDeepReportAiService> logger)
+        ILogger<OpenAiCompetenceDeepReportAiService> logger,
+        IPlatformErrorLog? platformLog = null)
     {
         _httpClientFactory = httpClientFactory;
         _openAi = openAi;
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<(string Summary, IReadOnlyList<(string Title, string Body)> Steps)?> TryGenerateAsync(
@@ -118,7 +122,8 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
                         Je bent een loopbaancoach van Lobsy. Schrijf in helder, positief maar eerlijk Nederlands
                         op B1-niveau en spreek de lezer aan met 'je'. Geen jargon zoals OCEAN, Big Five, RIASEC,
                         DISC. Blijf dicht bij het gegeven profiel; verzin geen feiten die er niet in staan.
-                        """
+                        Noem geen woonplaats of regio. Zeg niet wat de persoon leuk vindt, tenzij dat in de feiten staat.
+                        """ + "\n" + CandidateFactGuard.StrictAddendum
                 },
                 new { role = "user", content = sb.ToString() }
             }
@@ -163,7 +168,24 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
             return null;
         }
 
-        return (dto.Summary.Trim(), steps);
+        var summary = dto.Summary.Trim();
+        var visible = summary + "\n" + string.Join('\n', steps.Select(step => step.Item1 + " " + step.Item2));
+        var scores = draft.Traits.Select(trait => $"{trait.LabelNl} {trait.Score}%").ToList();
+        if (!string.IsNullOrWhiteSpace(jobTitle))
+        {
+            scores.Add(jobTitle.Trim());
+        }
+
+        var sheet = CandidateFactSheet.Personal([], [], [], scores: scores, checkJobTitles: false);
+        var reason = CandidateFactGuard.RejectionReason(visible, sheet);
+        if (reason is not null)
+        {
+            await AiFactRejectionLog.WriteAsync(
+                _platformLog, _logger, "competence-report", reason, 1, ct, model, visible);
+            return null;
+        }
+
+        return (summary, steps);
     }
 
 

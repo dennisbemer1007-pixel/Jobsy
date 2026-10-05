@@ -89,6 +89,11 @@ public static class CandidateInsightsFingerprint
            && generatedAtUtc is DateTime at
            && utcNow - at >= TimeSpan.FromHours(1);
 
+    /// <summary>A template story for the same fingerprint is not sent to the model again within 24 hours.</summary>
+    public static bool ShouldRetryWhoAmI(bool fromOpenAi, DateTime? lastAttemptUtc, DateTime utcNow)
+        => !fromOpenAi
+           && (lastAttemptUtc is null || utcNow - lastAttemptUtc >= TimeSpan.FromHours(24));
+
     private static string StableHash(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))

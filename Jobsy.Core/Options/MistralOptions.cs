@@ -9,6 +9,10 @@ public static class MistralFeatureSlots
     public const string CareerReport = "CareerReport";
     public const string Compass = "Compass";
     public const string Chat = "Chat";
+    public const string CareerPath = "CareerPath";
+    public const string CompetenceReport = "CompetenceReport";
+    public const string CultureFit = "CultureFit";
+    public const string RoleFit = "RoleFit";
 }
 
 /// <summary>One row on Admin → Integraties.</summary>
@@ -24,6 +28,14 @@ public sealed class MistralFeatureModels
     public string? Compass { get; set; }
 
     public string? Chat { get; set; }
+
+    public string? CareerPath { get; set; }
+
+    public string? CompetenceReport { get; set; }
+
+    public string? CultureFit { get; set; }
+
+    public string? RoleFit { get; set; }
 }
 
 /// <summary>
@@ -52,7 +64,8 @@ public sealed class MistralOptions
 
     /// <summary>
     /// Optional per-feature overrides. Empty slots use <see cref="Model"/>.
-    /// Env: <c>Mistral__Models__Story</c>, <c>__CareerReport</c>, <c>__Compass</c>, <c>__Chat</c>.
+    /// Env: <c>Mistral__Models__Story</c>, <c>__CareerReport</c>, <c>__Compass</c>, <c>__Chat</c>,
+    /// <c>__CareerPath</c>, <c>__CompetenceReport</c>, <c>__CultureFit</c>, <c>__RoleFit</c>.
     /// </summary>
     public MistralFeatureModels Models { get; set; } = new();
 
@@ -70,6 +83,10 @@ public sealed class MistralOptions
         {
             OpenAiFeature.WhoAmI => Models?.Story,
             OpenAiFeature.AssistantChat => Models?.Chat,
+            OpenAiFeature.CareerPathPlan => Models?.CareerPath,
+            OpenAiFeature.CompetenceDeepReport => Models?.CompetenceReport,
+            OpenAiFeature.CultureFit => Models?.CultureFit,
+            OpenAiFeature.RoleFitCheck => Models?.RoleFit,
             _ => null
         };
         return Effective(slot, Model);
@@ -94,7 +111,11 @@ public sealed class MistralOptions
             new(MistralFeatureSlots.Story, ModelFor(OpenAiFeature.WhoAmI)),
             new(MistralFeatureSlots.CareerReport, compassCall),
             new(MistralFeatureSlots.Compass, compassCall),
-            new(MistralFeatureSlots.Chat, ModelFor(OpenAiFeature.AssistantChat))
+            new(MistralFeatureSlots.Chat, ModelFor(OpenAiFeature.AssistantChat)),
+            new(MistralFeatureSlots.CareerPath, ModelFor(OpenAiFeature.CareerPathPlan)),
+            new(MistralFeatureSlots.CompetenceReport, ModelFor(OpenAiFeature.CompetenceDeepReport)),
+            new(MistralFeatureSlots.CultureFit, ModelFor(OpenAiFeature.CultureFit)),
+            new(MistralFeatureSlots.RoleFit, ModelFor(OpenAiFeature.RoleFitCheck))
         ];
     }
 

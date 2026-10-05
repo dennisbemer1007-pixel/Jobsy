@@ -4,7 +4,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using Jobsy.Api.Extensions;
 using Jobsy.Core.Diagnostics;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -139,7 +141,7 @@ public static class RateLimitPartitioning
             Type = "https://tools.ietf.org/html/rfc6585#section-4",
             Title = "Too many requests",
             Status = StatusCodes.Status429TooManyRequests,
-            Detail = "Probeer het zo opnieuw."
+            Detail = RetryDetail(http)
         };
         problem.Extensions["code"] = RateLimitCode;
         problem.Extensions["retryAfterSeconds"] = retryAfterSeconds;
@@ -148,6 +150,19 @@ public static class RateLimitPartitioning
         await http.Response.WriteAsync(
             JsonSerializer.Serialize(problem, ProblemJson),
             cancellationToken);
+    }
+
+    private static string RetryDetail(HttpContext http)
+    {
+        var lang = JobsyLanguages.Normalize(http.GetJobsyLanguage());
+        return lang switch
+        {
+            "en" => "Try again in a moment.",
+            "pl" => "Spróbuj za chwilę jeszcze raz.",
+            "ro" => "Mai încearcă peste puțin timp.",
+            "ar" => "جرّب مرة أخرى بعد قليل.",
+            _ => "Probeer het zo opnieuw."
+        };
     }
 
     private static string? ResolveUserId(ClaimsPrincipal user)

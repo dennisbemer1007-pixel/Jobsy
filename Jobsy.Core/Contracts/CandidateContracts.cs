@@ -75,7 +75,8 @@ public record CandidateEmployerHistoryDto(
     string? Description = null,
     /// <summary>Start month as yyyy-MM. End empty means currently employed.</summary>
     string? StartMonth = null,
-    string? EndMonth = null);
+    string? EndMonth = null,
+    bool? IsCurrent = null);
 
 public record CandidateCertificateDto(
     string Name,

@@ -122,6 +122,24 @@ public class CandidateFactGuardTests
             """;
         Assert.Equal("unknown-job", CandidateFactGuard.CompassRejection(recordedMistral, sheet));
 
+        var direction = sheet.DirectionLabels[0];
+        var placeNote = JsonSerializer.Serialize(new
+        {
+            strengths = new[] { "Aanpakken", "Helpen", "Ordenen" },
+            superMatches = new[]
+            {
+                new { title = allowed, percent = 90, why = $"Dit sluit aan bij {direction}.", keys = new[] { "klus" } }
+            },
+            strongChoices = Array.Empty<object>(),
+            broadening = Array.Empty<object>(),
+            practicalNotes = new[] { "Open de banenkaart. Vacatures in Den Haag of het Westland scoren hoger." }
+        });
+        Assert.Null(CandidateFactGuard.CompassRejection(placeNote, sheet));
+        var kept = CareerCompassJson.TryDeserialize(placeNote);
+        Assert.NotNull(kept);
+        Assert.Contains(kept!.PracticalNotes, note => note.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(kept.PracticalNotes, note => note.Contains("Den Haag", StringComparison.OrdinalIgnoreCase));
+
         var stored = CareerCompassJson.TryDeserialize("""
             {
               "strengths": ["Aanpakken", "Helpen", "Ordenen"],
@@ -161,7 +179,7 @@ public class CandidateFactGuardTests
         }));
         var clean = WrapChat(JsonSerializer.Serialize(new
         {
-            story = "Ik pak taken aan en maak ze af. Samenwerken past bij mij.\n\nIk houd van een duidelijke dag. In Den Haag of het Westland voel ik me op mijn plek.",
+            story = "Ik pak taken aan en maak ze af. Samenwerken past bij mij.\n\nIk houd van een duidelijke dag. Ik maak af waar ik aan begin.",
             keywords = new[] { "aanpakken" }
         }));
         var handler = new RecordingHandler { Responses = [invented, clean] };

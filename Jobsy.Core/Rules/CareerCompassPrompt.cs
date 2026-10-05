@@ -10,19 +10,19 @@ public static class CareerCompassPrompt
         Kies elke title alleen uit de lijst Toegestane beroepen in het gebruikersbericht. Gebruik die titels letterlijk. Verzin geen andere functienaam.
         Verzin geen werkgever, sector, jaartal, diploma of werkervaring. De feitenlijst heeft geen werkverleden. Zeg niets over eerder werk.
         Niet beperken tot vacatures die nu op Lobsy staan. Geen bedrijfsnamen, geen woonplaats vragen, geen naam of e-mail.
-        Hiërarchie is verplicht en moet logisch zijn: de top-matches zijn de best denkbare fit voor DEZE kandidaat. Percentages zijn de aansluiting van dat beroep bij de testuitslag, niet een willekeurig cijfer.
-        - superMatches (kernfit): percent 95-100. De ideale banen die direct resoneren met de hoogste richtingen. Nooit geforceerd te laag (geen 80% voor de beste fit). 3 tot 6 beroepen, aflopend in percent.
-        - strongChoices (uitstekende alternatieven): percent 85-94. Dichtbij de kernfit, logisch om te overwegen. 3 tot 6 beroepen, allemaal lager dan de laagste super-match.
-        - broadening (doorgroei of omscholing): percent 75-84. Aanverwante talenten of een mogelijke switch. 3 tot 6 beroepen, allemaal lager dan de laagste sterke keus.
-        Elk beroep: title (algemene functienaam), percent, why (één warme zin waarom dit bij de antwoorden past), keys (2-6 korte Nederlandse zoekwoorden voor de banenkaart, bijv. zorg, verpleeg, kas).
+        Het percentage bij elk beroep staat al in de feitenlijst. Kopieer dat cijfer. Verzin geen 95-100 en geen ander cijfer.
+        Kies superMatches 3 tot 4, strongChoices 3 tot 4, broadening 2 tot 4. Samen 8 tot 12 beroepen. Niet meer.
+        Elk beroep: title (exact uit de toegestane lijst), percent (het berekende cijfer), why (één warme zin), keys (2-6 korte Nederlandse zoekwoorden, bijv. zorg, verpleeg, kas).
+        De why-zin noemt één van de drie hoogste richtingen uit de feitenlijst, letterlijk (bijvoorbeeld Aanpakken met je handen, Mensen helpen of Netjes organiseren).
+        Zeg niet dat de persoon van dieren, planten, koken, schoonmaak of andere dingen houdt, tenzij dat letterlijk in de feiten staat. Leg het beroep uit met de scores.
         practicalNotes: 3 tot 5 korte alinea's onder "Wat betekent dit voor jou?": soort werkomgeving, soort taken, sfeer/cultuur, en hoe de kandidaat dit op de Lobsy-banenkaart gebruikt (filter op hoge match, bewaar wat voelt als 'dit is het').
         strengths: 3 tot 5 sterke kanten in gewone woorden, afgeleid van de hoogste richtingen.
         Antwoord ALLEEN als JSON-object met exact deze velden:
         {
           "strengths": ["korte sterke kanten in gewone taal"],
-          "superMatches": [{"title":"algemeen beroep","percent":97,"why":"één zin","keys":["zoekwoord","synoniem"]}],
-          "strongChoices": [{"title":"...","percent":88,"why":"...","keys":["..."]}],
-          "broadening": [{"title":"...","percent":78,"why":"...","keys":["..."]}],
+          "superMatches": [{"title":"algemeen beroep","percent":66,"why":"één zin die een richting uit de feiten noemt","keys":["zoekwoord","synoniem"]}],
+          "strongChoices": [{"title":"...","percent":64,"why":"...","keys":["..."]}],
+          "broadening": [{"title":"...","percent":62,"why":"...","keys":["..."]}],
           "practicalNotes": ["Wat betekent dit voor jou? korte alinea's"]
         }
         """;

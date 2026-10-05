@@ -1,3 +1,4 @@
+using Jobsy.Api.Extensions;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
@@ -31,7 +32,7 @@ public sealed class CandidateWhoAmIController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
-        return Ok(await _whoAmI.GetAsync(user.Id, cancellationToken));
+        return Ok(await _whoAmI.GetAsync(user.Id, HttpContext.GetJobsyLanguage(), cancellationToken));
     }
 
     [HttpPut]

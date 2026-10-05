@@ -11,7 +11,7 @@ public static class WhoAmIKeywords
         SchwartzValuesScores? values = null)
     {
         var items = new List<(string Label, int Percent)>();
-        foreach (var code in CompetencyTestCatalog.CategoryCodes)
+        foreach (var code in CompetencyTestCatalog.QuickScanCategories)
         {
             items.Add((EverydayCompetency(code), competency.Get(code)));
         }
@@ -45,7 +45,7 @@ public static class WhoAmIKeywords
     }
 
     public static string EverydayCompetency(string code)
-        => CompetencyTestCatalog.CategoryCodes.Contains(code, StringComparer.OrdinalIgnoreCase)
+        => CompetencyTestCatalog.QuickScanCategories.Contains(code, StringComparer.OrdinalIgnoreCase)
             ? DimensionLabels.For(code)
             : "werksterkte";
 }

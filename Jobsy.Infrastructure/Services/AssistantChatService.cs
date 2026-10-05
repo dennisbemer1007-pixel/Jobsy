@@ -174,6 +174,16 @@ public sealed class AssistantChatService : IAssistantChatService
                     [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/hoe-werkt-lobsy", Label: "Hoe werkt Lobsy")]);
             }
 
+            if (LooksLikeDiplomaQuestion(text))
+            {
+                return await CandidateDiplomaAsync(context, cancellationToken);
+            }
+
+            if (LooksLikeDreamQuestion(text))
+            {
+                return await CandidateDreamAsync(context, cancellationToken);
+            }
+
             if (LooksLikePassportHelp(text))
             {
                 return await CandidatePassportHelpAsync(context, cancellationToken);
@@ -1282,6 +1292,14 @@ Verbetervoorstellen:
                     confirmed.Add(prefs.PreferredTransport.Trim());
                 }
 
+                foreach (var occupation in CareerCompassBuilder.Occupations)
+                {
+                    if (!jobs.Exists(job => string.Equals(job, occupation.Title, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        jobs.Add(occupation.Title);
+                    }
+                }
+
                 var sheet = CandidateFactSheet.Personal(work, education, certificates, jobs, scoreLines, confirmed);
                 sb.AppendLine();
                 sb.Append(sheet.ToPrompt());
@@ -1442,7 +1460,7 @@ Verbetervoorstellen:
                 .Take(CareerCompassSanitize.MaxCatalogueJobs);
             var listed = occupations.ToList();
             sb.Append("topOccupations=")
-                .Append(string.Join(", ", listed.Select(m => $"{m.Title} {m.Percent}%")))
+                .Append(string.Join(", ", listed.Select(m => $"{OccupationTitles.ForChat(m.Title, lang)} {m.Percent}%")))
                 .Append("; ");
             jobs.AddRange(listed.Select(m => m.Title));
         }
@@ -1620,6 +1638,9 @@ Verbetervoorstellen:
             "If it says werkervaring: geen or experience=none, say nothing about past work. " +
             "If a personal fact is missing, say you do not know. Do not guess. " +
             "Never say tests are missing when the facts list completed tests, scores or occupations. " +
+            "Zeg niet wat de persoon leuk vindt (dieren, planten, koken…) tenzij het in de feiten staat; leg een beroep alleen uit met de scores. " +
+            "You may compare catalogue jobs that are not on the candidate's own list. Explain them with the scores. Do not say you do not know those jobs. " +
+            "Zeg niet dat een opleiding is afgerond tenzij dat in de feiten staat. " +
             "completedTests is the list of finished tests. deepTests=none means there is no extra long test, not that the person did nothing. " +
             "Never use the words Riasec, RIASEC, Career-test, Holland or werksterkte. Use only labels that appear in the facts. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
@@ -1822,6 +1843,92 @@ Verbetervoorstellen:
                       || ContainsAny(text, "heftruck", "reachtruck", "chauffeur", "orderpicker", "barista", "plukker",
                           "magazijnmedewerker", "kasmedewerker", "baan", "banen", "job", "jobs", "werk");
         return jobWord || workType is not null;
+    }
+
+    private static bool LooksLikeDiplomaQuestion(string text) =>
+        ContainsAny(text,
+            "diploma", "welk diploma", "welke opleiding", "which diploma", "what diploma", "my diploma",
+            "dyplom", "jaki dyplom", "diplomă", "ce diplomă", "شهادة", "ما شهادتي");
+
+    private static bool LooksLikeDreamQuestion(string text) =>
+        ContainsAny(text,
+            "droombaan", "mijn droom", "dream job", "my dream", "wymarzon", "jobul visat", "وظيفة الأحلام", "وظيفة أحلام");
+
+    private async Task<AssistantChatResult> CandidateDiplomaAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
+    {
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+        var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+        var education = (prefs?.Educations ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .ToList();
+        var lang = JobsyLanguages.Normalize(context.Language);
+        if (education.Count == 0)
+        {
+            var missing = lang switch
+            {
+                "en" => "That is not in your details.",
+                "pl" => "Tego nie ma w twoich danych.",
+                "ro" => "Asta nu este în datele tale.",
+                "ar" => "هذا ليس في بياناتك.",
+                _ => "Dat staat niet in je gegevens."
+            };
+            return new AssistantChatResult(missing, false, []);
+        }
+
+        var level = string.Join(", ", education);
+        var reply = lang switch
+        {
+            "en" => $"You have {level}",
+            "pl" => $"Masz {level}",
+            "ro" => $"Ai {level}",
+            "ar" => $"لديك {level}",
+            _ => $"Je hebt {level}"
+        };
+        return new AssistantChatResult(reply, false, []);
+    }
+
+    private async Task<AssistantChatResult> CandidateDreamAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
+    {
+        var dream = await _db.CandidateCareerPlans.AsNoTracking()
+            .Where(p => p.UserId == context.UserId)
+            .Select(p => p.DreamTitle)
+            .FirstOrDefaultAsync(cancellationToken);
+        var lang = JobsyLanguages.Normalize(context.Language);
+        if (string.IsNullOrWhiteSpace(dream))
+        {
+            var empty = lang switch
+            {
+                "en" => "You have not chosen a dream job yet.",
+                "pl" => "Nie wybrałeś jeszcze wymarzonej pracy.",
+                "ro" => "Nu ai ales încă un job de vis.",
+                "ar" => "لم تختر بعد وظيفة الأحلام.",
+                _ => "Je hebt nog geen droombaan gekozen"
+            };
+            return new AssistantChatResult(
+                empty,
+                false,
+                [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/carriere", Label: lang == "en" ? "Career" : "Carrière")]);
+        }
+
+        var title = OccupationTitles.ForChat(dream.Trim(), lang);
+        var reply = lang switch
+        {
+            "en" => $"Your dream job is {title}.",
+            "pl" => $"Twoja wymarzona praca to {title}.",
+            "ro" => $"Jobul tău de vis este {title}.",
+            "ar" => $"وظيفة أحلامك هي {title}.",
+            _ => $"Je droombaan is {title}."
+        };
+        return new AssistantChatResult(
+            reply,
+            false,
+            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/carriere", Label: lang == "en" ? "Career" : "Carrière")]);
     }
 
     private static bool LooksLikePassportHelp(string text) =>

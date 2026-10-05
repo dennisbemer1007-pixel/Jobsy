@@ -37,11 +37,11 @@
                                             </label>
                                             <label class="ob-wizard__check">
                                                 <input type="checkbox"
-                                                       checked="@string.IsNullOrWhiteSpace(Editor.Employers[idx].EndMonth)"
-                                                       @onchange="e => SetCurrentJob(idx, e.Value is true)" />
+                                                       checked="@Editor.Employers[idx].ShowsAsCurrent"
+                                                       @onchange="e => Editor.SetEmployerCurrent(idx, e.Value is true)" />
                                                 @Culture["Profile.CurrentJob"]
                                             </label>
-                                            @if (!string.IsNullOrWhiteSpace(Editor.Employers[idx].EndMonth))
+                                            @if (!Editor.Employers[idx].ShowsAsCurrent)
                                             {
                                                 <label class="profile-employer-card__field profile-employer-card__field--end">
                                                     <span>@Culture["Profile.EmployerTo"]</span>
@@ -68,12 +68,4 @@
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
-
-    private void SetCurrentJob(int index, bool current)
-    {
-        var end = current
-            ? null
-            : Editor.Employers[index].StartMonth ?? DateTime.UtcNow.ToString("yyyy-MM");
-        Editor.SetEmployerEndMonth(index, end);
-    }
 }
