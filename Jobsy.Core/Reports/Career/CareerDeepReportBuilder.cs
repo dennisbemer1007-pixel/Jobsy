@@ -87,8 +87,14 @@ public static class CareerDeepReportBuilder
         {
             var nl = DeepReportCatalog.RiasecLabel(code, "nl");
             var en = DeepReportCatalog.RiasecLabel(code, "en");
-            var jobNl = ExampleJob(code, occupations, "nl", used);
-            var jobEn = ExampleJob(code, occupations, "en", used);
+            var job = PickJob(code, occupations, used);
+            if (job is not null)
+            {
+                used.Add(job.TitleNl);
+            }
+
+            var jobNl = job?.Title("nl") ?? "een beroep uit je lijst";
+            var jobEn = job?.Title("en") ?? "a job from your list";
             var (bodyNl, bodyEn) = ActionBody(index, jobNl, jobEn);
             steps.Add(new DeepActionStep
             {
@@ -134,10 +140,9 @@ public static class CareerDeepReportBuilder
             $"Shadow someone in {jobEn} once. Notice which tasks give you energy.")
     };
 
-    private static string ExampleJob(
+    private static DeepOccupationFit? PickJob(
         string code,
         IReadOnlyList<DeepOccupationFit> occupations,
-        string lang,
         HashSet<string> used)
     {
         foreach (var job in occupations)
@@ -147,32 +152,15 @@ public static class CareerDeepReportBuilder
                 continue;
             }
 
-            var title = job.Title(lang);
-            if (string.IsNullOrWhiteSpace(title) || !used.Add(title))
+            if (string.IsNullOrWhiteSpace(job.TitleNl) || used.Contains(job.TitleNl))
             {
                 continue;
             }
 
-            return title;
+            return job;
         }
 
-        foreach (var job in occupations)
-        {
-            if (SkipHigherEducation(job.TitleNl, occupations))
-            {
-                continue;
-            }
-
-            var title = job.Title(lang);
-            if (string.IsNullOrWhiteSpace(title) || !used.Add(title))
-            {
-                continue;
-            }
-
-            return title;
-        }
-
-        return ReportLanguage.IsEnglish(lang) ? "a job from your list" : "een beroep uit je lijst";
+        return null;
     }
 
     public static string TypicalPlaces(CareerDeepReport report, string lang)
@@ -202,17 +190,7 @@ public static class CareerDeepReportBuilder
     }
 
     private static bool PrimaryCodeIs(string titleNl, string code)
-    {
-        var job = CareerCompassBuilder.Occupations.FirstOrDefault(o =>
-            string.Equals(o.Title, titleNl, StringComparison.OrdinalIgnoreCase));
-        if (job is null || job.Weights.Length == 0)
-        {
-            return false;
-        }
-
-        var top = job.Weights.OrderByDescending(w => w.Weight).First();
-        return string.Equals(top.Code, code, StringComparison.OrdinalIgnoreCase);
-    }
+        => string.Equals(CareerCompassBuilder.PrimaryCode(titleNl), code, StringComparison.OrdinalIgnoreCase);
 
     private static string EnglishOccupation(string nl) => nl switch
     {

@@ -8,29 +8,30 @@ public static class WhoAmIKeywords
         CompetencyScores competency,
         RiasecScores career,
         CulturePersonalityScores culture,
-        SchwartzValuesScores? values = null)
+        SchwartzValuesScores? values = null,
+        string? language = null)
     {
         var items = new List<(string Label, int Percent)>();
         foreach (var code in CompetencyTestCatalog.QuickScanCategories)
         {
-            items.Add((EverydayCompetency(code), competency.Get(code)));
+            items.Add((EverydayCompetency(code, language), competency.Get(code)));
         }
 
         foreach (var code in CulturePersonalityCatalog.CategoryCodes)
         {
-            items.Add((CulturePersonalityCatalog.EverydayLabel(code), culture.Get(code)));
+            items.Add((DimensionLabels.For(code, language), culture.Get(code)));
         }
 
         foreach (var code in CareerTestCatalog.RiasecCodes)
         {
-            items.Add((CareerCompassBuilder.TypeLabel(code), career.Get(code)));
+            items.Add((DimensionLabels.For(code, language), career.Get(code)));
         }
 
         if (values is { IsComplete: true })
         {
             foreach (var code in SchwartzValuesCatalog.CategoryCodes)
             {
-                items.Add((SchwartzValuesCatalog.EverydayLabel(code), values.Get(code)));
+                items.Add((DimensionLabels.For(code, language), values.Get(code)));
             }
         }
 
@@ -44,8 +45,8 @@ public static class WhoAmIKeywords
             .ToList();
     }
 
-    public static string EverydayCompetency(string code)
+    public static string EverydayCompetency(string code, string? language = null)
         => CompetencyTestCatalog.QuickScanCategories.Contains(code, StringComparer.OrdinalIgnoreCase)
-            ? DimensionLabels.For(code)
+            ? DimensionLabels.For(code, language)
             : "werksterkte";
 }

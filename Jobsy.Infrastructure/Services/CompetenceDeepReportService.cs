@@ -183,19 +183,23 @@ public sealed class CompetenceDeepReportService : ICompetenceDeepReportService
     private async Task<IReadOnlyList<(string Title, int MatchPercent, string Reason)>?> TryLoadTopOccupationsAsync(
         Guid userId, CancellationToken ct)
     {
-        var compassJson = await _db.CandidateCareerInterests.AsNoTracking()
-            .Where(c => c.UserId == userId)
-            .Select(c => c.CompassJson)
-            .FirstOrDefaultAsync(ct);
-        var compass = CareerCompassJson.TryDeserialize(compassJson);
-        if (compass is not { HasOccupations: true })
+        var career = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, ct);
+        var scores = CareerTestCatalog.CompletedScoresOrNull(
+            career?.Status,
+            career?.RealisticPercent,
+            career?.InvestigativePercent,
+            career?.ArtisticPercent,
+            career?.SocialPercent,
+            career?.EnterprisingPercent,
+            career?.ConventionalPercent);
+        if (scores is not { IsComplete: true })
         {
             return null;
         }
 
-        var top = compass.AllOccupations
-            .OrderByDescending(o => o.Percent)
-            .Take(3)
+        var top = CareerCompassBuilder.Listed(scores)
+            .Take(8)
             .Select(o => (o.Title, o.Percent, o.Why))
             .ToList();
         return top.Count > 0 ? top : null;

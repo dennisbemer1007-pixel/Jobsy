@@ -271,7 +271,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     .Select(FriendlyTag)
                     .Where(t => !string.IsNullOrWhiteSpace(t))
                     .ToList();
-                var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
+                var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores, employersOn);
                 bytes = RenderCompetence(brand, logo, user.FullName, generated, scoreLines, tags, advice);
             }
         }

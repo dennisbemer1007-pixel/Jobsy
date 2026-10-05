@@ -954,6 +954,19 @@ public class AdminController : ControllerBase
             CareerInterestDeepReset.ClearDeepCompass(career, DateTime.UtcNow);
         }
 
+        var plans = await _db.CandidateCareerPlans
+            .Where(p => p.UserId == userId)
+            .ToListAsync(cancellationToken);
+        if (plans.Count > 0)
+        {
+            var planIds = plans.Select(p => p.Id).ToList();
+            var steps = await _db.CandidateCareerStepProgress
+                .Where(s => planIds.Contains(s.PlanId))
+                .ToListAsync(cancellationToken);
+            _db.CandidateCareerStepProgress.RemoveRange(steps);
+            _db.CandidateCareerPlans.RemoveRange(plans);
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
         _insightsQueue.TryEnqueue(userId);
         return NoContent();

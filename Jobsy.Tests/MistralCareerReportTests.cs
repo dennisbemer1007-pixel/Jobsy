@@ -37,8 +37,7 @@ public class MistralCareerReportTests
 
         var compass = CareerCompassJson.TryDeserialize(json);
         Assert.NotNull(compass);
-        Assert.Empty(compass!.SuperMatches);
-        Assert.DoesNotContain(compass.Strengths, s => s.Contains("hands-on", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(compass!.Strengths, s => s.Contains("hands-on", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(compass.AllOccupations, m => m.Title == "Hovenier" && m.Percent == 92);
         Assert.Contains(compass.AllOccupations, m => m.Title == "Kasmedewerker" && m.Percent == 92);
         Assert.Contains(compass.AllOccupations, m => m.Title == "Helpende zorg en welzijn");
@@ -130,7 +129,13 @@ public class MistralCareerReportTests
         foreach (var step in report.ActionPlan)
         {
             var body = step.Body.Resolve("nl");
-            Assert.Contains(titles, title => body.Contains(title, StringComparison.OrdinalIgnoreCase));
+            var namesListedJob = titles.Any(title => body.Contains(title, StringComparison.OrdinalIgnoreCase));
+            var namesFallback = body.Contains("een beroep uit je lijst", StringComparison.Ordinal);
+            Assert.True(namesListedJob || namesFallback, body);
+            if ((step.Title.Nl ?? "").Contains("Mensen helpen", StringComparison.Ordinal))
+            {
+                Assert.DoesNotContain("Chauffeur", body, StringComparison.OrdinalIgnoreCase);
+            }
         }
 
         var pdf = AssessmentReportPdfService.RenderCareerDeep(

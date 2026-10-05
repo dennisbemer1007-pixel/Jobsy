@@ -149,6 +149,7 @@
                                     ShowCarriedOver="@_showCarriedOver"
                                     ErrorText="@_error"
                                     OnChangeDream="OpenDreamDialog"
+                                    OnClearDream="ClearDreamAsync"
                                     OnDismissCarriedOver="DismissCarriedOver"
                                     OnRegenerateLanguage="RegenerateForLanguageAsync" />
 
@@ -521,6 +522,33 @@
             ApplyPlan(plan);
             _choice = null;
             _archived = await Api.GetArchivedCareerPlansAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = FailureMessage(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ClearDreamAsync()
+    {
+        if (_busy || !_plan.HasPlan && string.IsNullOrWhiteSpace(_plan.DreamTitle))
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.ClearCareerDreamAsync();
+            _plan = CareerPlanViewModel.Empty;
+            _archived = [];
+            _choice = null;
+            _dialogOpen = false;
         }
         catch (Exception ex)
         {

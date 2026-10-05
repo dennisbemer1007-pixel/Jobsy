@@ -67,7 +67,7 @@ public class CandidateRun11Tests
         var snapshot = CareerCompassSanitize.EnsureDepth(CareerCompassSnapshot.Empty(), Scores, "MBO");
         var jobs = snapshot.AllOccupations.ToList();
         Assert.InRange(jobs.Count, 8, 12);
-        Assert.All(jobs, job => Assert.Equal(CareerCompassBuilder.CatalogueFit(job.Title, Scores), job.Percent));
+        Assert.All(jobs, job => Assert.Equal(CareerCompassBuilder.CatalogueFit(job.Title, Scores, "MBO"), job.Percent));
         Assert.Contains("Verzin geen 95-100", CareerCompassPrompt.System, StringComparison.Ordinal);
         Assert.Contains("8 tot 12", CareerCompassPrompt.System, StringComparison.Ordinal);
         var higher = jobs.Where(job => CareerGoalFit.IsClearlyHigherEducation(job.Title)).ToList();

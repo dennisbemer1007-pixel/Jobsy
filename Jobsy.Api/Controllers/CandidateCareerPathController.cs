@@ -108,6 +108,20 @@ public sealed class CandidateCareerPathController : ControllerBase
         return Ok(HorizonCareerPathPlanDto.From(plan));
     }
 
+    [HttpDelete("dream")]
+    [EnableRateLimiting("public-write")]
+    public async Task<IActionResult> ClearDream(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { code = CareerPlanErrorCodes.NoPlan });
+        }
+
+        await _plans.ClearDreamAsync(user.Id, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<HorizonCareerPathPlanDto>> Generate(

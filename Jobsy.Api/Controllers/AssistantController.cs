@@ -30,7 +30,7 @@ public sealed class AssistantController : ControllerBase
     }
 
     [HttpPost("chat")]
-    [EnableRateLimiting("ai")]
+    [EnableRateLimiting("assistant")]
     public async Task<ActionResult<AssistantChatResponseDto>> Chat(
         [FromBody] AssistantChatRequestDto request,
         CancellationToken cancellationToken)

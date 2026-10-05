@@ -190,10 +190,8 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
         }
 
         var story = WhoAmIStoryBuilder.Sanitize(dto?.Story);
-        var reason = CandidateFactGuard.RejectionReason(story, sheet)
-            ?? (story is null || !story.Contains("ik", StringComparison.OrdinalIgnoreCase) || !WhoAmIStoryBuilder.Accepts(story, profile, competency, culture, career, values)
-                ? "story-rules"
-                : null);
+        var shape = WhoAmIStoryBuilder.StoryRuleReason(story, profile, competency, culture, career, values);
+        var reason = CandidateFactGuard.RejectionReason(story, sheet) ?? shape;
         if (reason is not null || story is null)
         {
             return (null, reason ?? "story-rules", story ?? dto?.Story);

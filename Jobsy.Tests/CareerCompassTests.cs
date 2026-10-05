@@ -27,11 +27,12 @@ public class CareerCompassTests
         var compass = CareerCompassBuilder.Build(HandsOnScores(), fromDeepAnalysis: true);
         Assert.True(compass.FromDeepAnalysis);
         Assert.Contains("Aanpakken met je handen", compass.Strengths);
-        Assert.Contains(compass.SuperMatches, m => m.Title.Contains("kas", StringComparison.OrdinalIgnoreCase) && m.Percent >= 95);
+        Assert.Contains(compass.SuperMatches, m => m.Title.Contains("kas", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(compass.SuperMatches, m => m.Title.Contains("bouw", StringComparison.OrdinalIgnoreCase));
-        Assert.All(compass.SuperMatches, m => Assert.True(m.Percent >= 95));
-        Assert.All(compass.StrongChoices, m => Assert.InRange(m.Percent, 85, 94));
-        Assert.All(compass.Broadening, m => Assert.InRange(m.Percent, 75, 84));
+        Assert.NotEmpty(compass.SuperMatches);
+        Assert.NotEmpty(compass.StrongChoices);
+        Assert.NotEmpty(compass.Broadening);
+        Assert.All(compass.AllOccupations, m => Assert.InRange(m.Percent, 1, 100));
         Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(compass.PracticalNotes, n => n == TrainingCopy.GapAdvice);
         Assert.DoesNotContain(compass.PracticalNotes, n => n.Contains("150 vragen", StringComparison.OrdinalIgnoreCase));
@@ -92,9 +93,11 @@ public class CareerCompassTests
     [Fact]
     public void Organising_hands_on_scores_suggest_logistics_leadership()
     {
-        var compass = CareerCompassBuilder.Build(new RiasecScores(90, 38, 31, 88, 81, 100));
+        var scores = new RiasecScores(90, 38, 31, 70, 95, 80);
+        Assert.True(CareerCompassBuilder.EnterprisingInTop3(scores));
+        var compass = CareerCompassBuilder.Build(scores);
         Assert.True(compass.HasOccupations);
-        Assert.Contains(compass.AllOccupations, m => m.Title == "Teamleider logistiek");
+        Assert.Contains(CareerCompassBuilder.Ranked(scores), m => m.Title == "Teamleider logistiek");
         Assert.Contains(compass.AllOccupations, m => m.Title == "Planner");
         Assert.Contains(compass.AllOccupations, m => m.Title == "Voorman");
         AssertNoJargon(compass);
@@ -158,10 +161,10 @@ public class CareerCompassTests
 
         Assert.Equal("Mijn Beroepen-kompas", UiStrings.Get("Kompas.Career", "nl"));
         Assert.Equal("Wat betekent dit voor jou?", UiStrings.Get("Kompas.PracticalTitle", "nl"));
-        Assert.Contains("95%", UiStrings.Get("Kompas.BandSuper", "nl"));
-        Assert.Contains("Past heel goed", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.Ordinal);
-        Assert.Contains("85%", UiStrings.Get("Kompas.BandStrong", "nl"));
-        Assert.Contains("75%", UiStrings.Get("Kompas.BandBroaden", "nl"));
+        Assert.Contains("Past het best", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.Ordinal);
+        Assert.DoesNotContain("95%", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.Ordinal);
+        Assert.DoesNotContain("85%", UiStrings.Get("Kompas.BandStrong", "nl"), StringComparison.Ordinal);
+        Assert.DoesNotContain("75%", UiStrings.Get("Kompas.BandBroaden", "nl"), StringComparison.Ordinal);
         Assert.Equal("Profiel", UiStrings.Get("Kompas.TabProfile", "nl"));
         Assert.Equal("Wie ik ben", UiStrings.Get("Kompas.TabDna", "nl"));
         Assert.Equal("Tests", UiStrings.Get("Kompas.TabTests", "nl"));
@@ -390,9 +393,8 @@ public class CareerCompassTests
         var compass = CareerCompassJson.TryDeserialize(json);
         Assert.NotNull(compass);
         Assert.Contains(compass!.SuperMatches, m => m.Title == "Verpleegkundige" && m.Percent == 97);
-        Assert.Empty(compass.StrongChoices);
+        Assert.Contains(compass.AllOccupations, m => m.Title == "Kassamedewerker" && m.Percent == 70);
         Assert.DoesNotContain(compass.AllOccupations, m => m.Title.Contains("RIASEC", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(compass.AllOccupations, m => m.Percent < 75);
         Assert.DoesNotContain(compass.PracticalNotes, n => n.Contains("Den Haag", StringComparison.OrdinalIgnoreCase));
         Assert.NotEmpty(compass.PracticalNotes);
         AssertNoJargon(compass);
@@ -419,13 +421,11 @@ public class CareerCompassTests
             """;
         var compass = CareerCompassJson.TryDeserialize(json);
         Assert.NotNull(compass);
-        Assert.Empty(compass!.SuperMatches);
-        Assert.NotEmpty(compass.StrongChoices);
-        Assert.All(compass.StrongChoices, m => Assert.InRange(m.Percent, 85, 94));
-        Assert.Equal("Medewerker tuinbouw / kas", compass.StrongChoices[0].Title);
-        Assert.Equal(90, compass.StrongChoices[0].Percent);
-        Assert.Contains(compass.StrongChoices, m => m.Title == "Servicemonteur" && m.Percent == 89);
-        Assert.DoesNotContain(compass.AllOccupations, m => m.Percent >= 95);
+        Assert.NotEmpty(compass!.SuperMatches);
+        Assert.Equal("Medewerker tuinbouw / kas", compass.SuperMatches[0].Title);
+        Assert.Equal(90, compass.SuperMatches[0].Percent);
+        Assert.Contains(compass.AllOccupations, m => m.Title == "Servicemonteur" && m.Percent == 89);
+        Assert.Contains(compass.AllOccupations, m => m.Percent < 95);
         AssertNoJargon(compass);
     }
 

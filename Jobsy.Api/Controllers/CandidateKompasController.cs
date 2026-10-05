@@ -1,3 +1,4 @@
+using Jobsy.Api.Extensions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -32,7 +33,7 @@ public sealed class CandidateKompasController : ControllerBase
 
         try
         {
-            return Ok(await _kompas.GetAsync(user.Id, cancellationToken));
+            return Ok(await _kompas.GetAsync(user.Id, HttpContext.GetJobsyLanguage(), cancellationToken));
         }
         catch (InvalidOperationException ex)
         {
@@ -52,7 +53,7 @@ public sealed class CandidateKompasController : ControllerBase
 
         try
         {
-            return Ok(await _kompas.GetDnaAsync(user.Id, cancellationToken));
+            return Ok(await _kompas.GetDnaAsync(user.Id, HttpContext.GetJobsyLanguage(), cancellationToken));
         }
         catch (InvalidOperationException ex)
         {

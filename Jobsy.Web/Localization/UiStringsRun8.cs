@@ -20,23 +20,41 @@ internal static class UiStringsRun8
         }
 
         Add("Kompas.BandSuper",
-            "Past heel goed (95% of meer)",
-            "Fits very well (95% or more)",
-            "Pasuje bardzo dobrze (95% lub więcej)",
-            "Se potrivește foarte bine (95% sau mai mult)",
-            "يناسبك جدًا (95% أو أكثر)");
+            "Past het best",
+            "Best match",
+            "Pasuje najlepiej",
+            "Se potrivește cel mai bine",
+            "الأنسب");
         Add("Kompas.BandStrong",
-            "Past goed (85% tot 94%)",
-            "Fits well (85% to 94%)",
-            "Pasuje dobrze (85% do 94%)",
-            "Se potrivește bine (85% până la 94%)",
-            "يناسبك جيدًا (من 85% إلى 94%)");
+            "Past goed",
+            "Good match",
+            "Pasuje dobrze",
+            "Se potrivește bine",
+            "يناسبك جيدًا");
         Add("Kompas.BandBroaden",
-            "Ook de moeite (75% tot 84%)",
-            "Also worth a look (75% to 84%)",
-            "Też warto (75% do 84%)",
-            "Merită și asta (75% până la 84%)",
-            "يستحق النظر أيضًا (من 75% إلى 84%)");
+            "Ook de moeite",
+            "Also worth a look",
+            "Też warto",
+            "Merită și asta",
+            "يستحق النظر أيضًا");
+        Add("Kompas.FitExplainer",
+            "Het percentage is hoe goed je hele profiel bij dit beroep past. De plek in de lijst telt mee.",
+            "The percentage is how well your whole profile fits this job. The place in the list matters too.",
+            "Procent to dopasowanie całego profilu do tego zawodu. Miejsce na liście też się liczy.",
+            "Procentul arată cât de bine se potrivește tot profilul tău cu această meserie. Locul în listă contează și el.",
+            "النسبة هي مدى تناسب ملفك كله مع هذه المهنة. الترتيب في القائمة مهم أيضًا.");
+        Add("Kompas.RankChoice",
+            "{0}e keus",
+            "choice {0}",
+            "{0}. wybór",
+            "alegerea {0}",
+            "الخيار {0}");
+        Add("Career.ClearDream",
+            "Droombaan wissen",
+            "Clear dream job",
+            "Usuń wymarzoną pracę",
+            "Șterge jobul de vis",
+            "امسح وظيفة الأحلام");
         Add("Kompas.BandRankTop",
             "Past het best bij je scores",
             "Best match for your scores",
@@ -172,40 +190,40 @@ internal static class UiStringsRun8
             "تريد أن يفيد عملك الآخرين.");
 
         Add("Tests.CultureLead.Autonomy",
-            "Je werkt het liefst zelfstandig.",
-            "You prefer to work on your own.",
-            "Najchętniej pracujesz samodzielnie.",
-            "Preferi să lucrezi pe cont propriu.",
-            "تفضل أن تعمل بمفردك.");
+            "Uit je test blijkt dat zelfstandig werken bij je past.",
+            "Your test shows that working on your own fits you.",
+            "Z twojego testu wynika, że samodzielna praca do ciebie pasuje.",
+            "Din testul tău reiese că munca pe cont propriu ți se potrivește.",
+            "يظهر من اختبارك أن العمل بمفردك يناسبك.");
         Add("Tests.CultureLead.Informal",
-            "Je houdt van een losse sfeer.",
-            "You like a relaxed atmosphere.",
-            "Lubisz swobodną atmosferę.",
-            "Îți place o atmosferă relaxată.",
-            "تحب جوًا مريحًا.");
+            "Uit je test blijkt dat een losse sfeer bij je past.",
+            "Your test shows that a relaxed atmosphere fits you.",
+            "Z twojego testu wynika, że swobodna atmosfera do ciebie pasuje.",
+            "Din testul tău reiese că o atmosferă relaxată ți se potrivește.",
+            "يظهر من اختبارك أن الجو المريح يناسبك.");
         Add("Tests.CultureLead.Collaboration",
-            "Je werkt graag samen met anderen.",
-            "You like working together with others.",
-            "Lubisz pracować razem z innymi.",
-            "Îți place să lucrezi împreună cu alții.",
-            "تحب العمل مع الآخرين.");
+            "Uit je test blijkt dat samenwerken bij je past.",
+            "Your test shows that working together fits you.",
+            "Z twojego testu wynika, że wspólna praca do ciebie pasuje.",
+            "Din testul tău reiese că lucrul împreună ți se potrivește.",
+            "يظهر من اختبارك أن العمل مع الآخرين يناسبك.");
         Add("Tests.CultureLead.Flexibility",
-            "Je past je makkelijk aan.",
-            "You adapt easily.",
-            "Łatwo się dostosowujesz.",
-            "Te adaptezi ușor.",
-            "تتكيف بسهولة.");
+            "Uit je test blijkt dat flexibel meebewegen bij je past.",
+            "Your test shows that moving with change fits you.",
+            "Z twojego testu wynika, że dopasowanie się do ciebie pasuje.",
+            "Din testul tău reiese că adaptarea ți se potrivește.",
+            "يظهر من اختبارك أن المرونة تناسبك.");
         Add("Tests.CultureLead.Innovation",
-            "Je zoekt graag een nieuwe manier.",
-            "You like looking for a new way.",
-            "Lubisz szukać nowego sposobu.",
-            "Îți place să cauți un mod nou.",
-            "تحب البحث عن طريقة جديدة.");
+            "Uit je test blijkt dat nieuwe manieren bij je passen.",
+            "Your test shows that a new way fits you.",
+            "Z twojego testu wynika, że nowy sposób do ciebie pasuje.",
+            "Din testul tău reiese că un mod nou ți se potrivește.",
+            "يظهر من اختبارك أن الطريقة الجديدة تناسبك.");
         Add("Tests.CultureLead.PeopleFirst",
-            "Mensen komen bij jou op de eerste plek.",
-            "People come first for you.",
-            "Ludzie są u ciebie na pierwszym miejscu.",
-            "Oamenii sunt pe primul loc pentru tine.",
-            "الناس يأتون عندك في المقام الأول.");
+            "Uit je test blijkt dat mensen voorop bij je past.",
+            "Your test shows that people first fits you.",
+            "Z twojego testu wynika, że ludzie na pierwszym miejscu do ciebie pasują.",
+            "Din testul tău reiese că oamenii pe primul loc ți se potrivesc.",
+            "يظهر من اختبارك أن الناس أولاً يناسبك.");
     }
 }

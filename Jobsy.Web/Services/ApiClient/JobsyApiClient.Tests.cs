@@ -230,6 +230,16 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task ClearCareerDreamAsync(CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync("api/me/career-path/dream", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw CareerApiErrorException.FromResponse(response.StatusCode, body);
+        }
+    }
+
     public Task<CareerPathPlanApiModel?> GenerateCareerPathAsync(string dreamTitle, CancellationToken ct = default)
         => GenerateCareerPathAsync(catalogKey: null, freeText: dreamTitle, force: false, ct);
 

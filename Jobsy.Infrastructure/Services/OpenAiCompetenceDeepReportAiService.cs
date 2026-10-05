@@ -83,7 +83,8 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
         sb.AppendLine("Persoonlijkheidsprofiel (Big Five, 0-100, hoog naar laag):");
         foreach (var trait in draft.Traits.OrderByDescending(t => t.Score))
         {
-            sb.AppendLine($"- {trait.LabelNl}: {trait.Score}/100 ({trait.Level}). {trait.Meaning}");
+            var band = CandidateFactSheet.ScoreBand(trait.Score);
+            sb.AppendLine($"- {trait.LabelNl}: {trait.Score}/100 ({trait.Level}, band {band}). {trait.Meaning}");
         }
 
         if (!string.IsNullOrWhiteSpace(jobTitle))
@@ -122,7 +123,9 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
                         Je bent een loopbaancoach van Lobsy. Schrijf in helder, positief maar eerlijk Nederlands
                         op B1-niveau en spreek de lezer aan met 'je'. Geen jargon zoals OCEAN, Big Five, RIASEC,
                         DISC. Blijf dicht bij het gegeven profiel; verzin geen feiten die er niet in staan.
-                        Noem geen woonplaats of regio. Zeg niet wat de persoon leuk vindt, tenzij dat in de feiten staat.
+                        Noem geen woonplaats of regio. Zeg niet wat de persoon leuk vindt.
+                        Zeg niet dat een trek sterk of positief is als de band laag is (score onder 50).
+                        Gebruik 'je scoort' of 'uit je test blijkt', niet 'je werkt graag' of 'you like'.
                         """ + "\n" + CandidateFactGuard.StrictAddendum
                 },
                 new { role = "user", content = sb.ToString() }
@@ -177,7 +180,9 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
         }
 
         var sheet = CandidateFactSheet.Personal([], [], [], scores: scores, checkJobTitles: false);
-        var reason = CandidateFactGuard.RejectionReason(visible, sheet);
+        var traits = draft.Traits.Select(trait => (trait.LabelNl, trait.Score)).ToList();
+        var reason = CandidateFactGuard.RejectionReason(visible, sheet)
+            ?? CandidateFactGuard.BelowAveragePraise(visible, traits);
         if (reason is not null)
         {
             await AiFactRejectionLog.WriteAsync(

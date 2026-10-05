@@ -52,6 +52,11 @@ public static partial class CandidateFactGuard
             return "invented-like";
         }
 
+        if (MentionsStatedLike(text))
+        {
+            return "invented-like";
+        }
+
         if (sheet.CheckJobTitles && MentionsUnknownJob(text, sheet))
         {
             return "unknown-job";
@@ -165,7 +170,7 @@ public static partial class CandidateFactGuard
                 return whyReason;
             }
 
-            if (sheet.DirectionLabels.Count > 0 && !NamesDirection(item.Why, sheet.DirectionLabels))
+            if (!WhyNamesOwnDirection(item.Title, item.Why, sheet.DirectionLabels))
             {
                 return "why-no-direction";
             }
@@ -393,6 +398,115 @@ public static partial class CandidateFactGuard
         => labels.Any(label =>
             label.Length > 0 && why.Contains(label, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// A why-line may name the job's own direction ("Chauffeur → Aanpakken met je handen")
+    /// or one of the candidate's top direction labels.
+    /// </summary>
+    private static bool WhyNamesOwnDirection(string? title, string why, IReadOnlyList<string> labels)
+    {
+        if (labels.Count == 0 || NamesDirection(why, labels))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return labels.Count == 0;
+        }
+
+        var canonical = CareerCompassSanitize.CanonicalTitle(title) ?? title;
+        var own = CareerCompassBuilder.TypeLabel(CareerCompassBuilder.PrimaryCode(canonical));
+        return own.Length > 0 && why.Contains(own, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Rejects a positive claim about a trait that scores under 50.
+    /// The label or a short alias must appear next to praise.
+    /// </summary>
+    public static string? BelowAveragePraise(string? text, IReadOnlyList<(string Label, int Score)> traits)
+    {
+        if (string.IsNullOrWhiteSpace(text) || traits.Count == 0)
+        {
+            return null;
+        }
+
+        foreach (var (label, score) in traits)
+        {
+            if (score > 50 || string.IsNullOrWhiteSpace(label))
+            {
+                continue;
+            }
+
+            foreach (var sentence in SplitSentences(text))
+            {
+                if (Negated().IsMatch(sentence) || TestOutcome().IsMatch(sentence))
+                {
+                    continue;
+                }
+
+                if (!SentenceNamesTrait(sentence, label))
+                {
+                    continue;
+                }
+
+                if (Praise().IsMatch(sentence))
+                {
+                    return "below-average";
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static bool SentenceNamesTrait(string sentence, string label)
+    {
+        if (sentence.Contains(label, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var key = label.ToLowerInvariant();
+        if (key.Contains("nieuw", StringComparison.Ordinal)
+            && (sentence.Contains("nieuwe idee", StringComparison.OrdinalIgnoreCase)
+                || sentence.Contains("open voor", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        if (key.Contains("kalm", StringComparison.Ordinal)
+            && (sentence.Contains("hoofd koel", StringComparison.OrdinalIgnoreCase)
+                || sentence.Contains("blijft kalm", StringComparison.OrdinalIgnoreCase)
+                || sentence.Contains("rustig", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// "You like / je werkt graag / تحب" is a stated personal like.
+    /// A test outcome ("uit je test blijkt", "je scoort hoog") may stay.
+    /// </summary>
+    private static bool MentionsStatedLike(string text)
+    {
+        foreach (var sentence in SplitSentences(text))
+        {
+            if (Negated().IsMatch(sentence) || TestOutcome().IsMatch(sentence))
+            {
+                continue;
+            }
+
+            if (StatedLike().IsMatch(sentence))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static bool MentionsUnknownYear(string text, CandidateFactSheet sheet)
     {
         foreach (Match match in YearClaim().Matches(text))
@@ -540,6 +654,21 @@ public static partial class CandidateFactGuard
 
     [GeneratedRegex(@"\b(vind|vindt|graag|hart|enthousiast|leuk|fijn|houd van|houdt van)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex LikeClaim();
+
+    [GeneratedRegex(
+        @"\byou like\b|\byou enjoy\b|\byou love\b|\bje werkt graag\b|\bje houdt van\b|\bje vind(?:t)? .+ leuk\b|\blubisz\b|\bîți place\b|\biti place\b|تحب",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex StatedLike();
+
+    [GeneratedRegex(
+        @"uit je test|je scoort|your test|you score|wynik|scorul tău|scorul tau|اختبار|bij je past|past bij je",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex TestOutcome();
+
+    [GeneratedRegex(
+        @"\b(sterk|open voor|graag|energie|koel|rustig|liefde|talent|goed in)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex Praise();
 
     private static readonly string[] LikeObjects =
     [
