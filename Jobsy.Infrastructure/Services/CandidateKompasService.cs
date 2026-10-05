@@ -483,6 +483,10 @@ public sealed class CandidateKompasService : ICandidateKompasService
     {
         var keywords = ParseKeywords(keywordsJson);
         var story = string.IsNullOrWhiteSpace(storyText) ? null : storyText.Trim();
+        if (fromOpenAi && story is not null)
+        {
+            story = WhoAmIStoryBuilder.NormalizeParagraphs(story);
+        }
         var unlocked = WhoAmICompleteness.IsUnlocked(profileFilled, competencyDone, careerDone, cultureDone);
         var scoresReady = competency is { IsComplete: true }
                           && career is { IsComplete: true }
