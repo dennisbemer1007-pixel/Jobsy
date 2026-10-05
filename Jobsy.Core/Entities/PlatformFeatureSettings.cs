@@ -105,6 +105,12 @@ public class PlatformFeatureSettings
     public bool WhatsAppRemindersEnabled { get; set; }
 
     /// <summary>
+    /// When true, paid personal deep-test PDFs use the compact chart layout.
+    /// Default false keeps today's longer pages.
+    /// </summary>
+    public bool CompactTestPdfEnabled { get; set; }
+
+    /// <summary>
     /// When true, everyone except admins gets the 503 maintenance page (errors 05). Default false.
     /// </summary>
     public bool MaintenanceEnabled { get; set; }

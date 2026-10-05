@@ -4747,6 +4747,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("CompactTestPdfEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("EmployersEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
