@@ -373,6 +373,8 @@ public class OccupationDayInLifeTests
         Assert.Contains("day-life__timeline", page, StringComparison.Ordinal);
         Assert.Contains("Day.FitTitle", page, StringComparison.Ordinal);
         Assert.Contains("LobsyBubble", page, StringComparison.Ordinal);
+        Assert.Contains("/images/brand/mascot-coach.webp", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("LobsyCoachAvatar", page, StringComparison.Ordinal);
         Assert.Contains("Culture.Language", page, StringComparison.Ordinal);
         var readerSource = reader;
         Assert.DoesNotContain("IOccupationDayInLifeTranslator", readerSource, StringComparison.Ordinal);

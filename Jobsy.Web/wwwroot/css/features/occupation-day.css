@@ -23,9 +23,11 @@
 }
 
 .day-life__mascot {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
   flex: none;
+  object-fit: contain;
+  background: transparent;
 }
 
 .day-life__speech {
