@@ -81,32 +81,75 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
                 }
             });
 
-            using var response = await client.SendAsync(request, cancellationToken);
-            if ((int)response.StatusCode == 429 && attempt == 1)
+            HttpResponseMessage response;
+            try
             {
-                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
-                continue;
+                response = await client.SendAsync(request, cancellationToken);
             }
-
-            if (!response.IsSuccessStatusCode)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
+                throw;
+            }
+            catch (Exception ex) when (ex is OperationCanceledException or HttpRequestException)
+            {
+                var reason = ex is OperationCanceledException
+                    ? OccupationDayWriteErrors.Timeout
+                    : OccupationDayWriteErrors.FromStatus(0, ex.Message);
                 _logger.LogWarning(
-                    "OpenAI dag-in-het-leven gaf {StatusCode} (response body not logged).",
-                    (int)response.StatusCode);
-                return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.Http, model);
+                    "OpenAI dag-in-het-leven aanroep mislukt: {Reason}",
+                    OccupationDayWriteErrors.SafeSnippet(reason));
+                return new OccupationDayWriteResult(false, null, reason, model);
             }
 
-            var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
-            var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
-            if (string.IsNullOrWhiteSpace(content))
+            using (response)
             {
-                return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.Empty, model);
-            }
+                if ((int)response.StatusCode == 429 && attempt == 1)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                    continue;
+                }
 
-            return new OccupationDayWriteResult(true, content, null, model);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var detail = await ReadErrorDetailAsync(response, cancellationToken);
+                    var reason = OccupationDayWriteErrors.FromStatus((int)response.StatusCode, detail);
+                    _logger.LogWarning(
+                        "OpenAI dag-in-het-leven gaf {StatusCode}: {Reason}",
+                        (int)response.StatusCode,
+                        OccupationDayWriteErrors.SafeSnippet(detail));
+                    return new OccupationDayWriteResult(false, null, reason, model);
+                }
+
+                var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
+                var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.Empty, model);
+                }
+
+                return new OccupationDayWriteResult(true, content, null, model);
+            }
         }
 
         return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.Http, model);
+    }
+
+    private static async Task<string> ReadErrorDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (body.Length > 2000)
+            {
+                body = body[..2000];
+            }
+
+            return OccupationDayWriteErrors.DetailFromBody(body);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            return "";
+        }
     }
 
     /// <summary>OpenAI host only. A Mistral base URL is replaced with the public OpenAI endpoint.</summary>

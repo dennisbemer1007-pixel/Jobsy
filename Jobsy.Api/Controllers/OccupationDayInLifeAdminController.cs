@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Jobsy.Api.Admin;
@@ -23,15 +24,18 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
     private readonly OccupationDayInLifeReader _reader;
     private readonly OccupationDayInLifeGenerator _generator;
     private readonly OccupationDayInLifeBatchRunner _runner;
+    private readonly IAdminAuditContext _audit;
 
     public OccupationDayInLifeAdminController(
         OccupationDayInLifeReader reader,
         OccupationDayInLifeGenerator generator,
-        OccupationDayInLifeBatchRunner runner)
+        OccupationDayInLifeBatchRunner runner,
+        IAdminAuditContext audit)
     {
         _reader = reader;
         _generator = generator;
         _runner = runner;
+        _audit = audit;
     }
 
     [HttpGet("status")]
@@ -48,29 +52,103 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
     [AdminAudit(AdminAuditKeys.OccupationDayGenerate, TargetType = "setting")]
     public async Task<ActionResult<OccupationDayGenerateResult>> Generate(
         [FromQuery] int limit = 10,
+        [FromQuery] string? ids = null,
+        [FromBody] OccupationDayRunRequest? body = null,
         CancellationToken cancellationToken = default)
     {
-        limit = Math.Clamp(limit, 1, 15);
-        return Ok(await _generator.GenerateMissingAsync(limit, cancellationToken));
+        limit = Math.Clamp(body?.Limit ?? limit, 1, 15);
+        if (!TryPick(body?.Ids ?? ids, out var only, out var error))
+        {
+            return BadRequest(new { message = error });
+        }
+
+        try
+        {
+            var result = await _generator.GenerateMissingAsync(limit, skipEscoIds: null, only, cancellationToken);
+            Remember(result);
+            return Ok(result);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            var reason = OccupationDayWriteErrors.SafeSnippet(ex.Message);
+            _audit.Reason = OccupationDayWriteErrors.Timeout + " " + reason;
+            _audit.ResultOverride = AdminAuditKeys.Results.Failed;
+            return Ok(new OccupationDayGenerateResult(0, 1, 0, 0, false, [new OccupationDayFailure("", OccupationDayWriteErrors.Timeout)]));
+        }
     }
 
-    /// <summary>Background one-shot. Omit <paramref name="limit"/> to fill every missing occupation.</summary>
+    /// <summary>One OpenAI call for one occupation. Nothing is stored. The error is the provider reply.</summary>
+    [HttpPost("probe")]
+    [EnableRateLimiting("public-write")]
+    [AdminAudit(AdminAuditKeys.OccupationDayProbe, TargetType = "setting")]
+    public async Task<ActionResult<OccupationDayProbeResult>> Probe(
+        [FromQuery] string? q,
+        [FromBody] OccupationDayRunRequest? body,
+        CancellationToken cancellationToken)
+    {
+        var raw = string.IsNullOrWhiteSpace(body?.Ids) ? q : body!.Ids;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return BadRequest(new { message = "Kies eerst één beroep." });
+        }
+
+        var pick = OccupationDaySelection.Resolve(raw);
+        if (pick.Jobs.Count == 0)
+        {
+            _audit.ResultOverride = AdminAuditKeys.Results.Failed;
+            _audit.Reason = "onbekend-beroep";
+            return Ok(new OccupationDayProbeResult(false, null, null, "onbekend-beroep", null));
+        }
+
+        var result = await _generator.ProbeAsync(pick.Jobs[0].Id, cancellationToken);
+        _audit.TargetLabel = result.TitleNl;
+        _audit.TargetId = result.EscoId;
+        _audit.Reason = result.Ok ? result.TitleNl + ": OpenAI antwoordde." : OccupationDayWriteErrors.SafeSnippet(result.Error);
+        if (!result.Ok)
+        {
+            _audit.ResultOverride = AdminAuditKeys.Results.Failed;
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>Background one-shot. Omit limit to fill every missing occupation. ids limits the pilot.</summary>
     [HttpPost("start")]
     [EnableRateLimiting("public-write")]
     [AdminAudit(AdminAuditKeys.OccupationDayStart, TargetType = "setting")]
-    public IActionResult Start([FromQuery] int? limit)
+    public IActionResult Start(
+        [FromQuery] int? limit,
+        [FromQuery] string? ids,
+        [FromBody] OccupationDayRunRequest? body)
     {
-        if (limit is < 1)
+        var chosen = body?.Limit ?? limit;
+        if (chosen is < 1)
         {
             return BadRequest(new { message = "Limit moet minstens 1 zijn." });
         }
 
-        if (!_runner.TryStart(limit))
+        if (!TryPick(body?.Ids ?? ids, out var only, out var error))
+        {
+            return BadRequest(new { message = error });
+        }
+
+        Guid? actorId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsed) ? parsed : null;
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (!_runner.TryStart(chosen, only, actorId, role))
         {
             return Conflict(new { message = "Er loopt al een vulling." });
         }
 
-        return Accepted();
+        var titles = only is null ? [] : only.Select(id => OccupationCatalog.Shared.Get(id)?.Nl ?? id).ToList();
+        _audit.Reason = only is null
+            ? "limiet " + (chosen?.ToString() ?? "alles")
+            : titles.Count + " beroepen";
+        _audit.TargetLabel = titles.Count == 0 ? null : string.Join(", ", titles.Take(8));
+        return Ok(new OccupationDayStartResult(true, false, null, titles));
     }
 
     [HttpPost("stop")]
@@ -123,4 +201,55 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
 
         return Ok(await _generator.ImportAsync(document, cancellationToken));
     }
+
+    private void Remember(OccupationDayGenerateResult result)
+    {
+        var first = result.Failures.Count > 0 ? result.Failures[0].Reason : null;
+        var reason = result.Generated + " gelukt, " + result.Failed + " mislukt.";
+        if (!string.IsNullOrWhiteSpace(first))
+        {
+            reason = reason + " " + OccupationDayWriteErrors.SafeSnippet(first);
+        }
+
+        _audit.Reason = reason;
+        if (result.KeyMissing || result.KeyRejected || (result.Failed > 0 && result.Generated == 0))
+        {
+            _audit.ResultOverride = AdminAuditKeys.Results.Failed;
+        }
+    }
+
+    private static bool TryPick(string? raw, out IReadOnlySet<string>? only, out string? error)
+    {
+        only = null;
+        error = null;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return true;
+        }
+
+        var pick = OccupationDaySelection.Resolve(raw);
+        if (pick.Unknown.Count > 0)
+        {
+            error = "Dit beroep kennen we niet: " + string.Join(", ", pick.Unknown.Take(5));
+            return false;
+        }
+
+        if (pick.Jobs.Count == 0)
+        {
+            error = "Kies eerst één beroep.";
+            return false;
+        }
+
+        only = pick.Jobs.Select(job => job.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return true;
+    }
 }
+
+public sealed class OccupationDayRunRequest
+{
+    public int? Limit { get; set; }
+    public string? Ids { get; set; }
+}
+
+public sealed record OccupationDayStartResult(bool Started, bool Busy, string? Message, IReadOnlyList<string> Titles);
+

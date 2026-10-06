@@ -44,11 +44,89 @@ public sealed record OccupationDayWriteResult(bool Ok, string? Json, string? Err
     public bool KeyMissing => string.Equals(Error, OccupationDayWriteErrors.KeyMissing, StringComparison.Ordinal);
 }
 
-public static class OccupationDayWriteErrors
+public static partial class OccupationDayWriteErrors
 {
     public const string KeyMissing = "openai-key-missing";
+    public const string KeyInvalid = "openai-key-invalid";
+    public const string Timeout = "openai-timeout";
     public const string Http = "openai-http";
     public const string Empty = "openai-empty";
+
+    public static bool IsKeyInvalid(string? error)
+        => (error ?? "").StartsWith(KeyInvalid, StringComparison.Ordinal);
+
+    public static string FromStatus(int status, string? detail)
+    {
+        var snip = SafeSnippet(detail);
+        if (status is 401 or 403
+            || snip.Contains("invalid_api_key", StringComparison.OrdinalIgnoreCase)
+            || snip.Contains("incorrect api key", StringComparison.OrdinalIgnoreCase))
+        {
+            return snip.Length == 0 ? KeyInvalid : KeyInvalid + ": " + snip;
+        }
+
+        var code = status > 0 ? status.ToString() : "0";
+        return snip.Length == 0 ? "openai-http-" + code : "openai-http-" + code + ": " + snip;
+    }
+
+    public static string SafeSnippet(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "";
+        }
+
+        var value = text.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        value = SecretPattern().Replace(value, "[sleutel]");
+        value = BearerPattern().Replace(value, "Bearer [sleutel]");
+        return value.Length <= 160 ? value : value[..160].Trim();
+    }
+
+    public static string DetailFromBody(string? body)
+    {
+        var raw = body ?? "";
+        if (raw.Length == 0)
+        {
+            return "";
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(raw);
+            if (doc.RootElement.TryGetProperty("error", out var error))
+            {
+                if (error.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    if (error.TryGetProperty("message", out var message) && message.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        return message.GetString() ?? "";
+                    }
+
+                    if (error.TryGetProperty("code", out var code) && code.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        return code.GetString() ?? "";
+                    }
+                }
+
+                if (error.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    return error.GetString() ?? "";
+                }
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return raw;
+        }
+
+        return raw;
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"sk-[A-Za-z0-9_\-]{8,}", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+    private static partial System.Text.RegularExpressions.Regex SecretPattern();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"Bearer\s+\S+", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+    private static partial System.Text.RegularExpressions.Regex BearerPattern();
 }
 
 public sealed record OccupationDayDraft(
@@ -71,7 +149,15 @@ public sealed record OccupationDayGenerateResult(
     int SkippedExisting,
     int Remaining,
     bool KeyMissing,
-    IReadOnlyList<OccupationDayFailure> Failures);
+    IReadOnlyList<OccupationDayFailure> Failures,
+    bool KeyRejected = false);
+
+public sealed record OccupationDayProbeResult(
+    bool Ok,
+    string? EscoId,
+    string? TitleNl,
+    string? Error,
+    string? Model);
 
 public sealed record OccupationDayImportResult(int Inserted, int Updated, int Unchanged, int Rejected);
 

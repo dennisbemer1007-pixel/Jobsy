@@ -60,6 +60,7 @@ public static partial class AdminActionLabels
             "occupation-day.stop" => "AdminAudit.Action.OccupationDayStop",
             "occupation-day.import" => "AdminAudit.Action.OccupationDayImport",
             "occupation-day.export" => "AdminAudit.Action.OccupationDayExport",
+            "occupation-day.probe" => "AdminAudit.Action.OccupationDayProbe",
             _ => null
         };
 
@@ -368,6 +369,7 @@ public static partial class AdminActionLabels
         yield return ("occupation-day.stop", "AdminAudit.Action.OccupationDayStop");
         yield return ("occupation-day.import", "AdminAudit.Action.OccupationDayImport");
         yield return ("occupation-day.export", "AdminAudit.Action.OccupationDayExport");
+        yield return ("occupation-day.probe", "AdminAudit.Action.OccupationDayProbe");
 
         foreach (var entry in PlatformSettingsCatalog.Entries)
         {
