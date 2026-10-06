@@ -65,7 +65,13 @@
                         }
                     </ul>
                 </div>
+                <p class="future-jobs__scale-note">@Culture["FutureJobs.ScaleNote"]</p>
             </details>
+
+            @if (_list.WhyIsShared && _list.Items.Count > 0)
+            {
+                <p class="future-jobs__why future-jobs__why--shared">@Why(_list.Items[0])</p>
+            }
 
             @if (_list.Items.Count == 0)
             {
@@ -84,7 +90,10 @@
                             <span class="future-jobs__nr">@number</span>
                             <div>
                                 <h4 class="future-jobs__name">@row.TitleNl</h4>
-                                <p class="future-jobs__why">@Why(row)</p>
+                                @if (!_list.WhyIsShared && Why(row) is { Length: > 0 } why)
+                                {
+                                    <p class="future-jobs__why">@why</p>
+                                }
                                 <div class="future-jobs__need" aria-label="@Culture.Format("FutureJobs.Bar", need, filled)">
                                     <b>@need</b>
                                     @Bar(row.ItkbRank)

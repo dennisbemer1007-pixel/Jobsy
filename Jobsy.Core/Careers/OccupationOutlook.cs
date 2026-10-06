@@ -304,7 +304,8 @@ public sealed class OccupationOutlook
             rank,
             (roa.Itkb?.Typering ?? "").Trim().ToLowerInvariant(),
             openings,
-            string.IsNullOrWhiteSpace(ai) ? null : ai.Trim());
+            string.IsNullOrWhiteSpace(ai) ? null : ai.Trim(),
+            (roa.Baanopeningen?.Typering ?? "").Trim().ToLowerInvariant());
         return true;
     }
 
@@ -437,7 +438,8 @@ public sealed record SourcedDemand(
     int ItkbRank,
     string Typering,
     double OpeningsPer100,
-    string? AiLine);
+    string? AiLine,
+    string OpeningsTypering);
 
 public sealed record OccupationOutlookResult(
     string? DemandLine,

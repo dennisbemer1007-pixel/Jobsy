@@ -94,13 +94,17 @@ public class FutureJobsForYouTests
             Assert.Equal(demand.AiLine, item.AiLine);
             Assert.Equal(FutureJobsForYou.DisplayTitle(job.Nl), item.TitleNl);
             Assert.Equal(CareerCompassBuilder.ProfileMatch(job.Oi!, HandsOn), item.FitPercent);
-            Assert.NotEmpty(item.WhyTraitCodes);
             Assert.All(item.WhyTraitCodes, code => Assert.Contains(code, top));
+            Assert.True(FutureJobsForYou.OpeningsMatchStrongNeed(demand.OpeningsTypering));
+            Assert.Equal(FutureJobsForYou.NeedLabelNl(item.ItkbRank), UiStrings.Get($"FutureJobs.Need.{item.ItkbRank}", "nl"));
 
             var why = FutureJobsForYou.WhyNl(item.WhyTraitCodes);
-            Assert.StartsWith("Past bij jou:", why, StringComparison.Ordinal);
-            Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(why));
-            Assert.DoesNotContain("ITKB", why, StringComparison.OrdinalIgnoreCase);
+            if (item.WhyTraitCodes.Count > 0)
+            {
+                Assert.StartsWith("Past bij jou:", why, StringComparison.Ordinal);
+                Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(why));
+                Assert.DoesNotContain("ITKB", why, StringComparison.OrdinalIgnoreCase);
+            }
 
             if (i == 0)
             {
@@ -108,7 +112,8 @@ public class FutureJobsForYouTests
             }
 
             var previous = list.Items[i - 1];
-            var fit = previous.FitPercent.CompareTo(item.FitPercent);
+            var fit = FutureJobsForYou.FitLevel(previous.FitPercent)
+                .CompareTo(FutureJobsForYou.FitLevel(item.FitPercent));
             Assert.True(fit >= 0);
             if (fit != 0)
             {
@@ -121,6 +126,13 @@ public class FutureJobsForYouTests
             {
                 Assert.True(previous.OpeningsPer100 >= item.OpeningsPer100);
             }
+        }
+
+        var seenGroups = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var item in list.Items)
+        {
+            var group = FutureJobsForYou.IscoGroup(catalog.Get(item.EscoId)!.Isco);
+            Assert.True(seenGroups.Add(group));
         }
 
         var weak = catalog.Listable.First(job =>
@@ -167,13 +179,104 @@ public class FutureJobsForYouTests
         rows.Add(new FutureJobRow("tie-low-open", "Tie laag", 90, 4, "zeer groot", 20, null, []));
         rows.Add(new FutureJobRow("tie-high-open", "Tie hoog", 90, 4, "zeer groot", 40, null, []));
         rows.Add(new FutureJobRow("tie-weaker-need", "Tie minder", 90, 3, "groot", 80, null, []));
+        rows.Add(new FutureJobRow("near-low-fit-high-need", "Band nodig", 60, 4, "zeer groot", 50, null, []));
+        rows.Add(new FutureJobRow("near-high-fit-low-need", "Band fit", 64, 3, "groot", 10, null, []));
 
         var ordered = FutureJobsForYou.Order(rows);
         Assert.Equal(FutureJobsForYou.MaxCount, ordered.Count);
         Assert.Equal("tie-high-open", ordered[0].EscoId);
         Assert.Equal("tie-low-open", ordered[1].EscoId);
         Assert.Equal("tie-weaker-need", ordered[2].EscoId);
+        Assert.Equal(FutureJobsForYou.FitLevel(64), FutureJobsForYou.FitLevel(60));
+        Assert.Equal("near-low-fit-high-need", ordered[3].EscoId);
+        var higherFit = ordered.ToList().FindIndex(row => row.EscoId == "near-high-fit-low-need");
+        Assert.True(higherFit > 3);
         Assert.DoesNotContain(ordered, row => row.EscoId == "low-fit");
+    }
+
+    [Fact]
+    public void Demand_label_follows_itkb_and_low_openings_stay_out()
+    {
+        Assert.Equal(4, OccupationOutlook.ItkbRank("zeer groot"));
+        Assert.Equal("Heel hard nodig", FutureJobsForYou.NeedLabelNl(4));
+        Assert.Equal(3, OccupationOutlook.ItkbRank("groot"));
+        Assert.Equal("Hard nodig", FutureJobsForYou.NeedLabelNl(3));
+        Assert.Equal(2, OccupationOutlook.ItkbRank("enige"));
+        Assert.Equal("Een beetje tekort", FutureJobsForYou.NeedLabelNl(2));
+        Assert.Null(FutureJobsForYou.NeedLabelNl(-1));
+
+        foreach (var rank in new[] { 0, 1, 2, 3, 4 })
+        {
+            Assert.Equal(FutureJobsForYou.NeedLabelNl(rank), UiStrings.Get($"FutureJobs.Need.{rank}", "nl"));
+        }
+
+        Assert.True(FutureJobsForYou.OpeningsMatchStrongNeed("erg hoog"));
+        Assert.True(FutureJobsForYou.OpeningsMatchStrongNeed("hoog"));
+        Assert.True(FutureJobsForYou.OpeningsMatchStrongNeed("gemiddeld"));
+        Assert.False(FutureJobsForYou.OpeningsMatchStrongNeed("laag"));
+        Assert.False(FutureJobsForYou.OpeningsMatchStrongNeed("erg laag"));
+        Assert.False(FutureJobsForYou.OpeningsMatchStrongNeed(""));
+
+        var outlook = OccupationOutlook.Shared;
+        var low = OccupationCatalog.Shared.Listable.First(job =>
+            outlook.TryGetSourcedDemand(job.Id, out var demand)
+            && demand!.ItkbRank >= FutureJobsForYou.StrongNeedMinRank
+            && !FutureJobsForYou.OpeningsMatchStrongNeed(demand.OpeningsTypering));
+        Assert.True(outlook.TryGetSourcedDemand(low.Id, out var lowDemand));
+        Assert.True(lowDemand!.OpeningsTypering is "laag" or "erg laag");
+        Assert.False(FutureJobsForYou.IsEligible(low, HandsOn));
+
+        var kept = FutureJobsForYou.Build(HandsOn);
+        Assert.DoesNotContain(kept.Items, item => item.EscoId == low.Id);
+        Assert.All(kept.Items, item =>
+        {
+            Assert.True(item.ItkbRank >= FutureJobsForYou.StrongNeedMinRank);
+            Assert.Equal(item.Typering is "zeer groot" ? "Heel hard nodig" : "Hard nodig", FutureJobsForYou.NeedLabelNl(item.ItkbRank));
+        });
+    }
+
+    [Fact]
+    public void One_occupation_per_isco_group_prefers_the_cbs_name()
+    {
+        var catalog = OccupationCatalog.Shared;
+        var eligible = catalog.Listable.Where(job => FutureJobsForYou.IsEligible(job, HandsOn)).ToList();
+        var crowded = eligible
+            .GroupBy(job => FutureJobsForYou.IscoGroup(job.Isco))
+            .First(group => group.Count() >= 2);
+        var chosen = FutureJobsForYou.ChooseRepresentative(crowded.ToList());
+        Assert.Contains(crowded, job => job.Id == chosen.Id);
+
+        var cbs = crowded.Where(catalog.IsCbsTitleForItsIsco).ToList();
+        if (cbs.Count > 0)
+        {
+            Assert.Contains(cbs, job => job.Id == chosen.Id);
+            var shortest = cbs.Min(job => FutureJobsForYou.DisplayTitle(job.Nl).Length);
+            Assert.Equal(shortest, FutureJobsForYou.DisplayTitle(chosen.Nl).Length);
+        }
+
+        var list = FutureJobsForYou.Build(HandsOn);
+        var groups = list.Items.Select(item => FutureJobsForYou.IscoGroup(catalog.Get(item.EscoId)!.Isco)).ToList();
+        Assert.Equal(groups.Count, groups.Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void Why_line_names_the_overlap_and_collapses_when_it_is_the_same()
+    {
+        var scores = new RiasecScores(80, 20, 75, 30, 70, 25);
+        var artistic = FutureJobsForYou.WhyTraitCodes(scores, [2, 1, 6, 1, 2, 1]);
+        var hands = FutureJobsForYou.WhyTraitCodes(scores, [6, 1, 1, 4, 1, 1]);
+        Assert.Equal([CareerTestCatalog.Artistic, CareerTestCatalog.Realistic], artistic);
+        Assert.Equal([CareerTestCatalog.Realistic], hands);
+        Assert.Contains("iets eigens", FutureJobsForYou.WhyNl(artistic), StringComparison.Ordinal);
+        Assert.Contains("handen", FutureJobsForYou.WhyNl(hands), StringComparison.Ordinal);
+        Assert.DoesNotContain("iets eigens", FutureJobsForYou.WhyNl(hands), StringComparison.Ordinal);
+
+        var same = new FutureJobRow("a", "A", 60, 3, "groot", 20, null, artistic);
+        var copy = new FutureJobRow("b", "B", 61, 3, "groot", 20, null, artistic);
+        var other = new FutureJobRow("c", "C", 61, 3, "groot", 20, null, hands);
+        Assert.True(FutureJobsForYou.SameWhy([same, copy]));
+        Assert.False(FutureJobsForYou.SameWhy([same, other]));
+        Assert.Equal("", FutureJobsForYou.WhyNl([]));
     }
 
     [Fact]

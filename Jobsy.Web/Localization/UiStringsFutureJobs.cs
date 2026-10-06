@@ -30,11 +30,11 @@ public static class UiStringsFutureJobs
             "Muncă cu viitor care ți se potrivește",
             "عمل له مستقبل ويناسبك");
         Add("FutureJobs.Lead",
-            "Deze banen passen bij jouw test. Bovenaan staat wat het best bij jou past. Is dat gelijk, dan staat werk waar meer mensen voor nodig zijn hoger.",
-            "These jobs fit your test. The best fit is at the top. When the fit is the same, work that needs more people comes first.",
-            "Te zawody pasują do twojego testu. Najlepsze dopasowanie jest na górze. Przy tym samym dopasowaniu wyżej jest praca, do której potrzeba więcej ludzi.",
-            "Aceste meserii se potrivesc cu testul tău. Cea mai bună potrivire este sus. La potrivire egală, munca unde e nevoie de mai mulți oameni stă mai sus.",
-            "هذه الوظائف تناسب اختبارك. الأنسب في الأعلى. وإذا تساوت الملاءمة، يأتي أولاً العمل الذي يحتاج إلى مزيد من الناس.");
+            "Deze banen passen bij jouw test. Bovenaan staat wat het best bij jou past. Past het bijna even goed, dan staat werk waar meer mensen voor nodig zijn hoger.",
+            "These jobs fit your test. The best fit is at the top. When the fit is almost the same, work that needs more people comes first.",
+            "Te zawody pasują do twojego testu. Najlepsze dopasowanie jest na górze. Gdy dopasowanie jest prawie takie samo, wyżej jest praca, do której potrzeba więcej ludzi.",
+            "Aceste meserii se potrivesc cu testul tău. Cea mai bună potrivire este sus. Când potrivirea este aproape la fel, munca unde e nevoie de mai mulți oameni stă mai sus.",
+            "هذه الوظائف تناسب اختبارك. الأنسب في الأعلى. وإذا كانت الملاءمة متقاربة، يأتي أولاً العمل الذي يحتاج إلى مزيد من الناس.");
         Add("FutureJobs.Region",
             "Heel Nederland",
             "All of the Netherlands",
@@ -60,17 +60,17 @@ public static class UiStringsFutureJobs
             "Ne uităm la meserii care se potrivesc cu testul tău. Doar cele pentru care avem cifre reale.",
             "ننظر إلى الوظائف التي تناسب اختبارك. فقط الوظائف التي لدينا أرقام حقيقية لها.");
         Add("FutureJobs.How2",
-            "We houden banen waar werkgevers tot 2030 hard of heel hard mensen voor zoeken. Dat verwacht ROA, een onderzoeksbureau van de Universiteit Maastricht.",
-            "We keep jobs where employers will badly need people up to 2030. That is what ROA expects. ROA is a research institute of Maastricht University.",
-            "Zostawiamy zawody, w których do 2030 pracodawcy bardzo potrzebują ludzi. Tak przewiduje ROA, instytut badawczy Uniwersytetu w Maastricht.",
-            "Păstrăm meseriile unde angajatorii au mare nevoie de oameni până în 2030. Așa estimează ROA, un institut al Universității din Maastricht.",
-            "نبقي الوظائف التي سيحتاج فيها أصحاب العمل بشدة إلى أشخاص حتى 2030. هذا ما يتوقعه ROA، وهو معهد بحث في جامعة ماستريخت.");
+            "We houden banen waar werkgevers tot 2030 hard of heel hard mensen voor zoeken. Banen waar maar weinig plekken vrijkomen laten we weg. Dat verwacht ROA, een onderzoeksbureau van de Universiteit Maastricht.",
+            "We keep jobs where employers will badly need people up to 2030. We leave out jobs where few places open up. That is what ROA expects. ROA is a research institute of Maastricht University.",
+            "Zostawiamy zawody, w których do 2030 pracodawcy bardzo potrzebują ludzi. Zawody, w których zwalnia się mało miejsc, pomijamy. Tak przewiduje ROA, instytut badawczy Uniwersytetu w Maastricht.",
+            "Păstrăm meseriile unde angajatorii au mare nevoie de oameni până în 2030. Meseriile unde se eliberează puține locuri le lăsăm deoparte. Așa estimează ROA, un institut al Universității din Maastricht.",
+            "نبقي الوظائف التي سيحتاج فيها أصحاب العمل بشدة إلى أشخاص حتى 2030. والوظائف التي يتحرر فيها عدد قليل من الأماكن نتركها. هذا ما يتوقعه ROA، وهو معهد بحث في جامعة ماستريخت.");
         Add("FutureJobs.How3",
-            "De baan die het best bij jouw test past staat bovenaan. Is dat gelijk, dan staat de baan waar meer plekken vrijkomen hoger.",
-            "The job that fits your test best is at the top. When that is equal, the job with more openings comes first.",
-            "Zawód, który najlepiej pasuje do twojego testu, jest na górze. Przy remisie wyżej jest zawód, w którym zwalnia się więcej miejsc.",
-            "Meseria care se potrivește cel mai bine cu testul tău este sus. La egalitate, meseria cu mai multe locuri libere stă mai sus.",
-            "الوظيفة الأنسب لاختبارك في الأعلى. وإذا تساوت، تأتي أولاً الوظيفة التي يتحرر فيها عدد أكبر من الأماكن.");
+            "De baan die het best bij jouw test past staat bovenaan. Past het bijna even goed, dan staat de baan waar meer plekken vrijkomen hoger. Van elke soort werk laten we één baan zien.",
+            "The job that fits your test best is at the top. When the fit is almost the same, the job with more openings comes first. We show one job for each kind of work.",
+            "Zawód, który najlepiej pasuje do twojego testu, jest na górze. Gdy dopasowanie jest prawie takie samo, wyżej jest zawód, w którym zwalnia się więcej miejsc. Z każdego rodzaju pracy pokazujemy jeden zawód.",
+            "Meseria care se potrivește cel mai bine cu testul tău este sus. Când potrivirea este aproape la fel, meseria cu mai multe locuri libere stă mai sus. Din fiecare fel de muncă arătăm o meserie.",
+            "الوظيفة الأنسب لاختبارك في الأعلى. وإذا كانت الملاءمة متقاربة، تأتي أولاً الوظيفة التي يتحرر فيها عدد أكبر من الأماكن. ومن كل نوع عمل نعرض وظيفة واحدة.");
         Add("FutureJobs.How4",
             "Wat AI aan het werk verandert, zie je als extra regel. Dat telt niet mee voor de volgorde. Dit komt van de ILO, de werkorganisatie van de Verenigde Naties.",
             "What AI changes in the work is an extra line. It does not change the order. This comes from the ILO, the labour organisation of the United Nations.",
@@ -83,6 +83,12 @@ public static class UiStringsFutureJobs
             "Jak czytać „bardzo potrzebne”",
             "Cum citești „foarte căutat”",
             "كيف تقرأ «حاجة كبيرة»");
+        Add("FutureJobs.ScaleNote",
+            "“Hard nodig” zegt of werkgevers mensen kunnen vinden. Het getal eronder zegt hoeveel banen vrijkomen. Dat zijn twee verschillende cijfers.",
+            "“Badly needed” says whether employers can find people. The number under it says how many jobs come open. Those are two different figures.",
+            "„Pilnie potrzebne” mówi, czy pracodawcy mogą znaleźć ludzi. Liczba pod spodem mówi, ile miejsc się zwalnia. To dwie różne liczby.",
+            "„Mare nevoie” spune dacă angajatorii pot găsi oameni. Numărul de dedesubt spune câte locuri se eliberează. Sunt două cifre diferite.",
+            "«حاجة كبيرة» تقول إن كان أصحاب العمل يجدون أشخاصاً. والرقم تحتها يقول كم وظيفة تتحرر. وهما رقمان مختلفان.");
         Add("FutureJobs.Need.4",
             "Heel hard nodig",
             "Very badly needed",
