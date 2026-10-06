@@ -107,48 +107,48 @@ public sealed class OccupationDayInLifeTranslator : IOccupationDayInLifeTranslat
 
         using (response)
         {
-        if (!response.IsSuccessStatusCode)
-        {
-            var detail = "";
-            try
+            if (!response.IsSuccessStatusCode)
             {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                detail = OccupationDayWriteErrors.DetailFromBody(body.Length > 2000 ? body[..2000] : body);
+                var detail = "";
+                try
+                {
+                    var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                    detail = OccupationDayWriteErrors.DetailFromBody(body.Length > 2000 ? body[..2000] : body);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+                {
+                    detail = "";
+                }
+
+                var reason = OccupationDayWriteErrors.FromStatus((int)response.StatusCode, detail);
+                _logger.LogWarning(
+                    "Vertaling dag-in-het-leven gaf {StatusCode} naar {Language}: {Reason}",
+                    (int)response.StatusCode,
+                    target,
+                    OccupationDayWriteErrors.SafeSnippet(detail));
+                return new OccupationDayTranslateResult(false, null, reason, model, false);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+
+            var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
+            var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
+            if (!OccupationDayInLifeJson.TryParse(content, SourceFacts(source), out var parsed, out var error))
             {
-                detail = "";
+                return new OccupationDayTranslateResult(false, null, error ?? OccupationDayWriteErrors.Empty, model, false);
             }
 
-            var reason = OccupationDayWriteErrors.FromStatus((int)response.StatusCode, detail);
-            _logger.LogWarning(
-                "Vertaling dag-in-het-leven gaf {StatusCode} naar {Language}: {Reason}",
-                (int)response.StatusCode,
-                target,
-                OccupationDayWriteErrors.SafeSnippet(detail));
-            return new OccupationDayTranslateResult(false, null, reason, model, false);
-        }
+            var title = ReadTitle(content);
+            var draft = string.IsNullOrWhiteSpace(title) ? parsed : parsed with { TitleNl = title };
+            if (draft.Tasks is not { Count: > 0 })
+            {
+                draft = draft with { Tasks = source.Tasks ?? [] };
+            }
 
-        var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
-        var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
-        if (!OccupationDayInLifeJson.TryParse(content, SourceFacts(source), out var parsed, out var error))
-        {
-            return new OccupationDayTranslateResult(false, null, error ?? OccupationDayWriteErrors.Empty, model, false);
-        }
+            if (draft.Skills is not { Count: > 0 })
+            {
+                draft = draft with { Skills = source.Skills ?? [] };
+            }
 
-        var title = ReadTitle(content);
-        var draft = string.IsNullOrWhiteSpace(title) ? parsed : parsed with { TitleNl = title };
-        if (draft.Tasks is not { Count: > 0 })
-        {
-            draft = draft with { Tasks = source.Tasks ?? [] };
-        }
-
-        if (draft.Skills is not { Count: > 0 })
-        {
-            draft = draft with { Skills = source.Skills ?? [] };
-        }
-
-        return new OccupationDayTranslateResult(true, draft, null, model, false);
+            return new OccupationDayTranslateResult(true, draft, null, model, false);
         }
     }
 
