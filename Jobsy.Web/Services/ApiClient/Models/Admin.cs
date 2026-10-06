@@ -203,6 +203,8 @@ public sealed class IntegrationCredentialItem
     public DateTime? UpdatedAtUtc { get; set; }
     public bool IgnoresEnvironmentCredentials { get; set; }
     public bool UsesEnvironmentCredentials { get; set; }
+    /// <summary>Mail footer lacks an address or KvK. Comes from the API, not from web config.</summary>
+    public bool LegalFooterMissing { get; set; }
 }
 
 public sealed class IntegrationCredentialSaveForm

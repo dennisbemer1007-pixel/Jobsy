@@ -49,7 +49,7 @@ public sealed class MailLegalFooterWarningHostedService : IHostedService
         if (mail.MissingLegalFooter)
         {
             _logger.LogWarning(
-                "E-mailfooter mist adres en/of KvK-nummer (Mail:LegalAddress, Mail:KvkNumber). Dennis moet deze nog aanleveren.");
+                "E-mailfooter mist adres en/of KvK-nummer. Vul Bedrijfsgegevens in, of zet Mail:LegalAddress en Mail:KvkNumber.");
         }
 
         return Task.CompletedTask;

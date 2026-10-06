@@ -417,7 +417,9 @@ public static class DependencyInjection
             sp.GetRequiredService<ISecretProtector>(),
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MailOptions>>(),
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<KvkOptions>>(),
-            sp.GetRequiredService<IMemoryCache>()));
+            sp.GetRequiredService<IMemoryCache>(),
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<LettermintOptions>>(),
+            sp.GetRequiredService<ILegalIdentity>()));
         services.AddScoped<IAdminFinanceSummaryService, AdminFinanceSummaryService>();
         services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.KvkFailedRegistrationsSource>();
         services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.PendingTakeoversSource>();

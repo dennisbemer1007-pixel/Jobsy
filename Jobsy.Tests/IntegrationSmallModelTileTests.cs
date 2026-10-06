@@ -70,6 +70,34 @@ public class IntegrationSmallModelTileTests : BunitContext
         Assert.DoesNotContain("Klein model", cut.Markup, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Mail_tile_warns_only_when_the_api_says_the_footer_is_missing()
+    {
+        var missing = Render<IntegrationSettingsTile>(parameters => parameters
+            .Add(p => p.Credential, MailCredential(legalFooterMissing: true)));
+        missing.Find("article").Click();
+        Assert.Contains("data-testid=\"mail-legal-footer-warning\"", missing.Markup, StringComparison.Ordinal);
+        Assert.Contains("Bedrijfsgegevens", missing.Markup, StringComparison.Ordinal);
+
+        var filled = Render<IntegrationSettingsTile>(parameters => parameters
+            .Add(p => p.Credential, MailCredential(legalFooterMissing: false, displayName: "Mail (Lettermint)")));
+        filled.Find("article").Click();
+        Assert.Contains("Mail (Lettermint)", filled.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("mail-legal-footer-warning", filled.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mail (Resend)", filled.Markup, StringComparison.Ordinal);
+    }
+
+    private static IntegrationCredentialItem MailCredential(bool legalFooterMissing, string displayName = "Mail")
+        => new()
+        {
+            Key = "Mail",
+            DisplayName = displayName,
+            Description = "Uitgaande e-mail",
+            SupportsApiKey = true,
+            SupportsFromAddress = true,
+            LegalFooterMissing = legalFooterMissing
+        };
+
     private sealed class FakeAuth : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()

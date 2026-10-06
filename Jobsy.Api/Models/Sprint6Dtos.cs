@@ -270,7 +270,8 @@ public record IntegrationCredentialDto(
     DateTime? UpdatedAtUtc,
     bool IgnoresEnvironmentCredentials = false,
     bool UsesEnvironmentCredentials = false,
-    string? SmallModel = null);
+    string? SmallModel = null,
+    bool LegalFooterMissing = false);
 
 /// <summary>Partial update: null fields keep the current value.</summary>
 public record UpdatePlatformFeatureRequest(

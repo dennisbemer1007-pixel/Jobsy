@@ -69,7 +69,123 @@ public class MailTestSendTests
         Assert.True(view.UsesEnvironmentCredentials);
         Assert.False(view.IgnoresEnvironmentCredentials);
         Assert.Equal("Mail (Resend)", view.DisplayName);
+        Assert.Contains("Resend", view.Description, StringComparison.Ordinal);
+        Assert.True(view.LegalFooterMissing);
         Assert.Contains("noreply@lobsy.nl", view.FromAddress);
+    }
+
+    [Fact]
+    public async Task Mail_card_names_lettermint_when_that_provider_has_a_key()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions { Provider = "Lettermint" }),
+            Options.Create(new KvkOptions()),
+            cache: null,
+            lettermintOptions: Options.Create(new LettermintOptions { ApiKey = "lm_test_key" }));
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+
+        Assert.NotNull(view);
+        Assert.Equal("Mail (Lettermint)", view!.DisplayName);
+        Assert.Contains("Lettermint", view.Description, StringComparison.Ordinal);
+        Assert.Contains("EU", view.Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Mail_card_stays_neutral_when_lettermint_has_no_key()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions { Provider = "Lettermint" }),
+            Options.Create(new KvkOptions()),
+            cache: null,
+            lettermintOptions: Options.Create(new LettermintOptions()));
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+
+        Assert.Equal("Mail", view!.DisplayName);
+        Assert.Contains("nog niet klaar", view.Description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Mail_footer_warning_hides_when_company_details_have_address_and_kvk()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions()),
+            Options.Create(new KvkOptions()),
+            cache: null,
+            lettermintOptions: null,
+            legalIdentity: new FixedLegalIdentity(new LegalIdentitySnapshot(
+                Name: "Lobsy B.V.",
+                TradeName: "Lobsy",
+                Street: "Straat 1",
+                PostalCode: "1234 AB",
+                City: "Delft",
+                Country: "Nederland",
+                KvkNumber: "87654321",
+                VatNumber: null,
+                PrivacyEmail: null,
+                SupportEmail: "support@lobsy.nl",
+                SchoolsEmail: null)));
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+
+        Assert.False(view!.LegalFooterMissing);
+    }
+
+    [Fact]
+    public async Task Mail_footer_warning_hides_when_mail_env_has_address_and_kvk()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions
+            {
+                LegalAddress = "Markt 1, Delft",
+                KvkNumber = "12345678"
+            }));
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+
+        Assert.False(view!.LegalFooterMissing);
+    }
+
+    [Fact]
+    public async Task Mail_footer_warning_shows_when_only_the_address_is_known()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions { LegalAddress = "Markt 1, Delft" }),
+            Options.Create(new KvkOptions()),
+            cache: null,
+            lettermintOptions: null,
+            legalIdentity: new FixedLegalIdentity(new LegalIdentitySnapshot(
+                Name: null,
+                TradeName: "Lobsy",
+                Street: null,
+                PostalCode: null,
+                City: null,
+                Country: "Nederland",
+                KvkNumber: null,
+                VatNumber: null,
+                PrivacyEmail: null,
+                SupportEmail: "support@lobsy.nl",
+                SchoolsEmail: null)));
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+
+        Assert.True(view!.LegalFooterMissing);
     }
 
     [Fact]
@@ -211,6 +327,14 @@ public class MailTestSendTests
     private sealed class FakeHttpClientFactory : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => new();
+    }
+
+    private sealed class FixedLegalIdentity : ILegalIdentity
+    {
+        private readonly LegalIdentitySnapshot _snap;
+        public FixedLegalIdentity(LegalIdentitySnapshot snap) => _snap = snap;
+        public Task<LegalIdentitySnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(_snap);
     }
 
     private sealed class FakeHostEnvironment : IHostEnvironment
