@@ -62,7 +62,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.AmbassadorsEnabled ?? false,
                 dto?.WhatsAppRemindersEnabled ?? false,
                 dto?.CompactTestPdfEnabled ?? false,
-                dto?.HonestAdviceEnabled ?? false);
+                dto?.HonestAdviceEnabled ?? false,
+                dto?.FutureJobsForYouEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -117,5 +118,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("honestAdviceEnabled")]
         public bool HonestAdviceEnabled { get; set; }
+
+        [JsonPropertyName("futureJobsForYouEnabled")]
+        public bool FutureJobsForYouEnabled { get; set; }
     }
 }

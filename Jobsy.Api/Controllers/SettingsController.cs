@@ -482,7 +482,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
                     FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled,
-                    HonestAdviceEnabled: request.HonestAdviceEnabled),
+                    HonestAdviceEnabled: request.HonestAdviceEnabled,
+                    FutureJobsForYouEnabled: request.FutureJobsForYouEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -559,6 +560,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
         Add("FreeCandidateTestsEnabled", before.FreeCandidateTestsEnabled.ToString(), after.FreeCandidateTestsEnabled.ToString());
         Add("HonestAdviceEnabled", before.HonestAdviceEnabled.ToString(), after.HonestAdviceEnabled.ToString());
+        Add("FutureJobsForYouEnabled", before.FutureJobsForYouEnabled.ToString(), after.FutureJobsForYouEnabled.ToString());
         return list;
     }
 
@@ -581,7 +583,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             ambassadorsEnabled = snap.AmbassadorsEnabled,
             whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled,
             compactTestPdfEnabled = snap.CompactTestPdfEnabled,
-            honestAdviceEnabled = snap.HonestAdviceEnabled
+            honestAdviceEnabled = snap.HonestAdviceEnabled,
+            futureJobsForYouEnabled = snap.FutureJobsForYouEnabled
         });
     }
 
@@ -889,7 +892,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.CompactTestPdfEnabled,
             _whatsApp.IsConfigured,
             snap.FreeCandidateTestsEnabled,
-            snap.HonestAdviceEnabled);
+            snap.HonestAdviceEnabled,
+            snap.FutureJobsForYouEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

@@ -174,6 +174,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.HonestAdviceEnabled = honestAdviceEnabled;
         }
 
+        if (update.FutureJobsForYouEnabled is bool futureJobsForYouEnabled)
+        {
+            row.FutureJobsForYouEnabled = futureJobsForYouEnabled;
+        }
+
         if (update.FreeCandidateTestsEnabled is bool freeCandidateTestsEnabled)
         {
             row.FreeCandidateTestsEnabled = freeCandidateTestsEnabled;
@@ -364,6 +369,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.WhatsAppRemindersEnabled ?? false,
             row?.CompactTestPdfEnabled ?? false,
             row?.FreeCandidateTestsEnabled ?? true,
-            row?.HonestAdviceEnabled ?? false);
+            row?.HonestAdviceEnabled ?? false,
+            row?.FutureJobsForYouEnabled ?? false);
     }
 }

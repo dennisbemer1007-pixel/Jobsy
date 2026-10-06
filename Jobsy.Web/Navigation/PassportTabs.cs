@@ -43,16 +43,26 @@ public static class PassportTabs
         };
     }
 
-    /// <summary>Tabs the candidate can open. Job-fit stays hidden while employers are off.</summary>
+    /// <summary>Tabs the candidate can open. Job-fit stays hidden while employers are off, unless future jobs are on.</summary>
     public static IReadOnlyList<string> Visible(bool employersEnabled)
-        => employersEnabled ? All : All.Where(t => t != Fit).ToArray();
+        => Visible(employersEnabled, futureJobsEnabled: false);
+
+    /// <summary>
+    /// Job-fit is hidden while employers are off. The future-jobs flag opens that tab anyway,
+    /// so the self-check and the new block stay reachable without turning employers on.
+    /// </summary>
+    public static IReadOnlyList<string> Visible(bool employersEnabled, bool futureJobsEnabled)
+        => employersEnabled || futureJobsEnabled ? All : All.Where(t => t != Fit).ToArray();
 
     public static string Neighbor(string current, int delta)
         => Neighbor(current, delta, employersEnabled: true);
 
     public static string Neighbor(string current, int delta, bool employersEnabled)
+        => Neighbor(current, delta, employersEnabled, futureJobsEnabled: false);
+
+    public static string Neighbor(string current, int delta, bool employersEnabled, bool futureJobsEnabled)
     {
-        var tabs = Visible(employersEnabled);
+        var tabs = Visible(employersEnabled, futureJobsEnabled);
         var index = tabs.ToList().IndexOf(Normalize(current));
         if (index < 0)
         {

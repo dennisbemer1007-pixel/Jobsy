@@ -1,0 +1,301 @@
+@namespace Jobsy.Web.Components.Candidate
+@using System.Globalization
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+@if (_enabled && !_loading)
+{
+    <section class="detail-card future-jobs" data-testid="future-jobs" aria-labelledby="@_titleId">
+        <p class="future-jobs__eyebrow">
+            <i class="future-jobs__dot" aria-hidden="true"></i>
+            @Culture["FutureJobs.Eyebrow"]
+        </p>
+        <h3 id="@_titleId" class="future-jobs__title">@Culture["FutureJobs.Title"]</h3>
+
+        @if (_error)
+        {
+            <p class="state-message" role="alert">@Culture["Common.Error"]</p>
+        }
+        else if (_list.NeedsTest)
+        {
+            <p class="future-jobs__empty" data-testid="future-jobs-empty">@Culture["FutureJobs.Empty"]</p>
+            <a class="btn btn-primary future-jobs__empty-cta" href="/candidate/career">@Culture["FutureJobs.EmptyCta"]</a>
+        }
+        else
+        {
+            <p class="future-jobs__lead">@Culture["FutureJobs.Lead"]</p>
+            <div class="future-jobs__where">
+                <span class="future-jobs__region">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+                        <circle cx="12" cy="9.5" r="2.5" />
+                    </svg>
+                    @Culture["FutureJobs.Region"]
+                </span>
+                <small>@Culture["FutureJobs.RegionNote"]</small>
+            </div>
+            <details class="future-jobs__how">
+                <summary>
+                    @((MarkupString)NavIcons.Info)
+                    <span>@Culture["FutureJobs.How"]</span>
+                    <span class="future-jobs__chev" aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                </summary>
+                <ol>
+                    <li><span>@Culture["FutureJobs.How1"]</span></li>
+                    <li><span>@Culture["FutureJobs.How2"]</span></li>
+                    <li><span>@Culture["FutureJobs.How3"]</span></li>
+                    <li><span>@Culture["FutureJobs.How4"]</span></li>
+                </ol>
+                <div class="future-jobs__scale">
+                    <strong>@Culture["FutureJobs.Scale"]</strong>
+                    <ul>
+                        @for (var rank = 4; rank >= 0; rank--)
+                        {
+                            <li>
+                                @Bar(rank)
+                                <span>@Culture[$"FutureJobs.Need.{rank}"]</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </details>
+
+            @if (_list.Items.Count == 0)
+            {
+                <p class="future-jobs__none" data-testid="future-jobs-none">@Culture["FutureJobs.None"]</p>
+            }
+            else
+            {
+                <ol class="future-jobs__list">
+                    @for (var index = 0; index < _list.Items.Count; index++)
+                    {
+                        var row = _list.Items[index];
+                        var number = index + 1;
+                        var filled = Math.Clamp(row.ItkbRank + 1, 0, 5);
+                        var need = Culture[$"FutureJobs.Need.{row.ItkbRank}"];
+                        <li class="future-jobs__row @(number <= 3 ? "future-jobs__row--top" : null)">
+                            <span class="future-jobs__nr">@number</span>
+                            <div>
+                                <h4 class="future-jobs__name">@row.TitleNl</h4>
+                                <p class="future-jobs__why">@Why(row)</p>
+                                <div class="future-jobs__need" aria-label="@Culture.Format("FutureJobs.Bar", need, filled)">
+                                    <b>@need</b>
+                                    @Bar(row.ItkbRank)
+                                </div>
+                                <p class="future-jobs__open">
+                                    <strong>@Culture.Format("FutureJobs.Openings", Openings(row))</strong>
+                                </p>
+                                @if (!string.IsNullOrWhiteSpace(row.AiLine))
+                                {
+                                    <p class="future-jobs__ai">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <rect x="6" y="6" width="12" height="12" rx="2" />
+                                            <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" />
+                                        </svg>
+                                        <span>@row.AiLine</span>
+                                    </p>
+                                }
+                                <div class="future-jobs__acts">
+                                    @if (_dayIds.Contains(row.EscoId))
+                                    {
+                                        <a class="future-jobs__link" href="@($"/candidate/beroep/{row.EscoId}/dag?from={DayFrom}")">
+                                            @Culture.Format("FutureJobs.Day", row.TitleNl)
+                                            @((MarkupString)NavIcons.Chevron)
+                                        </a>
+                                    }
+                                    @if (ShowCheck)
+                                    {
+                                        <button type="button" class="future-jobs__link" @onclick="() => CheckAsync(row.TitleNl)">
+                                            @Culture["FutureJobs.Check"]
+                                            @((MarkupString)NavIcons.Chevron)
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ol>
+            }
+
+            <p class="future-jobs__source">@SourceLine</p>
+        }
+    </section>
+}
+
+@code {
+    private readonly string _titleId = "future-jobs-" + Guid.NewGuid().ToString("N");
+    private bool _enabled;
+    private bool _loading = true;
+    private bool _error;
+    private bool _started;
+    private FutureJobsList _list = new(true, [], "");
+    private readonly HashSet<string> _dayIds = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Runs the existing functiefit check for this occupation title.</summary>
+    [Parameter] public EventCallback<string> OnCheck { get; set; }
+
+    /// <summary>Hide the check link when the functiefit check is still locked.</summary>
+    [Parameter] public bool ShowCheck { get; set; } = true;
+
+    /// <summary><c>fit</c> or <c>career</c>, used by the day-page back link.</summary>
+    [Parameter] public string From { get; set; } = "fit";
+
+    private string DayFrom => string.Equals(From, "career", StringComparison.OrdinalIgnoreCase) ? "career" : "fit";
+
+    private string SourceLine
+        => string.Format(CultureInfo.InvariantCulture, OccupationOutlook.SourceLine, _list.Peildatum)
+           + " "
+           + Culture["FutureJobs.Country"];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started || !RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        _started = true;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = false;
+        try
+        {
+            _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.FutureJobsForYou);
+            if (!_enabled)
+            {
+                return;
+            }
+
+            var careerTask = Api.GetMyCareerInterestsAsync();
+            var profileTask = Api.GetMyProfileAsync();
+            await Task.WhenAll(careerTask, profileTask);
+            var scores = careerTask.Result?.Scores;
+            var riasec = scores is { IsComplete: true }
+                ? new RiasecScores(
+                    scores.Realistic,
+                    scores.Investigative,
+                    scores.Artistic,
+                    scores.Social,
+                    scores.Enterprising,
+                    scores.Conventional)
+                : null;
+            var prefs = profileTask.Result?.Preferences;
+            var education = prefs is null
+                ? null
+                : string.Join(
+                    " ",
+                    (prefs.Educations ?? []).Append(prefs.EducationDirection ?? "")
+                    .Where(item => !string.IsNullOrWhiteSpace(item)));
+            _list = FutureJobsForYou.Build(riasec, education);
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _error = true;
+            _list = new FutureJobsList(false, [], OccupationOutlook.Shared.Peildatum);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+
+        if (_enabled && !_error && _list.Items.Count > 0)
+        {
+            await LoadDaysAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDaysAsync()
+    {
+        var tasks = _list.Items.Select(async row =>
+        {
+            if (!Guid.TryParse(row.EscoId, out var id))
+            {
+                return;
+            }
+
+            try
+            {
+                var day = await Api.GetOccupationDayAsync(id, Culture.Language);
+                if (day is { Found: true, Enabled: true })
+                {
+                    lock (_dayIds)
+                    {
+                        _dayIds.Add(row.EscoId);
+                    }
+                }
+            }
+            catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+            {
+                // A missing day page just hides the link.
+            }
+        });
+        await Task.WhenAll(tasks);
+    }
+
+    private Task CheckAsync(string title)
+        => OnCheck.HasDelegate ? OnCheck.InvokeAsync(title) : Task.CompletedTask;
+
+    private string Why(FutureJobRow row)
+    {
+        var phrases = new List<string>();
+        foreach (var code in row.WhyTraitCodes.Take(2))
+        {
+            if (!CareerTestCatalog.HollandLetter.TryGetValue(code, out var letter))
+            {
+                continue;
+            }
+
+            var phrase = Culture[$"FutureJobs.Trait.{letter}"];
+            if (!string.IsNullOrWhiteSpace(phrase)
+                && !phrase.StartsWith("FutureJobs.", StringComparison.Ordinal))
+            {
+                phrases.Add(phrase);
+            }
+        }
+
+        if (phrases.Count == 0)
+        {
+            return FutureJobsForYou.WhyNl(row.WhyTraitCodes);
+        }
+
+        return phrases.Count == 1
+            ? Culture.Format("FutureJobs.WhyOne", phrases[0])
+            : Culture.Format("FutureJobs.WhyTwo", phrases[0], phrases[1]);
+    }
+
+    private string Openings(FutureJobRow row)
+    {
+        var culture = Culture.Language is "nl" or "pl" or "ro"
+            ? CultureInfo.GetCultureInfo("nl-NL")
+            : CultureInfo.InvariantCulture;
+        return FutureJobsForYou.FormatOpenings(row.OpeningsPer100, culture);
+    }
+
+    private static MarkupString Bar(int rank)
+    {
+        var filled = Math.Clamp(rank + 1, 0, 5);
+        var parts = new System.Text.StringBuilder("<span class=\"future-jobs__bar\" aria-hidden=\"true\">");
+        for (var dot = 0; dot < 5; dot++)
+        {
+            parts.Append(dot < filled
+                ? "<i class=\"is-on\"></i>"
+                : "<i></i>");
+        }
+
+        parts.Append("</span>");
+        return new MarkupString(parts.ToString());
+    }
+}

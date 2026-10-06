@@ -11,6 +11,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
+@inject IJSRuntime Js
 
 <div class="passport-fit">
     @if (_session.Loading)
@@ -27,6 +28,7 @@
                 <a class="btn btn-secondary" href="/candidate/career">@Culture["Career.Start"]</a>
             </div>
         </section>
+        <FutureJobsBlock ShowCheck="false" From="fit" />
     }
     else
     {
@@ -166,6 +168,8 @@
                 </section>
             </div>
 
+            <FutureJobsBlock OnCheck="CheckJobAsync" ShowCheck="true" From="fit" />
+
             <aside class="passport-fit__aside">
                 @if (_session.LastResult is { CultureFitLabel: { Length: > 0 } cultureLabel } resultCulture)
                 {
@@ -266,6 +270,9 @@
     [Parameter] public CandidateKompasState? Snapshot { get; set; }
     [Parameter] public bool OpenForWork { get; set; } = true;
 
+    /// <summary>Occupation title from <c>?check=</c>. Runs the existing functiefit check once.</summary>
+    [Parameter] public string? CheckTitle { get; set; }
+
     private readonly RoleFitCheckSession _session = new();
     private bool _wasActive;
     private bool _showFull;
@@ -275,6 +282,7 @@
     private List<CandidateMatchedVacancy> _topMatches = [];
     private int _newContacts;
     private bool _adviceOn;
+    private string? _ranCheck;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -306,6 +314,35 @@
         else
         {
             ApplyMatchesFromSnapshot();
+        }
+
+        await RunRequestedCheckAsync();
+    }
+
+    private async Task RunRequestedCheckAsync()
+    {
+        var title = (CheckTitle ?? "").Trim();
+        if (title.Length == 0
+            || !_session.IsUnlocked
+            || string.Equals(_ranCheck, title, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _ranCheck = title;
+        await CheckJobAsync(title);
+    }
+
+    private async Task CheckJobAsync(string title)
+    {
+        await EvaluateSimilarAsync(title);
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyQuestionnaire.scrollToQuestion", "passport-fit-title", true);
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            // The result stays in the search card when scroll is unavailable.
         }
     }
 

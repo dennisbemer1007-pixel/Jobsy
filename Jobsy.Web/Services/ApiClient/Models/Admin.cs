@@ -254,6 +254,8 @@ public sealed class PlatformFeatureItem
     public bool CompactTestPdfEnabled { get; set; }
     /// <summary>Stored honest advice on job detail. Default off.</summary>
     public bool HonestAdviceEnabled { get; set; }
+    /// <summary>Future jobs that fit the candidate. Default off.</summary>
+    public bool FutureJobsForYouEnabled { get; set; }
     /// <summary>When true, candidates take paid tests without Mollie. Default on.</summary>
     public bool FreeCandidateTestsEnabled { get; set; } = true;
     /// <summary>Server has WhatsApp credentials. Never a secret.</summary>
@@ -289,6 +291,7 @@ public sealed class PlatformFeaturePatch
     public bool? CompactTestPdfEnabled { get; set; }
     public bool? FreeCandidateTestsEnabled { get; set; }
     public bool? HonestAdviceEnabled { get; set; }
+    public bool? FutureJobsForYouEnabled { get; set; }
     public string? Reason { get; set; }
 }
 
