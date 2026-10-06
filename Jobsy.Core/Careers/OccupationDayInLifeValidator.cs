@@ -35,7 +35,10 @@ public static partial class OccupationDayInLifeValidator
     public static bool TryValidate(OccupationDayDraft draft, OccupationDayFacts facts, out IReadOnlyList<string> reasons)
     {
         var found = new List<string>();
-        var min = facts.IsThin ? 20 : 40;
+        var blockDay = draft.Blocks is { Count: > 0 };
+        var min = blockDay
+            ? (facts.IsThin ? 12 : 24)
+            : (facts.IsThin ? 20 : 40);
         var max = facts.IsThin ? 700 : 900;
         RequireSection(found, draft.Morning, min, max);
         RequireSection(found, draft.Midday, min, max);
@@ -272,43 +275,93 @@ public static partial class OccupationDayInLifeValidator
 
     private static void ValidateBlocks(List<string> found, IReadOnlyList<OccupationDayBlock> blocks, bool thin)
     {
-        var min = thin ? MinThinCount() : OccupationDayBlocks.MinNormal;
-        if (blocks.Count < min || blocks.Count > OccupationDayBlocks.Max)
+        var noted = 0;
+        var min = thin ? OccupationDayBlocks.MinThin : OccupationDayBlocks.MinNormal;
+        if (blocks.Count < min)
         {
-            found.Add("blok");
-            return;
+            Note(blocks.Count == 1
+                ? "blok: 1 blok, minimaal " + min
+                : "blok: " + blocks.Count + " blokken, minimaal " + min);
+        }
+        else if (blocks.Count > OccupationDayBlocks.Max)
+        {
+            Note("blok: " + blocks.Count + " blokken, maximaal " + OccupationDayBlocks.Max);
         }
 
-        var keys = blocks.Select(block => block.Key).ToList();
-        if (keys.Distinct(StringComparer.OrdinalIgnoreCase).Count() != keys.Count
-            || keys.Any(key => !OccupationDayBlocks.IsKnown(key))
-            || !keys.Contains("start", StringComparer.OrdinalIgnoreCase)
-            || !keys.Contains("morning", StringComparer.OrdinalIgnoreCase)
-            || !keys.Contains("afternoon", StringComparer.OrdinalIgnoreCase))
-        {
-            found.Add("blok");
-        }
-
+        var keys = new List<string>();
         var textMin = thin ? 12 : 24;
-        foreach (var block in blocks)
+        for (var i = 0; i < blocks.Count; i++)
         {
+            var block = blocks[i];
+            var number = i + 1;
+            var rawKey = (block.Key ?? "").Trim();
+            var canonical = OccupationDayBlocks.IsKnown(rawKey)
+                ? rawKey.ToLowerInvariant()
+                : OccupationDayBlocks.CanonicalKey(rawKey, block.Label);
+            if (canonical is null)
+            {
+                var shown = rawKey.Length == 0 ? "?" : rawKey.Length <= 24 ? rawKey : rawKey[..24];
+                Note("blok " + number + ": onbekende key '" + shown + "'");
+                continue;
+            }
+
+            if (keys.Contains(canonical, StringComparer.OrdinalIgnoreCase))
+            {
+                Note("blok: dubbele key " + canonical);
+            }
+            else
+            {
+                keys.Add(canonical);
+            }
+
             var label = (block.Label ?? "").Trim();
             var text = (block.Text ?? "").Trim();
-            if (label.Length < 2 || label.Length > 32 || text.Length < textMin || text.Length > 700)
+            if (label.Length > 32)
             {
-                found.Add("blok");
-                break;
+                Note("blok " + number + ": label te lang");
+            }
+            else if (label.Length < 2)
+            {
+                Note("blok " + number + ": label te kort");
+            }
+            else if (LongestSentence(label) > 6)
+            {
+                Note("blok " + number + ": zin te lang");
             }
 
-            if (LongestSentence(text) > MaxWordsPerSentence || LongestSentence(label) > 6)
+            if (text.Length < textMin)
             {
-                found.Add("zin-te-lang");
-                break;
+                Note("blok " + number + ": tekst te kort");
+            }
+            else if (text.Length > 700)
+            {
+                Note("blok " + number + ": tekst te lang");
+            }
+            else if (LongestSentence(text) > MaxWordsPerSentence)
+            {
+                Note("blok " + number + ": zin te lang");
             }
         }
-    }
 
-    private static int MinThinCount() => OccupationDayBlocks.MinThin;
+        foreach (var required in new[] { "start", "morning", "afternoon" })
+        {
+            if (!keys.Contains(required, StringComparer.OrdinalIgnoreCase))
+            {
+                Note("blok: ontbreekt " + required);
+            }
+        }
+
+        void Note(string reason)
+        {
+            if (noted >= 4 || found.Contains(reason, StringComparer.Ordinal))
+            {
+                return;
+            }
+
+            found.Add(reason);
+            noted++;
+        }
+    }
 
     private static bool SameBlocks(IReadOnlyList<OccupationDayBlock>? left, IReadOnlyList<OccupationDayBlock>? right)
     {
