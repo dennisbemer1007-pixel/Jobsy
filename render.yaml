@@ -74,7 +74,9 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
-              # Cloudflare Transform Rule secret (header X-Jobsy-Origin-Secret).
+              # Same value on API and Web of this environment. Dashboard only — never commit a value.
+              # Web sends it as X-Jobsy-Origin-Secret on server-side calls to ApiBaseUrl.
+              # Browsers need a Cloudflare Transform Rule. Render probes: /health (API), /healthz (web).
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn
@@ -178,6 +180,7 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              # Same value as this environment's API. Dashboard only (sync: false). See docs/deploy-render.md.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn
@@ -261,6 +264,7 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              # Same value on API and Web of this environment. Dashboard only — never commit a value.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn
@@ -405,6 +409,7 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              # Same value as this environment's API. Dashboard only (sync: false). See docs/deploy-render.md.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn

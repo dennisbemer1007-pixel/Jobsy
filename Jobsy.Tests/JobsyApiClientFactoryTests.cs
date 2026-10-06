@@ -19,7 +19,11 @@ public class JobsyApiClientFactoryTests
             JobsyApiClientFactory.SharedSocketsHandler,
             JobsyApiClientFactory.SharedSocketsHandler);
         Assert.False(JobsyApiClientFactory.SharedSocketsHandler.UseCookies);
+        Assert.True(JobsyApiClientFactory.SharedSocketsHandler.AllowAutoRedirect);
+        Assert.False(JobsyApiClientFactory.SharedSocketsHandlerNoRedirect.AllowAutoRedirect);
         Assert.Equal(TimeSpan.FromMinutes(2), JobsyApiClientFactory.SharedSocketsHandler.PooledConnectionLifetime);
+        Assert.Contains("CloudflareOriginHeaderHandler", source, StringComparison.Ordinal);
+        Assert.Contains("JobsyApiRedirectHandler", source, StringComparison.Ordinal);
 
         // NonDisposingHandler intentionally skips base.Dispose (CA2215) so the shared
         // SocketsHttpHandler outlives per-request HttpClient wrappers.
