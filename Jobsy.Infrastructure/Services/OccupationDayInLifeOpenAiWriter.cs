@@ -63,7 +63,8 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
         var model = ModelName();
         var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
         var client = _httpClientFactory.CreateClient(HttpClientName);
-        for (var attempt = 1; attempt <= 2; attempt++)
+        var useSchema = true;
+        for (var attempt = 1; attempt <= 3; attempt++)
         {
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -73,7 +74,7 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
             {
                 model,
                 temperature = 0.2,
-                response_format = new { type = "json_object" },
+                response_format = ResponseFormat(useSchema),
                 messages = new object[]
                 {
                     new { role = "system", content = systemPrompt },
@@ -103,7 +104,7 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
 
             using (response)
             {
-                if ((int)response.StatusCode == 429 && attempt == 1)
+                if ((int)response.StatusCode == 429 && attempt < 3)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
                     continue;
@@ -112,6 +113,12 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
                 if (!response.IsSuccessStatusCode)
                 {
                     var detail = await ReadErrorDetailAsync(response, cancellationToken);
+                    if (useSchema && (int)response.StatusCode == 400 && SchemaRejected(detail) && attempt < 3)
+                    {
+                        useSchema = false;
+                        continue;
+                    }
+
                     var reason = OccupationDayWriteErrors.FromStatus((int)response.StatusCode, detail);
                     _logger.LogWarning(
                         "OpenAI dag-in-het-leven gaf {StatusCode}: {Reason}",
@@ -132,6 +139,62 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
         }
 
         return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.Http, model);
+    }
+
+    private static object ResponseFormat(bool schema)
+    {
+        if (!schema)
+        {
+            return new { type = "json_object" };
+        }
+
+        return new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "occupation_day",
+                strict = true,
+                schema = new
+                {
+                    type = "object",
+                    additionalProperties = false,
+                    required = new[] { "blocks", "highlights", "varies" },
+                    properties = new
+                    {
+                        blocks = new
+                        {
+                            type = "array",
+                            items = new
+                            {
+                                type = "object",
+                                additionalProperties = false,
+                                required = new[] { "key", "label", "text" },
+                                properties = new
+                                {
+                                    key = new { type = "string", @enum = OccupationDayBlocks.Keys },
+                                    label = new { type = "string" },
+                                    text = new { type = "string" }
+                                }
+                            }
+                        },
+                        highlights = new
+                        {
+                            type = "array",
+                            items = new { type = "string" }
+                        },
+                        varies = new { type = "string" }
+                    }
+                }
+            }
+        };
+    }
+
+    private static bool SchemaRejected(string? detail)
+    {
+        var text = detail ?? "";
+        return text.Contains("json_schema", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("response_format", StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task<string> ReadErrorDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)

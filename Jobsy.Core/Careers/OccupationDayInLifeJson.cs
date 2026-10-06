@@ -71,9 +71,39 @@ public static class OccupationDayInLifeJson
     }
 
     private static string ReadString(JsonElement root, string name)
-        => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
-            ? (value.GetString() ?? "").Trim()
-            : "";
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return "";
+        }
+
+        foreach (var property in root.EnumerateObject())
+        {
+            if (!property.Name.Equals(name, StringComparison.OrdinalIgnoreCase)
+                || property.Value.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            return (property.Value.GetString() ?? "").Trim();
+        }
+
+        return "";
+    }
+
+    private static string ReadAlias(JsonElement item, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            var value = ReadString(item, name);
+            if (value.Length > 0)
+            {
+                return value;
+            }
+        }
+
+        return "";
+    }
 
     private static IReadOnlyList<OccupationDayBlock> ReadBlocks(JsonElement root)
     {
@@ -83,25 +113,34 @@ public static class OccupationDayInLifeJson
         }
 
         var rows = new List<OccupationDayBlock>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var clean = true;
         foreach (var item in value.EnumerateArray())
         {
             if (item.ValueKind != JsonValueKind.Object)
             {
+                clean = false;
                 continue;
             }
 
-            var key = ReadString(item, "key");
-            var label = ReadString(item, "label");
-            var text = ReadString(item, "text");
-            if (!OccupationDayBlocks.IsKnown(key) || text.Length == 0)
+            var keyRaw = ReadAlias(item, "key", "sleutel", "moment");
+            var label = ReadAlias(item, "label", "titel", "title", "naam", "name");
+            var text = ReadAlias(item, "text", "tekst", "omschrijving", "description", "body", "inhoud");
+            var canonical = OccupationDayBlocks.CanonicalKey(keyRaw, label);
+            if (canonical is null)
             {
-                continue;
+                clean = false;
+            }
+            else if (label.Length > 32 || text.Length == 0 || !seen.Add(canonical))
+            {
+                clean = false;
             }
 
+            var key = canonical ?? (keyRaw.Length == 0 ? "?" : keyRaw.Trim());
             rows.Add(new OccupationDayBlock(key, label, text));
         }
 
-        return OccupationDayBlocks.Normalize(rows);
+        return clean ? OccupationDayBlocks.Normalize(rows) : rows;
     }
 
     private static IReadOnlyList<string> ReadLines(JsonElement root, string name)

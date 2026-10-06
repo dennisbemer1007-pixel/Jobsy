@@ -55,7 +55,7 @@ public static class UiStringsOccupationDay
         Add("Admin.Day.KeyInvalid", "OpenAI weigert de sleutel. Controleer de OpenAI-sleutel. Deze vulling gebruikt geen Mistral.", "OpenAI rejects the key. Check the OpenAI key. This fill does not use Mistral.", "OpenAI odrzuca klucz. Sprawdź klucz OpenAI. To uzupełnianie nie używa Mistral.", "OpenAI respinge cheia. Verifică cheia OpenAI. Această completare nu folosește Mistral.", "يرفض OpenAI المفتاح. تحقق من مفتاح OpenAI. هذا الملء لا يستخدم Mistral.");
         Add("Admin.Day.Http", "OpenAI gaf een fout ({0}).", "OpenAI returned an error ({0}).", "OpenAI zwróciło błąd ({0}).", "OpenAI a dat o eroare ({0}).", "أعاد OpenAI خطأ ({0}).");
         Add("Admin.Day.PickEmpty", "Kies eerst één beroep.", "Choose one occupation first.", "Najpierw wybierz jeden zawód.", "Alege mai întâi o meserie.", "اختر مهنة واحدة أولاً.");
-        Add("Admin.Day.ProbeOk", "{0}: OpenAI antwoordde.", "{0}: OpenAI answered.", "{0}: OpenAI odpowiedziało.", "{0}: OpenAI a răspuns.", "{0}: أجاب OpenAI.");
+        Add("Admin.Day.ProbeOk", "{0}: de dag voldoet.", "{0}: the day passed the check.", "{0}: dzień spełnia warunki.", "{0}: ziua respectă regulile.", "{0}: اليوم مستوفٍ للشروط.");
         Add("Admin.Day.UnknownJob", "Dit beroep kennen we niet: {0}", "We do not know this occupation: {0}", "Nie znamy tego zawodu: {0}", "Nu cunoaștem această meserie: {0}", "لا نعرف هذه المهنة: {0}");
         Add("Admin.Day.Export", "JSON downloaden", "Download JSON", "Pobierz JSON", "Descarcă JSON", "تنزيل JSON");
         Add("Admin.Day.Import", "Importeer JSON", "Import JSON", "Importuj JSON", "Importă JSON", "استيراد JSON");

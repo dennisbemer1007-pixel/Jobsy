@@ -120,27 +120,11 @@ public sealed class OccupationDayInLifeGenerator
                 continue;
             }
 
-            var (draft, error, keyMissing, keyRejected, model) = await AskAsync(facts, facts.ToPrompt(), cancellationToken);
+            var (draft, error, keyMissing, keyRejected, model) = await ComposeAsync(facts, cancellationToken);
             if (keyMissing || keyRejected)
             {
                 failures.Add(new OccupationDayFailure(facts.EscoId, error ?? (keyMissing ? OccupationDayWriteErrors.KeyMissing : OccupationDayWriteErrors.KeyInvalid)));
                 return StopForKey(generated, skipped, remaining, failures, keyMissing, keyRejected);
-            }
-
-            if (draft is null && !LooksLikeProviderFailure(error))
-            {
-                var retryUser = facts.ToPrompt() + "\n\nAfgekeurd: " + error + "\n" + OccupationDayInLifePrompt.Retry;
-                if (_options.DelayMilliseconds > 0)
-                {
-                    await Task.Delay(_options.DelayMilliseconds, cancellationToken);
-                }
-
-                (draft, error, keyMissing, keyRejected, model) = await AskAsync(facts, retryUser, cancellationToken);
-                if (keyMissing || keyRejected)
-                {
-                    failures.Add(new OccupationDayFailure(facts.EscoId, error ?? OccupationDayWriteErrors.KeyInvalid));
-                    return StopForKey(generated, skipped, remaining, failures, keyMissing, keyRejected);
-                }
             }
 
             if (draft is null)
@@ -508,8 +492,10 @@ public sealed class OccupationDayInLifeGenerator
 
         try
         {
-            var write = await _writer.CompleteAsync(OccupationDayInLifePrompt.System, facts.ToPrompt(), cancellationToken);
-            return new OccupationDayProbeResult(write.Ok, facts.EscoId, facts.TitleNl, write.Error, write.Model);
+            var (draft, error, _, _, model) = await ComposeAsync(facts, cancellationToken);
+            return draft is not null
+                ? new OccupationDayProbeResult(true, facts.EscoId, facts.TitleNl, null, model)
+                : new OccupationDayProbeResult(false, facts.EscoId, facts.TitleNl, error ?? "afgekeurd", model);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -547,6 +533,25 @@ public sealed class OccupationDayInLifeGenerator
            || string.Equals(error, OccupationDayWriteErrors.Timeout, StringComparison.Ordinal)
            || (error ?? "").StartsWith("openai-http", StringComparison.Ordinal)
            || string.Equals(error, OccupationDayWriteErrors.KeyMissing, StringComparison.Ordinal);
+
+    private async Task<(OccupationDayDraft? Draft, string? Error, bool KeyMissing, bool KeyRejected, string Model)> ComposeAsync(
+        OccupationDayFacts facts,
+        CancellationToken cancellationToken)
+    {
+        var first = await AskAsync(facts, facts.ToPrompt(), cancellationToken);
+        if (first.Draft is not null || first.KeyMissing || first.KeyRejected || LooksLikeProviderFailure(first.Error))
+        {
+            return first;
+        }
+
+        if (_options.DelayMilliseconds > 0)
+        {
+            await Task.Delay(_options.DelayMilliseconds, cancellationToken);
+        }
+
+        var retryUser = facts.ToPrompt() + "\n\n" + OccupationDayInLifePrompt.RetryFor(first.Error);
+        return await AskAsync(facts, retryUser, cancellationToken);
+    }
 
     private async Task<(OccupationDayDraft? Draft, string? Error, bool KeyMissing, bool KeyRejected, string Model)> AskAsync(
         OccupationDayFacts facts,

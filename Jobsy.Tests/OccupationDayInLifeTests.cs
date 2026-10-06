@@ -109,7 +109,36 @@ public class OccupationDayInLifeTests
 
         var shortDay = BlockDraft() with { Blocks = BlockDraft().Blocks!.Take(2).ToList() };
         Assert.False(OccupationDayInLifeValidator.TryValidate(shortDay, facts, out var shortReasons));
-        Assert.Contains("blok", shortReasons);
+        Assert.Contains("blok: 2 blokken, minimaal 5", shortReasons);
+
+        var labeled = BlockDraft();
+        var rows = labeled.Blocks!.ToList();
+        rows[2] = rows[2] with { Label = "Dit label is veel te lang voor een moment" };
+        Assert.False(OccupationDayInLifeValidator.TryValidate(labeled with { Blocks = rows }, facts, out var labelReasons));
+        Assert.Contains("blok 3: label te lang", labelReasons);
+    }
+
+    [Fact]
+    public void Five_core_blocks_pass_when_optional_moments_are_absent()
+    {
+        var blocks = BlockDraft().Blocks!.Where(block => block.Key != "plan").ToList();
+        var draft = OccupationDayBlocks.WithDerived(BlockDraft() with { Blocks = blocks });
+        Assert.Equal(5, draft.Blocks!.Count);
+        Assert.True(OccupationDayInLifeValidator.TryValidate(draft, SampleFacts(), out var reasons), string.Join("; ", reasons));
+    }
+
+    [Fact]
+    public void Realistic_model_json_with_dutch_keys_and_clock_labels_passes()
+    {
+        var facts = OccupationDayFacts.For(CookId);
+        Assert.NotNull(facts);
+        Assert.False(facts!.IsThin);
+        Assert.True(OccupationDayInLifeJson.TryParse(RealisticCookJson(), facts, out var draft, out var error), error);
+        var blocks = draft.Blocks ?? [];
+        Assert.Equal(["start", "morning", "pause", "afternoon", "close"], blocks.Select(block => block.Key).ToArray());
+        Assert.Equal("07:00 – Start", blocks[0].Label);
+        Assert.Contains("temperatuur", blocks.Single(block => block.Key == "afternoon").Text, StringComparison.Ordinal);
+        Assert.True(OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons), string.Join("; ", reasons));
     }
 
     [Fact]
@@ -315,6 +344,45 @@ public class OccupationDayInLifeTests
         Assert.Contains("gpt-4o-mini", handler.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("mistral", handler.Body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Verzin geen werkgever", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("json_schema", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("\"morning\"", handler.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task OpenAi_writer_falls_back_to_json_object_when_the_schema_is_rejected()
+    {
+        var handler = new SequenceHandler(
+            new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent(
+                    """{"error":{"message":"Invalid response_format json_schema"}}""",
+                    Encoding.UTF8,
+                    "application/json")
+            },
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"choices":[{"message":{"content":"{\"morning\":\"ok\"}"}}]}""",
+                    Encoding.UTF8,
+                    "application/json")
+            });
+        var services = new ServiceCollection();
+        services.AddHttpClient(OccupationDayInLifeOpenAiWriter.HttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => handler);
+        await using var provider = services.BuildServiceProvider();
+        var writer = new OccupationDayInLifeOpenAiWriter(
+            provider.GetRequiredService<IHttpClientFactory>(),
+            new StubCredentials(apiKey: "sk-test", baseUrl: null),
+            Options.Create(new OpenAiOptions { ApiKey = "sk-test", BaseUrl = "https://api.openai.com/v1/" }),
+            Options.Create(new OccupationDayInLifeOptions()),
+            NullLogger<OccupationDayInLifeOpenAiWriter>.Instance);
+
+        var result = await writer.CompleteAsync(OccupationDayInLifePrompt.System, "Beroep: kok", CancellationToken.None);
+        Assert.True(result.Ok);
+        Assert.Equal(2, handler.Bodies.Count);
+        Assert.Contains("json_schema", handler.Bodies[0], StringComparison.Ordinal);
+        Assert.Contains("json_object", handler.Bodies[1], StringComparison.Ordinal);
+        Assert.DoesNotContain("json_schema", handler.Bodies[1], StringComparison.Ordinal);
     }
 
     [Fact]
@@ -463,6 +531,41 @@ public class OccupationDayInLifeTests
     }
 
     [Fact]
+    public async Task Generate_retries_once_with_the_specific_block_reason()
+    {
+        await using var db = NewDb();
+        var writer = new ScriptWriter([ShortCookJson(), RealisticCookJson()]);
+        var generator = Generator(db, writer);
+        var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { CookId };
+        var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);
+        Assert.Equal(1, result.Generated);
+        Assert.Equal(0, result.Failed);
+        Assert.Equal(2, writer.Calls);
+        Assert.Contains("Afgekeurd:", writer.UserPrompts[1], StringComparison.Ordinal);
+        Assert.Contains("blok: 4 blokken, minimaal 5", writer.UserPrompts[1], StringComparison.Ordinal);
+        Assert.Equal(1, await db.OccupationDayInLives.CountAsync());
+    }
+
+    [Fact]
+    public async Task Probe_runs_validation_and_stores_nothing()
+    {
+        await using var db = NewDb();
+        var writer = new ScriptWriter([ShortCookJson(), ShortCookJson()]);
+        var failed = await Generator(db, writer).ProbeAsync(CookId, CancellationToken.None);
+        Assert.False(failed.Ok);
+        Assert.Contains("blok: 4 blokken, minimaal 5", failed.Error, StringComparison.Ordinal);
+        Assert.Equal(2, writer.Calls);
+        Assert.Equal(0, await db.OccupationDayInLives.CountAsync());
+
+        var okWriter = new ScriptWriter(RealisticCookJson());
+        var ok = await Generator(db, okWriter).ProbeAsync(CookId, CancellationToken.None);
+        Assert.True(ok.Ok, ok.Error);
+        Assert.Null(ok.Error);
+        Assert.Equal(1, okWriter.Calls);
+        Assert.Equal(0, await db.OccupationDayInLives.CountAsync());
+    }
+
+    [Fact]
     public void Admin_page_runs_a_background_pilot_and_can_test_one_occupation()
     {
         var root = RepoRoot.Find();
@@ -476,6 +579,8 @@ public class OccupationDayInLifeTests
         Assert.Contains("probe", controller, StringComparison.Ordinal);
         Assert.Contains("TryPick", controller, StringComparison.Ordinal);
         Assert.Contains("ForceOpenAiBaseUrl", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/OccupationDayInLifeOpenAiWriter.cs")), StringComparison.Ordinal);
+        Assert.Contains("json_schema", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/OccupationDayInLifeOpenAiWriter.cs")), StringComparison.Ordinal);
+        Assert.Contains("de dag voldoet", controller, StringComparison.Ordinal);
         Assert.Contains("occupation-day-in-life/probe", client, StringComparison.Ordinal);
         Assert.Equal("Test 1 beroep", UiStrings.Get("Admin.Day.Probe", "nl"));
         Assert.Equal("OpenAI weigert de sleutel. Controleer de OpenAI-sleutel. Deze vulling gebruikt geen Mistral.", UiStrings.Get("Admin.Day.KeyInvalid", "nl"));
@@ -529,6 +634,37 @@ public class OccupationDayInLifeTests
         Assert.Contains("OccupationDayLink", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckPanel.razor")), StringComparison.Ordinal);
         Assert.Contains("OccupationDayLink", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Passport/PassportFitTab.razor")), StringComparison.Ordinal);
     }
+
+    private const string CookId = "90f75f67-495d-49fa-ab57-2f320e251d7e";
+
+    private static string RealisticCookJson()
+        => """
+           {
+             "blocks": [
+               {"key":"07:00","label":"07:00 – Start","text":"Je start met de bestellingen van de dag. Je kijkt wat er bereid moet worden."},
+               {"key":"ochtend","label":"Ochtend","text":"In de ochtend weeg en meng je de ingrediënten. Je houdt de plek schoon en veilig."},
+               {"key":"pauze","label":"Pauze","text":"Je neemt pauze. Daarna pak je de bestellingen weer op en ga je verder met koken."},
+               {"key":"middag","titel":"Middag","omschrijving":"In de middag regel je de temperatuur van de ovens. Je bereidt de maaltijden verder."},
+               {"key":"afronden","label":"Afronden","text":"Aan het eind geef je de plek over. Je ruimt de apparatuur op en sluit af."}
+             ],
+             "highlights": ["Ingrediënten wegen en mengen", "Maaltijden bereiden en presenteren"],
+             "varies": "De volgorde verschilt per werkgever."
+           }
+           """;
+
+    private static string ShortCookJson()
+        => """
+           {
+             "blocks": [
+               {"key":"morning","label":"Ochtend","text":"In de ochtend weeg en meng je de ingrediënten. Je houdt de plek schoon en veilig."},
+               {"key":"pause","label":"Pauze","text":"Je neemt pauze. Daarna pak je de bestellingen weer op en ga je verder met koken."},
+               {"key":"afternoon","label":"Middag","text":"In de middag regel je de temperatuur van de ovens. Je bereidt de maaltijden verder."},
+               {"key":"close","label":"Afronden","text":"Aan het eind geef je de plek over. Je ruimt de apparatuur op en sluit af."}
+             ],
+             "highlights": ["Ingrediënten wegen en mengen", "Maaltijden bereiden en presenteren"],
+             "varies": "De volgorde verschilt per werkgever."
+           }
+           """;
 
     private static OccupationDayFacts SampleFacts()
         => OccupationDayFacts.Create(
@@ -657,9 +793,25 @@ public class OccupationDayInLifeTests
         }
     }
 
-    private sealed class ScriptWriter(string json, string? error = null) : IOccupationDayInLifeWriter
+    private sealed class ScriptWriter : IOccupationDayInLifeWriter
     {
+        private readonly string[] _json;
+        private readonly string? _error;
+
+        public ScriptWriter(string json, string? error = null)
+            : this([json], error)
+        {
+        }
+
+        public ScriptWriter(IReadOnlyList<string> json, string? error = null)
+        {
+            _json = json.Count == 0 ? [""] : json.ToArray();
+            _error = error;
+        }
+
         public int Calls { get; private set; }
+
+        public List<string> UserPrompts { get; } = [];
 
         public Task<OccupationDayWriteResult> CompleteAsync(
             string systemPrompt,
@@ -667,9 +819,33 @@ public class OccupationDayInLifeTests
             CancellationToken cancellationToken = default)
         {
             Calls++;
-            return Task.FromResult(error is null
+            UserPrompts.Add(userPrompt);
+            var json = _json[Math.Min(Calls, _json.Length) - 1];
+            return Task.FromResult(_error is null
                 ? new OccupationDayWriteResult(true, json, null, "gpt-4o-mini")
-                : new OccupationDayWriteResult(false, null, error, "gpt-4o-mini"));
+                : new OccupationDayWriteResult(false, null, _error, "gpt-4o-mini"));
+        }
+    }
+
+    private sealed class SequenceHandler : HttpMessageHandler
+    {
+        private readonly Queue<HttpResponseMessage> _responses;
+
+        public SequenceHandler(params HttpResponseMessage[] responses)
+        {
+            _responses = new Queue<HttpResponseMessage>(responses);
+        }
+
+        public List<string?> Bodies { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            Bodies.Add(request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken));
+            return _responses.Count == 0
+                ? new HttpResponseMessage(HttpStatusCode.OK)
+                : _responses.Dequeue();
         }
     }
 

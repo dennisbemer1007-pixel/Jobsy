@@ -81,7 +81,7 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
         }
     }
 
-    /// <summary>One OpenAI call for one occupation. Nothing is stored. The error is the provider reply.</summary>
+    /// <summary>One occupation through the same checks as a batch, including validation. Nothing is stored.</summary>
     [HttpPost("probe")]
     [EnableRateLimiting("public-write")]
     [AdminAudit(AdminAuditKeys.OccupationDayProbe, TargetType = "setting")]
@@ -107,7 +107,9 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
         var result = await _generator.ProbeAsync(pick.Jobs[0].Id, cancellationToken);
         _audit.TargetLabel = result.TitleNl;
         _audit.TargetId = result.EscoId;
-        _audit.Reason = result.Ok ? result.TitleNl + ": OpenAI antwoordde." : OccupationDayWriteErrors.SafeSnippet(result.Error);
+        _audit.Reason = result.Ok
+            ? result.TitleNl + ": de dag voldoet."
+            : OccupationDayWriteErrors.SafeSnippet(result.Error);
         if (!result.Ok)
         {
             _audit.ResultOverride = AdminAuditKeys.Results.Failed;

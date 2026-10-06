@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 
 namespace Jobsy.Core.Careers;
@@ -16,7 +17,11 @@ public static class OccupationDayBlocks
         "start", "morning", "talk", "plan", "pause", "afternoon", "handover", "close"
     ];
 
-    public const int MinNormal = 6;
+    /// <summary>
+    /// Five moments always fit a normal source: start, morning, pause, afternoon, close.
+    /// Talk, plan and handover are extra, only when the source names that work.
+    /// </summary>
+    public const int MinNormal = 5;
     public const int MinThin = 4;
     public const int Max = 8;
 
@@ -35,6 +40,30 @@ public static class OccupationDayBlocks
 
     public static bool IsKnown(string? key)
         => Keys.Contains((key ?? "").Trim(), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Maps a model key onto the stored key. Dutch names and a clock time in the key are accepted.
+    /// A sentence in the label is not used as a key.
+    /// </summary>
+    public static string? CanonicalKey(string? raw, string? label = null)
+    {
+        var key = (raw ?? "").Trim();
+        if (key.Length > 0)
+        {
+            var mapped = MapLoose(key);
+            if (mapped is not null)
+            {
+                return mapped;
+            }
+
+            if (!ContainsClock(key))
+            {
+                return null;
+            }
+        }
+
+        return MapLoose(label);
+    }
 
     public static IReadOnlyList<OccupationDayBlock> Parse(string? json)
     {
@@ -144,6 +173,119 @@ public static class OccupationDayBlocks
             }
 
             rows.Add(new OccupationDayBlock(key, DefaultLabel(key), line));
+        }
+    }
+
+    private static string? MapLoose(string? value)
+    {
+        string? found = null;
+        var content = 0;
+        foreach (var token in Tokens(value))
+        {
+            if (IsClock(token))
+            {
+                continue;
+            }
+
+            content++;
+            var mapped = MapWord(token);
+            if (mapped is null)
+            {
+                return null;
+            }
+
+            found = mapped;
+        }
+
+        return content == 0 ? null : found;
+    }
+
+    private static string? MapWord(string token) => token switch
+    {
+        "start" or "begin" or "opening" or "aanvang" => "start",
+        "morning" or "ochtend" or "voormiddag" => "morning",
+        "talk" or "gesprek" or "overleg" or "contact" => "talk",
+        "plan" or "plannen" or "planning" => "plan",
+        "pause" or "pauze" or "break" or "rust" => "pause",
+        "afternoon" or "middag" or "namiddag" => "afternoon",
+        "handover" or "overdracht" or "overdragen" or "overgave" => "handover",
+        "close" or "closing" or "afronden" or "afsluiten" or "einde" or "eind" or "slot" => "close",
+        _ => null
+    };
+
+    private static bool ContainsClock(string text)
+    {
+        foreach (var token in Tokens(text))
+        {
+            if (IsClock(token))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsClock(string token)
+    {
+        var split = token.IndexOf(':');
+        if (split <= 0)
+        {
+            split = token.IndexOf('.');
+        }
+
+        if (split <= 0 || split >= token.Length - 1)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < token.Length; i++)
+        {
+            if (i == split)
+            {
+                continue;
+            }
+
+            if (!char.IsDigit(token[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static List<string> Tokens(string? value)
+    {
+        var list = new List<string>();
+        var current = new StringBuilder();
+        foreach (var ch in (value ?? "").Trim().ToLowerInvariant())
+        {
+            if (ch is ' ' or '\t' or '-' or '–' or '—' or '|' or '/' or ',')
+            {
+                Flush();
+                continue;
+            }
+
+            current.Append(ch);
+        }
+
+        Flush();
+        return list;
+
+        void Flush()
+        {
+            if (current.Length == 0)
+            {
+                return;
+            }
+
+            var token = current.ToString().Trim('.', ';');
+            current.Clear();
+            if (token.Length > 0)
+            {
+                list.Add(token);
+            }
         }
     }
 }
