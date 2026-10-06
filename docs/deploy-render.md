@@ -237,7 +237,7 @@ See also [email-deliverability.md](email-deliverability.md) for the Dennis check
 `Mail__Provider` kiest de verzender.
 
 - **Lettermint** (`POST https://api.lettermint.co/v1/send`, header `x-lettermint-token`) is een Nederlands bedrijf. De mail blijft in de EU. Dit pad is actief alleen als `Mail__Provider=Lettermint` én `Lettermint__ApiKey` gezet is.
-- Zonder die sleutel valt Lobsy terug op **Resend** (`POST https://api.resend.com/emails`) en logt één waarschuwing.
+- Zonder die sleutel gaat er geen mail via Resend. Lobsy logt één fout: Mail: niet ingesteld. Resend (`POST https://api.resend.com/emails`) geldt alleen als `Mail__Provider=Resend`.
 - SMTP is alleen fallback. Open- en klikmeting sturen we niet mee.
 
 Acceptatie zet `Mail__AllowedRecipientPattern` op `^test-[^@]+@lobsy\.nl$`. Andere adressen worden overgeslagen. Het log toont alleen een afgeschermd adres. `Mail__AllowedRecipientAddresses__0` is het extra adres van de beheerder. Productie laat het patroon leeg: daar gaat elke mail eruit.
@@ -265,7 +265,7 @@ Zet op `jobsy-api` (en provider + Lettermint-sleutel ook op `jobsy-web`):
 
 **B. Admin UI**
 
-Admin → Integraties → **Mail (Resend)** → plak de Resend API-key + From → Opslaan → **Stuur testmail**.
+Admin → Integraties → **Mail (Lettermint)** of **Mail (Resend)** → plak de Resend API-key + From als Resend de verzender is → Opslaan → **Stuur testmail**. De tegel toont de verzender die echt aan staat.
 
 De Lettermint-sleutel staat niet in dit scherm. Die zet je alleen als env var. DB-credentials voor Resend hebben voorrang; env vult lege velden.
 

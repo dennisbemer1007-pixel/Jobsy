@@ -939,7 +939,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             view.UpdatedAtUtc,
             view.IgnoresEnvironmentCredentials,
             view.UsesEnvironmentCredentials,
-            view.SmallModel);
+            view.SmallModel,
+            view.LegalFooterMissing);
 }
 
 public sealed record PlatformCompanyDto(

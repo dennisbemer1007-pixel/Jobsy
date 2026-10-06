@@ -89,4 +89,5 @@ public sealed record IntegrationCredentialView(
     DateTime? UpdatedAtUtc,
     bool IgnoresEnvironmentCredentials = false,
     bool UsesEnvironmentCredentials = false,
-    string? SmallModel = null);
+    string? SmallModel = null,
+    bool LegalFooterMissing = false);
