@@ -84,14 +84,49 @@ public sealed class OccupationDayInLifeTranslator : IOccupationDayInLifeTranslat
             }
         });
 
-        using var response = await client.SendAsync(request, cancellationToken);
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.SendAsync(request, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or HttpRequestException)
+        {
+            var reason = ex is OperationCanceledException
+                ? OccupationDayWriteErrors.Timeout
+                : OccupationDayWriteErrors.FromStatus(0, ex.Message);
+            _logger.LogWarning(
+                "Vertaling dag-in-het-leven naar {Language} mislukt: {Reason}",
+                target,
+                OccupationDayWriteErrors.SafeSnippet(reason));
+            return new OccupationDayTranslateResult(false, null, reason, model, false);
+        }
+
+        using (response)
+        {
         if (!response.IsSuccessStatusCode)
         {
+            var detail = "";
+            try
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                detail = OccupationDayWriteErrors.DetailFromBody(body.Length > 2000 ? body[..2000] : body);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+            {
+                detail = "";
+            }
+
+            var reason = OccupationDayWriteErrors.FromStatus((int)response.StatusCode, detail);
             _logger.LogWarning(
-                "Vertaling dag-in-het-leven gaf {StatusCode} naar {Language} (response body not logged).",
+                "Vertaling dag-in-het-leven gaf {StatusCode} naar {Language}: {Reason}",
                 (int)response.StatusCode,
-                target);
-            return new OccupationDayTranslateResult(false, null, OccupationDayWriteErrors.Http, model, false);
+                target,
+                OccupationDayWriteErrors.SafeSnippet(detail));
+            return new OccupationDayTranslateResult(false, null, reason, model, false);
         }
 
         var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
@@ -114,6 +149,7 @@ public sealed class OccupationDayInLifeTranslator : IOccupationDayInLifeTranslat
         }
 
         return new OccupationDayTranslateResult(true, draft, null, model, false);
+        }
     }
 
     private static string ReadTitle(string? json)

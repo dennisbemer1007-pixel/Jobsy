@@ -28,25 +28,51 @@ public sealed partial class JobsyApiClient
     public Task<OccupationDayAdminStatus?> GetOccupationDayStatusAsync(CancellationToken ct = default)
         => GetApiJsonAsync<OccupationDayAdminStatus>("api/admin/occupation-day-in-life/status", ct);
 
-    public async Task<OccupationDayGenerateResult?> GenerateOccupationDaysAsync(int limit, CancellationToken ct = default)
+    public async Task<OccupationDayGenerateResult?> GenerateOccupationDaysAsync(int limit, string? ids = null, CancellationToken ct = default)
     {
-        var response = await PostApiJsonAsync($"api/admin/occupation-day-in-life/generate?limit={limit}", new { }, ct);
+        var response = await PostApiJsonAsync(
+            "api/admin/occupation-day-in-life/generate",
+            new OccupationDayRunRequest { Limit = limit, Ids = ids },
+            ct);
         response.EnsureSuccessStatusCode();
         return await ReadApiJsonAsync<OccupationDayGenerateResult>(response.Content, ct);
     }
 
-    public async Task StartOccupationDayBatchAsync(int? limit = null, CancellationToken ct = default)
+    public async Task<OccupationDayStartResult?> StartOccupationDayBatchAsync(int? limit = null, string? ids = null, CancellationToken ct = default)
     {
-        var path = limit is int value
-            ? $"api/admin/occupation-day-in-life/start?limit={value}"
-            : "api/admin/occupation-day-in-life/start";
-        var response = await PostApiJsonAsync(path, new { }, ct);
+        var response = await PostApiJsonAsync(
+            "api/admin/occupation-day-in-life/start",
+            new OccupationDayRunRequest { Limit = limit, Ids = ids },
+            ct);
         if (response.StatusCode == HttpStatusCode.Conflict)
         {
-            return;
+            return new OccupationDayStartResult { Busy = true, Message = "Er loopt al een vulling." };
+        }
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var problem = await ReadApiJsonAsync<OccupationDayProblem>(response.Content, ct);
+            return new OccupationDayStartResult { Message = problem?.Message };
         }
 
         response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<OccupationDayStartResult>(response.Content, ct);
+    }
+
+    public async Task<OccupationDayProbeResult?> ProbeOccupationDayAsync(string query, CancellationToken ct = default)
+    {
+        var response = await PostApiJsonAsync(
+            "api/admin/occupation-day-in-life/probe",
+            new OccupationDayRunRequest { Ids = query },
+            ct);
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var problem = await ReadApiJsonAsync<OccupationDayProblem>(response.Content, ct);
+            return new OccupationDayProbeResult { Error = problem?.Message };
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<OccupationDayProbeResult>(response.Content, ct);
     }
 
     public async Task StopOccupationDayBatchAsync(CancellationToken ct = default)
@@ -70,6 +96,34 @@ public sealed partial class JobsyApiClient
         response.EnsureSuccessStatusCode();
         return await ReadApiJsonAsync<OccupationDayImportResult>(response.Content, ct);
     }
+}
+
+public sealed class OccupationDayRunRequest
+{
+    public int? Limit { get; set; }
+    public string? Ids { get; set; }
+}
+
+public sealed class OccupationDayStartResult
+{
+    public bool Started { get; set; }
+    public bool Busy { get; set; }
+    public string? Message { get; set; }
+    public List<string> Titles { get; set; } = [];
+}
+
+public sealed class OccupationDayProbeResult
+{
+    public bool Ok { get; set; }
+    public string? EscoId { get; set; }
+    public string? TitleNl { get; set; }
+    public string? Error { get; set; }
+    public string? Model { get; set; }
+}
+
+public sealed class OccupationDayProblem
+{
+    public string? Message { get; set; }
 }
 
 public sealed class OccupationDayResponse

@@ -120,19 +120,14 @@ public sealed class OccupationDayInLifeGenerator
                 continue;
             }
 
-            var (draft, error, keyMissing, model) = await AskAsync(facts, facts.ToPrompt(), cancellationToken);
-            if (keyMissing)
+            var (draft, error, keyMissing, keyRejected, model) = await AskAsync(facts, facts.ToPrompt(), cancellationToken);
+            if (keyMissing || keyRejected)
             {
-                return new OccupationDayGenerateResult(
-                    generated,
-                    failures.Count,
-                    skipped,
-                    Math.Max(0, remaining - generated),
-                    true,
-                    failures);
+                failures.Add(new OccupationDayFailure(facts.EscoId, error ?? (keyMissing ? OccupationDayWriteErrors.KeyMissing : OccupationDayWriteErrors.KeyInvalid)));
+                return StopForKey(generated, skipped, remaining, failures, keyMissing, keyRejected);
             }
 
-            if (draft is null)
+            if (draft is null && !LooksLikeProviderFailure(error))
             {
                 var retryUser = facts.ToPrompt() + "\n\nAfgekeurd: " + error + "\n" + OccupationDayInLifePrompt.Retry;
                 if (_options.DelayMilliseconds > 0)
@@ -140,25 +135,20 @@ public sealed class OccupationDayInLifeGenerator
                     await Task.Delay(_options.DelayMilliseconds, cancellationToken);
                 }
 
-                (draft, error, keyMissing, model) = await AskAsync(facts, retryUser, cancellationToken);
-                if (keyMissing)
+                (draft, error, keyMissing, keyRejected, model) = await AskAsync(facts, retryUser, cancellationToken);
+                if (keyMissing || keyRejected)
                 {
-                    return new OccupationDayGenerateResult(
-                        generated,
-                        failures.Count,
-                        skipped,
-                        Math.Max(0, remaining - generated),
-                        true,
-                        failures);
+                    failures.Add(new OccupationDayFailure(facts.EscoId, error ?? OccupationDayWriteErrors.KeyInvalid));
+                    return StopForKey(generated, skipped, remaining, failures, keyMissing, keyRejected);
                 }
             }
 
             if (draft is null)
             {
-                _logger.LogInformation(
-                    "Dag-in-het-leven afgekeurd voor beroep {EscoId}: {Reason}",
+                _logger.LogWarning(
+                    "Dag-in-het-leven mislukt voor beroep {EscoId}: {Reason}",
                     facts.EscoId,
-                    error);
+                    OccupationDayWriteErrors.SafeSnippet(error));
                 failures.Add(new OccupationDayFailure(facts.EscoId, error ?? "afgekeurd"));
                 continue;
             }
@@ -345,7 +335,24 @@ public sealed class OccupationDayInLifeGenerator
         string language,
         CancellationToken cancellationToken)
     {
-        var result = await _translator.TranslateAsync(dutch, language, cancellationToken);
+        OccupationDayTranslateResult result;
+        try
+        {
+            result = await _translator.TranslateAsync(dutch, language, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                "Vertaling dag-in-het-leven mislukt naar {Language}: {Reason}",
+                language,
+                OccupationDayWriteErrors.SafeSnippet(ex.Message));
+            return new OccupationDayTranslateResult(false, null, OccupationDayWriteErrors.Timeout, "", false);
+        }
+
         if (result.KeyMissing || (result.Ok && result.Draft is not null && OccupationDayInLifeValidator.TryValidateTranslation(dutch, result.Draft, out _)))
         {
             return result;
@@ -491,35 +498,107 @@ public sealed class OccupationDayInLifeGenerator
         return true;
     }
 
-    private async Task<(OccupationDayDraft? Draft, string? Error, bool KeyMissing, string Model)> AskAsync(
+    public async Task<OccupationDayProbeResult> ProbeAsync(string? escoId, CancellationToken cancellationToken = default)
+    {
+        var facts = OccupationDayFacts.For(escoId);
+        if (facts is null)
+        {
+            return new OccupationDayProbeResult(false, escoId, null, "onbekend-beroep", null);
+        }
+
+        try
+        {
+            var write = await _writer.CompleteAsync(OccupationDayInLifePrompt.System, facts.ToPrompt(), cancellationToken);
+            return new OccupationDayProbeResult(write.Ok, facts.EscoId, facts.TitleNl, write.Error, write.Model);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            var reason = OccupationDayWriteErrors.SafeSnippet(ex.Message);
+            _logger.LogWarning(
+                "Test dag-in-het-leven mislukt voor beroep {EscoId}: {Reason}",
+                facts.EscoId,
+                reason);
+            return new OccupationDayProbeResult(false, facts.EscoId, facts.TitleNl, OccupationDayWriteErrors.Timeout + ": " + reason, _options.Model);
+        }
+    }
+
+    private static OccupationDayGenerateResult StopForKey(
+        int generated,
+        int skipped,
+        int remaining,
+        List<OccupationDayFailure> failures,
+        bool keyMissing,
+        bool keyRejected)
+        => new(
+            generated,
+            failures.Count,
+            skipped,
+            Math.Max(0, remaining - generated),
+            keyMissing,
+            failures,
+            keyRejected);
+
+    private static bool LooksLikeProviderFailure(string? error)
+        => OccupationDayWriteErrors.IsKeyInvalid(error)
+           || string.Equals(error, OccupationDayWriteErrors.Timeout, StringComparison.Ordinal)
+           || (error ?? "").StartsWith("openai-http", StringComparison.Ordinal)
+           || string.Equals(error, OccupationDayWriteErrors.KeyMissing, StringComparison.Ordinal);
+
+    private async Task<(OccupationDayDraft? Draft, string? Error, bool KeyMissing, bool KeyRejected, string Model)> AskAsync(
         OccupationDayFacts facts,
         string userPrompt,
         CancellationToken cancellationToken)
     {
-        var write = await _writer.CompleteAsync(OccupationDayInLifePrompt.System, userPrompt, cancellationToken);
+        OccupationDayWriteResult write;
+        try
+        {
+            write = await _writer.CompleteAsync(OccupationDayInLifePrompt.System, userPrompt, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                "Dag-in-het-leven aanroep mislukt voor beroep {EscoId}: {Reason}",
+                facts.EscoId,
+                OccupationDayWriteErrors.SafeSnippet(ex.Message));
+            return (null, OccupationDayWriteErrors.Timeout, false, false, _options.Model);
+        }
+
         var model = string.IsNullOrWhiteSpace(write.Model) ? _options.Model : write.Model;
         if (write.KeyMissing)
         {
-            return (null, write.Error, true, model);
+            return (null, write.Error, true, false, model);
+        }
+
+        if (OccupationDayWriteErrors.IsKeyInvalid(write.Error))
+        {
+            return (null, write.Error, false, true, model);
         }
 
         if (!write.Ok)
         {
-            return (null, write.Error ?? OccupationDayWriteErrors.Http, false, model);
+            return (null, write.Error ?? OccupationDayWriteErrors.Http, false, false, model);
         }
 
         if (!OccupationDayInLifeJson.TryParse(write.Json, facts, out var draft, out var error))
         {
-            return (null, error ?? "onleesbaar", false, model);
+            return (null, error ?? "onleesbaar", false, false, model);
         }
 
         draft = AttachFacts(draft, facts, forceCatalog: true);
         if (!OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons))
         {
-            return (null, string.Join("; ", reasons), false, model);
+            return (null, string.Join("; ", reasons), false, false, model);
         }
 
-        return (draft, null, false, model);
+        return (draft, null, false, false, model);
     }
 
     private static bool TryAccept(

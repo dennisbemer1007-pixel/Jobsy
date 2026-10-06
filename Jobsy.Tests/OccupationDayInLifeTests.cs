@@ -414,6 +414,74 @@ public class OccupationDayInLifeTests
     }
 
     [Fact]
+    public void Provider_error_names_a_rejected_key_without_the_secret()
+    {
+        var detail = OccupationDayWriteErrors.DetailFromBody(
+            """{"error":{"message":"Incorrect API key sk-abcsecretkeyvalue provided"}}""");
+        var reason = OccupationDayWriteErrors.FromStatus(401, detail);
+        Assert.StartsWith(OccupationDayWriteErrors.KeyInvalid, reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-abc", reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-", OccupationDayWriteErrors.SafeSnippet("Bearer sk-abcsecretkeyvalue"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Selection_resolves_a_dutch_title_and_keeps_an_unknown_name()
+    {
+        var pick = OccupationDaySelection.Resolve("kok\nniet-een-echt-beroep-xyz");
+        Assert.Contains(pick.Jobs, job => job.Nl.Contains("kok", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains("niet-een-echt-beroep-xyz", pick.Unknown);
+    }
+
+    [Fact]
+    public async Task Generate_stops_when_openai_rejects_the_key()
+    {
+        var id = OccupationCatalog.Shared.All[0].Id;
+        await using var db = NewDb();
+        var writer = new ScriptWriter("{}", OccupationDayWriteErrors.KeyInvalid + ": invalid_api_key");
+        var generator = Generator(db, writer);
+        var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { id };
+        var result = await generator.GenerateMissingAsync(5, null, only, CancellationToken.None);
+        Assert.True(result.KeyRejected);
+        Assert.False(result.KeyMissing);
+        Assert.Equal(1, writer.Calls);
+        Assert.Equal(0, await db.OccupationDayInLives.CountAsync());
+        Assert.Contains(result.Failures, failure => failure.Reason.StartsWith(OccupationDayWriteErrors.KeyInvalid, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Probe_returns_the_provider_error_and_stores_nothing()
+    {
+        var id = OccupationCatalog.Shared.All[3].Id;
+        await using var db = NewDb();
+        var writer = new ScriptWriter("{}", OccupationDayWriteErrors.Timeout);
+        var generator = Generator(db, writer);
+        var result = await generator.ProbeAsync(id, CancellationToken.None);
+        Assert.False(result.Ok);
+        Assert.Equal(OccupationDayWriteErrors.Timeout, result.Error);
+        Assert.Equal(1, writer.Calls);
+        Assert.Equal(0, await db.OccupationDayInLives.CountAsync());
+    }
+
+    [Fact]
+    public void Admin_page_runs_a_background_pilot_and_can_test_one_occupation()
+    {
+        var root = RepoRoot.Find();
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Admin/OccupationDayAdmin.razor"));
+        var controller = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/OccupationDayInLifeAdminController.cs"));
+        var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/ApiClient/JobsyApiClient.OccupationDay.cs"));
+        Assert.Contains("Admin.Day.Probe", page, StringComparison.Ordinal);
+        Assert.Contains("Admin.Day.Pick", page, StringComparison.Ordinal);
+        Assert.Contains("ProbeAsync", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("GenerateOccupationDaysAsync", page, StringComparison.Ordinal);
+        Assert.Contains("probe", controller, StringComparison.Ordinal);
+        Assert.Contains("TryPick", controller, StringComparison.Ordinal);
+        Assert.Contains("ForceOpenAiBaseUrl", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/OccupationDayInLifeOpenAiWriter.cs")), StringComparison.Ordinal);
+        Assert.Contains("occupation-day-in-life/probe", client, StringComparison.Ordinal);
+        Assert.Equal("Test 1 beroep", UiStrings.Get("Admin.Day.Probe", "nl"));
+        Assert.Equal("OpenAI weigert de sleutel. Controleer de OpenAI-sleutel. Deze vulling gebruikt geen Mistral.", UiStrings.Get("Admin.Day.KeyInvalid", "nl"));
+    }
+
+    [Fact]
     public void Candidate_page_shows_an_honest_empty_state_and_does_not_call_openai()
     {
         var root = RepoRoot.Find();

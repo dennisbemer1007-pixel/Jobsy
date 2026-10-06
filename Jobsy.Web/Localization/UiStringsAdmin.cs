@@ -918,6 +918,7 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.OccupationDayStop", "Dagen genereren gestopt", "Day generation stopped", "Zatrzymano generowanie dni", "Generarea zilelor s-a oprit", "توقف توليد الأيام");
         Add("AdminAudit.Action.OccupationDayImport", "Dagen geïmporteerd", "Days imported", "Zaimportowano dni", "Zile importate", "تم استيراد الأيام");
         Add("AdminAudit.Action.OccupationDayExport", "Dagen geëxporteerd", "Days exported", "Wyeksportowano dni", "Zile exportate", "تم تصدير الأيام");
+        Add("AdminAudit.Action.OccupationDayProbe", "Eén beroep getest", "One occupation tested", "Sprawdzono jeden zawód", "O meserie testată", "تم اختبار مهنة واحدة");
         Add("AdminAction.Resource.Users", "Gebruikerslijst", "User list", "Lista użytkowników", "Lista utilizatorilor", "قائمة المستخدمين");
         Add("AdminAction.Resource.UserSessions", "Gebruikerssessies", "User sessions", "Sesje użytkownika", "Sesiuni utilizator", "جلسات المستخدم");
         Add("AdminAction.Resource.PlatformLogs", "Platformlogs", "Platform logs", "Logi platformy", "Jurnale platformă", "سجلات المنصة");
