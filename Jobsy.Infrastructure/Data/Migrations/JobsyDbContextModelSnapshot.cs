@@ -4871,6 +4871,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateOnly?>("FreePublishUntil")
                         .HasColumnType("date");
 
+                    b.Property<bool>("FutureJobsForYouEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("HonestAdviceEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")

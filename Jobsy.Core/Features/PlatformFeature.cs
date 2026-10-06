@@ -28,5 +28,11 @@ public enum PlatformFeature
     CompactTestPdf,
 
     /// <summary>Stored honest career advice on job detail. Default false. No live generation.</summary>
-    HonestAdvice
+    HonestAdvice,
+
+    /// <summary>
+    /// "Werk met toekomst dat bij jou past" on Functiefit and Carrière.
+    /// Default false. Uses sourced outlook and the candidate's own test only.
+    /// </summary>
+    FutureJobsForYou
 }

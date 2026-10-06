@@ -249,6 +249,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("FutureJobsForYouEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "FutureJobsForYouEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.FutureJobs.Enabled.Title",
+                DescriptionKey: "AdminSettings.FutureJobs.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.FutureJobsForYouEnabled,
+                Write: v => new PlatformFeatureUpdate(FutureJobsForYouEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("FreeCandidateTestsEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -507,6 +520,7 @@ public static class PlatformSettingsCatalog
         bool? whatsAppRemindersEnabled = null;
         bool? compactTestPdfEnabled = null;
         bool? honestAdviceEnabled = null;
+        bool? futureJobsForYouEnabled = null;
         bool? freeCandidateTestsEnabled = null;
 
         foreach (var p in parts)
@@ -546,6 +560,7 @@ public static class PlatformSettingsCatalog
             if (p.CompactTestPdfEnabled is not null) compactTestPdfEnabled = p.CompactTestPdfEnabled;
             if (p.FreeCandidateTestsEnabled is not null) freeCandidateTestsEnabled = p.FreeCandidateTestsEnabled;
             if (p.HonestAdviceEnabled is not null) honestAdviceEnabled = p.HonestAdviceEnabled;
+            if (p.FutureJobsForYouEnabled is not null) futureJobsForYouEnabled = p.FutureJobsForYouEnabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -574,6 +589,7 @@ public static class PlatformSettingsCatalog
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
             CompactTestPdfEnabled: compactTestPdfEnabled,
             FreeCandidateTestsEnabled: freeCandidateTestsEnabled,
-            HonestAdviceEnabled: honestAdviceEnabled);
+            HonestAdviceEnabled: honestAdviceEnabled,
+            FutureJobsForYouEnabled: futureJobsForYouEnabled);
     }
 }

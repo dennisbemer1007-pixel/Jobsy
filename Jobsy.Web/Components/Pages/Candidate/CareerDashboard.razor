@@ -63,6 +63,7 @@
                                  OnChoice="SetChoice"
                                  OnSearch="SearchDreamsAsync"
                                  OnSubmit="GeneratePlanAsync" />
+                <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
     }
@@ -100,6 +101,7 @@
                                     NextCourseCount="@(done.NextStep?.CourseCount ?? 0)"
                                     OnUndo="UndoStepAsync"
                                     OnNext="GoToNextStepAsync" />
+                <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
     }
@@ -126,6 +128,7 @@
                                       VacancyFit="@_stepFit"
                                       OnComplete="CompleteStepAsync"
                                       OnUndo="UndoStepAsync" />
+                <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
     }
@@ -154,6 +157,8 @@
                                     OnClearDream="ClearDreamAsync"
                                     OnDismissCarriedOver="DismissCarriedOver"
                                     OnRegenerateLanguage="RegenerateForLanguageAsync" />
+
+                <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
 
                 <CareerArchivedPlans Plans="@_archived" Busy="@_busy" OnRestore="RestoreAsync" />
             </ChildContent>
@@ -696,6 +701,17 @@
         _educationLabel = string.Join(
             " ",
             (prefs.Educations ?? []).Append(prefs.EducationDirection ?? "").Where(item => !string.IsNullOrWhiteSpace(item)));
+    }
+
+    private void OpenFutureJobCheck(string title)
+    {
+        var name = (title ?? "").Trim();
+        if (name.Length == 0)
+        {
+            return;
+        }
+
+        Navigation.NavigateTo("/candidate/paspoort?tab=fit&check=" + Uri.EscapeDataString(name));
     }
 
     private void ApplyCareerScores(CandidateCareerInterestState? state)

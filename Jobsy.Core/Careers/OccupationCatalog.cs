@@ -29,6 +29,7 @@ public sealed class OccupationCatalog
     private readonly Dictionary<string, List<Occupation>> _byIsco;
     private readonly List<(string Fold, string Isco)> _cbsTitles;
     private readonly HashSet<string> _cbsFolds;
+    private readonly HashSet<string> _cbsTitleByIsco;
     private readonly List<SearchRule> _searchRules;
     private readonly List<LevelSwap> _swaps;
 
@@ -58,6 +59,10 @@ public sealed class OccupationCatalog
         _cbsFolds = _cbsTitles
             .Select(item => item.Fold)
             .Where(fold => fold.Length > 0)
+            .ToHashSet(StringComparer.Ordinal);
+        _cbsTitleByIsco = _cbsTitles
+            .Where(item => item.Fold.Length > 0 && item.Isco.Length > 0)
+            .Select(item => item.Isco + "\u001f" + item.Fold)
             .ToHashSet(StringComparer.Ordinal);
         _searchRules = searchRules.ToList();
         _swaps = swaps.ToList();
@@ -226,6 +231,18 @@ public sealed class OccupationCatalog
     {
         var fold = CareerOccupationKeys.Fold(occupation.Nl);
         return fold.Length > 0 && _cbsFolds.Contains(fold);
+    }
+
+    /// <summary>
+    /// True when this occupation's Dutch name is a CBS title filed under the same ISCO code.
+    /// That is the recognisable name of the group, not a niche ESCO variant.
+    /// </summary>
+    public bool IsCbsTitleForItsIsco(Occupation occupation)
+    {
+        var fold = CareerOccupationKeys.Fold(occupation.Nl);
+        return fold.Length > 0
+               && occupation.Isco.Length > 0
+               && _cbsTitleByIsco.Contains(occupation.Isco + "\u001f" + fold);
     }
 
     public static bool IsLeadership(Occupation occupation)

@@ -117,6 +117,12 @@ public class PlatformFeatureSettings
     public bool HonestAdviceEnabled { get; set; }
 
     /// <summary>
+    /// When true, candidates see "Werk met toekomst dat bij jou past" on Functiefit and Carrière.
+    /// Default false. Does not turn employers on.
+    /// </summary>
+    public bool FutureJobsForYouEnabled { get; set; }
+
+    /// <summary>
     /// When true, every candidate unlocks the uitgebreide analyse without Mollie.
     /// Default true so acceptatie is free after deploy. An admin can turn it off.
     /// Test accounts stay free even when this is false.

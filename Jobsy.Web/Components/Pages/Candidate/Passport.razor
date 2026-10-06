@@ -93,7 +93,7 @@
                      role="tablist"
                      aria-label="@Culture["Passport.Title"]"
                      @onkeydown="OnTabListKeyDown">
-                    @foreach (var tab in PassportTabs.Visible(_flags.EmployersEnabled))
+                    @foreach (var tab in PassportTabs.Visible(_flags.EmployersEnabled, _flags.FutureJobsForYouEnabled))
                     {
                         var id = $"passport-tab-{tab}";
                         var selected = _tab == tab;
@@ -160,11 +160,14 @@
                              hidden="@(_tab != PassportTabs.Fit)">
                         @if (_visited.Contains(PassportTabs.Fit))
                         {
-                            @if (_flags.EmployersEnabled)
+                            @if (_flags.EmployersEnabled || _flags.FutureJobsForYouEnabled)
                             {
                                 <LobsyBubble Text="@BubbleFor(PassportTabs.Fit)" />
                                 <PanelErrorBoundary Name="passport-fit">
-                                    <PassportFitTab Active="@(_tab == PassportTabs.Fit)" Snapshot="_kompas" OpenForWork="@(_profile?.OpenForWork ?? true)" />
+                                    <PassportFitTab Active="@(_tab == PassportTabs.Fit)"
+                                                    Snapshot="_kompas"
+                                                    OpenForWork="@(_profile?.OpenForWork ?? true)"
+                                                    CheckTitle="@_fitCheck" />
                                 </PanelErrorBoundary>
                             }
                             else
@@ -226,6 +229,7 @@
     private const string KompasPersistKey = "passport-kompas";
 
     private string _tab = PassportTabs.Dna;
+    private string? _fitCheck;
     private string? _proofItem;
     private bool _freshLayer;
     private readonly HashSet<string> _visited = new(StringComparer.OrdinalIgnoreCase);
@@ -385,6 +389,7 @@
         _freshLayer = query.TryGetValue("laag", out var laag)
             && string.Equals(laag.FirstOrDefault(), "1", StringComparison.Ordinal);
         _proofItem = query.TryGetValue("item", out var item) ? item.FirstOrDefault() : null;
+        _fitCheck = query.TryGetValue("check", out var check) ? check.FirstOrDefault() : null;
         _tab = tab;
         _visited.Add(_tab);
     }
@@ -416,7 +421,7 @@
             return;
         }
 
-        var visible = PassportTabs.Visible(_flags.EmployersEnabled);
+        var visible = PassportTabs.Visible(_flags.EmployersEnabled, _flags.FutureJobsForYouEnabled);
         if (delta == int.MinValue)
         {
             await SetTab(visible[0]);
@@ -429,7 +434,7 @@
             return;
         }
 
-        await SetTab(PassportTabs.Neighbor(_tab, delta, _flags.EmployersEnabled));
+        await SetTab(PassportTabs.Neighbor(_tab, delta, _flags.EmployersEnabled, _flags.FutureJobsForYouEnabled));
     }
 
     private void ApplyModel()

@@ -3500,6 +3500,7 @@ public static class UiStrings
         UiStringsStatus.MergeAll(nl, en, pl, ro, ar);
         UiStringsLegal.MergeAll(nl, en, pl, ro, ar);
         UiStringsOutlook.MergeAll(nl, en, pl, ro, ar);
+        UiStringsFutureJobs.MergeAll(nl, en, pl, ro, ar);
         UiStringsOccupationDay.MergeAll(nl, en, pl, ro, ar);
         UiStringsPublicInfo.MergeAll(nl, en, pl, ro, ar);
         UiStringsComeback.MergeAll(nl, en, pl, ro, ar);

@@ -267,6 +267,48 @@ public sealed class OccupationOutlook
         return iloRank >= 0 && itkbRank >= 0;
     }
 
+    /// <summary>
+    /// Demand facts for one occupation. False when the ROA typering or the openings
+    /// percentage is missing. The AI line is null when the ILO has no label for this job.
+    /// </summary>
+    public bool TryGetSourcedDemand(string? escoId, out SourcedDemand? demand)
+    {
+        demand = null;
+        var occupation = OccupationCatalog.Shared.Get(escoId);
+        if (occupation is null || string.IsNullOrWhiteSpace(occupation.Brc))
+        {
+            return false;
+        }
+
+        if (!_roa.TryGetValue(occupation.Brc, out var roa))
+        {
+            return false;
+        }
+
+        var rank = ItkbRank(roa.Itkb?.Typering);
+        if (rank < 0 || roa.Baanopeningen?.Totaal6jrperc is not double openings)
+        {
+            return false;
+        }
+
+        var outlook = Get(occupation.Id);
+        var ai = outlook.MissingReasons.Contains("geen-ilo") || outlook.AiLine == MissingIlo
+            ? null
+            : outlook.AiLine;
+        if (ContainsForbiddenWord(ai))
+        {
+            ai = null;
+        }
+
+        demand = new SourcedDemand(
+            rank,
+            (roa.Itkb?.Typering ?? "").Trim().ToLowerInvariant(),
+            openings,
+            string.IsNullOrWhiteSpace(ai) ? null : ai.Trim(),
+            (roa.Baanopeningen?.Typering ?? "").Trim().ToLowerInvariant());
+        return true;
+    }
+
     private List<string> Approved(string isco, IReadOnlyList<IloTask>? tasks)
     {
         var lines = new List<string>();
@@ -391,6 +433,13 @@ public sealed class IloTask
 
     public string? En { get; set; }
 }
+
+public sealed record SourcedDemand(
+    int ItkbRank,
+    string Typering,
+    double OpeningsPer100,
+    string? AiLine,
+    string OpeningsTypering);
 
 public sealed record OccupationOutlookResult(
     string? DemandLine,

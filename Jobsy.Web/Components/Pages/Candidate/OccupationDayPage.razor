@@ -172,9 +172,11 @@
         }
     }
 
-    private string BackHref => string.Equals(From, "fit", StringComparison.OrdinalIgnoreCase)
-        ? "/candidate/profile?tab=fit"
-        : "/candidate/profile?tab=tests";
+    private string BackHref => string.Equals(From, "career", StringComparison.OrdinalIgnoreCase)
+        ? "/carriere"
+        : string.Equals(From, "fit", StringComparison.OrdinalIgnoreCase)
+            ? "/candidate/profile?tab=fit"
+            : "/candidate/profile?tab=tests";
 
     private IReadOnlyList<string> TaskChips => _day?.Tasks ?? [];
 

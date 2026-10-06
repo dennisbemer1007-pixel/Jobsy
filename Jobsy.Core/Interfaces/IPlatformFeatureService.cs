@@ -47,7 +47,8 @@ public sealed record PlatformFeatureSnapshot(
     /// false so test stubs that omit the flag keep the paid checkout path.
     /// </summary>
     bool FreeCandidateTestsEnabled = false,
-    bool HonestAdviceEnabled = false);
+    bool HonestAdviceEnabled = false,
+    bool FutureJobsForYouEnabled = false);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -98,4 +99,6 @@ public sealed record PlatformFeatureUpdate(
     /// <summary>Null = keep existing. Product insert default is on.</summary>
     bool? FreeCandidateTestsEnabled = null,
     /// <summary>Null = keep existing. Default false.</summary>
-    bool? HonestAdviceEnabled = null);
+    bool? HonestAdviceEnabled = null,
+    /// <summary>Null = keep existing. Default false.</summary>
+    bool? FutureJobsForYouEnabled = null);
