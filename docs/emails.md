@@ -27,4 +27,4 @@ See `docs/email-deliverability.md` (From `hallo@mail.lobsy.nl`, Reply-To `suppor
 
 ## Legal footer
 
-`Mail:LegalName` (default Lobsy), `Mail:LegalAddress`, `Mail:KvkNumber`. Empty address/KvK → name only until Dennis fills Integraties / env.
+`Mail:LegalName` (default Lobsy), `Mail:LegalAddress`, `Mail:KvkNumber`. Empty address or KvK is filled from Admin → Bedrijfsgegevens. The integrations card warns only when both sources are still empty.

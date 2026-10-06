@@ -95,6 +95,27 @@ builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.Circu
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.RequestCultureCircuitHandler>();
 
 builder.Services.AddTransient<Jobsy.Web.Auth.TrustedClientIpHandler>();
+builder.Services.AddTransient<CloudflareOriginHeaderHandler>();
+builder.Services.AddTransient<JobsyApiRedirectHandler>();
+var cloudflareOriginSecret = CloudflareOriginSecret.Normalize(
+    builder.Configuration[CloudflareOriginMiddleware.ConfigKey]
+    ?? builder.Configuration[CloudflareOriginMiddleware.ConfigKeyAlt]);
+builder.Services.ConfigureHttpClientDefaults(http =>
+{
+    // Named API clients (auth, SEO, branding, session, …). While the secret is unset this
+    // handler is a no-op and redirects stay on the default HttpClientHandler.
+    // Once it is set, follow redirects here so a third-party hop never sees the secret.
+    if (cloudflareOriginSecret is not null)
+    {
+        http.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        http.AddHttpMessageHandler<JobsyApiRedirectHandler>();
+    }
+
+    http.AddHttpMessageHandler<CloudflareOriginHeaderHandler>();
+});
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton<JobsyAccessTokenIssuer>();
 builder.Services.AddMemoryCache();
@@ -437,6 +458,24 @@ if (string.IsNullOrWhiteSpace(builder.Configuration[Jobsy.Core.Security.Internal
 app.UseMiddleware<Jobsy.Web.Seo.SeoNoIndexMiddleware>();
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
+// Render probes the web service directly (not via Cloudflare). Answer before origin enforcement.
+app.Use(async (context, next) =>
+{
+    if ((HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))
+        && CloudflareOriginMiddleware.IsHealthProbe(context.Request.Path))
+    {
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        if (HttpMethods.IsGet(context.Request.Method))
+        {
+            await context.Response.WriteAsync("ok", context.RequestAborted);
+        }
+
+        return;
+    }
+
+    await next();
+});
 app.UseMiddleware<CloudflareOriginMiddleware>();
 app.UseWebSockets(new WebSocketOptions
 {

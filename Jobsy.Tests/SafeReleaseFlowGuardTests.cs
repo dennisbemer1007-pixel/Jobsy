@@ -34,6 +34,30 @@ public class SafeReleaseFlowGuardTests
         Assert.Contains("CursorCloud__Ref", yaml, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Render_yaml_mail_provider_is_lettermint_and_has_no_resend_value()
+    {
+        var yaml = File.ReadAllText(Path.Combine(FindRepoRoot(), "render.yaml"));
+        Assert.DoesNotContain("value: Resend", yaml, StringComparison.Ordinal);
+        Assert.Equal(4, Count(yaml, "value: Lettermint"));
+        Assert.Contains("key: Mail__ResendApiKey", yaml, StringComparison.Ordinal);
+        Assert.Contains("key: Lettermint__ApiKey", yaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("re_", yaml, StringComparison.Ordinal);
+    }
+
+    private static int Count(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

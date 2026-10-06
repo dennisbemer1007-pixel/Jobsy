@@ -38,7 +38,7 @@ Default connection string: `Host=localhost;Port=5432;Database=JobsyDb;Username=p
 
 ### Transactional mail
 
-`Mail__Provider` is `Resend` or `Lettermint`. Lettermint (https://lettermint.co, Dutch company, mail stays in the EU) sends only when `Lettermint__ApiKey` is set; otherwise Lobsy uses Resend and logs a warning once. Acceptatie sets `Mail__AllowedRecipientPattern` to `^test-[^@]+@lobsy\.nl$` and can add the admin address as `Mail__AllowedRecipientAddresses__0`. Production leaves the pattern empty, so every recipient is mailed. Full list: [`docs/deploy-render.md`](docs/deploy-render.md) and [`docs/email-deliverability.md`](docs/email-deliverability.md). No secret values belong in git.
+`Mail__Provider` is `Resend` or `Lettermint`. Lettermint (https://lettermint.co, Dutch company, mail stays in the EU) sends only when `Lettermint__ApiKey` is set. Without that key, mail is not sent and Lobsy logs an error once. Resend is used only when `Mail__Provider` is `Resend`. Acceptatie sets `Mail__AllowedRecipientPattern` to `^test-[^@]+@lobsy\.nl$` and can add the admin address as `Mail__AllowedRecipientAddresses__0`. Production leaves the pattern empty, so every recipient is mailed. Full list: [`docs/deploy-render.md`](docs/deploy-render.md) and [`docs/email-deliverability.md`](docs/email-deliverability.md). No secret values belong in git.
 
 ### Demo users
 

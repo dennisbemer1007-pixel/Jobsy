@@ -74,7 +74,9 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
-              # Cloudflare Transform Rule secret (header X-Jobsy-Origin-Secret).
+              # Same value on API and Web of this environment. Dashboard only — never commit a value.
+              # Web sends it as X-Jobsy-Origin-Secret on server-side calls to ApiBaseUrl.
+              # Browsers need a Cloudflare Transform Rule. Render probes: /health (API), /healthz (web).
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn
@@ -112,9 +114,10 @@ projects:
                 value: "https://lobsy.nl"
               - key: Cors__AllowedOrigins__2
                 value: "https://www.lobsy.nl"
-              # Mail. Provider Resend until Lettermint is verified. Set keys in the Dashboard — do not commit secrets.
+              # Mail via Lettermint (EU). Keys stay in the Dashboard — do not commit secrets.
+              # Without Lettermint__ApiKey, mail is not sent. Resend is not a fallback.
               - key: Mail__Provider
-                value: Resend
+                value: Lettermint
               - key: Mail__ResendApiKey
                 sync: false
               - key: Mail__FromAddress
@@ -177,6 +180,7 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              # Same value as this environment's API. Dashboard only (sync: false). See docs/deploy-render.md.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn
@@ -198,7 +202,7 @@ projects:
                 value: "false"
               # Same mail provider as the API so the privacy sentence matches the sender.
               - key: Mail__Provider
-                value: Resend
+                value: Lettermint
               - key: Lettermint__ApiKey
                 sync: false
               - key: WebPush__Subject
@@ -260,6 +264,7 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              # Same value on API and Web of this environment. Dashboard only — never commit a value.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn
@@ -317,7 +322,7 @@ projects:
                   envVarKey: RENDER_EXTERNAL_URL
               - key: Cors__AllowedOrigins__1
                 value: "https://acceptatie.lobsy.nl"
-              # Acceptatie mail: Lettermint when the key is set, otherwise Resend.
+              # Acceptatie mail: Lettermint. Without the key, mail is not sent (no Resend fallback).
               # Only test-*@lobsy.nl (and one extra address) may receive mail.
               - key: Mail__Provider
                 value: Lettermint
@@ -404,6 +409,7 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              # Same value as this environment's API. Dashboard only (sync: false). See docs/deploy-render.md.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
               - key: Sentry__Dsn

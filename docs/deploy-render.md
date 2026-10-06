@@ -84,9 +84,42 @@ De Blueprint zet `JobsyAuth__AllowDevelopmentAuth=false` op **alle** services (P
 - `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens.
 - `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met web voor OAuth credential-provisioning.
 - **ES256 JWT PEMs** (`JobsyAuth__Jwt__PublicKeyPem` op API, `JobsyAuth__Jwt__PrivateKeyPem` op Web) staan in de Blueprint als `sync: false`. Zonder Dashboard-waarde start de app met een gelogde **Development bootstrap-pair** (Critical in logs) zodat Acceptatie/Production niet crashen. Zet zo snel mogelijk een **eigen** ES256-paar per environment (openssl / `JobsyAccessToken.GenerateDevelopmentKeyPair`), zelfde private op Web en public op API. Production-PEMs mogen niet gelijk zijn aan Acceptatie.
-- `CLOUDFLARE_ORIGIN_SECRET` is ook `sync: false`. Leeg = geen origin-header-handhaving (Critical-log); gezet = Transform Rule verplicht (behalve `/health` op de API).
+- `CLOUDFLARE_ORIGIN_SECRET` is ook `sync: false` (geen waarde in de repo). Leeg = geen origin-header-handhaving (Critical-log in Production). Gezet = zie [Cloudflare origin-secret aanzetten](#cloudflare-origin-secret-aanzetten).
 
 Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth__DevelopmentAuthSecret`, `JobsyAuth__LocalSessionSigningKey` én `JobsyAuth__ExternalProvisionSecret` hebben. Production-secrets mogen **niet** gelijk zijn aan Acceptatie.
+
+## Cloudflare origin-secret aanzetten
+
+`CLOUDFLARE_ORIGIN_SECRET` staat in `render.yaml` als `sync: false` op API én web (Production `jobsy-api` / `jobsy-web` en Acceptatie `lobsy-acc-api` / `lobsy-acc-web`). Er hoort **geen** waarde in git.
+
+Zolang de variabele leeg is, verandert er niets: verkeer zonder header wordt doorgelaten en Production logt een Critical-regel dat handhaving uit staat.
+
+Staat de variabele wél gezet, dan weigert de service elk verzoek zonder header `X-Jobsy-Origin-Secret` (403), behalve:
+
+| Verkeer | Hoe het binnenkomt |
+|---------|-------------------|
+| Browser → web (en eventueel een geproxiede API-host) | Cloudflare Transform Rule zet de header |
+| Web → API (`ApiBaseUrl`, het `onrender.com`-adres) | De web-service stuurt de header zelf mee op server-side calls. Het geheim gaat niet naar de browser en niet naar Nominatim/PDOK of een externe redirect (bijv. vacaturefoto) |
+| Render health check | API `GET /health` en web `GET /healthz` blijven open |
+| Mollie `POST /api/webhooks/mollie` en Cursor `POST /api/feedback/cursor-webhook` | Blijven open op het Render-adres (`PublicApiBaseUrl` = `RENDER_EXTERNAL_URL`). Die routes verifiëren zelf (Mollie-pull / HMAC) |
+
+Direct `*.onrender.com` in de browser geeft daarna 403. Dat is de bedoeling.
+
+**Externe vacature-API** (`/api/external/vacancies`) op `*.onrender.com` geeft ook 403. Partners krijgen het geheim niet. Zet eerst een Cloudflare-proxied hostnaam (bijv. `api.lobsy.nl` / een acc-host) met dezelfde Transform Rule, zet `PublicApiBaseUrl` daarop en mail die URL. Doe dat vóór je de externe koppeling nodig hebt nádat het geheim aan staat.
+
+### Volgorde (per environment, nooit Production-waarde = Acceptatie)
+
+1. Deploy deze code terwijl het geheim nog **leeg** is. Gedrag blijft het oude.
+2. Genereer een lange random waarde (bijv. `openssl rand -base64 32`). Eén waarde voor API én web van **dezelfde** environment. Andere waarde voor de andere environment. Niet committen.
+3. Cloudflare → Rules → Transform Rules → **Modify Request Header**, op alle verzoeken naar de geproxiede hostnamen (ook `/_blazor`, dat is het WebSocket-upgrade-verzoek):
+   - Header: `X-Jobsy-Origin-Secret`
+   - Waarde: de geheime string (statisch)
+   - Production: `lobsy.nl` en `www.lobsy.nl`
+   - Acceptatie: `acceptatie.lobsy.nl` (oranje wolk), anders blijft het acc-subdomein `onrender.com` 403 geven zodra het geheim aan staat
+4. Zet `CLOUDFLARE_ORIGIN_SECRET` eerst op de **web**-service en wacht tot die deploy groen is (`/healthz`). De web-service stuurt de header daarna naar de API; de API eist hem nog niet.
+5. Zet **daarna** dezelfde waarde op de **API**-service en wacht tot `/health` groen is.
+
+Zet je de API eerder dan de web, dan weigert de API alle web→API-calls. Zet je de web eerder dan de Transform Rule, dan krijgen bezoekers 403.
 
 ### Named admin aanmaken (Production)
 
@@ -119,7 +152,7 @@ WHERE lower("Email") = lower('jij@jouwdomein.nl');
    - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
    - `JobsyAuth__AllowDevelopmentAuth=false`, `JobsyAuth__AllowStubPayments=false`, geen `Seed__PurgeDemoData`
    - Idealiter: `JobsyAuth__Jwt__PublicKeyPem` (API) + `JobsyAuth__Jwt__PrivateKeyPem` (Web) gezet; anders Critical bootstrap-log en Development-PEMs
-   - Idealiter: `CLOUDFLARE_ORIGIN_SECRET` gezet op API én Web (zelfde waarde) + Transform Rule
+   - `CLOUDFLARE_ORIGIN_SECRET` alleen ná de Cloudflare Transform Rule, eerst op web, daarna op API (zelfde waarde per environment) — zie hieronder
    - Production API-logs: **geen** “Operational wipe” / purge; alleen migrate (+ geen seed tenzij `Seed__Enabled`)
    - Acceptatie API-logs: `Seed completed` / `Seeding Jobsy mock data` (geen wipe)
    - `jobsy-api` URL + `/health` → OK
@@ -237,7 +270,7 @@ See also [email-deliverability.md](email-deliverability.md) for the Dennis check
 `Mail__Provider` kiest de verzender.
 
 - **Lettermint** (`POST https://api.lettermint.co/v1/send`, header `x-lettermint-token`) is een Nederlands bedrijf. De mail blijft in de EU. Dit pad is actief alleen als `Mail__Provider=Lettermint` én `Lettermint__ApiKey` gezet is.
-- Zonder die sleutel valt Lobsy terug op **Resend** (`POST https://api.resend.com/emails`) en logt één waarschuwing.
+- Zonder die sleutel gaat er geen mail via Resend. Lobsy logt één fout: Mail: niet ingesteld. Resend (`POST https://api.resend.com/emails`) geldt alleen als `Mail__Provider=Resend`.
 - SMTP is alleen fallback. Open- en klikmeting sturen we niet mee.
 
 Acceptatie zet `Mail__AllowedRecipientPattern` op `^test-[^@]+@lobsy\.nl$`. Andere adressen worden overgeslagen. Het log toont alleen een afgeschermd adres. `Mail__AllowedRecipientAddresses__0` is het extra adres van de beheerder. Productie laat het patroon leeg: daar gaat elke mail eruit.
@@ -265,7 +298,7 @@ Zet op `jobsy-api` (en provider + Lettermint-sleutel ook op `jobsy-web`):
 
 **B. Admin UI**
 
-Admin → Integraties → **Mail (Resend)** → plak de Resend API-key + From → Opslaan → **Stuur testmail**.
+Admin → Integraties → **Mail (Lettermint)** of **Mail (Resend)** → plak de Resend API-key + From als Resend de verzender is → Opslaan → **Stuur testmail**. De tegel toont de verzender die echt aan staat.
 
 De Lettermint-sleutel staat niet in dit scherm. Die zet je alleen als env var. DB-credentials voor Resend hebben voorrang; env vult lege velden.
 

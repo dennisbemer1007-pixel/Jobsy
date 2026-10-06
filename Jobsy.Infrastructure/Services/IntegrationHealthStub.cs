@@ -75,10 +75,10 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     {
         var (ok, message) = await RunLiveTestAsync(key, cancellationToken);
         await _credentials.SavePingResultAsync(key, ok, message, cancellationToken);
-        _ = await _credentials.GetAsync(key, cancellationToken);
+        var view = await _credentials.GetAsync(key, cancellationToken);
         return new IntegrationHealthResult(
             key,
-            IntegrationCredentialService.DisplayName(key),
+            view?.DisplayName ?? IntegrationCredentialService.DisplayName(key),
             ok,
             message,
             DateTime.UtcNow,

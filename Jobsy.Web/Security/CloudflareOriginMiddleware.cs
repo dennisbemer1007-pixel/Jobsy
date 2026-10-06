@@ -1,14 +1,23 @@
+using Jobsy.Core.Security;
+
 namespace Jobsy.Web.Security;
 
 /// <summary>
 /// When <c>CLOUDFLARE_ORIGIN_SECRET</c> is set, requires that shared secret header
-/// (Cloudflare Transform Rule). Empty secret skips enforcement (bootstrap until configured).
+/// (Cloudflare Transform Rule). Skips Render health probes (<c>/healthz</c>, <c>/health</c>).
+/// Empty secret skips enforcement (bootstrap until configured).
 /// </summary>
 public sealed class CloudflareOriginMiddleware
 {
-    public const string HeaderName = "X-Jobsy-Origin-Secret";
+    public const string HeaderName = CloudflareOriginSecret.HeaderName;
     public const string ConfigKey = "CLOUDFLARE_ORIGIN_SECRET";
     public const string ConfigKeyAlt = "Cloudflare:OriginSecret";
+    public const string UnsetInProductionMessage =
+        "CRITICAL: CLOUDFLARE_ORIGIN_SECRET is unset in Production; " +
+        "origin-header enforcement is disabled until the secret is configured.";
+    public const string InvalidInProductionMessage =
+        "CRITICAL: CLOUDFLARE_ORIGIN_SECRET is set but not a single-line header value; " +
+        "origin-header enforcement is disabled until it is replaced.";
 
     private readonly RequestDelegate _next;
     private readonly byte[]? _expected;
@@ -17,13 +26,15 @@ public sealed class CloudflareOriginMiddleware
     public CloudflareOriginMiddleware(
         RequestDelegate next,
         IConfiguration configuration,
-        IHostEnvironment environment)
+        IHostEnvironment environment,
+        ILogger<CloudflareOriginMiddleware>? logger = null)
     {
         _next = next;
-        var secret = configuration[ConfigKey] ?? configuration[ConfigKeyAlt];
-        if (!string.IsNullOrWhiteSpace(secret))
+        var raw = configuration[ConfigKey] ?? configuration[ConfigKeyAlt];
+        var secret = CloudflareOriginSecret.Normalize(raw);
+        if (secret is not null)
         {
-            _expected = System.Text.Encoding.UTF8.GetBytes(secret.Trim());
+            _expected = System.Text.Encoding.UTF8.GetBytes(secret);
             _enforce = true;
         }
         else
@@ -32,9 +43,16 @@ public sealed class CloudflareOriginMiddleware
             // secret is still empty (sync:false). Enforcement activates once configured.
             if (environment.IsProduction())
             {
-                Console.Error.WriteLine(
-                    "CRITICAL: CLOUDFLARE_ORIGIN_SECRET is unset in Production; " +
-                    "origin-header enforcement is disabled until the secret is configured.");
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    logger?.LogCritical(UnsetInProductionMessage);
+                    Console.Error.WriteLine(UnsetInProductionMessage);
+                }
+                else
+                {
+                    logger?.LogCritical(InvalidInProductionMessage);
+                    Console.Error.WriteLine(InvalidInProductionMessage);
+                }
             }
 
             _expected = null;
@@ -42,9 +60,20 @@ public sealed class CloudflareOriginMiddleware
         }
     }
 
+    /// <summary>Render health checks hit the service directly and cannot send the Cloudflare header.</summary>
+    public static bool IsHealthProbe(PathString path)
+    {
+        var value = path.Value ?? string.Empty;
+        return value.Equals("/healthz", StringComparison.OrdinalIgnoreCase)
+               || value.Equals("/healthz/", StringComparison.OrdinalIgnoreCase)
+               || value.Equals("/health", StringComparison.OrdinalIgnoreCase)
+               || value.Equals("/health/", StringComparison.OrdinalIgnoreCase);
+    }
+
     public async Task InvokeAsync(HttpContext context)
     {
-        if (_enforce && !IsValidOrigin(context))
+        var presentedValidSecret = IsValidOrigin(context);
+        if (_enforce && !IsHealthProbe(context.Request.Path) && !presentedValidSecret)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsync(
@@ -60,8 +89,8 @@ public sealed class CloudflareOriginMiddleware
         ApplyForwardedHttps(context);
 
         // Only a request which passed the origin-secret check may supply the Cloudflare
-        // client address. This keeps rate limits and audit data tied to the browser IP.
-        if (_enforce
+        // client address. Health probes must not be able to spoof it.
+        if (presentedValidSecret
             && System.Net.IPAddress.TryParse(
                 context.Request.Headers["CF-Connecting-IP"].ToString(),
                 out var clientIp))
@@ -101,9 +130,7 @@ public sealed class CloudflareOriginMiddleware
         }
 
         var provided = values.ToString() ?? string.Empty;
-        var providedBytes = System.Text.Encoding.UTF8.GetBytes(provided);
-        return providedBytes.Length == _expected.Length
-               && System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
-                   providedBytes, _expected);
+        var expected = System.Text.Encoding.UTF8.GetString(_expected);
+        return CloudflareOriginSecret.Matches(expected, provided);
     }
 }

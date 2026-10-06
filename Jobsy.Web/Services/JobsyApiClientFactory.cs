@@ -1,6 +1,8 @@
 using System.Net;
 using Jobsy.Core;
+using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Jobsy.Web.Services;
@@ -22,8 +24,30 @@ public static class JobsyApiClientFactory
         UseCookies = false
     };
 
+    /// <summary>
+    /// Used only when <c>CLOUDFLARE_ORIGIN_SECRET</c> is set, so cross-host image
+    /// redirects can drop the secret. Unset keeps <see cref="SharedSocketsHandler"/>.
+    /// </summary>
+    public static readonly SocketsHttpHandler SharedSocketsHandlerNoRedirect = new()
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+        AutomaticDecompression = DecompressionMethods.All,
+        UseCookies = false,
+        AllowAutoRedirect = false
+    };
+
     public static HttpClient Create(IServiceProvider sp, IConfiguration configuration)
     {
+        var originSecret = CloudflareOriginSecret.Normalize(
+            configuration[CloudflareOriginMiddleware.ConfigKey]
+            ?? configuration[CloudflareOriginMiddleware.ConfigKeyAlt]);
+        var sockets = originSecret is null ? SharedSocketsHandler : SharedSocketsHandlerNoRedirect;
+        HttpMessageHandler transport = new NonDisposingHandler(sockets);
+        if (originSecret is not null)
+        {
+            transport = new JobsyApiRedirectHandler { InnerHandler = transport };
+        }
+
         var auth = new JobsyApiAuthHandler(
             sp.GetRequiredService<IHttpContextAccessor>(),
             sp.GetRequiredService<AuthenticationStateProvider>(),
@@ -32,11 +56,16 @@ public static class JobsyApiClientFactory
             sp.GetRequiredService<JobsyAccessTokenIssuer>())
         {
             // Do not dispose the shared sockets handler when a scoped HttpClient is disposed.
-            InnerHandler = new NonDisposingHandler(SharedSocketsHandler)
+            InnerHandler = transport
+        };
+        // Inside the retry handler: retries strip X-Jobsy-* and this puts the origin secret back.
+        var origin = new CloudflareOriginHeaderHandler(configuration)
+        {
+            InnerHandler = auth
         };
         var retry = new JobsyApiTransientRetryHandler
         {
-            InnerHandler = auth
+            InnerHandler = origin
         };
         var handler = new ApiCallTrackingHandler(sp.GetService<ApiCallTracker>())
         {

@@ -263,10 +263,10 @@
                             @onclick:stopPropagation="true">
                         Stuur testmail
                     </button>
-                    <p class="muted">Stuurt een echte testmail via Resend (als API-key gezet is) of SMTP.</p>
+                    <p class="muted">Stuurt een echte testmail via de verzender die nu aan staat, of via SMTP.</p>
                     @if (_mailLegalFooterMissing)
                     {
-                        <p class="state-message error">E-mailfooter mist adres en/of KvK-nummer (Mail:LegalAddress, Mail:KvkNumber).</p>
+                        <p class="state-message error" data-testid="mail-legal-footer-warning">De e-mailfooter mist een adres of KvK-nummer. Vul Bedrijfsgegevens in. Of zet Mail:LegalAddress en Mail:KvkNumber.</p>
                     }
                 </div>
             }
@@ -357,7 +357,7 @@
 
     protected override void OnParametersSet()
     {
-        _mailLegalFooterMissing = IsMailIntegration && MailOptions.Value.MissingLegalFooter;
+        _mailLegalFooterMissing = IsMailIntegration && Credential.LegalFooterMissing;
         var keyChanged = !string.Equals(_boundKey, Credential.Key, StringComparison.OrdinalIgnoreCase);
         var serverUpdated = Credential.UpdatedAtUtc != _boundUpdatedAtUtc;
         if (keyChanged)
