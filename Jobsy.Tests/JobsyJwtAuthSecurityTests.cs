@@ -111,6 +111,33 @@ public class JobsyJwtAuthSecurityTests : IClassFixture<JobsyJwtAuthSecurityFacto
         var response = await client.GetAsync("/health");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Mollie_webhook_is_reachable_without_origin_header()
+    {
+        var client = _factory.CreateClient();
+        using var body = new FormUrlEncodedContent(new Dictionary<string, string>());
+        var response = await client.PostAsync("/api/webhooks/mollie", body);
+        Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Cursor_webhook_is_reachable_without_origin_header()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.PostAsync(
+            "/api/feedback/cursor-webhook",
+            new StringContent("{}", System.Text.Encoding.UTF8, "application/json"));
+        Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task External_vacancy_api_still_requires_origin_header()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/api/external/vacancies");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }
 
 public sealed class JobsyJwtAuthSecurityFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
