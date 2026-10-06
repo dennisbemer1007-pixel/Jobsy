@@ -165,13 +165,29 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _started || !RendererInfo.IsInteractive)
+        if (!firstRender || _started || !IsInteractiveRender())
         {
             return;
         }
 
         _started = true;
         await LoadAsync();
+    }
+
+    /// <summary>
+    /// Static and test renders have no interactive circuit. Bunit throws when the
+    /// renderer was not configured, which is the same as "not interactive".
+    /// </summary>
+    private bool IsInteractiveRender()
+    {
+        try
+        {
+            return RendererInfo.IsInteractive;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private async Task LoadAsync()

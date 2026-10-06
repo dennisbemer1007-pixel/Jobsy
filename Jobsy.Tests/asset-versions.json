@@ -39,6 +39,10 @@
     "sha256": "9815efc2872ddd3d2b7d4fcf528ac0d0019fe90494ad060682e8d7091c2fec81",
     "v": "20261004-10"
   },
+  "css/features/future-jobs.css": {
+    "sha256": "78bf18d1a684c393bd4c61a439436f74488ba496619ab71063a935bee494e3b2",
+    "v": "20261006-02"
+  },
   "css/features/gratis-dna.css": {
     "sha256": "2a7d8f1c132b3556c62fc1cbfbbb8300b579f73ca684b4760bc9275a2fdeada5",
     "v": "20261004-10"
