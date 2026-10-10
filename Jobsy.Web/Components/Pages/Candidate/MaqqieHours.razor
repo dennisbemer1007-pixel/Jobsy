@@ -5,8 +5,10 @@
 @using Jobsy.Core.Features
 @using Jobsy.Core.Interfaces
 @attribute [RequiresFeature(PlatformFeature.EmployerPhase2)]
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 
 <PageTitle>Uren doorgeven · Lobsy</PageTitle>
 
@@ -155,7 +157,8 @@ else
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

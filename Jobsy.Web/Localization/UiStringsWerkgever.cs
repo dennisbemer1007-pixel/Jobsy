@@ -409,6 +409,17 @@ public static class UiStringsWerkgever
         Add("WgApp.Step.Hired", "Aangenomen", "Hired", "Zatrudniony", "Angajat", "مُعيَّن");
         Add("WgApp.Back", "Terug", "Back", "Wstecz", "Înapoi", "رجوع");
         Add("WgApp.Completed", "Afgerond", "Completed", "Ukończone", "Finalizat", "مكتمل");
+        Add("WgPhase2.FactsTitle", "Wat past bij de baan", "What fits the job", "Co pasuje do pracy", "Ce se potrivește jobului", "ما يناسب الوظيفة");
+        Add("WgPhase2.AcceptCost", "Accepteren kost {0}", "Accepting costs {0}", "Akceptacja kosztuje {0}", "Acceptarea costă {0}", "القبول يكلف {0}");
+        Add("WgPhase2.AcceptCta", "Accepteren", "Accept", "Akceptuj", "Acceptă", "قبول");
+        Add("WgPhase2.AcceptFailed", "Accepteren is niet gelukt.", "Accepting failed.", "Akceptacja nie powiodła się.", "Acceptarea a eșuat.", "فشل القبول.");
+        Add("WgPhase2.ChoiceTitle", "Hoe wil je laten werken?", "How will they work?", "Jak chcesz, żeby pracował?", "Cum va lucra?", "كيف سيعمل؟");
+        Add("WgPhase2.ChoiceLead", "Kies zelf in dienst of via Maqqie. Via Maqqie krijg je na week 1 je token terug.", "Choose direct hire or via Maqqie. With Maqqie you get your token back after week 1.", "Wybierz bezpośrednio lub przez Maqqie.", "Alege direct sau prin Maqqie.", "اختر مباشرة أو عبر Maqqie.");
+        Add("WgPhase2.Mode.Self", "Zelf in dienst", "Direct hire", "Bezpośrednio", "Angajare directă", "توظيف مباشر");
+        Add("WgPhase2.Mode.Maqqie", "Via Maqqie", "Through Maqqie", "Przez Maqqie", "Prin Maqqie", "عبر Maqqie");
+        Add("WgPhase2.ModeChosen.Maqqie", "Route: Maqqie", "Path: Maqqie", "Trasa: Maqqie", "Rută: Maqqie", "المسار: Maqqie");
+        Add("WgPhase2.ModeChosen.Self", "Route: zelf in dienst", "Route: direct hire", "Trasa: bezpośrednio", "Rută: direct", "المسار: مباشر");
+        Add("WgPhase2.ChoiceFailed", "Keuze opslaan is niet gelukt.", "Could not save choice.", "Nie zapisano wyboru.", "Nu s-a putut salva alegerea.", "تعذر حفظ الاختيار.");
 
         // Organisatie / Team (05)
         Add("WgOrg.Lead", "Je organisatie, regio's, vestigingen en wie waar bij kan.", "Your organisation, regions, branches and who can access what.", "Twoja organizacja, regiony, placówki i kto ma dostęp.", "Organizația, regiunile, filialele și cine are acces.", "منظمتك والمناطق والفروع ومن يمكنه الوصول.");
