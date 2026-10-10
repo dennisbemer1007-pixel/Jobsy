@@ -115,7 +115,8 @@ public sealed class EmployerPhase2ApplicationContextItem
     public bool IsStaffingAgencyVacancy { get; set; }
     public bool HasPlacement { get; set; }
     public PlacementEmploymentMode? EmploymentMode { get; set; }
-    public decimal? AcceptCostTokens { get; set; }
+    public decimal AcceptCostTokens { get; set; }
+    public bool OffersEmploymentModeChoice { get; set; }
     public List<EmployerPhase2FactItem> Facts { get; set; } = [];
 }
 

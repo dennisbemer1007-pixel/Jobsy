@@ -411,6 +411,7 @@ public static class UiStringsWerkgever
         Add("WgApp.Completed", "Afgerond", "Completed", "Ukończone", "Finalizat", "مكتمل");
         Add("WgPhase2.FactsTitle", "Wat past bij de baan", "What fits the job", "Co pasuje do pracy", "Ce se potrivește jobului", "ما يناسب الوظيفة");
         Add("WgPhase2.AcceptCost", "Accepteren kost {0}", "Accepting costs {0}", "Akceptacja kosztuje {0}", "Acceptarea costă {0}", "القبول يكلف {0}");
+        Add("WgPhase2.AcceptFree", "Accepteren is gratis.", "Accepting is free.", "Akceptacja jest bezpłatna.", "Acceptarea este gratuită.", "القبول مجاني.");
         Add("WgPhase2.AcceptCta", "Accepteren", "Accept", "Akceptuj", "Acceptă", "قبول");
         Add("WgPhase2.AcceptFailed", "Accepteren is niet gelukt.", "Accepting failed.", "Akceptacja nie powiodła się.", "Acceptarea a eșuat.", "فشل القبول.");
         Add("WgPhase2.ChoiceTitle", "Hoe wil je laten werken?", "How will they work?", "Jak chcesz, żeby pracował?", "Cum va lucra?", "كيف سيعمل؟");

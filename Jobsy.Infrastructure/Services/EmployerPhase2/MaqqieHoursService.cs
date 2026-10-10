@@ -3,6 +3,7 @@ using System.Text.Json;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -45,7 +46,9 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
         return await (
             from p in _db.ApplicationPlacements.AsNoTracking()
             join a in _db.Applications.AsNoTracking() on p.ApplicationId equals a.Id
+            join v in _db.Vacancies.AsNoTracking() on a.VacancyId equals v.Id
             where p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                  && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(v.Kind)
                   && a.CandidateUserId == candidateUserId
                   && a.Status != ApplicationStatus.Rejected
                   && a.Status != ApplicationStatus.Withdrawn
@@ -65,6 +68,7 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
             .AsNoTracking()
             .Include(p => p.Application).ThenInclude(a => a.Vacancy).ThenInclude(v => v.Company)
             .Where(p => p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                        && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(p.Application.Vacancy.Kind)
                         && p.Application.CandidateUserId == candidateUserId)
             .OrderByDescending(p => p.EmploymentModeChosenAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
@@ -208,7 +212,8 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
                 w => w.ApplicationId == applicationId
                      && w.Status >= MaqqieHoursWeekStatus.EmployerApproved,
                 cancellationToken);
-        if (approvedCount == 1)
+        if (approvedCount == 1
+            && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(week.Application.Vacancy.Kind))
         {
             await _phase2.TryCreditMaqqieWeekOneAsync(applicationId, cancellationToken);
         }
@@ -283,6 +288,7 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
             join p in _db.ApplicationPlacements.AsNoTracking() on a.Id equals p.ApplicationId
             join v in _db.Vacancies.AsNoTracking() on a.VacancyId equals v.Id
             where p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                  && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(v.Kind)
                   && w.Status == MaqqieHoursWeekStatus.Submitted
                   && ScopeMatches(accessibleCompanyIds, v.CompanyId, v.IntermediaryCompanyId)
             orderby w.WeekStart descending, w.SubmittedAtUtc descending
@@ -301,16 +307,21 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
     }
 
     private async Task<bool> IsMaqqieApplicationAsync(Guid applicationId, CancellationToken cancellationToken)
-        => await _db.ApplicationPlacements.AsNoTracking()
-            .AnyAsync(
-                p => p.ApplicationId == applicationId && p.EmploymentMode == PlacementEmploymentMode.Maqqie,
-                cancellationToken);
+        => await (
+            from p in _db.ApplicationPlacements.AsNoTracking()
+            join a in _db.Applications.AsNoTracking() on p.ApplicationId equals a.Id
+            join v in _db.Vacancies.AsNoTracking() on a.VacancyId equals v.Id
+            where p.ApplicationId == applicationId
+                  && p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                  && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(v.Kind)
+            select p).AnyAsync(cancellationToken);
 
     private IQueryable<ApplicationPlacement> MaqqiePlacementQuery(IReadOnlySet<Guid>? accessibleCompanyIds)
         => from p in _db.ApplicationPlacements.AsNoTracking()
            join a in _db.Applications.AsNoTracking() on p.ApplicationId equals a.Id
            join v in _db.Vacancies.AsNoTracking() on a.VacancyId equals v.Id
            where p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                 && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(v.Kind)
                  && ScopeMatches(accessibleCompanyIds, v.CompanyId, v.IntermediaryCompanyId)
            select p;
 
@@ -344,7 +355,9 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
     {
         return await _db.ApplicationPlacements
             .AsNoTracking()
+            .Include(p => p.Application).ThenInclude(a => a.Vacancy)
             .Where(p => p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                        && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(p.Application.Vacancy.Kind)
                         && p.Application.CandidateUserId == candidateUserId)
             .OrderByDescending(p => p.EmploymentModeChosenAtUtc)
             .Select(p => p.ApplicationId)

@@ -23,17 +23,20 @@ public sealed class EmployerPhase2Controller : ControllerBase
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IUserLookupService _users;
     private readonly IEmployerPhase2Service _phase2;
+    private readonly IFlexCommercialService _commercial;
 
     public EmployerPhase2Controller(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IUserLookupService users,
-        IEmployerPhase2Service phase2)
+        IEmployerPhase2Service phase2,
+        IFlexCommercialService commercial)
     {
         _db = db;
         _companyAuth = companyAuth;
         _users = users;
         _phase2 = phase2;
+        _commercial = commercial;
     }
 
     [HttpGet("applications/{applicationId:guid}/context")]
@@ -63,13 +66,25 @@ public sealed class EmployerPhase2Controller : ControllerBase
             .Select(f => new EmployerPhase2FactDto(f.Label, f.Value, f.FitsWell))
             .ToList();
 
+        var commercial = await _commercial.GetAsync(cancellationToken);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var acceptCost = placement?.AcceptCostTokens
+                         ?? AcceptCandidateVacancyRules.ResolveAcceptCostTokens(
+                             application.Vacancy.Kind,
+                             commercial,
+                             today);
+        var offersEmploymentModeChoice = application.Vacancy.IntermediaryCompanyId is null
+                                         && AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(
+                                             application.Vacancy.Kind);
+
         return Ok(new EmployerPhase2ApplicationContextDto(
             application.Id,
             application.Status,
             application.Vacancy.IntermediaryCompanyId is not null,
             placement is not null,
             placement?.EmploymentMode,
-            placement?.AcceptCostTokens,
+            acceptCost,
+            offersEmploymentModeChoice,
             facts));
     }
 
@@ -206,7 +221,8 @@ public sealed record EmployerPhase2ApplicationContextDto(
     bool IsStaffingAgencyVacancy,
     bool HasPlacement,
     PlacementEmploymentMode? EmploymentMode,
-    decimal? AcceptCostTokens,
+    decimal AcceptCostTokens,
+    bool OffersEmploymentModeChoice,
     IReadOnlyList<EmployerPhase2FactDto> Facts);
 
 public sealed record ChooseEmploymentModeRequest(PlacementEmploymentMode Mode);

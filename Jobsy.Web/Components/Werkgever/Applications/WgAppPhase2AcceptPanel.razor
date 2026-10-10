@@ -28,7 +28,14 @@
         @if (_context is { HasPlacement: false, Status: ApplicationStatus.Pending } && CanWrite)
         {
             <p class="wg-phase2__cost">
-                @string.Format(Culture["WgPhase2.AcceptCost"], FormatCost(_context.AcceptCostTokens))
+                @if (_context.AcceptCostTokens <= 0)
+                {
+                    @Culture["WgPhase2.AcceptFree"]
+                }
+                else
+                {
+                    @string.Format(Culture["WgPhase2.AcceptCost"], FormatCost(_context.AcceptCostTokens))
+                }
             </p>
             @if (!string.IsNullOrEmpty(_error))
             {
@@ -41,7 +48,7 @@
                 @Culture["WgPhase2.AcceptCta"]
             </button>
         }
-        else if (_context is { HasPlacement: true, IsStaffingAgencyVacancy: false, EmploymentMode: null, Status: ApplicationStatus.Accepted } && CanWrite)
+        else if (_context is { HasPlacement: true, IsStaffingAgencyVacancy: false, OffersEmploymentModeChoice: true, EmploymentMode: null, Status: ApplicationStatus.Accepted } && CanWrite)
         {
             <h3 class="wg-phase2__title">@Culture["WgPhase2.ChoiceTitle"]</h3>
             <p class="muted">@Culture["WgPhase2.ChoiceLead"]</p>

@@ -70,10 +70,36 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
 
         var commercial = await _commercial.GetAsync(cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var cost = AcceptCandidatePricingRules.ResolveCostTokens(commercial, today);
+        var cost = AcceptCandidateVacancyRules.ResolveAcceptCostTokens(
+            application.Vacancy.Kind,
+            commercial,
+            today);
         var billingCompanyId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
 
         var respondedAt = DateTime.UtcNow;
+        if (cost <= 0m)
+        {
+            if (!_statusRecorder.SetStatus(
+                    application,
+                    ApplicationStatus.Accepted,
+                    ApplicationStatusActorKind.Employer,
+                    actorUserId,
+                    respondedAt))
+            {
+                return new(false, "react_failed", "Op deze sollicitatie kun je niet meer reageren.", null);
+            }
+
+            _db.ApplicationPlacements.Add(new ApplicationPlacement
+            {
+                ApplicationId = applicationId,
+                BillingCompanyId = billingCompanyId,
+                AcceptCostTokens = 0m
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+            var balance = await _tokens.GetBalanceAsync(billingCompanyId, cancellationToken);
+            return new(true, null, null, balance);
+        }
+
         var spend = await _tokens.TrySpendAsync(
             billingCompanyId,
             TokenSpendReason.AcceptCandidate,
@@ -150,6 +176,11 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
             return new(false, "not_applicable", "Uitzendbureaus kiezen geen Maqqie-route.");
         }
 
+        if (!AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(placement.Application.Vacancy.Kind))
+        {
+            return new(false, "not_applicable", "Voor stage en vrijwilligerswerk is geen Maqqie-route.");
+        }
+
         if (placement.Application.Status != ApplicationStatus.Accepted)
         {
             return new(false, "invalid_status", "Keuze kan alleen na accepteren.");
@@ -172,8 +203,8 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
     {
         var commercial = await _commercial.GetAsync(cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var cost = AcceptCandidatePricingRules.ResolveCostTokens(commercial, today);
         var balance = await _tokens.GetBalanceAsync(billingCompanyId, cancellationToken);
+        var defaultCost = AcceptCandidatePricingRules.ResolveCostTokens(commercial, today);
 
         var placements = await _db.ApplicationPlacements
             .AsNoTracking()
@@ -214,8 +245,10 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
         }
 
         var pending = placements
-            .Where(x => x.p.EmploymentMode == PlacementEmploymentMode.Maqqie
-                        && x.p.MaqqieCreditGrantedAtUtc is null)
+            .Where(x => AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(x.v.Kind)
+                        && x.p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                        && x.p.MaqqieCreditGrantedAtUtc is null
+                        && x.p.AcceptCostTokens > 0)
             .Select(x => new EmployerPhase2PendingCreditDto(
                 x.a.Id,
                 MaskName(x.a.CandidateName),
@@ -226,8 +259,8 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
         return new EmployerPhase2WalletDto(
             balance,
             AcceptCandidatePricingRules.IsPilotActive(commercial, today),
-            cost,
-            AcceptCandidatePricingRules.EuroDisplay(cost),
+            defaultCost,
+            AcceptCandidatePricingRules.EuroDisplay(defaultCost),
             lines.OrderByDescending(l => l.OccurredAtUtc).Take(20).ToList(),
             pending);
     }
@@ -242,9 +275,10 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
         }
 
         var placement = await _db.ApplicationPlacements
-            .Include(p => p.Application)
+            .Include(p => p.Application).ThenInclude(a => a.Vacancy)
             .FirstOrDefaultAsync(p => p.ApplicationId == applicationId, cancellationToken);
         if (placement is null
+            || !AcceptCandidateVacancyRules.SupportsEmploymentModeChoice(placement.Application.Vacancy.Kind)
             || placement.EmploymentMode != PlacementEmploymentMode.Maqqie
             || placement.MaqqieCreditGrantedAtUtc is not null
             || placement.AcceptCostTokens <= 0)
