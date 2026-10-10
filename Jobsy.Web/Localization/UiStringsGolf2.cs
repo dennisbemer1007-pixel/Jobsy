@@ -224,7 +224,7 @@ internal static class UiStringsGolf2
 
         Add("Golf2.Admin.Title",
             "Westland pilot",
-            "Westland pilot",
+            "Westland pilot programme",
             "Pilot Westland",
             "Pilot Westland",
             "تجربة Westland");
@@ -270,6 +270,18 @@ internal static class UiStringsGolf2
             "Pobierz CSV (zadania)",
             "Descarcă CSV (sarcini)",
             "تنزيل CSV (المهام)");
+        Add("Golf2.Admin.LoadFailed",
+            "Kon niet laden. Probeer het later opnieuw.",
+            "Could not load. Try again later.",
+            "Nie udało się załadować. Spróbuj później.",
+            "Nu s-a putut încărca. Încearcă mai târziu.",
+            "تعذّر التحميل. حاول لاحقًا.");
+        Add("Golf2.Admin.ExportFailed",
+            "Download mislukt. Probeer het later opnieuw.",
+            "Download failed. Try again later.",
+            "Pobieranie nie powiodło się. Spróbuj później.",
+            "Descărcarea a eșuat. Încearcă mai târziu.",
+            "فشل التنزيل. حاول لاحقًا.");
 
         Add("Golf2.SamenStarten.Title",
             "Samen starten",
@@ -309,7 +321,7 @@ internal static class UiStringsGolf2
             "ورقة قصيرة للمقابلة. بدون نتائج أو تاريخ ميلاد.");
         Add("Golf2.SamenStarten.Section3Title",
             "Privacy",
-            "Privacy",
+            "Your privacy",
             "Prywatność",
             "Confidențialitate",
             "الخصوصية");

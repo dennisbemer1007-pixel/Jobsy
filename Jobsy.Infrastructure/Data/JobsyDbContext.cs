@@ -173,6 +173,14 @@ public class JobsyDbContext : DbContext
     public DbSet<VacancyCategory> VacancyCategories => Set<VacancyCategory>();
     public DbSet<SalesPackage> SalesPackages => Set<SalesPackage>();
     public DbSet<PlatformFeedback> PlatformFeedbacks => Set<PlatformFeedback>();
+    public DbSet<WestlandPilotCohort> WestlandPilotCohorts => Set<WestlandPilotCohort>();
+    public DbSet<WestlandPilotEnrollment> WestlandPilotEnrollments => Set<WestlandPilotEnrollment>();
+    public DbSet<PassportFourTestsFeedback> PassportFourTestsFeedbacks => Set<PassportFourTestsFeedback>();
+    public DbSet<CandidateOutsideWorkExperience> CandidateOutsideWorkExperiences => Set<CandidateOutsideWorkExperience>();
+    public DbSet<CandidateConversationSheet> CandidateConversationSheets => Set<CandidateConversationSheet>();
+    public DbSet<WestlandOccupation> WestlandOccupations => Set<WestlandOccupation>();
+    public DbSet<WestlandOccupationTask> WestlandOccupationTasks => Set<WestlandOccupationTask>();
+    public DbSet<CandidateWestlandTaskChoice> CandidateWestlandTaskChoices => Set<CandidateWestlandTaskChoice>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -2814,6 +2822,106 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.School)
                 .WithMany()
                 .HasForeignKey(e => e.SchoolId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WestlandPilotCohort>(entity =>
+        {
+            entity.ToTable("WestlandPilotCohorts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Key).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(120).IsRequired();
+            entity.HasIndex(e => e.Key).IsUnique();
+        });
+
+        modelBuilder.Entity<WestlandPilotEnrollment>(entity =>
+        {
+            entity.ToTable("WestlandPilotEnrollments");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.CohortId, e.UserId }).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasOne(e => e.Cohort)
+                .WithMany(c => c.Enrollments)
+                .HasForeignKey(e => e.CohortId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PassportFourTestsFeedback>(entity =>
+        {
+            entity.ToTable("PassportFourTestsFeedbacks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.OpenAnswer).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateOutsideWorkExperience>(entity =>
+        {
+            entity.ToTable("CandidateOutsideWorkExperiences");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ActivityTitle).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.SortOrder });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateConversationSheet>(entity =>
+        {
+            entity.ToTable("CandidateConversationSheets");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.StrengthsText).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.MotivationText).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.CustomText).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WestlandOccupation>(entity =>
+        {
+            entity.ToTable("WestlandOccupations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EscoId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TitleNl).HasMaxLength(160).IsRequired();
+            entity.HasIndex(e => e.EscoId).IsUnique();
+        });
+
+        modelBuilder.Entity<WestlandOccupationTask>(entity =>
+        {
+            entity.ToTable("WestlandOccupationTasks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TitleNl).HasMaxLength(200).IsRequired();
+            entity.HasIndex(e => new { e.OccupationId, e.SortOrder });
+            entity.HasOne(e => e.Occupation)
+                .WithMany(o => o.Tasks)
+                .HasForeignKey(e => e.OccupationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateWestlandTaskChoice>(entity =>
+        {
+            entity.ToTable("CandidateWestlandTaskChoices");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.UserId, e.TaskId }).IsUnique();
+            entity.HasOne(e => e.Task)
+                .WithMany(t => t.Choices)
+                .HasForeignKey(e => e.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

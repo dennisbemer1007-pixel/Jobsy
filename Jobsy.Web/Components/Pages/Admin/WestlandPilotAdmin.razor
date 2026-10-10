@@ -71,9 +71,9 @@
                 _error = Culture["Golf2.Admin.Off"];
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Golf2.Admin.LoadFailed"];
         }
         finally
         {
@@ -99,11 +99,11 @@
             }
 
             var b64 = Convert.ToBase64String(bytes);
-            await Js.InvokeVoidAsync("eval", $"(() => {{ const a = document.createElement('a'); a.href = 'data:text/csv;base64,{b64}'; a.download = 'westland-pilot.csv'; a.click(); }})()");
+            await Js.InvokeVoidAsync("jobsyDownload.bytes", "westland-pilot.csv", b64, "text/csv;charset=utf-8");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Golf2.Admin.ExportFailed"];
         }
         finally
         {

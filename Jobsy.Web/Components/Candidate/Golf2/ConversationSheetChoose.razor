@@ -105,13 +105,13 @@
             await Api.SaveGolf2ConversationSheetAsync(_strengths, _motivation, _custom, null);
             Navigation.NavigateTo("/candidate/paspoort/gespreksblad/print");
         }
-        catch (ApiErrorException ex)
+        catch (ApiErrorException)
         {
-            _errors.Add(ex.Message);
+            _errors.Add(Culture["Panel.ErrorInline"]);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _errors.Add(ex.Message);
+            _errors.Add(Culture["Panel.ErrorInline"]);
         }
         finally
         {

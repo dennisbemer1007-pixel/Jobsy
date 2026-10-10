@@ -43,6 +43,10 @@
     "sha256": "78bf18d1a684c393bd4c61a439436f74488ba496619ab71063a935bee494e3b2",
     "v": "20261006-02"
   },
+  "css/features/golf2-westland.css": {
+    "sha256": "63e380f9c39941e89eca17c8dfa56df3fb600da072de3e7e0dc35d2ae0c68268",
+    "v": "20261010-01"
+  },
   "css/features/gratis-dna.css": {
     "sha256": "2a7d8f1c132b3556c62fc1cbfbbb8300b579f73ca684b4760bc9275a2fdeada5",
     "v": "20261004-10"

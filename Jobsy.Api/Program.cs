@@ -7,6 +7,7 @@ using Jobsy.Api.Ops;
 using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
+using Jobsy.Core.Options;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -101,6 +102,10 @@ builder.Services.AddControllers(options =>
             System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 builder.Services.AddOpenApi(ExternalApiOpenApi.DocumentName, ExternalApiOpenApi.Configure);
+builder.Services.Configure<Golf2WestlandOptions>(
+    builder.Configuration.GetSection(Golf2WestlandOptions.SectionName));
+builder.Services.AddScoped<Jobsy.Infrastructure.Services.WestlandPilotReportingService>();
+builder.Services.AddScoped<Jobsy.Infrastructure.Services.Golf2CandidateService>();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddJobsyApiAuthorization(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<DatabaseSeedHostedService>();

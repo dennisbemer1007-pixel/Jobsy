@@ -53,9 +53,9 @@
             _hoursText = null;
             await OnAdded.InvokeAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Panel.ErrorInline"];
         }
         finally
         {
