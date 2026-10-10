@@ -30,7 +30,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 table: "FlexCommercialSettings",
                 type: "numeric",
                 nullable: false,
-                defaultValue: 0m);
+                defaultValue: 0.5m);
 
             migrationBuilder.AddColumn<DateOnly>(
                 name: "AcceptCandidatePilotEndsOn",
@@ -43,7 +43,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 table: "FlexCommercialSettings",
                 type: "numeric",
                 nullable: false,
-                defaultValue: 0m);
+                defaultValue: 1m);
 
             migrationBuilder.CreateTable(
                 name: "ApplicationPlacements",
