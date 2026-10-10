@@ -1067,7 +1067,11 @@ public sealed partial class JobsyApiClient
                 settings.DeepTestPriceValuesEuro,
                 settings.DeepTestPriceCultureEuro,
                 settings.AgencyAnnualPriceEuro,
-                settings.ContactUnlockCostTokens
+                settings.ContactUnlockCostTokens,
+                settings.AcceptCandidatePilotCostTokens,
+                settings.AcceptCandidatePilotEndsOn,
+                settings.AcceptCandidateStandardCostTokens,
+                settings.FirstEmployerAcceptanceFreeEnabled
             },
             ct);
         if (!response.IsSuccessStatusCode)

@@ -30,6 +30,7 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
     private readonly IOneTimeLinkService _oneTimeLinks;
     private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
+    private readonly IExternalVacancyTravelEstimator _travel;
     private readonly ILogger<CandidateExternalVacancyService> _logger;
 
     public CandidateExternalVacancyService(
@@ -43,6 +44,7 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         IOneTimeLinkService oneTimeLinks,
         ITransactionalMailer mailer,
         IPlatformFeatureService features,
+        IExternalVacancyTravelEstimator travel,
         ILogger<CandidateExternalVacancyService> logger)
     {
         _db = db;
@@ -55,6 +57,7 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         _oneTimeLinks = oneTimeLinks;
         _mailer = mailer;
         _features = features;
+        _travel = travel;
         _logger = logger;
     }
 
@@ -78,6 +81,10 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         var structured = BuildStructuredFacts(extracted);
         var insights = await _match.BuildMatchInsightsAsync(candidateUserId, structured, cancellationToken);
         var suggested = await _contacts.FindEmployerEmailsAsync(uri, extracted.Company, cancellationToken);
+        var travelMinutes = await _travel.TryEstimateTravelMinutesAsync(
+            candidateUserId,
+            extracted.Place,
+            cancellationToken);
 
         var row = new CandidateExternalVacancy
         {
@@ -95,6 +102,7 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
             RequirementsBulletsJson = JsonSerializer.Serialize(extracted.RequirementBullets, JsonOptions),
             StructuredFactsJson = JsonSerializer.Serialize(structured, JsonOptions),
             MatchInsightsJson = JsonSerializer.Serialize(insights, JsonOptions),
+            TravelMinutesEstimate = travelMinutes,
             SavedAtUtc = DateTime.UtcNow,
             Status = CandidateExternalVacancyStatus.Saved
         };
@@ -215,6 +223,8 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         var apiBase = JobsyPublicUrl.NormalizeBaseUrl(platform.PublicWebBaseUrl, "http://localhost:5200/");
         var unsubUrl =
             $"{apiBase}api/public/external-vacancy/unsubscribe?token={Uri.EscapeDataString(unsubToken)}";
+        var openUrl =
+            $"{apiBase}api/public/external-vacancy/open?token={Uri.EscapeDataString(link.Token)}";
 
         var mail = TransactionalEmails.ExternalVacancyApplication(
             platform.PublicWebBaseUrl,
@@ -224,7 +234,8 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
             request.Motivation.Trim(),
             shared.Select(kv => (kv.Key, kv.Value)).ToList(),
             inviteUrl,
-            unsubUrl);
+            unsubUrl,
+            openTrackingPixelUrl: openUrl);
 
         var send = await _mailer.SendAsync(mail, normalizedEmail, cancellationToken: cancellationToken);
         if (!send.Sent)

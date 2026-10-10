@@ -584,13 +584,19 @@
 
         var vacancyFromQuery = ApplicationPipelineRules.ResolveVacancyQuery(
             q.TryGetValue("vacancyId", out var vacancyId) ? vacancyId.ToString() : null,
-            q.TryGetValue("vacature", out var vac) ? vac.ToString() : null);
+            q.TryGetValue("vacature", out var vac) ? vac.ToString() : null,
+            q.TryGetValue("vacancy", out var vacancy) ? vacancy.ToString() : null);
         if (!string.IsNullOrEmpty(vacancyFromQuery))
         {
             _vacancyId = vacancyFromQuery;
         }
 
-        if (q.TryGetValue("kandidaat", out var kid) && Guid.TryParse(kid, out var appId))
+        var applicationQuery = q.TryGetValue("application", out var application)
+            ? application.ToString()
+            : q.TryGetValue("kandidaat", out var kid)
+                ? kid.ToString()
+                : null;
+        if (!string.IsNullOrWhiteSpace(applicationQuery) && Guid.TryParse(applicationQuery, out var appId))
         {
             OpenCandidate(appId);
         }

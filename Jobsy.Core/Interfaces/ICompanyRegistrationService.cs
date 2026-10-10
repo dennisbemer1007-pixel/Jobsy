@@ -85,7 +85,9 @@ public sealed record RegistrationSubmitRequest(
     string? PreferredLoginProvider = null,
     bool LocationUnknown = false,
     /// <summary>Code from the first-click <c>lobsy_sales_ref</c> cookie (typed code still wins).</summary>
-    string? CookieTrackingCode = null);
+    string? CookieTrackingCode = null,
+    /// <summary>Employer invite token from external vacancy apply flow (<c>extToken</c> query).</summary>
+    string? ExternalVacancyInviteToken = null);
 
 public sealed record RegistrationSubmitResult(
     Guid RegistrationId,
@@ -114,7 +116,9 @@ public sealed record RegistrationActivationResult(
     /// <summary>True when the one-time welcome ledger credit was granted.</summary>
     bool WelcomeTokenGranted = false,
     /// <summary>Inclusive free-publish end date when the promo is active at activation time.</summary>
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    /// <summary>When set, the Web UI should redirect here after sign-in (external vacancy onboarding).</summary>
+    string? PostActivationWebPath = null);
 
 public sealed record TakeoverInboxItem(
     Guid TakeoverId,

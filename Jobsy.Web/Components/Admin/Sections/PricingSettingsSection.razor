@@ -87,6 +87,10 @@ else
                             Backoffice-partner
                             <input @bind="_lobsyCommercial.BackofficePartnerName" style="width:100%" />
                         </label>
+                        <label class="filter-check" style="align-self:center">
+                            <input type="checkbox" @bind="_lobsyCommercial.FirstEmployerAcceptanceFreeEnabled" />
+                            Eerste acceptatie werkgever gratis
+                        </label>
                         <button class="btn-compact btn-compact--primary" type="button" disabled="@_lobsyCommercialBusy" @onclick="SaveLobsyCommercialAsync">@Culture["Common.Save"]</button>
                     </div>
                 </article>

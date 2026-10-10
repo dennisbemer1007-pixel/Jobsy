@@ -103,6 +103,7 @@
     private int _step = 1;
     private string _email = "";
     private string? _selectedCompany;
+    private string? _selectedKvk;
     private string _tokenHint = "";
 
     protected override async Task OnParametersSetAsync()
@@ -143,7 +144,10 @@
         => _step > n ? "is-done" : _step == n ? "is-active" : "";
 
     private void OnKvkSelected(KvkSearchHitItem hit)
-        => _selectedCompany = $"{hit.Name} (KVK {hit.KvkNumber})";
+    {
+        _selectedCompany = $"{hit.Name} (KVK {hit.KvkNumber})";
+        _selectedKvk = hit.KvkNumber;
+    }
 
     private string RegisterHref
     {
@@ -153,6 +157,11 @@
             if (!string.IsNullOrWhiteSpace(Token))
             {
                 q += $"&extToken={Uri.EscapeDataString(Token)}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedKvk))
+            {
+                q += $"&kvk={Uri.EscapeDataString(_selectedKvk)}";
             }
 
             return q;

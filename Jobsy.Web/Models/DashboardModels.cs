@@ -436,6 +436,7 @@ public class RegistrationActivationResult
     public string? SessionToken { get; set; }
     public bool InstantlyVerified { get; set; }
     public string? PreferredLoginProvider { get; set; }
+    public string? PostActivationWebPath { get; set; }
 }
 
 public class RegistrationReferralItem
@@ -1040,6 +1041,10 @@ public class LobsyCommercialSettingsItem
     public decimal DeepTestPriceCultureEuro { get; set; } = 2.99m;
     public decimal AgencyAnnualPriceEuro { get; set; } = 4000m;
     public decimal ContactUnlockCostTokens { get; set; } = 1m;
+    public decimal AcceptCandidatePilotCostTokens { get; set; } = 0.5m;
+    public DateOnly? AcceptCandidatePilotEndsOn { get; set; }
+    public decimal AcceptCandidateStandardCostTokens { get; set; } = 1m;
+    public bool FirstEmployerAcceptanceFreeEnabled { get; set; } = true;
     public DateTime UpdatedAtUtc { get; set; }
 }
 

@@ -548,6 +548,10 @@ public static class DependencyInjection
         services.AddScoped<ICandidateExternalVacancyService, Services.CandidateExternalVacancies.CandidateExternalVacancyService>();
         services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyOutboundMetricsService,
             Services.CandidateExternalVacancies.ExternalVacancyOutboundMetricsService>();
+        services.AddScoped<IExternalVacancyEmployerOnboardingService,
+            Services.CandidateExternalVacancies.ExternalVacancyEmployerOnboardingService>();
+        services.AddScoped<IExternalVacancyTravelEstimator,
+            Services.CandidateExternalVacancies.ExternalVacancyTravelEstimator>();
         services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyReminderService,
             Services.CandidateExternalVacancies.ExternalVacancyReminderService>();
         services.AddOptions<UploadScanOptions>()

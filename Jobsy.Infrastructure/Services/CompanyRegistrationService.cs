@@ -40,6 +40,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private readonly ILenderRegistrationCheck? _lenderRegistration;
     private readonly IOneTimeLinkService _links;
     private readonly IExternalVacancyOutboundMetricsService? _externalVacancyMetrics;
+    private readonly IExternalVacancyEmployerOnboardingService? _externalOnboarding;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
@@ -103,7 +104,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         IGeocodingService? geocoder,
         ILenderRegistrationCheck? lenderRegistration,
         ILogger<CompanyRegistrationService> logger,
-        IExternalVacancyOutboundMetricsService? externalVacancyMetrics = null)
+        IExternalVacancyOutboundMetricsService? externalVacancyMetrics = null,
+        IExternalVacancyEmployerOnboardingService? externalOnboarding = null)
     {
         _db = db;
         _kvk = kvk;
@@ -117,6 +119,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         _lenderRegistration = lenderRegistration;
         _links = new OneTimeLinkService(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<OneTimeLinkService>.Instance);
         _externalVacancyMetrics = externalVacancyMetrics;
+        _externalOnboarding = externalOnboarding;
         _logger = logger;
     }
 
@@ -128,6 +131,25 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var establishmentId = request.KvkEstablishmentId.Trim();
         var email = request.ContactEmail.Trim().ToLowerInvariant();
         var name = request.ContactName.Trim();
+
+        Guid? externalVacancyOutboundId = null;
+        if (!string.IsNullOrWhiteSpace(request.ExternalVacancyInviteToken))
+        {
+            if (_externalOnboarding is null)
+            {
+                throw new ArgumentException("Externe sollicitatie-registratie is niet beschikbaar.");
+            }
+
+            externalVacancyOutboundId = await _externalOnboarding.TryResolveOutboundIdAsync(
+                request.ExternalVacancyInviteToken,
+                email,
+                cancellationToken);
+            if (externalVacancyOutboundId is null)
+            {
+                throw new ArgumentException(
+                    "Deze uitnodigingslink is ongeldig of hoort niet bij dit e-mailadres.");
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(kvkNumber)
             || string.IsNullOrWhiteSpace(establishmentId)
@@ -308,6 +330,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 || (kvkVerificationStatus == KvkVerificationStatus.Pending
                     && request.ManualLatitude is null
                     && request.ManualLongitude is null),
+            ExternalVacancyOutboundId = externalVacancyOutboundId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -605,7 +628,19 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         {
             await _externalVacancyMetrics.MarkEmployerAccountCreatedAsync(
                 registration.ContactEmail,
+                registration.ExternalVacancyOutboundId,
                 cancellationToken);
+        }
+
+        string? postActivationWebPath = null;
+        if (_externalOnboarding is not null && registration.ExternalVacancyOutboundId is Guid outboundId)
+        {
+            var onboard = await _externalOnboarding.CompleteRegistrationAsync(
+                outboundId,
+                branchId,
+                user.Id,
+                cancellationToken);
+            postActivationWebPath = onboard.PostActivationWebPath;
         }
 
         _logger.LogInformation(
@@ -614,7 +649,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             EmailServiceStub.RedactEmail(registration.ContactEmail));
 
         return await BuildActivationResultAsync(
-            registration, usedChosenPassword, welcomeGranted, cancellationToken);
+            registration, usedChosenPassword, welcomeGranted, postActivationWebPath, cancellationToken);
     }
 
     /// <summary>
@@ -1374,6 +1409,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CompanyRegistration registration,
         bool usedChosenPassword,
         bool welcomeTokenGranted,
+        string? postActivationWebPath,
         CancellationToken cancellationToken)
     {
         var user = registration.CreatedUserId is Guid uid
@@ -1408,7 +1444,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.CreatedBranchCompanyId,
             usedChosenPassword,
             WelcomeTokenGranted: welcomeTokenGranted,
-            FreePublishUntil: freeUntil);
+            FreePublishUntil: freeUntil,
+            PostActivationWebPath: postActivationWebPath);
     }
 
     private async Task<RegistrationActivationResult> CompleteTakeoverEmailVerificationAsync(
@@ -1585,7 +1622,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await SendActivatedCredentialsEmailAsync(registration, user.Id, needsSetPassword, cancellationToken);
 
         return await BuildActivationResultAsync(
-            registration, usedChosenPassword, welcomeTokenGranted: false, cancellationToken);
+            registration, usedChosenPassword, welcomeTokenGranted: false, postActivationWebPath: null, cancellationToken);
     }
 
     /// <summary>

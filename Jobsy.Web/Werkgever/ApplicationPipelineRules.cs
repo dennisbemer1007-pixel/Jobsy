@@ -178,9 +178,9 @@ public static class ApplicationPipelineRules
     }
 
     /// <summary>
-    /// Preselect from <c>?vacancyId=</c> or the older <c>?vacature=</c>. Empty means all vacancies.
+    /// Preselect from <c>?vacancyId=</c>, <c>?vacature=</c>, or <c>?vacancy=</c>. Empty means all vacancies.
     /// </summary>
-    public static string ResolveVacancyQuery(string? vacancyId, string? vacature)
+    public static string ResolveVacancyQuery(string? vacancyId, string? vacature, string? vacancy = null)
     {
         if (Guid.TryParse(vacancyId, out var fromVacancyId))
         {
@@ -190,6 +190,11 @@ public static class ApplicationPipelineRules
         if (Guid.TryParse(vacature, out var fromVacature))
         {
             return fromVacature.ToString("D");
+        }
+
+        if (Guid.TryParse(vacancy, out var fromVacancy))
+        {
+            return fromVacancy.ToString("D");
         }
 
         return "";

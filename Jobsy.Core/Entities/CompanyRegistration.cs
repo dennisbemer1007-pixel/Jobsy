@@ -105,5 +105,8 @@ public class CompanyRegistration
     /// <summary>Day-21 unverified reminder e-mail sent (once).</summary>
     public DateTime? ReminderSentDay21AtUtc { get; set; }
 
+    /// <summary>When registering via an external vacancy employer invite, links to the outbound mail row.</summary>
+    public Guid? ExternalVacancyOutboundId { get; set; }
+
     public ICollection<EstablishmentTakeoverRequest> TakeoverRequests { get; set; } = new List<EstablishmentTakeoverRequest>();
 }

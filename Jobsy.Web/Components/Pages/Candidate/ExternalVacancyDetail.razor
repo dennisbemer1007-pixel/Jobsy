@@ -45,6 +45,11 @@
             </section>
         }
 
+        @if (_detail.TravelMinutesEstimate is int travel)
+        {
+            <p class="muted">@string.Format(Culture["Discovery.TravelMinutes"], travel)</p>
+        }
+
         <section class="kb-ext__card">
             <h2 class="kb-ext__method-title">@Culture["ExtVac.Detail.Facts"]</h2>
             <table class="kb-ext__facts">
