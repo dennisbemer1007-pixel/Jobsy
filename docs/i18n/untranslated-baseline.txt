@@ -5,7 +5,7 @@
 # Before auth-07: en=234 pl=846 ro=865 ar=839
 # Public-pages 08: lowered after UiStringsHowLobsyRoles stopped copying nl into pl/ro/ar
 # (staff guides now carry the English draft). Before: en=192 pl=205 ro=225 ar=195
-en=188
-pl=104
-ro=121
-ar=93
+en=192
+pl=107
+ro=123
+ar=94

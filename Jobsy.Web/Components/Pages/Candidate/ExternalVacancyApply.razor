@@ -10,6 +10,7 @@
 @inject NavigationManager Navigation
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["ExtVac.Apply.Title"] · Lobsy</PageTitle>
 
@@ -173,7 +174,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -194,7 +195,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
     }
 }

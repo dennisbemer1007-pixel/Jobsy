@@ -8,6 +8,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["ExtVac.Add.Title"] · Lobsy</PageTitle>
 
@@ -87,7 +88,7 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {

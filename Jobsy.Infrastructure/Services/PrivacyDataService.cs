@@ -1559,6 +1559,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateDiplomaEvaluations.RemoveRange(diplomaEvaluations);
         }
 
+        var externalVacancies = await _db.CandidateExternalVacancies
+            .Where(v => v.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (externalVacancies.Count > 0)
+        {
+            _db.CandidateExternalVacancies.RemoveRange(externalVacancies);
+        }
+
         var misuse = await _db.ReferenceMisuseReports
             .Where(r => r.UserId == user.Id)
             .ToListAsync(cancellationToken);

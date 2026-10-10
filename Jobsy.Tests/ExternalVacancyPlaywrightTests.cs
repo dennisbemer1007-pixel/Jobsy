@@ -1,6 +1,5 @@
 using System.Net;
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -21,8 +21,6 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ExternalVacancyPlaywrightTests : IAsyncLifetime
 {
-    private ExternalVacancyWebFactory? _webOff;
-    private ExternalVacancyWebFactory? _webOn;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -32,10 +30,6 @@ public sealed class ExternalVacancyPlaywrightTests : IAsyncLifetime
         Assert.Equal(0, exit);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        _webOff = new ExternalVacancyWebFactory(externalOn: false);
-        _webOn = new ExternalVacancyWebFactory(externalOn: true);
-        _ = _webOff.ServerAddress;
-        _ = _webOn.ServerAddress;
     }
 
     public async ValueTask DisposeAsync()
@@ -46,16 +40,15 @@ public sealed class ExternalVacancyPlaywrightTests : IAsyncLifetime
         }
 
         _playwright?.Dispose();
-        _webOff?.Dispose();
-        _webOn?.Dispose();
     }
 
     [Fact]
     public async Task Flag_off_add_page_redirects_away_from_route()
     {
+        using var web = new ExternalVacancyWebFactory(externalOn: false);
         var page = await _browser!.NewPageAsync();
         page.SetDefaultTimeout(30_000);
-        await page.GotoAsync(_webOff!.ServerAddress + "/candidate/external/add", new()
+        await page.GotoAsync(web.EnsureServerAddress() + "/candidate/external/add", new()
         {
             WaitUntil = WaitUntilState.NetworkIdle,
             Timeout = 60_000
@@ -68,10 +61,11 @@ public sealed class ExternalVacancyPlaywrightTests : IAsyncLifetime
     [Fact]
     public async Task Flag_on_shows_paste_field_for_candidate()
     {
+        using var web = new ExternalVacancyWebFactory(externalOn: true);
         var page = await _browser!.NewPageAsync();
         page.SetDefaultTimeout(30_000);
         await page.GotoAsync(
-            _webOn!.ServerAddress + "/__test/sign-in?return=/candidate/external/add",
+            web.EnsureServerAddress() + "/__test/sign-in?return=/candidate/external/add",
             new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
 
         await page.Locator("[data-testid=kb-ext-url-input]").WaitForAsync();
@@ -85,15 +79,30 @@ public sealed class ExternalVacancyPlaywrightTests : IAsyncLifetime
 
         public string ServerAddress { get; private set; } = "";
 
-        public ExternalVacancyWebFactory(bool externalOn)
+        public ExternalVacancyWebFactory(bool externalOn) => _externalOn = externalOn;
+
+        public string EnsureServerAddress()
         {
-            _externalOn = externalOn;
-            _ = CreateClient();
+            if (string.IsNullOrEmpty(ServerAddress))
+            {
+                _ = CreateClient();
+            }
+
+            return ServerAddress;
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ApiBaseUrl"] = "http://api.test/",
+                    ["CLOUDFLARE_ORIGIN_SECRET"] = "",
+                    ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
+                });
+            });
             builder.ConfigureTestServices(services =>
             {
                 services.AddSingleton<IStartupFilter>(new SignInFilter());
@@ -127,6 +136,7 @@ public sealed class ExternalVacancyPlaywrightTests : IAsyncLifetime
 
             base.Dispose(disposing);
         }
+
     }
 
     private sealed class StubFlags(bool externalOn) : IFeatureFlags
