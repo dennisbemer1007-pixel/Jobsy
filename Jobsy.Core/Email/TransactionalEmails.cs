@@ -247,6 +247,16 @@ public static partial class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ComebackReminderKinds.LookAgain, c),
             "comebackremindertests" => ComebackReminder(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ComebackReminderKinds.BasicTests, c, "ComebackReminderTests"),
+            "externalvacancyapplication" => ExternalVacancyApplication(
+                ctx.PublicWebBaseUrl,
+                ctx.RecipientName,
+                ctx.VacancyTitle,
+                ctx.CompanyName,
+                "Ik werk graag met mijn handen en ben altijd op tijd.",
+                [("Rijbewijs B", "Ja"), ("Direct beschikbaar", "Ja")],
+                links.Absolute("/register/externe-sollicitatie?token=voorbeeld"),
+                links.Absolute("/api/public/external-vacancy/unsubscribe?token=voorbeeld"),
+                c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }
