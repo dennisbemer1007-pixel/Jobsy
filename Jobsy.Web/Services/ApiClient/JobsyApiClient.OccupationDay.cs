@@ -38,6 +38,22 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<OccupationDayGenerateResult>(response.Content, ct);
     }
 
+    public async Task<OccupationDayGenerateResult?> RegenerateOccupationDaysAsync(int limit, string ids, CancellationToken ct = default)
+    {
+        var response = await PostApiJsonAsync(
+            "api/admin/occupation-day-in-life/regenerate",
+            new OccupationDayRunRequest { Limit = limit, Ids = ids },
+            ct);
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var problem = await ReadApiJsonAsync<OccupationDayProblem>(response.Content, ct);
+            throw new InvalidOperationException(problem?.Message ?? "Ongeldige selectie.");
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<OccupationDayGenerateResult>(response.Content, ct);
+    }
+
     public async Task<OccupationDayStartResult?> StartOccupationDayBatchAsync(int? limit = null, string? ids = null, CancellationToken ct = default)
     {
         var response = await PostApiJsonAsync(

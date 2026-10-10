@@ -44,6 +44,7 @@
             <button class="login-submit" type="button" disabled="@(_busy || _status.Running)" @onclick="StartAsync">@Culture["Admin.Day.Start"]</button>
             <button class="provider-btn" type="button" disabled="@(_busy || _status.Running)" @onclick="ChunkAsync">@Culture["Admin.Day.Chunk"]</button>
             <button class="provider-btn" type="button" disabled="@(_busy || _status.Running)" @onclick="ProbeAsync">@Culture["Admin.Day.Probe"]</button>
+            <button class="provider-btn" type="button" disabled="@(_busy || _status.Running)" @onclick="RegenerateAsync">@Culture["Admin.Day.Regenerate"]</button>
             <button class="provider-btn" type="button" disabled="@_busy" @onclick="StopAsync">@Culture["Admin.Day.Stop"]</button>
             <button class="provider-btn" type="button" disabled="@_busy" @onclick="ExportAsync">@Culture["Admin.Day.Export"]</button>
         </div>
@@ -119,6 +120,39 @@
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
         {
             _message = Culture["Admin.Day.Timeout"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RegenerateAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_pick))
+            {
+                _message = Culture["Admin.Day.PickEmpty"];
+                return;
+            }
+
+            var result = await Api.RegenerateOccupationDaysAsync(15, _pick);
+            if (result is null)
+            {
+                _message = Culture["Common.Error"];
+            }
+            else
+            {
+                _message = Culture.Format("Admin.Day.Summary", result.Generated, result.Failed);
+                await RefreshAsync();
+            }
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
         }
         finally
         {
@@ -250,6 +284,7 @@
                         }
                     }
 
+                    await InvokeAsync(StateHasChanged);
                     break;
                 }
 

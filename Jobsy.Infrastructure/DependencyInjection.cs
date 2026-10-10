@@ -125,6 +125,7 @@ public static class DependencyInjection
 
                 options.Model = options.Model.Trim();
                 options.DelayMilliseconds = Math.Clamp(options.DelayMilliseconds, 0, 10_000);
+                options.MaxComposeRetries = Math.Clamp(options.MaxComposeRetries, 2, 5);
             });
 
         services.AddOptions<AiOptions>()

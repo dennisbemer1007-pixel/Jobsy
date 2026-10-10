@@ -1356,12 +1356,39 @@ window.jobsyDialog = (function () {
     if (!("serviceWorker" in navigator)) {
         return;
     }
+    var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
+    var swUrl = isPublished
+        ? "/service-worker.published.js?v=20261010-02"
+        : "/service-worker.js?v=20261010-02";
+    var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
+        && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
+
+    function circuitReady() {
+        try {
+            return document.documentElement.getAttribute("data-lobsy-circuit") === "ready";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function register() {
+        navigator.serviceWorker.register(swUrl, { scope: "/", updateViaCache: "none" }).catch(function () { });
+    }
+
+    function scheduleRegister() {
+        var started = Date.now();
+        function tick() {
+            if (circuitReady() || Date.now() - started > 12000) {
+                register();
+                return;
+            }
+            window.setTimeout(tick, isWebKit ? 400 : 200);
+        }
+        tick();
+    }
+
     window.addEventListener("load", function () {
-        var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
-        var swUrl = isPublished
-            ? "/service-worker.published.js?v=20261005-06"
-            : "/service-worker.js?v=20261005-06";
-        navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
+        window.setTimeout(scheduleRegister, isWebKit ? 1200 : 0);
     });
 })();
 

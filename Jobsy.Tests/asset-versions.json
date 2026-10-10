@@ -72,8 +72,8 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "209ca55f8fd8f84ffdfc7bce95adea0def3015099abe58d6433b6ee4e58106c6",
-    "v": "20261004-13"
+    "sha256": "8ce42fa8f539967f373f070aef873c9f402b48b4ed4d4c74d1b664c714edb8d0",
+    "v": "20261010-02"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
@@ -120,8 +120,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "d49020856b29140f55c8924ba8551a7476b3550f2b63063eea272d9c7437814f",
-    "v": "20261004-10"
+    "sha256": "1f7fbb3058645d759202ed9c9a4f85fa4b4cdd62a2cdb3fbb2c543b4474fc3fc",
+    "v": "20261010-02"
   },
   "css/features/werkgever-aanmelding.css": {
     "sha256": "61ab5ba72e934f78dde05395a0af29eb0cf55ab4d3d3dfae4c1c19091d799a09",
@@ -148,8 +148,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "d25f47944aa909144a0b38cd7921fae307b4356989f5c6f6629619d14efa0bb2",
-    "v": "20261010-01"
+    "sha256": "10fdcf647e2aa58b5cb96f95ffe0eeb45563c0a95d28118e8cc8d3d2c7fb05b1",
+    "v": "20261010-02"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -200,8 +200,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "13f04d852246cecf5851822e2a6168b38dfb1f27e304a41c9506ca2dbecb7524",
-    "v": "20261005-06"
+    "sha256": "0156459ac11e1e36d0d2159806a06c1315648a6041133522433b033d132a6fc5",
+    "v": "20261010-02"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -224,11 +224,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "c2420e448fa8dc9774b258a3a2f74dc2ee667bbedd9db11d609839440f170280",
-    "v": "20261005-06"
+    "sha256": "bd92fa197624a5f46ddf47bcbf1f4e42606d37b2906224afe99cec3cc9de3906",
+    "v": "20261010-02"
   },
   "service-worker.published.js": {
-    "sha256": "c95cdc8e748e10b23dcbef08dbd4ff913195fd7edcf0c89bb082d29c6a199e49",
-    "v": "20261005-06"
+    "sha256": "20a03b3c45cb871ccbbe13dc4c132a8a58ba70c254f49d0474257933645aa85c",
+    "v": "20261010-02"
   }
 }
