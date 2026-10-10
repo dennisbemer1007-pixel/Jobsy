@@ -113,17 +113,11 @@ public static class VacancyManageRules
         VacancyListItem v,
         IReadOnlyDictionary<string, decimal> costs)
     {
-        var total = v.CategoryPublishCostTokens
-            ?? costs.GetValueOrDefault("Publish", 1m);
+        var total = 0m;
         if (v.RequestedHighlight)
         {
             total += v.CategoryHighlightCostTokens
                 ?? costs.GetValueOrDefault("Highlight", VacancyProductRules.DefaultHighlightCostTokens);
-        }
-
-        if (v.RequestedExtend)
-        {
-            total += costs.GetValueOrDefault("Extend", 1m);
         }
 
         // PushBom cost needs a preview; count base cost as a floor when requested.

@@ -124,10 +124,8 @@ public sealed class WerkgeverTokenSummaryService : IWerkgeverTokenSummaryService
 
         var reservedRequests = openTokenRequests.Sum(r => (decimal)r.Amount);
 
-        // Pending publish token cost estimate from active spend costs.
-        var publishCost = await _ledger.GetCostAsync(TokenSpendReason.Publish, cancellationToken) ?? 1m;
-        var reservedPublish = openPublish * publishCost;
-        var reserved = reservedRequests + reservedPublish;
+        // Pending publish approvals may only reserve tokens for paid add-ons (highlight/PushBom), not posting.
+        var reserved = reservedRequests;
 
         var withAllocation = branchUsage.Count(b => b.Allocated > 0 || b.Remaining > 0);
 

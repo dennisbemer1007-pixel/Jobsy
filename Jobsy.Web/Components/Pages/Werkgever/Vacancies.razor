@@ -488,8 +488,7 @@
     private bool AllPageSelected =>
         CanWrite && Paged.Count > 0 && Paged.All(v => _selected.Contains(v.Id));
 
-    private decimal BulkExtendCost =>
-        _selected.Count * _costs.GetValueOrDefault("Extend", 1m);
+    private decimal BulkExtendCost => 0m;
 
     private decimal BulkHighlightCost =>
         _selected.Count * _costs.GetValueOrDefault("Highlight", VacancyProductRules.DefaultHighlightCostTokens);
@@ -1115,19 +1114,13 @@
 
     private void OpenReopen(VacancyListItem vacancy)
     {
-        var cost = _costs.GetValueOrDefault("Extend", 1m);
-        var after = _tokenBalance - cost;
         _singleExtend = true;
         _deleteMode = false;
         _confirmKind = BulkKind.Extend;
         _confirmVacancyId = vacancy.Id;
         _confirmTitle = Culture["VacancyAction.Reactivate"];
-        var costLabel = TokenPhrase(cost);
-        var balanceLabel = TokenPhrase(_tokenBalance);
-        _confirmBody = after < 0
-            ? string.Format(Culture["WgVac.Confirm.ReopenLow"], costLabel, balanceLabel)
-            : string.Format(Culture["WgVac.Confirm.Reopen"], costLabel, balanceLabel, CountPhrase.Tokens(Culture, after));
-        _confirmInsufficient = after < 0;
+        _confirmBody = Culture["WgVac.Confirm.ReopenFree"];
+        _confirmInsufficient = false;
         _confirmOpen = true;
     }
 

@@ -1065,13 +1065,9 @@
 
             var balances = await Api.GetTokenBalancesAsync();
             var balance = balances.FirstOrDefault(b => b.CompanyId == company.Id)?.Balance ?? company.TokenBalance;
-            var costs = await Api.GetTokenCostsAsync();
-            var publishCost = costs.FirstOrDefault(c =>
-                string.Equals(c.Reason, "Publish", StringComparison.OrdinalIgnoreCase))?.CostTokens ?? 1m;
             _vmPublishNote = string.Format(
                 Culture["WgVac.Create.VmPublishNote"],
-                balance.ToString("0.##"),
-                publishCost.ToString("0.##"));
+                balance.ToString("0.##"));
         }
         catch
         {

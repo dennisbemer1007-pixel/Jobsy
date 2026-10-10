@@ -15,7 +15,7 @@ namespace Jobsy.Tests;
 public class PrepaidTokenCheckoutTests
 {
     [Fact]
-    public async Task Publish_without_tokens_and_no_pending_approval_returns_InsufficientTokens()
+    public async Task Publish_without_tokens_and_no_pending_approval_succeeds()
     {
         await using var db = CreateDb();
         var (_, vacancyId) = await SeedDraftVacancyAsync(db, tokenBalance: 0);
@@ -31,12 +31,9 @@ public class PrepaidTokenCheckoutTests
             actorUserId: null,
             allowPendingApproval: false);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.InsufficientTokens);
-        Assert.Equal(VacancyStatus.Draft, vacancy.Status);
-        Assert.True(result.RequiredTokens >= 1m);
+        Assert.True(result.Succeeded, result.ErrorMessage);
+        Assert.Equal(VacancyStatus.Active, vacancy.Status);
         Assert.Equal(0m, result.Balance);
-        Assert.Contains("tokens", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -96,7 +93,8 @@ public class PrepaidTokenCheckoutTests
             CompanyId = companyId,
             VacancyId = vacancyId,
             ActionKind = PendingTokenActionKind.Publish,
-            RequiredTokens = 1m,
+            OptionHighlight = true,
+            RequiredTokens = 2m,
             Status = PendingTokenActionStatus.Pending,
             CreatedAt = DateTime.UtcNow
         });

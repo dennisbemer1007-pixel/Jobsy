@@ -69,7 +69,7 @@ public class VacancyManageRulesTests
             RequestedExtend = true,
             CategoryPublishCostTokens = 1m
         };
-        Assert.Equal(4m, VacancyManageRules.EstimatePendingTokens(v, costs));
+        Assert.Equal(2m, VacancyManageRules.EstimatePendingTokens(v, costs));
     }
 
     [Fact]
