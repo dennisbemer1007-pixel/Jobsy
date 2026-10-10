@@ -6,6 +6,7 @@ namespace Jobsy.Core.Rules;
 public static class CandidateExternalVacancyRules
 {
     public const int MaxImportsPerUserPerDay = 20;
+    public const int MaxAppliesPerUserPerDay = 5;
     public const int MaxMotivationLength = 2000;
     public const int ReminderAfterDays = 7;
     public const int MaxHtmlBytes = 512 * 1024;

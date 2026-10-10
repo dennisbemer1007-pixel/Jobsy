@@ -163,6 +163,11 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
             return new(false, "suppressed", "Dit adres accepteert geen sollicitaties via Lobsy.");
         }
 
+        if (!await EnsureApplyRateLimitAsync(candidateUserId, cancellationToken))
+        {
+            return new(false, "rate_limit", "Je hebt vandaag het maximum aan sollicitaties via Lobsy bereikt.");
+        }
+
         var vacancy = await _db.CandidateExternalVacancies
             .Include(v => v.CandidateUser)
             .Include(v => v.OutboundMessages)
@@ -279,6 +284,18 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         {
             throw new InvalidOperationException("rate_limit");
         }
+    }
+
+    private async Task<bool> EnsureApplyRateLimitAsync(Guid candidateUserId, CancellationToken cancellationToken)
+    {
+        var since = DateTime.UtcNow.Date;
+        var count = await _db.CandidateExternalVacancyOutbounds.AsNoTracking()
+            .CountAsync(
+                o => o.InitialSentAtUtc >= since
+                     && _db.CandidateExternalVacancies.Any(v =>
+                         v.Id == o.ExternalVacancyId && v.CandidateUserId == candidateUserId),
+                cancellationToken);
+        return count < CandidateExternalVacancyRules.MaxAppliesPerUserPerDay;
     }
 
     private async Task<ExternalVacancyDetailDto> MapDetailAsync(

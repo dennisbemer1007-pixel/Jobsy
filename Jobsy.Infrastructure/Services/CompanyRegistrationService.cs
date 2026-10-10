@@ -12,6 +12,7 @@ using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
+using Jobsy.Infrastructure.Services.CandidateExternalVacancies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -38,6 +39,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private readonly IGeocodingService? _geocoder;
     private readonly ILenderRegistrationCheck? _lenderRegistration;
     private readonly IOneTimeLinkService _links;
+    private readonly IExternalVacancyOutboundMetricsService? _externalVacancyMetrics;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
@@ -100,7 +102,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         IRegistrationReferralResolver? referralResolver,
         IGeocodingService? geocoder,
         ILenderRegistrationCheck? lenderRegistration,
-        ILogger<CompanyRegistrationService> logger)
+        ILogger<CompanyRegistrationService> logger,
+        IExternalVacancyOutboundMetricsService? externalVacancyMetrics = null)
     {
         _db = db;
         _kvk = kvk;
@@ -113,6 +116,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         _geocoder = geocoder;
         _lenderRegistration = lenderRegistration;
         _links = new OneTimeLinkService(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<OneTimeLinkService>.Instance);
+        _externalVacancyMetrics = externalVacancyMetrics;
         _logger = logger;
     }
 
@@ -596,6 +600,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         await SendActivatedCredentialsEmailAsync(registration, user.Id, needsSetPassword, cancellationToken);
+
+        if (_externalVacancyMetrics is not null)
+        {
+            await _externalVacancyMetrics.MarkEmployerAccountCreatedAsync(
+                registration.ContactEmail,
+                cancellationToken);
+        }
 
         _logger.LogInformation(
             "Activated registration {Id} for {Email}",

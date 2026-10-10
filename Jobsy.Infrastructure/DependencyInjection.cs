@@ -546,6 +546,10 @@ public static class DependencyInjection
         services.AddScoped<IExternalVacancySuppressionService, Services.CandidateExternalVacancies.ExternalVacancySuppressionService>();
         services.AddScoped<IExternalVacancyEmployerInviteService, Services.CandidateExternalVacancies.ExternalVacancyEmployerInviteService>();
         services.AddScoped<ICandidateExternalVacancyService, Services.CandidateExternalVacancies.CandidateExternalVacancyService>();
+        services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyOutboundMetricsService,
+            Services.CandidateExternalVacancies.ExternalVacancyOutboundMetricsService>();
+        services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyReminderService,
+            Services.CandidateExternalVacancies.ExternalVacancyReminderService>();
         services.AddOptions<UploadScanOptions>()
             .Bind(configuration.GetSection(UploadScanOptions.SectionName));
         // ClamAV stays off until UploadScan:Enabled. No AI body logger on this client.
@@ -733,6 +737,7 @@ public static class DependencyInjection
         services.AddHostedService<CareerPlanArchiveCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
+        services.AddHostedService<Jobs.ExternalVacancyReminderHostedService>();
         services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();
