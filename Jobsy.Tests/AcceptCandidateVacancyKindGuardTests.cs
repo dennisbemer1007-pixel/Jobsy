@@ -84,6 +84,24 @@ public class AcceptCandidateVacancyKindGuardTests
         Assert.Equal(0, await db.ApplicationPlacements.CountAsync());
     }
 
+    [Fact]
+    public async Task Accept_regular_first_placement_free_when_commercial_flag_on()
+    {
+        await using var db = CreateDb();
+        var (_, appId, actorId) = await SeedPendingApplicationAsync(db, VacancyKind.Regular, tokenBalance: 0m);
+        var settings = await db.FlexCommercialSettings.SingleAsync();
+        settings.FirstEmployerAcceptanceFreeEnabled = true;
+        await db.SaveChangesAsync();
+        var sut = CreatePhase2Service(db);
+
+        var result = await sut.AcceptApplicationAsync(appId, actorId);
+
+        Assert.True(result.Succeeded, result.UserMessage);
+        Assert.Equal(0, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
+        var placement = await db.ApplicationPlacements.SingleAsync(p => p.ApplicationId == appId);
+        Assert.Equal(0m, placement.AcceptCostTokens);
+    }
+
     [Theory]
     [InlineData(VacancyKind.Internship)]
     [InlineData(VacancyKind.Volunteer)]
@@ -272,6 +290,7 @@ public class AcceptCandidateVacancyKindGuardTests
             AcceptCandidatePilotCostTokens = 0.5m,
             AcceptCandidatePilotEndsOn = DateOnly.MaxValue,
             AcceptCandidateStandardCostTokens = 1m,
+            FirstEmployerAcceptanceFreeEnabled = false,
             UpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
