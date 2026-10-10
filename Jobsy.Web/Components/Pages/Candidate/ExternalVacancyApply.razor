@@ -1,0 +1,200 @@
+@page "/candidate/external/{Id:guid}/apply"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.CandidateExternalVacancies)]
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.KandidaatBanen
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["ExtVac.Apply.Title"] · Lobsy</PageTitle>
+
+<div class="kb-ext" data-testid="kb-ext-apply">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_detail is null)
+    {
+        <Jobsy.Web.Components.Errors.NotFoundView Embedded="true" />
+    }
+    else if (_sent)
+    {
+        <div class="kb-ext__card" role="status">
+            <p>@Culture["ExtVac.Apply.Done"]</p>
+            <a class="kb-ext__btn kb-ext__btn--secondary" href="@KbRoutes.ExternalVacancyDetail(_detail.Id)">@Culture["Common.Back"]</a>
+        </div>
+    }
+    else
+    {
+        <h1 class="kb-ext__title">@Culture["ExtVac.Apply.Title"]</h1>
+        <p class="muted">@_detail.Title · @_detail.CompanyName</p>
+
+        <form class="kb-ext__card" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+            <label class="kb-ext__method-title" for="ext-employer-email">@Culture["ExtVac.Apply.Email"]</label>
+            <input id="ext-employer-email"
+                   type="email"
+                   autocomplete="email"
+                   list="ext-email-suggestions"
+                   data-testid="kb-ext-employer-email"
+                   @bind="_email"
+                   required />
+            @if (_detail.SuggestedEmployerEmails.Count > 0)
+            {
+                <datalist id="ext-email-suggestions">
+                    @foreach (var e in _detail.SuggestedEmployerEmails)
+                    {
+                        <option value="@e"></option>
+                    }
+                </datalist>
+            }
+
+            <label class="kb-ext__method-title" for="ext-motivation">@Culture["ExtVac.Apply.Motivation"]</label>
+            <textarea id="ext-motivation"
+                      rows="6"
+                      maxlength="2000"
+                      data-testid="kb-ext-motivation"
+                      @bind="_motivation"
+                      required></textarea>
+
+            @if (_shareKeys.Count > 0)
+            {
+                <p class="kb-ext__method-title">@Culture["ExtVac.Apply.SharedFacts"]</p>
+                @foreach (var key in _shareKeys)
+                {
+                    _detail.StructuredFacts.TryGetValue(key, out var val);
+                    if (string.IsNullOrWhiteSpace(val))
+                    {
+                        continue;
+                    }
+
+                    var labelKey = $"ExtVac.Fact.{key}";
+                    var label = Culture[labelKey];
+                    <label class="kb-ext__checkbox">
+                        <input type="checkbox"
+                               checked="@_selectedFacts.Contains(key)"
+                               @onchange="e => ToggleFact(key, e.Value is true)" />
+                        <span><strong>@label:</strong> @val</span>
+                    </label>
+                }
+            }
+
+            <p class="kb-ext__plan-b">@Culture["ExtVac.Apply.OneTime"]</p>
+
+            <button type="submit" class="kb-ext__btn" disabled="@_busy" data-testid="kb-ext-apply-submit">
+                @Culture["ExtVac.Apply.Submit"]
+            </button>
+        </form>
+
+        <section class="kb-ext__plan-b">
+            <h2 class="kb-ext__method-title">@Culture["ExtVac.Apply.PlanBTitle"]</h2>
+            <p class="muted">@Culture["ExtVac.Apply.PlanBBody"]</p>
+            <button type="button" class="kb-ext__btn kb-ext__btn--secondary" @onclick="DownloadPdfAsync">
+                @Culture["ExtVac.Apply.DownloadPdf"]
+            </button>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="state-message error" role="alert">@_error</p>
+        }
+
+        <LobsyBubble Text="@Culture["ExtVac.Apply.Coach"]" />
+    }
+</div>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ExternalVacancyDetailDto? _detail;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _sent;
+    private string? _error;
+    private string _email = "";
+    private string _motivation = "";
+    private List<string> _shareKeys = [];
+    private HashSet<string> _selectedFacts = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _detail = await Api.GetExternalVacancyAsync(Id);
+        if (_detail is not null)
+        {
+            _email = _detail.SuggestedEmployerEmails.FirstOrDefault() ?? "";
+            _shareKeys = _detail.StructuredFacts.Keys.Where(k => !string.IsNullOrWhiteSpace(_detail.StructuredFacts[k])).ToList();
+            _selectedFacts = _shareKeys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        _loading = false;
+    }
+
+    private void ToggleFact(string key, bool on)
+    {
+        if (on)
+        {
+            _selectedFacts.Add(key);
+        }
+        else
+        {
+            _selectedFacts.Remove(key);
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_busy || _detail is null)
+        {
+            return;
+        }
+
+        _error = null;
+        _busy = true;
+        try
+        {
+            var request = new ExternalVacancyApplyRequest(
+                _email.Trim(),
+                _motivation.Trim(),
+                _selectedFacts.ToList());
+            var result = await Api.ApplyExternalVacancyAsync(_detail.Id, request);
+            if (result?.Succeeded == true)
+            {
+                _sent = true;
+            }
+            else
+            {
+                _error = result?.Message ?? "Versturen mislukt.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await Api.DownloadExternalVacancyApplicationLetterAsync(_detail.Id, Js);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+}

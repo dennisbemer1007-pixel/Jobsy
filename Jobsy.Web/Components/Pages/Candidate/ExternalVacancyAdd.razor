@@ -1,0 +1,97 @@
+@page "/candidate/external/add"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.CandidateExternalVacancies)]
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.KandidaatBanen
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["ExtVac.Add.Title"] · Lobsy</PageTitle>
+
+<div class="kb-ext" data-testid="kb-ext-add">
+    <header>
+        <h1 class="kb-ext__title">@Culture["ExtVac.Add.Title"]</h1>
+        <p class="kb-ext__lead">@Culture["ExtVac.Add.Lead"]</p>
+    </header>
+
+    <section class="kb-ext__card">
+        <h2 class="kb-ext__method-title">@Culture["ExtVac.Add.Method1Title"]</h2>
+        <p class="muted">@Culture["ExtVac.Add.Method1Body"]</p>
+    </section>
+
+    <section class="kb-ext__card">
+        <h2 class="kb-ext__method-title">@Culture["ExtVac.Add.Method2Title"]</h2>
+        <div class="kb-ext__url-row">
+            <label class="visually-hidden" for="ext-vac-url">@Culture["ExtVac.Add.Method2Title"]</label>
+            <input id="ext-vac-url"
+                   type="url"
+                   inputmode="url"
+                   autocomplete="off"
+                   placeholder="@Culture["ExtVac.Add.UrlPlaceholder"]"
+                   data-testid="kb-ext-url-input"
+                   @bind="_url" />
+            <button type="button"
+                    class="kb-ext__btn"
+                    data-testid="kb-ext-add-submit"
+                    disabled="@_busy"
+                    @onclick="SubmitAsync">
+                @(_busy ? Culture["ExtVac.Add.Working"] : Culture["ExtVac.Add.Submit"])
+            </button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="state-message error" role="alert">@_error</p>
+        }
+    </section>
+
+    <LobsyBubble Text="@Culture["ExtVac.Add.Coach"]" />
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "url")] public string? PrefillUrl { get; set; }
+
+    private string _url = "";
+    private bool _busy;
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(PrefillUrl) && string.IsNullOrWhiteSpace(_url))
+        {
+            _url = PrefillUrl.Trim();
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _error = null;
+        _busy = true;
+        try
+        {
+            var dto = await Api.ImportExternalVacancyAsync(_url.Trim());
+            if (dto is null)
+            {
+                _error = "Deze functie is niet beschikbaar.";
+                return;
+            }
+
+            Navigation.NavigateTo(KbRoutes.ExternalVacancyDetail(dto.Id));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

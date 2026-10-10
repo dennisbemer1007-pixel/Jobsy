@@ -3485,6 +3485,7 @@ public static class UiStrings
         UiStringsCandidateSignup.MergeAll(nl, en, pl, ro, ar);
         UiStringsWerkgeverAanmelding.MergeAll(nl, en, pl, ro, ar);
         UiStringsKandidaatBanen.MergeAll(nl, en, pl, ro, ar);
+        UiStringsExternalVacancy.MergeAll(nl, en, pl, ro, ar);
         UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
         UiStringsPassport.MergeAll(nl, en, pl, ro, ar);
         UiStringsDiplomaEvaluation.MergeAll(nl, en, pl, ro, ar);

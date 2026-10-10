@@ -29,12 +29,18 @@ public sealed class ExternalVacancyEmployerInviteService : IExternalVacancyEmplo
             return null;
         }
 
-        var outbound = await _db.CandidateExternalVacancyOutbounds.AsNoTracking()
+        var outbound = await _db.CandidateExternalVacancyOutbounds
             .Include(o => o.ExternalVacancy).ThenInclude(v => v.CandidateUser)
             .FirstOrDefaultAsync(o => o.OneTimeLinkId == peek.LinkId, cancellationToken);
         if (outbound is null)
         {
             return null;
+        }
+
+        if (outbound.ClickedAtUtc is null)
+        {
+            outbound.ClickedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
         var facts = ParseSharedFacts(outbound.SharedFactsJson);

@@ -22,4 +22,13 @@ public static class KbRoutes
 
     public const string CultureTest = "/candidate/culture";
     public const string ValuesTest = "/candidate/values";
+
+    public const string ExternalVacancyShareIn = "/candidate/share-in";
+    public const string ExternalVacancyAdd = "/candidate/external/add";
+    public const string ExternalVacancyDetailBase = "/candidate/external";
+    public const string ExternalEmployerRegister = "/register/externe-sollicitatie";
+
+    public static string ExternalVacancyDetail(Guid id) => $"{ExternalVacancyDetailBase}/{id:D}";
+
+    public static string ExternalVacancyApply(Guid id) => $"{ExternalVacancyDetailBase}/{id:D}/apply";
 }
