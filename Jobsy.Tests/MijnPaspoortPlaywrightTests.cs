@@ -67,6 +67,8 @@ public class MijnPaspoortPlaywrightTests
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "mijn-paspoort.css"));
         Assert.Contains("position: sticky", css, StringComparison.Ordinal);
+        Assert.Contains("position: fixed", css, StringComparison.Ordinal);
+        Assert.Contains("--bottom-nav-h", css, StringComparison.Ordinal);
         Assert.Contains(".passport-tabs", css, StringComparison.Ordinal);
         Assert.Contains("overflow-x: auto", css, StringComparison.Ordinal);
         Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);

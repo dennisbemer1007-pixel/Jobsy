@@ -1,6 +1,6 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-published-v20261005-06";
+var CACHE_VERSION = "lobsy-shell-published-v20261010-02";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 var OFFLINE_URL = "/offline.html";
@@ -10,7 +10,7 @@ var PRECACHE = [
     "/manifest.webmanifest?v=20261004-14",
     "/css/critical.css?v=20261004-13",
     "/css/app.min.css?v=20261010-01",
-    "/js/app-core.js?v=20261010-01",
+    "/js/app-core.js?v=20261010-02",
     "/icons/icon-192.png?v=20261004-13",
     "/icons/icon-512.png?v=20261004-13",
     "/favicon.png?v=20261004-13",

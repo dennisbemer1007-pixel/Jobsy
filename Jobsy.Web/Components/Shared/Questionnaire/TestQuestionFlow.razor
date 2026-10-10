@@ -5,6 +5,7 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 @inject IJSRuntime Js
+@implements IAsyncDisposable
 
 @{
     var targetCount = TargetCount;
@@ -215,18 +216,34 @@
         _focusRequest = false;
         try
         {
-            if (Target == TestDepthLevel.Bottom)
+            if (Ordered.Count > 0)
             {
-                await Js.InvokeVoidAsync("jobsyCoachDock.bind", _footer, "--sticky-footer-h");
-            }
-            else
-            {
-                await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--sticky-footer-h");
+                var bindFooter = Target == TestDepthLevel.Bottom || await MatchesMediaAsync("(max-width: 639px)");
+                if (bindFooter)
+                {
+                    await Js.InvokeVoidAsync("jobsyCoachDock.bind", _footer, "--sticky-footer-h");
+                }
+                else
+                {
+                    await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--sticky-footer-h");
+                }
             }
         }
         catch
         {
             // bUnit
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--sticky-footer-h");
+        }
+        catch
+        {
+            // bUnit / disconnect
         }
     }
 
