@@ -213,13 +213,25 @@
 }
 
 @media (max-width: 639px) {
+  .test-flow:has(.test-flow__footer) {
+    padding-bottom: calc(
+      var(--sticky-footer-h, 4.25rem)
+      + var(--bottom-nav-h, 4.75rem)
+      + env(safe-area-inset-bottom, 0px)
+      + 0.75rem
+    );
+  }
+
   .test-flow__footer {
-    position: sticky;
-    bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
-    z-index: 6;
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
+    z-index: 45;
     inline-size: 100%;
-    margin-inline: -0.25rem;
-    padding: 0.75rem 0.25rem;
+    margin-inline: 0;
+    padding: 0.75rem max(0.75rem, env(safe-area-inset-inline-end, 0px))
+      0.75rem max(0.75rem, env(safe-area-inset-inline-start, 0px));
+    box-sizing: border-box;
     background-color: var(--surface);
     background-image: linear-gradient(var(--surface), var(--surface));
     border-top: 1px solid var(--border);

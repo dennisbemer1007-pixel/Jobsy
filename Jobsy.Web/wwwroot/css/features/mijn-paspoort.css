@@ -495,6 +495,25 @@
 
 /* Phone: keep the overview above the bottom-right coach. */
 @media (max-width: 639px) {
+    .passport-page .passport-layout__main {
+        padding-bottom: calc(
+            3.25rem + var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
+    .passport-page .passport-tabs {
+        position: fixed;
+        inset-inline: 0;
+        inset-block-start: auto;
+        inset-block-end: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
+        z-index: 48;
+        margin-block: 0;
+        padding-inline: max(var(--space-3), env(safe-area-inset-inline-start, 0px))
+            max(var(--space-3), env(safe-area-inset-inline-end, 0px));
+        background: color-mix(in srgb, var(--bg) 96%, transparent);
+        box-shadow: 0 -6px 16px color-mix(in srgb, var(--text) 8%, transparent);
+    }
+
     .passport-layout {
         gap: 0.45rem;
     }

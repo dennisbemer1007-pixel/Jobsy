@@ -188,6 +188,13 @@ public sealed class TestsStackGuardTests
         var testsCss = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/tests.css"));
         Assert.Contains("background-color: var(--surface);", testsCss, StringComparison.Ordinal);
         Assert.Contains("border-top: 1px solid var(--border);", testsCss, StringComparison.Ordinal);
+        Assert.Contains("position: fixed;", testsCss, StringComparison.Ordinal);
+        Assert.Contains("--sticky-footer-h", testsCss, StringComparison.Ordinal);
+
+        var flow = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Shared/Questionnaire/TestQuestionFlow.razor"));
+        Assert.Contains("jobsyCoachDock.bind", flow, StringComparison.Ordinal);
+        Assert.Contains("(max-width: 639px)", flow, StringComparison.Ordinal);
+        Assert.Contains("IAsyncDisposable", flow, StringComparison.Ordinal);
     }
 
     [Fact]
