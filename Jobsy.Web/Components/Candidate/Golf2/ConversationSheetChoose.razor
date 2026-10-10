@@ -1,0 +1,121 @@
+@page "/candidate/paspoort/gespreksblad"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Options
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IOptions<Golf2WestlandOptions> Golf2Options
+
+<PageTitle>@Culture["Golf2.Sheet.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page golf2-sheet-page">
+    @if (!_enabled)
+    {
+        <p class="state-message" role="status">@Culture["Panel.ErrorInline"]</p>
+        <a class="btn btn-secondary" href="/candidate/paspoort">@Culture["Golf2.Sheet.Back"]</a>
+    }
+    else if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <h1>@Culture["Golf2.Sheet.Title"]</h1>
+        <p class="login-lead">@Culture["Golf2.Sheet.Lead"]</p>
+        <ReadAloudButton Text="@($"{Culture["Golf2.Sheet.Title"]}. {Culture["Golf2.Sheet.Lead"]}")" SpeechKey="golf2-sheet" />
+
+        <label class="field-label" for="golf2-strengths">@Culture["Golf2.Sheet.Strengths"]</label>
+        <textarea id="golf2-strengths" class="text-input" rows="4" maxlength="4000" @bind="_strengths"></textarea>
+
+        <label class="field-label" for="golf2-motivation">@Culture["Golf2.Sheet.Motivation"]</label>
+        <textarea id="golf2-motivation" class="text-input" rows="4" maxlength="4000" @bind="_motivation"></textarea>
+
+        <label class="field-label" for="golf2-custom">@Culture["Golf2.Sheet.Custom"]</label>
+        <textarea id="golf2-custom" class="text-input" rows="3" maxlength="4000" @bind="_custom"></textarea>
+
+        @if (_errors.Count > 0)
+        {
+            <div role="alert" class="panel-inline-error">
+                @foreach (var err in _errors)
+                {
+                    <p>@err</p>
+                }
+            </div>
+        }
+
+        <div class="golf2-block__actions golf2-no-print">
+            <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="SaveAsync">
+                @( _busy ? Culture["Common.Loading"] : Culture["Golf2.Sheet.Save"])
+            </button>
+            <a class="btn btn-secondary" href="/candidate/paspoort/gespreksblad/print">@Culture["Golf2.Sheet.Print"]</a>
+            <a class="btn btn-ghost" href="/candidate/paspoort">@Culture["Golf2.Sheet.Back"]</a>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _enabled;
+    private bool _loading = true;
+    private bool _busy;
+    private string _strengths = "";
+    private string _motivation = "";
+    private string _custom = "";
+    private readonly List<string> _errors = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var opts = Golf2Options.Value;
+        _enabled = opts.Enabled && opts.ConversationSheet;
+        if (!_enabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            var sheet = await Api.GetGolf2ConversationSheetAsync();
+            if (sheet is not null)
+            {
+                _strengths = sheet.StrengthsText;
+                _motivation = sheet.MotivationText;
+                _custom = sheet.CustomText;
+            }
+        }
+        catch
+        {
+            // empty form
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _errors.Clear();
+        try
+        {
+            await Api.SaveGolf2ConversationSheetAsync(_strengths, _motivation, _custom, null);
+            Navigation.NavigateTo("/candidate/paspoort/gespreksblad/print");
+        }
+        catch (ApiErrorException ex)
+        {
+            _errors.Add(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _errors.Add(ex.Message);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -7,8 +7,11 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Dna
+@using Jobsy.Web.Components.Candidate.Golf2
 @using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Options
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Routing
@@ -19,6 +22,7 @@
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject IFeatureFlags FeatureFlags
+@inject IOptions<Golf2WestlandOptions> Golf2Options
 @implements IDisposable
 
 <PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
@@ -88,6 +92,15 @@
                                   Important="@_important"
                                   ImportantStatus="@_importantStatus"
                                   OnGoTests="() => SetTab(PassportTabs.Tests)" />
+
+                @if (Golf2Options.Value.Enabled)
+                {
+                    <PassportNextStepBlock Options="Golf2Options.Value"
+                                           FourTestsComplete="@(_completedTests >= 4)"
+                                           OnGoCareer="() => SetTab(PassportTabs.Career)" />
+                    <PassportFourTestsFeedback Options="Golf2Options.Value"
+                                               FourTestsComplete="@(_completedTests >= 4)" />
+                }
 
                 <div class="passport-tabs"
                      role="tablist"

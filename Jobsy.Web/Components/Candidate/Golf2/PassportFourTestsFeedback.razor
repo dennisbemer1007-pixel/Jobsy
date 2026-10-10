@@ -1,0 +1,129 @@
+@using Jobsy.Core.Options
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+@if (Options.FourTestsFeedback && FourTestsComplete && !_dismissed)
+{
+    <section class="golf2-block" data-testid="golf2-four-tests-feedback" aria-labelledby="golf2-feedback-title">
+        @if (_saved)
+        {
+            <p class="golf2-block__lead" role="status">@Culture["Golf2.Feedback.Thanks"]</p>
+        }
+        else
+        {
+            <h2 id="golf2-feedback-title" class="golf2-block__title">@Culture["Golf2.Feedback.Title"]</h2>
+            <p class="golf2-block__lead">@Culture["Golf2.Feedback.Lead"]</p>
+            <ReadAloudButton Text="@($"{Culture["Golf2.Feedback.Title"]}. {Culture["Golf2.Feedback.Lead"]}")" SpeechKey="golf2-feedback" />
+            <div class="golf2-smileys" role="group" aria-label="@Culture["Golf2.Feedback.Title"]">
+                @foreach (var rating in new[] { 1, 2, 3 })
+                {
+                    var selected = _rating == rating;
+                    <button type="button"
+                            class="golf2-smiley @(selected ? "golf2-smiley--selected" : null)"
+                            aria-pressed="@(selected ? "true" : "false")"
+                            @onclick="() => _rating = rating">
+                        <span class="golf2-smiley__icon" aria-hidden="true">@Smiley(rating)</span>
+                        <span class="golf2-smiley__label">@Culture[RatingKey(rating)]</span>
+                    </button>
+                }
+            </div>
+            <label class="field-label" for="golf2-feedback-open">@Culture["Golf2.Feedback.OpenLabel"]</label>
+            <textarea id="golf2-feedback-open" class="text-input" rows="3" maxlength="2000" @bind="_open"></textarea>
+            <label class="field-label">
+                <input type="checkbox" @bind="_sharePilot" />
+                @Culture["Golf2.Feedback.SharePilot"]
+            </label>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="error" role="alert">@_error</p>
+            }
+            <div class="golf2-block__actions">
+                <button type="button" class="btn btn-ghost" disabled="@_busy" @onclick="Skip">@Culture["Golf2.Feedback.Skip"]</button>
+                <button type="button" class="btn btn-primary" disabled="@(_busy || _rating is null)" @onclick="SaveAsync">
+                    @( _busy ? Culture["Common.Loading"] : Culture["Golf2.Feedback.Save"])
+                </button>
+            </div>
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public Golf2WestlandOptions Options { get; set; } = null!;
+
+    [Parameter]
+    public bool FourTestsComplete { get; set; }
+
+    private int? _rating;
+    private string _open = "";
+    private bool _sharePilot = true;
+    private bool _busy;
+    private bool _saved;
+    private bool _dismissed;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Options.FourTestsFeedback || !FourTestsComplete)
+        {
+            return;
+        }
+
+        try
+        {
+            var existing = await Api.GetGolf2FourTestsFeedbackAsync();
+            if (existing is not null && existing.HelpfulnessRating > 0)
+            {
+                _saved = true;
+                _dismissed = true;
+            }
+        }
+        catch
+        {
+            // ignore load errors; user can still submit
+        }
+    }
+
+    private static string Smiley(int rating) => rating switch
+    {
+        1 => "🙁",
+        2 => "😐",
+        _ => "🙂"
+    };
+
+    private static string RatingKey(int rating) => rating switch
+    {
+        1 => "Golf2.Feedback.Rating1",
+        2 => "Golf2.Feedback.Rating2",
+        _ => "Golf2.Feedback.Rating3"
+    };
+
+    private void Skip() => _dismissed = true;
+
+    private async Task SaveAsync()
+    {
+        if (_rating is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.SaveGolf2FourTestsFeedbackAsync(_rating.Value, _open, _sharePilot);
+            _saved = true;
+            _dismissed = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

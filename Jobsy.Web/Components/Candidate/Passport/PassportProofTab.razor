@@ -6,7 +6,11 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Components.Candidate.Golf2
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Options
 @inject JobsyApiClient Api
+@inject IOptions<Golf2WestlandOptions> Golf2Options
 @inject CultureState Culture
 @inject CandidateProfileEditor Editor
 @inject IJSRuntime Js
@@ -222,6 +226,11 @@
                 </div>
             </article>
         </div>
+
+        @if (Golf2Options.Value.Enabled && Golf2Options.Value.OutsideWork)
+        {
+            <OutsideWorkList />
+        }
 
         <p class="passport-proof__note muted">@Culture["Passport.Proof.LobsyCvNote"]</p>
         <button class="btn btn-secondary" type="button" data-testid="passport-proof-download-pdf" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">

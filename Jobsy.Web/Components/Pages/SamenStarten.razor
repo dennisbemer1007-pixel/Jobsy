@@ -1,0 +1,42 @@
+@page "/samen-starten"
+@layout PublicLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.Layout.Public
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["Golf2.SamenStarten.Title"] · Lobsy</PageTitle>
+
+<article class="golf2-samen public-page">
+    <header class="golf2-samen__hero">
+        <h1>@Culture["Golf2.SamenStarten.Title"]</h1>
+        <p class="login-lead">@Culture["Golf2.SamenStarten.Lead"]</p>
+        <ReadAloudButton Text="@($"{Culture["Golf2.SamenStarten.Title"]}. {Culture["Golf2.SamenStarten.Lead"]}")" SpeechKey="golf2-samen-starten" />
+    </header>
+
+    <section class="golf2-samen__section" aria-labelledby="golf2-samen-s1">
+        <h2 id="golf2-samen-s1">@Culture["Golf2.SamenStarten.Section1Title"]</h2>
+        <p>@Culture["Golf2.SamenStarten.Section1Body"]</p>
+    </section>
+
+    <section class="golf2-samen__section" aria-labelledby="golf2-samen-s2">
+        <h2 id="golf2-samen-s2">@Culture["Golf2.SamenStarten.Section2Title"]</h2>
+        <p>@Culture["Golf2.SamenStarten.Section2Body"]</p>
+    </section>
+
+    <section class="golf2-samen__section" aria-labelledby="golf2-samen-s3">
+        <h2 id="golf2-samen-s3">@Culture["Golf2.SamenStarten.Section3Title"]</h2>
+        <p>@Culture["Golf2.SamenStarten.Section3Body"]</p>
+    </section>
+
+    <div class="golf2-block__actions golf2-no-print">
+        <button type="button" class="btn btn-primary" @onclick="PrintAsync">@Culture["Golf2.SamenStarten.Print"]</button>
+        <PublicLangMenu />
+    </div>
+</article>
+
+@code {
+    private async Task PrintAsync() => await Js.InvokeVoidAsync("print");
+}

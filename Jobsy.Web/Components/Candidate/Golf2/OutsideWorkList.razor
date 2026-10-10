@@ -1,0 +1,83 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<section class="golf2-block passport-proof__card" aria-labelledby="golf2-outside-work-title">
+    <h3 id="golf2-outside-work-title" class="passport-proof__card-title">@Culture["Golf2.OutsideWork.Title"]</h3>
+    <p class="muted">@Culture["Golf2.OutsideWork.Lead"]</p>
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="muted">@Culture["Golf2.OutsideWork.Empty"]</p>
+    }
+    else
+    {
+        <ul class="golf2-outside-work__list">
+            @foreach (var item in _items.OrderBy(i => i.SortOrder))
+            {
+                <li class="golf2-outside-work__item">
+                    <strong>@item.ActivityTitle</strong>
+                    @if (item.HoursPerWeek is int h)
+                    {
+                        <span class="muted"> · @h u/wk</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Description))
+                    {
+                        <p class="muted">@item.Description</p>
+                    }
+                    <button type="button" class="btn btn-ghost" disabled="@_busy" @onclick="() => DeleteAsync(item.Id)">
+                        @Culture["Golf2.OutsideWork.Delete"]
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+    <OutsideWorkAdd OnAdded="ReloadAsync" />
+</section>
+
+@code {
+    private List<JobsyApiClient.Golf2OutsideWorkDto> _items = [];
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    public async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _items = (await Api.GetGolf2OutsideWorkAsync()).ToList();
+        }
+        catch
+        {
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            await Api.DeleteGolf2OutsideWorkAsync(id);
+            await ReloadAsync();
+        }
+        catch
+        {
+            // keep list as-is
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

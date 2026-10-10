@@ -1,0 +1,65 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<div class="golf2-outside-work__form">
+    <label class="field-label" for="golf2-outside-activity">@Culture["Golf2.OutsideWork.Activity"]</label>
+    <input id="golf2-outside-activity" class="text-input" maxlength="120" @bind="_activity" />
+    <label class="field-label" for="golf2-outside-desc">@Culture["Golf2.OutsideWork.Description"]</label>
+    <textarea id="golf2-outside-desc" class="text-input" rows="2" maxlength="2000" @bind="_description"></textarea>
+    <label class="field-label" for="golf2-outside-hours">@Culture["Golf2.OutsideWork.Hours"]</label>
+    <input id="golf2-outside-hours" class="text-input" type="number" min="0" max="168" @bind="_hoursText" />
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="error" role="alert">@_error</p>
+    }
+    <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="AddAsync">
+        @( _busy ? Culture["Common.Loading"] : Culture["Golf2.OutsideWork.Add"])
+    </button>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnAdded { get; set; }
+
+    private string _activity = "";
+    private string _description = "";
+    private string? _hoursText;
+    private bool _busy;
+    private string? _error;
+
+    private async Task AddAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_activity))
+        {
+            _error = Culture["Golf2.OutsideWork.Activity"];
+            return;
+        }
+
+        int? hours = null;
+        if (!string.IsNullOrWhiteSpace(_hoursText) && int.TryParse(_hoursText, out var h))
+        {
+            hours = h;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.UpsertGolf2OutsideWorkAsync(null, _activity.Trim(), _description.Trim(), hours, 0);
+            _activity = "";
+            _description = "";
+            _hoursText = null;
+            await OnAdded.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

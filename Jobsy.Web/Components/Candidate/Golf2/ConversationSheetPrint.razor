@@ -1,0 +1,94 @@
+@page "/candidate/paspoort/gespreksblad/print"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Options
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject IOptions<Golf2WestlandOptions> Golf2Options
+
+<PageTitle>@Culture["Golf2.Sheet.Title"] · @Culture["Golf2.Sheet.Print"]</PageTitle>
+
+<div class="golf2-sheet-print">
+    @if (!_enabled)
+    {
+        <p class="state-message">@Culture["Panel.ErrorInline"]</p>
+    }
+    else if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <header class="golf2-sheet-print__section">
+            <h1>@Culture["Golf2.Sheet.Title"]</h1>
+            <p class="muted">Lobsy · @DateTime.Now.ToString("dd-MM-yyyy")</p>
+        </header>
+        <section class="golf2-sheet-print__section" aria-labelledby="golf2-print-strengths">
+            <h2 id="golf2-print-strengths" class="golf2-sheet-print__h">@Culture["Golf2.Sheet.Strengths"]</h2>
+            <p class="golf2-sheet-print__body">@Display(_strengths)</p>
+        </section>
+        <section class="golf2-sheet-print__section" aria-labelledby="golf2-print-motivation">
+            <h2 id="golf2-print-motivation" class="golf2-sheet-print__h">@Culture["Golf2.Sheet.Motivation"]</h2>
+            <p class="golf2-sheet-print__body">@Display(_motivation)</p>
+        </section>
+        @if (!string.IsNullOrWhiteSpace(_custom))
+        {
+            <section class="golf2-sheet-print__section" aria-labelledby="golf2-print-custom">
+                <h2 id="golf2-print-custom" class="golf2-sheet-print__h">@Culture["Golf2.Sheet.Custom"]</h2>
+                <p class="golf2-sheet-print__body">@_custom</p>
+            </section>
+        }
+        <div class="golf2-block__actions golf2-no-print">
+            <button type="button" class="btn btn-primary" @onclick="PrintAsync">@Culture["Golf2.Sheet.Print"]</button>
+            <a class="btn btn-secondary" href="/candidate/paspoort/gespreksblad">@Culture["Golf2.Sheet.Back"]</a>
+            <a class="btn btn-ghost" href="/candidate/paspoort">@Culture["Golf2.Sheet.Back"]</a>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _enabled;
+    private bool _loading = true;
+    private string _strengths = "";
+    private string _motivation = "";
+    private string _custom = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var opts = Golf2Options.Value;
+        _enabled = opts.Enabled && opts.ConversationSheet;
+        if (!_enabled)
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            var sheet = await Api.GetGolf2ConversationSheetAsync();
+            if (sheet is not null)
+            {
+                _strengths = sheet.StrengthsText;
+                _motivation = sheet.MotivationText;
+                _custom = sheet.CustomText;
+            }
+        }
+        catch
+        {
+            // show empty print
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Display(string? text) =>
+        string.IsNullOrWhiteSpace(text) ? "—" : text.Trim();
+
+    private async Task PrintAsync() => await Js.InvokeVoidAsync("print");
+}
