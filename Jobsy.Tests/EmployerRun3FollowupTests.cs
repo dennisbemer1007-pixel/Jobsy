@@ -54,11 +54,18 @@ public class EmployerRun3FollowupTests
             "Vacature en 4 sollicitaties definitief verwijderen? Dit kun je niet ongedaan maken.",
             string.Format(UiStrings.Get("AdminVacancy.Confirm.Purge", "nl"), CountPhrase.Applications(culture, 4)));
         Assert.Equal(
-            "Vacature offline halen? Kandidaten zien hem dan niet meer. Weer online zetten kost 1 token.",
+            "Vacature offline halen? Kandidaten zien hem dan niet meer. Weer online zetten is gratis.",
             UiStrings.Get("WgVac.Confirm.Offline", "nl"));
-        foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
+        foreach (var (lang, freeHint) in new[]
+                 {
+                     ("nl", "gratis"),
+                     ("en", "free"),
+                     ("pl", "bezpłatne"),
+                     ("ro", "gratuit"),
+                     ("ar", "مجاني"),
+                 })
         {
-            Assert.Contains("1", UiStrings.Get("WgVac.Confirm.Offline", lang), StringComparison.Ordinal);
+            Assert.Contains(freeHint, UiStrings.Get("WgVac.Confirm.Offline", lang), StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("competenties", UiStrings.Get("Talent.Lead", lang), StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("competenc", UiStrings.Get("Talent.Lead", lang), StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("Match", UiStrings.Get("Insights.Premium.Check.Match", lang), StringComparison.Ordinal);

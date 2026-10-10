@@ -54,7 +54,7 @@ public class EmployerRun2FollowupTests
             Assert.Equal("Beschikbaar voor jouw vacatures", UiStrings.Get("Insights.Kpi.Matching", "nl"));
             Assert.DoesNotContain("Match", UiStrings.Get("Insights.Kpi.Matching", lang), StringComparison.Ordinal);
             Assert.Contains("manager", UiStrings.Get("WgTodo.NoManager.MetaRm", "nl"), StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("niet genoeg tokens", UiStrings.Get("WgVac.Confirm.ReopenLow", "nl"), StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("geen tokens", UiStrings.Get("WgVac.Confirm.ReopenFree", "nl"), StringComparison.OrdinalIgnoreCase);
             Assert.Equal("1 eerdere werkgever", UiStrings.Get("WgApp.Fact.EmployersOne", "nl"));
             Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("Count.Token.One", lang)));
             Assert.False(string.IsNullOrWhiteSpace(purge));

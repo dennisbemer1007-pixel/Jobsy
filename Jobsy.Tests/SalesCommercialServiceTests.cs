@@ -128,9 +128,9 @@ public class SalesCommercialServiceTests
         var refreshed = await db.Companies.AsNoTracking().SingleAsync(c => c.Id == company.Id);
         Assert.False(refreshed.PendingStartHighlightBonus);
 
-        // Only publish cost charged (1 token); highlight was free.
+        // Publish is free; highlight was free via start bonus.
         var balance = await new TokenLedgerService(db).GetBalanceAsync(company.Id);
-        Assert.Equal(4m, balance);
+        Assert.Equal(5m, balance);
     }
 
     [Fact]
@@ -294,8 +294,8 @@ public class SalesCommercialServiceTests
         Assert.True(second.Vacancy!.IsHighlighted);
 
         var balance = await new TokenLedgerService(db).GetBalanceAsync(company.Id);
-        // First: publish 1 + free highlight. Second: publish 1 + paid highlight 2 → spent 4, balance 6.
-        Assert.Equal(6m, balance);
+        // First: free publish + free highlight. Second: free publish + paid highlight 2 → spent 2, balance 8.
+        Assert.Equal(8m, balance);
         Assert.False((await db.Companies.AsNoTracking().SingleAsync(c => c.Id == company.Id)).PendingStartHighlightBonus);
     }
 

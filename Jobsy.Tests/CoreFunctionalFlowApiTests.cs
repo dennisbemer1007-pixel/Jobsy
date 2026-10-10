@@ -34,7 +34,7 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
     }
 
     [Fact]
-    public async Task Employer_publish_with_empty_balance_returns_402_insufficient_tokens()
+    public async Task Employer_publish_with_empty_balance_succeeds_without_token_debit()
     {
         var client = EmployerClient();
         var response = await client.PostAsJsonAsync("api/vacancies/publish", new
@@ -45,17 +45,13 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
             extend = false
         });
 
-        Assert.Equal(HttpStatusCode.PaymentRequired, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<InsufficientTokensDto>(JsonOpts);
-        Assert.NotNull(body);
-        Assert.Equal("InsufficientTokens", body!.Code);
-        Assert.Equal(_factory.CompanyId, body.CompanyId);
-        Assert.Equal(_factory.DraftVacancyId, body.VacancyId);
-        Assert.Equal("Publish", body.Action);
-        Assert.Equal(0m, body.Balance);
-        Assert.True(body.RequiredTokens >= 1m);
-        Assert.True(body.Deficit >= 1m);
-        Assert.Contains("token", body.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var vacancy = await db.Vacancies.AsNoTracking().SingleAsync(v => v.Id == _factory.DraftVacancyId);
+        Assert.Equal(VacancyStatus.Active, vacancy.Status);
+        Assert.False(await db.TokenTransactions.AnyAsync(t =>
+            t.CompanyId == _factory.CompanyId && t.Kind == TokenTransactionKind.Spend));
     }
 
     [Fact]
