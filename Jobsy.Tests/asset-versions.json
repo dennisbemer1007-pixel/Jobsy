@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "a49cb0fcee651343edf5f539b8397ae2f767eea3dd1760bd34fb03679a48a25e",
-    "v": "20261005-06"
+    "sha256": "a315f325f6333688894ce1110fdae5e74ea02f2ae745dcd4243279c2337480b2",
+    "v": "20261010-01"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -96,7 +96,7 @@
     "v": "20261004-10"
   },
   "css/features/public-theme.css": {
-    "sha256": "257e1ae80b47a5ccd74c7147f049da9dbe355799ff5fc8714f61bc280e82612d",
+    "sha256": "92e73fda8b6ce147006d097245b10eee95dabb43ad75d9af8999a5009a0daa99",
     "v": "20261004-11"
   },
   "css/features/questionnaire.css": {
@@ -148,8 +148,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "40d3046fc1c604c1f84c9eddd2aaf2fd30fdd6e21f75b702f634cf07ae6f667b",
-    "v": "20261005-06"
+    "sha256": "2c0fa75f4de608c41d653c9f5c00f03b8aac33b8fca6650d858b91f7e0e37279",
+    "v": "20261010-01"
   },
   "js/app-extras.js": {
     "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
@@ -224,11 +224,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "4f14eecf327c8f949a84ba7c9904839c39f4c17e3f65cd7a6d3f265aaeeeeebf",
+    "sha256": "c2420e448fa8dc9774b258a3a2f74dc2ee667bbedd9db11d609839440f170280",
     "v": "20261005-06"
   },
   "service-worker.published.js": {
-    "sha256": "f685aeca957d5da5c84fb810d9c62a0c15a0eacd8cc3c093235ca4eba116a29a",
+    "sha256": "c95cdc8e748e10b23dcbef08dbd4ff913195fd7edcf0c89bb082d29c6a199e49",
     "v": "20261005-06"
   }
 }

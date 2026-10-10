@@ -71,6 +71,9 @@ for line in text.splitlines():
         continue
     m = re.search(r"warning (NU\d+): ([^\[]+)", line)
     if m:
+        # NuGet audit (NU190x) is warning-only in Directory.Build.props; vulnerable-package gate is separate.
+        if m.group(1).startswith("NU19"):
+            continue
         key = f"package:{m.group(1)}:{m.group(2).strip()}"
         if key in keys:
             continue

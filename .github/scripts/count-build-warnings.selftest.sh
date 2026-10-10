@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Self-test for count-build-warnings.sh: one each of CS/CA/IDE/RZ/ASP/BL/NU + a duplicate → 7.
+# Self-test for count-build-warnings.sh: one each of CS/CA/IDE/RZ/ASP/BL + a duplicate → 6 (NU190x excluded).
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 script="$root/.github/scripts/count-build-warnings.sh"
@@ -18,8 +18,8 @@ cat >"$fixture" <<'LOG'
 LOG
 
 got="$("$script" "$fixture")"
-if [[ "$got" != "7" ]]; then
-  echo "expected 7 unique warnings, got $got" >&2
+if [[ "$got" != "6" ]]; then
+  echo "expected 6 unique warnings, got $got" >&2
   exit 1
 fi
 echo "count-build-warnings.selftest: ok ($got)"

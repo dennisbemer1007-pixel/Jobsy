@@ -543,6 +543,14 @@
   contain: layout paint style;
 }
 
+.pub-theme .cookie-consent__title {
+  color: var(--text);
+}
+
+.pub-theme .cookie-consent__text {
+  color: var(--muted);
+}
+
 .pub-theme .cookie-consent a {
   color: var(--brand);
 }
