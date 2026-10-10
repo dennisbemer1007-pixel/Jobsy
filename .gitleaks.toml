@@ -7,7 +7,7 @@ title = "Jobsy / Lobsy gitleaks allowlist"
 useDefault = true
 
 [allowlist]
-description = "Development placeholders in appsettings.Development.json (local-dev-*, demo passwords)"
+description = "Development placeholders and admin setting keys (not secrets)"
 paths = [
   '''(^|/)appsettings\.Development\.json$''',
   '''PlatformSettingsCatalog\.cs$''',
