@@ -3,7 +3,7 @@ name: PR tests
 on:
   pull_request:
   push:
-    branches: [main, acceptatie]
+    branches: [main, acceptatie, "cursor/**"]
 
 jobs:
   test:
