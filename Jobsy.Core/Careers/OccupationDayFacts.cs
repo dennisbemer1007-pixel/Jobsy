@@ -19,7 +19,7 @@ public sealed class OccupationDayFacts
         PropertyNameCaseInsensitive = true
     };
 
-    private static readonly Lazy<IReadOnlyDictionary<string, string[]>> TasksByIsco = new(LoadTasks);
+    private static readonly Lazy<IReadOnlyDictionary<string, TaskLine[]>> TasksByIsco = new(LoadTasks);
 
     private OccupationDayFacts(
         string escoId,
@@ -28,7 +28,8 @@ public sealed class OccupationDayFacts
         string description,
         IReadOnlyList<string> altNames,
         IReadOnlyList<string> skills,
-        IReadOnlyList<string> tasks)
+        IReadOnlyList<string> tasks,
+        OccupationDaySourceRewrite.WorkplaceKind workplace)
     {
         EscoId = escoId;
         Uri = uri;
@@ -37,6 +38,7 @@ public sealed class OccupationDayFacts
         AltNames = altNames;
         Skills = skills;
         Tasks = tasks;
+        Workplace = workplace;
         IsThin = description.Length < 120 && skills.Count < 2 && tasks.Count < 2;
     }
 
@@ -47,6 +49,7 @@ public sealed class OccupationDayFacts
     public IReadOnlyList<string> AltNames { get; }
     public IReadOnlyList<string> Skills { get; }
     public IReadOnlyList<string> Tasks { get; }
+    public OccupationDaySourceRewrite.WorkplaceKind Workplace { get; }
     public bool IsThin { get; }
 
     public string SourceText
@@ -81,17 +84,22 @@ public sealed class OccupationDayFacts
             AddSkill(skills, OccupationSkills.Shared.Label(index));
         }
 
-        var tasks = TasksByIsco.Value.TryGetValue(job.Isco, out var lines)
-            ? lines.Take(MaxTasks).ToList()
-            : [];
-        var description = TrimDescription(job.Desc);
         var alt = job.Alt
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(4)
             .ToList();
-        return new OccupationDayFacts(job.Id, job.Uri, job.Nl.Trim(), description, alt, skills, tasks);
+        var description = OccupationDaySourceRewrite.RewriteDescription(TrimDescription(job.Desc));
+        var workplace = OccupationDaySourceRewrite.DetectWorkplace(job.Nl.Trim(), description, alt);
+        var tasks = TasksByIsco.Value.TryGetValue(job.Isco, out var lines)
+            ? lines
+                .Take(MaxTasks)
+                .Select(line => OccupationDaySourceRewrite.RewriteTask(line.Nl, line.En, workplace))
+                .Where(line => line.Length > 0)
+                .ToList()
+            : [];
+        return new OccupationDayFacts(job.Id, job.Uri, job.Nl.Trim(), description, alt, skills, tasks, workplace);
     }
 
     /// <summary>Test and import helper. Does not invent fields that were not passed in.</summary>
@@ -103,14 +111,21 @@ public sealed class OccupationDayFacts
         IReadOnlyList<string>? skills = null,
         IReadOnlyList<string>? tasks = null,
         IReadOnlyList<string>? altNames = null)
-        => new(
-            escoId.Trim(),
-            uri.Trim(),
-            title.Trim(),
-            TrimDescription(description),
-            (altNames ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(4).ToList(),
-            (skills ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxSkills).ToList(),
-            (tasks ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxTasks).ToList());
+        {
+            var alt = (altNames ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(4).ToList();
+            var desc = OccupationDaySourceRewrite.RewriteDescription(TrimDescription(description));
+            var workplace = OccupationDaySourceRewrite.DetectWorkplace(title.Trim(), desc, alt);
+            var taskLines = (tasks ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxTasks).ToList();
+            return new OccupationDayFacts(
+                escoId.Trim(),
+                uri.Trim(),
+                title.Trim(),
+                desc,
+                alt,
+                (skills ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxSkills).ToList(),
+                taskLines,
+                workplace);
+        }
 
     public string ToPrompt()
     {
@@ -122,11 +137,23 @@ public sealed class OccupationDayFacts
         sb.AppendLine(Description.Length == 0 ? "geen" : Description);
         sb.AppendLine("Vaardigheden uit de bron:");
         AppendLines(sb, Skills);
-        sb.AppendLine("Taken uit de bron:");
+        sb.AppendLine("Taken uit de bron (al in gewoon Nederlands, B1):");
         AppendLines(sb, Tasks);
+        sb.Append("Werkplek: ").AppendLine(WorkplaceHint());
         sb.Append("Bron is dun: ").AppendLine(IsThin ? "ja" : "nee");
+        sb.AppendLine();
+        sb.AppendLine(OccupationDayInLifePrompt.GenerationRules);
         return sb.ToString().Trim();
     }
+
+    private string WorkplaceHint() => Workplace switch
+    {
+        OccupationDaySourceRewrite.WorkplaceKind.Greenhouse =>
+            "kwekerij of kas (geen hovenier of particuliere tuin)",
+        OccupationDaySourceRewrite.WorkplaceKind.Kitchen => "keuken of institutionele catering",
+        OccupationDaySourceRewrite.WorkplaceKind.RoadTransport => "wegtransport met vrachtwagen",
+        _ => "algemeen"
+    };
 
     private static void AppendLines(StringBuilder sb, IReadOnlyList<string> lines)
     {
@@ -170,18 +197,17 @@ public sealed class OccupationDayFacts
         return text[..cut].Trim();
     }
 
-    private static IReadOnlyDictionary<string, string[]> LoadTasks()
+    private static IReadOnlyDictionary<string, TaskLine[]> LoadTasks()
     {
         using var stream = Open("ilo_tasks_nl.json");
         var rows = JsonSerializer.Deserialize<List<TaskLine>>(stream, Json) ?? [];
-        var grouped = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var grouped = new Dictionary<string, List<TaskLine>>(StringComparer.Ordinal);
         foreach (var row in rows)
         {
             var isco = (row.Isco ?? "").Trim();
             var nl = (row.Nl ?? "").Trim();
             var en = (row.En ?? "").Trim();
-            var line = nl.Length > 0 ? nl : en;
-            if (isco.Length == 0 || line.Length == 0)
+            if (isco.Length == 0 || (nl.Length == 0 && en.Length == 0))
             {
                 continue;
             }
@@ -192,12 +218,14 @@ public sealed class OccupationDayFacts
                 grouped[isco] = list;
             }
 
-            if (list.Contains(line, StringComparer.OrdinalIgnoreCase) || list.Count >= MaxTasks)
+            if (list.Any(item => string.Equals(item.Nl, nl, StringComparison.OrdinalIgnoreCase)
+                                 && string.Equals(item.En, en, StringComparison.OrdinalIgnoreCase))
+                || list.Count >= MaxTasks)
             {
                 continue;
             }
 
-            list.Add(line);
+            list.Add(new TaskLine { Isco = isco, Nl = nl, En = en });
         }
 
         return grouped.ToDictionary(
@@ -225,6 +253,7 @@ public sealed class OccupationDayFacts
         public string? Isco { get; set; }
 
         public string? En { get; set; }
+
         public string? Nl { get; set; }
     }
 }

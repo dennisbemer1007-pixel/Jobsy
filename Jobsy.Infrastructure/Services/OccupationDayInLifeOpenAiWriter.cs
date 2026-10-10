@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Core.Careers;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Microsoft.Extensions.Logging;
@@ -57,10 +58,10 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.KeyMissing, ModelName());
+            return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.KeyMissing, await ResolveModelAsync(cancellationToken));
         }
 
-        var model = ModelName();
+        var model = await ResolveModelAsync(cancellationToken);
         var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
         var client = _httpClientFactory.CreateClient(HttpClientName);
         var useSchema = true;
@@ -237,15 +238,28 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
         return normalized;
     }
 
-    private string ModelName()
+    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
     {
-        var model = (_options.Model ?? "").Trim();
-        if (model.Length == 0 || model.Contains("mistral", StringComparison.OrdinalIgnoreCase))
+        var configured = (_options.Model ?? "").Trim();
+        if (configured.Length > 0 && !configured.Contains("mistral", StringComparison.OrdinalIgnoreCase))
         {
-            return OccupationDayInLifeOptions.DefaultModel;
+            return configured;
         }
 
-        return model;
+        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
+        var fromTile = AiModelRouting.FirstNonEmpty(fromDb);
+        if (fromTile is not null && !fromTile.Contains("mistral", StringComparison.OrdinalIgnoreCase))
+        {
+            return fromTile;
+        }
+
+        var fromConfig = (_openAi.Model ?? "").Trim();
+        if (fromConfig.Length > 0 && !fromConfig.Contains("mistral", StringComparison.OrdinalIgnoreCase))
+        {
+            return fromConfig;
+        }
+
+        return OccupationDayInLifeOptions.DefaultModel;
     }
 
     private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
