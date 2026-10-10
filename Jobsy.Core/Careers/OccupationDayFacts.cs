@@ -111,21 +111,21 @@ public sealed class OccupationDayFacts
         IReadOnlyList<string>? skills = null,
         IReadOnlyList<string>? tasks = null,
         IReadOnlyList<string>? altNames = null)
-        {
-            var alt = (altNames ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(4).ToList();
-            var desc = OccupationDaySourceRewrite.RewriteDescription(TrimDescription(description));
-            var workplace = OccupationDaySourceRewrite.DetectWorkplace(title.Trim(), desc, alt);
-            var taskLines = (tasks ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxTasks).ToList();
-            return new OccupationDayFacts(
-                escoId.Trim(),
-                uri.Trim(),
-                title.Trim(),
-                desc,
-                alt,
-                (skills ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxSkills).ToList(),
-                taskLines,
-                workplace);
-        }
+    {
+        var alt = (altNames ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(4).ToList();
+        var desc = OccupationDaySourceRewrite.RewriteDescription(TrimDescription(description));
+        var workplace = OccupationDaySourceRewrite.DetectWorkplace(title.Trim(), desc, alt);
+        var taskLines = (tasks ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxTasks).ToList();
+        return new OccupationDayFacts(
+            escoId.Trim(),
+            uri.Trim(),
+            title.Trim(),
+            desc,
+            alt,
+            (skills ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Take(MaxSkills).ToList(),
+            taskLines,
+            workplace);
+    }
 
     public string ToPrompt()
     {
