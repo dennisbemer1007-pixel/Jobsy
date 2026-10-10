@@ -42,8 +42,12 @@ public class JobMapPinsClustersPlaywrightTests
         Assert.Contains("markersByCoordKey", js, StringComparison.Ordinal);
         Assert.Contains("lastClusterTapAt", js, StringComparison.Ordinal);
         Assert.Contains("jobsy-agency-areas", js, StringComparison.Ordinal);
+        Assert.Contains("jobsy-pins-cluster-agency-badge", js, StringComparison.Ordinal);
+        Assert.Contains("map-popup__agency", js, StringComparison.Ordinal);
         Assert.Contains("via uitzendbureau", js, StringComparison.Ordinal);
         Assert.Contains("__testGetAgencyAreaCount", js, StringComparison.Ordinal);
+        Assert.Contains("__testHasAgencyMapTextLabels", js, StringComparison.Ordinal);
+        Assert.DoesNotContain("jobsy-pins-agency-label", js, StringComparison.Ordinal);
     }
 
     private static async Task RunViewportScenarioAsync(int width, int height)
