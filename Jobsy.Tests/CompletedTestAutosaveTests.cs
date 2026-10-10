@@ -333,6 +333,7 @@ public class CompletedTestAutosaveTests
                 FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
                 null,
                 FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
+                true,
                 DateTime.UtcNow));
 
         public Task<FlexCommercialSettingsDto> UpdateAsync(

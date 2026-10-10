@@ -70,11 +70,14 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
 
         var commercial = await _commercial.GetAsync(cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var billingCompanyId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+        var hasPriorPlacements = await _db.ApplicationPlacements.AsNoTracking()
+            .AnyAsync(p => p.BillingCompanyId == billingCompanyId, cancellationToken);
         var cost = AcceptCandidateVacancyRules.ResolveAcceptCostTokens(
             application.Vacancy.Kind,
             commercial,
-            today);
-        var billingCompanyId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+            today,
+            hasPriorPlacements);
 
         var respondedAt = DateTime.UtcNow;
         if (cost <= 0m)

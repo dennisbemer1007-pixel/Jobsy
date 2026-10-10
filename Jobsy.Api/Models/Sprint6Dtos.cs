@@ -303,7 +303,8 @@ public record UpdatePlatformFeatureRequest(
     bool? FreeCandidateTestsEnabled = null,
     bool? HonestAdviceEnabled = null,
     bool? FutureJobsForYouEnabled = null,
-    bool? EmployerPhase2Enabled = null);
+    bool? EmployerPhase2Enabled = null,
+    bool? CandidateExternalVacanciesEnabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -334,7 +335,8 @@ public record PlatformFeatureDto(
     bool FreeCandidateTestsEnabled = true,
     bool HonestAdviceEnabled = false,
     bool FutureJobsForYouEnabled = false,
-    bool EmployerPhase2Enabled = false);
+    bool EmployerPhase2Enabled = false,
+    bool CandidateExternalVacanciesEnabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

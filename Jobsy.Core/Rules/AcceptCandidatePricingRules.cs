@@ -18,7 +18,8 @@ public static class AcceptCandidatePricingRules
         {
             AcceptCandidatePilotCostTokens = dto.AcceptCandidatePilotCostTokens,
             AcceptCandidatePilotEndsOn = dto.AcceptCandidatePilotEndsOn,
-            AcceptCandidateStandardCostTokens = dto.AcceptCandidateStandardCostTokens
+            AcceptCandidateStandardCostTokens = dto.AcceptCandidateStandardCostTokens,
+            FirstEmployerAcceptanceFreeEnabled = dto.FirstEmployerAcceptanceFreeEnabled
         };
 
     public static decimal ResolveCostTokens(FlexCommercialSettings settings, DateOnly todayUtc)

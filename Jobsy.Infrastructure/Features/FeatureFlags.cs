@@ -53,7 +53,8 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.CompactTestPdfEnabled,
                 snap.HonestAdviceEnabled,
                 snap.FutureJobsForYouEnabled,
-                snap.EmployerPhase2Enabled);
+                snap.EmployerPhase2Enabled,
+                snap.CandidateExternalVacanciesEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

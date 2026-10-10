@@ -14,7 +14,8 @@ public static class AiModelRouting
     public static bool UsesSmallModel(OpenAiFeature feature) => feature is
         OpenAiFeature.VacancyContentModeration
         or OpenAiFeature.CvExtraction
-        or OpenAiFeature.Translation;
+        or OpenAiFeature.Translation
+        or OpenAiFeature.ExternalVacancyExtraction;
 
     /// <summary>First non-blank value, trimmed. Null when every value is missing.</summary>
     public static string? FirstNonEmpty(params string?[] values)

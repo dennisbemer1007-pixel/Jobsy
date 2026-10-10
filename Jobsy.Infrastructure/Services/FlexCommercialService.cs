@@ -89,6 +89,7 @@ public sealed class FlexCommercialService : IFlexCommercialService
         settings.AcceptCandidatePilotEndsOn = update.AcceptCandidatePilotEndsOn;
         settings.AcceptCandidateStandardCostTokens =
             Math.Round(update.AcceptCandidateStandardCostTokens, 2, MidpointRounding.AwayFromZero);
+        settings.FirstEmployerAcceptanceFreeEnabled = update.FirstEmployerAcceptanceFreeEnabled;
         settings.UpdatedAtUtc = DateTime.UtcNow;
 
         await SyncContactUnlockSpendCostAsync(settings.ContactUnlockCostTokens, cancellationToken);
@@ -232,6 +233,7 @@ public sealed class FlexCommercialService : IFlexCommercialService
             ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
             AcceptCandidatePilotCostTokens = FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
             AcceptCandidateStandardCostTokens = FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
+            FirstEmployerAcceptanceFreeEnabled = true,
             UpdatedAtUtc = DateTime.UtcNow
         };
         _db.FlexCommercialSettings.Add(settings);
@@ -280,6 +282,7 @@ public sealed class FlexCommercialService : IFlexCommercialService
             settings.AcceptCandidatePilotCostTokens,
             settings.AcceptCandidatePilotEndsOn,
             settings.AcceptCandidateStandardCostTokens,
+            settings.FirstEmployerAcceptanceFreeEnabled,
             settings.UpdatedAtUtc);
     }
 

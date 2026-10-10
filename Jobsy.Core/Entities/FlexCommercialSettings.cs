@@ -42,5 +42,10 @@ public class FlexCommercialSettings
     /// <summary>Cost to accept after pilot (default 1 token).</summary>
     public decimal AcceptCandidateStandardCostTokens { get; set; } = DefaultAcceptCandidateStandardCostTokens;
 
+    /// <summary>
+    /// When true, the billing company's first paid accept costs 0 tokens (placement still recorded).
+    /// </summary>
+    public bool FirstEmployerAcceptanceFreeEnabled { get; set; } = true;
+
     public DateTime UpdatedAtUtc { get; set; }
 }

@@ -8,6 +8,7 @@ public static class OneTimeLinkRules
     public static readonly TimeSpan SetPasswordLifetime = TimeSpan.FromDays(7);
     public static readonly TimeSpan ApiKeyRevealLifetime = TimeSpan.FromHours(72);
     public static readonly TimeSpan PasswordResetLifetime = TimeSpan.FromMinutes(30);
+    public static readonly TimeSpan ExternalVacancyEmployerInviteLifetime = TimeSpan.FromDays(30);
 
     /// <summary>Used or expired links older than this are purged by the daily retention job.</summary>
     public const int RetentionDays = 30;
@@ -16,6 +17,7 @@ public static class OneTimeLinkRules
     {
         OneTimeLinkPurpose.ApiKeyReveal => ApiKeyRevealLifetime,
         OneTimeLinkPurpose.PasswordReset => PasswordResetLifetime,
+        OneTimeLinkPurpose.ExternalVacancyEmployerInvite => ExternalVacancyEmployerInviteLifetime,
         _ => SetPasswordLifetime
     };
 }

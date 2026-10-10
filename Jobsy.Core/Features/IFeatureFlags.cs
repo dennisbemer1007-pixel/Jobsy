@@ -21,7 +21,8 @@ public sealed record FeatureFlagSnapshot(
     bool CompactTestPdfEnabled = false,
     bool HonestAdviceEnabled = false,
     bool FutureJobsForYouEnabled = false,
-    bool EmployerPhase2Enabled = false)
+    bool EmployerPhase2Enabled = false,
+    bool CandidateExternalVacanciesEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -38,6 +39,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.HonestAdvice => HonestAdviceEnabled,
         PlatformFeature.FutureJobsForYou => FutureJobsForYouEnabled,
         PlatformFeature.EmployerPhase2 => EmployersEnabled && EmployerPhase2Enabled,
+        PlatformFeature.CandidateExternalVacancies => CandidateExternalVacanciesEnabled,
         _ => false
     };
 }

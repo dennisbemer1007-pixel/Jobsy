@@ -64,7 +64,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.CompactTestPdfEnabled ?? false,
                 dto?.HonestAdviceEnabled ?? false,
                 dto?.FutureJobsForYouEnabled ?? false,
-                dto?.EmployerPhase2Enabled ?? false);
+                dto?.EmployerPhase2Enabled ?? false,
+                dto?.CandidateExternalVacanciesEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -125,5 +126,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("employerPhase2Enabled")]
         public bool EmployerPhase2Enabled { get; set; }
+
+        [JsonPropertyName("candidateExternalVacanciesEnabled")]
+        public bool CandidateExternalVacanciesEnabled { get; set; }
     }
 }

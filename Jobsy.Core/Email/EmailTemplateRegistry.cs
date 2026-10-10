@@ -23,6 +23,8 @@ public static class EmailTemplateRegistry
         // —— §M core (31) ——
         Def("ApplicationConfirmation", "ApplicationConfirmation", "Kandidaat", EmailKind.Essential, "Applied", false,
             "Sollicitatie bevestigd", "Bevestiging na versturen van een sollicitatie.", requiresEmployers: true),
+        Def("ExternalVacancyApplication", "ExternalVacancyApplication", "Werkgever", EmailKind.Essential, "ExternalApply", false,
+            "Externe sollicitatie", "Kandidaat deelt een externe vacature met motivatie en feiten.", requiresEmployers: false),
         Def("ApplicationVerificationCode", "ApplicationVerificationCode", "Kandidaat", EmailKind.Security, "ApplyCode", false,
             "Verificatiecode sollicitatie", "6-cijferige code om een sollicitatie af te ronden.", requiresEmployers: true),
         Def("EmployerReactionAccepted", "EmployerReaction", "Kandidaat", EmailKind.Essential, "Applied", true,

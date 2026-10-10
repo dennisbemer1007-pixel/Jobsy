@@ -184,6 +184,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.EmployerPhase2Enabled = employerPhase2Enabled;
         }
 
+        if (update.CandidateExternalVacanciesEnabled is bool externalVacanciesEnabled)
+        {
+            row.CandidateExternalVacanciesEnabled = externalVacanciesEnabled;
+        }
+
         if (update.FreeCandidateTestsEnabled is bool freeCandidateTestsEnabled)
         {
             row.FreeCandidateTestsEnabled = freeCandidateTestsEnabled;
@@ -376,6 +381,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.FreeCandidateTestsEnabled ?? true,
             row?.HonestAdviceEnabled ?? false,
             row?.FutureJobsForYouEnabled ?? false,
-            row?.EmployerPhase2Enabled ?? false);
+            row?.EmployerPhase2Enabled ?? false,
+            row?.CandidateExternalVacanciesEnabled ?? false);
     }
 }

@@ -34,6 +34,13 @@ public class FeatureFlagFoundationTests
         Assert.True(d.CandidatePassportEnabled);
         Assert.False(d.IsEnabled(PlatformFeature.Employers));
         Assert.True(d.IsEnabled(PlatformFeature.CandidatePassport));
+        Assert.False(d.IsEnabled(PlatformFeature.CandidateExternalVacancies));
+    }
+
+    [Fact]
+    public void PlatformFeatureSettings_external_vacancies_default_off()
+    {
+        Assert.False(new PlatformFeatureSettings().CandidateExternalVacanciesEnabled);
     }
 
     [Fact]

@@ -129,6 +129,12 @@ public class PlatformFeatureSettings
     public bool FutureJobsForYouEnabled { get; set; }
 
     /// <summary>
+    /// When true, candidates can import external vacancy URLs and e-mail employers (mockups 6a–6e).
+    /// Default false.
+    /// </summary>
+    public bool CandidateExternalVacanciesEnabled { get; set; }
+
+    /// <summary>
     /// When true, every candidate unlocks the uitgebreide analyse without Mollie.
     /// Default true so acceptatie is free after deploy. An admin can turn it off.
     /// Test accounts stay free even when this is false.
