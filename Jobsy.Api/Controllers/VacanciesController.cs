@@ -2708,7 +2708,8 @@ public class VacanciesController : ControllerBase
             CulturePillars: r.CulturePillars is { Count: > 0 } ? r.CulturePillars.ToList() : null,
             EngagementItems: r.EngagementItems is { Count: > 0 }
                 ? r.EngagementItems.Select(e => new VacancyEngagementBadgeDto(e.ItemId, e.Checked)).ToList()
-                : null);
+                : null,
+            PublicMapRadiusKm: r.PublicMapRadiusKm);
     }
 
     private static VacancyListItemDto MapToDto(
@@ -2887,7 +2888,10 @@ public class VacanciesController : ControllerBase
             BarrierMinExperienceHours: barrier.Hours,
             BarrierHardChecks: barrier.HardChecks,
             IsPreview: isPreview,
-            PublishOnVerification: v.PublishOnVerification);
+            PublishOnVerification: v.PublishOnVerification,
+            PublicMapRadiusKm: v.IntermediaryCompanyId is not null
+                ? AcceptCandidatePricingRules.NormalizeAgencyRadiusKm(v.PublicMapRadiusKm)
+                : null);
     }
 
     private static (string? Kind, IReadOnlyList<string>? Diplomas, IReadOnlyList<string>? Certs, int? Years, int? Hours, IReadOnlyList<string>? HardChecks)

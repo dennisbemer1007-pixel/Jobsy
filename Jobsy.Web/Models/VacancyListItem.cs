@@ -36,6 +36,7 @@ public class VacancyListItem
     public int ApplicationCount { get; set; }
     public int LikeCount { get; set; }
     public string? OfferedByLabel { get; set; }
+    public int? PublicMapRadiusKm { get; set; }
     public bool ShowClientAddressOnMap { get; set; }
     public Guid? IntermediaryCompanyId { get; set; }
     public string Kind { get; set; } = "Regular";

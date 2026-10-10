@@ -622,6 +622,7 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.DailyHoursJson).HasMaxLength(2000).IsRequired();
             entity.Property(e => e.TotalHours).HasPrecision(6, 2);
+            entity.Property(e => e.EmployerReturnNote).HasMaxLength(280);
             entity.Property(e => e.Status).HasConversion<int>();
             entity.HasOne(e => e.Application)
                 .WithMany()

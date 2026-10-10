@@ -84,6 +84,28 @@ public sealed partial class JobsyApiClient
             ct);
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task ReturnMaqqieHoursWeekAsync(
+        Guid applicationId,
+        Guid weekId,
+        string note,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/maqqie-hours/applications/{applicationId:D}/weeks/{weekId:D}/return",
+            new { note },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<bool> GetMaqqieHoursEmployerActiveAsync(CancellationToken ct = default)
+    {
+        var dto = await _http.GetFromJsonAsync<MaqqieEmployerActiveItem>("api/maqqie-hours/employer/active", ct);
+        return dto?.Active == true;
+    }
+
+    public async Task<MaqqieHoursEmployerOverviewDto?> GetMaqqieHoursEmployerOverviewAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<MaqqieHoursEmployerOverviewDto>("api/maqqie-hours/employer/overview", ct);
 }
 
 public sealed class EmployerPhase2ApplicationContextItem
@@ -105,6 +127,11 @@ public sealed class EmployerPhase2FactItem
 }
 
 public sealed class MaqqieActiveItem
+{
+    public bool Active { get; set; }
+}
+
+public sealed class MaqqieEmployerActiveItem
 {
     public bool Active { get; set; }
 }

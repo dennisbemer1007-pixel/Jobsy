@@ -33,7 +33,12 @@ else
             <section class="wg-card">
                 <h2>Deze week (@week.WeekStart.ToString("dd-MM"))</h2>
                 <p class="muted">Status: @StatusLabel(week.Status)</p>
-                @if (week.Status == MaqqieHoursWeekStatus.Draft)
+                @if (!string.IsNullOrWhiteSpace(week.EmployerReturnNote))
+                {
+                    <p class="maqqie-hours__return-note" role="status">@week.EmployerReturnNote</p>
+                }
+                @if (week.Status == MaqqieHoursWeekStatus.Draft
+                     || week.Status == MaqqieHoursWeekStatus.ReturnedToCandidate)
                 {
                     <div class="maqqie-hours__grid">
                         @for (var d = 1; d <= 7; d++)
@@ -102,6 +107,7 @@ else
         MaqqieHoursWeekStatus.Submitted => "Ingediend",
         MaqqieHoursWeekStatus.EmployerApproved => "Goedgekeurd",
         MaqqieHoursWeekStatus.SentToMaqqie => "Naar Maqqie",
+        MaqqieHoursWeekStatus.ReturnedToCandidate => "Teruggestuurd",
         _ => status.ToString()
     };
 

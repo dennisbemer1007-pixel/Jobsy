@@ -420,6 +420,21 @@ public static class UiStringsWerkgever
         Add("WgPhase2.ModeChosen.Maqqie", "Route: Maqqie", "Path: Maqqie", "Trasa: Maqqie", "Rută: Maqqie", "المسار: Maqqie");
         Add("WgPhase2.ModeChosen.Self", "Route: zelf in dienst", "Route: direct hire", "Trasa: bezpośrednio", "Rută: direct", "المسار: مباشر");
         Add("WgPhase2.ChoiceFailed", "Keuze opslaan is niet gelukt.", "Could not save choice.", "Nie zapisano wyboru.", "Nu s-a putut salva alegerea.", "تعذر حفظ الاختيار.");
+        Add("WgNav.HoursApprove", "Uren goedkeuren", "Approve hours", "Zatwierdź godziny", "Aprobă orele", "اعتماد الساعات");
+        Add("WgPhase2.HoursApprove.Title", "Uren goedkeuren", "Approve hours", "Zatwierdź godziny", "Aprobă orele", "اعتماد الساعات");
+        Add("WgPhase2.HoursApprove.Lead", "Alleen voor kandidaten met een Maqqie-contract. Keur goed of stuur terug met een korte opmerking.", "Only for candidates on a Maqqie contract. Approve or return with a short note.", "Tylko dla kandydatów z kontraktem Maqqie.", "Doar pentru candidați cu contract Maqqie.", "للمرشحين بعقد Maqqie فقط.");
+        Add("WgPhase2.HoursApprove.Loading", "Laden…", "Loading…", "Ładowanie…", "Se încarcă…", "جارٍ التحميل…");
+        Add("WgPhase2.HoursApprove.Empty", "Er staan nu geen weken klaar om goed te keuren.", "No weeks are waiting for approval.", "Brak tygodni do zatwierdzenia.", "Nicio săptămână de aprobat.", "لا توجد أسابيع بانتظار الموافقة.");
+        Add("WgPhase2.HoursApprove.WeekLabel", "Week van {0}", "Week of {0}", "Tydzień od {0}", "Săptămâna de la {0}", "أسبوع {0}");
+        Add("WgPhase2.HoursApprove.TotalHours", "Totaal: {0} uur", "Total: {0} hours", "Razem: {0} godz.", "Total: {0} ore", "الإجمالي: {0} ساعة");
+        Add("WgPhase2.HoursApprove.Approve", "Goedkeuren", "Approve", "Zatwierdź", "Aprobă", "موافقة");
+        Add("WgPhase2.HoursApprove.Return", "Terugsturen", "Send back", "Odeślij", "Trimite înapoi", "إرجاع");
+        Add("WgPhase2.HoursApprove.ReturnNoteLabel", "Korte opmerking voor de kandidaat", "Short note for the candidate", "Krótka uwaga dla kandydata", "Notă scurtă pentru candidat", "ملاحظة قصيرة للمرشح");
+        Add("WgPhase2.HoursApprove.ReturnSubmit", "Terugsturen", "Send back", "Odeślij", "Trimite înapoi", "إرجاع");
+        Add("WgPhase2.HoursApprove.Cancel", "Annuleren", "Cancel", "Anuluj", "Anulează", "إلغاء");
+        Add("WgPhase2.HoursApprove.ReturnNoteRequired", "Schrijf een korte opmerking.", "Write a short note.", "Napisz krótką uwagę.", "Scrie o notă scurtă.", "اكتب ملاحظة قصيرة.");
+        Add("WgPhase2.HoursApprove.Approved", "Uren goedgekeurd.", "Hours approved.", "Godziny zatwierdzone.", "Ore aprobate.", "تم اعتماد الساعات.");
+        Add("WgPhase2.HoursApprove.Returned", "Week teruggestuurd naar de kandidaat.", "Week sent back to the candidate.", "Tydzień odesłany do kandydata.", "Săptămâna trimisă candidatului.", "أُعيد الأسبوع إلى المرشح.");
 
         // Organisatie / Team (05)
         Add("WgOrg.Lead", "Je organisatie, regio's, vestigingen en wie waar bij kan.", "Your organisation, regions, branches and who can access what.", "Twoja organizacja, regiony, placówki i kto ma dostęp.", "Organizația, regiunile, filialele și cine are acces.", "منظمتك والمناطق والفروع ومن يمكنه الوصول.");

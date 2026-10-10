@@ -21,6 +21,7 @@ public static class WerkgeverRightsMatrix
         new("/werkgever/vacatures/nieuw", "BranchManager,EnterpriseManager,Intermediary", true, false, true),
         new("/werkgever/sollicitaties", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/sollicitaties/{ApplicationId:guid}", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
+        new("/werkgever/uren", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/talentpool", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
         new("/werkgever/kandidaatinzichten", "BranchManager,RegionalManager,EnterpriseManager", true, true, true),
         new("/werkgever/organisatie/vestigingen", "RegionalManager,EnterpriseManager,Admin", true, true, false),

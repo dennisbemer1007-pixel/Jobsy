@@ -5,5 +5,6 @@ public enum MaqqieHoursWeekStatus
     Draft = 0,
     Submitted = 1,
     EmployerApproved = 2,
-    SentToMaqqie = 3
+    SentToMaqqie = 3,
+    ReturnedToCandidate = 4
 }

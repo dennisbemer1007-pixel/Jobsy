@@ -81,6 +81,7 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `/werkgever/vacatures/nieuw` | ● | — | ◯ | `BranchManager,EnterpriseManager,Intermediary` |
 | `/werkgever/sollicitaties` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/{ApplicationId:guid}` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/uren` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/talentpool` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary` |
 | `/werkgever/kandidaatinzichten` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager` |
 | `/werkgever/organisatie/vestigingen` | ● | ◐ | — | `RegionalManager,EnterpriseManager,Admin` |

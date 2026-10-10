@@ -128,7 +128,7 @@
     "v": "20261004-10"
   },
   "css/features/werkgever.css": {
-    "sha256": "71834403c93f423bd97bb0be8d4e78e8fcd239dda6051ba0302995cdb77e198d",
+    "sha256": "477072f0c19866dfa12bb35d4819b259695b6468097e718b2146bb7e62f92d3d",
     "v": "20261004-11"
   },
   "favicon.ico": {
@@ -148,7 +148,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "2c0fa75f4de608c41d653c9f5c00f03b8aac33b8fca6650d858b91f7e0e37279",
+    "sha256": "e7139efecf25675110a34072a8516da347b8632a5d5041e367b4027419a5c31b",
     "v": "20261010-01"
   },
   "js/app-extras.js": {
@@ -184,8 +184,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "2b6d44a927e62c63c9320d288008c98dca6d52a918e0e8f064a43b75133e434f",
-    "v": "20261002-kp04"
+    "sha256": "d5bf0bb3aaddf1a5ac0e1a0d576d5137228fc4f2a525d3c43a6429e8f34137cd",
+    "v": "20261010-ag01"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "7398c432fd1e38c3840753ca918919adeed81ed19074c0fdcf75b33e1972b825",

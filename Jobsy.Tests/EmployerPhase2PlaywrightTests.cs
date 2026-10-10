@@ -37,6 +37,33 @@ public class EmployerPhase2PlaywrightTests
         Assert.Equal(0, await hoursNav.CountAsync());
     }
 
+    [Fact]
+    public void Agency_map_and_employer_hours_ui_are_wired()
+    {
+        var root = FindRepoRoot();
+        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
+        var approve = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Werkgever", "MaqqieHoursApprove.razor"));
+        Assert.Contains("PIN_SOURCE_AGENCY_AREAS", js);
+        Assert.Contains("data-testid=\"wg-maqqie-hours-approve\"", approve);
+        Assert.Contains("WgPhase2.HoursApprove.Title", approve);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+
     private static async Task<bool> IsReachableAsync(string baseUrl)
     {
         try

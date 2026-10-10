@@ -131,7 +131,8 @@ public record VacancyListItemDto(
     /// </summary>
     bool OpenForWorkRequired = false,
     /// <summary>When the vacancy was taken offline. Null on older rows; do not substitute EndDate.</summary>
-    DateTime? ClosedAtUtc = null);
+    DateTime? ClosedAtUtc = null,
+    int? PublicMapRadiusKm = null);
 
 public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
 

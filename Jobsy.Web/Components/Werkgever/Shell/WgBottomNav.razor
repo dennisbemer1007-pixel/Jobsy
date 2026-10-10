@@ -65,7 +65,10 @@
     private bool _bootstrapped;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
-    private WerkgeverNavContext Ctx => new(CandidateInsightsEnabled: true, Counts: Counts.Counts);
+    private WerkgeverNavContext Ctx => new(
+        CandidateInsightsEnabled: true,
+        HasMaqqieHours: Counts.MaqqieHoursNavVisible,
+        Counts: Counts.Counts);
     private IReadOnlyList<WerkgeverNavItem> Items => WerkgeverNav.MobileItems(Role, Ctx);
     private IReadOnlyList<WerkgeverNavGroup> SidebarGroups => WerkgeverNav.For(Role, Ctx);
 

@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Web.Services;
 
@@ -10,6 +11,7 @@ public sealed class WerkgeverCountsState : IDisposable
 {
     private readonly JobsyApiClient _api;
     private readonly EmployerScopeState _scope;
+    private readonly IFeatureFlags _flags;
     private DateTime _lastFetchUtc = DateTime.MinValue;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _disposed;
@@ -19,10 +21,13 @@ public sealed class WerkgeverCountsState : IDisposable
 
     public event Action? Changed;
 
-    public WerkgeverCountsState(JobsyApiClient api, EmployerScopeState scope)
+    public bool MaqqieHoursNavVisible { get; private set; }
+
+    public WerkgeverCountsState(JobsyApiClient api, EmployerScopeState scope, IFeatureFlags flags)
     {
         _api = api;
         _scope = scope;
+        _flags = flags;
     }
 
     public async Task RefreshIfStaleAsync(CancellationToken ct = default)
@@ -78,6 +83,19 @@ public sealed class WerkgeverCountsState : IDisposable
 
             // Pending applications count for Sollicitaties badge prefers overdue; if zero keep todo-derived.
             Counts = map;
+            MaqqieHoursNavVisible = false;
+            if (await _flags.IsEnabledAsync(PlatformFeature.EmployerPhase2, ct))
+            {
+                try
+                {
+                    MaqqieHoursNavVisible = await _api.GetMaqqieHoursEmployerActiveAsync(ct);
+                }
+                catch
+                {
+                    MaqqieHoursNavVisible = false;
+                }
+            }
+
             _lastFetchUtc = DateTime.UtcNow;
             Changed?.Invoke();
         }

@@ -23,6 +23,11 @@ public class MaqqieHoursWeek
     public DateTime? EmployerApprovedAtUtc { get; set; }
     public DateTime? SentToMaqqieAtUtc { get; set; }
 
+    /// <summary>Short B1 note when the employer sends the week back for correction.</summary>
+    public string? EmployerReturnNote { get; set; }
+
+    public DateTime? EmployerReturnedAtUtc { get; set; }
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

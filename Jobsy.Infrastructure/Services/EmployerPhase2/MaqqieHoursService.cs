@@ -132,9 +132,17 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
             };
             _db.MaqqieHoursWeeks.Add(week);
         }
-        else if (week.Status != MaqqieHoursWeekStatus.Draft)
+        else if (week.Status is not MaqqieHoursWeekStatus.Draft
+                 and not MaqqieHoursWeekStatus.ReturnedToCandidate)
         {
             return MapWeek(week);
+        }
+
+        if (week.Status == MaqqieHoursWeekStatus.ReturnedToCandidate)
+        {
+            week.Status = MaqqieHoursWeekStatus.Draft;
+            week.EmployerReturnNote = null;
+            week.EmployerReturnedAtUtc = null;
         }
 
         week.DailyHoursJson = json;
@@ -147,13 +155,17 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
     public async Task<bool> SubmitWeekAsync(Guid candidateUserId, Guid weekId, CancellationToken cancellationToken = default)
     {
         var week = await LoadOwnedWeekAsync(candidateUserId, weekId, cancellationToken);
-        if (week is null || week.Status != MaqqieHoursWeekStatus.Draft)
+        if (week is null
+            || week.Status is not MaqqieHoursWeekStatus.Draft
+                and not MaqqieHoursWeekStatus.ReturnedToCandidate)
         {
             return false;
         }
 
         week.Status = MaqqieHoursWeekStatus.Submitted;
         week.SubmittedAtUtc = DateTime.UtcNow;
+        week.EmployerReturnNote = null;
+        week.EmployerReturnedAtUtc = null;
         week.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         return true;
@@ -204,6 +216,118 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
         return true;
     }
 
+    public async Task<bool> EmployerReturnWeekAsync(
+        Guid applicationId,
+        Guid weekId,
+        Guid actorUserId,
+        string note,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _phase2.IsEnabledAsync(cancellationToken))
+        {
+            return false;
+        }
+
+        note = (note ?? "").Trim();
+        if (note.Length == 0 || note.Length > 280)
+        {
+            return false;
+        }
+
+        var week = await _db.MaqqieHoursWeeks
+            .FirstOrDefaultAsync(w => w.Id == weekId && w.ApplicationId == applicationId, cancellationToken);
+        if (week is null || week.Status != MaqqieHoursWeekStatus.Submitted)
+        {
+            return false;
+        }
+
+        if (!await IsMaqqieApplicationAsync(applicationId, cancellationToken))
+        {
+            return false;
+        }
+
+        week.Status = MaqqieHoursWeekStatus.ReturnedToCandidate;
+        week.EmployerReturnNote = note;
+        week.EmployerReturnedAtUtc = DateTime.UtcNow;
+        week.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> EmployerHasMaqqiePlacementsAsync(
+        Guid employerUserId,
+        IReadOnlySet<Guid>? accessibleCompanyIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _phase2.IsEnabledAsync(cancellationToken))
+        {
+            return false;
+        }
+
+        return await MaqqiePlacementQuery(accessibleCompanyIds).AnyAsync(cancellationToken);
+    }
+
+    public async Task<MaqqieHoursEmployerOverviewDto?> GetEmployerOverviewAsync(
+        Guid employerUserId,
+        IReadOnlySet<Guid>? accessibleCompanyIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _phase2.IsEnabledAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var rows = await (
+            from w in _db.MaqqieHoursWeeks.AsNoTracking()
+            join a in _db.Applications.AsNoTracking() on w.ApplicationId equals a.Id
+            join p in _db.ApplicationPlacements.AsNoTracking() on a.Id equals p.ApplicationId
+            join v in _db.Vacancies.AsNoTracking() on a.VacancyId equals v.Id
+            where p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                  && w.Status == MaqqieHoursWeekStatus.Submitted
+                  && ScopeMatches(accessibleCompanyIds, v.CompanyId, v.IntermediaryCompanyId)
+            orderby w.WeekStart descending, w.SubmittedAtUtc descending
+            select new MaqqieHoursEmployerWeekRowDto(
+                a.Id,
+                w.Id,
+                w.WeekStart,
+                w.TotalHours,
+                a.CandidateName,
+                v.Title,
+                w.Status))
+            .Take(50)
+            .ToListAsync(cancellationToken);
+
+        return new MaqqieHoursEmployerOverviewDto(rows);
+    }
+
+    private async Task<bool> IsMaqqieApplicationAsync(Guid applicationId, CancellationToken cancellationToken)
+        => await _db.ApplicationPlacements.AsNoTracking()
+            .AnyAsync(
+                p => p.ApplicationId == applicationId && p.EmploymentMode == PlacementEmploymentMode.Maqqie,
+                cancellationToken);
+
+    private IQueryable<ApplicationPlacement> MaqqiePlacementQuery(IReadOnlySet<Guid>? accessibleCompanyIds)
+        => from p in _db.ApplicationPlacements.AsNoTracking()
+           join a in _db.Applications.AsNoTracking() on p.ApplicationId equals a.Id
+           join v in _db.Vacancies.AsNoTracking() on a.VacancyId equals v.Id
+           where p.EmploymentMode == PlacementEmploymentMode.Maqqie
+                 && ScopeMatches(accessibleCompanyIds, v.CompanyId, v.IntermediaryCompanyId)
+           select p;
+
+    private static bool ScopeMatches(
+        IReadOnlySet<Guid>? accessibleCompanyIds,
+        Guid companyId,
+        Guid? intermediaryCompanyId)
+    {
+        if (accessibleCompanyIds is null)
+        {
+            return true;
+        }
+
+        return accessibleCompanyIds.Contains(companyId)
+               || (intermediaryCompanyId is Guid i && accessibleCompanyIds.Contains(i));
+    }
+
     private async Task<MaqqieHoursWeek?> LoadOwnedWeekAsync(
         Guid candidateUserId,
         Guid weekId,
@@ -231,7 +355,13 @@ public sealed class MaqqieHoursService : IMaqqieHoursService
     {
         var hours = JsonSerializer.Deserialize<Dictionary<int, decimal>>(week.DailyHoursJson)
                     ?? new Dictionary<int, decimal>();
-        return new MaqqieHoursWeekDto(week.Id, week.WeekStart, week.Status, hours, week.TotalHours);
+        return new MaqqieHoursWeekDto(
+            week.Id,
+            week.WeekStart,
+            week.Status,
+            hours,
+            week.TotalHours,
+            week.EmployerReturnNote);
     }
 
     private static DateOnly StartOfWeek(DateOnly date)

@@ -131,6 +131,111 @@ public sealed class MaqqieHoursController : ControllerBase
         var ok = await _hours.EmployerApproveWeekAsync(applicationId, weekId, actor.Id, cancellationToken);
         return ok ? NoContent() : NotFound();
     }
+
+    [HttpGet("employer/active")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
+    public async Task<ActionResult<MaqqieEmployerActiveDto>> GetEmployerActive(CancellationToken cancellationToken)
+    {
+        var scope = await ResolveAccessibleCompaniesAsync(cancellationToken);
+        if (scope.Deny)
+        {
+            return Forbid();
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var active = await _hours.EmployerHasMaqqiePlacementsAsync(
+            actor.Id,
+            scope.CompanyIds,
+            cancellationToken);
+        return Ok(new MaqqieEmployerActiveDto(active));
+    }
+
+    [HttpGet("employer/overview")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
+    public async Task<ActionResult<MaqqieHoursEmployerOverviewDto>> GetEmployerOverview(CancellationToken cancellationToken)
+    {
+        var scope = await ResolveAccessibleCompaniesAsync(cancellationToken);
+        if (scope.Deny)
+        {
+            return Forbid();
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var overview = await _hours.GetEmployerOverviewAsync(
+            actor.Id,
+            scope.CompanyIds,
+            cancellationToken);
+        return overview is null ? NotFound() : Ok(overview);
+    }
+
+    [HttpPost("applications/{applicationId:guid}/weeks/{weekId:guid}/return")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
+    public async Task<IActionResult> EmployerReturnWeek(
+        Guid applicationId,
+        Guid weekId,
+        [FromBody] EmployerReturnMaqqieWeekRequest request,
+        CancellationToken cancellationToken)
+    {
+        var application = await _db.Applications
+            .Include(a => a.Vacancy)
+            .FirstOrDefaultAsync(a => a.Id == applicationId, cancellationToken);
+        if (application is null)
+        {
+            return NotFound();
+        }
+
+        if (!_companyAuth.IsAdmin(User))
+        {
+            var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+            if (accessible is not null
+                && !accessible.Contains(application.Vacancy.CompanyId)
+                && !(application.Vacancy.IntermediaryCompanyId is Guid i && accessible.Contains(i)))
+            {
+                return Forbid();
+            }
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return Unauthorized();
+        }
+
+        var ok = await _hours.EmployerReturnWeekAsync(
+            applicationId,
+            weekId,
+            actor.Id,
+            request.Note ?? "",
+            cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    private async Task<(bool Deny, IReadOnlySet<Guid>? CompanyIds)> ResolveAccessibleCompaniesAsync(
+        CancellationToken cancellationToken)
+    {
+        if (_companyAuth.IsAdmin(User))
+        {
+            return (false, null);
+        }
+
+        var ids = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        if (ids is null)
+        {
+            return (true, null);
+        }
+
+        return (false, ids as IReadOnlySet<Guid> ?? ids.ToHashSet());
+    }
 }
 
 public sealed record MaqqieActiveDto(bool Active);
@@ -138,3 +243,7 @@ public sealed record MaqqieActiveDto(bool Active);
 public sealed record UpsertMaqqieHoursWeekRequest(
     DateOnly WeekStart,
     Dictionary<int, decimal>? DailyHours);
+
+public sealed record MaqqieEmployerActiveDto(bool Active);
+
+public sealed record EmployerReturnMaqqieWeekRequest(string? Note);

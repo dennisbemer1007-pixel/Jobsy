@@ -91,6 +91,13 @@ window.jobMap = (function () {
     const PIN_LAYER_UNCLUSTERED = "jobsy-pins-unclustered";
     const PIN_LAYER_UNCLUSTERED_GLYPH = "jobsy-pins-unclustered-glyph";
     const PIN_LAYER_SELECTED = "jobsy-pins-selected";
+    const PIN_SOURCE_AGENCY_AREAS = "jobsy-agency-areas";
+    const PIN_LAYER_AGENCY_AREAS_FILL = "jobsy-agency-areas-fill";
+    const PIN_LAYER_AGENCY_AREAS_LINE = "jobsy-agency-areas-line";
+    const PIN_LAYER_AGENCY_LABEL = "jobsy-pins-agency-label";
+    const PIN_LAYER_CLUSTER_AGENCY_LABEL = "jobsy-pins-cluster-agency-label";
+    const AGENCY_PIN_COLOR = "#4f46e5";
+    const AGENCY_LABEL = "via uitzendbureau";
 
     // On-road cruise km/h. Keep in sync with TravelReach.SpeedKmPerHour.
     const CRUISE_KM_H = {
@@ -1856,6 +1863,20 @@ window.jobMap = (function () {
         }
     }
 
+    function agencyRadiusKm(raw) {
+        if (!raw) {
+            return 0;
+        }
+        const km = raw.publicMapRadiusKm != null ? raw.publicMapRadiusKm
+            : (raw.PublicMapRadiusKm != null ? raw.PublicMapRadiusKm : 0);
+        const n = Number(km);
+        return n === 5 || n === 10 ? n : (n > 0 ? 2 : 0);
+    }
+
+    function isAgencyPin(raw) {
+        return agencyRadiusKm(raw) > 0;
+    }
+
     function normalizePin(raw) {
         if (!raw) {
             return null;
@@ -1866,6 +1887,7 @@ window.jobMap = (function () {
         }
         const lat = Number(raw.lat != null ? raw.lat : raw.Lat);
         const lng = Number(raw.lng != null ? raw.lng : raw.Lng);
+        const radiusKm = agencyRadiusKm(raw);
         const colour = raw.categoryColor || raw.colour || raw.Colour || null;
         const matchPercent = raw.matchPercent != null ? raw.matchPercent
             : (raw.MatchPercent != null ? raw.MatchPercent : null);
@@ -1881,6 +1903,8 @@ window.jobMap = (function () {
             lng: lng,
             categoryColor: colour,
             colour: colour,
+            publicMapRadiusKm: radiusKm > 0 ? radiusKm : null,
+            agency: radiusKm > 0,
             matchPercent: matchPercent,
             workType: workType,
             workTypes: workTypes || (workType ? [workType] : []),
@@ -3182,6 +3206,7 @@ window.jobMap = (function () {
             features: Object.keys(markersById).map(function (id) {
                 const record = markersById[id];
                 const v = record.options.jobData || {};
+                const agency = isAgencyPin(v) ? 1 : 0;
                 let outside = 0;
                 if (origin && outerM > 0) {
                     const d = haversineMeters(origin.lat, origin.lng, record.lat, record.lng);
@@ -3196,9 +3221,11 @@ window.jobMap = (function () {
                     properties: {
                         id: String(id),
                         featured: isFeaturedVacancy(v) ? 1 : 0,
+                        agency: agency,
+                        radiusKm: agency ? agencyRadiusKm(v) : 0,
                         workType: workTypeOf(v) || "",
-                        glyph: workTypeGlyph(workTypeOf(v)),
-                        colour: v.categoryColor || v.colour || "",
+                        glyph: agency ? "◆" : workTypeGlyph(workTypeOf(v)),
+                        colour: agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
                         outside: outside
@@ -3206,6 +3233,44 @@ window.jobMap = (function () {
                 };
             })
         };
+    }
+
+    function agencyAreasGeoJson() {
+        const seen = Object.create(null);
+        const features = [];
+        Object.keys(markersById).forEach(function (id) {
+            const record = markersById[id];
+            const v = record.options.jobData || {};
+            const km = agencyRadiusKm(v);
+            if (km <= 0) {
+                return;
+            }
+            const key = coordKey(record.lat, record.lng) + "|" + km;
+            if (seen[key]) {
+                return;
+            }
+            seen[key] = true;
+            features.push({
+                type: "Feature",
+                properties: { radiusKm: km },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: circlePolygon(record.lat, record.lng, km * 1000)
+                }
+            });
+        });
+        return { type: "FeatureCollection", features: features };
+    }
+
+    function refreshAgencyAreas() {
+        if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) {
+            return;
+        }
+        ensureAgencyAreaLayers();
+        const source = map.getSource(PIN_SOURCE_AGENCY_AREAS);
+        if (source && typeof source.setData === "function") {
+            source.setData(agencyAreasGeoJson());
+        }
     }
 
     function haversineMeters(lat1, lng1, lat2, lng2) {
@@ -3216,6 +3281,38 @@ window.jobMap = (function () {
             Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
             Math.sin(dLng / 2) * Math.sin(dLng / 2);
         return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function ensureAgencyAreaLayers() {
+        if (!map) {
+            return;
+        }
+        if (!map.getSource(PIN_SOURCE_AGENCY_AREAS)) {
+            const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
+            map.addSource(PIN_SOURCE_AGENCY_AREAS, {
+                type: "geojson",
+                data: agencyAreasGeoJson()
+            });
+            map.addLayer({
+                id: PIN_LAYER_AGENCY_AREAS_FILL,
+                type: "fill",
+                source: PIN_SOURCE_AGENCY_AREAS,
+                paint: {
+                    "fill-color": AGENCY_PIN_COLOR,
+                    "fill-opacity": 0.12
+                }
+            }, beforeId);
+            map.addLayer({
+                id: PIN_LAYER_AGENCY_AREAS_LINE,
+                type: "line",
+                source: PIN_SOURCE_AGENCY_AREAS,
+                paint: {
+                    "line-color": AGENCY_PIN_COLOR,
+                    "line-width": 2,
+                    "line-opacity": 0.55
+                }
+            }, beforeId);
+        }
     }
 
     function ensurePinImages() {
@@ -3255,6 +3352,9 @@ window.jobMap = (function () {
                 cluster: true,
                 clusterRadius: CLUSTER_OPTS.clusterRadius,
                 clusterMaxZoom: CLUSTER_OPTS.clusterMaxZoom,
+                clusterProperties: {
+                    agency_sum: ["+", ["get", "agency"]]
+                },
                 promoteId: "id"
             });
         }
@@ -3268,7 +3368,12 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: ["has", "point_count"],
                 paint: {
-                    "circle-color": "#16a34a",
+                    "circle-color": [
+                        "case",
+                        ["==", ["get", "agency_sum"], ["get", "point_count"]],
+                        AGENCY_PIN_COLOR,
+                        "#16a34a"
+                    ],
                     "circle-radius": [
                         "step", ["get", "point_count"],
                         20, 10, 22, 30, 25
@@ -3298,7 +3403,12 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: ["has", "point_count"],
                 paint: {
-                    "circle-color": "#16a34a",
+                    "circle-color": [
+                        "case",
+                        ["==", ["get", "agency_sum"], ["get", "point_count"]],
+                        AGENCY_PIN_COLOR,
+                        "#16a34a"
+                    ],
                     "circle-radius": [
                         "step", ["get", "point_count"],
                         15, 10, 17, 30, 20
@@ -3321,6 +3431,24 @@ window.jobMap = (function () {
                 paint: { "text-color": "#ffffff" }
             });
             map.addLayer({
+                id: PIN_LAYER_CLUSTER_AGENCY_LABEL,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["all", ["has", "point_count"], ["==", ["get", "agency_sum"], ["get", "point_count"]]],
+                layout: {
+                    "text-field": AGENCY_LABEL,
+                    "text-size": 9,
+                    "text-offset": [0, 1.35],
+                    "text-font": ["Noto Sans Regular"],
+                    "text-allow-overlap": false
+                },
+                paint: {
+                    "text-color": AGENCY_PIN_COLOR,
+                    "text-halo-color": "#ffffff",
+                    "text-halo-width": 1.2
+                }
+            });
+            map.addLayer({
                 id: PIN_LAYER_UNCLUSTERED_HIT,
                 type: "circle",
                 source: PIN_SOURCE,
@@ -3340,6 +3468,7 @@ window.jobMap = (function () {
                     "circle-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["get", "agency"], 1], AGENCY_PIN_COLOR,
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [
                             "case",
@@ -3352,6 +3481,7 @@ window.jobMap = (function () {
                     "circle-radius": [
                         "case",
                         ["==", ["feature-state", "selected"], true], 10,
+                        ["==", ["get", "agency"], 1], 8,
                         ["==", ["get", "featured"], 1], 8,
                         7
                     ],
@@ -3381,6 +3511,30 @@ window.jobMap = (function () {
                     "text-ignore-placement": true
                 },
                 paint: {
+                    "text-opacity": [
+                        "case",
+                        ["==", ["get", "outside"], 1],
+                        0.35,
+                        1
+                    ]
+                }
+            });
+            map.addLayer({
+                id: PIN_LAYER_AGENCY_LABEL,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "agency"], 1]],
+                layout: {
+                    "text-field": AGENCY_LABEL,
+                    "text-size": 9,
+                    "text-offset": [0, 1.35],
+                    "text-font": ["Noto Sans Regular"],
+                    "text-allow-overlap": false
+                },
+                paint: {
+                    "text-color": AGENCY_PIN_COLOR,
+                    "text-halo-color": "#ffffff",
+                    "text-halo-width": 1.2,
                     "text-opacity": [
                         "case",
                         ["==", ["get", "outside"], 1],
@@ -3514,6 +3668,7 @@ window.jobMap = (function () {
         if (source && typeof source.setData === "function") {
             source.setData(pinsGeoJson());
         }
+        refreshAgencyAreas();
         if (selectedId != null) {
             highlight(selectedId);
         }
@@ -4288,6 +4443,10 @@ window.jobMap = (function () {
         /** @internal Playwright / diagnostics */
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
+        __testGetAgencyAreaCount: function () {
+            return agencyAreasGeoJson().features.length;
+        },
+        __testAgencyLabel: function () { return AGENCY_LABEL; },
         __testGetMapCreateCount: function () { return mapCreateCount; },
         __testGetPinsNetworkFetchCount: function () { return pinsNetworkFetchCount; },
         __testPinsFilterKey: pinsFilterKey,

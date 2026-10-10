@@ -25,6 +25,23 @@ public interface IMaqqieHoursService
         Guid weekId,
         Guid actorUserId,
         CancellationToken cancellationToken = default);
+
+    Task<bool> EmployerReturnWeekAsync(
+        Guid applicationId,
+        Guid weekId,
+        Guid actorUserId,
+        string note,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> EmployerHasMaqqiePlacementsAsync(
+        Guid employerUserId,
+        IReadOnlySet<Guid>? accessibleCompanyIds,
+        CancellationToken cancellationToken = default);
+
+    Task<MaqqieHoursEmployerOverviewDto?> GetEmployerOverviewAsync(
+        Guid employerUserId,
+        IReadOnlySet<Guid>? accessibleCompanyIds,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record MaqqieHoursOverviewDto(
@@ -38,10 +55,23 @@ public sealed record MaqqieHoursWeekDto(
     DateOnly WeekStart,
     MaqqieHoursWeekStatus Status,
     IReadOnlyDictionary<int, decimal> DailyHours,
-    decimal TotalHours);
+    decimal TotalHours,
+    string? EmployerReturnNote = null);
 
 public sealed record MaqqieHoursWeekSummaryDto(
     Guid Id,
     DateOnly WeekStart,
     decimal TotalHours,
+    MaqqieHoursWeekStatus Status);
+
+public sealed record MaqqieHoursEmployerOverviewDto(
+    IReadOnlyList<MaqqieHoursEmployerWeekRowDto> Weeks);
+
+public sealed record MaqqieHoursEmployerWeekRowDto(
+    Guid ApplicationId,
+    Guid WeekId,
+    DateOnly WeekStart,
+    decimal TotalHours,
+    string CandidateName,
+    string VacancyTitle,
     MaqqieHoursWeekStatus Status);
