@@ -265,7 +265,8 @@ public class VacanciesController : ControllerBase
                 highlighted,
                 highlighted ? HighlightShuffleRules.Rank(highlightSeed, c.Record.Id) : 0u,
                 workType,
-                matchBand);
+                matchBand,
+                c.Record.PublicMapRadiusKm);
         });
 
         return Ok(pins);
@@ -1420,6 +1421,11 @@ public class VacanciesController : ControllerBase
         vacancy.ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp;
         vacancy.IntermediaryCompanyId = intermediaryCompanyId;
         vacancy.ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap;
+        if (isIntermediary)
+        {
+            vacancy.PublicMapRadiusKm = AcceptCandidatePricingRules.NormalizeAgencyRadiusKm(request.PublicMapRadiusKm);
+        }
+
         vacancy.Kind = category.PlacementKind;
         vacancy.CategoryId = category.Id;
         vacancy.Category = category;

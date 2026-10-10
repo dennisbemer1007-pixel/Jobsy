@@ -20,7 +20,8 @@ public sealed record FeatureFlagSnapshot(
     bool WhatsAppRemindersEnabled = false,
     bool CompactTestPdfEnabled = false,
     bool HonestAdviceEnabled = false,
-    bool FutureJobsForYouEnabled = false)
+    bool FutureJobsForYouEnabled = false,
+    bool EmployerPhase2Enabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -36,6 +37,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.CompactTestPdf => CompactTestPdfEnabled,
         PlatformFeature.HonestAdvice => HonestAdviceEnabled,
         PlatformFeature.FutureJobsForYou => FutureJobsForYouEnabled,
+        PlatformFeature.EmployerPhase2 => EmployersEnabled && EmployerPhase2Enabled,
         _ => false
     };
 }

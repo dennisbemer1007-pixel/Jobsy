@@ -160,7 +160,8 @@ public sealed record VacancyPinDto(
     bool Highlighted = false,
     uint HighlightRank = 0,
     string? WorkType = null,
-    string? MatchColorBand = null);
+    string? MatchColorBand = null,
+    int? PublicMapRadiusKm = null);
 
 /// <summary>
 /// Lightweight popup/list card from the in-memory discovery index (no DB round-trip).

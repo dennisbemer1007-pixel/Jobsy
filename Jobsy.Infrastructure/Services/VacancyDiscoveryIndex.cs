@@ -286,7 +286,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
             PublisherVerified: PublicVisibility.IsCompanyPublic(vacancy.Company)
                 && (vacancy.IntermediaryCompanyId is null
                     || PublicVisibility.IsCompanyPublic(vacancy.IntermediaryCompany)),
-            IsTestData: vacancy.IsTestData);
+            IsTestData: vacancy.IsTestData,
+            PublicMapRadiusKm: vacancy.IntermediaryCompanyId is not null
+                ? AcceptCandidatePricingRules.NormalizeAgencyRadiusKm(vacancy.PublicMapRadiusKm)
+                : null);
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(

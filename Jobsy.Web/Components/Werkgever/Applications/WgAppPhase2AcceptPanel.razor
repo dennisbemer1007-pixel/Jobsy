@@ -1,0 +1,176 @@
+@namespace Jobsy.Web.Components.Werkgever.Applications
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject IFeatureFlags FeatureFlags
+
+@if (_visible)
+{
+    <section class="wg-phase2" data-testid="wg-phase2-panel">
+        @if (_context?.Facts is { Count: > 0 } facts)
+        {
+            <h3 class="wg-phase2__title">Wat je ziet (geen scores)</h3>
+            <ul class="wg-phase2__facts">
+                @foreach (var f in facts)
+                {
+                    <li class="@(f.FitsWell ? "is-ok" : null)">
+                        <strong>@f.Label:</strong> @f.Value
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (_context is { HasPlacement: false, Status: ApplicationStatus.Pending } && CanWrite)
+        {
+            <p class="wg-phase2__cost">
+                Accepteren kost <strong>@FormatCost(_context.AcceptCostTokens)</strong>
+                <span class="muted"> · pilot mogelijk</span>
+            </p>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="state-message error" role="alert">@_error</p>
+            }
+            <button type="button"
+                    class="btn-compact btn-compact--primary"
+                    disabled="@_busy"
+                    @onclick="AcceptAsync">
+                Accepteer kandidaat
+            </button>
+        }
+        else if (_context is { HasPlacement: true, IsStaffingAgencyVacancy: false, EmploymentMode: null, Status: ApplicationStatus.Accepted } && CanWrite)
+        {
+            <h3 class="wg-phase2__title">Hoe gaat de kandidaat werken?</h3>
+            <p class="muted">Kies één route. Bij Maqqie krijg je na week 1 je token terug als alles klopt.</p>
+            <div class="wg-phase2__modes">
+                <button type="button"
+                        class="btn-compact @(_mode == PlacementEmploymentMode.SelfDirect ? "btn-compact--primary" : null)"
+                        disabled="@_busy"
+                        @onclick="() => ChooseModeAsync(PlacementEmploymentMode.SelfDirect)">
+                    Zelf contract
+                </button>
+                <button type="button"
+                        class="btn-compact @(_mode == PlacementEmploymentMode.Maqqie ? "btn-compact--primary" : null)"
+                        disabled="@_busy"
+                        @onclick="() => ChooseModeAsync(PlacementEmploymentMode.Maqqie)">
+                    Via Maqqie
+                </button>
+            </div>
+        }
+        else if (_context?.EmploymentMode is PlacementEmploymentMode mode)
+        {
+            <p class="muted" role="status">
+                @(mode == PlacementEmploymentMode.Maqqie ? "Route: Maqqie" : "Route: zelf contract")
+            </p>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+    [Parameter] public bool CanWrite { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private EmployerPhase2ApplicationContextItem? _context;
+    private bool _visible;
+    private bool _busy;
+    private string? _error;
+    private PlacementEmploymentMode? _mode;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _visible = false;
+        _context = null;
+        _error = null;
+
+        if (ApplicationId == Guid.Empty)
+        {
+            return;
+        }
+
+        var flags = await FeatureFlags.GetAsync();
+        if (!flags.IsEnabled(PlatformFeature.EmployerPhase2))
+        {
+            return;
+        }
+
+        try
+        {
+            _context = await Api.GetEmployerPhase2ContextAsync(ApplicationId);
+            _visible = _context is not null;
+            if (_context?.EmploymentMode is PlacementEmploymentMode m)
+            {
+                _mode = m;
+            }
+        }
+        catch
+        {
+            _visible = false;
+        }
+    }
+
+    private async Task AcceptAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.AcceptEmployerPhase2Async(ApplicationId);
+            if (result is { Succeeded: false })
+            {
+                _error = result.UserMessage ?? "Accepteren is niet gelukt.";
+                return;
+            }
+
+            await ReloadContextAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ChooseModeAsync(PlacementEmploymentMode mode)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.SetEmployerPhase2EmploymentModeAsync(ApplicationId, mode);
+            if (result is { Succeeded: false })
+            {
+                _error = result.UserMessage ?? "Keuze opslaan is niet gelukt.";
+                return;
+            }
+
+            _mode = mode;
+            await ReloadContextAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ReloadContextAsync()
+    {
+        _context = await Api.GetEmployerPhase2ContextAsync(ApplicationId);
+        _visible = _context is not null;
+    }
+
+    private static string FormatCost(decimal? tokens)
+        => tokens is decimal t && t > 0
+            ? (t == 0.5m ? "½ token" : $"{t:0.##} token(s)")
+            : "—";
+}

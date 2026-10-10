@@ -137,6 +137,23 @@ public static class PlatformSettingsCatalog
         var list = new List<PlatformSettingDescriptor>();
 
         // --- Platform-modus ---
+        if (FieldExists("EmployerPhase2Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "EmployerPhase2Enabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.EmployerPhase2.Enabled.Title",
+                DescriptionKey: "AdminSettings.EmployerPhase2.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.EmployerPhase2Enabled,
+                Write: v => new PlatformFeatureUpdate(EmployerPhase2Enabled: ToBool(v)),
+                ImpactKey: "AdminSettings.EmployerPhase2.Enabled.ImpactOff",
+                ImpactLevel: PlatformSettingImpactLevel.Warn,
+                ShowOnDashboard: true,
+                ConfirmOnChange: true,
+                ConfirmWhen: PlatformSettingConfirmWhen.On));
+        }
+
         if (FieldExists("EmployersEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -521,6 +538,7 @@ public static class PlatformSettingsCatalog
         bool? compactTestPdfEnabled = null;
         bool? honestAdviceEnabled = null;
         bool? futureJobsForYouEnabled = null;
+        bool? employerPhase2Enabled = null;
         bool? freeCandidateTestsEnabled = null;
 
         foreach (var p in parts)
@@ -561,6 +579,7 @@ public static class PlatformSettingsCatalog
             if (p.FreeCandidateTestsEnabled is not null) freeCandidateTestsEnabled = p.FreeCandidateTestsEnabled;
             if (p.HonestAdviceEnabled is not null) honestAdviceEnabled = p.HonestAdviceEnabled;
             if (p.FutureJobsForYouEnabled is not null) futureJobsForYouEnabled = p.FutureJobsForYouEnabled;
+            if (p.EmployerPhase2Enabled is not null) employerPhase2Enabled = p.EmployerPhase2Enabled;
         }
 
         return new PlatformFeatureUpdate(
@@ -590,6 +609,7 @@ public static class PlatformSettingsCatalog
             CompactTestPdfEnabled: compactTestPdfEnabled,
             FreeCandidateTestsEnabled: freeCandidateTestsEnabled,
             HonestAdviceEnabled: honestAdviceEnabled,
-            FutureJobsForYouEnabled: futureJobsForYouEnabled);
+            FutureJobsForYouEnabled: futureJobsForYouEnabled,
+            EmployerPhase2Enabled: employerPhase2Enabled);
     }
 }

@@ -21,7 +21,7 @@ public class DeepAnalysisPricingTests
     public void For_returns_per_kind_price(AssessmentKind kind)
     {
         var dto = new FlexCommercialSettingsDto(
-            2m, "X", 1.11m, 2.22m, 3.33m, 4.44m, 4000m, 1m, DateTime.UtcNow);
+            2m, "X", 1.11m, 2.22m, 3.33m, 4.44m, 4000m, 1m, 0.5m, null, 1m, DateTime.UtcNow);
         var price = DeepAnalysisPricing.For(dto, kind);
         Assert.Equal(kind switch
         {
@@ -36,7 +36,7 @@ public class DeepAnalysisPricingTests
     public void Split_returns_cents_incl_ex_vat()
     {
         var dto = new FlexCommercialSettingsDto(
-            2m, "X", 2.99m, 2.99m, 2.99m, 2.99m, 4000m, 1m, DateTime.UtcNow);
+            2m, "X", 2.99m, 2.99m, 2.99m, 2.99m, 4000m, 1m, 0.5m, null, 1m, DateTime.UtcNow);
         var (ex, vat, total) = DeepAnalysisPricing.Split(dto, AssessmentKind.Competence);
         Assert.Equal(299, total);
         Assert.Equal(ex + vat, total);

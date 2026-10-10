@@ -34,5 +34,11 @@ public enum PlatformFeature
     /// "Werk met toekomst dat bij jou past" on Functiefit and Carrière.
     /// Default false. Uses sourced outlook and the candidate's own test only.
     /// </summary>
-    FutureJobsForYou
+    FutureJobsForYou,
+
+    /// <summary>
+    /// Phase-2 employer flows: ½-token accept, Maqqie placement, agency map radius, uren doorgeven.
+    /// Default false. Requires <see cref="Employers"/> when enabled.
+    /// </summary>
+    EmployerPhase2
 }

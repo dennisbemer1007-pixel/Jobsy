@@ -132,6 +132,21 @@
                         <p class="muted">Vacaturetype voor intermediairs staat vast op Uitzendbureau.</p>
                     </div>
                 </div>
+                <fieldset>
+                    <legend>Zichtbaarheid op de banenkaart</legend>
+                    <p class="muted">Kandidaten zien een cirkel rond het uitzendbureau · @MapRadiusPreview</p>
+                    <div class="inline-actions">
+                        @foreach (var km in new[] { 2, 5, 10 })
+                        {
+                            var value = km;
+                            <label class="checkbox-row">
+                                <input type="radio" name="map-radius" checked="@(_publicMapRadiusKm == value)"
+                                       @onchange="() => _publicMapRadiusKm = value" />
+                                <span>@value km</span>
+                            </label>
+                        }
+                    </div>
+                </fieldset>
             }
             else
             {
@@ -819,6 +834,7 @@
     private string _selectedEstablishmentId = "";
     private bool _kvkBusy;
     private bool _hideClientAddressOnMap = true;
+    private int _publicMapRadiusKm = 2;
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
@@ -883,6 +899,9 @@
         _editVacancyId is not null
             ? "Vacature bewerken"
             : (_isDuplicate ? Culture["Employer.DuplicateVacancy"] : Culture["Employer.CreateVacancy"]);
+
+    private string MapRadiusPreview =>
+        $"via {SelectedCategory?.Name ?? VacancyCategoryDefaults.UitzendbureauLabel} · {_publicMapRadiusKm} km";
 
     private bool ShowSuitableFor65PlusLegal =>
         !_isIntermediary && string.Equals(SelectedCategory?.Slug, "regulier", StringComparison.OrdinalIgnoreCase);
@@ -1976,7 +1995,8 @@
                 BarrierCertifications: BarrierCertList(),
                 BarrierMinExperienceYears: _barrierHigh ? _barrierYears : null,
                 BarrierMinExperienceHours: _barrierHigh ? _barrierHours : null,
-                BarrierHardChecks: _barrierHigh ? _barrierHardChecks.ToArray() : null);
+                BarrierHardChecks: _barrierHigh ? _barrierHardChecks.ToArray() : null,
+                PublicMapRadiusKm: _isIntermediary ? _publicMapRadiusKm : null);
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)

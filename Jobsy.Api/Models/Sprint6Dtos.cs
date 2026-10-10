@@ -302,7 +302,8 @@ public record UpdatePlatformFeatureRequest(
     bool? CompactTestPdfEnabled = null,
     bool? FreeCandidateTestsEnabled = null,
     bool? HonestAdviceEnabled = null,
-    bool? FutureJobsForYouEnabled = null);
+    bool? FutureJobsForYouEnabled = null,
+    bool? EmployerPhase2Enabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -332,7 +333,8 @@ public record PlatformFeatureDto(
     bool WhatsAppRemindersConfigured = false,
     bool FreeCandidateTestsEnabled = true,
     bool HonestAdviceEnabled = false,
-    bool FutureJobsForYouEnabled = false);
+    bool FutureJobsForYouEnabled = false,
+    bool EmployerPhase2Enabled = false);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

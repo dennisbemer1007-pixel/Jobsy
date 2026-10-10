@@ -31,6 +31,8 @@ public class JobsyDbContext : DbContext
     public DbSet<AtsScrapedListing> AtsScrapedListings => Set<AtsScrapedListing>();
     public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
     public DbSet<Application> Applications => Set<Application>();
+    public DbSet<ApplicationPlacement> ApplicationPlacements => Set<ApplicationPlacement>();
+    public DbSet<MaqqieHoursWeek> MaqqieHoursWeeks => Set<MaqqieHoursWeek>();
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistories => Set<ApplicationStatusHistory>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateDiplomaEvaluation> CandidateDiplomaEvaluations => Set<CandidateDiplomaEvaluation>();
@@ -592,6 +594,40 @@ public class JobsyDbContext : DbContext
                 .WithOne(h => h.Application)
                 .HasForeignKey(h => h.ApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationPlacement>(entity =>
+        {
+            entity.ToTable("ApplicationPlacements");
+            entity.HasKey(e => e.ApplicationId);
+            entity.Property(e => e.AcceptCostTokens).HasPrecision(9, 2);
+            entity.Property(e => e.EmploymentMode).HasConversion<int?>();
+            entity.HasOne(e => e.Application)
+                .WithOne()
+                .HasForeignKey<ApplicationPlacement>(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.AcceptSpendTransaction)
+                .WithMany()
+                .HasForeignKey(e => e.AcceptSpendTransactionId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.MaqqieCreditGrantTransaction)
+                .WithMany()
+                .HasForeignKey(e => e.MaqqieCreditGrantTransactionId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<MaqqieHoursWeek>(entity =>
+        {
+            entity.ToTable("MaqqieHoursWeeks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DailyHoursJson).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.TotalHours).HasPrecision(6, 2);
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.HasOne(e => e.Application)
+                .WithMany()
+                .HasForeignKey(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.ApplicationId, e.WeekStart }).IsUnique();
         });
 
         modelBuilder.Entity<ApplicationStatusHistory>(entity =>

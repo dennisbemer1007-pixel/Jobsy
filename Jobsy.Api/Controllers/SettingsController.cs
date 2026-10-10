@@ -207,7 +207,14 @@ public class SettingsController : ControllerBase
                             ? request.DeepAnalysisPriceEuro
                             : request.DeepTestPriceCompetenceEuro),
                     request.AgencyAnnualPriceEuro,
-                    request.ContactUnlockCostTokens),
+                    request.ContactUnlockCostTokens,
+                    request.AcceptCandidatePilotCostTokens > 0
+                        ? request.AcceptCandidatePilotCostTokens
+                        : FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
+                    request.AcceptCandidatePilotEndsOn,
+                    request.AcceptCandidateStandardCostTokens > 0
+                        ? request.AcceptCandidateStandardCostTokens
+                        : FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens),
                 cancellationToken));
         }
         catch (ArgumentException ex)
@@ -483,7 +490,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
                     FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled,
                     HonestAdviceEnabled: request.HonestAdviceEnabled,
-                    FutureJobsForYouEnabled: request.FutureJobsForYouEnabled),
+                    FutureJobsForYouEnabled: request.FutureJobsForYouEnabled,
+                    EmployerPhase2Enabled: request.EmployerPhase2Enabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -561,6 +569,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("FreeCandidateTestsEnabled", before.FreeCandidateTestsEnabled.ToString(), after.FreeCandidateTestsEnabled.ToString());
         Add("HonestAdviceEnabled", before.HonestAdviceEnabled.ToString(), after.HonestAdviceEnabled.ToString());
         Add("FutureJobsForYouEnabled", before.FutureJobsForYouEnabled.ToString(), after.FutureJobsForYouEnabled.ToString());
+        Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
         return list;
     }
 
@@ -584,7 +593,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled,
             compactTestPdfEnabled = snap.CompactTestPdfEnabled,
             honestAdviceEnabled = snap.HonestAdviceEnabled,
-            futureJobsForYouEnabled = snap.FutureJobsForYouEnabled
+            futureJobsForYouEnabled = snap.FutureJobsForYouEnabled,
+            employerPhase2Enabled = snap.EmployerPhase2Enabled
         });
     }
 
@@ -893,7 +903,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             _whatsApp.IsConfigured,
             snap.FreeCandidateTestsEnabled,
             snap.HonestAdviceEnabled,
-            snap.FutureJobsForYouEnabled);
+            snap.FutureJobsForYouEnabled,
+            snap.EmployerPhase2Enabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(
@@ -1024,4 +1035,7 @@ public sealed record UpdateLobsyCommercialRequest(
     decimal DeepTestPriceValuesEuro = 0,
     decimal DeepTestPriceCultureEuro = 0,
     decimal AgencyAnnualPriceEuro = 0,
-    decimal ContactUnlockCostTokens = 0);
+    decimal ContactUnlockCostTokens = 0,
+    decimal AcceptCandidatePilotCostTokens = 0,
+    DateOnly? AcceptCandidatePilotEndsOn = null,
+    decimal AcceptCandidateStandardCostTokens = 0);

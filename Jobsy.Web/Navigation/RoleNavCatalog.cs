@@ -55,6 +55,9 @@ public static class RoleNavCatalog
     public static readonly NavItem CareerItem =
         new("Nav.CareerPath", "/carriere", NavIcons.Career);
 
+    public static readonly NavItem HoursItem =
+        new("Nav.Hours", "/candidate/uren", NavIcons.Clock, ShortTitleKey: "Nav.Hours.Short");
+
     public static readonly NavItem ProfileItem =
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/profiel", "/home"]);
 
@@ -145,6 +148,28 @@ public static class RoleNavCatalog
     /// </summary>
     public static bool ShowsSavedInNav(FeatureFlagSnapshot flags)
         => flags.EmployersEnabled && !flags.CandidatePassportEnabled;
+
+    /// <summary>Inserts Uren before Carrière when the candidate has an active Maqqie contract.</summary>
+    public static IReadOnlyList<NavItem> WithMaqqieHoursNav(IReadOnlyList<NavItem> items)
+    {
+        if (items.Any(i => string.Equals(i.Href, HoursItem.Href, StringComparison.OrdinalIgnoreCase)))
+        {
+            return items;
+        }
+
+        var list = items.ToList();
+        var careerIdx = list.FindIndex(i => string.Equals(i.Href, CareerItem.Href, StringComparison.OrdinalIgnoreCase));
+        if (careerIdx >= 0)
+        {
+            list.Insert(careerIdx, HoursItem);
+        }
+        else
+        {
+            list.Add(HoursItem);
+        }
+
+        return list;
+    }
 
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
         => ForUser(user, FeatureFlagSnapshot.Defaults);

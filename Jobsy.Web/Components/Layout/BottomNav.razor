@@ -26,6 +26,7 @@
                href="@item.Href"
                title="@title"
                data-desktop-only="@(item.DesktopOnly ? "true" : null)"
+               data-testid="@(string.Equals(item.Href, RoleNavCatalog.HoursItem.Href, StringComparison.OrdinalIgnoreCase) ? "nav-maqqie-uren" : null)"
                aria-current="@(active ? "page" : null)">
                 <span class="bottom-nav__icon" aria-hidden="true">
                     @((MarkupString)item.Svg)
@@ -64,6 +65,7 @@
     private bool _salesOnboardingComplete;
     private bool _ambassadeurOnboardingComplete;
     private bool _csvImportEnabled;
+    private bool _maqqieHoursNav;
     private bool _roleFlagsLoaded;
     private string? _lastRoleFingerprint;
 
@@ -201,6 +203,20 @@
             }
         }
 
+        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate)
+            && _flags.IsEnabled(PlatformFeature.EmployerPhase2))
+        {
+            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
+            {
+                await RefreshMaqqieHoursNavAsync();
+            }
+
+            if (_maqqieHoursNav)
+            {
+                catalog = RoleNavCatalog.WithMaqqieHoursNav(catalog);
+            }
+        }
+
         _roleFlagsLoaded = true;
 
         var previousCount = _items.Count;
@@ -260,6 +276,18 @@
         catch
         {
             _csvImportEnabled = false;
+        }
+    }
+
+    private async Task RefreshMaqqieHoursNavAsync()
+    {
+        try
+        {
+            _maqqieHoursNav = await Api.GetMaqqieHoursActiveAsync();
+        }
+        catch
+        {
+            _maqqieHoursNav = false;
         }
     }
 

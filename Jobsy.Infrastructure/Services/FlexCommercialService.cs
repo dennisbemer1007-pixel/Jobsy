@@ -64,6 +64,12 @@ public sealed class FlexCommercialService : IFlexCommercialService
             throw new ArgumentOutOfRangeException(nameof(update), "ContactUnlock moet tussen 0,1 en 100 tokens liggen.");
         }
 
+        if (update.AcceptCandidatePilotCostTokens is <= 0 or > 100
+            || update.AcceptCandidateStandardCostTokens is <= 0 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(update), "Accept-kosten moeten tussen 0,1 en 100 tokens liggen.");
+        }
+
         if (string.IsNullOrWhiteSpace(update.BackofficePartnerName))
         {
             throw new ArgumentException("Backoffice-partner is verplicht.", nameof(update));
@@ -78,9 +84,15 @@ public sealed class FlexCommercialService : IFlexCommercialService
         settings.DeepTestPriceCultureEuro = RoundPrice(update.DeepTestPriceCultureEuro);
         settings.AgencyAnnualPriceEuro = Math.Round(update.AgencyAnnualPriceEuro, 2, MidpointRounding.AwayFromZero);
         settings.ContactUnlockCostTokens = Math.Round(update.ContactUnlockCostTokens, 2, MidpointRounding.AwayFromZero);
+        settings.AcceptCandidatePilotCostTokens =
+            Math.Round(update.AcceptCandidatePilotCostTokens, 2, MidpointRounding.AwayFromZero);
+        settings.AcceptCandidatePilotEndsOn = update.AcceptCandidatePilotEndsOn;
+        settings.AcceptCandidateStandardCostTokens =
+            Math.Round(update.AcceptCandidateStandardCostTokens, 2, MidpointRounding.AwayFromZero);
         settings.UpdatedAtUtc = DateTime.UtcNow;
 
         await SyncContactUnlockSpendCostAsync(settings.ContactUnlockCostTokens, cancellationToken);
+        await SyncAcceptCandidateSpendCostAsync(settings, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         _cache.Remove(CacheKey);
         var dto = MapSettings(settings);
@@ -172,6 +184,30 @@ public sealed class FlexCommercialService : IFlexCommercialService
         row.IsActive = true;
     }
 
+    private async Task SyncAcceptCandidateSpendCostAsync(
+        FlexCommercialSettings settings,
+        CancellationToken cancellationToken)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var cost = Jobsy.Core.Rules.AcceptCandidatePricingRules.ResolveCostTokens(settings, today);
+        var row = await _db.TokenSpendCosts
+            .FirstOrDefaultAsync(c => c.Reason == TokenSpendReason.AcceptCandidate, cancellationToken);
+        if (row is null)
+        {
+            _db.TokenSpendCosts.Add(new TokenSpendCost
+            {
+                Id = Guid.NewGuid(),
+                Reason = TokenSpendReason.AcceptCandidate,
+                CostTokens = cost,
+                IsActive = true
+            });
+            return;
+        }
+
+        row.CostTokens = cost;
+        row.IsActive = true;
+    }
+
     private async Task<FlexCommercialSettings> EnsureSettingsAsync(CancellationToken cancellationToken)
     {
         var settings = await _db.FlexCommercialSettings
@@ -194,9 +230,13 @@ public sealed class FlexCommercialService : IFlexCommercialService
             DeepTestPriceCultureEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
             AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
             ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
+            AcceptCandidatePilotCostTokens = FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
+            AcceptCandidateStandardCostTokens = FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
             UpdatedAtUtc = DateTime.UtcNow
         };
         _db.FlexCommercialSettings.Add(settings);
+        await _db.SaveChangesAsync(cancellationToken);
+        await SyncAcceptCandidateSpendCostAsync(settings, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         return settings;
     }
@@ -237,6 +277,9 @@ public sealed class FlexCommercialService : IFlexCommercialService
             settings.DeepTestPriceCultureEuro,
             settings.AgencyAnnualPriceEuro,
             settings.ContactUnlockCostTokens,
+            settings.AcceptCandidatePilotCostTokens,
+            settings.AcceptCandidatePilotEndsOn,
+            settings.AcceptCandidateStandardCostTokens,
             settings.UpdatedAtUtc);
     }
 

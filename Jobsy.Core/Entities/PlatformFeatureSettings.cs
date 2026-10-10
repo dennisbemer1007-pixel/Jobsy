@@ -85,6 +85,12 @@ public class PlatformFeatureSettings
     public bool EmployersEnabled { get; set; }
 
     /// <summary>
+    /// Phase-2 employer product: ½-token accept, Maqqie placement, agency map radius, candidate hours.
+    /// Default false. Requires <see cref="EmployersEnabled"/> for any effect.
+    /// </summary>
+    public bool EmployerPhase2Enabled { get; set; }
+
+    /// <summary>
     /// When true, candidates see Mijn Paspoort instead of the classic profile. Default true.
     /// </summary>
     public bool CandidatePassportEnabled { get; set; } = true;

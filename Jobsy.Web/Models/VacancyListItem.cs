@@ -559,4 +559,5 @@ public sealed class VacancyPinBootItem
     public uint HighlightRank { get; set; }
     public string? WorkType { get; set; }
     public string? MatchColorBand { get; set; }
+    public int? PublicMapRadiusKm { get; set; }
 }

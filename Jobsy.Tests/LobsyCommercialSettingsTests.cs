@@ -23,7 +23,10 @@ public class LobsyCommercialSettingsTests
             DeepTestPriceValuesEuro: 4.95m,
             DeepTestPriceCultureEuro: 4.95m,
             AgencyAnnualPriceEuro: 3500m,
-            ContactUnlockCostTokens: 2m));
+            ContactUnlockCostTokens: 2m,
+            AcceptCandidatePilotCostTokens: 0.5m,
+            AcceptCandidatePilotEndsOn: null,
+            AcceptCandidateStandardCostTokens: 1m));
 
         Assert.Equal(2.50m, updated.MarginPerHourEuro);
         Assert.Equal("Partner X", updated.BackofficePartnerName);
@@ -59,7 +62,7 @@ public class LobsyCommercialSettingsTests
 
         var sut = new FlexCommercialService(db);
         await sut.UpdateAsync(new FlexCommercialSettingsUpdate(
-            2m, "Yellowstone", 2.99m, 2.99m, 2.99m, 2.99m, 4500m, 1m));
+            2m, "Yellowstone", 2.99m, 2.99m, 2.99m, 2.99m, 4500m, 1m, 0.5m, null, 1m));
 
         var sub = await sut.ActivateAgencySubscriptionAsync(
             Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));

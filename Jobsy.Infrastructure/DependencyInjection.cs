@@ -628,6 +628,11 @@ public static class DependencyInjection
         services.AddScoped<ITalentPoolService, TalentPoolService>();
         services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
+        services.AddScoped<IEmployerPhase2Service, Jobsy.Infrastructure.Services.EmployerPhase2.EmployerPhase2Service>();
+        services.AddScoped<IMaqqieHoursService, Jobsy.Infrastructure.Services.EmployerPhase2.MaqqieHoursService>();
+        services.AddScoped<IMaqqieHoursExporter, Jobsy.Infrastructure.Services.EmployerPhase2.FileMaqqieHoursExporter>();
+        services.Configure<Jobsy.Infrastructure.Services.EmployerPhase2.MaqqieHoursOptions>(
+            configuration.GetSection("MaqqieHours"));
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();

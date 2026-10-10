@@ -48,7 +48,9 @@ public sealed record PlatformFeatureSnapshot(
     /// </summary>
     bool FreeCandidateTestsEnabled = false,
     bool HonestAdviceEnabled = false,
-    bool FutureJobsForYouEnabled = false);
+    bool FutureJobsForYouEnabled = false,
+    /// <summary>Phase-2 accept, Maqqie placement, agency map radius, uren. Default false.</summary>
+    bool EmployerPhase2Enabled = false);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -101,4 +103,6 @@ public sealed record PlatformFeatureUpdate(
     /// <summary>Null = keep existing. Default false.</summary>
     bool? HonestAdviceEnabled = null,
     /// <summary>Null = keep existing. Default false.</summary>
-    bool? FutureJobsForYouEnabled = null);
+    bool? FutureJobsForYouEnabled = null,
+    /// <summary>Null = keep existing. Default false. Requires employers when ON.</summary>
+    bool? EmployerPhase2Enabled = null);

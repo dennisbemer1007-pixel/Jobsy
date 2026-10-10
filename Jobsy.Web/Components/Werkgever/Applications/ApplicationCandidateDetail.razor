@@ -61,6 +61,12 @@
 
     @if (Tab == "profiel")
     {
+        @if (Item is not null)
+        {
+            <WgAppPhase2AcceptPanel ApplicationId="Item.Id"
+                                    CanWrite="CanWritePhase2"
+                                    OnChanged="OnPhase2Changed" />
+        }
         <dl class="wg-app-facts">
             <div>
                 <dt>@Culture["WgApp.Fact.Travel"]</dt>
@@ -149,6 +155,8 @@
     [Parameter] public EmployerApplicationItem? Item { get; set; }
     [Parameter] public string Tab { get; set; } = "profiel";
     [Parameter] public EventCallback<string> TabChanged { get; set; }
+    [Parameter] public bool CanWritePhase2 { get; set; }
+    [Parameter] public EventCallback OnPhase2Changed { get; set; }
 
     private string DisplayName => Item is null
         ? ""
