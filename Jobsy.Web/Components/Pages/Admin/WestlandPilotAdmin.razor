@@ -1,0 +1,113 @@
+@page "/admin/westland-pilot"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Options
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IOptions<Golf2WestlandOptions> Golf2Options
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["Golf2.Admin.Title"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Golf2.Admin.Title"]" Lead="@Culture["Golf2.Admin.Lead"]">
+    @if (!_reporting)
+    {
+        <p class="state-message" role="status">@Culture["Golf2.Admin.Off"]</p>
+    }
+    else if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_stats is not null)
+    {
+        <div class="golf2-admin-kpis">
+            <div class="golf2-admin-kpi">
+                <p class="golf2-admin-kpi__label">@Culture["Golf2.Admin.Enrollments"]</p>
+                <p class="golf2-admin-kpi__value">@FormatCount(_stats.EnrollmentsStatus, _stats.Enrollments)</p>
+            </div>
+            <div class="golf2-admin-kpi">
+                <p class="golf2-admin-kpi__label">@Culture["Golf2.Admin.Feedback"]</p>
+                <p class="golf2-admin-kpi__value">@FormatCount(_stats.FeedbackResponsesStatus, _stats.FeedbackResponses)</p>
+            </div>
+            <div class="golf2-admin-kpi">
+                <p class="golf2-admin-kpi__label">@Culture["Golf2.Admin.AvgRating"]</p>
+                <p class="golf2-admin-kpi__value">@FormatCount(_stats.AvgHelpfulnessStatus, _stats.AvgHelpfulnessRating)</p>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary" disabled="@_exportBusy" @onclick="ExportCsvAsync">
+            @( _exportBusy ? Culture["Common.Loading"] : Culture["Golf2.Admin.ExportCsv"])
+        </button>
+    }
+</AdminPageShell>
+
+@code {
+    private bool _reporting;
+    private bool _loading = true;
+    private bool _exportBusy;
+    private string? _error;
+    private JobsyApiClient.WestlandPilotStatsResponse? _stats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _reporting = Golf2Options.Value.PilotReporting;
+        if (!_reporting)
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _stats = await Api.GetWestlandPilotStatsAsync();
+            if (_stats is null)
+            {
+                _error = Culture["Golf2.Admin.Off"];
+            }
+        }
+        catch (Exception)
+        {
+            _error = Culture["Golf2.Admin.LoadFailed"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string FormatCount(string status, int? value) =>
+        string.Equals(status, "ok", StringComparison.OrdinalIgnoreCase) && value is int v
+            ? v.ToString()
+            : Culture["Golf2.Admin.Insufficient"];
+
+    private async Task ExportCsvAsync()
+    {
+        _exportBusy = true;
+        try
+        {
+            var bytes = await Api.GetWestlandPilotExportCsvAsync();
+            if (bytes is null || bytes.Length == 0)
+            {
+                _error = Culture["Golf2.Admin.Off"];
+                return;
+            }
+
+            var b64 = Convert.ToBase64String(bytes);
+            await Js.InvokeVoidAsync("jobsyDownload.bytes", "westland-pilot.csv", b64, "text/csv;charset=utf-8");
+        }
+        catch (Exception)
+        {
+            _error = Culture["Golf2.Admin.ExportFailed"];
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+}

@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (242 routes)
+## Table (246 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -114,6 +114,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/vacatures/moderatie` | `Pages/Admin/VacanciesModerationPage.razor` | Admin |
 | `/admin/wages` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/werkgeververificatie` | `Pages/Admin/WerkgeverVerificatieAdmin.razor` | Admin |
+| `/admin/westland-pilot` | `Pages/Admin/WestlandPilotAdmin.razor` | Admin |
 | `/algemene-voorwaarden` | `Pages/Legal/AlgemeneVoorwaarden.razor` | anonymous |
 | `/ambassadeur` | `Pages/Ambassadeur/Dashboard.razor` | Ambassadeur |
 | `/ambassadeur/finance` | `Pages/Ambassadeur/Finance.razor` | Ambassadeur |
@@ -146,6 +147,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
+| `/candidate/paspoort/gespreksblad` | `Candidate/Golf2/ConversationSheetChoose.razor` | Candidate |
+| `/candidate/paspoort/gespreksblad/print` | `Candidate/Golf2/ConversationSheetPrint.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
@@ -235,6 +238,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/salesmanager/payout-checkout` | `Pages/Sales/LegacyPayoutRedirect.razor` | SalesManager |
 | `/salesmanager/referrals` | `Pages/Sales/LegacyReferralsRedirect.razor` | SalesManager |
 | `/salesmanager/toolkit` | `Pages/Sales/LegacyToolkitRedirect.razor` | SalesManager |
+| `/samen-starten` | `Pages/SamenStarten.razor` | anonymous |
 | `/scholen` | `Pages/ScholenPublic.razor` | anonymous |
 | `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
 | `/school/gegevens` | `Pages/School/SchoolDetails.razor` | SchoolAdmin |

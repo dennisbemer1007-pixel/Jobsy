@@ -1672,6 +1672,46 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateCareerPlans.RemoveRange(careerPlans);
         }
 
+        var conversationSheets = await _db.CandidateConversationSheets
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (conversationSheets.Count > 0)
+        {
+            _db.CandidateConversationSheets.RemoveRange(conversationSheets);
+        }
+
+        var outsideWork = await _db.CandidateOutsideWorkExperiences
+            .Where(e => e.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (outsideWork.Count > 0)
+        {
+            _db.CandidateOutsideWorkExperiences.RemoveRange(outsideWork);
+        }
+
+        var westlandTasks = await _db.CandidateWestlandTaskChoices
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (westlandTasks.Count > 0)
+        {
+            _db.CandidateWestlandTaskChoices.RemoveRange(westlandTasks);
+        }
+
+        var fourTestsFeedback = await _db.PassportFourTestsFeedbacks
+            .Where(f => f.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (fourTestsFeedback.Count > 0)
+        {
+            _db.PassportFourTestsFeedbacks.RemoveRange(fourTestsFeedback);
+        }
+
+        var pilotEnrollments = await _db.WestlandPilotEnrollments
+            .Where(e => e.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (pilotEnrollments.Count > 0)
+        {
+            _db.WestlandPilotEnrollments.RemoveRange(pilotEnrollments);
+        }
+
         var onboardings = await _db.CandidateOnboardings
             .Where(o => o.UserId == user.Id)
             .ToListAsync(cancellationToken);

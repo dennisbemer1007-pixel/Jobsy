@@ -1,0 +1,61 @@
+@using Jobsy.Core.Options
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+@if (_visible)
+{
+    <section class="golf2-block" data-testid="golf2-next-step" aria-labelledby="golf2-next-step-title">
+        <h2 id="golf2-next-step-title" class="golf2-block__title">@Culture["Golf2.NextStep.Title"]</h2>
+        <p class="golf2-block__lead">@Culture["Golf2.NextStep.Lead"]</p>
+        @if (!string.IsNullOrWhiteSpace(_nextStepTitle))
+        {
+            <p><strong>@Culture.Format("Golf2.NextStep.Dream", _nextStepTitle)</strong></p>
+        }
+        <ReadAloudButton Text="@($"{Culture["Golf2.NextStep.Title"]}. {Culture["Golf2.NextStep.Lead"]}")" SpeechKey="golf2-next-step" />
+        <div class="golf2-block__actions">
+            <button type="button" class="btn btn-secondary" @onclick="OnGoCareer">
+                @Culture["Golf2.NextStep.CareerLink"]
+            </button>
+            @if (Options.ConversationSheet)
+            {
+                <a class="btn btn-primary" href="/candidate/paspoort/gespreksblad">@Culture["Golf2.NextStep.SheetLink"]</a>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public Golf2WestlandOptions Options { get; set; } = null!;
+
+    [Parameter]
+    public bool FourTestsComplete { get; set; }
+
+    [Parameter]
+    public EventCallback OnGoCareer { get; set; }
+
+    private bool _visible;
+    private string? _nextStepTitle;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _visible = Options.Enabled && FourTestsComplete;
+        _nextStepTitle = null;
+        if (!_visible)
+        {
+            return;
+        }
+
+        try
+        {
+            var row = await Api.GetGolf2PassportNextStepAsync();
+            _nextStepTitle = row?.NextStepTitle;
+        }
+        catch
+        {
+            _nextStepTitle = null;
+        }
+    }
+}

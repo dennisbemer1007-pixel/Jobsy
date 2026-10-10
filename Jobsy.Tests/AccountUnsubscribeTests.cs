@@ -516,11 +516,13 @@ public class AccountUnsubscribeTests
             typeof(CandidateCareerPlan),
             typeof(CandidateCareerStepProgress),
             typeof(CandidateCompetency),
+            typeof(CandidateConversationSheet),
             typeof(CandidateCulturePersonalityProfile),
             typeof(CandidateDeepAnalysis),
             typeof(CandidateDiplomaEvaluation),
             typeof(CandidateMatchSnapshot),
             typeof(CandidateOnboarding),
+            typeof(CandidateOutsideWorkExperience),
             typeof(CandidateReference),
             typeof(CandidateReminderPreference),
             typeof(ReferenceConfirmation),
@@ -530,6 +532,7 @@ public class AccountUnsubscribeTests
             typeof(CandidateUploadedCv),
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
+            typeof(CandidateWestlandTaskChoice),
             typeof(CandidateWhoAmIProfile),
             typeof(ComebackReminderLog),
             typeof(ConsumerPurchaseInvoice),
@@ -541,6 +544,7 @@ public class AccountUnsubscribeTests
             typeof(OneTimeLink),
             typeof(PartnerAffiliateProfile),
             typeof(PassportAccessLog),
+            typeof(PassportFourTestsFeedback),
             typeof(PassportPartnerCandidateLink),
             typeof(PhoneVerificationChallenge),
             typeof(PlatformFeedback),
@@ -558,7 +562,8 @@ public class AccountUnsubscribeTests
             typeof(VacancyLike),
             typeof(VacancySearchImpression),
             typeof(VacancyShare),
-            typeof(WebPushSubscription)
+            typeof(WebPushSubscription),
+            typeof(WestlandPilotEnrollment)
         }
         .OrderBy(type => type.Name)
         .ToArray();

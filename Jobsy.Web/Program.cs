@@ -31,6 +31,8 @@ builder.Services.AddOptions<Jobsy.Core.Options.AiOptions>()
 builder.Services.AddOptions<Jobsy.Core.Options.MistralOptions>()
     .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.MistralOptions.SectionName))
     .PostConfigure(options => Jobsy.Core.Options.MistralOptions.ApplyKeyAlias(options, key => builder.Configuration[key]));
+builder.Services.Configure<Jobsy.Core.Options.Golf2WestlandOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.Golf2WestlandOptions.SectionName));
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {

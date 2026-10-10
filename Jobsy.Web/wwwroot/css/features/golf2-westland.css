@@ -1,0 +1,170 @@
+/* Golf 2 Westland pilot — warm pearl + coral accents (uses app.css tokens) */
+
+.golf2-block {
+    margin-block: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius);
+    background: var(--pearl-gradient);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.golf2-block__title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-lg);
+    color: var(--brand);
+}
+
+.golf2-block__lead {
+    margin: 0 0 var(--space-3);
+    color: var(--muted);
+    font-size: var(--text-sm);
+}
+
+.golf2-block__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.golf2-smileys {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-block: var(--space-3);
+}
+
+.golf2-smiley {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    cursor: pointer;
+    min-width: 5rem;
+}
+
+.golf2-smiley--selected {
+    border-color: var(--coral);
+    background: var(--coral-soft);
+}
+
+.golf2-smiley__icon {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.golf2-outside-work__list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.golf2-outside-work__item {
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.golf2-sheet-page {
+    max-width: 42rem;
+    margin-inline: auto;
+    padding: var(--space-4);
+}
+
+.golf2-sheet-print {
+    max-width: 210mm;
+    margin-inline: auto;
+    padding: var(--space-6);
+    background: var(--surface);
+    color: var(--text);
+}
+
+.golf2-sheet-print__section {
+    margin-block-end: var(--space-5);
+    padding-block-end: var(--space-4);
+    border-bottom: 2px solid var(--coral-soft);
+}
+
+.golf2-sheet-print__h {
+    margin: 0 0 var(--space-2);
+    color: var(--brand);
+    font-size: var(--text-md);
+}
+
+.golf2-sheet-print__body {
+    margin: 0;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.golf2-samen {
+    max-width: 40rem;
+    margin-inline: auto;
+    padding: var(--space-6) var(--space-4) var(--bottom-nav-clearance);
+}
+
+.golf2-samen__hero {
+    padding: var(--space-6);
+    border-radius: var(--radius);
+    background: linear-gradient(145deg, var(--coral-soft) 0%, var(--gold-soft) 55%, var(--pearl) 100%);
+    margin-block-end: var(--space-5);
+}
+
+.golf2-samen__section {
+    margin-block-end: var(--space-5);
+    padding: var(--space-4);
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.golf2-admin-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--space-3);
+    margin-block-end: var(--space-4);
+}
+
+.golf2-admin-kpi {
+    padding: var(--space-4);
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+}
+
+.golf2-admin-kpi__label {
+    font-size: var(--text-sm);
+    color: var(--muted);
+    margin: 0 0 var(--space-1);
+}
+
+.golf2-admin-kpi__value {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    color: var(--brand);
+    margin: 0;
+}
+
+@media print {
+    .golf2-no-print {
+        display: none !important;
+    }
+
+    .golf2-samen {
+        padding: 0;
+        max-width: none;
+    }
+
+    .golf2-sheet-print {
+        padding: 0;
+        box-shadow: none;
+    }
+}
