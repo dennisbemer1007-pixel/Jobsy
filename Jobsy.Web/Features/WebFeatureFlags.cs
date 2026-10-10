@@ -63,7 +63,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.WhatsAppRemindersEnabled ?? false,
                 dto?.CompactTestPdfEnabled ?? false,
                 dto?.HonestAdviceEnabled ?? false,
-                dto?.FutureJobsForYouEnabled ?? false);
+                dto?.FutureJobsForYouEnabled ?? false,
+                dto?.EmployerPhase2Enabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -121,5 +122,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("futureJobsForYouEnabled")]
         public bool FutureJobsForYouEnabled { get; set; }
+
+        [JsonPropertyName("employerPhase2Enabled")]
+        public bool EmployerPhase2Enabled { get; set; }
     }
 }

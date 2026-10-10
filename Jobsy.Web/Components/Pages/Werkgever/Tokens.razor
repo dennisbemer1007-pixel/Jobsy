@@ -18,6 +18,7 @@
 @inject CultureState Culture
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@PageTitleText · Lobsy</PageTitle>
@@ -77,6 +78,30 @@
                             Value="@Fmt(_summary?.ReservedForRequests ?? 0)"
                             Delta="@string.Format(Culture["WgTok.Kpi.ReservedSub"], _summary?.OpenPublishRequestCount ?? 0)" />
             </div>
+
+            @if (_phase2Wallet is not null)
+            {
+                <section class="wg-card wg-phase2-wallet" data-testid="wg-phase2-wallet">
+                    <h2>Fase 2 · accept &amp; Maqqie</h2>
+                    @if (_phase2Wallet.PilotActive)
+                    {
+                        <p class="muted">Pilot: accepteren kost @_phase2Wallet.AcceptCostTokens token (≈ € @_phase2Wallet.AcceptCostEuro.ToString("0.##")).</p>
+                    }
+                    else
+                    {
+                        <p class="muted">Accepteren kost @_phase2Wallet.AcceptCostTokens token(s).</p>
+                    }
+                    @if (_phase2Wallet.PendingCredits.Count > 0)
+                    {
+                        <ul class="wg-phase2-wallet__pending">
+                            @foreach (var p in _phase2Wallet.PendingCredits.Take(5))
+                            {
+                                <li>@p.CandidateLabel · @p.Detail</li>
+                            }
+                        </ul>
+                    }
+                </section>
+            }
 
             <div class="wg-tok-overview-grid">
                 <WgTokenUsageTable Rows="@BranchRows" Take="5" ShowFullLink="true"
@@ -309,6 +334,7 @@
 
 @code {
     private bool _loading = true;
+    private EmployerPhase2WalletDto? _phase2Wallet;
     private bool _busy;
     private bool _started;
     private bool _canPurchase;
@@ -455,6 +481,20 @@
             {
                 _checkoutCompanyId = pot.CompanyId;
                 _central = pot.Balance;
+            }
+
+            _phase2Wallet = null;
+            var flags = await FeatureFlags.GetAsync();
+            if (flags.IsEnabled(PlatformFeature.EmployerPhase2) && _checkoutCompanyId != Guid.Empty)
+            {
+                try
+                {
+                    _phase2Wallet = await Api.GetEmployerPhase2WalletAsync(_checkoutCompanyId);
+                }
+                catch
+                {
+                    _phase2Wallet = null;
+                }
             }
 
             if (Role == EmployerRole.Vestigingsmanager)

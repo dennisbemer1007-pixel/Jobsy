@@ -270,9 +270,9 @@ public static class UiStringsWerkgever
         Add("WgVac.Status.Fulfilled", "Vervuld", "Filled", "Obsadzona", "Ocupat", "مُشغَل");
         Add("WgVac.Visibility.Highlighted", "Uitgelicht", "Featured", "Wyróżniona", "Evidențiat", "مميز");
         Add("WgVac.Visibility.Push", "Pushbericht", "Push", "Powiadomienie", "Notificare", "إشعار");
-        Add("WgVac.Info.PendingBm", "{0} vestigingen vragen tokens aan om te publiceren. Goedkeuren boekt de tokens af van het centrale saldo ({1}).", "{0} branches request tokens to publish. Approving deducts from the central balance ({1}).", "{0} placówek prosi o tokeny do publikacji. Zatwierdzenie pobiera tokeny z salda centralnego ({1}).", "{0} filiale cer tokenuri pentru publicare. Aprobarea scade din soldul central ({1}).", "{0} فروع تطلب رموزاً للنشر. الموافقة تخصم من الرصيد المركزي ({1}).");
+        Add("WgVac.Info.PendingBm", "{0} vestigingen hebben een publicatieaanvraag met betaalde opties (uitlichten/pushbericht). Goedkeuren boekt alleen die opties af van het centrale saldo ({1}).", "{0} branches have a publication request with paid options (highlight/push message). Approving only deducts those options from the central balance ({1}).", "{0} placówek ma wniosek o publikację z płatnymi opcjami. Zatwierdzenie pobiera tylko te opcje z salda centralnego ({1}).", "{0} filiale au cerere de publicare cu opțiuni plătite. Aprobarea scade doar acele opțiuni din soldul central ({1}).", "{0} فروع لديها طلب نشر بخيارات مدفوعة. الموافقة تخصم تلك الخيارات فقط من الرصيد المركزي ({1}).");
         Add("WgVac.Info.ShowRequests", "Alleen aanvragen tonen", "Show requests only", "Pokaż tylko wnioski", "Arată doar cererile", "عرض الطلبات فقط");
-        Add("WgVac.Info.VmTokens", "Vestiging {0} heeft {1} tokens, toegewezen door de bedrijfsmanager. Publiceer je boven dit saldo, dan gaat de vacature als aanvraag naar de bedrijfsmanager.", "Branch {0} has {1} tokens, allocated by the company manager. If you publish above this balance, the vacancy becomes a request to the company manager.", "Placówka {0} ma {1} tokenów, przydzielonych przez menedżera firmy. Publikacja powyżej salda staje się wnioskiem do menedżera firmy.", "Filiala {0} are {1} tokenuri, alocate de managerul de firmă. Dacă publici peste sold, postul devine cerere către managerul de firmă.", "فرع {0} لديه {1} رمزاً مخصصاً من مدير الشركة. النشر فوق الرصيد يحوّل الوظيفة إلى طلب لمدير الشركة.");
+        Add("WgVac.Info.VmTokens", "Vestiging {0} heeft {1} tokens voor betaalde opties (uitlichten, pushbericht). Plaatsen en verlengen kost geen tokens.", "Branch {0} has {1} tokens for paid options (highlight, push message). Posting and extending cost no tokens.", "Placówka {0} ma {1} tokenów na opcje płatne (wyróżnienie, powiadomienie). Publikacja i przedłużenie są bezpłatne.", "Filiala {0} are {1} tokenuri pentru opțiuni plătite (evidențiere, notificare). Publicarea și prelungirea nu costă tokenuri.", "فرع {0} لديه {1} رمزاً للخيارات المدفوعة (تمييز، إشعار). النشر والتمديد مجانيان.");
         Add("WgVac.Info.ViewTokens", "Tokens bekijken", "View tokens", "Zobacz tokeny", "Vezi tokenuri", "عرض الرموز");
         Add("WgVac.RequestLine", "Aanvraag {0} · {1}", "Request {0} · {1}", "Wniosek {0} · {1}", "Cerere {0} · {1}", "طلب {0} · {1}");
         Add("WgVac.RequestLineAnon", "Aanvraag · {0}", "Request · {0}", "Wniosek · {0}", "Cerere · {0}", "طلب · {0}");
@@ -288,28 +288,28 @@ public static class UiStringsWerkgever
         Add("WgVac.Confirm.BulkTitle", "Bulkactie bevestigen?", "Confirm bulk action?", "Potwierdzić akcję zbiorczą?", "Confirmi acțiunea în masă?", "تأكيد الإجراء الجماعي؟");
         Add("WgVac.Confirm.BulkBody", "Totaal {0}. Saldo nu: {1}. Saldo na: {2}.", "Total {0}. Balance now: {1}. Balance after: {2}.", "Razem {0}. Saldo teraz: {1}. Po: {2}.", "Total {0}. Sold acum: {1}. După: {2}.", "المجموع {0}. الرصيد الآن: {1}. بعده: {2}.");
         Add("WgVac.Confirm.AskTokens", "Vraag tokens aan bij je bedrijfsmanager", "Ask your company manager for tokens", "Poproś menedżera firmy o tokeny", "Cere tokenuri managerului de firmă", "اطلب الرموز من مدير شركتك");
-        Add("WgVac.Confirm.Reopen", "Dit kost {0}. De vacature staat daarna weer 14 dagen online. Je saldo is nu {1}. Daarna: {2}.", "This costs {0}. The vacancy stays online for 14 more days. Your balance is {1}. After: {2}.", "To kosztuje {0}. Oferta będzie online jeszcze 14 dni. Twoje saldo: {1}. Potem: {2}.", "Costă {0}. Jobul rămâne online încă 14 zile. Soldul tău este {1}. După: {2}.", "هذا يكلف {0}. تبقى الوظيفة ظاهرة 14 يوماً أخرى. رصيدك الآن {1}. بعدها: {2}.");
-        Add("WgVac.Confirm.ReopenLow", "Dit kost {0}. De vacature staat daarna weer 14 dagen online. Je saldo is nu {1}. Je hebt niet genoeg tokens.", "This costs {0}. The vacancy stays online for 14 more days. Your balance is {1}. You do not have enough tokens.", "To kosztuje {0}. Oferta będzie online jeszcze 14 dni. Twoje saldo: {1}. Nie masz wystarczająco tokenów.", "Costă {0}. Jobul rămâne online încă 14 zile. Soldul tău este {1}. Nu ai destule tokenuri.", "هذا يكلف {0}. تبقى الوظيفة ظاهرة 14 يوماً أخرى. رصيدك الآن {1}. ليس لديك رموز كافية.");
+        Add("WgVac.Confirm.ReopenFree", "De vacature staat daarna weer 14 dagen online. Verlengen kost geen tokens.", "The vacancy stays online for 14 more days. Extending costs no tokens.", "Oferta będzie online jeszcze 14 dni. Przedłużenie jest bezpłatne.", "Jobul rămâne online încă 14 zile. Prelungirea nu costă tokenuri.", "تبقى الوظيفة ظاهرة 14 يوماً أخرى. التمديد مجاني.");
         Add("WgVac.Delete", "Verwijderen", "Delete", "Usuń", "Șterge", "حذف");
         Add("WgVac.Deleted", "Vacature verwijderd.", "Vacancy deleted.", "Oferta usunięta.", "Job șters.", "تم حذف الوظيفة.");
         Add("WgVac.Confirm.Delete", "Vacature '{0}' wordt permanent verwijderd. Dit kan niet terug.", "Vacancy '{0}' is deleted for good. This cannot be undone.", "Oferta '{0}' zostanie trwale usunięta. Nie da się tego cofnąć.", "Jobul '{0}' este șters definitiv. Nu se poate anula.", "ستُحذف الوظيفة '{0}' نهائياً. لا يمكن التراجع.");
         Add("WgVac.Cost.Highlight", "Uitlichten · {0}", "Feature · {0}", "Wyróżnij · {0}", "Evidențiază · {0}", "تمييز · {0}");
         Add("WgVac.Cost.Extend", "Verlengen · {0}", "Extend · {0}", "Przedłuż · {0}", "Prelungește · {0}", "تمديد · {0}");
+        Add("WgVac.Cost.ExtendFree", "Verlengen · gratis", "Extend · free", "Przedłuż · gratis", "Prelungește · gratuit", "تمديد · مجاني");
         Add("WgVac.Cost.Push", "Pushbericht naar kandidaten · {0}", "Push message · {0}", "Powiadomienie · {0}", "Notificare · {0}", "إشعار · {0}");
         Add("WgVac.Pager", "{0} van {1}", "{0} of {1}", "{0} z {1}", "{0} din {1}", "{0} من {1}");
         Add("WgVac.Closed", "Gesloten", "Closed", "Zamknięta", "Închis", "مغلقة");
         Add("WgVac.Confirm.Offline",
-            "Vacature offline halen? Kandidaten zien hem dan niet meer. Weer online zetten kost 1 token.",
-            "Take this vacancy offline? Candidates will no longer see it. Putting it back online costs 1 token.",
-            "Wyłączyć tę ofertę? Kandydaci jej wtedy nie zobaczą. Ponowne włączenie kosztuje 1 token.",
-            "Scoți anunțul de pe site? Candidații nu îl mai văd. Punerea din nou online costă 1 token.",
-            "إيقاف الوظيفة؟ لن يراها المرشحون بعد ذلك. إعادتها تكلف 1 رمز.");
+            "Vacature offline halen? Kandidaten zien hem dan niet meer. Weer online zetten is gratis.",
+            "Take this vacancy offline? Candidates will no longer see it. Putting it back online is free.",
+            "Wyłączyć tę ofertę? Kandydaci jej wtedy nie zobaczą. Ponowne włączenie jest bezpłatne.",
+            "Scoți anunțul de pe site? Candidații nu îl mai văd. Punerea din nou online este gratuită.",
+            "إيقاف الوظيفة؟ لن يراها المرشحون بعد ذلك. إعادتها مجانية.");
         Add("WgVac.Confirm.OfflineAction", "Offline halen", "Take offline", "Wyłącz publikację", "Oprește publicarea", "إيقاف النشر");
         Add("WgVac.Empty", "Nog geen vacatures.", "No vacancies yet.", "Brak ofert.", "Niciun post încă.", "لا وظائف بعد.");
         Add("WgVac.EmptyFilter", "Geen vacatures gevonden voor deze zoekopdracht of filter.", "No vacancies match this search or filter.", "Brak ofert dla tego wyszukiwania lub filtra.", "Niciun post pentru această căutare sau filtru.", "لا وظائف لهذا البحث أو التصفية.");
         Add("WgVac.ClosedOn", "Gesloten {0}", "Closed {0}", "Zamknięta {0}", "Închis {0}", "مغلق {0}");
         Add("WgVac.Deactivated", "gedeactiveerd", "deactivated", "dezaktywowana", "dezactivat", "مُلغى");
-        Add("WgVac.Create.VmPublishNote", "Je vestiging heeft {0} tokens. Publiceren kost {1}. Is je saldo te laag, dan gaat de vacature als publicatieaanvraag naar de bedrijfsmanager.", "Your branch has {0} tokens. Publishing costs {1}. If your balance is too low, the vacancy becomes a publication request to the company manager.", "Twoja placówka ma {0} tokenów. Publikacja kosztuje {1}. Przy zbyt niskim saldzie oferta trafia jako wniosek do menedżera firmy.", "Filiala ta are {0} tokenuri. Publicarea costă {1}. Dacă soldul e prea mic, postul devine cerere de publicare către managerul de firmă.", "فرعك لديه {0} رمزاً. النشر يكلف {1}. إذا كان الرصيد منخفضاً تصبح الوظيفة طلب نشر لمدير الشركة.");
+        Add("WgVac.Create.VmPublishNote", "Plaatsen kost geen tokens. Je vestiging heeft {0} tokens voor betaalde opties (uitlichten, pushbericht).", "Posting costs no tokens. Your branch has {0} tokens for paid options (highlight, push message).", "Publikacja jest bezpłatna. Placówka ma {0} tokenów na opcje płatne (wyróżnienie, powiadomienie).", "Publicarea nu costă tokenuri. Filiala are {0} tokenuri pentru opțiuni plătite (evidențiere, notificare).", "النشر مجاني. فرعك لديه {0} رمزاً للخيارات المدفوعة (تمييز، إشعار).");
         Add("WgVac.Paid.Publish", "Betaling gelukt — vacature is gepubliceerd.", "Payment succeeded — vacancy published.", "Płatność OK — oferta opublikowana.", "Plată reușită — post publicat.", "تم الدفع — نُشرت الوظيفة.");
         Add("WgVac.Paid.Highlight", "Betaling gelukt — vacature is uitgelicht.", "Payment succeeded — vacancy featured.", "Płatność OK — oferta wyróżniona.", "Plată reușită — post evidențiat.", "تم الدفع — مُيِّزت الوظيفة.");
         Add("WgVac.Paid.PushBom", "Betaling gelukt — pushbericht is verstuurd.", "Payment succeeded — push message sent.", "Płatność OK — powiadomienie wysłane.", "Plată reușită — notificare trimisă.", "تم الدفع — أُرسل الإشعار.");
@@ -409,6 +409,33 @@ public static class UiStringsWerkgever
         Add("WgApp.Step.Hired", "Aangenomen", "Hired", "Zatrudniony", "Angajat", "مُعيَّن");
         Add("WgApp.Back", "Terug", "Back", "Wstecz", "Înapoi", "رجوع");
         Add("WgApp.Completed", "Afgerond", "Completed", "Ukończone", "Finalizat", "مكتمل");
+        Add("WgPhase2.FactsTitle", "Wat past bij de baan", "What fits the job", "Co pasuje do pracy", "Ce se potrivește jobului", "ما يناسب الوظيفة");
+        Add("WgPhase2.AcceptCost", "Accepteren kost {0}", "Accepting costs {0}", "Akceptacja kosztuje {0}", "Acceptarea costă {0}", "القبول يكلف {0}");
+        Add("WgPhase2.AcceptFree", "Accepteren is gratis.", "Accepting is free.", "Akceptacja jest bezpłatna.", "Acceptarea este gratuită.", "القبول مجاني.");
+        Add("WgPhase2.AcceptCta", "Accepteren", "Accept", "Akceptuj", "Acceptă", "قبول");
+        Add("WgPhase2.AcceptFailed", "Accepteren is niet gelukt.", "Accepting failed.", "Akceptacja nie powiodła się.", "Acceptarea a eșuat.", "فشل القبول.");
+        Add("WgPhase2.ChoiceTitle", "Hoe wil je laten werken?", "How will they work?", "Jak chcesz, żeby pracował?", "Cum va lucra?", "كيف سيعمل؟");
+        Add("WgPhase2.ChoiceLead", "Kies zelf in dienst of via Maqqie. Via Maqqie krijg je na week 1 je token terug.", "Choose direct hire or via Maqqie. With Maqqie you get your token back after week 1.", "Wybierz bezpośrednio lub przez Maqqie.", "Alege direct sau prin Maqqie.", "اختر مباشرة أو عبر Maqqie.");
+        Add("WgPhase2.Mode.Self", "Zelf in dienst", "Direct hire", "Bezpośrednio", "Angajare directă", "توظيف مباشر");
+        Add("WgPhase2.Mode.Maqqie", "Via Maqqie", "Through Maqqie", "Przez Maqqie", "Prin Maqqie", "عبر Maqqie");
+        Add("WgPhase2.ModeChosen.Maqqie", "Route: Maqqie", "Path: Maqqie", "Trasa: Maqqie", "Rută: Maqqie", "المسار: Maqqie");
+        Add("WgPhase2.ModeChosen.Self", "Route: zelf in dienst", "Route: direct hire", "Trasa: bezpośrednio", "Rută: direct", "المسار: مباشر");
+        Add("WgPhase2.ChoiceFailed", "Keuze opslaan is niet gelukt.", "Could not save choice.", "Nie zapisano wyboru.", "Nu s-a putut salva alegerea.", "تعذر حفظ الاختيار.");
+        Add("WgNav.HoursApprove", "Uren goedkeuren", "Approve hours", "Zatwierdź godziny", "Aprobă orele", "اعتماد الساعات");
+        Add("WgPhase2.HoursApprove.Title", "Uren goedkeuren", "Approve hours", "Zatwierdź godziny", "Aprobă orele", "اعتماد الساعات");
+        Add("WgPhase2.HoursApprove.Lead", "Alleen voor kandidaten met een Maqqie-contract. Keur goed of stuur terug met een korte opmerking.", "Only for candidates on a Maqqie contract. Approve or return with a short note.", "Tylko dla kandydatów z kontraktem Maqqie.", "Doar pentru candidați cu contract Maqqie.", "للمرشحين بعقد Maqqie فقط.");
+        Add("WgPhase2.HoursApprove.Loading", "Laden…", "Loading…", "Ładowanie…", "Se încarcă…", "جارٍ التحميل…");
+        Add("WgPhase2.HoursApprove.Empty", "Er staan nu geen weken klaar om goed te keuren.", "No weeks are waiting for approval.", "Brak tygodni do zatwierdzenia.", "Nicio săptămână de aprobat.", "لا توجد أسابيع بانتظار الموافقة.");
+        Add("WgPhase2.HoursApprove.WeekLabel", "Week van {0}", "Week of {0}", "Tydzień od {0}", "Săptămâna de la {0}", "أسبوع {0}");
+        Add("WgPhase2.HoursApprove.TotalHours", "Totaal: {0} uur", "Total: {0} hours", "Razem: {0} godz.", "Total: {0} ore", "الإجمالي: {0} ساعة");
+        Add("WgPhase2.HoursApprove.Approve", "Goedkeuren", "Approve", "Zatwierdź", "Aprobă", "موافقة");
+        Add("WgPhase2.HoursApprove.Return", "Terugsturen", "Send back", "Odeślij", "Trimite înapoi", "إرجاع");
+        Add("WgPhase2.HoursApprove.ReturnNoteLabel", "Korte opmerking voor de kandidaat", "Short note for the candidate", "Krótka uwaga dla kandydata", "Notă scurtă pentru candidat", "ملاحظة قصيرة للمرشح");
+        Add("WgPhase2.HoursApprove.ReturnSubmit", "Terugsturen", "Send back", "Odeślij", "Trimite înapoi", "إرجاع");
+        Add("WgPhase2.HoursApprove.Cancel", "Annuleren", "Cancel", "Anuluj", "Anulează", "إلغاء");
+        Add("WgPhase2.HoursApprove.ReturnNoteRequired", "Schrijf een korte opmerking.", "Write a short note.", "Napisz krótką uwagę.", "Scrie o notă scurtă.", "اكتب ملاحظة قصيرة.");
+        Add("WgPhase2.HoursApprove.Approved", "Uren goedgekeurd.", "Hours approved.", "Godziny zatwierdzone.", "Ore aprobate.", "تم اعتماد الساعات.");
+        Add("WgPhase2.HoursApprove.Returned", "Week teruggestuurd naar de kandidaat.", "Week sent back to the candidate.", "Tydzień odesłany do kandydata.", "Săptămâna trimisă candidatului.", "أُعيد الأسبوع إلى المرشح.");
 
         // Organisatie / Team (05)
         Add("WgOrg.Lead", "Je organisatie, regio's, vestigingen en wie waar bij kan.", "Your organisation, regions, branches and who can access what.", "Twoja organizacja, regiony, placówki i kto ma dostęp.", "Organizația, regiunile, filialele și cine are acces.", "منظمتك والمناطق والفروع ومن يمكنه الوصول.");

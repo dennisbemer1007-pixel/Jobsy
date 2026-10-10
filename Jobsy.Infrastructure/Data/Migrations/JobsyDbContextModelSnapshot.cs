@@ -533,6 +533,45 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("Applications");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.ApplicationPlacement", b =>
+                {
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AcceptCostTokens")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("numeric(9,2)");
+
+                    b.Property<Guid?>("AcceptSpendTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BillingCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("EmploymentMode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EmploymentModeChosenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("MaqqieCreditGrantTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("MaqqieCreditGrantedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ApplicationId");
+
+                    b.HasIndex("AcceptSpendTransactionId");
+
+                    b.HasIndex("MaqqieCreditGrantTransactionId");
+
+                    b.ToTable("ApplicationPlacements", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.ApplicationStatusHistory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3743,6 +3782,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("AcceptCandidatePilotCostTokens")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateOnly?>("AcceptCandidatePilotEndsOn")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("AcceptCandidateStandardCostTokens")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("AgencyAnnualPriceEuro")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
@@ -3969,6 +4017,60 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("LocalAuthCredentials");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.MaqqieHoursWeek", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DailyHoursJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("EmployerApprovedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmployerReturnNote")
+                        .HasMaxLength(280)
+                        .HasColumnType("character varying(280)");
+
+                    b.Property<DateTime?>("EmployerReturnedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SentToMaqqieAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SubmittedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("TotalHours")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("WeekStart")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId", "WeekStart")
+                        .IsUnique();
+
+                    b.ToTable("MaqqieHoursWeeks", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.MarketingFlyerSettings", b =>
@@ -4857,6 +4959,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("EmployerPhase2Enabled")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("EmployersEnabled")
                         .ValueGeneratedOnAdd()
@@ -7995,6 +8100,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("OverrideContactPreference")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("PublicMapRadiusKm")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("PublishOnVerification")
                         .HasColumnType("boolean");
 
@@ -8605,6 +8713,31 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("CandidateUser");
 
                     b.Navigation("Vacancy");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ApplicationPlacement", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.TokenTransaction", "AcceptSpendTransaction")
+                        .WithMany()
+                        .HasForeignKey("AcceptSpendTransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.Application", "Application")
+                        .WithOne()
+                        .HasForeignKey("Jobsy.Core.Entities.ApplicationPlacement", "ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.TokenTransaction", "MaqqieCreditGrantTransaction")
+                        .WithMany()
+                        .HasForeignKey("MaqqieCreditGrantTransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AcceptSpendTransaction");
+
+                    b.Navigation("Application");
+
+                    b.Navigation("MaqqieCreditGrantTransaction");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.ApplicationStatusHistory", b =>
@@ -9417,6 +9550,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.MaqqieHoursWeek", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Application", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.MfaTrustedDevice", b =>

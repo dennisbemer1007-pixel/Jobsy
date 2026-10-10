@@ -1,0 +1,174 @@
+@page "/werkgever/uren"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Interfaces
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.EmployerPhase2)]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject UserFacingError UserFacing
+
+<PageTitle>@Culture["WgPhase2.HoursApprove.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["WgPhase2.HoursApprove.Loading"]</p>
+}
+else
+{
+    <div class="wg-maqqie-hours" data-testid="wg-maqqie-hours-approve">
+        <header class="wg-maqqie-hours__head">
+            <h1>@Culture["WgPhase2.HoursApprove.Title"]</h1>
+            <p class="muted">@Culture["WgPhase2.HoursApprove.Lead"]</p>
+        </header>
+
+        @if (_overview is null || _overview.Weeks.Count == 0)
+        {
+            <p class="state-message">@Culture["WgPhase2.HoursApprove.Empty"]</p>
+        }
+        else
+        {
+            <ul class="wg-maqqie-hours__list">
+                @foreach (var row in _overview.Weeks)
+                {
+                    <li class="wg-card wg-maqqie-hours__row">
+                        <div class="wg-maqqie-hours__row-main">
+                            <h2 class="wg-maqqie-hours__week">
+                                @string.Format(Culture["WgPhase2.HoursApprove.WeekLabel"], row.WeekStart.ToString("dd-MM-yyyy"))
+                            </h2>
+                            <p class="muted">@row.CandidateName · @row.VacancyTitle</p>
+                            <p>@string.Format(Culture["WgPhase2.HoursApprove.TotalHours"], row.TotalHours)</p>
+                        </div>
+                        @if (_returnWeekId == row.WeekId)
+                        {
+                            <div class="wg-maqqie-hours__return">
+                                <label for="return-note-@row.WeekId">@Culture["WgPhase2.HoursApprove.ReturnNoteLabel"]</label>
+                                <textarea id="return-note-@row.WeekId"
+                                          class="wg-maqqie-hours__note"
+                                          maxlength="280"
+                                          rows="3"
+                                          @bind="_returnNote"></textarea>
+                                <div class="wg-maqqie-hours__actions">
+                                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="CancelReturn">
+                                        @Culture["WgPhase2.HoursApprove.Cancel"]
+                                    </button>
+                                    <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => ReturnAsync(row)">
+                                        @Culture["WgPhase2.HoursApprove.ReturnSubmit"]
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="wg-maqqie-hours__actions">
+                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => StartReturn(row.WeekId)">
+                                    @Culture["WgPhase2.HoursApprove.Return"]
+                                </button>
+                                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => ApproveAsync(row)">
+                                    @Culture["WgPhase2.HoursApprove.Approve"]
+                                </button>
+                            </div>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <p class="state-message" role="status">@_message</p>
+}
+
+@code {
+    private MaqqieHoursEmployerOverviewDto? _overview;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+    private Guid? _returnWeekId;
+    private string _returnNote = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _overview = await Api.GetMaqqieHoursEmployerOverviewAsync();
+        }
+        catch
+        {
+            _overview = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void StartReturn(Guid weekId)
+    {
+        _returnWeekId = weekId;
+        _returnNote = "";
+        _message = null;
+    }
+
+    private void CancelReturn()
+    {
+        _returnWeekId = null;
+        _returnNote = "";
+    }
+
+    private async Task ApproveAsync(MaqqieHoursEmployerWeekRowDto row)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.ApproveMaqqieHoursWeekAsync(row.ApplicationId, row.WeekId);
+            _message = Culture["WgPhase2.HoursApprove.Approved"];
+            _overview = await Api.GetMaqqieHoursEmployerOverviewAsync();
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+            _returnWeekId = null;
+        }
+    }
+
+    private async Task ReturnAsync(MaqqieHoursEmployerWeekRowDto row)
+    {
+        var note = (_returnNote ?? "").Trim();
+        if (note.Length == 0)
+        {
+            _message = Culture["WgPhase2.HoursApprove.ReturnNoteRequired"];
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.ReturnMaqqieHoursWeekAsync(row.ApplicationId, row.WeekId, note);
+            _message = Culture["WgPhase2.HoursApprove.Returned"];
+            _overview = await Api.GetMaqqieHoursEmployerOverviewAsync();
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+            _returnWeekId = null;
+            _returnNote = "";
+        }
+    }
+}

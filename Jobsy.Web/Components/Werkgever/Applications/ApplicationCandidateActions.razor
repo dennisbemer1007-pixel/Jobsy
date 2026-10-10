@@ -26,7 +26,7 @@
                 @Culture["WgApp.Action.Cv"]
             </button>
         }
-        @if (primary is not null)
+        @if (primary is not null && !HidePrimary)
         {
             <button type="button" class="btn-compact btn-compact--primary" disabled="@Busy" @onclick="OnPrimary">
                 @Culture[primary]
@@ -38,6 +38,7 @@
 @code {
     [Parameter] public EmployerApplicationItem? Item { get; set; }
     [Parameter] public bool CanWrite { get; set; }
+    [Parameter] public bool HidePrimary { get; set; }
     [Parameter] public bool Busy { get; set; }
     [Parameter] public EventCallback OnPrimary { get; set; }
     [Parameter] public EventCallback OnReject { get; set; }

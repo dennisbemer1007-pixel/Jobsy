@@ -1,4 +1,5 @@
 using Bunit;
+using Jobsy.Core.Features;
 using Jobsy.Web.Components.KandidaatBanen;
 using Jobsy.Web.Services;
 using Jobsy.Web.Components.Werkgever.Applications;
@@ -6,7 +7,9 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Werkgever;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
 
@@ -29,6 +32,23 @@ public class EmployerRolesFixlistPlaywrightTests : BunitContext
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton(new EmployerScopeState());
         Services.AddSingleton(new JobsyApiClient(new HttpClient { BaseAddress = new Uri("http://localhost/") }));
+        Services.AddSingleton<IFeatureFlags>(new Phase2OffFlags());
+        Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        Services.AddSingleton(sp => new UserFacingError(
+            NullLogger<UserFacingError>.Instance,
+            sp.GetRequiredService<CultureState>(),
+            sp.GetRequiredService<IHttpContextAccessor>()));
+    }
+
+    private sealed class Phase2OffFlags : IFeatureFlags
+    {
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(FeatureFlagSnapshot.Defaults);
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
+
+        public void Invalidate() { }
     }
 
     [Fact]

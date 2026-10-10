@@ -115,7 +115,7 @@ public class CoreFunctionalFlowE2ETests
         var idealCheckout = await payments.CreateTokenPurchaseCheckoutAsync(company.Id, 5);
         Assert.Equal(MolliePaymentMethods.Ideal, idealCheckout.PaymentMethod);
 
-        // ── 3. Spend welcome token, then "no tokens, no action" ───────────────
+        // ── 3. Plain publish is free; paid add-ons still need tokens ───────────
         var products = CreateProducts(db);
         var vacancy1 = await SeedDraftVacancyAsync(db, company.Id, "Welkomst vacature");
         var firstPublish = await products.PublishAsync(
@@ -124,19 +124,18 @@ public class CoreFunctionalFlowE2ETests
             actorUserId: activated.UserId,
             allowPendingApproval: false);
         Assert.True(firstPublish.Succeeded, firstPublish.ErrorMessage);
-        Assert.Equal(0m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
-        // SM referral grants a free start-highlight on the first publish.
+        Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
         Assert.False(company.PendingStartHighlightBonus);
 
-        var vacancy2 = await SeedDraftVacancyAsync(db, company.Id, "Blocked vacature");
+        var vacancy2 = await SeedDraftVacancyAsync(db, company.Id, "Highlight vacature");
         var blocked = await products.PublishAsync(
             vacancy2,
-            new VacancyPublishOptions(),
+            new VacancyPublishOptions(Highlight: true),
             actorUserId: activated.UserId,
             allowPendingApproval: false);
         Assert.False(blocked.Succeeded);
         Assert.True(blocked.InsufficientTokens);
-        Assert.Equal(0m, blocked.Balance);
+        Assert.Equal(1m, blocked.Balance);
         Assert.True(blocked.RequiredTokens >= 1m);
         Assert.Contains("token", blocked.ErrorMessage, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(VacancyStatus.Draft, vacancy2.Status);
@@ -154,7 +153,7 @@ public class CoreFunctionalFlowE2ETests
             PreferencesJson = """{"preferredTransport":"Fiets","maxTravelMinutes":45}"""
         });
 
-        // Highlight / PushBom / Extend also blocked on empty balance (separate active listing).
+        // Highlight / PushBom blocked on low balance; extend stays free.
         var activeNoTokens = await SeedDraftVacancyAsync(db, company.Id, "Active no tokens");
         activeNoTokens.Status = VacancyStatus.Active;
         activeNoTokens.PublishedAtUtc = DateTime.UtcNow;
@@ -164,8 +163,8 @@ public class CoreFunctionalFlowE2ETests
         Assert.True(highlightBlocked.InsufficientTokens, highlightBlocked.ErrorMessage);
         var pushBlocked = await products.PushBomAsync(activeNoTokens, activated.UserId);
         Assert.True(pushBlocked.InsufficientTokens, pushBlocked.ErrorMessage);
-        var extendBlocked = await products.ExtendAsync(activeNoTokens, activated.UserId);
-        Assert.True(extendBlocked.InsufficientTokens, extendBlocked.ErrorMessage);
+        var extendOk = await products.ExtendAsync(activeNoTokens, activated.UserId);
+        Assert.True(extendOk.Succeeded, extendOk.ErrorMessage);
 
         // In-context top-up quote: Exact Match + bulk packs (mirrors GET top-up-quote).
         var balance = await new TokenLedgerService(db).GetBalanceAsync(company.Id);
@@ -195,7 +194,7 @@ public class CoreFunctionalFlowE2ETests
             company.Id,
             vacancy2.Id,
             PendingTokenActionKind.Publish,
-            optionHighlight: false,
+            optionHighlight: true,
             optionPushBom: false,
             optionExtend: false,
             requiredTokens: required,

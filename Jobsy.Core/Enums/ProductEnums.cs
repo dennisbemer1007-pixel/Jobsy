@@ -22,7 +22,9 @@ public enum TokenSpendReason
     /// <summary>Unlock anonymous talent-pool contact (1 token; refundable within 48h rules).</summary>
     ContactUnlock = 5,
     /// <summary>Paid unlock of Kandidaatinzichten for a set duration (default 12 tokens).</summary>
-    InsightsUnlock = 6
+    InsightsUnlock = 6,
+    /// <summary>Accepting a candidate application (pilot: ½ token).</summary>
+    AcceptCandidate = 7
 }
 
 public enum ApplicationStatus

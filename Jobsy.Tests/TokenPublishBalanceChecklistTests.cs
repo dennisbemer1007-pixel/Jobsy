@@ -43,7 +43,7 @@ public class TokenPublishBalanceChecklistTests
     }
 
     [Fact]
-    public async Task Zero_token_balance_blocks_operational_publish_without_going_negative()
+    public async Task Zero_token_balance_operational_publish_succeeds_without_spend()
     {
         await using var db = CreateDb();
         var (companyId, vacancyId) = await SeedDraftVacancyAsync(db, tokenBalance: 0, VacancyKind.Regular);
@@ -57,22 +57,14 @@ public class TokenPublishBalanceChecklistTests
             actorUserId: null,
             allowPendingApproval: false);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.InsufficientTokens);
-        Assert.False(string.IsNullOrWhiteSpace(result.ErrorMessage));
-        Assert.Contains("token", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(VacancyStatus.Draft, vacancy.Status);
-        Assert.Equal(0m, result.Balance);
-        Assert.True(result.RequiredTokens >= 1m);
-
-        var balance = await ledger.GetBalanceAsync(companyId);
-        Assert.Equal(0m, balance);
+        Assert.True(result.Succeeded, result.ErrorMessage);
+        Assert.Equal(VacancyStatus.Active, vacancy.Status);
+        Assert.Equal(0m, await ledger.GetBalanceAsync(companyId));
         Assert.Equal(0, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
-        Assert.DoesNotContain(db.TokenTransactions, t => t.NewBalance < 0);
     }
 
     [Fact]
-    public async Task Operational_publish_debits_exactly_one_token_by_default()
+    public async Task Operational_publish_with_balance_does_not_debit_publish_tokens()
     {
         await using var db = CreateDb();
         var (companyId, vacancyId) = await SeedDraftVacancyAsync(db, tokenBalance: 1m, VacancyKind.Regular);
@@ -88,18 +80,12 @@ public class TokenPublishBalanceChecklistTests
 
         Assert.True(result.Succeeded, result.ErrorMessage);
         Assert.Equal(VacancyStatus.Active, vacancy.Status);
-        Assert.Equal(0m, await ledger.GetBalanceAsync(companyId));
-
-        var spend = Assert.Single(db.TokenTransactions.Where(t => t.Kind == TokenTransactionKind.Spend));
-        Assert.Equal(TokenSpendReason.Publish, spend.Reason);
-        Assert.Equal(-1m, spend.Amount);
-        Assert.Equal(1m, spend.OldBalance);
-        Assert.Equal(0m, spend.NewBalance);
-        Assert.Equal(vacancyId, spend.VacancyId);
+        Assert.Equal(1m, await ledger.GetBalanceAsync(companyId));
+        Assert.Equal(0, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
     }
 
     [Fact]
-    public async Task Operational_publish_debits_configured_category_rate()
+    public async Task Operational_publish_ignores_configured_category_publish_rate()
     {
         await using var db = CreateDb();
         const decimal configuredRate = 2m;
@@ -132,12 +118,8 @@ public class TokenPublishBalanceChecklistTests
             allowPendingApproval: false);
 
         Assert.True(result.Succeeded, result.ErrorMessage);
-        Assert.Equal(0m, await ledger.GetBalanceAsync(companyId));
-
-        var spend = Assert.Single(db.TokenTransactions.Where(t => t.Kind == TokenTransactionKind.Spend));
-        Assert.Equal(-configuredRate, spend.Amount);
-        Assert.Equal(0m, spend.NewBalance);
-        Assert.True(spend.NewBalance >= 0m);
+        Assert.Equal(configuredRate, await ledger.GetBalanceAsync(companyId));
+        Assert.Equal(0, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
     }
 
     private static IVacancyProductService CreateProducts(JobsyDbContext db)

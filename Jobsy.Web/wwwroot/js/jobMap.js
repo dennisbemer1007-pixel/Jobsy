@@ -91,6 +91,22 @@ window.jobMap = (function () {
     const PIN_LAYER_UNCLUSTERED = "jobsy-pins-unclustered";
     const PIN_LAYER_UNCLUSTERED_GLYPH = "jobsy-pins-unclustered-glyph";
     const PIN_LAYER_SELECTED = "jobsy-pins-selected";
+    const PIN_SOURCE_AGENCY_AREAS = "jobsy-agency-areas";
+    const PIN_LAYER_AGENCY_AREAS_FILL = "jobsy-agency-areas-fill";
+    const PIN_LAYER_AGENCY_AREAS_LINE = "jobsy-agency-areas-line";
+    const PIN_LAYER_CLUSTER_AGENCY_BADGE = "jobsy-pins-cluster-agency-badge";
+    const AGENCY_PIN_MIN_ZOOM = CLUSTER_OPTS.disableClusteringAtZoom;
+    const AGENCY_PIN_COLOR = "#4f46e5";
+    const AGENCY_LABEL = "via uitzendbureau";
+    const UNCLUSTERED_PIN_FILTER = [
+        "all",
+        ["!", ["has", "point_count"]],
+        [
+            "any",
+            ["!=", ["get", "agency"], 1],
+            [">=", ["zoom"], AGENCY_PIN_MIN_ZOOM]
+        ]
+    ];
 
     // On-road cruise km/h. Keep in sync with TravelReach.SpeedKmPerHour.
     const CRUISE_KM_H = {
@@ -580,7 +596,32 @@ window.jobMap = (function () {
         return "<div class=\"map-popup__meta\">" + parts.join("") + "</div>";
     }
 
+    function agencyPopupLineHtml(v) {
+        if (!isAgencyPin(v)) {
+            return "";
+        }
+        return (
+            "<p class=\"map-popup__agency\">" +
+                "<span class=\"map-popup__agency-glyph\" aria-hidden=\"true\">◆</span>" +
+                "<span>" + escapeHtml(AGENCY_LABEL) + "</span>" +
+            "</p>"
+        );
+    }
+
     function companyLineHtml(v, detailHref) {
+        const agencyLine = agencyPopupLineHtml(v);
+        if (agencyLine && v.company) {
+            const companyHref = v.companyHref ? String(v.companyHref) : detailHref;
+            return agencyLine +
+                "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
+                    (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
+                    buildingIconHtml() +
+                    "<b>" + escapeHtml(v.company || "") + "</b>" +
+                "</a>";
+        }
+        if (agencyLine) {
+            return agencyLine;
+        }
         if (v.offeredBy) {
             return (
                 "<p class=\"map-popup__company map-popup__company--via\">" +
@@ -1601,6 +1642,16 @@ window.jobMap = (function () {
             target.closest(".map-popup__wage-info, .map-popup__wage-popover"));
     }
 
+    function clearSelectedPinVisual() {
+        if (selectedId != null && map && map.getSource(PIN_SOURCE)) {
+            try {
+                map.setFeatureState({ source: PIN_SOURCE, id: String(selectedId) }, { selected: false });
+            } catch (e) { }
+        }
+        selectedId = null;
+        refreshAgencyAreas();
+    }
+
     function closeActivePopup() {
         if (activeClusterPopup) {
             try { activeClusterPopup.remove(); } catch (e) { }
@@ -1615,6 +1666,7 @@ window.jobMap = (function () {
         setClusterOpenChrome(false);
         unbindClusterEscape();
         syncSheetChromeOffset();
+        clearSelectedPinVisual();
     }
 
     function closePopupsIfClickOutside(ev) {
@@ -1856,6 +1908,20 @@ window.jobMap = (function () {
         }
     }
 
+    function agencyRadiusKm(raw) {
+        if (!raw) {
+            return 0;
+        }
+        const km = raw.publicMapRadiusKm != null ? raw.publicMapRadiusKm
+            : (raw.PublicMapRadiusKm != null ? raw.PublicMapRadiusKm : 0);
+        const n = Number(km);
+        return n === 5 || n === 10 ? n : (n > 0 ? 2 : 0);
+    }
+
+    function isAgencyPin(raw) {
+        return agencyRadiusKm(raw) > 0;
+    }
+
     function normalizePin(raw) {
         if (!raw) {
             return null;
@@ -1866,6 +1932,7 @@ window.jobMap = (function () {
         }
         const lat = Number(raw.lat != null ? raw.lat : raw.Lat);
         const lng = Number(raw.lng != null ? raw.lng : raw.Lng);
+        const radiusKm = agencyRadiusKm(raw);
         const colour = raw.categoryColor || raw.colour || raw.Colour || null;
         const matchPercent = raw.matchPercent != null ? raw.matchPercent
             : (raw.MatchPercent != null ? raw.MatchPercent : null);
@@ -1881,6 +1948,8 @@ window.jobMap = (function () {
             lng: lng,
             categoryColor: colour,
             colour: colour,
+            publicMapRadiusKm: radiusKm > 0 ? radiusKm : null,
+            agency: radiusKm > 0,
             matchPercent: matchPercent,
             workType: workType,
             workTypes: workTypes || (workType ? [workType] : []),
@@ -2469,19 +2538,11 @@ window.jobMap = (function () {
     }
 
     function eachTravelRing(lat, lng, fn) {
-        const minutes = ringMinutes(travelOptions.maxMinutes);
-        const chosen = chosenRingMinutes();
-        const cap = maxRingRadiusMeters();
-        minutes.forEach(function (mins, index) {
-            const radius = ringRadiusForMinutes(mins);
-            if (radius < 40) {
-                return;
-            }
-            if (index > 0 && radius >= cap - 1 && ringRadiusForMinutes(minutes[index - 1]) >= cap - 1) {
-                return;
-            }
-            fn(mins, index, radius, mins === chosen || (chosen > 30 && index === minutes.length - 1));
-        });
+        const mins = chosenRingMinutes();
+        const radius = ringRadiusForMinutes(mins);
+        if (radius >= 40) {
+            fn(mins, 0, radius, true);
+        }
     }
 
     function buildTravelRingFeatures(lat, lng) {
@@ -2512,7 +2573,7 @@ window.jobMap = (function () {
 
     function fetchIsochrones(lat, lng) {
         const mode = canonicalTransport(travelOptions.transport || "Fiets");
-        const minutes = ringMinutes(travelOptions.maxMinutes);
+        const minutes = [chosenRingMinutes()];
         const key = isochroneCacheKey(lat, lng, mode, minutes);
         if (isochroneCache[key]) {
             return Promise.resolve(isochroneCache[key]);
@@ -3182,6 +3243,7 @@ window.jobMap = (function () {
             features: Object.keys(markersById).map(function (id) {
                 const record = markersById[id];
                 const v = record.options.jobData || {};
+                const agency = isAgencyPin(v) ? 1 : 0;
                 let outside = 0;
                 if (origin && outerM > 0) {
                     const d = haversineMeters(origin.lat, origin.lng, record.lat, record.lng);
@@ -3196,9 +3258,11 @@ window.jobMap = (function () {
                     properties: {
                         id: String(id),
                         featured: isFeaturedVacancy(v) ? 1 : 0,
+                        agency: agency,
+                        radiusKm: agency ? agencyRadiusKm(v) : 0,
                         workType: workTypeOf(v) || "",
-                        glyph: workTypeGlyph(workTypeOf(v)),
-                        colour: v.categoryColor || v.colour || "",
+                        glyph: agency ? "◆" : workTypeGlyph(workTypeOf(v)),
+                        colour: agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
                         outside: outside
@@ -3206,6 +3270,43 @@ window.jobMap = (function () {
                 };
             })
         };
+    }
+
+    function agencyAreasGeoJson() {
+        if (selectedId == null) {
+            return { type: "FeatureCollection", features: [] };
+        }
+        const record = markersById[selectedId];
+        if (!record) {
+            return { type: "FeatureCollection", features: [] };
+        }
+        const v = record.options.jobData || {};
+        const km = agencyRadiusKm(v);
+        if (km <= 0) {
+            return { type: "FeatureCollection", features: [] };
+        }
+        return {
+            type: "FeatureCollection",
+            features: [{
+                type: "Feature",
+                properties: { radiusKm: km, pinId: String(selectedId) },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: circlePolygon(record.lat, record.lng, km * 1000)
+                }
+            }]
+        };
+    }
+
+    function refreshAgencyAreas() {
+        if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) {
+            return;
+        }
+        ensureAgencyAreaLayers();
+        const source = map.getSource(PIN_SOURCE_AGENCY_AREAS);
+        if (source && typeof source.setData === "function") {
+            source.setData(agencyAreasGeoJson());
+        }
     }
 
     function haversineMeters(lat1, lng1, lat2, lng2) {
@@ -3216,6 +3317,38 @@ window.jobMap = (function () {
             Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
             Math.sin(dLng / 2) * Math.sin(dLng / 2);
         return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function ensureAgencyAreaLayers() {
+        if (!map) {
+            return;
+        }
+        if (!map.getSource(PIN_SOURCE_AGENCY_AREAS)) {
+            const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
+            map.addSource(PIN_SOURCE_AGENCY_AREAS, {
+                type: "geojson",
+                data: agencyAreasGeoJson()
+            });
+            map.addLayer({
+                id: PIN_LAYER_AGENCY_AREAS_FILL,
+                type: "fill",
+                source: PIN_SOURCE_AGENCY_AREAS,
+                paint: {
+                    "fill-color": AGENCY_PIN_COLOR,
+                    "fill-opacity": 0.12
+                }
+            }, beforeId);
+            map.addLayer({
+                id: PIN_LAYER_AGENCY_AREAS_LINE,
+                type: "line",
+                source: PIN_SOURCE_AGENCY_AREAS,
+                paint: {
+                    "line-color": AGENCY_PIN_COLOR,
+                    "line-width": 2,
+                    "line-opacity": 0.55
+                }
+            }, beforeId);
+        }
     }
 
     function ensurePinImages() {
@@ -3255,12 +3388,25 @@ window.jobMap = (function () {
                 cluster: true,
                 clusterRadius: CLUSTER_OPTS.clusterRadius,
                 clusterMaxZoom: CLUSTER_OPTS.clusterMaxZoom,
+                clusterProperties: {
+                    agency_sum: ["+", ["get", "agency"]]
+                },
                 promoteId: "id"
             });
         }
         const PIN_LAYER_CLUSTER_HALO = PIN_LAYER_CLUSTERS + "-halo";
         const PIN_LAYER_CLUSTER_HIT = PIN_LAYER_CLUSTERS + "-hit";
         const PIN_LAYER_UNCLUSTERED_HIT = PIN_LAYER_UNCLUSTERED + "-hit";
+        const legacyAgencyPinLabelLayer = ["jobsy-pins", "agency-label"].join("-");
+        const legacyClusterAgencyLabelLayer = ["jobsy-pins-cluster", "agency-label"].join("-");
+        [PIN_LAYER_CLUSTER_AGENCY_BADGE, legacyAgencyPinLabelLayer, legacyClusterAgencyLabelLayer]
+            .forEach(function (legacyId) {
+                try {
+                    if (map.getLayer(legacyId)) {
+                        map.removeLayer(legacyId);
+                    }
+                } catch (eLegacy) { }
+            });
         if (!map.getLayer(PIN_LAYER_CLUSTER_HALO)) {
             map.addLayer({
                 id: PIN_LAYER_CLUSTER_HALO,
@@ -3321,10 +3467,29 @@ window.jobMap = (function () {
                 paint: { "text-color": "#ffffff" }
             });
             map.addLayer({
+                id: PIN_LAYER_CLUSTER_AGENCY_BADGE,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["all", ["has", "point_count"], [">", ["get", "agency_sum"], 0]],
+                layout: {
+                    "text-field": ["concat", "◆", ["to-string", ["get", "agency_sum"]]],
+                    "text-size": 10,
+                    "text-offset": [1.15, 1.15],
+                    "text-font": ["Noto Sans Bold"],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true
+                },
+                paint: {
+                    "text-color": AGENCY_PIN_COLOR,
+                    "text-halo-color": "#ffffff",
+                    "text-halo-width": 1.5
+                }
+            });
+            map.addLayer({
                 id: PIN_LAYER_UNCLUSTERED_HIT,
                 type: "circle",
                 source: PIN_SOURCE,
-                filter: ["!", ["has", "point_count"]],
+                filter: UNCLUSTERED_PIN_FILTER,
                 paint: {
                     "circle-color": "#000000",
                     "circle-radius": 22,
@@ -3335,11 +3500,12 @@ window.jobMap = (function () {
                 id: PIN_LAYER_UNCLUSTERED,
                 type: "circle",
                 source: PIN_SOURCE,
-                filter: ["!", ["has", "point_count"]],
+                filter: UNCLUSTERED_PIN_FILTER,
                 paint: {
                     "circle-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["get", "agency"], 1], AGENCY_PIN_COLOR,
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [
                             "case",
@@ -3352,6 +3518,7 @@ window.jobMap = (function () {
                     "circle-radius": [
                         "case",
                         ["==", ["feature-state", "selected"], true], 10,
+                        ["==", ["get", "agency"], 1], 8,
                         ["==", ["get", "featured"], 1], 8,
                         7
                     ],
@@ -3373,7 +3540,7 @@ window.jobMap = (function () {
                 id: PIN_LAYER_UNCLUSTERED_GLYPH,
                 type: "symbol",
                 source: PIN_SOURCE,
-                filter: ["!", ["has", "point_count"]],
+                filter: UNCLUSTERED_PIN_FILTER,
                 layout: {
                     "text-field": ["get", "glyph"],
                     "text-size": 10,
@@ -3388,6 +3555,40 @@ window.jobMap = (function () {
                         1
                     ]
                 }
+            });
+        } else if (!map.getLayer(PIN_LAYER_CLUSTER_AGENCY_BADGE)) {
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_AGENCY_BADGE,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["all", ["has", "point_count"], [">", ["get", "agency_sum"], 0]],
+                layout: {
+                    "text-field": ["concat", "◆", ["to-string", ["get", "agency_sum"]]],
+                    "text-size": 10,
+                    "text-offset": [1.15, 1.15],
+                    "text-font": ["Noto Sans Bold"],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true
+                },
+                paint: {
+                    "text-color": AGENCY_PIN_COLOR,
+                    "text-halo-color": "#ffffff",
+                    "text-halo-width": 1.5
+                }
+            });
+            [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_HIT, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setFilter(layerId, UNCLUSTERED_PIN_FILTER);
+                    }
+                } catch (eFilter) { }
+            });
+            [PIN_LAYER_CLUSTERS, PIN_LAYER_CLUSTER_HALO].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setPaintProperty(layerId, "circle-color", "#16a34a");
+                    }
+                } catch (ePaint) { }
             });
         }
         if (!map._jobsyPinClicksBound) {
@@ -3514,6 +3715,7 @@ window.jobMap = (function () {
         if (source && typeof source.setData === "function") {
             source.setData(pinsGeoJson());
         }
+        refreshAgencyAreas();
         if (selectedId != null) {
             highlight(selectedId);
         }
@@ -4145,6 +4347,7 @@ window.jobMap = (function () {
         if (id != null) {
             try { map.setFeatureState({ source: PIN_SOURCE, id: String(id) }, { selected: true }); } catch (e) { }
         }
+        refreshAgencyAreas();
     }
 
     function focus(id) {
@@ -4288,6 +4491,28 @@ window.jobMap = (function () {
         /** @internal Playwright / diagnostics */
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
+        __testGetAgencyAreaCount: function () {
+            return agencyAreasGeoJson().features.length;
+        },
+        __testGetAgencyPinCount: function () {
+            let n = 0;
+            Object.keys(markersById).forEach(function (id) {
+                const v = markersById[id].options.jobData || {};
+                if (isAgencyPin(v)) {
+                    n += 1;
+                }
+            });
+            return n;
+        },
+        __testAgencyLabel: function () { return AGENCY_LABEL; },
+        __testHasAgencyMapTextLabels: function () {
+            if (!map) {
+                return false;
+            }
+            const legacyPin = ["jobsy-pins", "agency-label"].join("-");
+            const legacyCluster = ["jobsy-pins-cluster", "agency-label"].join("-");
+            return !!(map.getLayer(legacyPin) || map.getLayer(legacyCluster));
+        },
         __testGetMapCreateCount: function () { return mapCreateCount; },
         __testGetPinsNetworkFetchCount: function () { return pinsNetworkFetchCount; },
         __testPinsFilterKey: pinsFilterKey,

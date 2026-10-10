@@ -18,6 +18,7 @@
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject IJSRuntime Js
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@PageHeading · Lobsy</PageTitle>
@@ -92,6 +93,10 @@ else
                 </div>
             </dl>
 
+            <WgAppPhase2AcceptPanel ApplicationId="a.Id"
+                                    CanWrite="CanWrite"
+                                    OnChanged="ReloadSelfAsync" />
+
             <section>
                 <h2>@Culture["WgApp.Tab.Motivation"]</h2>
                 <div class="wg-app-cand__block">
@@ -129,6 +134,7 @@ else
             <div class="wg-app-cand__footer" data-testid="wg-app-mobile-footer">
                 <ApplicationCandidateActions Item="a"
                                              CanWrite="CanWrite"
+                                             HidePrimary="_phase2Enabled && CanWrite && ApplicationPipelineRules.StatusOf(a) == ApplicationStatus.Pending"
                                              Busy="_busy"
                                              OnPrimary="HandlePrimary"
                                              OnReject="HandleReject"
@@ -188,6 +194,7 @@ else
     private bool _rejectOpen;
     private bool _hireOpen;
     private string? _message;
+    private bool _phase2Enabled;
 
     private string EmployerHistory(int count)
         => count == 1
@@ -207,6 +214,8 @@ else
         try
         {
             await ScopeBootstrap.EnsureLoadedAsync();
+            var flags = await FeatureFlags.GetAsync();
+            _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
             var items = await Api.GetApplicationsAsync();
             _item = items.FirstOrDefault(a => a.Id == ApplicationId);
         }

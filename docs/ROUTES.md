@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (242 routes)
+## Table (244 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -151,6 +151,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
 | `/candidate/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
+| `/candidate/uren` | `Pages/Candidate/MaqqieHours.razor` | Candidate |
 | `/candidate/vacancies` | `Pages/Candidate/Vacancies.razor` | Candidate |
 | `/candidate/values` | `Pages/Candidate/ValuesScan.razor` | Candidate |
 | `/carriere` | `Pages/Candidate/CareerDashboard.razor` | Candidate |
@@ -272,6 +273,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/tokens/facturen` | `Pages/Werkgever/TokensFacturen.razor` | EnterpriseManager, Intermediary, Admin |
 | `/werkgever/tokens/mutaties` | `Pages/Werkgever/TokensMutaties.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/tokens/verbruik` | `Pages/Werkgever/TokensVerbruik.razor` | RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/uren` | `Pages/Werkgever/MaqqieHoursApprove.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures` | `Pages/Werkgever/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures/nieuw` | `Pages/Werkgever/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
 | `/werkgever/wervingsmateriaal` | `Pages/Werkgever/Wervingsmateriaal.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |

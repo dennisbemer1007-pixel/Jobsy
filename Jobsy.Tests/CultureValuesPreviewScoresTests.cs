@@ -179,6 +179,9 @@ public class CultureValuesPreviewScoresTests
                 FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
                 0,
                 0,
+                FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
+                null,
+                FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
                 DateTime.UtcNow));
 
         public Task<FlexCommercialSettingsDto> UpdateAsync(

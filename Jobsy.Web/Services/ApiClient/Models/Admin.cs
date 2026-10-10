@@ -256,6 +256,8 @@ public sealed class PlatformFeatureItem
     public bool HonestAdviceEnabled { get; set; }
     /// <summary>Future jobs that fit the candidate. Default off.</summary>
     public bool FutureJobsForYouEnabled { get; set; }
+    /// <summary>Phase-2 employer accept, Maqqie, agency radius, uren. Default off.</summary>
+    public bool EmployerPhase2Enabled { get; set; }
     /// <summary>When true, candidates take paid tests without Mollie. Default on.</summary>
     public bool FreeCandidateTestsEnabled { get; set; } = true;
     /// <summary>Server has WhatsApp credentials. Never a secret.</summary>
@@ -292,6 +294,7 @@ public sealed class PlatformFeaturePatch
     public bool? FreeCandidateTestsEnabled { get; set; }
     public bool? HonestAdviceEnabled { get; set; }
     public bool? FutureJobsForYouEnabled { get; set; }
+    public bool? EmployerPhase2Enabled { get; set; }
     public string? Reason { get; set; }
 }
 

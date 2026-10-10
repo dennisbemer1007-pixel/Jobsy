@@ -29,6 +29,12 @@ public class Vacancy
     public bool ShowClientAddressOnMap { get; set; }
 
     /// <summary>
+    /// For intermediary vacancies: discovery map circle radius in km (2, 5 or 10). Default 2.
+    /// Distance search uses the area centre (postcode/place geocode).
+    /// </summary>
+    public int PublicMapRadiusKm { get; set; } = 2;
+
+    /// <summary>
     /// Origin channel: Manual / Api / Csv = Regulier; Ats = scrape pipeline.
     /// </summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;

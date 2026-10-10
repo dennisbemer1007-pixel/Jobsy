@@ -24,6 +24,7 @@
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject IJSRuntime Js
 @inject UserFacingError UserFacing
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["WgNav.Applications"] · Lobsy</PageTitle>
@@ -274,11 +275,16 @@
 
 <EntDrawer Open="_drawerOpen" OpenChanged="OnDrawerOpenChanged" Title="@DrawerTitle" Placement="end">
     <ChildContent>
-        <ApplicationCandidateDetail Item="_selected" Tab="@_drawerTab" TabChanged="OnDrawerTabChanged" />
+        <ApplicationCandidateDetail Item="_selected"
+                                    Tab="@_drawerTab"
+                                    TabChanged="OnDrawerTabChanged"
+                                    CanWritePhase2="CanWrite"
+                                    OnPhase2Changed="ReloadSelectedAsync" />
     </ChildContent>
     <Footer>
         <ApplicationCandidateActions Item="_selected"
                                      CanWrite="CanWrite"
+                                     HidePrimary="Phase2HidesPrimary(_selected)"
                                      Busy="_busyId.HasValue"
                                      OnPrimary="HandlePrimary"
                                      OnReject="HandleReject"
@@ -369,6 +375,7 @@
     private bool _hireRejectOthers = true;
     private bool _hireCloseVacancy = true;
     private bool _bulkRejectOpen;
+    private bool _phase2Enabled;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
@@ -540,6 +547,8 @@
         try
         {
             await ScopeBootstrap.EnsureLoadedAsync();
+            var flags = await FeatureFlags.GetAsync();
+            _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
             _companies = (await Api.GetMyCompaniesAsync())?.ToList() ?? [];
             _vacancies = (await Api.GetManagedVacanciesAsync(Scope.CompanyIds.Count > 0 ? Scope.CompanyIds : null)).ToList();
             ApplyQuery();
@@ -585,6 +594,18 @@
         {
             OpenCandidate(appId);
         }
+    }
+
+    private bool Phase2HidesPrimary(EmployerApplicationItem? item)
+        => _phase2Enabled
+           && CanWrite
+           && item is not null
+           && ApplicationPipelineRules.StatusOf(item) == ApplicationStatus.Pending;
+
+    private async Task ReloadSelectedAsync()
+    {
+        await ReloadAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task ReloadAsync()

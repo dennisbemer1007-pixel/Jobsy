@@ -1,3 +1,4 @@
+@using Jobsy.Core.Rules
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 
@@ -13,7 +14,7 @@
             <input type="checkbox" checked disabled />
             <span>
                 @Culture["Employer.PublishBase"]
-                <em>@PublishCost.ToString("0.##") tokens</em>
+                <em>@Culture["Employer.PublishBaseFree"]</em>
             </span>
         </label>
         @if (HighlightAvailable)
@@ -38,7 +39,7 @@
         <label class="publish-option">
             <input type="checkbox" @bind="_extend" />
             <span>
-                @string.Format(Culture["WgVac.Cost.Extend"], CountPhrase.Tokens(Culture, _costs.GetValueOrDefault("Extend", 1m)))
+                @Culture["WgVac.Cost.ExtendFree"]
             </span>
         </label>
     </div>
@@ -118,10 +119,6 @@
     private bool _topUpOpen;
     private InsufficientTokensInfo? _topUpInfo;
 
-    private decimal PublishCost =>
-        Vacancy?.CategoryPublishCostTokens
-        ?? _costs.GetValueOrDefault("Publish", 1m);
-
     private decimal HighlightCost =>
         Vacancy?.CategoryHighlightCostTokens
         ?? _costs.GetValueOrDefault("Highlight", 1m);
@@ -138,10 +135,8 @@
             : 0;
 
     private decimal TotalCost =>
-        PublishCost
-        + (_highlight && HighlightAvailable ? HighlightCost : 0)
-        + (PushBomAvailable ? PushBomCost : 0)
-        + (_extend ? _costs.GetValueOrDefault("Extend", 1m) : 0);
+        (_highlight && HighlightAvailable ? HighlightCost : 0)
+        + (PushBomAvailable ? PushBomCost : 0);
 
     private bool ConfirmDisabled =>
         _busy

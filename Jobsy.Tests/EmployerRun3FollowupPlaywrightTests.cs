@@ -43,7 +43,7 @@ public class EmployerRun3FollowupPlaywrightTests : BunitContext
         await Assertions.Expect(note).ToBeVisibleAsync();
         var text = await note.InnerTextAsync();
         Assert.Contains("Vacature offline halen?", text, StringComparison.Ordinal);
-        Assert.Contains("Weer online zetten kost 1 token.", text, StringComparison.Ordinal);
+        Assert.Contains("Weer online zetten is gratis.", text, StringComparison.Ordinal);
         var cancel = page.GetByTestId("wg-vac-offline-cancel");
         var confirm = page.GetByTestId("wg-vac-offline-confirm-btn");
         await Assertions.Expect(cancel).ToHaveTextAsync("Annuleren");

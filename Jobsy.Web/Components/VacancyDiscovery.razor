@@ -2936,6 +2936,11 @@
             dict["workType"] = p.WorkType;
         }
 
+        if (p.PublicMapRadiusKm is int radiusKm && radiusKm > 0)
+        {
+            dict["publicMapRadiusKm"] = radiusKm;
+        }
+
         return dict;
     }
 
@@ -2958,7 +2963,8 @@
                     MatchColorBand = v.MatchColorBand,
                     Highlighted = v.IsHighlighted,
                     HighlightRank = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
-                    WorkType = workType
+                    WorkType = workType,
+                    PublicMapRadiusKm = v.PublicMapRadiusKm
                 });
             })
             .ToList();

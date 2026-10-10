@@ -76,6 +76,7 @@ public sealed record WerkgeverNavContext(
     bool InsightsLocked = false,
     bool HasCandidateApplications = false,
     bool HasMultipleBranches = false,
+    bool HasMaqqieHours = false,
     IReadOnlyDictionary<string, int>? Counts = null);
 
 /// <summary>
@@ -122,6 +123,9 @@ public static class WerkgeverNav
             new("applications", "WgNav.Applications", "/werkgever/sollicitaties", NavIcons.Applications,
                 ["/branch/applicants"], BmRmVm with { Intermediair = RoleVisibilityKind.Full },
                 CountKey: "applications"),
+            new("hours-approve", "WgNav.HoursApprove", "/werkgever/uren", NavIcons.Clock,
+                [], BmRmVm with { Intermediair = RoleVisibilityKind.Full },
+                AvailabilityKey: "maqqie-hours"),
             new("talent", "WgNav.Talentpool", "/werkgever/talentpool", NavIcons.Users,
                 ["/employer/talent", "/employer/talent-contacts"], BmRmVm with { Intermediair = RoleVisibilityKind.Full }),
             new("insights", "WgNav.CandidateInsights", "/werkgever/kandidaatinzichten", NavIcons.Users,
@@ -386,6 +390,7 @@ public static class WerkgeverNav
             "insights" => ctx.CandidateInsightsEnabled,
             "my-applications" => ctx.HasCandidateApplications,
             "regions-tab" => ctx.HasMultipleBranches,
+            "maqqie-hours" => ctx.HasMaqqieHours,
             _ => item.IsAvailable
         };
     }

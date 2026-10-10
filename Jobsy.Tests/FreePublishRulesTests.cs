@@ -74,7 +74,7 @@ public class FreePublishProductTests
     }
 
     [Fact]
-    public async Task Publish_costs_again_after_promo_ends()
+    public async Task Publish_stays_free_after_promo_ends()
     {
         await using var db = CreateDb();
         SeedFreePublish(db, new DateOnly(2020, 1, 1));
@@ -86,7 +86,10 @@ public class FreePublishProductTests
         var result = await sut.PublishAsync(vacancy, new VacancyPublishOptions(), actorUserId: null);
 
         Assert.True(result.Succeeded, result.ErrorMessage);
-        Assert.Equal(0m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+        Assert.DoesNotContain(
+            await db.TokenTransactions.Where(t => t.CompanyId == companyId).ToListAsync(),
+            t => t.Kind == TokenTransactionKind.Spend && t.Reason == TokenSpendReason.Publish);
+        Assert.Equal(1m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -213,25 +216,24 @@ public class FreePublishProductTests
             await db.TokenTransactions.Where(t => t.CompanyId == companyId).ToListAsync(),
             t => t.Kind == TokenTransactionKind.Spend);
 
-        // 3) Highlight bij publiceren zonder saldo → onvoldoende tokens (highlight kost wél)
+        // 3) Highlight bij publiceren zonder saldo → pending approval (highlight kost wél)
         var draft2 = await SeedDraftForCompanyAsync(db, companyId, "Wil highlight");
-        var blocked = await products.PublishAsync(
+        var pending = await products.PublishAsync(
             draft2,
             new VacancyPublishOptions(Highlight: true),
             actorUserId: activated.UserId);
-        Assert.False(blocked.Succeeded);
-        Assert.True(blocked.InsufficientTokens);
-        Assert.Equal(VacancyStatus.Draft, draft2.Status);
+        Assert.True(pending.Succeeded);
+        Assert.True(pending.PendingApproval);
+        Assert.Equal(VacancyStatus.PendingApproval, draft2.Status);
         Assert.Equal(0m, await BalanceAsync(db, companyId));
 
-        // 4) Tokens kopen/grant → publiceren mét highlight: alleen highlight-tokens (2) afgeschreven
+        // 4) Tokens kopen/grant → goedkeuren: alleen highlight-tokens (2) afgeschreven
         await GrantTokensAsync(db, companyId, 5m);
         Assert.Equal(5m, await BalanceAsync(db, companyId));
 
-        var withHighlight = await products.PublishAsync(
+        var withHighlight = await products.ApprovePublishAsync(
             draft2,
-            new VacancyPublishOptions(Highlight: true),
-            actorUserId: activated.UserId);
+            activated.UserId);
         Assert.True(withHighlight.Succeeded, withHighlight.ErrorMessage);
         Assert.Equal(VacancyStatus.Active, draft2.Status);
         Assert.True(draft2.IsHighlighted);

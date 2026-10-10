@@ -31,7 +31,10 @@ public sealed record FlexCommercialSettingsUpdate(
     decimal DeepTestPriceValuesEuro,
     decimal DeepTestPriceCultureEuro,
     decimal AgencyAnnualPriceEuro,
-    decimal ContactUnlockCostTokens);
+    decimal ContactUnlockCostTokens,
+    decimal AcceptCandidatePilotCostTokens,
+    DateOnly? AcceptCandidatePilotEndsOn,
+    decimal AcceptCandidateStandardCostTokens);
 
 public sealed record FlexCommercialSettingsDto(
     decimal MarginPerHourEuro,
@@ -42,6 +45,9 @@ public sealed record FlexCommercialSettingsDto(
     decimal DeepTestPriceCultureEuro,
     decimal AgencyAnnualPriceEuro,
     decimal ContactUnlockCostTokens,
+    decimal AcceptCandidatePilotCostTokens,
+    DateOnly? AcceptCandidatePilotEndsOn,
+    decimal AcceptCandidateStandardCostTokens,
     DateTime UpdatedAtUtc)
 {
     /// <summary>Legacy alias — competence price (kept for landing/DTO compatibility).</summary>

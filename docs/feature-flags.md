@@ -12,6 +12,7 @@ Admin toggles live in the singleton `PlatformFeatureSettings` row and are read t
 | `CompactTestPdfEnabled` | **false** | Compact personal deep-test PDFs (about 4 A4 pages with charts). Off keeps today's longer layout. Does not change scores, payment, or the partner passport PDF. |
 | `HonestAdviceEnabled` | **false** | Stored "Eerlijk advies" under the job outlook on carrière and functiefit. Off hides the block. The text comes from `honest_advice.nl.json`. The candidate flow never calls a model for it. |
 | `FutureJobsForYouEnabled` | **false** | "Werk met toekomst dat bij jou past" on Functiefit and Carrière. Off hides the block. On shows up to 10 occupations that fit the candidate's own test and that ROA expects employers to need strongly (ITKB groot or zeer groot, and openings not typed as low). One occupation per ISCO group. Netherlands only. No invented figures. Does not turn employers on. While employers are off, the Functiefit tab stays reachable so the block and the self-check can be used. |
+| `EmployerPhase2Enabled` | **false** | Phase-2 employer flows: ½-token accept, Maqqie placement choice, phase-2 wallet on tokens, agency map radius (2/5/10 km), candidate uren doorgeven. Requires `EmployersEnabled` when ON. Off keeps legacy accept (no token spend) and hides phase-2 UI/API (`feature_disabled`). |
 
 Gate with `[RequiresFeature(PlatformFeature.Employers)]` (pages, controllers, actions) or `<FeatureVisible Feature="PlatformFeature.Employers">` (sections). Minimal APIs: `.RequireFeature(PlatformFeature.Employers)`.
 

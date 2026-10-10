@@ -123,23 +123,15 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "PushBom is niet beschikbaar voor deze vacaturecategorie.");
         }
 
-        var publishCost = FreePublishRules.EffectivePublishCost(
-            pricing.PublishCostTokens,
-            CompanyVerificationRules.CanUseFreePublishPromo(rootStatus)
-                ? (await _features.GetAsync(cancellationToken)).FreePublishUntil
-                : null,
-            DateTime.UtcNow);
-        if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
-        {
-            publishCost = 0m;
-        }
+        var publishCost = VacancyPostingTokenRules.PublishCostTokens;
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
 
         var reasons = BuildPublishReasons(options);
         var costOverrides = new Dictionary<TokenSpendReason, decimal>
         {
-            [TokenSpendReason.Publish] = publishCost
+            [TokenSpendReason.Publish] = publishCost,
+            [TokenSpendReason.Extend] = VacancyPostingTokenRules.ExtendCostTokens
         };
         List<PushBomRecipient>? pushBomCandidates = null;
 
@@ -194,22 +186,13 @@ public sealed class VacancyProductService : IVacancyProductService
         var totalCost = billableReasons.Sum(CostOf);
         var balance = await _tokens.GetBalanceAsync(vacancy.CompanyId, cancellationToken);
 
-        if (publishCost > 0 && balance < publishCost)
+        if (balance < totalCost)
         {
-            if (allowPendingApproval)
+            if (allowPendingApproval && totalCost > 0)
             {
                 return await MarkPendingApprovalAsync(vacancy, options, cancellationToken);
             }
 
-            return InsufficientTokens(
-                vacancy,
-                Math.Max(totalCost, publishCost),
-                balance,
-                "Je tokens zijn op. Koop tokens om te publiceren.");
-        }
-
-        if (balance < totalCost)
-        {
             return InsufficientTokens(
                 vacancy,
                 totalCost,
@@ -283,8 +266,7 @@ public sealed class VacancyProductService : IVacancyProductService
 
         if (!spend.Succeeded)
         {
-            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true
-                && spend.Balance < publishCost)
+            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
             {
                 if (allowPendingApproval)
                 {
@@ -295,16 +277,7 @@ public sealed class VacancyProductService : IVacancyProductService
                     vacancy,
                     totalCost,
                     spend.Balance,
-                    "Je tokens zijn op. Koop tokens om te publiceren.");
-            }
-
-            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                return InsufficientTokens(
-                    vacancy,
-                    totalCost,
-                    spend.Balance,
-                    spend.ErrorMessage);
+                    spend.ErrorMessage ?? "Onvoldoende tokens voor geselecteerde opties.");
             }
 
             return Fail(vacancy, spend.ErrorMessage ?? "Tokenafschrijving mislukt.");
@@ -401,21 +374,11 @@ public sealed class VacancyProductService : IVacancyProductService
             costOverrides?.Remove(TokenSpendReason.PushBom);
         }
 
-        var publishCost = FreePublishRules.EffectivePublishCost(
-            pricing.PublishCostTokens,
-            CompanyVerificationRules.CanUseFreePublishPromo(
-                await ResolveRootVerificationStatusAsync(company, cancellationToken))
-                ? (await _features.GetAsync(cancellationToken)).FreePublishUntil
-                : null,
-            DateTime.UtcNow);
-        if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
-        {
-            publishCost = 0m;
-        }
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
         costOverrides ??= new Dictionary<TokenSpendReason, decimal>();
-        costOverrides[TokenSpendReason.Publish] = publishCost;
+        costOverrides[TokenSpendReason.Publish] = VacancyPostingTokenRules.PublishCostTokens;
+        costOverrides[TokenSpendReason.Extend] = VacancyPostingTokenRules.ExtendCostTokens;
         if (approveOptions.Highlight)
         {
             costOverrides[TokenSpendReason.Highlight] = useStartHighlight ? 0m : highlightCost;
@@ -699,50 +662,22 @@ public sealed class VacancyProductService : IVacancyProductService
             return lenderBlock;
         }
 
-        TokenSpendOutcome spend;
         try
         {
-            spend = await _tokens.TrySpendAsync(
-                vacancy.CompanyId,
-                TokenSpendReason.Extend,
-                vacancyId: vacancy.Id,
-                actorUserId: actorUserId,
-                branchCompanyId: vacancy.CompanyId,
-                note: $"Extend +{VacancyProductRules.ExtendDays}d",
-                onSuccessBeforeCommit: async ct =>
-                {
-                    await _db.Entry(vacancy).ReloadAsync(ct);
-                    if (vacancy.Status is not (VacancyStatus.Active or VacancyStatus.Archived))
-                    {
-                        throw new VacancyProductConflictException(
-                            "Vacature kan niet meer worden verlengd.");
-                    }
+            await _db.Entry(vacancy).ReloadAsync(cancellationToken);
+            if (vacancy.Status is not (VacancyStatus.Active or VacancyStatus.Archived))
+            {
+                return Fail(vacancy, "Vacature kan niet meer worden verlengd.");
+            }
 
-                    ApplyExtend(vacancy);
-                },
-                cancellationToken: cancellationToken);
+            ApplyExtend(vacancy);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Indexed(new VacancyProductOutcome(true, null, vacancy));
         }
         catch (VacancyProductConflictException ex)
         {
             return Fail(vacancy, ex.Message);
         }
-
-        if (spend.Succeeded)
-        {
-            return Indexed(new VacancyProductOutcome(true, null, vacancy));
-        }
-
-        if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            var extendCost = await _tokens.GetCostAsync(TokenSpendReason.Extend, cancellationToken) ?? 1m;
-            return InsufficientTokens(
-                vacancy,
-                extendCost,
-                spend.Balance,
-                "Je tokens zijn op. Koop tokens om te verlengen.");
-        }
-
-        return Fail(vacancy, spend.ErrorMessage ?? "Verlengen mislukt.");
     }
 
     public async Task<VacancyProductOutcome> DeactivateAsync(
@@ -1399,20 +1334,6 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         return company.VerificationStatus;
-    }
-
-    private async Task<bool> HasActiveAgencySubscriptionAsync(
-        Guid companyId,
-        CancellationToken cancellationToken)
-    {
-        var now = DateTime.UtcNow;
-        return await _db.AgencyAnnualSubscriptions.AsNoTracking()
-            .AnyAsync(
-                s => s.CompanyId == companyId
-                     && s.IsActive
-                     && s.StartsAtUtc <= now
-                     && s.EndsAtUtc > now,
-                cancellationToken);
     }
 
     private static VacancyProductOutcome Fail(Vacancy vacancy, string message, string? errorCode = null)

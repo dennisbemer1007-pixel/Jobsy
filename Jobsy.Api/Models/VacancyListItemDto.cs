@@ -131,7 +131,8 @@ public record VacancyListItemDto(
     /// </summary>
     bool OpenForWorkRequired = false,
     /// <summary>When the vacancy was taken offline. Null on older rows; do not substitute EndDate.</summary>
-    DateTime? ClosedAtUtc = null);
+    DateTime? ClosedAtUtc = null,
+    int? PublicMapRadiusKm = null);
 
 public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
 
@@ -160,7 +161,8 @@ public sealed record VacancyPinDto(
     bool Highlighted = false,
     uint HighlightRank = 0,
     string? WorkType = null,
-    string? MatchColorBand = null);
+    string? MatchColorBand = null,
+    int? PublicMapRadiusKm = null);
 
 /// <summary>
 /// Lightweight popup/list card from the in-memory discovery index (no DB round-trip).

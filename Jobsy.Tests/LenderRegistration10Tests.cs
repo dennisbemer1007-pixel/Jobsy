@@ -148,7 +148,7 @@ public class LenderRegistration10Tests
             allowPendingApproval: false);
         Assert.True(published.Succeeded, published.ErrorMessage);
         Assert.Equal(VacancyStatus.Active, again.Status);
-        Assert.Equal(1, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
+        Assert.Equal(0, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
     }
 
     [Fact]
