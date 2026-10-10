@@ -136,7 +136,7 @@ public class OccupationDayInLifeTests
         Assert.True(OccupationDayInLifeJson.TryParse(RealisticCookJson(), facts, out var draft, out var error), error);
         var blocks = draft.Blocks ?? [];
         Assert.Equal(["start", "morning", "pause", "afternoon", "close"], blocks.Select(block => block.Key).ToArray());
-        Assert.Equal("07:00 – Start", blocks[0].Label);
+        Assert.Equal("07:00 Start", blocks[0].Label);
         Assert.Contains("temperatuur", blocks.Single(block => block.Key == "afternoon").Text, StringComparison.Ordinal);
         Assert.True(OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons), string.Join("; ", reasons));
     }
@@ -335,13 +335,13 @@ public class OccupationDayInLifeTests
 
         var result = await writer.CompleteAsync(OccupationDayInLifePrompt.System, "Beroep: kok", CancellationToken.None);
         Assert.True(result.Ok);
-        Assert.Equal("gpt-4o-mini", result.Model);
+        Assert.Equal("gpt-4o", result.Model);
         Assert.NotNull(handler.Request);
         Assert.Equal("api.openai.com", handler.Request!.RequestUri!.Host);
         Assert.EndsWith("chat/completions", handler.Request.RequestUri.AbsolutePath, StringComparison.Ordinal);
         Assert.Equal("Bearer", handler.Request.Headers.Authorization?.Scheme);
         Assert.Equal("sk-test", handler.Request.Headers.Authorization?.Parameter);
-        Assert.Contains("gpt-4o-mini", handler.Body, StringComparison.Ordinal);
+        Assert.Contains("gpt-4o", handler.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("mistral", handler.Body, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Verzin geen werkgever", handler.Body, StringComparison.Ordinal);
         Assert.Contains("json_schema", handler.Body, StringComparison.Ordinal);
@@ -531,6 +531,72 @@ public class OccupationDayInLifeTests
     }
 
     [Fact]
+    public void Catalog_lists_3039_esco_occupations_for_batch_fill()
+    {
+        Assert.Equal(3039, OccupationCatalog.Shared.All.Count);
+    }
+
+    [Fact]
+    public void Greenhouse_tasks_are_rewritten_from_ilo_not_as_garden_cleaning()
+    {
+        const string id = "1a9d99ba-4c08-4864-8f6a-1b0f2b4cf883";
+        var facts = OccupationDayFacts.For(id);
+        Assert.NotNull(facts);
+        Assert.Equal(OccupationDaySourceRewrite.WorkplaceKind.Greenhouse, facts!.Workplace);
+        Assert.Contains(facts.Tasks, task => task.Contains("kas", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(facts.Tasks, task => task.Contains("tuinen schoonmaken", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Cook_tasks_drop_keukenhulpverleners_and_rooster_duplicates()
+    {
+        var facts = OccupationDayFacts.For(CookId);
+        Assert.NotNull(facts);
+        var blob = string.Join(' ', facts!.Tasks);
+        Assert.DoesNotContain("keukenhulpverlener", blob, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("roosters, roosters", blob, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Quality_checker_requires_a_clock_on_every_block_label()
+    {
+        var facts = SampleFacts();
+        var draft = BlockDraft();
+        Assert.False(OccupationDayQualityChecker.TryCheck(draft, facts, out var reasons));
+        Assert.Contains(reasons, reason => reason.Contains("kloktijd", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Quality_checker_flags_adjacent_word_repetition()
+    {
+        var facts = SampleFacts();
+        var draft = BlockDraft();
+        var blocks = draft.Blocks!.Select((block, index) => block with
+        {
+            Label = $"0{7 + index}:00 {block.Label}",
+            Text = index == 0 ? "Je start start met de lijst." : block.Text
+        }).ToList();
+        draft = draft with { Blocks = blocks };
+        Assert.False(OccupationDayQualityChecker.TryCheck(draft, facts, out var reasons));
+        Assert.Contains(reasons, reason => reason.StartsWith("herhaling:", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Generate_fails_after_retries_when_quality_never_passes()
+    {
+        await using var db = NewDb();
+        var bad = RealisticCookJson().Replace("07:00 Start", "Start", StringComparison.Ordinal);
+        var writer = new ScriptWriter([bad, bad, bad, bad]);
+        var generator = Generator(db, writer);
+        var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { CookId };
+        var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);
+        Assert.Equal(0, result.Generated);
+        Assert.Equal(1, result.Failed);
+        Assert.Equal(4, writer.Calls);
+        Assert.Equal(0, await db.OccupationDayInLives.CountAsync());
+    }
+
+    [Fact]
     public async Task Generate_retries_once_with_the_specific_block_reason()
     {
         await using var db = NewDb();
@@ -554,7 +620,7 @@ public class OccupationDayInLifeTests
         var failed = await Generator(db, writer).ProbeAsync(CookId, CancellationToken.None);
         Assert.False(failed.Ok);
         Assert.Contains("blok: 4 blokken, minimaal 5", failed.Error, StringComparison.Ordinal);
-        Assert.Equal(2, writer.Calls);
+        Assert.Equal(4, writer.Calls);
         Assert.Equal(0, await db.OccupationDayInLives.CountAsync());
 
         var okWriter = new ScriptWriter(RealisticCookJson());
@@ -573,6 +639,9 @@ public class OccupationDayInLifeTests
         var controller = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/OccupationDayInLifeAdminController.cs"));
         var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/ApiClient/JobsyApiClient.OccupationDay.cs"));
         Assert.Contains("Admin.Day.Probe", page, StringComparison.Ordinal);
+        Assert.Contains("Admin.Day.Regenerate", page, StringComparison.Ordinal);
+        Assert.Contains("RegenerateAsync", page, StringComparison.Ordinal);
+        Assert.Contains("regenerate", controller, StringComparison.Ordinal);
         Assert.Contains("Admin.Day.Pick", page, StringComparison.Ordinal);
         Assert.Contains("ProbeAsync", page, StringComparison.Ordinal);
         Assert.DoesNotContain("GenerateOccupationDaysAsync", page, StringComparison.Ordinal);
@@ -641,11 +710,11 @@ public class OccupationDayInLifeTests
         => """
            {
              "blocks": [
-               {"key":"07:00","label":"07:00 – Start","text":"Je start met de bestellingen van de dag. Je kijkt wat er bereid moet worden."},
-               {"key":"ochtend","label":"Ochtend","text":"In de ochtend weeg en meng je de ingrediënten. Je houdt de plek schoon en veilig."},
-               {"key":"pauze","label":"Pauze","text":"Je neemt pauze. Daarna pak je de bestellingen weer op en ga je verder met koken."},
-               {"key":"middag","titel":"Middag","omschrijving":"In de middag regel je de temperatuur van de ovens. Je bereidt de maaltijden verder."},
-               {"key":"afronden","label":"Afronden","text":"Aan het eind geef je de plek over. Je ruimt de apparatuur op en sluit af."}
+               {"key":"07:00","label":"07:00 Start","text":"Je start met de bestellingen van de dag. Je kijkt wat er bereid moet worden."},
+               {"key":"ochtend","label":"09:00 Ochtend","text":"In de ochtend weeg en meng je de ingrediënten. Je houdt de plek schoon en veilig."},
+               {"key":"pauze","label":"12:00 Pauze","text":"Je neemt pauze. Daarna pak je de bestellingen weer op en ga je verder met koken."},
+               {"key":"middag","titel":"14:00 Middag","omschrijving":"In de middag regel je de temperatuur van de ovens. Je bereidt de maaltijden verder."},
+               {"key":"afronden","label":"17:00 Afronden","text":"Aan het eind geef je de plek over. Je ruimt de apparatuur op en sluit af."}
              ],
              "highlights": ["Ingrediënten wegen en mengen", "Maaltijden bereiden en presenteren"],
              "varies": "De volgorde verschilt per werkgever."

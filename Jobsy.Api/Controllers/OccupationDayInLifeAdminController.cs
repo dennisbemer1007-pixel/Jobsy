@@ -81,6 +81,47 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
         }
     }
 
+    /// <summary>Overwrite stored Dutch days (and translations) for the picked ESCO ids. Max 15 per call.</summary>
+    [HttpPost("regenerate")]
+    [EnableRateLimiting("public-write")]
+    [AdminAudit(AdminAuditKeys.OccupationDayGenerate, TargetType = "setting")]
+    public async Task<ActionResult<OccupationDayGenerateResult>> Regenerate(
+        [FromQuery] int limit = 10,
+        [FromQuery] string? ids = null,
+        [FromBody] OccupationDayRunRequest? body = null,
+        CancellationToken cancellationToken = default)
+    {
+        limit = Math.Clamp(body?.Limit ?? limit, 1, 15);
+        if (!TryPick(body?.Ids ?? ids, out var only, out var error) || only is null || only.Count == 0)
+        {
+            return BadRequest(new { message = error ?? "Kies eerst één of meer beroepen." });
+        }
+
+        try
+        {
+            var result = await _generator.GenerateMissingAsync(
+                limit,
+                skipEscoIds: null,
+                only,
+                replaceExisting: true,
+                cancellationToken);
+            Remember(result);
+            _audit.Reason = "opnieuw: " + (_audit.Reason ?? "");
+            return Ok(result);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            var reason = OccupationDayWriteErrors.SafeSnippet(ex.Message);
+            _audit.Reason = OccupationDayWriteErrors.Timeout + " " + reason;
+            _audit.ResultOverride = AdminAuditKeys.Results.Failed;
+            return Ok(new OccupationDayGenerateResult(0, 1, 0, 0, false, [new OccupationDayFailure("", OccupationDayWriteErrors.Timeout)]));
+        }
+    }
+
     /// <summary>One occupation through the same checks as a batch, including validation. Nothing is stored.</summary>
     [HttpPost("probe")]
     [EnableRateLimiting("public-write")]

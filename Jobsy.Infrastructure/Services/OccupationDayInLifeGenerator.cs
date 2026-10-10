@@ -11,7 +11,7 @@ namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
 /// One-shot fill of missing ESCO days and their stored translations.
-/// A Dutch row is never rewritten. A language is translated once and then only read.
+/// Missing Dutch rows are filled once. Use <c>replaceExisting</c> to overwrite selected ids (regenerate).
 /// </summary>
 public sealed class OccupationDayInLifeGenerator
 {
@@ -38,12 +38,20 @@ public sealed class OccupationDayInLifeGenerator
     }
 
     public Task<OccupationDayGenerateResult> GenerateMissingAsync(int limit, CancellationToken cancellationToken = default)
-        => GenerateMissingAsync(limit, skipEscoIds: null, onlyEscoIds: null, cancellationToken);
+        => GenerateMissingAsync(limit, skipEscoIds: null, onlyEscoIds: null, replaceExisting: false, cancellationToken);
 
     public async Task<OccupationDayGenerateResult> GenerateMissingAsync(
         int limit,
         IReadOnlySet<string>? skipEscoIds,
         IReadOnlySet<string>? onlyEscoIds,
+        CancellationToken cancellationToken = default)
+        => await GenerateMissingAsync(limit, skipEscoIds, onlyEscoIds, replaceExisting: false, cancellationToken);
+
+    public async Task<OccupationDayGenerateResult> GenerateMissingAsync(
+        int limit,
+        IReadOnlySet<string>? skipEscoIds,
+        IReadOnlySet<string>? onlyEscoIds,
+        bool replaceExisting,
         CancellationToken cancellationToken = default)
     {
         limit = Math.Clamp(limit, 1, 50);
@@ -61,12 +69,13 @@ public sealed class OccupationDayInLifeGenerator
 
         var queue = OccupationCatalog.Shared.All
             .Where(job => onlyEscoIds is null || onlyEscoIds.Contains(job.Id))
-            .Where(job => !complete.Contains(job.Id))
+            .Where(job => replaceExisting || !complete.Contains(job.Id))
             .Where(job => skipEscoIds is null || !skipEscoIds.Contains(job.Id))
             .Take(limit)
             .ToList();
         var remaining = OccupationCatalog.Shared.All.Count(job =>
-            (onlyEscoIds is null || onlyEscoIds.Contains(job.Id)) && !complete.Contains(job.Id));
+            (onlyEscoIds is null || onlyEscoIds.Contains(job.Id))
+            && (replaceExisting || !complete.Contains(job.Id)));
         if (queue.Count == 0)
         {
             return new OccupationDayGenerateResult(0, 0, complete.Count, remaining, false, []);
@@ -94,9 +103,32 @@ public sealed class OccupationDayInLifeGenerator
                 .FirstOrDefaultAsync(item => item.EscoId == facts.EscoId, cancellationToken);
             if (existing is not null)
             {
-                if (OccupationDayTranslations.IsComplete(existing.TranslationsJson, existing.ContentHash))
+                if (!replaceExisting
+                    && OccupationDayTranslations.IsComplete(existing.TranslationsJson, existing.ContentHash))
                 {
                     skipped++;
+                    continue;
+                }
+
+                if (replaceExisting)
+                {
+                    var replaced = await ReplaceDutchAsync(existing, facts, failures, cancellationToken);
+                    if (replaced is ReplaceOutcome.KeyMissing or ReplaceOutcome.KeyRejected)
+                    {
+                        return StopForKey(
+                            generated,
+                            skipped,
+                            remaining,
+                            failures,
+                            replaced == ReplaceOutcome.KeyMissing,
+                            replaced == ReplaceOutcome.KeyRejected);
+                    }
+
+                    if (replaced == ReplaceOutcome.Updated)
+                    {
+                        generated++;
+                    }
+
                     continue;
                 }
 
@@ -252,6 +284,51 @@ public sealed class OccupationDayInLifeGenerator
         Complete,
         Partial,
         KeyMissing
+    }
+
+    private enum ReplaceOutcome
+    {
+        Failed,
+        Updated,
+        KeyMissing,
+        KeyRejected
+    }
+
+    private async Task<ReplaceOutcome> ReplaceDutchAsync(
+        OccupationDayInLife existing,
+        OccupationDayFacts facts,
+        List<OccupationDayFailure> failures,
+        CancellationToken cancellationToken)
+    {
+        var (draft, error, keyMissing, keyRejected, model) = await ComposeAsync(facts, cancellationToken);
+        if (keyMissing)
+        {
+            failures.Add(new OccupationDayFailure(facts.EscoId, error ?? OccupationDayWriteErrors.KeyMissing));
+            return ReplaceOutcome.KeyMissing;
+        }
+
+        if (keyRejected)
+        {
+            failures.Add(new OccupationDayFailure(facts.EscoId, error ?? OccupationDayWriteErrors.KeyInvalid));
+            return ReplaceOutcome.KeyRejected;
+        }
+
+        if (draft is null)
+        {
+            _logger.LogWarning(
+                "Dag-in-het-leven opnieuw genereren mislukt voor beroep {EscoId}: {Reason}",
+                facts.EscoId,
+                OccupationDayWriteErrors.SafeSnippet(error));
+            failures.Add(new OccupationDayFailure(facts.EscoId, error ?? "afgekeurd"));
+            return ReplaceOutcome.Failed;
+        }
+
+        var hash = OccupationDayInLifeHash.Compute(facts.EscoId, draft);
+        Apply(existing, facts, draft, model, DateTime.UtcNow, hash);
+        existing.TranslationsJson = "{}";
+        await _db.SaveChangesAsync(cancellationToken);
+        var after = await FillTranslationsAsync(existing, draft, failures, cancellationToken);
+        return after == FillOutcome.KeyMissing ? ReplaceOutcome.KeyMissing : ReplaceOutcome.Updated;
     }
 
     private async Task<FillOutcome> FillTranslationsAsync(
@@ -538,19 +615,34 @@ public sealed class OccupationDayInLifeGenerator
         OccupationDayFacts facts,
         CancellationToken cancellationToken)
     {
-        var first = await AskAsync(facts, facts.ToPrompt(), cancellationToken);
-        if (first.Draft is not null || first.KeyMissing || first.KeyRejected || LooksLikeProviderFailure(first.Error))
+        var attempts = Math.Clamp(_options.MaxComposeRetries, 2, 5);
+        string? lastError = null;
+        string model = _options.Model;
+        for (var attempt = 1; attempt <= attempts; attempt++)
         {
-            return first;
+            var user = attempt == 1
+                ? facts.ToPrompt()
+                : facts.ToPrompt() + "\n\n" + OccupationDayInLifePrompt.RetryFor(lastError);
+            var result = await AskAsync(facts, user, cancellationToken);
+            model = result.Model;
+            if (result.Draft is not null || result.KeyMissing || result.KeyRejected || LooksLikeProviderFailure(result.Error))
+            {
+                return result;
+            }
+
+            lastError = result.Error;
+            if (attempt < attempts && _options.DelayMilliseconds > 0)
+            {
+                await Task.Delay(_options.DelayMilliseconds, cancellationToken);
+            }
         }
 
-        if (_options.DelayMilliseconds > 0)
-        {
-            await Task.Delay(_options.DelayMilliseconds, cancellationToken);
-        }
-
-        var retryUser = facts.ToPrompt() + "\n\n" + OccupationDayInLifePrompt.RetryFor(first.Error);
-        return await AskAsync(facts, retryUser, cancellationToken);
+        _logger.LogWarning(
+            "Dag-in-het-leven na {Attempts} pogingen afgekeurd voor beroep {EscoId}: {Reason}",
+            attempts,
+            facts.EscoId,
+            OccupationDayWriteErrors.SafeSnippet(lastError));
+        return (null, lastError ?? "afgekeurd", false, false, model);
     }
 
     private async Task<(OccupationDayDraft? Draft, string? Error, bool KeyMissing, bool KeyRejected, string Model)> AskAsync(
@@ -603,7 +695,104 @@ public sealed class OccupationDayInLifeGenerator
             return (null, string.Join("; ", reasons), false, false, model);
         }
 
+        if (!OccupationDayQualityChecker.TryCheck(draft, facts, out var quality))
+        {
+            return (null, string.Join("; ", quality), false, false, model);
+        }
+
+        if (_options.QualityReviewWithAi)
+        {
+            var ai = await ReviewWithAiAsync(draft, facts, write.Json, cancellationToken);
+            if (!ai.Ok)
+            {
+                return (null, ai.Reason ?? "kwaliteit", false, false, model);
+            }
+        }
+
         return (draft, null, false, false, model);
+    }
+
+    private async Task<(bool Ok, string? Reason)> ReviewWithAiAsync(
+        OccupationDayDraft draft,
+        OccupationDayFacts facts,
+        string? dayJson,
+        CancellationToken cancellationToken)
+    {
+        var payload = dayJson;
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            payload = JsonSerializer.Serialize(new
+            {
+                blocks = (draft.Blocks ?? []).Select(block => new { block.Key, block.Label, block.Text }),
+                highlights = draft.Highlights,
+                varies = draft.VariesNote
+            });
+        }
+
+        var source = facts.TitleNl + "\n" + facts.Description;
+        foreach (var task in facts.Tasks.Take(4))
+        {
+            source += "\n- " + task;
+        }
+
+        OccupationDayWriteResult write;
+        try
+        {
+            write = await _writer.CompleteAsync(
+                OccupationDayQualityPrompt.System,
+                OccupationDayQualityPrompt.UserMessage(facts.TitleNl, source, payload),
+                cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                "Kwaliteitscontrole dag-in-het-leven mislukt voor beroep {EscoId}: {Reason}",
+                facts.EscoId,
+                OccupationDayWriteErrors.SafeSnippet(ex.Message));
+            return (true, null);
+        }
+
+        if (!write.Ok || string.IsNullOrWhiteSpace(write.Json))
+        {
+            return (true, null);
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(write.Json);
+            if (doc.RootElement.TryGetProperty("ok", out var okProp) && okProp.ValueKind == JsonValueKind.True)
+            {
+                return (true, null);
+            }
+
+            var issues = new List<string>();
+            if (doc.RootElement.TryGetProperty("issues", out var issuesProp) && issuesProp.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in issuesProp.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String)
+                    {
+                        var text = item.GetString();
+                        if (!string.IsNullOrWhiteSpace(text))
+                        {
+                            issues.Add(text.Trim());
+                        }
+                    }
+                }
+            }
+
+            return issues.Count == 0
+                ? (false, "kwaliteit-ai")
+                : (false, string.Join("; ", issues));
+        }
+        catch (JsonException)
+        {
+            return (true, null);
+        }
     }
 
     private static bool TryAccept(

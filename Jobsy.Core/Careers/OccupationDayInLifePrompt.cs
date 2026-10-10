@@ -28,17 +28,24 @@ public static class OccupationDayInLifePrompt
         Neem altijd start, morning en afternoon. Neem ook pause en close. Dat zijn 5 momenten en dat is genoeg als de bron verder niets noemt.
         Neem bij voorkeur 7 momenten als de bron dat toelaat. Voeg talk toe alleen bij contact met mensen, plan alleen bij plannen of routes, handover alleen bij overdragen of afstemmen. Sla die drie over als de bron ze niet noemt. Verzin ze niet om aan een hoger aantal te komen.
         key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close. Geen Nederlands woord als key en geen kloktijd als key. Gebruik die volgorde.
-        label is kort, hooguit drie woorden en hooguit 32 tekens. Een kloktijd mag in het label, zoals "07:00 Start". "Ochtendzorg" alleen als de bron over zorg gaat. "Gesprek" alleen als de bron contact met mensen noemt. "Overdracht" alleen als de bron overdragen of afstemmen noemt. Anders een korter label dat bij de bron past, zoals "Ochtend" of "Afronden".
+        label is kort, hooguit drie woorden en hooguit 32 tekens. Elke label heeft een kloktijd in het formaat uu:mm, zoals "07:00 Start" of "14:30 Afronden". "Ochtendzorg" alleen als de bron over zorg gaat. "Gesprek" alleen als de bron contact met mensen noemt. "Overdracht" alleen als de bron overdragen of afstemmen noemt.
         Pauze mag altijd. Noem daarbij geen plaats.
         text is één of twee korte zinnen, minstens 40 tekens. Alleen feiten uit de bron.
         highlights zijn 2 tot 4 korte punten die letterlijk bij de taken of vaardigheden passen. Bij een dunne bron mag 1 punt.
         varies legt uit wat per werkgever kan verschillen. Verzin geen werkgever, klant, stad of diploma.
         """;
 
+    public const string GenerationRules =
+        """
+        Schrijf natuurlijk Nederlands (B1). Gebruik de taken en beschrijving als feiten, maar kopieer geen lange ESCO/ILO-zinnen letterlijk.
+        Geen zeldzame of verzonnen woorden. Geen herhaling van hetzelfde woord direct na elkaar.
+        Houd je aan de werkplek in dit bericht (kas is niet dezelfde als particuliere tuin).
+        """;
+
     public static string RetryFor(string? reason)
     {
         var detail = string.IsNullOrWhiteSpace(reason) ? "afgekeurd" : reason.Trim();
         return "Afgekeurd: " + detail
-            + "\nSchrijf opnieuw. Alleen JSON. Herstel precies die punten. Zinnen van hooguit 20 woorden. Verzin geen werkgever, stad, salaris of diploma. Alleen feiten uit de bron. Als de bron dun is, houd de dag kort. key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close.";
+            + "\nSchrijf opnieuw. Alleen JSON. Herstel precies die punten. Zinnen van hooguit 20 woorden. Verzin geen werkgever, stad, salaris of diploma. Alleen feiten uit de bron. Als de bron dun is, houd de dag kort. key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close. Elke label heeft een kloktijd (uu:mm).";
     }
 }

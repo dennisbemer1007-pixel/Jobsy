@@ -46,6 +46,7 @@ public static class UiStringsOccupationDay
         Add("Admin.Day.Stop", "Stoppen", "Stop", "Zatrzymaj", "Oprește", "إيقاف");
         Add("Admin.Day.Chunk", "Volgende 10 nu", "Next 10 now", "Następne 10 teraz", "Următoarele 10 acum", "العشرة التالية الآن");
         Add("Admin.Day.Probe", "Test 1 beroep", "Test 1 occupation", "Test 1 zawód", "Testează 1 meserie", "اختبر مهنة واحدة");
+        Add("Admin.Day.Regenerate", "Opnieuw genereren", "Regenerate selected", "Wygeneruj ponownie", "Generează din nou", "إعادة توليد المحدد");
         Add("Admin.Day.Pick", "Beroepen voor een proef", "Occupations for a trial", "Zawody do próby", "Meserii pentru o probă", "مهن للتجربة");
         Add("Admin.Day.PickLead", "Plak namen of ESCO-ids, één per regel. Bijvoorbeeld leraar basisonderwijs, kok of schilder.", "Paste names or ESCO ids, one per line. For example primary school teacher, cook or painter.", "Wklej nazwy lub identyfikatory ESCO, jedna na wiersz.", "Lipește nume sau id-uri ESCO, câte unul pe rând.", "ألصق الأسماء أو معرّفات ESCO، واحداً في كل سطر.");
         Add("Admin.Day.Started", "De vulling loopt op de achtergrond. Hier zie je het resultaat.", "The fill runs in the background. The result shows here.", "Uzupełnianie działa w tle. Wynik widać tutaj.", "Completarea rulează în fundal. Rezultatul apare aici.", "التعبئة تعمل في الخلفية. النتيجة تظهر هنا.");
