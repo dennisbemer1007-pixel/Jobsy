@@ -452,13 +452,27 @@ window.jobsyCulture = {
 
     var KEY = "Jobsy.CookieConsent";
 
+    function consentStored() {
+        try {
+            if (localStorage.getItem(KEY)) {
+                return true;
+            }
+        } catch (e) { }
+        var escaped = KEY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        var match = document.cookie.match(new RegExp("(?:^|; )" + escaped + "=([^;]*)"));
+        return !!(match && match[1]);
+    }
+
     function applyKnownClass() {
         try {
-            var known = !!(localStorage.getItem(KEY) || "");
-            document.documentElement.classList.toggle("cookie-consent-known", known);
+            document.documentElement.classList.toggle("cookie-consent-known", consentStored());
         } catch (e) {
             // private mode / blocked storage — show the banner
         }
+    }
+
+    function onEnhancedNav() {
+        applyKnownClass();
     }
 
     window.jobsyCookieConsent = {
@@ -602,6 +616,12 @@ window.jobsyCulture = {
     });
 
     applyKnownClass();
+    document.addEventListener("enhancedload", onEnhancedNav);
+    try {
+        if (window.Blazor && typeof Blazor.addEventListener === "function") {
+            Blazor.addEventListener("enhancedload", onEnhancedNav);
+        }
+    } catch (e) { }
 })();
 
 /* === maps-loader.js === */
@@ -1440,6 +1460,10 @@ window.lobsyPwaInstall = (function () {
   }
 
   document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-menu-close]")) {
+      setOpen(null);
+      return;
+    }
     var trigger = event.target.closest("[data-menu-trigger]");
     if (trigger) {
       var root = trigger.closest("[data-menu-id]");

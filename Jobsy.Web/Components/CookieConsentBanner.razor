@@ -29,10 +29,10 @@
                 }
                 else
                 {
-                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => SaveAsync(false)">
+                    <button type="button" class="btn-compact" data-consent="necessary" disabled="@_busy" @onclick="() => SaveAsync(false)">
                         Alleen noodzakelijk
                     </button>
-                    <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SaveAsync(true)">
+                    <button type="button" class="btn-compact btn-compact--primary" data-consent="analytics" disabled="@_busy" @onclick="() => SaveAsync(true)">
                         Accepteer cookies
                     </button>
                 }

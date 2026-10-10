@@ -1559,7 +1559,7 @@ html[dir="rtl"] .account-menu__panel {
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: visible;
     position: relative;
     z-index: 1;
 }
@@ -1568,6 +1568,13 @@ html[dir="rtl"] .account-menu__panel {
 .app-shell:has(.jobsy-discovery) .app-main,
 .app-shell:has(.funda-layout) .app-main {
     overflow: hidden;
+}
+
+/* Fixed-height shells scroll inside main (questionnaire, match uses inner panes). */
+.app-shell.app-shell--questionnaire .app-main {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Side-gutter logos removed for a quieter desktop chrome. */
@@ -5482,8 +5489,11 @@ a.map-popup__apply.map-popup__cta:visited {
 }
 
 .notification-bell__close {
-    width: 1.7rem;
-    height: 1.7rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
     border: 0;
     border-radius: 999px;
     background: transparent;
@@ -5491,6 +5501,7 @@ a.map-popup__apply.map-popup__cta:visited {
     font-size: 1.25rem;
     line-height: 1;
     cursor: pointer;
+    padding: 0;
 }
 
 .notification-bell__close:hover {
@@ -5613,7 +5624,13 @@ a.map-popup__apply.map-popup__cta:visited {
     font-size: 1.25rem;
     line-height: 1;
     cursor: pointer;
-    padding: 0 0.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    margin: -0.35rem -0.5rem -0.35rem 0;
 }
 
 .page-help__close:hover {
@@ -15187,7 +15204,7 @@ html.cookie-consent-known .cookie-consent {
     .app-main,
     .panel-page {
         max-width: 100%;
-        overflow-x: hidden;
+        overflow-x: clip;
     }
 
     .table-list .table-row,
@@ -18578,7 +18595,7 @@ body {
     overscroll-behavior: none;
 }
 
-.app-main {
+.app-shell.app-shell--questionnaire .app-main {
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
 }
