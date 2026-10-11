@@ -1377,15 +1377,15 @@
 
     private async Task FlushShedTestSaveAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
     {
-        if (_shedFullyDone || (_serverAnswers.Count == 0 && _miniAnswers.Count == 0))
+        _countedStep = _shedStep;
+        var merged = await MergeTestAnswersAsync(kind);
+        if (merged.Count == 0)
         {
             return;
         }
 
-        var full = OnboardingWizardCatalog.FullLevelCount(kind);
-        var loaded = _serverAnswers.Count + _miniAnswers.Count;
-        var completed = _answeredCount >= full && loaded >= full;
-        await FlushTestSaveAsync(completed);
+        var completed = JourneyTestFlow.IsFullyDone(_answeredCount, kind);
+        await SaveTestAnswersAsync(merged, completed);
     }
 
     private void NoteSaveFailure(Exception ex)
@@ -1504,8 +1504,56 @@
     private async Task FlushTestSaveAsync(bool completed)
     {
         if (_autosave is not null) await _autosave.FlushAsync();
+        var kind = OnboardingWizardCatalog.TestKindForStep(_countedStep)!.Value;
+        var merged = await MergeTestAnswersAsync(kind);
+        if (merged.Count == 0)
+        {
+            return;
+        }
+
+        await SaveTestAnswersAsync(merged, completed);
+    }
+
+    private async Task<Dictionary<int, int>> MergeTestAnswersAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
         var merged = new Dictionary<int, int>(_serverAnswers);
-        foreach (var a in _miniAnswers) merged[a.Key] = a.Value;
+        foreach (var a in _miniAnswers)
+        {
+            merged[a.Key] = a.Value;
+        }
+
+        if (merged.Count > 0)
+        {
+            return merged;
+        }
+
+        return await LoadTestAnswersAsync(kind);
+    }
+
+    private async Task<Dictionary<int, int>> LoadTestAnswersAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        Dictionary<string, int>? answers = kind switch
+        {
+            OnboardingWizardCatalog.OnboardingTestKind.Competency => (await Api.GetMyCompetenciesAsync())?.Answers,
+            OnboardingWizardCatalog.OnboardingTestKind.Career => (await Api.GetMyCareerInterestsAsync())?.Answers,
+            OnboardingWizardCatalog.OnboardingTestKind.Culture => (await Api.GetMyCultureAsync())?.Answers,
+            _ => (await Api.GetMyValuesAsync())?.Answers
+        };
+
+        var merged = new Dictionary<int, int>();
+        foreach (var answer in answers ?? [])
+        {
+            if (int.TryParse(answer.Key, out var id) && answer.Value is >= 1 and <= 5)
+            {
+                merged[id] = answer.Value;
+            }
+        }
+
+        return merged;
+    }
+
+    private async Task SaveTestAnswersAsync(IReadOnlyDictionary<int, int> merged, bool completed)
+    {
         switch (_countedStep)
         {
             case 7: await Api.SaveMyCompetenciesAsync(merged, completed); break;
