@@ -148,7 +148,34 @@ public sealed class CandidateProfileEditor : IDisposable
     public string? AvailabilityKind =>
         CandidateAvailabilityPresets.Detect(MinHours, MaxHours, FlexibleTimes);
 
+    public bool StartImmediately { get; set; } = true;
+    public DateOnly? AvailableFromDate { get; set; }
+
     public void Notify() => Changed?.Invoke();
+
+    public Task SetStartImmediatelyAsync(bool immediate)
+    {
+        StartImmediately = immediate;
+        if (immediate)
+        {
+            AvailableFromDate = null;
+        }
+
+        Notify();
+        return Task.CompletedTask;
+    }
+
+    public Task SetAvailableFromDateAsync(DateOnly? date)
+    {
+        if (date is not null)
+        {
+            StartImmediately = false;
+        }
+
+        AvailableFromDate = date;
+        Notify();
+        return Task.CompletedTask;
+    }
 
     public void ApplyFromProfile(MeProfile profile)
     {
@@ -264,6 +291,8 @@ public sealed class CandidateProfileEditor : IDisposable
         MinHours = prefs.MinHoursPerWeek ?? 8;
         MaxHours = prefs.MaxHoursPerWeek ?? 24;
         FlexibleTimes = prefs.FlexibleTimes == true;
+        StartImmediately = profile.AvailableFromDate is null;
+        AvailableFromDate = profile.AvailableFromDate;
         Employers.Clear();
         Employers.AddRange(prefs.Employers ?? []);
         Certificates.Clear();
@@ -487,6 +516,12 @@ public sealed class CandidateProfileEditor : IDisposable
             or CandidateAvailabilityPresets.PartTime
             or CandidateAvailabilityPresets.Seasonal)
         {
+            if (preset == CandidateAvailabilityPresets.Immediate)
+            {
+                StartImmediately = true;
+                AvailableFromDate = null;
+            }
+
             var patch = CandidateAvailabilityPresets.Apply(preset);
             FlexibleTimes = patch.FlexibleTimes;
             MinHours = patch.MinHoursPerWeek;
@@ -872,6 +907,12 @@ public sealed class CandidateProfileEditor : IDisposable
                 return;
             }
 
+            if (!StartImmediately && !AvailabilityStartRules.IsValidExplicitStartDate(AvailableFromDate))
+            {
+                Message = _culture["Profile.AvailabilityStartDateInvalid"];
+                return;
+            }
+
             var clearHome = HomeLocationDirty && string.IsNullOrWhiteSpace(HomeAddress);
             var homeAddressToSave = clearHome
                 ? null
@@ -980,7 +1021,9 @@ public sealed class CandidateProfileEditor : IDisposable
                         Email = r.Email.Trim(),
                         Phone = r.Phone.Trim()
                     })
-                    .ToList());
+                    .ToList(),
+                availableFromDate: StartImmediately ? null : AvailableFromDate,
+                clearAvailableFromDate: StartImmediately);
             HomeLocationDirty = false;
             Message = _culture["Profile.Saved"];
             CandidateNameBroadcast.Publish(FirstName, LastName);

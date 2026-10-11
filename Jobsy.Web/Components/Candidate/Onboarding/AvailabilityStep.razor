@@ -48,25 +48,19 @@
                 <dt>@Culture["Profile.Availability"]</dt>
                 <dd>@DaysSummary</dd>
             </div>
+            <div>
+                <dt>@Culture["Onboarding.AvailabilityStartSummary"]</dt>
+                <dd>@StartSummary</dd>
+            </div>
         </dl>
     </section>
 }
 
-<section class="ob-wizard__section" aria-labelledby="ob-avail-start">
-    <h2 id="ob-avail-start" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityStartLegend"]</h2>
-    <label class="ob-wizard__check ob-wizard__check--block">
-        <input type="checkbox" checked="@Draft.Immediate" @onchange="OnImmediateChanged" />
-        <span>@Culture["Onboarding.AvailabilityImmediateCheck"]</span>
-    </label>
-    @if (!Draft.Immediate)
-    {
-        <label>
-            @Culture["Onboarding.AvailableFrom"]
-            <input type="date" @bind="Draft.AvailableFrom" @bind:after="NotifyAsync" />
-        </label>
-        <p class="ob-wizard__hint">@Culture["Onboarding.AvailabilityStartDateHint"]</p>
-    }
-</section>
+<AvailabilityStartSection Immediate="Draft.Immediate"
+                            ImmediateChanged="OnImmediateChanged"
+                            AvailableFrom="Draft.AvailableFrom"
+                            AvailableFromChanged="OnAvailableFromChanged"
+                            ShowValidation="true" />
 
 @if (Draft.FineTune)
 {
@@ -124,7 +118,7 @@
 
 @if (!AvailabilityValid)
 {
-    <p class="ob-wizard__hint error" role="alert">@Culture["Onboarding.AvailabilityRequired"]</p>
+    <p class="ob-wizard__hint error" role="alert">@AvailabilityError</p>
 }
 
 @code {
@@ -146,28 +140,45 @@
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
     private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
     private bool HasSelection => Draft.Presets.Count > 0 || Draft.Availability.Count > 0;
+    private bool StartDateValid => AvailabilityStartRules.StepIsValid(Draft.Immediate, Draft.AvailableFrom);
     private bool AvailabilityValid => Draft.MinHours is > 0
                                       && Draft.MaxHours >= Draft.MinHours
-                                      && Draft.Availability.Count > 0;
+                                      && Draft.Availability.Count > 0
+                                      && StartDateValid;
+
+    private string AvailabilityError => !StartDateValid
+        ? Culture["Onboarding.AvailabilityStartDateInvalid"]
+        : Culture["Onboarding.AvailabilityRequired"];
 
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
     private string DaysSummary => Draft.Availability.Count == 0
         ? "–" : Culture.Format("Onboarding.DayPartsCount", Draft.Availability.Count);
+    private string StartSummary => Draft.Immediate
+        ? Culture["Onboarding.AvailableImmediate"]
+        : Draft.AvailableFrom is { } d
+            ? AvailabilityStartRules.FormatDisplayDate(d, Culture.Language)
+            : "–";
 
     private string AvailabilityLabel(string day, string slot)
         => $"{UiLabels.Weekday(Culture, day)} {UiLabels.AvailabilitySlot(Culture, slot)}";
 
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
 
-    private async Task OnImmediateChanged(ChangeEventArgs e)
+    private async Task OnImmediateChanged(bool value)
     {
-        Draft.Immediate = e.Value is true;
-        if (Draft.Immediate)
+        Draft.Immediate = value;
+        if (value)
         {
             Draft.AvailableFrom = null;
         }
 
+        await NotifyAsync();
+    }
+
+    private async Task OnAvailableFromChanged(DateOnly? value)
+    {
+        Draft.AvailableFrom = value;
         await NotifyAsync();
     }
 }

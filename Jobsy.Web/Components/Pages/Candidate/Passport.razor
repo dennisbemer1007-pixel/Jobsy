@@ -776,14 +776,14 @@
             return null;
         }
 
+        if (_profile?.AvailableFromDate is DateOnly fromDate)
+        {
+            return fromDate.ToString("dd-MM-yyyy");
+        }
+
         if (prefs.AvailabilityPresets is { Count: > 0 })
         {
             return string.Join(", ", prefs.AvailabilityPresets.Take(2));
-        }
-
-        if (_profile?.AvailableFromDate is DateOnly d)
-        {
-            return d.ToString("dd-MM-yyyy");
         }
 
         return Culture["Profile.PresetImmediate"];
