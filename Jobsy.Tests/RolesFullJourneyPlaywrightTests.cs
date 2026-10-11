@@ -1,3 +1,4 @@
+using Jobsy.Infrastructure.Data;
 using Jobsy.Tests.E2e;
 using Microsoft.Playwright;
 
@@ -11,6 +12,9 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class RolesFullJourneyPlaywrightTests
 {
+    private static readonly string DemoClassPath =
+        $"/leraar/klas/{DemoSchoolIds.Class1AId:D}";
+
     private sealed record Step(string Path, string Slug);
 
     private sealed record RolePlan(
@@ -18,7 +22,8 @@ public sealed class RolesFullJourneyPlaywrightTests
         string DisplayName,
         string? LoginEmail,
         Step[] Steps,
-        bool TapHomeNav = false);
+        bool TapHomeNav = false,
+        Step[]? PreLoginSteps = null);
 
     private static readonly RolePlan[] Plans =
     [
@@ -116,7 +121,48 @@ public sealed class RolesFullJourneyPlaywrightTests
                 new Step("/admin/financien", "05-financieel"),
                 new Step("/admin/instellingen", "06-instellingen"),
                 new Step("/admin/beveiliging/systeemlogs", "07-logging")
-            ])
+            ]),
+        new(
+            "school-beheer",
+            "Schoolbeheerder (SchoolAdmin)",
+            "schoolbeheer@jobsy.local",
+            [
+                new Step("/school", "01-dashboard"),
+                new Step("/school/klassen", "02-klassen"),
+                new Step("/school/te-doen", "03-te-doen"),
+                new Step("/school/resultaten", "04-resultaten"),
+                new Step("/school/leraren", "05-leraren")
+            ]),
+        new(
+            "leraar",
+            "Leraar (Teacher)",
+            "leraar@jobsy.local",
+            [
+                new Step("/leraar", "01-dashboard"),
+                new Step(DemoClassPath, "02-klas-overzicht"),
+                new Step($"{DemoClassPath}/codes", "03-codes"),
+                new Step($"{DemoClassPath}/groep", "04-groep")
+            ]),
+        new(
+            "werkcoach",
+            "Werkcoach (Teacher)",
+            "werkcoach@jobsy.local",
+            [
+                new Step("/leraar", "01-dashboard"),
+                new Step(DemoClassPath, "02-klas-overzicht"),
+                new Step($"{DemoClassPath}/droombanen", "03-droombanen"),
+                new Step($"{DemoClassPath}/materiaal", "04-materiaal")
+            ]),
+        new(
+            "gemeente",
+            "Gemeente (publiek + partner)",
+            "gemeente@jobsy.local",
+            [
+                new Step("/home", "02-home"),
+                new Step("/employer/vacancies", "03-vacatures"),
+                new Step("/regional/branches", "04-vestigingen")
+            ],
+            PreLoginSteps: [new Step("/westland", "01-westland-teaser")])
     ];
 
     [Fact]
@@ -136,6 +182,7 @@ public sealed class RolesFullJourneyPlaywrightTests
         await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
         Assert.True(await CandidateJourneyE2e.WaitForFlagsAsync(baseUrl), "Feature flags did not turn on in time");
         Assert.True(await CandidateJourneyE2e.WaitForAmbassadorsFlagAsync(baseUrl), "AmbassadorsEnabled did not turn on in time");
+        Assert.True(await CandidateJourneyE2e.WaitForSchoolsFlagAsync(baseUrl), "SchoolsEnabled did not turn on in time");
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
@@ -163,6 +210,14 @@ public sealed class RolesFullJourneyPlaywrightTests
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
         var capture = KbE2e.AttachCapture(page);
+
+        if (plan.PreLoginSteps is { Length: > 0 })
+        {
+            foreach (var step in plan.PreLoginSteps)
+            {
+                await RoleJourneyE2e.VisitAsync(page, baseUrl, plan.Slug, viewportTag, step.Path, step.Slug);
+            }
+        }
 
         if (plan.LoginEmail is not null)
         {
