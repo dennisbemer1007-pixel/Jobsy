@@ -8,7 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Full unit+integration+Playwright suite often exceeds 60m on ubuntu-latest.
+    timeout-minutes: 90
     services:
       postgres:
         # PostGIS required — API migrate runs CREATE EXTENSION postgis.
