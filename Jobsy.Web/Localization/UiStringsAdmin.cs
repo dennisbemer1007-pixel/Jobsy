@@ -768,6 +768,7 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.Tokens", "Tokens verleend", "Tokens granted", "Przyznano tokeny", "Tokenuri acordate", "رموز ممنوحة");
         Add("AdminAudit.Action.Deleted", "Account verwijderd", "Account deleted", "Konto usunięte", "Cont șters", "حساب محذوف");
         Add("AdminAudit.Action.LoginFailed", "Login mislukt", "Login failed", "Nieudane logowanie", "Autentificare eșuată", "فشل تسجيل الدخول");
+        Add("AdminAudit.Action.SystemAdminLogin", "Break-glass beheerder ingelogd", "Break-glass administrator signed in", "Logowanie break-glass admin", "Autentificare administrator break-glass", "تسجيل دخول مشرف break-glass");
         Add("AdminAudit.ActiveSupport", "Actieve support-toegang", "Active support access", "Aktywny dostęp support", "Acces support activ", "وصول دعم نشط");
         Add("AdminAudit.ActiveSupportEmpty", "Geen actieve support-toegang.", "No active support access.", "Brak aktywnego dostępu support.", "Niciun acces support activ.", "لا وصول دعم نشط.");
         Add("AdminAudit.MaskingOn", "Gegevens standaard gemaskeerd", "Data masked by default", "Dane domyślnie maskowane", "Date mascate implicit", "البيانات مقنّعة افتراضيًا");

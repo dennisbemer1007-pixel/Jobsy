@@ -476,6 +476,8 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
             new StubFeatures(authenticatorEnabled: true),
             new UnknownAccountLockoutTracker("test-lockout-key"),
             new StubTestAccountsRuntime(),
+            new StubSystemAdminSettings(),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<AuthController>.Instance);
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;
@@ -502,6 +504,7 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
             new Jobsy.Infrastructure.Security.TotpVerifier(db),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             new StubFeatures(authenticatorEnabled: true),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<MfaController>.Instance);
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;

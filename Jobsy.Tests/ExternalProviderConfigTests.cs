@@ -91,6 +91,8 @@ public class ExternalProviderConfigTests
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
             new StubTestAccountsRuntime(),
+            new StubSystemAdminSettings(),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<AuthController>.Instance);
     }
 

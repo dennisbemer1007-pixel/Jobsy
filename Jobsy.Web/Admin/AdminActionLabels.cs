@@ -31,6 +31,7 @@ public static partial class AdminActionLabels
             "privacy.account.deleted" => "AdminAudit.Action.Deleted",
             "privacy.retention.run" or "Data retention" => "AdminAudit.Action.Retention",
             "auth.admin.login-failed" => "AdminAudit.Action.LoginFailed",
+            "auth.system-admin.login" => "AdminAudit.Action.SystemAdminLogin",
             "vacancy-category.create" => "AdminAudit.Action.CategoryCreated",
             "vacancy-category.update" => "AdminAudit.Action.CategoryUpdated",
             "vacancy-category.delete" => "AdminAudit.Action.CategoryDeleted",

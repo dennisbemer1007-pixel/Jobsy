@@ -95,6 +95,8 @@ public static class EmailTemplateRegistry
             "Wachtwoord gewijzigd", "Bevestiging na een geslaagde wachtwoordwijziging."),
         Def("SupportAccessRequested", "SupportAccessRequested", "Beheer", EmailKind.Essential, "AdminNotice", false,
             "Support-toegang aangevraagd", "Andere admins krijgen bericht over tijdelijke toegang."),
+        Def("SystemAdminLogin", "SystemAdminLogin", "Beheer", EmailKind.Security, "AdminNotice", false,
+            "Break-glass admin login", "Alert when the env-provisioned system administrator signs in."),
         Def("MailTest", "MailTest", "Beheer", EmailKind.Essential, "AdminNotice", false,
             "Connectiviteitstest", "Korte check of Resend/SMTP werkt."),
 

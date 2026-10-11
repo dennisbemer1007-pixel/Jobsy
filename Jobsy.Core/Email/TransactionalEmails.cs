@@ -212,6 +212,7 @@ public static partial class TransactionalEmails
             "emailcodeusepassword" => EmailCodeUsePassword(ctx.PublicWebBaseUrl, c.Language),
             "parentalconsent" => ParentalConsent(ctx.PublicWebBaseUrl, "Sanne", links.ParentalConsent("voorbeeld"), new DateTime(2026, 10, 7, 12, 0, 0, DateTimeKind.Utc), c),
             "supportaccessrequested" => SupportAccessRequested(ctx.PublicWebBaseUrl, "Admin Demo", "Voorbeeldreden", new DateTime(2026, 9, 30, 18, 0, 0, DateTimeKind.Utc), "Persoonsgegevens", c),
+            "systemadminlogin" => SystemAdminLogin(ctx.PublicWebBaseUrl, DateTime.UtcNow, "password", "203.0.113.10", c),
             "accountlockout" => AccountLockout(
                 ctx.PublicWebBaseUrl, 5, new DateTime(2026, 10, 2, 11, 5, 0, DateTimeKind.Utc), TimeSpan.FromMinutes(15), c),
             "mfalockout" => MfaLockout(ctx.PublicWebBaseUrl, c),

@@ -87,6 +87,9 @@ public static class DependencyInjection
         });
         services.AddScoped<IPersonalDataAccessLogger, PersonalDataAccessLogger>();
         services.AddScoped<IAdminAuditLog, AdminAuditLog>();
+        services.Configure<SystemAdminOptions>(configuration.GetSection(SystemAdminOptions.SectionName));
+        services.AddSingleton<ISystemAdminSettings, SystemAdminSettings>();
+        services.AddScoped<SystemAdminLoginNotifier>();
         services.AddScoped<IPlatformErrorLog, PlatformErrorLog>();
         services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
         services.AddScoped<IApplicationStatusRecorder, ApplicationStatusRecorder>();

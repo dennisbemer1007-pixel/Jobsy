@@ -150,7 +150,8 @@ public record LocalLoginResponse(
     bool UsedRecoveryCode = false,
     string? MfaTrustToken = null,
     string? AuthMethod = null,
-    bool IsTestAccount = false);
+    bool IsTestAccount = false,
+    bool IsSystemAdminAccount = false);
 
 public record MfaEnrollmentRequest(string ChallengeToken);
 
