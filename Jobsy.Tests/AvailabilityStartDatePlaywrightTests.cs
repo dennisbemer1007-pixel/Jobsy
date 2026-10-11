@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Jobsy.Tests.E2e;
 using Microsoft.Playwright;
 
@@ -63,22 +62,14 @@ public sealed class AvailabilityStartDatePlaywrightTests
             FullPage = true
         });
 
-        if (!await KbE2e.TryLoginAsync(page, baseUrl))
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.DefaultCompleteEmail, KbE2e.DefaultPassword))
         {
             return;
         }
 
-        await page.GotoAsync(baseUrl + "/candidate/profile?tab=profile", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
-        if (page.Url.Contains("/paspoort", StringComparison.OrdinalIgnoreCase))
-        {
-            var editProfile = page.Locator("a,button").Filter(new() { HasTextRegex = new Regex("Profiel|Profile|Bewerk", RegexOptions.IgnoreCase) });
-            if (await editProfile.CountAsync() > 0)
-            {
-                await editProfile.First.ClickAsync();
-                await page.WaitForTimeoutAsync(1500);
-            }
-        }
-
+        await page.GotoAsync(
+            baseUrl + "/candidate/paspoort?tab=data",
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
         await KbE2e.WaitForStyledAppAsync(page, "app.min.css");
         var availToggle = page.Locator("button.admin-sublink").Filter(new() { HasText = "Beschikbaarheid" });
         if (await availToggle.CountAsync() == 0)
@@ -91,6 +82,7 @@ public sealed class AvailabilityStartDatePlaywrightTests
         await page.Locator(".ob-wizard__start-option").Filter(new() { HasText = "Vanaf een datum" }).First.ClickAsync();
         await page.Locator(".ob-wizard__start-date input[type=date]").FillAsync(startDate);
         await KbE2e.AssertSelectorLooksStyledAsync(page, ".ob-wizard__start-option.is-selected");
+        await page.WaitForTimeoutAsync(2_000);
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(outDir, $"after-profile-availability-from-date-{label}.png"),
