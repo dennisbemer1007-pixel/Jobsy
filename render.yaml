@@ -427,6 +427,8 @@ projects:
                   property: connectionString
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
+              - key: PublicWebBaseUrl
+                value: "https://acceptatie.lobsy.nl"
               - key: TestAccounts__Enabled
                 sync: false
               # Same provider and key presence as the API, so the privacy page drops Resend when Lettermint sends.
