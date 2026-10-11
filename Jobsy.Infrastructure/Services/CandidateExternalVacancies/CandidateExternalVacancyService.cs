@@ -117,7 +117,7 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         CancellationToken cancellationToken = default)
     {
         return await _db.CandidateExternalVacancies.AsNoTracking()
-            .Where(v => v.CandidateUserId == candidateUserId)
+            .Where(v => v.CandidateUserId == candidateUserId && IsOnSavedList(v.Status))
             .OrderByDescending(v => v.SavedAtUtc)
             .Select(v => new ExternalVacancyListItemDto(
                 v.Id,
@@ -146,6 +146,79 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
             ? Array.Empty<string>()
             : await _contacts.FindEmployerEmailsAsync(uri, row.CompanyName, cancellationToken);
         return await MapDetailAsync(row, suggested, cancellationToken);
+    }
+
+    public async Task<ExternalVacancyDetailDto?> SetSavedAsync(
+        Guid candidateUserId,
+        Guid id,
+        bool saved,
+        CancellationToken cancellationToken = default)
+    {
+        var row = await _db.CandidateExternalVacancies
+            .FirstOrDefaultAsync(v => v.Id == id && v.CandidateUserId == candidateUserId, cancellationToken);
+        if (row is null)
+        {
+            return null;
+        }
+
+        if (row.Status == CandidateExternalVacancyStatus.Closed)
+        {
+            return null;
+        }
+
+        if (saved)
+        {
+            if (row.Status == CandidateExternalVacancyStatus.RemovedFromSaved)
+            {
+                row.Status = CandidateExternalVacancyStatus.Saved;
+            }
+        }
+        else if (row.Status == CandidateExternalVacancyStatus.Saved)
+        {
+            row.Status = CandidateExternalVacancyStatus.RemovedFromSaved;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return await GetDetailAsync(candidateUserId, id, cancellationToken);
+    }
+
+    public async Task<ExternalVacancyDetailDto?> DismissAsync(
+        Guid candidateUserId,
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var row = await _db.CandidateExternalVacancies
+            .FirstOrDefaultAsync(v => v.Id == id && v.CandidateUserId == candidateUserId, cancellationToken);
+        if (row is null)
+        {
+            return null;
+        }
+
+        if (row.Status == CandidateExternalVacancyStatus.Applied)
+        {
+            return null;
+        }
+
+        row.Status = CandidateExternalVacancyStatus.Closed;
+        await _db.SaveChangesAsync(cancellationToken);
+        return await GetDetailAsync(candidateUserId, id, cancellationToken);
+    }
+
+    public async Task<ExternalVacancyDetailDto?> RestoreDismissedAsync(
+        Guid candidateUserId,
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var row = await _db.CandidateExternalVacancies
+            .FirstOrDefaultAsync(v => v.Id == id && v.CandidateUserId == candidateUserId, cancellationToken);
+        if (row is null || row.Status != CandidateExternalVacancyStatus.Closed)
+        {
+            return null;
+        }
+
+        row.Status = CandidateExternalVacancyStatus.Saved;
+        await _db.SaveChangesAsync(cancellationToken);
+        return await GetDetailAsync(candidateUserId, id, cancellationToken);
     }
 
     public async Task<ExternalVacancyApplyResultDto> ApplyAsync(
@@ -333,8 +406,13 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
             row.Status,
             row.SavedAtUtc,
             !hasOutbound,
-            suggestedEmails);
+            suggestedEmails,
+            IsOnSavedList(row.Status),
+            row.Status == CandidateExternalVacancyStatus.Closed);
     }
+
+    internal static bool IsOnSavedList(CandidateExternalVacancyStatus status)
+        => status is CandidateExternalVacancyStatus.Saved or CandidateExternalVacancyStatus.Applied;
 
     private static Dictionary<string, string> BuildStructuredFacts(ExternalVacancyExtractionResult extracted)
     {

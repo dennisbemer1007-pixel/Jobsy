@@ -29,7 +29,11 @@ public sealed record ExternalVacancyDetailDto(
     CandidateExternalVacancyStatus Status,
     DateTime SavedAtUtc,
     bool CanApply,
-    IReadOnlyList<string> SuggestedEmployerEmails);
+    IReadOnlyList<string> SuggestedEmployerEmails,
+    bool IsOnSavedList,
+    bool IsDismissed);
+
+public sealed record ExternalVacancySetSavedRequest(bool Saved);
 
 public sealed record ExternalVacancyMatchInsightsDto(
     IReadOnlyList<string> Strengths,
