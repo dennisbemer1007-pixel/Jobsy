@@ -137,22 +137,25 @@
                 else if (_countedStep == 2)
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
-                    <AvailabilityStep Draft="Draft"
-                                      Presets="VisiblePresets"
-                                      TogglePreset="TogglePreset"
-                                      ToggleFineTune="ToggleFineTune"
-                                      SetMinHours="SetMinHoursAsync"
-                                      SetMaxHours="SetMaxHoursAsync"
-                                      ManualAvailability="ManualAvailabilityAsync"
-                                      ToggleAvailability="ToggleAvailability"
-                                      ResetPresets="ResetPresets" />
-                    <TransportStep Draft="Draft"
-                                   ShowHeading="false"
-                                   ShowDrivingLicenses="true"
-                                   SelectTransport="SelectTransport"
-                                   SelectTravelTime="SelectTravelTime"
-                                   ShowCustomTravel="ShowCustomTravel"
-                                   ToggleLicense="ToggleLicense" />
+                    <div class="journey-stack">
+                        <AvailabilityStep Draft="Draft"
+                                          Presets="VisiblePresets"
+                                          TogglePreset="TogglePreset"
+                                          ToggleFineTune="ToggleFineTune"
+                                          SetMinHours="SetMinHoursAsync"
+                                          SetMaxHours="SetMaxHoursAsync"
+                                          ManualAvailability="ManualAvailabilityAsync"
+                                          ToggleAvailability="ToggleAvailability"
+                                          ResetPresets="ResetPresets" />
+                        <div class="journey-stack__divider" role="separator" aria-hidden="true"></div>
+                        <TransportStep Draft="Draft"
+                                       ShowHeading="false"
+                                       ShowDrivingLicenses="true"
+                                       SelectTransport="SelectTransport"
+                                       SelectTravelTime="SelectTravelTime"
+                                       ShowCustomTravel="ShowCustomTravel"
+                                       ToggleLicense="ToggleLicense" />
+                    </div>
                     @RenderFooter()
                 }
                 else if (_countedStep == 3)

@@ -16,6 +16,10 @@ internal static class UiStringsOnboardingV2
         Add(ro, "ro", "Completează-ți profilul de start", "Mai sunt {0} pași, apoi Busola ta este gata.", "Continuă de unde ai rămas");
         Add(ar, "ar", "أكمل ملفك التعريفي", "تبقّى {0} خطوات ثم تصبح بوصلتك جاهزة.", "تابع من حيث توقفت");
 
+        PatchAvailabilityEducationPl(pl);
+        PatchAvailabilityEducationRo(ro);
+        PatchAvailabilityEducationAr(ar);
+
         nl["Onboarding.Age.TooYoung"] = "Je moet minstens {0} jaar zijn om Lobsy te gebruiken.";
         en["Onboarding.Age.TooYoung"] = "You must be at least {0} to use Lobsy.";
         pl["Onboarding.Age.TooYoung"] = "Musisz mieć co najmniej {0} lat, aby korzystać z Lobsy.";
@@ -43,13 +47,28 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Step1.Title"] = english ? "Let’s get acquainted" : "Even kennismaken";
         map["Onboarding.Step1.Lead"] = english ? "Is this correct? We copied your name from your account." : "Klopt dit? We hebben je naam overgenomen van je account.";
         map["Onboarding.Step2.Title"] = english ? "When can you work?" : "Wanneer kun je werken?";
-        map["Onboarding.Step2.Lead"] = english ? "Choose what fits you. You can select more than one." : "Kies wat bij je past, meerdere mag. We vullen de details voor je in.";
+        map["Onboarding.Step2.Lead"] = english ? "Pick one or more options. We fill in the hours and days for you." : "Kies één of meer opties. Wij zetten uren en dagen voor je klaar.";
+        map["Onboarding.AvailabilityPresetsLegend"] = english ? "1. Pick what fits you" : "1. Kies wat op jou lijkt";
+        map["Onboarding.AvailabilityPresetsHint"] = english ? "You can pick more than one." : "Je mag er meer dan één kiezen.";
+        map["Onboarding.AvailabilityStartLegend"] = english ? "2. When can you start?" : "2. Wanneer kun je beginnen?";
+        map["Onboarding.AvailabilityImmediateCheck"] = english ? "I can start right away" : "Ik kan meteen beginnen";
+        map["Onboarding.AvailabilityStartDateHint"] = english ? "Pick the first day you can work." : "Kies de eerste dag waarop je kunt werken.";
+        map["Onboarding.AvailabilitySummaryTitle"] = english ? "Your choice" : "Jouw keuze";
+        map["Onboarding.AvailabilityFineTuneCta"] = english ? "Change hours or days" : "Uren of dagen aanpassen";
+        map["Onboarding.AvailabilityFineTuneClose"] = english ? "Hide details" : "Details verbergen";
+        map["Onboarding.AvailabilityFineTuneLegend"] = english ? "Set hours and days yourself" : "Stel zelf uren en dagen in";
+        map["Onboarding.AvailabilityMatrixHint"] = english ? "Tap a block for each time you can work." : "Tik op elk vakje waarop je kunt werken.";
         map["Onboarding.Step3.Title"] = english ? "How do you get to work?" : "Hoe kom je op je werk?";
         map["Onboarding.Step3.Lead"] = english ? "We only show jobs that are easy to reach." : "Dan laten we alleen banen zien die goed te bereiken zijn.";
         map["Onboarding.Step4.Title"] = english ? "Have you worked before?" : "Heb je al gewerkt?";
         map["Onboarding.Step4.Lead"] = english ? "A side job, volunteering or internship counts too." : "Bijbaan, vrijwilligerswerk of stage telt ook mee.";
         map["Onboarding.Step5.Title"] = english ? "What is your education?" : "Wat is je opleiding?";
-        map["Onboarding.Step5.Lead"] = english ? "What you are studying now, or your highest completed level." : "Waar je nu mee bezig bent, of je hoogst afgeronde.";
+        map["Onboarding.Step5.Lead"] = english ? "Pick your highest finished school level. No diploma? Choose None." : "Kies je hoogste afgeronde opleiding. Geen diploma? Kies Geen.";
+        map["Onboarding.EducationPickLevel"] = english ? "School level" : "Kies je opleidingsniveau";
+        map["Onboarding.EducationMboLegend"] = english ? "Which MBO level?" : "Welk MBO-niveau?";
+        map["Onboarding.EducationMboLevel"] = english ? "MBO {0}" : "MBO {0}";
+        map["Onboarding.EducationDirectionHint"] = english ? "Optional. Tap a topic or type your own." : "Optioneel. Tik op een richting of typ zelf.";
+        map["Onboarding.EducationDirectionField"] = english ? "Or type yourself" : "Of typ zelf";
         map["Onboarding.Step6.Title"] = english ? "What is your dream job?" : "Wat is je droombaan?";
         map["Onboarding.Step6.Lead"] = english ? "Think big. We make a route towards it in Career." : "Denk groot. We maken er in Carrière een route naartoe.";
         map["Onboarding.Step7.Title"] = english ? "How do you work?" : "Hoe werk jij?";
@@ -152,5 +171,65 @@ internal static class UiStringsOnboardingV2
                 _ => nl
             };
         }
+    }
+
+    private static void PatchAvailabilityEducationPl(Dictionary<string, string> map)
+    {
+        map["Onboarding.Step2.Lead"] = "Wybierz jedną lub więcej opcji. Uzupełnimy godziny i dni za Ciebie.";
+        map["Onboarding.AvailabilityPresetsLegend"] = "1. Wybierz, co do Ciebie pasuje";
+        map["Onboarding.AvailabilityPresetsHint"] = "Możesz wybrać więcej niż jedną opcję.";
+        map["Onboarding.AvailabilityStartLegend"] = "2. Kiedy możesz zacząć?";
+        map["Onboarding.AvailabilityImmediateCheck"] = "Mogę zacząć od razu";
+        map["Onboarding.AvailabilityStartDateHint"] = "Wybierz pierwszy dzień, w którym możesz pracować.";
+        map["Onboarding.AvailabilitySummaryTitle"] = "Twój wybór";
+        map["Onboarding.AvailabilityFineTuneCta"] = "Zmień godziny lub dni";
+        map["Onboarding.AvailabilityFineTuneClose"] = "Ukryj szczegóły";
+        map["Onboarding.AvailabilityFineTuneLegend"] = "Ustaw godziny i dni samodzielnie";
+        map["Onboarding.AvailabilityMatrixHint"] = "Dotknij każdego pola, w którym możesz pracować.";
+        map["Onboarding.Step5.Lead"] = "Wybierz najwyższy ukończony poziom. Brak dyplomu? Wybierz Brak.";
+        map["Onboarding.EducationPickLevel"] = "Wybierz poziom wykształcenia";
+        map["Onboarding.EducationMboLegend"] = "Który poziom MBO?";
+        map["Onboarding.EducationDirectionHint"] = "Opcjonalnie. Dotknij kierunku lub wpisz własny.";
+        map["Onboarding.EducationDirectionField"] = "Albo wpisz samodzielnie";
+    }
+
+    private static void PatchAvailabilityEducationRo(Dictionary<string, string> map)
+    {
+        map["Onboarding.Step2.Lead"] = "Alege una sau mai multe opțiuni. Completăm noi orele și zilele.";
+        map["Onboarding.AvailabilityPresetsLegend"] = "1. Alege ce ți se potrivește";
+        map["Onboarding.AvailabilityPresetsHint"] = "Poți alege mai multe opțiuni.";
+        map["Onboarding.AvailabilityStartLegend"] = "2. Când poți începe?";
+        map["Onboarding.AvailabilityImmediateCheck"] = "Pot începe imediat";
+        map["Onboarding.AvailabilityStartDateHint"] = "Alege prima zi în care poți lucra.";
+        map["Onboarding.AvailabilitySummaryTitle"] = "Alegerea ta";
+        map["Onboarding.AvailabilityFineTuneCta"] = "Schimbă orele sau zilele";
+        map["Onboarding.AvailabilityFineTuneClose"] = "Ascunde detaliile";
+        map["Onboarding.AvailabilityFineTuneLegend"] = "Setează orele și zilele singur";
+        map["Onboarding.AvailabilityMatrixHint"] = "Atinge fiecare pătrat când poți lucra.";
+        map["Onboarding.Step5.Lead"] = "Alege cel mai înalt nivel terminat. Fără diplomă? Alege Niciunul.";
+        map["Onboarding.EducationPickLevel"] = "Alege nivelul de școală";
+        map["Onboarding.EducationMboLegend"] = "Ce nivel MBO?";
+        map["Onboarding.EducationDirectionHint"] = "Opțional. Atinge o direcție sau scrie tu.";
+        map["Onboarding.EducationDirectionField"] = "Sau scrie tu";
+    }
+
+    private static void PatchAvailabilityEducationAr(Dictionary<string, string> map)
+    {
+        map["Onboarding.Step2.Lead"] = "‏اختر خيارًا واحدًا أو أكثر. نحن نملأ الساعات والأيام لك.";
+        map["Onboarding.AvailabilityPresetsLegend"] = "‏1. اختر ما يناسبك";
+        map["Onboarding.AvailabilityPresetsHint"] = "‏يمكنك اختيار أكثر من خيار.";
+        map["Onboarding.AvailabilityStartLegend"] = "‏2. متى يمكنك البدء؟";
+        map["Onboarding.AvailabilityImmediateCheck"] = "‏يمكنني البدء فورًا";
+        map["Onboarding.AvailabilityStartDateHint"] = "‏اختر أول يوم يمكنك فيه العمل.";
+        map["Onboarding.AvailabilitySummaryTitle"] = "‏اختيارك";
+        map["Onboarding.AvailabilityFineTuneCta"] = "‏غيّر الساعات أو الأيام";
+        map["Onboarding.AvailabilityFineTuneClose"] = "‏إخفاء التفاصيل";
+        map["Onboarding.AvailabilityFineTuneLegend"] = "‏حدّد الساعات والأيام بنفسك";
+        map["Onboarding.AvailabilityMatrixHint"] = "‏المس كل مربع يمكنك العمل فيه.";
+        map["Onboarding.Step5.Lead"] = "‏اختر أعلى مستوى أنهيتَه. لا شهادة؟ اختر لا يوجد.";
+        map["Onboarding.EducationPickLevel"] = "‏اختر مستوى التعليم";
+        map["Onboarding.EducationMboLegend"] = "‏أي مستوى MBO؟";
+        map["Onboarding.EducationDirectionHint"] = "‏اختياري. المس اتجاهًا أو اكتب بنفسك.";
+        map["Onboarding.EducationDirectionField"] = "‏أو اكتب بنفسك";
     }
 }
