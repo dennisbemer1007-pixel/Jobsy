@@ -373,6 +373,7 @@ public static partial class TransactionalEmails
         EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
         var when = occurredAtUtc.ToString("yyyy-MM-dd HH:mm") + " UTC";
         var ip = string.IsNullOrWhiteSpace(ipAddress) ? "—" : ipAddress;
         return Finish(Doc(
@@ -384,6 +385,7 @@ public static partial class TransactionalEmails
                 P(Sf(c, "Email.SystemAdminLogin.P1", when)),
                 P(Sf(c, "Email.SystemAdminLogin.P2", authMethod, ip))
             ],
+            Button(S(c, "Email.SystemAdminLogin.Cta"), links.AdminSecurityAudit),
             eyebrow: new EmailEyebrow(S(c, "Email.SystemAdminLogin.Eyebrow"), EmailTone.Peach),
             culture: c), baseUrl);
     }

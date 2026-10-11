@@ -407,6 +407,7 @@ internal static class EmailStringsNl
         ["Email.SystemAdminLogin.P2"] = "Methode: {0}. IP-adres: {1}.",
         ["Email.SystemAdminLogin.Preheader"] = "Login op {0}.",
         ["Email.SystemAdminLogin.Subject"] = "Lobsy: break-glass beheerder ingelogd",
+        ["Email.SystemAdminLogin.Cta"] = "Bekijk het auditlog",
         ["Email.TakeoverApproved.Eyebrow"] = "Goedgekeurd",
         ["Email.TakeoverApproved.Heading"] = "Je hebt toegang",
         ["Email.TakeoverApproved.P1"] = "Je verzoek voor {0} is goedgekeurd. Vacatures, tokens en geschiedenis blijven bij de vestiging.",

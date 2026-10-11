@@ -97,6 +97,7 @@ public sealed class EmailLinks
     /// <summary>Dependencies G — AdminNav emails page.</summary>
     public string AdminEmails => Absolute("/admin/content/emails");
     public string AdminPersonalDataAccessLog => Absolute("/admin/personal-data-access-log");
+    public string AdminSecurityAudit => Absolute("/admin/beveiliging");
     public string AdminWerkgeverVerificatie(string? tab = null)
         => string.IsNullOrWhiteSpace(tab)
             ? Absolute("/admin/werkgeververificatie")

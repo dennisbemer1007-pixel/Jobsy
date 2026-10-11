@@ -407,6 +407,7 @@ internal static class EmailStringsRo
         ["Email.SystemAdminLogin.P2"] = "Method: {0}. IP address: {1}.",
         ["Email.SystemAdminLogin.Preheader"] = "Sign-in at {0}.",
         ["Email.SystemAdminLogin.Subject"] = "Lobsy: break-glass administrator signed in",
+        ["Email.SystemAdminLogin.Cta"] = "View audit log",
         ["Email.TakeoverApproved.Eyebrow"] = "Approved",
         ["Email.TakeoverApproved.Heading"] = "You have access",
         ["Email.TakeoverApproved.P1"] = "Your request for {0} was approved. Vacancies, tokens and history stay with the branch.",
