@@ -1,7 +1,12 @@
 .kb-ext {
-  padding: 1rem 1rem calc(5rem + var(--cookie-bar-h, 0px));
+  padding: 1rem 1rem calc(var(--bottom-nav-clearance, 4.5rem) + var(--cookie-bar-h, 0px) + 1rem);
   max-width: 640px;
   margin: 0 auto;
+}
+
+.kb-ext__match,
+.kb-ext__actions {
+  scroll-margin-bottom: calc(var(--cookie-bar-h, 0px) + var(--bottom-nav-h, 4.75rem) + 1.25rem);
 }
 
 .kb-ext__card {

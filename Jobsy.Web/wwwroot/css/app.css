@@ -13328,14 +13328,49 @@ html.cookie-consent-known .cookie-consent {
 }
 
 @media (max-width: 640px) {
+  .cookie-consent__title {
+    display: inline;
+    margin: 0 0.35rem 0 0;
+    font-size: 0.72rem;
+    font-weight: 650;
+  }
+
+  .cookie-consent__copy {
+    flex: 1 1 100%;
+    line-height: 1.25;
+  }
+
+  .cookie-consent__text {
+    display: inline;
+    font-size: 0.68rem;
+    max-width: none;
+  }
+
+  .cookie-consent__inner {
+    gap: 0.35rem;
+  }
+
   .cookie-consent__actions {
     width: 100%;
     flex: 1 1 100%;
+    gap: 0.35rem;
   }
 
   .cookie-consent__actions .btn-compact,
   .cookie-consent__actions .btn-compact--primary {
-    flex: 1 1 calc(50% - 0.3rem);
+    flex: 1 1 calc(50% - 0.2rem);
+    min-height: 2.15rem;
+    padding: 0.3rem 0.45rem;
+    font-size: 0.72rem;
+  }
+}
+
+/* Cookie bar sits above bottom nav (nav z-index 50, cookie 80). */
+@media (max-width: 1023px) {
+  .app-shell.has-bottom-nav .cookie-consent,
+  .app-shell:has(.bottom-nav) .cookie-consent {
+    bottom: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0.35rem;
   }
 }
 
@@ -19775,22 +19810,35 @@ html.using-keyboard h1[tabindex="-1"]:focus-visible {
 }
 
 html:not(.cookie-consent-known) {
-    --cookie-bar-h: 4.25rem;
+    --cookie-bar-h: 3.75rem;
+    scroll-padding-bottom: calc(
+        var(--cookie-bar-h, 3.75rem) + var(--bottom-nav-h, 0px) + env(safe-area-inset-bottom, 0px)
+    );
+}
+
+@media (max-width: 640px) {
+    html:not(.cookie-consent-known) {
+        --cookie-bar-h: 4.5rem;
+    }
 }
 
 html:not(.cookie-consent-known) body {
-    padding-bottom: calc(var(--cookie-bar-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(
+        var(--cookie-bar-h, 3.75rem) + var(--bottom-nav-h, 0px) + env(safe-area-inset-bottom, 0px)
+    );
 }
 
 html:not(.cookie-consent-known) .app-main {
-    padding-bottom: calc(var(--cookie-bar-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(
+        var(--cookie-bar-h, 3.75rem) + var(--bottom-nav-h, 0px) + env(safe-area-inset-bottom, 0px)
+    );
 }
 
 html:not(.cookie-consent-known) .app-shell.has-bottom-nav .app-main,
 html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
     padding-bottom: calc(
         var(--bottom-nav-clearance)
-        + var(--cookie-bar-h, 0px)
+        + var(--cookie-bar-h, 3.75rem)
         + env(safe-area-inset-bottom, 0px)
     );
 }
