@@ -271,6 +271,78 @@ public class PassportPdfV2Tests
     }
 
     [Fact]
+    public async Task Export_visual_matrix_when_a_folder_is_set()
+    {
+        var dir = Environment.GetEnvironmentVariable("PASSPORT_SAMPLE_DIR");
+        if (string.IsNullOrWhiteSpace(dir))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(dir);
+        var scenarios = new (string Slug, PassportPdfFacts Facts)[]
+        {
+            ("rich-nl", RichSample() with { Language = "nl" }),
+            ("thin-nl", ThinSample()),
+            ("full-en", FullFacts() with { Language = "en" }),
+            ("full-pl", FullFacts() with
+            {
+                Language = "pl",
+                FullName = "Złotysław Żółty-Ąęść",
+                OwnWords = "Pracuję dokładnie i lubię pracę zespołową w szklarni."
+            }),
+            ("full-ro", FullFacts() with { Language = "ro" }),
+            ("rich-ar", RichSample() with { Language = "ar" }),
+            ("sparse-nl", FullFacts() with
+            {
+                OpenForWork = false,
+                Roles = null,
+                Experience = null,
+                Certificates = null,
+                Educations = null,
+                OwnWords = null,
+                Dna = PassportDnaLayer.None(),
+                DreamTitle = null,
+                ReferenceQuotes = null,
+                MinHours = null,
+                MaxHours = null
+            }),
+            ("long-nl", FullFacts() with
+            {
+                FullName = "Christoffel van den Berg-Hendriksma",
+                OwnWords = new string('Z', 420)
+            })
+        };
+
+        foreach (var (slug, facts) in scenarios)
+        {
+            var pdf = await Render(facts);
+            Assert.Equal(2, pdf.Pages);
+            var pdfPath = Path.Combine(dir, $"{slug}.pdf");
+            await File.WriteAllBytesAsync(pdfPath, pdf.Bytes);
+            ExportPdfPagesAsPng(pdfPath, Path.Combine(dir, slug));
+        }
+    }
+
+    private static void ExportPdfPagesAsPng(string pdfPath, string pngPrefix)
+    {
+        var startInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "pdftoppm",
+            Arguments = $"-png -r 150 \"{pdfPath}\" \"{pngPrefix}-page\"",
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var process = System.Diagnostics.Process.Start(startInfo)
+            ?? throw new InvalidOperationException("pdftoppm not available.");
+        process.WaitForExit(120_000);
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(process.StandardError.ReadToEnd());
+        }
+    }
+
+    [Fact]
     public async Task Write_review_samples_when_a_folder_is_set()
     {
         var dir = Environment.GetEnvironmentVariable("PASSPORT_SAMPLE_DIR");
