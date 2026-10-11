@@ -1,8 +1,23 @@
 @namespace Jobsy.Web.Components.Candidate.ProfileSections
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Shared
 @inject CultureState Culture
+
+                            <AvailabilityStartSection Immediate="Editor.StartImmediately"
+                                                      ImmediateChanged="Editor.SetStartImmediatelyAsync"
+                                                      AvailableFrom="Editor.AvailableFromDate"
+                                                      AvailableFromChanged="Editor.SetAvailableFromDateAsync"
+                                                      LegendKey="Profile.AvailabilityStartLegend"
+                                                      ImmediateLabelKey="Profile.AvailabilityStartImmediate"
+                                                      ImmediateHintKey="Profile.AvailabilityStartImmediateHint"
+                                                      FromDateLabelKey="Profile.AvailabilityStartFromDate"
+                                                      FromDateHintKey="Profile.AvailabilityStartFromDateHint"
+                                                      DateFieldLabelKey="Profile.AvailableFromDateLabel"
+                                                      DateFieldHintKey="Profile.AvailabilityStartDateHint"
+                                                      DateInvalidKey="Profile.AvailabilityStartDateInvalid"
+                                                      ShowValidation="true" />
 
                             <fieldset class="vacancy-hours profile-hours">
                                 <legend class="visually-hidden">@Culture["Vacancy.HoursPerWeek"]</legend>

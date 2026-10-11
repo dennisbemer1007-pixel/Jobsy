@@ -310,7 +310,6 @@
 
     private static readonly AvailabilityStep.Preset[] PresetItems =
     [
-        new("direct", "Onboarding.Preset.Direct", "Onboarding.Preset.Direct.Lead"),
         new("school", "Onboarding.Preset.School", "Onboarding.Preset.School.Lead"),
         new("weekend", "Onboarding.Preset.Weekend", "Onboarding.Preset.Weekend.Lead"),
         new("evening", "Onboarding.Preset.Evening", "Onboarding.Preset.Evening.Lead"),
@@ -359,7 +358,10 @@
     private string DaysSummary => Draft.Availability.Count == 0
         ? "–" : Culture.Format("Onboarding.DayPartsCount", Draft.Availability.Count);
     private string AvailableFromLabel => Draft.Immediate
-        ? Culture["Onboarding.AvailableImmediate"] : Draft.AvailableFrom?.ToString() ?? "";
+        ? Culture["Onboarding.AvailableImmediate"]
+        : Draft.AvailableFrom is { } d
+            ? AvailabilityStartRules.FormatDisplayDate(d, Culture.Language)
+            : "";
     private string AndSeparator => $" {Culture["Onboarding.And"]} ";
     private string MiniPrefix => $"obv2-{_step}-";
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
@@ -384,7 +386,7 @@
              && Draft.BirthDate is DateOnly born
              && !Jobsy.Core.Privacy.CandidateConsentRules.IsBelowMinimumAge(born, DateOnly.FromDateTime(DateTime.Today))
              && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
-        2 => AvailabilityValid,
+        2 => AvailabilityValid && AvailabilityStartRules.StepIsValid(Draft.Immediate, Draft.AvailableFrom),
         3 => !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
         6 => !string.IsNullOrWhiteSpace(Draft.Dream),
         7 when !Draft.HasConsent => Draft.ConsentRequested,
@@ -709,8 +711,6 @@
         Draft.MaxHours = result.MaxHours;
         Draft.Availability.Clear();
         foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
-        Draft.Immediate = result.Immediate;
-        if (Draft.Immediate) Draft.AvailableFrom = null;
     }
 
     private void ResetPresets()
