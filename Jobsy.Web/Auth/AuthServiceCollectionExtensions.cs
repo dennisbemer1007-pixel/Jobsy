@@ -26,6 +26,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Jobsy.Web.Auth;
 
@@ -233,16 +234,24 @@ public static class AuthServiceCollectionExtensions
                         .CreateLogger("Jobsy.Web.Auth.Entra");
                     var configuration = services.GetRequiredService<IConfiguration>();
                     var entraOpts = (OpenIdConnectOptions)context.Options;
-                    var tenant = string.IsNullOrWhiteSpace(entraOpts.Authority)
-                        ? null
-                        : entraOpts.Authority.Split('/', StringSplitOptions.RemoveEmptyEntries)
-                            .ElementAtOrDefault(3);
+                    var tenant = EntraAuthority.TryGetTenantSegment(entraOpts.Authority);
                     EntraOidcCallbackDiagnostics.LogContext(
                         logger,
                         context.HttpContext,
                         entraOpts.Authority,
                         entraOpts.ClientId,
                         tenant);
+                    if (context.Failure is SecurityTokenInvalidAudienceException
+                        || EntraAuthFailureFormatter.Describe(context.Failure)
+                            .Contains("IDX10214", StringComparison.Ordinal))
+                    {
+                        EntraOidcAudienceDiagnostics.LogAudienceFailure(
+                            logger,
+                            context.Failure,
+                            entraOpts.ClientId,
+                            entraOpts.TokenValidationParameters);
+                    }
+
                     var aadsts = EntraAuthFailureFormatter.TryGetAadstsCode(context.Failure);
                     var redirectUri = EntraOidcRedirectUri.Build(
                         context.HttpContext,
