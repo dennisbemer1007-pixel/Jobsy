@@ -5,55 +5,73 @@
 
 <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
-<fieldset>
-    <legend class="visually-hidden">@Culture["Onboarding.Step2.Title"]</legend>
-    <div class="ob-wizard__presets">
-        @foreach (var preset in Presets)
-        {
-            var isSelected = Draft.Presets.Contains(preset.Code);
-            <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                    class="@(isSelected ?"is-selected" : null)"
-                    @onclick="() => TogglePreset.InvokeAsync(preset.Code)">
-                <span>@(isSelected ? "✓" : "")</span>
-                <b>@Culture[preset.Title]</b>
-                <small>@Culture[preset.Lead]</small>
-            </button>
-        }
-    </div>
-</fieldset>
-<div class="ob-wizard__availability-summary">
-    <strong>@Culture["Onboarding.AvailabilitySummary"]</strong>
-    <button type="button" aria-expanded="@(Draft.FineTune ? "true" : "false")" @onclick="ToggleFineTune">
-        @Culture["Onboarding.Adjust"]
-    </button>
-    <dl>
-        <div>
-            <dt>@Culture["Vacancy.HoursPerWeek"]</dt>
-            <dd>@HoursLabel</dd>
+
+<section class="ob-wizard__section" aria-labelledby="ob-avail-presets">
+    <h2 id="ob-avail-presets" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityPresetsLegend"]</h2>
+    <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
+    <fieldset>
+        <legend class="visually-hidden">@Culture["Onboarding.AvailabilityPresetsLegend"]</legend>
+        <div class="ob-wizard__presets">
+            @foreach (var preset in Presets)
+            {
+                var isSelected = Draft.Presets.Contains(preset.Code);
+                <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
+                        class="@(isSelected ? "is-selected" : null)"
+                        @onclick="() => TogglePreset.InvokeAsync(preset.Code)">
+                    <span>@(isSelected ? "✓" : "")</span>
+                    <b>@Culture[preset.Title]</b>
+                    <small>@Culture[preset.Lead]</small>
+                </button>
+            }
         </div>
-        <div>
-            <dt>@Culture["Profile.Availability"]</dt>
-            <dd>@DaysSummary</dd>
-        </div>
-        @if (Draft.Immediate)
-        {
-            <div>
-                <dt>@Culture["Onboarding.AvailableFrom"]</dt>
-                <dd>@AvailableFromLabel</dd>
-            </div>
-        }
-    </dl>
-</div>
-@if (!Draft.Immediate)
+    </fieldset>
+</section>
+
+@if (HasSelection)
 {
-    <label>
-        @Culture["Onboarding.AvailableFrom"]
-        <input type="date" @bind="Draft.AvailableFrom" @bind:after="NotifyAsync" />
-    </label>
+    <section class="ob-wizard__availability-summary" aria-labelledby="ob-avail-summary">
+        <div class="ob-wizard__summary-head">
+            <strong id="ob-avail-summary">@Culture["Onboarding.AvailabilitySummaryTitle"]</strong>
+            <button type="button"
+                    class="ob-wizard__summary-action"
+                    aria-expanded="@(Draft.FineTune ? "true" : "false")"
+                    @onclick="ToggleFineTune">
+                @(Draft.FineTune ? Culture["Onboarding.AvailabilityFineTuneClose"] : Culture["Onboarding.AvailabilityFineTuneCta"])
+            </button>
+        </div>
+        <dl>
+            <div>
+                <dt>@Culture["Vacancy.HoursPerWeek"]</dt>
+                <dd>@HoursLabel</dd>
+            </div>
+            <div>
+                <dt>@Culture["Profile.Availability"]</dt>
+                <dd>@DaysSummary</dd>
+            </div>
+        </dl>
+    </section>
 }
+
+<section class="ob-wizard__section" aria-labelledby="ob-avail-start">
+    <h2 id="ob-avail-start" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityStartLegend"]</h2>
+    <label class="ob-wizard__check ob-wizard__check--block">
+        <input type="checkbox" checked="@Draft.Immediate" @onchange="OnImmediateChanged" />
+        <span>@Culture["Onboarding.AvailabilityImmediateCheck"]</span>
+    </label>
+    @if (!Draft.Immediate)
+    {
+        <label>
+            @Culture["Onboarding.AvailableFrom"]
+            <input type="date" @bind="Draft.AvailableFrom" @bind:after="NotifyAsync" />
+        </label>
+        <p class="ob-wizard__hint">@Culture["Onboarding.AvailabilityStartDateHint"]</p>
+    }
+</section>
+
 @if (Draft.FineTune)
 {
-    <div class="ob-wizard__fine-tune">
+    <section class="ob-wizard__fine-tune" aria-labelledby="ob-avail-finetune">
+        <h2 id="ob-avail-finetune" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityFineTuneLegend"]</h2>
         <HoursRangeSlider CssClass="hours-range--compact"
                           Min="1"
                           Max="60"
@@ -67,10 +85,16 @@
                           UnitLabel="@Culture["Onboarding.Hours"]" />
         <fieldset>
             <legend>@Culture["Profile.Availability"]</legend>
-            <div class="ob-wizard__matrix">
+            <p class="ob-wizard__hint">@Culture["Onboarding.AvailabilityMatrixHint"]</p>
+            <div class="ob-wizard__matrix ob-wizard__matrix--labeled" role="group" aria-label="@Culture["Profile.Availability"]">
+                <span class="ob-wizard__matrix-corner" aria-hidden="true"></span>
+                @foreach (var slot in WorkingSlots)
+                {
+                    <span class="ob-wizard__matrix-head">@UiLabels.AvailabilitySlot(Culture, slot)</span>
+                }
                 @foreach (var day in Days)
                 {
-                    <span>@UiLabels.Weekday(Culture, day)</span>
+                    <span class="ob-wizard__matrix-day">@UiLabels.Weekday(Culture, day)</span>
                     @foreach (var slot in WorkingSlots)
                     {
                         var key = $"{day}:{slot}";
@@ -78,9 +102,9 @@
                         <button type="button"
                                 aria-pressed="@(isAvailable ? "true" : "false")"
                                 aria-label="@AvailabilityLabel(day, slot)"
-                                class="@(isAvailable ?"is-on" : null)"
+                                class="@(isAvailable ? "is-on" : null)"
                                 @onclick="() => ToggleAvailability.InvokeAsync(key)">
-                            @UiLabels.AvailabilitySlot(Culture, slot)
+                            @(isAvailable ? "✓" : "–")
                         </button>
                     }
                 }
@@ -95,11 +119,12 @@
                 </button>
             </p>
         }
-    </div>
+    </section>
 }
+
 @if (!AvailabilityValid)
 {
-    <p class="ob-wizard__hint error">@Culture["Onboarding.AvailabilityRequired"]</p>
+    <p class="ob-wizard__hint error" role="alert">@Culture["Onboarding.AvailabilityRequired"]</p>
 }
 
 @code {
@@ -120,6 +145,7 @@
 
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
     private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
+    private bool HasSelection => Draft.Presets.Count > 0 || Draft.Availability.Count > 0;
     private bool AvailabilityValid => Draft.MinHours is > 0
                                       && Draft.MaxHours >= Draft.MinHours
                                       && Draft.Availability.Count > 0;
@@ -128,11 +154,20 @@
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
     private string DaysSummary => Draft.Availability.Count == 0
         ? "–" : Culture.Format("Onboarding.DayPartsCount", Draft.Availability.Count);
-    private string AvailableFromLabel => Draft.Immediate
-        ? Culture["Onboarding.AvailableImmediate"] : Draft.AvailableFrom?.ToString() ?? "";
 
     private string AvailabilityLabel(string day, string slot)
         => $"{UiLabels.Weekday(Culture, day)} {UiLabels.AvailabilitySlot(Culture, slot)}";
 
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
+
+    private async Task OnImmediateChanged(ChangeEventArgs e)
+    {
+        Draft.Immediate = e.Value is true;
+        if (Draft.Immediate)
+        {
+            Draft.AvailableFrom = null;
+        }
+
+        await NotifyAsync();
+    }
 }
