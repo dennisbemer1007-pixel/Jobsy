@@ -107,7 +107,12 @@ public sealed class ExternalAuthCredentialSource : IExternalAuthCredentialSource
             using var response = await client.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _cache.Set(cacheKey, (ExternalOAuthCredentials?)null, TimeSpan.FromSeconds(30));
+                // Do not cache transient API/auth failures — the OIDC callback must re-read Integraties.
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    _cache.Set(cacheKey, (ExternalOAuthCredentials?)null, TimeSpan.FromSeconds(30));
+                }
+
                 return null;
             }
 

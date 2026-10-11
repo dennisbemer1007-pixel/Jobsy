@@ -34,7 +34,9 @@ builder.Services.AddOptions<Jobsy.Core.Options.MistralOptions>()
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
     // Cloudflare → Render is two hops; default KnownProxies (loopback-only) ignores both.
     // Clear so X-Forwarded-Proto reaches Kestrel (Secure cookies / no redirect loops).
     // Client IP still comes from CF-Connecting-IP only after CloudflareOriginMiddleware

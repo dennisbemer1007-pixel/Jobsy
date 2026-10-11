@@ -173,16 +173,21 @@ public static class AuthServiceCollectionExtensions
                 ? "pending"
                 : authOptions.Entra.ClientSecret;
             options.ResponseType = OpenIdConnectResponseType.Code;
+            // GET callback (?code=) is more reliable behind Render/Cloudflare than form_post.
+            options.ResponseMode = OpenIdConnectResponseMode.Query;
             options.CallbackPath = authOptions.Entra.CallbackPath;
             options.SaveTokens = false;
             options.CorrelationCookie.SecurePolicy = secureAlways
                 ? CookieSecurePolicy.Always
                 : CookieSecurePolicy.SameAsRequest;
+            options.CorrelationCookie.SameSite = SameSiteMode.None;
+            options.CorrelationCookie.Path = "/";
             options.NonceCookie.SecurePolicy = secureAlways
                 ? CookieSecurePolicy.Always
                 : CookieSecurePolicy.SameAsRequest;
-            // OIDC nonce/correlation cookies stay SameSite=None (framework default).
-            // Lax/Strict would drop them on the cross-site Entra redirect and break login.
+            options.NonceCookie.SameSite = SameSiteMode.None;
+            options.NonceCookie.Path = "/";
+            // SameSite=None + Secure: required for cross-site return from login.microsoftonline.com.
             // Entra ID tokens already carry profile/email claims; UserInfo often 404s and caused 500s.
             options.GetClaimsFromUserInfoEndpoint = false;
             options.Scope.Clear();
@@ -195,6 +200,7 @@ public static class AuthServiceCollectionExtensions
             {
                 OnRedirectToIdentityProvider = ApplyEntraCredentialsBeforeChallengeAsync,
                 OnMessageReceived = ApplyEntraCredentialsBeforeCallbackAsync,
+                OnAuthorizationCodeReceived = ApplyEntraRedirectUriBeforeCodeExchangeAsync,
                 OnTokenValidated = async context =>
                 {
                     if (IsEmailUnverified(context.Principal))
@@ -221,13 +227,33 @@ public static class AuthServiceCollectionExtensions
                 },
                 OnRemoteFailure = context =>
                 {
-                    var logger = context.HttpContext.RequestServices
+                    var services = context.HttpContext.RequestServices;
+                    var logger = services
                         .GetRequiredService<ILoggerFactory>()
                         .CreateLogger("Jobsy.Web.Auth.Entra");
+                    var configuration = services.GetRequiredService<IConfiguration>();
+                    var entraOpts = (OpenIdConnectOptions)context.Options;
+                    var tenant = string.IsNullOrWhiteSpace(entraOpts.Authority)
+                        ? null
+                        : entraOpts.Authority.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                            .ElementAtOrDefault(3);
+                    EntraOidcCallbackDiagnostics.LogContext(
+                        logger,
+                        context.HttpContext,
+                        entraOpts.Authority,
+                        entraOpts.ClientId,
+                        tenant);
+                    var aadsts = EntraAuthFailureFormatter.TryGetAadstsCode(context.Failure);
+                    var redirectUri = EntraOidcRedirectUri.Build(
+                        context.HttpContext,
+                        configuration,
+                        entraOpts.CallbackPath);
                     logger.LogWarning(
                         context.Failure,
-                        "Microsoft Entra login mislukt: {Message}",
-                        context.Failure?.Message);
+                        "Microsoft Entra login mislukt: {Description} (AADSTS={AadstsCode}, redirectUri={RedirectUri})",
+                        EntraAuthFailureFormatter.Describe(context.Failure),
+                        aadsts ?? "(none)",
+                        redirectUri);
                     context.HandleResponse();
                     context.Response.Redirect(
                         AuthRedirects.AppendReturnUrl("/login?error=entra-failed", context.Properties?.RedirectUri));
@@ -356,6 +382,12 @@ public static class AuthServiceCollectionExtensions
 
         EntraOidcOptionsApplier.Apply(context.Options, entra);
         context.ProtocolMessage.ClientId = entra.ClientId;
+        var configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+        EntraOidcRedirectUri.ApplyToProtocolMessage(
+            context.HttpContext,
+            configuration,
+            context.ProtocolMessage,
+            context.Options.CallbackPath);
     }
 
     private static async Task ApplyEntraCredentialsBeforeCallbackAsync(MessageReceivedContext context)
@@ -371,6 +403,25 @@ public static class AuthServiceCollectionExtensions
         }
 
         EntraOidcOptionsApplier.Apply(context.Options, entra);
+    }
+
+    private static Task ApplyEntraRedirectUriBeforeCodeExchangeAsync(AuthorizationCodeReceivedContext context)
+    {
+        var configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+        var redirectUri = EntraOidcRedirectUri.Build(
+            context.HttpContext,
+            configuration,
+            context.Options.CallbackPath);
+        if (context.TokenEndpointRequest is not null)
+        {
+            context.TokenEndpointRequest.RedirectUri = redirectUri;
+        }
+
+        if (context.Properties?.Items is not null)
+        {
+            context.Properties.Items["Jobsy.EntraRedirectUri"] = redirectUri;
+        }
+        return Task.CompletedTask;
     }
 
     public static void MapJobsyAuthEndpoints(this WebApplication app)
