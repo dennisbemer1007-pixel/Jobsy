@@ -1,13 +1,13 @@
 KEY: SystemAdminLogin
 SUBJECT: Lobsy: break-glass beheerder ingelogd
-PREHEADER: Login op 2026-10-11 09:10 UTC.
+PREHEADER: Login op 2026-10-11 08:00 UTC.
 KIND: Essential
 --- TEXT ---
 Break-glass beheerder is ingelogd
 =================================
 
 De systeembeheerder (via omgevingsvariabelen) is ingelogd op 2026-10-11
-09:10 UTC.
+08:00 UTC.
 
 Methode: password. IP-adres: 203.0.113.10.
 

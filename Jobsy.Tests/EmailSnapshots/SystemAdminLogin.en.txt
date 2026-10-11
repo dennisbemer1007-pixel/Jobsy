@@ -1,13 +1,13 @@
 KEY: SystemAdminLogin
 SUBJECT: Lobsy: break-glass administrator signed in
-PREHEADER: Sign-in at 2026-10-11 09:10 UTC.
+PREHEADER: Sign-in at 2026-10-11 08:00 UTC.
 KIND: Essential
 --- TEXT ---
 Break-glass administrator signed in
 ===================================
 
 The environment-provisioned system administrator signed in at 2026-10-11
-09:10 UTC.
+08:00 UTC.
 
 Method: password. IP address: 203.0.113.10.
 
