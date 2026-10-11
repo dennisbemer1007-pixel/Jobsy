@@ -102,7 +102,7 @@ Legenda: **werkt** | **gefixt** | **probleem over**
 
 ## Kandidaat
 
-Volledige journey: PR **#627** / `CandidateFullJourneyPlaywrightTests`.
+Volledige journey: **`docs/reports/candidate-journey-e2e-verdicts.nl.md`** / PR **#627** / `CandidateFullJourneyPlaywrightTests`.
 
 ## Niet in ROLES_AND_VIEWS / geen demo-seed
 
@@ -121,3 +121,37 @@ Volledige journey: PR **#627** / `CandidateFullJourneyPlaywrightTests`.
 3. **Stylesheet-wacht**: `Attached` i.p.v. `Visible` (voorkomt timeout op kaartpagina’s).
 4. **Geen volledige vacature-submit** in Playwright — formulier openen + screenshot.
 5. **School/leraar/coach** buiten scope tot demo-accounts bestaan.
+
+---
+
+## Screenshot-paden (journey-volgorde)
+
+Prefix: `/opt/cursor/artifacts/screenshots/roles-journey/`
+
+### Gast
+- Desktop: `guest/desktop/01-banenkaart.png` → `02-registreren.png` → `03-inloggen.png` → `04-partner.png` → `05-hoe-werkt-lobsy.png` → `06-privacy.png`
+- Mobile: zelfde nummering onder `guest/mobile/`
+
+### Filiaalmanager
+- Desktop: `branch-manager/desktop/01-home.png` … `07-overnames.png`
+- Mobile: `01-home.png` … `07-overnames.png`, plus `08-bottomnav-vacatures.png`
+
+### Regiomanager
+- Desktop/mobile: `regional-manager/{desktop|mobile}/01-home.png` → `02-vacatures.png` → `03-vestigingen.png` → `04-tokens.png`
+
+### Bedrijfsmanager
+- Desktop/mobile: `enterprise-manager/{desktop|mobile}/01-home.png` … `06-organisatie.png`
+
+### Intermediair
+- Desktop/mobile: `intermediary/{desktop|mobile}/01-home.png` … `05-tokens.png`
+
+### Salesmanager
+- Desktop/mobile: `sales-manager/{desktop|mobile}/01-home.png` … `06-facturen.png`
+
+### Ambassadeur
+- Desktop/mobile: `ambassadeur/{desktop|mobile}/01-home.png` … `05-onboarding.png`
+
+### Admin
+- Desktop/mobile: `admin/{desktop|mobile}/01-home.png` … `07-logging.png`
+
+**Totaal:** 93 PNG’s (1280×900 desktop, 375×812 mobile).
