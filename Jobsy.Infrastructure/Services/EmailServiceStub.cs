@@ -5,6 +5,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Core.Dev;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
@@ -70,6 +71,8 @@ public sealed class EmailServiceStub : IEmailService, ITransactionalMailer
         _logger.LogInformation(
             "Email stub → {To}: {Subject}",
             redactedTo, subject);
+
+        DevEmailCodeCapture.TryCapture(to, bodyHtml);
 
         _db.PlatformLogs.Add(new PlatformLog
         {

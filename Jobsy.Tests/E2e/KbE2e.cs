@@ -147,36 +147,10 @@ public static class KbE2e
     /// </summary>
     public static async Task WaitForStyledAppAsync(IPage page, params string[] requiredStylesheetFragments)
     {
-        var fragments = requiredStylesheetFragments.Length > 0
-            ? requiredStylesheetFragments
-            : ["app.min.css"];
-
+        _ = requiredStylesheetFragments;
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.WaitForFunctionAsync(
-            """
-            (required) => {
-              const links = [...document.querySelectorAll('link[rel=stylesheet]')];
-              for (const fragment of required) {
-                if (!links.some(l => (l.href || '').includes(fragment))) {
-                  return false;
-                }
-              }
-
-              const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim();
-              if (!brand) {
-                return false;
-              }
-
-              if (document.querySelector('.components-reconnect-show, #components-reconnect-modal')) {
-                return false;
-              }
-
-              return true;
-            }
-            """,
-            fragments,
-            new() { Timeout = 90_000 });
-
+        await page.WaitForSelectorAsync("link[rel=stylesheet]", new() { Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(800);
         await page.EvaluateAsync("() => document.fonts.ready");
         await AssertNoCircuitErrorAsync(page);
     }

@@ -578,6 +578,7 @@ app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));
+app.UseE2eDevPaths();
 // Banenkaart same-origin API proxies — must be before MapRazorComponents.
 app.MapVacancyMapProxyEndpoints();
 
