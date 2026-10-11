@@ -104,13 +104,44 @@ Legenda: **werkt** | **gefixt** | **probleem over**
 
 Volledige journey: **`docs/reports/candidate-journey-e2e-verdicts.nl.md`** / PR **#627** / `CandidateFullJourneyPlaywrightTests`.
 
-## Niet in ROLES_AND_VIEWS / geen demo-seed
+## Schoolbeheerder (`schoolbeheer@jobsy.local`)
 
-| Rol (user-vraag) | Status |
-|------------------|--------|
-| Werkcoach / coach | **probleem over** — geen aparte rol in matrix; geen `@jobsy.local` seed |
-| Leraar / schoolbeheer | **probleem over** — routes `/leraar`, `/school`; geen lokale demo-login in `DemoUsersSeeder` |
-| Gemeente / partner (ingelogd) | **probleem over** — publiek `/partner` getest als gast |
+| Stap | Pad | Desktop | Mobile |
+|------|-----|---------|--------|
+| 01-dashboard | `/school` | werkt | werkt |
+| 02-klassen | `/school/klassen` | werkt | werkt |
+| 03-te-doen | `/school/te-doen` | werkt | werkt |
+| 04-resultaten | `/school/resultaten` | werkt | werkt |
+| 05-leraren | `/school/leraren` | werkt | werkt |
+
+## Leraar (`leraar@jobsy.local`)
+
+| Stap | Pad | Desktop | Mobile |
+|------|-----|---------|--------|
+| 01-dashboard | `/leraar` | werkt | werkt |
+| 02-klas-overzicht | `/leraar/klas/{demo-klas}` | werkt | werkt |
+| 03-codes | `…/codes` | werkt | werkt |
+| 04-groep | `…/groep` | werkt | werkt |
+
+## Werkcoach (`werkcoach@jobsy.local`, Teacher)
+
+| Stap | Pad | Desktop | Mobile |
+|------|-----|---------|--------|
+| 01-dashboard | `/leraar` | werkt | werkt |
+| 02-klas-overzicht | `/leraar/klas/{demo-klas}` | werkt | werkt |
+| 03-droombanen | `…/droombanen` | werkt | werkt |
+| 04-materiaal | `…/materiaal` | werkt | werkt |
+
+## Gemeente (`gemeente@jobsy.local` + publiek)
+
+| Stap | Pad | Desktop | Mobile |
+|------|-----|---------|--------|
+| 01-westland-teaser | `/westland` (anoniem) | werkt | werkt |
+| 02-home | `/home` | werkt | werkt |
+| 03-vacatures | `/employer/vacancies` | werkt | werkt |
+| 04-vestigingen | `/regional/branches` | werkt | werkt |
+
+*Demo-seed (Development): `DemoUsersSeeder` + `appsettings.Development.json` → `Authentication:DemoUsers` (`Jobsy123!`). Klas-id: `DemoSchoolIds.Class1AId`.*
 
 ---
 
@@ -120,7 +151,8 @@ Volledige journey: **`docs/reports/candidate-journey-e2e-verdicts.nl.md`** / PR 
 2. **Ambassadeur-login** vereist `AmbassadorsEnabled=true`; E2E zet dit mee aan.
 3. **Stylesheet-wacht**: `Attached` i.p.v. `Visible` (voorkomt timeout op kaartpagina’s).
 4. **Geen volledige vacature-submit** in Playwright — formulier openen + screenshot.
-5. **School/leraar/coach** buiten scope tot demo-accounts bestaan.
+5. **School/gemeente demo** — unieke KVK + verplichte `Company.Location` voor gemeente-demo-bedrijf (gefixt seed-fout).
+6. **Werkcoach** = `Teacher` met eigen login; geen aparte `UserRole`.
 
 ---
 
@@ -154,4 +186,16 @@ Prefix: `/opt/cursor/artifacts/screenshots/roles-journey/`
 ### Admin
 - Desktop/mobile: `admin/{desktop|mobile}/01-home.png` … `07-logging.png`
 
-**Totaal:** 93 PNG’s (1280×900 desktop, 375×812 mobile).
+### Schoolbeheerder
+- Desktop/mobile: `school-beheer/{desktop|mobile}/01-dashboard.png` … `05-leraren.png`
+
+### Leraar
+- Desktop/mobile: `leraar/{desktop|mobile}/01-dashboard.png` … `04-groep.png`
+
+### Werkcoach
+- Desktop/mobile: `werkcoach/{desktop|mobile}/01-dashboard.png` … `04-materiaal.png`
+
+### Gemeente
+- Desktop/mobile: `gemeente/{desktop|mobile}/01-westland-teaser.png` → `04-vestigingen.png`
+
+**Totaal:** 125 PNG’s (1280×900 desktop, 375×812 mobile) — 12 rollen × desktop + mobile.

@@ -537,11 +537,15 @@ internal static class DemoUsersSeeder
             {
                 Id = DemoGemeenteIds.CompanyId,
                 Name = "Gemeente Westland (demo)",
-                KvkNumber = "12345678",
+                KvkNumber = "99887766",
+                KvkEstablishmentId = "99887766_0001",
+                Address = "Raadhuisplein 1, Naaldwijk",
                 Type = CompanyType.Employer,
+                Location = new GeoPoint(51.994, 4.209),
                 VerificationStatus = CompanyVerificationStatus.Verified,
                 VerificationMethod = CompanyVerificationMethod.Manual,
-                VerifiedAtUtc = DateTime.UtcNow
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
             added++;
         }
