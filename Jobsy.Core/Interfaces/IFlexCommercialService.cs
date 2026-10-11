@@ -34,7 +34,8 @@ public sealed record FlexCommercialSettingsUpdate(
     decimal ContactUnlockCostTokens,
     decimal AcceptCandidatePilotCostTokens,
     DateOnly? AcceptCandidatePilotEndsOn,
-    decimal AcceptCandidateStandardCostTokens);
+    decimal AcceptCandidateStandardCostTokens,
+    bool FirstEmployerAcceptanceFreeEnabled = true);
 
 public sealed record FlexCommercialSettingsDto(
     decimal MarginPerHourEuro,
@@ -48,6 +49,7 @@ public sealed record FlexCommercialSettingsDto(
     decimal AcceptCandidatePilotCostTokens,
     DateOnly? AcceptCandidatePilotEndsOn,
     decimal AcceptCandidateStandardCostTokens,
+    bool FirstEmployerAcceptanceFreeEnabled,
     DateTime UpdatedAtUtc)
 {
     /// <summary>Legacy alias — competence price (kept for landing/DTO compatibility).</summary>

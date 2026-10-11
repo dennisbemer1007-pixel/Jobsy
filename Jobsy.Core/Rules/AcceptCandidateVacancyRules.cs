@@ -22,16 +22,41 @@ public static class AcceptCandidateVacancyRules
     public static decimal ResolveAcceptCostTokens(
         VacancyKind kind,
         FlexCommercialSettings settings,
-        DateOnly todayUtc)
-        => ChargesTokensOnAccept(kind)
-            ? AcceptCandidatePricingRules.ResolveCostTokens(settings, todayUtc)
-            : 0m;
+        DateOnly todayUtc,
+        bool billingCompanyHasPriorPlacements = true)
+        => ResolveAcceptCostTokensCore(
+            kind,
+            settings.FirstEmployerAcceptanceFreeEnabled,
+            billingCompanyHasPriorPlacements,
+            AcceptCandidatePricingRules.ResolveCostTokens(settings, todayUtc));
 
     public static decimal ResolveAcceptCostTokens(
         VacancyKind kind,
         FlexCommercialSettingsDto settings,
-        DateOnly todayUtc)
-        => ChargesTokensOnAccept(kind)
-            ? AcceptCandidatePricingRules.ResolveCostTokens(settings, todayUtc)
-            : 0m;
+        DateOnly todayUtc,
+        bool billingCompanyHasPriorPlacements = true)
+        => ResolveAcceptCostTokensCore(
+            kind,
+            settings.FirstEmployerAcceptanceFreeEnabled,
+            billingCompanyHasPriorPlacements,
+            AcceptCandidatePricingRules.ResolveCostTokens(settings, todayUtc));
+
+    private static decimal ResolveAcceptCostTokensCore(
+        VacancyKind kind,
+        bool firstAcceptanceFreeEnabled,
+        bool billingCompanyHasPriorPlacements,
+        decimal pricedTokens)
+    {
+        if (!ChargesTokensOnAccept(kind))
+        {
+            return 0m;
+        }
+
+        if (firstAcceptanceFreeEnabled && !billingCompanyHasPriorPlacements)
+        {
+            return 0m;
+        }
+
+        return pricedTokens;
+    }
 }

@@ -626,6 +626,7 @@ public sealed partial class JobsyApiClient
         bool locationUnknown = false,
         bool acceptedRepresentation = false,
         string? cookieTrackingCode = null,
+        string? externalVacancyInviteToken = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/registration", new
@@ -655,7 +656,8 @@ public sealed partial class JobsyApiClient
             preferredLoginProvider,
             locationUnknown,
             acceptedRepresentation,
-            cookieTrackingCode
+            cookieTrackingCode,
+            externalVacancyInviteToken
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

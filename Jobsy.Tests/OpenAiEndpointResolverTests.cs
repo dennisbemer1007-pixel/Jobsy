@@ -405,7 +405,8 @@ public class OpenAiEndpointResolverTests
             [
                 OpenAiFeature.VacancyContentModeration,
                 OpenAiFeature.CvExtraction,
-                OpenAiFeature.Translation
+                OpenAiFeature.Translation,
+                OpenAiFeature.ExternalVacancyExtraction
             ],
             cheap);
     }

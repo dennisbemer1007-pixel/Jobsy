@@ -182,7 +182,8 @@ public class RegistrationController : ControllerBase
                     request.RepresentationConsentVersion,
                     request.PreferredLoginProvider,
                     request.LocationUnknown,
-                    request.CookieTrackingCode),
+                    request.CookieTrackingCode,
+                    request.ExternalVacancyInviteToken),
                 cancellationToken);
 
             return Ok(new RegistrationSubmitResponse(

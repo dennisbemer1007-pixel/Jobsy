@@ -1,0 +1,38 @@
+KEY: ExternalVacancyApplication
+SUBJECT: Application via Lobsy
+PREHEADER: A candidate shares a vacancy with you.
+KIND: Essential
+--- TEXT ---
+New application
+===============
+
+Alex de Tester applies via Lobsy for Weekendhulp verkoop at Bakkerij De
+Gouden Korrel.
+
+"Ik werk graag met mijn handen en ben altijd op tijd."
+
+Rijbewijs B: Ja
+Direct beschikbaar: Ja
+
+Je kunt de sollicitatie bekijken en een Lobsy-account maken om verder te
+gaan.
+
+View application: https://lobsy.nl/register/externe-sollicitatie?token=voorbeeld
+
+Team Lobsy
+
+No more emails? Unsubscribe: https://lobsy.nl/api/public/external-vacancy/unsubscribe?token=voorbeeld
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: New application
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View application -> https://lobsy.nl/register/externe-sollicitatie?token=voorbeeld
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -59,6 +59,10 @@
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
     "v": "20261004-10"
   },
+  "css/features/kb-external-vacancy.css": {
+    "sha256": "9002146421f8e1aee942ec27a945631f1d4cbd456130a681d00132f488afe01d",
+    "v": "20261010-01"
+  },
   "css/features/landing.css": {
     "sha256": "fa784797cf21626a06bd7b7d8e8c18498071f2d7496200cfe5c3f1300e95e1f3",
     "v": "20261004-10"
@@ -220,7 +224,7 @@
     "v": "20261004-13"
   },
   "manifest.webmanifest": {
-    "sha256": "24734edaa71dd22629176dedd0ad0b54921ea57da44a9fb98d221a4a2fc86a74",
+    "sha256": "fe76719e490f6c2dc046d7049216f82dd5422e5ba529ff1aec1f1bfa517d682b",
     "v": "20261004-14"
   },
   "service-worker.js": {

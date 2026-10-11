@@ -1,0 +1,22 @@
+@namespace Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Core.Features
+@using Jobsy.Web.KandidaatBanen
+@inject IFeatureFlags FeatureFlags
+@inject CultureState Culture
+
+@if (_visible)
+{
+    <p class="kb-ext__promo" data-testid="kb-ext-promo">
+        <a href="@KbRoutes.ExternalVacancyAdd">@Culture["ExtVac.Promo.Link"]</a>
+    </p>
+}
+
+@code {
+    private bool _visible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var snap = await FeatureFlags.GetAsync();
+        _visible = snap.CandidateExternalVacanciesEnabled;
+    }
+}

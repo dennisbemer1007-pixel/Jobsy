@@ -4,6 +4,7 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services.CandidateExternalVacancies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -16,6 +17,7 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
     private readonly ITokenLedgerService _tokens;
     private readonly IFlexCommercialService _commercial;
     private readonly IApplicationStatusRecorder _statusRecorder;
+    private readonly IExternalVacancyOutboundMetricsService? _externalVacancyMetrics;
     private readonly ILogger<EmployerPhase2Service> _logger;
 
     public EmployerPhase2Service(
@@ -24,13 +26,15 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
         ITokenLedgerService tokens,
         IFlexCommercialService commercial,
         IApplicationStatusRecorder statusRecorder,
-        ILogger<EmployerPhase2Service> logger)
+        ILogger<EmployerPhase2Service> logger,
+        IExternalVacancyOutboundMetricsService? externalVacancyMetrics = null)
     {
         _db = db;
         _flags = flags;
         _tokens = tokens;
         _commercial = commercial;
         _statusRecorder = statusRecorder;
+        _externalVacancyMetrics = externalVacancyMetrics;
         _logger = logger;
     }
 
@@ -70,11 +74,14 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
 
         var commercial = await _commercial.GetAsync(cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var billingCompanyId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+        var hasPriorPlacements = await _db.ApplicationPlacements.AsNoTracking()
+            .AnyAsync(p => p.BillingCompanyId == billingCompanyId, cancellationToken);
         var cost = AcceptCandidateVacancyRules.ResolveAcceptCostTokens(
             application.Vacancy.Kind,
             commercial,
-            today);
-        var billingCompanyId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+            today,
+            hasPriorPlacements);
 
         var respondedAt = DateTime.UtcNow;
         if (cost <= 0m)
@@ -96,6 +103,7 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
                 AcceptCostTokens = 0m
             });
             await _db.SaveChangesAsync(cancellationToken);
+            await NotifyExternalVacancyAcceptedAsync(applicationId, cancellationToken);
             var balance = await _tokens.GetBalanceAsync(billingCompanyId, cancellationToken);
             return new(true, null, null, balance);
         }
@@ -149,7 +157,25 @@ public sealed class EmployerPhase2Service : IEmployerPhase2Service
             }
         }
 
+        await NotifyExternalVacancyAcceptedAsync(applicationId, cancellationToken);
         return new(true, null, null, spend.Balance);
+    }
+
+    private async Task NotifyExternalVacancyAcceptedAsync(Guid applicationId, CancellationToken cancellationToken)
+    {
+        if (_externalVacancyMetrics is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _externalVacancyMetrics.MarkApplicationAcceptedAsync(applicationId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "External vacancy accept metric update failed for {ApplicationId}", applicationId);
+        }
     }
 
     public async Task<EmployerPhase2PlacementResult> ChooseEmploymentModeAsync(

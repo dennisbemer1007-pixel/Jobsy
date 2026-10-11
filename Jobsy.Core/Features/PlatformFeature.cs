@@ -40,5 +40,8 @@ public enum PlatformFeature
     /// Phase-2 employer flows: ½-token accept, Maqqie placement, agency map radius, uren doorgeven.
     /// Default false. Requires <see cref="Employers"/> when enabled.
     /// </summary>
-    EmployerPhase2
+    EmployerPhase2,
+
+    /// <summary>Import/share external vacancy URLs and e-mail employers. Default false.</summary>
+    CandidateExternalVacancies
 }

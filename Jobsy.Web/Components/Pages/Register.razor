@@ -16,13 +16,15 @@
 }
 else
 {
-    <RegisterWizard DeepLinkKvk="@Kvk" RefCode="@Ref" />
+    <RegisterWizard DeepLinkKvk="@Kvk" RefCode="@Ref" DeepLinkEmail="@Email" ExtToken="@ExtToken" />
 }
 
 @code {
     [SupplyParameterFromQuery(Name = "kvk")] public string? Kvk { get; set; }
     [SupplyParameterFromQuery(Name = "ref")] public string? Ref { get; set; }
     [SupplyParameterFromQuery(Name = "van")] public string? Van { get; set; }
+    [SupplyParameterFromQuery(Name = "email")] public string? Email { get; set; }
+    [SupplyParameterFromQuery(Name = "extToken")] public string? ExtToken { get; set; }
 
     private bool _redirecting;
 

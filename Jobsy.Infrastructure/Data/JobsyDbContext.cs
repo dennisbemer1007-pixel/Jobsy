@@ -88,6 +88,9 @@ public class JobsyDbContext : DbContext
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
     public DbSet<VacancyLike> VacancyLikes => Set<VacancyLike>();
+    public DbSet<CandidateExternalVacancy> CandidateExternalVacancies => Set<CandidateExternalVacancy>();
+    public DbSet<CandidateExternalVacancyOutbound> CandidateExternalVacancyOutbounds => Set<CandidateExternalVacancyOutbound>();
+    public DbSet<OutboundRecipientSuppression> OutboundRecipientSuppressions => Set<OutboundRecipientSuppression>();
     public DbSet<VacancyShare> VacancyShares => Set<VacancyShare>();
     public DbSet<VacancySearchImpression> VacancySearchImpressions => Set<VacancySearchImpression>();
     public DbSet<SiteVisit> SiteVisits => Set<SiteVisit>();
@@ -1464,6 +1467,62 @@ public class JobsyDbContext : DbContext
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => e.CreatedAt);
+        });
+
+        modelBuilder.Entity<CandidateExternalVacancy>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SourceUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(e => e.SourceHost).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(512);
+            entity.Property(e => e.CompanyName).HasMaxLength(512);
+            entity.Property(e => e.Place).HasMaxLength(256);
+            entity.Property(e => e.HoursText).HasMaxLength(256);
+            entity.Property(e => e.PayText).HasMaxLength(256);
+            entity.Property(e => e.StartText).HasMaxLength(256);
+            entity.Property(e => e.TrainingText).HasMaxLength(512);
+            entity.Property(e => e.RequirementsBulletsJson).HasMaxLength(8000);
+            entity.Property(e => e.StructuredFactsJson).HasMaxLength(8000);
+            entity.Property(e => e.MatchInsightsJson).HasMaxLength(8000);
+            entity.HasIndex(e => new { e.CandidateUserId, e.SavedAtUtc });
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.LinkedVacancy)
+                .WithMany()
+                .HasForeignKey(e => e.LinkedVacancyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Application)
+                .WithMany()
+                .HasForeignKey(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CandidateExternalVacancyOutbound>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EmployerEmailNormalized).HasMaxLength(254).IsRequired();
+            entity.Property(e => e.Motivation).HasMaxLength(4000);
+            entity.Property(e => e.SharedFactsJson).HasMaxLength(8000);
+            entity.HasIndex(e => new { e.ExternalVacancyId, e.EmployerEmailNormalized }).IsUnique();
+            entity.HasOne(e => e.ExternalVacancy)
+                .WithMany(v => v.OutboundMessages)
+                .HasForeignKey(e => e.ExternalVacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.OneTimeLink)
+                .WithMany()
+                .HasForeignKey(e => e.OneTimeLinkId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<OutboundRecipientSuppression>(entity =>
+        {
+            entity.HasKey(e => e.NormalizedEmail);
+            entity.Property(e => e.NormalizedEmail).HasMaxLength(254);
+            entity.Property(e => e.NormalizedDomain).HasMaxLength(253);
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.HasIndex(e => e.NormalizedDomain);
         });
 
         modelBuilder.Entity<VacancyShare>(entity =>

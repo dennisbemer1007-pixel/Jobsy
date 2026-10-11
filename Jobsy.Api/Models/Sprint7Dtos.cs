@@ -28,7 +28,8 @@ public record SubmitRegistrationRequest(
     string? PreferredLoginProvider = null,
     bool LocationUnknown = false,
     bool AcceptedRepresentation = false,
-    string? CookieTrackingCode = null);
+    string? CookieTrackingCode = null,
+    string? ExternalVacancyInviteToken = null);
 
 public record KvkEstablishmentsLookupResponse(
     string Status,

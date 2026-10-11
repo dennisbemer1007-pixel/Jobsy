@@ -344,6 +344,19 @@ public static class PlatformSettingsCatalog
             Max: CandidateInsightsAccess.MaxUnlockDays,
             UnitKey: "AdminSettings.Unit.Days"));
 
+        if (FieldExists("CandidateExternalVacanciesEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateExternalVacanciesEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ExternalVacancies.Enabled.Title",
+                DescriptionKey: "AdminSettings.ExternalVacancies.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.CandidateExternalVacanciesEnabled,
+                Write: v => new PlatformFeatureUpdate(CandidateExternalVacanciesEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "CandidateInsightsUnlockPerBranch",
             Group: GroupVacancies,
@@ -539,6 +552,7 @@ public static class PlatformSettingsCatalog
         bool? honestAdviceEnabled = null;
         bool? futureJobsForYouEnabled = null;
         bool? employerPhase2Enabled = null;
+        bool? candidateExternalVacanciesEnabled = null;
         bool? freeCandidateTestsEnabled = null;
 
         foreach (var p in parts)
@@ -580,6 +594,10 @@ public static class PlatformSettingsCatalog
             if (p.HonestAdviceEnabled is not null) honestAdviceEnabled = p.HonestAdviceEnabled;
             if (p.FutureJobsForYouEnabled is not null) futureJobsForYouEnabled = p.FutureJobsForYouEnabled;
             if (p.EmployerPhase2Enabled is not null) employerPhase2Enabled = p.EmployerPhase2Enabled;
+            if (p.CandidateExternalVacanciesEnabled is not null)
+            {
+                candidateExternalVacanciesEnabled = p.CandidateExternalVacanciesEnabled;
+            }
         }
 
         return new PlatformFeatureUpdate(
@@ -610,6 +628,7 @@ public static class PlatformSettingsCatalog
             FreeCandidateTestsEnabled: freeCandidateTestsEnabled,
             HonestAdviceEnabled: honestAdviceEnabled,
             FutureJobsForYouEnabled: futureJobsForYouEnabled,
-            EmployerPhase2Enabled: employerPhase2Enabled);
+            EmployerPhase2Enabled: employerPhase2Enabled,
+            CandidateExternalVacanciesEnabled: candidateExternalVacanciesEnabled);
     }
 }

@@ -127,6 +127,8 @@
 @code {
     [Parameter] public string? DeepLinkKvk { get; set; }
     [Parameter] public string? RefCode { get; set; }
+    [Parameter] public string? DeepLinkEmail { get; set; }
+    [Parameter] public string? ExtToken { get; set; }
 
     [Inject] public RegistrationWizardState State { get; set; } = null!;
 
@@ -179,6 +181,16 @@
         {
             State.SearchQuery = DeepLinkKvk;
             await LoadProfileAsync(DeepLinkKvk);
+        }
+
+        if (!string.IsNullOrWhiteSpace(DeepLinkEmail) && string.IsNullOrWhiteSpace(State.ContactEmail))
+        {
+            State.ContactEmail = DeepLinkEmail.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(ExtToken) && string.IsNullOrWhiteSpace(State.ExternalVacancyInviteToken))
+        {
+            State.ExternalVacancyInviteToken = ExtToken.Trim();
         }
 
         await InvokeAsync(StateHasChanged);
@@ -433,7 +445,8 @@
                 representationConsentAtUtc: DateTime.UtcNow,
                 representationConsentVersion: "Wa.Account.Represent/v1",
                 preferredLoginProvider: State.PreferredLoginProvider,
-                locationUnknown: State.LocationUnknown);
+                locationUnknown: State.LocationUnknown,
+                externalVacancyInviteToken: State.ExternalVacancyInviteToken);
 
             State.RegistrationId = result.RegistrationId;
             State.VerificationExpiresAt = result.VerificationExpiresAt;
@@ -463,7 +476,9 @@
             if (!string.IsNullOrWhiteSpace(activated.SessionToken)
                 && !RegistrationPasswordRules.IsExternalLoginProvider(activated.PreferredLoginProvider ?? State.PreferredLoginProvider))
             {
-                var returnUrl = MfaPolicyNeedsSetup(activated.Role) ? "/account/mfa/setup" : "/home";
+                var returnUrl = !string.IsNullOrWhiteSpace(activated.PostActivationWebPath)
+                    ? activated.PostActivationWebPath!
+                    : MfaPolicyNeedsSetup(activated.Role) ? "/account/mfa/setup" : "/home";
                 Navigation.NavigateTo(
                     $"/account/register-signin?token={Uri.EscapeDataString(activated.SessionToken)}&returnUrl={Uri.EscapeDataString(returnUrl)}",
                     forceLoad: true);

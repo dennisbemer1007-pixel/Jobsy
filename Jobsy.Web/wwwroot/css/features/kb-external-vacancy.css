@@ -1,0 +1,227 @@
+.kb-ext {
+  padding: 1rem 1rem 5rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.kb-ext__card {
+  background: var(--surface, #fffcfa);
+  border: 1px solid var(--border, #ddd5cc);
+  border-radius: var(--radius, 12px);
+  padding: 1.25rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.kb-ext__title {
+  font-size: 1.35rem;
+  margin: 0 0 0.35rem;
+  color: var(--text, #122033);
+}
+
+.kb-ext__lead {
+  color: var(--muted, #5a6a7d);
+  margin: 0 0 1rem;
+  line-height: 1.45;
+}
+
+.kb-ext__method-title {
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.kb-ext__url-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.kb-ext__url-row input[type="url"],
+.kb-ext__url-row input[type="email"],
+.kb-ext__url-row textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border, #ddd5cc);
+  border-radius: var(--radius-sm, 8px);
+  font: inherit;
+}
+
+.kb-ext__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 600;
+  font: inherit;
+  cursor: pointer;
+  background: var(--coral, #f54a1b);
+  color: #fff;
+}
+
+.kb-ext__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.kb-ext__btn--secondary {
+  background: var(--surface, #fffcfa);
+  color: var(--brand, #0f2d5c);
+  border: 1px solid var(--border, #ddd5cc);
+}
+
+.kb-ext__badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--success-soft, #ecfdf3);
+  color: var(--success, #15803d);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.kb-ext__facts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.kb-ext__facts th,
+.kb-ext__facts td {
+  text-align: left;
+  padding: 0.45rem 0.25rem;
+  border-bottom: 1px solid var(--border, #ddd5cc);
+  vertical-align: top;
+}
+
+.kb-ext__facts .is-unknown {
+  color: var(--muted, #5a6a7d);
+  font-style: italic;
+}
+
+.kb-ext__match {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .kb-ext__match {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.kb-ext__match-panel {
+  padding: 0.75rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--accent-soft, #e7eef7);
+}
+
+.kb-ext__match-panel--good {
+  background: var(--success-soft, #ecfdf3);
+}
+
+.kb-ext__match-panel h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+}
+
+.kb-ext__privacy {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--success-soft, #ecfdf3);
+  color: var(--success, #15803d);
+  font-size: 0.85rem;
+}
+
+.kb-ext__plan-b {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border: 2px dashed var(--border, #ddd5cc);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.kb-ext__promo {
+  margin: 0.5rem 1rem 0;
+  text-align: center;
+}
+
+.kb-ext__promo a {
+  font-size: 0.85rem;
+  color: var(--brand, #0f2d5c);
+  font-weight: 600;
+}
+
+.kb-ext__stepper {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.kb-ext__step {
+  flex: 1;
+  min-width: 4rem;
+  text-align: center;
+  font-size: 0.7rem;
+  padding: 0.35rem 0.25rem;
+  border-radius: 999px;
+  background: var(--pearl-mid, #efe9e3);
+  color: var(--muted, #5a6a7d);
+}
+
+.kb-ext__step.is-active {
+  background: var(--brand, #0f2d5c);
+  color: #fff;
+}
+
+.kb-ext__step.is-done {
+  background: var(--success-soft, #ecfdf3);
+  color: var(--success, #15803d);
+}
+
+.kb-ext__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.kb-ext__list a {
+  display: block;
+  padding: 0.75rem;
+  border: 1px solid var(--border, #ddd5cc);
+  border-radius: var(--radius-sm, 8px);
+  text-decoration: none;
+  color: inherit;
+}
+
+.kb-ext__list a:hover {
+  background: var(--hover, #f0ebe6);
+}
+
+.kb-ext__header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.kb-ext ul.kb-ext__bullets {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.kb-ext__checkbox {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+}

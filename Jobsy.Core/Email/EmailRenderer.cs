@@ -136,6 +136,7 @@ public static class EmailRenderer
         }
 
         sb.Append($"<p class=\"m\" style=\"margin:18px 0 0 0;font-size:14px;line-height:20px;color:{muted};\">{Escape(doc.SignOff)}</p>");
+
         sb.Append("</td></tr></table>");
 
         // Footer

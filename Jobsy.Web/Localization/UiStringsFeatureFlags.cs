@@ -160,5 +160,17 @@ public static class UiStringsFeatureFlags
             "Pozostaje wyłączone do wyboru dostawcy SMS. Poza Development nie ma SMS.",
             "Rămâne oprit până la un furnizor SMS. Nu se trimite SMS în afara Development.",
             "يبقى متوقفاً حتى اختيار مزود رسائل. لا تُرسل رسالة خارج بيئة التطوير.");
+        Add("AdminSettings.CandidateExternalVacancies.Enabled.Title",
+            "Externe vacatures",
+            "External vacancies",
+            "Oferty zewnętrzne",
+            "Joburi externe",
+            "وظائف خارجية");
+        Add("AdminSettings.CandidateExternalVacancies.Enabled.Desc",
+            "Kandidaten plakken links van andere vacaturesites en solliciteren via Lobsy.",
+            "Candidates paste links from other job sites and apply via Lobsy.",
+            "Kandydaci wklejają linki z innych portali i aplikują przez Lobsy.",
+            "Candidații lipește linkuri de pe alte site-uri și aplică prin Lobsy.",
+            "المرشحون يلصقون روابط من مواقع أخرى ويتقدمون عبر لوبسي.");
     }
 }

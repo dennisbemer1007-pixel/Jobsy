@@ -14,6 +14,8 @@
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
 @inject PersistentComponentState Persist
+@inject IFeatureFlags FeatureFlags
+@using Jobsy.Core.Contracts
 @implements IDisposable
 
 <PageTitle>@Culture["Kb.Saved.Title"] · Lobsy</PageTitle>
@@ -30,6 +32,33 @@
 
             <CandidateJobListTabs />
             <CandidateSavedSubnav />
+
+            @if (_externalOn)
+            {
+                <section class="kb-ext__card kb-saved__external" aria-labelledby="ext-saved-title">
+                    <h2 id="ext-saved-title" class="kb-ext__method-title">@Culture["ExtVac.Saved.Title"]</h2>
+                    <p class="muted">@Culture["ExtVac.Saved.Lead"]</p>
+                    @if (_externalItems.Count == 0)
+                    {
+                        <p class="state-message">@Culture["ExtVac.Saved.Empty"] <a href="@KbRoutes.ExternalVacancyAdd">@Culture["ExtVac.Saved.Add"]</a>.</p>
+                    }
+                    else
+                    {
+                        <ul class="kb-ext__list">
+                            @foreach (var ext in _externalItems)
+                            {
+                                <li>
+                                    <a href="@KbRoutes.ExternalVacancyDetail(ext.Id)">
+                                        <strong>@ext.Title</strong>
+                                        <span class="muted">@ext.CompanyName · @ext.Place</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        <p><a href="@KbRoutes.ExternalVacancyAdd">@Culture["ExtVac.Saved.Add"]</a></p>
+                    }
+                </section>
+            }
 
             @if (_loading)
             {
@@ -242,6 +271,8 @@
     private int _countOpen;
     private int _countClosed;
     private CandidateEngagementItem? _undoItem;
+    private bool _externalOn;
+    private List<ExternalVacancyListItemDto> _externalItems = [];
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
 
@@ -278,6 +309,20 @@
 
         try
         {
+            var flags = await FeatureFlags.GetAsync();
+            _externalOn = flags.CandidateExternalVacanciesEnabled;
+            if (_externalOn)
+            {
+                try
+                {
+                    _externalItems = (await Api.ListExternalVacanciesAsync()).ToList();
+                }
+                catch
+                {
+                    _externalItems = [];
+                }
+            }
+
             _items = (await Api.GetMyLikesAsync()).ToList();
             RefreshCounts();
             ApplyFilter();

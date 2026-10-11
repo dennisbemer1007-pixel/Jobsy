@@ -1,0 +1,37 @@
+KEY: ExternalVacancyApplication
+SUBJECT: طلب عبر Lobsy
+PREHEADER: مرشح يشارك وظيفة معك.
+KIND: Essential
+--- TEXT ---
+طلب جديد
+
+⁨Alex de Tester⁩ يتقدم عبر Lobsy على ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De
+Gouden Korrel⁩.
+
+"Ik werk graag met mijn handen en ben altijd op tijd."
+
+Ja :Rijbewijs B
+Ja :Direct beschikbaar
+
+Je kunt de sollicitatie bekijken en een Lobsy-account maken om verder te
+gaan.
+
+عرض الطلب: https://lobsy.nl/register/externe-sollicitatie?token=voorbeeld
+
+فريق Lobsy
+
+لا مزيد من الرسائل؟ إلغاء الاشتراك: https://lobsy.nl/api/public/external-vacancy/unsubscribe?token=voorbeeld
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: طلب جديد
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض الطلب -> https://lobsy.nl/register/externe-sollicitatie?token=voorbeeld
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

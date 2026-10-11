@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (244 routes)
+## Table (249 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -141,12 +141,16 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/deep-analysis/checkout` | `Pages/Candidate/DeepAnalysisCheckout.razor` | Candidate |
 | `/candidate/deep-analysis/{Kind}` | `Pages/Candidate/DeepAnalysis.razor` | Candidate |
 | `/candidate/disc` | `Pages/Candidate/CultureScan.razor` | Candidate |
+| `/candidate/external/add` | `Pages/Candidate/ExternalVacancyAdd.razor` | Candidate |
+| `/candidate/external/{Id:guid}` | `Pages/Candidate/ExternalVacancyDetail.razor` | Candidate |
+| `/candidate/external/{Id:guid}/apply` | `Pages/Candidate/ExternalVacancyApply.razor` | Candidate |
 | `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate |
 | `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
+| `/candidate/share-in` | `Pages/Candidate/ShareIn.razor` | anonymous |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
@@ -215,6 +219,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/regional/tokens` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/register` | `Pages/Register.razor` | anonymous |
 | `/register/bedrijf` | `Pages/RegisterBedrijf.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |
+| `/register/externe-sollicitatie` | `Pages/ExternalEmployerRegister.razor` | anonymous |
 | `/register/koppelen` | `Pages/RegisterKoppelen.razor` | authenticated |
 | `/register/toegang` | `Pages/RegisterToegang.razor` | anonymous |
 | `/register/verifieren` | `Pages/RegisterVerifieren.razor` | EnterpriseManager, BranchManager, Intermediary, Admin |

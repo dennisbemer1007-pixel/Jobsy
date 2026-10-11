@@ -1477,6 +1477,153 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateDiplomaEvaluations", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateExternalVacancy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CandidateUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("HoursText")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("LinkedVacancyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MatchInsightsJson")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<string>("PayText")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Place")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("RequirementsBulletsJson")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<DateTime>("SavedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SourceHost")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SourceUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("StartText")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StructuredFactsJson")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("TrainingText")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int?>("TravelMinutesEstimate")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId");
+
+                    b.HasIndex("LinkedVacancyId");
+
+                    b.HasIndex("CandidateUserId", "SavedAtUtc");
+
+                    b.ToTable("CandidateExternalVacancies");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateExternalVacancyOutbound", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcceptedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ClickedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EmployerAccountCreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmployerEmailNormalized")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<Guid>("ExternalVacancyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("InitialSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Motivation")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid?>("OneTimeLinkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReminderSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SharedFactsJson")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OneTimeLinkId");
+
+                    b.HasIndex("ExternalVacancyId", "EmployerEmailNormalized")
+                        .IsUnique();
+
+                    b.ToTable("CandidateExternalVacancyOutbounds");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2748,6 +2895,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<Guid?>("ExternalVacancyOutboundId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsIntermediarySbi")
                         .HasColumnType("boolean");
 
@@ -3820,6 +3970,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<bool>("FirstEmployerAcceptanceFreeEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("MarginPerHourEuro")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
@@ -4409,6 +4562,32 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("OneTimeLinks", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.OutboundRecipientSuppression", b =>
+                {
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedDomain")
+                        .IsRequired()
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("NormalizedEmail");
+
+                    b.HasIndex("NormalizedDomain");
+
+                    b.ToTable("OutboundRecipientSuppressions");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.PartnerAffiliateProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4939,6 +5118,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("AuthenticatorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CandidateExternalVacanciesEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("CandidateInsightsEnabled")
@@ -8919,6 +9101,49 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateExternalVacancy", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Application", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.User", "CandidateUser")
+                        .WithMany()
+                        .HasForeignKey("CandidateUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Vacancy", "LinkedVacancy")
+                        .WithMany()
+                        .HasForeignKey("LinkedVacancyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Application");
+
+                    b.Navigation("CandidateUser");
+
+                    b.Navigation("LinkedVacancy");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateExternalVacancyOutbound", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.CandidateExternalVacancy", "ExternalVacancy")
+                        .WithMany("OutboundMessages")
+                        .HasForeignKey("ExternalVacancyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.OneTimeLink", "OneTimeLink")
+                        .WithMany()
+                        .HasForeignKey("OneTimeLinkId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ExternalVacancy");
+
+                    b.Navigation("OneTimeLink");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateInsightsUnlock", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "ActorUser")
@@ -10554,6 +10779,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCareerPlan", b =>
                 {
                     b.Navigation("StepProgress");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateExternalVacancy", b =>
+                {
+                    b.Navigation("OutboundMessages");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.Company", b =>

@@ -531,6 +531,29 @@ public static class DependencyInjection
         services.AddScoped<IWhoAmIService, WhoAmIService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
+        services.AddHttpClient(Services.CandidateExternalVacancies.ExternalVacancyUrlFetchService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(15);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<IExternalVacancyUrlFetchService, Services.CandidateExternalVacancies.ExternalVacancyUrlFetchService>();
+        services.AddScoped<IExternalVacancyExtractionService, Services.CandidateExternalVacancies.ExternalVacancyExtractionService>();
+        services.AddScoped<IExternalVacancyMatchService, Services.CandidateExternalVacancies.ExternalVacancyMatchService>();
+        services.AddScoped<IExternalVacancyContactFinder, Services.CandidateExternalVacancies.ExternalVacancyContactFinder>();
+        services.AddScoped<IExternalVacancyApplicationLetterPdfBuilder, Services.CandidateExternalVacancies.ExternalVacancyApplicationLetterPdfBuilder>();
+        services.AddScoped<IExternalVacancySuppressionService, Services.CandidateExternalVacancies.ExternalVacancySuppressionService>();
+        services.AddScoped<IExternalVacancyEmployerInviteService, Services.CandidateExternalVacancies.ExternalVacancyEmployerInviteService>();
+        services.AddScoped<ICandidateExternalVacancyService, Services.CandidateExternalVacancies.CandidateExternalVacancyService>();
+        services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyOutboundMetricsService,
+            Services.CandidateExternalVacancies.ExternalVacancyOutboundMetricsService>();
+        services.AddScoped<IExternalVacancyEmployerOnboardingService,
+            Services.CandidateExternalVacancies.ExternalVacancyEmployerOnboardingService>();
+        services.AddScoped<IExternalVacancyTravelEstimator,
+            Services.CandidateExternalVacancies.ExternalVacancyTravelEstimator>();
+        services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyReminderService,
+            Services.CandidateExternalVacancies.ExternalVacancyReminderService>();
         services.AddOptions<UploadScanOptions>()
             .Bind(configuration.GetSection(UploadScanOptions.SectionName));
         // ClamAV stays off until UploadScan:Enabled. No AI body logger on this client.
@@ -718,6 +741,7 @@ public static class DependencyInjection
         services.AddHostedService<CareerPlanArchiveCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
+        services.AddHostedService<Jobs.ExternalVacancyReminderHostedService>();
         services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();

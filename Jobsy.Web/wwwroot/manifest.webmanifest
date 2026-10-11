@@ -40,6 +40,16 @@
       "purpose": "maskable"
     }
   ],
+  "share_target": {
+    "action": "/candidate/share-in",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "shortcuts": [
     {
       "name": "Zoeken",

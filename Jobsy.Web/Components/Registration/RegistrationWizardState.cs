@@ -48,6 +48,7 @@ public sealed class RegistrationWizardState
     public DateTime? VerificationExpiresAt { get; set; }
     public bool InstantlyVerified { get; set; }
     public bool Done { get; set; }
+    public string? ExternalVacancyInviteToken { get; set; }
 
     public bool IsIntermediarySbi =>
         SbiCodes.Any(s =>
@@ -155,7 +156,8 @@ public sealed class RegistrationWizardState
         RegistrationId = RegistrationId,
         VerificationExpiresAt = VerificationExpiresAt,
         InstantlyVerified = InstantlyVerified,
-        Done = Done
+        Done = Done,
+        ExternalVacancyInviteToken = ExternalVacancyInviteToken
     };
 
     private void Apply(WizardSnapshot dto)
@@ -198,6 +200,7 @@ public sealed class RegistrationWizardState
         VerificationExpiresAt = dto.VerificationExpiresAt;
         InstantlyVerified = dto.InstantlyVerified;
         Done = dto.Done;
+        ExternalVacancyInviteToken = dto.ExternalVacancyInviteToken;
     }
 
     private sealed class WizardSnapshot
@@ -238,6 +241,7 @@ public sealed class RegistrationWizardState
         public DateTime? VerificationExpiresAt { get; set; }
         public bool InstantlyVerified { get; set; }
         public bool Done { get; set; }
+        public string? ExternalVacancyInviteToken { get; set; }
     }
 }
 

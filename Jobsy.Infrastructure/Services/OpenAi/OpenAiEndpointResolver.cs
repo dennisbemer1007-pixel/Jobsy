@@ -61,6 +61,7 @@ public sealed class OpenAiEndpointResolver : IOpenAiEndpointResolver
             [OpenAiFeature.CareerCompass] = new(DefaultModel, DefaultBaseUrl, IntegrationKey.OpenAI, OpenAiOptions.SectionName, BaseUrlConfigFallbackStyle.NormalizeOrDefault),
             [OpenAiFeature.RoleFitCheck] = new(DefaultModel, DefaultBaseUrl, IntegrationKey.OpenAI, OpenAiOptions.SectionName, BaseUrlConfigFallbackStyle.NormalizeOrDefault),
             [OpenAiFeature.CompetenceDeepReport] = new(DefaultModel, DefaultBaseUrl, IntegrationKey.OpenAI, OpenAiOptions.SectionName, BaseUrlConfigFallbackStyle.TrimAndEnsureSlash),
+            [OpenAiFeature.ExternalVacancyExtraction] = new(DefaultModel, DefaultBaseUrl, IntegrationKey.OpenAI, OpenAiOptions.SectionName, BaseUrlConfigFallbackStyle.NormalizeOrDefault),
         };
 
     private readonly IIntegrationCredentialService _credentials;

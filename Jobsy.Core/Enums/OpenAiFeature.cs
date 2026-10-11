@@ -17,4 +17,5 @@ public enum OpenAiFeature
     CareerCompass,
     RoleFitCheck,
     CompetenceDeepReport,
+    ExternalVacancyExtraction,
 }

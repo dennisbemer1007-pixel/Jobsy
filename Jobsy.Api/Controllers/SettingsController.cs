@@ -214,7 +214,8 @@ public class SettingsController : ControllerBase
                     request.AcceptCandidatePilotEndsOn,
                     request.AcceptCandidateStandardCostTokens > 0
                         ? request.AcceptCandidateStandardCostTokens
-                        : FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens),
+                        : FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
+                    request.FirstEmployerAcceptanceFreeEnabled),
                 cancellationToken));
         }
         catch (ArgumentException ex)
@@ -491,7 +492,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled,
                     HonestAdviceEnabled: request.HonestAdviceEnabled,
                     FutureJobsForYouEnabled: request.FutureJobsForYouEnabled,
-                    EmployerPhase2Enabled: request.EmployerPhase2Enabled),
+                    EmployerPhase2Enabled: request.EmployerPhase2Enabled,
+                    CandidateExternalVacanciesEnabled: request.CandidateExternalVacanciesEnabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -570,6 +572,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("HonestAdviceEnabled", before.HonestAdviceEnabled.ToString(), after.HonestAdviceEnabled.ToString());
         Add("FutureJobsForYouEnabled", before.FutureJobsForYouEnabled.ToString(), after.FutureJobsForYouEnabled.ToString());
         Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
+        Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         return list;
     }
 
@@ -594,7 +597,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             compactTestPdfEnabled = snap.CompactTestPdfEnabled,
             honestAdviceEnabled = snap.HonestAdviceEnabled,
             futureJobsForYouEnabled = snap.FutureJobsForYouEnabled,
-            employerPhase2Enabled = snap.EmployerPhase2Enabled
+            employerPhase2Enabled = snap.EmployerPhase2Enabled,
+            candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled
         });
     }
 
@@ -904,7 +908,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.FreeCandidateTestsEnabled,
             snap.HonestAdviceEnabled,
             snap.FutureJobsForYouEnabled,
-            snap.EmployerPhase2Enabled);
+            snap.EmployerPhase2Enabled,
+            snap.CandidateExternalVacanciesEnabled);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(
@@ -1038,4 +1043,5 @@ public sealed record UpdateLobsyCommercialRequest(
     decimal ContactUnlockCostTokens = 0,
     decimal AcceptCandidatePilotCostTokens = 0,
     DateOnly? AcceptCandidatePilotEndsOn = null,
-    decimal AcceptCandidateStandardCostTokens = 0);
+    decimal AcceptCandidateStandardCostTokens = 0,
+    bool FirstEmployerAcceptanceFreeEnabled = true);
