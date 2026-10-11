@@ -1045,7 +1045,13 @@ public static class PassportPdfModelBuilder
             }
         }
 
-        return bits.Count == 0 ? null : string.Join(" · ", bits);
+        if (bits.Count == 0)
+        {
+            return null;
+        }
+
+        var line = string.Join(" · ", bits);
+        return line.Length <= 240 ? line : line[..237] + "…";
     }
 
     private static string PracticalSeek(string lang, PassportPdfFacts facts)

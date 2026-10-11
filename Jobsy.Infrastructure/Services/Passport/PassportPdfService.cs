@@ -2,6 +2,7 @@ using System.Globalization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Passport;
 using Jobsy.Core.Time;
+using QuestPDF.Drawing;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -20,12 +21,26 @@ public sealed class PassportPdfService : IPassportPdfService
     private static readonly Color Green = Color.FromHex("#ECFDF3");
     private static readonly Color GreenInk = Color.FromHex("#15803D");
     private static readonly Color White = Colors.White;
+    private const string ArabicFontFamily = "Noto Sans Arabic";
 
     private readonly IPlatformCompanySettingsService _companySettings;
 
     static PassportPdfService()
     {
         QuestPDF.Settings.License = LicenseType.Community;
+        RegisterEmbeddedFont("Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Regular.ttf");
+        RegisterEmbeddedFont("Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Bold.ttf");
+    }
+
+    private static void RegisterEmbeddedFont(string resourceName)
+    {
+        using var stream = typeof(PassportPdfService).Assembly.GetManifestResourceStream(resourceName);
+        if (stream is null)
+        {
+            return;
+        }
+
+        FontManager.RegisterFont(stream);
     }
 
     public PassportPdfService(IPlatformCompanySettingsService companySettings)
@@ -55,11 +70,18 @@ public sealed class PassportPdfService : IPassportPdfService
         return Task.FromResult(bytes);
     }
 
+    private static bool IsRtl(string lang) => string.Equals(lang, "ar", StringComparison.OrdinalIgnoreCase);
+
     private static void Compose(PageDescriptor page, PassportPdfModel model, string lang, bool page2)
     {
         page.Size(PageSizes.A4);
         page.Margin(0);
-        page.DefaultTextStyle(style => style.FontSize(9).FontColor(Ink).LineHeight(1.25f));
+        var rtl = IsRtl(lang);
+        page.DefaultTextStyle(style =>
+        {
+            var text = style.FontSize(9).FontColor(Ink).LineHeight(1.25f);
+            return rtl ? text.FontFamily(ArabicFontFamily) : text;
+        });
 
         page.Header().Height(40).Background(Navy).Layers(layers =>
         {
@@ -81,17 +103,26 @@ public sealed class PassportPdfService : IPassportPdfService
             });
         });
 
-        page.Content().PaddingHorizontal(16).PaddingTop(8).PaddingBottom(4).ScaleToFit().Column(col =>
+        page.Content().Element(body =>
         {
-            col.Spacing(7);
-            if (page2)
+            var column = body.PaddingHorizontal(16).PaddingTop(8).PaddingBottom(6);
+            if (rtl)
             {
-                Page2(col, model, lang);
+                column = column.ContentFromRightToLeft();
             }
-            else
+
+            column.Column(col =>
             {
-                Page1(col, model, lang);
-            }
+                col.Spacing(6);
+                if (page2)
+                {
+                    Page2(col, model, lang);
+                }
+                else
+                {
+                    Page1(col, model, lang);
+                }
+            });
         });
 
         page.Footer().PaddingHorizontal(16).PaddingBottom(8).PaddingTop(2).Row(row =>
@@ -319,7 +350,7 @@ public sealed class PassportPdfService : IPassportPdfService
         {
             row.RelativeItem().Column(name =>
             {
-                name.Item().Text(model.FullName).FontSize(20).Bold().FontColor(Navy);
+                name.Item().Text(model.FullName).FontSize(HeroNameFontSize(model.FullName)).Bold().FontColor(Navy).LineHeight(1.15f);
                 if (!string.IsNullOrWhiteSpace(model.HeroMeta))
                 {
                     name.Item().PaddingTop(1).Text(model.HeroMeta).FontSize(8).FontColor(Muted);
@@ -477,7 +508,7 @@ public sealed class PassportPdfService : IPassportPdfService
             block.Item().Text(PassportPdfStrings.T(lang, "PracticalTitle")).FontSize(9).Bold().FontColor(Navy);
             if (!string.IsNullOrWhiteSpace(model.PracticalLine))
             {
-                block.Item().PaddingTop(2).Text(model.PracticalLine).FontSize(8);
+                block.Item().PaddingTop(2).Text(model.PracticalLine).FontSize(8).LineHeight(1.3f);
             }
 
             if (!string.IsNullOrWhiteSpace(model.PracticalSeek))
@@ -542,6 +573,15 @@ public sealed class PassportPdfService : IPassportPdfService
 
     private static string AvatarSvg()
         => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><circle cx=\"18\" cy=\"18\" r=\"18\" fill=\"#0F2D5C\"/></svg>";
+
+    private static float HeroNameFontSize(string fullName)
+        => fullName.Length switch
+        {
+            > 36 => 14f,
+            > 30 => 16f,
+            > 24 => 18f,
+            _ => 20f
+        };
 
     private static string AvatarLetter(PassportPdfModel model)
     {
