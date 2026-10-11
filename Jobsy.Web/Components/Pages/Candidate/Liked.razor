@@ -241,11 +241,11 @@
                 <h2>@Culture["Saved.Headline"]</h2>
                 <p>@Culture["Saved.Lead"]</p>
                 <div class="saved-gate__actions">
-                    <a class="provider-btn provider-btn--google"
-                       href="@($"/account/external/google?returnUrl={Uri.EscapeDataString("/candidate/liked")}")">
+                    <ExternalProviderLink Class="provider-btn provider-btn--google"
+                                          Href="@($"/account/external/google?returnUrl={Uri.EscapeDataString("/candidate/liked")}")">
                         <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">G</span>
                         @Culture["Saved.ContinueGoogle"]
-                    </a>
+                    </ExternalProviderLink>
                     <a class="provider-btn"
                        href="@($"/login?returnUrl={Uri.EscapeDataString("/candidate/liked")}")">
                         @Culture["Saved.ContinueApple"]

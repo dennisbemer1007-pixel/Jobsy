@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Public
 @using Jobsy.Web.Auth
+@using Jobsy.Web.Components.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
@@ -33,11 +34,11 @@
     <div class="gd-signup__providers">
         @if (_googleEnabled)
         {
-            <a class="gd-signup__btn"
-               href="@GoogleHref"
-               data-kpi="ResultCtaSignup"
-               data-kpi-target="google"
-               data-testid="gd-signup-google">
+            <ExternalProviderLink Class="gd-signup__btn"
+                                  Href="@GoogleHref"
+                                  data-kpi="ResultCtaSignup"
+                                  data-kpi-target="google"
+                                  data-testid="gd-signup-google">
                 <span class="gd-signup__icon gd-signup__icon--google" aria-hidden="true">
                     <svg viewBox="0 0 48 48" width="16" height="16">
                         <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
@@ -47,21 +48,21 @@
                     </svg>
                 </span>
                 @Culture["Signup.Google"]
-            </a>
+            </ExternalProviderLink>
         }
 
         @if (_entraEnabled)
         {
-            <a class="gd-signup__btn"
-               href="@MicrosoftHref"
-               data-kpi="ResultCtaSignup"
-               data-kpi-target="microsoft"
-               data-testid="gd-signup-microsoft">
+            <ExternalProviderLink Class="gd-signup__btn"
+                                  Href="@MicrosoftHref"
+                                  data-kpi="ResultCtaSignup"
+                                  data-kpi-target="microsoft"
+                                  data-testid="gd-signup-microsoft">
                 <span class="gd-signup__icon" aria-hidden="true">
                     <svg viewBox="0 0 23 23" width="16" height="16"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
                 </span>
                 @Culture["Signup.Microsoft"]
-            </a>
+            </ExternalProviderLink>
         }
 
         <a class="gd-signup__btn"

@@ -58,6 +58,7 @@ public class LoginPageRenderTests
 
         Assert.Contains("/account/external/entra", html, StringComparison.Ordinal);
         Assert.DoesNotContain("/account/external/google", html, StringComparison.Ordinal);
+        Assert.Contains("data-enhance-nav=\"false\"", html, StringComparison.Ordinal);
     }
 
     [Fact]
