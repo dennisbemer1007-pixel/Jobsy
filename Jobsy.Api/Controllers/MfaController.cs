@@ -252,7 +252,7 @@ public sealed class MfaController : ControllerBase
         await _systemAdminLoginNotifier.NotifySuccessfulLoginAsync(
             user,
             "password+mfa",
-            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            HttpContext?.Connection.RemoteIpAddress?.ToString(),
             cancellationToken);
 
         var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
