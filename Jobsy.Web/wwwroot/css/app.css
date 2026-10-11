@@ -46,6 +46,7 @@
     --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     /* Room for the sticky bottom-nav (pb-28). */
     --bottom-nav-clearance: 7rem;
+    --cookie-bar-h: 0px;
     --app-header-height: 4.25rem;
     /* Spacing / type / z-index tokens (design system; admin + enterprise denser layout). */
     --space-1: 0.25rem;
@@ -13225,11 +13226,12 @@ html.cookie-consent-known .cookie-consent {
   right: 0;
   bottom: 0;
   z-index: 80;
-  padding: 0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.45rem 0.75rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(180deg, rgba(15, 45, 92, 0.96), rgba(10, 32, 68, 0.98));
   color: #f7f4f0;
-  box-shadow: 0 -8px 28px rgba(15, 45, 92, 0.28);
+  box-shadow: 0 -4px 16px rgba(15, 45, 92, 0.22);
   contain: layout paint style;
+  pointer-events: auto;
 }
 
 .cookie-consent__inner {
@@ -13237,9 +13239,14 @@ html.cookie-consent-known .cookie-consent {
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.65rem 1rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.cookie-consent__copy {
+  flex: 1 1 12rem;
+  min-width: 0;
 }
 
 .cookie-consent__mascot {
@@ -13271,6 +13278,20 @@ html.cookie-consent-known .cookie-consent {
   max-width: 36rem;
 }
 
+.cookie-consent__text-short {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .cookie-consent__text-full {
+    display: none;
+  }
+
+  .cookie-consent__text-short {
+    display: inline;
+  }
+}
+
 .cookie-consent__text a,
 .cookie-consent a.cookie-consent__privacy {
   color: #fff;
@@ -13291,31 +13312,30 @@ html.cookie-consent-known .cookie-consent {
   gap: 0.55rem;
 }
 
-.cookie-consent__actions .btn-compact {
+.cookie-consent__actions .btn-compact,
+.cookie-consent__actions .btn-compact--primary {
   background: transparent;
   color: #f7f4f0;
-  border: 1px solid rgba(247, 244, 240, 0.45);
+  border: 1px solid rgba(247, 244, 240, 0.55);
+  min-height: 2.5rem;
+  font-weight: 600;
 }
 
-.cookie-consent__actions .btn-compact--primary {
-  background: var(--coral-deep, #d93a12);
-  border-color: var(--coral-deep, #d93a12);
-  color: #fff;
-}
-
+.cookie-consent__actions .btn-compact:hover:not(:disabled),
 .cookie-consent__actions .btn-compact--primary:hover:not(:disabled) {
-  background: #c43410;
-  border-color: #c43410;
+  background: rgba(247, 244, 240, 0.12);
   color: #fff;
 }
 
 @media (max-width: 640px) {
   .cookie-consent__actions {
     width: 100%;
+    flex: 1 1 100%;
   }
 
-  .cookie-consent__actions .btn-compact {
-    flex: 1 1 auto;
+  .cookie-consent__actions .btn-compact,
+  .cookie-consent__actions .btn-compact--primary {
+    flex: 1 1 calc(50% - 0.3rem);
   }
 }
 
@@ -19754,16 +19774,29 @@ html.using-keyboard h1[tabindex="-1"]:focus-visible {
     filter: none;
 }
 
-html:not(.cookie-consent-known) .app-shell.has-bottom-nav .app-main,
-html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
-    padding-bottom: calc(var(--bottom-nav-clearance) + 5.5rem + env(safe-area-inset-bottom, 0px));
+html:not(.cookie-consent-known) {
+    --cookie-bar-h: 4.25rem;
 }
 
-/* Banenkaart: keep map flush with bottom-nav even while the cookie banner is open.
-   The rule above is more specific than .app-shell:has(.jobsy-discovery) .app-main and
-   otherwise leaves ~125px empty gap above the nav. */
+html:not(.cookie-consent-known) body {
+    padding-bottom: calc(var(--cookie-bar-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+}
+
+html:not(.cookie-consent-known) .app-main {
+    padding-bottom: calc(var(--cookie-bar-h, 4.25rem) + env(safe-area-inset-bottom, 0px));
+}
+
+html:not(.cookie-consent-known) .app-shell.has-bottom-nav .app-main,
+html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
+    padding-bottom: calc(
+        var(--bottom-nav-clearance)
+        + var(--cookie-bar-h, 0px)
+        + env(safe-area-inset-bottom, 0px)
+    );
+}
+
+/* Banenkaart: map stays flush with bottom-nav; cookie clearance is on scrollable inner panes. */
 @media (max-width: 1024px) {
-    /* Only reserve bottom-nav space when the nav is actually present (anonymous has no nav). */
     html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
         padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
     }
@@ -19773,7 +19806,7 @@ html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
 }
 
 html:not(.cookie-consent-known) .login-modal__dialog {
-    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--cookie-bar-h, 0px) + 1.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .cookie-consent {
