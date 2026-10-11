@@ -242,7 +242,9 @@ public class AdminController : ControllerBase
 
         var aggregates = await AdminUsersAggregatesQuery.QueryAsync(_db, cancellationToken);
 
-        var baseQuery = _db.Users.AsNoTracking().AsQueryable();
+        var baseQuery = _db.Users.AsNoTracking()
+            .Where(u => !u.IsSystemAdminAccount)
+            .AsQueryable();
 
         if (companyId is Guid cid)
         {
@@ -777,6 +779,12 @@ public class AdminController : ControllerBase
             return NotFound();
         }
 
+        if (target.IsSystemAdminAccount)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "De break-glass systeembeheerder kan niet via dit scherm worden beheerd." });
+        }
+
         var maskedLabel = PersonalDataMasker.MaskName(target.FullName);
         _auditContext.TargetLabel = maskedLabel;
 
@@ -1162,10 +1170,16 @@ public class AdminController : ControllerBase
             return NotFound();
         }
 
+        if (target.IsSystemAdminAccount)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "De break-glass systeembeheerder kan niet worden geblokkeerd." });
+        }
+
         if (target.Role == UserRole.Admin && target.IsActive)
         {
             var otherActiveAdmins = await _db.Users.CountAsync(
-                u => u.Role == UserRole.Admin && u.IsActive && u.Id != userId,
+                u => u.Role == UserRole.Admin && u.IsActive && u.Id != userId && !u.IsSystemAdminAccount,
                 cancellationToken);
             if (otherActiveAdmins == 0)
             {
@@ -1291,10 +1305,17 @@ public class AdminController : ControllerBase
                     continue;
                 }
 
+                if (target.IsSystemAdminAccount)
+                {
+                    results.Add(new AdminBulkUserResultDto(id, false, "systeembeheerder"));
+                    skipped++;
+                    continue;
+                }
+
                 if (target.Role == UserRole.Admin && target.IsActive)
                 {
                     var otherActiveAdmins = await _db.Users.CountAsync(
-                        u => u.Role == UserRole.Admin && u.IsActive && u.Id != id,
+                        u => u.Role == UserRole.Admin && u.IsActive && u.Id != id && !u.IsSystemAdminAccount,
                         cancellationToken);
                     if (otherActiveAdmins == 0)
                     {

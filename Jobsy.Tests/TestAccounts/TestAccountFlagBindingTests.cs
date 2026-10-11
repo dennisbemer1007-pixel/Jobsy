@@ -19,7 +19,7 @@ public class TestAccountFlagBindingTests
                         || t.Name.EndsWith("Create", StringComparison.Ordinal)
                         || t.Name.EndsWith("Command", StringComparison.Ordinal))
             .SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            .Where(p => p.Name is "IsTestAccount" or "IsTestData")
+            .Where(p => p.Name is "IsTestAccount" or "IsTestData" or "IsSystemAdminAccount")
             .Select(p => $"{p.DeclaringType?.FullName}.{p.Name}")
             .ToList();
 

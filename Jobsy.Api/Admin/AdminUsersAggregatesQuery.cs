@@ -15,19 +15,21 @@ public static class AdminUsersAggregatesQuery
         JobsyDbContext db,
         CancellationToken cancellationToken = default)
     {
-        var byRoleRows = await db.Users.AsNoTracking()
+        var visibleUsers = db.Users.AsNoTracking().Where(u => !u.IsSystemAdminAccount);
+
+        var byRoleRows = await visibleUsers
             .GroupBy(u => u.Role)
             .Select(g => new { Role = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
         var byRole = byRoleRows.ToDictionary(r => r.Role.ToString(), r => r.Count);
 
-        var activeCount = await db.Users.AsNoTracking()
+        var activeCount = await visibleUsers
             .CountAsync(u => u.IsActive, cancellationToken);
-        var inactiveCount = await db.Users.AsNoTracking()
+        var inactiveCount = await visibleUsers
             .CountAsync(u => !u.IsActive, cancellationToken);
 
         // Project only the columns needed, then group in-memory so InMemory + Npgsql stay aligned.
-        var companyRows = await db.Users.AsNoTracking()
+        var companyRows = await visibleUsers
             .Where(u => u.CompanyId != null)
             .Select(u => new { u.CompanyId, Name = u.Company != null ? u.Company.Name : "—" })
             .ToListAsync(cancellationToken);
@@ -38,7 +40,7 @@ public static class AdminUsersAggregatesQuery
             .Take(20)
             .ToList();
 
-        var stamps = await db.Users.AsNoTracking()
+        var stamps = await visibleUsers
             .Select(u => u.TermsAcceptedAt)
             .ToListAsync(cancellationToken);
         var byWeek = BuildWeekBuckets(stamps);

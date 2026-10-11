@@ -13,7 +13,9 @@ using Jobsy.Core.Ops;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Security;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -37,6 +39,8 @@ public class AuthController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly UnknownAccountLockoutTracker _unknownLockouts;
     private readonly ITestAccountsRuntime _testAccounts;
+    private readonly ISystemAdminSettings _systemAdmin;
+    private readonly SystemAdminLoginNotifier _systemAdminLoginNotifier;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
@@ -52,6 +56,8 @@ public class AuthController : ControllerBase
         IPlatformFeatureService features,
         UnknownAccountLockoutTracker unknownLockouts,
         ITestAccountsRuntime testAccounts,
+        ISystemAdminSettings systemAdmin,
+        SystemAdminLoginNotifier systemAdminLoginNotifier,
         ILogger<AuthController> logger)
     {
         _db = db;
@@ -66,11 +72,36 @@ public class AuthController : ControllerBase
         _features = features;
         _unknownLockouts = unknownLockouts;
         _testAccounts = testAccounts;
+        _systemAdmin = systemAdmin;
+        _systemAdminLoginNotifier = systemAdminLoginNotifier;
         _logger = logger;
     }
 
     private bool IsTestAccountExempt(User user)
         => user.IsTestAccount && _testAccounts.IsActive;
+
+    private bool RequiresLocalPasswordMfa(User user)
+        => MfaPolicy.IsLocalPasswordMfaStepRequired(
+            user.IsSystemAdminAccount,
+            user.Role,
+            user.IsTestAccount,
+            _testAccounts.IsActive,
+            user.AuthenticatorEnabled,
+            _systemAdmin.RequireTwoFactor);
+
+    private string? ClientIpAddress()
+        => HttpContext.Connection.RemoteIpAddress?.ToString();
+
+    private async Task NotifySystemAdminLoginAsync(User user, string authMethod, CancellationToken cancellationToken)
+    {
+        if (!user.IsSystemAdminAccount)
+        {
+            return;
+        }
+
+        await _systemAdminLoginNotifier.NotifySuccessfulLoginAsync(
+            user, authMethod, ClientIpAddress(), cancellationToken);
+    }
 
     /// <summary>
     /// Validates a local registration credential (hashed password).
@@ -212,9 +243,7 @@ public class AuthController : ControllerBase
         }
 
         var testExempt = IsTestAccountExempt(user);
-        if (!testExempt
-            && (user.AuthenticatorEnabled
-                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
+        if (!testExempt && RequiresLocalPasswordMfa(user))
         {
             if (user.AuthenticatorEnabled
                 && await _trustedDevices.TryValidateAsync(
@@ -243,6 +272,7 @@ public class AuthController : ControllerBase
 
                 user.LastLoginAtUtc = DateTime.UtcNow;
                 await _db.SaveChangesAsync(cancellationToken);
+                await NotifySystemAdminLoginAsync(user, "password+trusted-device", cancellationToken);
                 return Ok(new LocalLoginResponse(
                     user.Email,
                     user.FullName,
@@ -261,7 +291,8 @@ public class AuthController : ControllerBase
                     MfaVerified: true,
                     SchoolId: user.SchoolId,
                     AuthMethod: "password+trusted-device",
-                    IsTestAccount: user.IsTestAccount));
+                    IsTestAccount: user.IsTestAccount,
+                    IsSystemAdminAccount: user.IsSystemAdminAccount));
             }
 
             return Ok(new LocalLoginResponse(
@@ -275,7 +306,8 @@ public class AuthController : ControllerBase
                 MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
                 UserId: user.Id,
                 SchoolId: user.SchoolId,
-                IsTestAccount: user.IsTestAccount));
+                IsTestAccount: user.IsTestAccount,
+                IsSystemAdminAccount: user.IsSystemAdminAccount));
         }
 
         if (testExempt)
@@ -301,6 +333,8 @@ public class AuthController : ControllerBase
 
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        var authMethod = testExempt ? "password+test-exempt" : "password";
+        await NotifySystemAdminLoginAsync(user, authMethod, cancellationToken);
 
         return Ok(new LocalLoginResponse(
             user.Email,
@@ -319,7 +353,8 @@ public class AuthController : ControllerBase
             user.Id,
             SchoolId: user.SchoolId,
             AuthMethod: testExempt ? "password+test-exempt" : null,
-            IsTestAccount: user.IsTestAccount));
+            IsTestAccount: user.IsTestAccount,
+            IsSystemAdminAccount: user.IsSystemAdminAccount));
     }
 
     /// <summary>
@@ -360,9 +395,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Sessie ongeldig of verlopen." });
         }
 
-        if (!IsTestAccountExempt(user)
-            && (user.AuthenticatorEnabled
-                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
+        if (!IsTestAccountExempt(user) && RequiresLocalPasswordMfa(user))
         {
             return Ok(new LocalLoginResponse(
                 user.Email,
@@ -480,6 +513,11 @@ public class AuthController : ControllerBase
                 return Unauthorized(new { message = "Account is niet actief." });
             }
 
+            if (user.IsSystemAdminAccount)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { code = "system_admin_local_only" });
+            }
+
             if (!string.IsNullOrWhiteSpace(fullName)
                 && !string.Equals(user.FullName, fullName, StringComparison.Ordinal)
                 && fullName != email)
@@ -523,10 +561,7 @@ public class AuthController : ControllerBase
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
         // IdP (Entra/Google/…) already enforced MFA — never challenge again in Lobsy.
-        if (provider is null
-            && !IsTestAccountExempt(user)
-            && (user.AuthenticatorEnabled
-                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
+        if (provider is null && !IsTestAccountExempt(user) && RequiresLocalPasswordMfa(user))
         {
             return Ok(new EnsureExternalUserResponse(
                 user.Email,
@@ -824,9 +859,7 @@ public class AuthController : ControllerBase
 
         ContactVerification.MarkEmailVerified(user, now);
 
-        if (!IsTestAccountExempt(user)
-            && (user.AuthenticatorEnabled
-                || MfaPolicy.IsRequiredFor(user.Role, user.IsTestAccount, _testAccounts.IsActive)))
+        if (!IsTestAccountExempt(user) && RequiresLocalPasswordMfa(user))
         {
             return Ok(new LocalLoginResponse(
                 user.Email,

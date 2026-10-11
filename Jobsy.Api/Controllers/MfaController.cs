@@ -11,6 +11,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -35,6 +36,7 @@ public sealed class MfaController : ControllerBase
     private readonly ITotpVerifier _totp;
     private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
+    private readonly SystemAdminLoginNotifier _systemAdminLoginNotifier;
     private readonly ILogger<MfaController> _logger;
 
     public MfaController(
@@ -47,6 +49,7 @@ public sealed class MfaController : ControllerBase
         ITotpVerifier totp,
         ITransactionalMailer mailer,
         IPlatformFeatureService features,
+        SystemAdminLoginNotifier systemAdminLoginNotifier,
         ILogger<MfaController> logger)
     {
         _db = db;
@@ -58,6 +61,7 @@ public sealed class MfaController : ControllerBase
         _totp = totp;
         _mailer = mailer;
         _features = features;
+        _systemAdminLoginNotifier = systemAdminLoginNotifier;
         _logger = logger;
     }
 
@@ -245,6 +249,11 @@ public sealed class MfaController : ControllerBase
         user.LastLoginAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
         _challenges.Consume(request.ChallengeToken);
+        await _systemAdminLoginNotifier.NotifySuccessfulLoginAsync(
+            user,
+            "password+mfa",
+            HttpContext?.Connection.RemoteIpAddress?.ToString(),
+            cancellationToken);
 
         var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
         if (user.CompanyId is Guid primary && !companyIds.Contains(primary))
@@ -288,7 +297,8 @@ public sealed class MfaController : ControllerBase
             RecoveryCodesLeft: recoveryCodesLeft,
             UsedRecoveryCode: usedRecovery,
             MfaTrustToken: trustRaw,
-            AuthMethod: "password+mfa"));
+            AuthMethod: "password+mfa",
+            IsSystemAdminAccount: user.IsSystemAdminAccount));
     }
 
     [HttpPost("recovery-codes/regenerate")]

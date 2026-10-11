@@ -2130,6 +2130,18 @@ public static class AuthServiceCollectionExtensions
                 TestAccountClaimTypes.TestAccountValue));
         }
 
+        foreach (var existing in identity.FindAll(SystemAdminClaimTypes.SystemAdmin).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        if (profile.IsSystemAdminAccount)
+        {
+            identity.AddClaim(new Claim(
+                SystemAdminClaimTypes.SystemAdmin,
+                SystemAdminClaimTypes.SystemAdminValue));
+        }
+
         if (!identity.HasClaim(c => c.Type == "auth_method"))
         {
             identity.AddClaim(new Claim("auth_method", authMethod));

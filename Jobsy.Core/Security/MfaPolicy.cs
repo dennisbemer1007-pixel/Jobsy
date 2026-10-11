@@ -24,4 +24,24 @@ public static class MfaPolicy
     /// </summary>
     public static bool IsRequiredFor(UserRole role, bool isTestAccount, bool testAccountsActive)
         => !(isTestAccount && testAccountsActive) && IsRequired(role);
+
+    /// <summary>
+    /// Whether a local-password sign-in must enter the MFA challenge (enroll or verify).
+    /// System admin accounts follow <paramref name="systemAdminRequireTwoFactor"/> only.
+    /// </summary>
+    public static bool IsLocalPasswordMfaStepRequired(
+        bool isSystemAdminAccount,
+        UserRole role,
+        bool isTestAccount,
+        bool testAccountsActive,
+        bool authenticatorEnabled,
+        bool systemAdminRequireTwoFactor)
+    {
+        if (isSystemAdminAccount)
+        {
+            return systemAdminRequireTwoFactor;
+        }
+
+        return authenticatorEnabled || IsRequiredFor(role, isTestAccount, testAccountsActive);
+    }
 }

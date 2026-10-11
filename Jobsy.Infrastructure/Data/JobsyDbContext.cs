@@ -214,6 +214,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.HomeLocation).HasMethod("GIST");
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasIndex(e => e.IsTestAccount);
+            entity.HasIndex(e => e.IsSystemAdminAccount);
             entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
             entity.HasIndex(e => e.SchoolId);
             // PushBom + OpenForWork metrics hot path.

@@ -365,6 +365,31 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
+    public static ComposedEmail SystemAdminLogin(
+        string? baseUrl,
+        DateTime occurredAtUtc,
+        string authMethod,
+        string? ipAddress,
+        EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        var when = occurredAtUtc.ToString("yyyy-MM-dd HH:mm") + " UTC";
+        var ip = string.IsNullOrWhiteSpace(ipAddress) ? "—" : ipAddress;
+        return Finish(Doc(
+            "SystemAdminLogin",
+            S(c, "Email.SystemAdminLogin.Subject"),
+            Sf(c, "Email.SystemAdminLogin.Preheader", when),
+            S(c, "Email.SystemAdminLogin.Heading"),
+            [
+                P(Sf(c, "Email.SystemAdminLogin.P1", when)),
+                P(Sf(c, "Email.SystemAdminLogin.P2", authMethod, ip))
+            ],
+            Button(S(c, "Email.SystemAdminLogin.Cta"), links.AdminSecurityAudit),
+            eyebrow: new EmailEyebrow(S(c, "Email.SystemAdminLogin.Eyebrow"), EmailTone.Peach),
+            culture: c), baseUrl);
+    }
+
     public static ComposedEmail MfaLockout(string? baseUrl, EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;

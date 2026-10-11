@@ -71,6 +71,7 @@ Mail op Acceptatie blijft leeg tot je `Lettermint__ApiKey` (of als terugval `Mai
 
 De Blueprint zet `JobsyAuth__AllowDevelopmentAuth=false` op **alle** services (Production én Acceptatie). Daarnaast:
 
+- Optionele break-glass beheerder alleen via env: [`system-admin-break-glass.md`](system-admin-break-glass.md) (`SystemAdmin__*`).
 - `POST /account/demo-login` geeft **altijd 404** in Production (harde environment-check), ongeacht config.
 - DemoUsers staan alleen in `appsettings.Development.json` (niet in `appsettings.json`).
 - `Seed__PurgeDemoData` / `DemoDataPurge` bestaan niet meer — geen startup-wipe van users/bedrijven.

@@ -8,7 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Unit+integration alone can exceed 85m on ubuntu-latest; add Playwright smoke on top.
+    timeout-minutes: 150
     services:
       postgres:
         # PostGIS required — API migrate runs CREATE EXTENSION postgis.

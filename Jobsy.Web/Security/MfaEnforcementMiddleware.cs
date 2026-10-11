@@ -48,6 +48,18 @@ public sealed class MfaEnforcementMiddleware
             return;
         }
 
+        if (context.User.HasClaim(
+                SystemAdminClaimTypes.SystemAdmin,
+                SystemAdminClaimTypes.SystemAdminValue))
+        {
+            var systemAdmin = context.RequestServices?.GetService(typeof(ISystemAdminSettings)) as ISystemAdminSettings;
+            if (systemAdmin?.RequireTwoFactor != true)
+            {
+                await _next(context);
+                return;
+            }
+        }
+
         var roleClaim = context.User.FindFirstValue(ClaimTypes.Role)
                         ?? context.User.FindFirstValue("role");
         if (!Enum.TryParse<UserRole>(roleClaim, ignoreCase: true, out var role)

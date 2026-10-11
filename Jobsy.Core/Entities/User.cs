@@ -75,6 +75,12 @@ public class User
     /// </summary>
     public bool IsTestAccount { get; set; }
 
+    /// <summary>
+    /// Break-glass admin provisioned from <c>SystemAdmin:*</c> env vars on startup only.
+    /// Never set via API/UI; hidden from admin user lists.
+    /// </summary>
+    public bool IsSystemAdminAccount { get; set; }
+
     /// <summary>When the user accepted terms/privacy (registration or profile).</summary>
     public DateTime? TermsAcceptedAt { get; set; }
     public string? ConsentVersion { get; set; }

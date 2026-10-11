@@ -44,6 +44,17 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             throw;
         }
 
+        try
+        {
+            await SystemAdminAccountProvisioner.ProvisionAsync(
+                _services, _configuration, _logger, stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "SystemAdmin provisioning failed during startup.");
+            throw;
+        }
+
         var allowSeed = _environment.IsDevelopment()
                         || _configuration.GetValue("Seed:Enabled", false);
         _logger.LogInformation(

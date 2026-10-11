@@ -433,7 +433,7 @@
 
     private static string ActionPillClass(string action) => action switch
     {
-        "user.mfa.reset" or "privacy.account.deleted" or "auth.admin.login-failed" => "status-pill--danger",
+        "user.mfa.reset" or "privacy.account.deleted" or "auth.admin.login-failed" or "auth.system-admin.login" => "status-pill--danger",
         "support-access.grant" or "support-access.revoke" or "user.sessions.revoke" or "user.sessions.revoke-all" or "user.block" or "user.unblock"
             => "status-pill--warn",
         "settings.platform.update" or "settings.pricing.update" or "settings.company.update" or "tokens.goodwill.grant" or "user.role.change"

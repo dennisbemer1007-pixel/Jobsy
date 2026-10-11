@@ -272,6 +272,8 @@ public class MfaTrustedDeviceTests
             new Auth04StubFeatures(true),
             new UnknownAccountLockoutTracker("test-lockout-key"),
             new StubTestAccountsRuntime(),
+            new StubSystemAdminSettings(),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<AuthController>.Instance);
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;
@@ -295,6 +297,7 @@ public class MfaTrustedDeviceTests
             new TotpVerifier(db),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             new Auth04StubFeatures(true),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<MfaController>.Instance);
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;
@@ -400,6 +403,7 @@ public class RecoveryCodeRegenerationTests
             new TotpVerifier(db),
             mailer,
             new Auth04StubFeatures(true),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<MfaController>.Instance);
     }
 

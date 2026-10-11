@@ -292,6 +292,8 @@ public class AuthHardeningHotfixTests
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
             new StubTestAccountsRuntime(),
+            new StubSystemAdminSettings(),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<AuthController>.Instance);
     }
 
@@ -316,6 +318,7 @@ public class AuthHardeningHotfixTests
             new TotpVerifier(db),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             new AlwaysOnFeatures(),
+            SystemAdminTestDoubles.LoginNotifier(),
             NullLogger<MfaController>.Instance);
     }
 

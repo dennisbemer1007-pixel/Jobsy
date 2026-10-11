@@ -7807,6 +7807,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("IsTestAccount")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsSystemAdminAccount")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("LastLoginAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -7936,6 +7939,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("HomeLocation"), "GIST");
 
                     b.HasIndex("IsTestAccount");
+
+                    b.HasIndex("IsSystemAdminAccount");
 
                     b.HasIndex("ReferredByAmbassadeurUserId");
 
