@@ -18,9 +18,7 @@ public sealed record EmailDocument(
     /// <summary>Tokenized one-click unsubscribe URL for kind O (filled at send time when missing).</summary>
     string? UnsubscribeUrl = null,
     /// <summary>Why an account holder gets an essential mail. Omitted for readers without an account.</summary>
-    string? AccountBecause = null,
-    /// <summary>Optional 1×1 open-tracking pixel URL (employer external vacancy mails).</summary>
-    string? OpenTrackingPixelUrl = null);
+    string? AccountBecause = null);
 
 public abstract record EmailBlock;
 

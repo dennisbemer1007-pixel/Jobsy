@@ -16,7 +16,8 @@ public class CandidateExternalVacancyOutbound
 
     public DateTime InitialSentAtUtc { get; set; }
     public DateTime? ReminderSentAtUtc { get; set; }
-    public DateTime? OpenedAtUtc { get; set; }
+
+    /// <summary>Employer opened the signed invite link (CTA “Bekijk sollicitatie”).</summary>
     public DateTime? ClickedAtUtc { get; set; }
     public DateTime? EmployerAccountCreatedAtUtc { get; set; }
     public DateTime? AcceptedAtUtc { get; set; }

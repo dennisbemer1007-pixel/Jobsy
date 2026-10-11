@@ -10,32 +10,15 @@ namespace Jobsy.Api.Controllers;
 [AllowAnonymous]
 public sealed class ExternalVacancyPublicController : ControllerBase
 {
-    private static readonly byte[] TransparentGif =
-    [
-        0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00, 0x00,
-        0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x21, 0xF9, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00,
-        0x2C, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44, 0x01, 0x00, 0x3B
-    ];
-
     private readonly IExternalVacancyEmployerInviteService _invites;
     private readonly IExternalVacancySuppressionService _suppression;
-    private readonly IExternalVacancyOutboundMetricsService _metrics;
 
     public ExternalVacancyPublicController(
         IExternalVacancyEmployerInviteService invites,
-        IExternalVacancySuppressionService suppression,
-        IExternalVacancyOutboundMetricsService metrics)
+        IExternalVacancySuppressionService suppression)
     {
         _invites = invites;
         _suppression = suppression;
-        _metrics = metrics;
-    }
-
-    [HttpGet("open")]
-    public async Task<IActionResult> MarkOpened([FromQuery] string token, CancellationToken cancellationToken)
-    {
-        await _metrics.MarkEmailOpenedAsync(token, cancellationToken);
-        return File(TransparentGif, "image/gif");
     }
 
     [HttpGet("employer-invite")]

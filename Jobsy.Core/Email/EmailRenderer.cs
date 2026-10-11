@@ -136,11 +136,6 @@ public static class EmailRenderer
         }
 
         sb.Append($"<p class=\"m\" style=\"margin:18px 0 0 0;font-size:14px;line-height:20px;color:{muted};\">{Escape(doc.SignOff)}</p>");
-        if (!string.IsNullOrWhiteSpace(doc.OpenTrackingPixelUrl))
-        {
-            sb.Append(
-                $"<img src=\"{Escape(doc.OpenTrackingPixelUrl)}\" width=\"1\" height=\"1\" alt=\"\" style=\"display:block;width:1px;height:1px;border:0;\" />");
-        }
 
         sb.Append("</td></tr></table>");
 

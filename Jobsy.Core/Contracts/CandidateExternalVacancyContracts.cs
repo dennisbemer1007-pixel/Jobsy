@@ -55,7 +55,6 @@ public sealed record ExternalVacancyEmployerInviteDto(
 public sealed record ExternalVacancyAdminMetricsDto(
     int SentCount,
     int ReminderCount,
-    int OpenedCount,
     int ClickedCount,
     int EmployerAccountCreatedCount,
     int AcceptedCount);

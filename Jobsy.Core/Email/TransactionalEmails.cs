@@ -83,8 +83,7 @@ public static partial class TransactionalEmails
         bool showMascot = false,
         string? signOff = null,
         EmailCulture? culture = null,
-        string? reasonText = null,
-        string? openTrackingPixelUrl = null)
+        string? reasonText = null)
     {
         var c = culture ?? EmailCulture.Nl;
         var def = EmailTemplateRegistry.GetRequired(key);
@@ -102,8 +101,7 @@ public static partial class TransactionalEmails
             Greeting: greeting,
             Cta: def.Kind == EmailKind.Security ? null : cta,
             ShowMascot: showMascot && def.GoodNews,
-            AccountBecause: AccountBecauseLine(c, def),
-            OpenTrackingPixelUrl: openTrackingPixelUrl);
+            AccountBecause: AccountBecauseLine(c, def));
     }
 
     /// <summary>
@@ -258,7 +256,6 @@ public static partial class TransactionalEmails
                 [("Rijbewijs B", "Ja"), ("Direct beschikbaar", "Ja")],
                 links.Absolute("/register/externe-sollicitatie?token=voorbeeld"),
                 links.Absolute("/api/public/external-vacancy/unsubscribe?token=voorbeeld"),
-                openTrackingPixelUrl: null,
                 culture: c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };

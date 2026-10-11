@@ -1,7 +1,4 @@
-using Jobsy.Core.Enums;
-using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
-using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +11,6 @@ public interface IExternalVacancyOutboundMetricsService
         Guid? outboundId = null,
         CancellationToken cancellationToken = default);
 
-    Task MarkEmailOpenedAsync(string inviteToken, CancellationToken cancellationToken = default);
-
     Task MarkApplicationAcceptedAsync(Guid applicationId, CancellationToken cancellationToken = default);
 }
 
@@ -23,39 +18,10 @@ public interface IExternalVacancyOutboundMetricsService
 public sealed class ExternalVacancyOutboundMetricsService : IExternalVacancyOutboundMetricsService
 {
     private readonly JobsyDbContext _db;
-    private readonly IOneTimeLinkService _links;
 
-    public ExternalVacancyOutboundMetricsService(JobsyDbContext db, IOneTimeLinkService links)
+    public ExternalVacancyOutboundMetricsService(JobsyDbContext db)
     {
         _db = db;
-        _links = links;
-    }
-
-    public async Task MarkEmailOpenedAsync(string inviteToken, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(inviteToken))
-        {
-            return;
-        }
-
-        var peek = await _links.PeekAsync(
-            OneTimeLinkPurpose.ExternalVacancyEmployerInvite,
-            inviteToken.Trim(),
-            cancellationToken);
-        if (!peek.Valid || peek.LinkId is null)
-        {
-            return;
-        }
-
-        var outbound = await _db.CandidateExternalVacancyOutbounds
-            .FirstOrDefaultAsync(o => o.OneTimeLinkId == peek.LinkId, cancellationToken);
-        if (outbound is null || outbound.OpenedAtUtc is not null)
-        {
-            return;
-        }
-
-        outbound.OpenedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
     }
 
     public async Task MarkEmployerAccountCreatedAsync(

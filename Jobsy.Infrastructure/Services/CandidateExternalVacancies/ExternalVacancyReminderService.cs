@@ -91,8 +91,6 @@ public sealed class ExternalVacancyReminderService : IExternalVacancyReminderSer
             var unsubToken = _suppression.CreateUnsubscribeToken(outbound.EmployerEmailNormalized);
             var unsubUrl =
                 $"{apiBase}api/public/external-vacancy/unsubscribe?token={Uri.EscapeDataString(unsubToken)}";
-            var openUrl =
-                $"{apiBase}api/public/external-vacancy/open?token={Uri.EscapeDataString(link.Token)}";
 
             var mail = TransactionalEmails.ExternalVacancyApplication(
                 platform.PublicWebBaseUrl,
@@ -102,8 +100,7 @@ public sealed class ExternalVacancyReminderService : IExternalVacancyReminderSer
                 outbound.Motivation,
                 shared,
                 inviteUrl,
-                unsubUrl,
-                openTrackingPixelUrl: openUrl);
+                unsubUrl);
 
             var outcome = await _mailer.SendAsync(mail, outbound.EmployerEmailNormalized, cancellationToken: cancellationToken);
             if (outcome.Sent)

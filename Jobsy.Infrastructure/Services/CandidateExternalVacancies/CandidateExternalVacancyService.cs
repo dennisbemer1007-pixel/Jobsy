@@ -223,8 +223,6 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         var apiBase = JobsyPublicUrl.NormalizeBaseUrl(platform.PublicWebBaseUrl, "http://localhost:5200/");
         var unsubUrl =
             $"{apiBase}api/public/external-vacancy/unsubscribe?token={Uri.EscapeDataString(unsubToken)}";
-        var openUrl =
-            $"{apiBase}api/public/external-vacancy/open?token={Uri.EscapeDataString(link.Token)}";
 
         var mail = TransactionalEmails.ExternalVacancyApplication(
             platform.PublicWebBaseUrl,
@@ -234,8 +232,7 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
             request.Motivation.Trim(),
             shared.Select(kv => (kv.Key, kv.Value)).ToList(),
             inviteUrl,
-            unsubUrl,
-            openTrackingPixelUrl: openUrl);
+            unsubUrl);
 
         var send = await _mailer.SendAsync(mail, normalizedEmail, cancellationToken: cancellationToken);
         if (!send.Sent)
@@ -280,7 +277,6 @@ public sealed class CandidateExternalVacancyService : ICandidateExternalVacancyS
         return new ExternalVacancyAdminMetricsDto(
             rows.Count,
             rows.Count(r => r.ReminderSentAtUtc is not null),
-            rows.Count(r => r.OpenedAtUtc is not null),
             rows.Count(r => r.ClickedAtUtc is not null),
             rows.Count(r => r.EmployerAccountCreatedAtUtc is not null),
             rows.Count(r => r.AcceptedAtUtc is not null));

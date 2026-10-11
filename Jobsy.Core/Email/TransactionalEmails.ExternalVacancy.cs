@@ -13,7 +13,6 @@ public static partial class TransactionalEmails
         IReadOnlyList<(string Label, string Value)> sharedFacts,
         string inviteUrl,
         string unsubscribeUrl,
-        string? openTrackingPixelUrl = null,
         EmailCulture? culture = null)
     {
         var c = culture ?? EmailCulture.Nl;
@@ -40,8 +39,7 @@ public static partial class TransactionalEmails
                 Button(S(c, "Email.ExternalVacancyApplication.Cta"), inviteUrl),
                 eyebrow: new EmailEyebrow(S(c, "Email.ExternalVacancyApplication.Eyebrow"), EmailTone.Peach),
                 culture: c,
-                reasonText: $"{S(c, "Email.ExternalVacancyApplication.Unsubscribe")} {unsubscribeUrl}",
-                openTrackingPixelUrl: openTrackingPixelUrl),
+                reasonText: $"{S(c, "Email.ExternalVacancyApplication.Unsubscribe")} {unsubscribeUrl}"),
             baseUrl);
     }
 }
