@@ -4,7 +4,7 @@
 
 ## Werkbeschrijving
 
-De publieke banenkaart is de voordeur van Jobsy. Bezoekers filteren vacatures op **reistijd**, **vervoer** (fiets, auto, OV, lopend) en **straal**, en zien resultaten in een Funda-achtige split view: lijst links, Leaflet-kaart rechts.
+De publieke banenkaart is de voordeur van Lobsy. Bezoekers filteren vacatures op **reistijd**, **vervoer** (fiets, auto, OV, lopend) en **straal**, en zien resultaten in een Funda-achtige split view: lijst links, Leaflet-kaart rechts.
 
 Zonder login kun je vacatures bekijken. Solliciteren, liken en delen vragen om een account (of doorlinken naar inloggen).
 
