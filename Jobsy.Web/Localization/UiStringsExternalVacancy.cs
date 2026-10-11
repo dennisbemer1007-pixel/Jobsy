@@ -36,6 +36,12 @@ public static class UiStringsExternalVacancy
         Add("ExtVac.Detail.Privacy", "Alleen jij ziet deze match-analyse. Werkgevers zien dit niet.", "Only you see this match analysis. Employers do not.", "Tylko ty widzisz tę analizę. Pracodawcy nie.", "Doar tu vezi această analiză. Angajatorii nu.", "أنت فقط ترى هذا التحليل. أصحاب العمل لا.");
         Add("ExtVac.Detail.Apply", "Ik wil solliciteren", "I want to apply", "Chcę aplikować", "Vreau să aplic", "أريد التقديم");
         Add("ExtVac.Detail.Source", "Bron", "Source", "Źródło", "Sursă", "المصدر");
+        Add("ExtVac.Detail.Save", "Bewaren", "Save", "Zapisz", "Salvează", "احفظ");
+        Add("ExtVac.Detail.Unsave", "Uit Bewaard", "Remove from Saved", "Usuń z zapisanych", "Scoate din Salvate", "إزالة من المحفوظات");
+        Add("ExtVac.Detail.NotInterested", "Niet interessant", "Not interested", "Nie interesuje mnie", "Nu mă interesează", "لا يهمّني");
+        Add("ExtVac.Detail.DismissedLead", "Deze vacature staat niet meer in je Bewaard-lijst.", "This vacancy is no longer in your Saved list.", "Ta oferta nie jest już na liście Zapisane.", "Acest job nu mai e în lista Salvate.", "لم تعد هذه الوظيفة في قائمة المحفوظات.");
+        Add("ExtVac.Detail.DismissUndoToast", "Verwijderd. Ongedaan maken?", "Removed. Undo?", "Usunięto. Cofnąć?", "Eliminat. Anulezi?", "أُزيل. تراجع؟");
+        Add("ExtVac.Detail.DismissUndo", "Ongedaan maken", "Undo", "Cofnij", "Anulează", "تراجع");
 
         Add("ExtVac.Apply.Title", "Solliciteren", "Apply", "Aplikuj", "Aplică", "تقديم");
         Add("ExtVac.Apply.Email", "E-mailadres werkgever", "Employer email address", "E-mail pracodawcy", "E-mail angajator", "بريد صاحب العمل");

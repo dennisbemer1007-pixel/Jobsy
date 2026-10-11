@@ -31,6 +31,36 @@ public sealed partial class JobsyApiClient
     public async Task<ExternalVacancyDetailDto?> GetExternalVacancyAsync(Guid id, CancellationToken ct = default)
         => await GetApiJsonAsync<ExternalVacancyDetailDto>($"api/candidate/external-vacancies/{id:D}", ct);
 
+    public async Task<ExternalVacancyDetailDto?> SetExternalVacancySavedAsync(
+        Guid id,
+        bool saved,
+        CancellationToken ct = default)
+    {
+        var response = await PutApiJsonAsync(
+            $"api/candidate/external-vacancies/{id:D}/saved",
+            new ExternalVacancySetSavedRequest(saved),
+            ct);
+        return response.IsSuccessStatusCode
+            ? await ReadApiJsonAsync<ExternalVacancyDetailDto>(response.Content, ct)
+            : null;
+    }
+
+    public async Task<ExternalVacancyDetailDto?> DismissExternalVacancyAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await PostApiJsonAsync($"api/candidate/external-vacancies/{id:D}/dismiss", new { }, ct);
+        return response.IsSuccessStatusCode
+            ? await ReadApiJsonAsync<ExternalVacancyDetailDto>(response.Content, ct)
+            : null;
+    }
+
+    public async Task<ExternalVacancyDetailDto?> RestoreExternalVacancyAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await PostApiJsonAsync($"api/candidate/external-vacancies/{id:D}/restore", new { }, ct);
+        return response.IsSuccessStatusCode
+            ? await ReadApiJsonAsync<ExternalVacancyDetailDto>(response.Content, ct)
+            : null;
+    }
+
     public async Task<ExternalVacancyApplyResultDto?> ApplyExternalVacancyAsync(
         Guid id,
         ExternalVacancyApplyRequest request,
