@@ -64,6 +64,7 @@ public class BandwidthGuardTests
         Assert.Contains("cache.put", sw);
         Assert.Contains("addEventListener(\"push\"", sw);
         Assert.Contains("url.pathname.indexOf(\"/api/\") === 0", sw);
+        Assert.Contains("url.pathname.indexOf(\"/account/\") === 0", sw);
         Assert.Contains("request.mode === \"navigate\"", sw);
         Assert.Contains("showNotification", sw);
 

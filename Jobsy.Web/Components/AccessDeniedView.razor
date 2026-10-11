@@ -52,7 +52,7 @@
             }
             @if (_showSwitchAccount)
             {
-                <form method="post" action="/account/logout" class="err-switch-form">
+                <form method="post" action="/account/logout" class="err-switch-form" data-enhance="false">
                     <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
                     <input type="hidden" name="reason" value="switch" />
                     <input type="hidden" name="returnUrl" value="@_safeReturnUrl" />
