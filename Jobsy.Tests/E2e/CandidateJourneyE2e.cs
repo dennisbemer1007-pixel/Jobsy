@@ -47,10 +47,17 @@ public static class CandidateJourneyE2e
             db,
             Options.Create(new JobsyFeatureOptions()),
             config);
+        if (await WaitForFlagsAsync(baseUrl) && await WaitForAmbassadorsFlagAsync(baseUrl))
+        {
+            return;
+        }
+
         await platform.UpdateAsync(new PlatformFeatureUpdate(
             EmployersEnabled: true,
             PassportPdfV2Enabled: true,
-            CandidateExternalVacanciesEnabled: true));
+            CandidateExternalVacanciesEnabled: true,
+            AmbassadorsEnabled: true,
+            SchoolsEnabled: true));
         await Task.Delay(35_000);
     }
 
@@ -77,6 +84,31 @@ public static class CandidateJourneyE2e
             }
 
             await Task.Delay(5_000);
+        }
+
+        return false;
+    }
+
+    public static async Task<bool> WaitForAmbassadorsFlagAsync(string baseUrl)
+    {
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        for (var i = 0; i < 12; i++)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(await http.GetStringAsync(api + "/api/settings/feature-flags"));
+                if (doc.RootElement.GetProperty("ambassadorsEnabled").GetBoolean())
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                // retry
+            }
+
+            await Task.Delay(2_000);
         }
 
         return false;
