@@ -8,8 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Full unit+integration+Playwright suite often exceeds 60m on ubuntu-latest.
-    timeout-minutes: 90
+    # Unit+integration alone can exceed 85m on ubuntu-latest; add Playwright smoke on top.
+    timeout-minutes: 150
     services:
       postgres:
         # PostGIS required — API migrate runs CREATE EXTENSION postgis.
