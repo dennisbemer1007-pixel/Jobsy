@@ -5,7 +5,7 @@
 
 ## Werkbeschrijving
 
-De admin beheert het **hele Jobsy-platform**. Naast KPI’s (users, companies, errors, engagement) zijn er modules voor bedrijven, vacatures, finance/token grants, settings (pricing, PushBom, early-adapter), integraties en WML (wettelijk minimumloon).
+De admin beheert het **hele Lobsy-platform**. Naast KPI’s (users, companies, errors, engagement) zijn er modules voor bedrijven, vacatures, finance/token grants, settings (pricing, PushBom, early-adapter), integraties en WML (wettelijk minimumloon).
 
 Placeholders (later): moderatie, masterdata, notificaties.
 

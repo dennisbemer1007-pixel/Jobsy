@@ -140,7 +140,7 @@ internal static class DemoUsersSeeder
         {
             Id = enterpriseManagerId,
             Email = "enterprise@jobsy.local",
-            FullName = "Bedrijfsmanager Jobsy Retail",
+            FullName = "Bedrijfsmanager Lobsy Retail",
             Role = UserRole.EnterpriseManager,
             CompanyId = SupermarketId,
             IsActive = true
