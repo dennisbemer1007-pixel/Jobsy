@@ -569,17 +569,11 @@ public static class CandidateJourneyE2e
         using var startDoc = JsonDocument.Parse(await startResponse.Content.ReadAsStringAsync());
         var challengeId = startDoc.RootElement.GetProperty("challengeId").GetGuid();
 
-        var code = await WaitForOpenChallengeCodeAsync(baseUrl, email, challengeId, maxAttempts: 80)
-            ?? await FetchEmailCodeAsync(
-                baseUrl,
-                email,
-                staleCode: null,
-                afterSequence: sequenceBefore,
-                maxAttempts: 80);
-
+        var code = await WaitForOpenChallengeCodeAsync(baseUrl, email, challengeId, maxAttempts: 80);
         if (string.IsNullOrWhiteSpace(code))
         {
-            throw new InvalidOperationException("No OTP captured for re-login — set JOBSY_E2E_CAPTURE_EMAIL_CODES=1 on API.");
+            throw new InvalidOperationException(
+                $"No OTP captured for challenge {challengeId} — set JOBSY_E2E_CAPTURE_EMAIL_CODES=1 and restart API.");
         }
 
         using var verifyRequest = new HttpRequestMessage(HttpMethod.Post, $"{api}/api/auth/email-code/verify")
@@ -594,7 +588,12 @@ public static class CandidateJourneyE2e
         };
         AddProvisionHeader(verifyRequest);
         using var verifyResponse = await http.SendAsync(verifyRequest);
-        verifyResponse.EnsureSuccessStatusCode();
+        if (!verifyResponse.IsSuccessStatusCode)
+        {
+            var detail = await verifyResponse.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"email-code verify failed ({(int)verifyResponse.StatusCode}): {detail}");
+        }
         using var verifyDoc = JsonDocument.Parse(await verifyResponse.Content.ReadAsStringAsync());
         var sessionToken = verifyDoc.RootElement.GetProperty("sessionToken").GetString()
             ?? throw new InvalidOperationException("email-code verify returned no sessionToken");
