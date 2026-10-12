@@ -21,7 +21,6 @@ public sealed class ProactiveMatchingRealStackE2eTests
     private static readonly Guid DemoCandidateId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
     private static readonly Guid UnavailableCandidateId = Guid.Parse("aaaaaaaa-3333-3333-3333-333333333333");
     private static readonly Guid WestlandVacancyId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-    private static readonly Guid WestlandCompanyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid EmployerUserId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
 
     [Fact]
@@ -54,7 +53,7 @@ public sealed class ProactiveMatchingRealStackE2eTests
             await DismissCookieBannerIfVisibleAsync(page);
             await page.GotoAsync(baseUrl + "/candidate/proactive-matching", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.Locator(".proactive-page").WaitForAsync();
-            await AssertProactiveMatchInAppNotificationAsync(page, "desktop");
+            await AssertProactiveMatchInAppNotificationAsync(page, "desktop", "instant-publish-notification");
         }
 
         await using (var mobile = await browser.NewContextAsync(KbE2e.MobileContext()))
@@ -311,7 +310,10 @@ public sealed class ProactiveMatchingRealStackE2eTests
             $"Token balance unexpected after accept (before={balanceBefore}, after={balanceAfterAccept}).");
     }
 
-    private static async Task AssertProactiveMatchInAppNotificationAsync(IPage page, string label)
+    private static Task AssertProactiveMatchInAppNotificationAsync(IPage page, string label) =>
+        AssertProactiveMatchInAppNotificationAsync(page, label, "11-notifications-proactive-match");
+
+    private static async Task AssertProactiveMatchInAppNotificationAsync(IPage page, string label, string shotName)
     {
         var notifs = await FetchCandidateNotificationsAsync();
         Assert.Contains(
@@ -324,7 +326,7 @@ public sealed class ProactiveMatchingRealStackE2eTests
             await page.Locator(".notification-bell__badge").WaitForAsync(new() { Timeout = 45_000 });
         }
 
-        await OpenNotificationsPanelAndShotAsync(page, label, "11-notifications-proactive-match", "Nieuwe match:");
+        await OpenNotificationsPanelAndShotAsync(page, label, shotName, "Nieuwe match:");
     }
 
     private static async Task AssertIntroductionInAppNotificationAsync(IPage page, string label)
@@ -458,34 +460,38 @@ public sealed class ProactiveMatchingRealStackE2eTests
         using var response = await http.PutAsync(
             "http://127.0.0.1:5200/api/me/proactive-matching/settings",
             content);
-        _ = await response.Content.ReadAsStringAsync();
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.True(response.IsSuccessStatusCode, body);
     }
 
     private static async Task<Guid> CreateAndPublishCompanionVacancyAsync()
     {
-        var templateJson = await GetEmployerApiJsonAsync($"/api/vacancies/{WestlandVacancyId:D}");
-        using var templateDoc = JsonDocument.Parse(templateJson);
-        var template = templateDoc.RootElement;
-        var salaryTableId = template.GetProperty("salaryTableId").GetGuid();
+        var template = await ResolveEmployerTemplateVacancyAsync();
+        var companyId = template.GetProperty("companyId").GetGuid();
+        var salaryTableId = template.TryGetProperty("salaryTableId", out var stEl)
+                            && stEl.ValueKind is JsonValueKind.String
+            ? stEl.GetGuid()
+            : throw new InvalidOperationException("Template vacancy has no salaryTableId.");
+        var hourlyWage = template.TryGetProperty("hourlyWage", out var wageEl) && wageEl.ValueKind == JsonValueKind.Number
+            ? wageEl.GetDecimal()
+            : template.GetProperty("wageByAge").EnumerateArray().First().GetProperty("hourlyRate").GetDecimal();
         var title = $"E2E instant match {DateTime.UtcNow:yyyyMMddHHmmss}";
         var createPayload = JsonSerializer.Serialize(new
         {
-            companyId = WestlandCompanyId,
+            companyId,
             title,
-            description = template.GetProperty("description").GetString() ?? "E2E vacature voor proactieve matching.",
-            hourlyWage = template.GetProperty("hourlyWage").GetDecimal(),
+            description = template.TryGetProperty("description", out var descEl)
+                ? descEl.GetString()
+                : "E2E vacature voor proactieve matching.",
+            hourlyWage,
             startDate = template.GetProperty("startDate").GetString(),
             endDate = template.GetProperty("endDate").GetString(),
-            requiredTransport = template.GetProperty("requiredTransport").EnumerateArray()
-                .Select(e => e.GetString())
-                .Where(s => s is not null)
-                .ToArray(),
-            workTypes = template.GetProperty("workTypes").EnumerateArray()
-                .Select(e => e.GetString())
-                .Where(s => s is not null)
-                .ToArray(),
+            requiredTransport = ReadRequiredTransportFlags(template),
+            workTypes = template.TryGetProperty("workTypes", out var wtEl)
+                ? wtEl.EnumerateArray().Select(e => e.GetString()).Where(s => s is not null).ToArray()
+                : Array.Empty<string>(),
             salaryTableId,
-            flexibleTimes = template.TryGetProperty("flexibleTimes", out var flex) && flex.GetBoolean()
+            flexibleTimes = true
         });
 
         using var createHttp = CreateEmployerApiClient();
@@ -510,6 +516,41 @@ public sealed class ProactiveMatchingRealStackE2eTests
         var publishBody = await publishResponse.Content.ReadAsStringAsync();
         Assert.True(publishResponse.IsSuccessStatusCode, publishBody);
         return vacancyId;
+    }
+
+    private static int ReadRequiredTransportFlags(JsonElement template)
+    {
+        if (!template.TryGetProperty("requiredTransport", out var rt) || rt.ValueKind != JsonValueKind.Array)
+        {
+            return (int)TransportLabels.ParseMany(null);
+        }
+
+        var labels = rt.EnumerateArray()
+            .Select(e => e.GetString())
+            .Where(s => !string.IsNullOrWhiteSpace(s));
+        return (int)TransportLabels.ParseMany(string.Join(", ", labels));
+    }
+
+    private static async Task<JsonElement> ResolveEmployerTemplateVacancyAsync()
+    {
+        var rows = await FetchEmployerJsonArrayAsync("/api/vacancies/manage");
+        foreach (var row in rows)
+        {
+            var status = row.TryGetProperty("status", out var statusEl)
+                ? statusEl.GetString()
+                : null;
+            if (!string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (row.TryGetProperty("salaryTableId", out _))
+            {
+                return row.Clone();
+            }
+        }
+
+        throw new InvalidOperationException("No active managed vacancy with salary table found for E2E publish template.");
     }
 
     private static async Task WaitForProactiveMatchNotificationAsync(TimeSpan timeout)

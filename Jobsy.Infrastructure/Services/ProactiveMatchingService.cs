@@ -495,7 +495,7 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             }
 
             match = downranked[0].Match;
-            var rationale = BuildDeliveryRationale(match);
+            var rationale = ProactiveMatchingRules.FormatProactiveMatchReason(match);
 
             await DeliverAsync(
                 settings.UserId,
