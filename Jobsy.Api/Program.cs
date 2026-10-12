@@ -19,6 +19,12 @@ if (args.Length > 0 && args[0] == "test-accounts")
     return;
 }
 
+if (args.Length > 0 && args[0] == "proactive-matching")
+{
+    Environment.ExitCode = await ProactiveMatchingCommand.RunAsync(args[1..]);
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];

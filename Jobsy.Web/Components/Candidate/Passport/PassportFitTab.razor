@@ -14,6 +14,19 @@
 @inject IJSRuntime Js
 
 <div class="passport-fit">
+    @if (_proactiveMatchingOn)
+    {
+        <aside class="proactive-promo" data-testid="proactive-promo-fit">
+            <div class="proactive-promo__copy">
+                <p class="proactive-promo__title">@Culture["ProactiveMatching.Promo.Title"]</p>
+                <p class="proactive-promo__lead">@Culture["ProactiveMatching.Promo.Lead"]</p>
+            </div>
+            <a class="btn btn-primary proactive-promo__cta" href="/candidate/proactive-matching">
+                @Culture["ProactiveMatching.Promo.Cta"]
+            </a>
+        </aside>
+    }
+
     @if (_session.Loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
@@ -282,6 +295,7 @@
     private List<CandidateMatchedVacancy> _topMatches = [];
     private int _newContacts;
     private bool _adviceOn;
+    private bool _proactiveMatchingOn;
     private string? _ranCheck;
 
     protected override async Task OnParametersSetAsync()
@@ -289,10 +303,12 @@
         try
         {
             _adviceOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.HonestAdvice);
+            _proactiveMatchingOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.ProactiveMatching);
         }
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
         {
             _adviceOn = false;
+            _proactiveMatchingOn = false;
         }
 
         if (!Active)

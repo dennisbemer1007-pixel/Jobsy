@@ -12,13 +12,15 @@ public static class EmailOptionalCategories
     /// until the candidate opts in.
     /// </summary>
     public const string ComebackReminder = "ComebackReminder";
+    public const string ProactiveMatchSuggestion = "ProactiveMatchSuggestion";
 
     public static readonly IReadOnlyList<string> All =
     [
         PushBom,
         VacancyEngagementReminder,
         CompanyReEngagement,
-        ComebackReminder
+        ComebackReminder,
+        ProactiveMatchSuggestion
     ];
 
     public static bool IsOptional(string? key)

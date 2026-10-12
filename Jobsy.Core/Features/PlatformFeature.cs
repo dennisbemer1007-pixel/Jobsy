@@ -43,5 +43,10 @@ public enum PlatformFeature
     EmployerPhase2,
 
     /// <summary>Import/share external vacancy URLs and e-mail employers. Default false.</summary>
-    CandidateExternalVacancies
+    CandidateExternalVacancies,
+
+    /// <summary>
+    /// Proactive matching: Lobsy zoekt voor je, werkgever-shortlist en kennismakingsverzoeken. Default false.
+    /// </summary>
+    ProactiveMatching
 }

@@ -469,6 +469,15 @@ internal static class EmailStringsNl
         ["Email.VacancyEngagementReminder.Tip.NotShared"] = "Deel de vacature actief. Dat vergroot herhaald bezoek.",
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "Er is interesse, maar nog geen sollicitaties. Maak eisen realistischer of verduidelijk het uurloon.",
 
+        ["Email.ProactiveMatch.Subject"] = "Lobsy tip: {0}",
+        ["Email.ProactiveMatch.Preheader"] = "Match {0}% — bekijk waarom dit bij je past",
+        ["Email.ProactiveMatch.Heading"] = "Lobsy zoekt voor je",
+        ["Email.ProactiveMatch.Eyebrow"] = "Nieuwe match",
+        ["Email.ProactiveMatch.P1"] = "We zagen een vacature die bij je past: {0} bij {1}.",
+        ["Email.ProactiveMatch.Why"] = "Waarom dit bij je past: {0}",
+        ["Email.ProactiveMatch.Score"] = "Matchscore: {0}%",
+        ["Email.ProactiveMatch.Cta"] = "Bekijk tip",
+
         ["Email.DeepTestReceipt.Subject"] = "Je uitgebreide test staat klaar",
         ["Email.DeepTestReceipt.Preheader"] = "Betaald: je kunt met vraag 1 beginnen",
         ["Email.DeepTestReceipt.Heading"] = "Betaald. Je kunt beginnen",

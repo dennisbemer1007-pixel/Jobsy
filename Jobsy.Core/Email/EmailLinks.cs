@@ -41,6 +41,8 @@ public sealed class EmailLinks
     }
 
     public string CandidateApplications => Absolute("/candidate/applications");
+    public string CandidateProactiveMatching => Absolute("/candidate/proactive-matching");
+    public string CandidateTalentContacts => Absolute("/candidate/talent-contacts");
     public string Vacancy(Guid id) => Absolute($"/vacancies/{id}");
     /// <summary>Dependencies A/C: PublicRoutes.Banenkaart / KbRoutes.Map = /banenkaart.</summary>
     public string Map => Absolute("/banenkaart");

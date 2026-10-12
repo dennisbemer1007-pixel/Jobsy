@@ -1753,6 +1753,93 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateMatchSnapshots", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateProactiveMatchingSettings", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ConsentAcceptedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ConsentVersion")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastProcessedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PausedUntilUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("CandidateProactiveMatchingSettings", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ProactiveMatchSuggestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CandidateUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompanyLabel")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("DeliveredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ExternalVacancyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Feedback")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("FeedbackAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MatchPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Rationale")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("VacancyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalVacancyId");
+
+                    b.HasIndex("VacancyId");
+
+                    b.HasIndex("CandidateUserId", "DeliveredAtUtc");
+
+                    b.ToTable("ProactiveMatchSuggestions", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateOnboarding", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5123,6 +5210,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("CandidateExternalVacanciesEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("ProactiveMatchingEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("CandidateInsightsEnabled")
                         .HasColumnType("boolean");
 
@@ -7178,6 +7268,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("TokenChargeOnAccept")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("VacancyId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("WithdrawnAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -7192,6 +7288,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("RespondByUtc");
 
                     b.HasIndex("SpendTransactionId");
+
+                    b.HasIndex("VacancyId");
 
                     b.HasIndex("CompanyId", "CandidateUserId", "Status");
 
@@ -9229,6 +9327,42 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateProactiveMatchingSettings", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ProactiveMatchSuggestion", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "CandidateUser")
+                        .WithMany()
+                        .HasForeignKey("CandidateUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.CandidateExternalVacancy", "ExternalVacancy")
+                        .WithMany()
+                        .HasForeignKey("ExternalVacancyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.Vacancy", "Vacancy")
+                        .WithMany()
+                        .HasForeignKey("VacancyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CandidateUser");
+
+                    b.Navigation("ExternalVacancy");
+
+                    b.Navigation("Vacancy");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateOnboarding", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -10354,6 +10488,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasForeignKey("SpendTransactionId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Jobsy.Core.Entities.Vacancy", "Vacancy")
+                        .WithMany()
+                        .HasForeignKey("VacancyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("CandidateUser");
 
                     b.Navigation("Company");
@@ -10363,6 +10502,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("RefundTransaction");
 
                     b.Navigation("SpendTransaction");
+
+                    b.Navigation("Vacancy");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenPurchaseCheckout", b =>

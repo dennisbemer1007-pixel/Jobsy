@@ -20,6 +20,19 @@
 <div class="journey-page career-page">
     <p class="career-live visually-hidden" role="status" aria-live="polite">@_announcement</p>
 
+    @if (_proactiveMatchingOn)
+    {
+        <aside class="proactive-promo" data-testid="proactive-promo-carriere">
+            <div class="proactive-promo__copy">
+                <p class="proactive-promo__title">@Culture["ProactiveMatching.Promo.Title"]</p>
+                <p class="proactive-promo__lead">@Culture["ProactiveMatching.Promo.Lead"]</p>
+            </div>
+            <a class="btn btn-primary proactive-promo__cta" href="/candidate/proactive-matching">
+                @Culture["ProactiveMatching.Promo.Cta"]
+            </a>
+        </aside>
+    }
+
     @if (_bootstrapping)
     {
         <CareerStage Variant="ClimbVariant.Stones"
@@ -212,6 +225,7 @@
     private bool _showCarriedOver;
     private bool _employersOn = true;
     private bool _passportOn;
+    private bool _proactiveMatchingOn;
 
     private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
 
@@ -277,6 +291,7 @@
             var flags = await FeatureFlags.GetAsync();
             _employersOn = flags.EmployersEnabled;
             _passportOn = flags.CandidatePassportEnabled;
+            _proactiveMatchingOn = flags.ProactiveMatchingEnabled;
         }
         catch (Exception)
         {

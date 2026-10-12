@@ -159,6 +159,8 @@ public static class EmailTemplateRegistry
             "Kom terug — 4 weken", "Herinnering na 4 weken stilte."),
         Def("ComebackReminderTests", "ComebackReminder", "Kandidaat", EmailKind.Optional, "ComebackReminder", false,
             "Kom terug — 4 korte tests", "Herinnering als de 4 korte tests nog openstaan."),
+        Def("ProactiveMatchSuggestion", "ProactiveMatchSuggestion", "Kandidaat", EmailKind.Optional, "ProactiveMatchSuggestion", false,
+            "Lobsy zoekt voor je", "Nieuwe vacaturetip met waarom dit bij je past.", requiresEmployers: false),
         Def("ReferenceConfirmation", "ReferenceConfirmation", "Referent", EmailKind.Essential, "ReferenceAsked", false,
             "Bevestiging van een referent", "Mail met een eenmalige link naar 5 korte vragen."),
     ];
