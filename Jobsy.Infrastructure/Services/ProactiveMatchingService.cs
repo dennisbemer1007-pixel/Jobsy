@@ -164,9 +164,11 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         var now = DateTime.UtcNow;
         var externalOn = await _flags.IsEnabledAsync(PlatformFeature.CandidateExternalVacancies, cancellationToken);
 
-        var settingsRows = await _db.CandidateProactiveMatchingSettings.AsNoTracking()
-            .Where(s => s.Enabled && ProactiveMatchingRules.HasValidConsent(s.ConsentAcceptedAtUtc, s.ConsentVersion))
-            .ToListAsync(cancellationToken);
+        var settingsRows = (await _db.CandidateProactiveMatchingSettings.AsNoTracking()
+                .Where(s => s.Enabled)
+                .ToListAsync(cancellationToken))
+            .Where(s => ProactiveMatchingRules.HasValidConsent(s.ConsentAcceptedAtUtc, s.ConsentVersion))
+            .ToList();
 
         var activeVacancies = await _discovery.GetActiveAsync(cancellationToken);
         var sent = 0;
