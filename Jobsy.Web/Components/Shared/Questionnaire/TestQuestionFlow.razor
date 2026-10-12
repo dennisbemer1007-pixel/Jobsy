@@ -305,6 +305,7 @@
             await OnAnswer.InvokeAsync((question.Id, value));
         }
 
+        await InvokeAsync(StateHasChanged);
         await OnChanged.InvokeAsync();
         await FireLevelsAsync();
         if (generation != _advanceGeneration || _index != answeredIndex) return;

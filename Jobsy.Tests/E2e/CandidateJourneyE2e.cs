@@ -270,11 +270,12 @@ public static class CandidateJourneyE2e
                 break;
             }
 
-            var testLabel = page.Locator(".test-likert label").Nth(Math.Clamp(value - 1, 0, 4));
-            if (await testLabel.CountAsync() > 0)
+            var likert = page.Locator(".test-flow .test-likert, .test-likert").First;
+            var radio = likert.Locator("input[type=radio]").Nth(Math.Clamp(value - 1, 0, 4));
+            if (await radio.CountAsync() > 0)
             {
-                await testLabel.ClickAsync(new() { Timeout = 5_000 });
-                await page.WaitForTimeoutAsync(350);
+                await radio.CheckAsync(new() { Timeout = 5_000, Force = true });
+                await page.WaitForTimeoutAsync(450);
                 var testNext = page.Locator("button.test-flow__next:not([disabled])").First;
                 if (await testNext.CountAsync() > 0)
                 {
@@ -405,31 +406,41 @@ public static class CandidateJourneyE2e
     public static async Task SelectMaxShedDepthAsync(IPage page)
     {
         await DismissAssistantOverlayAsync(page);
-        for (var attempt = 0; attempt < 10; attempt++)
+        var picked = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const opts = [...document.querySelectorAll('.journey-dive__opt:not(.is-done):not([disabled])')];
+              if (opts.length === 0) {
+                return false;
+              }
+              opts[opts.length - 1].click();
+              return true;
+            }
+            """);
+        if (!picked)
         {
-            var picked = await page.EvaluateAsync<bool>(
-                """
-                () => {
-                  const opts = [...document.querySelectorAll(
-                    '.journey-dive__opt:not(.is-done):not([disabled]):not(.is-on)')];
-                  if (opts.length === 0) {
-                    return false;
-                  }
-                  opts[opts.length - 1].click();
-                  return true;
-                }
-                """);
-            if (!picked)
-            {
-                return;
-            }
+            return;
+        }
 
-            await page.WaitForTimeoutAsync(500);
-            var stillOpen = await page.Locator(".journey-dive__opt:not(.is-done):not([disabled]):not(.is-on)").CountAsync();
-            if (stillOpen == 0)
-            {
-                return;
-            }
+        await page.WaitForTimeoutAsync(400);
+    }
+
+    /// <summary>Clicks wizard / test-flow primary when a mini-test block is finished.</summary>
+    public static async Task TryAdvanceMiniTestWizardAsync(IPage page)
+    {
+        await DismissAssistantOverlayAsync(page);
+        var finish = page.Locator("button.test-flow__next:not([disabled])").Filter(new() { HasText = "Afronden" });
+        if (await finish.CountAsync() > 0)
+        {
+            await finish.First.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
+            await page.WaitForTimeoutAsync(400);
+        }
+
+        var wizardNext = page.Locator("button.ob-wizard__cta:not([disabled])").First;
+        if (await wizardNext.CountAsync() > 0)
+        {
+            await wizardNext.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
+            await page.WaitForTimeoutAsync(400);
         }
     }
 

@@ -1928,6 +1928,7 @@
         _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
         _saveStatus = "saved";
         QueueMiniSave(id, value);
+        _ = InvokeAsync(StateHasChanged);
         return Task.CompletedTask;
     }
 

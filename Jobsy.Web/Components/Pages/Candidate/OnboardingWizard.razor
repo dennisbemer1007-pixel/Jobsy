@@ -246,9 +246,11 @@
                                                 CurrentQuestion="_currentQuestion"
                                                 TestTabs="MiniTestTabs"
                                                 Questions="_miniQuestions"
-                                                Answers="_miniAnswers"
+                                                Answers="MiniVisibleAnswers"
+                                                Depth="TestDepthLevel.First"
                                                 InputPrefix="@MiniPrefix"
                                                 Answer="OnMiniAnswer"
+                                                OnFinished="FinishMiniAsync"
                                                 ExpandQuestion="ExpandQuestion"
                                                 ResolveQuestionText="QuestionText" />
                             break;
@@ -1007,6 +1009,25 @@
 
     private string QuestionText(OnboardingMiniTest.MiniQuestion question) => Culture[question.TextKey];
 
+    private IReadOnlyDictionary<int, int> MiniVisibleAnswers
+    {
+        get
+        {
+            if (_serverAnswers.Count == 0)
+            {
+                return _miniAnswers;
+            }
+
+            var merged = new Dictionary<int, int>(_serverAnswers);
+            foreach (var answer in _miniAnswers)
+            {
+                merged[answer.Key] = answer.Value;
+            }
+
+            return merged;
+        }
+    }
+
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
@@ -1017,8 +1038,11 @@
             _ = SaveMiniQuietAsync(id, value);
         }
 
+        _ = InvokeAsync(StateHasChanged);
         return Task.CompletedTask;
     }
+
+    private Task FinishMiniAsync() => NextAsync();
 
     private async Task SaveMiniQuietAsync(int id, int value)
     {

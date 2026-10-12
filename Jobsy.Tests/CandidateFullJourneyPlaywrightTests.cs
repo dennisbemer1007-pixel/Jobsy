@@ -180,7 +180,8 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
             if (await page.Locator(".test-flow, fieldset.q-likert, .q-likert__scale").CountAsync() > 0)
             {
-                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 6, 4);
+                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 8, 4);
+                await CandidateJourneyE2e.TryAdvanceMiniTestWizardAsync(page);
                 continue;
             }
 
@@ -379,12 +380,13 @@ public sealed class CandidateFullJourneyPlaywrightTests
                 await CandidateJourneyE2e.SelectMaxShedDepthAsync(page);
                 await CandidateJourneyE2e.ShotAsync(page, tag, $"05-shed-{round:D2}");
                 await CandidateJourneyE2e.ClickPrimaryAsync(page);
+                await page.WaitForTimeoutAsync(600);
                 continue;
             }
 
             if (await page.Locator(".test-flow, .test-likert, fieldset.q-likert, .questionnaire-shell").CountAsync() > 0)
             {
-                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 8, 4);
+                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 30, 4);
                 _ = await CandidateJourneyE2e.TryAdvanceDiscoveryStepAsync(page);
                 stagnantRounds = 0;
                 continue;
