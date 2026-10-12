@@ -21,7 +21,54 @@ public sealed class ProactiveMatchingRealStackE2eTests
     private static readonly Guid DemoCandidateId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
     private static readonly Guid UnavailableCandidateId = Guid.Parse("aaaaaaaa-3333-3333-3333-333333333333");
     private static readonly Guid WestlandVacancyId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private static readonly Guid WestlandCompanyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid EmployerUserId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
+
+    [Fact]
+    public async Task Instant_proactive_match_after_publish_desktop_and_mobile()
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("JOBSY_PROACTIVE_REAL"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(ScreenshotDir);
+        TryRunPrepareSql();
+        await PrepareCandidateProactiveSettingsViaApiAsync();
+        _ = await CreateAndPublishCompanionVacancyAsync();
+        await WaitForProactiveMatchNotificationAsync(TimeSpan.FromSeconds(90));
+
+        await using var browser = await KbE2e.LaunchChromiumAsync();
+        await using (var desktop = await browser.NewContextAsync(KbE2e.DesktopContext()))
+        {
+            await PlaywrightCookieConsent.AcceptAsync(desktop);
+            var page = await desktop.NewPageAsync();
+            page.SetDefaultTimeout(60_000);
+            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, CandidateEmail, Password));
+            await DismissCookieBannerIfVisibleAsync(page);
+            await page.GotoAsync(baseUrl + "/candidate/proactive-matching", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.Locator(".proactive-page").WaitForAsync();
+            await AssertProactiveMatchInAppNotificationAsync(page, "desktop");
+        }
+
+        await using (var mobile = await browser.NewContextAsync(KbE2e.MobileContext()))
+        {
+            await PlaywrightCookieConsent.AcceptAsync(mobile);
+            var page = await mobile.NewPageAsync();
+            page.SetDefaultTimeout(60_000);
+            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, CandidateEmail, Password));
+            await DismissCookieBannerIfVisibleAsync(page);
+            await page.GotoAsync(baseUrl + "/candidate/proactive-matching", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.Locator(".proactive-page").WaitForAsync();
+            await TryNotificationPanelShotAsync(page, "mobile", "instant-publish-notification", "Nieuwe match:");
+        }
+    }
 
     [Fact]
     public async Task Proactive_flow_candidate_and_employer_real_stack()
@@ -82,8 +129,12 @@ public sealed class ProactiveMatchingRealStackE2eTests
             await Shot(page, $"03-candidate-beschikbaar-on", label);
         }
 
-        await TriggerDailyMatchingJobAsync();
+        await context.ClearCookiesAsync();
+        await PrepareCandidateProactiveSettingsViaApiAsync();
+        _ = await CreateAndPublishCompanionVacancyAsync();
+        await WaitForProactiveMatchNotificationAsync(TimeSpan.FromSeconds(90));
 
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, CandidateEmail, Password));
         await page.ReloadAsync(new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForTimeoutAsync(1200);
         await DismissCookieBannerIfVisibleAsync(page);
@@ -399,25 +450,85 @@ public sealed class ProactiveMatchingRealStackE2eTests
         }
     }
 
-    private static async Task TriggerDailyMatchingJobAsync()
+    private static async Task PrepareCandidateProactiveSettingsViaApiAsync()
     {
-        var psi = new System.Diagnostics.ProcessStartInfo
+        using var http = CreateCandidateApiClient();
+        var payload = JsonSerializer.Serialize(new { acceptConsent = true, enabled = true });
+        using var content = new StringContent(payload, Encoding.UTF8, "application/json");
+        using var response = await http.PutAsync(
+            "http://127.0.0.1:5200/api/me/proactive-matching/settings",
+            content);
+        _ = await response.Content.ReadAsStringAsync();
+    }
+
+    private static async Task<Guid> CreateAndPublishCompanionVacancyAsync()
+    {
+        var templateJson = await GetEmployerApiJsonAsync($"/api/vacancies/{WestlandVacancyId:D}");
+        using var templateDoc = JsonDocument.Parse(templateJson);
+        var template = templateDoc.RootElement;
+        var salaryTableId = template.GetProperty("salaryTableId").GetGuid();
+        var title = $"E2E instant match {DateTime.UtcNow:yyyyMMddHHmmss}";
+        var createPayload = JsonSerializer.Serialize(new
         {
-            FileName = "dotnet",
-            Arguments = "run --project Jobsy.Api/Jobsy.Api.csproj -c Release --no-build -- proactive-matching run-daily",
-            WorkingDirectory = FindRepoRoot(),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false
-        };
-        psi.Environment["ConnectionStrings__JobsyDb"] =
-            Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb")
-            ?? "Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres";
-        psi.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
-        psi.Environment["Jobsy__TestEmployersEnabled"] = "true";
-        using var proc = System.Diagnostics.Process.Start(psi)!;
-        await proc.WaitForExitAsync();
-        Assert.Equal(0, proc.ExitCode);
+            companyId = WestlandCompanyId,
+            title,
+            description = template.GetProperty("description").GetString() ?? "E2E vacature voor proactieve matching.",
+            hourlyWage = template.GetProperty("hourlyWage").GetDecimal(),
+            startDate = template.GetProperty("startDate").GetString(),
+            endDate = template.GetProperty("endDate").GetString(),
+            requiredTransport = template.GetProperty("requiredTransport").EnumerateArray()
+                .Select(e => e.GetString())
+                .Where(s => s is not null)
+                .ToArray(),
+            workTypes = template.GetProperty("workTypes").EnumerateArray()
+                .Select(e => e.GetString())
+                .Where(s => s is not null)
+                .ToArray(),
+            salaryTableId,
+            flexibleTimes = template.TryGetProperty("flexibleTimes", out var flex) && flex.GetBoolean()
+        });
+
+        using var createHttp = CreateEmployerApiClient();
+        using var createContent = new StringContent(createPayload, Encoding.UTF8, "application/json");
+        using var createResponse = await createHttp.PostAsync("http://127.0.0.1:5200/api/vacancies", createContent);
+        var createBody = await createResponse.Content.ReadAsStringAsync();
+        Assert.True(createResponse.IsSuccessStatusCode, createBody);
+        using var createDoc = JsonDocument.Parse(createBody);
+        var vacancyId = createDoc.RootElement.GetProperty("id").GetGuid();
+
+        var publishPayload = JsonSerializer.Serialize(new
+        {
+            vacancyId,
+            highlight = false,
+            pushBom = false,
+            extend = false
+        });
+        using var publishContent = new StringContent(publishPayload, Encoding.UTF8, "application/json");
+        using var publishResponse = await createHttp.PostAsync(
+            "http://127.0.0.1:5200/api/vacancies/publish",
+            publishContent);
+        var publishBody = await publishResponse.Content.ReadAsStringAsync();
+        Assert.True(publishResponse.IsSuccessStatusCode, publishBody);
+        return vacancyId;
+    }
+
+    private static async Task WaitForProactiveMatchNotificationAsync(TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            var notifs = await FetchCandidateNotificationsAsync();
+            if (notifs.Any(n =>
+                    (n.GetProperty("title").GetString() ?? "")
+                    .StartsWith("Nieuwe match:", StringComparison.Ordinal)))
+            {
+                return;
+            }
+
+            await Task.Delay(2000);
+        }
+
+        Assert.Fail("Geen proactieve match-notificatie binnen de wachttijd na publicatie.");
     }
 
     private static async Task<decimal> GetWestlandTokenBalanceAsync()
