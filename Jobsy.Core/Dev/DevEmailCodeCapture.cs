@@ -48,6 +48,12 @@ public static class DevEmailCodeCapture
 
         var normalized = email.Trim().ToLowerInvariant();
         var seq = Interlocked.Increment(ref _sequence);
+        if (challengeId is null && ByEmail.TryGetValue(normalized, out var previous))
+        {
+            // Email stub capture runs after AuthController.Record; keep the challenge id.
+            challengeId = previous.ChallengeId;
+        }
+
         ByEmail[normalized] = new CaptureEntry(code.Trim(), seq, challengeId, DateTime.UtcNow);
     }
 

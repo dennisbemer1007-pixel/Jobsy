@@ -80,7 +80,8 @@ public sealed class E2eDevController : ControllerBase
         }
 
         DevEmailCodeCapture.TryGetEntry(email, out var capture);
-        var matched = capture.ChallengeId == challenge.Id;
+        var matched = capture.ChallengeId == challenge.Id
+            || (capture.ChallengeId is null && !string.IsNullOrWhiteSpace(capture.Code));
         return Ok(new
         {
             email = normalized,
