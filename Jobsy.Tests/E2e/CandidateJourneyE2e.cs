@@ -21,6 +21,15 @@ public static class CandidateJourneyE2e
             ? "/cursor/stores/self/fulljourney"
             : Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT")!;
 
+    private static string ProvisionSecret =>
+        Environment.GetEnvironmentVariable("JOBSY_E2E_PROVISION_SECRET")
+        ?? "local-dev-jobsy-provision-secret";
+
+    private static void AddProvisionHeader(HttpRequestMessage request)
+    {
+        request.Headers.TryAddWithoutValidation("X-Jobsy-Provision-Secret", ProvisionSecret);
+    }
+
     public static bool ShouldRun =>
         string.Equals(
             Environment.GetEnvironmentVariable("JOBSY_E2E_FULL_JOURNEY"),
@@ -279,6 +288,13 @@ public static class CandidateJourneyE2e
         string baseUrl,
         string email,
         int maxAttempts = 80)
+        => await WaitForOpenChallengeCodeAsync(baseUrl, email, challengeId: null, maxAttempts);
+
+    public static async Task<string?> WaitForOpenChallengeCodeAsync(
+        string baseUrl,
+        string email,
+        Guid? challengeId,
+        int maxAttempts = 80)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
@@ -288,6 +304,15 @@ public static class CandidateJourneyE2e
             {
                 var json = await http.GetFromJsonAsync<JsonElement>(
                     $"{api}/api/e2e/open-email-challenge?email={Uri.EscapeDataString(email)}");
+                if (challengeId is Guid expected
+                    && json.TryGetProperty("challengeId", out var cidProp)
+                    && cidProp.TryGetGuid(out var openId)
+                    && openId != expected)
+                {
+                    await Task.Delay(500);
+                    continue;
+                }
+
                 if (json.TryGetProperty("code", out var codeProp))
                 {
                     var value = codeProp.GetString();
@@ -534,14 +559,17 @@ public static class CandidateJourneyE2e
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 
         var sequenceBefore = await GetEmailCodeSequenceAsync(baseUrl, email) ?? 0;
-        using var startResponse = await http.PostAsJsonAsync(
-            $"{api}/api/auth/email-code/start",
-            new { email, culture = "nl" });
+        using var startRequest = new HttpRequestMessage(HttpMethod.Post, $"{api}/api/auth/email-code/start")
+        {
+            Content = JsonContent.Create(new { email, culture = "nl" })
+        };
+        AddProvisionHeader(startRequest);
+        using var startResponse = await http.SendAsync(startRequest);
         startResponse.EnsureSuccessStatusCode();
         using var startDoc = JsonDocument.Parse(await startResponse.Content.ReadAsStringAsync());
         var challengeId = startDoc.RootElement.GetProperty("challengeId").GetGuid();
 
-        var code = await WaitForOpenChallengeCodeAsync(baseUrl, email, maxAttempts: 80)
+        var code = await WaitForOpenChallengeCodeAsync(baseUrl, email, challengeId, maxAttempts: 80)
             ?? await FetchEmailCodeAsync(
                 baseUrl,
                 email,
@@ -554,15 +582,18 @@ public static class CandidateJourneyE2e
             throw new InvalidOperationException("No OTP captured for re-login — set JOBSY_E2E_CAPTURE_EMAIL_CODES=1 on API.");
         }
 
-        using var verifyResponse = await http.PostAsJsonAsync(
-            $"{api}/api/auth/email-code/verify",
-            new
+        using var verifyRequest = new HttpRequestMessage(HttpMethod.Post, $"{api}/api/auth/email-code/verify")
+        {
+            Content = JsonContent.Create(new
             {
                 challengeId,
                 code,
                 rememberDevice = true,
                 userAgent = "JobsyE2E/1.0"
-            });
+            })
+        };
+        AddProvisionHeader(verifyRequest);
+        using var verifyResponse = await http.SendAsync(verifyRequest);
         verifyResponse.EnsureSuccessStatusCode();
         using var verifyDoc = JsonDocument.Parse(await verifyResponse.Content.ReadAsStringAsync());
         var sessionToken = verifyDoc.RootElement.GetProperty("sessionToken").GetString()
