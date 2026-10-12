@@ -436,6 +436,18 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Browser-direct passport PDF (same budget as API public-pdf).
+    options.AddPolicy("public-pdf", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 12,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     // GET /privacy/data/export (07): per signed-in user, not per IP (shared Web→API hop).
     options.AddPolicy("export", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(

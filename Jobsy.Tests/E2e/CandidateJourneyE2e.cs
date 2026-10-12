@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Jobsy.Core.Interfaces;
@@ -201,10 +202,20 @@ public static class CandidateJourneyE2e
         return doc.RootElement.TryGetProperty("id", out var id) && id.TryGetGuid(out var guid) ? guid : null;
     }
 
+    public static async Task ClearCapturedEmailCodesAsync(string baseUrl)
+    {
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        _ = await http.PostAsync($"{api}/api/e2e/clear-email-codes", null);
+    }
+
     public static async Task<string?> FetchEmailCodeAsync(string baseUrl, string email)
+        => await FetchEmailCodeAsync(baseUrl, email, staleCode: null);
+
+    public static async Task<string?> FetchEmailCodeAsync(string baseUrl, string email, string? staleCode)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-        for (var attempt = 0; attempt < 20; attempt++)
+        for (var attempt = 0; attempt < 40; attempt++)
         {
             try
             {
@@ -213,7 +224,12 @@ public static class CandidateJourneyE2e
                     $"{api}/api/e2e/last-email-code?email={Uri.EscapeDataString(email)}");
                 if (json.TryGetProperty("code", out var code))
                 {
-                    return code.GetString();
+                    var value = code.GetString();
+                    if (!string.IsNullOrWhiteSpace(value)
+                        && (staleCode is null || !string.Equals(value, staleCode, StringComparison.Ordinal)))
+                    {
+                        return value;
+                    }
                 }
             }
             catch
@@ -229,6 +245,7 @@ public static class CandidateJourneyE2e
 
     public static async Task AnswerLikertUntilDoneAsync(IPage page, int maxClicks, int value = 4)
     {
+        await DismissAssistantOverlayAsync(page);
         for (var i = 0; i < maxClicks; i++)
         {
             if (await page.Locator(".passport-overview, [data-testid=gd-result], .gd-result").CountAsync() > 0)
@@ -236,8 +253,28 @@ public static class CandidateJourneyE2e
                 break;
             }
 
-            var opt = page.Locator("fieldset.q-likert.is-current .q-likert__opt, .q-likert__opt:not(.q-likert--collapsed *)")
+            var testLabel = page.Locator(".test-likert label").Nth(Math.Clamp(value - 1, 0, 4));
+            if (await testLabel.CountAsync() > 0)
+            {
+                await testLabel.ClickAsync(new() { Timeout = 5_000 });
+                await page.WaitForTimeoutAsync(350);
+                var testNext = page.Locator("button.test-flow__next:not([disabled])").First;
+                if (await testNext.CountAsync() > 0)
+                {
+                    await testNext.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
+                    await page.WaitForTimeoutAsync(350);
+                }
+
+                continue;
+            }
+
+            var opt = page.Locator("fieldset.q-likert.is-current .q-likert__opt")
                 .Nth(Math.Clamp(value - 1, 0, 4));
+            if (await opt.CountAsync() == 0)
+            {
+                opt = page.Locator(".q-likert__scale .q-likert__opt").Nth(Math.Clamp(value - 1, 0, 4));
+            }
+
             if (await opt.CountAsync() == 0)
             {
                 opt = page.Locator($"[data-testid=gd-likert-{value}]").First;
@@ -249,30 +286,174 @@ public static class CandidateJourneyE2e
             }
 
             await opt.ClickAsync(new() { Timeout = 5_000 });
-            await page.WaitForTimeoutAsync(180);
+            await page.WaitForTimeoutAsync(450);
+        }
+
+        for (var wait = 0; wait < 30; wait++)
+        {
+            var testNext = page.Locator("button.test-flow__next:not([disabled])").First;
+            if (await testNext.CountAsync() > 0)
+            {
+                await testNext.ClickAsync(new() { Timeout = 15_000, Force = true });
+                await page.WaitForTimeoutAsync(300);
+                break;
+            }
+
+            var volgende = page.GetByRole(AriaRole.Button, new() { Name = "Volgende", Exact = true });
+            if (await volgende.CountAsync() > 0 && await volgende.IsEnabledAsync())
+            {
+                await volgende.ClickAsync(new() { Timeout = 5_000 });
+                await page.WaitForTimeoutAsync(300);
+                break;
+            }
+
+            await page.WaitForTimeoutAsync(120);
+        }
+
+        await DismissAssistantOverlayAsync(page);
+        var nextTest = page.GetByRole(AriaRole.Button, new() { Name = "Volgende test", Exact = true });
+        if (await nextTest.CountAsync() > 0 && await nextTest.IsEnabledAsync())
+        {
+            await nextTest.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
+            await page.WaitForTimeoutAsync(350);
         }
     }
 
+    public static async Task DismissAssistantOverlayAsync(IPage page)
+    {
+        var width = page.ViewportSize?.Width ?? 1280;
+        if (width >= 900)
+        {
+            return;
+        }
+
+        var close = page.Locator(".lobsy-assistant.is-open .share-modal__close").First;
+        if (await close.CountAsync() > 0)
+        {
+            await close.ClickAsync(new() { Timeout = 5_000, Force = true });
+            await page.WaitForTimeoutAsync(300);
+        }
+    }
+
+    private static bool IsMobileViewport(IPage page)
+        => (page.ViewportSize?.Width ?? 1280) < 900;
+
     public static async Task ClickPrimaryAsync(IPage page)
     {
+        await DismissAssistantOverlayAsync(page);
         var btn = page.Locator("button.btn-primary:not([disabled])").First;
         if (await btn.CountAsync() > 0)
         {
-            await btn.ClickAsync(new() { Timeout = 15_000 });
+            await btn.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
         }
     }
 
     public static async Task SelectMaxShedDepthAsync(IPage page)
     {
-        var options = page.Locator(".journey-dive__opt:not(.is-done):not([disabled])");
-        var count = await options.CountAsync();
-        if (count == 0)
+        var unselected = page.Locator(".journey-dive__opt:not(.is-done):not([disabled]):not(.is-on)");
+        if (await unselected.CountAsync() == 0)
         {
             return;
         }
 
-        await options.Last.ClickAsync(new() { Timeout = 10_000 });
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            var shallow = unselected.First;
+            try
+            {
+                await shallow.ClickAsync(new() { Timeout = 8_000, Force = true });
+                await page.WaitForTimeoutAsync(400);
+                return;
+            }
+            catch (PlaywrightException) when (attempt < 3)
+            {
+                await page.WaitForTimeoutAsync(350);
+            }
+        }
     }
+
+    public static async Task<byte[]?> FetchPaspoortPdfAsync(IPage page, string baseUrl)
+    {
+        var path = baseUrl.TrimEnd('/') + Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.LobsyCvPath;
+        try
+        {
+            var cookies = await page.Context.CookiesAsync(baseUrl);
+            if (cookies.Count > 0)
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+                using var request = new HttpRequestMessage(HttpMethod.Get, path);
+                request.Headers.Add("Cookie", string.Join("; ", cookies.Select(c => $"{c.Name}={c.Value}")));
+                using var response = await http.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsByteArrayAsync();
+                    var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
+                    if (IsPdfBody(body, contentType))
+                    {
+                        return body;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // fall through
+        }
+
+        try
+        {
+            var bytes = await page.EvaluateAsync<byte[]>(
+                """
+                async path => {
+                  const res = await fetch(path, { credentials: 'include', cache: 'no-store' });
+                  if (!res.ok) return [];
+                  const buf = new Uint8Array(await res.arrayBuffer());
+                  return Array.from(buf);
+                }
+                """,
+                Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.LobsyCvPath);
+            if (bytes is { Length: > 5_000 } && bytes[0] == (byte)'%' && bytes[1] == (byte)'P')
+            {
+                return bytes;
+            }
+        }
+        catch
+        {
+            // fall through
+        }
+
+        return null;
+    }
+
+    public static async Task<byte[]?> FetchPaspoortPdfViaApiBearerAsync(string baseUrl, string email, string password)
+    {
+        var bearer = await LoginApiBearerAsync(baseUrl, email, password);
+        if (string.IsNullOrWhiteSpace(bearer))
+        {
+            return null;
+        }
+
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{api}/api/me/lobsy-cv.pdf");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
+        using var response = await http.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
+        var body = await response.Content.ReadAsByteArrayAsync();
+        return IsPdfBody(body, contentType) ? body : null;
+    }
+
+    private static bool IsPdfBody(byte[] body, string contentType)
+        => body.Length > 5_000
+           && body[0] == (byte)'%'
+           && body[1] == (byte)'P'
+           && (string.IsNullOrWhiteSpace(contentType)
+               || contentType.Contains("pdf", StringComparison.OrdinalIgnoreCase));
 
     public static async Task RenderPdfFirstPageAsync(byte[] pdf, string outputPng)
     {

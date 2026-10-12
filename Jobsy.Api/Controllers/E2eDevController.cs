@@ -38,6 +38,24 @@ public sealed class E2eDevController : ControllerBase
             : NotFound(new { message = "no code captured yet" });
     }
 
+    [HttpPost("clear-email-codes")]
+    [AllowAnonymous]
+    public IActionResult ClearEmailCodes()
+    {
+        if (!HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        if (!DevEmailCodeCapture.Enabled)
+        {
+            return NotFound(new { message = "JOBSY_E2E_CAPTURE_EMAIL_CODES is off" });
+        }
+
+        DevEmailCodeCapture.Clear();
+        return Ok(new { cleared = true });
+    }
+
     [HttpPost("fixture/external-vacancy")]
     [AllowAnonymous]
     public async Task<IActionResult> ExternalVacancyFixture(

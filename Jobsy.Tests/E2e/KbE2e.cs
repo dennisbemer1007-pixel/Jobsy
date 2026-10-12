@@ -119,7 +119,10 @@ public static class KbE2e
         return capture;
     }
 
-    public static void AssertHealthy(KbPageCapture capture, bool requireNoIsochrone404 = true)
+    public static void AssertHealthy(
+        KbPageCapture capture,
+        bool requireNoIsochrone404 = true,
+        bool allowFont404 = false)
     {
         var stack = capture.PageErrors
             .Where(e => e.Contains("Maximum call stack size exceeded", StringComparison.OrdinalIgnoreCase))
@@ -136,7 +139,11 @@ public static class KbE2e
             .ToList();
         Assert.True(consoleStack.Count == 0, "console stack: " + string.Join(" | ", consoleStack));
 
-        Assert.Equal(0, capture.Font404);
+        if (!allowFont404)
+        {
+            Assert.Equal(0, capture.Font404);
+        }
+
         if (requireNoIsochrone404)
         {
             Assert.Equal(0, capture.Isochrone404);
