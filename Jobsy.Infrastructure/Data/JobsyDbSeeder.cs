@@ -1,5 +1,6 @@
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -93,6 +94,8 @@ public static class JobsyDbSeeder
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var perfCount = configuration.GetValue("Seed:BanenkaartPerfCount", 0);
 
         if (await db.Companies.AnyAsync())
         {
@@ -127,6 +130,7 @@ public static class JobsyDbSeeder
                 await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
                 await AtsScrapeSourceSeeder.SeedAsync(db, logger);
                 await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+                await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
             }
             catch (Exception ex)
             {
@@ -156,6 +160,7 @@ public static class JobsyDbSeeder
             await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
             await AtsScrapeSourceSeeder.SeedAsync(db, logger);
             await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+            await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)

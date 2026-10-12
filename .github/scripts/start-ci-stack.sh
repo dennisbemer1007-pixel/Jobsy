@@ -8,6 +8,7 @@ cd "$ROOT"
 export ASPNETCORE_ENVIRONMENT=Development
 export DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 export Seed__Enabled=true
+export Seed__BanenkaartPerfCount="${Seed__BanenkaartPerfCount:-0}"
 export JobsyAuth__AllowDevelopmentAuth=true
 export JobsyAuth__AllowStubPayments=true
 # Playwright WaitForFunctionAsync needs eval; Acc/prod CSP stays without unsafe-eval.

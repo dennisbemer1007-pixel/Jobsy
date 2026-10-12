@@ -640,7 +640,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261010-ag02"
+        "/js/jobMap.min.js?v=20261012-bbox07"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -828,6 +828,11 @@ window.jobsyMaps = (function () {
         try {
             var u = new URL(url, window.location.origin);
             u.searchParams.delete("transport");
+            u.searchParams.delete("minLat");
+            u.searchParams.delete("minLng");
+            u.searchParams.delete("maxLat");
+            u.searchParams.delete("maxLng");
+            u.searchParams.delete("zoom");
             var keys = Array.prototype.slice.call(u.searchParams.keys()).sort();
             var parts = [];
             for (var i = 0; i < keys.length; i++) {

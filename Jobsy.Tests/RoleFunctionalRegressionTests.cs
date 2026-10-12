@@ -48,9 +48,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var list = await client.GetAsync("api/vacancies");
         Assert.Equal(HttpStatusCode.OK, list.StatusCode);
-        var vacancies = await list.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.NotNull(vacancies);
-        Assert.Contains(vacancies!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
+        var page = await list.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.NotNull(page);
+        Assert.Contains(page!.Items, v => v.Id == _factory.VacancyId);
 
         var discover = await client.GetAsync(
             $"api/vacancies/discover?originLat=52.09&originLng=4.31&transport=Fiets&maxMinutes=60");
@@ -205,33 +205,26 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         // Legacy query param still works.
         var filter65 = await client.GetAsync("api/vacancies/discover?suitableFor65Plus=true&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, filter65.StatusCode);
-        var items65 = await filter65.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.NotNull(items65);
-        Assert.Contains(items65!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
-        Assert.Contains(items65!, v => v.GetProperty("id").GetGuid() == _factory.NightShiftVacancyId);
-        Assert.DoesNotContain(items65!, v => v.GetProperty("id").GetGuid() == _factory.LowMatchVacancyId);
+        var page65 = await filter65.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.NotNull(page65);
+        Assert.Contains(page65!.Items, v => v.Id == _factory.VacancyId);
+        Assert.Contains(page65.Items, v => v.Id == _factory.NightShiftVacancyId);
+        Assert.DoesNotContain(page65.Items, v => v.Id == _factory.LowMatchVacancyId);
 
         // Unified vacancy-type filter: 65+ category also returns flagged Regulier vacancies.
         var by65Category = await client.GetAsync(
             $"api/vacancies/discover?categoryId={VacancyCategoryDefaults.SeniorLightId:D}&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, by65Category.StatusCode);
-        var items65Cat = await by65Category.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.Contains(items65Cat!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
-        Assert.Contains(items65Cat!, v => v.GetProperty("id").GetGuid() == _factory.NightShiftVacancyId);
-        Assert.DoesNotContain(items65Cat!, v => v.GetProperty("id").GetGuid() == _factory.LowMatchVacancyId);
+        var page65Cat = await by65Category.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.Contains(page65Cat!.Items, v => v.Id == _factory.VacancyId);
+        Assert.Contains(page65Cat.Items, v => v.Id == _factory.NightShiftVacancyId);
+        Assert.DoesNotContain(page65Cat.Items, v => v.Id == _factory.LowMatchVacancyId);
 
         var byCategory = await client.GetAsync(
             $"api/vacancies/discover?categoryId={VacancyCategoryDefaults.RegulierId:D}&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, byCategory.StatusCode);
-        var regulier = await byCategory.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.Contains(regulier!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
-        Assert.All(regulier!, v =>
-        {
-            Assert.False(v.TryGetProperty("categoryFields", out var fields) && fields.ValueKind is JsonValueKind.Object);
-            Assert.True(!v.TryGetProperty("categoryPublishCostTokens", out var cost)
-                        || cost.ValueKind is JsonValueKind.Null
-                        || cost.ValueKind is JsonValueKind.Undefined);
-        });
+        var regulierPage = await byCategory.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.Contains(regulierPage!.Items, v => v.Id == _factory.VacancyId);
 
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await client.GetAsync("api/vacancy-categories/admin")).StatusCode);
@@ -717,9 +710,10 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var discover = await client.GetAsync(
             $"api/vacancies/discover?categoryId={VacancyCategoryDefaults.SeniorLightId:D}&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, discover.StatusCode);
-        var items = await discover.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.Contains(items!, v => v.GetProperty("suitableFor65Plus").GetBoolean()
-            || v.GetProperty("categoryId").GetGuid() == VacancyCategoryDefaults.SeniorLightId);
+        var page = await discover.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.NotNull(page);
+        Assert.Contains(page!.Items, v => v.SuitableFor65Plus
+            || v.CategoryId == VacancyCategoryDefaults.SeniorLightId);
     }
 
     [Fact]

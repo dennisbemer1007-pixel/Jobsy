@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (251 routes)
+## Table (252 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -145,6 +145,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/external/{Id:guid}` | `Pages/Candidate/ExternalVacancyDetail.razor` | Candidate |
 | `/candidate/external/{Id:guid}/apply` | `Pages/Candidate/ExternalVacancyApply.razor` | Candidate |
 | `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate |
+| `/candidate/home` | `Pages/Candidate/CandidateHomeRedirect.razor` | Candidate |
 | `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
