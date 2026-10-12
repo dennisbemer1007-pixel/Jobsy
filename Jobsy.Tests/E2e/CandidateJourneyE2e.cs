@@ -533,6 +533,7 @@ public static class CandidateJourneyE2e
         var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
 
+        var sequenceBefore = await GetEmailCodeSequenceAsync(baseUrl, email) ?? 0;
         using var startResponse = await http.PostAsJsonAsync(
             $"{api}/api/auth/email-code/start",
             new { email, culture = "nl" });
@@ -540,11 +541,13 @@ public static class CandidateJourneyE2e
         using var startDoc = JsonDocument.Parse(await startResponse.Content.ReadAsStringAsync());
         var challengeId = startDoc.RootElement.GetProperty("challengeId").GetGuid();
 
-        var code = await WaitForOpenChallengeCodeAsync(baseUrl, email, maxAttempts: 80);
-        if (string.IsNullOrWhiteSpace(code))
-        {
-            code = await FetchEmailCodeAsync(baseUrl, email, staleCode: null, afterSequence: null, maxAttempts: 40);
-        }
+        var code = await WaitForOpenChallengeCodeAsync(baseUrl, email, maxAttempts: 80)
+            ?? await FetchEmailCodeAsync(
+                baseUrl,
+                email,
+                staleCode: null,
+                afterSequence: sequenceBefore,
+                maxAttempts: 80);
 
         if (string.IsNullOrWhiteSpace(code))
         {
