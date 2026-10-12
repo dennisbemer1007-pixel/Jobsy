@@ -30,7 +30,10 @@ window.jobMap = (function () {
     let deferMapReveal = false;
     let detailCache = {};
     let pinsUrl = null;
+    let pinsBaseUrl = null;
     let pinsFetchGen = 0;
+    let viewportPinsBound = false;
+    let viewportListDotNet = null;
     /** Localized map UI strings from VacancyDiscovery (nl fallbacks). */
     let uiLabels = {
         vacanciesAtPlace: "{count} banen",
@@ -2158,6 +2161,28 @@ window.jobMap = (function () {
     const pinsByFilterKey = Object.create(null);
     let pinsNetworkFetchCount = 0;
 
+    function stripViewportParams(url) {
+        return String(url || "")
+            .replace(/([?&])(minLat|minLng|maxLat|maxLng|zoom)=[^&]*/gi, "$1")
+            .replace(/[?&]+$/g, "")
+            .replace(/\?&/g, "?");
+    }
+
+    function viewportQueryString() {
+        if (!map || typeof map.getBounds !== "function") {
+            return "";
+        }
+        var b = map.getBounds();
+        var sw = b.getSouthWest();
+        var ne = b.getNorthEast();
+        var z = Math.round(map.getZoom() * 10) / 10;
+        return "&minLat=" + encodeURIComponent(String(sw.lat))
+            + "&minLng=" + encodeURIComponent(String(sw.lng))
+            + "&maxLat=" + encodeURIComponent(String(ne.lat))
+            + "&maxLng=" + encodeURIComponent(String(ne.lng))
+            + "&zoom=" + encodeURIComponent(String(z));
+    }
+
     /** Filter cache key: everything in the pins URL except travel mode. */
     function pinsFilterKey(url) {
         if (!url) {
@@ -2198,7 +2223,8 @@ window.jobMap = (function () {
         if (!url) {
             return Promise.resolve([]);
         }
-        pinsUrl = String(url);
+        pinsBaseUrl = stripViewportParams(String(url));
+        pinsUrl = pinsBaseUrl + viewportQueryString();
         const filterKey = pinsFilterKey(pinsUrl);
         const cached = filterKey ? pinsByFilterKey[filterKey] : null;
         if (cached && cached.pins) {
@@ -3987,6 +4013,9 @@ window.jobMap = (function () {
         }
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
+        viewportListDotNet = options && options.syncViewportList && options.dotNetRef
+            ? options.dotNetRef
+            : null;
         if (options && options.labels && typeof options.labels === "object") {
             uiLabels = Object.assign({}, uiLabels, options.labels);
             uiLabels.canSave = options.labels.canSave === true || options.labels.canSave === "true";
@@ -4001,6 +4030,7 @@ window.jobMap = (function () {
         }
 
         bindMapRuntime();
+        bindViewportPinsReload();
 
         // Early boot() may already have painted pins — do not re-fetch (one pins request/load).
         const alreadyPinned = live && Object.keys(markersById).length > 0;
@@ -4190,7 +4220,9 @@ window.jobMap = (function () {
     }
 
     function reloadPins(url) {
-        pinsUrl = url ? String(url) : pinsUrl;
+        if (url) {
+            pinsBaseUrl = stripViewportParams(String(url));
+        }
         if (pinsReloadTimer) {
             clearTimeout(pinsReloadTimer);
             pinsReloadTimer = null;
@@ -4198,9 +4230,50 @@ window.jobMap = (function () {
         return new Promise(function (resolve) {
             pinsReloadTimer = setTimeout(function () {
                 pinsReloadTimer = null;
-                resolve(fetchPins(pinsUrl));
+                resolve(fetchPins(pinsBaseUrl || pinsUrl));
             }, 200);
         });
+    }
+
+    function notifyViewportList() {
+        if (!viewportListDotNet || !map) {
+            return;
+        }
+        try {
+            var b = map.getBounds();
+            var sw = b.getSouthWest();
+            var ne = b.getNorthEast();
+            viewportListDotNet.invokeMethodAsync(
+                "OnMapViewportChanged",
+                sw.lat,
+                sw.lng,
+                ne.lat,
+                ne.lng,
+                map.getZoom());
+        } catch (e) { /* circuit */ }
+    }
+
+    function bindViewportPinsReload() {
+        if (!map || viewportPinsBound) {
+            return;
+        }
+        viewportPinsBound = true;
+        var debounce = null;
+        function schedule() {
+            if (debounce) {
+                clearTimeout(debounce);
+            }
+            debounce = setTimeout(function () {
+                debounce = null;
+                if (pinsBaseUrl) {
+                    fetchPins(pinsBaseUrl);
+                }
+                notifyViewportList();
+            }, 300);
+        }
+        map.on("moveend", schedule);
+        map.on("zoomend", schedule);
+        setTimeout(schedule, 80);
     }
 
     function ensureOriginMarker(la, ln) {

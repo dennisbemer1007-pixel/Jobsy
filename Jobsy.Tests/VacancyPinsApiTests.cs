@@ -73,6 +73,9 @@ public class VacancyPinsApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("function fetchVacancyDetail", js);
         Assert.Contains("function normalizePin", js);
         Assert.Contains("reloadPins", js);
+        Assert.Contains("viewportQueryString", js);
+        Assert.Contains("syncViewportList", js);
+        Assert.Contains("OnMapViewportChanged", discovery);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("/login", maps);

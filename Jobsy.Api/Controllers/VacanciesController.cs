@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Jobsy.Core.Features;
+using Jobsy.Api.Security;
+using Jobsy.Api.Vacancies;
 
 namespace Jobsy.Api.Controllers;
 
@@ -88,16 +90,33 @@ public class VacanciesController : ControllerBase
     [HttpGet]
     [AllowAnonymous]
     [EnableRateLimiting("public-read")]
-    public async Task<ActionResult<IEnumerable<VacancyListItemDto>>> GetActive(
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<VacancyListPageDto>> GetActive(
+        [FromQuery] int skip = 0,
+        [FromQuery] int? take = null,
+        CancellationToken cancellationToken = default)
     {
+        skip = VacancyListPaging.ClampSkip(skip);
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+        var (takeResolved, _) = VacancyListPaging.ResolveCatalogTake(take, isAuthenticated);
         var showWage = await CanViewerSeeWageAsync(cancellationToken);
         var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
-        var mapped = records
+        var ordered = records
+            .OrderBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(r => r.Id)
+            .ToList();
+        var total = ordered.Count;
+        var mapped = ordered
+            .Skip(skip)
+            .Take(takeResolved)
             .Select(r => MapRecordToDto(r, showWage, ageYears: null, includeDescription: false))
             .ToList();
         ApplyPublicListCacheHeaders();
-        return Ok(mapped);
+        return Ok(new VacancyListPageDto(
+            mapped,
+            skip,
+            takeResolved,
+            total,
+            skip + mapped.Count < total));
     }
 
     /// <summary>
@@ -133,12 +152,22 @@ public class VacanciesController : ControllerBase
         [FromQuery] bool? suitableFor65Plus = null,
         [FromQuery] Guid[]? companyId = null,
         [FromQuery] int? minMatchPercent = null,
+        [FromQuery] double? minLat = null,
+        [FromQuery] double? minLng = null,
+        [FromQuery] double? maxLat = null,
+        [FromQuery] double? maxLng = null,
+        [FromQuery] int? zoom = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
         var mode = TransportLabels.Parse(transport);
+        GeoBbox? bbox = GeoBbox.TryParse(minLat, minLng, maxLat, maxLng, out var parsedBbox)
+            ? parsedBbox
+            : null;
         var records = VacancyDiscoveryQuery.Filter(
-            await _discoveryIndex.GetActiveAsync(cancellationToken),
+            VacancyDiscoveryBbox.Filter(
+                await _discoveryIndex.GetActiveAsync(cancellationToken),
+                bbox),
             companyIds: companyId,
             categoryIds: categoryId,
             suitableFor65Plus,
@@ -219,8 +248,22 @@ public class VacanciesController : ControllerBase
             }
         }
 
+        var pinCap = bbox is { IsValid: true }
+            ? PublicApiLimits.MaxPinsPerBbox
+            : PublicApiLimits.MaxPinsWithoutBbox;
+        if (candidates.Count > pinCap)
+        {
+            var capped = VacancyDiscoveryBbox.CapPins(
+                candidates.Select(c => c.Record).ToList(),
+                bbox,
+                pinCap,
+                zoom);
+            var allowed = capped.Select(r => r.Id).ToHashSet();
+            candidates = candidates.Where(c => allowed.Contains(c.Record.Id)).ToList();
+        }
+
         // Content hash (not a 60s clock) so Cloudflare can cache stable pin sets.
-        var contentHash = ComputePinsContentHash(candidates, matches);
+        var contentHash = ComputePinsContentHash(candidates, matches, bbox, zoom);
         var etag = $"\"pins-{contentHash}-{(isCandidate ? "c" : "a")}\"";
         if (Request.Headers.IfNoneMatch.ToString().Contains(etag, StringComparison.Ordinal))
         {
@@ -439,7 +482,7 @@ public class VacanciesController : ControllerBase
     [HttpGet("discover")]
     [AllowAnonymous]
     [EnableRateLimiting("public-read")]
-    public async Task<ActionResult<IEnumerable<VacancyListItemDto>>> Discover(
+    public async Task<ActionResult<VacancyListPageDto>> Discover(
         [FromQuery] double? originLat,
         [FromQuery] double? originLng,
         [FromQuery] string transport = TransportLabels.Bike,
@@ -455,10 +498,21 @@ public class VacanciesController : ControllerBase
         [FromQuery] Guid[]? categoryId = null,
         [FromQuery] bool? suitableFor65Plus = null,
         [FromQuery] Guid[]? companyId = null,
+        [FromQuery] int skip = 0,
         [FromQuery] int? take = null,
         [FromQuery] int? minMatchPercent = null,
+        [FromQuery] double? minLat = null,
+        [FromQuery] double? minLng = null,
+        [FromQuery] double? maxLat = null,
+        [FromQuery] double? maxLng = null,
         CancellationToken cancellationToken = default)
     {
+        skip = VacancyListPaging.ClampSkip(skip);
+        var isAuthenticated = User.Identity?.IsAuthenticated == true;
+        var (takeResolved, _) = VacancyListPaging.ResolveDiscoverTake(take, isAuthenticated);
+        GeoBbox? bbox = GeoBbox.TryParse(minLat, minLng, maxLat, maxLng, out var parsedBbox)
+            ? parsedBbox
+            : null;
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
         var filterMinHours = Math.Clamp(minHoursPerWeek ?? 0, 0, 40);
         var filterMaxHours = Math.Clamp(maxHoursPerWeek ?? 40, 0, 40);
@@ -472,7 +526,9 @@ public class VacanciesController : ControllerBase
         var showWage = age is not null || await CanViewerSeeWageAsync(cancellationToken);
 
         var records = VacancyDiscoveryQuery.Filter(
-            await _discoveryIndex.GetActiveAsync(cancellationToken),
+            VacancyDiscoveryBbox.Filter(
+                await _discoveryIndex.GetActiveAsync(cancellationToken),
+                bbox),
             companyIds: companyId,
             categoryIds: categoryId,
             suitableFor65Plus,
@@ -619,18 +675,17 @@ public class VacanciesController : ControllerBase
             }
         }
 
-        if (take is int cap)
-        {
-            cap = Math.Clamp(cap, 1, 200);
-            if (results.Count > cap)
-            {
-                results = results.Take(cap).ToList();
-            }
-        }
+        var total = results.Count;
+        var page = results.Skip(skip).Take(takeResolved).ToList();
 
         ApplyPublicListCacheHeaders();
         // Banenkaart list stays on the indexed snapshot — no OpenAI wait on open.
-        return Ok(results);
+        return Ok(new VacancyListPageDto(
+            page,
+            skip,
+            takeResolved,
+            total,
+            skip + page.Count < total));
     }
 
     /// <summary>
@@ -2398,13 +2453,35 @@ public class VacanciesController : ControllerBase
            && Math.Abs(lng) <= 180
            && !(lat == 0 && lng == 0);
 
+    private static uint MixHashFloat(uint h, float value)
+    {
+        h ^= (uint)BitConverter.SingleToInt32Bits(value);
+        return h * 16777619u;
+    }
+
     private static uint ComputePinsContentHash(
         List<(VacancyDiscoveryRecord Record, int? TravelMinutes)> candidates,
-        IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches)
+        IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches,
+        GeoBbox? bbox = null,
+        int? zoom = null)
     {
         unchecked
         {
             uint h = 2166136261;
+            if (bbox is { IsValid: true } box)
+            {
+                h = MixHashFloat(h, (float)box.MinLat);
+                h = MixHashFloat(h, (float)box.MinLng);
+                h = MixHashFloat(h, (float)box.MaxLat);
+                h = MixHashFloat(h, (float)box.MaxLng);
+            }
+
+            if (zoom is int z)
+            {
+                h ^= (uint)z;
+                h *= 16777619u;
+            }
+
             foreach (var c in candidates.OrderBy(x => x.Record.Id))
             {
                 foreach (var b in c.Record.Id.ToByteArray())

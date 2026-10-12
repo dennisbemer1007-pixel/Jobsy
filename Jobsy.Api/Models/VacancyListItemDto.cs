@@ -2,6 +2,13 @@ namespace Jobsy.Api.Models;
 
 public record WageByAgeDto(int AgeYears, decimal HourlyRate, string Label);
 
+public sealed record VacancyListPageDto(
+    IReadOnlyList<VacancyListItemDto> Items,
+    int Skip,
+    int Take,
+    int TotalCount,
+    bool HasMore);
+
 public record VacancyListItemDto(
     Guid Id,
     string Title,

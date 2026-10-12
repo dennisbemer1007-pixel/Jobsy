@@ -33,6 +33,54 @@ public sealed partial class JobsyApiClient
         int? minMatchPercent = null,
         CancellationToken ct = default)
     {
+        var page = await DiscoverVacanciesPageAsync(
+            originLat,
+            originLng,
+            transport,
+            maxMinutes,
+            radiusKm,
+            ageYears,
+            minHourlyWage,
+            maxHourlyWage,
+            workTypes,
+            searchQuery,
+            minHoursPerWeek,
+            maxHoursPerWeek,
+            categoryIds,
+            suitableFor65Plus,
+            companyIds,
+            skip: 0,
+            take,
+            minMatchPercent,
+            ct: ct);
+        return page.Items;
+    }
+
+    public async Task<VacancyListPage> DiscoverVacanciesPageAsync(
+        double? originLat,
+        double? originLng,
+        string transport,
+        int maxMinutes,
+        double? radiusKm,
+        int? ageYears = null,
+        decimal? minHourlyWage = null,
+        decimal? maxHourlyWage = null,
+        IEnumerable<string>? workTypes = null,
+        string? searchQuery = null,
+        int? minHoursPerWeek = null,
+        int? maxHoursPerWeek = null,
+        IEnumerable<Guid>? categoryIds = null,
+        bool? suitableFor65Plus = null,
+        IEnumerable<Guid>? companyIds = null,
+        int skip = 0,
+        int? take = null,
+        int? minMatchPercent = null,
+        double? minLat = null,
+        double? minLng = null,
+        double? maxLat = null,
+        double? maxLng = null,
+        CancellationToken ct = default)
+    {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
         if (originLat is not null && originLng is not null)
         {
@@ -104,9 +152,13 @@ public sealed partial class JobsyApiClient
             qs += $"&q={Uri.EscapeDataString(searchQuery.Trim())}";
         }
 
+        if (skip > 0)
+        {
+            qs += $"&skip={skip}";
+        }
+
         if (take is int cap)
         {
-            cap = Math.Clamp(cap, 1, 200);
             qs += $"&take={cap}";
         }
 
@@ -115,7 +167,16 @@ public sealed partial class JobsyApiClient
             qs += $"&minMatchPercent={Math.Clamp(floor, 0, 100)}";
         }
 
-        return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];
+        if (minLat is not null && minLng is not null && maxLat is not null && maxLng is not null)
+        {
+            qs += $"&minLat={minLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&minLng={minLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&maxLat={maxLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&maxLng={maxLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        return await _http.GetFromJsonAsync<VacancyListPage>($"api/vacancies/discover?{qs}", ct)
+               ?? new VacancyListPage();
     }
 
     public async Task<VacancyMapViewResponse?> GetVacancyMapViewAsync(CancellationToken ct = default)
@@ -141,6 +202,11 @@ public sealed partial class JobsyApiClient
         IEnumerable<Guid>? categoryIds = null,
         IEnumerable<Guid>? companyIds = null,
         int? minMatchPercent = null,
+        double? minLat = null,
+        double? minLng = null,
+        double? maxLat = null,
+        double? maxLng = null,
+        int? zoom = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -187,6 +253,19 @@ public sealed partial class JobsyApiClient
         if (minMatchPercent is int floor)
         {
             qs += $"&minMatchPercent={Math.Clamp(floor, 0, 100)}";
+        }
+
+        if (minLat is not null && minLng is not null && maxLat is not null && maxLng is not null)
+        {
+            qs += $"&minLat={minLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&minLng={minLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&maxLat={maxLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&maxLng={maxLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (zoom is int z)
+        {
+            qs += $"&zoom={z}";
         }
 
         try

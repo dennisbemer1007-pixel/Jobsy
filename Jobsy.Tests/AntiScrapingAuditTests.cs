@@ -73,4 +73,15 @@ public sealed class AntiScrapingAuditTests
     {
         Assert.InRange(PublicApiLimits.MaxMasterdataOptions, 100, 2_000);
     }
+
+    [Fact]
+    public void Vacancy_catalog_uses_paged_dto_and_limits()
+    {
+        var controller = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Api/Controllers/VacanciesController.cs"));
+        var paging = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Api/Vacancies/VacancyListPaging.cs"));
+        Assert.Contains("VacancyListPageDto", controller, StringComparison.Ordinal);
+        Assert.Contains("PublicApiLimits.DefaultListTake", paging, StringComparison.Ordinal);
+        Assert.Contains("VacancyListPaging", controller, StringComparison.Ordinal);
+        Assert.Contains("minLat", controller, StringComparison.Ordinal);
+    }
 }

@@ -1188,6 +1188,14 @@
     private bool _weergaveHydrated;
     private ElementReference _listRailMapElement;
     private const int VacancyCardPageSize = 20;
+    private const int DiscoverApiPageSize = 100;
+    private int _discoverSkip;
+    private bool _discoverHasMore;
+    private double? _bboxMinLat;
+    private double? _bboxMinLng;
+    private double? _bboxMaxLat;
+    private double? _bboxMaxLng;
+    private int? _mapViewportZoom;
     /// <summary>IntersectionObserver may keep the sentinel in view on tall panes; cap auto-load so we do not paint every seed vacancy.</summary>
     private const int VacancyCardAutoLoadCap = 40;
     private const int HighlightCarouselCap = 8;
@@ -1475,7 +1483,7 @@
         SortedVacancies.Take(_visibleCardCount);
 
     private bool HasMoreVacancyCards =>
-        ShouldRenderVacancyCards && SortedVacancies.Count > _visibleCardCount;
+        ShouldRenderVacancyCards && (SortedVacancies.Count > _visibleCardCount || _discoverHasMore);
 
     private int RemainingVacancyCardCount =>
         Math.Max(0, SortedVacancies.Count - _visibleCardCount);
@@ -1488,11 +1496,33 @@
     {
         if (!HasMoreVacancyCards || _visibleCardCount >= VacancyCardAutoLoadCap)
         {
+            if (_discoverHasMore && _visibleCardCount >= SortedVacancies.Count - VacancyCardPageSize)
+            {
+                return LoadMoreDiscoverPageAsync();
+            }
+
             return Task.CompletedTask;
         }
 
         ShowMoreVacancyCards();
         return InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public Task OnMapViewportChanged(double minLat, double minLng, double maxLat, double maxLng, double zoom)
+    {
+        if (!IsFinite(minLat) || !IsFinite(minLng) || !IsFinite(maxLat) || !IsFinite(maxLng))
+        {
+            return Task.CompletedTask;
+        }
+
+        _bboxMinLat = minLat;
+        _bboxMinLng = minLng;
+        _bboxMaxLat = maxLat;
+        _bboxMaxLng = maxLng;
+        _mapViewportZoom = double.IsFinite(zoom) ? (int)Math.Round(zoom) : null;
+        _ = LoadVacanciesAsync(reloadMapPins: false);
+        return Task.CompletedTask;
     }
 
     private string FormatCarouselTravel(VacancyListItem vacancy)
@@ -2522,6 +2552,7 @@
                 ["highlightSeed"] = _highlightShuffleSeed,
                 ["preferFilledLocation"] = preferFilledLocation,
                 ["pinsUrl"] = BuildPinsApiUrl(),
+                ["syncViewportList"] = true,
                 ["labels"] = MapUiLabels(),
                 ["view"] = new Dictionary<string, object?>
                 {
@@ -2567,6 +2598,59 @@
         }
     }
 
+    private async Task LoadMoreDiscoverPageAsync()
+    {
+        if (!_discoverHasMore)
+        {
+            return;
+        }
+
+        var generation = _loadGeneration;
+        var companyFocus = _companyFocusIds is { Count: > 0 } || _myVacanciesOnly;
+        var useOrigin = _origin is not null && !companyFocus;
+        var nextSkip = _discoverSkip + DiscoverApiPageSize;
+        try
+        {
+            var page = await Api.DiscoverVacanciesPageAsync(
+                useOrigin ? _origin!.Latitude : null,
+                useOrigin ? _origin!.Longitude : null,
+                _selectedTransport,
+                _maxTravelMinutes,
+                useOrigin ? _radiusKm : null,
+                companyFocus ? null : _ageYears,
+                companyFocus ? null : _minHourlyWage,
+                companyFocus ? null : _maxHourlyWage,
+                companyFocus || _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
+                companyFocus ? null : _searchQuery,
+                companyFocus ? null : _minHoursPerWeek,
+                companyFocus ? null : _maxHoursPerWeek,
+                companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
+                suitableFor65Plus: null,
+                companyIds: _companyFocusIds,
+                skip: nextSkip,
+                take: DiscoverApiPageSize,
+                minMatchPercent: _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
+                minLat: _bboxMinLat,
+                minLng: _bboxMinLng,
+                maxLat: _bboxMaxLat,
+                maxLng: _bboxMaxLng);
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
+            _discoverSkip = nextSkip;
+            _discoverHasMore = page.HasMore;
+            _vacancies.AddRange(page.Items);
+            ShowMoreVacancyCards();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            /* keep current list */
+        }
+    }
+
     private async Task LoadVacanciesAsync(CancellationToken ct = default, bool reloadMapPins = true)
     {
         var generation = ++_loadGeneration;
@@ -2585,7 +2669,8 @@
             var companyFocus = _companyFocusIds is { Count: > 0 } || _myVacanciesOnly;
             var queryCompanyFocus = !_myVacanciesOnly && _queryCompanyFocusIds is { Count: > 0 };
             var useOrigin = _origin is not null && !companyFocus;
-            var items = await Api.DiscoverVacanciesAsync(
+            _discoverSkip = 0;
+            var page = await Api.DiscoverVacanciesPageAsync(
                 useOrigin ? _origin!.Latitude : null,
                 useOrigin ? _origin!.Longitude : null,
                 _selectedTransport,
@@ -2601,8 +2686,16 @@
                 companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                 suitableFor65Plus: null,
                 companyIds: _companyFocusIds,
+                skip: 0,
+                take: DiscoverApiPageSize,
                 minMatchPercent: _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
+                minLat: _bboxMinLat,
+                minLng: _bboxMinLng,
+                maxLat: _bboxMaxLat,
+                maxLng: _bboxMaxLng,
                 ct: ct);
+            var items = page.Items;
+            _discoverHasMore = page.HasMore;
 
             if (generation != _loadGeneration)
             {
@@ -2612,7 +2705,7 @@
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
             if (items.Count == 0 && ShouldFallbackFromEmptyProximity && !companyFocus)
             {
-                items = await Api.DiscoverVacanciesAsync(
+                var fallbackPage = await Api.DiscoverVacanciesPageAsync(
                     originLat: null,
                     originLng: null,
                     _selectedTransport,
@@ -2628,8 +2721,16 @@
                     _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                     suitableFor65Plus: null,
                     companyIds: _companyFocusIds,
+                    skip: 0,
+                    take: DiscoverApiPageSize,
                     minMatchPercent: _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
+                    minLat: _bboxMinLat,
+                    minLng: _bboxMinLng,
+                    maxLat: _bboxMaxLat,
+                    maxLng: _bboxMaxLng,
                     ct: ct);
+                items = fallbackPage.Items;
+                _discoverHasMore = fallbackPage.HasMore;
 
                 if (generation != _loadGeneration)
                 {
@@ -2812,6 +2913,11 @@
                 _selectedCategoryIds.Count > 0 ? _selectedCategoryIds : null,
                 _companyFocusIds,
                 _isCandidate && _minMatchPercent > 0 ? _minMatchPercent : null,
+                _bboxMinLat,
+                _bboxMinLng,
+                _bboxMaxLat,
+                _bboxMaxLng,
+                _mapViewportZoom,
                 ct);
             if (pins.Count == 0)
             {
