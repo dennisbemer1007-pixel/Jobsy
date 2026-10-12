@@ -263,7 +263,7 @@
                         <button type="button"
                                 class="btn btn-primary ob-wizard__cta"
                                 disabled="@(!CanNext || _busy)"
-                                @onclick="NextAsync">@NextLabel</button>
+                                @onclick="@(() => NextAsync())">@NextLabel</button>
                         @if (_step is 4 or 5)
                         {
                             <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
@@ -536,9 +536,9 @@
         await PrepareMiniAsync();
     }
 
-    private async Task NextAsync()
+    private async Task NextAsync(bool fromMiniTestFinish = false)
     {
-        if (!CanNext || _busy) return;
+        if (_busy || (!fromMiniTestFinish && !CanNext)) return;
         _busy = true;
         _error = null;
         _miniArrivedViaBack = false;
@@ -1049,7 +1049,7 @@
         return Task.CompletedTask;
     }
 
-    private Task FinishMiniAsync() => NextAsync();
+    private Task FinishMiniAsync() => NextAsync(fromMiniTestFinish: true);
 
     private async Task SaveMiniQuietAsync(int id, int value)
     {
