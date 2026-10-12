@@ -1,0 +1,97 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<fieldset class="ob-wizard__start-options" role="radiogroup" aria-labelledby="@_legendId">
+    <legend id="@_legendId" class="ob-wizard__section-title">@Culture[LegendKey]</legend>
+    <div class="ob-wizard__start-grid">
+        <button type="button"
+                role="radio"
+                aria-checked="@(Immediate ? "true" : "false")"
+                class="ob-wizard__start-option @(Immediate ? "is-selected" : null)"
+                @onclick="SelectImmediateAsync">
+            <strong>@Culture[ImmediateLabelKey]</strong>
+            <small>@Culture[ImmediateHintKey]</small>
+        </button>
+        <button type="button"
+                role="radio"
+                aria-checked="@(!Immediate ? "true" : "false")"
+                class="ob-wizard__start-option @(!Immediate ? "is-selected" : null)"
+                @onclick="SelectFromDateAsync">
+            <strong>@Culture[FromDateLabelKey]</strong>
+            <small>@Culture[FromDateHintKey]</small>
+        </button>
+    </div>
+    @if (!Immediate)
+    {
+        <label class="ob-wizard__start-date">
+            @Culture[DateFieldLabelKey]
+            <input type="date"
+                   min="@AvailabilityStartRules.MinDateInputValue"
+                   value="@_dateInput"
+                   @onchange="OnDateChangedAsync" />
+        </label>
+        <p class="ob-wizard__hint">@Culture[DateFieldHintKey]</p>
+        @if (ShowValidation && !AvailabilityStartRules.IsValidExplicitStartDate(AvailableFrom))
+        {
+            <p class="ob-wizard__hint error" role="alert">@Culture[DateInvalidKey]</p>
+        }
+    }
+</fieldset>
+
+@code {
+    private readonly string _legendId = $"avail-start-{Guid.NewGuid():N}";
+
+    [Parameter] public bool Immediate { get; set; } = true;
+    [Parameter] public EventCallback<bool> ImmediateChanged { get; set; }
+    [Parameter] public DateOnly? AvailableFrom { get; set; }
+    [Parameter] public EventCallback<DateOnly?> AvailableFromChanged { get; set; }
+    [Parameter] public bool ShowValidation { get; set; }
+    [Parameter] public string LegendKey { get; set; } = "Onboarding.AvailabilityStartLegend";
+    [Parameter] public string ImmediateLabelKey { get; set; } = "Onboarding.AvailabilityStartImmediate";
+    [Parameter] public string ImmediateHintKey { get; set; } = "Onboarding.AvailabilityStartImmediateHint";
+    [Parameter] public string FromDateLabelKey { get; set; } = "Onboarding.AvailabilityStartFromDate";
+    [Parameter] public string FromDateHintKey { get; set; } = "Onboarding.AvailabilityStartFromDateHint";
+    [Parameter] public string DateFieldLabelKey { get; set; } = "Onboarding.AvailableFrom";
+    [Parameter] public string DateFieldHintKey { get; set; } = "Onboarding.AvailabilityStartDateHint";
+    [Parameter] public string DateInvalidKey { get; set; } = "Onboarding.AvailabilityStartDateInvalid";
+
+    private string? _dateInput => AvailableFrom?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
+    private async Task SelectImmediateAsync()
+    {
+        if (Immediate)
+        {
+            return;
+        }
+
+        await ImmediateChanged.InvokeAsync(true);
+        await AvailableFromChanged.InvokeAsync(null);
+    }
+
+    private async Task SelectFromDateAsync()
+    {
+        if (!Immediate)
+        {
+            return;
+        }
+
+        var fallback = AvailableFrom ?? AvailabilityStartRules.TodayUtc.AddDays(1);
+        await ImmediateChanged.InvokeAsync(false);
+        await AvailableFromChanged.InvokeAsync(fallback);
+    }
+
+    private async Task OnDateChangedAsync(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(raw)
+            || !DateOnly.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+        {
+            await AvailableFromChanged.InvokeAsync(null);
+            return;
+        }
+
+        await AvailableFromChanged.InvokeAsync(parsed);
+    }
+}

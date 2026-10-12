@@ -440,6 +440,30 @@
   margin: 16px 0 6px;
 }
 
+.journey-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.journey-stack__divider {
+  block-size: 1px;
+  margin: 18px 0 6px;
+  background: color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.journey-step .ob-wizard__section:first-of-type {
+  margin-block-start: 8px;
+}
+
+.journey-step .ob-wizard h1 {
+  margin-block-start: 4px;
+}
+
+.journey-step__foot {
+  padding-block-end: calc(4px + env(safe-area-inset-bottom, 0px));
+}
+
 /* ---- lobster zone ---- */
 .journey-lz {
   position: relative;

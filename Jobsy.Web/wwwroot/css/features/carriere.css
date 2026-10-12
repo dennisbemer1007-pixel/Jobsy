@@ -1158,6 +1158,14 @@
     padding: 14px 16px 12px;
     border-radius: 16px;
   }
+
+  .career-card input,
+  .career-card select,
+  .career-card textarea {
+    box-sizing: border-box;
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
   .career-card--overview h1 {
     margin: 0 0 2px;
     font-size: 1.625rem;

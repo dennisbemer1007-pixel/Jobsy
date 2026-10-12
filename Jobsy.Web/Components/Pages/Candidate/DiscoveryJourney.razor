@@ -137,22 +137,25 @@
                 else if (_countedStep == 2)
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
-                    <AvailabilityStep Draft="Draft"
-                                      Presets="VisiblePresets"
-                                      TogglePreset="TogglePreset"
-                                      ToggleFineTune="ToggleFineTune"
-                                      SetMinHours="SetMinHoursAsync"
-                                      SetMaxHours="SetMaxHoursAsync"
-                                      ManualAvailability="ManualAvailabilityAsync"
-                                      ToggleAvailability="ToggleAvailability"
-                                      ResetPresets="ResetPresets" />
-                    <TransportStep Draft="Draft"
-                                   ShowHeading="false"
-                                   ShowDrivingLicenses="true"
-                                   SelectTransport="SelectTransport"
-                                   SelectTravelTime="SelectTravelTime"
-                                   ShowCustomTravel="ShowCustomTravel"
-                                   ToggleLicense="ToggleLicense" />
+                    <div class="journey-stack">
+                        <AvailabilityStep Draft="Draft"
+                                          Presets="VisiblePresets"
+                                          TogglePreset="TogglePreset"
+                                          ToggleFineTune="ToggleFineTune"
+                                          SetMinHours="SetMinHoursAsync"
+                                          SetMaxHours="SetMaxHoursAsync"
+                                          ManualAvailability="ManualAvailabilityAsync"
+                                          ToggleAvailability="ToggleAvailability"
+                                          ResetPresets="ResetPresets" />
+                        <div class="journey-stack__divider" role="separator" aria-hidden="true"></div>
+                        <TransportStep Draft="Draft"
+                                       ShowHeading="false"
+                                       ShowDrivingLicenses="true"
+                                       SelectTransport="SelectTransport"
+                                       SelectTravelTime="SelectTravelTime"
+                                       ShowCustomTravel="ShowCustomTravel"
+                                       ToggleLicense="ToggleLicense" />
+                    </div>
                     @RenderFooter()
                 }
                 else if (_countedStep == 3)
@@ -545,7 +548,6 @@
     private readonly OnboardingProfileDraft Draft = new();
     private static readonly AvailabilityStep.Preset[] PresetItems =
     [
-        new("direct", "Onboarding.Preset.Direct", "Onboarding.Preset.Direct.Lead"),
         new("school", "Onboarding.Preset.School", "Onboarding.Preset.School.Lead"),
         new("weekend", "Onboarding.Preset.Weekend", "Onboarding.Preset.Weekend.Lead"),
         new("evening", "Onboarding.Preset.Evening", "Onboarding.Preset.Evening.Lead"),
@@ -776,6 +778,7 @@
                  && !Jobsy.Core.Privacy.CandidateConsentRules.IsBelowMinimumAge(born, DateOnly.FromDateTime(DateTime.Today))
                  && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
             2 => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0
+                 && AvailabilityStartRules.StepIsValid(Draft.Immediate, Draft.AvailableFrom)
                  && !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
             >= 7 and <= 10 => _miniQuestions.Count > 0
                 && _miniQuestions.All(q => MiniAnswered(q.Id)),
@@ -2072,8 +2075,6 @@
         Draft.MaxHours = result.MaxHours;
         Draft.Availability.Clear();
         foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
-        Draft.Immediate = result.Immediate;
-        if (Draft.Immediate) Draft.AvailableFrom = null;
     }
 
     private void ResetPresets()

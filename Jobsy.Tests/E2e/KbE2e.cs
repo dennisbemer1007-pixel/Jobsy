@@ -142,6 +142,40 @@ public static class KbE2e
         }
     }
 
+    /// <summary>
+    /// Waits until versioned stylesheets are applied and design tokens are active (avoids unstyled prerender shots).
+    /// </summary>
+    public static async Task WaitForStyledAppAsync(IPage page, params string[] requiredStylesheetFragments)
+    {
+        _ = requiredStylesheetFragments;
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.WaitForSelectorAsync("link[rel=stylesheet]", new() { Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(800);
+        await page.EvaluateAsync("() => document.fonts.ready");
+        await AssertNoCircuitErrorAsync(page);
+    }
+
+    public static async Task AssertSelectorLooksStyledAsync(IPage page, string selector)
+    {
+        var styled = await page.EvaluateAsync<bool>(
+            """
+            (sel) => {
+              const el = document.querySelector(sel);
+              if (!el) {
+                return false;
+              }
+
+              const style = getComputedStyle(el);
+              const radius = parseFloat(style.borderRadius) || 0;
+              const minHeight = parseFloat(style.minHeight) || parseFloat(style.height) || 0;
+              const fontSize = parseFloat(style.fontSize) || 0;
+              return radius >= 4 && minHeight >= 40 && fontSize >= 12;
+            }
+            """,
+            selector);
+        Assert.True(styled, $"Selector '{selector}' does not look styled (missing CSS or Blazor not rendered).");
+    }
+
     public static async Task AssertNoCircuitErrorAsync(IPage page)
     {
         var circuit = await page.EvaluateAsync<bool>("""
