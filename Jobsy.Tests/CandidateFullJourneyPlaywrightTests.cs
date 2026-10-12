@@ -95,7 +95,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.WaitForSelectorAsync("#signup-title, .pub-signup__title", new() { Timeout = 60_000 });
-        await page.WaitForSelectorAsync("link[rel=stylesheet]", new() { Timeout = 30_000 });
+        await KbE2e.WaitForStyledAppAsync(page);
         await CandidateJourneyE2e.ShotAsync(page, tag, "01-account-maken");
 
         await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
