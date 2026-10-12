@@ -46,6 +46,24 @@ public static class UiStringsProactive
             "Możesz to wyłączyć później na tej stronie lub przez privacy@lobsy.nl.",
             "Poți opri asta mai târziu pe această pagină sau prin privacy@lobsy.nl.",
             "يمكنك إيقاف ذلك لاحقاً من هذه الصفحة أو عبر privacy@lobsy.nl.");
+        Add("ProactiveMatching.Consent.Step1",
+            "Je geeft toestemming voor tips per e-mail (en in-app meldingen wanneer je ingelogd bent).",
+            "You consent to tips by e-mail (and in-app notifications when signed in).",
+            "Wyrażasz zgodę na tipy e-mail (i powiadomienia w aplikacji po zalogowaniu).",
+            "Accepți sfaturi pe e-mail (și notificări în app când ești autentificat).",
+            "توافق على نصائح بالبريد (وإشعارات داخل التطبيق عند تسجيل الدخول).");
+        Add("ProactiveMatching.Consent.Step2",
+            "Lobsy vergelijkt vacatures met je profiel, tests en voorkeuren — alleen bij een echte match.",
+            "Lobsy compares vacancies with your profile, tests and preferences — only on a real match.",
+            "Lobsy porównuje oferty z profilem, testami i preferencjami — tylko przy realnym dopasowaniu.",
+            "Lobsy compară joburi cu profilul, testele și preferințele — doar la potrivire reală.",
+            "يقارن Lobsy الوظائف بملفك واختباراتك وتفضيلاتك — فقط عند تطابق حقيقي.");
+        Add("ProactiveMatching.Consent.Step3",
+            "Jij reageert met interesse of niet; daarna sturen we geen herhaling voor dezelfde vacature.",
+            "You respond interested or not; we will not repeat the same vacancy afterwards.",
+            "Reagujesz zainteresowaniem lub nie; nie powtarzamy tej samej oferty.",
+            "Răspunzi interesat sau nu; nu repetăm același job.",
+            "ترد باهتمام أو لا؛ لن نكرر نفس الوظيفة.");
         Add("ProactiveMatching.Consent.Submit",
             "Ik geef toestemming", "I give consent",
             "Wyrażam zgodę", "Îmi dau consimțământul", "أوافق");
