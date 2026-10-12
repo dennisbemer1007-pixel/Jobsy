@@ -80,7 +80,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await VisitExternalVacancyShareApplyAsync(page, baseUrl, viewportTag, email);
         await VisitCarriereAsync(page, baseUrl, viewportTag);
         await VisitBanenkaartAsync(page, baseUrl, viewportTag);
-        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag, email, signupCode);
+        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag, email, signupCode, firstName);
         if (fullJourney && viewportTag == "desktop")
         {
             await SwitchArabicOnPaspoortAsync(page, baseUrl, viewportTag);
@@ -90,42 +90,22 @@ public sealed class CandidateFullJourneyPlaywrightTests
         KbE2e.AssertHealthy(capture, requireNoIsochrone404: false, allowFont404: true);
     }
 
-    private static async Task CompleteEmailCodeGateAsync(IPage page, string baseUrl, string email, string? staleSignupCode)
+    private static async Task CompleteEmailCodeGateAsync(
+        IPage page,
+        string baseUrl,
+        string email,
+        string? staleSignupCode,
+        string expectedFirstName)
     {
-        await page.Context.ClearCookiesAsync();
-        await PlaywrightCookieConsent.AcceptAsync(page.Context);
-        await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await KbE2e.WaitForStyledAppAsync(page);
-
-        var sequenceBefore = await CandidateJourneyE2e.GetEmailCodeSequenceAsync(baseUrl, email) ?? 0;
-
-        await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
-        await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
+        _ = staleSignupCode;
+        await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, baseUrl, email);
         await page.WaitForURLAsync(
-            "**/account-maken/code**",
-            new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
-
-        var code = await CandidateJourneyE2e.WaitForOpenChallengeCodeAsync(baseUrl, email, maxAttempts: 80)
-            ?? await CandidateJourneyE2e.FetchEmailCodeAsync(
-                baseUrl,
-                email,
-                staleCode: staleSignupCode,
-                afterSequence: sequenceBefore,
-                maxAttempts: 20);
-        Assert.False(string.IsNullOrWhiteSpace(code), "OTP — zet JOBSY_E2E_CAPTURE_EMAIL_CODES=1 en herstart de API");
-
-        await page.Locator("input[name=code], input[inputmode=numeric]").First.FillAsync(code!);
-        await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync(
-            url => !url.Contains("/account-maken/code", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
-
-        await page.GotoAsync(baseUrl + "/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.WaitForURLAsync(
-            url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+            url => url.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase),
             new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator(".passport-overview, .passport-overview__title").First.WaitForAsync(new() { Timeout = 60_000 });
+        var body = await page.InnerTextAsync("body");
+        Assert.Contains(expectedFirstName, body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Demo Kandidaat", body, StringComparison.OrdinalIgnoreCase);
         await KbE2e.WaitForStyledAppAsync(page);
         await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
     }
@@ -561,7 +541,13 @@ public sealed class CandidateFullJourneyPlaywrightTests
         }
     }
 
-    private static async Task VisitApplicationsAndSettingsAsync(IPage page, string baseUrl, string tag, string email, string? signupCode)
+    private static async Task VisitApplicationsAndSettingsAsync(
+        IPage page,
+        string baseUrl,
+        string tag,
+        string email,
+        string? signupCode,
+        string expectedFirstName)
     {
         foreach (var (path, slug) in new[]
                  {
@@ -584,7 +570,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             return;
         }
 
-        await CompleteEmailCodeGateAsync(page, baseUrl, email, signupCode);
+        await CompleteEmailCodeGateAsync(page, baseUrl, email, signupCode, expectedFirstName);
         await CandidateJourneyE2e.ShotAsync(page, tag, "15-login-after-logout-otp");
     }
 
@@ -633,7 +619,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             await VisitPaspoortAndPdfAsync(page, baseUrl, tag);
             await VisitCarriereAsync(page, baseUrl, tag);
             await VisitBanenkaartAsync(page, baseUrl, tag);
-            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag, KbE2e.DefaultCompleteEmail, signupCode: null);
+            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag, KbE2e.DefaultCompleteEmail, signupCode: null, "Demo");
             if (tag == "desktop")
             {
                 await SwitchArabicOnPaspoortAsync(page, baseUrl, tag);

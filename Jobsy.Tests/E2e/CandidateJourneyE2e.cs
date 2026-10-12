@@ -512,23 +512,66 @@ public static class CandidateJourneyE2e
         await page.WaitForTimeoutAsync(400);
     }
 
-    /// <summary>Clicks wizard / test-flow primary when a mini-test block is finished.</summary>
+    /// <summary>Clicks the mini-test primary (Volgende test on the last question).</summary>
     public static async Task TryAdvanceMiniTestWizardAsync(IPage page)
     {
         await DismissAssistantOverlayAsync(page);
-        var finish = page.Locator("button.test-flow__next:not([disabled])").Filter(new() { HasText = "Afronden" });
-        if (await finish.CountAsync() > 0)
+        var testNext = page.Locator("button.test-flow__next:not([disabled])").First;
+        if (await testNext.CountAsync() > 0)
         {
-            await finish.First.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
-            await page.WaitForTimeoutAsync(400);
+            await testNext.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
+            await page.WaitForTimeoutAsync(500);
+        }
+    }
+
+    public static async Task SignInExistingCandidateViaEmailCodeAsync(
+        IPage page,
+        string baseUrl,
+        string email,
+        string returnPath = "/candidate/paspoort?tab=dna")
+    {
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+
+        using var startResponse = await http.PostAsJsonAsync(
+            $"{api}/api/auth/email-code/start",
+            new { email, culture = "nl" });
+        startResponse.EnsureSuccessStatusCode();
+        using var startDoc = JsonDocument.Parse(await startResponse.Content.ReadAsStringAsync());
+        var challengeId = startDoc.RootElement.GetProperty("challengeId").GetGuid();
+
+        var code = await WaitForOpenChallengeCodeAsync(baseUrl, email, maxAttempts: 80);
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            code = await FetchEmailCodeAsync(baseUrl, email, staleCode: null, afterSequence: null, maxAttempts: 40);
         }
 
-        var wizardNext = page.Locator("button.ob-wizard__cta:not([disabled])").First;
-        if (await wizardNext.CountAsync() > 0)
+        if (string.IsNullOrWhiteSpace(code))
         {
-            await wizardNext.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
-            await page.WaitForTimeoutAsync(400);
+            throw new InvalidOperationException("No OTP captured for re-login — set JOBSY_E2E_CAPTURE_EMAIL_CODES=1 on API.");
         }
+
+        using var verifyResponse = await http.PostAsJsonAsync(
+            $"{api}/api/auth/email-code/verify",
+            new
+            {
+                challengeId,
+                code,
+                rememberDevice = true,
+                userAgent = "JobsyE2E/1.0"
+            });
+        verifyResponse.EnsureSuccessStatusCode();
+        using var verifyDoc = JsonDocument.Parse(await verifyResponse.Content.ReadAsStringAsync());
+        var sessionToken = verifyDoc.RootElement.GetProperty("sessionToken").GetString()
+            ?? throw new InvalidOperationException("email-code verify returned no sessionToken");
+
+        await page.Context.ClearCookiesAsync();
+        await PlaywrightCookieConsent.AcceptAsync(page.Context);
+        var safeReturn = Uri.EscapeDataString(returnPath);
+        var token = Uri.EscapeDataString(sessionToken);
+        await page.GotoAsync(
+            $"{baseUrl.TrimEnd('/')}/account/register-signin?token={token}&returnUrl={safeReturn}",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
     }
 
     public static async Task<byte[]?> FetchPaspoortPdfAsync(IPage page, string baseUrl)

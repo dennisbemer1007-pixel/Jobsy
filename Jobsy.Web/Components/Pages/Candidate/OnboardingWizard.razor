@@ -257,24 +257,27 @@
                     }
                 </section>
 
-                <footer class="ob-wizard__footer">
-                    <button type="button"
-                            class="btn btn-primary ob-wizard__cta"
-                            disabled="@(!CanNext || _busy)"
-                            @onclick="NextAsync">@NextLabel</button>
-                    @if (_step is 4 or 5)
-                    {
-                        <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
-                            @Culture["Onboarding.Skip"]
-                        </button>
-                    }
-                    else if (_step == 6)
-                    {
-                        <button type="button" class="ob-wizard__ghost" @onclick="DreamUnknownAsync">
-                            @Culture["Onboarding.DreamUnknown"]
-                        </button>
-                    }
-                </footer>
+                @if (!ShowMiniTestFooter)
+                {
+                    <footer class="ob-wizard__footer">
+                        <button type="button"
+                                class="btn btn-primary ob-wizard__cta"
+                                disabled="@(!CanNext || _busy)"
+                                @onclick="NextAsync">@NextLabel</button>
+                        @if (_step is 4 or 5)
+                        {
+                            <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
+                                @Culture["Onboarding.Skip"]
+                            </button>
+                        }
+                        else if (_step == 6)
+                        {
+                            <button type="button" class="ob-wizard__ghost" @onclick="DreamUnknownAsync">
+                                @Culture["Onboarding.DreamUnknown"]
+                            </button>
+                        }
+                    </footer>
+                }
             </main>
         </div>
     }
@@ -376,6 +379,10 @@
         : _step is >= 7 ? Culture["Onboarding.NextTest"]
         : Draft.FineTune && _step == 2 ? Culture["Onboarding.Done"]
         : Culture["Onboarding.Next"];
+
+    /// <summary>Mini-test uses a single primary in <see cref="TestQuestionFlow"/> (no duplicate wizard CTA).</summary>
+    private bool ShowMiniTestFooter =>
+        _step is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0;
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
@@ -1042,7 +1049,15 @@
         return Task.CompletedTask;
     }
 
-    private Task FinishMiniAsync() => NextAsync();
+    private async Task FinishMiniAsync()
+    {
+        if (_busy || !CanNext)
+        {
+            return;
+        }
+
+        await NextAsync();
+    }
 
     private async Task SaveMiniQuietAsync(int id, int value)
     {

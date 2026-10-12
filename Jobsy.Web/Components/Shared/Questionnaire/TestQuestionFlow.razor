@@ -134,7 +134,7 @@
                     class="test-flow__next engagement-btn"
                     disabled="@(!answered || LoadFailed)"
                     @onclick="GoNextAsync">
-                @(isLast ? Culture["TestFlow.Finish"] : Culture["TestFlow.Next"])
+                @(isLast ? (FinishLabel ?? Culture["TestFlow.Finish"]) : Culture["TestFlow.Next"])
             </button>
         </footer>
     }
@@ -158,6 +158,8 @@
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
     [Parameter] public bool LoadFailed { get; set; }
+    /// <summary>Overrides <see cref="UiStrings"/> TestFlow.Finish on the last question (e.g. onboarding “Volgende test”).</summary>
+    [Parameter] public string? FinishLabel { get; set; }
     /// <summary>When set, advancing past this 0-based index fires <see cref="OnPauseAfter"/> instead of moving on.</summary>
     [Parameter] public Func<int, bool>? ShouldPauseAfterIndex { get; set; }
     [Parameter] public EventCallback<int> OnPauseAfter { get; set; }
@@ -330,7 +332,11 @@
                 await Autosave.FlushAsync();
             }
 
-            await OnFinished.InvokeAsync();
+            if (OnFinished.HasDelegate)
+            {
+                await OnFinished.InvokeAsync();
+            }
+
             return;
         }
 
