@@ -50,6 +50,11 @@ public class CandidateJourneyPolishTests
             root, "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateHomeRedirect.razor"));
         Assert.Contains("@page \"/candidate/home\"", homeAlias, StringComparison.Ordinal);
         Assert.Contains("NavigateTo(\"/home\"", homeAlias, StringComparison.Ordinal);
+
+        Assert.Contains("@page \"/candidate/settings\"", File.ReadAllText(Path.Combine(
+            root, "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateSettings.razor")), StringComparison.Ordinal);
+        Assert.Contains("@page \"/candidate/privacy\"", File.ReadAllText(Path.Combine(
+            root, "Jobsy.Web", "Components", "Pages", "Candidate", "CandidatePrivacy.razor")), StringComparison.Ordinal);
     }
 
     [Fact]
