@@ -5,6 +5,7 @@ using Jobsy.Core.Scholen;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.Sales;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
@@ -239,7 +240,8 @@ public sealed class TestAccountsSeedService
         var credential = await _db.LocalAuthCredentials
             .FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken)
             ?? await _db.LocalAuthCredentials
-                .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
+                .WhereCredentialEmailEquals(email)
+                .FirstOrDefaultAsync(cancellationToken);
 
         if (credential is null)
         {
@@ -776,7 +778,7 @@ public sealed class TestAccountsSeedService
 
         var email = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain);
         var user = await _db.Users.FirstOrDefaultAsync(
-            u => u.IsTestAccount && u.Email == email,
+            u => u.IsTestAccount && u.EmailLookupHash == EmailLookupHash.Compute(email),
             cancellationToken);
         if (user is null)
         {

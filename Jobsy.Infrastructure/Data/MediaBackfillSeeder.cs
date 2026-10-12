@@ -120,7 +120,7 @@ internal static class MediaBackfillSeeder
             CreatedAt = DateTime.UtcNow
         });
 
-        var intermediaryUser = await db.Users.FirstOrDefaultAsync(u => u.Email == "intermediair@jobsy.local");
+        var intermediaryUser = await db.Users.WhereEmailEquals("intermediair@jobsy.local").FirstOrDefaultAsync();
         if (intermediaryUser is not null && intermediaryUser.CompanyId is null)
         {
             intermediaryUser.CompanyId = intermediaryCompanyId;

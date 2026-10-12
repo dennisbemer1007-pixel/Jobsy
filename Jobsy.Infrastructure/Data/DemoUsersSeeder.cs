@@ -244,7 +244,7 @@ internal static class DemoUsersSeeder
         StampDemoConsent(template);
 
         var email = template.Email.ToLowerInvariant();
-        var existing = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+        var existing = await db.Users.WhereEmailEquals(email).FirstOrDefaultAsync();
         if (existing is not null)
         {
             // Keep accounts active and roles aligned with demo expectations.
@@ -296,7 +296,7 @@ internal static class DemoUsersSeeder
     {
         var email = user.Email.Trim().ToLowerInvariant();
         var credential = await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.UserId == user.Id)
-            ?? await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.Email == email);
+            ?? await db.LocalAuthCredentials.WhereCredentialEmailEquals(email).FirstOrDefaultAsync();
 
         if (credential is null)
         {

@@ -258,7 +258,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         if (await _db.Users.AnyAsync(u => u.Email.ToLower() == email, cancellationToken)
-            || await _db.LocalAuthCredentials.AnyAsync(c => c.Email == email, cancellationToken))
+            || await _db.LocalAuthCredentials.WhereCredentialEmailEquals(email).AnyAsync(cancellationToken))
         {
             return new RegistrationSubmitResult(
                 Guid.NewGuid(),

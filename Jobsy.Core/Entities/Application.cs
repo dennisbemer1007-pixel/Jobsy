@@ -11,6 +11,9 @@ public class Application
     public User? CandidateUser { get; set; }
     public string CandidateName { get; set; } = string.Empty;
     public string CandidateEmail { get; set; } = string.Empty;
+
+    /// <summary>Blind index for privacy/export queries by e-mail.</summary>
+    public string? CandidateEmailLookupHash { get; set; }
     public string? CandidateCity { get; set; }
     public string? CandidateAddress { get; set; }
     public string PreferredTransport { get; set; } = string.Empty;

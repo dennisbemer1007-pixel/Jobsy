@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Jobsy.Core\Jobsy.Core.csproj" />
+    <ProjectReference Include="..\Jobsy.Infrastructure\Jobsy.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

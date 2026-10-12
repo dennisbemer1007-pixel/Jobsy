@@ -485,7 +485,7 @@ internal static class Sprint8MetricsSeeder
         }
 
         // Guest applications spread over month for employer/admin KPI's.
-        if (!await db.Applications.AnyAsync(a => a.CandidateEmail == "lisa.sprint8@example.com"))
+        if (!await db.Applications.WhereCandidateEmailEquals("lisa.sprint8@example.com").AnyAsync())
         {
             if (await VacancyExistsAsync(OrderpickerVacancyId))
             {

@@ -1,7 +1,10 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Ops;
+using Jobsy.Core.Options;
 using Jobsy.Core.Security;
+using Jobsy.Infrastructure.Security;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
 using Jobsy.Web.Hosting;
@@ -46,6 +49,18 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+builder.Services.Configure<FieldEncryptionOptions>(
+    builder.Configuration.GetSection(FieldEncryptionOptions.SectionName));
+builder.Services.PostConfigure<FieldEncryptionOptions>(options =>
+{
+    if (builder.Environment.IsDevelopment()
+        && string.IsNullOrWhiteSpace(options.ActiveKeyId)
+        && (options.Keys == null || options.Keys.Count == 0))
+    {
+        options.AllowPassthroughWithoutKeys = true;
+    }
+});
+builder.Services.AddSingleton<IFieldEncryptionService, FieldEncryptionService>();
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
 
 builder.Services.AddSingleton<ITestAccountsRuntime>(_ =>

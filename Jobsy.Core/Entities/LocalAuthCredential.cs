@@ -10,6 +10,9 @@ public class LocalAuthCredential
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
     public string Email { get; set; } = string.Empty;
+
+    /// <summary>Blind index for credential lookup (see <see cref="User.EmailLookupHash"/>).</summary>
+    public string? EmailLookupHash { get; set; }
     /// <summary>PBKDF2 password hash (see JobsyPasswordHasher).</summary>
     public string PasswordHash { get; set; } = string.Empty;
 

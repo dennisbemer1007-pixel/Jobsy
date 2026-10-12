@@ -44,7 +44,8 @@ internal static class SalesManagerDemoSeeder
             return;
         }
 
-        var sm = await db.Users.FirstOrDefaultAsync(u => u.Id == SalesManagerUserId || u.Email == "sales@jobsy.local");
+        var sm = await db.Users.FirstOrDefaultAsync(u => u.Id == SalesManagerUserId)
+                 ?? await db.Users.WhereEmailEquals("sales@jobsy.local").FirstOrDefaultAsync();
         if (sm is null)
         {
             logger.LogWarning("SalesManager demo seed skipped: sales@jobsy.local not found.");

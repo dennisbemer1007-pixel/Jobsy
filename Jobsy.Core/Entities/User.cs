@@ -7,6 +7,9 @@ public class User
 {
     public Guid Id { get; set; }
     public string Email { get; set; } = string.Empty;
+
+    /// <summary>Blind index (HMAC) for login/uniqueness; not secret.</summary>
+    public string? EmailLookupHash { get; set; }
     public string FullName { get; set; } = string.Empty;
 
     /// <summary>Optional given name; when set with LastName, FullName is kept in sync.</summary>

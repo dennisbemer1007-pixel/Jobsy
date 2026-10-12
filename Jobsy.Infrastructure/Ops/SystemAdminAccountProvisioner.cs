@@ -2,6 +2,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Security;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -45,7 +46,8 @@ public static class SystemAdminAccountProvisioner
         if (holder is null)
         {
             var emailTaken = await db.Users.AsNoTracking()
-                .AnyAsync(u => u.Email == email && !u.IsSystemAdminAccount, cancellationToken);
+                .WhereEmailEquals(email)
+                .AnyAsync(u => !u.IsSystemAdminAccount, cancellationToken);
             if (emailTaken)
             {
                 throw new InvalidOperationException(
@@ -86,7 +88,7 @@ public static class SystemAdminAccountProvisioner
             {
                 var emailTaken = await db.Users.AsNoTracking()
                     .AnyAsync(
-                        u => u.Email == email && u.Id != holder.Id,
+                        u => u.EmailLookupHash == EmailLookupHash.Compute(email) && u.Id != holder.Id,
                         cancellationToken);
                 if (emailTaken)
                 {
@@ -164,7 +166,8 @@ public static class SystemAdminAccountProvisioner
         var credential = await db.LocalAuthCredentials
             .FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken)
             ?? await db.LocalAuthCredentials
-                .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
+                .WhereCredentialEmailEquals(email)
+                .FirstOrDefaultAsync(cancellationToken);
 
         if (credential is null)
         {

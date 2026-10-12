@@ -133,7 +133,8 @@ public class CompanyAuthorizationService : ICompanyAuthorizationService
         var dbUser = await _db.Users
             .AsNoTracking()
             .Include(u => u.CompanyMemberships)
-            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            .WhereEmailEquals(email)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (dbUser is null || !dbUser.IsActive)
         {

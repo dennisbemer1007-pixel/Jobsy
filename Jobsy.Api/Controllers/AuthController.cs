@@ -122,7 +122,8 @@ public class AuthController : ControllerBase
 
         var email = LoginIdentity.Normalize(request.Email);
         var credential = await _db.LocalAuthCredentials
-            .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
+            .WhereCredentialEmailEquals(email)
+            .FirstOrDefaultAsync(cancellationToken);
         var now = DateTime.UtcNow;
         var unknownKey = _unknownLockouts.KeyForEmail(email);
 

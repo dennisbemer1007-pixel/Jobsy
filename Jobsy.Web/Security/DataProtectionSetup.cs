@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Jobsy.Infrastructure.Security;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
@@ -153,7 +154,8 @@ public static class DataProtectionSetup
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
-                elements.Add(XElement.Parse(reader.GetString(0)));
+                var raw = reader.GetString(0);
+                elements.Add(XElement.Parse(FieldEncryptionAtRest.UnprotectXml(raw)));
             }
 
             return elements;
@@ -172,7 +174,8 @@ public static class DataProtectionSetup
                 """,
                 conn);
             cmd.Parameters.AddWithValue("id", friendlyName);
-            cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
+            var xml = FieldEncryptionAtRest.ProtectXml(element.ToString(SaveOptions.DisableFormatting));
+            cmd.Parameters.AddWithValue("xml", xml);
             cmd.ExecuteNonQuery();
         }
 
