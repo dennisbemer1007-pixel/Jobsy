@@ -42,6 +42,17 @@ public class ProactiveMatchingRulesTests
     }
 
     [Fact]
+    public void In_app_notification_titles_follow_dennis_format()
+    {
+        Assert.Equal(
+            "Nieuwe match: Orderpicker bij Westland Bloemen, 87%",
+            ProactiveMatchingRules.FormatInAppNewMatchTitle("Orderpicker", "Westland Bloemen", 87));
+        Assert.Equal(
+            "Nieuw kennismakingsverzoek: Orderpicker bij Westland Bloemen",
+            ProactiveMatchingRules.FormatInAppIntroductionTitle("Orderpicker", "Westland Bloemen"));
+    }
+
+    [Fact]
     public void Deferred_introduction_charges_token_only_after_accept()
     {
         var pending = new TalentContactRequest { TokenChargeOnAccept = true, Status = TalentContactStatus.Pending };

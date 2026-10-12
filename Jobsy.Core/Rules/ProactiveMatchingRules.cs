@@ -46,4 +46,20 @@ public static class ProactiveMatchingRules
         var offset = ((int)d.DayOfWeek + 6) % 7;
         return d.AddDays(-offset).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
     }
+
+    /// <summary>In-app notification title for a delivered proactive match tip.</summary>
+    public static string FormatInAppNewMatchTitle(string vacancyTitle, string companyName, int matchPercent)
+    {
+        var title = string.IsNullOrWhiteSpace(vacancyTitle) ? "Vacature" : vacancyTitle.Trim();
+        var company = string.IsNullOrWhiteSpace(companyName) ? "werkgever" : companyName.Trim();
+        return $"Nieuwe match: {title} bij {company}, {matchPercent}%";
+    }
+
+    /// <summary>In-app notification title for a vacancy introduction request.</summary>
+    public static string FormatInAppIntroductionTitle(string vacancyTitle, string companyName)
+    {
+        var title = string.IsNullOrWhiteSpace(vacancyTitle) ? "Vacature" : vacancyTitle.Trim();
+        var company = string.IsNullOrWhiteSpace(companyName) ? "werkgever" : companyName.Trim();
+        return $"Nieuw kennismakingsverzoek: {title} bij {company}";
+    }
 }
