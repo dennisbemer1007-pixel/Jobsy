@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
@@ -27,10 +28,11 @@
     {
         <label class="ob-wizard__start-date">
             @Culture[DateFieldLabelKey]
-            <input type="date"
-                   min="@AvailabilityStartRules.MinDateInputValue"
-                   value="@_dateInput"
-                   @onchange="OnDateChangedAsync" />
+            <JobsyDateField Constraint="JobsyDateConstraint.AvailabilityStart"
+                            Value="AvailableFrom"
+                            ValueChanged="AvailableFromChanged"
+                            ShowInvalid="ShowValidation && !AvailabilityStartRules.IsValidExplicitStartDate(AvailableFrom)"
+                            TestId="availability-start-date" />
         </label>
         <p class="ob-wizard__hint">@Culture[DateFieldHintKey]</p>
         @if (ShowValidation && !AvailabilityStartRules.IsValidExplicitStartDate(AvailableFrom))
@@ -57,8 +59,6 @@
     [Parameter] public string DateFieldHintKey { get; set; } = "Onboarding.AvailabilityStartDateHint";
     [Parameter] public string DateInvalidKey { get; set; } = "Onboarding.AvailabilityStartDateInvalid";
 
-    private string? _dateInput => AvailableFrom?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-
     private async Task SelectImmediateAsync()
     {
         if (Immediate)
@@ -80,18 +80,5 @@
         var fallback = AvailableFrom ?? AvailabilityStartRules.TodayUtc.AddDays(1);
         await ImmediateChanged.InvokeAsync(false);
         await AvailableFromChanged.InvokeAsync(fallback);
-    }
-
-    private async Task OnDateChangedAsync(ChangeEventArgs e)
-    {
-        var raw = e.Value?.ToString();
-        if (string.IsNullOrWhiteSpace(raw)
-            || !DateOnly.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-        {
-            await AvailableFromChanged.InvokeAsync(null);
-            return;
-        }
-
-        await AvailableFromChanged.InvokeAsync(parsed);
     }
 }

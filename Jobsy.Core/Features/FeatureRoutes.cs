@@ -8,6 +8,8 @@ public static class FeatureRoutes
 {
     public const string OntdekPath = "/ontdek";
     public const string CandidateProfilePath = "/candidate/profile";
+    /// <summary>Step-by-step onboarding wizard (<c>/candidate/start</c>).</summary>
+    public const string CandidateWizardStartPath = "/candidate/start";
     public const string CandidatePassportPath = "/candidate/paspoort";
     /// <summary>De ontdekkingsreis entry (same path as <c>OnboardingRoutes.DiscoveryPath</c>).</summary>
     public const string CandidateDiscoveryPath = "/candidate/ontdekkingsreis";
@@ -95,7 +97,7 @@ public static class FeatureRoutes
     {
         if (flags.CandidatePassportEnabled)
         {
-            return passportReady ? CandidatePassportPath : CandidateDiscoveryPath;
+            return passportReady ? CandidatePassportPath : CandidateWizardStartPath;
         }
 
         return flags.EmployersEnabled ? "/" : CandidateProfilePath;

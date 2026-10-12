@@ -71,7 +71,10 @@
                                   Keywords="_keywords"
                                   CompletenessPercent="_completeness"
                                   OneLiner="@_oneLiner"
-                                  OnEdit="OpenDataTab" />
+                                  CvBusy="_pdfBusy"
+                                  DnaPassport="_flags.PassportPdfV2Enabled"
+                                  OnEdit="OpenDataTab"
+                                  OnDownloadCv="DownloadLobsyCvAsync" />
                 </div>
 
                 <PassportOverview CompetenceProgress="@Arc(AssessmentKind.Competence)"

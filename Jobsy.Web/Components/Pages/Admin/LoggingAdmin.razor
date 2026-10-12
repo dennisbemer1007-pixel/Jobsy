@@ -6,6 +6,7 @@
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Components.Shared
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -26,8 +27,14 @@
         </select>
         <input type="search" class="admin-filter-input" @bind="_category" @bind:event="oninput"
                placeholder="@Culture["AdminLogs.CategoryPlaceholder"]" />
-        <input type="date" class="admin-filter-input" @bind="_fromDate" />
-        <input type="date" class="admin-filter-input" @bind="_toDate" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_fromFilterDate"
+                        ValueChanged="OnFromFilterChanged"
+                        TestId="admin-log-from-date" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_toFilterDate"
+                        ValueChanged="OnToFilterChanged"
+                        TestId="admin-log-to-date" />
         <button class="btn-compact" type="button" disabled="@_loading" @onclick="FilterAsync">@Culture["Common.Filter"]</button>
     </AdminFilterBar>
 
@@ -87,8 +94,20 @@
     private string _level = "";
     private string _category = "";
     private string _q = "";
-    private DateTime? _fromDate;
-    private DateTime? _toDate;
+    private DateOnly? _fromFilterDate;
+    private DateOnly? _toFilterDate;
+
+    private Task OnFromFilterChanged(DateOnly? value)
+    {
+        _fromFilterDate = value;
+        return Task.CompletedTask;
+    }
+
+    private Task OnToFilterChanged(DateOnly? value)
+    {
+        _toFilterDate = value;
+        return Task.CompletedTask;
+    }
     private bool _loading = true;
     private string? _error;
     private int _pageNum = 1;
@@ -197,8 +216,8 @@
             var page = await Api.GetPlatformLogsPageAsync(
                 category: string.IsNullOrWhiteSpace(_category) ? null : _category,
                 level: string.IsNullOrWhiteSpace(_level) ? null : _level,
-                from: _fromDate?.ToUniversalTime(),
-                to: _toDate?.ToUniversalTime(),
+                from: _fromFilterDate?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+                to: _toFilterDate?.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc),
                 page: _pageNum,
                 pageSize: _pageSize,
                 q: string.IsNullOrWhiteSpace(_q) ? null : _q);

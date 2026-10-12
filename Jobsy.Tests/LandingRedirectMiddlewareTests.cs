@@ -62,7 +62,7 @@ public class LandingRedirectMiddlewareTests
         var client = app.GetTestClient();
         using var response = await client.GetAsync("/");
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal(FeatureRoutes.CandidateDiscoveryPath, response.Headers.Location?.ToString());
+        Assert.Equal(FeatureRoutes.CandidateWizardStartPath, response.Headers.Location?.ToString());
     }
 
     [Theory]

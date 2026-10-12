@@ -1,6 +1,11 @@
+using System.Security.Claims;
 using Jobsy.Core.Dev;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
+using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
 
@@ -31,5 +36,63 @@ public sealed class E2eDevController : ControllerBase
         return DevEmailCodeCapture.TryGet(email, out var code)
             ? Ok(new { email = email.Trim().ToLowerInvariant(), code })
             : NotFound(new { message = "no code captured yet" });
+    }
+
+    [HttpPost("fixture/external-vacancy")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalVacancyFixture(
+        [FromQuery] string? email,
+        [FromServices] JobsyDbContext db,
+        [FromServices] IHostEnvironment env,
+        CancellationToken cancellationToken)
+    {
+        if (!env.IsDevelopment() || !DevEmailCodeCapture.Enabled)
+        {
+            return NotFound();
+        }
+
+        Guid userId;
+        if (User.Identity?.IsAuthenticated == true
+            && Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var claimId))
+        {
+            userId = claimId;
+        }
+        else if (string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest(new { message = "email required when unauthenticated" });
+        }
+        else
+        {
+            var normalized = email.Trim().ToLowerInvariant();
+            var user = await db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == normalized, cancellationToken);
+            if (user is null)
+            {
+                return NotFound(new { message = "user not found" });
+            }
+
+            userId = user.Id;
+        }
+
+        var id = Guid.NewGuid();
+        db.CandidateExternalVacancies.Add(new CandidateExternalVacancy
+        {
+            Id = id,
+            CandidateUserId = userId,
+            SourceUrl = "https://example.com/e2e-vacancy",
+            SourceHost = "example.com",
+            Title = "E2E Buitenbaan",
+            CompanyName = "Demo Werkgever",
+            Place = "Den Haag",
+            HoursText = "32 uur",
+            PayText = "€ 14/uur",
+            StartText = "Per direct",
+            TrainingText = "Inwerktraject",
+            RequirementsBulletsJson = "[\"Rijbewijs B\"]",
+            Status = CandidateExternalVacancyStatus.Saved,
+            SavedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { id });
     }
 }

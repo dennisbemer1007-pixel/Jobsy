@@ -241,6 +241,15 @@ builder.Services.AddHttpClient(Jobsy.Web.Hosting.PrivacyDataExportEndpoints.Http
     client.Timeout = TimeSpan.FromSeconds(20);
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromMinutes(2);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
 // GET /partner/flyer.pdf forwards the anonymous API flyer so the share link needs no JavaScript (09).
 builder.Services.AddHttpClient(Jobsy.Web.Hosting.PartnerFlyerEndpoints.HttpClientName, client =>
 {
@@ -567,6 +576,7 @@ app.MapMailUnsubscribeEndpoints();
 app.MapReferenceConfirmationEndpoints();
 app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
+app.MapCandidatePassportPdfEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();

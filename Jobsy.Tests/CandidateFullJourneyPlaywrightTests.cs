@@ -45,7 +45,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         const string firstName = "Journey";
 
         await RunViewportAsync(browser, baseUrl, desktopEmail, firstName, 1280, 900, "desktop", fullJourney: true);
-        await RunViewportAsync(browser, baseUrl, mobileEmail, firstName, 375, 812, "mobile", fullJourney: false);
+        await RunViewportAsync(browser, baseUrl, mobileEmail, firstName, 375, 812, "mobile", fullJourney: true);
     }
 
     private static async Task RunViewportAsync(
@@ -75,19 +75,16 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await CompleteOnboardingWizardAsync(page, baseUrl, viewportTag);
         await CompleteDiscoveryJourneyDeepTestsAsync(page, baseUrl, viewportTag);
 
-        if (!fullJourney)
-        {
-            await KbE2e.WaitForStyledAppAsync(page);
-            await VisitPaspoortAndPdfAsync(page, baseUrl, viewportTag);
-            return;
-        }
-
         await KbE2e.WaitForStyledAppAsync(page);
         await VisitPaspoortAndPdfAsync(page, baseUrl, viewportTag);
+        await VisitExternalVacancyShareApplyAsync(page, baseUrl, viewportTag, email);
         await VisitCarriereAsync(page, baseUrl, viewportTag);
         await VisitBanenkaartAsync(page, baseUrl, viewportTag);
-        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag);
-        await SwitchArabicOnPaspoortAsync(page, baseUrl, viewportTag);
+        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag, email);
+        if (fullJourney && viewportTag == "desktop")
+        {
+            await SwitchArabicOnPaspoortAsync(page, baseUrl, viewportTag);
+        }
 
         await KbE2e.AssertNoCircuitErrorAsync(page);
         KbE2e.AssertHealthy(capture, requireNoIsochrone404: false);
@@ -98,7 +95,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.WaitForSelectorAsync("#signup-title, .pub-signup__title", new() { Timeout = 60_000 });
-        await page.WaitForSelectorAsync("link[rel=stylesheet]", new() { Timeout = 30_000 });
+        await KbE2e.WaitForStyledAppAsync(page);
         await CandidateJourneyE2e.ShotAsync(page, tag, "01-account-maken");
 
         await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
@@ -249,6 +246,12 @@ public sealed class CandidateFullJourneyPlaywrightTests
             || body.Contains("klaar", StringComparison.OrdinalIgnoreCase)
             || body.Contains("Volledig", StringComparison.Ordinal),
             "Discovery journey should reach results or completion");
+        Assert.True(
+            body.Contains("Competentie", StringComparison.OrdinalIgnoreCase)
+            && body.Contains("Carrière", StringComparison.OrdinalIgnoreCase)
+            && body.Contains("Cultuur", StringComparison.OrdinalIgnoreCase)
+            && body.Contains("Waarden", StringComparison.OrdinalIgnoreCase),
+            "Discovery results should list all four deep-test dimensions");
     }
 
     private static async Task VisitPaspoortAndPdfAsync(IPage page, string baseUrl, string tag)
@@ -258,28 +261,42 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.Locator(".passport-overview, .passport-overview__title").First.WaitForAsync(new() { Timeout = 60_000 });
         await CandidateJourneyE2e.ShotAsync(page, tag, "07-paspoort-dit-ben-jij");
 
-        var downloadBtn = page.Locator("[data-testid=passport-download-pdf], a:has-text('DNA-paspoort'), button:has-text('DNA-paspoort')").First;
-        if (await downloadBtn.CountAsync() > 0)
+        var downloadBtn = page.Locator("[data-testid=passport-download-pdf]").First;
+        await downloadBtn.WaitForAsync(new() { Timeout = 60_000 });
+        var download = await page.RunAndWaitForDownloadAsync(async () =>
         {
-            try
-            {
-                var download = await page.RunAndWaitForDownloadAsync(async () =>
-                {
-                    await downloadBtn.ClickAsync(new() { Timeout = 15_000 });
-                });
-                var pdfPath = await download.PathAsync();
-                var pdf = await File.ReadAllBytesAsync(pdfPath!);
-                if (pdf.Length > 5_000)
-                {
-                    var png = Path.Combine(CandidateJourneyE2e.ShotDir(tag), "08-paspoort-pdf-page1.png");
-                    await CandidateJourneyE2e.RenderPdfFirstPageAsync(pdf, png);
-                }
-            }
-            catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
-            {
-                // Mobile layouts may hide the download control; screenshot 07 still proves paspoort UI.
-            }
+            await downloadBtn.ClickAsync(new() { Timeout = 30_000 });
+        }, new() { Timeout = 120_000 });
+        var pdfPath = await download.PathAsync();
+        var pdf = await File.ReadAllBytesAsync(pdfPath!);
+        Assert.True(pdf.Length > 5_000, "Paspoort PDF download should return a non-empty file");
+        var png = Path.Combine(CandidateJourneyE2e.ShotDir(tag), "08-paspoort-pdf-page1.png");
+        await CandidateJourneyE2e.RenderPdfFirstPageAsync(pdf, png);
+    }
+
+    private static async Task VisitExternalVacancyShareApplyAsync(IPage page, string baseUrl, string tag, string email)
+    {
+        var extId = await CandidateJourneyE2e.SeedExternalVacancyFixtureAsync(baseUrl, email);
+        if (extId is null)
+        {
+            return;
         }
+
+        await page.GotoAsync($"{baseUrl}/candidate/external/{extId:D}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+        await CandidateJourneyE2e.ShotAsync(page, tag, "11b-external-vacancy");
+
+        var apply = page.Locator("a[href*='/apply'], button:has-text('Solliciteer')").First;
+        if (await apply.CountAsync() > 0)
+        {
+            await apply.ClickAsync();
+            await page.WaitForTimeoutAsync(1_500);
+            await CandidateJourneyE2e.ShotAsync(page, tag, "11c-external-apply");
+        }
+
+        await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+        await CandidateJourneyE2e.ShotAsync(page, tag, "11d-notifications-applications");
     }
 
     private static async Task VisitCarriereAsync(IPage page, string baseUrl, string tag)
@@ -306,11 +323,10 @@ public sealed class CandidateFullJourneyPlaywrightTests
         }
     }
 
-    private static async Task VisitApplicationsAndSettingsAsync(IPage page, string baseUrl, string tag)
+    private static async Task VisitApplicationsAndSettingsAsync(IPage page, string baseUrl, string tag, string email)
     {
         foreach (var (path, slug) in new[]
                  {
-                     ("/candidate/applications", "12-sollicitaties"),
                      ("/candidate/settings", "13-instellingen"),
                      ("/candidate/privacy", "14-privacy")
                  })
@@ -322,7 +338,15 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
         await page.GotoAsync(baseUrl + "/logout", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await CandidateJourneyE2e.ShotAsync(page, tag, "15-login-after-logout");
+        await page.Locator("input[type=email], #email").First.FillAsync(email);
+        await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
+        await page.WaitForURLAsync("**/login/**", new() { Timeout = 60_000 });
+        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
+        Assert.False(string.IsNullOrWhiteSpace(code), "OTP na logout — zet JOBSY_E2E_CAPTURE_EMAIL_CODES=1");
+        await page.Locator("input[name=code], input[inputmode=numeric]").First.FillAsync(code!);
+        await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
+        await page.WaitForURLAsync(url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase), new() { Timeout = 90_000 });
+        await CandidateJourneyE2e.ShotAsync(page, tag, "15-login-after-logout-otp");
     }
 
     private static async Task SwitchArabicOnPaspoortAsync(IPage page, string baseUrl, string tag)
@@ -370,7 +394,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             await VisitPaspoortAndPdfAsync(page, baseUrl, tag);
             await VisitCarriereAsync(page, baseUrl, tag);
             await VisitBanenkaartAsync(page, baseUrl, tag);
-            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag);
+            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag, KbE2e.DefaultCompleteEmail);
             if (tag == "desktop")
             {
                 await SwitchArabicOnPaspoortAsync(page, baseUrl, tag);

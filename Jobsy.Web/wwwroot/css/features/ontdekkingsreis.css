@@ -160,9 +160,31 @@
     min-width: 0;
     width: 100%;
     max-width: 100%;
+    scroll-margin-top: 148px;
   }
 
   .journey-mlob { order: 1; }
+
+  .journey-mprog {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+  }
+
+  .journey-stage {
+    padding-top: 6px;
+  }
+
+  .journey-mprog + .journey-stage .journey-step {
+    margin-top: 2px;
+  }
+
+  .journey-mtrack {
+    margin-top: 26px;
+  }
+
+  .journey-step__eyebrow,
+  .journey-step .ob-wizard h1 {
+    scroll-margin-top: 152px;
+  }
 }
 
 /* ---- rail ---- */
@@ -446,6 +468,22 @@
   gap: 4px;
 }
 
+.journey-step fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.journey-step .ob-wizard__section {
+  margin-block: 1.25rem 0.5rem;
+}
+
+.journey-step .ob-wizard__preset-required {
+  margin-block: 0.5rem 0;
+  padding-inline: 0.15rem;
+}
+
 .journey-stack__divider {
   block-size: 1px;
   margin: 18px 0 6px;
@@ -542,8 +580,9 @@
   top: 56px;
   z-index: 20;
   background: var(--surface);
-  padding: 10px 14px;
+  padding: 10px 14px 14px;
   box-shadow: var(--shadow);
+  margin-bottom: 4px;
 }
 
 .journey-mprog__t {

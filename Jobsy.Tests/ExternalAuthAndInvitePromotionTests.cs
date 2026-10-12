@@ -79,7 +79,7 @@ public class ExternalAuthAndInvitePromotionTests
     public void CandidatePostLoginUrl_defaults_use_passport_home()
     {
         Assert.Equal(
-            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.CandidateWizardStartPath,
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: true));
         Assert.Equal(
             FeatureRoutes.CandidatePassportPath,
@@ -94,7 +94,7 @@ public class ExternalAuthAndInvitePromotionTests
             "/vacancies/abc",
             AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true, on));
         Assert.Equal(
-            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.CandidateWizardStartPath,
             AuthRedirects.ResolveCandidateReturnUrl("/home", showCandidateHowTo: true));
         Assert.Equal(
             FeatureRoutes.CandidatePassportPath,

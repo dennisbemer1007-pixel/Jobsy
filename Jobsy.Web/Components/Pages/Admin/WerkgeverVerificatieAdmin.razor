@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
@@ -170,7 +172,10 @@
                 </label>
                 <label>
                     @Culture["AdminWa.Waadi.ValidUntil"]
-                    <input type="date" @bind="_waadiValidUntilDate" />
+                    <JobsyDateField Constraint="JobsyDateConstraint.NotPast"
+                                    Value="_waadiValidUntil"
+                                    ValueChanged="v => _waadiValidUntil = v"
+                                    TestId="admin-waadi-valid-until" />
                 </label>
                 <label>
                     @Culture["AdminWa.Waadi.Note"]
@@ -353,7 +358,7 @@
     private string _waadiReference = "";
     private string _waadiSource = "WaadiKvk";
     private string _waadiNote = "";
-    private DateTime? _waadiValidUntilDate;
+    private DateOnly? _waadiValidUntil;
     private bool _loading = true;
     private string? _error;
     private AdminCompanyVerificationItem? _rejectTarget;
@@ -511,7 +516,7 @@
         _waadiReference = item.Reference ?? "";
         _waadiSource = string.IsNullOrWhiteSpace(item.Source) ? "WaadiKvk" : item.Source!;
         _waadiNote = item.Note ?? "";
-        _waadiValidUntilDate = item.ValidUntil?.Date;
+        _waadiValidUntil = item.ValidUntil is { } until ? DateOnly.FromDateTime(until) : null;
     }
 
     private async Task ConfirmWaadiDecideAsync()
@@ -531,7 +536,7 @@
             _waadiApprove,
             _waadiSource,
             string.IsNullOrWhiteSpace(_waadiReference) ? null : _waadiReference,
-            _waadiValidUntilDate,
+            _waadiValidUntil?.ToDateTime(TimeOnly.MinValue),
             string.IsNullOrWhiteSpace(_waadiNote) ? null : _waadiNote);
         _waadiTarget = null;
         await ReloadAsync();

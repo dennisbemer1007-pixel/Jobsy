@@ -157,7 +157,7 @@ public class CandidatePassportNavLandingTests
         Assert.True(flags.CandidatePassportEnabled);
 
         var home = FeatureRoutes.CandidateHome(flags, passportReady: false);
-        Assert.Equal(FeatureRoutes.CandidateDiscoveryPath, home);
+        Assert.Equal(FeatureRoutes.CandidateWizardStartPath, home);
 
         var nav = RoleNavCatalog.CandidateItems(flags);
         Assert.Equal(

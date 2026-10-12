@@ -999,7 +999,23 @@ window.jobsyExtras = (function () {
         });
     };
 
-    return { ensure: ensure };
+    function openDatePicker(el) {
+        if (!el) {
+            return;
+        }
+        if (typeof el.showPicker === "function") {
+            try {
+                el.showPicker();
+                return;
+            } catch (e) {
+                // fall through
+            }
+        }
+        el.focus();
+        el.click();
+    }
+
+    return { ensure: ensure, openDatePicker: openDatePicker };
 })();
 
 window.jobsyPageVisible = function () {
@@ -1358,7 +1374,7 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261010-02"
+        ? "/service-worker.published.js?v=20261012-01"
         : "/service-worker.js?v=20261010-02";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
