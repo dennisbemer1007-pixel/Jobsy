@@ -95,6 +95,45 @@ public static class ProactiveMatchingRules
             h.Feedback == ProactiveMatchFeedback.NotInterested
             && MatchesDeliveryIdentity(h.Title, h.CompanyLabel, vacancyTitle, companyLabel));
 
+    /// <summary>DNA-based one-liner for proactive match cards (never a generic profile blurb when headlines exist).</summary>
+    public static string FormatProactiveMatchReason(ProfileVacancyMatch match)
+    {
+        var headlines = ProfileVacancyMatchCalculator.WhyHeadlines(match);
+        if (headlines.Count > 0)
+        {
+            return string.Join(" · ", headlines);
+        }
+
+        var line = ProfileVacancyMatchCalculator.SummaryLine(match);
+        if (!string.IsNullOrWhiteSpace(line) && !IsGenericStoredRationale(line))
+        {
+            return line!;
+        }
+
+        if (!string.IsNullOrWhiteSpace(match.MatchRationale) && !IsGenericStoredRationale(match.MatchRationale))
+        {
+            return match.MatchRationale!;
+        }
+
+        return $"Op basis van je DNA-profiel en voorkeuren scoort deze vacature {match.TotalPercent}%.";
+    }
+
+    public static IReadOnlyList<string> ProactiveMatchHighlightLabels(ProfileVacancyMatch match)
+        => ProfileVacancyMatchCalculator.WhyHeadlines(match);
+
+    public static bool IsGenericStoredRationale(string? rationale)
+    {
+        if (string.IsNullOrWhiteSpace(rationale))
+        {
+            return true;
+        }
+
+        return (rationale.Contains("past voor", StringComparison.OrdinalIgnoreCase)
+                && rationale.Contains("bij jouw profiel", StringComparison.OrdinalIgnoreCase))
+               || rationale.Contains("externe vacature sluit aan", StringComparison.OrdinalIgnoreCase)
+               || rationale.Equals("Deze vacature past bij jouw profiel.", StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool IsWithinSameVacancyCooldown(
         IReadOnlyList<ProactiveDeliveryHistoryEntry> history,
         string vacancyTitle,

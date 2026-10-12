@@ -96,6 +96,58 @@ public class ProactiveMatchingRulesTests
     }
 
     [Fact]
+    public void Shortlist_availability_shows_per_direct_or_start_date()
+    {
+        var immediate = new User
+        {
+            Id = Guid.NewGuid(),
+            OpenForWork = true,
+            AvailableFromDate = null
+        };
+        Assert.Equal(
+            "Per direct",
+            ProactiveTalentAvailabilityRules.FormatShortlistAvailabilityLine(
+                immediate,
+                null,
+                false,
+                null,
+                null,
+                null));
+
+        var future = new User
+        {
+            Id = Guid.NewGuid(),
+            OpenForWork = true,
+            AvailableFromDate = new DateOnly(2026, 11, 1)
+        };
+        Assert.StartsWith(
+            "Vanaf 01-11-2026",
+            ProactiveTalentAvailabilityRules.FormatShortlistAvailabilityLine(
+                future,
+                null,
+                false,
+                24m,
+                32m,
+                null));
+    }
+
+    [Fact]
+    public void Employer_shortlist_respects_min_score_threshold()
+    {
+        Assert.False(67 >= ProactiveMatchingRules.ClampMinScore(80));
+        Assert.True(82 >= ProactiveMatchingRules.ClampMinScore(80));
+    }
+
+    [Fact]
+    public void Generic_stored_rationale_is_detected_for_enrichment()
+    {
+        Assert.True(ProactiveMatchingRules.IsGenericStoredRationale("Deze vacature past bij jouw profiel."));
+        Assert.True(ProactiveMatchingRules.IsGenericStoredRationale(
+            "Deze externe vacature sluit aan bij wat je eerder hebt opgeslagen."));
+        Assert.False(ProactiveMatchingRules.IsGenericStoredRationale("Beroepsinteresse past · Goede reistijd"));
+    }
+
+    [Fact]
     public void In_app_notification_titles_follow_dennis_format()
     {
         Assert.Equal(

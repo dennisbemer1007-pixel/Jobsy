@@ -31,6 +31,7 @@ ON CONFLICT ("Id") DO UPDATE SET
 -- Demo kandidaat: talentpool + profiel voor matching/shortlist
 UPDATE "Users"
 SET "OpenForWork" = true,
+    "AvailableFromDate" = NULL,
     "TalentPoolConsentAt" = COALESCE("TalentPoolConsentAt", NOW() AT TIME ZONE 'UTC'),
     "TalentPoolConsentVersion" = COALESCE("TalentPoolConsentVersion", '2026-09-26'),
     "CandidateHowToCompletedAt" = COALESCE("CandidateHowToCompletedAt", NOW() AT TIME ZONE 'UTC')

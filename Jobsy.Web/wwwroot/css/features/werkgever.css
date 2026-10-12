@@ -71,6 +71,34 @@
     color: #fff;
 }
 
+.wg-topbar .notification-bell {
+    color: var(--brand);
+}
+
+.wg-topbar .notification-bell__toggle {
+    color: var(--brand);
+    background: var(--surface);
+    border-color: color-mix(in srgb, #fff 40%, var(--brand-deep));
+}
+
+.wg-topbar .notification-bell__icon,
+.wg-topbar .notification-bell__icon svg {
+    color: var(--brand);
+    stroke: var(--brand);
+    fill: none;
+}
+
+.wg-topbar .notification-bell__toggle--unread {
+    color: var(--gold);
+    border-color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 22%, var(--surface));
+}
+
+.wg-topbar .notification-bell__toggle--unread .notification-bell__icon svg {
+    stroke: currentColor;
+    color: var(--gold);
+}
+
 .wg-topbar__account-meta {
     display: none;
     font-size: var(--text-xs);

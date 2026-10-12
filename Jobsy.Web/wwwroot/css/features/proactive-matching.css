@@ -1,10 +1,21 @@
-/* Proactive matching — candidate settings + employer shortlist */
-.proactive-page {
+/* Proactive matching — candidate settings + employer shortlist (navy + warm off-white) */
+.proactive-page,
+.proactive-shortlist-page {
+    --pm-navy: color-mix(in srgb, var(--brand) 92%, #0c1222);
+    --pm-cream: #f5f2ee;
+    --pm-surface: #fffcfa;
     --pm-ring: color-mix(in srgb, var(--brand) 35%, #38bdf8);
-    --pm-glow: color-mix(in srgb, var(--brand) 12%, transparent);
+    --pm-glow: color-mix(in srgb, var(--brand) 14%, transparent);
     max-width: 52rem;
     margin-inline: auto;
     padding-block: 1.25rem 2.5rem;
+    background: var(--pm-cream);
+    border-radius: calc(var(--form-card-radius) + 6px);
+}
+
+.proactive-shortlist-page {
+    max-width: 56rem;
+    padding-inline: clamp(0.75rem, 3vw, 1.25rem);
 }
 
 .proactive-match-badge {
@@ -188,6 +199,15 @@
     gap: 1rem;
 }
 
+.proactive-wow-card {
+    border-radius: calc(var(--form-card-radius) + 8px);
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, #ddd5cc);
+    background: var(--pm-surface);
+    box-shadow:
+        0 12px 32px color-mix(in srgb, var(--pm-navy) 9%, transparent),
+        inset 0 0 0 1px color-mix(in srgb, var(--pm-surface) 80%, #fff);
+}
+
 .proactive-tip {
     position: relative;
     padding: 1rem 1.05rem 1.1rem;
@@ -264,11 +284,25 @@
     color: var(--muted);
 }
 
+.proactive-tip__dna-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 0.55rem;
+    padding: 0;
+    list-style: none;
+}
+
+.proactive-tip__dna-chip {
+    font-size: 0.8rem;
+}
+
 .proactive-tip__why-text {
     margin: 0;
     font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text);
+    font-weight: 600;
+    color: var(--pm-navy);
+    line-height: 1.45;
 }
 
 .proactive-tip__actions {
@@ -357,10 +391,13 @@
 
 .proactive-shortlist-promo {
     margin-block: var(--form-section-gap);
-    padding: 1.15rem 1.25rem;
-    border-radius: var(--form-card-radius);
-    border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--border));
-    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+    padding: 1.25rem 1.35rem;
+    border-radius: calc(var(--form-card-radius) + 6px);
+    border: 1px solid color-mix(in srgb, var(--brand) 32%, var(--border));
+    background:
+        radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--brand) 10%, transparent), transparent 55%),
+        linear-gradient(145deg, var(--pm-cream), color-mix(in srgb, var(--accent-soft) 45%, var(--pm-surface)));
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 8%, transparent);
 }
 
 .proactive-shortlist-promo h2 {
@@ -445,10 +482,15 @@
 
 .proactive-shortlist-card {
     padding: 1rem 1.15rem 1.15rem;
-    border: 1px solid var(--border);
-    border-radius: calc(var(--form-card-radius) + 2px);
-    background: var(--surface);
-    box-shadow: var(--shadow);
+    border: 1px solid color-mix(in srgb, var(--brand) 20%, var(--border));
+    border-radius: calc(var(--form-card-radius) + 6px);
+    background: linear-gradient(
+        160deg,
+        var(--surface),
+        color-mix(in srgb, var(--pm-cream) 45%, var(--pm-surface)));
+    box-shadow:
+        0 8px 22px color-mix(in srgb, var(--brand) 7%, transparent),
+        var(--shadow);
 }
 
 .proactive-shortlist--page .proactive-shortlist-card {
@@ -512,13 +554,17 @@
 }
 
 .proactive-chip {
-    padding: 0.25rem 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0 0.75rem;
     border-radius: 999px;
     font-size: 0.82rem;
     font-weight: 600;
-    background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+    background: var(--accent-soft);
     color: var(--brand);
-    border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border));
+    border: none;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 12%, var(--border));
 }
 
 .proactive-chip--muted {

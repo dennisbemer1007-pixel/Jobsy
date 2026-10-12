@@ -285,7 +285,7 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                     continue;
                 }
 
-                var rationale = BuildDeliveryRationale(item.Match);
+                var rationale = ProactiveMatchingRules.FormatProactiveMatchReason(item.Match);
 
                 await DeliverAsync(
                     settings.UserId,
@@ -533,29 +533,8 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             row.CompanyLabel,
             row.DeliveredAtUtc,
             row.Feedback,
-            1);
-
-    private static string BuildDeliveryRationale(ProfileVacancyMatch match)
-    {
-        var line = ProfileVacancyMatchCalculator.SummaryLine(match);
-        if (!string.IsNullOrWhiteSpace(line) && !IsGenericRationale(line))
-        {
-            return line!;
-        }
-
-        var headlines = ProfileVacancyMatchCalculator.WhyHeadlines(match);
-        if (headlines.Count > 0)
-        {
-            return headlines[0];
-        }
-
-        if (!string.IsNullOrWhiteSpace(match.MatchRationale) && !IsGenericRationale(match.MatchRationale))
-        {
-            return match.MatchRationale!;
-        }
-
-        return $"Op basis van je DNA-profiel en voorkeuren scoort deze vacature {match.TotalPercent}%.";
-    }
+            1,
+            null);
 
     private async Task<IReadOnlyList<ProactiveMatchSuggestionDto>> EnrichRationalesAsync(
         Guid candidateUserId,
@@ -599,16 +578,18 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             }
 
             var rationale = tip.Rationale;
-            if (IsGenericRationale(rationale))
+            var highlights = ProactiveMatchingRules.ProactiveMatchHighlightLabels(match);
+            if (ProactiveMatchingRules.IsGenericStoredRationale(rationale))
             {
-                rationale = BuildDeliveryRationale(match);
+                rationale = ProactiveMatchingRules.FormatProactiveMatchReason(match);
             }
 
             enriched.Add(tip with
             {
                 Title = ProactiveMatchingRules.NormalizeVacancyTitle(tip.Title),
                 MatchPercent = Math.Max(tip.MatchPercent, match.TotalPercent),
-                Rationale = rationale
+                Rationale = rationale,
+                MatchHighlights = highlights.Count > 0 ? highlights : null
             });
         }
 
@@ -639,16 +620,4 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             .ToList();
     }
 
-    private static bool IsGenericRationale(string? rationale)
-    {
-        if (string.IsNullOrWhiteSpace(rationale))
-        {
-            return true;
-        }
-
-        return (rationale.Contains("past voor", StringComparison.OrdinalIgnoreCase)
-                && rationale.Contains("bij jouw profiel", StringComparison.OrdinalIgnoreCase))
-               || rationale.Contains("externe vacature sluit aan", StringComparison.OrdinalIgnoreCase)
-               || rationale.Equals("Deze vacature past bij jouw profiel.", StringComparison.OrdinalIgnoreCase);
-    }
 }
