@@ -653,6 +653,10 @@ public static class DependencyInjection
         services.AddScoped<ISampleAssessmentReportPdfService, SampleAssessmentReportPdfService>();
         services.AddHostedService<AssessmentNormSnapshotHostedService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.Configure<Jobsy.Core.Options.ProactiveMatchingOptions>(
+            configuration.GetSection(Jobsy.Core.Options.ProactiveMatchingOptions.SectionName));
+        services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();
+        services.AddScoped<IProactiveVacancyShortlistService, ProactiveVacancyShortlistService>();
         services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<IEmployerPhase2Service, Jobsy.Infrastructure.Services.EmployerPhase2.EmployerPhase2Service>();
@@ -745,6 +749,7 @@ public static class DependencyInjection
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<Jobs.ExternalVacancyReminderHostedService>();
+        services.AddHostedService<Jobs.ProactiveMatchingHostedService>();
         services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();

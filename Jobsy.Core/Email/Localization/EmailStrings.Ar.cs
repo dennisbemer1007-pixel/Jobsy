@@ -469,6 +469,15 @@ internal static class EmailStringsAr
         ["Email.VacancyEngagementReminder.Tip.NotShared"] = "Share the vacancy actively. That increases repeat visits.",
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "There is interest, but no applications yet. Make requirements more realistic or clarify the wage.",
 
+        ["Email.ProactiveMatch.Subject"] = "نصيحة Lobsy: {0}",
+        ["Email.ProactiveMatch.Preheader"] = "تطابق {0}% — اكتشف لماذا يناسبك",
+        ["Email.ProactiveMatch.Heading"] = "Lobsy يبحث لك",
+        ["Email.ProactiveMatch.Eyebrow"] = "تطابق جديد",
+        ["Email.ProactiveMatch.P1"] = "رصدنا وظيفة تناسبك: {0} لدى {1}.",
+        ["Email.ProactiveMatch.Why"] = "لماذا يناسبك: {0}",
+        ["Email.ProactiveMatch.Score"] = "درجة التطابق: {0}%",
+        ["Email.ProactiveMatch.Cta"] = "عرض النصيحة",
+
         ["Email.DeepTestReceipt.Subject"] = "Your extended test is ready",
         ["Email.DeepTestReceipt.Preheader"] = "Paid: you can start with question 1",
         ["Email.DeepTestReceipt.Heading"] = "Paid. You can start",

@@ -357,6 +357,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("ProactiveMatchingEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ProactiveMatchingEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ProactiveMatching.Enabled.Title",
+                DescriptionKey: "AdminSettings.ProactiveMatching.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ProactiveMatchingEnabled,
+                Write: v => new PlatformFeatureUpdate(ProactiveMatchingEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "CandidateInsightsUnlockPerBranch",
             Group: GroupVacancies,
@@ -553,6 +566,7 @@ public static class PlatformSettingsCatalog
         bool? futureJobsForYouEnabled = null;
         bool? employerPhase2Enabled = null;
         bool? candidateExternalVacanciesEnabled = null;
+        bool? proactiveMatchingEnabled = null;
         bool? freeCandidateTestsEnabled = null;
 
         foreach (var p in parts)
@@ -598,6 +612,11 @@ public static class PlatformSettingsCatalog
             {
                 candidateExternalVacanciesEnabled = p.CandidateExternalVacanciesEnabled;
             }
+
+            if (p.ProactiveMatchingEnabled is not null)
+            {
+                proactiveMatchingEnabled = p.ProactiveMatchingEnabled;
+            }
         }
 
         return new PlatformFeatureUpdate(
@@ -629,6 +648,7 @@ public static class PlatformSettingsCatalog
             HonestAdviceEnabled: honestAdviceEnabled,
             FutureJobsForYouEnabled: futureJobsForYouEnabled,
             EmployerPhase2Enabled: employerPhase2Enabled,
-            CandidateExternalVacanciesEnabled: candidateExternalVacanciesEnabled);
+            CandidateExternalVacanciesEnabled: candidateExternalVacanciesEnabled,
+            ProactiveMatchingEnabled: proactiveMatchingEnabled);
     }
 }

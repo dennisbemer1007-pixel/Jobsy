@@ -189,6 +189,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.CandidateExternalVacanciesEnabled = externalVacanciesEnabled;
         }
 
+        if (update.ProactiveMatchingEnabled is bool proactiveMatchingEnabled)
+        {
+            row.ProactiveMatchingEnabled = proactiveMatchingEnabled;
+        }
+
         if (update.FreeCandidateTestsEnabled is bool freeCandidateTestsEnabled)
         {
             row.FreeCandidateTestsEnabled = freeCandidateTestsEnabled;
@@ -382,6 +387,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.HonestAdviceEnabled ?? false,
             row?.FutureJobsForYouEnabled ?? false,
             row?.EmployerPhase2Enabled ?? false,
-            row?.CandidateExternalVacanciesEnabled ?? false);
+            row?.CandidateExternalVacanciesEnabled ?? false,
+            row?.ProactiveMatchingEnabled ?? false);
     }
 }

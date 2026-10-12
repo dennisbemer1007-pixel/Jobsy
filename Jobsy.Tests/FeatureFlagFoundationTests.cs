@@ -35,6 +35,13 @@ public class FeatureFlagFoundationTests
         Assert.False(d.IsEnabled(PlatformFeature.Employers));
         Assert.True(d.IsEnabled(PlatformFeature.CandidatePassport));
         Assert.False(d.IsEnabled(PlatformFeature.CandidateExternalVacancies));
+        Assert.False(d.IsEnabled(PlatformFeature.ProactiveMatching));
+    }
+
+    [Fact]
+    public void PlatformFeatureSettings_proactive_matching_default_off()
+    {
+        Assert.False(new PlatformFeatureSettings().ProactiveMatchingEnabled);
     }
 
     [Fact]
