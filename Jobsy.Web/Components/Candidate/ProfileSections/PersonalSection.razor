@@ -41,7 +41,9 @@
 
                             <label>
                                 @Culture["Profile.DateOfBirth"]
-                                <input type="date" @bind="Editor.DobInput" />
+                                <JobsyDateField Constraint="JobsyDateConstraint.CandidateBirthDate"
+                                                @bind-Value="Editor.DobInput"
+                                                TestId="profile-birth-date" />
                             </label>
 
                             <div class="profile-address">

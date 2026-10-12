@@ -111,7 +111,11 @@
                                         </label>
                                         <label>
                                             <span>@Culture["DiplomaEval.Date"]</span>
-                                            <input data-testid="diploma-eval-date" type="date" required value="@draft.DateInput" @onchange="@(e => draft.DateInput = e.Value?.ToString() ?? string.Empty)" />
+                                            <JobsyDateField Constraint="JobsyDateConstraint.NotFuture"
+                                                            Required="true"
+                                                            TextValue="@draft.DateInput"
+                                                            TextValueChanged="value => draft.DateInput = value ?? string.Empty"
+                                                            TestId="diploma-eval-date" />
                                         </label>
                                         <label>
                                             <span>@Culture["DiplomaEval.Reference"]</span>

@@ -1,5 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Privacy
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
@@ -61,22 +63,12 @@
 }
 <fieldset>
     <legend>@Culture["Onboarding.BirthDate"]</legend>
-    <div class="ob-wizard__birth">
-        <label>
-            @Culture["Onboarding.Day"]
-            <input inputmode="numeric" maxlength="2"
-                   @bind="Draft.BirthDay" @bind:event="oninput" @bind:after="OnBirthDateChangedAsync" />
-        </label>
-        <label>
-            @Culture["Onboarding.Month"]
-            <input inputmode="numeric" maxlength="2"
-                   @bind="Draft.BirthMonth" @bind:event="oninput" @bind:after="OnBirthDateChangedAsync" />
-        </label>
-        <label>
-            @Culture["Onboarding.Year"]
-            <input inputmode="numeric" maxlength="4"
-                   @bind="Draft.BirthYear" @bind:event="oninput" @bind:after="OnBirthDateChangedAsync" />
-        </label>
+    <div class="ob-wizard__birth-date">
+        <JobsyDateField Constraint="JobsyDateConstraint.CandidateBirthDate"
+                        Value="Draft.BirthDate"
+                        ValueChanged="OnBirthDatePickedAsync"
+                        TestId="onboarding-birth-date"
+                        InputId="onboarding-birth-date-input" />
     </div>
     <small>@BirthHint</small>
     @if (AgeMessage is not null)
@@ -152,7 +144,24 @@
 
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
     private Task OnAddressChangedAsync() => AddressChanged.InvokeAsync();
-    private Task OnBirthDateChangedAsync() => BirthDateChanged.InvokeAsync();
+    private async Task OnBirthDatePickedAsync(DateOnly? value)
+    {
+        Draft.BirthDate = value;
+        if (value is { } d)
+        {
+            Draft.BirthDay = d.Day.ToString();
+            Draft.BirthMonth = d.Month.ToString();
+            Draft.BirthYear = d.Year.ToString();
+        }
+        else
+        {
+            Draft.BirthDay = "";
+            Draft.BirthMonth = "";
+            Draft.BirthYear = "";
+        }
+
+        await BirthDateChanged.InvokeAsync();
+    }
     private Task OnShowCityAsync() => ShowCity.InvokeAsync();
     private Task OnSelectAddressAsync(AddressSuggestion suggestion) => SelectAddress.InvokeAsync(suggestion);
 }

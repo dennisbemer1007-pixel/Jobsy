@@ -1,0 +1,96 @@
+@namespace Jobsy.Web.Components.Shared
+@using System.Globalization
+@using Jobsy.Core.Rules
+
+<input @ref="_input"
+       id="@InputId"
+       class="jobsy-date-field__input @CssClass"
+       type="@_inputType"
+       min="@_min"
+       max="@_max"
+       value="@_value"
+       required="@Required"
+       disabled="@Disabled"
+       aria-invalid="@(ShowInvalid ? "true" : null)"
+       data-testid="@TestId"
+       @onchange="OnChangedAsync" />
+
+@code {
+    private ElementReference _input;
+    private string _inputType = "date";
+    private string? _min;
+    private string? _max;
+    private string? _value;
+
+    [Parameter] public JobsyDatePickerKind Kind { get; set; } = JobsyDatePickerKind.Date;
+    [Parameter] public JobsyDateConstraint Constraint { get; set; } = JobsyDateConstraint.None;
+    [Parameter] public DateOnly? ReferenceDate { get; set; }
+    [Parameter] public DateOnly? Value { get; set; }
+    [Parameter] public EventCallback<DateOnly?> ValueChanged { get; set; }
+    [Parameter] public string? MonthValue { get; set; }
+    [Parameter] public EventCallback<string?> MonthValueChanged { get; set; }
+    [Parameter] public string? TextValue { get; set; }
+    [Parameter] public EventCallback<string?> TextValueChanged { get; set; }
+    [Parameter] public string? Min { get; set; }
+    [Parameter] public string? Max { get; set; }
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public string? InputId { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool ShowInvalid { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _inputType = Kind == JobsyDatePickerKind.Month ? "month" : "date";
+        var bounds = JobsyDateInputRules.Bounds(Constraint, ReferenceDate);
+        _min = Min ?? bounds.Min;
+        _max = Max ?? bounds.Max;
+        _value = Kind switch
+        {
+            JobsyDatePickerKind.Month => JobsyDateInputRules.ToMonthInputValue(MonthValue),
+            _ when TextValue is not null => JobsyDateInputRules.ToDateInputValue(
+                JobsyDateInputRules.TryParseDateInput(TextValue, out var d) ? d : null),
+            _ => JobsyDateInputRules.ToDateInputValue(Value)
+        };
+    }
+
+    private async Task OnChangedAsync(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        if (Kind == JobsyDatePickerKind.Month)
+        {
+            if (!JobsyDateInputRules.TryParseMonthInput(raw, out var month))
+            {
+                MonthValue = null;
+                await MonthValueChanged.InvokeAsync(null);
+                return;
+            }
+
+            MonthValue = month;
+            await MonthValueChanged.InvokeAsync(month);
+            return;
+        }
+
+        if (!JobsyDateInputRules.TryParseDateInput(raw, out var parsed))
+        {
+            Value = null;
+            await ValueChanged.InvokeAsync(null);
+            if (TextValueChanged.HasDelegate)
+            {
+                TextValue = null;
+                await TextValueChanged.InvokeAsync(null);
+            }
+
+            return;
+        }
+
+        Value = parsed;
+        await ValueChanged.InvokeAsync(parsed);
+        if (TextValueChanged.HasDelegate)
+        {
+            TextValue = JobsyDateInputRules.ToDateInputValue(parsed);
+            await TextValueChanged.InvokeAsync(TextValue);
+        }
+    }
+}

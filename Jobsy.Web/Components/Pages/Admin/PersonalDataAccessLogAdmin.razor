@@ -6,6 +6,7 @@
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Sections
 @using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
@@ -63,8 +64,14 @@
         </div>
         <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Resource"]" @bind="_resource" />
         <input type="text" class="admin-filter-input" placeholder="@Culture["AdminAudit.Col.Action"]" @bind="_action" />
-        <input type="date" class="admin-filter-input" @bind="_fromDate" />
-        <input type="date" class="admin-filter-input" @bind="_toDate" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_fromFilterDate"
+                        ValueChanged="v => _fromFilterDate = v"
+                        TestId="admin-pii-from-date" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_toFilterDate"
+                        ValueChanged="v => _toFilterDate = v"
+                        TestId="admin-pii-to-date" />
         <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
     </AdminFilterBar>
     @if (!string.IsNullOrEmpty(_idHint))
@@ -125,8 +132,8 @@
     private readonly DebouncedAction _subjectSuggest = new();
     private string _resource = "";
     private string _action = "";
-    private DateTime? _fromDate;
-    private DateTime? _toDate;
+    private DateOnly? _fromFilterDate;
+    private DateOnly? _toFilterDate;
     private bool _loading = true;
 
     private string? _idHint;
@@ -278,8 +285,8 @@
             _page = await Api.GetPersonalDataAccessLogAsync(
                 page: 1, pageSize: 50,
                 actorUserId: actor, subjectUserId: subject,
-                fromUtc: _fromDate?.ToUniversalTime(),
-                toUtc: _toDate?.ToUniversalTime());
+                fromUtc: _fromFilterDate?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+                toUtc: _toFilterDate?.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc));
         }
         catch { _page = new PersonalDataAccessLogPage(); }
         finally { _loading = false; }

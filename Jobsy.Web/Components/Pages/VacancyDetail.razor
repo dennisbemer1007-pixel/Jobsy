@@ -432,7 +432,9 @@
                         <Authorized>
                             <label>
                                 @Culture["Vacancy.DateOfBirth"]
-                                <input type="date" @bind="_dobInput" />
+                                <JobsyDateField Constraint="JobsyDateConstraint.CandidateBirthDate"
+                                                @bind-Value="_dobInput"
+                                                TestId="vacancy-dob-date" />
                             </label>
                             <button class="login-submit" type="button" disabled="@_savingDob" @onclick="SaveDobAsync">
                                 @Culture["Common.Save"]
