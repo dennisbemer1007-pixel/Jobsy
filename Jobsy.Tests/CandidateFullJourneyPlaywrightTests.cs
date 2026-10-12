@@ -104,13 +104,6 @@ public sealed class CandidateFullJourneyPlaywrightTests
             "**/account-maken/code**",
             new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
 
-        var resend = page.Locator("form.pub-signup__resend button[type=submit]").First;
-        if (await resend.CountAsync() > 0)
-        {
-            await resend.ClickAsync(new() { Timeout = 15_000 });
-            await page.WaitForTimeoutAsync(1_500);
-        }
-
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(
             baseUrl,
             email,
@@ -119,19 +112,10 @@ public sealed class CandidateFullJourneyPlaywrightTests
         Assert.False(string.IsNullOrWhiteSpace(code), "OTP — zet JOBSY_E2E_CAPTURE_EMAIL_CODES=1 en herstart de API");
 
         await page.Locator("input[name=code], input[inputmode=numeric]").First.FillAsync(code!);
-        var verifyOk = await page.EvaluateAsync<bool>(
-            """
-            async code => {
-              const form = document.querySelector('form[action="/account/email-code/verify"]');
-              if (!form) return false;
-              const fd = new FormData(form);
-              fd.set('code', code);
-              const res = await fetch(form.action, { method: 'POST', body: fd, credentials: 'include', redirect: 'manual' });
-              return res.status === 302 || res.status === 303 || res.ok;
-            }
-            """,
-            code);
-        Assert.True(verifyOk, "E-mailcode verify POST failed");
+        await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
+        await page.WaitForURLAsync(
+            url => !url.Contains("/account-maken/code", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
 
         await page.GotoAsync(baseUrl + "/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.WaitForURLAsync(
