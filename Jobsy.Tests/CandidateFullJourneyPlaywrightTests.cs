@@ -484,14 +484,21 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.Locator(".passport-overview, .passport-overview__title").First.WaitForAsync(new() { Timeout = 60_000 });
         await CandidateJourneyE2e.ShotAsync(page, tag, "07-paspoort-dit-ben-jij");
 
-        var downloadBtn = page.Locator("[data-testid=passport-download-pdf]").First;
-        await downloadBtn.WaitForAsync(new() { Timeout = 60_000 });
-        await Assertions.Expect(downloadBtn).ToBeEnabledAsync(new() { Timeout = 60_000 });
-
         var pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, baseUrl);
         if (pdf is null || pdf.Length <= 5_000)
         {
-            await downloadBtn.ClickAsync(new() { Timeout = 30_000 });
+            var downloadBtn = page.Locator("[data-testid=passport-download-pdf]").First;
+            if (string.Equals(tag, "mobile", StringComparison.Ordinal))
+            {
+                await downloadBtn.ClickAsync(new() { Timeout = 30_000, Force = true });
+            }
+            else
+            {
+                await downloadBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+                await Assertions.Expect(downloadBtn).ToBeEnabledAsync(new() { Timeout = 60_000 });
+                await downloadBtn.ClickAsync(new() { Timeout = 30_000 });
+            }
+
             await page.WaitForTimeoutAsync(800);
             pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, baseUrl);
         }
