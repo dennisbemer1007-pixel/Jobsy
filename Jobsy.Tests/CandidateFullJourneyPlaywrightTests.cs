@@ -117,6 +117,9 @@ public sealed class CandidateFullJourneyPlaywrightTests
             code);
         Assert.True(verifyOk, "E-mailcode verify POST failed");
         await page.GotoAsync(baseUrl + "/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.WaitForURLAsync(
+            url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
         await KbE2e.WaitForStyledAppAsync(page);
         await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
     }
