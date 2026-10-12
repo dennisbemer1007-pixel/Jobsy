@@ -106,12 +106,13 @@ public sealed class CandidateFullJourneyPlaywrightTests
             "**/account-maken/code**",
             new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
 
-        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(
-            baseUrl,
-            email,
-            staleCode: staleSignupCode,
-            afterSequence: sequenceBefore,
-            maxAttempts: 80);
+        var code = await CandidateJourneyE2e.WaitForOpenChallengeCodeAsync(baseUrl, email, maxAttempts: 80)
+            ?? await CandidateJourneyE2e.FetchEmailCodeAsync(
+                baseUrl,
+                email,
+                staleCode: staleSignupCode,
+                afterSequence: sequenceBefore,
+                maxAttempts: 20);
         Assert.False(string.IsNullOrWhiteSpace(code), "OTP — zet JOBSY_E2E_CAPTURE_EMAIL_CODES=1 en herstart de API");
 
         await page.Locator("input[name=code], input[inputmode=numeric]").First.FillAsync(code!);

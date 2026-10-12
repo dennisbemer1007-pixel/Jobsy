@@ -47,6 +47,50 @@ public sealed class E2eDevController : ControllerBase
         });
     }
 
+    [HttpGet("open-email-challenge")]
+    [AllowAnonymous]
+    public async Task<IActionResult> OpenEmailChallenge(
+        [FromQuery] string? email,
+        [FromServices] JobsyDbContext db,
+        CancellationToken cancellationToken)
+    {
+        if (!HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        if (!DevEmailCodeCapture.Enabled || string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest(new { message = "email required" });
+        }
+
+        var normalized = email.Trim().ToLowerInvariant();
+        var now = DateTime.UtcNow;
+        var challenge = await db.EmailSignInChallenges.AsNoTracking()
+            .Where(c => c.EmailNormalized == normalized
+                        && c.ConsumedAtUtc == null
+                        && c.ExpiresAtUtc > now)
+            .OrderByDescending(c => c.CreatedAtUtc)
+            .Select(c => new { c.Id, c.CreatedAtUtc })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (challenge is null)
+        {
+            return NotFound(new { message = "no open challenge" });
+        }
+
+        DevEmailCodeCapture.TryGetEntry(email, out var capture);
+        var matched = capture.ChallengeId == challenge.Id;
+        return Ok(new
+        {
+            email = normalized,
+            challengeId = challenge.Id,
+            code = matched ? capture.Code : null,
+            sequence = matched ? capture.Sequence : (long?)null,
+            createdAtUtc = challenge.CreatedAtUtc
+        });
+    }
+
     [HttpPost("clear-email-codes")]
     [AllowAnonymous]
     public IActionResult ClearEmailCodes()

@@ -275,6 +275,39 @@ public static class CandidateJourneyE2e
         return null;
     }
 
+    public static async Task<string?> WaitForOpenChallengeCodeAsync(
+        string baseUrl,
+        string email,
+        int maxAttempts = 80)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            try
+            {
+                var json = await http.GetFromJsonAsync<JsonElement>(
+                    $"{api}/api/e2e/open-email-challenge?email={Uri.EscapeDataString(email)}");
+                if (json.TryGetProperty("code", out var codeProp))
+                {
+                    var value = codeProp.GetString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+            catch
+            {
+                // not ready
+            }
+
+            await Task.Delay(500);
+        }
+
+        return null;
+    }
+
     public static async Task<long?> GetEmailCodeSequenceAsync(string baseUrl, string email)
     {
         try
