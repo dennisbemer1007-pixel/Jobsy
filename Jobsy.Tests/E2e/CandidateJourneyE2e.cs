@@ -365,11 +365,41 @@ public static class CandidateJourneyE2e
             }
 
             var likert = page.Locator(".test-flow .test-likert, .test-likert").First;
-            var radio = likert.Locator("input[type=radio]").Nth(Math.Clamp(value - 1, 0, 4));
-            if (await radio.CountAsync() > 0)
+            var optIndex = Math.Clamp(value - 1, 0, 4);
+            var likertOpt = likert.Locator(".test-likert__opt").Nth(optIndex);
+            if (await likertOpt.CountAsync() > 0)
             {
-                await radio.CheckAsync(new() { Timeout = 5_000, Force = true });
+                await likertOpt.ClickAsync(new() { Timeout = 5_000, Force = IsMobileViewport(page) });
                 await page.WaitForTimeoutAsync(450);
+            }
+            else if (await likert.Locator("input[type=radio]").Nth(optIndex).CountAsync() > 0)
+            {
+                try
+                {
+                    await likert.Locator("input[type=radio]").Nth(optIndex)
+                        .CheckAsync(new() { Timeout = 5_000, Force = true });
+                }
+                catch (PlaywrightException)
+                {
+                    await page.EvaluateAsync(
+                        """
+                        value => {
+                          const root = document.querySelector('.test-flow .test-likert, .test-likert');
+                          if (!root) return;
+                          const input = root.querySelector(`input[type=radio][value="${value}"]`);
+                          if (!input) return;
+                          input.checked = true;
+                          input.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        """,
+                        Math.Clamp(value, 1, 5));
+                }
+
+                await page.WaitForTimeoutAsync(450);
+            }
+
+            if (await likert.CountAsync() > 0)
+            {
                 var testNext = page.Locator("button.test-flow__next:not([disabled])").First;
                 if (await testNext.CountAsync() == 0)
                 {
