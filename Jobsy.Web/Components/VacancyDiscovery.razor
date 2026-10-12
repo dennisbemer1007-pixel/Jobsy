@@ -1521,7 +1521,13 @@
         _bboxMaxLat = maxLat;
         _bboxMaxLng = maxLng;
         _mapViewportZoom = double.IsFinite(zoom) ? (int)Math.Round(zoom) : null;
-        _ = LoadVacanciesAsync(reloadMapPins: false);
+        // Mobile map view: pins reload in jobMap; defer discover list reload until Lijst is open
+        // so toggling list is not racing an empty bbox page during pan/zoom.
+        if (_wideViewport || !showMapOnMobile)
+        {
+            _ = LoadVacanciesAsync(reloadMapPins: false);
+        }
+
         return Task.CompletedTask;
     }
 
@@ -4435,12 +4441,20 @@
 
     private async Task ToggleMobileView()
     {
+        var openingList = showMapOnMobile;
         showMapOnMobile = !showMapOnMobile;
+        if (openingList)
+        {
+            _ = LoadVacanciesAsync(reloadMapPins: false);
+        }
+
         if (_mapReady)
         {
             await Task.Delay(50);
             await Js.InvokeVoidAsync("jobMap.invalidate");
         }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private static bool IsFinite(double value) =>

@@ -93,6 +93,14 @@ public sealed class BanenkaartPerfMeasurementPlaywrightTests
             Assert.True(v.BrowserPinsRequests >= 1, $"Expected at least one pins request ({v.Label}).");
         }
 
+        var mobile = all.FirstOrDefault(v => v.Label == "mobile");
+        if (mobile is not null)
+        {
+            Assert.True(mobile.LoadMoreTriggered, "Mobile Lijst: expected load-more control.");
+            Assert.True(mobile.VacancyCardsAfterLoadMore >= 20,
+                $"Mobile Lijst: expected ≥20 list items after load-more (got {mobile.VacancyCardsAfterLoadMore}).");
+        }
+
         if (string.Equals(runLabel, "after", StringComparison.OrdinalIgnoreCase))
         {
             Assert.True(all.Any(v => v.BrowserPinsRequestsAfterPan >= 2),
@@ -193,7 +201,8 @@ public sealed class BanenkaartPerfMeasurementPlaywrightTests
         var pinCountAfterPan = await page.EvaluateAsync<int>("() => (window.jobMap && window.jobMap.__testGetPinCount) ? window.jobMap.__testGetPinCount() : 0");
 
         var loadMore = false;
-        var cards = await page.Locator(".job-card").CountAsync();
+        var listItemSelector = ".job-card, .kb-list-row, [data-testid=kb-list-row]";
+        var cards = await page.Locator(listItemSelector).CountAsync();
         if (width >= 1024)
         {
             var more = page.Locator(".vacancy-list__more");
@@ -202,29 +211,33 @@ public sealed class BanenkaartPerfMeasurementPlaywrightTests
                 await more.First.ClickAsync();
                 loadMore = true;
                 await page.WaitForTimeoutAsync(1500);
-                cards = await page.Locator(".job-card").CountAsync();
+                cards = await page.Locator(listItemSelector).CountAsync();
             }
         }
         else
         {
-            var listTab = page.Locator("button, a").Filter(new() { HasText = "Lijst" });
+            var listTab = page.Locator("[data-testid=kb-view-toggle]");
+            if (await listTab.CountAsync() == 0 || !await listTab.First.IsVisibleAsync())
+            {
+                listTab = page.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("Lijst|List", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
+            }
+
             if (await listTab.CountAsync() > 0)
             {
                 await listTab.First.ClickAsync();
-                await page.WaitForTimeoutAsync(800);
+                await page.WaitForSelectorAsync(
+                    ".jobsy-discovery.show-list .kb-list-row, .jobsy-discovery.show-list .job-card",
+                    new() { Timeout = 15_000 });
             }
 
             var more = page.Locator(".vacancy-list__more");
             if (await more.CountAsync() > 0)
             {
-                try
-                {
-                    await more.First.ClickAsync(new() { Timeout = 5000 });
-                    loadMore = true;
-                    await page.WaitForTimeoutAsync(1500);
-                    cards = await page.Locator(".job-card").CountAsync();
-                }
-                catch (PlaywrightException) { }
+                await more.First.ScrollIntoViewIfNeededAsync();
+                await more.First.ClickAsync(new() { Timeout = 10_000 });
+                loadMore = true;
+                await page.WaitForTimeoutAsync(1500);
+                cards = await page.Locator(listItemSelector).CountAsync();
             }
         }
 
