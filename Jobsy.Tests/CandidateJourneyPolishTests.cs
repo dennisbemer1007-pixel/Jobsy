@@ -45,6 +45,11 @@ public class CandidateJourneyPolishTests
         Assert.Contains("@if (!_signedIn)", mfa, StringComparison.Ordinal);
         Assert.Contains("@page \"/profiel/tests\"", File.ReadAllText(Path.Combine(
             root, "Jobsy.Web", "Components", "Pages", "Candidate", "TestsIndexRedirect.razor")), StringComparison.Ordinal);
+
+        var homeAlias = File.ReadAllText(Path.Combine(
+            root, "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateHomeRedirect.razor"));
+        Assert.Contains("@page \"/candidate/home\"", homeAlias, StringComparison.Ordinal);
+        Assert.Contains("NavigateTo(\"/home\"", homeAlias, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -58,5 +63,16 @@ public class CandidateJourneyPolishTests
         }
 
         Assert.Equal("Dit is mijn huidige baan", UiStrings.Get("Profile.CurrentJob", "nl"));
+    }
+
+    [Fact]
+    public void Proactive_consent_steps_are_localized()
+    {
+        foreach (var language in new[] { "nl", "en", "pl", "ro", "ar" })
+        {
+            Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("ProactiveMatching.Consent.Step1", language)));
+            Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("ProactiveMatching.Consent.Step2", language)));
+            Assert.False(string.IsNullOrWhiteSpace(UiStrings.Get("ProactiveMatching.Consent.Step3", language)));
+        }
     }
 }

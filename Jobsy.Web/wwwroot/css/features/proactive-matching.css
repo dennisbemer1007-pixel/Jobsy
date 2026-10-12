@@ -124,6 +124,27 @@
     color: var(--muted);
 }
 
+.proactive-consent__steps {
+    margin: 0;
+    padding-inline-start: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--text);
+}
+
+.proactive-consent__steps li::marker {
+    color: var(--brand);
+    font-weight: 700;
+}
+
+.proactive-consent__cta {
+    align-self: flex-start;
+    margin-block-start: 0.25rem;
+}
+
 .proactive-form label {
     display: flex;
     flex-direction: column;

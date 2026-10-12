@@ -40,8 +40,13 @@
             <section class="proactive-card proactive-consent" aria-labelledby="pm-consent-title">
                 <h2 id="pm-consent-title" class="proactive-card__title">@Culture["ProactiveMatching.Consent.Title"]</h2>
                 <p class="proactive-consent__text">@Culture["ProactiveMatching.Consent.Body"]</p>
+                <ol class="proactive-consent__steps">
+                    <li>@Culture["ProactiveMatching.Consent.Step1"]</li>
+                    <li>@Culture["ProactiveMatching.Consent.Step2"]</li>
+                    <li>@Culture["ProactiveMatching.Consent.Step3"]</li>
+                </ol>
                 <p class="proactive-consent__muted">@Culture["ProactiveMatching.Consent.LineWithdraw"]</p>
-                <button class="login-submit" type="button" disabled="@_busy" @onclick="AcceptConsentAsync">
+                <button class="login-submit proactive-consent__cta" type="button" disabled="@_busy" @onclick="AcceptConsentAsync">
                     @Culture["ProactiveMatching.Consent.Submit"]
                 </button>
             </section>
