@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Jobsy.Api.Models;
 using Jobsy.Api.Security;
+using Jobsy.Core.Dev;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
@@ -652,7 +653,7 @@ public class AuthController : ControllerBase
             .CountAsync(c => c.EmailNormalized == email && c.CreatedAtUtc >= dayStart, cancellationToken);
         // Count non-candidate reminder attempts via PlatformLogs would be heavy; instead track
         // throttle rows even when we only send a password reminder (dummy challenges without hash).
-        if (starts15 >= 3 || startsDay >= 10)
+        if (!DevEmailCodeCapture.Enabled && (starts15 >= 3 || startsDay >= 10))
         {
             return Conflict(new { message = "too_many_codes" });
         }
@@ -718,6 +719,11 @@ public class AuthController : ControllerBase
         };
         _db.EmailSignInChallenges.Add(challenge);
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (DevEmailCodeCapture.Enabled)
+        {
+            DevEmailCodeCapture.Record(email, code, challenge.Id);
+        }
 
         try
         {

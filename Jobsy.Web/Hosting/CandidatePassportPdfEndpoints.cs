@@ -40,11 +40,11 @@ public static class CandidatePassportPdfEndpoints
                            ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
                            ?? $"Lobsy-CV-{DateTime.UtcNow:yyyyMMdd}.pdf";
             http.Response.Headers.CacheControl = "no-store";
-            var stream = await response.Content.ReadAsStreamAsync(http.RequestAborted);
-            return Results.File(stream, "application/pdf", fileName);
+            var bytes = await response.Content.ReadAsByteArrayAsync(http.RequestAborted);
+            return Results.File(bytes, "application/pdf", fileName);
         })
         .RequireAuthorization()
-        .RequireRateLimiting("export");
+        .RequireRateLimiting("public-pdf");
 
         return app;
     }

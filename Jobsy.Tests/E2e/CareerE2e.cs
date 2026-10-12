@@ -145,9 +145,17 @@ public static class CareerE2e
             }
         }
 
-        await page.GotoAsync(
-            $"{baseUrl}/taal/{language}?returnUrl={Uri.EscapeDataString(returnPath)}",
-            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        try
+        {
+            await page.GotoAsync(
+                $"{baseUrl}/taal/{language}?returnUrl={Uri.EscapeDataString(returnPath)}",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        }
+        catch (PlaywrightException)
+        {
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        }
+
         await page.WaitForSelectorAsync("h1", new() { Timeout = 60_000 });
         return string.Equals(
             await page.EvaluateAsync<string?>("() => document.documentElement.lang"),

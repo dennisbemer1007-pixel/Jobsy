@@ -470,7 +470,7 @@ internal static class EmailStringsAr
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "There is interest, but no applications yet. Make requirements more realistic or clarify the wage.",
 
         ["Email.ProactiveMatch.Subject"] = "نصيحة Lobsy: {0}",
-        ["Email.ProactiveMatch.Preheader"] = "تطابق {0}% — اكتشف لماذا يناسبك",
+        ["Email.ProactiveMatch.Preheader"] = "تطابق {0}% - اكتشف لماذا يناسبك",
         ["Email.ProactiveMatch.Heading"] = "Lobsy يبحث لك",
         ["Email.ProactiveMatch.Eyebrow"] = "تطابق جديد",
         ["Email.ProactiveMatch.P1"] = "رصدنا وظيفة تناسبك: {0} لدى {1}.",

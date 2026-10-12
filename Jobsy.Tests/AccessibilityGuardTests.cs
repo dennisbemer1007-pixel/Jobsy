@@ -45,13 +45,12 @@ public class AccessibilityGuardTests
         var end = css.IndexOf('}', start);
         Assert.True(end > start);
         var block = css[start..end];
-        Assert.Contains("--coral-deep", block);
-        Assert.Contains("#fff", block);
-        Assert.DoesNotContain("#f54a1b", block);
+        Assert.Contains("#f7f4f0", block);
+        Assert.Contains("transparent", block, StringComparison.Ordinal);
 
         Assert.True(
-            ContrastRatio(0xFFFFFF, 0xD93A12) >= 4.5,
-            "White on --coral-deep (#d93a12) must meet WCAG AA for the compact cookie CTA.");
+            ContrastRatio(0xF7F4F0, 0x0F2D5C) >= 4.5,
+            "Cookie CTA text on dark bar must meet WCAG AA.");
     }
 
     [Fact]

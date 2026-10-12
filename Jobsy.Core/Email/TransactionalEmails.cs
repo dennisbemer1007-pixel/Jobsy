@@ -263,6 +263,13 @@ public static partial class TransactionalEmails
                 links.Absolute("/register/externe-sollicitatie?token=voorbeeld"),
                 links.Absolute("/api/public/external-vacancy/unsubscribe?token=voorbeeld"),
                 culture: c),
+            "proactivematchsuggestion" => ProactiveMatchSuggestion(
+                ctx.VacancyTitle,
+                ctx.CompanyName,
+                "Past bij je profiel en voorkeuren.",
+                87,
+                c,
+                ctx.PublicWebBaseUrl),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

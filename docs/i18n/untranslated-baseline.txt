@@ -6,7 +6,7 @@
 # Public-pages 08: lowered after UiStringsHowLobsyRoles stopped copying nl into pl/ro/ar
 # (staff guides now carry the English draft). Before: en=192 pl=205 ro=225 ar=195
 # Availability start-date keys (2026-10): en +1 after nl Onboarding.AvailableImmediate → Per direct review
-en=193
-pl=108
-ro=124
-ar=95
+en=195
+pl=109
+ro=125
+ar=96

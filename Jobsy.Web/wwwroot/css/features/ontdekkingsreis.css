@@ -43,6 +43,14 @@
 .journey-only-desktop { display: contents; }
 
 @media (max-width: 899px) {
+  .journey {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 64px);
+    max-height: calc(100dvh - 64px);
+    overflow: hidden;
+  }
+
   .journey-scene--desktop { display: none; }
   .journey-scene--mobile {
     display: block;
@@ -160,16 +168,25 @@
     min-width: 0;
     width: 100%;
     max-width: 100%;
-    scroll-margin-top: 148px;
+    scroll-margin-top: 0;
   }
 
   .journey-mlob { order: 1; }
 
   .journey-mprog {
-    top: calc(56px + env(safe-area-inset-top, 0px));
+    position: relative;
+    top: auto;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
   }
 
   .journey-stage {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding-top: 6px;
   }
 

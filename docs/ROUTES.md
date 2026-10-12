@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (249 routes)
+## Table (251 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -149,6 +149,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
+| `/candidate/proactive-matching` | `Pages/Candidate/ProactiveMatching.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
 | `/candidate/share-in` | `Pages/Candidate/ShareIn.razor` | anonymous |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
@@ -281,6 +282,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/uren` | `Pages/Werkgever/MaqqieHoursApprove.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures` | `Pages/Werkgever/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures/nieuw` | `Pages/Werkgever/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
+| `/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist` | `Pages/Werkgever/ProactiveVacancyShortlistPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/wervingsmateriaal` | `Pages/Werkgever/Wervingsmateriaal.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
 | `/werkgevers/binnenkort` | `Pages/WerkgeversBinnenkort.razor` | anonymous |
 | `/werven/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |

@@ -246,33 +246,38 @@
                                                 CurrentQuestion="_currentQuestion"
                                                 TestTabs="MiniTestTabs"
                                                 Questions="_miniQuestions"
-                                                Answers="_miniAnswers"
+                                                Answers="MiniVisibleAnswers"
+                                                Depth="TestDepthLevel.First"
                                                 InputPrefix="@MiniPrefix"
                                                 Answer="OnMiniAnswer"
+                                                OnFinished="FinishMiniAsync"
                                                 ExpandQuestion="ExpandQuestion"
                                                 ResolveQuestionText="QuestionText" />
                             break;
                     }
                 </section>
 
-                <footer class="ob-wizard__footer">
-                    <button type="button"
-                            class="btn btn-primary ob-wizard__cta"
-                            disabled="@(!CanNext || _busy)"
-                            @onclick="NextAsync">@NextLabel</button>
-                    @if (_step is 4 or 5)
-                    {
-                        <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
-                            @Culture["Onboarding.Skip"]
-                        </button>
-                    }
-                    else if (_step == 6)
-                    {
-                        <button type="button" class="ob-wizard__ghost" @onclick="DreamUnknownAsync">
-                            @Culture["Onboarding.DreamUnknown"]
-                        </button>
-                    }
-                </footer>
+                @if (!ShowMiniTestFooter)
+                {
+                    <footer class="ob-wizard__footer">
+                        <button type="button"
+                                class="btn btn-primary ob-wizard__cta"
+                                disabled="@(!CanNext || _busy)"
+                                @onclick="@(() => NextAsync())">@NextLabel</button>
+                        @if (_step is 4 or 5)
+                        {
+                            <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
+                                @Culture["Onboarding.Skip"]
+                            </button>
+                        }
+                        else if (_step == 6)
+                        {
+                            <button type="button" class="ob-wizard__ghost" @onclick="DreamUnknownAsync">
+                                @Culture["Onboarding.DreamUnknown"]
+                            </button>
+                        }
+                    </footer>
+                }
             </main>
         </div>
     }
@@ -374,6 +379,10 @@
         : _step is >= 7 ? Culture["Onboarding.NextTest"]
         : Draft.FineTune && _step == 2 ? Culture["Onboarding.Done"]
         : Culture["Onboarding.Next"];
+
+    /// <summary>Mini-test uses a single primary in <see cref="TestQuestionFlow"/> (no duplicate wizard CTA).</summary>
+    private bool ShowMiniTestFooter =>
+        _step is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0;
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
@@ -391,7 +400,7 @@
         3 => !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
         6 => !string.IsNullOrWhiteSpace(Draft.Dream),
         7 when !Draft.HasConsent => Draft.ConsentRequested,
-        >= 7 => _miniQuestions.All(question => _miniAnswers.ContainsKey(question.Id)),
+        >= 7 => _miniQuestions.All(question => MiniVisibleAnswers.ContainsKey(question.Id)),
         _ => true
     };
 
@@ -527,9 +536,9 @@
         await PrepareMiniAsync();
     }
 
-    private async Task NextAsync()
+    private async Task NextAsync(bool fromMiniTestFinish = false)
     {
-        if (!CanNext || _busy) return;
+        if (_busy || (!fromMiniTestFinish && !CanNext)) return;
         _busy = true;
         _error = null;
         _miniArrivedViaBack = false;
@@ -1007,6 +1016,25 @@
 
     private string QuestionText(OnboardingMiniTest.MiniQuestion question) => Culture[question.TextKey];
 
+    private IReadOnlyDictionary<int, int> MiniVisibleAnswers
+    {
+        get
+        {
+            if (_serverAnswers.Count == 0)
+            {
+                return _miniAnswers;
+            }
+
+            var merged = new Dictionary<int, int>(_serverAnswers);
+            foreach (var answer in _miniAnswers)
+            {
+                merged[answer.Key] = answer.Value;
+            }
+
+            return merged;
+        }
+    }
+
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
@@ -1017,8 +1045,11 @@
             _ = SaveMiniQuietAsync(id, value);
         }
 
+        _ = InvokeAsync(StateHasChanged);
         return Task.CompletedTask;
     }
+
+    private Task FinishMiniAsync() => NextAsync(fromMiniTestFinish: true);
 
     private async Task SaveMiniQuietAsync(int id, int value)
     {

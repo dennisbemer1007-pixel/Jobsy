@@ -33,9 +33,89 @@ public sealed class E2eDevController : ControllerBase
             return BadRequest(new { message = "email required" });
         }
 
-        return DevEmailCodeCapture.TryGet(email, out var code)
-            ? Ok(new { email = email.Trim().ToLowerInvariant(), code })
-            : NotFound(new { message = "no code captured yet" });
+        if (!DevEmailCodeCapture.TryGetEntry(email, out var entry))
+        {
+            return NotFound(new { message = "no code captured yet" });
+        }
+
+        return Ok(new
+        {
+            email = email.Trim().ToLowerInvariant(),
+            code = entry.Code,
+            sequence = entry.Sequence,
+            challengeId = entry.ChallengeId
+        });
+    }
+
+    [HttpGet("open-email-challenge")]
+    [AllowAnonymous]
+    public async Task<IActionResult> OpenEmailChallenge(
+        [FromQuery] string? email,
+        [FromServices] JobsyDbContext db,
+        CancellationToken cancellationToken)
+    {
+        if (!HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        if (!DevEmailCodeCapture.Enabled || string.IsNullOrWhiteSpace(email))
+        {
+            return BadRequest(new { message = "email required" });
+        }
+
+        var normalized = email.Trim().ToLowerInvariant();
+        var now = DateTime.UtcNow;
+        var challenge = await db.EmailSignInChallenges.AsNoTracking()
+            .Where(c => c.EmailNormalized == normalized
+                        && c.ConsumedAtUtc == null
+                        && c.ExpiresAtUtc > now)
+            .OrderByDescending(c => c.CreatedAtUtc)
+            .Select(c => new { c.Id, c.CreatedAtUtc })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (challenge is null)
+        {
+            return NotFound(new { message = "no open challenge" });
+        }
+
+        string? code = null;
+        long? sequence = null;
+        if (DevEmailCodeCapture.TryGetForChallenge(challenge.Id, out var forChallenge))
+        {
+            code = forChallenge;
+            if (DevEmailCodeCapture.TryGetEntry(email, out var capture))
+            {
+                sequence = capture.Sequence;
+            }
+        }
+
+        return Ok(new
+        {
+            email = normalized,
+            challengeId = challenge.Id,
+            code,
+            sequence,
+            createdAtUtc = challenge.CreatedAtUtc
+        });
+    }
+
+    [HttpPost("clear-email-codes")]
+    [AllowAnonymous]
+    public IActionResult ClearEmailCodes()
+    {
+        if (!HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        if (!DevEmailCodeCapture.Enabled)
+        {
+            return NotFound(new { message = "JOBSY_E2E_CAPTURE_EMAIL_CODES is off" });
+        }
+
+        DevEmailCodeCapture.Clear();
+        return Ok(new { cleared = true });
     }
 
     [HttpPost("fixture/external-vacancy")]

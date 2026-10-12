@@ -470,7 +470,7 @@ internal static class EmailStringsNl
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "Er is interesse, maar nog geen sollicitaties. Maak eisen realistischer of verduidelijk het uurloon.",
 
         ["Email.ProactiveMatch.Subject"] = "Lobsy tip: {0}",
-        ["Email.ProactiveMatch.Preheader"] = "Match {0}% — bekijk waarom dit bij je past",
+        ["Email.ProactiveMatch.Preheader"] = "Match {0}% - bekijk waarom dit bij je past",
         ["Email.ProactiveMatch.Heading"] = "Lobsy zoekt voor je",
         ["Email.ProactiveMatch.Eyebrow"] = "Nieuwe match",
         ["Email.ProactiveMatch.P1"] = "We zagen een vacature die bij je past: {0} bij {1}.",
