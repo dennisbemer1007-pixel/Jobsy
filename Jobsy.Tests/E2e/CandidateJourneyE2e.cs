@@ -15,7 +15,7 @@ namespace Jobsy.Tests.E2e;
 /// <summary>Playwright helpers for the full candidate journey E2E capture run.</summary>
 public static class CandidateJourneyE2e
 {
-    public const string ArtifactsRoot = "/opt/cursor/artifacts/screenshots/candidate-journey";
+    public const string ArtifactsRoot = "/cursor/stores/self/fulljourney";
 
     public static bool ShouldRun =>
         string.Equals(
@@ -158,7 +158,7 @@ public static class CandidateJourneyE2e
     public static async Task ShotAsync(IPage page, string viewportTag, string stepSlug)
     {
         var path = Path.Combine(ShotDir(viewportTag), $"{stepSlug}.png");
-        await page.ScreenshotAsync(new() { Path = path, FullPage = true });
+        await page.ScreenshotAsync(new() { Path = path, FullPage = false });
     }
 
     public static async Task ShotViewportAsync(IPage page, string outputPath)

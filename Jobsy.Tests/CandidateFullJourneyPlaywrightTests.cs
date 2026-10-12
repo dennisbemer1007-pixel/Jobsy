@@ -139,12 +139,30 @@ public sealed class CandidateFullJourneyPlaywrightTests
                 }
             }
 
+            if (step == 2)
+            {
+                await CaptureOnboardingProgressHeaderWhileScrolledAsync(page, tag);
+            }
+
             await FillVisibleWizardFieldsAsync(page);
             await CandidateJourneyE2e.ClickPrimaryAsync(page);
         }
 
         await page.WaitForTimeoutAsync(800);
         await CandidateJourneyE2e.ShotAsync(page, tag, "04-onboarding-finish");
+    }
+
+    private static async Task CaptureOnboardingProgressHeaderWhileScrolledAsync(IPage page, string tag)
+    {
+        var scroll = page.Locator(".ob-wizard__content").First;
+        if (await scroll.CountAsync() == 0)
+        {
+            return;
+        }
+
+        await scroll.EvaluateAsync("el => { el.scrollTop = Math.min(el.scrollHeight, 420); }");
+        await page.WaitForTimeoutAsync(350);
+        await CandidateJourneyE2e.ShotAsync(page, tag, "03-onboarding-header-scrolled");
     }
 
     private static async Task FillVisibleWizardFieldsAsync(IPage page)
