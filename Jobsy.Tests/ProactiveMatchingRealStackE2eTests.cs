@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Jobsy.Core.Rules;
 using Jobsy.Tests.E2e;
 using Microsoft.Playwright;
 
@@ -90,6 +91,14 @@ public sealed class ProactiveMatchingRealStackE2eTests
         if (await suggestion.CountAsync() > 0)
         {
             await suggestion.WaitForAsync();
+            var whyText = (await page.Locator(".proactive-tip__why-text").First.InnerTextAsync()).Trim();
+            Assert.False(
+                ProactiveMatchingRules.IsGenericStoredRationale(whyText),
+                $"Expected DNA-based rationale, got: {whyText}");
+            var dnaChips = page.Locator(".proactive-tip__dna-chip");
+            Assert.True(
+                await dnaChips.CountAsync() > 0 || whyText.Contains('·', StringComparison.Ordinal),
+                "Expected DNA highlight chips or multi-part rationale.");
             await Shot(page, $"04-candidate-match-notification", label);
 
             await AssertProactiveMatchInAppNotificationAsync(page, label);
