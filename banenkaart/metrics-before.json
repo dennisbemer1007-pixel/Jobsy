@@ -1,0 +1,51 @@
+{
+  "capturedAtUtc": "2026-10-12T23:17:30.2677506Z",
+  "branchLabel": "before",
+  "baseUrl": "http://127.0.0.1:5201",
+  "api": {
+    "CatalogBytes": 6456777,
+    "DiscoverBytes": 6456777,
+    "PinsNoBboxBytes": 543678,
+    "PinsBboxBytes": 543678,
+    "CatalogItemCount": 3528,
+    "DiscoverItemCount": 3528,
+    "PinsNoBboxCount": 3528,
+    "PinsBboxCount": 3528
+  },
+  "viewports": [
+    {
+      "Width": 1280,
+      "Height": 900,
+      "Label": "desktop",
+      "FirstRenderMs": 3796.1525,
+      "BrowserVacancyApiRequests": 16,
+      "BrowserPinsRequests": 7,
+      "BrowserPinsBytes": 40582,
+      "BrowserPinsRequestsAfterPan": 11,
+      "PinsNetworkFetchAfterPan": 10,
+      "PinCountOnMap": 5,
+      "PinCountAfterPan": 4,
+      "ClusterFeatureCount": 2,
+      "LoadMoreTriggered": true,
+      "VacancyCardsAfterLoadMore": 40,
+      "ScreenshotPath": "/workspace/banenkaart/before-desktop.png"
+    },
+    {
+      "Width": 390,
+      "Height": 844,
+      "Label": "mobile",
+      "FirstRenderMs": 3730.485,
+      "BrowserVacancyApiRequests": 22,
+      "BrowserPinsRequests": 8,
+      "BrowserPinsBytes": 2804779,
+      "BrowserPinsRequestsAfterPan": 14,
+      "PinsNetworkFetchAfterPan": 13,
+      "PinCountOnMap": 887,
+      "PinCountAfterPan": 840,
+      "ClusterFeatureCount": 76,
+      "LoadMoreTriggered": true,
+      "VacancyCardsAfterLoadMore": 0,
+      "ScreenshotPath": "/workspace/banenkaart/before-mobile.png"
+    }
+  ]
+}

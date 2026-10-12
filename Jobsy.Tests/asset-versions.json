@@ -27,6 +27,10 @@
     "sha256": "a6a392c09fe4b4d6ba05d4718d82d44bb18d4786ad10bd49f23f967f4eb250d0",
     "v": "20261004-14"
   },
+  "css/features/candidate-hub.css": {
+    "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
+    "v": "20261012-01"
+  },
   "css/features/carriere.css": {
     "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
     "v": "20261011-01"
@@ -160,7 +164,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "324b8e9f54c678f84cc93e4776f571116f02cb12d8d09cd3f3503e8107c37a7a",
+    "sha256": "da93c94860a08e9d19b4c632db4b78a71fe1f1b72aa8ebc93379a99b98779fdc",
     "v": "20261012-02"
   },
   "js/app-extras.js": {
@@ -196,8 +200,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "25a789ccdd0e0d4ad63dfb2dd942dcb34c4a12a7a299f31ec507e85924dc8a70",
-    "v": "20261012-bbox01"
+    "sha256": "6fbbfbaa6292f43f0f7cbc987c456c39278472ec17647ba26a7216ceb42f5836",
+    "v": "20261012-bbox07"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "7398c432fd1e38c3840753ca918919adeed81ed19074c0fdcf75b33e1972b825",

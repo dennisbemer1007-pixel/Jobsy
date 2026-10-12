@@ -2168,22 +2168,67 @@ window.jobMap = (function () {
             .replace(/\?&/g, "?");
     }
 
-    function viewportQueryString() {
-        if (!map || typeof map.getBounds !== "function") {
-            return "";
+    function readViewportBounds() {
+        if (!map || typeof map.getZoom !== "function") {
+            return null;
         }
-        var b = map.getBounds();
-        var sw = b.getSouthWest();
-        var ne = b.getNorthEast();
         var z = Math.round(map.getZoom() * 10) / 10;
-        return "&minLat=" + encodeURIComponent(String(sw.lat))
-            + "&minLng=" + encodeURIComponent(String(sw.lng))
-            + "&maxLat=" + encodeURIComponent(String(ne.lat))
-            + "&maxLng=" + encodeURIComponent(String(ne.lng))
-            + "&zoom=" + encodeURIComponent(String(z));
+        var minLat;
+        var minLng;
+        var maxLat;
+        var maxLng;
+        try {
+            if (typeof map.unproject === "function" && typeof map.getContainer === "function") {
+                var host = map.getContainer();
+                var w = host && host.clientWidth ? host.clientWidth : 0;
+                var h = host && host.clientHeight ? host.clientHeight : 0;
+                if (w > 0 && h > 0) {
+                    var nw = map.unproject([0, 0]);
+                    var se = map.unproject([w, h]);
+                    minLat = Math.min(nw.lat, se.lat);
+                    maxLat = Math.max(nw.lat, se.lat);
+                    minLng = Math.min(nw.lng, se.lng);
+                    maxLng = Math.max(nw.lng, se.lng);
+                }
+            }
+            if (!Number.isFinite(minLat) && typeof map.getBounds === "function") {
+                var b = map.getBounds();
+                var sw = b.getSouthWest();
+                var ne = b.getNorthEast();
+                minLat = sw.lat;
+                minLng = sw.lng;
+                maxLat = ne.lat;
+                maxLng = ne.lng;
+            }
+        } catch (eBounds) {
+            return null;
+        }
+        if (!Number.isFinite(minLat) || !Number.isFinite(minLng)
+            || !Number.isFinite(maxLat) || !Number.isFinite(maxLng)) {
+            return null;
+        }
+        return {
+            minLat: minLat,
+            minLng: minLng,
+            maxLat: maxLat,
+            maxLng: maxLng,
+            zoom: z
+        };
     }
 
-    /** Filter cache key: everything in the pins URL except travel mode. */
+    function viewportQueryString() {
+        var box = readViewportBounds();
+        if (!box) {
+            return "";
+        }
+        return "&minLat=" + encodeURIComponent(String(box.minLat))
+            + "&minLng=" + encodeURIComponent(String(box.minLng))
+            + "&maxLat=" + encodeURIComponent(String(box.maxLat))
+            + "&maxLng=" + encodeURIComponent(String(box.maxLng))
+            + "&zoom=" + encodeURIComponent(String(box.zoom));
+    }
+
+    /** Filter cache key: filter state only (no transport, no viewport bbox). */
     function pinsFilterKey(url) {
         if (!url) {
             return "";
@@ -2191,6 +2236,11 @@ window.jobMap = (function () {
         try {
             const u = new URL(url, window.location.origin);
             u.searchParams.delete("transport");
+            u.searchParams.delete("minLat");
+            u.searchParams.delete("minLng");
+            u.searchParams.delete("maxLat");
+            u.searchParams.delete("maxLng");
+            u.searchParams.delete("zoom");
             const keys = Array.prototype.slice.call(u.searchParams.keys()).sort();
             const parts = [];
             for (let i = 0; i < keys.length; i++) {
@@ -2224,9 +2274,10 @@ window.jobMap = (function () {
             return Promise.resolve([]);
         }
         pinsBaseUrl = stripViewportParams(String(url));
-        pinsUrl = pinsBaseUrl + viewportQueryString();
+        const viewportQs = viewportQueryString();
+        pinsUrl = pinsBaseUrl + viewportQs;
         const filterKey = pinsFilterKey(pinsUrl);
-        const cached = filterKey ? pinsByFilterKey[filterKey] : null;
+        const cached = !viewportQs && filterKey ? pinsByFilterKey[filterKey] : null;
         if (cached && cached.pins) {
             // Transport-only changes reuse the same pin set; travel rings update separately.
             pinsCachedPayload = cached.payload;
@@ -4026,7 +4077,8 @@ window.jobMap = (function () {
             : 0;
         const nextPinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
         if (nextPinsUrl) {
-            pinsUrl = nextPinsUrl;
+            pinsBaseUrl = stripViewportParams(nextPinsUrl);
+            pinsUrl = pinsBaseUrl + viewportQueryString();
         }
 
         bindMapRuntime();
@@ -4056,7 +4108,7 @@ window.jobMap = (function () {
             }
             // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
             // Match by filter key so Fiets/Auto prefetch URLs share one body.
-            if (pinsUrl && window.__jobsyPinsPrefetch
+            if (pinsUrl && !viewportQueryString() && window.__jobsyPinsPrefetch
                 && pinsFilterKey(window.__jobsyPinsPrefetchUrl) === pinsFilterKey(pinsUrl)) {
                 const gen = ++pinsFetchGen;
                 Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
@@ -4240,22 +4292,29 @@ window.jobMap = (function () {
             return;
         }
         try {
-            var b = map.getBounds();
-            var sw = b.getSouthWest();
-            var ne = b.getNorthEast();
+            var box = readViewportBounds();
+            if (!box) {
+                return;
+            }
             viewportListDotNet.invokeMethodAsync(
                 "OnMapViewportChanged",
-                sw.lat,
-                sw.lng,
-                ne.lat,
-                ne.lng,
-                map.getZoom());
+                box.minLat,
+                box.minLng,
+                box.maxLat,
+                box.maxLng,
+                box.zoom);
         } catch (e) { /* circuit */ }
     }
 
     function bindViewportPinsReload() {
-        if (!map || viewportPinsBound) {
+        if (!map) {
             return;
+        }
+        if (map._jobsyViewportPinsSchedule) {
+            try {
+                map.off("moveend", map._jobsyViewportPinsSchedule);
+                map.off("zoomend", map._jobsyViewportPinsSchedule);
+            } catch (eOff) { /* ignore */ }
         }
         viewportPinsBound = true;
         var debounce = null;
@@ -4265,12 +4324,11 @@ window.jobMap = (function () {
             }
             debounce = setTimeout(function () {
                 debounce = null;
-                if (pinsBaseUrl) {
-                    fetchPins(pinsBaseUrl);
-                }
+                reloadPins();
                 notifyViewportList();
             }, 300);
         }
+        map._jobsyViewportPinsSchedule = schedule;
         map.on("moveend", schedule);
         map.on("zoomend", schedule);
         setTimeout(schedule, 80);
@@ -4517,6 +4575,7 @@ window.jobMap = (function () {
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
+        viewportPinsBound = false;
         // Stale If-None-Match after dispose+rebuild used to yield 304 with no body
         // while markers were already cleared — empty map. Always drop etag + cache.
         pinsEtag = null;
@@ -4588,6 +4647,10 @@ window.jobMap = (function () {
         },
         __testGetMapCreateCount: function () { return mapCreateCount; },
         __testGetPinsNetworkFetchCount: function () { return pinsNetworkFetchCount; },
+        __testViewportQueryString: function () { return viewportQueryString(); },
+        __testGetPinsUrl: function () {
+            return pinsBaseUrl ? pinsBaseUrl + viewportQueryString() : pinsUrl;
+        },
         __testPinsFilterKey: pinsFilterKey,
         __testClearPinsFilterCache: function () {
             Object.keys(pinsByFilterKey).forEach(function (k) { delete pinsByFilterKey[k]; });
