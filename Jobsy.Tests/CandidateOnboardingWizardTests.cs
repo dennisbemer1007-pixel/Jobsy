@@ -188,7 +188,7 @@ public class CandidateOnboardingWizardTests
     {
         Assert.Equal("/candidate/start", AuthRedirects.CandidateHowToPath);
         Assert.Equal("/candidate/hoe-werkt-lobsy", AuthRedirects.CandidateHowToGuidePath);
-        Assert.Equal(FeatureRoutes.CandidateDiscoveryPath, AuthRedirects.CandidatePostLoginUrl(true));
+        Assert.Equal(FeatureRoutes.CandidateWizardStartPath, AuthRedirects.CandidatePostLoginUrl(true));
         var off = new FeatureFlagSnapshot(true, false);
         Assert.Equal("/candidate/start", AuthRedirects.CandidatePostLoginUrl(true, off));
 

@@ -178,14 +178,14 @@ public class FeatureFlagFoundationTests
 
         var passportOn = new FeatureFlagSnapshot(true, true);
         Assert.Equal(
-            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.CandidateWizardStartPath,
             FeatureRoutes.HomeFor(candidate, passportOn, passportReady: false));
         Assert.Equal(
             FeatureRoutes.CandidatePassportPath,
             FeatureRoutes.HomeFor(candidate, passportOn, passportReady: true));
         var passportEmployersOff = new FeatureFlagSnapshot(false, true);
         Assert.Equal(
-            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.CandidateWizardStartPath,
             FeatureRoutes.HomeFor(candidate, passportEmployersOff, passportReady: false));
         Assert.Equal(
             FeatureRoutes.CandidatePassportPath,

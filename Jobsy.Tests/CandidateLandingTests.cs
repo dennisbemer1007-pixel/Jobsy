@@ -25,9 +25,9 @@ public class CandidateLandingTests
     }
 
     [Theory]
-    [InlineData(true, true, false, "/candidate/ontdekkingsreis")]
+    [InlineData(true, true, false, "/candidate/start")]
     [InlineData(true, true, true, "/candidate/paspoort")]
-    [InlineData(false, true, false, "/candidate/ontdekkingsreis")]
+    [InlineData(false, true, false, "/candidate/start")]
     [InlineData(false, true, true, "/candidate/paspoort")]
     [InlineData(true, false, false, "/")]
     [InlineData(true, false, true, "/")]
@@ -50,7 +50,7 @@ public class CandidateLandingTests
     {
         var on = new FeatureFlagSnapshot(true, true);
         Assert.Equal(
-            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.CandidateWizardStartPath,
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: true, on));
         Assert.Equal(
             FeatureRoutes.CandidatePassportPath,
@@ -68,7 +68,7 @@ public class CandidateLandingTests
     [Fact]
     public void CandidatePostLoginUrl_defaults_are_passport_on()
     {
-        Assert.Equal(FeatureRoutes.CandidateDiscoveryPath, AuthRedirects.CandidatePostLoginUrl(true));
+        Assert.Equal(FeatureRoutes.CandidateWizardStartPath, AuthRedirects.CandidatePostLoginUrl(true));
         Assert.Equal(FeatureRoutes.CandidatePassportPath, AuthRedirects.CandidatePostLoginUrl(false));
     }
 
@@ -80,7 +80,7 @@ public class CandidateLandingTests
             "/vacancies/abc",
             AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true, on));
         Assert.Equal(
-            FeatureRoutes.CandidateDiscoveryPath,
+            FeatureRoutes.CandidateWizardStartPath,
             AuthRedirects.ResolveCandidateReturnUrl("/home", showCandidateHowTo: true, on));
         Assert.Equal(
             FeatureRoutes.CandidatePassportPath,

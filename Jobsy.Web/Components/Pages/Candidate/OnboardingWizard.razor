@@ -1,6 +1,7 @@
 @page "/candidate/start"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -400,21 +401,6 @@
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
 
-        try
-        {
-            if (await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport))
-            {
-                var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-                var target = "/candidate/ontdekkingsreis" + uri.Query;
-                Navigation.NavigateTo(target, replace: true);
-                return;
-            }
-        }
-        catch
-        {
-            // Fall through to classic wizard on flag lookup failure.
-        }
-
         await LoadAsync();
     }
 
@@ -430,6 +416,7 @@
             _state = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true };
             ApplyProfile(await profileTask);
 
+            var passportOn = await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport);
             if (_state.IsComplete)
             {
                 if (await ShouldInstallAsync())
@@ -438,8 +425,16 @@
                 }
                 else
                 {
-                    Navigation.NavigateTo("/candidate/profile", true);
+                    Navigation.NavigateTo(
+                        passportOn ? FeatureRoutes.CandidatePassportPath : "/candidate/profile",
+                        true);
                 }
+                return;
+            }
+
+            if (passportOn && _state.FinishReached)
+            {
+                Navigation.NavigateTo(FeatureRoutes.CandidateDiscoveryPath, true);
                 return;
             }
 
@@ -1179,9 +1174,31 @@
 
     private async Task CompleteAsync()
     {
+        var passportOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.CandidatePassport);
+        if (passportOn)
+        {
+            _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
+            if (await ShouldInstallAsync())
+            {
+                _phase = WizardPhase.Install;
+            }
+            else
+            {
+                Navigation.NavigateTo(FeatureRoutes.CandidateDiscoveryPath);
+            }
+
+            return;
+        }
+
         _state = await Api.CompleteMyOnboardingAsync();
-        if (await ShouldInstallAsync()) _phase = WizardPhase.Install;
-        else Navigation.NavigateTo("/candidate/profile");
+        if (await ShouldInstallAsync())
+        {
+            _phase = WizardPhase.Install;
+        }
+        else
+        {
+            Navigation.NavigateTo("/candidate/profile");
+        }
     }
 
     private async Task<bool> ShouldInstallAsync()

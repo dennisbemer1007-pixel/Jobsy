@@ -9,6 +9,7 @@ public sealed class AvailabilityStartDatePlaywrightTests
 {
     [Theory]
     [InlineData(390, 844, "mobile")]
+    [InlineData(1280, 900, "desktop")]
     public async Task Capture_availability_start_date_screenshots(int width, int height, string label)
     {
         if (Environment.GetEnvironmentVariable("JOBSY_CAPTURE_AVAILABILITY_SCREENSHOTS") != "1")
@@ -39,55 +40,82 @@ public sealed class AvailabilityStartDatePlaywrightTests
         }
 
         await page.GotoAsync(
+            baseUrl + "/candidate/ontdekkingsreis?stap=1",
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+        await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "onboarding-wizard.css", "form-fields.css");
+        await page.Locator(".ob-fields input").First.WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator(".ob-fields input").Nth(0).FillAsync("Alex");
+        await page.Locator(".ob-fields input").Nth(1).FillAsync("Jansen");
+        await page.Locator(".ob-fields input").Nth(2).FillAsync("1234AB");
+        var birthDate = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-22).ToString("yyyy-MM-dd");
+        await page.Locator("[data-testid=onboarding-birth-date], .jobsy-date-field__input").First.FillAsync(birthDate);
+        await page.Locator(".ob-fields input[type=tel]").FillAsync("0612345678");
+        await KbE2e.AssertSelectorLooksStyledAsync(page, ".ob-fields input");
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(outDir, $"01-after-onboarding-personal-filled-{label}.png"),
+            FullPage = true
+        });
+
+        await page.GotoAsync(
             baseUrl + "/candidate/ontdekkingsreis?stap=2",
             new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
-        await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "onboarding-wizard.css");
+        await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "onboarding-wizard.css", "form-fields.css");
         await page.Locator(".ob-wizard__start-option").First.WaitForAsync(new() { Timeout = 60_000 });
 
         await page.Locator(".ob-wizard__start-option").Filter(new() { HasText = "Per direct" }).First.ClickAsync();
         await KbE2e.AssertSelectorLooksStyledAsync(page, ".ob-wizard__start-option.is-selected");
         await page.ScreenshotAsync(new()
         {
-            Path = Path.Combine(outDir, $"before-onboarding-beschikbaarheid-immediate-{label}.png"),
+            Path = Path.Combine(outDir, $"02-after-onboarding-availability-immediate-{label}.png"),
             FullPage = true
         });
 
         await page.Locator(".ob-wizard__start-option").Filter(new() { HasText = "Vanaf een datum" }).First.ClickAsync();
         var startDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7).ToString("yyyy-MM-dd");
-        await page.Locator(".ob-wizard__start-date input[type=date]").FillAsync(startDate);
-        await KbE2e.AssertSelectorLooksStyledAsync(page, ".ob-wizard__start-date input");
+        await page.Locator("[data-testid=availability-start-date], .jobsy-date-field__input").First.FillAsync(startDate);
+        await KbE2e.AssertSelectorLooksStyledAsync(page, ".jobsy-date-field__input");
         await page.ScreenshotAsync(new()
         {
-            Path = Path.Combine(outDir, $"after-onboarding-beschikbaarheid-from-date-{label}.png"),
+            Path = Path.Combine(outDir, $"03-after-onboarding-availability-date-{label}.png"),
             FullPage = true
         });
 
-        if (!await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.DefaultCompleteEmail, KbE2e.DefaultPassword))
+        await using var profileContext = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
+        await PlaywrightCookieConsent.AcceptAsync(profileContext);
+        var profilePage = await profileContext.NewPageAsync();
+        if (await KbE2e.TryLoginAsync(profilePage, baseUrl, KbE2e.DefaultCompleteEmail, KbE2e.DefaultPassword))
         {
-            return;
-        }
+            await profilePage.GotoAsync(
+                baseUrl + "/candidate/profile",
+                new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+            await KbE2e.WaitForStyledAppAsync(profilePage, "app.min.css", "form-fields.css");
+            var kompasProfile = profilePage.Locator(".kompas-tabs button.admin-sublink").Filter(new() { HasText = "Profiel" });
+            if (await kompasProfile.CountAsync() > 0)
+            {
+                await kompasProfile.First.ClickAsync();
+            }
 
-        await page.GotoAsync(
-            baseUrl + "/candidate/paspoort?tab=data",
-            new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
-        await KbE2e.WaitForStyledAppAsync(page, "app.min.css");
-        var availToggle = page.Locator("button.admin-sublink").Filter(new() { HasText = "Beschikbaarheid" });
-        if (await availToggle.CountAsync() == 0)
-        {
-            return;
+            var availToggle = profilePage.Locator(".profile-section-nav button.admin-sublink")
+                .Filter(new() { HasText = "Beschikbaarheid" });
+            if (await availToggle.CountAsync() > 0)
+            {
+                await availToggle.First.ClickAsync();
+                await profilePage.Locator("#profile-section-availability .ob-wizard__start-option").First
+                    .WaitForAsync(new() { Timeout = 30_000 });
+                await profilePage.Locator(".ob-wizard__start-option").Filter(new() { HasText = "Vanaf een datum" }).First
+                    .ClickAsync();
+                await profilePage.Locator("[data-testid=availability-start-date], .jobsy-date-field__input").First
+                    .FillAsync(startDate);
+                await KbE2e.AssertSelectorLooksStyledAsync(profilePage, ".jobsy-date-field__input");
+                await profilePage.WaitForTimeoutAsync(1_500);
+                await profilePage.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(outDir, $"04-after-profile-availability-date-{label}.png"),
+                    FullPage = true
+                });
+            }
         }
-
-        await availToggle.ClickAsync();
-        await page.Locator(".ob-wizard__start-option").First.WaitForAsync(new() { Timeout = 30_000 });
-        await page.Locator(".ob-wizard__start-option").Filter(new() { HasText = "Vanaf een datum" }).First.ClickAsync();
-        await page.Locator(".ob-wizard__start-date input[type=date]").FillAsync(startDate);
-        await KbE2e.AssertSelectorLooksStyledAsync(page, ".ob-wizard__start-option.is-selected");
-        await page.WaitForTimeoutAsync(2_000);
-        await page.ScreenshotAsync(new()
-        {
-            Path = Path.Combine(outDir, $"after-profile-availability-from-date-{label}.png"),
-            FullPage = true
-        });
 
         KbE2e.AssertHealthy(capture, requireNoIsochrone404: false);
     }

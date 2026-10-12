@@ -4,7 +4,7 @@ namespace Jobsy.Web.Navigation;
 
 /// <summary>
 /// Flag-aware entry path for candidate first-login / resume onboarding.
-/// Passport ON → De ontdekkingsreis; OFF → classic wizard.
+/// Always the step-by-step wizard; discovery follows after the wizard when paspoort is ON.
 /// </summary>
 public static class OnboardingRoutes
 {
@@ -12,8 +12,14 @@ public static class OnboardingRoutes
     public const string DiscoveryPath = "/candidate/ontdekkingsreis";
 
     public static string StartPath(FeatureFlagSnapshot flags)
-        => flags.CandidatePassportEnabled ? DiscoveryPath : ClassicStartPath;
+    {
+        _ = flags;
+        return ClassicStartPath;
+    }
 
     public static string StartPath(bool candidatePassportEnabled)
-        => candidatePassportEnabled ? DiscoveryPath : ClassicStartPath;
+    {
+        _ = candidatePassportEnabled;
+        return ClassicStartPath;
+    }
 }

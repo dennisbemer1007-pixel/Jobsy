@@ -102,7 +102,7 @@ public class Ontdekkingsreis08RoutesNavTests
     [Fact]
     public void StartPath_flag_aware()
     {
-        Assert.Equal("/candidate/ontdekkingsreis",
+        Assert.Equal("/candidate/start",
             OnboardingRoutes.StartPath(new FeatureFlagSnapshot(true, true)));
         Assert.Equal("/candidate/start",
             OnboardingRoutes.StartPath(new FeatureFlagSnapshot(true, false)));
