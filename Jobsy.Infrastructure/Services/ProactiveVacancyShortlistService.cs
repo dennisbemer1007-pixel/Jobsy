@@ -70,7 +70,7 @@ public sealed class ProactiveVacancyShortlistService : IProactiveVacancyShortlis
             .ToListAsync(cancellationToken);
         var careers = careerRows.GroupBy(c => c.UserId).ToDictionary(g => g.Key, g => g.First());
 
-        var scored = new List<(Jobsy.Core.Entities.User User, int Percent, AnonymousTalentCardDto Card)>();
+        var scored = new List<(Jobsy.Core.Entities.User User, int Percent, ProfileVacancyMatch Match, AnonymousTalentCardDto Card)>();
         foreach (var user in candidates)
         {
             if (!competencies.ContainsKey(user.Id) && !careers.ContainsKey(user.Id))
@@ -106,7 +106,7 @@ public sealed class ProactiveVacancyShortlistService : IProactiveVacancyShortlis
 
             var prefs = DeserializePrefs(user.PreferencesJson);
             var card = BuildCard(user, prefs, competencies, careers, travel);
-            scored.Add((user, match.TotalPercent, card));
+            scored.Add((user, match.TotalPercent, match, card));
         }
 
         var ordered = scored
@@ -118,11 +118,18 @@ public sealed class ProactiveVacancyShortlistService : IProactiveVacancyShortlis
         for (var i = 0; i < ordered.Count; i++)
         {
             var row = ordered[i];
+            var strengths = ProfileVacancyMatchCalculator.WhyHeadlines(row.Match).ToList();
+            if (strengths.Count == 0 && row.Card.MatchTags.Count > 0)
+            {
+                strengths = row.Card.MatchTags.Take(3).ToList();
+            }
+
             result.Add(new ProactiveVacancyShortlistEntryDto(
                 i + 1,
                 row.User.Id,
                 row.Percent,
                 row.Card.MatchTags,
+                strengths,
                 row.Card.AvailabilitySummary,
                 row.Card.TravelMinutes,
                 row.Card.RegionLabel));

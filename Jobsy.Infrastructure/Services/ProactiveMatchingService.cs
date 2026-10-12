@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -121,9 +122,12 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         var rows = await _db.ProactiveMatchSuggestions.AsNoTracking()
             .Where(s => s.CandidateUserId == candidateUserId)
             .OrderByDescending(s => s.DeliveredAtUtc)
-            .Take(take)
+            .Take(Math.Clamp(take * 3, take, 150))
             .ToListAsync(cancellationToken);
-        return rows.Select(MapSuggestion).ToList();
+
+        var mapped = rows.Select(MapSuggestion).ToList();
+        var deduped = DedupeSuggestions(mapped, take);
+        return await EnrichRationalesAsync(candidateUserId, deduped, cancellationToken);
     }
 
     public async Task<ProactiveMatchSuggestionDto?> SubmitFeedbackAsync(
@@ -244,9 +248,7 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                     continue;
                 }
 
-                var rationale = !string.IsNullOrWhiteSpace(item.Match.MatchRationale)
-                    ? item.Match.MatchRationale!
-                    : $"Deze vacature past voor {item.Match.TotalPercent}% bij jouw profiel.";
+                var rationale = BuildDeliveryRationale(item.Match);
 
                 await DeliverAsync(
                     settings.UserId,
@@ -468,5 +470,137 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             row.Title,
             row.CompanyLabel,
             row.DeliveredAtUtc,
-            row.Feedback);
+            row.Feedback,
+            1);
+
+    private static string BuildDeliveryRationale(ProfileVacancyMatch match)
+    {
+        var line = ProfileVacancyMatchCalculator.SummaryLine(match);
+        if (!string.IsNullOrWhiteSpace(line) && !IsGenericRationale(line))
+        {
+            return line!;
+        }
+
+        var headlines = ProfileVacancyMatchCalculator.WhyHeadlines(match);
+        if (headlines.Count > 0)
+        {
+            return headlines[0];
+        }
+
+        if (!string.IsNullOrWhiteSpace(match.MatchRationale) && !IsGenericRationale(match.MatchRationale))
+        {
+            return match.MatchRationale!;
+        }
+
+        return $"Op basis van je DNA-profiel en voorkeuren scoort deze vacature {match.TotalPercent}%.";
+    }
+
+    private async Task<IReadOnlyList<ProactiveMatchSuggestionDto>> EnrichRationalesAsync(
+        Guid candidateUserId,
+        IReadOnlyList<ProactiveMatchSuggestionDto> suggestions,
+        CancellationToken cancellationToken)
+    {
+        var vacancyIds = suggestions
+            .Where(s => s.VacancyId is Guid)
+            .Select(s => s.VacancyId!.Value)
+            .Distinct()
+            .ToList();
+        if (vacancyIds.Count == 0)
+        {
+            return suggestions;
+        }
+
+        var context = await _matches.TryLoadForUserIdAsync(candidateUserId, cancellationToken);
+        if (context is null)
+        {
+            return suggestions;
+        }
+
+        var active = await _discovery.GetActiveAsync(cancellationToken);
+        var batch = active
+            .Where(v => vacancyIds.Contains(v.Id))
+            .Select(v => (v, (int?)null))
+            .ToList();
+        if (batch.Count == 0)
+        {
+            return suggestions;
+        }
+
+        var scores = await _matches.ScoreAsync(context, batch, cancellationToken);
+        var enriched = new List<ProactiveMatchSuggestionDto>(suggestions.Count);
+        foreach (var tip in suggestions)
+        {
+            if (tip.VacancyId is not Guid vid || !scores.TryGetValue(vid, out var match))
+            {
+                enriched.Add(tip with { Title = CleanDisplayTitle(tip.Title) });
+                continue;
+            }
+
+            var rationale = tip.Rationale;
+            if (IsGenericRationale(rationale))
+            {
+                rationale = BuildDeliveryRationale(match);
+            }
+
+            enriched.Add(tip with
+            {
+                Title = CleanDisplayTitle(tip.Title),
+                MatchPercent = Math.Max(tip.MatchPercent, match.TotalPercent),
+                Rationale = rationale
+            });
+        }
+
+        return enriched;
+    }
+
+    private static List<ProactiveMatchSuggestionDto> DedupeSuggestions(
+        IReadOnlyList<ProactiveMatchSuggestionDto> items,
+        int take)
+    {
+        return items
+            .GroupBy(s => NormalizeVacancyTitle(s.Title), StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var best = g.OrderByDescending(x => x.MatchPercent)
+                    .ThenByDescending(x => x.DeliveredAtUtc)
+                    .First();
+                var count = g.Count();
+                return best with
+                {
+                    Title = CleanDisplayTitle(best.Title),
+                    SimilarVacancyCount = count
+                };
+            })
+            .OrderByDescending(x => x.MatchPercent)
+            .ThenByDescending(x => x.DeliveredAtUtc)
+            .Take(take)
+            .ToList();
+    }
+
+    private static string NormalizeVacancyTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return "";
+        }
+
+        var t = Regex.Replace(title.Trim(), @"\(\d+\)\s*$", "", RegexOptions.None, TimeSpan.FromMilliseconds(50)).Trim();
+        t = Regex.Replace(t, @"\s+", " ", RegexOptions.None, TimeSpan.FromMilliseconds(50));
+        return t;
+    }
+
+    private static string CleanDisplayTitle(string title) => NormalizeVacancyTitle(title);
+
+    private static bool IsGenericRationale(string? rationale)
+    {
+        if (string.IsNullOrWhiteSpace(rationale))
+        {
+            return true;
+        }
+
+        return (rationale.Contains("past voor", StringComparison.OrdinalIgnoreCase)
+                && rationale.Contains("bij jouw profiel", StringComparison.OrdinalIgnoreCase))
+               || rationale.Contains("externe vacature sluit aan", StringComparison.OrdinalIgnoreCase)
+               || rationale.Equals("Deze vacature past bij jouw profiel.", StringComparison.OrdinalIgnoreCase);
+    }
 }

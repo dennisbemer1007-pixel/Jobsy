@@ -8,9 +8,18 @@
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
 
-<section class="proactive-shortlist" aria-labelledby="proactive-shortlist-title" data-testid="proactive-shortlist">
-    <h2 id="proactive-shortlist-title">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
-    <p class="proactive-shortlist__lead">@Culture["ProactiveMatching.Employer.Shortlist.Lead"]</p>
+<section class="proactive-shortlist @(Layout == "full" ? "proactive-shortlist--page" : "proactive-shortlist--inline")"
+         aria-labelledby="proactive-shortlist-title"
+         data-testid="proactive-shortlist">
+    @if (Layout != "full")
+    {
+        <h2 id="proactive-shortlist-title">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
+        <p class="proactive-shortlist__lead">@Culture["ProactiveMatching.Employer.Shortlist.Lead"]</p>
+    }
+    else
+    {
+        <h2 id="proactive-shortlist-title" class="visually-hidden">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
+    }
 
     @if (!string.IsNullOrEmpty(_message))
     {
@@ -30,42 +39,67 @@
         <div class="proactive-shortlist__grid">
             @foreach (var entry in _entries)
             {
-                <article class="proactive-shortlist-card" data-testid="proactive-shortlist-card">
+                <article class="proactive-shortlist-card proactive-suggestion-card" data-testid="proactive-shortlist-card">
                     <div class="proactive-shortlist-card__head">
                         <span class="proactive-shortlist-card__rank">
                             @Culture.Format("ProactiveMatching.Employer.Shortlist.Rank", entry.Rank)
                         </span>
-                        <span class="proactive-shortlist-card__score">
-                            @Culture.Format("ProactiveMatching.Suggestions.Match", entry.MatchPercent)
+                        <span class="proactive-shortlist-card__score proactive-match-badge" aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", entry.MatchPercent)">
+                            <span class="proactive-match-badge__value">@entry.MatchPercent</span>
+                            <span class="proactive-match-badge__suffix">%</span>
                         </span>
                     </div>
-                    <p><strong>@(entry.RegionLabel ?? "—")</strong>
-                        @(entry.TravelMinutes is int m ? $" · {m} min" : "")</p>
-                    <p>@(entry.AvailabilitySummary ?? Culture["Talent.AvailabilityUnknown"])</p>
-                    @if (entry.MatchTags.Count > 0)
+                    <p class="proactive-shortlist-card__anon">@Culture["ProactiveMatching.Employer.Shortlist.Anonymous"]</p>
+                    <p class="proactive-shortlist-card__meta">
+                        <strong>@(entry.RegionLabel ?? "—")</strong>
+                        @(entry.TravelMinutes is int m ? $" · {m} min" : "")
+                    </p>
+                    <p class="proactive-shortlist-card__availability">@(entry.AvailabilitySummary ?? Culture["Talent.AvailabilityUnknown"])</p>
+                    @if (entry.TopStrengths.Count > 0)
                     {
-                        <p class="profile-address__hint">@string.Join(", ", entry.MatchTags)</p>
+                        <div class="proactive-shortlist-card__strengths">
+                            <span class="proactive-shortlist-card__strengths-label">@Culture["ProactiveMatching.Employer.Shortlist.Strengths"]</span>
+                            <ul class="proactive-chip-list">
+                                @foreach (var strength in entry.TopStrengths)
+                                {
+                                    <li class="proactive-chip">@strength</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else if (entry.MatchTags.Count > 0)
+                    {
+                        <ul class="proactive-chip-list">
+                            @foreach (var tag in entry.MatchTags.Take(4))
+                            {
+                                <li class="proactive-chip proactive-chip--muted">@tag</li>
+                            }
+                        </ul>
                     }
                     @if (_canMutate)
                     {
                         @if (_introduceId == entry.CandidateUserId)
                         {
-                            <label>
+                            <label class="proactive-shortlist-card__message">
                                 @Culture["ProactiveMatching.Employer.Shortlist.Message"]
                                 <textarea @bind="_introMessage" maxlength="2000"></textarea>
                             </label>
-                            <button class="login-submit" type="button" disabled="@_busy" @onclick="() => IntroduceAsync(entry.CandidateUserId)">
-                                @Culture["ProactiveMatching.Employer.Shortlist.Introduce"]
-                            </button>
-                            <button class="btn btn-secondary" type="button" disabled="@_busy" @onclick="CancelIntroduce">
-                                @Culture["Discovery.Cancel"]
-                            </button>
+                            <div class="proactive-shortlist-card__actions">
+                                <button class="login-submit proactive-introduce-btn" type="button" disabled="@_busy" @onclick="() => IntroduceAsync(entry.CandidateUserId)">
+                                    @Culture["ProactiveMatching.Employer.Shortlist.Introduce"]
+                                </button>
+                                <button class="btn btn-secondary" type="button" disabled="@_busy" @onclick="CancelIntroduce">
+                                    @Culture["Discovery.Cancel"]
+                                </button>
+                            </div>
                         }
                         else
                         {
-                            <button class="login-submit" type="button" disabled="@_busy" @onclick="() => StartIntroduce(entry.CandidateUserId)">
-                                @Culture["ProactiveMatching.Employer.Shortlist.Introduce"]
-                            </button>
+                            <div class="proactive-shortlist-card__actions">
+                                <button class="login-submit proactive-introduce-btn" type="button" disabled="@_busy" @onclick="() => StartIntroduce(entry.CandidateUserId)">
+                                    @Culture["ProactiveMatching.Employer.Shortlist.Introduce"]
+                                </button>
+                            </div>
                         }
                     }
                     else
@@ -80,6 +114,9 @@
 
 @code {
     [Parameter, EditorRequired] public Guid VacancyId { get; set; }
+
+    /// <summary><c>inline</c> on vacancy editor; <c>full</c> on dedicated shortlist page.</summary>
+    [Parameter] public string Layout { get; set; } = "inline";
 
     private List<ProactiveVacancyShortlistEntryDto> _entries = [];
     private bool _loading = true;

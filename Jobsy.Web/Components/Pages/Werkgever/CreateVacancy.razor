@@ -718,7 +718,14 @@
 
         @if (_proactiveMatchingOn && _editVacancyId is Guid shortlistVacancyId)
         {
-            <ProactiveVacancyShortlistSection VacancyId="shortlistVacancyId" />
+            <section class="proactive-shortlist-promo" aria-labelledby="proactive-shortlist-promo-title">
+                <h2 id="proactive-shortlist-promo-title">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
+                <p>@Culture["ProactiveMatching.Employer.Shortlist.PromoLead"]</p>
+                <a class="login-submit proactive-shortlist-promo__cta"
+                   href="@($"/werkgever/vacatures/{shortlistVacancyId:D}/proactieve-shortlist")">
+                    @Culture["ProactiveMatching.Employer.Shortlist.OpenPage"]
+                </a>
+            </section>
         }
 
         <aside class="vacancy-preview" aria-label="Voorbeeldtegel">

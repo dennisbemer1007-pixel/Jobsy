@@ -106,18 +106,24 @@ public static class UiStringsProactive
             "{0}% match", "{0}% match",
             "Dopasowanie {0}%", "Potrivire {0}%", "تطابق {0}%");
         Add("ProactiveMatching.Suggestions.Rationale",
-            "Waarom dit past", "Why this fits",
-            "Dlaczego pasuje", "De ce se potrivește", "لماذا يناسبك");
+            "Waarom dit bij je past", "Why this fits you",
+            "Dlaczego pasuje", "De ce ți se potrivește", "لماذا يناسبك");
+        Add("ProactiveMatching.Suggestions.Grouped",
+            "We hebben {0} vergelijkbare vacatures samengevoegd — dit is de sterkste match.",
+            "We merged {0} similar vacancies — this is the strongest match.",
+            "Połączyliśmy {0} podobnych ofert — to najlepsze dopasowanie.",
+            "Am combinat {0} joburi similare — aceasta e cea mai bună potrivire.",
+            "دمجنا {0} وظائف مشابهة — هذا أقوى تطابق.");
         Add("ProactiveMatching.Suggestions.ViewVacancy",
-            "Bekijk vacature", "View vacancy",
-            "Zobacz ofertę", "Vezi postul", "عرض الوظيفة");
+            "Bekijk", "View",
+            "Zobacz", "Vezi", "عرض");
 
         Add("ProactiveMatching.Feedback.Interested",
             "Interessant", "Interesting",
             "Interesujące", "Interesant", "مثير للاهتمام");
         Add("ProactiveMatching.Feedback.NotInterested",
-            "Niet voor mij", "Not for me",
-            "Nie dla mnie", "Nu pentru mine", "ليس لي");
+            "Niet interessant", "Not interested",
+            "Nie interesuje", "Nu mă interesează", "غير مهتم");
         Add("ProactiveMatching.Feedback.Done",
             "Bedankt voor je reactie.", "Thanks for your feedback.",
             "Dzięki za opinię.", "Mulțumim pentru feedback.", "شكراً على ردك.");
@@ -154,8 +160,29 @@ public static class UiStringsProactive
             "#{0}", "#{0}",
             "#{0}", "#{0}", "#{0}");
         Add("ProactiveMatching.Employer.Shortlist.Introduce",
-            "Stel voor", "Introduce",
-            "Przedstaw", "Prezintă", "قدّم");
+            "Stuur kennismakingsverzoek", "Send introduction request",
+            "Wyślij prośbę o kontakt", "Trimite cerere de contact", "أرسل طلب تعارف");
+        Add("ProactiveMatching.Employer.Shortlist.PageTitle",
+            "Proactieve shortlist", "Proactive shortlist",
+            "Shortlista proaktywna", "Shortlist proactiv", "قائمة استباقية");
+        Add("ProactiveMatching.Employer.Shortlist.BackToVacancy",
+            "← Terug naar vacature", "← Back to vacancy",
+            "← Wróć do oferty", "← Înapoi la post", "← العودة للوظيفة");
+        Add("ProactiveMatching.Employer.Shortlist.PromoLead",
+            "Bekijk anonieme kandidaten met matchscore, sterke punten en stuur direct een kennismakingsverzoek.",
+            "View anonymous candidates with match score, strengths and send an introduction request.",
+            "Zobacz anonimowych kandydatów ze scorem i mocnymi stronami.",
+            "Vezi candidați anonimi cu scor și puncte forte.",
+            "عرض مرشحين مجهولين مع نسبة التطابق ونقاط القوة.");
+        Add("ProactiveMatching.Employer.Shortlist.OpenPage",
+            "Open proactieve shortlist", "Open proactive shortlist",
+            "Otwórz shortlistę", "Deschide shortlist", "افتح القائمة");
+        Add("ProactiveMatching.Employer.Shortlist.Anonymous",
+            "Anonieme kandidaat", "Anonymous candidate",
+            "Anonimowy kandydat", "Candidat anonim", "مرشح مجهول");
+        Add("ProactiveMatching.Employer.Shortlist.Strengths",
+            "Sterke punten", "Top strengths",
+            "Mocne strony", "Puncte forte", "نقاط القوة");
         Add("ProactiveMatching.Employer.Shortlist.Message",
             "Korte boodschap (optioneel)", "Short message (optional)",
             "Krótka wiadomość (opcjonalnie)", "Mesaj scurt (opțional)", "رسالة قصيرة (اختياري)");

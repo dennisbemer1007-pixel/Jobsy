@@ -107,31 +107,40 @@
                 <div class="proactive-suggestions">
                     @foreach (var tip in _suggestions)
                     {
-                        <article class="proactive-tip" data-testid="proactive-tip">
+                        <article class="proactive-tip proactive-suggestion-card" data-testid="proactive-tip">
                             <div class="proactive-tip__head">
-                                <h3 class="proactive-tip__title">@tip.Title</h3>
-                                <span class="proactive-tip__score">
-                                    @Culture.Format("ProactiveMatching.Suggestions.Match", tip.MatchPercent)
+                                <div class="proactive-tip__title-wrap">
+                                    <h3 class="proactive-tip__title">@tip.Title</h3>
+                                    @if (!string.IsNullOrWhiteSpace(tip.CompanyLabel))
+                                    {
+                                        <p class="proactive-tip__company">@tip.CompanyLabel</p>
+                                    }
+                                </div>
+                                <span class="proactive-match-badge proactive-match-badge--candidate @(tip.MatchPercent >= 80 ? "proactive-match-badge--strong" : "")"
+                                      aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", tip.MatchPercent)">
+                                    <span class="proactive-match-badge__value">@tip.MatchPercent</span>
+                                    <span class="proactive-match-badge__suffix">%</span>
+                                    <span class="proactive-match-badge__label">match</span>
                                 </span>
                             </div>
-                            @if (!string.IsNullOrWhiteSpace(tip.CompanyLabel))
+                            @if (tip.SimilarVacancyCount > 1)
                             {
-                                <p class="proactive-tip__company">@tip.CompanyLabel</p>
+                                <p class="proactive-tip__grouped">
+                                    @Culture.Format("ProactiveMatching.Suggestions.Grouped", tip.SimilarVacancyCount)
+                                </p>
                             }
                             <div class="proactive-tip__why">
                                 <strong>@Culture["ProactiveMatching.Suggestions.Rationale"]</strong>
-                                @tip.Rationale
+                                <p class="proactive-tip__why-text">@tip.Rationale</p>
                             </div>
-                            @if (VacancyHref(tip) is string href)
-                            {
-                                <p class="proactive-tip__actions">
-                                    <a class="proactive-tip__link" href="@href">@Culture["ProactiveMatching.Suggestions.ViewVacancy"]</a>
-                                </p>
-                            }
-                            <div class="proactive-tip__actions">
+                            <div class="proactive-tip__actions proactive-tip__actions--primary">
+                                @if (VacancyHref(tip) is string href)
+                                {
+                                    <a class="btn btn-primary proactive-tip__view" href="@href">@Culture["ProactiveMatching.Suggestions.ViewVacancy"]</a>
+                                }
                                 @if (tip.Feedback is ProactiveMatchFeedback fb)
                                 {
-                                    <span class="profile-address__hint">
+                                    <span class="proactive-tip__feedback-done">
                                         @(fb == ProactiveMatchFeedback.Interested
                                             ? Culture["ProactiveMatching.Feedback.Interested"]
                                             : Culture["ProactiveMatching.Feedback.NotInterested"])

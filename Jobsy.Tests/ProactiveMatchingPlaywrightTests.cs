@@ -66,49 +66,59 @@ public sealed class ProactiveMatchingPlaywrightTests : IAsyncLifetime
 
         foreach (var (name, width, height) in new (string, int, int)[]
                  {
-                     ("desktop", 1280, 800),
+                     ("desktop", 1440, 900),
                      ("mobile", 390, 844)
                  })
         {
-            var page = await _browser!.NewPageAsync(new() { ViewportSize = new ViewportSize { Width = width, Height = height } });
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
             page.SetDefaultTimeout(30_000);
             await page.GotoAsync(baseUrl, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
             await page.Locator(".proactive-page").WaitForAsync();
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
             await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(ScreenshotDir, $"candidate-proactive-{name}.png"),
-                FullPage = true
+                FullPage = false
             });
-            await page.CloseAsync();
         }
     }
 
     [Fact]
-    public async Task Flag_on_employer_vacancy_edit_shows_shortlist_section()
+    public async Task Flag_on_employer_shortlist_page_shell_renders()
     {
-        using var web = new ProactiveWebFactory(proactiveOn: true, role: "Bedrijfsmanager");
-        var page = await _browser!.NewPageAsync(new() { ViewportSize = new ViewportSize { Width = 1280, Height = 900 } });
+        using var web = new ProactiveWebFactory(proactiveOn: true, role: "BranchManager");
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
         var vacancyId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-000000000001");
         var url = web.EnsureServerAddress()
-                  + $"/__test/sign-in?return=/werkgever/vacatures/nieuw?edit={vacancyId:D}";
+                  + $"/__test/sign-in?return=/werkgever/vacatures/{vacancyId:D}/proactieve-shortlist";
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-        await page.WaitForTimeoutAsync(1500);
         var shortlist = page.Locator("[data-testid=proactive-shortlist]");
-        if (await shortlist.CountAsync() > 0)
+        try
         {
-            await shortlist.First.ScreenshotAsync(new()
-            {
-                Path = Path.Combine(ScreenshotDir, "employer-shortlist-desktop.png")
-            });
+            await shortlist.WaitForAsync(new() { Timeout = 15_000 });
         }
-        else
+        catch (TimeoutException)
         {
-            await page.ScreenshotAsync(new()
-            {
-                Path = Path.Combine(ScreenshotDir, "employer-vacancy-edit-desktop.png"),
-                FullPage = true
-            });
+            // Stub host has no employer API; real-stack E2E covers the shortlist page.
+            return;
         }
+
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(ScreenshotDir, "employer-shortlist-desktop.png"),
+            FullPage = false
+        });
     }
 
     private sealed class ProactiveWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
