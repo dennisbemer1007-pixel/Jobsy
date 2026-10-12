@@ -45,6 +45,11 @@
                         {
                             <a class="account-menu__link" href="@howHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>
                         }
+                        @if (RoleClaimMatching.HasRole(context.User, JobsyRoles.Candidate))
+                        {
+                            <a class="account-menu__link" href="/candidate/settings" role="menuitem">@Culture["CandidateSettings.Title"]</a>
+                            <a class="account-menu__link" href="/candidate/privacy" role="menuitem">@Culture["CandidatePrivacy.Title"]</a>
+                        }
                         <button type="button"
                                 class="account-menu__link"
                                 role="menuitem"

@@ -81,14 +81,13 @@ public class EmployerRun5FollowUpTests
         => Assert.Equal(expected, UiStrings.Get("Apply.LeadReadyThree", lang));
 
     [Fact]
-    public void Passport_data_save_uses_one_status_region()
+    public void Passport_data_save_shows_feedback_near_save_and_for_toggles()
     {
         var tab = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web/Components/Candidate/Passport/PassportDataTab.razor"));
-        Assert.Contains("<ProfileSaveBar ShowMessage=\"false\" />", tab, StringComparison.Ordinal);
+        Assert.Contains("<ProfileSaveBar ShowMessage=\"true\" />", tab, StringComparison.Ordinal);
         Assert.Contains("role=\"status\"", tab, StringComparison.Ordinal);
         Assert.Contains("aria-live=\"polite\"", tab, StringComparison.Ordinal);
         Assert.Equal(1, Count(tab, "role=\"status\""));
-        Assert.DoesNotContain("profile-save-bar__message", tab, StringComparison.Ordinal);
     }
 
     [Fact]
