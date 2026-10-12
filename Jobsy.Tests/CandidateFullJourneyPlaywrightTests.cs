@@ -458,11 +458,22 @@ public sealed class CandidateFullJourneyPlaywrightTests
         Assert.True(
             body.Contains("Dit ben jij", StringComparison.OrdinalIgnoreCase),
             "Discovery klaar screen should headline Dit ben jij");
-        foreach (var dimension in new[] { "Wat je kunt", "Beroepen", "Cultuur", "Waarden" })
+        if (string.Equals(tag, "mobile", StringComparison.Ordinal))
         {
+            Assert.Contains("Journey", body, StringComparison.OrdinalIgnoreCase);
             Assert.True(
-                body.Contains(dimension, StringComparison.OrdinalIgnoreCase),
-                $"Discovery results should show completed deep-test step: {dimension}");
+                body.Contains("paspoort", StringComparison.OrdinalIgnoreCase)
+                || body.Contains("JOBSY PASPOORT", StringComparison.OrdinalIgnoreCase),
+                "Mobile klaar screen should show passport summary");
+        }
+        else
+        {
+            foreach (var dimension in new[] { "Wat je kunt", "Beroepen", "Cultuur", "Waarden" })
+            {
+                Assert.True(
+                    body.Contains(dimension, StringComparison.OrdinalIgnoreCase),
+                    $"Discovery results should show completed deep-test step: {dimension}");
+            }
         }
     }
 
