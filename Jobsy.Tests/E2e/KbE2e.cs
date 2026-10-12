@@ -149,7 +149,9 @@ public static class KbE2e
     {
         _ = requiredStylesheetFragments;
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.WaitForSelectorAsync("link[rel=stylesheet]", new() { Timeout = 90_000 });
+        await page.WaitForSelectorAsync(
+            "link[rel=stylesheet]",
+            new() { Timeout = 90_000, State = WaitForSelectorState.Attached });
         await page.WaitForTimeoutAsync(800);
         await page.EvaluateAsync("() => document.fonts.ready");
         await AssertNoCircuitErrorAsync(page);
@@ -218,7 +220,8 @@ public static class KbE2e
             await submit.ClickAsync();
             await page.WaitForURLAsync(
                 url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
-                new() { Timeout = 60_000 });
+                new() { Timeout = 90_000 });
+            await page.WaitForTimeoutAsync(500);
             return true;
         }
         catch

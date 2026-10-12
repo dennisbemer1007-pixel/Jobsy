@@ -1,13 +1,31 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Scholen;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Data;
+
+/// <summary>Deterministic ids for local demo school E2E (Development only).</summary>
+public static class DemoSchoolIds
+{
+    public static readonly Guid SchoolId = Guid.Parse("99999999-1111-1111-1111-111111111111");
+    public static readonly Guid Class1AId = Guid.Parse("99999999-2222-2222-2222-222222222222");
+    public static readonly Guid SchoolAdminUserId = Guid.Parse("bbbbbbbb-2222-2222-2222-222222222222");
+    public static readonly Guid TeacherUserId = Guid.Parse("bbbbbbbb-3333-3333-3333-333333333333");
+    public static readonly Guid WerkcoachUserId = Guid.Parse("bbbbbbbb-4444-4444-4444-444444444444");
+}
+
+public static class DemoGemeenteIds
+{
+    public static readonly Guid CompanyId = Guid.Parse("88888888-8888-8888-8888-888888888888");
+    public static readonly Guid RegionalUserId = Guid.Parse("cccccccc-2222-2222-2222-222222222222");
+}
 
 internal static class DemoUsersSeeder
 {
@@ -194,6 +212,9 @@ internal static class DemoUsersSeeder
 
         await EnsureAmbassadeurProfileAsync(db, ambassadeurId);
 
+        added += await EnsureDemoSchoolStaffAsync(db);
+        added += await EnsureDemoGemeentePartnerAsync(db);
+
         await EnsureMembershipAsync(db, branchManagerId, WestlandId);
         await EnsureMembershipAsync(db, regionalManagerId, CafeId);
         await EnsureMembershipAsync(db, regionalManagerId, SupermarketId);
@@ -240,6 +261,11 @@ internal static class DemoUsersSeeder
             if (template.CompanyId is Guid companyId && existing.CompanyId != companyId)
             {
                 existing.CompanyId = companyId;
+            }
+
+            if (template.SchoolId is Guid schoolId && existing.SchoolId != schoolId)
+            {
+                existing.SchoolId = schoolId;
             }
 
             if (!string.Equals(existing.FullName, template.FullName, StringComparison.Ordinal)
@@ -402,5 +428,139 @@ internal static class DemoUsersSeeder
                 UpdatedAtUtc = now
             });
         }
+    }
+
+    private static async Task<int> EnsureDemoSchoolStaffAsync(JobsyDbContext db)
+    {
+        var added = 0;
+        var schoolAdminId = DemoSchoolIds.SchoolAdminUserId;
+        var teacherId = DemoSchoolIds.TeacherUserId;
+        var coachId = DemoSchoolIds.WerkcoachUserId;
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = schoolAdminId,
+            Email = "schoolbeheer@jobsy.local",
+            FullName = "Demo Schoolbeheerder",
+            Role = UserRole.SchoolAdmin,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true
+        });
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = teacherId,
+            Email = "leraar@jobsy.local",
+            FullName = "Demo Leraar",
+            Role = UserRole.Teacher,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true
+        });
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = coachId,
+            Email = "werkcoach@jobsy.local",
+            FullName = "Demo Werkcoach",
+            Role = UserRole.Teacher,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true
+        });
+
+        var now = DateTime.UtcNow;
+        var school = await db.Schools.FirstOrDefaultAsync(s => s.Id == DemoSchoolIds.SchoolId);
+        if (school is null)
+        {
+            school = new School
+            {
+                Id = DemoSchoolIds.SchoolId,
+                Name = "Demo College Lobsy",
+                City = "Naaldwijk",
+                BrinCode = "99ZZ00",
+                AllowedEmailDomains = """["jobsy.local"]""",
+                IsActive = true,
+                IsTestData = true,
+                CreatedAtUtc = now,
+                CreatedByUserId = schoolAdminId,
+                ProcessorAgreementSignedOn = DateOnly.FromDateTime(now),
+                ProcessorAgreementVersion = "demo-local"
+            };
+            db.Schools.Add(school);
+            added++;
+        }
+
+        var yearStart = SchoolYear.Current(DateOnly.FromDateTime(now));
+        var schoolClass = await db.SchoolClasses.FirstOrDefaultAsync(c => c.Id == DemoSchoolIds.Class1AId);
+        if (schoolClass is null)
+        {
+            schoolClass = new SchoolClass
+            {
+                Id = DemoSchoolIds.Class1AId,
+                SchoolId = DemoSchoolIds.SchoolId,
+                Name = "2A",
+                Level = SchoolLevel.VmboGt,
+                QuestionSet = PupilQuestionSet.Vo,
+                Year = 2,
+                SchoolYearStart = yearStart,
+                PupilCount = 5,
+                IsTestData = true,
+                CreatedAtUtc = now
+            };
+            db.SchoolClasses.Add(schoolClass);
+            added++;
+        }
+
+        foreach (var uid in new[] { teacherId, coachId })
+        {
+            if (!await db.TeacherClassAssignments.AnyAsync(
+                    a => a.TeacherUserId == uid && a.SchoolClassId == DemoSchoolIds.Class1AId))
+            {
+                db.TeacherClassAssignments.Add(new TeacherClassAssignment
+                {
+                    TeacherUserId = uid,
+                    SchoolClassId = DemoSchoolIds.Class1AId,
+                    CreatedAtUtc = now
+                });
+                added++;
+            }
+        }
+
+        return added;
+    }
+
+    private static async Task<int> EnsureDemoGemeentePartnerAsync(JobsyDbContext db)
+    {
+        var added = 0;
+        if (!await db.Companies.AnyAsync(c => c.Id == DemoGemeenteIds.CompanyId))
+        {
+            db.Companies.Add(new Company
+            {
+                Id = DemoGemeenteIds.CompanyId,
+                Name = "Gemeente Westland (demo)",
+                KvkNumber = "99887766",
+                KvkEstablishmentId = "99887766_0001",
+                Address = "Raadhuisplein 1, Naaldwijk",
+                Type = CompanyType.Employer,
+                Location = new GeoPoint(51.994, 4.209),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.Manual,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
+            added++;
+        }
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = DemoGemeenteIds.RegionalUserId,
+            Email = "gemeente@jobsy.local",
+            FullName = "Demo Gemeente Regio",
+            Role = UserRole.RegionalManager,
+            CompanyId = DemoGemeenteIds.CompanyId,
+            IsActive = true
+        });
+
+        await EnsureMembershipAsync(db, DemoGemeenteIds.RegionalUserId, DemoGemeenteIds.CompanyId);
+        return added;
     }
 }

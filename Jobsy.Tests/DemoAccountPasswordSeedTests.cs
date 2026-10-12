@@ -25,7 +25,11 @@ public class DemoAccountPasswordSeedTests
             "intermediair@jobsy.local",
             "admin@jobsy.local",
             "sales@jobsy.local",
-            "ambassadeur@jobsy.local"
+            "ambassadeur@jobsy.local",
+            "schoolbeheer@jobsy.local",
+            "leraar@jobsy.local",
+            "werkcoach@jobsy.local",
+            "gemeente@jobsy.local"
         };
 
         foreach (var email in emails)
