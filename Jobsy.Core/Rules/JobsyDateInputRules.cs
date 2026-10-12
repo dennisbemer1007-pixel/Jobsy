@@ -54,6 +54,18 @@ public static class JobsyDateInputRules
         return true;
     }
 
+    /// <summary>User-visible date (nl: dd-MM-yyyy).</summary>
+    public static string FormatDisplayDate(DateOnly date, string language)
+    {
+        if (string.Equals(language, "nl", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(language))
+        {
+            return date.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture);
+        }
+
+        return AvailabilityStartRules.FormatDisplayDate(date, language);
+    }
+
     public static (string? Min, string? Max) Bounds(JobsyDateConstraint constraint, DateOnly? reference = null)
     {
         var today = TodayUtc;

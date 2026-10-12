@@ -20,4 +20,11 @@ public sealed class JobsyDateInputRulesTests
         Assert.Equal("2024-08", value);
         Assert.Equal("2024-08", JobsyDateInputRules.ToMonthInputValue(value));
     }
+
+    [Fact]
+    public void Dutch_display_uses_dd_MM_yyyy()
+    {
+        var text = JobsyDateInputRules.FormatDisplayDate(new DateOnly(2026, 10, 19), "nl");
+        Assert.Equal("19-10-2026", text);
+    }
 }

@@ -1,19 +1,53 @@
 @namespace Jobsy.Web.Components.Shared
 @using System.Globalization
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
 
-<input @ref="_input"
-       id="@InputId"
-       class="jobsy-date-field__input @CssClass"
-       type="@_inputType"
-       min="@_min"
-       max="@_max"
-       value="@_value"
-       required="@Required"
-       disabled="@Disabled"
-       aria-invalid="@(ShowInvalid ? "true" : null)"
-       data-testid="@TestId"
-       @onchange="OnChangedAsync" />
+@if (_localizedShell)
+{
+    <div class="jobsy-date-field jobsy-date-field--localized" data-testid="@TestId">
+        <button type="button"
+                class="jobsy-date-field__display-btn jobsy-form-value"
+                disabled="@Disabled"
+                aria-invalid="@(ShowInvalid ? "true" : null)"
+                aria-describedby="@AriaDescribedBy"
+                @onclick="OpenPickerAsync">
+            <span class="jobsy-date-field__display-text">@(_displayText ?? Placeholder)</span>
+            <span class="jobsy-date-field__calendar-icon" aria-hidden="true"></span>
+        </button>
+        <input @ref="_input"
+               id="@InputId"
+               class="jobsy-date-field__input jobsy-date-field__input--native"
+               type="@_inputType"
+               lang="@_htmlLang"
+               min="@_min"
+               max="@_max"
+               value="@_value"
+               required="@Required"
+               disabled="@Disabled"
+               tabindex="-1"
+               aria-hidden="true"
+               @onchange="OnChangedAsync" />
+    </div>
+}
+else
+{
+    <input @ref="_input"
+           id="@InputId"
+           class="jobsy-date-field__input @CssClass"
+           type="@_inputType"
+           lang="@_htmlLang"
+           min="@_min"
+           max="@_max"
+           value="@_value"
+           required="@Required"
+           disabled="@Disabled"
+           aria-invalid="@(ShowInvalid ? "true" : null)"
+           data-testid="@TestId"
+           @onchange="OnChangedAsync" />
+}
 
 @code {
     private ElementReference _input;
@@ -21,6 +55,9 @@
     private string? _min;
     private string? _max;
     private string? _value;
+    private string? _displayText;
+    private string _htmlLang = "nl-NL";
+    private bool _localizedShell;
 
     [Parameter] public JobsyDatePickerKind Kind { get; set; } = JobsyDatePickerKind.Date;
     [Parameter] public JobsyDateConstraint Constraint { get; set; } = JobsyDateConstraint.None;
@@ -36,6 +73,8 @@
     [Parameter] public string CssClass { get; set; } = "";
     [Parameter] public string? TestId { get; set; }
     [Parameter] public string? InputId { get; set; }
+    [Parameter] public string? AriaDescribedBy { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
     [Parameter] public bool Required { get; set; }
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public bool ShowInvalid { get; set; }
@@ -43,6 +82,18 @@
     protected override void OnParametersSet()
     {
         _inputType = Kind == JobsyDatePickerKind.Month ? "month" : "date";
+        _htmlLang = Culture.Language switch
+        {
+            "en" => "en-GB",
+            "pl" => "pl-PL",
+            "ro" => "ro-RO",
+            "ar" => "ar",
+            _ => "nl-NL"
+        };
+        _localizedShell = Kind == JobsyDatePickerKind.Date
+                          && (_htmlLang.StartsWith("nl", StringComparison.OrdinalIgnoreCase)
+                              || string.IsNullOrWhiteSpace(Culture.Language));
+
         var bounds = JobsyDateInputRules.Bounds(Constraint, ReferenceDate);
         _min = Min ?? bounds.Min;
         _max = Max ?? bounds.Max;
@@ -53,6 +104,32 @@
                 JobsyDateInputRules.TryParseDateInput(TextValue, out var d) ? d : null),
             _ => JobsyDateInputRules.ToDateInputValue(Value)
         };
+
+        DateOnly? displayDate = Value;
+        if (displayDate is null && JobsyDateInputRules.TryParseDateInput(_value, out var parsedForDisplay))
+        {
+            displayDate = parsedForDisplay;
+        }
+
+        _displayText = displayDate is { } picked
+            ? JobsyDateInputRules.FormatDisplayDate(picked, Culture.Language)
+            : null;
+        Placeholder ??= Culture.Language switch
+        {
+            "en" => "dd/mm/yyyy",
+            _ => "dd-mm-jjjj"
+        };
+    }
+
+    private async Task OpenPickerAsync()
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        await Js.InvokeVoidAsync("jobsyExtras.ensure");
+        await Js.InvokeVoidAsync("jobsyExtras.openDatePicker", _input);
     }
 
     private async Task OnChangedAsync(ChangeEventArgs e)
@@ -75,6 +152,7 @@
         if (!JobsyDateInputRules.TryParseDateInput(raw, out var parsed))
         {
             Value = null;
+            _displayText = null;
             await ValueChanged.InvokeAsync(null);
             if (TextValueChanged.HasDelegate)
             {
@@ -86,6 +164,7 @@
         }
 
         Value = parsed;
+        _displayText = JobsyDateInputRules.FormatDisplayDate(parsed, Culture.Language);
         await ValueChanged.InvokeAsync(parsed);
         if (TextValueChanged.HasDelegate)
         {

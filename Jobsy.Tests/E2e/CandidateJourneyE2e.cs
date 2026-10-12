@@ -161,6 +161,46 @@ public static class CandidateJourneyE2e
         await page.ScreenshotAsync(new() { Path = path, FullPage = true });
     }
 
+    public static async Task ShotViewportAsync(IPage page, string outputPath)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        await page.ScreenshotAsync(new() { Path = outputPath, FullPage = false });
+    }
+
+    public static async Task<string?> LoginApiBearerAsync(string baseUrl, string email, string password)
+    {
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        using var response = await http.PostAsJsonAsync($"{api}/api/auth/local-login", new { email, password });
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return doc.RootElement.TryGetProperty("sessionToken", out var token) ? token.GetString() : null;
+    }
+
+    public static async Task<Guid?> SeedExternalVacancyFixtureAsync(string baseUrl, string candidateEmail)
+    {
+        if (string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return null;
+        }
+
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var url = $"{api}/api/e2e/fixture/external-vacancy?email={Uri.EscapeDataString(candidateEmail)}";
+        using var response = await http.PostAsync(url, null);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return doc.RootElement.TryGetProperty("id", out var id) && id.TryGetGuid(out var guid) ? guid : null;
+    }
+
     public static async Task<string?> FetchEmailCodeAsync(string baseUrl, string email)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };

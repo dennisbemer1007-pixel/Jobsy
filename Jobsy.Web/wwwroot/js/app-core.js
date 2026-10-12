@@ -999,7 +999,23 @@ window.jobsyExtras = (function () {
         });
     };
 
-    return { ensure: ensure };
+    function openDatePicker(el) {
+        if (!el) {
+            return;
+        }
+        if (typeof el.showPicker === "function") {
+            try {
+                el.showPicker();
+                return;
+            } catch (e) {
+                // fall through
+            }
+        }
+        el.focus();
+        el.click();
+    }
+
+    return { ensure: ensure, openDatePicker: openDatePicker };
 })();
 
 window.jobsyPageVisible = function () {

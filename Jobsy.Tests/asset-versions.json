@@ -40,8 +40,8 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "ce8c238302f6eb657358fbfe38b72e5c05f4ba418cc438d097288fca1ad0afb4",
-    "v": "20261012-02"
+    "sha256": "d1210f974f134556ff6e4ff44a93686b3ed7c05baa158287acb34613c9e8ca5b",
+    "v": "20261012-03"
   },
   "css/features/future-jobs.css": {
     "sha256": "78bf18d1a684c393bd4c61a439436f74488ba496619ab71063a935bee494e3b2",
@@ -96,8 +96,8 @@
     "v": "20261012-01"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "6f6843b0bb64602e2742f0f62ccbcdc17638dbe6751c44e6ec56193a9f94478b",
-    "v": "20261011-01"
+    "sha256": "147eef3eaa5a691801e85fc6ebcae698a31fb89f481d443a7331635c7a1511bb",
+    "v": "20261012-01"
   },
   "css/features/public-pages.css": {
     "sha256": "5517416d9a7ca622dd7a2ab65e0f85828531671b42d58772e42f5900056750c5",
@@ -156,11 +156,11 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "76fd8de0c6a32f3eebb118071e6ec83567ff9f5a127abf3fb0dce8005f177fef",
-    "v": "20261010-02"
+    "sha256": "878816ae5c1fe3f41cf2a9b7238a7d23224c21e0eae28f863f2435319f863274",
+    "v": "20261012-02"
   },
   "js/app-extras.js": {
-    "sha256": "5126183ab8cf5e8c966fc2730fbc09baeb2f59c8b0af864bbd9f123e998e489c",
+    "sha256": "766c6b30c5eb689319309e1b3f6bd29871a9d93e9f57468be1937a2aee6f9823",
     "v": "20260902-bw1"
   },
   "js/blazor-boot.js": {
@@ -232,11 +232,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "2eca3eec54d54f37b36e20020a9e83c523efbed80bbf70a4f844ae02ad28595e",
+    "sha256": "a38bbcd49ffd25195426866f2dde9ccfa8e935849b0eef3668cd10128b405c78",
     "v": "20261010-02"
   },
   "service-worker.published.js": {
-    "sha256": "422bdd1297e50a9b219a4b14cd1919e7ee822aa8c6d8ee3b07d83b214b2a5a55",
+    "sha256": "6dc44801c1317f8735dfb7a946d657fe48b5b15de35fddf0139636db0d57208d",
     "v": "20261012-01"
   }
 }

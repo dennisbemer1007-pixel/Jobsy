@@ -83,6 +83,7 @@ public static class KbE2e
             ViewportSize = new() { Width = width, Height = height },
             HasTouch = width < 900,
             IsMobile = width < 900,
+            Locale = "nl-NL",
             IgnoreHTTPSErrors = true
         };
 

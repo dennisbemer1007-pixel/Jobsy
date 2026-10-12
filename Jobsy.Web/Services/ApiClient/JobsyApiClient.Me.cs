@@ -22,20 +22,16 @@ public sealed partial class JobsyApiClient
     public Task<MeGetResult<MeProfile>> GetMyProfileResultAsync(CancellationToken ct = default)
         => GetMeJsonAsync<MeProfile>("api/me/profile", ct);
 
-    public async Task DownloadMyLobsyCvPdfAsync(IJSRuntime js, CancellationToken ct = default)
+    public Task DownloadMyLobsyCvPdfAsync(IJSRuntime js, CancellationToken ct = default)
     {
-        var response = await _http.GetAsync("api/me/lobsy-cv.pdf", ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Lobsy-CV downloaden mislukt.");
-        }
+        _ = ct;
+        return DownloadMyLobsyCvPdfViaBrowserAsync(js);
+    }
 
-        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
-                       ?? $"Lobsy-CV-{DateTime.UtcNow:yyyyMMdd}.pdf";
-        var base64 = Convert.ToBase64String(bytes);
-        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+    private static async Task DownloadMyLobsyCvPdfViaBrowserAsync(IJSRuntime js)
+    {
+        await js.InvokeVoidAsync("jobsyExtras.ensure");
+        await js.InvokeVoidAsync("jobsyDownload.url", Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.LobsyCvPath);
     }
 
     public async Task<MeProfile?> UploadMyCvAsync(IBrowserFile file, CancellationToken ct = default)

@@ -9,7 +9,7 @@
 <section class="ob-wizard__section" aria-labelledby="ob-avail-presets">
     <h2 id="ob-avail-presets" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityPresetsLegend"]</h2>
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
-    <fieldset>
+    <fieldset class="ob-wizard__presets-field">
         <legend class="visually-hidden">@Culture["Onboarding.AvailabilityPresetsLegend"]</legend>
         <div class="ob-wizard__presets">
             @foreach (var preset in Presets)
@@ -24,6 +24,10 @@
                 </button>
             }
         </div>
+        @if (!HasSelection)
+        {
+            <p class="ob-wizard__hint ob-wizard__preset-required" role="status">@Culture["Onboarding.AvailabilityRequired"]</p>
+        }
     </fieldset>
 </section>
 
@@ -116,9 +120,9 @@
     </section>
 }
 
-@if (!AvailabilityValid)
+@if (!StartDateValid && !Draft.Immediate)
 {
-    <p class="ob-wizard__hint error" role="alert">@AvailabilityError</p>
+    <p class="ob-wizard__hint error ob-wizard__start-date-error" role="alert">@Culture["Onboarding.AvailabilityStartDateInvalid"]</p>
 }
 
 @code {
@@ -145,10 +149,6 @@
                                       && Draft.MaxHours >= Draft.MinHours
                                       && Draft.Availability.Count > 0
                                       && StartDateValid;
-
-    private string AvailabilityError => !StartDateValid
-        ? Culture["Onboarding.AvailabilityStartDateInvalid"]
-        : Culture["Onboarding.AvailabilityRequired"];
 
     private string HoursLabel => Draft.MinHours is not null && Draft.MaxHours is not null
         ? $"{Draft.MinHours:0} – {Draft.MaxHours:0} {Culture["Onboarding.Hours"]}" : "–";
