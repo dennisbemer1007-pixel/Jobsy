@@ -1688,6 +1688,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateOnboardings.RemoveRange(onboardings);
         }
 
+        var proactiveSettings = await _db.CandidateProactiveMatchingSettings
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (proactiveSettings.Count > 0)
+        {
+            _db.CandidateProactiveMatchingSettings.RemoveRange(proactiveSettings);
+        }
+
+        var proactiveSuggestions = await _db.ProactiveMatchSuggestions
+            .Where(s => s.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (proactiveSuggestions.Count > 0)
+        {
+            _db.ProactiveMatchSuggestions.RemoveRange(proactiveSuggestions);
+        }
+
         var roleFits = await _db.CandidateRoleFitChecks
             .Where(r => r.UserId == user.Id)
             .ToListAsync(cancellationToken);

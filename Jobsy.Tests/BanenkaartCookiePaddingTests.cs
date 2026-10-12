@@ -34,7 +34,8 @@ public class BanenkaartCookiePaddingTests
 
         // General cookie rule for other pages must remain.
         var generalSlice = css.Substring(generalIdx, Math.Min(260, css.Length - generalIdx));
-        Assert.Contains("var(--bottom-nav-clearance) + 5.5rem", generalSlice, StringComparison.Ordinal);
+        Assert.Contains("var(--bottom-nav-clearance)", generalSlice, StringComparison.Ordinal);
+        Assert.Contains("var(--cookie-bar-h", generalSlice, StringComparison.Ordinal);
 
         var min = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "app.min.css"));
         Assert.Contains(

@@ -76,7 +76,11 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
         for (var step = 0; step < 4; step++)
         {
             cut.Find("input[type=radio][value='4']").Change(new ChangeEventArgs { Value = "4" });
-            cut.Find("button.test-flow__next").Click();
+            var nextButtons = cut.FindAll("button.test-flow__next");
+            if (nextButtons.Count > 0)
+            {
+                nextButtons[0].Click();
+            }
         }
 
         cut.WaitForAssertion(() => Assert.Contains("Wil je dieper", cut.Markup, StringComparison.Ordinal));

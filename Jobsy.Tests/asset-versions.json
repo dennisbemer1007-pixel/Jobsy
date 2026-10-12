@@ -92,11 +92,15 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "3ca251a32c243e2ea8d16e4f5b05b660097330bf0700d1d85cd035ca58f1d87e",
-    "v": "20261012-01"
+    "sha256": "a88974b883714b1756e364e81e540dea487ff4737992fda08c247fcd5ecb0fd2",
+    "v": "20261012-04"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "147eef3eaa5a691801e85fc6ebcae698a31fb89f481d443a7331635c7a1511bb",
+    "sha256": "00c329cc69c6cf5c3da11d3810f2091896b8f60b46a7b0276534a586fef1d442",
+    "v": "20261012-04"
+  },
+  "css/features/proactive-matching.css": {
+    "sha256": "275d2595b7f4920d7bb4679f1b8af600b729bf537962f6fdd21ce83d8c69e7ef",
     "v": "20261012-01"
   },
   "css/features/public-pages.css": {
