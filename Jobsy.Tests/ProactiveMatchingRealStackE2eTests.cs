@@ -37,6 +37,7 @@ public sealed class ProactiveMatchingRealStackE2eTests
         }
 
         Directory.CreateDirectory(ScreenshotDir);
+        TryRunPrepareSql();
         await using var browser = await KbE2e.LaunchChromiumAsync();
 
         var balanceBefore = await RunMutationFlowAsync(browser, KbE2e.DesktopContext(), baseUrl, "desktop");
@@ -91,6 +92,8 @@ public sealed class ProactiveMatchingRealStackE2eTests
             await suggestion.WaitForAsync();
             await Shot(page, $"04-candidate-match-notification", label);
 
+            await AssertProactiveMatchInAppNotificationAsync(page, label);
+
             var feedbackBtn = page.Locator("button:has-text('Interessant'), button:has-text('Niet interessant')").First;
             if (await feedbackBtn.CountAsync() > 0)
             {
@@ -127,6 +130,17 @@ public sealed class ProactiveMatchingRealStackE2eTests
             shortlistJson.Select(e => e.GetProperty("candidateUserId").GetGuid()));
 
         _ = await TryPostIntroduceViaApiAsync(DemoCandidateId, "Graag kennismaken voor deze vacature (E2E real stack).");
+
+        await context.ClearCookiesAsync();
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, CandidateEmail, Password));
+        await DismissCookieBannerIfVisibleAsync(page);
+        await page.GotoAsync(baseUrl + "/candidate/proactive-matching", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.Locator(".proactive-page").WaitForAsync();
+        await AssertIntroductionInAppNotificationAsync(page, label);
+
+        await context.ClearCookiesAsync();
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, EmployerEmail, Password));
+        await DismissCookieBannerIfVisibleAsync(page);
         await page.ReloadAsync(new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForTimeoutAsync(800);
         await DismissCookieBannerIfVisibleAsync(page);
@@ -191,6 +205,16 @@ public sealed class ProactiveMatchingRealStackE2eTests
         await page.Locator(".proactive-page").WaitForAsync();
         await DismissCookieBannerIfVisibleAsync(page);
         await Shot(page, "01-candidate-proactive-landing", "mobile");
+        await TryNotificationPanelShotAsync(
+            page,
+            "mobile",
+            "11-notifications-proactive-match",
+            "Nieuwe match:");
+        await TryNotificationPanelShotAsync(
+            page,
+            "mobile",
+            "12-notifications-kennismaking",
+            "Nieuw kennismakingsverzoek:");
         await page.GotoAsync(baseUrl + "/candidate/talent-contacts", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForTimeoutAsync(800);
         await DismissCookieBannerIfVisibleAsync(page);
@@ -217,6 +241,116 @@ public sealed class ProactiveMatchingRealStackE2eTests
             $"Token balance unexpected after accept (before={balanceBefore}, after={balanceAfterAccept}).");
     }
 
+    private static async Task AssertProactiveMatchInAppNotificationAsync(IPage page, string label)
+    {
+        var notifs = await FetchCandidateNotificationsAsync();
+        Assert.Contains(
+            notifs,
+            n => (n.GetProperty("title").GetString() ?? "").StartsWith("Nieuwe match:", StringComparison.Ordinal));
+
+        var unread = await FetchCandidateUnreadCountAsync();
+        if (unread > 0)
+        {
+            await page.Locator(".notification-bell__badge").WaitForAsync(new() { Timeout = 45_000 });
+        }
+
+        await OpenNotificationsPanelAndShotAsync(page, label, "11-notifications-proactive-match", "Nieuwe match:");
+    }
+
+    private static async Task AssertIntroductionInAppNotificationAsync(IPage page, string label)
+    {
+        var notifs = await FetchCandidateNotificationsAsync();
+        Assert.Contains(
+            notifs,
+            n => (n.GetProperty("title").GetString() ?? "")
+                .StartsWith("Nieuw kennismakingsverzoek:", StringComparison.Ordinal));
+
+        var unread = await FetchCandidateUnreadCountAsync();
+        if (unread > 0)
+        {
+            await page.Locator(".notification-bell__badge").WaitForAsync(new() { Timeout = 45_000 });
+        }
+
+        await OpenNotificationsPanelAndShotAsync(page, label, "12-notifications-kennismaking", "Nieuw kennismakingsverzoek:");
+    }
+
+    private static async Task TryNotificationPanelShotAsync(
+        IPage page,
+        string label,
+        string shotName,
+        string titlePrefix)
+    {
+        var notifs = await FetchCandidateNotificationsAsync();
+        if (!notifs.Any(n => (n.GetProperty("title").GetString() ?? "").StartsWith(titlePrefix, StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        try
+        {
+            await OpenNotificationsPanelAndShotAsync(page, label, shotName, titlePrefix);
+        }
+        catch (TimeoutException)
+        {
+            if (await page.Locator(".notification-bell__panel").IsVisibleAsync())
+            {
+                await Shot(page, shotName, label);
+                await page.Locator(".notification-bell__close").ClickAsync();
+            }
+        }
+    }
+
+    private static async Task OpenNotificationsPanelAndShotAsync(
+        IPage page,
+        string label,
+        string shotName,
+        string titlePrefix)
+    {
+        await DismissCookieBannerIfVisibleAsync(page);
+
+        await page.Locator(".notification-bell__toggle").ClickAsync();
+        await page.Locator(".notification-bell__panel").WaitForAsync();
+        await page.Locator(".notification-bell__list .notification-bell__item").First.WaitForAsync(new() { Timeout = 45_000 });
+        var title = page.Locator(".notification-bell__item-title").Filter(new() { HasText = titlePrefix }).First;
+        await title.WaitForAsync(new() { Timeout = 45_000 });
+        await Shot(page, shotName, label);
+        await page.Locator(".notification-bell__close").ClickAsync();
+        await page.WaitForTimeoutAsync(300);
+    }
+
+    private static async Task<List<JsonElement>> FetchCandidateNotificationsAsync()
+    {
+        var json = await GetCandidateApiJsonAsync("/api/notifications?take=50");
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.EnumerateArray().Select(e => e.Clone()).ToList();
+    }
+
+    private static async Task<int> FetchCandidateUnreadCountAsync()
+    {
+        var json = await GetCandidateApiJsonAsync("/api/notifications/unread-count");
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.TryGetProperty("count", out var c)
+            ? c.GetInt32()
+            : doc.RootElement.GetProperty("Count").GetInt32();
+    }
+
+    private static async Task<string> GetCandidateApiJsonAsync(string path)
+    {
+        using var http = CreateCandidateApiClient();
+        using var response = await http.GetAsync("http://127.0.0.1:5200" + path);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.True(response.IsSuccessStatusCode, body);
+        return body;
+    }
+
+    private static HttpClient CreateCandidateApiClient()
+    {
+        var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        http.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", JobsyTestAuth.Mint(DemoCandidateId));
+        return http;
+    }
+
     private static async Task DismissCookieBannerIfVisibleAsync(IPage page)
     {
         var accept = page.Locator(".cookie-consent button[data-consent=analytics], .cookie-consent button:has-text('Accepteer cookies')").First;
@@ -231,11 +365,19 @@ public sealed class ProactiveMatchingRealStackE2eTests
 
     private static async Task Shot(IPage page, string name, string viewport)
     {
-        await page.ScreenshotAsync(new()
+        var path = Path.Combine(ScreenshotDir, $"{name}-{viewport}.png");
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            Path = Path.Combine(ScreenshotDir, $"{name}-{viewport}.png"),
-            FullPage = false
-        });
+            try
+            {
+                await page.ScreenshotAsync(new() { Path = path, FullPage = false });
+                return;
+            }
+            catch (IOException) when (attempt < 2)
+            {
+                await Task.Delay(250);
+            }
+        }
     }
 
     private static async Task TriggerDailyMatchingJobAsync()
@@ -313,6 +455,35 @@ public sealed class ProactiveMatchingRealStackE2eTests
         http.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", JobsyTestAuth.Mint(EmployerUserId));
         return http;
+    }
+
+    private static void TryRunPrepareSql()
+    {
+        var script = Path.Combine(FindRepoRoot(), "scripts/prepare-proactive-real-e2e.sql");
+        if (!File.Exists(script))
+        {
+            return;
+        }
+
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "psql",
+                Arguments = $"-h 127.0.0.1 -U postgres -d JobsyCi -f \"{script}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            psi.Environment["PGPASSWORD"] =
+                Environment.GetEnvironmentVariable("PGPASSWORD") ?? "postgres";
+            using var proc = System.Diagnostics.Process.Start(psi);
+            proc?.WaitForExit(15_000);
+        }
+        catch
+        {
+            // Best-effort for local/CI JobsyCi; soft-skip when psql unavailable.
+        }
     }
 
     private static string FindRepoRoot()

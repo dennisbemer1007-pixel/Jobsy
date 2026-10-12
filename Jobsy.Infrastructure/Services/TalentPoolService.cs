@@ -385,12 +385,12 @@ public sealed class TalentPoolService : ITalentPoolService
             || (await _flags.GetAsync(cancellationToken)).EmployersEnabled;
         if (employersOn)
         {
-            var companyName = vacancy.Company?.Name ?? "Een werkgever";
+            var companyName = vacancy.Company?.Name ?? "werkgever";
             await _notifications.CreateAsync(
                 new NotificationCreateRequest(
                     candidate.Id,
-                    $"{companyName} wil kennismaken",
-                    "Wil jij ook? Je deelt pas gegevens als je accepteert.",
+                    ProactiveMatchingRules.FormatInAppIntroductionTitle(vacancy.Title, companyName),
+                    "Reageer binnen 48 uur — je deelt pas gegevens als je accepteert.",
                     "TalentContact",
                     DeepLink: "/candidate/talent-contacts",
                     ActionLabel: "Bekijk verzoek",

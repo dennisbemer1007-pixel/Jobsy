@@ -41,7 +41,14 @@ public sealed record ProactiveMatchingSettingsDto(
     bool HasConsent,
     DateTime? ConsentAcceptedAtUtc,
     int MinScorePercent,
-    int MaxNotificationsPerWeek);
+    int MaxNotificationsPerWeek,
+    int SameVacancyCooldownDays);
+
+public readonly record struct ProactiveDeliveryHistoryEntry(
+    string Title,
+    string? CompanyLabel,
+    DateTime DeliveredAtUtc,
+    ProactiveMatchFeedback? Feedback);
 
 public sealed record ProactiveMatchingSettingsUpdate(
     bool? Enabled = null,
