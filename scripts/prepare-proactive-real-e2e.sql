@@ -124,4 +124,23 @@ SELECT
 WHERE NOT EXISTS (
     SELECT 1 FROM "CandidateCompetencies" WHERE "UserId" = 'aaaaaaaa-3333-3333-3333-333333333333');
 
+-- E2E herhaalbaar: schone proactieve tips + inbox voor demo-kandidaat
+DELETE FROM "ProactiveMatchSuggestions"
+WHERE "CandidateUserId" = 'aaaaaaaa-1111-1111-1111-111111111111';
+
+DELETE FROM "UserNotifications"
+WHERE "UserId" = 'aaaaaaaa-1111-1111-1111-111111111111'
+  AND "Category" IN ('ProactiveMatch', 'TalentContact');
+
+DELETE FROM "TalentContactRequests"
+WHERE "CandidateUserId" = 'aaaaaaaa-1111-1111-1111-111111111111'
+  AND "CompanyId" = '11111111-1111-1111-1111-111111111111';
+
+UPDATE "CandidateProactiveMatchingSettings"
+SET "LastProcessedAtUtc" = NULL,
+    "Enabled" = true,
+    "ConsentAcceptedAtUtc" = COALESCE("ConsentAcceptedAtUtc", NOW() AT TIME ZONE 'UTC'),
+    "ConsentVersion" = COALESCE("ConsentVersion", 'proactive-matching-2026-01')
+WHERE "UserId" = 'aaaaaaaa-1111-1111-1111-111111111111';
+
 COMMIT;

@@ -328,14 +328,16 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         };
         _db.ProactiveMatchSuggestions.Add(suggestion);
 
+        var displayTitle = CleanDisplayTitle(title);
+        var company = string.IsNullOrWhiteSpace(companyLabel) ? "werkgever" : companyLabel.Trim();
         var notification = await _notifications.CreateAsync(
             new NotificationCreateRequest(
                 candidateUserId,
-                "Lobsy zoekt voor je",
-                $"{title} — {rationale}",
+                ProactiveMatchingRules.FormatInAppNewMatchTitle(displayTitle, company, matchPercent),
+                rationale,
                 "ProactiveMatch",
                 DeepLink: "/candidate/proactive-matching",
-                ActionLabel: "Bekijk tip",
+                ActionLabel: "Bekijk match",
                 ActionUrl: "/candidate/proactive-matching",
                 RelatedEntityType: nameof(ProactiveMatchSuggestion),
                 RelatedEntityId: suggestion.Id),
