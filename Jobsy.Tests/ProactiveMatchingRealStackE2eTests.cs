@@ -137,6 +137,16 @@ public sealed class ProactiveMatchingRealStackE2eTests
         Assert.Contains(
             DemoCandidateId,
             shortlistJson.Select(e => e.GetProperty("candidateUserId").GetGuid()));
+        foreach (var entry in shortlistJson)
+        {
+            Assert.True(
+                entry.GetProperty("matchPercent").GetInt32() >= 80,
+                "Shortlist must only include matches at or above the configured minimum (80%).");
+            var availability = entry.GetProperty("availabilitySummary").GetString() ?? "";
+            Assert.False(
+                availability.Contains("onbekend", StringComparison.OrdinalIgnoreCase),
+                "OpenForWork shortlist entries must show real availability.");
+        }
 
         _ = await TryPostIntroduceViaApiAsync(DemoCandidateId, "Graag kennismaken voor deze vacature (E2E real stack).");
 
