@@ -65,7 +65,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.HonestAdviceEnabled ?? false,
                 dto?.FutureJobsForYouEnabled ?? false,
                 dto?.EmployerPhase2Enabled ?? false,
-                dto?.CandidateExternalVacanciesEnabled ?? false);
+                dto?.CandidateExternalVacanciesEnabled ?? false,
+                dto?.ProactiveMatchingEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -129,5 +130,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("candidateExternalVacanciesEnabled")]
         public bool CandidateExternalVacanciesEnabled { get; set; }
+
+        [JsonPropertyName("proactiveMatchingEnabled")]
+        public bool ProactiveMatchingEnabled { get; set; }
     }
 }

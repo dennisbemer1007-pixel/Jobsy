@@ -3,11 +3,13 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]
+@using Jobsy.Web.Components.Werkgever.Sections
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Media
@@ -714,6 +716,11 @@
             }
         </form>
 
+        @if (_proactiveMatchingOn && _editVacancyId is Guid shortlistVacancyId)
+        {
+            <ProactiveVacancyShortlistSection VacancyId="shortlistVacancyId" />
+        }
+
         <aside class="vacancy-preview" aria-label="Voorbeeldtegel">
             <h2>Voorbeeld</h2>
             <article class="vacancy-card vacancy-card--preview">
@@ -862,6 +869,7 @@
     private string? _moderationWarning;
     private string? _moderationSuggestion;
     private Guid? _editVacancyId;
+    private bool _proactiveMatchingOn;
     private DateOnly? _draftStartDate;
     private DateOnly? _draftEndDate;
     private Guid _companyId;
@@ -1002,6 +1010,16 @@
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _proactiveMatchingOn = flags.ProactiveMatchingEnabled;
+        }
+        catch (Exception)
+        {
+            _proactiveMatchingOn = false;
+        }
+
         var profile = await Api.GetMyProfileAsync();
         var auth = await AuthState.GetAuthenticationStateAsync();
         _isIntermediary = string.Equals(profile?.Role, nameof(UserRole.Intermediary), StringComparison.OrdinalIgnoreCase)

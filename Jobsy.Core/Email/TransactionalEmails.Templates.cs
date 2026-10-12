@@ -484,4 +484,31 @@ public static partial class TransactionalEmails
             eyebrow: new EmailEyebrow(S(c, "Email.ReferenceAsk.Eyebrow"), EmailTone.Sky),
             culture: c), baseUrl);
     }
+
+    public static ComposedEmail ProactiveMatchSuggestion(
+        string vacancyTitle,
+        string companyLabel,
+        string rationale,
+        int matchPercent,
+        EmailCulture? culture = null,
+        string? baseUrl = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var links = Links(baseUrl);
+        var subject = Sf(c, "Email.ProactiveMatch.Subject", EmailBidi.Isolate(c, vacancyTitle));
+        var preheader = Sf(c, "Email.ProactiveMatch.Preheader", matchPercent.ToString());
+        return Finish(Doc(
+            "ProactiveMatchSuggestion",
+            subject,
+            preheader,
+            S(c, "Email.ProactiveMatch.Heading"),
+            [
+                P(T(c, "Email.ProactiveMatch.P1", EmailArg.Bold(vacancyTitle), EmailArg.Plain(companyLabel))),
+                P(T(c, "Email.ProactiveMatch.Why", EmailArg.Plain(rationale))),
+                P(Sf(c, "Email.ProactiveMatch.Score", matchPercent.ToString()))
+            ],
+            Button(S(c, "Email.ProactiveMatch.Cta"), links.CandidateProactiveMatching),
+            eyebrow: new EmailEyebrow(S(c, "Email.ProactiveMatch.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
+    }
 }

@@ -469,6 +469,15 @@ internal static class EmailStringsPl
         ["Email.VacancyEngagementReminder.Tip.NotShared"] = "Share the vacancy actively. That increases repeat visits.",
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "There is interest, but no applications yet. Make requirements more realistic or clarify the wage.",
 
+        ["Email.ProactiveMatch.Subject"] = "Lobsy tip: {0}",
+        ["Email.ProactiveMatch.Preheader"] = "Match {0}% — zobacz, dlaczego to pasuje",
+        ["Email.ProactiveMatch.Heading"] = "Lobsy szuka dla Ciebie",
+        ["Email.ProactiveMatch.Eyebrow"] = "Nowe dopasowanie",
+        ["Email.ProactiveMatch.P1"] = "Widzimy ofertę, która do Ciebie pasuje: {0} w {1}.",
+        ["Email.ProactiveMatch.Why"] = "Dlaczego to pasuje: {0}",
+        ["Email.ProactiveMatch.Score"] = "Wynik dopasowania: {0}%",
+        ["Email.ProactiveMatch.Cta"] = "Zobacz tip",
+
         ["Email.DeepTestReceipt.Subject"] = "Your extended test is ready",
         ["Email.DeepTestReceipt.Preheader"] = "Paid: you can start with question 1",
         ["Email.DeepTestReceipt.Heading"] = "Paid. You can start",

@@ -22,7 +22,8 @@ public sealed record FeatureFlagSnapshot(
     bool HonestAdviceEnabled = false,
     bool FutureJobsForYouEnabled = false,
     bool EmployerPhase2Enabled = false,
-    bool CandidateExternalVacanciesEnabled = false)
+    bool CandidateExternalVacanciesEnabled = false,
+    bool ProactiveMatchingEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -40,6 +41,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.FutureJobsForYou => FutureJobsForYouEnabled,
         PlatformFeature.EmployerPhase2 => EmployersEnabled && EmployerPhase2Enabled,
         PlatformFeature.CandidateExternalVacancies => CandidateExternalVacanciesEnabled,
+        PlatformFeature.ProactiveMatching => ProactiveMatchingEnabled,
         _ => false
     };
 }

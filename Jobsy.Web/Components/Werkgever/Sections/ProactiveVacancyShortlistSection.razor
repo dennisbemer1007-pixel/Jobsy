@@ -1,0 +1,164 @@
+@namespace Jobsy.Web.Components.Werkgever.Sections
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Rules
+@using Microsoft.AspNetCore.Components.Authorization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
+
+<section class="proactive-shortlist" aria-labelledby="proactive-shortlist-title" data-testid="proactive-shortlist">
+    <h2 id="proactive-shortlist-title">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
+    <p class="proactive-shortlist__lead">@Culture["ProactiveMatching.Employer.Shortlist.Lead"]</p>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message" role="status">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message" aria-busy="true">@Culture["Common.Loading"]</p>
+    }
+    else if (_entries.Count == 0)
+    {
+        <p class="state-message">@Culture["ProactiveMatching.Employer.Shortlist.Empty"]</p>
+    }
+    else
+    {
+        <div class="proactive-shortlist__grid">
+            @foreach (var entry in _entries)
+            {
+                <article class="proactive-shortlist-card" data-testid="proactive-shortlist-card">
+                    <div class="proactive-shortlist-card__head">
+                        <span class="proactive-shortlist-card__rank">
+                            @Culture.Format("ProactiveMatching.Employer.Shortlist.Rank", entry.Rank)
+                        </span>
+                        <span class="proactive-shortlist-card__score">
+                            @Culture.Format("ProactiveMatching.Suggestions.Match", entry.MatchPercent)
+                        </span>
+                    </div>
+                    <p><strong>@(entry.RegionLabel ?? "—")</strong>
+                        @(entry.TravelMinutes is int m ? $" · {m} min" : "")</p>
+                    <p>@(entry.AvailabilitySummary ?? Culture["Talent.AvailabilityUnknown"])</p>
+                    @if (entry.MatchTags.Count > 0)
+                    {
+                        <p class="profile-address__hint">@string.Join(", ", entry.MatchTags)</p>
+                    }
+                    @if (_canMutate)
+                    {
+                        @if (_introduceId == entry.CandidateUserId)
+                        {
+                            <label>
+                                @Culture["ProactiveMatching.Employer.Shortlist.Message"]
+                                <textarea @bind="_introMessage" maxlength="2000"></textarea>
+                            </label>
+                            <button class="login-submit" type="button" disabled="@_busy" @onclick="() => IntroduceAsync(entry.CandidateUserId)">
+                                @Culture["ProactiveMatching.Employer.Shortlist.Introduce"]
+                            </button>
+                            <button class="btn btn-secondary" type="button" disabled="@_busy" @onclick="CancelIntroduce">
+                                @Culture["Discovery.Cancel"]
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="login-submit" type="button" disabled="@_busy" @onclick="() => StartIntroduce(entry.CandidateUserId)">
+                                @Culture["ProactiveMatching.Employer.Shortlist.Introduce"]
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <p class="profile-address__hint">@Culture["ProactiveMatching.Employer.Shortlist.ReadOnly"]</p>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public Guid VacancyId { get; set; }
+
+    private List<ProactiveVacancyShortlistEntryDto> _entries = [];
+    private bool _loading = true;
+    private bool _busy;
+    private bool _canMutate = true;
+    private Guid? _introduceId;
+    private string _introMessage = "";
+    private string? _message;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _message = null;
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            _canMutate = ResolveCanMutate(auth.User);
+            _entries = (await Api.GetProactiveVacancyShortlistAsync(VacancyId))?.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _entries = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void StartIntroduce(Guid candidateUserId)
+    {
+        _introduceId = candidateUserId;
+        _introMessage = "";
+        _message = null;
+    }
+
+    private void CancelIntroduce()
+    {
+        _introduceId = null;
+        _introMessage = "";
+    }
+
+    private async Task IntroduceAsync(Guid candidateUserId)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.IntroduceProactiveCandidateAsync(VacancyId, candidateUserId, _introMessage.Trim());
+            _message = Culture["ProactiveMatching.Employer.Shortlist.IntroduceSuccess"];
+            _introduceId = null;
+            _introMessage = "";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static bool ResolveCanMutate(System.Security.Claims.ClaimsPrincipal user)
+    {
+        foreach (UserRole role in Enum.GetValues<UserRole>())
+        {
+            if (RoleClaimMatching.HasRole(user, role.ToString()) && JobsyRoles.CanMutateEmployerData(role))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

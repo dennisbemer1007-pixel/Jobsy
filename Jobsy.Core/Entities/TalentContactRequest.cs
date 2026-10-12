@@ -21,6 +21,15 @@ public class TalentContactRequest
     public Guid CandidateUserId { get; set; }
     public User CandidateUser { get; set; } = null!;
 
+    /// <summary>When set, this is a vacancy-specific kennismakingsverzoek (proactive matching).</summary>
+    public Guid? VacancyId { get; set; }
+    public Vacancy? Vacancy { get; set; }
+
+    /// <summary>
+    /// When true, no token is spent on create; exactly one token is charged when the candidate accepts.
+    /// </summary>
+    public bool TokenChargeOnAccept { get; set; }
+
     public TalentContactStatus Status { get; set; } = TalentContactStatus.Pending;
 
     /// <summary>Secure message / invitation shown to the candidate.</summary>

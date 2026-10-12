@@ -59,6 +59,8 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
     public DbSet<OccupationDayInLife> OccupationDayInLives => Set<OccupationDayInLife>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
+    public DbSet<CandidateProactiveMatchingSettings> CandidateProactiveMatchingSettings => Set<CandidateProactiveMatchingSettings>();
+    public DbSet<ProactiveMatchSuggestion> ProactiveMatchSuggestions => Set<ProactiveMatchSuggestion>();
     public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
     public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
     public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
@@ -1052,6 +1054,40 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<CandidateProactiveMatchingSettings>(entity =>
+        {
+            entity.ToTable("CandidateProactiveMatchingSettings");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.ConsentVersion).HasMaxLength(64);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProactiveMatchSuggestion>(entity =>
+        {
+            entity.ToTable("ProactiveMatchSuggestions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Rationale).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.CompanyLabel).HasMaxLength(500);
+            entity.HasIndex(e => new { e.CandidateUserId, e.DeliveredAtUtc });
+            entity.HasIndex(e => e.VacancyId);
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.ExternalVacancy)
+                .WithMany()
+                .HasForeignKey(e => e.ExternalVacancyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         modelBuilder.Entity<CandidateVacancyCultureFit>(entity =>
         {
             entity.ToTable("CandidateVacancyCultureFits");
@@ -1223,6 +1259,10 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.RefundTransaction)
                 .WithMany()
                 .HasForeignKey(e => e.RefundTransactionId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

@@ -172,5 +172,17 @@ public static class UiStringsFeatureFlags
             "Kandydaci wklejają linki z innych portali i aplikują przez Lobsy.",
             "Candidații lipește linkuri de pe alte site-uri și aplică prin Lobsy.",
             "المرشحون يلصقون روابط من مواقع أخرى ويتقدمون عبر لوبسي.");
+        Add("AdminSettings.ProactiveMatching.Enabled.Title",
+            "Proactieve matching",
+            "Proactive matching",
+            "Proaktywne dopasowanie",
+            "Potrivire proactivă",
+            "المطابقة الاستباقية");
+        Add("AdminSettings.ProactiveMatching.Enabled.Desc",
+            "Lobsy zoekt voor je, werkgever-shortlist en kennismakingsverzoeken. Standaard uit.",
+            "Lobsy searches for you, employer shortlists and introduction requests. Default off.",
+            "Lobsy szuka dla Ciebie, shortlisty i prośby o kontakt. Domyślnie wył.",
+            "Lobsy caută pentru tine, shortlist-uri și cereri de cunoaștere. Implicit oprit.",
+            "لوبسي يبحث لك، قوائم أصحاب العمل وطلبات التعارف. متوقف افتراضياً.");
     }
 }

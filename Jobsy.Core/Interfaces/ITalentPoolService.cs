@@ -18,6 +18,17 @@ public interface ITalentPoolService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Proactive kennismakingsverzoek for a vacancy: no token until the candidate accepts.
+    /// </summary>
+    Task<TalentContactRequestDto> SendVacancyIntroductionAsync(
+        Guid companyId,
+        Guid employerUserId,
+        Guid vacancyId,
+        Guid candidateUserId,
+        string message,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Candidate answer. Accepting shares the PII; declining stores why (D14).
     /// </summary>
     Task<TalentContactRequestDto> CandidateRespondAsync(

@@ -134,6 +134,9 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool CandidateExternalVacanciesEnabled { get; set; }
 
+    /// <summary>Proactive matching (Lobsy zoekt voor je + werkgever-shortlist). Default false.</summary>
+    public bool ProactiveMatchingEnabled { get; set; }
+
     /// <summary>
     /// When true, every candidate unlocks the uitgebreide analyse without Mollie.
     /// Default true so acceptatie is free after deploy. An admin can turn it off.
