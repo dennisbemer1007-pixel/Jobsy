@@ -11,9 +11,9 @@
     var targetCount = TargetCount;
     var index = Math.Clamp(_index, 0, Math.Max(0, Ordered.Count - 1));
     var question = Ordered.Count > 0 ? Ordered[index] : null;
-    var answered = question is not null && Answers.ContainsKey(question.Id);
+    var answered = question is not null && FlowAnswers.ContainsKey(question.Id);
     var isLast = Ordered.Count > 0 && index >= targetCount - 1;
-    var answeredCount = Answers.Count;
+    var answeredCount = FlowAnswers.Count;
     var reached = TestDepthRules.Reached(Kind, answeredCount);
     var nextLevel = TestDepthRules.Next(Kind, answeredCount);
     var blocks = targetCount > 50 ? 25 : targetCount;
@@ -86,7 +86,7 @@
         }
 
         <LikertRadioGroup QuestionId="question.Id"
-                          Value="@(answered ? Answers[question.Id] : null)"
+                          Value="@(answered ? FlowAnswers[question.Id] : null)"
                           Interactive="true"
                           InputPrefix="@InputPrefix"
                           StatementId="@($"tf-stmt-{question.Id}")"
@@ -171,17 +171,21 @@
     private readonly HashSet<TestDepthLevel> _firedLevels = [];
     private CancellationTokenSource? _advanceCts;
     private int _advanceGeneration;
+    /// <summary>Merged parameter answers plus in-flight selections (same dict ref may not trigger param refresh).</summary>
+    private readonly Dictionary<int, int> _flowAnswers = new();
+    private IReadOnlyDictionary<int, int> FlowAnswers => _flowAnswers;
     private IReadOnlyList<FlowQuestion> Ordered => Questions;
 
     private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
 
     protected override void OnInitialized()
     {
+        MergeParameterAnswers();
         _index = Math.Clamp(StartAt, 0, Math.Max(0, TargetCount - 1));
         // Prefer first unanswered within target.
         for (var i = 0; i < TargetCount; i++)
         {
-            if (!Answers.ContainsKey(Ordered[i].Id))
+            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
             {
                 _index = i;
                 break;
@@ -267,7 +271,7 @@
         for (var i = _index - 1; i >= 0; i--)
         {
             var q = Ordered[i];
-            if (Answers.TryGetValue(q.Id, out var v))
+            if (_flowAnswers.TryGetValue(q.Id, out var v))
             {
                 yield return (q, v, i);
             }
@@ -296,6 +300,9 @@
         var generation = _advanceGeneration;
 
         var question = Ordered[answeredIndex];
+        _flowAnswers[question.Id] = value;
+        await InvokeAsync(StateHasChanged);
+
         if (Autosave is not null)
         {
             await Autosave.SetAnswerAsync(question.Id, value);
@@ -304,8 +311,6 @@
         {
             await OnAnswer.InvokeAsync((question.Id, value));
         }
-
-        await InvokeAsync(StateHasChanged);
         await OnChanged.InvokeAsync();
         await FireLevelsAsync();
         if (generation != _advanceGeneration || _index != answeredIndex) return;
@@ -371,7 +376,7 @@
         var count = TargetCount;
         for (var i = 0; i < count; i++)
         {
-            if (!Answers.ContainsKey(Ordered[i].Id))
+            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
             {
                 return i;
             }
@@ -380,8 +385,26 @@
         return null;
     }
 
+    private void MergeParameterAnswers()
+    {
+        foreach (var (id, val) in Answers)
+        {
+            _flowAnswers[id] = val;
+        }
+
+        if (Autosave is not null)
+        {
+            foreach (var (id, val) in Autosave.Answers)
+            {
+                _flowAnswers[id] = val;
+            }
+        }
+    }
+
     protected override void OnParametersSet()
     {
+        MergeParameterAnswers();
+
         // Apply an external jump only when it changes. Re-applying the same index
         // on every render put the candidate back on the last question after Next
         // had moved them to the first unanswered one.
@@ -400,7 +423,7 @@
 
     private async Task FireLevelsAsync()
     {
-        var count = Answers.Count;
+        var count = _flowAnswers.Count;
         foreach (var band in TestDepthRules.Levels(Kind))
         {
             if (count >= band.Count && _firedLevels.Add(band.Level) && OnLevelReached.HasDelegate)
@@ -440,7 +463,7 @@
         if (Ordered.Count == 0 || TargetCount <= 0) return;
         _index = Math.Clamp(_index, 0, TargetCount - 1);
         var question = Ordered[_index];
-        if (!Answers.ContainsKey(question.Id)) return;
+        if (!_flowAnswers.ContainsKey(question.Id)) return;
 
         if (_index >= TargetCount - 1)
         {
@@ -465,6 +488,7 @@
 
         _index++;
         _focusRequest = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LaterAsync()

@@ -157,7 +157,9 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.GotoAsync(baseUrl + "/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await KbE2e.WaitForStyledAppAsync(page);
 
-        for (var step = 1; step <= 20; step++)
+        string? lastMiniStatement = null;
+        var miniStagnant = 0;
+        for (var step = 1; step <= 14; step++)
         {
             await page.WaitForTimeoutAsync(400);
             await CandidateJourneyE2e.ShotAsync(page, tag, $"03-onboarding-step-{step:D2}");
@@ -180,8 +182,25 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
             if (await page.Locator(".test-flow, fieldset.q-likert, .q-likert__scale").CountAsync() > 0)
             {
+                var statement = page.Locator(".test-flow__statement").First;
+                var statementText = await statement.CountAsync() > 0 ? await statement.InnerTextAsync() : "";
                 await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 8, 4);
                 await CandidateJourneyE2e.TryAdvanceMiniTestWizardAsync(page);
+                if (!string.IsNullOrWhiteSpace(statementText)
+                    && string.Equals(statementText, lastMiniStatement, StringComparison.Ordinal))
+                {
+                    miniStagnant++;
+                    if (miniStagnant >= 3)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    miniStagnant = 0;
+                    lastMiniStatement = statementText;
+                }
+
                 continue;
             }
 

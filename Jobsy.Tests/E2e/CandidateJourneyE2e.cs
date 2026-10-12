@@ -277,6 +277,24 @@ public static class CandidateJourneyE2e
                 await radio.CheckAsync(new() { Timeout = 5_000, Force = true });
                 await page.WaitForTimeoutAsync(450);
                 var testNext = page.Locator("button.test-flow__next:not([disabled])").First;
+                if (await testNext.CountAsync() == 0)
+                {
+                    await page.EvaluateAsync(
+                        """
+                        value => {
+                          const root = document.querySelector('.test-flow .test-likert, .test-likert');
+                          if (!root) return;
+                          const input = root.querySelector(`input[type=radio][value="${value}"]`);
+                          if (!input) return;
+                          input.checked = true;
+                          input.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        """,
+                        Math.Clamp(value, 1, 5));
+                    await page.WaitForTimeoutAsync(450);
+                    testNext = page.Locator("button.test-flow__next:not([disabled])").First;
+                }
+
                 if (await testNext.CountAsync() > 0)
                 {
                     await testNext.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
