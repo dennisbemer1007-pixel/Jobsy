@@ -1,5 +1,5 @@
 using System.Text.Json;
-using System.Text.RegularExpressions;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -203,16 +203,44 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                 continue;
             }
 
-            var already = await _db.ProactiveMatchSuggestions.AsNoTracking()
+            var priorSuggestions = await _db.ProactiveMatchSuggestions.AsNoTracking()
                 .Where(s => s.CandidateUserId == settings.UserId)
-                .Select(s => new { s.VacancyId, s.ExternalVacancyId })
+                .Select(s => new
+                {
+                    s.VacancyId,
+                    s.ExternalVacancyId,
+                    s.Title,
+                    s.CompanyLabel,
+                    s.DeliveredAtUtc,
+                    s.Feedback
+                })
                 .ToListAsync(cancellationToken);
-            var knownVacancyIds = already.Where(a => a.VacancyId is not null).Select(a => a.VacancyId!.Value).ToHashSet();
-            var knownExternalIds = already.Where(a => a.ExternalVacancyId is not null).Select(a => a.ExternalVacancyId!.Value).ToHashSet();
+            var deliveryHistory = priorSuggestions
+                .Select(s => new ProactiveDeliveryHistoryEntry(
+                    s.Title,
+                    s.CompanyLabel,
+                    s.DeliveredAtUtc,
+                    s.Feedback))
+                .ToList();
+            var knownVacancyIds = priorSuggestions
+                .Where(a => a.VacancyId is not null)
+                .Select(a => a.VacancyId!.Value)
+                .ToHashSet();
+            var knownExternalIds = priorSuggestions
+                .Where(a => a.ExternalVacancyId is not null)
+                .Select(a => a.ExternalVacancyId!.Value)
+                .ToHashSet();
+            var cooldownDays = ProactiveMatchingRules.ClampSameVacancyCooldownDays(_options.SameVacancyCooldownDays);
 
             var dislikeCodes = await LoadDislikeCodesAsync(settings.UserId, cancellationToken);
             var batch = activeVacancies
                 .Where(v => !knownVacancyIds.Contains(v.Id))
+                .Where(v => !ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+                    deliveryHistory,
+                    v.Title,
+                    v.CompanyName,
+                    now,
+                    cooldownDays))
                 .Select(v => (v, (int?)null))
                 .ToList();
 
@@ -248,7 +276,17 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                     continue;
                 }
 
-                var rationale = BuildDeliveryRationale(item.Match);
+                if (ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+                        deliveryHistory,
+                        item.Record.Title,
+                        item.Record.CompanyName,
+                        now,
+                        cooldownDays))
+                {
+                    continue;
+                }
+
+                var rationale = ProactiveMatchingRules.FormatProactiveMatchReason(item.Match);
 
                 await DeliverAsync(
                     settings.UserId,
@@ -259,6 +297,11 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                     item.Match.TotalPercent,
                     rationale,
                     cancellationToken);
+                deliveryHistory.Add(new ProactiveDeliveryHistoryEntry(
+                    item.Record.Title,
+                    item.Record.CompanyName,
+                    now,
+                    null));
                 sent++;
             }
 
@@ -279,6 +322,16 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                         break;
                     }
 
+                    if (ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+                            deliveryHistory,
+                            ext.Title,
+                            ext.CompanyName,
+                            now,
+                            cooldownDays))
+                    {
+                        continue;
+                    }
+
                     var rationale = "Deze externe vacature sluit aan bij wat je eerder hebt opgeslagen.";
                     await DeliverAsync(
                         settings.UserId,
@@ -289,6 +342,11 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                         minScore,
                         rationale,
                         cancellationToken);
+                    deliveryHistory.Add(new ProactiveDeliveryHistoryEntry(
+                        ext.Title,
+                        ext.CompanyName,
+                        now,
+                        null));
                     sent++;
                 }
             }
@@ -299,6 +357,164 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         if (sent > 0)
         {
             _logger.LogInformation("Proactive matching delivered {Count} suggestions.", sent);
+        }
+
+        return sent;
+    }
+
+    public async Task<int> RunInstantMatchingForVacancyAsync(
+        Guid vacancyId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _flags.IsEnabledAsync(PlatformFeature.ProactiveMatching, cancellationToken))
+        {
+            return 0;
+        }
+
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId, cancellationToken);
+        if (vacancy is null || vacancy.Status != VacancyStatus.Active)
+        {
+            return 0;
+        }
+
+        var record = VacancyDiscoveryIndex.ToRecord(vacancy);
+        var minScore = ProactiveMatchingRules.ClampMinScore(_options.MinScorePercent);
+        var maxPerWeek = ProactiveMatchingRules.ClampMaxPerWeek(_options.MaxNotificationsPerWeek);
+        var weekStart = ProactiveMatchingRules.WeekStartUtc(DateTime.UtcNow);
+        var now = DateTime.UtcNow;
+        var cooldownDays = ProactiveMatchingRules.ClampSameVacancyCooldownDays(_options.SameVacancyCooldownDays);
+
+        var settingsRows = await _db.CandidateProactiveMatchingSettings.AsNoTracking()
+            .Where(s => s.Enabled)
+            .ToListAsync(cancellationToken);
+        if (settingsRows.Count == 0)
+        {
+            return 0;
+        }
+
+        var userIds = settingsRows.Select(s => s.UserId).Distinct().ToList();
+        var users = await _db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+        var userById = users.ToDictionary(u => u.Id);
+        var eligibleSettings = settingsRows
+            .Where(s =>
+            {
+                if (!ProactiveMatchingRules.HasValidConsent(s.ConsentAcceptedAtUtc, s.ConsentVersion))
+                {
+                    return false;
+                }
+
+                if (s.PausedUntilUtc is DateTime pause && pause > now)
+                {
+                    return false;
+                }
+
+                return userById.TryGetValue(s.UserId, out var user)
+                       && ProactiveTalentAvailabilityRules.IsEligibleForEmployerShortlist(user);
+            })
+            .ToList();
+
+        if (eligibleSettings.Count == 0)
+        {
+            return 0;
+        }
+
+        var sent = 0;
+        var batch = new List<(VacancyDiscoveryRecord Record, int? TravelMinutes)> { (record, null) };
+
+        foreach (var settings in eligibleSettings)
+        {
+            var deliveredThisWeek = await _db.ProactiveMatchSuggestions.CountAsync(
+                s => s.CandidateUserId == settings.UserId && s.DeliveredAtUtc >= weekStart,
+                cancellationToken);
+            if (deliveredThisWeek >= maxPerWeek)
+            {
+                continue;
+            }
+
+            var priorSuggestions = await _db.ProactiveMatchSuggestions.AsNoTracking()
+                .Where(s => s.CandidateUserId == settings.UserId)
+                .Select(s => new
+                {
+                    s.VacancyId,
+                    s.Title,
+                    s.CompanyLabel,
+                    s.DeliveredAtUtc,
+                    s.Feedback
+                })
+                .ToListAsync(cancellationToken);
+
+            if (priorSuggestions.Any(s => s.VacancyId == vacancyId))
+            {
+                continue;
+            }
+
+            var deliveryHistory = priorSuggestions
+                .Select(s => new ProactiveDeliveryHistoryEntry(
+                    s.Title,
+                    s.CompanyLabel,
+                    s.DeliveredAtUtc,
+                    s.Feedback))
+                .ToList();
+
+            if (ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+                    deliveryHistory,
+                    record.Title,
+                    record.CompanyName,
+                    now,
+                    cooldownDays))
+            {
+                continue;
+            }
+
+            var context = await _matches.TryLoadForUserIdAsync(settings.UserId, cancellationToken);
+            if (context is null)
+            {
+                continue;
+            }
+
+            var scores = await _matches.ScoreAsync(context, batch, cancellationToken);
+            if (!scores.TryGetValue(vacancyId, out var match)
+                || !match.Core.LegalEligible
+                || match.TotalPercent < minScore)
+            {
+                continue;
+            }
+
+            var dislikeCodes = await LoadDislikeCodesAsync(settings.UserId, cancellationToken);
+            var downranked = DislikeMatchRules.DownRankNightShifts(
+                [(Record: record, Match: match)],
+                dislikeCodes,
+                c => c.Record.LegalNightShift23To06 == true).ToList();
+            if (downranked.Count == 0 || downranked[0].Match.TotalPercent < minScore)
+            {
+                continue;
+            }
+
+            match = downranked[0].Match;
+            var rationale = ProactiveMatchingRules.FormatProactiveMatchReason(match);
+
+            await DeliverAsync(
+                settings.UserId,
+                vacancyId,
+                null,
+                record.Title,
+                record.CompanyName,
+                match.TotalPercent,
+                rationale,
+                cancellationToken);
+            sent++;
+        }
+
+        if (sent > 0)
+        {
+            _logger.LogInformation(
+                "Instant proactive matching for vacancy {VacancyId} delivered {Count} suggestions.",
+                vacancyId,
+                sent);
         }
 
         return sent;
@@ -328,14 +544,16 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         };
         _db.ProactiveMatchSuggestions.Add(suggestion);
 
+        var displayTitle = ProactiveMatchingRules.NormalizeVacancyTitle(title);
+        var company = string.IsNullOrWhiteSpace(companyLabel) ? "werkgever" : companyLabel.Trim();
         var notification = await _notifications.CreateAsync(
             new NotificationCreateRequest(
                 candidateUserId,
-                "Lobsy zoekt voor je",
-                $"{title} — {rationale}",
+                ProactiveMatchingRules.FormatInAppNewMatchTitle(displayTitle, company, matchPercent),
+                rationale,
                 "ProactiveMatch",
                 DeepLink: "/candidate/proactive-matching",
-                ActionLabel: "Bekijk tip",
+                ActionLabel: "Bekijk match",
                 ActionUrl: "/candidate/proactive-matching",
                 RelatedEntityType: nameof(ProactiveMatchSuggestion),
                 RelatedEntityId: suggestion.Id),
@@ -440,6 +658,7 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         var maxPerWeek = ProactiveMatchingRules.ClampMaxPerWeek(_options.MaxNotificationsPerWeek);
         if (row is null)
         {
+            var cooldown = ProactiveMatchingRules.ClampSameVacancyCooldownDays(_options.SameVacancyCooldownDays);
             return new ProactiveMatchingSettingsDto(
                 false,
                 ProactiveMatchingFrequency.Daily,
@@ -447,7 +666,8 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                 false,
                 null,
                 minScore,
-                maxPerWeek);
+                maxPerWeek,
+                cooldown);
         }
 
         return new ProactiveMatchingSettingsDto(
@@ -457,7 +677,8 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             ProactiveMatchingRules.HasValidConsent(row.ConsentAcceptedAtUtc, row.ConsentVersion),
             row.ConsentAcceptedAtUtc,
             minScore,
-            maxPerWeek);
+            maxPerWeek,
+            ProactiveMatchingRules.ClampSameVacancyCooldownDays(_options.SameVacancyCooldownDays));
     }
 
     private static ProactiveMatchSuggestionDto MapSuggestion(ProactiveMatchSuggestion row)
@@ -471,29 +692,8 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             row.CompanyLabel,
             row.DeliveredAtUtc,
             row.Feedback,
-            1);
-
-    private static string BuildDeliveryRationale(ProfileVacancyMatch match)
-    {
-        var line = ProfileVacancyMatchCalculator.SummaryLine(match);
-        if (!string.IsNullOrWhiteSpace(line) && !IsGenericRationale(line))
-        {
-            return line!;
-        }
-
-        var headlines = ProfileVacancyMatchCalculator.WhyHeadlines(match);
-        if (headlines.Count > 0)
-        {
-            return headlines[0];
-        }
-
-        if (!string.IsNullOrWhiteSpace(match.MatchRationale) && !IsGenericRationale(match.MatchRationale))
-        {
-            return match.MatchRationale!;
-        }
-
-        return $"Op basis van je DNA-profiel en voorkeuren scoort deze vacature {match.TotalPercent}%.";
-    }
+            1,
+            null);
 
     private async Task<IReadOnlyList<ProactiveMatchSuggestionDto>> EnrichRationalesAsync(
         Guid candidateUserId,
@@ -532,21 +732,23 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         {
             if (tip.VacancyId is not Guid vid || !scores.TryGetValue(vid, out var match))
             {
-                enriched.Add(tip with { Title = CleanDisplayTitle(tip.Title) });
+                enriched.Add(tip with { Title = ProactiveMatchingRules.NormalizeVacancyTitle(tip.Title) });
                 continue;
             }
 
             var rationale = tip.Rationale;
-            if (IsGenericRationale(rationale))
+            var highlights = ProactiveMatchingRules.ProactiveMatchHighlightLabels(match);
+            if (ProactiveMatchingRules.IsGenericStoredRationale(rationale))
             {
-                rationale = BuildDeliveryRationale(match);
+                rationale = ProactiveMatchingRules.FormatProactiveMatchReason(match);
             }
 
             enriched.Add(tip with
             {
-                Title = CleanDisplayTitle(tip.Title),
+                Title = ProactiveMatchingRules.NormalizeVacancyTitle(tip.Title),
                 MatchPercent = Math.Max(tip.MatchPercent, match.TotalPercent),
-                Rationale = rationale
+                Rationale = rationale,
+                MatchHighlights = highlights.Count > 0 ? highlights : null
             });
         }
 
@@ -558,7 +760,7 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         int take)
     {
         return items
-            .GroupBy(s => NormalizeVacancyTitle(s.Title), StringComparer.OrdinalIgnoreCase)
+            .GroupBy(s => ProactiveMatchingRules.NormalizeVacancyTitle(s.Title), StringComparer.OrdinalIgnoreCase)
             .Select(g =>
             {
                 var best = g.OrderByDescending(x => x.MatchPercent)
@@ -567,7 +769,7 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
                 var count = g.Count();
                 return best with
                 {
-                    Title = CleanDisplayTitle(best.Title),
+                    Title = ProactiveMatchingRules.NormalizeVacancyTitle(best.Title),
                     SimilarVacancyCount = count
                 };
             })
@@ -577,30 +779,4 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
             .ToList();
     }
 
-    private static string NormalizeVacancyTitle(string title)
-    {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return "";
-        }
-
-        var t = Regex.Replace(title.Trim(), @"\(\d+\)\s*$", "", RegexOptions.None, TimeSpan.FromMilliseconds(50)).Trim();
-        t = Regex.Replace(t, @"\s+", " ", RegexOptions.None, TimeSpan.FromMilliseconds(50));
-        return t;
-    }
-
-    private static string CleanDisplayTitle(string title) => NormalizeVacancyTitle(title);
-
-    private static bool IsGenericRationale(string? rationale)
-    {
-        if (string.IsNullOrWhiteSpace(rationale))
-        {
-            return true;
-        }
-
-        return (rationale.Contains("past voor", StringComparison.OrdinalIgnoreCase)
-                && rationale.Contains("bij jouw profiel", StringComparison.OrdinalIgnoreCase))
-               || rationale.Contains("externe vacature sluit aan", StringComparison.OrdinalIgnoreCase)
-               || rationale.Equals("Deze vacature past bij jouw profiel.", StringComparison.OrdinalIgnoreCase);
-    }
 }

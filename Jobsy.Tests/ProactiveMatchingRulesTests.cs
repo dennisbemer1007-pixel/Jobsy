@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Xunit;
@@ -39,6 +40,122 @@ public class ProactiveMatchingRulesTests
         var filtered = ProactiveTalentAvailabilityRules.FilterEligible([open, closed]).ToList();
         Assert.Single(filtered);
         Assert.Equal(open.Id, filtered[0].Id);
+    }
+
+    [Fact]
+    public void Same_vacancy_cooldown_blocks_repost_within_window()
+    {
+        var now = new DateTime(2026, 10, 12, 12, 0, 0, DateTimeKind.Utc);
+        var history = new List<ProactiveDeliveryHistoryEntry>
+        {
+            new("Orderpicker (19)", "Westland Bloemen", now.AddDays(-10), null)
+        };
+
+        Assert.True(ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+            history,
+            "Orderpicker (29)",
+            "Westland Bloemen",
+            now,
+            cooldownDays: 30));
+
+        Assert.False(ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+            history,
+            "Orderpicker (29)",
+            "Westland Bloemen",
+            now.AddDays(21),
+            cooldownDays: 30));
+    }
+
+    [Fact]
+    public void Not_interested_blocks_same_title_and_company_forever()
+    {
+        var now = new DateTime(2026, 10, 12, 12, 0, 0, DateTimeKind.Utc);
+        var history = new List<ProactiveDeliveryHistoryEntry>
+        {
+            new("Activiteitenbegeleider in Seghwaert", "Care Co", now.AddDays(-120), ProactiveMatchFeedback.NotInterested)
+        };
+
+        Assert.True(ProactiveMatchingRules.IsPermanentlyBlockedByNotInterested(
+            history,
+            "Activiteitenbegeleider in Seghwaert (9)",
+            "Care Co"));
+
+        Assert.True(ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+            history,
+            "Activiteitenbegeleider in Seghwaert",
+            "Care Co",
+            now.AddYears(1),
+            cooldownDays: 30));
+
+        Assert.False(ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+            history,
+            "Activiteitenbegeleider in Seghwaert",
+            "Other Employer",
+            now,
+            cooldownDays: 30));
+    }
+
+    [Fact]
+    public void Shortlist_availability_shows_per_direct_or_start_date()
+    {
+        var immediate = new User
+        {
+            Id = Guid.NewGuid(),
+            OpenForWork = true,
+            AvailableFromDate = null
+        };
+        Assert.Equal(
+            "Per direct",
+            ProactiveTalentAvailabilityRules.FormatShortlistAvailabilityLine(
+                immediate,
+                null,
+                false,
+                null,
+                null,
+                null));
+
+        var future = new User
+        {
+            Id = Guid.NewGuid(),
+            OpenForWork = true,
+            AvailableFromDate = new DateOnly(2026, 11, 1)
+        };
+        Assert.StartsWith(
+            "Vanaf 01-11-2026",
+            ProactiveTalentAvailabilityRules.FormatShortlistAvailabilityLine(
+                future,
+                null,
+                false,
+                24m,
+                32m,
+                null));
+    }
+
+    [Fact]
+    public void Employer_shortlist_respects_min_score_threshold()
+    {
+        Assert.False(67 >= ProactiveMatchingRules.ClampMinScore(80));
+        Assert.True(82 >= ProactiveMatchingRules.ClampMinScore(80));
+    }
+
+    [Fact]
+    public void Generic_stored_rationale_is_detected_for_enrichment()
+    {
+        Assert.True(ProactiveMatchingRules.IsGenericStoredRationale("Deze vacature past bij jouw profiel."));
+        Assert.True(ProactiveMatchingRules.IsGenericStoredRationale(
+            "Deze externe vacature sluit aan bij wat je eerder hebt opgeslagen."));
+        Assert.False(ProactiveMatchingRules.IsGenericStoredRationale("Beroepsinteresse past · Goede reistijd"));
+    }
+
+    [Fact]
+    public void In_app_notification_titles_follow_dennis_format()
+    {
+        Assert.Equal(
+            "Nieuwe match: Orderpicker bij Westland Bloemen, 87%",
+            ProactiveMatchingRules.FormatInAppNewMatchTitle("Orderpicker", "Westland Bloemen", 87));
+        Assert.Equal(
+            "Nieuw kennismakingsverzoek: Orderpicker bij Westland Bloemen",
+            ProactiveMatchingRules.FormatInAppIntroductionTitle("Orderpicker", "Westland Bloemen"));
     }
 
     [Fact]

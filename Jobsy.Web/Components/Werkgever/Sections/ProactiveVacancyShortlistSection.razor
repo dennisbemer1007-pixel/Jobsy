@@ -39,14 +39,16 @@
         <div class="proactive-shortlist__grid">
             @foreach (var entry in _entries)
             {
-                <article class="proactive-shortlist-card proactive-suggestion-card" data-testid="proactive-shortlist-card">
+                <article class="proactive-shortlist-card proactive-suggestion-card proactive-wow-card" data-testid="proactive-shortlist-card">
                     <div class="proactive-shortlist-card__head">
                         <span class="proactive-shortlist-card__rank">
                             @Culture.Format("ProactiveMatching.Employer.Shortlist.Rank", entry.Rank)
                         </span>
-                        <span class="proactive-shortlist-card__score proactive-match-badge" aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", entry.MatchPercent)">
+                        <span class="proactive-match-badge proactive-match-badge--strong"
+                              aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", entry.MatchPercent)">
                             <span class="proactive-match-badge__value">@entry.MatchPercent</span>
                             <span class="proactive-match-badge__suffix">%</span>
+                            <span class="proactive-match-badge__label">match</span>
                         </span>
                     </div>
                     <p class="proactive-shortlist-card__anon">@Culture["ProactiveMatching.Employer.Shortlist.Anonymous"]</p>

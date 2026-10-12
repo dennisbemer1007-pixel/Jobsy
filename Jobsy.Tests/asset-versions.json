@@ -100,8 +100,8 @@
     "v": "20261012-04"
   },
   "css/features/proactive-matching.css": {
-    "sha256": "275d2595b7f4920d7bb4679f1b8af600b729bf537962f6fdd21ce83d8c69e7ef",
-    "v": "20261012-01"
+    "sha256": "1c5a03d0f23a70440e9354e831d10dfa368dc692258326856bde311d2d9dd2d8",
+    "v": "20261012-03"
   },
   "css/features/public-pages.css": {
     "sha256": "5517416d9a7ca622dd7a2ab65e0f85828531671b42d58772e42f5900056750c5",
@@ -140,8 +140,8 @@
     "v": "20261004-10"
   },
   "css/features/werkgever.css": {
-    "sha256": "477072f0c19866dfa12bb35d4819b259695b6468097e718b2146bb7e62f92d3d",
-    "v": "20261004-11"
+    "sha256": "8fcf6fa8cd382f1926077ae4aaf1a269b50f516c32612000d112fb752766f049",
+    "v": "20261012-01"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",

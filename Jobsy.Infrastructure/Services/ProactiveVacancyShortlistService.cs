@@ -49,6 +49,7 @@ public sealed class ProactiveVacancyShortlistService : IProactiveVacancyShortlis
 
         var record = VacancyDiscoveryIndex.ToRecord(vacancy);
         var company = vacancy.Company;
+        var minScore = ProactiveMatchingRules.ClampMinScore(_options.MinScorePercent);
 
         var candidates = await _db.Users.AsNoTracking()
             .Where(u => u.Role == UserRole.Candidate && u.IsActive)
@@ -99,7 +100,9 @@ public sealed class ProactiveVacancyShortlistService : IProactiveVacancyShortlis
 
             var batch = new List<(VacancyDiscoveryRecord Record, int? TravelMinutes)> { (record, travel) };
             var scores = await _matches.ScoreAsync(context, batch, cancellationToken);
-            if (!scores.TryGetValue(vacancyId, out var match) || !match.Core.LegalEligible)
+            if (!scores.TryGetValue(vacancyId, out var match)
+                || !match.Core.LegalEligible
+                || match.TotalPercent < minScore)
             {
                 continue;
             }
@@ -110,6 +113,7 @@ public sealed class ProactiveVacancyShortlistService : IProactiveVacancyShortlis
         }
 
         var ordered = scored
+            .Where(s => s.Percent >= minScore)
             .OrderByDescending(s => s.Percent)
             .Take(Math.Clamp(_options.ShortlistTake, 5, 50))
             .ToList();
@@ -161,7 +165,8 @@ public sealed class ProactiveVacancyShortlistService : IProactiveVacancyShortlis
             }
         }
 
-        var availability = LobsyCvModelFactory.FormatTalentPoolAvailability(
+        var availability = ProactiveTalentAvailabilityRules.FormatShortlistAvailabilityLine(
+            user,
             prefs.Availability,
             prefs.FlexibleTimes == true,
             prefs.MinHoursPerWeek,

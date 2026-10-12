@@ -31,6 +31,7 @@ ON CONFLICT ("Id") DO UPDATE SET
 -- Demo kandidaat: talentpool + profiel voor matching/shortlist
 UPDATE "Users"
 SET "OpenForWork" = true,
+    "AvailableFromDate" = NULL,
     "TalentPoolConsentAt" = COALESCE("TalentPoolConsentAt", NOW() AT TIME ZONE 'UTC'),
     "TalentPoolConsentVersion" = COALESCE("TalentPoolConsentVersion", '2026-09-26'),
     "CandidateHowToCompletedAt" = COALESCE("CandidateHowToCompletedAt", NOW() AT TIME ZONE 'UTC')
@@ -123,5 +124,44 @@ SELECT
     NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
 WHERE NOT EXISTS (
     SELECT 1 FROM "CandidateCompetencies" WHERE "UserId" = 'aaaaaaaa-3333-3333-3333-333333333333');
+
+-- E2E herhaalbaar: schone proactieve tips + inbox voor demo-kandidaat
+DELETE FROM "ProactiveMatchSuggestions"
+WHERE "CandidateUserId" = 'aaaaaaaa-1111-1111-1111-111111111111';
+
+DELETE FROM "UserNotifications"
+WHERE "UserId" = 'aaaaaaaa-1111-1111-1111-111111111111'
+  AND "Category" IN ('ProactiveMatch', 'TalentContact');
+
+DELETE FROM "TalentContactRequests"
+WHERE "CandidateUserId" = 'aaaaaaaa-1111-1111-1111-111111111111'
+  AND "CompanyId" = '11111111-1111-1111-1111-111111111111';
+
+INSERT INTO "CandidateProactiveMatchingSettings" (
+    "UserId",
+    "Enabled",
+    "Frequency",
+    "ConsentAcceptedAtUtc",
+    "ConsentVersion",
+    "LastProcessedAtUtc",
+    "UpdatedAtUtc")
+VALUES (
+    'aaaaaaaa-1111-1111-1111-111111111111',
+    true,
+    0,
+    NOW() AT TIME ZONE 'UTC',
+    'proactive-matching-2026-01',
+    NULL,
+    NOW() AT TIME ZONE 'UTC')
+ON CONFLICT ("UserId") DO UPDATE SET
+    "LastProcessedAtUtc" = NULL,
+    "Enabled" = true,
+    "ConsentAcceptedAtUtc" = COALESCE(
+        "CandidateProactiveMatchingSettings"."ConsentAcceptedAtUtc",
+        EXCLUDED."ConsentAcceptedAtUtc"),
+    "ConsentVersion" = COALESCE(
+        "CandidateProactiveMatchingSettings"."ConsentVersion",
+        EXCLUDED."ConsentVersion"),
+    "UpdatedAtUtc" = EXCLUDED."UpdatedAtUtc";
 
 COMMIT;
