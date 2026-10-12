@@ -12,6 +12,7 @@ public static class DevEmailCodeCapture
     private static readonly Regex SixDigits = new(@"\b(\d{6})\b", RegexOptions.Compiled);
 
     private static readonly ConcurrentDictionary<string, CaptureEntry> ByEmail = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<Guid, string> ByChallengeId = new();
     private static long _sequence;
 
     public sealed record CaptureEntry(string Code, long Sequence, Guid? ChallengeId, DateTime CapturedAtUtc);
@@ -54,8 +55,16 @@ public static class DevEmailCodeCapture
             challengeId = previous.ChallengeId;
         }
 
-        ByEmail[normalized] = new CaptureEntry(code.Trim(), seq, challengeId, DateTime.UtcNow);
+        var entry = new CaptureEntry(code.Trim(), seq, challengeId, DateTime.UtcNow);
+        ByEmail[normalized] = entry;
+        if (challengeId is Guid cid)
+        {
+            ByChallengeId[cid] = entry.Code;
+        }
     }
+
+    public static bool TryGetForChallenge(Guid challengeId, out string code)
+        => ByChallengeId.TryGetValue(challengeId, out code!);
 
     public static bool TryGet(string email, out string code)
     {
@@ -83,6 +92,7 @@ public static class DevEmailCodeCapture
     public static void Clear()
     {
         ByEmail.Clear();
+        ByChallengeId.Clear();
         Interlocked.Exchange(ref _sequence, 0);
     }
 }

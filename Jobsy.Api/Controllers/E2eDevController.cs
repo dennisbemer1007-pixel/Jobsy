@@ -79,15 +79,23 @@ public sealed class E2eDevController : ControllerBase
             return NotFound(new { message = "no open challenge" });
         }
 
-        DevEmailCodeCapture.TryGetEntry(email, out var capture);
-        var matched = capture.ChallengeId == challenge.Id
-            || (capture.ChallengeId is null && !string.IsNullOrWhiteSpace(capture.Code));
+        string? code = null;
+        long? sequence = null;
+        if (DevEmailCodeCapture.TryGetForChallenge(challenge.Id, out var forChallenge))
+        {
+            code = forChallenge;
+            if (DevEmailCodeCapture.TryGetEntry(email, out var capture))
+            {
+                sequence = capture.Sequence;
+            }
+        }
+
         return Ok(new
         {
             email = normalized,
             challengeId = challenge.Id,
-            code = matched ? capture.Code : null,
-            sequence = matched ? capture.Sequence : (long?)null,
+            code,
+            sequence,
             createdAtUtc = challenge.CreatedAtUtc
         });
     }

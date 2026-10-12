@@ -400,7 +400,7 @@
         3 => !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
         6 => !string.IsNullOrWhiteSpace(Draft.Dream),
         7 when !Draft.HasConsent => Draft.ConsentRequested,
-        >= 7 => _miniQuestions.All(question => _miniAnswers.ContainsKey(question.Id)),
+        >= 7 => _miniQuestions.All(question => MiniVisibleAnswers.ContainsKey(question.Id)),
         _ => true
     };
 
@@ -1049,15 +1049,7 @@
         return Task.CompletedTask;
     }
 
-    private async Task FinishMiniAsync()
-    {
-        if (_busy || !CanNext)
-        {
-            return;
-        }
-
-        await NextAsync();
-    }
+    private Task FinishMiniAsync() => NextAsync();
 
     private async Task SaveMiniQuietAsync(int id, int value)
     {
