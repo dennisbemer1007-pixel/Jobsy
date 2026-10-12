@@ -10,6 +10,22 @@ public interface ICandidateExternalVacancyService
 
     Task<ExternalVacancyDetailDto?> GetDetailAsync(Guid candidateUserId, Guid id, CancellationToken cancellationToken = default);
 
+    Task<ExternalVacancyDetailDto?> SetSavedAsync(
+        Guid candidateUserId,
+        Guid id,
+        bool saved,
+        CancellationToken cancellationToken = default);
+
+    Task<ExternalVacancyDetailDto?> DismissAsync(
+        Guid candidateUserId,
+        Guid id,
+        CancellationToken cancellationToken = default);
+
+    Task<ExternalVacancyDetailDto?> RestoreDismissedAsync(
+        Guid candidateUserId,
+        Guid id,
+        CancellationToken cancellationToken = default);
+
     Task<ExternalVacancyApplyResultDto> ApplyAsync(
         Guid candidateUserId,
         Guid id,

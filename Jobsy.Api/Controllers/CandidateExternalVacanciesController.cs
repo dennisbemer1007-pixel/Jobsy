@@ -80,6 +80,48 @@ public sealed class CandidateExternalVacanciesController : ControllerBase
         return dto is null ? NotFound() : Ok(dto);
     }
 
+    [HttpPut("{id:guid}/saved")]
+    public async Task<ActionResult<ExternalVacancyDetailDto>> SetSaved(
+        Guid id,
+        [FromBody] ExternalVacancySetSavedRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await RequireUserAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var dto = await _service.SetSavedAsync(user.Id, id, request.Saved, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpPost("{id:guid}/dismiss")]
+    public async Task<ActionResult<ExternalVacancyDetailDto>> Dismiss(Guid id, CancellationToken cancellationToken)
+    {
+        var user = await RequireUserAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var dto = await _service.DismissAsync(user.Id, id, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpPost("{id:guid}/restore")]
+    public async Task<ActionResult<ExternalVacancyDetailDto>> Restore(Guid id, CancellationToken cancellationToken)
+    {
+        var user = await RequireUserAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var dto = await _service.RestoreDismissedAsync(user.Id, id, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
     [HttpPost("{id:guid}/apply")]
     public async Task<ActionResult<ExternalVacancyApplyResultDto>> Apply(
         Guid id,

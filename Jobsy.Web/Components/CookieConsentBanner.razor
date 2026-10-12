@@ -12,8 +12,8 @@
             <div class="cookie-consent__copy">
                 <h2 id="cookie-consent-title" class="cookie-consent__title">Cookies &amp; privacy</h2>
                 <p class="cookie-consent__text">
-                    Noodzakelijke cookies voor inloggen.
-                    Optioneel anonieme statistieken.
+                    <span class="cookie-consent__text-full">Noodzakelijke cookies voor inloggen. Optioneel anonieme statistieken. </span>
+                    <span class="cookie-consent__text-short">Cookies voor inloggen. Optioneel statistieken. </span>
                     <a href="/privacy" class="cookie-consent__privacy">Privacy</a>
                 </p>
             </div>
@@ -23,7 +23,7 @@
                     <button type="button" class="btn-compact" data-consent="necessary">
                         Alleen noodzakelijk
                     </button>
-                    <button type="button" class="btn-compact btn-compact--primary" data-consent="analytics">
+                    <button type="button" class="btn-compact" data-consent="analytics">
                         Accepteer cookies
                     </button>
                 }
@@ -32,7 +32,7 @@
                     <button type="button" class="btn-compact" data-consent="necessary" disabled="@_busy" @onclick="() => SaveAsync(false)">
                         Alleen noodzakelijk
                     </button>
-                    <button type="button" class="btn-compact btn-compact--primary" data-consent="analytics" disabled="@_busy" @onclick="() => SaveAsync(true)">
+                    <button type="button" class="btn-compact" data-consent="analytics" disabled="@_busy" @onclick="() => SaveAsync(true)">
                         Accepteer cookies
                     </button>
                 }

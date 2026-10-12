@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "a315f325f6333688894ce1110fdae5e74ea02f2ae745dcd4243279c2337480b2",
-    "v": "20261010-01"
+    "sha256": "70b584f73cc289dc5916198d43c07143563e9333d2c1dba5d01459fe23f56121",
+    "v": "20261011-03"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -60,8 +60,8 @@
     "v": "20261004-10"
   },
   "css/features/kb-external-vacancy.css": {
-    "sha256": "9002146421f8e1aee942ec27a945631f1d4cbd456130a681d00132f488afe01d",
-    "v": "20261010-01"
+    "sha256": "c9ea90545de3e0a2249edc32b744cf44b2d230152c1c08a97b54cb29a56a4703",
+    "v": "20261011-03"
   },
   "css/features/landing.css": {
     "sha256": "fa784797cf21626a06bd7b7d8e8c18498071f2d7496200cfe5c3f1300e95e1f3",
