@@ -67,7 +67,8 @@ public sealed record ProactiveMatchSuggestionDto(
     string? CompanyLabel,
     DateTime DeliveredAtUtc,
     ProactiveMatchFeedback? Feedback,
-    int SimilarVacancyCount = 1);
+    int SimilarVacancyCount = 1,
+    IReadOnlyList<string>? MatchHighlights = null);
 
 public sealed record ProactiveVacancyShortlistEntryDto(
     int Rank,

@@ -96,6 +96,15 @@ public class ProactiveMatchingRulesTests
     }
 
     [Fact]
+    public void Generic_stored_rationale_is_detected_for_enrichment()
+    {
+        Assert.True(ProactiveMatchingRules.IsGenericStoredRationale("Deze vacature past bij jouw profiel."));
+        Assert.True(ProactiveMatchingRules.IsGenericStoredRationale(
+            "Deze externe vacature sluit aan bij wat je eerder hebt opgeslagen."));
+        Assert.False(ProactiveMatchingRules.IsGenericStoredRationale("Beroepsinteresse past · Goede reistijd"));
+    }
+
+    [Fact]
     public void In_app_notification_titles_follow_dennis_format()
     {
         Assert.Equal(
