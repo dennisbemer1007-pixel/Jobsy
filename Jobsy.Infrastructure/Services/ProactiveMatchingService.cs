@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -356,6 +357,164 @@ public sealed class ProactiveMatchingService : IProactiveMatchingService
         if (sent > 0)
         {
             _logger.LogInformation("Proactive matching delivered {Count} suggestions.", sent);
+        }
+
+        return sent;
+    }
+
+    public async Task<int> RunInstantMatchingForVacancyAsync(
+        Guid vacancyId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _flags.IsEnabledAsync(PlatformFeature.ProactiveMatching, cancellationToken))
+        {
+            return 0;
+        }
+
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId, cancellationToken);
+        if (vacancy is null || vacancy.Status != VacancyStatus.Active)
+        {
+            return 0;
+        }
+
+        var record = VacancyDiscoveryIndex.ToRecord(vacancy);
+        var minScore = ProactiveMatchingRules.ClampMinScore(_options.MinScorePercent);
+        var maxPerWeek = ProactiveMatchingRules.ClampMaxPerWeek(_options.MaxNotificationsPerWeek);
+        var weekStart = ProactiveMatchingRules.WeekStartUtc(DateTime.UtcNow);
+        var now = DateTime.UtcNow;
+        var cooldownDays = ProactiveMatchingRules.ClampSameVacancyCooldownDays(_options.SameVacancyCooldownDays);
+
+        var settingsRows = await _db.CandidateProactiveMatchingSettings.AsNoTracking()
+            .Where(s => s.Enabled)
+            .ToListAsync(cancellationToken);
+        if (settingsRows.Count == 0)
+        {
+            return 0;
+        }
+
+        var userIds = settingsRows.Select(s => s.UserId).Distinct().ToList();
+        var users = await _db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+        var userById = users.ToDictionary(u => u.Id);
+        var eligibleSettings = settingsRows
+            .Where(s =>
+            {
+                if (!ProactiveMatchingRules.HasValidConsent(s.ConsentAcceptedAtUtc, s.ConsentVersion))
+                {
+                    return false;
+                }
+
+                if (s.PausedUntilUtc is DateTime pause && pause > now)
+                {
+                    return false;
+                }
+
+                return userById.TryGetValue(s.UserId, out var user)
+                       && ProactiveTalentAvailabilityRules.IsEligibleForEmployerShortlist(user);
+            })
+            .ToList();
+
+        if (eligibleSettings.Count == 0)
+        {
+            return 0;
+        }
+
+        var sent = 0;
+        var batch = new List<(VacancyDiscoveryRecord Record, int? TravelMinutes)> { (record, null) };
+
+        foreach (var settings in eligibleSettings)
+        {
+            var deliveredThisWeek = await _db.ProactiveMatchSuggestions.CountAsync(
+                s => s.CandidateUserId == settings.UserId && s.DeliveredAtUtc >= weekStart,
+                cancellationToken);
+            if (deliveredThisWeek >= maxPerWeek)
+            {
+                continue;
+            }
+
+            var priorSuggestions = await _db.ProactiveMatchSuggestions.AsNoTracking()
+                .Where(s => s.CandidateUserId == settings.UserId)
+                .Select(s => new
+                {
+                    s.VacancyId,
+                    s.Title,
+                    s.CompanyLabel,
+                    s.DeliveredAtUtc,
+                    s.Feedback
+                })
+                .ToListAsync(cancellationToken);
+
+            if (priorSuggestions.Any(s => s.VacancyId == vacancyId))
+            {
+                continue;
+            }
+
+            var deliveryHistory = priorSuggestions
+                .Select(s => new ProactiveDeliveryHistoryEntry(
+                    s.Title,
+                    s.CompanyLabel,
+                    s.DeliveredAtUtc,
+                    s.Feedback))
+                .ToList();
+
+            if (ProactiveMatchingRules.ShouldSkipProactiveDelivery(
+                    deliveryHistory,
+                    record.Title,
+                    record.CompanyName,
+                    now,
+                    cooldownDays))
+            {
+                continue;
+            }
+
+            var context = await _matches.TryLoadForUserIdAsync(settings.UserId, cancellationToken);
+            if (context is null)
+            {
+                continue;
+            }
+
+            var scores = await _matches.ScoreAsync(context, batch, cancellationToken);
+            if (!scores.TryGetValue(vacancyId, out var match)
+                || !match.Core.LegalEligible
+                || match.TotalPercent < minScore)
+            {
+                continue;
+            }
+
+            var dislikeCodes = await LoadDislikeCodesAsync(settings.UserId, cancellationToken);
+            var downranked = DislikeMatchRules.DownRankNightShifts(
+                [(Record: record, Match: match)],
+                dislikeCodes,
+                c => c.Record.LegalNightShift23To06 == true).ToList();
+            if (downranked.Count == 0 || downranked[0].Match.TotalPercent < minScore)
+            {
+                continue;
+            }
+
+            match = downranked[0].Match;
+            var rationale = ProactiveMatchingRules.FormatProactiveMatchReason(match);
+
+            await DeliverAsync(
+                settings.UserId,
+                vacancyId,
+                null,
+                record.Title,
+                record.CompanyName,
+                match.TotalPercent,
+                rationale,
+                cancellationToken);
+            sent++;
+        }
+
+        if (sent > 0)
+        {
+            _logger.LogInformation(
+                "Instant proactive matching for vacancy {VacancyId} delivered {Count} suggestions.",
+                vacancyId,
+                sent);
         }
 
         return sent;

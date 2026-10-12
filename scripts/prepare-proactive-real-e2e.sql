@@ -137,11 +137,31 @@ DELETE FROM "TalentContactRequests"
 WHERE "CandidateUserId" = 'aaaaaaaa-1111-1111-1111-111111111111'
   AND "CompanyId" = '11111111-1111-1111-1111-111111111111';
 
-UPDATE "CandidateProactiveMatchingSettings"
-SET "LastProcessedAtUtc" = NULL,
+INSERT INTO "CandidateProactiveMatchingSettings" (
+    "UserId",
+    "Enabled",
+    "Frequency",
+    "ConsentAcceptedAtUtc",
+    "ConsentVersion",
+    "LastProcessedAtUtc",
+    "UpdatedAtUtc")
+VALUES (
+    'aaaaaaaa-1111-1111-1111-111111111111',
+    true,
+    0,
+    NOW() AT TIME ZONE 'UTC',
+    'proactive-matching-2026-01',
+    NULL,
+    NOW() AT TIME ZONE 'UTC')
+ON CONFLICT ("UserId") DO UPDATE SET
+    "LastProcessedAtUtc" = NULL,
     "Enabled" = true,
-    "ConsentAcceptedAtUtc" = COALESCE("ConsentAcceptedAtUtc", NOW() AT TIME ZONE 'UTC'),
-    "ConsentVersion" = COALESCE("ConsentVersion", 'proactive-matching-2026-01')
-WHERE "UserId" = 'aaaaaaaa-1111-1111-1111-111111111111';
+    "ConsentAcceptedAtUtc" = COALESCE(
+        "CandidateProactiveMatchingSettings"."ConsentAcceptedAtUtc",
+        EXCLUDED."ConsentAcceptedAtUtc"),
+    "ConsentVersion" = COALESCE(
+        "CandidateProactiveMatchingSettings"."ConsentVersion",
+        EXCLUDED."ConsentVersion"),
+    "UpdatedAtUtc" = EXCLUDED."UpdatedAtUtc";
 
 COMMIT;

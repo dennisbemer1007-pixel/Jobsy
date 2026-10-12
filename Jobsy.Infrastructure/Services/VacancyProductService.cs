@@ -28,6 +28,7 @@ public sealed class VacancyProductService : IVacancyProductService
     private readonly ILenderRegistrationCheck _lenderRegistration;
     private readonly ILogger<VacancyProductService> _logger;
     private readonly IVacancyDiscoveryIndex? _discoveryIndex;
+    private readonly IProactiveVacancyInstantMatchQueue? _instantProactiveMatch;
 
     public VacancyProductService(
         JobsyDbContext db,
@@ -42,7 +43,8 @@ public sealed class VacancyProductService : IVacancyProductService
         ICandidateActionTokenService actionTokens,
         ILogger<VacancyProductService> logger,
         IVacancyDiscoveryIndex? discoveryIndex = null,
-        ILenderRegistrationCheck? lenderRegistration = null)
+        ILenderRegistrationCheck? lenderRegistration = null,
+        IProactiveVacancyInstantMatchQueue? instantProactiveMatch = null)
     {
         _db = db;
         _tokens = tokens;
@@ -57,6 +59,7 @@ public sealed class VacancyProductService : IVacancyProductService
         _logger = logger;
         _discoveryIndex = discoveryIndex;
         _lenderRegistration = lenderRegistration ?? new NullLenderRegistrationCheck();
+        _instantProactiveMatch = instantProactiveMatch;
     }
 
     private VacancyProductOutcome Indexed(VacancyProductOutcome result)
@@ -64,6 +67,10 @@ public sealed class VacancyProductService : IVacancyProductService
         if (result.Succeeded)
         {
             _discoveryIndex?.Invalidate();
+            if (result.Vacancy.Status == VacancyStatus.Active)
+            {
+                _instantProactiveMatch?.TryEnqueue(result.Vacancy.Id);
+            }
         }
 
         return result;
