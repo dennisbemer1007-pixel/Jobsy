@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
@@ -10,9 +11,17 @@ namespace Jobsy.Infrastructure.Data;
 
 public class JobsyDbContext : DbContext
 {
+    private readonly IFieldEncryptionService _fieldEncryption;
+
     public JobsyDbContext(DbContextOptions<JobsyDbContext> options)
+        : this(options, PassthroughFieldEncryption.Instance)
+    {
+    }
+
+    public JobsyDbContext(DbContextOptions<JobsyDbContext> options, IFieldEncryptionService fieldEncryption)
         : base(options)
     {
+        _fieldEncryption = fieldEncryption;
     }
 
     /// <summary>
@@ -185,6 +194,8 @@ public class JobsyDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        FieldEncryptionEntityConfigurator.Apply(modelBuilder, _fieldEncryption);
+
         modelBuilder.HasPostgresExtension("postgis");
 
         modelBuilder.Entity<User>(entity =>
@@ -214,7 +225,7 @@ public class JobsyDbContext : DbContext
                 .HasColumnType("geometry(Point, 4326)")
                 .IsRequired(false);
             entity.HasIndex(e => e.HomeLocation).HasMethod("GIST");
-            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.EmailLookupHash).HasMaxLength(64);
             entity.HasIndex(e => e.IsTestAccount);
             entity.HasIndex(e => e.IsSystemAdminAccount);
             entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
@@ -2284,7 +2295,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
             entity.Property(e => e.PasswordHash).HasMaxLength(512).IsRequired();
             entity.HasIndex(e => e.LockoutUntil);
-            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.EmailLookupHash).HasMaxLength(64);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

@@ -145,7 +145,8 @@ public sealed class E2eDevController : ControllerBase
         {
             var normalized = email.Trim().ToLowerInvariant();
             var user = await db.Users.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Email == normalized, cancellationToken);
+                .WhereEmailEquals(normalized)
+                .FirstOrDefaultAsync(cancellationToken);
             if (user is null)
             {
                 return NotFound(new { message = "user not found" });

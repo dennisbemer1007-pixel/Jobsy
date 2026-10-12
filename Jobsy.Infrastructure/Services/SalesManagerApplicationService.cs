@@ -107,7 +107,8 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         }
 
         var existingUser = await _db.Users.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+            .WhereEmailEquals(email)
+            .FirstOrDefaultAsync(cancellationToken);
         if (existingUser is not null && existingUser.Role == UserRole.SalesManager)
         {
             throw new InvalidOperationException("Deze persoon is al salesmanager.");
@@ -117,8 +118,7 @@ public sealed class SalesManagerApplicationService : ISalesManagerApplicationSer
         var duplicateCutoff = DateTime.UtcNow.AddDays(-PrivacyConstants.SalesManagerApplicationPendingRetentionDays);
         var duplicateExists = await _db.SalesManagerApplications.AnyAsync(
             a => a.CreatedAtUtc >= duplicateCutoff
-                 && (a.CandidateEmail == email
-                     || a.CandidateEmailSha256 == emailSha),
+                 && a.CandidateEmailSha256 == emailSha,
             cancellationToken);
         if (duplicateExists)
         {

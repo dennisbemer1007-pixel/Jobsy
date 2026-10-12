@@ -114,7 +114,7 @@ internal static class ApplicationsAndWagesSeeder
     public static async Task EnsureDemoCandidateApplicationCardsAsync(JobsyDbContext db, ILogger logger)
     {
         var candidate = await db.Users.FirstOrDefaultAsync(u => u.Id == DemoCandidateId)
-            ?? await db.Users.FirstOrDefaultAsync(u => u.Email == "kandidaat@jobsy.local");
+            ?? await db.Users.WhereEmailEquals("kandidaat@jobsy.local").FirstOrDefaultAsync();
         if (candidate is null)
         {
             return;

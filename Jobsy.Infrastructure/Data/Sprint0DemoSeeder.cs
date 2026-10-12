@@ -11,7 +11,7 @@ internal static class Sprint0DemoSeeder
     {
         // Never mass-reactivate users — admin deactivation must stick across restarts.
 
-        var candidate = await db.Users.FirstOrDefaultAsync(u => u.Email == "kandidaat@jobsy.local");
+        var candidate = await db.Users.WhereEmailEquals("kandidaat@jobsy.local").FirstOrDefaultAsync();
         if (candidate is not null)
         {
             if (candidate.DateOfBirth is null)
@@ -124,7 +124,8 @@ internal static class Sprint0DemoSeeder
 
         // Sprint 3: ensure demo candidate has at least one linked application for /home metrics.
         var demoCandidate = await db.Users.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == "kandidaat@jobsy.local");
+            .WhereEmailEquals("kandidaat@jobsy.local")
+            .FirstOrDefaultAsync();
         if (demoCandidate is not null
             && !await db.Applications.AnyAsync(a => a.CandidateUserId == demoCandidate.Id))
         {
@@ -372,7 +373,7 @@ internal static class Sprint0DemoSeeder
             Core.ValueObjects.GeoPoint home,
             string preferences)
         {
-            var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var existing = await db.Users.WhereEmailEquals(email).FirstOrDefaultAsync();
             if (existing is null)
             {
                 db.Users.Add(new User
@@ -413,7 +414,7 @@ internal static class Sprint0DemoSeeder
 
         // Ensure enterprise manager can approve Westland pending publishes.
         var westlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var enterprise = await db.Users.FirstOrDefaultAsync(u => u.Email == "enterprise@jobsy.local");
+        var enterprise = await db.Users.WhereEmailEquals("enterprise@jobsy.local").FirstOrDefaultAsync();
         if (enterprise is not null)
         {
             var hasWestland = await db.UserCompanies.AnyAsync(uc =>

@@ -41,7 +41,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
             ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
 
         var applications = await _db.Applications.AsNoTracking()
-            .Where(a => a.CandidateUserId == user.Id || a.CandidateEmail == user.Email)
+            .Where(a => a.CandidateUserId == user.Id
+                        || (user.EmailLookupHash != null
+                            && a.CandidateEmailLookupHash == user.EmailLookupHash))
             .Select(a => new
             {
                 a.Id,
@@ -1142,7 +1144,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
         var originalEmail = user.Email;
         var anonymizedEmail = $"deleted-{user.Id:N}@anonymized.jobsy.local";
         var applications = await _db.Applications
-            .Where(a => a.CandidateUserId == user.Id || a.CandidateEmail == originalEmail)
+            .Where(a => a.CandidateUserId == user.Id
+                        || a.CandidateEmailLookupHash == EmailLookupHash.Compute(originalEmail))
             .ToListAsync(cancellationToken);
 
         foreach (var app in applications)
@@ -1843,7 +1846,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
         return await _db.Users
                    .Include(u => u.CompanyMemberships)
-                   .FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken)
+                   .WhereEmailEquals(email)
+                   .FirstOrDefaultAsync(u => u.IsActive, cancellationToken)
                ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
     }
 

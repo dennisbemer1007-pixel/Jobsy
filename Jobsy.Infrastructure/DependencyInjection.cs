@@ -77,6 +77,19 @@ public static class DependencyInjection
         }
 
         services.AddJobsyDataProtection(connectionString, isDev, configuration);
+        services.Configure<FieldEncryptionOptions>(configuration.GetSection(FieldEncryptionOptions.SectionName));
+        services.PostConfigure<FieldEncryptionOptions>(options =>
+        {
+            if (isDev
+                && string.IsNullOrWhiteSpace(options.ActiveKeyId)
+                && (options.Keys == null || options.Keys.Count == 0))
+            {
+                options.AllowPassthroughWithoutKeys = true;
+            }
+        });
+        services.AddSingleton<IFieldEncryptionService, FieldEncryptionService>();
+        services.AddSingleton<SensitiveDataSaveInterceptor>();
+        services.AddHostedService<FieldEncryptionBackfillHostedService>();
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
         services.AddSingleton<IIbanProtector>(sp =>
@@ -232,7 +245,9 @@ public static class DependencyInjection
                 npgsql.UseNetTopologySuite();
                 npgsql.MigrationsAssembly(typeof(JobsyDbContext).Assembly.FullName);
             });
-            options.AddInterceptors(sp.GetRequiredService<AdminAuditAppendOnlyInterceptor>());
+            options.AddInterceptors(
+                sp.GetRequiredService<AdminAuditAppendOnlyInterceptor>(),
+                sp.GetRequiredService<SensitiveDataSaveInterceptor>());
         });
 
         services.AddTransient<AiRouteLoggingHandler>();
@@ -796,7 +811,21 @@ public static class DependencyInjection
         if (!value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
             && !value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
         {
-            return value;
+            if (value.Contains("Ssl Mode=", StringComparison.OrdinalIgnoreCase)
+                || value.Contains("sslmode=", StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+
+            var host = TryReadConnectionKey(value, "Host") ?? TryReadConnectionKey(value, "Server");
+            if (string.IsNullOrWhiteSpace(host)
+                || host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                || host.Equals("127.0.0.1", StringComparison.Ordinal))
+            {
+                return value;
+            }
+
+            return value.TrimEnd(';') + ";SSL Mode=Require;Trust Server Certificate=true";
         }
 
         var uri = new Uri(value);
@@ -810,5 +839,24 @@ public static class DependencyInjection
         var ssl = "SSL Mode=Require;Trust Server Certificate=true";
 
         return $"Host={uri.Host};Port={port};Database={database};Username={username};Password={password};{ssl}";
+    }
+
+    private static string? TryReadConnectionKey(string connectionString, string key)
+    {
+        foreach (var part in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var idx = part.IndexOf('=');
+            if (idx <= 0)
+            {
+                continue;
+            }
+
+            if (part[..idx].Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
+            {
+                return part[(idx + 1)..].Trim();
+            }
+        }
+
+        return null;
     }
 }
