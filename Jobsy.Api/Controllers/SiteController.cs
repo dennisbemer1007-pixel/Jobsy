@@ -39,6 +39,7 @@ public class SiteController : ControllerBase
     /// </summary>
     [HttpGet("status")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     [ResponseCache(Duration = 5, Location = ResponseCacheLocation.Any)]
     public async Task<ActionResult<SiteStatusDto>> GetStatus(CancellationToken cancellationToken)
     {

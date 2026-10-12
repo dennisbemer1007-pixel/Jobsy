@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
@@ -56,7 +57,7 @@ public sealed record DeepAnalysisQuestionDto(
     int Id,
     string Family,
     string Domain,
-    bool Reverse,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Always)] bool Reverse,
     string PromptNl,
     string ExampleNl = "",
     string DomainLabel = "");

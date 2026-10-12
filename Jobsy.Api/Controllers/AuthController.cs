@@ -1016,6 +1016,7 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpGet("external-providers")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<ExternalProvidersStatusResponse>> GetExternalProviders(
         CancellationToken cancellationToken)
     {

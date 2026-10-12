@@ -583,6 +583,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     /// </summary>
     [HttpGet("feature-flags")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<IActionResult> GetFeatureFlags(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
@@ -610,6 +611,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     /// </summary>
     [HttpGet("free-publish")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<FreePublishStatusDto>> GetFreePublishStatus(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
@@ -623,6 +625,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     /// </summary>
     [HttpGet("session-security")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<SessionSecurityDto>> GetSessionSecurity(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
