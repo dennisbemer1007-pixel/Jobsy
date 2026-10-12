@@ -7,6 +7,7 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
@@ -87,6 +88,7 @@ public class PlatformLogsController : ControllerBase
     /// <summary>Web circuit logger. Authorized by the internal secret, not an admin cookie.</summary>
     [HttpPost("errors")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-write")]
     public async Task<IActionResult> ReportError(
         [FromBody] PlatformErrorReport? body,
         [FromServices] IConfiguration configuration,

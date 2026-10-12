@@ -25,6 +25,7 @@ public sealed class CandidateCareerInterestsController : ControllerBase
     }
 
     [HttpGet("career-interests")]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<CandidateCareerInterestStateDto>> Get(CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);

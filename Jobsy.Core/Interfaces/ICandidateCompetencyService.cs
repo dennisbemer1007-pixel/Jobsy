@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Rules;
 
@@ -36,7 +37,7 @@ public sealed record CandidateCompetencyStateDto(
 public sealed record CompetencyQuestionDto(
     int Id,
     string Category,
-    bool Reverse,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Always)] bool Reverse,
     string TextKey,
     bool IsRiasec = false);
 

@@ -40,6 +40,7 @@ public sealed class DeepAnalysisController : ControllerBase
     }
 
     [HttpGet]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<DeepAnalysisStateDto>> Get(
         [FromQuery] string? kind,
         CancellationToken cancellationToken)
@@ -54,6 +55,7 @@ public sealed class DeepAnalysisController : ControllerBase
     }
 
     [HttpGet("payment-mode")]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<object>> PaymentMode(CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -123,6 +125,7 @@ public sealed class DeepAnalysisController : ControllerBase
     }
 
     [HttpGet("checkout/{checkoutId:guid}")]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<DeepTestCheckoutStatusDto>> GetCheckout(
         Guid checkoutId,
         CancellationToken cancellationToken)
