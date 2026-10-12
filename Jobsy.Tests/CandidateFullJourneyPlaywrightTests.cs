@@ -71,7 +71,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         page.SetDefaultTimeout(90_000);
         var capture = KbE2e.AttachCapture(page);
 
-        await SignUpAsync(page, baseUrl, email, firstName, viewportTag);
+        var signupCode = await SignUpAsync(page, baseUrl, email, firstName, viewportTag);
         await CompleteOnboardingWizardAsync(page, baseUrl, viewportTag);
         await CompleteDiscoveryJourneyDeepTestsAsync(page, baseUrl, viewportTag);
 
@@ -80,7 +80,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await VisitExternalVacancyShareApplyAsync(page, baseUrl, viewportTag, email);
         await VisitCarriereAsync(page, baseUrl, viewportTag);
         await VisitBanenkaartAsync(page, baseUrl, viewportTag);
-        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag, email);
+        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag, email, signupCode);
         if (fullJourney && viewportTag == "desktop")
         {
             await SwitchArabicOnPaspoortAsync(page, baseUrl, viewportTag);
@@ -90,9 +90,9 @@ public sealed class CandidateFullJourneyPlaywrightTests
         KbE2e.AssertHealthy(capture, requireNoIsochrone404: false, allowFont404: true);
     }
 
-    private static async Task CompleteEmailCodeGateAsync(IPage page, string baseUrl, string email)
+    private static async Task CompleteEmailCodeGateAsync(IPage page, string baseUrl, string email, string? staleSignupCode)
     {
-        await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
+        await page.WaitForTimeoutAsync(4_000);
         await page.Context.ClearCookiesAsync();
         await PlaywrightCookieConsent.AcceptAsync(page.Context);
         await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -100,9 +100,25 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await KbE2e.WaitForStyledAppAsync(page);
         await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
         await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync("**/account-maken/code**", new() { Timeout = 90_000 });
-        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
+        await page.WaitForURLAsync(
+            "**/account-maken/code**",
+            new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
+
+        var resend = page.Locator("form.pub-signup__resend button[type=submit]").First;
+        if (await resend.CountAsync() > 0)
+        {
+            await resend.ClickAsync(new() { Timeout = 15_000 });
+            await page.WaitForTimeoutAsync(1_500);
+        }
+
+        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(
+            baseUrl,
+            email,
+            staleCode: staleSignupCode,
+            maxAttempts: 80);
         Assert.False(string.IsNullOrWhiteSpace(code), "OTP — zet JOBSY_E2E_CAPTURE_EMAIL_CODES=1 en herstart de API");
+
+        await page.Locator("input[name=code], input[inputmode=numeric]").First.FillAsync(code!);
         var verifyOk = await page.EvaluateAsync<bool>(
             """
             async code => {
@@ -110,21 +126,23 @@ public sealed class CandidateFullJourneyPlaywrightTests
               if (!form) return false;
               const fd = new FormData(form);
               fd.set('code', code);
-              const res = await fetch(form.action, { method: 'POST', body: fd, credentials: 'include', redirect: 'follow' });
-              return res.ok || res.redirected;
+              const res = await fetch(form.action, { method: 'POST', body: fd, credentials: 'include', redirect: 'manual' });
+              return res.status === 302 || res.status === 303 || res.ok;
             }
             """,
             code);
         Assert.True(verifyOk, "E-mailcode verify POST failed");
+
         await page.GotoAsync(baseUrl + "/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.WaitForURLAsync(
             url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
             new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator(".passport-overview, .passport-overview__title").First.WaitForAsync(new() { Timeout = 60_000 });
         await KbE2e.WaitForStyledAppAsync(page);
         await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
     }
 
-    private static async Task SignUpAsync(IPage page, string baseUrl, string email, string firstName, string tag)
+    private static async Task<string?> SignUpAsync(IPage page, string baseUrl, string email, string firstName, string tag)
     {
         await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
@@ -147,6 +165,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             new() { Timeout = 90_000 });
         await KbE2e.WaitForStyledAppAsync(page);
         await CandidateJourneyE2e.ShotAsync(page, tag, "02-after-signup");
+        return code;
     }
 
     private static async Task CompleteOnboardingWizardAsync(IPage page, string baseUrl, string tag)
@@ -362,6 +381,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.GotoAsync(baseUrl + "/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await KbE2e.WaitForStyledAppAsync(page, "ontdekkingsreis.css");
 
+        var stagnantRounds = 0;
         for (var round = 0; round < 240; round++)
         {
             if (await page.Locator(".journey-end, .journey-klaar, [data-screen=klaar]").CountAsync() > 0)
@@ -371,6 +391,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
             if (await page.Locator(".journey-shed").CountAsync() > 0)
             {
+                await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
                 await CandidateJourneyE2e.SelectMaxShedDepthAsync(page);
                 await CandidateJourneyE2e.ShotAsync(page, tag, $"05-shed-{round:D2}");
                 await CandidateJourneyE2e.ClickPrimaryAsync(page);
@@ -379,12 +400,9 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
             if (await page.Locator(".test-flow, .test-likert, fieldset.q-likert, .questionnaire-shell").CountAsync() > 0)
             {
-                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 6, 4);
-                if (await page.Locator("button.btn-primary:not([disabled])").CountAsync() > 0)
-                {
-                    await CandidateJourneyE2e.ClickPrimaryAsync(page);
-                }
-
+                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 8, 4);
+                _ = await CandidateJourneyE2e.TryAdvanceDiscoveryStepAsync(page);
+                stagnantRounds = 0;
                 continue;
             }
 
@@ -416,13 +434,17 @@ public sealed class CandidateFullJourneyPlaywrightTests
                 continue;
             }
 
-            if (await page.Locator("button.btn-primary:not([disabled])").CountAsync() > 0)
+            if (await CandidateJourneyE2e.TryAdvanceDiscoveryStepAsync(page))
             {
-                await CandidateJourneyE2e.ClickPrimaryAsync(page);
+                stagnantRounds = 0;
             }
             else
             {
-                break;
+                stagnantRounds++;
+                if (stagnantRounds >= 20)
+                {
+                    break;
+                }
             }
 
             await page.WaitForTimeoutAsync(300);
@@ -519,7 +541,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         }
     }
 
-    private static async Task VisitApplicationsAndSettingsAsync(IPage page, string baseUrl, string tag, string email)
+    private static async Task VisitApplicationsAndSettingsAsync(IPage page, string baseUrl, string tag, string email, string? signupCode)
     {
         foreach (var (path, slug) in new[]
                  {
@@ -542,7 +564,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             return;
         }
 
-        await CompleteEmailCodeGateAsync(page, baseUrl, email);
+        await CompleteEmailCodeGateAsync(page, baseUrl, email, signupCode);
         await CandidateJourneyE2e.ShotAsync(page, tag, "15-login-after-logout-otp");
     }
 
@@ -591,7 +613,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             await VisitPaspoortAndPdfAsync(page, baseUrl, tag);
             await VisitCarriereAsync(page, baseUrl, tag);
             await VisitBanenkaartAsync(page, baseUrl, tag);
-            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag, KbE2e.DefaultCompleteEmail);
+            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag, KbE2e.DefaultCompleteEmail, signupCode: null);
             if (tag == "desktop")
             {
                 await SwitchArabicOnPaspoortAsync(page, baseUrl, tag);

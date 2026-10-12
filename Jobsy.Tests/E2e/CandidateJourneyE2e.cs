@@ -159,7 +159,24 @@ public static class CandidateJourneyE2e
     public static async Task ShotAsync(IPage page, string viewportTag, string stepSlug)
     {
         var path = Path.Combine(ShotDir(viewportTag), $"{stepSlug}.png");
-        await page.ScreenshotAsync(new() { Path = path, FullPage = false });
+        var temp = path[..^4] + ".tmp.png";
+        await page.ScreenshotAsync(new() { Path = temp, FullPage = false });
+        try
+        {
+            File.Move(temp, path, overwrite: true);
+        }
+        catch (IOException)
+        {
+            await page.ScreenshotAsync(new() { Path = path, FullPage = false });
+            try
+            {
+                File.Delete(temp);
+            }
+            catch (IOException)
+            {
+                // best-effort
+            }
+        }
     }
 
     public static async Task ShotViewportAsync(IPage page, string outputPath)
@@ -210,12 +227,12 @@ public static class CandidateJourneyE2e
     }
 
     public static async Task<string?> FetchEmailCodeAsync(string baseUrl, string email)
-        => await FetchEmailCodeAsync(baseUrl, email, staleCode: null);
+        => await FetchEmailCodeAsync(baseUrl, email, staleCode: null, maxAttempts: 40);
 
-    public static async Task<string?> FetchEmailCodeAsync(string baseUrl, string email, string? staleCode)
+    public static async Task<string?> FetchEmailCodeAsync(string baseUrl, string email, string? staleCode, int maxAttempts = 40)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-        for (var attempt = 0; attempt < 40; attempt++)
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
             try
             {
@@ -327,12 +344,49 @@ public static class CandidateJourneyE2e
             return;
         }
 
-        var close = page.Locator(".lobsy-assistant.is-open .share-modal__close").First;
-        if (await close.CountAsync() > 0)
+        await page.EvaluateAsync(
+            """
+            () => {
+              document.querySelector('.lobsy-assistant.is-open .share-modal__close')?.click();
+              document.querySelector('.lobsy-assistant-tab.is-open')?.classList.remove('is-open');
+              for (const el of document.querySelectorAll('.lobsy-assistant-tab, .lobsy-assistant-tab__btn')) {
+                el.style.pointerEvents = 'none';
+              }
+            }
+            """);
+        await page.WaitForTimeoutAsync(200);
+    }
+
+    public static async Task<bool> TryAdvanceDiscoveryStepAsync(IPage page)
+    {
+        await DismissAssistantOverlayAsync(page);
+        var force = IsMobileViewport(page);
+
+        var testNext = page.Locator("button.test-flow__next:not([disabled])").First;
+        if (await testNext.CountAsync() > 0)
         {
-            await close.ClickAsync(new() { Timeout = 5_000, Force = true });
-            await page.WaitForTimeoutAsync(300);
+            await testNext.ClickAsync(new() { Timeout = 15_000, Force = force });
+            await page.WaitForTimeoutAsync(350);
+            return true;
         }
+
+        var journeyNext = page.Locator(".journey-step__foot .btn-primary:not([disabled])").First;
+        if (await journeyNext.CountAsync() > 0)
+        {
+            await journeyNext.ClickAsync(new() { Timeout = 15_000, Force = force });
+            await page.WaitForTimeoutAsync(350);
+            return true;
+        }
+
+        var primary = page.Locator("button.btn-primary:not([disabled])").First;
+        if (await primary.CountAsync() > 0)
+        {
+            await primary.ClickAsync(new() { Timeout = 15_000, Force = force });
+            await page.WaitForTimeoutAsync(350);
+            return true;
+        }
+
+        return false;
     }
 
     private static bool IsMobileViewport(IPage page)
@@ -350,24 +404,31 @@ public static class CandidateJourneyE2e
 
     public static async Task SelectMaxShedDepthAsync(IPage page)
     {
-        var unselected = page.Locator(".journey-dive__opt:not(.is-done):not([disabled]):not(.is-on)");
-        if (await unselected.CountAsync() == 0)
+        await DismissAssistantOverlayAsync(page);
+        for (var attempt = 0; attempt < 10; attempt++)
         {
-            return;
-        }
-
-        for (var attempt = 0; attempt < 4; attempt++)
-        {
-            var shallow = unselected.First;
-            try
+            var picked = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const opts = [...document.querySelectorAll(
+                    '.journey-dive__opt:not(.is-done):not([disabled]):not(.is-on)')];
+                  if (opts.length === 0) {
+                    return false;
+                  }
+                  opts[opts.length - 1].click();
+                  return true;
+                }
+                """);
+            if (!picked)
             {
-                await shallow.ClickAsync(new() { Timeout = 8_000, Force = true });
-                await page.WaitForTimeoutAsync(400);
                 return;
             }
-            catch (PlaywrightException) when (attempt < 3)
+
+            await page.WaitForTimeoutAsync(500);
+            var stillOpen = await page.Locator(".journey-dive__opt:not(.is-done):not([disabled]):not(.is-on)").CountAsync();
+            if (stillOpen == 0)
             {
-                await page.WaitForTimeoutAsync(350);
+                return;
             }
         }
     }
@@ -459,20 +520,33 @@ public static class CandidateJourneyE2e
     {
         var dir = Path.GetDirectoryName(outputPng)!;
         Directory.CreateDirectory(dir);
-        var pdfPath = Path.Combine(dir, "_tmp.pdf");
+        var pdfPath = Path.Combine(Path.GetTempPath(), $"jobsy-journey-{Guid.NewGuid():N}.pdf");
         await File.WriteAllBytesAsync(pdfPath, pdf);
-        var psi = new ProcessStartInfo("pdftoppm", $"-png -f 1 -l 1 -singlefile \"{pdfPath}\" \"{outputPng[..^4]}\"")
+        try
         {
-            RedirectStandardError = true,
-            RedirectStandardOutput = true
-        };
-        using var proc = Process.Start(psi);
-        if (proc is null)
-        {
-            return;
-        }
+            var psi = new ProcessStartInfo("pdftoppm", $"-png -f 1 -l 1 -singlefile \"{pdfPath}\" \"{outputPng[..^4]}\"")
+            {
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
+            };
+            using var proc = Process.Start(psi);
+            if (proc is null)
+            {
+                return;
+            }
 
-        await proc.WaitForExitAsync();
-        File.Delete(pdfPath);
+            await proc.WaitForExitAsync();
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(pdfPath);
+            }
+            catch (IOException)
+            {
+                // temp cleanup is best-effort
+            }
+        }
     }
 }
