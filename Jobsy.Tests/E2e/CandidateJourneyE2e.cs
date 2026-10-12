@@ -16,7 +16,10 @@ namespace Jobsy.Tests.E2e;
 /// <summary>Playwright helpers for the full candidate journey E2E capture run.</summary>
 public static class CandidateJourneyE2e
 {
-    public const string ArtifactsRoot = "/cursor/stores/self/fulljourney";
+    public static string ArtifactsRoot =>
+        string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT"))
+            ? "/cursor/stores/self/fulljourney"
+            : Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT")!;
 
     public static bool ShouldRun =>
         string.Equals(
@@ -230,6 +233,14 @@ public static class CandidateJourneyE2e
         => await FetchEmailCodeAsync(baseUrl, email, staleCode: null, maxAttempts: 40);
 
     public static async Task<string?> FetchEmailCodeAsync(string baseUrl, string email, string? staleCode, int maxAttempts = 40)
+        => await FetchEmailCodeAsync(baseUrl, email, staleCode, afterSequence: null, maxAttempts);
+
+    public static async Task<string?> FetchEmailCodeAsync(
+        string baseUrl,
+        string email,
+        string? staleCode,
+        long? afterSequence,
+        int maxAttempts = 40)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         for (var attempt = 0; attempt < maxAttempts; attempt++)
@@ -239,10 +250,14 @@ public static class CandidateJourneyE2e
                 var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
                 var json = await http.GetFromJsonAsync<JsonElement>(
                     $"{api}/api/e2e/last-email-code?email={Uri.EscapeDataString(email)}");
-                if (json.TryGetProperty("code", out var code))
+                if (json.TryGetProperty("code", out var codeProp))
                 {
-                    var value = code.GetString();
+                    var value = codeProp.GetString();
+                    var sequence = json.TryGetProperty("sequence", out var seqProp) && seqProp.TryGetInt64(out var s)
+                        ? s
+                        : (long?)null;
                     if (!string.IsNullOrWhiteSpace(value)
+                        && (afterSequence is null || (sequence is not null && sequence > afterSequence))
                         && (staleCode is null || !string.Equals(value, staleCode, StringComparison.Ordinal)))
                     {
                         return value;
@@ -255,6 +270,27 @@ public static class CandidateJourneyE2e
             }
 
             await Task.Delay(500);
+        }
+
+        return null;
+    }
+
+    public static async Task<long?> GetEmailCodeSequenceAsync(string baseUrl, string email)
+    {
+        try
+        {
+            var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            var json = await http.GetFromJsonAsync<JsonElement>(
+                $"{api}/api/e2e/last-email-code?email={Uri.EscapeDataString(email)}");
+            if (json.TryGetProperty("sequence", out var seqProp) && seqProp.TryGetInt64(out var seq))
+            {
+                return seq;
+            }
+        }
+        catch
+        {
+            // ignore
         }
 
         return null;

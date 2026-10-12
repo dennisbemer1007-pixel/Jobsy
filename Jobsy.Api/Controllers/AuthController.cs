@@ -720,6 +720,11 @@ public class AuthController : ControllerBase
         _db.EmailSignInChallenges.Add(challenge);
         await _db.SaveChangesAsync(cancellationToken);
 
+        if (DevEmailCodeCapture.Enabled)
+        {
+            DevEmailCodeCapture.Record(email, code, challenge.Id);
+        }
+
         try
         {
             var mail = purpose == EmailSignInPurpose.SignUp

@@ -33,9 +33,18 @@ public sealed class E2eDevController : ControllerBase
             return BadRequest(new { message = "email required" });
         }
 
-        return DevEmailCodeCapture.TryGet(email, out var code)
-            ? Ok(new { email = email.Trim().ToLowerInvariant(), code })
-            : NotFound(new { message = "no code captured yet" });
+        if (!DevEmailCodeCapture.TryGetEntry(email, out var entry))
+        {
+            return NotFound(new { message = "no code captured yet" });
+        }
+
+        return Ok(new
+        {
+            email = email.Trim().ToLowerInvariant(),
+            code = entry.Code,
+            sequence = entry.Sequence,
+            challengeId = entry.ChallengeId
+        });
     }
 
     [HttpPost("clear-email-codes")]

@@ -92,12 +92,14 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
     private static async Task CompleteEmailCodeGateAsync(IPage page, string baseUrl, string email, string? staleSignupCode)
     {
-        await page.WaitForTimeoutAsync(4_000);
         await page.Context.ClearCookiesAsync();
         await PlaywrightCookieConsent.AcceptAsync(page.Context);
         await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await KbE2e.WaitForStyledAppAsync(page);
+
+        var sequenceBefore = await CandidateJourneyE2e.GetEmailCodeSequenceAsync(baseUrl, email) ?? 0;
+
         await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
         await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
         await page.WaitForURLAsync(
@@ -108,6 +110,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             baseUrl,
             email,
             staleCode: staleSignupCode,
+            afterSequence: sequenceBefore,
             maxAttempts: 80);
         Assert.False(string.IsNullOrWhiteSpace(code), "OTP — zet JOBSY_E2E_CAPTURE_EMAIL_CODES=1 en herstart de API");
 
@@ -405,6 +408,17 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
             if (await page.Locator(".test-flow, .test-likert, fieldset.q-likert, .questionnaire-shell").CountAsync() > 0)
             {
+                var counter = page.Locator(".test-flow__counter").First;
+                if (await counter.CountAsync() > 0)
+                {
+                    var counterText = await counter.InnerTextAsync();
+                    if (counterText.Contains("van 25", StringComparison.Ordinal)
+                        || counterText.Contains("van 18", StringComparison.Ordinal))
+                    {
+                        await CandidateJourneyE2e.ShotAsync(page, tag, "05-deep-test-counter");
+                    }
+                }
+
                 await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 30, 4);
                 _ = await CandidateJourneyE2e.TryAdvanceDiscoveryStepAsync(page);
                 stagnantRounds = 0;
