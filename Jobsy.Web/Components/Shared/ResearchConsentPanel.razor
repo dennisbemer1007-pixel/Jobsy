@@ -30,27 +30,27 @@
             <ResearchDemographicsSelect LabelKey="Research.Demo.Age"
                                         OptionCategory="Age"
                                         Options="ResearchDemographicsCatalog.AgeBands"
-                                        Id="_age"
+                                        Id="@ResearchDemoAgeId"
                                         @bind-Value="_age" />
             <ResearchDemographicsSelect LabelKey="Research.Demo.Gender"
                                         OptionCategory="Gender"
                                         Options="ResearchDemographicsCatalog.Genders"
-                                        Id="_gender"
+                                        Id="@ResearchDemoGenderId"
                                         @bind-Value="_gender" />
             <ResearchDemographicsSelect LabelKey="Research.Demo.Education"
                                         OptionCategory="Education"
                                         Options="ResearchDemographicsCatalog.EducationLevels"
-                                        Id="_education"
+                                        Id="@ResearchDemoEducationId"
                                         @bind-Value="_education" />
             <ResearchDemographicsSelect LabelKey="Research.Demo.NativeLang"
                                         OptionCategory="Lang"
                                         Options="ResearchDemographicsCatalog.Languages"
-                                        Id="_native"
+                                        Id="@ResearchDemoNativeLangId"
                                         @bind-Value="_native" />
             <ResearchDemographicsSelect LabelKey="Research.Demo.TestLang"
                                         OptionCategory="Lang"
                                         Options="ResearchDemographicsCatalog.Languages"
-                                        Id="_testLang"
+                                        Id="@ResearchDemoTestLangId"
                                         @bind-Value="_testLang" />
         </div>
     }
@@ -79,6 +79,12 @@
     [Parameter] public bool ShowSkip { get; set; } = true;
     [Parameter] public EventCallback<ResearchDemographicsSubmit> OnAccept { get; set; }
     [Parameter] public EventCallback OnSkip { get; set; }
+
+    private const string ResearchDemoAgeId = "_age";
+    private const string ResearchDemoGenderId = "_gender";
+    private const string ResearchDemoEducationId = "_education";
+    private const string ResearchDemoNativeLangId = "_native";
+    private const string ResearchDemoTestLangId = "_testLang";
 
     private bool _consentChecked;
     private string? _age;

@@ -1168,18 +1168,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int?>("RealisticPercent")
+                    b.Property<int>("QuickScanHighestAnswered")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
                     b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RealisticPercent")
+                        .HasColumnType("integer");
 
                     b.Property<string>("RiasecTagsJson")
                         .IsRequired()
@@ -1361,6 +1357,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int>("QuickScanHighestAnswered")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuickScanVersion")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("ResultaatgerichtheidPercent")
                         .HasColumnType("integer");
 
@@ -1379,16 +1381,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int?>("StressbestendigheidPercent")
                         .HasColumnType("integer");
-
-                    b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1460,14 +1452,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
+                        .HasColumnType("integer");
 
                     b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -2218,18 +2206,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int?>("StabilityPercent")
+                    b.Property<int>("QuickScanHighestAnswered")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
                     b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StabilityPercent")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -5362,6 +5346,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("MatchCalibrationV1Enabled")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("MinimumSessionVersion")
                         .HasColumnType("integer");
 
@@ -5381,9 +5368,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<bool>("ProactiveMatchingEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("MatchCalibrationV1Enabled")
                         .HasColumnType("boolean");
 
                     b.Property<string>("PublicWebBaseUrl")
