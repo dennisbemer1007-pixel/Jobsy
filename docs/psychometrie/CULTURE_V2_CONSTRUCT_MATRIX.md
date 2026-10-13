@@ -1,6 +1,7 @@
 # Cultuur-scan v2 — construct matrix
 
-**Catalogus:** `CulturePersonalityCatalogV2.cs` (12 dimensies × 4). **Curiosity** scored as Openness. **Teksten:** base + supplement + bank (Q20).
+**Catalogus:** `CulturePersonalityCatalogV2.cs` (12 dimensies × 4). **Curiosity** scored as Openness. **Teksten:** base + supplement + bank (Q20).  
+**v3 free tier (25):** ids `1–12, 25–26, 29–30, 33–34, 37–38, 41–42, 45–47` — zie `QUICKSCAN_V3_FREE_TIER_MATRIX.md`.
 
 | Id | Key | Construct | Keying | NL stem (referentie) |
 |----|-----|-----------|--------|----------------------|

@@ -2,7 +2,8 @@
 
 **Bron van itemteksten:** `UiStringsAssessmentV2ValuesCareerBank.cs` (via `UiStringsAssessmentV2.MergeAll`).  
 **Catalogus / keying:** `SchwartzValuesCatalogV2.cs`.  
-**Scoring:** gemiddelde per driver; reverse items → `6 − ruwe score` vóór middeling.
+**Scoring:** gemiddelde per driver; reverse items → `6 − ruwe score` vóór middeling.  
+**v3 free tier (25):** ids `1–5, 9–13, 17–21, 25–29, 33–37` — zie `QUICKSCAN_V3_FREE_TIER_MATRIX.md`.
 
 | Id | Key | Driver | Keying | NL stem (referentie) |
 |----|-----|--------|--------|----------------------|

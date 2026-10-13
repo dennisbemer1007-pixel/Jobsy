@@ -1,8 +1,8 @@
 # Testhandleiding Quick-Scan assessments v2 (Lobsy)
 
-**Versie:** concept v2 (Quick-Scan `QuickScanVersion = 2`)  
+**Versie:** v2 itembank + **v3 tier** (`QuickScanVersion` 1 / 2 / 3)  
 **Status:** interne handleiding — **geen COTAN-registratie**, geen normtabellen tot validatiestudie is afgerond.  
-**Feature flag:** `TestsV2Enabled` (standaard uit). Bestaande v1-resultaten blijven op versie 1.
+**Feature flag:** `TestsV2Enabled` (standaard uit). Nieuwe kandidaten krijgen bij flag **aan** `QuickScanVersion = 3` (25 free items). Legacy v2 (`= 2`) en v1 blijven geldig.
 
 ---
 
@@ -41,14 +41,26 @@ Minderjarigen: extra ouder/voogd-consent volgens platformregels.
 
 ---
 
-## Hoofdstuk 3 — Testmateriaal (v2)
+## Hoofdstuk 3 — Testmateriaal (v2 bank, v3 tier)
 
-| Instrument | Items (volledig) | Items per schaal/dimensie | Diepte |
-|------------|------------------|---------------------------|--------|
-| Competentie | 40 | 8 | Eerste blik 5, Dieper 10, Volledig 40 |
-| Carrière | 48 | 8 per RIASEC-type | Idem |
-| Cultuur | 48 | 4 per dimensie (12 dimensies) | Idem |
-| Waarden | 40 | 8 per waarde-driver | Idem |
+### 3.1 Drie tiers per instrument (`TestsV2Enabled`)
+
+| Laag | Diepte-token | Items (v3) | Betrouwbaarheid UI |
+|------|--------------|------------|--------------------|
+| Onboarding / mini | First (5) | 5 | Indicatief |
+| Gratis verdieping | Deeper (10) → Full | **25** | Volledige **free** Quick-Scan @ v3 |
+| Betaalde diepteanalyse | Bottom | 150–200 (`DeepAnalysisCatalog`) | Deep / paywall; zie `DEEP_ANALYSIS_ITEM_BANK_TODO.md` |
+
+### 3.2 Itembudget per versie
+
+| Instrument | v1 Full | v2 legacy Full | **v3 free Full** |
+|------------|---------|----------------|------------------|
+| Competentie | 25 | 40 | **25** (v2-subset) |
+| Carrière | 25 | 48 | **25** |
+| Cultuur | 18 | 48 | **25** |
+| Waarden | 25 | 40 | **25** |
+
+v3-id’s: `docs/psychometrie/QUICKSCAN_V3_FREE_TIER_MATRIX.md`.
 
 - **Likert 1–5** (oneens → eens). Reverse items: gescoorde waarde = 6 − ruwe waarde.
 - **Schaling:** percent = round((gemiddelde − 1) / 4 × 100), 0–100 (zie `AssessmentScoringDocumentation`).
@@ -94,7 +106,7 @@ Alle v2-instrumenten gebruiken **Likert 1–5** per item. Opgeslagen antwoorden 
 | 4 | **Indicatieve diepte:** als `QuestionCount` &lt; volledige bank → markeer `IsIndicativeDepth`; geen normvergelijking | `Candidate*Service.ToDto`, `TestDepthRules` |
 | 5 | Match: gewogen overlap profiel–vacature; bij indicatieve diepte factor **0,72** + **10 pp** onzekerheid | `AssessmentMatchEvidenceRules`, `ProfileVacancyMatchCalculator` |
 
-**Versie-scheiding:** kandidaten met `QuickScanVersion = 1` blijven via v1-catalogi en v1-itemteksten (`UiStringsTests` / legacy keys) gescoord; v2 alleen wanneer v2 actief was bij start/opslaan.
+**Versie-scheiding:** v1 → v1-catalogi; v2 (legacy extended) → volledige v2-bank; v3 → `QuickScanFreeTierV3` subset. Geen stille migratie van opgeslagen antwoorden.
 
 **Waarden v2:** vijf workplace-drivers (Autonomie, Verbinding, Prestatie, Stabiliteit, Impact) — 8 unieke stems per driver, 4 forward + 4 reverse (Schwartz/PVQ-stijl, B1).
 

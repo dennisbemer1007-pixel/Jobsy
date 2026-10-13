@@ -1,6 +1,7 @@
 # Carrière-scan v2 (RIASEC) — construct matrix
 
-**Catalogus:** `CareerTestCatalogV2.cs`. **Teksten:** `UiStringsAssessmentV2ValuesCareerBank.cs` (NL).
+**Catalogus:** `CareerTestCatalogV2.cs`. **Teksten:** `UiStringsAssessmentV2ValuesCareerBank.cs` (NL).  
+**v3 free tier (25):** ids `1–4, 9–12, 17–21, 25–28, 33–36, 41–44` — zie `QUICKSCAN_V3_FREE_TIER_MATRIX.md`.
 
 | Id | Key | Construct | Keying | NL stem (referentie) |
 |----|-----|-----------|--------|----------------------|

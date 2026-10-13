@@ -330,9 +330,9 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             => new()
             {
                 Status = "Draft",
-                QuickScanVersion = AssessmentTestVersions.V2,
-                QuickScanFullCount = 40,
-                QuestionCount = 40,
+                QuickScanVersion = AssessmentTestVersions.V3,
+                QuickScanFullCount = 25,
+                QuestionCount = 25,
                 IsIndicativeDepth = true,
                 Answers = new Dictionary<string, int> { ["1"] = 4, ["2"] = 3 }
             };
@@ -341,9 +341,9 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             => new()
             {
                 Status = "Draft",
-                QuickScanVersion = AssessmentTestVersions.V2,
-                QuickScanFullCount = 48,
-                QuestionCount = 48,
+                QuickScanVersion = AssessmentTestVersions.V3,
+                QuickScanFullCount = 25,
+                QuestionCount = 25,
                 Answers = new Dictionary<string, int>()
             };
 
@@ -351,8 +351,8 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             => new()
             {
                 Status = "Draft",
-                QuickScanVersion = AssessmentTestVersions.V2,
-                QuickScanFullCount = 48,
+                QuickScanVersion = AssessmentTestVersions.V3,
+                QuickScanFullCount = 25,
                 Answers = new Dictionary<string, int>()
             };
 
@@ -360,8 +360,8 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             => new()
             {
                 Status = "Draft",
-                QuickScanVersion = AssessmentTestVersions.V2,
-                QuickScanFullCount = 40,
+                QuickScanVersion = AssessmentTestVersions.V3,
+                QuickScanFullCount = 25,
                 Answers = new Dictionary<string, int>()
             };
     }
