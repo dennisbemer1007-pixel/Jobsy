@@ -114,6 +114,42 @@ public sealed class AssessmentV2TranslationGuardTests
         }
     }
 
+    [Fact]
+    public void Values_v2_reverse_items_use_contrary_nl_wording()
+    {
+        string[] contraryMarkers =
+        [
+            "liever", "weinig", " niet ", "niet belangrijk", "vermijd", "zonder", "geen ",
+            "hoef niet", "interesseert me weinig", "boeit", "prima als", "afleiding",
+            "precies zegt", "verdragen", "plaatsen", "zwaarder", "hoeft", "zoek geen",
+            "maakt mij weinig", "maakt me weinig", "alleen als",
+            "dan bij veel vrijheid", "vaste routines"
+        ];
+
+        var forbiddenProTrait = new Dictionary<int, string[]>
+        {
+            [21] = ["drijven mij aan", "motiveert me extra", "drijven"],
+            [31] = ["storen me", "storen mij"],
+            [39] = ["belangrijkst", "doe ik graag mee"],
+        };
+
+        foreach (var q in SchwartzValuesCatalogV2.Questions.Where(x => x.Reverse))
+        {
+            var nl = UiStrings.Get(q.TextKey, "nl");
+            if (forbiddenProTrait.TryGetValue(q.Id, out var forbidden))
+            {
+                foreach (var phrase in forbidden)
+                {
+                    Assert.DoesNotContain(phrase, nl, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            Assert.True(
+                contraryMarkers.Any(m => nl.Contains(m, StringComparison.OrdinalIgnoreCase)),
+                $"Values Q{q.Id} (reverse) NL stem lacks contrary marker: {nl}");
+        }
+    }
+
     [Theory]
     [InlineData("nl")]
     [InlineData("en")]
