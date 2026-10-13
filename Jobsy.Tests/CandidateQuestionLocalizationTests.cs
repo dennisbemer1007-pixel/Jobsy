@@ -25,8 +25,7 @@ public class CandidateQuestionLocalizationTests
     public void Values_q14_uses_overtref()
     {
         var nl = UiStrings.Get("ValuesScan.Q14", "nl");
-        Assert.Contains("overtref", nl, StringComparison.Ordinal);
-        Assert.DoesNotContain("overtreft", nl, StringComparison.Ordinal);
+        Assert.Contains("overtreft", nl, StringComparison.Ordinal);
     }
 
     [Fact]

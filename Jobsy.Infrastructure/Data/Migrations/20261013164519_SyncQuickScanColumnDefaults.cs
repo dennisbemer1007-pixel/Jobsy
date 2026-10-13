@@ -6,8 +6,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
     /// <summary>
-    /// Applies Quick-Scan v2 columns that were defined in a hand-written migration
-    /// missing from the EF designer chain (see removed AddQuickScanVersionAndTestsV2Enabled file).
+    /// Idempotent Quick-Scan v2 columns (50647 may already have applied them via IF NOT EXISTS).
     /// </summary>
     public partial class SyncQuickScanColumnDefaults : Migration
     {
