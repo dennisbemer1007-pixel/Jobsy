@@ -34,6 +34,9 @@ public class PlatformFeatureSettings
     /// </summary>
     public int MinimumSessionVersion { get; set; }
 
+    /// <summary>When true, research consent UI and exports are available (COTAN validation).</summary>
+    public bool ResearchConsentEnabled { get; set; }
+
     /// <summary>
     /// Inclusive last calendar day (UTC date) on which publishing a vacancy costs 0 tokens.
     /// Highlight and PushBom stay paid. Null = promo off (normal publish rates).

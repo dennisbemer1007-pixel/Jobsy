@@ -78,6 +78,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public DateTime? ParentalConsentAt { get; set; }
     public string ParentalConsentEmail { get; set; } = "";
     public string? ConsentMessage { get; private set; }
+    public bool ResearchFeatureEnabled { get; private set; }
+    public ResearchConsentStateClient? ResearchConsent { get; private set; }
     public bool UnsubscribeOpen { get; set; }
     public DateOnly? DobInput { get; set; }
     public string HomeAddress { get; set; } = string.Empty;
@@ -1132,6 +1134,82 @@ public sealed class CandidateProfileEditor : IDisposable
         {
             await _api.RequestParentalConsentAsync(ParentalConsentEmail);
             ConsentMessage = _culture["Profile.Consent.Toast.ParentalSent"];
+        }
+        catch (Exception ex)
+        {
+            ConsentMessage = Describe(ex);
+        }
+        finally
+        {
+            ConsentBusy = false;
+            Notify();
+        }
+    }
+
+    public async Task LoadResearchConsentAsync()
+    {
+        try
+        {
+            var researchStatus = await _api.GetResearchFeatureStatusAsync();
+            ResearchFeatureEnabled = researchStatus?.Enabled == true;
+        }
+        catch
+        {
+            ResearchFeatureEnabled = false;
+            ResearchConsent = null;
+            Notify();
+            return;
+        }
+
+        if (!ResearchFeatureEnabled)
+        {
+            ResearchConsent = null;
+            Notify();
+            return;
+        }
+
+        try
+        {
+            ResearchConsent = await _api.GetResearchConsentAsync();
+        }
+        catch
+        {
+            ResearchConsent = null;
+        }
+
+        Notify();
+    }
+
+    public async Task AcceptResearchConsentAsync(Components.Shared.ResearchConsentPanel.ResearchDemographicsSubmit demo)
+    {
+        ConsentBusy = true;
+        ConsentMessage = null;
+        Notify();
+        try
+        {
+            ResearchConsent = await _api.AcceptResearchConsentAsync(demo);
+            ConsentMessage = _culture["Research.Consent.Toast.Accepted"];
+        }
+        catch (Exception ex)
+        {
+            ConsentMessage = Describe(ex);
+        }
+        finally
+        {
+            ConsentBusy = false;
+            Notify();
+        }
+    }
+
+    public async Task WithdrawResearchConsentAsync()
+    {
+        ConsentBusy = true;
+        ConsentMessage = null;
+        Notify();
+        try
+        {
+            ResearchConsent = await _api.WithdrawResearchConsentAsync();
+            ConsentMessage = _culture["Research.Consent.Toast.Withdrawn"];
         }
         catch (Exception ex)
         {

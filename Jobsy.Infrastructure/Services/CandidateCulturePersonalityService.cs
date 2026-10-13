@@ -14,6 +14,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly IAssessmentResearchService _research;
     private readonly AssessmentSaveGuard _saveGuard;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly IFeatureFlags _flags;
@@ -22,6 +23,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateInsightsQueue queue,
+        IAssessmentResearchService research,
         ICandidateMatchSnapshotService matchSnapshots,
         AssessmentSaveGuard saveGuard,
         IFeatureFlags flags)
@@ -29,6 +31,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         _db = db;
         _commercial = commercial;
         _queue = queue;
+        _research = research;
         _matchSnapshots = matchSnapshots;
         _saveGuard = saveGuard;
         _flags = flags;
@@ -150,6 +153,14 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
+            await ResearchQuickScanSync.AfterCompleteAsync(
+                _research,
+                userId,
+                AssessmentKind.Culture,
+                answers,
+                itemDurationMs: null,
+                totalDurationMs: null,
+                cancellationToken);
             _queue.TryEnqueue(userId);
         }
 

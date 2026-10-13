@@ -63,7 +63,8 @@ public static class AdminNav
         [
             new("candidates", "AdminNav.Candidates", "/admin/kandidaten", NavIcons.Users,
                 [], IsAvailable: true),
-            // Tests & normen — deferred slot (comment only; no nav item).
+            new("research", "AdminNav.Research", "/admin/research", NavIcons.Logging,
+                [], IsAvailable: true),
         ]),
         new("vacancies", "AdminNav.Group.Vacancies",
         [

@@ -585,6 +585,8 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICultureFitAiService, CultureFitAiService>();
+        services.AddScoped<IResearchConsentGate, ResearchConsentGate>();
+        services.AddScoped<IAssessmentResearchService, AssessmentResearchService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
         services.AddScoped<ICandidateCulturePersonalityService, CandidateCulturePersonalityService>();
         services.AddScoped<ICandidateValuesService, CandidateValuesService>();

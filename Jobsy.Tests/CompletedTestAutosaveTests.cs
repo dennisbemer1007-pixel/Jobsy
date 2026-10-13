@@ -5,6 +5,7 @@ using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.Stubs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -46,6 +47,7 @@ public class CompletedTestAutosaveTests
             new StubCommercial(),
             new StubMatchSnapshots(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.SaveAsync(userId, edited, complete: false);
@@ -91,6 +93,7 @@ public class CompletedTestAutosaveTests
             db,
             new StubCommercial(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
@@ -146,6 +149,7 @@ public class CompletedTestAutosaveTests
             new StubCommercial(),
             new StubMatchSnapshots(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
         await sut.SaveAsync(userId, edited, complete: false);
@@ -169,6 +173,7 @@ public class CompletedTestAutosaveTests
             db,
             new StubCommercial(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
@@ -197,6 +202,7 @@ public class CompletedTestAutosaveTests
             db,
             new StubCommercial(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
@@ -262,6 +268,7 @@ public class CompletedTestAutosaveTests
             new StubCommercial(),
             new StubMatchSnapshots(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
         await sut.SaveAsync(userId, answers, complete: true);

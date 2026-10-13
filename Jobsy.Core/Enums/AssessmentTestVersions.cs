@@ -1,7 +1,8 @@
 namespace Jobsy.Core.Enums;
 
 /// <summary>
-/// Quick-Scan question-set version. Stored on candidate rows; v1 results keep v1 scoring/items forever.
+/// Quick-Scan question-set version stored on candidate rows and research exports.
+/// v1 results keep v1 scoring/items forever; v2 via <c>TestsV2Enabled</c> (PR #647).
 /// </summary>
 public static class AssessmentTestVersions
 {

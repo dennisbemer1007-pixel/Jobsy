@@ -7,6 +7,7 @@
 @using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -289,8 +290,16 @@ else
                 await _autosave.FlushAsync();
                 if (complete) await Api.SaveMyCompetenciesAsync(_autosave.Answers, complete: true);
             }
+
             _answered = _autosave?.AnsweredCount ?? _answered;
             _gainLines = [Culture["TestDone.Gain.Strength"], Culture["TestDone.Gain.Strength2"], Culture["TestDone.Gain.Less"]];
+            if (complete)
+            {
+                await ResearchPostTestNavigation.GoAfterQuickScanCompleteAsync(
+                    Api, Navigation, "/candidate/competencies?stap=klaar", "competence");
+                return;
+            }
+
             _mode = TestPageShell.ShellMode.Done;
             Navigation.NavigateTo("/candidate/competencies?stap=klaar", replace: true);
         }

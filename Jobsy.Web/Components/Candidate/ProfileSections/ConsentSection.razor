@@ -39,6 +39,33 @@
                     <button class="provider-btn provider-btn--danger" type="button" disabled="@Editor.ConsentBusy" @onclick="Editor.WithdrawTalentPoolConsentAsync">@Culture["Profile.Consent.TalentWithdraw"]</button>
                 }
 
+                @if (Editor.ResearchFeatureEnabled)
+                {
+                    @if (Editor.ResearchConsent?.HasConsent != true)
+                    {
+                        <div data-testid="profile-research-privacy">
+                            <ResearchConsentPanel Busy="Editor.ConsentBusy"
+                                                  Embedded="true"
+                                                  ShowSkip="false"
+                                                  OnAccept="Editor.AcceptResearchConsentAsync"
+                                                  OnSkip="() => Task.CompletedTask" />
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="profile-address__hint">
+                            @Culture.Format("Research.Consent.Since", Editor.ResearchConsent!.ResearchConsentAt!.Value.ToLocalTime().ToString("dd-MM-yyyy"))
+                        </p>
+                        <button class="provider-btn provider-btn--danger"
+                                type="button"
+                                disabled="@Editor.ConsentBusy"
+                                data-testid="research-consent-revoke"
+                                @onclick="Editor.WithdrawResearchConsentAsync">
+                            @Culture["Research.Consent.Revoke"]
+                        </button>
+                    }
+                }
+
                 @if (Editor.IsUnder16 && Editor.ParentalConsentAt is null)
                 {
                     <h3>@Culture["Profile.Consent.ParentalTitle"]</h3>
@@ -57,4 +84,12 @@
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Editor.LoadResearchConsentAsync();
+        }
+    }
 }

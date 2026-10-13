@@ -1,0 +1,141 @@
+@page "/pilot/{Code}"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared.Questionnaire
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>Pilot · Lobsy</PageTitle>
+
+<div class="panel-page pb-28" data-testid="pilot-test-page">
+    @if (_loading)
+    {
+        <p>@Culture["Common.Loading"]</p>
+    }
+    else if (_sessionId is null)
+    {
+        <p class="state-message">Deze pilotlink is niet geldig of niet actief.</p>
+    }
+    else if (!_finished)
+    {
+        <h1>@_campaignTitle</h1>
+        <p class="login-lead">Pilot — competentietest (anoniem, zonder account).</p>
+        <p>Vraag @_currentIndex / @CompetencyTestCatalog.QuestionCount</p>
+        @if (_currentQuestion is not null)
+        {
+            <LikertScaleQuestion QuestionId="_currentQuestion.Id"
+                                 Text="@($"{_currentQuestion.Id}. {Culture[_currentQuestion.TextKey]}")"
+                                 Value="@(_answers.TryGetValue(_currentQuestion.Id, out var v) ? v : null)"
+                                 IsAnswered="_answers.ContainsKey(_currentQuestion.Id)"
+                                 IsCurrent="true"
+                                 InputPrefix="pilot"
+                                 ValueChanged="OnAnswerAsync" />
+            <label class="filter-check">
+                <input type="checkbox" @bind="UnclearForCurrentQuestion" />
+                @Culture["Research.Pilot.Unclear"]
+            </label>
+        }
+        <button type="button" class="engagement-btn" disabled="@(!CanNext)" @onclick="NextAsync">Volgende</button>
+    }
+    else
+    {
+        <h2>Klaar</h2>
+        <label>
+            @Culture["Research.Pilot.Comment"]
+            <textarea @bind="_endComment" rows="3"></textarea>
+        </label>
+        <button type="button" class="engagement-btn" @onclick="SubmitAsync">Versturen</button>
+    }
+</div>
+
+@code {
+    [Parameter] public string Code { get; set; } = "";
+
+    private bool _loading = true;
+    private Guid? _sessionId;
+    private string _campaignTitle = "Pilot";
+    private bool _finished;
+    private int _currentIndex;
+    private string? _endComment;
+    private readonly Dictionary<int, int> _answers = [];
+    private readonly Dictionary<int, bool> _unclear = [];
+    private readonly Dictionary<int, int> _itemMs = [];
+    private DateTime _itemStarted = DateTime.UtcNow;
+
+    private CompetencyQuestion? _currentQuestion =>
+        _currentIndex >= 0 && _currentIndex < CompetencyTestCatalog.Questions.Count
+            ? CompetencyTestCatalog.Questions[_currentIndex]
+            : null;
+
+    private bool CanNext => _currentQuestion is not null && _answers.ContainsKey(_currentQuestion.Id);
+
+    private bool UnclearForCurrentQuestion
+    {
+        get => _currentQuestion is not null && _unclear.GetValueOrDefault(_currentQuestion.Id);
+        set
+        {
+            if (_currentQuestion is not null)
+            {
+                _unclear[_currentQuestion.Id] = value;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var started = await Api.StartResearchPilotAsync(Code);
+        if (started is not null)
+        {
+            _sessionId = started.SessionId;
+            _campaignTitle = started.CampaignTitle;
+        }
+
+        _itemStarted = DateTime.UtcNow;
+        _loading = false;
+    }
+
+    private Task OnAnswerAsync(int value)
+    {
+        if (_currentQuestion is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var ms = (int)(DateTime.UtcNow - _itemStarted).TotalMilliseconds;
+        _itemMs[_currentQuestion.Id] = ms;
+        _answers[_currentQuestion.Id] = value;
+        return Task.CompletedTask;
+    }
+
+    private void NextAsync()
+    {
+        if (_currentIndex + 1 >= CompetencyTestCatalog.QuestionCount)
+        {
+            _finished = true;
+            return;
+        }
+
+        _currentIndex++;
+        _itemStarted = DateTime.UtcNow;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_sessionId is null)
+        {
+            return;
+        }
+
+        await Api.SubmitResearchPilotAttemptAsync(
+            _sessionId.Value,
+            AssessmentKind.Competence,
+            _answers,
+            _itemMs,
+            _unclear,
+            _endComment);
+        Navigation.NavigateTo("/info/onderzoek");
+    }
+}

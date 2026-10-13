@@ -55,6 +55,16 @@ public class User
     public DateTime? TestAiConsentAt { get; set; }
     public string? TestAiConsentVersion { get; set; }
 
+    /// <summary>Optional consent for anonymized use of test answers in scientific research.</summary>
+    public DateTime? ResearchConsentAt { get; set; }
+    public string? ResearchConsentVersion { get; set; }
+
+    public string? ResearchAgeBand { get; set; }
+    public string? ResearchGender { get; set; }
+    public string? ResearchEducationLevel { get; set; }
+    public string? ResearchNativeLanguage { get; set; }
+    public string? ResearchTestLanguage { get; set; }
+
     /// <summary>Parent/guardian consent required before under-16s can use protected functions.</summary>
     public DateTime? ParentalConsentAt { get; set; }
     public string? ParentalConsentEmail { get; set; }

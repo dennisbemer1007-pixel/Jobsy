@@ -251,6 +251,7 @@ public static class UatScriptRunner
         {
             var available = AdminNav.AvailableItems().ToList();
             Assert.True(available.Count >= 10, $"{scenario.Id}: expected available admin nav items");
+            Assert.Contains(available, i => i.Href == "/admin/research");
             foreach (var item in available)
             {
                 AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: admin nav {item.Href}");

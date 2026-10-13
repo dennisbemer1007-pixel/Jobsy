@@ -1,0 +1,36 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+
+<div class="research-consent-card__field">
+    <label class="research-consent-card__label" for="@Id">
+        <span class="research-consent-card__label-text">@Culture[LabelKey]</span>
+        <select id="@Id"
+                class="research-consent-card__select"
+                value="@Value"
+                @onchange="OnChangeAsync">
+            <option value="">@ResearchDemographicsOptionLabels.Placeholder(Culture)</option>
+            @foreach (var opt in Options)
+            {
+                <option value="@opt">@ResearchDemographicsOptionLabels.Label(Culture, OptionCategory, opt)</option>
+            }
+        </select>
+    </label>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string LabelKey { get; set; } = "";
+    [Parameter, EditorRequired] public string OptionCategory { get; set; } = "";
+    [Parameter, EditorRequired] public IReadOnlyList<string> Options { get; set; } = [];
+    [Parameter, EditorRequired] public string Id { get; set; } = "";
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+
+    private async Task OnChangeAsync(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        Value = string.IsNullOrWhiteSpace(raw) ? null : raw;
+        await ValueChanged.InvokeAsync(Value);
+    }
+}
