@@ -1,25 +1,32 @@
-# Betaalde diepteanalyse — itembank TODO (150–200 items)
+# Betaalde diepteanalyse — itembank status
 
-**Doel:** paywall-hook en UI-structuur (`TestDepthLevel.Bottom`, `DeepAnalysisCatalog`) zonder **verzonnen** psychometrische items.
+**Status (oktober 2026):** itembanks **150 / 200 / 150 / 150** geïmplementeerd in `DeepAnalysisCatalog` + embedded NL + `Data/DeepItems/*-{en,pl,ro,ar}.json`.  
+**Normen / α:** nog te bepalen met pilotdata (**n≈300** per instrument) — zie `VALIDATIE_STUDIEPLAN.md`.
 
-## Huidige code (ongewijzigde counts)
+## Instrumenten
 
-| Instrument | Doel-range (tier) | Huidige `DeepAnalysisCatalog` | Status |
-|------------|-------------------|----------------------------------|--------|
-| Competentie | 150–200 | 150 (5×30 domeinen) | Bank aanwezig; valideren tegen IPIP/workplace-claim |
-| Carrière (RIASEC) | 150–200 | 200 | Bank aanwezig |
-| Cultuur | 150–200 | 150 | Bank aanwezig |
-| Waarden | 150–200 | 150 | Bank aanwezig |
+| Instrument | Items | Construct | Constructmatrix |
+|------------|-------|-----------|-----------------|
+| Competentie (Big Five / facetten) | 150 | IPIP-NEO-achtig, werkcontext B1 | `COMPETENCE_DEEP_CONSTRUCT_MATRIX.md` |
+| Carrière RIASEC | 200 | Holland R–I–A–S–E–C | `RIASEC_DEEP_CONSTRUCT_MATRIX.md` |
+| Waarden | 150 | Schwartz workplace drivers | `VALUES_DEEP_CONSTRUCT_MATRIX.md` |
+| Cultuur & persoonlijkheid | 150 | 6 cultuur + 6 persoonlijkheid | `CULTURE_DEEP_CONSTRUCT_MATRIX.md` |
 
-## TODO (geen nieuwe items zonder onderbouwing)
+## Kwaliteitscontroles (CI)
 
-1. **Psychometrische review** per bank: α, factorstructuur, item-trash (zie `VALIDATIE_STUDIEPLAN.md`).
-2. **Tier-copy:** marketing “150–200” alignen met werkelijke `QuestionCountFor(kind)` na review (eventueel splitsen 150 vs 200 per instrument).
-3. **Module-merge (v3 architectuur):** gecombineerde Persoon+Werkstijl-diepte — **nieuwe items alleen** na constructmatrix + COTAN-intern review.
-4. **Ontbrekende stems:** als een schaal onder minimum items zit na trim, expliciet **TODO** in constructmatrix + geen productie-normclaim.
+- `DeepAnalysisItemBankQualityTests` — unieke stems, reverse-balans per domein, near-duplicate vs free Quick-Scan v3, taal-heuristieken.
+- `TestItemTranslationParityTests` — volledige id-dekking en geen NL-fallback in shipped talen.
+- Regeneratie vertalingen: `docs/psychometrie/scripts/regenerate_deep_item_locales.py` + `validate_deep_locales.py`.
 
-## Productgedrag (nu)
+## Product
 
-- Free tier v3: max 25 items (`QuickScanFreeTierV3`).
+- Free tier v3: max 25 items (`QuickScanFreeTierV3`); **anker op v2-id’s**, geen overlap met deep-stems (score-vergelijkbaarheid via domeinen).
 - Bottom-tier: bestaande deep flow; betaling/consent zoals `DeepAnalysis.razor`.
 - Match-evidence: `AssessmentMatchEvidence.DeepAnalysis` na voltooide deep set.
+- Feature flag: `TestsV2Enabled` (Quick-Scan v3); deep catalog ongewijzigd qua versioning t.o.v. Quick-Scan.
+
+## Open (post-pilot)
+
+- [ ] Native review vertalingen (Argos-batch → menselijke B1-pass).
+- [ ] Factorstructuur / item-trash analyse op pilotdata.
+- [ ] Module-merge architectuur (Persoon+Werkstijl) — **geen** nieuwe items zonder nieuwe constructmatrix.

@@ -1,1202 +1,1202 @@
 {
  "1": {
-  "prompt": "Pracuję gladly z my hien, gereedschap lub machines.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować rękoma, narzędziami lub maszynami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "2": {
-  "prompt": "I vind the prettig om buiten lub in a kas, magazijn lub werkplaats te his.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię przebywać na zewnątrz albo w szklarni, magazynie lub warsztacie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "3": {
-  "prompt": "I zie gladly a tastbaar wynik to the eind of the dienst.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chciałbym zobaczyć namacalny wynik pod koniec zmiany.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "4": {
-  "prompt": "I vermijd wlubk waarbij I vies, nat lub stoffig kan wlubden.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Decydujące. Unikam pracy, gdzie mogę być brudny, mokry lub zakurzony.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "5": {
-  "prompt": "I snap snel hoe a device lub installatie in elkaar steekt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę łatwo zrozumieć, jak urządzenie lub instalacja składa się razem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "6": {
-  "prompt": "I houd of tillen, sjouwen lub fysiek dolubwerken jeśli the veilig kan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię podnosić, nosić lub fizycznie pracować, jeśli jest to bezpieczne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "7": {
-  "prompt": "The repareren lub bijstellen of iets that hapert geeft me voldoening.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Naprawianie lub przeskakiwanie coś, co zawiedzie daje mi satysfakcję.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "8": {
-  "prompt": "Praktisch jobs voelt jeśli tijdverlies; I wil volubal achter a scherm zitten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "PrakZatrzymanie pracy wydaje się stratą czasu; chcę siedzieć za ekranem.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "9": {
-  "prompt": "I lubiënteer me makkelijk in a grote ruimte, tuin lub magazijn.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Łatwo orientuję się w dużej przestrzeni, ogrodzie lub magazynie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "10": {
-  "prompt": "I volg technische instructions i pas ze toe bez a lot uitleg.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wykonuję instrukcje techniczne i stosuję je bez wyjaśnień.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "11": {
-  "prompt": "I voel me onzeker at machines, hekwerken lub zwaar materieel.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Czuję się niepewnie z maszynami, ogrodzeniem lub ciężkim sprzętem.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "12": {
-  "prompt": "I kweek, plant, oogst lub verwerk producten raczej dan I erover praat.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Hoduję, uprawiam, zbieram lub przetwarzam produkty zamiast o nich mówić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "13": {
-  "prompt": "I let on veiligheid: looppaden, scherpe rien, natte vloeren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zwracam uwagę na bezpieczeństwo: chodniki, ostre krawędzie, mokre podłogi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "14": {
-  "prompt": "I kan a hele dienst on the been blijven bez that I afhaak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę utrzymać całą zmianę bez rezygnacji.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "15": {
-  "prompt": "I kies wlubk waarin I zo min mogelijk fysiek hoef te doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wybieram pracę, w której muszę wykonywać Rzutkę Fizyczną.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "16": {
-  "prompt": "I meet, weeg lub tel raczej in the echt dan in a spreadsheet.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mierzę Wspaniale, ważę i liczę osobiście, a nie w arkuszu kalkulacyjnym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "17": {
-  "prompt": "I vind the fijn om z seizoen, weer lub teelt mee te wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować z sezonem, pogodą lub uprawą.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "18": {
-  "prompt": "Technische stlubingen laat Wolęably helemaal to a ier.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zostawić techniczne porażki komuś innemu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "19": {
-  "prompt": "I bouw, monteer lub zet iets in elkaar volgens a tekening lub volubbeeld.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Buduję Gotowi, montuję lub składam coś według rysunku lub przykładu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "20": {
-  "prompt": "I houd of ritme: herhalen, tempo maken, afvinken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię rytm: powtarzaj, przyspiesz, odklejaj.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "21": {
-  "prompt": "Buitenwerk lub productieomgevingen putten me mentaal out.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Poza pracą lub środowiskiem produkcyjnym jestem wykończony psychicznie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "22": {
-  "prompt": "I check kwaliteit z ogen i hien, nie alleen on papier.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sprawdzam jakość oczami i rękami, nie tylko na papierze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "23": {
-  "prompt": "I kan a voertuig, steekwagen lub heftruck-achtige zadanie aanleren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę nauczyć pojazd, ciężarówkę albo robotę jak widelce.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "24": {
-  "prompt": "I vermijd werkplaatsen, kassen i keukens jeśli I the choice heb.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam warsztatów, szklarni i kuchni, kiedy mam wybór.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "25": {
-  "prompt": "I krijg energie of doen, nie of eindeloos overleggen about doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mam energię z robienia rzeczy, a nie z niekończących się dyskusji na temat robienia rzeczy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "26": {
-  "prompt": "I onderzoek gladly waarom iets nie werkt zoals the holubt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię badać, dlaczego coś nie działa tak, jak powinno.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "27": {
-  "prompt": "I zoek out hoe a proces, teelt lub system in elkaar zit.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dowiem się, jak działa proces, uprawa lub system.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "28": {
-  "prompt": "I vergelijk cijfers lub metingen zanim I a conclusie trek.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Porównam liczby lub pomiary zanim wyciągnę wnioski.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "29": {
-  "prompt": "Diep nadenken about olubzaken vind I saai; zeg me gewoon the truc.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Głębokie myślenie o przyczynach jest dla mnie nudne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "30": {
-  "prompt": "I stel 'waarom'-vragen until I the mechanisme begrijp.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zapytam \"dlaczego\", dopóki nie zrozumiem mechanizmu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "31": {
-  "prompt": "I lees hileidingen lub specjeśliicaties raczej zelf na.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę czytać instrukcje i specyfikacje.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "32": {
-  "prompt": "I test a aanname klein zanim we hem overal dolubvoeren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Testuję małe założenie, zanim je wszędzie puścimy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "33": {
-  "prompt": "I vertrouw on feeling i sla controles lub data about.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Polegam na uczuciach i pomijam czeki lub dane.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "34": {
-  "prompt": "I vind the leuk om a foutpatroon te ontdekken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię odkrywać wzór błędu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "35": {
-  "prompt": "I kan me lang concentreren on a inhoudelijk vraagstuk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę się skupić na kwestii merytorycznej przez długi czas.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "36": {
-  "prompt": "Onderzoeken voelt jeśli treuzelen; I wil meteen doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Śledztwa mają ochotę na zwłokę, chcę to zrobić od razu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "37": {
-  "prompt": "I gebruik tabellen, logs lub keuringslijsten om te sturen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Używam tabel, dzienników lub list kontrolnych do wysyłania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "38": {
-  "prompt": "I wil the olubzaak of klachten kennen, nie alleen the symptomen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chcę znać przyczynę skarg, nie tylko symptomów.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "39": {
-  "prompt": "I leer gladly hoe wetgeving, kwaliteit lub voedselveiligheid werkt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię uczyć się, jak działa prawodawstwo, jakość i bezpieczeństwo żywności.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "40": {
-  "prompt": "Technische lub inhoudelijke diepgang schrik I of af.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Obawiam się technicznej lub merytorycznej głębi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "41": {
-  "prompt": "I splits a vaag problem on in meetbare stukjes.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Rozdzielam niejasny problem na mierzalne części.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "42": {
-  "prompt": "I houd of wlubk waarin I mag uitzoeken i verbeteren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracę, gdzie mogę wybrać i poprawić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "43": {
-  "prompt": "I accepteer 'that doen we zawsze zo' bez dolub te vragen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Akceptuję, że zawsze robimy to bez pytania.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "44": {
-  "prompt": "I zoek bronnen lub współpracownik-experts jeśli I iets nie weet.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Szukam źródeł lub kolegów ekspertów, jeśli czegoś nie wiem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "45": {
-  "prompt": "I zie gladly the verbi tussen weer, seizoen, vraag i volubraad.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię widzieć związek między pogodą, sezonem, popytem i zapasami. neglected",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "46": {
-  "prompt": "Cijfers i analyses laat I raczej volledig to a ier.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zostawić liczby i analizy komuś innemu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "47": {
-  "prompt": "I documenteer wat I heb gevonden zodat we ervan leren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dokumentuję to, co znalazłem, żebyśmy mogli się z tego uczyć.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "48": {
-  "prompt": "I blijf nuchter at a hype lub a snelle 'rozwiązanie'.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Pozostaję trzeźwy z hipem lub szybkim eanianem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "49": {
-  "prompt": "I wlubd ongeduldig of uitzoekwerk bez directe actie.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Jestem niecierpliwy pracą bez bezpośredniego działania.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "50": {
-  "prompt": "I krijg energie of puzzelen until the klopt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostaję energię z zagadek, dopóki się nie potwierdzi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "51": {
-  "prompt": "I bedenk gladly a own draai to hoe iets eruitziet lub overkomt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Są takie rzeczy, które mi się przytrafiają.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "52": {
-  "prompt": "I let on kleur, geur, presentatie lub atmosphere in the wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zwracam uwagę na kolor, zapach, prezentację lub atmosferę w pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "53": {
-  "prompt": "I maak of a saaie zadanie iets that er verzlubgd uitziet.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zamieniam nudne zadanie w coś, co wygląda na załatwione. Czwarty.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "54": {
-  "prompt": "Vlubmgeving i uitstraling interesseert me nauwelijks.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Nie obchodzi mnie wygląd i design.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "55": {
-  "prompt": "I verzin a lubiginele rozwiązanie jeśli the stiaardplaatje nie past.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wymyślę oryginalne rozwiązanie, Taak.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "56": {
-  "prompt": "I geniet of wlubk waarin smaak, stijl lub verhaal meeweegt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracę, w której smak, styl lub historia waży.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "57": {
-  "prompt": "I kan a etalage, blubd, arrangement lub gerecht aantrekkelijk maken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę zrobić okno, talerz, układ lub danie atrakcyjne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "58": {
-  "prompt": "Creatieve vrijheid maakt me onrustig; geef me a vast sjabloon.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Kreatywna wolność sprawia, że jestem niespokojny, daj mi stały szablon.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "59": {
-  "prompt": "I zie mogelijkheden in restmateriaal, seizoensproduct lub restant.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Widzę możliwości w materiale resztkowym, produkcie sezonowym lub pozostałościach.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "60": {
-  "prompt": "I experimenteer z combinaties (smaken, kleuren, indeling).",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Eksperymentuję z kombinacjami (smaki, oznaczające kolory, klasyfikacja).",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "61": {
-  "prompt": "I vermijd zadania waarin I iets 'mooi' lub 'passend' moet maken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Muszę zrobić coś, co zrobię lub zrobię.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "62": {
-  "prompt": "I vertaal a vaag idea of a klient to iets concreets.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Tłumaczę niejasny pomysł klienta na coś konkretnego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "63": {
-  "prompt": "I houd of afwisseling in hoe a product lub dienst wlubdt gebracht.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię różnorodność w sposobie dostarczania produktu lub usługi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "64": {
-  "prompt": "I gebruik taal lub beeld om iets helder i aantrekkelijk te maken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Używam języka lub wizerunku, żeby coś było jasne i atrakcyjne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "65": {
-  "prompt": "I vind creatieve input of ieren volubal gedoe.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Uważam, że kreatywny wkład od innych jest głównie kłopotliwy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "66": {
-  "prompt": "I merk disharmonie in indeling, muziek, licht lub styling.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zauważam dysharmonię w formacie, muzyce, świetle lub st. globalnie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "67": {
-  "prompt": "I wil ruimte om zelf keuzes te maken in the uitvoering.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chcę mieć miejsce na samodzielne wybory przy egzekucji.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "68": {
-  "prompt": "Strakke, identieke herhaling bez own inbreng is precies wat I zoek.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Dokładnie tego szukam.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "69": {
-  "prompt": "I inspireer współpracownicy z a frisse aanpak lub presentatie.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Inspiruję kolegów nowym podejściem lub prezentacją.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "70": {
-  "prompt": "I kan a seizoensthema lub actie visueel until leven brengen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę przynieść sezonowy temat lub działanie do życia wizualnie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "71": {
-  "prompt": "I sla about wat 'er leuk uitziet' jeśli functioneel genoeg is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Opuszczę to, co wygląda zabawniej, gdy będzie wystarczająco funkcjonalnie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "72": {
-  "prompt": "I schrijf, teken lub flubmuleer raczej zelf dan a stiaardtekst te kopiëren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę pisać, rysować lub formułować siebie niż kopiować standardowy tekst.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "73": {
-  "prompt": "I haal voldoening out iets unieks afleveren, nie alleen volume.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostaję satysfakcję z Pójścia z czymś wyjątkowym, nie tylko głośnym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "74": {
-  "prompt": "Kunstzinnige lub stylingtaken voelen jeśli hobby, nie jeśli wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Sztuka czy stylizacja to hobby, nie praca.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "75": {
-  "prompt": "I zie wlubk ook jeśli beleving flub the gast lub klient.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Widzę również pracę jako doświadczenie dla gościa lub klienta.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "76": {
-  "prompt": "Pomagam people gladly verder, ook jeśli the even duurt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pomagać ludziom, nawet jeśli to trochę potrwa.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "77": {
-  "prompt": "I voel me on my plek in zlubg, hlubeca, retail lub begeleiding.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czuję się jak w domu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "78": {
-  "prompt": "I merk the jeśli iemi zich onprettig voelt i doe er iets mee.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wiem, kiedy ktoś czuje się nieswojo i coś z tym robi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "79": {
-  "prompt": "Andermans problemen on the wlubk laat I raczej links liggen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zostawić problemy innych w pracy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "80": {
-  "prompt": "I leg iets geduldig out until the ier the snapt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wyjaśnię to cierpliwie, dopóki druga osoba tego nie dostanie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "81": {
-  "prompt": "Pracuję gladly in a zespół waarin we elkaar steunen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować w zespole, w którym się wspieramy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "82": {
-  "prompt": "I kan omgaan z gasten lub cliënten that extra aiacht nodig hebben.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę zająć się gośćmi lub klientami, którzy potrzebują dodatkowej uwagi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "83": {
-  "prompt": "I vermijd wlubk waarin I ieren moet begeleiden lub opvangen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam pracy, w której muszę towarzyszyć lub przyjmować innych.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "84": {
-  "prompt": "I bouw vertrouwen on dolub betrouwbaar i vriendelijk te blijven.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Buduję zaufanie, pozostając niezawodnym i przyjaznym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "85": {
-  "prompt": "I vind the belangrijk that iedereen zich welkom voelt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dopilnuję, by nowi koledzy poczuli się komfortowo.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "86": {
-  "prompt": "I wil zo min mogelijk te maken hebben z the feelings of ieren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Chcę mieć jak najmniej ニ s do czynienia z uczuciami innych.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "87": {
-  "prompt": "I kan a conflict tussen people sussen bez partij te kiezen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę złagodzić konflikt między ludźmi bez zabierania stron.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "88": {
-  "prompt": "I haal energie out a tevreden klient, leerling lub współpracownik.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czerpię energię z zadowolonego klienta, studenta lub kolegi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "89": {
-  "prompt": "I pas my uitleg to on leeftijd, taal lub ervaring of the ier.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dopasowuję moje wyjaśnienie do wieku, języka lub doświadczenia drugiego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "90": {
-  "prompt": "Service z a lach voelt gespeeld; raczej puur transactie.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Usługa z uśmiechem wydaje się grać; raczej czysta transakcja.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "91": {
-  "prompt": "I zie wlubk jeśli samen iets flub elkaar krijgen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Widzę, że praca to coś wspólnego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "92": {
-  "prompt": "I houd rekening z toegankelijkheid i inclusie in the praktijk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Uwzględniam w praktyce dostępność i integrację.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "93": {
-  "prompt": "I raak geïrriteerd jeśli people extra uitleg lub geduld vragen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wkurza mnie, gdy ludzie proszą o dodatkowe wyjaśnienia lub cierpliwość.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "94": {
-  "prompt": "I kan nieuws, bad nieuws lub a weigering respectvol brengen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę przynieść wieści, złe wieści albo odmówić z szacunkiem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "95": {
-  "prompt": "Pracuję gladly z publiek: gasten, patiënten, leerlingen, shoppers.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować z publicznością: Goście, pacjenci, studenci, klienci.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "96": {
-  "prompt": "I kies zadania waarin I zo min mogelijk z people hoef te praten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wybieram zadania, w których muszę rozmawiać z ludźmi tak mało na szczęście, jak to możliwe.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "97": {
-  "prompt": "I coach a nowy współpracownik raczej zelf dan the af te schuiven.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę trenować nowego kolegę, niż go odkładać.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "98": {
-  "prompt": "I merk groepsdruk i zlubg that niemi buitengesloten wlubdt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zauważyłem nacisk grupy i upewniam się, że nikogo nie pominięto.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "99": {
-  "prompt": "Zlubg- lub klantcontact put me out; I wil productiewerk bez people.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Pielęgnacja lub kontakt z klientem wyczerpuje mnie; chcę pracy produkcyjnej bez ludzi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "100": {
-  "prompt": "I krijg betekenis of wlubk that ieren écht helpt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mam znaczenie w pracy, które pomaga innym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "101": {
-  "prompt": "I neem gladly the initiatief jeśli niemi djeśliferent the doet.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię podejmować inicjatywę, kiedy nikt inny jej nie chce usunął.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "102": {
-  "prompt": "I overtuig ieren of a aanpak, product lub aanbieding.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Przekonałem innych o podejściu, produkcie lub ofercie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "103": {
-  "prompt": "I zie kansen om omzet, bezetting lub tempo te verbeteren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Widzę możliwości poprawy sprzedaży, okupacji lub tempa.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "104": {
-  "prompt": "Leiding nemen lub verkopen voelt ongemakkelijk; laat a ier the maar doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Prowadzenie lub sprzedaż czuje się niekomfortowo, niech ktoś inny to zrobi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "105": {
-  "prompt": "I stel doelen i trek the zespół daar naartoe.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ustawiłem cele i ściągnąłem tam drużynę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "106": {
-  "prompt": "I durf a prijs, schedule lub belofte te onderhielen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ośmielam się negocjować cenę, harmonogram lub obietnicę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "107": {
-  "prompt": "I blijf actie vragen until er a besluit is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ciągle proszę o działanie, Chwileczkę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "108": {
-  "prompt": "I wacht until I opdracht krijg in plaats of zelf te starten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Czekam na rozkazy, zamiast zaczynać.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "109": {
-  "prompt": "I presenteer a idea klubt i krachtig.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Przedstawiam pomysł krótki i potężny.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "110": {
-  "prompt": "I houd of verantwolubdelijkheid flub a wynik, nie alleen a zadanie.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię odpowiedzialność za wynik, a nie tylko za Zdarzenie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "111": {
-  "prompt": "I vermijd gesprekken waarin I iets moet 'verkopen'.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam rozmów, w których muszę coś sprzedać.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "112": {
-  "prompt": "I zet a actie, seizoenspiek lub campagne om in concrete stappen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zamieniam akcję, sezonowy wzrost lub kampanię w konkretne kroki.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "113": {
-  "prompt": "I spreek people to on agreements jeśli the wynik achterblijft.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Rozmawiam z ludźmi na umówionych spotkaniach, jeśli wynik zostanie pozostawiony.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "114": {
-  "prompt": "I zie concurrentie jeśli prikkel, nie jeśli dreiging.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Konkurencja to zachęta, a nie groźba.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "115": {
-  "prompt": "I laat kansen lopen jeśli er risico lub afwijzing in zit.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Pozwolę, by szanse się poślizgnęły, gdy będzie ryzyko lub odrzucenie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "116": {
-  "prompt": "I bouw a netwerk of vaste klienci, telers lub leveranciers.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Buduję sieć stałych klientów, plantatorów lub dostawców.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "117": {
-  "prompt": "I kan a zespół opstarten jeśli the leiding even weg is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę założyć zespół, kiedy trop zniknie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "118": {
-  "prompt": "I schrik terug of targets, omzet lub bezettingscijfers.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wystraszyłem się celów, Wiadomatów czy okupacji.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "119": {
-  "prompt": "I maak a proposal that flub beide partijen werkt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Składam propozycję, która działa na obie strony.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "120": {
-  "prompt": "I houd of wlubk waarin I mag sturen, werven lub lubganiseren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracę, w której mogę sterować, rekrutować lub organizować.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "121": {
-  "prompt": "I wil no zichtbare rol to buiten; hou me on the background.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Nie chcę mieć widocznej roli w tle.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "122": {
-  "prompt": "I zet teleurstelling om in a volgende pitch lub poging.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zamieniam rozczarowanie w kolejny rzut lub próbę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "123": {
-  "prompt": "I zie snel wie I nodig heb om iets flub elkaar te krijgen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zobaczę, kogo będę potrzebował, żeby coś zrobić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "124": {
-  "prompt": "Ondernemen in the klein (upsell, extra ronde, extra dienst) is niets flub mij.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Przedsiębiorczość w małych (izm, dodatkowa runda, dodatkowa obsługa) nie jest dla mnie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "125": {
-  "prompt": "I krijg energie of a deal, a volle zaal lub a gehaald doel.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostaję energię z umowy, pełnego pokoju lub celu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "126": {
-  "prompt": "I houd of duidelijke procedures, lijsten i vaste volglubdes.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię jasne procedury, listy i porządek.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "127": {
-  "prompt": "Pracuję nauwkeurig z cijfers, codes, data lub labels.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Pracuję dokładnie nad numerami, kodami, danymi lub etykietami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "128": {
-  "prompt": "I richt a administratie lub volubraad zo in that iedereen the terugvindt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ustawiłem administrację lub akcje, żeby każdy mógł je znaleźć.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "129": {
-  "prompt": "Regels i vaste flubmats irriteren me; I improviseer raczej zawsze.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zasady i stałe formaty mnie irytują; zawsze wolę improwizować.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "130": {
-  "prompt": "I check lub a bestelling, factuur lub schedule klopt until on the detail.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sprawdzam, czy zamówienie, faktura lub planowanie są dokładne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "131": {
-  "prompt": "Pracuję gladly z roosters, slots i volubspelbare diensten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować z harmonogramami, szczelinami i przewidywalnymi usługami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "132": {
-  "prompt": "I archiveer lub sluit af zodat er later no chaos is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Archiwizuję lub zamykam, więc nie będzie żadnego chaosu później.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "133": {
-  "prompt": "Papierwerk, scans i systemen laat I zo lang mogelijk liggen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zostawiam papierkową robotę, skany i systemy tak długo, jak to możliwe.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "134": {
-  "prompt": "I volg a checklist ook jeśli I the job al honderd keer deed.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Podążam za listą kontrolną, jeśli robiłem to setki razy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "135": {
-  "prompt": "I houd of wlubk waarin structuur belangrijker is dan improvisatie.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracę, w której struktura jest ważniejsza niż improwizacja.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "136": {
-  "prompt": "Vaste routines maken me rusteloos; I wil elke dag iets totaal djeśliferent.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Naprawione procedury sprawiają, że jestem niespokojny; Tętno ma być zupełnie inne każdego dnia.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "137": {
-  "prompt": "I voer gegevens foutloos in i controleer ze nog a keer.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wprowadzę dane bez zarzutu i sprawdzę je jeszcze raz.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "138": {
-  "prompt": "I bewaak volubraadgrenzen, houdbaarheidsdata lub minimumaantallen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Utrzymuję limit zapasów, daty przydatności do spożycia lub minimalne liczby.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "139": {
-  "prompt": "I maak of a wirwar a overzichtelijke indeling.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zamieniam bałagan w czysty układ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "140": {
-  "prompt": "I vind the overbodig om hetzelfde on twee plekken vast te leggen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Nie ma potrzeby nagrywać tego samego w dwóch miejscach.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "141": {
-  "prompt": "Pracuję prettig z kassa, planningsoftware lub lubderpicking-systemen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Współpracuję z kasą, oprogramowaniem do planowania lub systemami do zbierania zamówień.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "142": {
-  "prompt": "I houd me to afgesproken flubmats, ook jeśli I zelf a other layout zou kiezen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Trzymam się uzgodnionych formatów, nawet jeśli sam wybrałem inny układ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "143": {
-  "prompt": "I gooi influbmatiestromen dolub elkaar jeśli that sneller voelt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Mieszam informacje, jeśli czujesz się szybciej.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "144": {
-  "prompt": "I sluit the dag af z a kloppende telling lub overdracht.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Kończę dzień z pulsującą liczbą lub przeniesieniem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "145": {
-  "prompt": "I zie the jeśli my zadanie that wet- i regelgeving in the uitvoering klopt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Uważam, że moim zadaniem jest zadbanie o to, by prawodawstwo i przepisy były w pełni zgodne z przepisami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "146": {
-  "prompt": "Orde in mappen, bakken lub systemen is flub mij bijzaak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zamówienie w folderach, pieczenie lub systemy jest po mojej stronie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "147": {
-  "prompt": "Planuję terug of deadline to nu, in plaats of ad hoc te beginnen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Planuję cofnąć się od terminu do teraz, zamiast zaczynać ad hoc. Trzeba to zrobić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "148": {
-  "prompt": "Pracuję raczej z vaste kwaliteitsnlubmen dan z 'kijk maar'.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę pracować z ustalonymi standardami jakości niż z \"patrz\".",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "149": {
-  "prompt": "I vermijd zadania waarin I nauwkeurig moet registreren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam zadań, w których muszę dokładnie nagrywać.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "150": {
-  "prompt": "I krijg calm of a opgeruimd proces that elke dienst hetzelfde loopt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Odpoczywam od procesu czyszczenia, że każda zmiana działa tak samo.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "151": {
-  "prompt": "Pracuję gladly z teelt, logistiek lub productie waar I iets tastbaars maak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować z uprawą, logistyką lub produkcją, gdzie robię Jeśli coś obecnie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "+8)\n        (CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "152": {
-  "prompt": "I vermijd zadania waarbij I zware lub natte materialen moet hanteren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam zadań, w których muszę radzić sobie z materiałami ciężkimi lub moChciał.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "153": {
-  "prompt": "I houd of a duidelijke zadanie that I fysiek kan afronden.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię jasne zadanie, które mogę wykonać fizycznie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "154": {
-  "prompt": "I leer snel a nowy machine lub gereedschap te bedienen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Szybko uczę się obsługiwać nową maszynę lub narzędzie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "155": {
-  "prompt": "Wolęeer overlegkamers boven werkplaats, kas lub keuken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę sale konsultacyjne nad warsztatem, szklarnią lub kuchnią.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "156": {
-  "prompt": "I check lub paden, rekken i materialen veilig staan zanim I dolubwerk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sprawdzę, czy ścieżki, stojaki i materiały są bezpieczne przed pracą.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "157": {
-  "prompt": "Pracuję prettig in ploegen lub seizoenspieken jeśli the ritme helder is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Pracuję miło na zmiany lub sezonowe szczyty, kiedy rytm jest jasny.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "158": {
-  "prompt": "I raak gefrustreerd of herhalend productiewerk, hoe nuttig ook.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Sfrustrowały mnie powtarzające się prace produkcyjne, jakkolwiek użyteczne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Realistic"
+  "domain": ""
  },
  "159": {
-  "prompt": "I zoek systematisch to the olubzaak of a kwaliteitsafwijking.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Systematycznie szukam przyczyny wady jakości.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "+9)\n        (CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "160": {
-  "prompt": "I vind meten i controleren overbodig jeśli the 'er good uitziet'.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Uważam, że pomiar i sprawdzanie są zbędne, jeśli wygląda lepiej.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "161": {
-  "prompt": "I houd of wlubk waarin I processen mag verbeteren z feiten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracę, gdzie mogę usprawnić procesy faktami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "162": {
-  "prompt": "I lees keuringsrapplubten lub teeltlogs om beslissingen te sturen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czytałam raporty z inspekcji lub kłody upraw, żeby wysyłać decyzje.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "163": {
-  "prompt": "I wlubd ongeduldig of analyses that nie meteen until actie leiden.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zaczynam się niecierpliwić analizami, które nie prowadzą od razu do działania.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "164": {
-  "prompt": "I test a kleine wijziging zanim we that breed uitrollen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Przetestuję drobne, zanim się rozejrzymy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "165": {
-  "prompt": "I wil snappen hoe wetgeving lub voedselveiligheid in the praktijk werkt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chcę zrozumieć, jak w praktyce działa prawodawstwo lub bezpieczeństwo żywności.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "166": {
-  "prompt": "I laat onderzoek raczej helemaal to specialisten bez mee te denken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zostawiać badania wyłącznie specjalistom bez zastanowienia.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "167": {
-  "prompt": "I leg connections tussen cijfers, seizoen i wat er on the vloer gebeurt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Tworzę powiązania między liczbami, sezonem i tym, co dzieje się na podłodze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Investigative"
+  "domain": ""
  },
  "168": {
-  "prompt": "I geef a product lub dienst gladly a herkenbare, own uitstraling.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię dać produktowi lub usłudze rozpoznawalny, własny wygląd.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "+8)\n        (CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "169": {
-  "prompt": "I vind styling i presentatie bijzaak zolang the functioneert.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Uważam, poderwać stylizację i prezentację tak długo, jak to działa.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "170": {
-  "prompt": "I bedenk frisse manieren om seizoensproducten onder the aiacht te brengen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Szukam nowych sposobów na niejednoznaczne produkty sezonowe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "171": {
-  "prompt": "I let on atmosphere: licht, geur, indeling i hoe gasten that beleven.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zwracam uwagę na atmosferę: światło, zapach, układ i jak goście tego doświadczają.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "172": {
-  "prompt": "I vermijd zadania waarin I iets visueel lub creatief moet maken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam zadań, gdzie muszę zrobić coś wizualnego lub twórczego.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "173": {
-  "prompt": "I combineer smaken, kleuren lub materialen until iets that opvalt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Łączę smaki, kolory lub materiały z czymś, co się wyróżnia.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "174": {
-  "prompt": "I vertaal a vaag idea of a klient to a concreet wynik.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Przekładam niejasny pomysł klienta na konkretny rezultat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "175": {
-  "prompt": "Creatieve vrijheid maakt me onzeker; I wil precies volubgeschreven stappen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "KreaDrugiej wolności sprawia, że czuję się niepewnie; chcę dokładnie określonych kroków.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Artistic"
+  "domain": ""
  },
  "176": {
-  "prompt": "Pomagam nowy współpracownicy on weg until ze zich zeker voelen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Pomagam nowym kolegom w drodze, dopóki nie poczują się bezpieczni.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "+8)\n        (CareerTestCatalog.Social"
+  "domain": ""
  },
  "177": {
-  "prompt": "I vermijd wlubk waarin I gasten lub cliënten moet opvangen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam pracy, w której muszę przyjmować gości lub klientów.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "178": {
-  "prompt": "I merk spanning in a zespół i help that constructief on te lossen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wyczuwam napięcie w zespole i pomagam go konstruktywnie rozwiązać.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "179": {
-  "prompt": "I vind the belangrijk that iedereen zich gezien i welkom voelt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Uważam, że ważne jest, aby wszyscy czuli się widziani i mile widziani.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "180": {
-  "prompt": "I houd afsti: iermans welzijn is nie my verantwolubdelijkheid on the wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zachowam dystans. Dobro innych ludzi nie jest moją odpowiedzialnością w pracy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "181": {
-  "prompt": "I leg procedures geduldig out to people that ze flub the eerst doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Cierpliwie tłumaczę procedury ludziom, którzy najpierw to robią.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "182": {
-  "prompt": "I krijg energie of a tevreden gast, leerling lub współpracownik.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostaję energię od zadowolonego gościa, studenta lub kolegi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "183": {
-  "prompt": "I kies wlubk waarin I zo min mogelijk z people hoef te schakelen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wybieram pracę, w której muszę się zamienić z ludźmi jak najmniej.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Social"
+  "domain": ""
  },
  "184": {
-  "prompt": "I zie kansen om iets extra's te verkopen lub te lubganiseren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Widzę możliwości sprzedaży lub zorganizowania czegoś ekstra.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "+9)\n        (CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "185": {
-  "prompt": "I vermijd zichtbare rollen to klienci, leveranciers lub gasten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam widocznych ról dla klientów, dostawców lub gości.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "186": {
-  "prompt": "I neem the volubtouw jeśli er snel a beslissing nodig is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Przejmę dowodzenie, jeśli będziemy potrzebować decyzji.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "187": {
-  "prompt": "I bouw gladly relaties that later until samenwerking lub omzet leiden.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię budować związki, które później prowadzą do współpracy lub obrotu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "188": {
-  "prompt": "Targets i bezettingscijfers demotiveren me.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Cele i wskaźniki okupacji mnie poniżają.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "189": {
-  "prompt": "I kan a klubt proposal pitchen zodat ieren meegaan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę przedstawić krótką propozycję, żeby inni mogli przyjść.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "190": {
-  "prompt": "I lubganiseer people i middelen om a doel binnen the dienst te halen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Organizuję ludzi i środki, by dostać cel w służbie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "191": {
-  "prompt": "I laat initiatief raczej to ieren i volg afwachtend.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zostawić inicjatywę innym i poczekać i zobaczyć.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "192": {
-  "prompt": "I zet a setback om in a volgende poging lub betere aanpak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zmieniam niepowodzenie w kolejną próbę albo lepsze podejście.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Enterprising"
+  "domain": ""
  },
  "193": {
-  "prompt": "I houd roosters, lubders i volubraden strak at zodat niemi zoekt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mam napięty grafik, zamówienia i zapasy, żeby nikt nie patrzył.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "+8)\n        (CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "194": {
-  "prompt": "I vind vaste flubmats i checklists volubal belemmerend.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Uważam stałe formaty i listy kontrolne szczególnie obturacyjne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "195": {
-  "prompt": "I controleer labels, codes i aantallen until ze kloppen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sprawdzę znaczniki, kody i numery, aż się wymeldują.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "196": {
-  "prompt": "I richt mappen, bakken lub systemen zo in that iedereen the snapt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ustawiłem foldery, pojemniki lub systemy, żeby każdy je dostał.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "197": {
-  "prompt": "I sla registratie about jeśli I denk that I the toch indeed onthoud.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Opuszczę rejestrację, jeśli sobie przypomnę.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "198": {
-  "prompt": "Pracuję prettig z vaste kwaliteitsnlubmen i afvinklijsten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Przyjemnie pracuję z ustalonymi standardami jakości i listami kontrolnymi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "199": {
-  "prompt": "I sluit the dienst af z a kloppende overdracht lub telling.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zamykam serwis za pomocą pulsującego transferu lub liczyć.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  },
  "200": {
-  "prompt": "I raak onrustig of volubspelbare routines, ook jeśli ze efficiënt his.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Jestem niespokojny z powodu przewidywalnych procedur, nawet jeśli są skuteczne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CareerTestCatalog.Conventional"
+  "domain": ""
  }
 }

@@ -29,11 +29,19 @@
 - `PlatformFeature.TestsV2` / admin toggle; default **uit**.
 - Geen merge naar productie-main via agent; acceptatie-PR voor review.
 
+## Diepteanalyse (Bottom tier)
+
+- Vier itembanks **150 / 200 / 150 / 150** in `DeepAnalysis*Items.cs` (NL B1, theorie-gedreven; geen gekopieerde commerciële items).
+- Free Quick-Scan v3 (25) blijft **v2-subset**; deep-stems **niet** letterlijk herhaald (anker = zelfde domeinen/scoring, andere items).
+- Vertalingen deep: JSON resources + Argos nl→en→pl/ro/ar batch; **native review** nog open (review-CSV blijft).
+- Kwaliteit CI: `DeepAnalysisItemBankQualityTests`, constructmatrices `docs/psychometrie/*_DEEP_CONSTRUCT_MATRIX.md`.
+- **Geen normen/α** in UI — pilot **n≈300** per instrument.
+
 ## Wat bewust niet is gedaan
 
 - **Geen COTAN-claim** en geen normtabellen of validity-cijfers in product.
 - Geen verplichte migratie v1 → v2 (kandidaat kan op v1 blijven tot nieuwe scan met flag).
-- Deep analysis / betaalde rapporten ongewijzigd qua versioning (Quick-Scan v2 scope).
+- Geen module-merge Persoon+Werkstijl-deep (architectuur §2.2 blijft roadmap).
 
 ## Documentatie & tests
 

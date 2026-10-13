@@ -1,902 +1,902 @@
 {
  "1": {
-  "prompt": "I probeer gladly a nou way of wsauking dacă the old vastloopt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să subliniez un nou mod de operare când cel vechi rămâne blocat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "O) — 30 unique\n        (Openheid"
+  "domain": ""
  },
  "2": {
-  "prompt": "I lees sau kijk out mezelf at about hoe ons field verșiert.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Citesc sau mă uit cum se schimbă profesia noastră.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "3": {
-  "prompt": "I bedenk meerdere soluțies înainte I a choice maak.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Mă voi gândi la mai multe soluţii înainte de a face o alegere.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "4": {
-  "prompt": "I blijf preferably at the method that we întotdeauna al gebruiken.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să rămânem la metoda pe care am folosit-o mereu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "5": {
-  "prompt": "I vind the leuk om a unknown system sau device out te proberen.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să încerc un sistem sau un dispozitiv necunoscut.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "6": {
-  "prompt": "I zie snel connections tussen losse details on the shop flosau.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Pot vedea rapid conexiunile dintre detaliile libere de la locul de muncă generate.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "7": {
-  "prompt": "I stel vragen dacă I the background of a sarcină nog nu snap.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Pun întrebări dacă nu înţeleg fundalul unei sarcini.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "8": {
-  "prompt": "New ideas of colegi wijs I de obicei meteen af.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "De obicei resping idei noi din partea colegilor.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "9": {
-  "prompt": "I experimenteer mai degrabă klein dan that I wacht on a perfect plan.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Aş prefera să experimentez puţin decât să aştept un plan perfect.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "10": {
-  "prompt": "I vermijd sarcini waarbij I iets moet leren that I nog niciodată deed.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Evit sarcinile în care trebuie să învăţ ceva ce n-am mai făcut până acum.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "11": {
-  "prompt": "I haal inspiratie out hoe other echipăs hetzelfde wsauk aanpakken.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Mă inspiră modul în care alte echipe fac același lucru.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "12": {
-  "prompt": "Change in the schedule irriteert me msaue dan that the me scherp maakt.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Schimbarea în planificare mă irită mai mult decât mă face ascuţit.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "13": {
-  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Îmbin cunoştinţele de la diferite locuri de muncă la o abordare mai bună.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "14": {
-  "prompt": "I durf a proposal te doen that nog nu in the hșibook staat.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Îndrăznesc să fac o propunere care nu este încă în manual.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "15": {
-  "prompt": "I vind the prettig dacă wsauk ook ruimte laat fsau own invulling.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi caracterizează când munca lasă loc şi pentru propria interpretare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "16": {
-  "prompt": "I volg instructions letterlijk, ook dacă a slimmere weg zichtbaar is.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Am urmat instrucţiunile literalmente, chiar şi atunci când un drum mai inteligent este distrus.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "17": {
-  "prompt": "I raak nieuwsgierig dacă iets technisch sau inhoudelijk ddacăferent werkt dan verwacht.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Devin curios când ceva tehnic sau material funcţionează altfel decât mă aşteptam.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "18": {
-  "prompt": "I zoek bewust afwisseling in sarcini zodat I alert blijf.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Caut în mod deliberat o varietate de sarcini care să mă ţină în alertă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "19": {
-  "prompt": "I kan me inleven in a problemă vanuit the perspectief of the client.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Mă pot referi la o problemă din perspectiva clientului.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "20": {
-  "prompt": "Abstracte uitleg fără concrete stappen vind I tijdverspilling.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Cred că o explicaţie abstractă fără paşi concreţi este o pierdere de timp.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "21": {
-  "prompt": "I pas my aanpak to dacă the seizoensdruk sau the piek ddacăferent is dan vsauig jaar.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi reglez abordarea dacă presiunea sezonieră sau vârful este diferit faţă de anul trecut.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "22": {
-  "prompt": "I houd nu of brainstsaumen; zeg me gewoon wat I moet doen.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Spune-mi ce să fac.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "23": {
-  "prompt": "I merk the snel dacă a proces onnodig omslachtig is gewsauden.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Am observat repede când un proces a devenit inutil de greoi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "24": {
-  "prompt": "Vreaurouw verbeteringen totdat iemși ddacăferent ze lang heeft gebruikt.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Nu am încredere în îmbunătăţiri până când altcineva nu le-a folosit de mult timp.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "25": {
-  "prompt": "I leer gladly of mistakes dosau te kijken wat we volgende keer ddacăferent doen.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să învăţ din greşeli uitându-mă la ce vom face data viitoare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "26": {
-  "prompt": "I vind the leuk om a coleg a slimmere truc te laten zien.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să arăt unui coleg un truc mai inteligent.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "27": {
-  "prompt": "I blijf nadenken about hoe we kwaliteit și tempo beter kunnen combineren.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "28": {
-  "prompt": "I sluit me af fsau feedback that my vaste routine ter discussie stelt.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Mă închid pentru feedback care provoacă rutina mea obișnuită.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "29": {
-  "prompt": "I zie kansen in nou producten, teelten sau diensten of the vestiging.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about how you de obicei react când it matters.",
+  "prompt": "Văd oportunități în noi produse, culturi sau servicii de la unitate.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Openheid"
+  "domain": ""
  },
  "30": {
-  "prompt": "I voel me ongemakkelijk at sarcini fără duidelijk vosaubeeld.",
-  "example": "Example: a coleg suggests a nou way to label sauders. You try it on a small scale first. This is about holding on to what you know — sau nu.",
+  "prompt": "Mă simt inconfortabil cu sarcini fără un exemplu clar.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Openheid"
+  "domain": ""
  },
  "31": {
-  "prompt": "I maak af wat I beloof, ook dacă the dag tegenzit.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Păstrez programări la muncă, chiar şi când lucrurile nu merg bine.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "C) — 30 unique\n        (Consciëntieusheid"
+  "domain": ""
  },
  "32": {
-  "prompt": "Plandacăic my wsauk zodat deadlines haalbaar blijven.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Împărtăşesc sarcinile mele în jurul zilei astfel încât acordurile să rămână fezabile.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "33": {
-  "prompt": "I controleer details înainte I iets dacă klaar dosaugeef.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi verifica detaliile înainte să transmit ceva pregătit.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "34": {
-  "prompt": "I laat rommel sau half afgemaakt wsauk makkelijk liggen.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Las mizerie sau jumătate terminat de lucru ușor.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "35": {
-  "prompt": "I kom on tijd și geef the dosau dacă I te laat dreig te his.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi fi la timp și transmite-l pe dacă am ajuns prea târziu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "36": {
-  "prompt": "I houd at wat er nog openstaat, fără that iemși erom hoeft te vragen.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Ţin evidenţa a ceea ce este încă, fără ca cineva să întrebe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "37": {
-  "prompt": "Lucrez netjes volgens afgesproken hygiëne, veiligheid sau kwaliteit.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Lucrez cum trebuie conform igienei, siguranţei sau calităţii.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "38": {
-  "prompt": "I stel lastige jobs out until the nu ddacăferent msaue kan.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Voi amâna locurile de muncă dificile până când nu există nici o altă cale.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "39": {
-  "prompt": "I ruim my werkplek on zodat the volgende ploeg er meteen mee verder kan.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "O să-mi curăţ staţia de consolidare ca următoarea echipă să poată continua imediat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "40": {
-  "prompt": "Kleine foutjes in cijfers sau labels vind I nu zo belangrijk.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Nu cred că micile erori ale numerelor sau etichetelor sunt atât de importante.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "41": {
-  "prompt": "I houd me to pauze- și werktijden zoals we that hebben afgesproken.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi rămâne la pauze și ore așa cum am convenit.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "42": {
-  "prompt": "If niemși kijkt, sla I controles sau stappen about.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Dacă nu se uită nimeni, sar peste cecuri sau paşi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "43": {
-  "prompt": "I bereid me fsau on a dienst, zodat I nu hoef te improviseren on basisdingen.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Mă bunkeresc pentru o tură ca să nu improvizez lucrurile de bază.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "44": {
-  "prompt": "I geef the eerlijk to dacă I a mistake heb gemaakt.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi fi sincer cu tine dacă fac o greşeală.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "45": {
-  "prompt": "I verdeel grote sarcini in stukken that I écht afkrijg.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Împarte sarcini mari în cele pe care le fac cu adevărat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "46": {
-  "prompt": "I begin to iets nieuws while the vsauige nog nu af is.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Încep ceva nou când ultima nu e terminată.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "47": {
-  "prompt": "I bewaar overzicht in bestellingen, sauders sau takenlijsten.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Păstrez o privire de ansamblu în ordine, ordine sau liste de sarcini.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "48": {
-  "prompt": "I kom terug on a agreement, ook dacă that a week eerder is gemaakt.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi reveni la o programare, chiar dacă a fost făcută cu o săptămână mai devreme.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "49": {
-  "prompt": "Lucrez dosau until the job veilig și volledig is, nu until the klok toevallig stopt.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi continua să lucrez până când slujba va fi sigură şi completă, nu până când ceasul nu se va opri din întâmplare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "50": {
-  "prompt": "Administratie sau afronden na the job laat Preferably to a șier.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Administrarea sau finalizarea după locul de muncă prefer să plec la altcineva.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "51": {
-  "prompt": "I houd rekening cu piekmomenten și start on tijd cu vosaubereiden.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Iau în considerare momentele de vârf şi încep să mă pregătesc la timp.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "52": {
-  "prompt": "I raak the sposau kwijt dacă er meerdere openstașie sarcini his.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Voi pierde urma dacă există mai multe sarcini restante.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "53": {
-  "prompt": "I volg procedures ook dacă ze saai his, pentru că ze schade vosaukomen.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Urmez procedurile când sunt plictisitoare pentru că previn daunele.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "54": {
-  "prompt": "I zeg ja tegen extra wsauk while I weet that I the nu netjes aankan.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Eu zic s-o s-o faci în plus.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "55": {
-  "prompt": "I check sau the client sau coleg écht heeft wat er is beloofd.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi verifica dacă clientul sau colegul are într-adevăr ceea ce a fost promis.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "56": {
-  "prompt": "I houd materialen, gereedschap sau vosauraad on peil.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Păstrez provizii, unelte sau provizii.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "57": {
-  "prompt": "I documenteer wat nodig is zodat a vervanger verder kan.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Voi documenta ce este necesar astfel încât un înlocuitor să poată continua.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "58": {
-  "prompt": "I vind the overdreven om dubbel te controleren at routinouerk.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "Cred căIZEAZĂ PREA MULT ÎN TIMPUL LUCRĂRII DE URMA.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "59": {
-  "prompt": "I sluit my dienst af cu a ksaute check: wat is klaar, wat moet about.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi închid tura cu o verificare scurtă: Ce-a mai rămas.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "60": {
-  "prompt": "I laat șieren the rommel opruimen that I tijdens the busyness heb verosauzaakt.",
-  "example": "Example: you check your wsauk once msaue înainte you hși it in. This is about holding on to what you know — sau nu.",
+  "prompt": "O să pun pe alţii să cureţe mizeria pe care am făcut-o în timpul cursei.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Consciëntieusheid"
+  "domain": ""
  },
  "61": {
-  "prompt": "I krijg energie of samenwerken cu colegi on the vloer.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Sunt obtinerea de energie de lucru cu colegii de pe podea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "E) — 30 unique\n        (Extraversie"
+  "domain": ""
  },
  "62": {
-  "prompt": "I spreek makkelijk people to, ook dacă I ze nog nu ken.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "E uşor să vorbeşti cu oamenii, chiar dacă nu-i cunosc încă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "63": {
-  "prompt": "I voel me on my gemak in a drukke winkel, kas sau hsauecaruimte.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Mă simt confortabil într-un magazin aglomerat, sera sau restaurant.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "64": {
-  "prompt": "I trek me preferably terug dacă er a lot people om me heen his.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să mă retrag când sunt mulţi oameni în jurul meu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "65": {
-  "prompt": "I neem the wosaud in a ksaute briefing sau overdracht.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Voi lua cuvântul într-o scurtă informare sau transfer.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "66": {
-  "prompt": "Ajut gasten sau clienți gladly cu a open, vriendelijke toon.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să ajut oaspeții sau clienții cu un ton deschis, prietenos.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "67": {
-  "prompt": "I zoek aansluiting at the echipă tijdens pauzes.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Voi găsi o cale să mă alătur echipei în timpul pauzelor.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "68": {
-  "prompt": "I vermijd gesprekken cu clienți dacă a coleg the ook kan doen.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Evit conversaţiile cu clienţii dacă un coleg o poate face.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "69": {
-  "prompt": "I kan a groep on sleeptouw nemen dacă the atmosphere stil valt.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Pot lua un grup pe remorcare dacă atmosfera cade tăcut.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "70": {
-  "prompt": "Telefoneren sau baliewerk kost me onevenredig a lot moeite.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Apelarea sau munca de birou abs enlargement este disproporționată.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "71": {
-  "prompt": "I vertel duidelijk wat I nodig heb of șieren om verder te kunnen.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Îţi spun clar ce am nevoie de la alţii ca să merg mai departe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "72": {
-  "prompt": "Lucrez preferably the hele dienst fără meeting.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să lucrez toată tura fără consultaţii.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "73": {
-  "prompt": "I stel me fsau to nou colegi in plaats of te wachten until zij komen.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi imaginez noi colegi în loc să aştepte să vină.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "74": {
-  "prompt": "I houd the tempo erin dosau șieren mee te nemen in the actie.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Eu ţin pasul cu aducerea altora în acţiune.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "75": {
-  "prompt": "I durf a grap sau luchtige opmerking te maken om the spanning te breken.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Îndrăznesc să fac o glumă sau o remarcă uşoară pentru a rupe tensiunea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "76": {
-  "prompt": "In groepsoverleg blijf I mai degrabă stil, ook dacă I iets relevants weet.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "În şedinţele de grup, prefer să stau liniştită, chiar dacă ştiu ceva relevant.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "77": {
-  "prompt": "I merk the dacă a client sau coleg așiacht nodig heeft și loop ernaartoe.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "妻: I sense it when a customer or colleague needs attention and walks there.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "78": {
-  "prompt": "I kan schakelen tussen kassa, vloer și meeting fără that I dichtklap.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Pot schimba între che crate, podea și consultare fără a închide.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "79": {
-  "prompt": "I vind the prettig om zichtbaar te his in the echipă.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să fiu vizibil în echipă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "80": {
-  "prompt": "Onverwacht aangesproken wsauden haalt me out my concentratie.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "O abordare neaşteptată ia măsuri ilustrative.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "81": {
-  "prompt": "I bouw snel a werkrelatie on cu uitzendkrachten sau seizoenscollega's.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Am stabilit rapid o relaţie de lucru cu lucrătorii temporari sau cu personalul sezonier.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "82": {
-  "prompt": "I laat mai degrabă a e-mail sau appje gaan dan a gesprek of twee minuten.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Mai bine las un e-mail sau o aplicaţie decât o conversaţie de două minute.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "83": {
-  "prompt": "I kan a conflict on the vloer benoemen fără te verdwijnen.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Pot numi un conflict pe podea fără a dispărea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "84": {
-  "prompt": "Netwerken sau kennismaken on a vestiging voelt dacă a opgave.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Reţeaua sau cunoaşterea unei filiale pare o sarcină.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "85": {
-  "prompt": "I houd of wsauk waarin contact cu people a vast onderdeel is.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place locul de muncă în cazul în care contactul cu oamenii este o parte permanentă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "86": {
-  "prompt": "I geef energie to the echipă dacă the dienst lang duurt.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Dau energie echipei dacă serviciul durează mult.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "87": {
-  "prompt": "I spreek makkelijk af wie wat doet, in plaats of te wachten.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "E uşor de spus cine ce face în loc să aştepte.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "88": {
-  "prompt": "I vermijd overdrachten cu a lot people erbij.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Evit transferurile cu mulţi oameni.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "89": {
-  "prompt": "I voel me thuis in a omgeving cu a lot prikkels și beweging.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about how you de obicei react când it matters.",
+  "prompt": "Mă simt ca acasă într-un mediu cu multe stimuli şi mişcări.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "90": {
-  "prompt": "I doe alsof I busy ben om a extra klantgesprek te ontwijken.",
-  "example": "Example: in a busy shop you enjoy talking cu clienți. This is about holding on to what you know — sau nu.",
+  "prompt": "Mă prefac că sunt ocupat evitând un apel client suplimentar.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Extraversie"
+  "domain": ""
  },
  "91": {
-  "prompt": "Ajut a coleg ook dacă the nu letterlijk my sarcină is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "De asemenea, ajut un coleg dacă nu e literalmente treaba mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "A) — 30 unique\n        (Vriendelijkheid"
+  "domain": ""
  },
  "92": {
-  "prompt": "I luister eerst to the șier înainte I my mening geef.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "O voi asculta pe cealaltă înainte să-mi dau părerea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "93": {
-  "prompt": "I houd rekening cu hoe my toon overkomt at clienți sau gasten.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Iau în considerare cum sună tonul meu clienţilor sau oaspeţilor.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "94": {
-  "prompt": "If iemși traag is, laat I merken that I daar little geduld fsau heb.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Dacă cineva e lent, voi arăta că nu am prea multă răbdare.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "95": {
-  "prompt": "I zoek a soluție waar the echipă verder mee kan, nu alleen I.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Caut o soluţie ca echipa să poată merge mai departe, nu doar eu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "96": {
-  "prompt": "I geef complimenten dacă iemși iets good heeft gedaan.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Complimentez pe cineva pentru că a făcut ceva bine.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "97": {
-  "prompt": "I kan me inleven in a boze sau gestreste client fără terug te bijten.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Pot trăi până la un client furios sau stresat fără a atestat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "98": {
-  "prompt": "I zet my own belang boven that of the echipă dacă the schuurt.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Mi-am pus propriul interes mai presus de cel al echipei atunci când se freacă.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "99": {
-  "prompt": "I deel kennis zodat șieren zelfstșiiger wsauden.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Împărtăşesc cunoştinţele astfel încât alţii să devină mai independenţi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "100": {
-  "prompt": "I maak denigrerende opmerkingen dacă iemși a mistake maakt.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Fac remarci defavorabile când cineva face o greşeală.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "101": {
-  "prompt": "I pas my tempo to dacă a nou coleg nog moet inwerken.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi reglez ritmul dacă un nou coleg trebuie să lucreze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "102": {
-  "prompt": "I houd wrok dacă iemși my wsauk heeft overgenomen sau bekritiseerd.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Am ranchiună atunci când cineva a preluat munca mea sau criticat.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "103": {
-  "prompt": "I zeg the rustig dacă I the ergens nu mee eens ben.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "O voi spune în linişte dacă nu sunt de acord cu ceva.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "104": {
-  "prompt": "I respecteer verschillende achtergronden și werkstijlen in the echipă.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Respect diferite medii şi stiluri de lucru în echipă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "105": {
-  "prompt": "I bied hulp to înainte iemși erom hoeft te vragen.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Ofer ajutor înainte ca cineva să-l ceară.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "106": {
-  "prompt": "I trek me little to of hoe my gedrag the atmosphere beïnvloedt.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Nu-mi pasă cum comportamentulry meu afectează atmosfera.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "107": {
-  "prompt": "I geef ruimte to stillere colegi in meeting.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Le dau loc colegilor mai liniştiţi în consultare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "108": {
-  "prompt": "I kan toegeven dacă the șier a beter punt heeft.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Pot să recunosc dacă celălalt are un punct mai bun.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "109": {
-  "prompt": "I behșiel uitzendkrachten și vast personeel cu dezelfde beleefdheid.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Tratez muncitori temporari şi personal permanent cu aceeaşi amabilitate.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "110": {
-  "prompt": "I gebruik sarcastische opmerkingen om my zin dosau te drijven.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Folosesc remarci sarcastice pentru a-mi împinge linia.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "111": {
-  "prompt": "I let erop that niemși buiten the groep valt tijdens the dienst.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Mă voi asigura că nimeni nu va ieşi din grup în timpul turei.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "112": {
-  "prompt": "I laat a coleg bewust klem lopen dacă we om dezelfde sarcină concurreren.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Am pus în mod deliberat un coleg într-o poziție de a concura pentru aceeași sarcină.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "113": {
-  "prompt": "I houd rekening cu fysieke sau taalbarrières of șieren.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Consider barierele fizice sau lingvistice ale altor persoane.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "114": {
-  "prompt": "I vind the zwak dacă iemși om hulp vraagt at iets that I vanzelfsprekend vind.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Mi se pare slab atunci când cineva cere ajutor cu ceva ce iau de la sine.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "115": {
-  "prompt": "I sluit a conflict af cu a duidelijke, respectvolle agreement.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "S-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s-au s- s s- s s- s s s- s    in   in   in     in    cu s    in   in      in    cu s            in   in  in                                                                                     s",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "116": {
-  "prompt": "I bescherm the privacy of colegi in gesprekken cu derden.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Protejez intimitatea colegilor în conversaţii cu terţi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "117": {
-  "prompt": "I zeg dankjewel fsau wsauk that ddacăferent onzichtbaar blijft.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Îţi mulţumesc pentru munca ta care altfel va rămâne invizibilă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "118": {
-  "prompt": "I onderbreek șieren des pentru că my punt urgenter voelt.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "De multe ori îi întrerup pe alţii pentru că punctul meu de vedere este mai urgent.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "119": {
-  "prompt": "I zoek win-win dacă roosters sau sarcini botsen.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about how you de obicei react când it matters.",
+  "prompt": "Caut câştig câştig dacă listele sau sarcinile se ciocnesc.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "120": {
-  "prompt": "I speel people tegen elkaar out dacă that my wsauk makkelijker maakt.",
-  "example": "Example: a echipămate needs help și you step in fără being asked. This is about holding on to what you know — sau nu.",
+  "prompt": "Joc oameni unul împotriva celuilalt dacă asta îmi face munca mai uşoară.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "Vriendelijkheid"
+  "domain": ""
  },
  "121": {
-  "prompt": "I blijf kalm dacă the opeens busy wsaudt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi rămâne calm când lucrurile se vor aglomera.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "lage neuroticisme) — 30 unique\n        (EmotioneleStabiliteit"
+  "domain": ""
  },
  "122": {
-  "prompt": "I herstel snel na a setback sau a mistake.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "O să-mi revin imediat după un regres sau o greşeală.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "123": {
-  "prompt": "I kan meerdere dingen tegelijk to fără in panic te raken.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Mă pot descurca cu mai multe lucruri deodată fără să intru în panică.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "124": {
-  "prompt": "I pieker lang na about criticism, ook dacă that al is opgelost.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "M-am gândit necondiţionat mult timp la critici, chiar dacă au fost rezolvate.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "125": {
-  "prompt": "I houd overzicht dacă the schedule last-minute wijzigt.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Am o imagine de ansamblu atunci când planificarea se schimbă în ultimul minut.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "126": {
-  "prompt": "I blijf beleefd dacă a client sau coleg scherp out the hoek komt.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Rămân politicos când un client sau un coleg iese din colţ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "127": {
-  "prompt": "I slaap a incident af și begin the volgende dienst schoon.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "O să dorm şi o să încep următorul schimb curat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "128": {
-  "prompt": "I raak snel of slag dacă er iets unexpected gebeurt.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "Mă supăr foarte tare când se întâmplă ceva neaşteptat.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "129": {
-  "prompt": "I adem even dosau înainte I reageer in a spannend moment.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "O să respir înainte să reacţionez într-un moment emoţionant.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "130": {
-  "prompt": "I voel me snel persoonlijk aangevallen at gewone werkfeedback.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "Mă simt uşor de atacat personal de reacţiile obişnuite la muncă.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "131": {
-  "prompt": "I blijf functioneren dacă er a stsauing, wachtrij sau teksaut is.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Voi continua să funcţionez dacă există o defecţiune, coadă sau lipsă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "132": {
-  "prompt": "I vermijd lastige gesprekken out angst that the out the hși loopt.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "Evit conversaţiile dificile de teamă că lucrurile scapă de sub control.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "133": {
-  "prompt": "I kan a mistake herstellen fără that the rest of the dienst instsaut.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "PotFeature să repar o greşeală fără ca restul serviciului să se prăbuşească.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "134": {
-  "prompt": "I houd my stem și lichaamstaal rustig onder tijdsdruk.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi ţin vocea şi limbajul trupului tăcute sub presiunea timpului.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "135": {
-  "prompt": "I vraag om hulp dacă the busy te hoog wsaudt, in plaats of vast te lopen.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Cer ajutor în cazul în care presiunea devine prea mare, în loc de crashing.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "136": {
-  "prompt": "I neem spanning of wsauk mee to huis și kom er moeilijk vanaf.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "O să iau acasă emoţia muncii şi o să scap de ea.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "137": {
-  "prompt": "I blijf beslissen dacă nu alle infsaumatie perfect is.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Mă tot decid dacă toate informaţiile nu sunt perfecte.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "138": {
-  "prompt": "I accepteer that piekdagen hsauen at this wsauk, fără te blokkeren.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Accept că zilele de vârf fac parte din această slujbă fără a o bloca.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "139": {
-  "prompt": "I kan a conflict laten liggen until the moment om the te bespreken.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Pot lăsa un conflict momentan pentru a discuta despre asta.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "140": {
-  "prompt": "Kleine tegenvallers voelen at mij al snel dacă a ramp.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "Mi se pare un dezastru.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "141": {
-  "prompt": "I blijf veilig wsauk ook dacă I gehaast ben.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Voi continua să lucrez în siguranţă chiar dacă mă grăbesc.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "142": {
-  "prompt": "I wsaud prikkelbaar dacă I nu meteen controle about the situatie heb.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "Devin iritabil dacă nu pot controla situaealing imediat.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "143": {
-  "prompt": "I zet a setback om in a concrete volgende stap.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Transform un regres într-un pas provocat de beton.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "144": {
-  "prompt": "I vermijd verantwosaudelijkheid out angst om the schuld te krijgen.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "Evit să mă dau de vină.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "145": {
-  "prompt": "I houd my așiacht at the sarcină, ook dacă er om me heen rumoer is.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Îmi păstrez atenţia asupra sarcinii, chiar şi atunci când este zgomot în jurul meu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "146": {
-  "prompt": "I kan ja și nee zeggen fără daar uren about te twijfelen.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Pot spune da şi nu fără întrebări ore întregi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "147": {
-  "prompt": "I blijf vriendelijk to the kassa sau balie dacă the rij lang is.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Stau prietenos la casa de marcat sau birou atunci când linia este lung.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "148": {
-  "prompt": "I sluit me af sau bevries dacă the busy oploopt.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "O S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S S",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "149": {
-  "prompt": "I zie a drukke dienst dacă a uitdaging that I aankan.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about how you de obicei react când it matters.",
+  "prompt": "Văd o schimbare ocupată ca pe o provocare pe care o pot suporta.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  },
  "150": {
-  "prompt": "I heb na a lastige dienst lang last of piekeren sau boosheid.",
-  "example": "Example: a sudden schimbare in the schedule happens; you stay calm și act. This is about holding on to what you know — sau nu.",
+  "prompt": "După o schimbare grea, am fost îngrijorat sau supărat pentru o lungă perioadă de timp.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "EmotioneleStabiliteit"
+  "domain": ""
  }
 }

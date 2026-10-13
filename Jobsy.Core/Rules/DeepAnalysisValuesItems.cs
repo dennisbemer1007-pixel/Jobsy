@@ -18,7 +18,7 @@ internal static class DeepAnalysisValuesItems
         // Autonomy (Self-Direction / Stimulation) — 30
         (Autonomy, false, "Ik bepaal het liefst zelf de volgorde van mijn taken op een dienst."),
         (Autonomy, false, "Ik zoek graag uitdagingen die me net buiten mijn comfortzone trekken."),
-        (Autonomy, true, "Ik werk het best als iemand precies zegt wat ik stap voor stap moet doen."),
+        (Autonomy, true, "Ik voel me het prettigst als elke werksstap van tevoren voor mij is uitgezet."),
         (Autonomy, false, "Ik probeer nieuwe werkwijzen uit als de oude methode traag voelt."),
         (Autonomy, false, "Ik vind het belangrijk om eigen keuzes te maken over hoe ik een klus aanpak."),
         (Autonomy, true, "Vaste routines geven me meer rust dan steeds wisselende werkvormen."),

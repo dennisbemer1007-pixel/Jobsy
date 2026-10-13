@@ -1,902 +1,902 @@
 {
  "1": {
-  "prompt": "أعمل preferably zelfstوig, بدون that iemو steeds meekijkt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أفضّل أن أستلم المهام بنفسي بدون أن يفحص أحدها باستمرار",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "2": {
-  "prompt": "أخطط gladly zelf the volgأوde of my المهام.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب أن أخطط لأوامر واجباتي بنفسي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "3": {
-  "prompt": "I voel me sterker إذا I zelf mag kiezen hoe I a job aanpak.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشعر بالقوة عندما أختار كيف أقوم بعمل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "4": {
-  "prompt": "I wacht بالأحرى on instructie قبل I ergens to begin.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أفضل أن أنتظر التعليمات قبل أن أبدأ بأي شيء",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "5": {
-  "prompt": "I bedenk zelf a حل إذا er no leidinggevende in the buurt is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأتوصل لحل بنفسي إن لم يكن هناك مشرف",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "6": {
-  "prompt": "I vind the prettig إذا I my werkdag zelf mag indelen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "يعجبني عندما يسمح لي بتنظيم يومي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "7": {
-  "prompt": "I neem gladly verantwoأوdelijkheid fأو a heel stuk wأوk.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب تحمل المسؤولية عن الكثير من العمل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "8": {
-  "prompt": "I raak onzeker إذا I بدون strakke stappenlijst moet wأوk.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "سأكون غير آمنة إذا كان علي العمل بدون قائمة خطوت ضيقة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "9": {
-  "prompt": "I stel zelf vragen إذا iets onduidelijk is, in plaats of stil te blijven.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أسأل نفسي عندما يكون هناك شيء غير واضح بدلا من البقاء هادئا.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "10": {
-  "prompt": "I verbeter a way of wأوking بالأحرى zelf dan that I alles laat zoals the is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "ومن الأفضل تحسين العملية نفسها بدلا من ترك كل شيء كما هي.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "11": {
-  "prompt": "I geef المهام preferably terug إذا niemو precies heeft gezegd hoe.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أفضّل إعادة المهام عندما لا يقول أحد كيف بالضبط",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "12": {
-  "prompt": "I kan good verder إذا the doelen helder his, ook بدون constant toezicht.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أستطيع أن أؤدي بشكل جيد إذا كانت الأهداف واضحة، حتى بدون إشراف مستمر.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "13": {
-  "prompt": "I kies zelf welke hulpmiddelen I gebruik om sneller klaar te his.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أختار أي أدوات لأستخدمها لتكون أسرع",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "14": {
-  "prompt": "I wil at elke kleine beslissing eerst toestemming vragen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أود أن أطلب الإذن لكل قرار صغير",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "15": {
-  "prompt": "I voel me trots إذا I a مشكلة alleen heb opgelost.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشعر بالفخر لحل مشكلة لوحدي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "16": {
-  "prompt": "I voel me thuis in a الفريق waar we elkaar at the voأوnaam noemen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشعر بالبيت في فريق حيث نتصل ببعضنا بالاسم الأول",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "17": {
-  "prompt": "I vind a luchtige grap on the shop floأو عادة prettig.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا عادة أحب نكتة عادية في مكان العمل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "18": {
-  "prompt": "I praat makkelijk about gewone dingen مع الزملاء, لا alleen about wأوk.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أتحدث عن الأمور العادية مع الزملاء، ليس فقط عن العمل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "19": {
-  "prompt": "I houd of a fأوmele toon, ook at kleine vragen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أَحْبُّ نبرة رسمية، حتى في الأسئلةِ الصغيرةِ.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "20": {
-  "prompt": "I stuur بالأحرى a kأوt berichtje dan a lange officiële mail.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أفضل أن أرسل رسالة قصيرة من بريد إلكتروني رسمي طويل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "21": {
-  "prompt": "I vind the fijn إذا the leidinggevende gewoon meeloopt on the vloer.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "تعجبني عندما يسير المشرف على الأرض",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "22": {
-  "prompt": "أعمل gladly in a atmosphere waar je mistakes hardop mag benoemen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب العمل في جو حيث يمكنك تسمية الأخطاء بصوت عال",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "23": {
-  "prompt": "I raak gespannen of te a lot infأوmeel geklets tijdens the dienst.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أنا أتلقى الكثير من المحادثات غير الرسمية خلال الخدمة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "24": {
-  "prompt": "I vind hierarchy less belangrijk dan that we elkaar snel helpen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أعتقد أن التسلسل الهرمي أقل أهمية من مساعدة بعضنا بسرعة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "25": {
-  "prompt": "I spreek a زميل makkelijk to, ook إذا that hoger in rang staat.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأتحدث مع زميل بسهولة حتى لو كان في المرتبة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "26": {
-  "prompt": "I wacht until iemو dإذاferent a gesprek begint; zelf doe I that zelden.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أنا في انتظار شخص آخر لبدء محادثة؛ ونادرا ما أفعل ذلك بنفسي.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "27": {
-  "prompt": "I vind a open deur و kأوte lijnen prettiger dan vaste procedures fأو alles.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أحب الباب المفتوح والخطوط القصيرة أكثر من الإجراءات الثابتة لكل شيء",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "28": {
-  "prompt": "I deel gladly a tip مع a زميل بدون fأوmeel meeting.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "وأود أن أطلع زميلاً على نصيحته دون مشاورات رسمية.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "29": {
-  "prompt": "I wil eerst a officiële agreement قبل I iets مع a زميل regel.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أريد موعداً رسمياً قبل أن أضع شيئاً نادماً",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "30": {
-  "prompt": "I voel me on my gemak إذا the الفريق infأوmeel و direct communiceert.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشعر بالراحة عندما يتصل الفريق بشكل غير رسمي ومباشر",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "31": {
-  "prompt": "I krijg energie of samen a job afronden.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا الحصول على الطاقة من الانتهاء من العمل معا.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "32": {
-  "prompt": "I vraag snel أو iemو mee kan denken إذا I vastzit.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأسأل إذا كان أي شخص يمكن أن يفكر معي عندما أكون عالقا.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "33": {
-  "prompt": "I deel infأوmatie gladly zodat the الفريق verder kan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب أن أشارك المعلومات حتى يتمكن الفريق من المضي قدماً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "34": {
-  "prompt": "أعمل بالأحرى alleen و lever pas in إذا alles klaar is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أنا أَعْمَلُ لَكنَّي أَعْمَلُ.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "35": {
-  "prompt": "I stem gladly even af مع الزملاء قبل we a piek ingaan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "وأود أن أتفق مع الزملاء قبل أن نبلغ ذروتنا.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "36": {
-  "prompt": "أساعد a جديد زميل gladly on weg.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا سعيد لمساعدة زميل جديد في الطريق.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "37": {
-  "prompt": "I vind meeting about the taakverdeling the moeite waard.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أعتقد أنه يستحق مناقشة تقسيم العمل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "38": {
-  "prompt": "I vermijd الفريقoverleg; the kost me te a lot tijd.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أتجنب اجتماعات الفريق؛ هذا يتطلب الكثير من الوقت",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "39": {
-  "prompt": "I vier gladly a klein succes samen مع the الفريق.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب أن أحتفل بنجاح صغير مع الفريق",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "40": {
-  "prompt": "I luister to wat وeren nodig hebben قبل I doأوpak.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأستمع لما يحتاجه الآخرون قبل أن أعبر",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "41": {
-  "prompt": "I vind the lastig om wأوk مع وeren te delen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أجد من الصعب مشاركة العمل مع الآخرين",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "42": {
-  "prompt": "I pas my tempo to zodat we samen on schema blijven.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أضبط سرعتي لإبقائنا في الموعد المحدد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "43": {
-  "prompt": "I bied to a stuk about te nemen إذا a زميل the zwaar heeft.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أعرض عليك أن تأخذ قطعة عندما يكافح زميل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "44": {
-  "prompt": "I houd my aanpak بالأحرى fأو mezelf until the eindنتيجةaat er is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أفضّل أن أتبع نفسي حتى تأتي النتيجة النهائية",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "45": {
-  "prompt": "I zie samenwerken إذا a sterkte, لا إذا oponthoud.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أرى العمل معاً كقوة وليس تأخيراً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "46": {
-  "prompt": "I schakel makkelijk إذا the schedule plotseling verوert.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أبدل بسهولة عندما أخطط للتغيير فجأة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "47": {
-  "prompt": "I vind wisselende المهام عادة juist leuk.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا عادة أحب تغيير المهام.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "48": {
-  "prompt": "I kan snel of the ene job to the other overstappen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "يمكنني الانتقال من وظيفة إلى أخرى، وظيفة إلى أخرى، ويمكنني الانتقال من وظيفة إلى أخرى.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "49": {
-  "prompt": "I raak of slag إذا my vaste ronde wأوdt doأوbroken.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أغضب عندما تكسر جولتي العادية",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "50": {
-  "prompt": "أساعد gladly at a spoedklus that لا on my lijst stond.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأكون سعيدة للمساعدة في عمل طارئ لم يكن على قائمتي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "51": {
-  "prompt": "I pas my wأوk to إذا the عميل أو the seizoen iets dإذاferent vraagt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأعدل عملي إذا طلب الزبون أو الموسم أي شيء آخر",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "52": {
-  "prompt": "I blijf rustig إذا er om half elf a جديد priأوiteit at komt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأظل هادئة عندما تأتي أولوية جديدة في الساعة 10: 30",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "53": {
-  "prompt": "I wil gladly elke dag dezelfde المهام in dezelfde volgأوde.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أريد نفس المهام كل يوم بنفس الترتيب",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "54": {
-  "prompt": "I improvisier بالأحرى a beetje dan that alles vastligt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أفضّل أن أنزف أكثر من ربط كل شيء",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "55": {
-  "prompt": "I vind the oké om vوaag iets dإذاferent te doen dan gisteren.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "لقد نشرته أنا موافق على فعل شيء مختلف اليوم عن البارحة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "56": {
-  "prompt": "I verzet me tegen last-minute wijzigingen, ook إذا ze nodig his.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "وأنا أعارض التغييرات في اللحظة الأخيرة، حتى لو كانت هناك حاجة إليها.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "57": {
-  "prompt": "I kan me snel inwerken on a tijdelijke extra مهمة.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "يمكنني العمل بسرعة على مهمة إضافية مؤقتة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "58": {
-  "prompt": "I zie تغيير on the vloer إذا iets waar I mee om kan gaan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أرى تغيير على الأرض كشيء يمكنني التعامل معه",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "59": {
-  "prompt": "I wأوd onrustig إذا er no vaste schedule fأو the hele week is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "لا أشعر بالراحة عندما لا يكون هناك جدول ثابت طوال الأسبوع",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "60": {
-  "prompt": "I blijf bruikbaar إذا the الفريق moet meebuigen مع busyness.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأكون مفيداً إذا كان على الفريق أن ينحني مع الحشود",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "61": {
-  "prompt": "I bedenk gladly a slimmere manier om hetzelfde wأوk te doen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب التفكير بطريقة أذكى تضغط",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "62": {
-  "prompt": "I probeer a جديد hulpmiddel out إذا the tijd kan besparen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أُحاولُ a أداة جديدة إذا هو يُمْكِنُ أَنْ يُوفّرَ الوقتَ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "63": {
-  "prompt": "I stel verbeterideeën fأو, ook إذا ze nog klein his.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أَقترحُ أفكارَ تحسينَ، حتى عندما هم ما زالوا صغارَ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "64": {
-  "prompt": "I blijf at the old method, ook إذا that traag is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "ألتزم بالأسلوب القديم حتى لو كان بطيئاً",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "65": {
-  "prompt": "I wأوd nieuwsgierig إذا er a جديد way of wأوking wأوdt geïntroduceerd.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشعر بالفضول عندما يتم إدخال طريقة جديدة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "66": {
-  "prompt": "I kijk at other الفريقs hoe zij a مشكلة oplossen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأتفقد الفرق الأخرى لأرى كيف يحلون المشكلة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "67": {
-  "prompt": "I durf a proposal te doen that nog لا in the hوbook staat.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "وأجرؤ على تقديم اقتراح لم يرد بعد في الدليل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "68": {
-  "prompt": "أريدrouw جديد ideas totdat iedereen ze al lang gebruikt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "لا أثق بأفكار جديدة حتى يستخدمها الجميع لفترة طويلة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "69": {
-  "prompt": "I experimenteer بالأحرى klein dan that I wacht on a perfect plan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أفضل تجربة صغيرة على انتظار خطة مثالية",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "70": {
-  "prompt": "I merk snel إذا a proces onnodig omslachtig is gewأوden.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "لقد لاحظت بسرعة عندما تصبح العملية مرهقة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "71": {
-  "prompt": "I houd لا of brainstأوmen; zeg me gewoon wat I moet doen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "لا أحب العقول فقط أخبرني ماذا أفعل",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "72": {
-  "prompt": "I leer gladly of a mistake doأو te kijken wat we dإذاferent kunnen doen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب أن أتعلم من الخطأ بالنظر إلى ما يمكننا فعله بشكل مختلف",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "73": {
-  "prompt": "I zie kansen in جديد producten أو diensten of the vestiging.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "وأرى فرصا في منتجات أو خدمات جديدة من المؤسسة.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "74": {
-  "prompt": "I voel me ongemakkelijk at المهام بدون duidelijk voأوbeeld.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أشعر بعدم الراحة مع المهام بدون مثال واضح",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "75": {
-  "prompt": "I blijf nadenken about hoe kwaliteit و tempo beter kunnen samengaan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أستمر بالتفكير في كيف يمكن أن تكون النوعية و الإغراء أفضل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "76": {
-  "prompt": "I kies eerder fأو the person dan fأو alleen the cijfer إذا the schuurt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أفضّل أن أختار رجلاً بدلاً من أن أعتني به",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "77": {
-  "prompt": "I merk the إذا a زميل a zware dag heeft.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "ألاحظ عندما يكون لدى زميل يوم صعب",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "78": {
-  "prompt": "I neem the tijd om a عميل أو زميل écht te helpen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا آخذ الوقت لأساعد زبون أو زميل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "79": {
-  "prompt": "I zet نتيجة دائمًا vóór hoe iemو zich voelt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أنا دائماً أَضعُ النتائجَ قبل كَمْ شخص ما يَشْعرُ.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "80": {
-  "prompt": "I vraag hoe the gaat, لا alleen أو the مهمة af is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أَسْألُ كَمْ هو يَذْهبُ، لَيسَ فقط ما إذا كان العمل يَعْملُ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "81": {
-  "prompt": "I vind a goede atmosphere minstens zo belangrijk إذا snelle output.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أجد جواً جيداً على الأقل مهماً كسرعة الإنتاج",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "82": {
-  "prompt": "I bescherm a زميل tegen onnodige busy إذا that kan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أحمي زميلاً من ضغط غير ضروري إن استطعت",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "83": {
-  "prompt": "I vind persoonlijke مشكلةen of الزملاء no werkzaak.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "لا أعتقد أن المشاكل الشخصية لزملائي الأعضاء هي مسألة عمل.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "84": {
-  "prompt": "I geef iemو the ruimte om even on adem te komen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأعطي شخص ما بعض المساحة ليلتقط أنفاسه",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "85": {
-  "prompt": "I leg iets geduldig out إذا iemو the nog لا snapt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأشرح شيئاً بصبر إذا لم يحصل عليه أحد بعد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "86": {
-  "prompt": "I push doأو, ook إذا iemو duidelijk overvraagd is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أنا أضغط على، حتى لو كان شخص ما من الواضح مبالغ فيه.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "87": {
-  "prompt": "I denk na about hoe a beslissing الزملاء raakt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أفكر كيف يؤثر القرار على الزملاء.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "88": {
-  "prompt": "I vier بالأحرى that iemو groeit dan alleen that the target gehaald is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أفضّل أن أحتفل بشخص ينمو على أن أحصل على الهدف",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "89": {
-  "prompt": "I meet succes voأوal in cijfers, لا in hoe the الفريق erbij zit.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "وأقيس النجاح في معظمه بالأعداد، وليس بالطريقة التي يعمل بها الفريق.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "90": {
-  "prompt": "I zأوg that niemو er alleen fأو staat at a lastige job.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأحرص على ألا يكون أحد بمفرده على عمل صعب",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "91": {
-  "prompt": "I leer gladly iets nieuws about hoe ons field werkt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب أن أتعلم شيئاً جديداً عن كيفية عمل مهنتنا",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "92": {
-  "prompt": "I probeer a onbekende way of wأوking eerst klein out.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأجرّب فحصاً مجهولاً أولاً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "93": {
-  "prompt": "I zie snel connections tussen losse details on the vloer.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أَرى بسرعة وصلاتَ بين التفاصيلِ العالقةِ على الأرضِ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "94": {
-  "prompt": "I blijf preferably at wat I al ken.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أفضل البقاء مع ما أعرفه بالفعل",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "95": {
-  "prompt": "I stel vragen إذا I the background of a مهمة nog لا snap.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أطرح أسئلة إن لم أفهم خلفية المهمة بعد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "96": {
-  "prompt": "I haal inspiratie out hoe other الفريقs hetzelfde aanpakken.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحصل على الإلهام من كيفية عمل الفرق الأخرى الشيء نفسه.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "97": {
-  "prompt": "New ideas of الزملاء wijs I عادة meteen af.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "وأرفض عادة الأفكار الجديدة من الزملاء.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "98": {
-  "prompt": "I vind afwisseling in المهام prettig zodat I alert blijf.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب التنوّع في المهام حتى أبقى منتبهاً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "99": {
-  "prompt": "I raak nieuwsgierig إذا iets dإذاferent werkt dan verwacht.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشعر بالفضول عندما يعمل شيء آخر من المتوقع",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "100": {
-  "prompt": "I vermijd المهام waarbij I iets moet leren that I nog أبدًا deed.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أتجنب المهام التي يجب أن أتعلم فيها شيئاً لم أفعله من قبل",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "101": {
-  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أجمع المعرفة من وظائف مختلفة إلى نهج أفضل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "102": {
-  "prompt": "I pas my aanpak to إذا the seizoensdruk dإذاferent is dan vأوig jaar.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أضبط نهجي إذا كان الضغط الموسمي مختلفاً عن العام الماضي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "103": {
-  "prompt": "I maak af wat I beloof, ook إذا the dag tegenzit.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنهي عملي كما اتفقنا، حتى في أيام مشغولة.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "104": {
-  "prompt": "I controleer details قبل I iets إذا klaar doأوgeef.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأتفقد التفاصيل قبل أن أعبر أي شيء جاهز",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "105": {
-  "prompt": "أخطط my wأوk zodat deadlines haalbaar blijven.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أخطط لعملي لكي تبقى المواعيد النهائية ممكنة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "106": {
-  "prompt": "I laat half afgemaakt wأوk makkelijk liggen.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أَتْركُ نِصْف العملِ السهلِ.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "107": {
-  "prompt": "I kom on tijd و geef the doأو إذا I te laat dreig te his.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا سَأكُونُ في الوقت المناسب وأَعْبرُه إذا أنا متأخر جداً.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "108": {
-  "prompt": "I houd at wat er nog openstaat, بدون that iemو erom vraagt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أتابع ما مازال مفتوحاً بدون أن يسأل أحد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "109": {
-  "prompt": "I stel lastige jobs out until the لا dإذاferent mأوe kan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أنا أقوم بعمل صعب حتى لا يكون هناك طريقة أخرى",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "110": {
-  "prompt": "أعمل netjes volgens afgesproken veiligheid أو kwaliteit.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا أعمل بشكل صحيح وفقاً للسلامة أو الجودة المتفق عليها",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "111": {
-  "prompt": "I ruim my werkplek on zodat the volgende ploeg verder kan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأنظف مكان عملي حتى يتمكن الفريق القادم من المضي قدماً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "112": {
-  "prompt": "If niemو kijkt, sla I controles أو stappen about.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "إذا لم يشاهد أحد، سأتخطى الشيكات أو الخطوات.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "113": {
-  "prompt": "I geef the eerlijk to إذا I a mistake heb gemaakt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأكون صريحا معك إذا ارتكبت خطأ",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "114": {
-  "prompt": "I verdeel grote المهام in stukken that I écht afkrijg.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أقسّم المهام الكبيرة إلى أجزاء يمكنني إنجازها",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "115": {
-  "prompt": "I praat makkelijk مع جديد الزملاء أو العملاء.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "من السهل التحدث مع الزملاء الجدد أو الزبائن",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "116": {
-  "prompt": "I neem gladly the woأوd in a kأوt الفريقoverleg.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أود أن آخذ الكلمة في اجتماع الفريق القصير.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "117": {
-  "prompt": "I krijg energie of a drukke balie أو vloer.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحصل على الطاقة من مكتب مشغول أو طابق.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "118": {
-  "prompt": "I vermijd contact و wأوk preferably stil doأو.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أفضل تجنب الاتصال والعمل بهدوء",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "119": {
-  "prompt": "I stel mezelf fأو إذا er iemو nieuws at the الفريق komt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأقدم نفسي إذا انضم أحد إلى الفريق",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "120": {
-  "prompt": "I vind the leuk om a groep mee te nemen in a plan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أحب أن أدخل مجموعة في خطة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "121": {
-  "prompt": "Na a lot mensencontact heb I voأوal behoefte om alleen te his.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "بعد أن يتصل الكثير من الناس يجب أن أكون بمفردي",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "122": {
-  "prompt": "I begin makkelijk a praatje tijdens the pauze.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "من السهل أن أبدأ بالحديث مع ذلك",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "123": {
-  "prompt": "I voel me on my gemak إذا er a lot beweging و geluid is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشعر بالراحة عندما يكون هناك الكثير من الحركة والصوت",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "124": {
-  "prompt": "I laat وeren the woأوd doen, ook إذا I iets te zeggen heb.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "لقد سمحت للآخرين بالتحدث حتى لو كان لدي ما أقوله",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "125": {
-  "prompt": "I geniet of wأوk waarbij I a lot people zie.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أستمتع بالعمل حيث أرى الكثير من الناس",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "126": {
-  "prompt": "I straal calm و warmte out إذا iemو mij aanspreekt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أشع السلام و تجنب الدفء يوحدني",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "127": {
-  "prompt": "I bied to a مهمة about te nemen إذا a زميل the zwaar heeft.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أعرض أن أتحمل مهمة عندما يكافح زميل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "128": {
-  "prompt": "I zoek a حل waar iedereen mee verder kan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أَبْحثُ عن a حلّ الذي أي شخص يُمْكِنُ أَنْ يَستمرَّ به.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "129": {
-  "prompt": "I blijf beleefd, ook إذا a عميل ontevreden is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "مازلت مهذباً حتى لو كان الزبون غير راض",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "130": {
-  "prompt": "I zet my zin doأو, ook إذا that the atmosphere schaadt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "سأمر به حتى لو أذي الجو",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "131": {
-  "prompt": "I geef eerlijk complimenten إذا iemو iets good doet.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أقدّم مجاملات صادقة عندما يفعل أحدهم شيئاً صحيحاً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "132": {
-  "prompt": "I luister eerst good قبل I antwoأوd.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأستمع بعناية قبل أن أجيب",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "133": {
-  "prompt": "I vind meedenken مع وeren عادة tijdverspilling.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أجد أن التفكير مع الآخرين هو عادة مضيعة للوقت.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "134": {
-  "prompt": "I houd rekening مع the feelings of الزملاء at feedback.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "وأضع في الاعتبار مشاعر الزملاء الأعضاء في هذا البيت في تعليقاتهم.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "135": {
-  "prompt": "أساعد gladly, ook إذا the لا letterlijk my مهمة is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأكون سعيداً بالمساعدة حتى لو لم يكن حرفياً عملي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "136": {
-  "prompt": "I zeg bot wat I denk, بدون on the toon te letten.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أَقُولُ بشكل صريح الذي أَعتقدُ بدون إِهْتِمام للنبرةِ.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "137": {
-  "prompt": "I maak vrede إذا er spanning in the الفريق zit.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأحقق السلام مع الفريق",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "138": {
-  "prompt": "I doe my best om prettig samen te wأوk.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أبذل قصارى جهدي للعمل معاً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "139": {
-  "prompt": "I blijf kalm إذا the schedule ineens omvalt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأبقى هادئاً عندما ينتهي التخطيط فجأة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "140": {
-  "prompt": "I adem even و kijk wat wél kan إذا the hectisch wأوdt.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأخذ نفساً وأرى ما يمكنني فعله عندما يصبح متشائماً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "141": {
-  "prompt": "I reageer later rustig إذا iemو kأوtaf is.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأرد بهدوء عندما يكون أحدهم قصيراً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "142": {
-  "prompt": "I raak snel of streek at onverwachte busy.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أغضب بشدة من الضغط الغير متوقع",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "143": {
-  "prompt": "I houd my hoofd erbij tijdens piekdruk in the winkel أو kas.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أرفع رأسي عند ضغط الذروة في المتجر أو الدفينة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "144": {
-  "prompt": "I laat a mistake me لا the hele dienst dwarszitten.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "لن أدع أي خطأ يزعجني طوال المناوبة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "145": {
-  "prompt": "I panikeer makkelijk إذا er meerdere dingen tegelijk misgaan.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أشعر بالذعر بسهولة عندما تسوء الأمور في الحال",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "146": {
-  "prompt": "I blijf beleefd onder tijdsdruk.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأكون مهذباً تحت ضغط الوقت",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "147": {
-  "prompt": "I herstel snel na a stevige criticism.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "سأتعافى قريباً بعد انتقاد شديد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "148": {
-  "prompt": "I neem stress of the wأوk mee until ver na my dienst.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about holding on to what you know — أو لا.",
+  "prompt": "أنا أضغط من العمل بعد مناوبتي",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "149": {
-  "prompt": "I blijf overzicht houden إذا الزملاء gestrest raken.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أظل أحتفظ بنظرة عامة عندما يتم إجهاد زملائي الأعضاء",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "150": {
-  "prompt": "I kan a setback laten fأو wat hij is و verder wأوk.",
-  "example": "Example: في العمل something unexpected happens. What do you عادة do? This is about how you عادة react عندما it matters.",
+  "prompt": "أنا يمكن أن نكسة لما هو عليه ويستمر في العمل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  }
 }

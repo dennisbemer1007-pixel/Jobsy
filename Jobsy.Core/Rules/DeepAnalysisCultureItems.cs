@@ -25,7 +25,7 @@ internal static class DeepAnalysisCultureItems
     public static IReadOnlyList<(string Domain, bool Reverse, string Prompt)> All { get; } =
     [
         // Autonomy — 15 unique
-        (CulturePersonalityCatalog.Autonomy, false, "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt."),
+        (CulturePersonalityCatalog.Autonomy, false, "Ik pak taken het liefst zelf op, zonder dat iemand continu controleert."),
         (CulturePersonalityCatalog.Autonomy, false, "Ik plan graag zelf de volgorde van mijn taken."),
         (CulturePersonalityCatalog.Autonomy, false, "Ik voel me sterker als ik zelf mag kiezen hoe ik een klus aanpak."),
         (CulturePersonalityCatalog.Autonomy, true, "Ik wacht liever op instructie voordat ik ergens aan begin."),
@@ -141,7 +141,7 @@ internal static class DeepAnalysisCultureItems
         (CulturePersonalityCatalog.Openness, false, "Ik pas mijn aanpak aan als de seizoensdruk anders is dan vorig jaar."),
 
         // Conscientiousness — 12 unique
-        (CulturePersonalityCatalog.Conscientiousness, false, "Ik maak af wat ik beloof, ook als de dag tegenzit."),
+        (CulturePersonalityCatalog.Conscientiousness, false, "Ik rond mijn werktaken af zoals afgesproken, ook op drukke dagen."),
         (CulturePersonalityCatalog.Conscientiousness, false, "Ik controleer details voordat ik iets als klaar doorgeef."),
         (CulturePersonalityCatalog.Conscientiousness, false, "Ik plan mijn werk zodat deadlines haalbaar blijven."),
         (CulturePersonalityCatalog.Conscientiousness, true, "Ik laat half afgemaakt werk makkelijk liggen."),
