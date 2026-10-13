@@ -1,251 +1,311 @@
-# Psychometrische review Lobsy kandidaatstests (COTAN-geïnspireerd)
+# Psychometrische review Lobsy kandidaatstests
 
-**Datum:** 13 oktober 2026  
-**Scope:** Read-only review op basis van code, seed/metadata en scripts in `docs/psychometrie/`. **Geen wijzigingen aan productcode.**  
-**Status:** Dit is **geen officiële COTAN-beoordeling** en vervangt geen registratie, certificering of juridisch advies. Het is een interne kwaliteits- en risicoscan voor product, privacy en wetenschappelijke vervolgstappen.
-
----
-
-## 1. Samenvatting in gewone taal
-
-Lobsy biedt kandidaten vier gratis **Quick-Scans** (competenties, beroepsinteresses/RIASEC, cultuur & persoonlijkheid, waarden) plus optionele **diepteanalyses** (150–200 items). Antwoorden zijn 5-punts Likert-stellingen; schalen worden gemiddeld en omgerekend naar **0–100%**. Resultaten voeden **Mijn DNA** (vaste B1-zinnen), **tags** (drempel ≥70%) en het **vacature-matchpercentage** (multidimensionaal model, drempel Top-10 vaak 60%).
-
-**Sterk:** transparante opslag in code, reverse items, duidelijke scheiding free/deep, geen ruwe antwoorden naar werkgevers (privacy-copy), wetenschappelijke bronvermelding in UI, diepe versies met veel items per domein.
-
-**Zwak voor COTAN-niveau:** beperkte items per schaal in Quick-Scans (4–5), **geen normpopulatie**, **geen gepubliceerde betrouwbaarheid/validiteit** op Lobsy-data, competentieschaal is **werkplek-label** (niet 1:1 Mini-IPIP), vacature-profielen worden **afgeleid** uit tekst/sector, onboarding-**mini** (21 vragen) ≠ volledige Quick-Scan, **pl/ro/ar tonen Nederlandse itemteksten**, AI-rapporten na diepteanalyse.
-
-| COTAN-criterium | Oordeel | Kern |
-|-----------------|---------|------|
-| 1. Uitgangspunten testconstructie | **Onvoldoende** | Constructen benoemd maar niet volledig operationeel gelijk aan standaardinstrumenten |
-| 2. Kwaliteit testmateriaal | **Onvoldoende** | Korte schalen, enkele dubbelzinnige items; vertalingen deels incompleet |
-| 3. Handleiding | **Onvoldoende** | Geen aparte testhandleiding voor professionals |
-| 4. Normen | **Niet te beoordelen / onvoldoende** | Geen normtabellen; ruwe % zonder referentiegroep |
-| 5. Betrouwbaarheid | **Niet te beoordelen** | Geen echte responsdata in deze run; N≥300 nodig |
-| 6. Begripsvaliditeit | **Onvoldoende** | Geen factor- of convergentiestudies gepubliceerd |
-| 7. Criteriumvaliditeit | **Onvoldoende** | Match% niet gekoppeld aan arbeidsuitkomsten gevalideerd |
-| Fairness / bias | **Onvoldoende** | Taal-fallback, geen DIF; inferentie vacatures |
-| AI Act (high-risk readiness) | **Gedeeltelijk** | Consent aanwezig; uitleg menselijke regie kan scherper |
+**Datum:** 13 oktober 2026 (herziening: rigoureuze, conservatieve pass)  
+**Status:** **Geen officiële COTAN-beoordeling.** Dit document is een interne kwaliteits- en risicoscan op basis van broncode en beperkte synthetische pipeline-tests. Het vervangt geen registratie bij COTAN, geen juridisch advies en geen arbeidspsychologisch advies.
 
 ---
 
-## 2. Inventaris (code & seed)
+## 0. Referentiekader COTAN
 
-Machine-leesbare lijst: [`data/inventory.json`](./data/inventory.json) ( gegenereerd met [`scripts/extract_inventory.py`](./scripts/extract_inventory.py) ).
+Beoordeling is **geïnspireerd** op:
 
-### 2.1 Testoverzicht
+| Bron | Versie / datum |
+|------|----------------|
+| *COTAN Beoordelingssysteem voor de kwaliteit van tests* (Evers, Lucassen, Meijer & Sijtsma) | **2010** ([PDF NIP](https://nip.nl/wp-content/uploads/2022/08/COTAN-Beoordelingssysteem-2010.pdf), [cotandocumentatie.nl](https://www.cotandocumentatie.nl/cotan/beoordelingssysteem/)) |
+| Addendum unproctored gegevensverzameling | 01-12-2018 |
+| Addendum actualisatie instrumenten | 01-12-2018 |
+| Fairness addendum | 14-07-2021 |
+| Wijzigingen tabellen beoordelingssysteem | 01-06-2021 |
 
-| Test | Free (Quick-Scan) | Deep (betaald) | Model (claim in product) | Bron in code |
-|------|-------------------|----------------|--------------------------|--------------|
-| Competentie | 25 items, 5×5 schalen | 150 items, 30×5 Big Five domeinen | Big Five / Mini-IPIP | `AssessmentTestCatalog.cs` L14–26, `CompetencyTestCatalog.cs` |
-| Beroepen (RIASEC) | 25 (5R + 4×I/A/S/E/C) | 200 items | Holland RIASEC | `CareerTestCatalog.cs`, `AssessmentTestCatalog.cs` L27–40 |
-| Cultuur & persoonlijkheid | 18 items | 150 items | OCP + IPIP-facetten | `CulturePersonalityCatalog.cs`, `AssessmentTestCatalog.cs` L41–54 |
-| Waarden | 25 items, 5×5 | 150 items | Schwartz (werkplek-drivers) | `SchwartzValuesCatalog.cs`, `AssessmentTestCatalog.cs` L55–68 |
+COTAN gebruikt per criterium een **driepuntsschaal: onvoldoende / voldoende / goed** ([NIP procedure](https://nip.nl/cotan/beoordelingsprocedure/)). Wij passen die labels **conservatief** toe: bij twijfel **“niet te beoordelen”** (ontbrekende data) of **“onvoldoende”** (wel code, geen onderbouwing). Wij claimen **nergens “goed”** voor dit instrument in zijn huidige vorm.
 
-Metadata lengte/doorlooptijd: `Jobsy.Core/Rules/AssessmentTestCatalog.cs` (regels 11–68).
-
-### 2.2 Schalen en items per schaal (Quick-Scan)
-
-**Competentie** (`CompetencyTestCatalog.cs` L19–88): Samenwerken, Resultaatgerichtheid, Stressbestendigheid, Innovatie, Extraversie — elk **5 items**, waarvan **2 reverse** per schaal (behalve Extraversie: 3 forward, 2 reverse). Matching gebruikt alleen de eerste vier (`CategoryCodes` L33–39); Extraversie is tag/DNA (`L141–142`).
-
-**Beroepen:** zes RIASEC-types; Realistic **5**, overige **4** (`CareerTestCatalog.cs` L34–64, comment L35–36).
-
-**Cultuur:** 6 cultuurdimensies × 2 items + 5 persoonlijkheidsfacetten (Openness **2**, overige **1**) = 18 (`CulturePersonalityCatalog.cs` L47–77). Persoonlijkheidsfacetten hebben **geen reverse items** in de free scan (L71–76).
-
-**Waarden:** Autonomy, Connection, Achievement, Stability, Impact — elk **5 items**, 2 reverse (`SchwartzValuesCatalog.cs` L29–56).
-
-**Diepteanalyse:** 150/200/150/150 unieke stems (`DeepAnalysisCatalog.cs` L5–11); competentie-items in NL hardcoded in `DeepAnalysisCompetenceItems.cs` (geen vertaalsleutels).
-
-### 2.3 Onboarding-mini (≠ volledige Quick-Scan)
-
-Wizard **21 vragen** totaal (`OnboardingImpressionLibrary` / tests: `CandidateOnboardingWizardTests.cs` L37):  
-- Competentie: item-id’s **1, 6, 11, 16, 21** — één per schaal (`OnboardingWizardCatalog.cs` L22–26)  
-- Beroepen: **1, 6, 10, 14, 18, 22** (`L28–32`)  
-- Cultuur: **1, 3, 5, 7, 11** — Innovation dimension **weggelaten** (`L34–38`)  
-- Waarden: **1, 6, 11, 16, 21** (`L50–54`)
-
-Provisional scoring: partial JSON → `Score()` + bij cultuur **55% fill** op ontbrekende dimensies (`ProvisionalAssessmentScores.cs` L99–101, L151–155). Dit **verhoogt match/DNA vóór voltooide tests** (`CandidateOnboardingService.cs` via `Resolve*`).
-
-### 2.4 Antwoordformaat & scoring
-
-- Likert **1–5**, labels via `Competency.Likert.*` (`LikertAnswerJson.cs` L8–9, `CompetencyTestCatalog.cs` L103–104).  
-- Reverse: `LikertMax + LikertMin - raw` → 6−raw (`CompetencyTestCatalog.cs` L156).  
-- Schaalscore %: gemiddelde gescoorde items → `(avg−1)/4×100`, afgerond (`LikertAnswerJson.cs` L92–104).  
-- **Geen weging** per item; **geen normtransformatie**.  
-- Tags: schalen ≥ **70%** (`CompetencyTestCatalog.cs` L191–200; RIASEC top-3 `CareerTestCatalog.cs` L167–173).  
-- DNA zinnen: drempels **70 / 45** (`DnaSummarySentences.cs` L10–11); cultuur DNA binaire drempel **60** (`L80`).
-
-### 2.5 Koppeling DNA ↔ scores ↔ match%
-
-**Mijn DNA:** dominante schaal per test → vaste NL-zin (`DnaSummarySentences.cs`; gebruik o.a. in Kompas-services). Geen LLM voor DNA-samenvattingen.
-
-**Match%:** `ProfileVacancyMatchCalculator.Calculate` (`ProfileVacancyMatchCalculator.cs` L25–167):
-
-- Basis: reistijd, uren, dagdelen, ervaring/opleiding (`L86–121`).  
-- Competenties: `VacancyCompetencyProfile.Fit01` — ratio kandidaat/target per schaal, gemiddeld (`VacancyCompetencyProfile.cs` L65–80); targets **geïnferd** uit worktype + keyword-boost (`L21–62`).  
-- Cultuur/persoonlijkheid: blend in competency01 (`ProfileVacancyMatchCalculator.cs` L35–48).  
-- Waarden: `SchwartzValuesFitRules.Fit01` (`L51–57`).  
-- RIASEC + beroepen-kompas: gewichten o.a. `InterestWeightQuickScan` 0.25 (`L15–18, L87–96`).  
-- Weergave: kleur **≥70** groen (`MatchScoreCalculator.cs` L10); Top-10 filter **≥60** (`ProfileVacancyMatchCalculator.cs` L13, L188).  
-- Cultuurfit kan totaalscore **herwegen** (`CultureFitBuilder.TotalScoreWeight`, L134–136).
-
-**Belangrijk constructiepunt:** match% is een **holistisch productmodel**, geen pure testscore; vacature-eisen zijn deels **heuristisch**, niet empirisch genormeerd.
-
-### 2.6 Korte vs lange versie — meten ze hetzelfde?
-
-| Vergelijking | Zelfde items? | Zelfde construct? |
-|--------------|---------------|-------------------|
-| Mini (wizard) vs Quick-Scan | Deelset (1 item/schaal) | **Nee** — mini is te kort voor betrouwbare schaal; cultuur mist Innovation |
-| Quick-Scan vs Deep | Overlappend thema, andere stems/lengte | **Hypothese**, niet empirisch aangetoond in Lobsy |
-| Competentie Q21–25 | Was legacy RIASEC; nu Extraversie | Migratie gedocumenteerd (`CompetencyTestCatalog.cs` L175–178) |
-
-Empirische mini–full vergelijking: script [`analyze_responses.py`](./scripts/analyze_responses.py) (sectie `mini_vs_full`); vereist echte data.
+Toelichting betrouwbaarheid selectiecontext (extern, COTAN-gerelateerde literatuur): voor beslissingen met grote gevolgen worden in de sector vaak α **> .90** als sterk en **< .80** als zwak geïnterpreteerd ([Fundament 6.2](https://www.fundamentvoor.nl/onderneming-personeel/eerlijke-werving-en-selectie/assessment-beoordelen/62-inhoud-beoordeling-cotan)). Lobsy-tests zijn **niet** als gecertificeerde selectietest gepositioneerd in code; toch beïnvloeden scores **match%** en ranking — dat is een **risico** (zie criterium 7).
 
 ---
 
-## 3. Kwaliteit itemteksten (steekproef)
+## 1. Bewijstypen (verplichte leeswijze)
 
-Beoordelingskader: B1 NL, geen dubbele barreling, geen leading, geen jargon, consistentie nl/en/pl/ro/ar.
+Elke bewering in dit document is gelabeld:
 
-### 3.1 Positief
+| Label | Betekenis |
+|-------|-----------|
+| **(a)** | Geverifieerd uit **broncode** of gegenereerde inventaris uit code (file:line of `data/*.json` uit repo) |
+| **(b)** | **Berekend op synthetische data** — uitsluitend indicatief voor analyse-scripts, **geen** kwaliteitsclaim over Lobsy-respondenten |
+| **(c)** | **Niet te beoordelen** zonder echte, geanonimiseerde responsdata (minimaal N zie §6 en `VALIDATIE_STUDIEPLAN.md`) |
 
-- Werkplekcontext Den Haag/Westland in diepe competentie-items (`DeepAnalysisCompetenceItems.cs` L5–6).  
-- UI vermeldt reverse items (`UiStringsCompetencies.cs` — `Competency.ScienceNote`).  
-- EN vertaling aanwezig voor Quick-Scan items (`UiStringsCompetencies.cs` `En()` blok, o.a. L535+).
+Artifacts in deze PR:
 
-### 3.2 Aandachtspunten (met voorbeelden)
-
-| Issue | Voorbeeld | Locatie |
-|-------|-----------|---------|
-| **Dubbel/conceptueel breed** | “Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.” (taken vs emotie) | `Competency.Q13` → `UiStringsCompetencies.cs` L86 |
-| **Absoluut taalgebruik** | “Ik luister **eerst** naar anderen **voordat** ik mijn mening geef.” | `Competency.Q03` |
-| **Construct shift** | Quick-Scan “Innovatie” vs deep “Openheid” — gerelateerd maar niet identiek | `CompetencyTestCatalog` vs `DeepAnalysisCompetenceItems` |
-| **Cultuur: 1 item per facet** | Extraversion/Agreeableness/… slechts 1 item in free scan | `CulturePersonalityCatalog.cs` L71–76 |
-| **Vertaling pl/ro/ar** | Items = **Nederlands** (fallback) | `UiStringsCompetencies.cs` L16–18 `Merge(pl/ro/ar, Nl())` |
-| **RIASEC ongelijke lengte** | Realistic 5, Social 4 — scoringsgemiddelde ok, maar precision verschilt | `CareerTestCatalog.cs` |
-
-Aanbevolen: professionele vertaling + back-translation; itemreview door arbeidspsycholoog; B1-check op diepe 150/200 stems (nu NL-only strings).
+- `data/inventory.json` — (a) via `scripts/extract_inventory.py`
+- `data/scoring_verification.json` — (a) replicatie unit-testlogica in Python
+- `data/item_wording_review.json`, `ITEMteksten_BEOORDELING.md` — (a) + handmatige leesreview
+- `data/synthetic_demo_report.json` — (b) alleen pipeline
 
 ---
 
-## 4. Empirische analyse
+## 2. Executive summary (conservatief)
 
-### 4.1 Data in deze run
+Lobsy heeft vier gratis Quick-Scans (18–25 Likert-items) plus betaalde diepteanalyses (150–200 items), onboarding-mini (21 items) en productlogica voor DNA, tags en vacature-match%. **(a)**
 
-- **Geen productie-DB** en **geen lokale demo-DB met echte responsen** in de cloud agent-omgeving.  
-- **`data/synthetic_demo_report.json`**: alleen om het analyse-script te valideren (`--synthetic`, N=500). **Gebruik deze alfa’s/ correlaties niet** voor kwaliteitsclaims — de generator is niet gekalibreerd op Lobsy-respondenten.
-
-### 4.2 Minimum N (richtlijn)
-
-| Doel | Minimaal N (richtlijn) |
-|------|------------------------|
-| Cronbach α per schaal (5 items) | **≥300** afgeronde Quick-Scans |
-| Factoranalyse / CFA | **≥500** |
-| DIF per taal (nl/en/pl/ro/ar) | **≥200 per taalgroep** |
-| Test–retest (2–4 weken) | **≥100** |
-| Criteriumvaliditeit (hired / 90-dagen behoud) | **≥100–300** gekoppelde cases |
-| Convergentie vs COTAN-instrument (bijv. IPIP-20, SDS) | **≥150** |
-
-### 4.3 Uitvoering op echte (geanonimiseerde) data
-
-1. SQL-export: [`scripts/export_anonymized_responses.sql`](./scripts/export_anonymized_responses.sql)  
-2. Analyse: `python3 docs/psychometrie/scripts/analyze_responses.py --csv responses.csv --out report.json`  
-3. Rapporteer α, ω, item-rest, plafond-effecten, inter-scale correlaties, mini–full r.
+| COTAN-criterium | Ons oordeel | Motief (kort) |
+|-----------------|-------------|---------------|
+| 1 Uitgangspunten testconstructie | **Onvoldoende** | Theorie genoemd, maar meetpretentie / operationele definities niet als testhandleiding uitgewerkt **(a)** |
+| 2 Kwaliteit testmateriaal | **Onvoldoende** | Korte schalen; vertaal-gaten; cultuur/waarden EN zonder itemvertaling **(a)** |
+| 3 Kwaliteit handleiding | **Onvoldoende** | Alleen UI-teksten, geen professionele testhandleiding **(a)** |
+| 4 Normen | **Niet te beoordelen (c)** / inhoudelijk **onvoldoende** | Geen normpopulatie; ruwe 0–100% **(a)** |
+| 5 Betrouwbaarheid | **Niet te beoordelen (c)** | Geen echte data in deze review |
+| 6 Begripsvaliditeit | **Niet te beoordelen (c)** | Geen CFA/convergentiestudies |
+| 7 Criteriumvaliditeit | **Niet te beoordelen (c)** | Match% niet gevalideerd vs arbeidsuitkomsten **(a)** model, **(c)** empirisch |
+| Fairness (addendum 2021) | **Onvoldoende** | pl/ro/ar NL-items; geen DIF **(a)** |
+| AI / uitleg match + diep rapport | **Onvoldoende** voor high-risk readiness | Consent deels **(a)**; monitoring/onafhankelijkheid **(c)** |
 
 ---
 
-## 5. COTAN-criteria (detail)
+## 3. Inventaris tests & schalen **(a)**
 
-### Criterium 1 — Uitgangspunten testconstructie: **Onvoldoende**
+### 3.1 Overzicht
 
-**Evidence:** Theoretische labels (Big Five, RIASEC, Schwartz, OCP) staan in `AssessmentTestCatalog.cs` L21–66, maar operationele definities zijn **werkplek-herschrijvingen** (bijv. Samenwerken ≈ Agreeableness-werk, `CompetencyTestCatalog.cs` L7–8). Geen document met expliciete constructdefinitie, geen item-writing protocol, geen blue-print per facet.
+| Test | Items free | Items deep | Bron metadata |
+|------|------------|------------|---------------|
+| Competentie | 25 | 150 | `AssessmentTestCatalog.cs:14–26` |
+| Beroepen (RIASEC) | 25 | 200 | `AssessmentTestCatalog.cs:27–40` |
+| Cultuur & persoonlijkheid | 18 | 150 | `AssessmentTestCatalog.cs:41–54` |
+| Waarden (Schwartz-drivers) | 25 | 150 | `AssessmentTestCatalog.cs:55–68` |
 
-**Fixes:** Constructdocument (1 pagina per test); mappingtabel construct → item → vacature-inferentie; peer review door GZ-/ arbeidspsycholoog.
+Diepteanalyse lengtes: `DeepAnalysisCatalog.cs:5–17`.
 
-### Criterium 2 — Kwaliteit testmateriaal: **Onvoldoende**
+### 3.2 Competentie Quick-Scan **(a)**
 
-**Evidence:** 4–5 items/schaal (Quick-Scan); cultuur-personality ongelijk; diepe items niet via vertaalpipeline.
+- Schalen: Samenwerken, Resultaatgerichtheid, Stressbestendigheid, Innovatie, Extraversie — **5 items** elk (`CompetencyTestCatalog.cs:61–88`, `CategoryQuestionCount=5` L17).
+- Reverse items: 2 per schaal (Extraversie: 3 forward, 2 reverse) — tests bevestigen ≥8 reverse (`Jobsy.Tests/CompetencyMatchingTests.cs:24–25`).
+- Matching gebruikt **4** schalen (zonder Extraversie): `CategoryCodes` `CompetencyTestCatalog.cs:33–39`; Extraversie apart `L141–142`.
+- Constructieclaim UI: Mini-IPIP / Big Five (`CompetencyTestCatalog.cs:6–8`, `UiStringsCompetencies.cs:33–34`) — **operationeel** zijn het **werkplek-benamingen**, geen 1:1 Mini-IPIP schalen **(a)**.
 
-**Fixes:** Uitbreiden naar ≥8–10 items/schaal of officieel verkorte versie valideren; itemanalyse (p-values, rest-correlaties) na N≥300; itemrewrite lijst uit sectie 3.
+### 3.3 Beroepen Quick-Scan **(a)**
 
-### Criterium 3 — Handleiding: **Onvoldoende**
+- RIASEC: Realistic **5** items, I/A/S/E/C **4** elk (`CareerTestCatalog.cs:34–64`).
+- Holland-code: top-3 letters bij scores >0 (`CareerTestCatalog.cs:176–190`).
+- Tags: ≥70% top types, max 3 (`CareerTestCatalog.cs:167–173`).
 
-**Evidence:** Gebruikerscopy in UI (`Competency.ScienceNote`, privacy) — geen handleiding voor afnemer/beoordelaar met norminterpretatie, beperkingen, forbidden uses.
+### 3.4 Cultuur Quick-Scan **(a)**
 
-**Fixes:** Testhandleiding PDF: doel, doelgroep, admin, scoring, foutmarges, “geen selectiebesluit alleen op test”, FAQ.
+- 6 cultuurdimensies × **2** items + 5 persoonlijkheidsfacetten (Openness **2**, overige **1**) = 18 (`CulturePersonalityCatalog.cs:47–77`).
+- Personality items L71–76: **geen** reverse flags in catalog (alle `Reverse: false` behalve Q18 Openness reverse).
 
-### Criterium 4 — Normen: **Onvoldoende / niet te beoordelen**
+### 3.5 Waarden Quick-Scan **(a)**
 
-**Evidence:** Scores zijn ruwe percentiles zonder referentiepopulatie (`LikertAnswerJson.ToPercent`). Vacature-targets zijn defaults 60 + heuristiek (`VacancyCompetencyProfile.cs` L36–41).
+- 5 drivers × 5 items (`SchwartzValuesCatalog.cs:29–56`).
 
-**Fixes:** Normeringstudie (NL werkzoekenden, stratificatie leeftijd/opleiding/regio); publicatie normtabellen; scheiding “ruwe score” vs “normscore” in UI.
+### 3.6 Onboarding-mini **(a)**
 
-### Criterium 5 — Betrouwbaarheid: **Niet te beoordelen** (in deze run)
+- 21 items totaal (`OnboardingWizardCatalog.cs:26–54`; test `CandidateOnboardingWizardTests.cs:12–18`).
+- Cultuur-mini **laat Innovation-dimensie weg** (`OnboardingWizardCatalog.cs:34–38`).
+- Provisional padding cultuur: ontbrekende dimensies → **55%** (`ProvisionalAssessmentScores.cs:11`, `L99–101`, `L151–155`).
 
-**Evidence:** Geen echte data; 5-item schalen verwacht α ≈ .65–.75 **als** items homogeen zijn — moet gemeten worden.
+### 3.7 Diepteanalyse competentie **(a)**
 
-**Fixes:** Interne consistentie + test–retest; rapporteer per schaal en per taalversie.
+- 150 NL strings hardcoded (`DeepAnalysisCompetenceItems.cs`), **geen** UiStrings-sleutels — vertaling/arabisering niet via dezelfde pipeline als Quick-Scan.
 
-### Criterium 6 — Begripsvaliditeit: **Onvoldoende**
-
-**Evidence:** Geen CFA/EFA op Lobsy-data; geen convergentie met bestaande instrumenten; RIASEC Quick-Scan ≠ SDS lengte.
-
-**Fixes:** CFA per test; correlatie Mini-IPIP / RIASEC short forms; known-groups (beroepsrichting).
-
-### Criterium 7 — Criteriumvaliditeit: **Onvoldoende**
-
-**Evidence:** Match% (`ProfileVacancyMatchCalculator`) niet gevalideerd tegen instroom, tevredenheid, retention; `Application.MatchPercent` kan null zijn (`ApplicationRules.cs`).
-
-**Fixes:** Prospective study: match% decielen vs hire/90d; calibration plot; eventueel herkalibratie gewichten.
-
----
-
-## 6. Fairness, bias & taal
-
-- **Taal:** pl/ro/ar krijgen **Nederlandse** testitems (`UiStringsCompetencies.cs` L16–18) → systematische **begripsbias** voor niet-NL sprekers.  
-- **Leeftijd:** geen aparte normen; jongeren (<16) hebben parental consent flow (`User.cs` L44–48) — goed, maar geen validatie itembegrip.  
-- **Geslacht:** geen optionele DIF-analyse mogelijk zonder veld (niet op `User` entity).  
-- **Vacature-inferentie:** keywords kunnen sectorstereotypen versterken (`VacancyCompetencyProfile.cs` L52–56).  
-- **Provisional scores:** neutral fill 55% (`ProvisionalAssessmentScores.cs` L11) kan matches **kunstmatig middelmatig** maken vóór voltooide tests.
-
-**Fixes:** Echte vertalingen; DIF (Mantel-Haenszel / IRT-LR) op taal en leeftijd; audit inferentieregels; badge “voorlopige indruk” blijft zichtbaar (`Onboarding.ProvisionalBadge`).
+Volledige itemteksten Quick-Scan: **`ITEMteksten_BEOORDELING.md`** (93 items, handmatig gelezen + heuristiek).
 
 ---
 
-## 7. AI Act & high-risk readiness (orientation)
+## 4. Scoring, DNA, match% **(a)**
 
-Lobsy gebruikt tests + **AI** (diepteanalyse-rapport, compass, carrièrepad — o.a. `OpenAiCompetenceDeepReportAiService`, `CareerCompassGenerationService`). Werkgeversmatching kan impact hebben op **toegang tot arbeid** → prepare for **high-risk** obligations:
+### 4.1 Antwoordformaat
 
-| Thema | Huidige staat | Aanbeveling |
-|-------|---------------|-------------|
-| Transparantie | Science notes, privacy copy | Uitbreiden: hoe match% tot stand komt (gewichten in begrijpelijke taal) |
-| Uitlegbaarheid | Regels + `Why`/`Gaps` teksten (`ProfileVacancyMatchCalculator.cs` L312–564) | Menselijk reviewbare documentatie; geen black-box voor enkel score |
-| Menselijk toezicht | Werkgever ziet geen ruwe antwoorden | Beleid: test **niet** enige sollicitatiegrond; HR-training |
-| Consent | `TestAiConsentAt` (`User.cs` L40–42) | Versioneer; scheid test-only vs AI-report |
-| Data minimization | AVG-richtlijnen in repo | Behouden; log geen ruwe Likert in PlatformLogs |
-| Bias monitoring | Ontbreekt empirisch | Periodieke DIF + outcome monitoring |
+- Likert **1–5** (`LikertAnswerJson.cs:8–9`).
+- Validatie tekst: `CompetencyTestCatalog.cs:101–104`.
+
+### 4.2 Reverse & percentiles
+
+- Reverse: `LikertMax + LikertMin - raw` → **6 − raw** (`CompetencyTestCatalog.cs:156`).
+- Percent: gemiddelde gescoorde waarden → `(avg−1)/4×100`, clamp 0–100 (`LikertAnswerJson.cs:92–104`).
+
+**Verificatie (a):** `data/scoring_verification.json` — Python-replicatie van `CompetencyMatchingTests.Score_maps_likert_to_0_100_and_reverses_items`:
+
+- Alle schalen 100 bij “high” patroon: **pass**
+- Samenwerken/Innovatie 0 bij “low” patroon: **pass**
+- Neutraal (alle 3) → 50%: **pass**
+
+*(Dotnet-test niet gedraaid in cloud agent: `dotnet` ontbrak in PATH; Python-replicatie gebruikt dezelfde formules.)*
+
+### 4.3 DNA-headlines
+
+- Drempels high/mid: **70 / 45** (`DnaSummarySentences.cs:10–11`).
+- Cultuur DNA binair: **60** (`DnaSummarySentences.cs:80`).
+- Vaste NL-zinnen, geen LLM (`DnaSummarySentences.cs:3–7`).
+
+### 4.4 Match%
+
+- Calculator: `ProfileVacancyMatchCalculator.Calculate` (`ProfileVacancyMatchCalculator.cs:25–167`).
+- Top-10 drempel **60%**: `DisplayThreshold = 60` (`ProfileVacancyMatchCalculator.cs:13`, `L188`).
+- Kleur band “sterk” **≥70**: `MatchScoreCalculator.cs:10`, gebruikt in `ProfileVacancyMatchCalculator.cs:162–166`.
+- Vacature-competenties **geïnferd** ( geen candidate-only ): `VacancyCompetencyProfile.cs:21–62`.
+- Tag cutoff **70%**: `CompetencyTestCatalog.cs:191–200`.
+
+**Conservatieve conclusie (a+c):** match% is een **productheuristiek**, geen gevalideerde criterion score **(c)**.
 
 ---
 
-## 8. Concreet validatieplan (voor Dennis / universiteit)
+## 5. Itemteksten — review alle talen **(a)**
 
-1. **Data-export** (SQL-script) → CSV; alleen gehash respondent_id.  
-2. **Descriptief:** N per test/status/taal; itemfrequenties.  
-3. **Betrouwbaarheid:** α, ω, item-rest; verwijder/split items < .30 rest.  
-4. **Structuur:** EFA/CFA Quick-Scan vs theorie; multi-group op taal.  
-5. **Mini vs full:** correlatie per schaal; besluit: mag mini match beïnvloeden?  
-6. **Convergent:** parallel admin IPIP-20 + RIASEC short form (subsample).  
-7. **Criterium:** match% vs sollicitatie → hire → 90 dagen (met toestemming).  
-8. **Fairness:** DIF taal/leeftijd; review vacature-inferentie.  
-9. **Documentatie:** testhandleiding + normen + release notes bij itemwijziging.
+Methodiek: alle **93** Quick-Scan items gelezen in **nl, en, pl, ro, ar** (zie `ITEMteksten_BEOORDELING.md`). pl/ro/ar zijn **identiek aan nl** door `MergeAll` **(a)**:
+
+- `UiStringsCompetencies.cs:16–18`
+- `UiStringsCulture.cs:16–18`
+- `UiStringsValues.cs:16–18`
+
+### 5.1 Vertaalstatus **(a)**
+
+| Test | NL | EN items | pl / ro / ar |
+|------|----|-----------|--------------|
+| Competentie | ja | **ja** (`UiStringsCompetencies.cs:535–559`) | **NL-fallback** |
+| Beroepen | ja | **ja** (`Career.Q` in En-blok) | **NL-fallback** |
+| Cultuur | ja | **nee** — `En()` overschrijft Q01–Q18 niet (`UiStringsCulture.cs:154–188`) | **NL-fallback** |
+| Waarden | ja | **nee** — `En()` overschrijft Q01–Q25 niet (`UiStringsValues.cs:87–114`) | **NL-fallback** |
+
+**Reviewer-oordeel:** Voor gebruikers met UI-taal en/pl/ro/ar is de **meetinhoud feitelijk Nederlands** → fairness- en begripsbias **(a)**; empirische DIF **(c)**.
+
+### 5.2 Geselecteerde itemissues (handmatige review, NL)
+
+| Item | Issue | Ernst |
+|------|-------|-------|
+| `Competency.Q13` | Twee concepten (multitask + paniek) | should rewrite |
+| `Competency.Q03` | Absoluut “eerst … voordat” | could soften |
+| `Career.Q05` | Leading “vermijd … vies, zwaar” | could |
+| `CultureScan.Q02` | Autonomy **reverse** pole vs Q01 — pole pair ok **(a)** catalog | — |
+| `ValuesScan.Q14` | Typo “overtreff” i.p.v. “overtreft” **(a)** `UiStringsValues.cs:60` | must fix |
+| Diep NL-only | 150+200+150+150 stems niet in vertaaltabel | must (beleid) |
+
+Volledige lijst per item: **`ITEMteksten_BEOORDELING.md`**.
 
 ---
 
-## 9. Bijlagen
+## 6. Empirische psychometrie **(b)** vs **(c)**
 
-- Inventaris JSON: [`data/inventory.json`](./data/inventory.json)  
-- Synthetische demo (alleen scripttest): [`data/synthetic_demo_report.json`](./data/synthetic_demo_report.json)  
-- Scripts: [`scripts/`](./scripts/)
+### 6.1 Echte data
+
+- **Geen** toegang tot productie- of acceptatie-database in deze review **(c)**.
+- Export klaar: `scripts/export_anonymized_responses.sql`.
+
+### 6.2 Synthetische pipeline-check **(b)**
+
+`analyze_responses.py --synthetic --n 800` → `data/synthetic_demo_report.json`:
+
+- **Doel:** controleren dat reverse-keying vóór α gebeurt (`reverse_key_applied_before_alpha: true`) en dat **twee** α-methoden overeenkomen.
+- Voorbeeld competentie/Samenwerken **(b)**: `alpha_variance_formula ≈ 0.955`, `alpha_avg_interitem_correlation ≈ 0.955`, `methods_agree_within_0.01: true`.
+
+**Conservatief:** hoge α op synthetische unidimensionele data **bewijst niets** over Lobsy. Eerdere synthetische run **zonder** reverse-aware generator produceerde **negatieve** α — dat illustreert dat verkeerde pipeline misleidende cijfers geeft **(b)**; daarom is dubbele verificatie verplicht vóór echte data.
+
+### 6.3 Wat pas na export kan **(c)**
+
+Cronbach α/ω, item-rest, plafond, inter-scale correlaties, mini–full r, DIF, criteriumvaliditeit — zie **`VALIDATIE_STUDIEPLAN.md`**.
 
 ---
 
-*Einde rapport — geen officiële COTAN-uitspraak.*
+## 7. COTAN-criteria (detail, conservatief)
+
+### 7.1 Criterium 1 — Uitgangspunten testconstructie: **Onvoldoende (a)**
+
+COTAN 2010 beoordeelt o.a. meetpretentie, doelgroep, theoretische onderbouwing en operationalisatie (PDF §criterium 1).
+
+| Subvraag | Beoordeling | Bewijs |
+|----------|-------------|--------|
+| Meetpretentie / gebruiksdoel beschreven | Gedeeltelijk | UI `ScienceNote`-keys **(a)**, geen testhandleiding **(a)** |
+| Theoretische basis | Gedeeltelijk | `AssessmentTestCatalog.cs` modelnamen **(a)** |
+| Operationalisatie in items | Gedeeltelijk | Catalogi **(a)**, maar werkplek-labels ≠ standaardinstrument **(a)** |
+| Doelgroep / context unproctored | Minimaal | Web thuis invullen; unproctored-addendum niet adresserd **(a+c)** |
+
+### 7.2 Criterium 2 — Kwaliteit testmateriaal: **Onvoldoende (a)**
+
+| Aspect | Beoordeling | Bewijs |
+|--------|-------------|--------|
+| Aantal items per schaal | Zwak | 4–5 Quick-Scan **(a)** |
+| Itemformulering | Matig | Review §5.2 **(a)** |
+| Vertalingen | Zwak | §5.1 **(a)** |
+| Layout/instructies | Basis | Likert labels `UiStringsCompetencies.cs:50–54` **(a)** |
+| Diep testmateriaal | NL-only | `DeepAnalysisCompetenceItems.cs` **(a)** |
+
+### 7.3 Criterium 3 — Handleiding: **Onvoldoende (a)**
+
+Geen aparte handleiding met norminterpretatie, foutmarge, contraindicaties, scorer instructies. Alleen kandidaat-UI **(a)**.
+
+### 7.4 Criterium 4 — Normen: **Niet te beoordelen (c)**; inhoud **onvoldoende (a)**
+
+Geen normeringsstudie; percentiles zijn **ruwe transformatie** Likert **(a)** `LikertAnswerJson.ToPercent`. Vacature-defaults 60 **(a)** `VacancyCompetencyProfile.cs:36–41`.
+
+### 7.5 Criterium 5 — Betrouwbaarheid: **Niet te beoordelen (c)**
+
+Geen α/ω/test–retest op Lobsy-data. COTAN verwacht rapportage procedure + steekproef **(c)**.
+
+### 7.6 Criterium 6 — Begripsvaliditeit: **Niet te beoordelen (c)**
+
+Geen EFA/CFA, geen convergentie met COTAN-geregistreerde instrumenten **(c)**.
+
+### 7.7 Criterium 7 — Criteriumvaliditeit: **Niet te beoordelen (c)**
+
+Match% en tags beïnvloeden ranking **(a)** maar correlatie met hire/retention **(c)**.
+
+---
+
+## 8. Fairness & AI Act
+
+### 8.1 Fairness **(a + c)**
+
+- Taal: §5.1 **(a)**.
+- Geslacht: geen veld op `User` voor DIF **(a)** `User.cs` (geen Gender property in entity).
+- Provisional scores in onboarding beïnvloeden indruk vóór voltooide test **(a)** `ProvisionalAssessmentScores.cs`.
+- Fairness addendum 2021: geen documenteerbaar DIF-programma **(c)**.
+
+### 8.2 AI Act / high-risk **(conservatief)**
+
+Matching + AI-rapporten kunnen **toegang tot werk** raken. **(a)** `TestAiConsentAt` op `User.cs:40–42`. **(c)** volledige conformity assessment niet uitgevoerd. Beleid: test **niet** enige automatische afwijzing — **niet** als harde regel in code aangetoond **(a)** (match is ranking, geen hard gate everywhere).
+
+---
+
+## 9. Prioritized fix list
+
+### Must (voor serieuze validatie / fairness)
+
+1. **Vertaal alle itemteksten** cultuur + waarden EN; echte pl/ro/ar vertalingen (niet `Merge(Nl())`) — bewijs issue `UiStringsCulture.cs:154–188`, `UiStringsValues.cs:87–114`.
+2. **Fix typo** `ValuesScan.Q14` “overtreff” → “overtreft” (`UiStringsValues.cs:60`).
+3. **Testhandleiding** (meetpretentie, verboden uses, geen diagnose, interpretatie 0–100%, beperkingen mini vs full).
+4. **Scheid provisional onboarding** visueel/logisch van voltooide scores in match (badge bestaat **(a)** `Onboarding.ProvisionalBadge` — policy documenteren).
+5. **Export + analyse op echte data** (N≥300/test) vóór marketing “wetenschappelijk betrouwbaar”.
+
+### Should
+
+6. Quick-Scan uitbreiden tot **≥8–10 items/schaal** of extern verkorte vorm valideren.
+7. Cultuur personality: **≥2 items/facet** + reverse keys waar nodig.
+8. Documenteer vacature-inferentie (`VacancyCompetencyProfile`) + bias-audit.
+9. Diepteanalyse: vertaalstrategie of “alleen NL” expliciet in UI/consent.
+10. Test–retest subset (N=100).
+
+### Could
+
+11. Item rewrites (Q13, absolute woorden).
+12. Gelijk trekken RIASEC items per schaal (4 vs 5).
+13. CFA/publicatie met universiteitspartner.
+14. Kalibratie match% vs hire (N=200+).
+
+---
+
+## 10. Validatiestudie
+
+Zie **`VALIDATIE_STUDIEPLAN.md`** (fases, N, methoden, deliverables).
+
+---
+
+## 11. Bijlagen
+
+| Bestand | Type |
+|---------|------|
+| `ITEMteksten_BEOORDELING.md` | (a) item review |
+| `data/inventory.json` | (a) |
+| `data/scoring_verification.json` | (a) |
+| `data/synthetic_demo_report.json` | (b) |
+| `VALIDATIE_STUDIEPLAN.md` | plan |
+
+---
+
+*Einde document — geen COTAN-uitspraak.*

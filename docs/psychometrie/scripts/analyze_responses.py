@@ -45,8 +45,8 @@ def score_item(raw: int, reverse: bool) -> int:
     return raw
 
 
-def cronbach_alpha(matrix: np.ndarray) -> float | None:
-    """matrix: rows=persons, cols=items (already keyed)."""
+def cronbach_alpha_variance(matrix: np.ndarray) -> float | None:
+    """Standard formula (COTAN: internal consistency). Items must be reverse-keyed first."""
     k = matrix.shape[1]
     if k < 2 or matrix.shape[0] < 2:
         return None
@@ -56,6 +56,38 @@ def cronbach_alpha(matrix: np.ndarray) -> float | None:
     if var_total <= 0:
         return None
     return float(k / (k - 1) * (1 - variances.sum() / var_total))
+
+
+def cronbach_alpha_from_correlation(matrix: np.ndarray) -> float | None:
+    """Spearman-Brown from average inter-item correlation (second method for verification)."""
+    if matrix.shape[0] < 2 or matrix.shape[1] < 2:
+        return None
+    corr = np.corrcoef(matrix, rowvar=False)
+    if corr.shape[0] < 2:
+        return None
+    upper = corr[np.triu_indices(corr.shape[0], k=1)]
+    if upper.size == 0:
+        return None
+    r_bar = float(np.nanmean(upper))
+    k = matrix.shape[1]
+    denom = 1 + (k - 1) * r_bar
+    if abs(denom) < 1e-12:
+        return None
+    return float(k * r_bar / denom)
+
+
+def cronbach_alpha(matrix: np.ndarray) -> dict[str, float | None]:
+    a1 = cronbach_alpha_variance(matrix)
+    a2 = cronbach_alpha_from_correlation(matrix)
+    return {
+        "alpha_variance_formula": a1,
+        "alpha_avg_interitem_correlation": a2,
+        "methods_agree_within_0.01": (
+            None
+            if a1 is None or a2 is None
+            else abs(a1 - a2) <= 0.01
+        ),
+    }
 
 
 def mcdonald_omega(matrix: np.ndarray) -> float | None:
@@ -150,10 +182,12 @@ def analyze_test(df: pd.DataFrame, test_key: str) -> dict:
                 avg = sum(vals) / len(vals)
                 pct_list.append((avg - 1) / 4 * 100)
         scale_scores[scale] = np.array(pct_list)
+        alpha = cronbach_alpha(mat)
         scale_stats[scale] = {
             "n_complete": int(mat.shape[0]),
             "k_items": len(cols),
-            "cronbach_alpha": cronbach_alpha(mat),
+            "reverse_key_applied_before_alpha": True,
+            "cronbach_alpha": alpha,
             "mcdonald_omega": mcdonald_omega(mat),
             "item_rest_min": float(np.nanmin(irr)),
             "item_rest_mean": float(np.nanmean(irr)),
@@ -239,8 +273,10 @@ def generate_synthetic(n: int, seed: int = 42) -> pd.DataFrame:
                 if iid not in meta:
                     continue
                 scale, rev = meta[iid]
-                z = scale_latent[scale] + rng.normal(0, 0.5)
-                prob = 1 / (1 + np.exp(-z))
+                z = scale_latent[scale] + rng.normal(0, 0.35)
+                # Higher latent → agreement with construct; reverse items get inverted raw
+                z_eff = -z if rev else z
+                prob = 1 / (1 + np.exp(-z_eff))
                 raw = int(np.clip(np.round(prob * 4 + 1), 1, 5))
                 rows.append(
                     {
@@ -279,12 +315,13 @@ def main() -> None:
         data_source = str(args.csv)
 
     results = {
+        "evidence_class": "b_synthetic_indicative_only" if args.synthetic else "b_or_c_depends_on_csv",
         "data_source": data_source,
         "warning": (
-            "Synthetische data simuleert eenvoudige factorstructuur; "
-            "vervang door export van ≥300 echte afgeronde Quick-Scans per test voor COTAN-normen."
+            "INDICATIEF: synthetische data; alpha/correlaties zijn geen schatting van Lobsy-kwaliteit. "
+            "Gebruik uitsluitend om de analyse-pipeline te controleren."
             if args.synthetic
-            else "Empirische resultaten — controleer N en representativiteit."
+            else "Empirische resultaten — controleer N, selectiebias en representativiteit vóór COTAN-claims."
         ),
         "minimum_n_guidance": {
             "reliability_alpha": 300,

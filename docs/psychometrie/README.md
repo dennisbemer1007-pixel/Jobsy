@@ -6,7 +6,10 @@ Deze map bevat een **read-only** COTAN-geïnspireerde review van de Lobsy-assess
 
 | Bestand | Doel |
 |---------|------|
-| [COTAN_BEOORDELING_LOBSY_TESTS.md](./COTAN_BEOORDELING_LOBSY_TESTS.md) | Hoofdrapport (Nederlands): inventaris, COTAN-scores, AI Act, aanbevelingen |
+| [COTAN_BEOORDELING_LOBSY_TESTS.md](./COTAN_BEOORDELING_LOBSY_TESTS.md) | Hoofdrapport (NL): COTAN 2010 + addenda, bewijslabels (a/b/c), conservatieve oordelen |
+| [ITEMteksten_BEOORDELING.md](./ITEMteksten_BEOORDELING.md) | Alle 93 Quick-Scan items per taal (handmatige review) |
+| [VALIDATIE_STUDIEPLAN.md](./VALIDATIE_STUDIEPLAN.md) | Studieplan met steekproefgroottes voor universiteit/COTAN-partner |
+| [data/scoring_verification.json](./data/scoring_verification.json) | Reverse + ToPercent verificatie (a) |
 | [scripts/extract_inventory.py](./scripts/extract_inventory.py) | Haalt schalen, items en vertalingen uit de repo |
 | [scripts/analyze_responses.py](./scripts/analyze_responses.py) | Cronbach α, McDonald ω, item-rest, mini vs lang, DIF-hints |
 | [scripts/export_anonymized_responses.sql](./scripts/export_anonymized_responses.sql) | SQL voor geanonimiseerde CSV-export (PostgreSQL) |
@@ -17,6 +20,8 @@ Deze map bevat een **read-only** COTAN-geïnspireerde review van de Lobsy-assess
 
 ```bash
 # 1. Inventaris verversen vanuit code
+python3 docs/psychometrie/scripts/verify_scoring.py
+python3 docs/psychometrie/scripts/review_item_wording.py
 python3 docs/psychometrie/scripts/extract_inventory.py
 
 # 2. Export uit acceptatie/prod-DB (alleen geanonimiseerd; geen PII)
