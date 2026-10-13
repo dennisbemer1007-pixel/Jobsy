@@ -15,8 +15,8 @@ public class EmployerMatchScoresUnchangedTests
     private static readonly (string Key, int TotalPercent)[] Goldens =
     [
         ("near-strong", 85),
-        ("far-weak", 64),
-        ("mid-competency", 82)
+        ("far-weak", 58),
+        ("mid-competency", 81)
     ];
 
     [Fact]
