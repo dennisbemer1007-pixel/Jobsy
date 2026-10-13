@@ -14,6 +14,6 @@ public static class QuickScanVersionPolicy
             return AssessmentTestVersions.Normalize(stored);
         }
 
-        return testsV2Enabled ? AssessmentTestVersions.V2 : AssessmentTestVersions.V1;
+        return testsV2Enabled ? AssessmentTestVersions.V3 : AssessmentTestVersions.V1;
     }
 }

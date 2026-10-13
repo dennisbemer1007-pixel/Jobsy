@@ -145,9 +145,12 @@ else
 
     private int _quickScanVersion = AssessmentTestVersions.V1;
     private bool _isIndicativeDepth;
-    private bool ShowIndicativeBanner => _quickScanVersion == AssessmentTestVersions.V2
-        && (_isIndicativeDepth || _targetCount < _fullCount || (_answered > 0 && _answered < _fullCount));
-    private string IntroLead => _quickScanVersion == AssessmentTestVersions.V2
+    private bool ShowIndicativeBanner =>
+        (AssessmentTestVersions.IsLegacyExtendedV2(_quickScanVersion)
+            && (_isIndicativeDepth || _targetCount < _fullCount || (_answered > 0 && _answered < _fullCount)))
+        || (AssessmentTestVersions.IsFreeTier25(_quickScanVersion)
+            && (_isIndicativeDepth || (_answered > 0 && _answered < _fullCount)));
+    private string IntroLead => AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)
         ? Culture.Format("TestFlow.Lead.Values.V2", _fullCount)
         : Culture["TestFlow.Lead.Values"];
     private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Values, _target, _quickScanVersion);

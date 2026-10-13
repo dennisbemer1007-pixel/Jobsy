@@ -1,7 +1,7 @@
 # Voorstel: compacte testarchitectuur Lobsy (psychometrie & matching)
 
 **Datum:** 13 oktober 2026  
-**Status:** Architectuurvoorstel (documentatie only)  
+**Status:** Goedgekeurd tier-model — **v3 free tier geïmplementeerd** achter `TestsV2Enabled` (aparte PR); module-merge v3 architectuur (§2.2) blijft roadmap.  
 **Doel:** Minder overlap tussen kandidaat-assessments, duidelijke constructen voor matching, COTAN-conservatieve lijn (geen normclaims zonder data).  
 **Relatie andere PR’s:** psychometrische review [PR #645](https://github.com/dennisbemer1007-pixel/Jobsy/pull/645) (`docs/psychometrie/*`); implementatie Quick-Scan v2 [PR #647](https://github.com/dennisbemer1007-pixel/Jobsy/pull/647) (`TestsV2Enabled`, itembanks 40/48/24/40). Dit document **vult #645 aan met een merge-/productarchitectuur** en sluit aan op bestaande code (`ProfileVacancyMatchCalculator`, `VacancyCompetencyProfile`, paspoort-voorkeuren).
 

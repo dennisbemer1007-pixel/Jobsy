@@ -77,7 +77,7 @@ else
     protected override void OnParametersSet() => RefreshTransparency();
 
     private void RefreshTransparency()
-        => _showV2Transparency = AssessmentTestVersions.Normalize(QuickScanVersion) == AssessmentTestVersions.V2;
+        => _showV2Transparency = AssessmentTestVersions.UsesV2ItemBank(QuickScanVersion);
 
     public async Task RefreshAsync()
     {

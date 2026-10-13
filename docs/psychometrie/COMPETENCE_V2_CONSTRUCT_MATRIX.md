@@ -1,6 +1,7 @@
 # Competentie-scan v2 — construct matrix
 
-**Catalogus:** `CompetencyTestCatalogV2.cs`. **Teksten:** base + supplement merge (NL).
+**Catalogus:** `CompetencyTestCatalogV2.cs`. **Teksten:** base + supplement merge (NL).  
+**v3 free tier (25):** ids `1–5, 9–13, 17–21, 25–29, 33–37` — zie `QUICKSCAN_V3_FREE_TIER_MATRIX.md`.
 
 | Id | Key | Construct | Keying | NL stem (referentie) |
 |----|-----|-----------|--------|----------------------|

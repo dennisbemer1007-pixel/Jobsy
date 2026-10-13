@@ -28,17 +28,17 @@ public static class QuickScanAssessmentBridge
         => answers.Count >= FullCount(kind, quickScanVersion);
 
     public static IReadOnlyList<string> DeriveCompetencyTags(CompetencyScores scores, int quickScanVersion)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+        => AssessmentTestVersions.UsesV2ItemBank(quickScanVersion)
             ? CompetencyTestCatalogV2.DeriveMatchTags(scores)
             : CompetencyTestCatalog.DeriveMatchTags(scores);
 
     public static IReadOnlyList<string> DeriveCultureTags(CulturePersonalityScores scores, int quickScanVersion)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+        => AssessmentTestVersions.UsesV2ItemBank(quickScanVersion)
             ? CulturePersonalityCatalogV2.DeriveMatchTags(scores)
             : CulturePersonalityCatalog.DeriveMatchTags(scores);
 
     public static IReadOnlyList<string> DeriveValuesTags(SchwartzValuesScores scores, int quickScanVersion)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+        => AssessmentTestVersions.UsesV2ItemBank(quickScanVersion)
             ? SchwartzValuesCatalogV2.DeriveMatchTags(scores)
             : SchwartzValuesCatalog.DeriveMatchTags(scores);
 
@@ -52,12 +52,12 @@ public static class QuickScanAssessmentBridge
         => AssessmentQuickScanCatalog.ScoreCareer(answers, quickScanVersion);
 
     public static IReadOnlyList<string> DeriveCareerTags(RiasecScores scores, int quickScanVersion)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+        => AssessmentTestVersions.UsesV2ItemBank(quickScanVersion)
             ? CareerTestCatalogV2.DeriveRiasecTags(scores)
             : CareerTestCatalog.DeriveRiasecTags(scores);
 
     public static string HollandCode(RiasecScores scores, int quickScanVersion)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+        => AssessmentTestVersions.UsesV2ItemBank(quickScanVersion)
             ? CareerTestCatalogV2.HollandCode(scores)
             : CareerTestCatalog.HollandCode(scores);
 

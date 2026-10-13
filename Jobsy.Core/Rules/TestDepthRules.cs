@@ -132,6 +132,29 @@ public static class TestDepthRules
         int targetCount,
         int quickScanVersion = AssessmentTestVersions.V1)
     {
+        if (AssessmentTestVersions.IsFreeTier25(quickScanVersion))
+        {
+            var freeIds = QuickScanFreeTierV3.QuestionIds(kind);
+            var freeTarget = Math.Clamp(targetCount, FirstCount, freeIds.Length);
+            var freeOrdered = new List<int>(MiniIds(kind, quickScanVersion));
+            foreach (var id in DeeperIds(kind, quickScanVersion))
+            {
+                if (!freeOrdered.Contains(id)) freeOrdered.Add(id);
+            }
+
+            if (freeTarget <= DeeperCount)
+            {
+                return freeOrdered.Take(freeTarget).ToList();
+            }
+
+            foreach (var id in freeIds)
+            {
+                if (!freeOrdered.Contains(id)) freeOrdered.Add(id);
+            }
+
+            return freeOrdered.Take(freeTarget).ToList();
+        }
+
         var full = FullCount(kind, quickScanVersion);
         var target = Math.Clamp(targetCount, FirstCount, full);
         var ordered = new List<int>(MiniIds(kind, quickScanVersion));
@@ -269,19 +292,28 @@ public static class TestDepthRules
     };
 
     public static int[] MiniIds(AssessmentKind kind, int quickScanVersion = AssessmentTestVersions.V1)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
-            ? OnboardingWizardCatalogV2.MiniIds(kind)
-            : OnboardingWizardCatalog.MiniIds(ToOnboardingKind(kind));
+        => AssessmentTestVersions.Normalize(quickScanVersion) switch
+        {
+            AssessmentTestVersions.V3 => QuickScanFreeTierV3.MiniIds(kind),
+            AssessmentTestVersions.V2 => OnboardingWizardCatalogV2.MiniIds(kind),
+            _ => OnboardingWizardCatalog.MiniIds(ToOnboardingKind(kind))
+        };
 
     public static int[] DeeperIds(AssessmentKind kind, int quickScanVersion = AssessmentTestVersions.V1)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
-            ? OnboardingWizardCatalogV2.DeeperIds(kind)
-            : OnboardingWizardCatalog.DeeperIds(ToOnboardingKind(kind));
+        => AssessmentTestVersions.Normalize(quickScanVersion) switch
+        {
+            AssessmentTestVersions.V3 => QuickScanFreeTierV3.DeeperIds(kind),
+            AssessmentTestVersions.V2 => OnboardingWizardCatalogV2.DeeperIds(kind),
+            _ => OnboardingWizardCatalog.DeeperIds(ToOnboardingKind(kind))
+        };
 
     public static IReadOnlyList<int> AllCatalogIds(AssessmentKind kind, int quickScanVersion = AssessmentTestVersions.V1)
-        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
-            ? OnboardingWizardCatalogV2.AllCatalogIds(kind)
-            : OnboardingWizardCatalog.AllCatalogIds(ToOnboardingKind(kind));
+        => AssessmentTestVersions.Normalize(quickScanVersion) switch
+        {
+            AssessmentTestVersions.V3 => QuickScanFreeTierV3.QuestionIds(kind),
+            AssessmentTestVersions.V2 => OnboardingWizardCatalogV2.AllCatalogIds(kind),
+            _ => OnboardingWizardCatalog.AllCatalogIds(ToOnboardingKind(kind))
+        };
 
     /// <summary>Scene depth token: 8 at First, 9 at Deeper/Full, 10 at Bottom.</summary>
     public static int SceneDepth(TestDepthLevel level) => level switch

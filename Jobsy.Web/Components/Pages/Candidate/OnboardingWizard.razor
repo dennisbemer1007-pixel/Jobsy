@@ -1328,7 +1328,7 @@
             return AssessmentTestVersions.Normalize(v);
         }
 
-        return testsV2Enabled ? AssessmentTestVersions.V2 : AssessmentTestVersions.V1;
+        return testsV2Enabled ? AssessmentTestVersions.V3 : AssessmentTestVersions.V1;
     }
 
     public async ValueTask DisposeAsync()
