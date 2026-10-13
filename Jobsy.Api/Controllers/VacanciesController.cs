@@ -3291,6 +3291,11 @@ public class VacanciesController : ControllerBase
             VacancyId = match.VacancyId,
             VacancyTitle = match.VacancyTitle,
             TotalPercent = match.TotalPercent,
+            LegacyTotalPercent = match.LegacyTotalPercent,
+            FitRawPercent = match.FitRawPercent,
+            ConfidencePercent = match.ConfidencePercent,
+            CalibrationV1 = match.CalibrationV1,
+            DealBreaker = match.DealBreaker,
             Core = match.Core,
             ExperienceScore01 = match.ExperienceScore01,
             CompetencyScore01 = match.CompetencyScore01,
@@ -3325,6 +3330,8 @@ public class VacanciesController : ControllerBase
         return dto with
         {
             MatchPercent = applied.MatchPercent,
+            MatchFitRawPercent = match.CalibrationV1 ? match.FitRawPercent : null,
+            MatchConfidencePercent = match.CalibrationV1 ? match.ConfidencePercent : null,
             MatchColorBand = applied.MatchColorBand,
             MatchWhySummary = applied.FitWhyLineNl ?? ProfileVacancyMatchCalculator.SummaryLine(match),
             MatchWhy = PreferRationaleWhy(match),

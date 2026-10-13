@@ -6,6 +6,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -15,17 +16,23 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IUserLookupService _users;
     private readonly ICompanyCultureLookup _companyCulture;
+    private readonly IPlatformFeatureService _features;
+    private readonly ILogger<ProfileVacancyMatchService> _logger;
 
     public ProfileVacancyMatchService(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IUserLookupService users,
-        ICompanyCultureLookup companyCulture)
+        ICompanyCultureLookup companyCulture,
+        IPlatformFeatureService features,
+        ILogger<ProfileVacancyMatchService> logger)
     {
         _db = db;
         _companyAuth = companyAuth;
         _users = users;
         _companyCulture = companyCulture;
+        _features = features;
+        _logger = logger;
     }
 
     public async Task<ProfileVacancyMatchContext?> TryLoadForPrincipalAsync(
@@ -56,6 +63,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         // End-client CompanyId only (never IntermediaryCompanyId). G absent: clients are companies.
         var companyIds = batch.Select(v => v.Record.CompanyId).Distinct().ToList();
         var companyProfiles = await _companyCulture.GetForCompaniesAsync(companyIds, cancellationToken);
+        var platform = await _features.GetAsync(cancellationToken);
+        var useCalibrationV1 = platform.MatchCalibrationV1Enabled;
 
         var result = new Dictionary<Guid, ProfileVacancyMatch>();
         foreach (var (record, travelMinutes) in batch)
@@ -92,8 +101,18 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CompanyValuesScores = companyProfile?.Values,
                 CompanyEngagement = companyProfile?.Engagement,
                 CompanyName = record.CompanyName
-            });
+            }, useCalibrationV1);
             result[record.Id] = match;
+            if (useCalibrationV1 && match.LegacyTotalPercent is int legacy)
+            {
+                _logger.LogInformation(
+                    "MatchCalibrationV1 compare vacancy={VacancyId} legacy={Legacy} fit={Fit} confidence={Confidence} display={Display}",
+                    record.Id,
+                    legacy,
+                    match.FitRawPercent,
+                    match.ConfidencePercent,
+                    match.TotalPercent);
+            }
         }
 
         return result;

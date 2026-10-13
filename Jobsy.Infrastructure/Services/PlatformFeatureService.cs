@@ -194,6 +194,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.ProactiveMatchingEnabled = proactiveMatchingEnabled;
         }
 
+        if (update.MatchCalibrationV1Enabled is bool matchCalibrationV1)
+        {
+            row.MatchCalibrationV1Enabled = matchCalibrationV1;
+        }
+
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
         {
             row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
@@ -408,6 +413,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.EmployerPhase2Enabled ?? false,
             row?.CandidateExternalVacanciesEnabled ?? false,
             row?.ProactiveMatchingEnabled ?? false,
+            row?.MatchCalibrationV1Enabled ?? false,
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
             CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));

@@ -370,6 +370,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("MatchCalibrationV1Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "MatchCalibrationV1Enabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.MatchCalibrationV1.Enabled.Title",
+                DescriptionKey: "AdminSettings.MatchCalibrationV1.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.MatchCalibrationV1Enabled,
+                Write: v => new PlatformFeatureUpdate(MatchCalibrationV1Enabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("CandidateApplyPerHourLimit"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -612,6 +625,7 @@ public static class PlatformSettingsCatalog
         bool? employerPhase2Enabled = null;
         bool? candidateExternalVacanciesEnabled = null;
         bool? proactiveMatchingEnabled = null;
+        bool? matchCalibrationV1Enabled = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
         int? candidateApplyPerHour = null;
@@ -666,6 +680,11 @@ public static class PlatformSettingsCatalog
                 proactiveMatchingEnabled = p.ProactiveMatchingEnabled;
             }
 
+            if (p.MatchCalibrationV1Enabled is not null)
+            {
+                matchCalibrationV1Enabled = p.MatchCalibrationV1Enabled;
+            }
+
             if (p.CandidateApplyPerMinuteLimit is not null)
             {
                 candidateApplyPerMinute = p.CandidateApplyPerMinuteLimit;
@@ -713,6 +732,7 @@ public static class PlatformSettingsCatalog
             EmployerPhase2Enabled: employerPhase2Enabled,
             CandidateExternalVacanciesEnabled: candidateExternalVacanciesEnabled,
             ProactiveMatchingEnabled: proactiveMatchingEnabled,
+            MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,
             CandidateApplyPerDayLimit: candidateApplyPerDay);

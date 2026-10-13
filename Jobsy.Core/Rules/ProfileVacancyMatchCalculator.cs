@@ -22,7 +22,16 @@ public static class ProfileVacancyMatchCalculator
     public const double ExactWorkTypeWeight = 0.55;
     public const double TransferableWeight = 0.45;
 
-    public static ProfileVacancyMatch Calculate(ProfileVacancyMatchInput input)
+    public static ProfileVacancyMatch Calculate(ProfileVacancyMatchInput input, bool useMatchCalibrationV1 = false)
+    {
+        var legacy = CalculateLegacy(input);
+        return useMatchCalibrationV1
+            ? MatchCalibrationV1Calculator.Apply(input, legacy)
+            : legacy;
+    }
+
+    /// <summary>Pre-calibration scoring (legacy product behaviour).</summary>
+    public static ProfileVacancyMatch CalculateLegacy(ProfileVacancyMatchInput input)
     {
         var core = MatchScoreCalculator.Calculate(input.Core);
         var experience01 = ScoreExperience(input);
@@ -203,14 +212,14 @@ public static class ProfileVacancyMatchCalculator
         IEnumerable<ProfileVacancyMatchInput> inputs,
         int take = MaxResults,
         int minPercent = DisplayThreshold)
-        => RankScored(inputs.Select(Calculate), take, minPercent);
+        => RankScored(inputs.Select(i => Calculate(i)), take, minPercent);
 
     /// <summary>
     /// Live banenkaart scoring: every vacancy, including below the Top-10 threshold.
     /// Legal eligibility is left to the caller (hide only when age is known).
     /// </summary>
     public static IReadOnlyList<ProfileVacancyMatch> ScoreAll(IEnumerable<ProfileVacancyMatchInput> inputs)
-        => inputs.Select(Calculate).ToList();
+        => inputs.Select(i => Calculate(i)).ToList();
 
     public static IReadOnlyList<ProfileVacancyMatch> RankScored(
         IEnumerable<ProfileVacancyMatch> matches,
@@ -768,6 +777,14 @@ public sealed class ProfileVacancyMatch
     public Guid VacancyId { get; init; }
     public string VacancyTitle { get; init; } = "";
     public int TotalPercent { get; init; }
+    /// <summary>Legacy TotalPercent before MatchCalibrationV1 (compare / admin).</summary>
+    public int? LegacyTotalPercent { get; init; }
+    /// <summary>Fit over measured dimensions only (pre-shrinkage).</summary>
+    public int? FitRawPercent { get; init; }
+    /// <summary>Share of dimensions with real data (0–100).</summary>
+    public int? ConfidencePercent { get; init; }
+    public bool CalibrationV1 { get; init; }
+    public bool DealBreaker { get; init; }
     public required MatchScoreBreakdown Core { get; init; }
     public double ExperienceScore01 { get; init; }
     public double? CompetencyScore01 { get; init; }

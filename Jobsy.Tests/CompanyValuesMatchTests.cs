@@ -56,8 +56,7 @@ public class CompanyValuesMatchTests
         await db.SaveChangesAsync();
 
         var lookup = new CompanyCultureLookup(db, cache);
-        var service = new ProfileVacancyMatchService(
-            db, new CompanyAuthorizationService(db), new UserLookupService(db), lookup);
+        var service = ProfileVacancyMatchServiceCompanyCultureTests.CreateMatchService(db, lookup);
 
         var inherit = MakeRecord(company.Id, "Zorgmedewerker");
         var overrideVacancy = MakeRecord(

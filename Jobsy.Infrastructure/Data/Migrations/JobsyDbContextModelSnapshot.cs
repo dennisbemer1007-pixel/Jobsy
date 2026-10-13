@@ -5243,6 +5243,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("ProactiveMatchingEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("MatchCalibrationV1Enabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PublicWebBaseUrl")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");

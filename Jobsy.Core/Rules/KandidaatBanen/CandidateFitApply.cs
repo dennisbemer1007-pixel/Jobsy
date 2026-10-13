@@ -15,6 +15,21 @@ public static class CandidateFitApply
     public static CandidateFitApplyResult Apply(ProfileVacancyMatch match, CandidateFitGate gate)
     {
         ArgumentNullException.ThrowIfNull(match);
+        if (match.CalibrationV1 && gate.IsOpen)
+        {
+            return new CandidateFitApplyResult(
+                FitGate: FitGateOpen,
+                FitPercent: match.FitRawPercent,
+                FitBand: match.ColorBand,
+                FitWhyKinds: CandidateFitDisplay.MapWhyKinds(match),
+                FitWhyLineNl: match.ConfidencePercent is int conf
+                    ? MatchConfidenceCopy.NlHint(conf)
+                    : null,
+                FitDimensions: CandidateFitDisplay.BuildDimensions(match),
+                MatchPercent: match.TotalPercent,
+                MatchColorBand: match.ColorBand);
+        }
+
         var fit = CandidateFitDisplay.Build(match, gate);
         if (fit is null)
         {
