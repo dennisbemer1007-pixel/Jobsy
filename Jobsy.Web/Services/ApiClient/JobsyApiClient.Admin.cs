@@ -1775,7 +1775,7 @@ public sealed partial class JobsyApiClient
         var url = status is null
             ? "api/admin/beheer-todos"
             : $"api/admin/beheer-todos?status={status.Value}";
-        return await _http.GetFromJsonAsync<List<BeheerTodoItem>>(url, ct) ?? [];
+        return await _http.GetFromJsonAsync<List<BeheerTodoItem>>(url, ApiJson, ct) ?? [];
     }
 
     public async Task<BeheerTodoItem?> CreateBeheerTodoAsync(BeheerTodoUpsertPayload payload, CancellationToken ct = default)
@@ -1787,7 +1787,7 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(cancellationToken: ct);
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
     }
 
     public async Task<BeheerTodoItem?> UpdateBeheerTodoAsync(
@@ -1802,7 +1802,7 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(cancellationToken: ct);
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
     }
 
     public async Task<BeheerTodoItem?> MarkBeheerTodoDoneAsync(Guid id, CancellationToken ct = default)
@@ -1814,7 +1814,7 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(cancellationToken: ct);
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
     }
 
     public async Task DeleteBeheerTodoAsync(Guid id, CancellationToken ct = default)

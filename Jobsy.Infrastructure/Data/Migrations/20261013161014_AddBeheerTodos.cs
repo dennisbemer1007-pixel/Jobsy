@@ -35,78 +35,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateValuesProfiles",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 1);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateValuesProfiles",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 0);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCulturePersonalityProfiles",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 1);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCulturePersonalityProfiles",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 0);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCompetencies",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 1);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCompetencies",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 0);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCareerInterests",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 1);
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCareerInterests",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldDefaultValue: 0);
-
             migrationBuilder.CreateTable(
                 name: "BeheerTodos",
                 columns: table => new
@@ -163,7 +91,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
             migrationBuilder.Sql(
                 $"""
                  INSERT INTO "BeheerTodos" ("Id", "SeedKey", "Title", "Body", "DueDate", "Priority", "Status", "Category", "CreatedAtUtc", "UpdatedAtUtc", "CreatedByUserId", "UpdatedByUserId")
-                 VALUES (
+                 SELECT
                      'b1e0e0e0-e0e0-4000-8000-000000000001',
                      'seed-cotan-nip-mail',
                      'Mail NIP: wanneer gaat COTAN weer open?',
@@ -176,13 +104,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                      TIMESTAMPTZ '{seedAt}',
                      NULL,
                      NULL
-                 )
-                 ON CONFLICT ("SeedKey") DO NOTHING;
+                 WHERE NOT EXISTS (SELECT 1 FROM "BeheerTodos" WHERE "SeedKey" = 'seed-cotan-nip-mail');
                  """);
 
             migrationBuilder.Sql($"""
                 INSERT INTO "BeheerTodos" ("Id", "SeedKey", "Title", "Body", "DueDate", "Priority", "Status", "Category", "CreatedAtUtc", "UpdatedAtUtc", "CreatedByUserId", "UpdatedByUserId")
-                VALUES (
+                SELECT
                     'b1e0e0e0-e0e0-4000-8000-000000000002',
                     'seed-render-encryption-keys',
                     'Encryptiesleutels op Render zetten (acc + prod, API + Web) zodat PR #638 kan mergen',
@@ -195,13 +122,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     TIMESTAMPTZ '{seedAt}',
                     NULL,
                     NULL
-                )
-                ON CONFLICT ("SeedKey") DO NOTHING;
+                WHERE NOT EXISTS (SELECT 1 FROM "BeheerTodos" WHERE "SeedKey" = 'seed-render-encryption-keys');
                 """);
 
             migrationBuilder.Sql($"""
                 INSERT INTO "BeheerTodos" ("Id", "SeedKey", "Title", "Body", "DueDate", "Priority", "Status", "Category", "CreatedAtUtc", "UpdatedAtUtc", "CreatedByUserId", "UpdatedByUserId")
-                VALUES (
+                SELECT
                     'b1e0e0e0-e0e0-4000-8000-000000000003',
                     'seed-acc-feature-flags',
                     'Flags aanzetten op acceptatie: ProactiveMatchingEnabled, EmployersEnabled, MatchCalibrationV1Enabled, TestsV2Enabled',
@@ -214,8 +140,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     TIMESTAMPTZ '{seedAt}',
                     NULL,
                     NULL
-                )
-                ON CONFLICT ("SeedKey") DO NOTHING;
+                WHERE NOT EXISTS (SELECT 1 FROM "BeheerTodos" WHERE "SeedKey" = 'seed-acc-feature-flags');
                 """);
         }
 
@@ -224,78 +149,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "BeheerTodos");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateValuesProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateValuesProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCulturePersonalityProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCulturePersonalityProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCompetencies",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCompetencies",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCareerInterests",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1,
-                oldClrType: typeof(int),
-                oldType: "integer");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCareerInterests",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0,
-                oldClrType: typeof(int),
-                oldType: "integer");
         }
     }
 }
