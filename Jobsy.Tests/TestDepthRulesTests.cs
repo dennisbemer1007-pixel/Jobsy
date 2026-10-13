@@ -10,8 +10,16 @@ public sealed class TestDepthRulesTests
     [InlineData(AssessmentKind.Career, 25)]
     [InlineData(AssessmentKind.Values, 25)]
     [InlineData(AssessmentKind.Culture, 18)]
-    public void FullCount_MatchesCatalog(AssessmentKind kind, int expected)
+    public void FullCount_V1_MatchesCatalog(AssessmentKind kind, int expected)
         => Assert.Equal(expected, TestDepthRules.FullCount(kind));
+
+    [Theory]
+    [InlineData(AssessmentKind.Competence, 40)]
+    [InlineData(AssessmentKind.Career, 48)]
+    [InlineData(AssessmentKind.Values, 40)]
+    [InlineData(AssessmentKind.Culture, 24)]
+    public void FullCount_V2_MatchesCatalog(AssessmentKind kind, int expected)
+        => Assert.Equal(expected, TestDepthRules.FullCount(kind, AssessmentTestVersions.V2));
 
     [Fact]
     public void ResumeQuestionNumber_uses_the_first_gap_not_the_answer_count()

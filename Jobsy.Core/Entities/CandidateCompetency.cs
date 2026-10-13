@@ -1,3 +1,5 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -27,6 +29,11 @@ public class CandidateCompetency
 
     /// <summary>JSON array of competence match tags for talent-pool search.</summary>
     public string MatchTagsJson { get; set; } = "[]";
+
+    public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
+
+    /// <summary>Max answered item count ever saved for this row (per version catalog).</summary>
+    public int QuickScanHighestAnswered { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

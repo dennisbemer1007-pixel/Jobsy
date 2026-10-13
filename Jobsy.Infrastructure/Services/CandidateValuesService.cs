@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -14,19 +15,25 @@ public sealed class CandidateValuesService : ICandidateValuesService
     private readonly ICandidateInsightsQueue _queue;
     private readonly AssessmentSaveGuard _saveGuard;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
+    private readonly IFeatureFlags _flags;
+    private readonly QuickScanVersionPolicy _versionPolicy;
 
     public CandidateValuesService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateInsightsQueue queue,
         ICandidateMatchSnapshotService matchSnapshots,
-        AssessmentSaveGuard saveGuard)
+        AssessmentSaveGuard saveGuard,
+        IFeatureFlags flags,
+        QuickScanVersionPolicy versionPolicy)
     {
         _db = db;
         _commercial = commercial;
         _queue = queue;
         _matchSnapshots = matchSnapshots;
         _saveGuard = saveGuard;
+        _flags = flags;
+        _versionPolicy = versionPolicy;
     }
 
     public async Task<CandidateValuesStateDto> GetAsync(
@@ -53,7 +60,11 @@ public sealed class CandidateValuesService : ICandidateValuesService
             return ToDto(row, kept);
         }
 
-        var error = SchwartzValuesCatalog.ValidateAnswers(answers, complete);
+        var testsV2 = await _flags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
+        var version = _versionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
+
+        var error = QuickScanAssessmentBridge.ValidateAnswers(
+            AssessmentKind.Values, answers, complete, version);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
@@ -81,16 +92,22 @@ public sealed class CandidateValuesService : ICandidateValuesService
                 AnswersJson = "{}",
                 CreatedAtUtc = now
             };
+            row.QuickScanVersion = version;
             _db.CandidateValuesProfiles.Add(row);
         }
 
-        var storedAnswers = SchwartzValuesCatalog.ParseAnswers(row.AnswersJson);
+        version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
+        row.QuickScanHighestAnswered = Math.Max(row.QuickScanHighestAnswered, answers.Count);
+
+        var storedAnswers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Values, row.AnswersJson, version);
         // A "completed" row with a short answer set (seed or a partial save) is not a real
         // result yet. Treat the first full save as the original completion so scores update
         // and it does not spend an adjustment.
         var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
-            && SchwartzValuesCatalog.IsComplete(storedAnswers);
-        var answersJson = SchwartzValuesCatalog.SerializeAnswers(answers);
+            && QuickScanAssessmentBridge.IsComplete(AssessmentKind.Values, storedAnswers, version);
+        var answersJson = QuickScanAssessmentBridge.SerializeAnswers(
+            AssessmentKind.Values, answers, version);
         var baselineAnswersJson = row.AnswersJson;
         if (wasCompleted && !complete)
         {
@@ -100,7 +117,7 @@ public sealed class CandidateValuesService : ICandidateValuesService
         {
             var noOp = await _saveGuard.CommitCompleteAsync(
                 userId, AssessmentKind.Values, AssessmentVariant.Quick, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
-            if (noOp && ScoresMatch(row, SchwartzValuesCatalog.Score(answers)))
+            if (noOp && ScoresMatch(row, QuickScanAssessmentBridge.ScoreValues(answers, version)))
             {
                 var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Values);
                 return ToDto(row, priceNoOp);
@@ -109,19 +126,19 @@ public sealed class CandidateValuesService : ICandidateValuesService
         row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
-        var preview = SchwartzValuesCatalog.Score(answers);
+        var preview = QuickScanAssessmentBridge.ScoreValues(answers, version);
         if (complete)
         {
             if (preview is not { IsComplete: true })
             {
                 throw new InvalidOperationException(
-                    "Beantwoord alle 25 stellingen om de waardenscan af te ronden.");
+                    $"Beantwoord alle {QuickScanAssessmentBridge.FullCount(AssessmentKind.Values, version)} stellingen om de waardenscan af te ronden.");
             }
 
             ApplyScores(row, preview);
             row.Status = CandidateCompetencyStatuses.Completed;
             row.MatchTagsJson = SchwartzValuesCatalog.SerializeTags(
-                SchwartzValuesCatalog.DeriveMatchTags(preview));
+                QuickScanAssessmentBridge.DeriveValuesTags(preview, version));
             row.CompletedAtUtc = now;
         }
         else if (!CandidateCompetencyStatuses.IsCompleted(row.Status))
@@ -206,8 +223,12 @@ public sealed class CandidateValuesService : ICandidateValuesService
                 price);
         }
 
-        var answers = SchwartzValuesCatalog.ParseAnswers(row.AnswersJson);
-        var preview = SchwartzValuesCatalog.Score(answers);
+        var version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
+        var fullCount = QuickScanAssessmentBridge.FullCount(AssessmentKind.Values, version);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Values, row.AnswersJson, version);
+        var preview = QuickScanAssessmentBridge.ScoreValues(answers, version);
+        var depthCount = Math.Max(answers.Count, row.QuickScanHighestAnswered);
         return new CandidateValuesStateDto(
             row.Status,
             answers,
@@ -215,6 +236,9 @@ public sealed class CandidateValuesService : ICandidateValuesService
             SchwartzValuesCatalog.ParseTags(row.MatchTagsJson),
             row.CompletedAtUtc,
             price,
-            preview);
+            preview,
+            version,
+            fullCount,
+            depthCount < fullCount);
     }
 }

@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -14,19 +15,25 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ICandidateInsightsQueue _queue;
     private readonly AssessmentSaveGuard _saveGuard;
+    private readonly IFeatureFlags _flags;
+    private readonly QuickScanVersionPolicy _versionPolicy;
 
     public CandidateCompetencyService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateMatchSnapshotService matchSnapshots,
         ICandidateInsightsQueue queue,
-        AssessmentSaveGuard saveGuard)
+        AssessmentSaveGuard saveGuard,
+        IFeatureFlags flags,
+        QuickScanVersionPolicy versionPolicy)
     {
         _db = db;
         _commercial = commercial;
         _matchSnapshots = matchSnapshots;
         _queue = queue;
         _saveGuard = saveGuard;
+        _flags = flags;
+        _versionPolicy = versionPolicy;
     }
 
     public async Task<CandidateCompetencyStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -52,7 +59,11 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             return ToDto(row, kept);
         }
 
-        var error = CompetencyTestCatalog.ValidateAnswers(answers, complete);
+        var testsV2 = await _flags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
+        var version = _versionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
+
+        var error = QuickScanAssessmentBridge.ValidateAnswers(
+            AssessmentKind.Competence, answers, complete, version);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
@@ -80,13 +91,19 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                 AnswersJson = "{}",
                 CreatedAtUtc = now
             };
+            row.QuickScanVersion = version;
             _db.CandidateCompetencies.Add(row);
         }
 
-        var storedAnswers = CompetencyTestCatalog.ParseAnswersJson(row.AnswersJson);
+        version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
+        row.QuickScanHighestAnswered = Math.Max(row.QuickScanHighestAnswered, answers.Count);
+
+        var storedAnswers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Competence, row.AnswersJson, version);
         var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
-            && CompetencyTestCatalog.IsComplete(storedAnswers);
-        var answersJson = CompetencyTestCatalog.SerializeAnswers(answers);
+            && QuickScanAssessmentBridge.IsComplete(AssessmentKind.Competence, storedAnswers, version);
+        var answersJson = QuickScanAssessmentBridge.SerializeAnswers(
+            AssessmentKind.Competence, answers, version);
         var previousSnapshot = wasCompleted
             ? System.Text.Json.JsonSerializer.Serialize(new
             {
@@ -145,10 +162,11 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                 }
             }
 
-            var previewComplete = CompetencyTestCatalog.Score(answers);
+            var previewComplete = AssessmentQuickScanCatalog.ScoreCompetence(answers, version);
             if (previewComplete is not { IsComplete: true })
             {
-                throw new InvalidOperationException("Beantwoord alle 25 vragen om de test af te ronden.");
+                throw new InvalidOperationException(
+                    $"Beantwoord alle {QuickScanAssessmentBridge.FullCount(AssessmentKind.Competence, version)} vragen om de test af te ronden.");
             }
 
             var scoresJson = System.Text.Json.JsonSerializer.Serialize(new
@@ -185,7 +203,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.ExtraversiePercent = previewComplete.Extraversie;
             row.RiasecTagsJson = "[]";
             row.MatchTagsJson = CompetencyTestCatalog.SerializeTags(
-                CompetencyTestCatalog.DeriveMatchTags(previewComplete));
+                QuickScanAssessmentBridge.DeriveCompetencyTags(previewComplete, version));
             row.CompletedAtUtc = now;
             await _db.SaveChangesAsync(cancellationToken);
             await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
@@ -197,12 +215,13 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
-        var preview = CompetencyTestCatalog.Score(answers);
+        var preview = AssessmentQuickScanCatalog.ScoreCompetence(answers, version);
         if (complete)
         {
             if (preview is not { IsComplete: true })
             {
-                throw new InvalidOperationException("Beantwoord alle 25 vragen om de Quick-Scan af te ronden.");
+                throw new InvalidOperationException(
+                    $"Beantwoord alle {QuickScanAssessmentBridge.FullCount(AssessmentKind.Competence, version)} vragen om de Quick-Scan af te ronden.");
             }
 
             row.Status = CandidateCompetencyStatuses.Completed;
@@ -213,7 +232,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.ExtraversiePercent = preview.Extraversie;
             row.RiasecTagsJson = "[]";
             row.MatchTagsJson = CompetencyTestCatalog.SerializeTags(
-                CompetencyTestCatalog.DeriveMatchTags(preview));
+                QuickScanAssessmentBridge.DeriveCompetencyTags(preview, version));
             row.CompletedAtUtc = now;
         }
         else if (!CandidateCompetencyStatuses.IsCompleted(row.Status))
@@ -278,8 +297,11 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
 
     private static CandidateCompetencyStateDto ToDto(CandidateCompetency? row, decimal deepAnalysisPriceEuro)
     {
-        var answers = CompetencyTestCatalog.ParseAnswersJson(row?.AnswersJson);
-        var preview = CompetencyTestCatalog.Score(answers);
+        var version = AssessmentTestVersions.Normalize(row?.QuickScanVersion);
+        var fullCount = QuickScanAssessmentBridge.FullCount(AssessmentKind.Competence, version);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Competence, row?.AnswersJson, version);
+        var preview = AssessmentQuickScanCatalog.ScoreCompetence(answers, version);
         var completed = CompetencyTestCatalog.CompletedScoresOrNull(
             row?.Status,
             row?.SamenwerkenPercent,
@@ -287,19 +309,23 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row?.StressbestendigheidPercent,
             row?.InnovatiePercent,
             row?.ExtraversiePercent);
+        var depthCount = Math.Max(answers.Count, row?.QuickScanHighestAnswered ?? 0);
         return new CandidateCompetencyStateDto(
             row?.Status ?? CandidateCompetencyStatuses.Draft,
             answers,
             answers.Count,
-            CompetencyTestCatalog.QuestionCount,
+            fullCount,
             completed,
             preview,
             row?.CompletedAtUtc,
             row?.UpdatedAtUtc,
-            CompetencyTestCatalog.Questions
+            QuickScanAssessmentBridge.CompetenceQuestions(version)
                 .Select(q => new CompetencyQuestionDto(q.Id, q.Category, q.Reverse, q.TextKey, q.IsRiasec))
                 .ToList(),
             CompetencyTestCatalog.ParseTagsJson(row?.MatchTagsJson),
-            DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Competence));
+            DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Competence),
+            version,
+            fullCount,
+            depthCount < fullCount);
     }
 }

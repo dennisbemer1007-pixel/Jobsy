@@ -52,6 +52,9 @@ public sealed class CandidateCompetencyState
     public List<CompetencyQuestionItem> Questions { get; set; } = [];
     public List<string> MatchTags { get; set; } = [];
     public string DeepAnalysisUpsellCopy { get; set; } = "";
+    public int QuickScanVersion { get; set; } = 1;
+    public int QuickScanFullCount { get; set; }
+    public bool IsIndicativeDepth { get; set; }
 }
 
 public sealed class CandidateCareerInterestState

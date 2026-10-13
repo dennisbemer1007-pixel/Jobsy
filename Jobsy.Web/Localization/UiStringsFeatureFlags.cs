@@ -106,6 +106,18 @@ public static class UiStringsFeatureFlags
             "Wył. = kandydaci nie widzą dodatkowych preferencji. PDF v2 przyjdzie później.",
             "Oprit = candidații nu văd preferințele partajabile. PDF v2 vine mai târziu.",
             "إيقاف = لا يرى المرشحون التفضيلات القابلة للمشاركة. ملف PDF v2 يأتي لاحقاً.");
+        Add("AdminSettings.TestsV2.Enabled.Title",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)");
+        Add("AdminSettings.TestsV2.Enabled.Desc",
+            "Aan = nieuwe kandidaten krijgen de uitgebreidere v2-vragensets. Bestaande v1-resultaten blijven ongewijzigd.",
+            "On = new candidates get the expanded v2 item sets. Existing v1 results stay unchanged.",
+            "Wł. = nowi kandydaci dostają rozszerzone zestawy v2. Istniejące wyniki v1 pozostają.",
+            "Pornit = candidații noi primesc seturile v2 extinse. Rezultatele v1 existente rămân.",
+            "تشغيل = يحصل المرشحون الجدد على مجموعات v2. نتائج v1 الحالية تبقى.");
         Add("AdminSettings.CompactTestPdf.Enabled.Title",
             "Korte testrapporten",
             "Short test reports",

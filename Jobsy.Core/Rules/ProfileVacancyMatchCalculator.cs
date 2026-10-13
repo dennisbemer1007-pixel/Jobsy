@@ -32,6 +32,10 @@ public static class ProfileVacancyMatchCalculator
                 input.VacancyTitle,
                 input.VacancyDescription))
             : (double?)null;
+        if (competency01 is not null)
+        {
+            competency01 *= AssessmentMatchEvidenceRules.CompetencyWeightFactor(input.CompetencyMatchEvidence);
+        }
         // Pure competency (pre culture/values blend) for candidate DNA bars (04) — TotalPercent unchanged.
         var competencyDim01 = competency01;
         double? cultureDim01 = null;
@@ -103,6 +107,11 @@ public static class ProfileVacancyMatchCalculator
                 : occ.Score01;
         }
 
+        if (interest01 is not null)
+        {
+            interest01 *= AssessmentMatchEvidenceRules.CompetencyWeightFactor(input.CareerMatchEvidence);
+        }
+
         double total01;
         var interestWeight = InterestWeight(input.CareerDeepCompleted, competency01 is not null);
         if (competency01 is not null && interest01 is not null)
@@ -171,6 +180,17 @@ public static class ProfileVacancyMatchCalculator
             total = Math.Min(100, total + engagementBonus);
         }
 
+        var matchEvidence = AssessmentMatchEvidenceRules.Combine(
+            input.CompetencyMatchEvidence,
+            input.CareerMatchEvidence);
+        var uncertainty = Math.Max(
+            AssessmentMatchEvidenceRules.UncertaintyPoints(input.CompetencyMatchEvidence),
+            AssessmentMatchEvidenceRules.UncertaintyPoints(input.CareerMatchEvidence));
+        total = Math.Max(0, total - uncertainty);
+        string? transparencyNote = matchEvidence == AssessmentMatchEvidence.Indicative
+            ? AssessmentMatchEvidenceRules.MatchTransparencyNoteKey
+            : null;
+
         var (why, gaps) = BuildExplanation(
             input, core, experience01, competency01, interest01, occupationFit, culture, total, engagementBonus);
         return new ProfileVacancyMatch
@@ -178,6 +198,9 @@ public static class ProfileVacancyMatchCalculator
             VacancyId = input.VacancyId,
             VacancyTitle = input.VacancyTitle,
             TotalPercent = total,
+            MatchEvidenceLevel = matchEvidence,
+            MatchUncertaintyPoints = uncertainty,
+            MatchTransparencyNote = transparencyNote,
             Core = core,
             ExperienceScore01 = experience01,
             CompetencyScore01 = competency01,
@@ -761,6 +784,8 @@ public sealed class ProfileVacancyMatchInput
     public IReadOnlyList<CompanyEngagementMatchItem>? CompanyEngagement { get; init; }
     /// <summary>Company display name for the engagement bonus explanation line.</summary>
     public string? CompanyName { get; init; }
+    public AssessmentMatchEvidence CompetencyMatchEvidence { get; init; } = AssessmentMatchEvidence.None;
+    public AssessmentMatchEvidence CareerMatchEvidence { get; init; } = AssessmentMatchEvidence.None;
 }
 
 public sealed class ProfileVacancyMatch
@@ -788,6 +813,10 @@ public sealed class ProfileVacancyMatch
     public IReadOnlyList<ProfileMatchExplainPoint> Why { get; init; } = [];
     public IReadOnlyList<ProfileMatchExplainPoint> Gaps { get; init; } = [];
     public string ColorBand { get; init; } = "orange";
+    public AssessmentMatchEvidence MatchEvidenceLevel { get; init; } = AssessmentMatchEvidence.None;
+    public int MatchUncertaintyPoints { get; init; }
+    /// <summary>UiStrings key for match transparency when evidence is indicative.</summary>
+    public string? MatchTransparencyNote { get; init; }
 }
 
 public sealed record ProfileMatchExplainPoint(string Kind, string Code, string Text);

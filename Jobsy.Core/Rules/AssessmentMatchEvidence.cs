@@ -20,6 +20,8 @@ public enum AssessmentMatchEvidence
 
 public static class AssessmentMatchEvidenceRules
 {
+    public const string MatchTransparencyNoteKey = "AssessmentV2.Transparency.MatchIndicative";
+
     public const int IndicativeUncertaintyPoints = 10;
     public const int PartialDepthUncertaintyPoints = 6;
 
@@ -59,4 +61,7 @@ public static class AssessmentMatchEvidenceRules
             AssessmentMatchEvidence.DeepAnalysis => 1.0,
             _ => 0.85
         };
+
+    public static AssessmentMatchEvidence Combine(AssessmentMatchEvidence a, AssessmentMatchEvidence b)
+        => (AssessmentMatchEvidence)Math.Min((int)a, (int)b);
 }

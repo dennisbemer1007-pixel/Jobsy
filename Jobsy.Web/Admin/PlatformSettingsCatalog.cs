@@ -210,6 +210,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("TestsV2Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestsV2Enabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.TestsV2.Enabled.Title",
+                DescriptionKey: "AdminSettings.TestsV2.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestsV2Enabled,
+                Write: v => new PlatformFeatureUpdate(TestsV2Enabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
         if (FieldExists("PhoneVerificationEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -559,6 +572,7 @@ public static class PlatformSettingsCatalog
         bool? candidatePassportEnabled = null;
         bool? passportPartnersEnabled = null;
         bool? passportPdfV2Enabled = null;
+        bool? testsV2Enabled = null;
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
         bool? compactTestPdfEnabled = null;
@@ -601,6 +615,7 @@ public static class PlatformSettingsCatalog
             if (p.CandidatePassportEnabled is not null) candidatePassportEnabled = p.CandidatePassportEnabled;
             if (p.PassportPartnersEnabled is not null) passportPartnersEnabled = p.PassportPartnersEnabled;
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
+            if (p.TestsV2Enabled is not null) testsV2Enabled = p.TestsV2Enabled;
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
             if (p.CompactTestPdfEnabled is not null) compactTestPdfEnabled = p.CompactTestPdfEnabled;
@@ -641,6 +656,7 @@ public static class PlatformSettingsCatalog
             CandidatePassportEnabled: candidatePassportEnabled,
             PassportPartnersEnabled: passportPartnersEnabled,
             PassportPdfV2Enabled: passportPdfV2Enabled,
+            TestsV2Enabled: testsV2Enabled,
             PhoneVerificationEnabled: phoneVerificationEnabled,
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
             CompactTestPdfEnabled: compactTestPdfEnabled,
