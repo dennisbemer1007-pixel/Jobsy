@@ -23,10 +23,9 @@ public sealed class TestsV2FeatureFlagTests
     [Fact]
     public void QuickScanVersionPolicy_uses_v2_only_when_flag_on()
     {
-        var policy = new QuickScanVersionPolicy();
-        Assert.Equal(AssessmentTestVersions.V1, policy.ResolveVersionForNew(null, testsV2Enabled: false));
-        Assert.Equal(AssessmentTestVersions.V2, policy.ResolveVersionForNew(null, testsV2Enabled: true));
-        Assert.Equal(AssessmentTestVersions.V1, policy.ResolveVersionForNew(AssessmentTestVersions.V1, testsV2Enabled: true));
+        Assert.Equal(AssessmentTestVersions.V1, QuickScanVersionPolicy.ResolveVersionForNew(null, testsV2Enabled: false));
+        Assert.Equal(AssessmentTestVersions.V2, QuickScanVersionPolicy.ResolveVersionForNew(null, testsV2Enabled: true));
+        Assert.Equal(AssessmentTestVersions.V1, QuickScanVersionPolicy.ResolveVersionForNew(AssessmentTestVersions.V1, testsV2Enabled: true));
     }
 
     [Fact]

@@ -16,7 +16,6 @@ public sealed class CandidateValuesService : ICandidateValuesService
     private readonly AssessmentSaveGuard _saveGuard;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly IFeatureFlags _flags;
-    private readonly QuickScanVersionPolicy _versionPolicy;
 
     public CandidateValuesService(
         JobsyDbContext db,
@@ -24,8 +23,7 @@ public sealed class CandidateValuesService : ICandidateValuesService
         ICandidateInsightsQueue queue,
         ICandidateMatchSnapshotService matchSnapshots,
         AssessmentSaveGuard saveGuard,
-        IFeatureFlags flags,
-        QuickScanVersionPolicy versionPolicy)
+        IFeatureFlags flags)
     {
         _db = db;
         _commercial = commercial;
@@ -33,7 +31,6 @@ public sealed class CandidateValuesService : ICandidateValuesService
         _matchSnapshots = matchSnapshots;
         _saveGuard = saveGuard;
         _flags = flags;
-        _versionPolicy = versionPolicy;
     }
 
     public async Task<CandidateValuesStateDto> GetAsync(
@@ -61,7 +58,7 @@ public sealed class CandidateValuesService : ICandidateValuesService
         }
 
         var testsV2 = await _flags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
-        var version = _versionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
+        var version = QuickScanVersionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
 
         var error = QuickScanAssessmentBridge.ValidateAnswers(
             AssessmentKind.Values, answers, complete, version);

@@ -24,7 +24,7 @@ else if (_loadFailed)
 }
 else
 {
-    <TestConsentGate GateChanged="OnGateChanged">
+    <TestConsentGate QuickScanVersion="_quickScanVersion" GateChanged="OnGateChanged">
         @if (_gateOpen)
         {
             @if (_mode == TestPageShell.ShellMode.Intro)

@@ -1,0 +1,34 @@
+KEY: ProactiveMatchSuggestion
+SUBJECT: نصيحة Lobsy: ⁨Weekendhulp verkoop⁩
+PREHEADER: تطابق 87% - اكتشف لماذا يناسبك
+KIND: Optional
+--- TEXT ---
+Lobsy يبحث لك
+
+رصدنا وظيفة تناسبك: ⁨Weekendhulp verkoop⁩ لدى ⁨Bakkerij De Gouden Korrel⁩.
+
+لماذا يناسبك: ⁨Past bij je profiel en voorkeuren.⁩
+
+درجة التطابق: 87%
+
+عرض النصيحة: https://lobsy.nl/candidate/proactive-matching
+
+فريق Lobsy
+
+تصلك هذه الرسالة بسبب إجراء على Lobsy.
+لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك: https://lobsy.nl/mail/afmelden
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+إعدادات البريد: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Lobsy يبحث لك
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض النصيحة -> https://lobsy.nl/candidate/proactive-matching
+a: لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك -> https://lobsy.nl/mail/afmelden
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

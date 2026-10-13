@@ -60,8 +60,7 @@ public class CultureValuesPreviewScoresTests
             new StubQueue(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);
@@ -90,8 +89,7 @@ public class CultureValuesPreviewScoresTests
             new StubQueue(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);
@@ -127,8 +125,7 @@ public class CultureValuesPreviewScoresTests
             new StubQueue(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.SaveAsync(userId, new Dictionary<int, int>(), complete: true);
 
         Assert.Equal(CandidateCompetencyStatuses.Completed, dto.Status);

@@ -5,7 +5,6 @@ namespace Jobsy.Tests;
 
 internal static class QuickScanTestSupport
 {
-    internal static readonly QuickScanVersionPolicy VersionPolicy = new();
     internal static readonly IFeatureFlags FeatureFlagsOff = new OffFeatureFlags();
 
     private sealed class OffFeatureFlags : IFeatureFlags

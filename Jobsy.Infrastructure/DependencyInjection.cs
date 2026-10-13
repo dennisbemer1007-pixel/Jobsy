@@ -589,7 +589,6 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentAdjustmentService, AssessmentAdjustmentService>();
         services.AddScoped<IAssessmentRetakeService, AssessmentRetakeService>();
         services.AddScoped<AssessmentSaveGuard>();
-        services.AddSingleton<QuickScanVersionPolicy>();
         services.AddScoped<ICompanyCultureService, CompanyCultureService>();
         services.AddScoped<ICompanyProfileExtrasService, CompanyProfileExtrasService>();
         services.AddScoped<ICompanyEngagementService, CompanyEngagementService>();

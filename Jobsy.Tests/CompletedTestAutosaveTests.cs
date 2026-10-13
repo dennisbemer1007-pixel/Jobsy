@@ -47,8 +47,7 @@ public class CompletedTestAutosaveTests
             new StubMatchSnapshots(),
             new StubQueue(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.SaveAsync(userId, edited, complete: false);
 
         Assert.Equal(CandidateCompetencyStatuses.Completed, dto.Status);
@@ -93,7 +92,8 @@ public class CompletedTestAutosaveTests
             new StubCommercial(),
             new StubQueue(),
             new StubMatchSnapshots(),
-            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
+            QuickScanTestSupport.FeatureFlagsOff);
 
         // Autosave writes the full answers onto the completed row and leaves the old percents.
         await sut.SaveAsync(userId, answers, complete: false);
@@ -147,8 +147,7 @@ public class CompletedTestAutosaveTests
             new StubMatchSnapshots(),
             new StubQueue(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         await sut.SaveAsync(userId, edited, complete: false);
 
         var row = await db.CandidateCareerInterests.SingleAsync();
@@ -172,8 +171,7 @@ public class CompletedTestAutosaveTests
             new StubQueue(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         await sut.SaveAsync(userId, answers, complete: true);
         var before = await db.CandidateCulturePersonalityProfiles.AsNoTracking().SingleAsync();
         Assert.Equal(CandidateCompetencyStatuses.Completed, before.Status);
@@ -201,8 +199,7 @@ public class CompletedTestAutosaveTests
             new StubQueue(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         await sut.SaveAsync(userId, answers, complete: true);
         var before = await db.CandidateValuesProfiles.AsNoTracking().SingleAsync();
         Assert.Equal(CandidateCompetencyStatuses.Completed, before.Status);
@@ -266,8 +263,7 @@ public class CompletedTestAutosaveTests
             new StubMatchSnapshots(),
             new StubQueue(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
-            QuickScanTestSupport.FeatureFlagsOff,
-            QuickScanTestSupport.VersionPolicy);
+            QuickScanTestSupport.FeatureFlagsOff);
         await sut.SaveAsync(userId, answers, complete: true);
         var first = await db.CandidateCompetencies.AsNoTracking().SingleAsync();
 

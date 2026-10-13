@@ -17,7 +17,6 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
     private readonly AssessmentSaveGuard _saveGuard;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly IFeatureFlags _flags;
-    private readonly QuickScanVersionPolicy _versionPolicy;
 
     public CandidateCulturePersonalityService(
         JobsyDbContext db,
@@ -25,8 +24,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         ICandidateInsightsQueue queue,
         ICandidateMatchSnapshotService matchSnapshots,
         AssessmentSaveGuard saveGuard,
-        IFeatureFlags flags,
-        QuickScanVersionPolicy versionPolicy)
+        IFeatureFlags flags)
     {
         _db = db;
         _commercial = commercial;
@@ -34,7 +32,6 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         _matchSnapshots = matchSnapshots;
         _saveGuard = saveGuard;
         _flags = flags;
-        _versionPolicy = versionPolicy;
     }
 
     public async Task<CandidateCulturePersonalityStateDto> GetAsync(
@@ -62,7 +59,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         }
 
         var testsV2 = await _flags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
-        var version = _versionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
+        var version = QuickScanVersionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
 
         var error = QuickScanAssessmentBridge.ValidateAnswers(
             AssessmentKind.Culture, answers, complete, version);

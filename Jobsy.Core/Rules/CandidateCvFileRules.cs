@@ -99,7 +99,6 @@ public static class CandidateCvFileRules
     /// </summary>
     public static bool TryValidateBytes(byte[]? content, string? normalizedContentType, out string? error)
     {
-        error = null;
         if (content is null || content.Length == 0)
         {
             error = EmptyMessage;
