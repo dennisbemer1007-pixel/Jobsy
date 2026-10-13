@@ -10,68 +10,18 @@ namespace Jobsy.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateValuesProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateValuesProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1);
-
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCulturePersonalityProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCulturePersonalityProfiles",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1);
-
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCompetencies",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCompetencies",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1);
-
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanHighestAnswered",
-                table: "CandidateCareerInterests",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<int>(
-                name: "QuickScanVersion",
-                table: "CandidateCareerInterests",
-                type: "integer",
-                nullable: false,
-                defaultValue: 1);
-
-            migrationBuilder.AddColumn<bool>(
-                name: "TestsV2Enabled",
-                table: "PlatformFeatureSettings",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            migrationBuilder.Sql(
+                """
+                ALTER TABLE "CandidateValuesProfiles" ADD COLUMN IF NOT EXISTS "QuickScanHighestAnswered" integer NOT NULL DEFAULT 0;
+                ALTER TABLE "CandidateValuesProfiles" ADD COLUMN IF NOT EXISTS "QuickScanVersion" integer NOT NULL DEFAULT 1;
+                ALTER TABLE "CandidateCulturePersonalityProfiles" ADD COLUMN IF NOT EXISTS "QuickScanHighestAnswered" integer NOT NULL DEFAULT 0;
+                ALTER TABLE "CandidateCulturePersonalityProfiles" ADD COLUMN IF NOT EXISTS "QuickScanVersion" integer NOT NULL DEFAULT 1;
+                ALTER TABLE "CandidateCompetencies" ADD COLUMN IF NOT EXISTS "QuickScanHighestAnswered" integer NOT NULL DEFAULT 0;
+                ALTER TABLE "CandidateCompetencies" ADD COLUMN IF NOT EXISTS "QuickScanVersion" integer NOT NULL DEFAULT 1;
+                ALTER TABLE "CandidateCareerInterests" ADD COLUMN IF NOT EXISTS "QuickScanHighestAnswered" integer NOT NULL DEFAULT 0;
+                ALTER TABLE "CandidateCareerInterests" ADD COLUMN IF NOT EXISTS "QuickScanVersion" integer NOT NULL DEFAULT 1;
+                ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "TestsV2Enabled" boolean NOT NULL DEFAULT false;
+                """);
         }
 
         /// <inheritdoc />
