@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -136,6 +138,15 @@ public class PlatformFeatureSettings
 
     /// <summary>Proactive matching (Lobsy zoekt voor je + werkgever-shortlist). Default false.</summary>
     public bool ProactiveMatchingEnabled { get; set; }
+
+    /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
+    public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
+
+    /// <summary>Max authenticated apply POSTs per candidate per hour. Default 30.</summary>
+    public int CandidateApplyPerHourLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerHour;
+
+    /// <summary>Max authenticated apply POSTs per candidate per day. Default 100.</summary>
+    public int CandidateApplyPerDayLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerDay;
 
     /// <summary>
     /// When true, every candidate unlocks the uitgebreide analyse without Mollie.

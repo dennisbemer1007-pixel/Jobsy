@@ -153,12 +153,6 @@ builder.Services.AddRateLimiter(options =>
         ?? 20;
     var otpVerifyLimit = builder.Configuration.GetValue<int?>("RateLimiting:OtpVerifyPermitLimit")
         ?? 10;
-    var candidateApplyBurstLimit = builder.Configuration.GetValue<int?>("RateLimiting:CandidateApplyPermitLimitPerMinute")
-        ?? (isProduction ? 5 : 10_000);
-    var candidateApplyHourlyLimit = builder.Configuration.GetValue<int?>("RateLimiting:CandidateApplyPermitLimitPerHour")
-        ?? (isProduction ? 30 : 10_000);
-    var candidateApplyDailyLimit = builder.Configuration.GetValue<int?>("RateLimiting:CandidateApplyPermitLimitPerDay")
-        ?? (isProduction ? 100 : 10_000);
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.AddPolicy("candidate-apply", httpContext =>
@@ -169,6 +163,10 @@ builder.Services.AddRateLimiter(options =>
             return RateLimitPartition.GetNoLimiter("candidate-apply");
         }
 
+        var limits = httpContext.RequestServices
+            .GetRequiredService<Jobsy.Core.Interfaces.ICandidateApplyRateLimitProvider>()
+            .GetCurrent();
+
         var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                      ?? httpContext.User.FindFirst("sub")?.Value;
         var partition = string.IsNullOrWhiteSpace(userId)
@@ -178,11 +176,11 @@ builder.Services.AddRateLimiter(options =>
         return RateLimitPartition.Get(
             partition,
             _ => new TripleWindowRateLimiter(
-                candidateApplyBurstLimit,
+                limits.PerMinute,
                 TimeSpan.FromMinutes(1),
-                candidateApplyHourlyLimit,
+                limits.PerHour,
                 TimeSpan.FromHours(1),
-                candidateApplyDailyLimit,
+                limits.PerDay,
                 TimeSpan.FromDays(1)));
     });
 

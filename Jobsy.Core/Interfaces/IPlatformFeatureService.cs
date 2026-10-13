@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Core.Interfaces;
 
 public interface IPlatformFeatureService
@@ -52,7 +54,10 @@ public sealed record PlatformFeatureSnapshot(
     /// <summary>Phase-2 accept, Maqqie placement, agency map radius, uren. Default false.</summary>
     bool EmployerPhase2Enabled = false,
     bool CandidateExternalVacanciesEnabled = false,
-    bool ProactiveMatchingEnabled = false);
+    bool ProactiveMatchingEnabled = false,
+    int CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute,
+    int CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour,
+    int CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -110,4 +115,7 @@ public sealed record PlatformFeatureUpdate(
     bool? EmployerPhase2Enabled = null,
     /// <summary>Null = keep existing. Default false.</summary>
     bool? CandidateExternalVacanciesEnabled = null,
-    bool? ProactiveMatchingEnabled = null);
+    bool? ProactiveMatchingEnabled = null,
+    int? CandidateApplyPerMinuteLimit = null,
+    int? CandidateApplyPerHourLimit = null,
+    int? CandidateApplyPerDayLimit = null);
