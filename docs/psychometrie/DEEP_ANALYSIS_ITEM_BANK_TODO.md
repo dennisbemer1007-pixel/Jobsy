@@ -20,8 +20,9 @@
 
 ## Product
 
-- Free tier v3: 25 items (`QuickScanFreeTierV3`); **anker op v2-id’s**, geen overlap met deep-stems (score-vergelijkbaarheid via domeinen).
-- Paywall / flow: `DeepAnalysis.razor`, `TestDepthLevel.Bottom`, autosave + pauze per `TestDepthRules.Parts`.
+- Free tier v3: max 25 items (`QuickScanFreeTierV3`); **anker op v2-id’s**, geen overlap met deep-stems (score-vergelijkbaarheid via domeinen).
+- Bottom-tier: bestaande deep flow; betaling/consent zoals `DeepAnalysis.razor`.
+- Match-evidence: `AssessmentMatchEvidence.DeepAnalysis` na voltooide deep set.
 - Feature flag: `TestsV2Enabled` (Quick-Scan v3); deep catalog ongewijzigd qua versioning t.o.v. Quick-Scan.
 
 ## Open (post-pilot)
