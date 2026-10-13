@@ -451,6 +451,7 @@ public static class DependencyInjection
         services.AddScoped<IMarketingFlyerSettingsService, MarketingFlyerSettingsService>();
         services.AddScoped<IMarketingFlyerPdfService, MarketingFlyerPdfService>();
         services.AddScoped<IRegionHostService, RegionHostService>();
+        services.AddScoped<IBeheerTodoService, BeheerTodoService>();
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
         services.AddScoped<ICompanyAccessRequestService, CompanyAccessRequestService>();

@@ -481,7 +481,7 @@ public class MobileSaasUxTests
         Assert.Contains("pointer-events: none;", css);
         Assert.Contains(".feedback-widget__btn {\n    pointer-events: auto;", css);
         Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
-        Assert.Contains(".lobsy-assistant-tab.has-bottom-nav {\n        top: auto;\n        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains("@media (max-width: 639px) {\n    .lobsy-assistant-tab.has-bottom-nav {\n        top: auto;\n        bottom: calc(var(--bottom-nav-h, 4.75rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));", css);
         Assert.Contains(".feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.DoesNotContain(".lobsy-assistant-tab--edge,\n    .feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);

@@ -1767,4 +1767,63 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
     }
+
+    public async Task<IReadOnlyList<BeheerTodoItem>> GetBeheerTodosAsync(
+        BeheerTodoStatus? status = null,
+        CancellationToken ct = default)
+    {
+        var url = status is null
+            ? "api/admin/beheer-todos"
+            : $"api/admin/beheer-todos?status={status.Value}";
+        return await _http.GetFromJsonAsync<List<BeheerTodoItem>>(url, ApiJson, ct) ?? [];
+    }
+
+    public async Task<BeheerTodoItem?> CreateBeheerTodoAsync(BeheerTodoUpsertPayload payload, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/admin/beheer-todos", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
+    }
+
+    public async Task<BeheerTodoItem?> UpdateBeheerTodoAsync(
+        Guid id,
+        BeheerTodoUpsertPayload payload,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/admin/beheer-todos/{id}", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
+    }
+
+    public async Task<BeheerTodoItem?> MarkBeheerTodoDoneAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/beheer-todos/{id}/mark-done", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
+    }
+
+    public async Task DeleteBeheerTodoAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/admin/beheer-todos/{id}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
 }

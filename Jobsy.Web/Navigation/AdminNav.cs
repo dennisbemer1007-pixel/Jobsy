@@ -30,6 +30,8 @@ public static class AdminNav
                 ["/admin/cockpit"], IsAvailable: true),
             new("todo", "AdminNav.Todo", "/admin/te-doen", NavIcons.List,
                 [], IsAvailable: true, CountKey: "todo"),
+            new("beheer-taken", "AdminNav.BeheerTaken", "/admin/takenlijst", NavIcons.List,
+                [], IsAvailable: true),
             new("feedback", "AdminNav.Feedback", "/admin/feedback", NavIcons.Feedback,
                 [], IsAvailable: true, CountKey: "feedback"),
         ]),

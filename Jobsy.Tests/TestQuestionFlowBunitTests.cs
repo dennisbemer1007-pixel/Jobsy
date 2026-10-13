@@ -192,7 +192,7 @@ public sealed class TestsStackGuardTests
         Assert.Contains("--sticky-footer-h", testsCss, StringComparison.Ordinal);
 
         var flow = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Shared/Questionnaire/TestQuestionFlow.razor"));
-        Assert.Contains("jobsyCoachDock.bind", flow, StringComparison.Ordinal);
+        Assert.Contains("jobsyCoachDock.syncStickyFooters", flow, StringComparison.Ordinal);
         Assert.Contains("(max-width: 639px)", flow, StringComparison.Ordinal);
         Assert.Contains("IAsyncDisposable", flow, StringComparison.Ordinal);
     }

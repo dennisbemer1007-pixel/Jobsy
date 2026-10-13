@@ -99,6 +99,7 @@ public class JobsyDbContext : DbContext
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<RegionCompany> RegionCompanies => Set<RegionCompany>();
     public DbSet<RegionHost> RegionHosts => Set<RegionHost>();
+    public DbSet<BeheerTodo> BeheerTodos => Set<BeheerTodo>();
     public DbSet<CompanySalaryTable> CompanySalaryTables => Set<CompanySalaryTable>();
     public DbSet<CompanySalaryRate> CompanySalaryRates => Set<CompanySalaryRate>();
     public DbSet<CompanySalaryTableAllowedBranch> CompanySalaryTableAllowedBranches => Set<CompanySalaryTableAllowedBranch>();
@@ -1651,6 +1652,24 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.AddressLabel).HasMaxLength(RegionHostRules.MaxAddressLength);
             entity.Property(e => e.BackgroundImageUrl).HasMaxLength(RegionHostRules.MaxBackgroundUrlLength);
             entity.HasIndex(e => e.Hostname).IsUnique();
+        });
+
+        modelBuilder.Entity<BeheerTodo>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SeedKey).HasMaxLength(64);
+            entity.HasIndex(e => e.SeedKey).IsUnique().HasFilter("\"SeedKey\" IS NOT NULL");
+            entity.Property(e => e.Title).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Body).IsRequired();
+            entity.Property(e => e.Category).HasMaxLength(64).IsRequired();
+            entity.HasOne(e => e.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.UpdatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<CompanySalaryTable>(entity =>

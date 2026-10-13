@@ -501,3 +501,28 @@ public sealed class ReferenceMisuseItem
     public string? Message { get; set; }
     public string Status { get; set; } = "open";
 }
+
+public sealed class BeheerTodoItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Body { get; set; } = "";
+    public DateOnly? DueDate { get; set; }
+    public BeheerTodoPriority Priority { get; set; }
+    public BeheerTodoStatus Status { get; set; }
+    public string Category { get; set; } = "";
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+    public Guid? CreatedByUserId { get; set; }
+    public string? CreatedByDisplayName { get; set; }
+    public Guid? UpdatedByUserId { get; set; }
+    public string? UpdatedByDisplayName { get; set; }
+}
+
+public sealed record BeheerTodoUpsertPayload(
+    string Title,
+    string Body,
+    DateOnly? DueDate,
+    BeheerTodoPriority Priority,
+    BeheerTodoStatus Status,
+    string Category);

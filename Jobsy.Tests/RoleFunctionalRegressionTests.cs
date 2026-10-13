@@ -2188,6 +2188,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Ap
             EffectiveFrom = today.AddYears(-1)
         });
 
+        BeheerTodoSeeder.SeedAsync(db).GetAwaiter().GetResult();
         db.SaveChanges();
     }
 

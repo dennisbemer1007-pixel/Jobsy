@@ -65,6 +65,11 @@ public static class AdminAuditKeys
     public const string MasterdataUpdate = "masterdata.update";
     public const string MasterdataDelete = "masterdata.delete";
 
+    public const string BeheerTodoCreate = "beheer-todo.create";
+    public const string BeheerTodoUpdate = "beheer-todo.update";
+    public const string BeheerTodoMarkDone = "beheer-todo.mark-done";
+    public const string BeheerTodoDelete = "beheer-todo.delete";
+
     public static class Results
     {
         public const string Success = "success";
@@ -94,5 +99,6 @@ public static class AdminAuditKeys
         public const string Account = "account";
         public const string EmailTemplate = "email-template";
         public const string ContentReport = "content-report";
+        public const string BeheerTodo = "beheer-todo";
     }
 }
