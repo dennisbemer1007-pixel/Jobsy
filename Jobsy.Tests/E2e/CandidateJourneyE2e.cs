@@ -2,8 +2,14 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Jobsy.Core.Contracts;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Jobsy.Core.Privacy;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -211,6 +217,54 @@ public static class CandidateJourneyE2e
         return doc.RootElement.TryGetProperty("sessionToken", out var token) ? token.GetString() : null;
     }
 
+    /// <summary>Marks a fresh vacancy as applied so the vacancy detail shows the sent confirmation (E2E fallback).</summary>
+    public static async Task EnsureVacancyAppliedForDemoAsync(Guid vacancyId, string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var exists = await db.Applications.AnyAsync(a =>
+            a.VacancyId == vacancyId && a.CandidateUserId == user.Id && a.Status != ApplicationStatus.Withdrawn);
+        if (exists)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        db.Applications.Add(new Application
+        {
+            Id = Guid.NewGuid(),
+            VacancyId = vacancyId,
+            CandidateUserId = user.Id,
+            CandidateName = string.IsNullOrWhiteSpace(user.FullName) ? "Demo Kandidaat" : user.FullName,
+            CandidateEmail = normalized,
+            PreferredTransport = "Fiets",
+            EstimatedTravelMinutes = 15,
+            Status = ApplicationStatus.Pending,
+            ConsentAcceptedAt = now,
+            ConsentVersion = PrivacyConstants.CurrentConsentVersion,
+            WorkPermitConfirmed = true,
+            EmailVerifiedAt = now,
+            Motivation = "Ik solliciteer graag via Lobsy.",
+            CreatedAt = now
+        });
+        await db.SaveChangesAsync();
+    }
+
     public static async Task<Guid?> SeedExternalVacancyFixtureAsync(string baseUrl, string candidateEmail)
     {
         if (string.IsNullOrWhiteSpace(candidateEmail))
@@ -229,6 +283,149 @@ public static class CandidateJourneyE2e
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         return doc.RootElement.TryGetProperty("id", out var id) && id.TryGetGuid(out var guid) ? guid : null;
+    }
+
+    public static async Task EnsureDemoApplyProfileReadyAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var prefs = new CandidatePreferencesDto(
+            Roles: ["horeca", "retail"],
+            MaxTravelMinutes: 30,
+            PreferredTransport: "Fiets",
+            AboutMe: "Demo kandidaat (usability3 apply).",
+            DefaultMotivation: "Ik solliciteer graag via Lobsy.",
+            Availability: new Dictionary<string, string[]> { ["ma"] = ["ochtend"] },
+            Employers:
+            [
+                new CandidateEmployerHistoryDto("Demo Winkel Westland", "Medewerker", 2)
+            ]);
+        user.PreferencesJson = JsonSerializer.Serialize(
+            prefs,
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
+        user.OpenForWork = true;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears competence Quick-Scan answers and adjustment counters so E2E can run all 25 questions again.</summary>
+    public static async Task ResetDemoCompetencyForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateCompetencies.Where(c => c.UserId == user.Id).ToListAsync();
+        foreach (var row in rows)
+        {
+            row.Status = CandidateCompetencyStatuses.Draft;
+            row.AnswersJson = "{}";
+            row.SamenwerkenPercent = null;
+            row.ResultaatgerichtheidPercent = null;
+            row.StressbestendigheidPercent = null;
+            row.InnovatiePercent = null;
+            row.ExtraversiePercent = null;
+            row.MatchTagsJson = "[]";
+            row.RiasecTagsJson = "[]";
+            row.CompletedAtUtc = null;
+            row.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Competence)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    public static async Task<Guid?> SeedFreshVacancyFixtureAsync(string baseUrl, string candidateEmail)
+    {
+        _ = baseUrl;
+        _ = candidateEmail;
+
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return null;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+
+        var template = await db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Active)
+            .OrderByDescending(v => v.PublishedAtUtc ?? v.CreatedAtUtc)
+            .FirstOrDefaultAsync();
+        if (template is null)
+        {
+            return null;
+        }
+
+        var id = Guid.NewGuid();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = id,
+            Title = $"Usability3 sollicitatie {id.ToString("N")[..8]}",
+            Description = template.Description,
+            HourlyWage = template.HourlyWage,
+            StartDate = today,
+            EndDate = today.AddMonths(2),
+            Status = VacancyStatus.Active,
+            CompanyId = template.CompanyId,
+            Location = new GeoPoint(template.Location.Latitude, template.Location.Longitude),
+            RequiredTransport = template.RequiredTransport,
+            WorkTypes = template.WorkTypes,
+            WorkTypeLabels = template.WorkTypeLabels,
+            MaxApplications = template.MaxApplications,
+            SalaryTableId = template.SalaryTableId,
+            CategoryId = template.CategoryId,
+            MinHoursPerWeek = template.MinHoursPerWeek,
+            MaxHoursPerWeek = template.MaxHoursPerWeek,
+            FlexibleTimes = template.FlexibleTimes,
+            RequireEmailVerification = template.RequireEmailVerification,
+            PublishedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
     }
 
     public static async Task ClearCapturedEmailCodesAsync(string baseUrl)
@@ -359,18 +556,53 @@ public static class CandidateJourneyE2e
         await DismissAssistantOverlayAsync(page);
         for (var i = 0; i < maxClicks; i++)
         {
-            if (await page.Locator(".passport-overview, [data-testid=gd-result], .gd-result").CountAsync() > 0)
+            if (await page.Locator(".passport-overview, [data-testid=gd-result], .gd-result, .test-done").CountAsync() > 0)
+            {
+                break;
+            }
+
+            if (await page.GetByRole(AriaRole.Heading, new() { Name = "Weer een laag eraf" }).CountAsync() > 0)
             {
                 break;
             }
 
             var likert = page.Locator(".test-flow .test-likert, .test-likert").First;
+            var prefilledNext = page.Locator("button.test-flow__next:not([disabled])").First;
+            if (await likert.CountAsync() > 0
+                && await prefilledNext.CountAsync() > 0
+                && await likert.Locator(".test-likert__opt.is-on, .test-likert__opt input:checked").CountAsync() > 0)
+            {
+                await prefilledNext.ScrollIntoViewIfNeededAsync();
+                await prefilledNext.ClickAsync(new() { Timeout = 15_000, Force = IsMobileViewport(page) });
+                await page.WaitForTimeoutAsync(400);
+                continue;
+            }
             var optIndex = Math.Clamp(value - 1, 0, 4);
             var likertOpt = likert.Locator(".test-likert__opt").Nth(optIndex);
             if (await likertOpt.CountAsync() > 0)
             {
-                await likertOpt.ClickAsync(new() { Timeout = 5_000, Force = IsMobileViewport(page) });
-                await page.WaitForTimeoutAsync(450);
+                if (IsMobileViewport(page))
+                {
+                    await page.EvaluateAsync(
+                        """
+                        value => {
+                          const root = document.querySelector('.test-flow .test-likert, .test-likert');
+                          if (!root) return;
+                          const input = root.querySelector(`input[type=radio][value="${value}"]`);
+                          if (!input) return;
+                          input.checked = true;
+                          input.dispatchEvent(new Event('change', { bubbles: true }));
+                          input.closest('.test-likert__opt')?.click();
+                        }
+                        """,
+                        Math.Clamp(value, 1, 5));
+                }
+                else
+                {
+                    await likertOpt.Locator("label").ClickAsync(new() { Timeout = 5_000 });
+                }
+
+                await page.WaitForTimeoutAsync(IsMobileViewport(page) ? 600 : 450);
             }
             else if (await likert.Locator("input[type=radio]").Nth(optIndex).CountAsync() > 0)
             {

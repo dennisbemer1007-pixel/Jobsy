@@ -654,19 +654,29 @@
                                             <span>@Culture["Apply.UseAuthenticator"]</span>
                                         </label>
                                     }
-                                    <div class="apply-check">
-                                        <label>
-                                            <input type="checkbox" @bind="_acceptedTerms" />
-                                            <span>@Culture["Apply.AcceptTerms"]</span>
+                                    <div class="apply-check apply-check--terms">
+                                        <input id="apply-terms-consent"
+                                               type="checkbox"
+                                               @bind="_acceptedTerms" />
+                                        <label for="apply-terms-consent" class="apply-check__text">
+                                            @Culture["Apply.AcceptTerms"]
+                                            <a class="auth-link"
+                                               href="/gebruiksvoorwaarden"
+                                               target="_blank"
+                                               rel="noopener">@Culture["Apply.Terms"]</a>
+                                            @Culture["Apply.AndThe"]
+                                            <a class="auth-link"
+                                               href="/privacy"
+                                               target="_blank"
+                                               rel="noopener">@Culture["Apply.Privacy"]</a>.
                                         </label>
-                                        <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Apply.Terms"]</a>
-                                        @Culture["Apply.AndThe"]
-                                        <a class="auth-link" href="/privacy" target="_blank" rel="noopener">@Culture["Apply.Privacy"]</a>.
                                     </div>
-                                    <label class="apply-check">
-                                        <input type="checkbox" @bind="_workPermitConfirmed" />
-                                        <span>@Culture["Apply.WorkPermit"]</span>
-                                    </label>
+                                    <div class="apply-check">
+                                        <input id="apply-work-permit"
+                                               type="checkbox"
+                                               @bind="_workPermitConfirmed" />
+                                        <label for="apply-work-permit">@Culture["Apply.WorkPermit"]</label>
+                                    </div>
                                     <label class="apply-field apply-field--motivation">
                                         <span>@Culture["Apply.MotivationLabel"]</span>
                                         <textarea maxlength="500"
@@ -705,6 +715,7 @@
                                 {
                                     <button class="login-submit apply-flow__primary"
                                             type="button"
+                                            data-testid="apply-submit"
                                             disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed || _showSafetyNet || (RequiresExclusivityExtras && !ExclusivityFieldsReady))"
                                             @onclick="ApplyAsync">
                                         @(_applying ? Culture["Apply.Busy"] : Culture["Apply.Submit"])

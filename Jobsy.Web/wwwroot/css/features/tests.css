@@ -118,7 +118,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  inline-size: 100%;
   min-block-size: 56px;
+  touch-action: manipulation;
   border: 2px solid var(--pearl);
   border-radius: var(--radius-md, 8px);
   background: var(--surface);
