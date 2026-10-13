@@ -114,6 +114,30 @@ public sealed class AssessmentV2TranslationGuardTests
         }
     }
 
+    [Theory]
+    [InlineData("nl")]
+    [InlineData("en")]
+    [InlineData("pl")]
+    [InlineData("ro")]
+    [InlineData("ar")]
+    public void V2_item_stems_are_unique_within_each_language(string lang)
+    {
+        var stems = AllV2ItemKeys()
+            .Select(t => UiStrings.Get(t.Key, lang).Trim())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+
+        var duplicates = stems
+            .GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => (Stem: g.Key, Count: g.Count()))
+            .ToList();
+
+        Assert.True(
+            duplicates.Count == 0,
+            $"{lang}: duplicate v2 stems: {string.Join("; ", duplicates.Select(d => $"{d.Stem} (×{d.Count})"))}");
+    }
+
     [Fact]
     public void Culture_v2_dimensions_have_four_items_with_two_reverse_each()
     {

@@ -18,6 +18,7 @@ internal static class UiStringsAssessmentV2
         Merge(ro, Ro());
         Merge(ar, Ar());
         UiStringsAssessmentV2Supplement.MergeSupplement(nl, en, pl, ro, ar);
+        UiStringsAssessmentV2ValuesCareerBank.MergeAll(nl, en, pl, ro, ar);
     }
 
     private static void Merge(Dictionary<string, string> target, Dictionary<string, string> extra)
@@ -455,7 +456,7 @@ internal static class UiStringsAssessmentV2
         ["AssessmentV2.Culture.Q13"] = "Lubię uczyć się czegoś nowego, nawet gdy to na początku obce.",
         ["AssessmentV2.Culture.Q14"] = "Wolę znane sposoby pracy niż coś nowego.",
         ["AssessmentV2.Culture.Q15"] = "Kończę zadania starannie i sprawdzam, czy wszystko się zgadza.",
-        ["AssessmentV2.Culture.Q16"] = "Często odkładam zadania na ostatnią chwilę.",
+        ["AssessmentV2.Culture.Q16"] = "Zostawiam listy zadań niedokończone, gdy coś pilniejszego wypada.",
         ["AssessmentV2.Culture.Q17"] = "Kontakt z klientami albo kolegami daje mi energię.",
         ["AssessmentV2.Culture.Q18"] = "Zatłoczone miejsca i kontakt z kolegami szybko mnie męczą.",
         ["AssessmentV2.Culture.Q19"] = "Chętnie pomagam, żeby każdy mógł pracować wygodnie.",

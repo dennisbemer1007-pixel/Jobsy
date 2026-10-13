@@ -31,7 +31,7 @@ else
                 <TestPageShell Kind="AssessmentKind.Values"
                                Mode="TestPageShell.ShellMode.Intro"
                                H1="@Culture["Discovery.Test.ValuesScan.Title"]"
-                               Lead="@Culture["TestFlow.Lead.Values"]"
+                               Lead="@IntroLead"
                                TestName="@Culture["ValuesScan.Title"]"
                                Answered="_answered"
                                TargetCount="_targetCount"
@@ -146,6 +146,9 @@ else
     private bool _isIndicativeDepth;
     private bool ShowIndicativeBanner => _quickScanVersion == AssessmentTestVersions.V2
         && (_isIndicativeDepth || _targetCount < _fullCount || (_answered > 0 && _answered < _fullCount));
+    private string IntroLead => _quickScanVersion == AssessmentTestVersions.V2
+        ? Culture.Format("TestFlow.Lead.Values.V2", _fullCount)
+        : Culture["TestFlow.Lead.Values"];
     private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Values, _target, _quickScanVersion);
     private int _fullCount => TestDepthRules.CountFor(AssessmentKind.Values, TestDepthLevel.Full, _quickScanVersion);
     private static readonly IReadOnlyDictionary<int, int> EmptyAnswers = new Dictionary<int, int>();

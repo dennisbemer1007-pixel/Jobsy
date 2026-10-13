@@ -82,8 +82,23 @@ Thuis of eigen device; geen toezicht (unproctored). Kandidaat beantwoordt zelfst
 
 ## Hoofdstuk 5 — Scoring en match
 
-### 5.1 Per instrument
-Scoring via `AssessmentQuickScanCatalog` → v2 catalogi (`*CatalogV2`). v1 blijft ongewijzigd voor opgeslagen v1-data.
+### 5.1 Scorer-handleiding (technisch)
+
+Alle v2-instrumenten gebruiken **Likert 1–5** per item. Opgeslagen antwoorden blijven gekoppeld aan **vraagnummer** (`1…N`); wijzigingen in itemtekst (itembank 2.x) raken **niet** de betekenis van reeds opgeslagen ruwe scores zolang `QuickScanVersion` gelijk blijft.
+
+| Stap | Regel | Code-referentie |
+|------|--------|-----------------|
+| 1 | Parse JSON-antwoorden; valideer bereik 1–5 | `LikertAnswerJson`, `*CatalogV2.ValidateAnswers` |
+| 2 | Per schaal: gemiddelde van items; **reverse** items: gebruik `6 − ruwe waarde` vóór middeling | `SchwartzValuesCatalog.Score`, competentie/cultuur/RIASEC-scorers |
+| 3 | Schaalpercent = `round((gemiddelde − 1) / 4 × 100)`, clamp 0–100 | `AssessmentScoringDocumentation` |
+| 4 | **Indicatieve diepte:** als `QuestionCount` &lt; volledige bank → markeer `IsIndicativeDepth`; geen normvergelijking | `Candidate*Service.ToDto`, `TestDepthRules` |
+| 5 | Match: gewogen overlap profiel–vacature; bij indicatieve diepte factor **0,72** + **10 pp** onzekerheid | `AssessmentMatchEvidenceRules`, `ProfileVacancyMatchCalculator` |
+
+**Versie-scheiding:** kandidaten met `QuickScanVersion = 1` blijven via v1-catalogi en v1-itemteksten (`UiStringsTests` / legacy keys) gescoord; v2 alleen wanneer v2 actief was bij start/opslaan.
+
+**Waarden v2:** vijf workplace-drivers (Autonomie, Verbinding, Prestatie, Stabiliteit, Impact) — 8 unieke stems per driver, 4 forward + 4 reverse (Schwartz/PVQ-stijl, B1).
+
+**RIASEC v2:** 8 unieke stems per Holland-type (R–C); geen hergebruikte stems tussen types.
 
 ### 5.2 Match-percentage
 - Gewogen overlap kandidaat–vacature; cultuur/waarden/engagement-blends zoals in `ProfileVacancyMatchCalculator`.
@@ -119,7 +134,7 @@ Zie `docs/psychometrie/VALIDATIE_STUDIEPLAN.md`: fases A (materiaal) → B (α, 
 
 - Geen COTAN-beoordeling; geen externe validatiestudie op Lobsy-data in v2.
 - Cultuur/waarden/competentie zijn ** verkorte vormen**, geen volledige Big Five / Schwartz-batterijen.
-- RIASEC v2 bevat hergebruikte stems (monitoring in itembank).
+- RIASEC v2: itembank gecontroleerd op unieke stems per taal (`AssessmentV2TranslationGuardTests`).
 - Vertaling: v2 keys gecontroleerd; v1 legacy-keys kunnen nog NL-fallback hebben wanneer v2 uit staat.
 
 ---
