@@ -2453,3 +2453,33 @@
 ol.apply-steps.apply-steps--three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+
+/* Vacancy apply: consent row must keep checkbox visible on narrow viewports. */
+.apply-check:has(> input[type="checkbox"]) {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.65rem;
+}
+
+.apply-check--terms {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.65rem;
+}
+
+.apply-check--terms .apply-check__text {
+  min-width: 0;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.apply-check--terms input[type="checkbox"] {
+  margin-top: 0.2rem;
+  min-width: 1.15rem;
+}
+
+.apply-check--terms .auth-link {
+  word-break: break-word;
+}

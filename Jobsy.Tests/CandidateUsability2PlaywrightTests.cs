@@ -96,7 +96,7 @@ public sealed class CandidateUsability2PlaywrightTests
             await page.GotoAsync($"{baseUrl}/candidate/paspoort?tab=overview", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
 
-            var downloadBtn = page.Locator("[data-testid=passport-download-pdf]").First;
+            var downloadBtn = page.Locator(".passport-layout__card--desktop [data-testid=passport-download-pdf], [data-testid=passport-download-pdf-mobile]").First;
             if (await downloadBtn.CountAsync() > 0 && await downloadBtn.IsVisibleAsync())
             {
                 try

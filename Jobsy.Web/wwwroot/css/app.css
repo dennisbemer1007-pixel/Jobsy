@@ -12694,12 +12694,24 @@ button.linkish:hover {
     margin-top: 0.15rem;
     width: 1.15rem;
     height: 1.15rem;
+    min-width: 1.15rem;
     flex-shrink: 0;
+}
+
+.apply-check--terms {
+    align-items: flex-start;
+}
+
+.apply-check__text {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.45;
 }
 
 .apply-check .auth-link {
     text-decoration: underline;
     text-underline-offset: 0.12em;
+    word-break: break-word;
 }
 
 .apply-code-field {

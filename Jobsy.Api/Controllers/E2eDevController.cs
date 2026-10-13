@@ -175,4 +175,58 @@ public sealed class E2eDevController : ControllerBase
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new { id });
     }
+
+    [HttpPost("fixture/fresh-vacancy")]
+    [AllowAnonymous]
+    public async Task<IActionResult> FreshVacancyFixture(
+        [FromQuery] string? email,
+        [FromServices] JobsyDbContext db,
+        [FromServices] IHostEnvironment env,
+        CancellationToken cancellationToken)
+    {
+        if (!env.IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        _ = email;
+
+        var template = await db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Active)
+            .OrderByDescending(v => v.PublishedAtUtc ?? v.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (template is null)
+        {
+            return NotFound(new { message = "no active vacancy template" });
+        }
+
+        var id = Guid.NewGuid();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = id,
+            Title = $"Usability3 sollicitatie {id.ToString("N")[..8]}",
+            Description = template.Description,
+            HourlyWage = template.HourlyWage,
+            StartDate = today,
+            EndDate = today.AddMonths(2),
+            Status = VacancyStatus.Active,
+            CompanyId = template.CompanyId,
+            Location = template.Location,
+            RequiredTransport = template.RequiredTransport,
+            WorkTypes = template.WorkTypes,
+            WorkTypeLabels = template.WorkTypeLabels,
+            MaxApplications = template.MaxApplications,
+            SalaryTableId = template.SalaryTableId,
+            CategoryId = template.CategoryId,
+            MinHoursPerWeek = template.MinHoursPerWeek,
+            MaxHoursPerWeek = template.MaxHoursPerWeek,
+            FlexibleTimes = template.FlexibleTimes,
+            RequireEmailVerification = template.RequireEmailVerification,
+            PublishedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new { id });
+    }
 }

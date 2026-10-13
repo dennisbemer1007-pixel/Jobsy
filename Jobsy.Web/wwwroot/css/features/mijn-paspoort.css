@@ -244,6 +244,23 @@
     gap: var(--space-2);
 }
 
+.passport-card__actions--compact {
+    flex-direction: column;
+    padding-block-start: 0;
+}
+
+.passport-card__actions--compact .passport-card__pdf-btn,
+.passport-card__actions--compact .btn-primary {
+    inline-size: 100%;
+    min-block-size: 44px;
+    justify-content: center;
+}
+
+.passport-card--compact .passport-card__identity-main {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
 .passport-card__tagline {
     display: none;
     margin: 0;

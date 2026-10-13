@@ -15,7 +15,8 @@
         var current = value;
         var selected = Value == current;
         var radioId = $"{InputPrefix}-opt-{QuestionId}-{current}";
-        <div class="test-likert__opt @(selected ? "is-on" : null)">
+        <div class="test-likert__opt @(selected ? "is-on" : null)"
+             @onclick="async () => await OnSelectAsync(current)">
             <input type="radio"
                    id="@radioId"
                    name="@($"{InputPrefix}-q-{QuestionId}")"
