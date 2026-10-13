@@ -373,7 +373,145 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
-    public static async Task<Guid?> SeedFreshVacancyFixtureAsync(string baseUrl, string candidateEmail)
+    /// <summary>
+    /// Completes the vacancy apply form via real UI (consent + submit + optional safety-net + email verify). No DB shortcuts.
+    /// </summary>
+    public static async Task SubmitVacancyApplyViaUiAsync(IPage page, string? baseUrl = null, string? candidateEmail = null)
+    {
+        await DismissAssistantOverlayAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.Locator("#apply").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await page.Locator("#apply[data-apply-interactive='true']").WaitForAsync(new() { Timeout = 120_000 });
+
+        if (await page.Locator(".apply-panel--warn").CountAsync() > 0
+            && await page.Locator("#apply-terms-consent").CountAsync() == 0)
+        {
+            Assert.Fail("Apply profile incomplete — run EnsureDemoApplyProfileReadyAsync before UI submit.");
+        }
+
+        await page.Locator("#apply-terms-consent").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await SetApplyConsentCheckedAsync(page, "#apply-terms-consent");
+        await SetApplyConsentCheckedAsync(page, "#apply-work-permit");
+
+        var submit = page.Locator("[data-testid=apply-submit]");
+        await Assertions.Expect(submit).ToBeEnabledAsync(new() { Timeout = 45_000 });
+
+        for (var step = 0; step < 20; step++)
+        {
+            if (await page.Locator(".apply-panel--success").CountAsync() > 0)
+            {
+                break;
+            }
+
+            if (await page.Locator(".apply-panel--verify").CountAsync() > 0
+                && !string.IsNullOrWhiteSpace(baseUrl)
+                && !string.IsNullOrWhiteSpace(candidateEmail))
+            {
+                await CompleteApplyEmailVerificationViaUiAsync(page, baseUrl, candidateEmail);
+                continue;
+            }
+
+            if (await submit.IsEnabledAsync())
+            {
+                await submit.ScrollIntoViewIfNeededAsync();
+                await submit.ClickAsync(new() { Timeout = 15_000 });
+                await page.WaitForTimeoutAsync(800);
+            }
+
+            var safetyNet = page.GetByRole(AriaRole.Button, new() { Name = "Toch doorgaan met solliciteren" });
+            if (await safetyNet.CountAsync() > 0 && await safetyNet.IsVisibleAsync())
+            {
+                await safetyNet.ClickAsync(new() { Timeout = 15_000 });
+                await page.WaitForTimeoutAsync(1_000);
+            }
+
+            if (await page.GetByText("Sollicitatie verstuurd").CountAsync() > 0)
+            {
+                break;
+            }
+        }
+
+        try
+        {
+            var successPanel = page.Locator(".apply-panel--success");
+            await successPanel.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 60_000 });
+            await successPanel.ScrollIntoViewIfNeededAsync();
+            await page.GetByText("Sollicitatie verstuurd").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        }
+        catch (TimeoutException)
+        {
+            var debugDir = Path.Combine(ArtifactsRoot, "_debug");
+            Directory.CreateDirectory(debugDir);
+            await page.ScreenshotAsync(new() { Path = Path.Combine(debugDir, "apply-submit-failed.png"), FullPage = true });
+            try
+            {
+                var applyHtml = await page.Locator("#apply").InnerHTMLAsync();
+                await File.WriteAllTextAsync(Path.Combine(debugDir, "apply-submit-failed.html"), applyHtml);
+            }
+            catch
+            {
+                // ignore
+            }
+
+            throw;
+        }
+    }
+
+    private static async Task SetApplyConsentCheckedAsync(IPage page, string selector)
+    {
+        var box = page.Locator(selector);
+        if (await box.CountAsync() == 0 || await box.IsCheckedAsync())
+        {
+            return;
+        }
+
+        await page.EvaluateAsync(
+            """
+            sel => {
+              const el = document.querySelector(sel);
+              if (!el) return;
+              el.checked = true;
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            """,
+            selector);
+        await page.WaitForTimeoutAsync(250);
+    }
+
+    private static async Task CompleteApplyEmailVerificationViaUiAsync(IPage page, string baseUrl, string candidateEmail)
+    {
+        await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
+        var resend = page.GetByRole(AriaRole.Button, new() { Name = "Code opnieuw sturen" });
+        if (await resend.CountAsync() == 0)
+        {
+            resend = page.GetByRole(AriaRole.Button, new() { Name = "Resend code" });
+        }
+
+        if (await resend.CountAsync() > 0 && await resend.IsVisibleAsync())
+        {
+            await resend.ClickAsync(new() { Timeout = 15_000 });
+            await page.WaitForTimeoutAsync(800);
+        }
+
+        var code = await FetchEmailCodeAsync(baseUrl, candidateEmail);
+        Assert.False(string.IsNullOrWhiteSpace(code), "Expected apply verification email code from E2E stub.");
+
+        var input = page.Locator(".apply-code-field__input");
+        await input.FillAsync(code!);
+        await page.WaitForTimeoutAsync(300);
+        var confirm = page.GetByRole(AriaRole.Button, new() { Name = "Bevestigen en versturen" });
+        await confirm.ClickAsync(new() { Timeout = 15_000 });
+        await page.WaitForTimeoutAsync(1_200);
+    }
+
+    public static async Task<Guid?> SeedFreshVacancyFixtureAsync(
+        string baseUrl,
+        string candidateEmail,
+        string titlePrefix = "Usability3")
     {
         _ = baseUrl;
         _ = candidateEmail;
@@ -403,7 +541,7 @@ public static class CandidateJourneyE2e
         db.Vacancies.Add(new Vacancy
         {
             Id = id,
-            Title = $"Usability3 sollicitatie {id.ToString("N")[..8]}",
+            Title = $"{titlePrefix} sollicitatie {id.ToString("N")[..8]}",
             Description = template.Description,
             HourlyWage = template.HourlyWage,
             StartDate = today,
@@ -420,7 +558,11 @@ public static class CandidateJourneyE2e
             MinHoursPerWeek = template.MinHoursPerWeek,
             MaxHoursPerWeek = template.MaxHoursPerWeek,
             FlexibleTimes = template.FlexibleTimes,
-            RequireEmailVerification = template.RequireEmailVerification,
+            RequireEmailVerification = false,
+            RequiredDrivingLicense = null,
+            RequiredEducation = null,
+            MinimumReferences = 0,
+            MinimumEmployers = 0,
             PublishedAtUtc = DateTime.UtcNow,
             CreatedAtUtc = DateTime.UtcNow
         });

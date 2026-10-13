@@ -675,7 +675,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = JobsyPolicies.RequireCandidate)]
-    [EnableRateLimiting("otp-verify")]
+    [EnableRateLimiting("candidate-apply")]
     public async Task<ActionResult<ApplyResultDto>> Apply(
         [FromBody] ApplyRequest request,
         CancellationToken cancellationToken)
