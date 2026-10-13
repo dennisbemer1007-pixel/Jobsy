@@ -38,6 +38,18 @@ public class LoginPageRenderTests
     }
 
     [Fact]
+    public async Task Login_renders_entra_button_when_entra_configured()
+    {
+        await using var factory = new LoginPageWebFactory(entra: true, google: false, employers: true);
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var html = await client.GetStringAsync("/login");
+
+        Assert.Contains("/account/external/entra", html, StringComparison.Ordinal);
+        Assert.Contains("Inloggen met Microsoft", html, StringComparison.Ordinal);
+        Assert.Contains("au-provider", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Login_hides_unconfigured_providers()
     {
         await using var factory = new LoginPageWebFactory(entra: false, google: false, employers: true);
