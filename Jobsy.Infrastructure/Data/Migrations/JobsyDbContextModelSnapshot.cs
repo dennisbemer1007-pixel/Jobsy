@@ -5365,6 +5365,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("EmployerFitQuestionnairesEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("EmployerPhase2Enabled")
                         .HasColumnType("boolean");
 
@@ -5426,12 +5429,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<bool>("ProactiveMatchingEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("MatchCalibrationV1Enabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("EmployerFitQuestionnairesEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<string>("PublicWebBaseUrl")
@@ -8598,23 +8595,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
-                    b.Property<string>("VacancyWorkContextJson")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<string>("VacancyCompetencyTargetsJson")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<string>("VacancyCultureDeltaJson")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<bool>("VacancyUseInferredCompetencies")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(20000)
@@ -8778,6 +8758,23 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("VacancyCompetencyTargetsJson")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("VacancyCultureDeltaJson")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<bool>("VacancyUseInferredCompetencies")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("VacancyWorkContextJson")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("VideoUrl")
                         .HasMaxLength(1024)

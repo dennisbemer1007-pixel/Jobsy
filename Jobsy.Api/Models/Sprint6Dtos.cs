@@ -307,6 +307,8 @@ public record UpdatePlatformFeatureRequest(
     bool? EmployerPhase2Enabled = null,
     bool? CandidateExternalVacanciesEnabled = null,
     bool? ProactiveMatchingEnabled = null,
+    bool? MatchCalibrationV1Enabled = null,
+    bool? EmployerFitQuestionnairesEnabled = null,
     int? CandidateApplyPerMinuteLimit = null,
     int? CandidateApplyPerHourLimit = null,
     int? CandidateApplyPerDayLimit = null);
@@ -344,6 +346,8 @@ public record PlatformFeatureDto(
     bool EmployerPhase2Enabled = false,
     bool CandidateExternalVacanciesEnabled = false,
     bool ProactiveMatchingEnabled = false,
+    bool MatchCalibrationV1Enabled = false,
+    bool EmployerFitQuestionnairesEnabled = false,
     int CandidateApplyPerMinuteLimit = 5,
     int CandidateApplyPerHourLimit = 30,
     int CandidateApplyPerDayLimit = 100);

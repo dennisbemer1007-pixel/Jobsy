@@ -1,11 +1,15 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Jobsy.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddQuickScanVersionAndTestsV2Enabled : Migration
+    /// <summary>
+    /// Applies Quick-Scan v2 columns that were defined in a hand-written migration
+    /// missing from the EF designer chain (see removed AddQuickScanVersionAndTestsV2Enabled file).
+    /// </summary>
+    public partial class SyncQuickScanColumnDefaults : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

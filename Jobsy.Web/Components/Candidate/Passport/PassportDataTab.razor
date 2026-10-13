@@ -209,11 +209,14 @@
     private bool _loadFailed;
     private bool _loaded;
     private bool _pdfV2;
+    private bool _employerFitQuestionnaires;
     private bool _phoneVerification;
     private string? _openSection;
 
     private IEnumerable<DataSection> VisibleSections
-        => _pdfV2 ? Sections : Sections.Where(s => s.Id != "shared");
+        => _pdfV2 || _employerFitQuestionnaires
+            ? Sections
+            : Sections.Where(s => s.Id != "shared");
 
     private string? StatusText =>
         !string.IsNullOrWhiteSpace(Editor.ConsentMessage) ? Editor.ConsentMessage
@@ -249,6 +252,7 @@
         {
             var flags = await Flags.GetAsync();
             _pdfV2 = flags.PassportPdfV2Enabled;
+            _employerFitQuestionnaires = flags.IsEnabled(PlatformFeature.EmployerFitQuestionnaires);
             _phoneVerification = flags.PhoneVerificationEnabled;
             await Editor.LoadMasterdataAsync();
             var me = await Api.GetMyProfileAsync();
