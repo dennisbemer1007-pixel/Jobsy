@@ -17,6 +17,7 @@ internal static class UiStringsAssessmentV2
         Merge(pl, Pl());
         Merge(ro, Ro());
         Merge(ar, Ar());
+        UiStringsAssessmentV2Supplement.MergeSupplement(nl, en, pl, ro, ar);
     }
 
     private static void Merge(Dictionary<string, string> target, Dictionary<string, string> extra)
