@@ -23,51 +23,56 @@ public static class TestDepthRules
     public const int FirstCount = 5;
     public const int DeeperCount = 10;
 
-    public static int FullCount(AssessmentKind kind) => kind switch
-    {
-        AssessmentKind.Culture => CulturePersonalityCatalog.QuestionCount,
-        AssessmentKind.Competence => CompetencyTestCatalog.QuestionCount,
-        AssessmentKind.Career => CareerTestCatalog.QuestionCount,
-        AssessmentKind.Values => SchwartzValuesCatalog.QuestionCount,
-        _ => CompetencyTestCatalog.QuestionCount
-    };
+    public static int FullCount(AssessmentKind kind, int quickScanVersion = AssessmentTestVersions.V1)
+        => AssessmentQuickScanCatalog.QuestionCount(kind, quickScanVersion);
 
     public static int Bottom(AssessmentKind kind)
         => DeepAnalysisCatalog.QuestionCountFor(kind);
 
     /// <summary>Free levels only: First(5), Deeper(10), Full(18/25).</summary>
-    public static IReadOnlyList<TestDepthBand> Levels(AssessmentKind kind)
+    public static IReadOnlyList<TestDepthBand> Levels(
+        AssessmentKind kind,
+        int quickScanVersion = AssessmentTestVersions.V1)
         =>
         [
             new(TestDepthLevel.First, FirstCount),
             new(TestDepthLevel.Deeper, DeeperCount),
-            new(TestDepthLevel.Full, FullCount(kind))
+            new(TestDepthLevel.Full, FullCount(kind, quickScanVersion))
         ];
 
-    public static int CountFor(AssessmentKind kind, TestDepthLevel level) => level switch
+    public static int CountFor(
+        AssessmentKind kind,
+        TestDepthLevel level,
+        int quickScanVersion = AssessmentTestVersions.V1) => level switch
     {
         TestDepthLevel.First => FirstCount,
         TestDepthLevel.Deeper => DeeperCount,
-        TestDepthLevel.Full => FullCount(kind),
+        TestDepthLevel.Full => FullCount(kind, quickScanVersion),
         TestDepthLevel.Bottom => Bottom(kind),
         _ => FirstCount
     };
 
     /// <summary>Highest free level reached by answered count; null below 5.</summary>
-    public static TestDepthLevel? Reached(AssessmentKind kind, int answeredCount)
+    public static TestDepthLevel? Reached(
+        AssessmentKind kind,
+        int answeredCount,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
         if (answeredCount < FirstCount) return null;
-        if (answeredCount >= FullCount(kind)) return TestDepthLevel.Full;
+        if (answeredCount >= FullCount(kind, quickScanVersion)) return TestDepthLevel.Full;
         if (answeredCount >= DeeperCount) return TestDepthLevel.Deeper;
         return TestDepthLevel.First;
     }
 
     /// <summary>Next free level after the current answered count, or null when Full is done.</summary>
-    public static TestDepthLevel? Next(AssessmentKind kind, int answeredCount)
+    public static TestDepthLevel? Next(
+        AssessmentKind kind,
+        int answeredCount,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
         if (answeredCount < FirstCount) return TestDepthLevel.First;
         if (answeredCount < DeeperCount) return TestDepthLevel.Deeper;
-        if (answeredCount < FullCount(kind)) return TestDepthLevel.Full;
+        if (answeredCount < FullCount(kind, quickScanVersion)) return TestDepthLevel.Full;
         return null;
     }
 
@@ -87,24 +92,30 @@ public static class TestDepthRules
     /// <summary>
     /// Ordered question ids for a free level: mini, then DeeperQuestionIds, then remaining catalog ids.
     /// </summary>
-    public static IReadOnlyList<int> QuestionIdsFor(AssessmentKind kind, TestDepthLevel level)
+    public static IReadOnlyList<int> QuestionIdsFor(
+        AssessmentKind kind,
+        TestDepthLevel level,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
         if (level == TestDepthLevel.Bottom)
         {
             return DeepAnalysisCatalog.QuestionsFor(kind).Select(q => q.Id).ToList();
         }
 
-        var target = CountFor(kind, level);
-        return QuestionIdsUpTo(kind, target);
+        var target = CountFor(kind, level, quickScanVersion);
+        return QuestionIdsUpTo(kind, target, quickScanVersion);
     }
 
     /// <summary>
     /// 1-based question the test opens next: the first gap in catalog order.
     /// A contiguous prefix returns <c>answered + 1</c>. Counting answers is not enough when ids are missing.
     /// </summary>
-    public static int ResumeQuestionNumber(AssessmentKind kind, IReadOnlyDictionary<int, int> answers)
+    public static int ResumeQuestionNumber(
+        AssessmentKind kind,
+        IReadOnlyDictionary<int, int> answers,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
-        var ordered = QuestionIdsUpTo(kind, FullCount(kind));
+        var ordered = QuestionIdsUpTo(kind, FullCount(kind, quickScanVersion), quickScanVersion);
         for (var i = 0; i < ordered.Count; i++)
         {
             if (!answers.ContainsKey(ordered[i]))
@@ -116,17 +127,20 @@ public static class TestDepthRules
         return ordered.Count + 1;
     }
 
-    public static IReadOnlyList<int> QuestionIdsUpTo(AssessmentKind kind, int targetCount)
+    public static IReadOnlyList<int> QuestionIdsUpTo(
+        AssessmentKind kind,
+        int targetCount,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
-        var full = FullCount(kind);
+        var full = FullCount(kind, quickScanVersion);
         var target = Math.Clamp(targetCount, FirstCount, full);
-        var ordered = new List<int>(MiniIds(kind));
+        var ordered = new List<int>(MiniIds(kind, quickScanVersion));
         if (target <= FirstCount)
         {
             return ordered;
         }
 
-        foreach (var id in DeeperIds(kind))
+        foreach (var id in DeeperIds(kind, quickScanVersion))
         {
             if (!ordered.Contains(id)) ordered.Add(id);
         }
@@ -136,7 +150,7 @@ public static class TestDepthRules
             return ordered.Take(DeeperCount).ToList();
         }
 
-        foreach (var id in AllCatalogIds(kind))
+        foreach (var id in AllCatalogIds(kind, quickScanVersion))
         {
             if (!ordered.Contains(id)) ordered.Add(id);
         }
@@ -254,14 +268,20 @@ public static class TestDepthRules
         _ => OnboardingWizardCatalog.OnboardingTestKind.Competency
     };
 
-    public static int[] MiniIds(AssessmentKind kind)
-        => OnboardingWizardCatalog.MiniIds(ToOnboardingKind(kind));
+    public static int[] MiniIds(AssessmentKind kind, int quickScanVersion = AssessmentTestVersions.V1)
+        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+            ? OnboardingWizardCatalogV2.MiniIds(kind)
+            : OnboardingWizardCatalog.MiniIds(ToOnboardingKind(kind));
 
-    public static int[] DeeperIds(AssessmentKind kind)
-        => OnboardingWizardCatalog.DeeperIds(ToOnboardingKind(kind));
+    public static int[] DeeperIds(AssessmentKind kind, int quickScanVersion = AssessmentTestVersions.V1)
+        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+            ? OnboardingWizardCatalogV2.DeeperIds(kind)
+            : OnboardingWizardCatalog.DeeperIds(ToOnboardingKind(kind));
 
-    public static IReadOnlyList<int> AllCatalogIds(AssessmentKind kind)
-        => OnboardingWizardCatalog.AllCatalogIds(ToOnboardingKind(kind));
+    public static IReadOnlyList<int> AllCatalogIds(AssessmentKind kind, int quickScanVersion = AssessmentTestVersions.V1)
+        => AssessmentTestVersions.Normalize(quickScanVersion) == AssessmentTestVersions.V2
+            ? OnboardingWizardCatalogV2.AllCatalogIds(kind)
+            : OnboardingWizardCatalog.AllCatalogIds(ToOnboardingKind(kind));
 
     /// <summary>Scene depth token: 8 at First, 9 at Deeper/Full, 10 at Bottom.</summary>
     public static int SceneDepth(TestDepthLevel level) => level switch
