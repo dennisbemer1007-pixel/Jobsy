@@ -130,21 +130,145 @@ Aanbeveling: **#647 als tussenstap** (betere items & fairness); **module-merge a
 
 ---
 
-## 3. Werkgever- & vacaturekant (zelfde dimensies)
+## 3. Werkgever- & vacaturekant (optioneel, zelfde dimensies als kandidaat)
 
-### 3.1 Korte vragenlijst (10–15 min, éénmalig per vestiging + per vacature-aanvulling)
+**Eigenaar-requirement:** twee **optionele** invulmomenten — (a) cultuurfit op **bedrijf/team**-niveau (5–10 vragen), (b) **korte** aanvulling bij **vacature plaatsen** (werkcontext, gevraagde competenties, afwijkingen t.o.v. teamcultuur). Beide mappen op dezelfde dimensies als de kandidaat-modules (C, D, E, A). **Niet invullen = geldige keuze**; matching valt terug op infer (`VacancyCompetencyProfile`, tekst-heuristiek, pillars).
 
-| Blok | Vragen | Spiegelt module |
-|------|--------|-----------------|
-| **Teamcultuur** | 12 Likert (zelfde 6 dimensies als kandidaat C) | C |
-| **Waarden nadruk** | 10 Likert (5 drivers, “wat is hier normaal belangrijk”) | D |
-| **Werkcontext** | 8 enkelkeuze (tempo, fysiek, klant, ploeg, binnen/buiten) | E |
-| **Competentie-profiel** | Optioneel: 4 sliders 0–100 **of** laat infer + 1 bevestigingsvraag | A (targets) |
-| **Pillars (bestaand)** | Blijft 3–5 chips voor UX/copy | Koppeling naar C via `CulturePersonalityFitRules.PillarFit01` i.p.v. alleen competency mapping |
+**Aansluiting huidige product (acceptatie):** vestiging heeft al optionele **cultuurscan** (12 Likert, 6 cultuurdimensies × 2) via `CultureScanSection.razor` → `CompanyCultureProfile`; registratie kent **Quick** (6 sliders, `CompanyCultureSources.Quick`). Vacature-flow heeft al **optionele team-override** met culture pillars (`CreateVacancy.razor`, `_teamOverride`). Dit voorstel **versmallt** de verplichte mentale load en maakt de koppeling naar `ProfileVacancyMatchCalculator` expliciet.
 
-**Opslag:** `CompanyCultureProfile` uitbreiden met dezelfde dimensiecodes als kandidaat; vacature erft vestiging + overrides (JSON).
+### 3.1 UX-principes (snel & optioneel)
 
-### 3.2 Gebruik in `ProfileVacancyMatchCalculator` (filter vs gewicht)
+| Principe | Gedrag |
+|----------|--------|
+| **Standaard = doorgaan** | Vacature publiceren zonder extra blok; geen modal-gate. |
+| **Progressieve diepte** | Team: **6 vragen (~2 min)** volstaat voor match; link “+4 vragen voor scherper beeld” naar 10. |
+| **Eén scherm per context** | Teamcultuur onder **Organisatie → Cultuur** (bestaand); vacature-aanvulling als **ingeklapte** accordeon “Match scherper stellen (optioneel)”. |
+| **Herbruik** | Vacature toont samenvatting teamprofiel + “Wijkt deze functie af?” → alleen deltas invullen. |
+| **Transparantie kandidaat** | Geen ruwe employer-antwoorden; wel “past bij teamcultuur” in match-uitleg. |
+| **Read-only rollen** | Regio/lezen: profiel zien, niet wijzigen (bestaand patroon). |
+
+**Vacature-wizard copy (NL):**
+
+- Accordeon-titel: **“Match scherper stellen (optioneel, ±1 min)”**
+- Subtekst: *“Lobsy schat dit al uit functie en branche. Vul alleen in wat afwijkt van jullie team — dan worden matches en uitleg preciezer.”*
+- CTA skip: **“Overslaan — standaard inschatting gebruiken”** (primary path blijft publiceren).
+
+**Teamcultuur copy:**
+
+- *“Help kandidaten begrijpen hoe het bij jullie werkt. Zes korte stellingen zijn genoeg; uitgebreider kan later.”*
+
+### 3.2 (a) Optionele vragenlijst bedrijf / team — **6 + 4 vragen**
+
+**Formaat:** Likert 1–5 (*helemaal oneens* … *helemaal eens*), zelfde scoring als kandidaat (`CulturePersonalityCatalog` / `SchwartzValuesCatalog` → 0–100% per dimensie).
+
+#### Kern (6 vragen, ~2 min) — `CompanyCultureSources.Quick` / team-default
+
+| # | Dimensie (module) | Vraag (NL) | Code |
+|---|-------------------|------------|------|
+| T1 | Autonomy (C) | *“Bij ons mag je veel zelf beslissen hoe je je werk doet.”* | `Autonomy` |
+| T2 | Informal (C) | *“We doen het informeel: voornaam, korte lijntjes, weinig protocol.”* | `Informal` |
+| T3 | Collaboration (C) | *“We werken het liefst in een team en overleggen vaak.”* | `Collaboration` |
+| T4 | Flexibility (C) | *“Taken en tijden wisselen regelmatig — flexibiliteit hoort erbij.”* | `Flexibility` |
+| T5 | Innovation (C) | *“We proberen graag nieuwe manieren; verbeteren hoort bij de baan.”* | `Innovation` |
+| T6 | PeopleFirst (C) | *“De mens staat voor het resultaat: we nemen tijd voor elkaar en voor klanten.”* | `PeopleFirst` |
+
+#### Uitbreiding optioneel (+4 vragen, ~2 min) — wordt `Full` (max. 10 teamvragen)
+
+| # | Dimensie | Vraag (NL) | Code |
+|---|----------|------------|------|
+| T7 | Achievement (D) | *“Presteren en doelen halen worden hier zichtbaar beloond.”* | `Achievement` |
+| T8 | Stability (D) | *“Vaste afspraken en duidelijke regels geven ons rust op de werkvloer.”* | `Stability` |
+| T9 | Connection (D) | *“Collegialiteit en erbij horen zijn minstens zo belangrijk als de taak zelf.”* | `Connection` |
+| T10 | Impact (D) | *“We willen merken dat ons werk ertoe doet voor anderen of de omgeving.”* | `Impact` |
+
+> **Nota:** T7–T10 meten **organisatienorm** (wat hier geldt), niet de persoonlijkheid van de invuller. Geen Big Five-vragen aan werkgever — persoon–rol fit blijft kandidaat-side (module A) + tekst-heuristiek.
+
+**Opslag:** bestaande `CompanyCultureProfile` (percentvelden per dimensie); T1–T6 → cultuurpercentages; T7–T10 → optioneel `CompanyValuesProfile` (zelfde 5 drivers als kandidaat D) of JSON `EmployerValuesEmphasis`.
+
+**Bestaande 12-item scan:** blijft beschikbaar als “Uitgebreid teamprofiel” voor werkgevers die meer willen; inhoudelijk overlap met T1–T6 (1 vraag per dimensie i.p.v. 2).
+
+### 3.3 (b) Optionele vragenlijst bij vacature — **max. 8 korte items**
+
+Alles in één ingeklapte accordeon; defaults = **erfenis teamprofiel** + **infer**. Alleen gewijzigde velden worden opgeslagen op de vacature (`VacancyCultureOverridesJson`, `VacancyWorkContextJson`, `VacancyCompetencyTargets` — namen voorstel).
+
+#### Blok B1 — Werkcontext (module E, enkelkeuze, ~30 s)
+
+| # | Veld | Vraag (NL) | Antwoordopties → codes |
+|---|------|------------|-------------------------|
+| V1 | Tempo | *“Hoe is het tempo in deze functie?”* | Rustig (`calm`) · Normaal (`norm-ok`) · Vaak piek/druk (`piek`) |
+| V2 | Fysiek | *“Hoe fysiek is het werk?”* | Zittend/licht (`light`) · Veel staan/lopen (`standing`) · Tillen tot ~15 kg (`lifting-15`) · Zwaarder (`lifting-25`) |
+| V3 | Binnen/buiten | *“Waar werk je vooral?”* | Binnen (`prefer-indoor`) · Mix (`mix`) · Buiten (`prefer-outdoor`) |
+| V4 | Klantcontact | *“Hoeveel contact met klanten/gasten?”* | Veel · Af en toe · Weinig/geen |
+
+Mapping kandidaat: `SharedWorkPreferences` + paspoort; **match:** hard filter bij sterke mismatch (bijv. kandidaat `rather-not` outdoor + vacature `prefer-outdoor`), anders geen score-impact in fase 1.
+
+#### Blok B2 — Gevraagde competenties (module A → 4 werkdimensies, ~45 s)
+
+| # | Vraag (NL) | UI |
+|---|------------|-----|
+| V5 | *“Hoe belangrijk is **samenwerken** in deze functie?”* | Slider 0–100, default = infer |
+| V6 | *“Hoe belangrijk is **resultaat halen**?”* | idem |
+| V7 | *“Hoe belangrijk is **rust onder druk**?”* | idem |
+| V8 | *“Hoe belangrijk is **nieuwe oplossingen bedenken**?”* | idem |
+
+**Snel-variant (1 vraag):** checkbox *“Gebruik Lobsy-inschatting uit functietitel en branche”* (aan = geen V5–V8 opslaan, infer only).
+
+#### Blok B3 — Teamcultuur afwijking (module C, ~30 s)
+
+| # | Vraag (NL) | UI |
+|---|------------|-----|
+| V9 | *“Wijkt de **sfeer in dit team** af van jullie algemene bedrijfscultuur?”* | Nee → erf `CompanyCultureScores` · Ja → toon 3–6 **delta-sliders** (zelfde T1–T6 dimensies, alleen afwijkende) |
+| V10 | (alleen bij Ja) *“Welke 3 woorden passen het best bij **dit** team?”* | Hergebruik **culture pillars** (3 chips max) — bestaand UX |
+
+Pillars blijven **marketing + `CultureFitBuilder`**; numerieke fit loopt via `CulturePersonalityScores` (team + delta).
+
+### 3.4 Datastroom naar `ProfileVacancyMatchCalculator`
+
+Logische resolutie (implementatie-voorstel; geen code in deze PR):
+
+```
+EffectiveVacancyCulture =
+  ApplyVacancyDelta(CompanyCultureScores, VacancyCultureDelta)
+  ?? InferFromPillars(CulturePillars)           // bestaand
+  ?? null                                        // geen cultuurfit op C
+
+EffectiveVacancyCompetencies =
+  VacancyCompetencyTargets (V5–V8 ingevuld)
+  ?? MapCultureToCompetencies(EffectiveVacancyCulture)  // optionele brug
+  ?? VacancyCompetencyProfile.Infer(workTypes, title, description)  // FALLBACK
+
+EffectiveVacancyValues =
+  VacancyValuesOverride ?? CompanyValuesEmphasis (T7–T10)
+  ?? SchwartzValuesFitRules.InferVacancyDrivers(title, description)   // FALLBACK
+
+EffectiveWorkContext =
+  VacancyWorkContextJson (V1–V4) ?? InferWorkContext(title, description, schedule)
+```
+
+**Invoer `ProfileVacancyMatchInput` (bestaand + uitbreiding):**
+
+| Veld | Bron |
+|------|------|
+| `VacancyCompetencies` | `EffectiveVacancyCompetencies` |
+| `CompanyCultureScores` | `EffectiveVacancyCulture` (niet alleen company-wide als vacature-delta) |
+| `CulturePillars` | Vacature (override) of vestiging |
+| `CandidateCultureScores` | Kandidaat module C |
+| `CandidateCompetencies` | Kandidaat module A (werkdimensies) |
+| `CandidateValuesScores` | Kandidaat module D |
+| `Core` (reis/uren/dagdelen) | Profiel + vacature (bestaand) |
+
+**Bestaande blend in calculator (v1):**
+
+1. `competency01` = `VacancyCompetencyProfile.Fit01(kandidaat, EffectiveVacancyCompetencies)` — **fallback infer** als employer niets invulde.
+2. Indien kandidaat-cultuur compleet: personality + `CultureFit01(kandidaat, EffectiveVacancyCulture)` → 75/25 mix in competency-kanaal (L29–48).
+3. Waarden: `SchwartzValuesFitRules.Fit01(kandidaat, EffectiveVacancyValues)` → 78/22 blend (L51–57).
+4. `CultureFitBuilder.Evaluate(pillars, kandidaat-competenties, kandidaat-cultuur)` — **12%** op totaal na hard gates; pillars komen van vacature (V10) of default.
+
+**Werkcontext (V1–V4):** fase 1 **pre-filter** vóór `Calculate` (kandidaat ziet vacature wel/niet in top-10); fase 2 optioneel 5–8% gewicht.
+
+**Hard gates (ongewijzigd):** reis, legal, rijbewijs, opleiding — employer-vragenlijsten vervangen deze niet.
+
+### 3.5 Gebruik in `ProfileVacancyMatchCalculator` (filter vs gewicht)
 
 | Dimensie | Mechanisme | Default |
 |----------|------------|---------|
@@ -163,11 +287,12 @@ Aanbeveling: **#647 als tussenstap** (betere items & fairness); **module-merge a
 
 **Productregel:** max. **2 hard filters** uit psychometrie (rest = uitleg + ranking). Voorkomt “zwarte lijst”-gevoel en AVG-risico.
 
-### 3.3 `VacancyCompetencyProfile` (verbetering)
+### 3.6 `VacancyCompetencyProfile` (fallback-keten)
 
 - **Vandaag:** infer uit sector + keywords (`VacancyCompetencyProfile.cs`).
-- **Voorstel:** volgorde **(1)** expliciete employer sliders → **(2)** teamcultuur → **(3)** infer fallback.
-- Documenteer in vacature-UI: “Typisch voor deze functie — pas aan als je team afwijkt.”
+- **Voorstel:** volgorde **(1)** vacature-sliders V5–V8 → **(2)** afgeleid uit teamcultuur T1–T6 → **(3)** infer fallback (titel, branche, omschrijving).
+- UI: standaard checkbox “Lobsy-inschatting gebruiken”; alleen bij uitzetten sliders tonen.
+- Match-uitleg tag: *“Gebaseerd op jullie ingevulde functieprofiel”* vs *“Typisch voor deze branche (inschatting)”* zodat werkgever en kandidaat weten welke bron geldt.
 
 ---
 
@@ -186,7 +311,7 @@ Aanbeveling: **#647 als tussenstap** (betere items & fairness); **module-merge a
 |-------|------|--------|------|
 | Match-uitleg splitst competency / cultuur / waarden / interesse | `MatchExplainV2` | UX-complexiteit | Klikgedrag “waarom match” |
 | Indicatieve lagen (< Full count) verlagen match-evidence (#647 patroon) | `TestsV2Enabled` | Kandidaten verwachten hogere % | Vergelijk klachten / support |
-| Employer teamcultuur 12-item (optioneel) | `EmployerCultureScan` | Invuldrift | N ≥ 30 vestigingen |
+| Employer teamcultuur **6+4 optioneel** (T1–T10) + vacature-accordeon V1–V10 | `EmployerCultureScan` / `VacancyMatchOptional` | Invuldrift | Completion %; N ≥ 30 vestigingen |
 
 ### Fase 2 — Module-architectuur v3 (2027)
 
@@ -209,7 +334,7 @@ Aanbeveling: **#647 als tussenstap** (betere items & fairness); **module-merge a
 1. **Construct drift** bij merge — mitigatie: vaste mappingstabel + geen herberekening oude scans.
 2. **Te korte schalen** na merge — mitigatie: Full free ≥24–30 items per module; diepte voor rapporten.
 3. **Match% verlies vertrouwen** — mitigatie: bands + “indicatief” + employer erkenning in UI (#647).
-4. **Employer invullast** — mitigatie: infer defaults, 12-item max, hergebruik vestiging.
+4. **Employer invullast** — mitigatie: infer defaults, **6 teamvragen default**, vacature-accordeon ingeklapt, hergebruik vestiging.
 5. **AI-cultuurfit** (`CultureFitRefineWorker`) — mitigatie: lokale engine blijft leidend; AI alleen copy within clamp.
 
 ### Wat moet uit pilotdata komen vóór “v3 default aan”
