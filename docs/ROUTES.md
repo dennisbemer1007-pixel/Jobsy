@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (252 routes)
+## Table (260 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -88,6 +88,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/mail-test` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/marketing-flyer` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/masterdata` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/match-calibration` | `Pages/Admin/MatchCalibrationAdmin.razor` | Admin |
 | `/admin/moderation` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/notifications` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/organisaties` | `Pages/Admin/CompaniesAdmin.razor` | Admin |
@@ -95,12 +96,14 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/admin/organisaties/regios` | `Pages/Admin/CnamesAdmin.razor` | Admin |
 | `/admin/paspoortpartners` | `Pages/Admin/PassportPartnersAdmin.razor` | Admin |
 | `/admin/personal-data-access-log` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/research` | `Pages/Admin/ResearchAdmin.razor` | Admin |
 | `/admin/sales` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/sales-managers` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/scholen` | `Pages/Admin/Scholen/ScholenList.razor` | Admin |
 | `/admin/scholen/rapportage` | `Pages/Admin/Scholen/ScholenRapportage.razor` | Admin |
 | `/admin/scholen/{SchoolId:guid}` | `Pages/Admin/Scholen/ScholenDetail.razor` | Admin |
 | `/admin/settings` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
+| `/admin/takenlijst` | `Pages/Admin/BeheerTodosAdmin.razor` | Admin |
 | `/admin/te-doen` | `Pages/Admin/TodoAdmin.razor` | Admin |
 | `/admin/token-finance` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
 | `/admin/tokens` | `Pages/Admin/AdminLegacyRedirect.razor` | Admin |
@@ -150,8 +153,11 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
+| `/candidate/privacy` | `Pages/Candidate/CandidatePrivacy.razor` | Candidate |
 | `/candidate/proactive-matching` | `Pages/Candidate/ProactiveMatching.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
+| `/candidate/research-consent` | `Pages/Candidate/ResearchConsentFinish.razor` | Candidate |
+| `/candidate/settings` | `Pages/Candidate/CandidateSettings.razor` | Candidate |
 | `/candidate/share-in` | `Pages/Candidate/ShareIn.razor` | anonymous |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
@@ -185,6 +191,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/hoe-werkt-lobsy` | `Pages/HowLobsyWorks.razor` | anonymous |
 | `/home` | `Pages/RoleHome.razor` | authenticated |
 | `/home/metrics/{Key}` | `Pages/MetricDrilldownPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/info/onderzoek` | `Pages/Legal/Onderzoek.razor` | any (no Authorize attribute) |
 | `/intermediary` | `Pages/Intermediary/IntermediaryDashboard.razor` | Intermediary |
 | `/intermediary/team` | `Pages/Intermediary/Team.razor` | Intermediary |
 | `/koppeling/sleutel` | `Pages/Public/ApiKeyReveal.razor` | anonymous |
@@ -210,6 +217,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
+| `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | any (no Authorize attribute) |
 | `/privacy` | `Pages/Legal/Privacy.razor` | anonymous |
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
