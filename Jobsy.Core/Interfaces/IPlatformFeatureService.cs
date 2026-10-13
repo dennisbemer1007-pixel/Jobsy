@@ -55,6 +55,7 @@ public sealed record PlatformFeatureSnapshot(
     bool EmployerPhase2Enabled = false,
     bool CandidateExternalVacanciesEnabled = false,
     bool ProactiveMatchingEnabled = false,
+    bool MatchCalibrationV1Enabled = false,
     int CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute,
     int CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour,
     int CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay);
@@ -116,6 +117,7 @@ public sealed record PlatformFeatureUpdate(
     /// <summary>Null = keep existing. Default false.</summary>
     bool? CandidateExternalVacanciesEnabled = null,
     bool? ProactiveMatchingEnabled = null,
+    bool? MatchCalibrationV1Enabled = null,
     int? CandidateApplyPerMinuteLimit = null,
     int? CandidateApplyPerHourLimit = null,
     int? CandidateApplyPerDayLimit = null);

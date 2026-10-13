@@ -184,5 +184,29 @@ public static class UiStringsFeatureFlags
             "Lobsy szuka dla Ciebie, shortlisty i prośby o kontakt. Domyślnie wył.",
             "Lobsy caută pentru tine, shortlist-uri și cereri de cunoaștere. Implicit oprit.",
             "لوبسي يبحث لك، قوائم أصحاب العمل وطلبات التعارف. متوقف افتراضياً.");
+        Add("AdminSettings.MatchCalibrationV1.Enabled.Title",
+            "Matchkalibratie V1",
+            "Match calibration V1",
+            "Kalibracja dopasowania V1",
+            "Calibrare match V1",
+            "معايرة المطابقة V1");
+        Add("AdminSettings.MatchCalibrationV1.Enabled.Desc",
+            "Realistischer matchpercentage: geen volle punten bij ontbrekende data, aparte betrouwbaarheid. Standaard uit.",
+            "More realistic match scores: no full credit for missing data, separate confidence. Default off.",
+            "Bardziej realistyczny match: brak pełnych punktów przy brakujących danych, osobna pewność. Domyślnie wył.",
+            "Match mai realist: fără puncte pline la date lipsă, încredere separată. Implicit oprit.",
+            "مطابقة أكثر واقعية: لا نقاط كاملة عند نقص البيانات، ثقة منفصلة. متوقف افتراضياً.");
+        Add("Match.Confidence.Indicative",
+            "Indicatief — vul je profiel aan voor een betere match.",
+            "Indicative — complete your profile for a better match.",
+            "Orientacyjnie — uzupełnij profil, aby lepiej dopasować oferty.",
+            "Orientativ — completează profilul pentru un match mai bun.",
+            "تقريبي — أكمل ملفك للحصول على مطابقة أفضل.");
+        Add("Match.Confidence.Level",
+            "Betrouwbaarheid van deze match: ongeveer {0}%.",
+            "Confidence in this match: about {0}%.",
+            "Pewność tego dopasowania: około {0}%.",
+            "Încredere în acest match: circa {0}%.",
+            "ثقة هذا التطابق: حوالي {0}%.");
     }
 }

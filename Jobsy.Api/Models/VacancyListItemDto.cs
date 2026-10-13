@@ -87,6 +87,8 @@ public record VacancyListItemDto(
     DateTime? EngagementReminderSentAtUtc = null,
     int? MinimumReferences = null,
     int? MatchPercent = null,
+    int? MatchFitRawPercent = null,
+    int? MatchConfidencePercent = null,
     string? MatchColorBand = null,
     string? MatchWhySummary = null,
     IReadOnlyList<string>? MatchWhy = null,
