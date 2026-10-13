@@ -7,6 +7,8 @@
 
 **Disclaimer:** Geen officiële COTAN-beoordeling. Matchpercentages zijn **oriënterend** tot criteriumvalidatie (uitkomsten op het werk) is uitgevoerd (`VALIDATIE_STUDIEPLAN.md` in PR #645).
 
+**Eigenaar-prioriteit:** het matchpercentage moet **realistisch** voelen — geen “standaard 80%”, wel eerlijke spreiding, aparte **betrouwbaarheid/compleetheid**, en harde filters voor deal-breakers. Zie **§4**.
+
 ---
 
 ## 1. Dekkingsmatrix (construct → huidige tests → overlap)
@@ -296,7 +298,105 @@ EffectiveWorkContext =
 
 ---
 
-## 4. Gefaseerde roadmap
+## 4. Audit match-realism (`ProfileVacancyMatchCalculator`)
+
+De huidige **TotalPercent** is een gewogen gemiddelde (0–1) × 100, afgerond (`ProfileVacancyMatchCalculator.cs` L106–143), met optionele **+12% cultuur-pillars** (`CultureFitBuilder.TotalScoreWeight`, L154–157) en **+0–5 engagement** (`EngagementCatalog.MaxBonus`, L166–172). Drempels in product:
+
+| Constante | Waarde | Betekenis in UI |
+|-----------|--------|-----------------|
+| `DisplayThreshold` | **60** | Top-10 banenkaart / profiel-widget: vacatures **onder 60%** verdwijnen uit ranking (`RankScored`, L215–224). |
+| `MatchScoreWeights.StrongMatchThreshold` | **70** | “Groene” band — voelt als **sterke** match, terwijl 70% statistisch “C-voldoende” is. |
+| `MatchScoreWeights.GuldenMiddenwegThreshold` | **50** | Sollicitatie-safety-net: onder 50% extra bevestiging (`GuldenMiddenwegRules`). |
+
+### 4.1 Waar scores **omhoog** drukken (inflatie)
+
+| # | Mechanisme | Code / gedrag | Effect |
+|---|------------|---------------|--------|
+| 1 | **Ontbrekende reis = volle score** | `MatchScoreCalculator.ScoreTravel`: geen minuten of max → **40/40 punten** (“neutral travel”, L124–127) | Kandidaat zonder locatie/reis krijgt **100%** reis-component. |
+| 2 | **Ontbrekende uren = halve tot volle score** | Geen kandidaat-uren → **15/30** (L153–155); geen vacature-uren → **30/30** (L148–150) | Onvolledig profiel telt alsnog mee als “redelijke” fit. |
+| 3 | **Flexibele vacature-roosters** | `VacancySchedule.FlexibleTimes` → dagdelen **30/30** neutraal (L179–181) | Veel vacatures scoren **max** dagdelen zonder overlap-check. |
+| 4 | **Experience-baseline** | `ScoreExperience`: geen opleidingseis → **0,55–0,85** per subcomponent (L316–339); zelfde sector → **exact01 = 1** | Alleen sector-label “Horeca” vs “Horeca” geeft al hoge ervaringsscore. |
+| 5 | **Competentie-fit eenzijdig** | `VacancyCompetencyProfile.Fit01`: `min(c/target, 1)` (L78–79) — **boven target geen bonus, onder target zacht** | Uniform hoge testscores (~80) lijken op elke vacature “geschikt”. |
+| 6 | **Infer fallback overal** | Geen employer-input → infer targets + RIASEC-tags + waarden uit vacaturetekst (`SchwartzValuesFitRules.InferVacancyDrivers`) | Tekst-heuristiek **vermindert variatie** tussen vacatures. |
+| 7 | **Stacking cultuur + waarden in competency-kanaal** | 75/25 personality, 78/22 waarden op `competency01` (L51–77) | Eén hoog kanaal tilt **20%** van rest-gewicht mee; kandidaat ziet niet wat wat doet. |
+| 8 | **Cultuurfit-bonus** | Na voldoen hard gates: **12%** totaal opnieuw gemiddeld met pillar-fit (L145–157) | Kan **brede** matches over de 60-drempel tillen. |
+| 9 | **Ranking cutoff 60** | Alleen ≥60 in Top-10 | UI toont **alleen** “oranje/groen” band; gebruiker ziet geen spreiding 30–55%. |
+| 10 | **Geen aparte confidence** | `TotalPercent` is altijd “vol” | Ontbrekende tests worden **niet** als “onbekend” gelabeld. |
+
+**Clustering:** unit tests verwachten bewust brede profielen **≥ 60%** (`MultidimensionalMatchingTests`, `CompetencyMatchingTests.Rank`) — product en tests zijn zo afgestemd dat “goede verhalen” zichtbaar blijven, wat **hoge baselines** bevestigt.
+
+### 4.2 Voorstel: eerlijke kalibratie
+
+**Scheiding weergave (verplicht in UI):**
+
+| Veld | Betekenis |
+|------|-----------|
+| **Match % (fit)** | Geschatte fit **alleen over bekende dimensies**, geen neutrale vullers. |
+| **Betrouwbaarheid % (confidence)** | Gewichtsfraction van dimensies die **daadwerkelijk** gemeten zijn (tests af, profielvelden ingevuld, employer-optioneel ingevuld). |
+| **Label** | Bij confidence &lt; 50: *“Indicatief — vul X in voor scherper beeld”*; geen groene band. |
+
+**Rekenregels (voorstel `MatchCalibrationV1`):**
+
+1. **Geen neutrale 100%** — ontbrekende reis/uren/dagdelen: component **exclus** uit teller (hernormaliseer weights), confidence −Δ.
+2. **Indicatieve testdiepte** (#647): `AssessmentMatchEvidence.Indicative` → cap component (bijv. max 0,65 × raw fit) + lagere confidence.
+3. **Competentie-fit symmetrisch:** `1 − |c − t| / 100` per dimensie (straf voor over- én onderfit); target uit employer/vacature, anders infer.
+4. **Gewichten (onderzoeksgedreven prior):** meta-analyses person–job fit (Conscientiousness sterkste Big Five predictor; interests matig; culture modest — o.a. Barrick & Mount; NIST/Schmidt voor g). Voor Lobsy **tot er geen cognitieve screener is**:
+
+   | Laag | Dimensies | Gewicht fit | Rol |
+   |------|-----------|-------------|-----|
+   | 0 | Deal-breakers (legal, rijbewijs, harde barrier, reis **over** max, uren **0 overlap**) | — | **Filter** (vacature verborgen of rood) |
+   | 1 | Conscientiousness/resultaat + rol-eisen (module A **C**, ervaring, opleiding) | **30%** | Taakprestatie-proxy |
+   | 2 | Praktisch (reis, uren, dagdelen, werkcontext E) | **25%** | Arbeidsvoorwaarden |
+   | 3 | Interesses RIASEC + beroepen-kompas | **20%** | Retention / motivatie |
+   | 4 | Cultuur C + pillars | **15%** | Team-fit |
+   | 5 | Waarden D | **10%** | Langer-termijn fit |
+   | (later) | Cognitief non-verbaal (indicatief) | **≤10%** binnen laag 1, nooit filter | Alleen na validatie |
+
+5. **Geen additieve bonuses** op totaal — engagement (+5) en pillar-fit **binnen** laag 4, max +3 punten op fit%, niet stapelen boven 100.
+6. **Bands herkalibreren:** sterk ≥ **78**; goed **62–77**; twijfel **45–61**; laag &lt; 45. Top-10 drempel **55** i.p.v. 60, of dynamisch op percentiel in regio.
+7. **Shrinkage bij lage confidence:**  
+   `fit_display = round(100 × fit_raw × (0,55 + 0,45 × confidence))`  
+   (confidence 0,22 → max ~64% van raw naar display; voorkomt 85% bij dun profiel).
+
+**Hard filters (deal-breakers)** — blijven **vóór** fit-berekening:
+
+- `LegalEligible == false`
+- `TravelWithinPreference == false` (kandidaat-max bekend)
+- `HoursOverlapHours == 0` (beide kanten ingevuld)
+- `VacancyBarrierCheck` dealbreaker (diploma/certificaat)
+- Optioneel werkgever: taal/rijbewijs “must”
+
+### 4.3 Voorbeelden: huidige code vs voorstel (zelfde inputs)
+
+Scores **huidige code** zijn nagebouwd met de **zelfde formules** als `ProfileVacancyMatchCalculator` + `MatchScoreCalculator` (Python-replica op acceptatie-branch, maart 2026; ter controle: `dotnet test --filter MultidimensionalMatchingTests` / `CompetencyMatchingTests` op CI). **Voorstel** = `MatchCalibrationV1` (§4.2) met confidence-gewichten per scenario.
+
+| ID | Profiel (samenvatting) | **Huidig** | **Voorstel fit** | **Confidence** | Interpretatie |
+|----|------------------------|------------|------------------|----------------|---------------|
+| **S1** | Geen tests; reis & uren **onbekend**; zelfde sector (logistiek) | **85%** | **55%** | **22%** | Inflatie: neutrale reis (40/40) + flex dagdelen + sector-match → “groen terwijl DNA leeg”. |
+| **S2** | Kandidaat **Horeca**, vacature **Zorg**; testscores overal ~80% | **76%** | **63%** | **62%** | Tests “goed genoeg” ondanks verkeerde sector; asymmetrische Fit01 + hoge experience-transferable. |
+| **S3** | Retail × retail; sterke competenties; RIASEC enterprising; career deep | **89%** | **85%** | **92%** | Echte fit **mag** hoog; kleine correctie ( geen bonus-stacking ). |
+| **S4** | Reis **90 min** vs max **20**; uren **8–12** vs vacature **32–40**; geen tests | **41%** | **30%** | **38%** | Rood blijft rood; confidence laag → geen valse hoop. |
+| **S5** | “Broad admin” profiel (≈ `MultidimensionalMatchingTests`) — overdraagbare titel, hoge C, deep career | **87%** | **82%** | **88%** | Blijft **boven** drempel maar niet “bijna perfect”; uitleg “brede match” blijft, % iets bescheidener. |
+
+**Takeaway:** onder huidige regels scoort **S1 (weinig data) hoger dan S2 (verkeerde sector)** — dat ondermijnt vertrouwen. Na kalibratie daalt vooral **dun bewijs** (S1), blijft **echte fit** (S3/S5) hoog maar niet op 90+.
+
+### 4.4 Validatieplan (scores ↔ uitkomsten)
+
+| Fase | Data | Metriek | Doel |
+|------|------|---------|------|
+| **A — Telemetrie** (direct) | Alle `ProfileVacancyMatch` + confidence | Distributie fit%; % per band; correlatie confidence ↔ ingevulde modules | Detecteer clustering &gt; 70% |
+| **B — Proxies** (3–6 mnd) | Sollicitatie → uitnodiging → **ContactShared** | Lift top-deciel vs bottom; calibration plot | Fit% voorspelt **gesprek**, niet alleen klik |
+| **C — Werkgever** | 1–5 ster “klopt deze match?” na unlock | Mean rating vs fit% | Face validity |
+| **D — Uitkomst** (12+ mnd, AVG-safe) | **90-dagen behoud** / contract verlengd (flex) / “niet doorgestart” reden | HR logistic; Brier score | Criteriumvaliditeit |
+| **E — A/B** | Oude vs `MatchCalibrationV1` | Sollicatie-rate, geen toename mis-hires (werkgever) | Productacceptatie |
+
+Export: bestaande `docs/psychometrie/scripts/export_anonymized_responses.sql` uitbreiden met match-snapshots (geen PII). Rapportage kwartaal in `VALIDATIE_STUDIEPLAN.md`.
+
+**Feature flags:** `MatchCalibrationV1` (rekenengine), `MatchShowConfidence` (UI), `MatchBands2027` (drempels).
+
+---
+
+## 5. Gefaseerde roadmap
 
 ### Fase 0 — Baseline (nu → acceptatie)
 
@@ -305,13 +405,15 @@ EffectiveWorkContext =
 | Merge docs #645 + dit voorstel | — | Geen | — |
 | #647 review: v2 itembanks, `TestsV2Enabled` default **uit** | `TestsV2Enabled` | Meertaligheid / lengte | A/B: completion rate, tijd, drop-off |
 
-### Fase 1 — Transparantie & scheiding scores (Q4 2026)
+### Fase 1 — Transparantie, confidence & kalibratie (Q4 2026) — **prioriteit eigenaar**
 
 | Actie | Flag | Risico | Data |
 |-------|------|--------|------|
+| **MatchCalibrationV1**: geen neutrale 100% bij missende reis/uren; confidence % in UI | `MatchCalibrationV1` / `MatchShowConfidence` | Lagere Top-10 counts | Funnel + support tickets |
 | Match-uitleg splitst competency / cultuur / waarden / interesse | `MatchExplainV2` | UX-complexiteit | Klikgedrag “waarom match” |
 | Indicatieve lagen (< Full count) verlagen match-evidence (#647 patroon) | `TestsV2Enabled` | Kandidaten verwachten hogere % | Vergelijk klachten / support |
 | Employer teamcultuur **6+4 optioneel** (T1–T10) + vacature-accordeon V1–V10 | `EmployerCultureScan` / `VacancyMatchOptional` | Invuldrift | Completion %; N ≥ 30 vestigingen |
+| Telemetrie fit-distributie + calibration plot (§4.4 fase A) | — | — | Dashboard admin |
 
 ### Fase 2 — Module-architectuur v3 (2027)
 
@@ -349,16 +451,17 @@ EffectiveWorkContext =
 
 ---
 
-## 5. Beslispunten voor product & juridisch
+## 6. Beslispunten voor product & juridisch
 
 1. **Eén “DNA”-dashboard** met 4 modules + werkcontext i.p.v. 4 losse testmerken.
 2. **Pricing diepte:** bundel Persoon+Werkstijl i.p.v. apart competentie + cultuur deep.
 3. **Positionering:** blijft **matching & loopbaanoriëntatie**, geen gecertificeerde selectietest — expliciet in consent & employer contract.
 4. **Volgorde merge:** eerst data v2 (#647), dan v3 module-split — niet tegelijk.
+5. **Match-realism vóór marketing “80% match”:** kalibratie + confidence live vóór brede campagne.
 
 ---
 
-## 6. Referenties (code)
+## 7. Referenties (code)
 
 | Onderdeel | Pad |
 |-----------|-----|
