@@ -87,6 +87,8 @@ public record VacancyListItemDto(
     DateTime? EngagementReminderSentAtUtc = null,
     int? MinimumReferences = null,
     int? MatchPercent = null,
+    int? MatchFitRawPercent = null,
+    int? MatchConfidencePercent = null,
     string? MatchColorBand = null,
     string? MatchWhySummary = null,
     IReadOnlyList<string>? MatchWhy = null,
@@ -139,7 +141,10 @@ public record VacancyListItemDto(
     bool OpenForWorkRequired = false,
     /// <summary>When the vacancy was taken offline. Null on older rows; do not substitute EndDate.</summary>
     DateTime? ClosedAtUtc = null,
-    int? PublicMapRadiusKm = null);
+    int? PublicMapRadiusKm = null,
+    /// <summary>UiStrings key when match evidence is indicative (partial Quick-Scan).</summary>
+    string? MatchTransparencyNote = null,
+    int? MatchUncertaintyPoints = null);
 
 public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
 

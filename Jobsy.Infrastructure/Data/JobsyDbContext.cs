@@ -1872,6 +1872,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.CandidatePassportEnabled).HasDefaultValue(true);
             entity.Property(e => e.PassportPartnersEnabled).HasDefaultValue(false);
             entity.Property(e => e.PassportPdfV2Enabled).HasDefaultValue(false);
+            entity.Property(e => e.TestsV2Enabled).HasDefaultValue(false);
             entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
             entity.Property(e => e.WhatsAppRemindersEnabled).HasDefaultValue(false);
             entity.Property(e => e.CompactTestPdfEnabled).HasDefaultValue(false);

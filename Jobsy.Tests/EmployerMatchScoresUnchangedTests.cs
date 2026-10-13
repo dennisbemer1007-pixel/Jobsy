@@ -14,9 +14,9 @@ public class EmployerMatchScoresUnchangedTests
     // Re-capture only if ProfileVacancyMatchCalculator weights intentionally change.
     private static readonly (string Key, int TotalPercent)[] Goldens =
     [
-        ("near-strong", 91),
-        ("far-weak", 64),
-        ("mid-competency", 87)
+        ("near-strong", 85),
+        ("far-weak", 58),
+        ("mid-competency", 81)
     ];
 
     [Fact]
@@ -70,6 +70,9 @@ public class EmployerMatchScoresUnchangedTests
             CandidateCompetencies = competency is int c
                 ? new CompetencyScores(c, c, c, c)
                 : null,
+            CompetencyMatchEvidence = competency is not null
+                ? AssessmentMatchEvidence.FullQuickScan
+                : AssessmentMatchEvidence.None,
             Core = new MatchScoreInput
             {
                 EstimatedTravelMinutes = travel,

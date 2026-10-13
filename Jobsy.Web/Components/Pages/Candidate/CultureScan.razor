@@ -25,7 +25,7 @@ else if (_loadFailed)
 }
 else
 {
-    <TestConsentGate GateChanged="OnGateChanged">
+    <TestConsentGate QuickScanVersion="_quickScanVersion" GateChanged="OnGateChanged">
         @if (_gateOpen)
         {
             @if (_mode == TestPageShell.ShellMode.Intro)
@@ -33,15 +33,16 @@ else
                 <TestPageShell Kind="AssessmentKind.Culture"
                                Mode="TestPageShell.ShellMode.Intro"
                                H1="@Culture["Discovery.Test.CultureScan.Title"]"
-                               Lead="@Culture["TestFlow.Lead.Culture"]"
+                               Lead="@IntroLead"
                                TestName="@Culture["CultureScan.Title"]"
                                Answered="_answered"
                                TargetCount="_targetCount"
+                               ShowIndicativeBanner="ShowIndicativeBanner"
                                BubbleText="@IntroBubble">
                     <ChildContent>
                         <fieldset class="test-depth-pick" role="radiogroup" aria-label="@Culture["TestFlow.DepthPick"]">
                             <legend>@Culture["TestFlow.DepthPick"]</legend>
-                            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Culture))
+                            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Culture, _quickScanVersion))
                             {
                                 var done = _answered >= band.Count;
                                 <label class="test-depth-pick__card @(done ?"is-done" : null) @(_target == band.Level ? "is-on" : null)">
@@ -78,6 +79,7 @@ else
                                LevelName="@Culture[TestDepthRules.NameKey(_target)]"
                                Answered="_autosave.AnsweredCount"
                                TargetCount="_targetCount"
+                               ShowIndicativeBanner="ShowIndicativeBanner"
                                BubbleText="@Culture["TestFlow.Bubble.Question"]">
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
@@ -104,6 +106,7 @@ else
                                DoneLead="@DoneLead"
                                Answered="_answered"
                                TargetCount="_targetCount"
+                               ShowIndicativeBanner="ShowIndicativeBanner"
                                BubbleText="@Culture["TestDone.Bubble.Culture"]">
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
@@ -141,10 +144,18 @@ else
     private List<string> _gainLines = [];
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
-    private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Culture, _target);
-    private int _fullCount => TestDepthRules.CountFor(AssessmentKind.Culture, TestDepthLevel.Full);
+    private int _quickScanVersion = AssessmentTestVersions.V1;
+    private bool _isIndicativeDepth;
+    private bool ShowIndicativeBanner => _quickScanVersion == AssessmentTestVersions.V2
+        && (_isIndicativeDepth || _targetCount < _fullCount || (_answered > 0 && _answered < _fullCount));
+    private string IntroLead => _quickScanVersion == AssessmentTestVersions.V2
+        ? Culture.Format("TestFlow.Lead.Culture.V2", _fullCount)
+        : Culture["TestFlow.Lead.Culture"];
+    private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Culture, _target, _quickScanVersion);
+    private int _fullCount => TestDepthRules.CountFor(AssessmentKind.Culture, TestDepthLevel.Full, _quickScanVersion);
     private static readonly IReadOnlyDictionary<int, int> EmptyAnswers = new Dictionary<int, int>();
-    private int ResumeAt => TestDepthRules.ResumeQuestionNumber(AssessmentKind.Culture, _autosave?.Answers ?? EmptyAnswers);
+    private int ResumeAt => TestDepthRules.ResumeQuestionNumber(
+        AssessmentKind.Culture, _autosave?.Answers ?? EmptyAnswers, _quickScanVersion);
     private string IntroBubble => _answered >= _fullCount
         ? Culture["TestFlow.Bubble.IntroDone"]
         : _answered > 0
@@ -192,18 +203,23 @@ else
                     if (int.TryParse(key, out var id) && value is >= 1 and <= 5) answers[id] = value;
                 }
             }
+            _quickScanVersion = state?.QuickScanVersion ?? AssessmentTestVersions.V1;
+            _isIndicativeDepth = state?.IsIndicativeDepth ?? false;
             _answered = answers.Count;
-            _flowQuestions = TestDepthRules.QuestionIdsFor(AssessmentKind.Culture, TestDepthLevel.Full)
+            _flowQuestions = TestDepthRules.QuestionIdsFor(
+                    AssessmentKind.Culture, TestDepthLevel.Full, _quickScanVersion)
                 .Select(id =>
                 {
-                    var qItem = CulturePersonalityCatalog.Questions.First(x => x.Id == id);
+                    var qItem = AssessmentQuickScanCatalog.CultureQuestions(_quickScanVersion)
+                        .First(x => x.Id == id);
                     return new TestQuestionFlow.FlowQuestion(id, Culture[qItem.TextKey]);
                 }).ToList();
             _autosave.ReplaceAll(answers);
-            var reached = TestDepthRules.Reached(AssessmentKind.Culture, _answered);
+            var reached = TestDepthRules.Reached(AssessmentKind.Culture, _answered, _quickScanVersion);
             if (reached is TestDepthLevel r && r != TestDepthLevel.Full)
             {
-                _target = TestDepthRules.Next(AssessmentKind.Culture, _answered) ?? TestDepthLevel.Full;
+                _target = TestDepthRules.Next(AssessmentKind.Culture, _answered, _quickScanVersion)
+                    ?? TestDepthLevel.Full;
             }
         }
         catch { _loadFailed = true; }
@@ -213,7 +229,7 @@ else
     private RenderFragment RenderRail() => __builder =>
     {
         <ol class="test-rail">
-            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Culture))
+            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Culture, _quickScanVersion))
             {
                 var done = _answered >= band.Count;
                 var current = _mode == TestPageShell.ShellMode.Question && _target == band.Level;
@@ -224,7 +240,13 @@ else
         </ol>
     };
 
-    private void SelectDepth(TestDepthLevel level) { if (_answered < TestDepthRules.CountFor(AssessmentKind.Culture, level)) _target = level; }
+    private void SelectDepth(TestDepthLevel level)
+    {
+        if (_answered < TestDepthRules.CountFor(AssessmentKind.Culture, level, _quickScanVersion))
+        {
+            _target = level;
+        }
+    }
     private void StartQuestions()
     {
         _mode = TestPageShell.ShellMode.Question;

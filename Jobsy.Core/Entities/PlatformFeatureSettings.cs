@@ -142,6 +142,14 @@ public class PlatformFeatureSettings
     /// <summary>Proactive matching (Lobsy zoekt voor je + werkgever-shortlist). Default false.</summary>
     public bool ProactiveMatchingEnabled { get; set; }
 
+    /// <summary>Quick-Scan v2 catalogs for newly started candidate tests. Default false.</summary>
+    public bool TestsV2Enabled { get; set; }
+
+    /// <summary>
+    /// Realistic match calibration (fit + confidence, no neutral inflation). Default false.
+    /// </summary>
+    public bool MatchCalibrationV1Enabled { get; set; }
+
     /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
     public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
 

@@ -3291,6 +3291,11 @@ public class VacanciesController : ControllerBase
             VacancyId = match.VacancyId,
             VacancyTitle = match.VacancyTitle,
             TotalPercent = match.TotalPercent,
+            LegacyTotalPercent = match.LegacyTotalPercent,
+            FitRawPercent = match.FitRawPercent,
+            ConfidencePercent = match.ConfidencePercent,
+            CalibrationV1 = match.CalibrationV1,
+            DealBreaker = match.DealBreaker,
             Core = match.Core,
             ExperienceScore01 = match.ExperienceScore01,
             CompetencyScore01 = match.CompetencyScore01,
@@ -3304,7 +3309,10 @@ public class VacanciesController : ControllerBase
             MatchRationale = match.MatchRationale,
             Why = why,
             Gaps = gaps,
-            ColorBand = match.ColorBand
+            ColorBand = match.ColorBand,
+            MatchEvidenceLevel = match.MatchEvidenceLevel,
+            MatchUncertaintyPoints = match.MatchUncertaintyPoints,
+            MatchTransparencyNote = match.MatchTransparencyNote
         };
     }
 
@@ -3325,6 +3333,8 @@ public class VacanciesController : ControllerBase
         return dto with
         {
             MatchPercent = applied.MatchPercent,
+            MatchFitRawPercent = match.CalibrationV1 ? match.FitRawPercent : null,
+            MatchConfidencePercent = match.CalibrationV1 ? match.ConfidencePercent : null,
             MatchColorBand = applied.MatchColorBand,
             MatchWhySummary = applied.FitWhyLineNl ?? ProfileVacancyMatchCalculator.SummaryLine(match),
             MatchWhy = PreferRationaleWhy(match),
@@ -3342,7 +3352,9 @@ public class VacanciesController : ControllerBase
             FitWhyLine = applied.FitWhyLineNl,
             FitWhyKinds = applied.FitWhyKinds.Count > 0 ? applied.FitWhyKinds : null,
             FitDimensions = dims,
-            RankLowerReason = rankLowerReason
+            RankLowerReason = rankLowerReason,
+            MatchTransparencyNote = match.MatchTransparencyNote,
+            MatchUncertaintyPoints = match.MatchUncertaintyPoints > 0 ? match.MatchUncertaintyPoints : null
         };
     }
 

@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Enums
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -24,6 +25,8 @@ else if (_testConsentMissing)
     <div class="test-consent card" data-consent="test">
         <h2>@Culture["TestFlow.Consent.Title"]</h2>
         <p>@Culture["TestFlow.Consent.Lead"]</p>
+        <p class="muted">@Culture["AssessmentV2.Transparency.NotDiagnosis"]</p>
+        <p class="muted">@Culture["AssessmentV2.Transparency.HumanOversight"]</p>
         <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="GiveConsentAsync">
             @Culture["TestFlow.Consent.Cta"]
         </button>
@@ -36,25 +39,45 @@ else if (_testConsentMissing)
 }
 else
 {
+    @if (_showV2Transparency)
+    {
+        <aside class="test-transparency card" data-testid="assessment-v2-transparency">
+            <h2 class="test-transparency__title">@Culture["AssessmentV2.Transparency.Title"]</h2>
+            <p>@Culture["AssessmentV2.Transparency.Lead"]</p>
+            <ul class="test-transparency__list">
+                <li>@Culture["AssessmentV2.Transparency.NotDiagnosis"]</li>
+                <li>@Culture["AssessmentV2.Transparency.HumanOversight"]</li>
+                <li>@Culture["AssessmentV2.Transparency.MatchIndicative"]</li>
+            </ul>
+        </aside>
+    }
     @ChildContent
 }
 
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback<bool> GateChanged { get; set; }
+    [Parameter] public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
 
     private bool _loading = true;
     private bool _parentalMissing;
     private bool _testConsentMissing;
     private bool _busy;
     private string? _error;
+    private bool _showV2Transparency;
 
     public bool IsOpen => !_loading && !_parentalMissing && !_testConsentMissing;
 
     protected override async Task OnInitializedAsync()
     {
+        RefreshTransparency();
         await RefreshAsync();
     }
+
+    protected override void OnParametersSet() => RefreshTransparency();
+
+    private void RefreshTransparency()
+        => _showV2Transparency = AssessmentTestVersions.Normalize(QuickScanVersion) == AssessmentTestVersions.V2;
 
     public async Task RefreshAsync()
     {

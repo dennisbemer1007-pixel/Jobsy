@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -16,6 +17,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
     private readonly IAssessmentResearchService _research;
     private readonly AssessmentSaveGuard _saveGuard;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
+    private readonly IFeatureFlags _flags;
 
     public CandidateCulturePersonalityService(
         JobsyDbContext db,
@@ -23,7 +25,8 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         ICandidateInsightsQueue queue,
         IAssessmentResearchService research,
         ICandidateMatchSnapshotService matchSnapshots,
-        AssessmentSaveGuard saveGuard)
+        AssessmentSaveGuard saveGuard,
+        IFeatureFlags flags)
     {
         _db = db;
         _commercial = commercial;
@@ -31,6 +34,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         _research = research;
         _matchSnapshots = matchSnapshots;
         _saveGuard = saveGuard;
+        _flags = flags;
     }
 
     public async Task<CandidateCulturePersonalityStateDto> GetAsync(
@@ -57,7 +61,11 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
             return ToDto(row, kept);
         }
 
-        var error = CulturePersonalityCatalog.ValidateAnswers(answers, complete);
+        var testsV2 = await _flags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
+        var version = QuickScanVersionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
+
+        var error = QuickScanAssessmentBridge.ValidateAnswers(
+            AssessmentKind.Culture, answers, complete, version);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
@@ -85,13 +93,19 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 AnswersJson = "{}",
                 CreatedAtUtc = now
             };
+            row.QuickScanVersion = version;
             _db.CandidateCulturePersonalityProfiles.Add(row);
         }
 
-        var storedAnswers = CulturePersonalityCatalog.ParseAnswers(row.AnswersJson);
+        version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
+        row.QuickScanHighestAnswered = Math.Max(row.QuickScanHighestAnswered, answers.Count);
+
+        var storedAnswers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Culture, row.AnswersJson, version);
         var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
-            && CulturePersonalityCatalog.IsComplete(storedAnswers);
-        var answersJson = CulturePersonalityCatalog.SerializeAnswers(answers);
+            && QuickScanAssessmentBridge.IsComplete(AssessmentKind.Culture, storedAnswers, version);
+        var answersJson = QuickScanAssessmentBridge.SerializeAnswers(
+            AssessmentKind.Culture, answers, version);
         var baselineAnswersJson = row.AnswersJson;
         if (wasCompleted && !complete)
         {
@@ -101,7 +115,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         {
             var noOp = await _saveGuard.CommitCompleteAsync(
                 userId, AssessmentKind.Culture, AssessmentVariant.Quick, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
-            if (noOp && ScoresMatch(row, CulturePersonalityCatalog.Score(answers)))
+            if (noOp && ScoresMatch(row, QuickScanAssessmentBridge.ScoreCulture(answers, version)))
             {
                 var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
                 return ToDto(row, priceNoOp);
@@ -110,18 +124,19 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
-        var preview = CulturePersonalityCatalog.Score(answers);
+        var preview = QuickScanAssessmentBridge.ScoreCulture(answers, version);
         if (complete)
         {
             if (preview is not { IsComplete: true })
             {
-                throw new InvalidOperationException("Beantwoord alle 18 stellingen om de cultuurscan af te ronden.");
+                throw new InvalidOperationException(
+                    $"Beantwoord alle {QuickScanAssessmentBridge.FullCount(AssessmentKind.Culture, version)} stellingen om de cultuurscan af te ronden.");
             }
 
             ApplyScores(row, preview);
             row.Status = CandidateCompetencyStatuses.Completed;
             row.MatchTagsJson = CulturePersonalityCatalog.SerializeTags(
-                CulturePersonalityCatalog.DeriveMatchTags(preview));
+                QuickScanAssessmentBridge.DeriveCultureTags(preview, version));
             row.CompletedAtUtc = now;
         }
         else if (!CandidateCompetencyStatuses.IsCompleted(row.Status))
@@ -240,8 +255,12 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 price);
         }
 
-        var answers = CulturePersonalityCatalog.ParseAnswers(row.AnswersJson);
-        var preview = CulturePersonalityCatalog.Score(answers);
+        var version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
+        var fullCount = QuickScanAssessmentBridge.FullCount(AssessmentKind.Culture, version);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Culture, row.AnswersJson, version);
+        var preview = QuickScanAssessmentBridge.ScoreCulture(answers, version);
+        var depthCount = Math.Max(answers.Count, row.QuickScanHighestAnswered);
         return new CandidateCulturePersonalityStateDto(
             row.Status,
             answers,
@@ -249,7 +268,10 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
             CulturePersonalityCatalog.ParseTags(row.MatchTagsJson),
             row.CompletedAtUtc,
             price,
-            preview);
+            preview,
+            version,
+            fullCount,
+            depthCount < fullCount);
     }
 }
 

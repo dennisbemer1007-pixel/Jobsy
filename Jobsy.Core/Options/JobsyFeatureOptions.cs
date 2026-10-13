@@ -33,4 +33,7 @@ public sealed class JobsyFeatureOptions
     /// Overridden by <see cref="Entities.PlatformFeatureSettings.ResearchConsentEnabled"/> when set in admin.
     /// </summary>
     public bool ResearchConsentEnabled { get; set; }
+
+    /// <summary>When true, new Quick-Scan rows use v2 catalogs. Overridden by platform settings when present.</summary>
+    public bool TestsV2Enabled { get; set; }
 }

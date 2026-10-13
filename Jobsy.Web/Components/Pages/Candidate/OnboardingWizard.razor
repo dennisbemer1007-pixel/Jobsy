@@ -1,6 +1,7 @@
 @page "/candidate/start"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Features
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
@@ -898,31 +899,40 @@
         Dictionary<string, int>? answers;
         IEnumerable<(int Id, string Key)> catalog;
         int[] questionIds;
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
         switch (_step)
         {
             case 7:
                 var competency = await Api.GetMyCompetenciesAsync();
                 answers = competency?.Answers;
-                questionIds = OnboardingWizardCatalog.CompetencyQuestionIds;
-                catalog = CompetencyTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                var compVersion = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2);
+                questionIds = TestDepthRules.MiniIds(AssessmentKind.Competence, compVersion);
+                catalog = AssessmentQuickScanCatalog.CompetenceQuestions(compVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
             case 8:
                 var career = await Api.GetMyCareerInterestsAsync();
                 answers = career?.Answers;
-                questionIds = OnboardingWizardCatalog.CareerQuestionIds;
-                catalog = CareerTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                var careerVersion = ResolveQuickScanVersion(career?.QuickScanVersion, testsV2);
+                questionIds = TestDepthRules.MiniIds(AssessmentKind.Career, careerVersion);
+                catalog = AssessmentQuickScanCatalog.CareerQuestions(careerVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
             case 9:
                 var culture = await Api.GetMyCultureAsync();
                 answers = culture?.Answers;
-                questionIds = OnboardingWizardCatalog.CultureQuestionIds;
-                catalog = CulturePersonalityCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                var cultureVersion = ResolveQuickScanVersion(culture?.QuickScanVersion, testsV2);
+                questionIds = TestDepthRules.MiniIds(AssessmentKind.Culture, cultureVersion);
+                catalog = AssessmentQuickScanCatalog.CultureQuestions(cultureVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
             default:
                 var values = await Api.GetMyValuesAsync();
                 answers = values?.Answers;
-                questionIds = OnboardingWizardCatalog.ValuesQuestionIds;
-                catalog = SchwartzValuesCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                var valuesVersion = ResolveQuickScanVersion(values?.QuickScanVersion, testsV2);
+                questionIds = TestDepthRules.MiniIds(AssessmentKind.Values, valuesVersion);
+                catalog = AssessmentQuickScanCatalog.ValuesQuestions(valuesVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
         }
 
@@ -1310,6 +1320,16 @@
     }
 
     private Task OnMiniAnswer((int Id, int Value) args) => AnswerAsync(args.Id, args.Value);
+
+    private static int ResolveQuickScanVersion(int? storedVersion, bool testsV2Enabled)
+    {
+        if (storedVersion is int v && v > 0)
+        {
+            return AssessmentTestVersions.Normalize(v);
+        }
+
+        return testsV2Enabled ? AssessmentTestVersions.V2 : AssessmentTestVersions.V1;
+    }
 
     public async ValueTask DisposeAsync()
     {

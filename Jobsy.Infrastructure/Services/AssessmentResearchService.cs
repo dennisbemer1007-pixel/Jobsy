@@ -437,49 +437,49 @@ public sealed class AssessmentResearchService : IAssessmentResearchService
         switch (kind)
         {
             case AssessmentKind.Career:
-            {
-                var row = await _db.CandidateCareerInterests.AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-                if (row is null || row.CompletedAtUtc is null)
                 {
-                    return (null, null);
-                }
+                    var row = await _db.CandidateCareerInterests.AsNoTracking()
+                        .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+                    if (row is null || row.CompletedAtUtc is null)
+                    {
+                        return (null, null);
+                    }
 
-                return (CareerTestCatalog.ParseAnswersJson(row.AnswersJson), row.CompletedAtUtc);
-            }
+                    return (CareerTestCatalog.ParseAnswersJson(row.AnswersJson), row.CompletedAtUtc);
+                }
             case AssessmentKind.Culture:
-            {
-                var row = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-                if (row is null || row.CompletedAtUtc is null)
                 {
-                    return (null, null);
-                }
+                    var row = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+                        .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+                    if (row is null || row.CompletedAtUtc is null)
+                    {
+                        return (null, null);
+                    }
 
-                return (CulturePersonalityCatalog.ParseAnswers(row.AnswersJson).ToDictionary(kv => kv.Key, kv => kv.Value), row.CompletedAtUtc);
-            }
+                    return (CulturePersonalityCatalog.ParseAnswers(row.AnswersJson).ToDictionary(kv => kv.Key, kv => kv.Value), row.CompletedAtUtc);
+                }
             case AssessmentKind.Values:
-            {
-                var row = await _db.CandidateValuesProfiles.AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-                if (row is null || row.CompletedAtUtc is null)
                 {
-                    return (null, null);
-                }
+                    var row = await _db.CandidateValuesProfiles.AsNoTracking()
+                        .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+                    if (row is null || row.CompletedAtUtc is null)
+                    {
+                        return (null, null);
+                    }
 
-                return (SchwartzValuesCatalog.ParseAnswers(row.AnswersJson).ToDictionary(kv => kv.Key, kv => kv.Value), row.CompletedAtUtc);
-            }
+                    return (SchwartzValuesCatalog.ParseAnswers(row.AnswersJson).ToDictionary(kv => kv.Key, kv => kv.Value), row.CompletedAtUtc);
+                }
             default:
-            {
-                var row = await _db.CandidateCompetencies.AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-                if (row is null || row.CompletedAtUtc is null)
                 {
-                    return (null, null);
-                }
+                    var row = await _db.CandidateCompetencies.AsNoTracking()
+                        .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+                    if (row is null || row.CompletedAtUtc is null)
+                    {
+                        return (null, null);
+                    }
 
-                return (CompetencyTestCatalog.ParseAnswersJson(row.AnswersJson), row.CompletedAtUtc);
-            }
+                    return (CompetencyTestCatalog.ParseAnswersJson(row.AnswersJson), row.CompletedAtUtc);
+                }
         }
     }
 

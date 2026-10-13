@@ -55,7 +55,14 @@ public class CultureValuesPreviewScoresTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new CandidateCulturePersonalityService(db, new StubCommercial(), new StubQueue(), new NoOpAssessmentResearchService(), new StubMatchSnapshots(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
+        var sut = new CandidateCulturePersonalityService(
+            db,
+            new StubCommercial(),
+            new StubQueue(),
+            new NoOpAssessmentResearchService(),
+            new StubMatchSnapshots(),
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
+            QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);
@@ -78,7 +85,14 @@ public class CultureValuesPreviewScoresTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new CandidateValuesService(db, new StubCommercial(), new StubQueue(), new NoOpAssessmentResearchService(), new StubMatchSnapshots(), new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
+        var sut = new CandidateValuesService(
+            db,
+            new StubCommercial(),
+            new StubQueue(),
+            new NoOpAssessmentResearchService(),
+            new StubMatchSnapshots(),
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
+            QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.GetAsync(userId);
 
         Assert.Equal(CandidateCompetencyStatuses.Draft, dto.Status);
@@ -109,8 +123,13 @@ public class CultureValuesPreviewScoresTests
         await db.SaveChangesAsync();
 
         var sut = new CandidateValuesService(
-            db, new StubCommercial(), new StubQueue(), new NoOpAssessmentResearchService(), new StubMatchSnapshots(),
-            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)));
+            db,
+            new StubCommercial(),
+            new StubQueue(),
+            new NoOpAssessmentResearchService(),
+            new StubMatchSnapshots(),
+            new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
+            QuickScanTestSupport.FeatureFlagsOff);
         var dto = await sut.SaveAsync(userId, new Dictionary<int, int>(), complete: true);
 
         Assert.Equal(CandidateCompetencyStatuses.Completed, dto.Status);

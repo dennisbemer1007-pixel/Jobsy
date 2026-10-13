@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
@@ -32,7 +33,10 @@ public sealed record CandidateCompetencyStateDto(
     DateTime? UpdatedAtUtc,
     IReadOnlyList<CompetencyQuestionDto> Questions,
     IReadOnlyList<string> MatchTags,
-    string DeepAnalysisUpsellCopy);
+    string DeepAnalysisUpsellCopy,
+    int QuickScanVersion = AssessmentTestVersions.V1,
+    int QuickScanFullCount = 0,
+    bool IsIndicativeDepth = false);
 
 public sealed record CompetencyQuestionDto(
     int Id,

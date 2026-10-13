@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Rules;
 
@@ -22,7 +23,8 @@ public static class ProvisionalAssessmentScores
         int? resultaat,
         int? stress,
         int? innovatie,
-        int? extraversie)
+        int? extraversie,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
         var completed = CompetencyTestCatalog.CompletedScoresOrNull(
             status, samenwerken, resultaat, stress, innovatie, extraversie);
@@ -31,13 +33,14 @@ public static class ProvisionalAssessmentScores
             return new ResolvedCompetency(completed, false);
         }
 
-        var answers = CompetencyTestCatalog.ParseAnswersJson(answersJson);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Competence, answersJson, quickScanVersion);
         if (answers.Count == 0)
         {
             return new ResolvedCompetency(null, false);
         }
 
-        var preview = CompetencyTestCatalog.Score(answers);
+        var preview = AssessmentQuickScanCatalog.ScoreCompetence(answers, quickScanVersion);
         if (preview is null)
         {
             return new ResolvedCompetency(null, false);
@@ -55,7 +58,8 @@ public static class ProvisionalAssessmentScores
         int? artistic,
         int? social,
         int? enterprising,
-        int? conventional)
+        int? conventional,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
         var completed = CareerTestCatalog.CompletedScoresOrNull(
             status, realistic, investigative, artistic, social, enterprising, conventional);
@@ -64,19 +68,24 @@ public static class ProvisionalAssessmentScores
             return new ResolvedRiasec(completed, false);
         }
 
-        var answers = CareerTestCatalog.ParseAnswersJson(answersJson);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Career, answersJson, quickScanVersion);
         if (answers.Count == 0)
         {
             return new ResolvedRiasec(null, false);
         }
 
-        var preview = CareerTestCatalog.Score(answers);
+        var preview = QuickScanAssessmentBridge.ScoreCareer(answers, quickScanVersion);
         return preview is null
             ? new ResolvedRiasec(null, false)
             : new ResolvedRiasec(preview, true);
     }
 
-    public static ResolvedCulture ResolveCulture(string? status, string? answersJson, CulturePersonalityScores? storedCompleted)
+    public static ResolvedCulture ResolveCulture(
+        string? status,
+        string? answersJson,
+        CulturePersonalityScores? storedCompleted,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
         if (storedCompleted is { IsComplete: true }
             && CandidateCompetencyStatuses.IsCompleted(status))
@@ -84,13 +93,14 @@ public static class ProvisionalAssessmentScores
             return new ResolvedCulture(storedCompleted, false);
         }
 
-        var answers = CulturePersonalityCatalog.ParseAnswers(answersJson);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Culture, answersJson, quickScanVersion);
         if (answers.Count == 0)
         {
             return new ResolvedCulture(null, false);
         }
 
-        var preview = CulturePersonalityCatalog.Score(answers);
+        var preview = QuickScanAssessmentBridge.ScoreCulture(answers, quickScanVersion);
         if (preview is null)
         {
             return new ResolvedCulture(null, false);
@@ -108,7 +118,8 @@ public static class ProvisionalAssessmentScores
         int? connection,
         int? achievement,
         int? stability,
-        int? impact)
+        int? impact,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
         if (CandidateCompetencyStatuses.IsCompleted(status)
             && autonomy is not null
@@ -124,13 +135,14 @@ public static class ProvisionalAssessmentScores
             }
         }
 
-        var answers = SchwartzValuesCatalog.ParseAnswers(answersJson);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Values, answersJson, quickScanVersion);
         if (answers.Count == 0)
         {
             return new ResolvedValues(null, false);
         }
 
-        var preview = SchwartzValuesCatalog.Score(answers);
+        var preview = QuickScanAssessmentBridge.ScoreValues(answers, quickScanVersion);
         return preview is null
             ? new ResolvedValues(null, false)
             : new ResolvedValues(preview, true);

@@ -106,6 +106,18 @@ public static class UiStringsFeatureFlags
             "Wył. = kandydaci nie widzą dodatkowych preferencji. PDF v2 przyjdzie później.",
             "Oprit = candidații nu văd preferințele partajabile. PDF v2 vine mai târziu.",
             "إيقاف = لا يرى المرشحون التفضيلات القابلة للمشاركة. ملف PDF v2 يأتي لاحقاً.");
+        Add("AdminSettings.TestsV2.Enabled.Title",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)",
+            "Quick-Scan v2 (TestsV2)");
+        Add("AdminSettings.TestsV2.Enabled.Desc",
+            "Aan = nieuwe kandidaten krijgen de uitgebreidere v2-vragensets. Bestaande v1-resultaten blijven ongewijzigd.",
+            "On = new candidates get the expanded v2 item sets. Existing v1 results stay unchanged.",
+            "Wł. = nowi kandydaci dostają rozszerzone zestawy v2. Istniejące wyniki v1 pozostają.",
+            "Pornit = candidații noi primesc seturile v2 extinse. Rezultatele v1 existente rămân.",
+            "تشغيل = يحصل المرشحون الجدد على مجموعات v2. نتائج v1 الحالية تبقى.");
         Add("AdminSettings.CompactTestPdf.Enabled.Title",
             "Korte testrapporten",
             "Short test reports",
@@ -184,5 +196,29 @@ public static class UiStringsFeatureFlags
             "Lobsy szuka dla Ciebie, shortlisty i prośby o kontakt. Domyślnie wył.",
             "Lobsy caută pentru tine, shortlist-uri și cereri de cunoaștere. Implicit oprit.",
             "لوبسي يبحث لك، قوائم أصحاب العمل وطلبات التعارف. متوقف افتراضياً.");
+        Add("AdminSettings.MatchCalibrationV1.Enabled.Title",
+            "Matchkalibratie V1",
+            "Match calibration V1",
+            "Kalibracja dopasowania V1",
+            "Calibrare match V1",
+            "معايرة المطابقة V1");
+        Add("AdminSettings.MatchCalibrationV1.Enabled.Desc",
+            "Realistischer matchpercentage: geen volle punten bij ontbrekende data, aparte betrouwbaarheid. Standaard uit.",
+            "More realistic match scores: no full credit for missing data, separate confidence. Default off.",
+            "Bardziej realistyczny match: brak pełnych punktów przy brakujących danych, osobna pewność. Domyślnie wył.",
+            "Match mai realist: fără puncte pline la date lipsă, încredere separată. Implicit oprit.",
+            "مطابقة أكثر واقعية: لا نقاط كاملة عند نقص البيانات، ثقة منفصلة. متوقف افتراضياً.");
+        Add("Match.Confidence.Indicative",
+            "Indicatief — vul je profiel aan voor een betere match.",
+            "Indicative — complete your profile for a better match.",
+            "Orientacyjnie — uzupełnij profil, aby lepiej dopasować oferty.",
+            "Orientativ — completează profilul pentru un match mai bun.",
+            "تقريبي — أكمل ملفك للحصول على مطابقة أفضل.");
+        Add("Match.Confidence.Level",
+            "Betrouwbaarheid van deze match: ongeveer {0}%.",
+            "Confidence in this match: about {0}%.",
+            "Pewność tego dopasowania: około {0}%.",
+            "Încredere în acest match: circa {0}%.",
+            "ثقة هذا التطابق: حوالي {0}%.");
     }
 }

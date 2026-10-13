@@ -1141,6 +1141,18 @@
         {
             <p class="login-lead">@_matchExplain.MatchWhySummary</p>
         }
+        @if (!string.IsNullOrWhiteSpace(_matchExplain.MatchTransparencyNote))
+        {
+            <p class="test-indicative-banner muted" data-testid="vacancy-match-indicative">
+                @Culture[_matchExplain.MatchTransparencyNote]
+                @if (_matchExplain.MatchUncertaintyPoints is > 0)
+                {
+                    <span> @Culture.Format("AssessmentV2.Transparency.MatchUncertainty", _matchExplain.MatchUncertaintyPoints)</span>
+                }
+            </p>
+        }
+        <MatchConfidenceHint ConfidencePercent="_matchExplain.MatchConfidencePercent"
+                             FitRawPercent="_matchExplain.MatchFitRawPercent" />
         @if (!string.IsNullOrWhiteSpace(_matchExplain.CultureFitLabel))
         {
             <p class="culture-fit culture-fit--@(_matchExplain.CultureFitBand ?? "mid")">@_matchExplain.CultureFitLabel</p>
