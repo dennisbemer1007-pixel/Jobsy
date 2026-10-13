@@ -150,6 +150,9 @@ public class PlatformFeatureSettings
     /// </summary>
     public bool MatchCalibrationV1Enabled { get; set; }
 
+    /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
+    public bool EmployerFitQuestionnairesEnabled { get; set; }
+
     /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
     public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
 

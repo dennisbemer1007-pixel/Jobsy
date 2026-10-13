@@ -446,6 +446,57 @@
                     }
                 </div>
             </fieldset>
+            @if (_employerFitEnabled)
+            {
+                <details class="vacancy-match-optional detail-card">
+                    <summary>@Culture["EmployerFit.Vacancy.Accordion"]</summary>
+                    <p class="muted vacancy-field-hint">Lobsy schat dit al uit functie en branche. Vul alleen in wat afwijkt.</p>
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" checked="@_useInferredCompetencies" @onchange="e => _useInferredCompetencies = e.Value as bool? ?? true" />
+                        <span>Gebruik Lobsy-inschatting voor competenties</span>
+                    </label>
+                    <label>
+                        <span>Tempo in deze functie</span>
+                        <select @bind="_vacancyPace">
+                            <option value="">— Overslaan —</option>
+                            @foreach (var paceCode in WorkPreferenceCatalogs.VacancyPaceCodes)
+                            {
+                                <option value="@paceCode">@Culture[WorkPreferenceCatalogs.VacancyPaceLabelKey(paceCode)]</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        <span>Fysieke belasting</span>
+                        <select @bind="_vacancyPhysical">
+                            <option value="">— Overslaan —</option>
+                            @foreach (var physCode in WorkPreferenceCatalogs.PhysicalWorkCodes)
+                            {
+                                <option value="@physCode">@Culture[WorkPreferenceCatalogs.PhysicalLabelKey(physCode)]</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        <span>Waar werk je vooral?</span>
+                        <select @bind="_vacancyPlace">
+                            <option value="">— Overslaan —</option>
+                            @foreach (var placeCode in WorkPreferenceCatalogs.IndoorOutdoorCodes)
+                            {
+                                <option value="@placeCode">@Culture[WorkPreferenceCatalogs.IndoorOutdoorLabelKey(placeCode)]</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        <span>Klantcontact</span>
+                        <select @bind="_vacancyCustomer">
+                            <option value="">— Overslaan —</option>
+                            @foreach (var custCode in WorkPreferenceCatalogs.CustomerContactCodes)
+                            {
+                                <option value="@custCode">@Culture[WorkPreferenceCatalogs.CustomerContactLabelKey(custCode)]</option>
+                            }
+                        </select>
+                    </label>
+                </details>
+            }
             <fieldset class="profile-roles vacancy-culture">
                 <legend>@Culture["WaProfile.Vacancy.Section"]</legend>
                 @if (_companyCultureSummary is null && !_teamOverride)
@@ -862,6 +913,12 @@
     private HashSet<string> _selectedCulturePillars = new(StringComparer.OrdinalIgnoreCase);
     private bool _cultureError;
     private bool _teamOverride;
+    private bool _employerFitEnabled;
+    private bool _useInferredCompetencies = true;
+    private string? _vacancyPace;
+    private string? _vacancyPhysical;
+    private string? _vacancyPlace;
+    private string? _vacancyCustomer;
     private string _companyCultureName = "";
     private List<(string Label, int Percent)>? _companyCultureSummary;
     private List<string> _companyValueLabels = [];
@@ -1021,6 +1078,7 @@
         {
             var flags = await FeatureFlags.GetAsync();
             _proactiveMatchingOn = flags.ProactiveMatchingEnabled;
+            _employerFitEnabled = flags.IsEnabled(PlatformFeature.EmployerFitQuestionnaires);
         }
         catch (Exception)
         {
@@ -2017,7 +2075,9 @@
                 BarrierMinExperienceYears: _barrierHigh ? _barrierYears : null,
                 BarrierMinExperienceHours: _barrierHigh ? _barrierHours : null,
                 BarrierHardChecks: _barrierHigh ? _barrierHardChecks.ToArray() : null,
-                PublicMapRadiusKm: _isIntermediary ? _publicMapRadiusKm : null);
+                PublicMapRadiusKm: _isIntermediary ? _publicMapRadiusKm : null,
+                WorkContext: BuildVacancyWorkContext(),
+                UseInferredCompetencies: _useInferredCompetencies);
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)
@@ -2041,5 +2101,27 @@
         {
             _saving = false;
         }
+    }
+
+    private VacancyWorkContextSnapshot? BuildVacancyWorkContext()
+    {
+        if (!_employerFitEnabled)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(_vacancyPace)
+            && string.IsNullOrWhiteSpace(_vacancyPhysical)
+            && string.IsNullOrWhiteSpace(_vacancyPlace)
+            && string.IsNullOrWhiteSpace(_vacancyCustomer))
+        {
+            return null;
+        }
+
+        return new VacancyWorkContextSnapshot(
+            string.IsNullOrWhiteSpace(_vacancyPace) ? null : _vacancyPace,
+            string.IsNullOrWhiteSpace(_vacancyPhysical) ? null : _vacancyPhysical,
+            string.IsNullOrWhiteSpace(_vacancyPlace) ? null : _vacancyPlace,
+            string.IsNullOrWhiteSpace(_vacancyCustomer) ? null : _vacancyCustomer);
     }
 }

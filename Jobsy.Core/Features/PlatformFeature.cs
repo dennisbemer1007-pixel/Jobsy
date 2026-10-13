@@ -51,5 +51,8 @@ public enum PlatformFeature
     ProactiveMatching,
 
     /// <summary>Quick-Scan v2 question sets for new candidate test rows. Default false.</summary>
-    TestsV2
+    TestsV2,
+
+    /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
+    EmployerFitQuestionnaires
 }

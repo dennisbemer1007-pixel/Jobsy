@@ -1456,6 +1456,26 @@ public class VacanciesController : ControllerBase
         }
 
         vacancy.CulturePillarsJson = CulturePillarCatalog.Serialize(culturePillars);
+        if (request.WorkContext is not null)
+        {
+            vacancy.VacancyWorkContextJson = VacancyMatchExtrasJson.SerializeWork(request.WorkContext);
+        }
+
+        if (request.CompetencyTargets is not null)
+        {
+            vacancy.VacancyCompetencyTargetsJson = VacancyMatchExtrasJson.SerializeCompetencies(request.CompetencyTargets);
+        }
+
+        if (request.CultureDelta is not null)
+        {
+            vacancy.VacancyCultureDeltaJson = VacancyMatchExtrasJson.SerializeCultureDelta(request.CultureDelta);
+        }
+
+        if (request.UseInferredCompetencies is bool useInfer)
+        {
+            vacancy.VacancyUseInferredCompetencies = useInfer;
+        }
+
         vacancy.BarrierRequirementsJson = VacancyBarrierCatalog.Serialize(
             VacancyBarrierCatalog.Normalize(
                 ParseBarrierKind(request.BarrierKind),

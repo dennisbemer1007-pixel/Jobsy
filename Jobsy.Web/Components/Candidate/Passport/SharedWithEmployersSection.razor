@@ -3,6 +3,7 @@
 @using Jobsy.Web.Components.Candidate.ProfileSections
 @using Jobsy.Web.Localization
 @inject CultureState Culture
+@inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 
 <section class="shared-prefs" data-testid="shared-with-employers">
     <p class="shared-prefs__help">@Culture["Passport.Shared.Help"]</p>
@@ -39,6 +40,42 @@
                     @onclick="() => SetPace(code)">@Culture[WorkPreferenceCatalogs.PaceLabelKey(code)]</button>
         }
     </fieldset>
+
+    @if (_employerFitEnabled)
+    {
+        <fieldset class="shared-prefs__group">
+            <legend>@Culture["WorkPref.TeamMode.team"] / @Culture["WorkPref.TeamMode.solo"]</legend>
+            @foreach (var code in WorkPreferenceCatalogs.TeamModeCodes)
+            {
+                <button type="button" class="chip @(Editor.WorkTeamMode == code ? "is-on" : null)"
+                        @onclick="() => SetTeamMode(code)">@Culture[WorkPreferenceCatalogs.TeamModeLabelKey(code)]</button>
+            }
+        </fieldset>
+        <fieldset class="shared-prefs__group">
+            <legend>@Culture["WorkPref.Structure.fixed"]</legend>
+            @foreach (var code in WorkPreferenceCatalogs.StructureCodes)
+            {
+                <button type="button" class="chip @(Editor.WorkStructure == code ? "is-on" : null)"
+                        @onclick="() => SetStructure(code)">@Culture[WorkPreferenceCatalogs.StructureLabelKey(code)]</button>
+            }
+        </fieldset>
+        <fieldset class="shared-prefs__group">
+            <legend>@Culture["WorkPref.Customer.much"]</legend>
+            @foreach (var code in WorkPreferenceCatalogs.CustomerContactCodes)
+            {
+                <button type="button" class="chip @(Editor.WorkCustomerContact == code ? "is-on" : null)"
+                        @onclick="() => SetCustomer(code)">@Culture[WorkPreferenceCatalogs.CustomerContactLabelKey(code)]</button>
+            }
+        </fieldset>
+        <fieldset class="shared-prefs__group">
+            <legend>@Culture["WorkPref.Shifts.flex"]</legend>
+            @foreach (var code in WorkPreferenceCatalogs.ShiftsPreferenceCodes)
+            {
+                <button type="button" class="chip @(Editor.WorkShiftsPreference == code ? "is-on" : null)"
+                        @onclick="() => SetShifts(code)">@Culture[WorkPreferenceCatalogs.ShiftsLabelKey(code)]</button>
+            }
+        </fieldset>
+    }
 
     <label class="detail-card passport-data__switch">
         <input type="checkbox" checked="@Editor.ShareEmployerPreferences" @onchange="ToggleShareEmployers" />
@@ -85,10 +122,22 @@
 
     [Parameter] public bool PhoneVerificationEnabled { get; set; }
 
+    private bool _employerFitEnabled;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _employerFitEnabled = flags.IsEnabled(Jobsy.Core.Features.PlatformFeature.EmployerFitQuestionnaires);
+    }
+
     private void SetIndoor(string code) { Editor.WorkIndoor = code; Editor.Notify(); }
     private void SetOutdoor(string code) { Editor.WorkOutdoor = code; Editor.Notify(); }
     private void SetPhysical(string code) { Editor.WorkPhysical = code; Editor.Notify(); }
     private void SetPace(string code) { Editor.WorkPace = code; Editor.Notify(); }
+    private void SetTeamMode(string code) { Editor.WorkTeamMode = code; Editor.Notify(); }
+    private void SetStructure(string code) { Editor.WorkStructure = code; Editor.Notify(); }
+    private void SetCustomer(string code) { Editor.WorkCustomerContact = code; Editor.Notify(); }
+    private void SetShifts(string code) { Editor.WorkShiftsPreference = code; Editor.Notify(); }
     private void SetCar(bool value) { Editor.HasOwnCar = value; Editor.Notify(); }
 
     private void ToggleShareEmployers(ChangeEventArgs _)

@@ -25,6 +25,11 @@ public static class ProfileVacancyMatchCalculator
     public static ProfileVacancyMatch Calculate(ProfileVacancyMatchInput input, bool useMatchCalibrationV1 = false)
     {
         var legacy = CalculateLegacy(input);
+        if (legacy.WorkContextHardMismatch)
+        {
+            return legacy;
+        }
+
         return useMatchCalibrationV1
             ? MatchCalibrationV1Calculator.Apply(input, legacy)
             : legacy;
@@ -33,6 +38,14 @@ public static class ProfileVacancyMatchCalculator
     /// <summary>Pre-calibration scoring (legacy product behaviour).</summary>
     public static ProfileVacancyMatch CalculateLegacy(ProfileVacancyMatchInput input)
     {
+        var workContext = WorkContextMatchRules.Evaluate(
+            input.CandidateWorkContext ?? CandidateWorkContextSnapshot.Empty,
+            input.VacancyWorkContext);
+        if (input.EmployerFitQuestionnairesEnabled && workContext.HardMismatch)
+        {
+            return BuildWorkContextExcludedMatch(input, workContext);
+        }
+
         var core = MatchScoreCalculator.Calculate(input.Core);
         var experience01 = ScoreExperience(input);
         var competency01 = input.CandidateCompetencies is { IsComplete: true } scores
@@ -202,6 +215,24 @@ public static class ProfileVacancyMatchCalculator
 
         var (why, gaps) = BuildExplanation(
             input, core, experience01, competency01, interest01, occupationFit, culture, total, engagementBonus);
+        if (input.EmployerFitQuestionnairesEnabled && workContext.Notes.Count > 0 && !workContext.HardMismatch)
+        {
+            why = why.Concat(workContext.Notes.Where(n => n.Code == "align")).ToList();
+        }
+
+        if (input.VacancyCompetenciesFromEmployer)
+        {
+            why = why.Concat([
+                new ProfileMatchExplainPoint("competency", "employer", "Gebaseerd op jullie ingevulde functieprofiel")
+            ]).ToList();
+        }
+        else if (input.EmployerFitQuestionnairesEnabled && input.VacancyCompetencies is not null)
+        {
+            gaps = gaps.Concat([
+                new ProfileMatchExplainPoint("competency", "infer", "Typisch voor deze branche (inschatting)")
+            ]).ToList();
+        }
+
         return new ProfileVacancyMatch
         {
             VacancyId = input.VacancyId,
@@ -227,7 +258,30 @@ public static class ProfileVacancyMatchCalculator
                 ? "green"
                 : total >= DisplayThreshold
                     ? "orange"
-                    : "red"
+                    : "red",
+            WorkContextHardMismatch = workContext.HardMismatch
+        };
+    }
+
+    private static ProfileVacancyMatch BuildWorkContextExcludedMatch(
+        ProfileVacancyMatchInput input,
+        WorkContextMatchRules.Result workContext)
+    {
+        var core = MatchScoreCalculator.Calculate(input.Core);
+        var gaps = workContext.Notes
+            .Where(n => n.Code != "align")
+            .ToList();
+        return new ProfileVacancyMatch
+        {
+            VacancyId = input.VacancyId,
+            VacancyTitle = input.VacancyTitle,
+            TotalPercent = 0,
+            Core = core,
+            ExperienceScore01 = 0,
+            Why = [],
+            Gaps = gaps,
+            ColorBand = "red",
+            WorkContextHardMismatch = true
         };
     }
 
@@ -249,7 +303,7 @@ public static class ProfileVacancyMatchCalculator
         int take = MaxResults,
         int minPercent = DisplayThreshold)
         => matches
-            .Where(m => m.Core.LegalEligible && m.TotalPercent >= minPercent)
+            .Where(m => m.Core.LegalEligible && !m.WorkContextHardMismatch && m.TotalPercent >= minPercent)
             .OrderByDescending(m => m.TotalPercent)
             .ThenBy(m => m.VacancyTitle, StringComparer.OrdinalIgnoreCase)
             .Take(Math.Clamp(take, 1, MaxResults))
@@ -795,6 +849,12 @@ public sealed class ProfileVacancyMatchInput
     public string? CompanyName { get; init; }
     public AssessmentMatchEvidence CompetencyMatchEvidence { get; init; } = AssessmentMatchEvidence.None;
     public AssessmentMatchEvidence CareerMatchEvidence { get; init; } = AssessmentMatchEvidence.None;
+    public CandidateWorkContextSnapshot? CandidateWorkContext { get; init; }
+    public VacancyWorkContextSnapshot? VacancyWorkContext { get; init; }
+    public bool VacancyCompetenciesFromEmployer { get; init; }
+    public bool VacancyCultureFromEmployer { get; init; }
+    public bool VacancyWorkContextFromEmployer { get; init; }
+    public bool EmployerFitQuestionnairesEnabled { get; init; }
 }
 
 public sealed class ProfileVacancyMatch
@@ -834,6 +894,7 @@ public sealed class ProfileVacancyMatch
     public int MatchUncertaintyPoints { get; init; }
     /// <summary>UiStrings key for match transparency when evidence is indicative.</summary>
     public string? MatchTransparencyNote { get; init; }
+    public bool WorkContextHardMismatch { get; init; }
 }
 
 public sealed record ProfileMatchExplainPoint(string Kind, string Code, string Text);

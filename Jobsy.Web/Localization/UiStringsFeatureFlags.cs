@@ -207,7 +207,19 @@ public static class UiStringsFeatureFlags
             "More realistic match scores: no full credit for missing data, separate confidence. Default off.",
             "Bardziej realistyczny match: brak pełnych punktów przy brakujących danych, osobna pewność. Domyślnie wył.",
             "Match mai realist: fără puncte pline la date lipsă, încredere separată. Implicit oprit.",
-            "مطابقة أكثر واقعية: لا نقاط كاملة عند نقص البيانات، ثقة منفصلة. متوقف افتراضياً.");
+            "مطابقة أكثر واقعية: لا نقاط كاملة عند نقص البيانات، ثقة منفصلة. متوقف افterاضياً.");
+        Add("AdminSettings.EmployerFitQuestionnaires.Enabled.Title",
+            "Werkgever fit-vragenlijsten",
+            "Employer fit questionnaires",
+            "Kwestionariusze dopasowania pracodawcy",
+            "Chestionare fit angajator",
+            "استبيانات ملاءمة صاحب العمل");
+        Add("AdminSettings.EmployerFitQuestionnaires.Enabled.Desc",
+            "Optionele teamcultuur (6+4) en vacature-aanvulling voor scherper matchen. Standaard uit.",
+            "Optional team culture (6+4) and vacancy extras for sharper matching. Default off.",
+            "Opcjonalna kultura zespołu (6+4) i uzupełnienie oferty. Domyślnie wył.",
+            "Cultură echipă opțională (6+4) și extra pe vacanță. Implicit oprit.",
+            "ثقافة الفريق (6+4) وإضافات الوظيفة اختيارية. متوقف افتراضياً.");
         Add("Match.Confidence.Indicative",
             "Indicatief — vul je profiel aan voor een betere match.",
             "Indicative — complete your profile for a better match.",

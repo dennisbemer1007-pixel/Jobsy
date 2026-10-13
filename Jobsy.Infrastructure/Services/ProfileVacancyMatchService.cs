@@ -65,6 +65,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         var companyProfiles = await _companyCulture.GetForCompaniesAsync(companyIds, cancellationToken);
         var platform = await _features.GetAsync(cancellationToken);
         var useCalibrationV1 = platform.MatchCalibrationV1Enabled;
+        var employerFit = platform.EmployerFitQuestionnairesEnabled;
 
         var result = new Dictionary<Guid, ProfileVacancyMatch>();
         foreach (var (record, travelMinutes) in batch)
@@ -73,6 +74,22 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             // Per-team override: pillars set → ignore company culture; kernwaarden always from company.
             var overridesCulture = CulturePillarCatalog.HasProfile(record.CulturePillars);
             var core = MatchingProfileMapper.BuildInput(record, context.Prefs, travelMinutes, context.AgeYears);
+            var extras = employerFit
+                ? VacancyMatchProfileResolver.ParseExtras(
+                    record.VacancyWorkContextJson,
+                    record.VacancyCompetencyTargetsJson,
+                    record.VacancyCultureDeltaJson,
+                    record.VacancyUseInferredCompetencies)
+                : VacancyMatchExtrasSnapshot.Empty;
+            var resolved = employerFit
+                ? VacancyMatchProfileResolver.Resolve(
+                    record.WorkTypeLabelList,
+                    record.Title,
+                    record.Description,
+                    extras,
+                    overridesCulture ? null : companyProfile?.Culture,
+                    record.CulturePillars)
+                : null;
             var match = ProfileVacancyMatchCalculator.Calculate(new ProfileVacancyMatchInput
             {
                 VacancyId = record.Id,
@@ -88,7 +105,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 RequiredEducation = record.RequiredEducation,
                 MinimumEmployers = record.MinimumEmployers,
                 CandidateCompetencies = context.Competencies,
-                VacancyCompetencies = VacancyCompetencyProfile.Infer(record),
+                VacancyCompetencies = resolved?.VacancyCompetencies ?? VacancyCompetencyProfile.Infer(record),
                 CandidateRiasecTags = context.RiasecTags,
                 CandidateRiasecScores = context.RiasecScores,
                 CareerDeepCompleted = context.CareerDeepCompleted,
@@ -96,13 +113,19 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CareerOccupations = context.CareerOccupations,
                 CulturePillars = record.CulturePillars,
                 CandidateCultureScores = context.CultureScores,
-                CompanyCultureScores = overridesCulture ? null : companyProfile?.Culture,
+                CompanyCultureScores = resolved?.EffectiveCulture ?? (overridesCulture ? null : companyProfile?.Culture),
                 CandidateValuesScores = context.ValuesScores,
                 CompanyValuesScores = companyProfile?.Values,
                 CompanyEngagement = companyProfile?.Engagement,
                 CompanyName = record.CompanyName,
                 CompetencyMatchEvidence = context.CompetencyMatchEvidence,
-                CareerMatchEvidence = context.CareerMatchEvidence
+                CareerMatchEvidence = context.CareerMatchEvidence,
+                CandidateWorkContext = context.CandidateWorkContext,
+                VacancyWorkContext = employerFit ? resolved?.WorkContext : null,
+                VacancyCompetenciesFromEmployer = resolved?.VacancyCompetenciesExplicit ?? false,
+                VacancyCultureFromEmployer = resolved?.CultureExplicit ?? false,
+                VacancyWorkContextFromEmployer = employerFit && resolved?.WorkContext is not null,
+                EmployerFitQuestionnairesEnabled = employerFit
             }, useCalibrationV1);
             result[record.Id] = match;
             if (useCalibrationV1 && match.LegacyTotalPercent is int legacy)
@@ -240,12 +263,15 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             careerResolved.IsProvisional,
             careerDeep);
 
+        var candidateWorkContext = CandidateWorkContextProfile.FromPreferences(prefs.WorkPreferences);
+
         return new ProfileVacancyMatchContext
         {
             UserId = user.Id,
             HomeLatitude = user.HomeLocation?.Latitude,
             HomeLongitude = user.HomeLocation?.Longitude,
             Prefs = prefs,
+            CandidateWorkContext = candidateWorkContext,
             AgeYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth) ?? prefs.AgeYears,
             Competencies = scores,
             RiasecTags = riasecTags,

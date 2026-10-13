@@ -5428,6 +5428,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("ProactiveMatchingEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("MatchCalibrationV1Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EmployerFitQuestionnairesEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PublicWebBaseUrl")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
@@ -8591,6 +8597,23 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("CulturePillarsJson")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("VacancyWorkContextJson")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("VacancyCompetencyTargetsJson")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("VacancyCultureDeltaJson")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<bool>("VacancyUseInferredCompetencies")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Description")
                         .IsRequired()
